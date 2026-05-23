@@ -1,0 +1,5 @@
+# Local clones of upstream reference repos. Not part of this repo's history.
+reference/
+
+# mdBook build output (per book.toml build-dir = "book").
+book/book/

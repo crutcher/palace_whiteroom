@@ -1,0 +1,58 @@
+[book]
+title = "The Palace Whiteroom"
+authors = ["The Palace Whiteroom Contributors"]
+description = "A layered impedance-matching specification of the Palace electromagnetic simulator's algorithms, lifted into a language-agnostic graph-evaluation calculus."
+language = "en"
+src = "src"
+
+[rust]
+edition = "2021"
+
+[build]
+build-dir = "book"
+create-missing = false
+
+# ── preprocessors ─────────────────────────────────────────────────────────────
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
+[preprocessor.katex]
+after = ["links"]
+macros = "./katex-macros.txt"
+
+# ── HTML output ───────────────────────────────────────────────────────────────
+
+[output.html]
+default-theme = "rust"
+preferred-dark-theme = "ayu"
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
+additional-css = []
+no-section-label = false
+mathjax-support = false
+
+[output.html.print]
+enable = true
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
+limit-results = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 2
+boost-paragraph = 1
+expand = true
+heading-split-level = 3
+
+# ── linkcheck ─────────────────────────────────────────────────────────────────
+
+[output.linkcheck2]
+command = "mdbook-linkcheck2"
+follow-web-links = false
+traverse-parent-directories = false
+warning-policy = "warn"
+cache-timeout = 86400

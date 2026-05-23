@@ -1,0 +1,20 @@
+% KaTeX macros usable across the Palace Whiteroom book.
+% Define one per line as: \name:\replacement
+\RR:\mathbb{R}
+\NN:\mathbb{N}
+\ZZ:\mathbb{Z}
+\Bool:\mathbb{B}
+\T:\mathbf{T}
+\Tensor:\mathrm{Tensor}
+\Scalar:\mathrm{Scalar}
+\Sim:\mathrm{Sim}
+\Op:\mathrm{Op}
+\Eff:\mathrm{Eff}
+\vec:\mathbf{#1}
+\axpy:\mathsf{axpy}
+\dot:\mathsf{dot}
+\matvec:\mathsf{matvec}
+\bind:\,\texttt{>>=}\,
+\ret:\mathsf{return}\,
+\to:\rightarrow
+\turn:\vdash
