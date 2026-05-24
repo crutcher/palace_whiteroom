@@ -50,6 +50,17 @@ graph BT
   orthog --> gemv-basis
   orthog --> allreduce-sum
   gemv-basis --> axpy
+  nrm2 --> dot
+  orthogonalization --> dot
+  orthogonalization --> axpy
+  orthogonalization --> nrm2
+  gmres --> axpy
+  gmres --> dot
+  gmres --> nrm2
+  gmres --> apply-linop
+  gmres --> orthogonalization
+  gmres --> constructed-operators
+  gmres --> variant-absorption
 ```
 
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.

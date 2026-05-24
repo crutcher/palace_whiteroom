@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-24 cycle-24 — forward gmres [L1→L2] — pass
+
+- Synthesis: GMRES L1→L2: unfolded the six L1 building blocks into the axpy/dot/nrm2/scal/apply_linop/givens primitive vocabulary as a `## L2 — primitive composition` section appended to the slice; extracted four support-operator concepts (apply-linop, dot, nrm2, orthogonalization); preserved variant absorption at L2 (primitive-sequence shape-invariant across pc_side × gs_orthog × flexible).
+- Verdict: pass.
+- Friction: concept_write create skipped (already exists; use append-section): nrm2; concept_write create skipped (already exists; use append-section): dot.
+- Structural change: applied: 4 concept_write(s), 5 dep-map edge(s), 2 lesson(s); 5 rotation_claim(s).
 ## 2026-05-24 cycle-23 — forward orthog [L1→L2] — pass
 
 - Synthesis: orthog L1→L2: unfolded the three variants into named primitive chains (dot, allreduce_sum, axpy, gemv_basis), preserving load-bearing collective shape and MGS ordering while marking BLAS-fusion / kernel-packing transparent; extracted gemv_basis as a new L2 concept with axpy dependency; added dependency-map edges for orthog→{dot, axpy, gemv-basis, allreduce-sum}.
