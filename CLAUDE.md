@@ -53,6 +53,7 @@ book/                # the spec, rendered as an mdBook
 problems/            # out-of-band concern channel — see problems/README.md
 scaffolding/         # agent-side workshop (cross-cutting notes, decisions) — see scaffolding/README.md
 skills/              # agent-invocable procedures — see skills/README.md
+tools/               # evaluation tooling (Python venv-per-tool; scratch sandbox) — see tools/README.md
 reference/           # local clones of palace, bunsen, burn, tensorflow-java (gitignored)
 
 # Files Phase 0 of BOOTSTRAP.md creates (agent-loop infrastructure):
@@ -296,6 +297,14 @@ What scaffolding is *not*: slice-local notes (those live in the slice's `## Work
 Authority: skill creation, refinement, and retirement is Meta-Critic / meta-review work (Medium cascade). Per-cycle agents *invoke* skills; they do not create or modify them. Pre-orchestrator, this Claude Code session acts in the meta-cycle capacity.
 
 Small-scope speculative skills are default-accepted; the expected pattern is *write small, use, observe friction, refine* rather than design-from-imagination.
+
+## Tools — evaluation tooling
+
+`tools/` holds purpose-built scripts and small projects for verifying, validating, or exploring aspects of the dissection beyond what the per-cycle agents do themselves. Distinct from skills (which *describe* procedures) — tools are *executed code*. Full protocol in `tools/README.md`.
+
+Layout: each named tool gets its own subdirectory `tools/<name>/`. Python tools own a local virtual environment (`tools/<name>/.venv/`, gitignored) — prevents cross-tool dep conflicts and keeps each tool reproducible. Non-Python tools follow their own ecosystem conventions (Cargo, shell scripts, etc.).
+
+`tools/scratch/` is a sandbox for grab-bag evaluation when symbolic execution or reasoning would help. Different discipline from named tools — scratch is mutable; promote crystallized work out.
 
 ## Meta-review — out-of-cycle friction integration
 

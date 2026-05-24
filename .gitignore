@@ -10,3 +10,8 @@ target/
 # Claude Code machine-local settings (the .claude/ dir itself IS tracked
 # for shared config like mcp.json; the *.local.json files are not).
 .claude/*.local.json
+
+# Python virtual environments and bytecode caches anywhere under tools/.
+tools/**/.venv/
+tools/**/__pycache__/
+tools/**/*.pyc
