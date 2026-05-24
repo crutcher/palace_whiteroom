@@ -310,7 +310,7 @@ Layout: each named tool gets its own subdirectory `tools/<name>/`. Python tools 
 
 Full procedure: `book/src/meta-reviews/index.md`.
 
-**Trigger**: every 10 completed agent cycles, or human invocation. The normal loop **pauses** until the meta-review is fully enacted — analysis → plan → human approval → enactment — and only then resumes.
+**Trigger**: every 3 completed agent cycles (per `config.toml`'s `meta_review_every_n_cycles`), or human invocation. The normal loop **pauses** until the meta-review is fully enacted — analysis → plan → human approval → enactment — and only then resumes. The cadence is tunable; tighter (3) during shake-down so friction integrates fast, looser later as the loop matures.
 
 **Driver**: a distinct **Meta-Critic** role (not the per-cycle Critic) with its own system prompt, isolated context, and incremental project history built from prior meta-review records. The Meta-Critic carries **medium-cascade authority**:
 
@@ -331,7 +331,7 @@ Recurring patterns across meta-review records are first-class signal — a probl
 - **Output format: mdBook from day one.** Plain Markdown with KaTeX math under `book/src/`. Layout mirrors bunsen's book.
 - **Slice granularity: one slice per algorithm.** Small / medium slices are a single Markdown file with consistent `## L0` / `## L1` / `## L2` / `## L3` / `## L4` section headings. **Genuinely large slices** (e.g., GMRES with Hessenberg, Givens rotations, restart logic; or block-multigrid) are organized as a **subdirectory `book/src/spec/slices/<slice>/` from the start**, with per-layer files or per-aspect files (best judgment by the Synthesizer). Splitting after-the-fact is more disruptive than planning multi-file from the start; reach for the subdirectory shape when the single-file form would exceed ~400 lines or the layer sections would each be book-chapter-sized.
 - **Citation format: plain text** `relative/path/file.ext:start-end` (relative to `reference/`), e.g., `palace/linalg/cg.cpp:42-67`. Editors with line-aware navigation resolve these against local clones. No markdown links — the grep/IDE workflow is the navigation.
-- **Meta-cycle: every 10 completed agent cycles or manual.** Procedure in `book/src/meta-reviews/index.md`.
+- **Meta-cycle: every 3 completed agent cycles or manual** (per `config.toml`; tunable). Procedure in `book/src/meta-reviews/index.md`.
 - **`concepts/` library** (under `book/src/concepts/`) is extracted on demand: when a slice reaches for a primitive or abstract concept that "feels canonical," add it. Cross-link from slices. This is both DRY and the unification artifact of the methodology.
 - **Every piece of produced spec content** (slice file, concept file, design artifact, meta-review record) may optionally include two agent-facing sections:
   - **`## Context`** — at the top of the file, after the title: a short orientation paragraph for agents reading this section cold. What this is, why it exists, what you need to know to read the rest. Not the spec content itself.

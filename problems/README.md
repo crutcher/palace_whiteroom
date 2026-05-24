@@ -61,6 +61,6 @@ What the agent suspects should happen. Often empty — the point is to raise the
 
 ## Lifecycle
 
-Problems are reviewed **out-of-cycle** by the human, not by the running agent loop. The loop does not consume `problems/` entries. They accumulate until the next **meta-review** pass picks them up — see `book/src/meta-reviews/index.md` for the meta-review procedure and trigger (every 10 completed agent cycles, or manual). Resolutions land as `BOOTSTRAP.md` updates, prompt revisions, or methodology-doc edits. Nothing in the per-cycle git history acts on them automatically.
+Problems are reviewed **out-of-cycle** by the human, not by the running agent loop. The loop does not consume `problems/` entries. They accumulate until the next **meta-review** pass picks them up — see `book/src/meta-reviews/index.md` for the meta-review procedure and trigger (every 3 completed agent cycles per `config.toml`, or manual). Resolutions land as `BOOTSTRAP.md` updates, prompt revisions, or methodology-doc edits. Nothing in the per-cycle git history acts on them automatically.
 
 When a problem is resolved, mark it by appending `resolved: ${timestamp}` and `resolution:` lines to the frontmatter and committing the update. **Do not delete resolved problems** — they are part of the research record.

@@ -1,0 +1,71 @@
+name: Deploy mdBook to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel in-flight runs for the same ref; the latest push wins.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+env:
+  MDBOOK_VERSION: 0.4.40
+  MDBOOK_KATEX_VERSION: 0.9.0
+  MDBOOK_MERMAID_VERSION: 0.14.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # Cache ~/.cargo so preprocessor installs don't recompile every run.
+      # Key on the pinned versions so a version bump invalidates cleanly.
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+          key: cargo-mdbook-${{ env.MDBOOK_VERSION }}-katex-${{ env.MDBOOK_KATEX_VERSION }}-mermaid-${{ env.MDBOOK_MERMAID_VERSION }}
+
+      - name: Install mdbook and preprocessors
+        run: |
+          cargo install --locked --version ${MDBOOK_VERSION}        mdbook
+          cargo install --locked --version ${MDBOOK_KATEX_VERSION}  mdbook-katex
+          cargo install --locked --version ${MDBOOK_MERMAID_VERSION} mdbook-mermaid
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build
+        run: mdbook build
+        # If your book lives in a subdir: `mdbook build path/to/book`
+        # and adjust the upload path below to match.
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./book
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+

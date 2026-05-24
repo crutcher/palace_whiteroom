@@ -69,7 +69,7 @@ meta_critic  = "claude-opus-4-7"
 explorer_max_input_tokens = 60000
 cycle_token_budget        = 200000
 max_parallel_slices       = 1               # raise after Phase 6
-meta_review_every_n_cycles = 10
+meta_review_every_n_cycles = 3      # tighter cadence during shake-down
 ```
 
 **DONE when:** the agent-specific files / directories above exist, `config.toml` is populated, `git log` shows the bootstrap commit. The mdBook still builds (`cargo make book`) — Phase 0 must not break the existing artifact.
@@ -642,7 +642,7 @@ write a one-sentence `lesson` to be appended to `lessons.md`.
 
 ```
 You are the Meta-Critic. You operate ONLY when the meta-review trigger fires
-(every 10 completed cycles, or on manual invocation). The normal loop is paused
+(every 3 completed cycles per `config.toml`, or on manual invocation). The normal loop is paused
 while you are in session — analysis, plan, human approval, and enactment all
 complete before any new exploration runs.
 
@@ -807,7 +807,7 @@ Then run `--continuous` for ten cycles (extending GMRES through restart variants
 - The episodic log records non-trivial `friction_observed` and `structural_change` on at least one push (a ten-cycle run with all friction fields empty signals the loop isn't exercising its full push vocabulary).
 - At least one BACK push is scheduled and executed in response to a push-back signal — i.e., the loop demonstrates productive friction resolution, not just forward motion.
 - At least one SIDEWAYS push surfaces a unification opportunity (e.g., extracting `arnoldi_step` to `concepts/` because GMRES and a future eigensolver share it).
-- The 10-cycle threshold fires a meta-review automatically.
+- The meta-review trigger (every 3 cycles per `config.toml`) fires automatically during the run — expect 3 meta-reviews across the 10-cycle window.
 
 **DONE when:** GMRES is pushed to L4 with all rotation chains explicit and verified; hand-verification passes for the first three rotation claims (against the source, not against a hand-drafted reference); the ten continuous cycles produce at least one BACK push, at least one concept-extracting SIDEWAYS push, and a meta-review that fires automatically and completes. "Completes cleanly" is **not** the bar — a run that records no friction events is a failure to exercise the loop, not a success. (See CLAUDE.md *Process* and the verification rubric below for why count-based "done" misses the point.)
 

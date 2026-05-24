@@ -6,7 +6,7 @@ Out-of-cycle friction-integration passes. The normal agent loop produces work; t
 
 Meta-review runs when **any** of the following is true:
 
-- **10 completed agent cycles** since the last meta-review.
+- **3 completed agent cycles** since the last meta-review (per `config.toml`'s `meta_review_every_n_cycles`; tunable — tight cadence during shake-down, looser later).
 - The human invokes one manually.
 
 When a meta-review is triggered, the normal loop **pauses** until the meta-review is fully enacted. No new exploration cycles run during analysis → plan → human approval → enactment. The pause is load-bearing: it prevents the agents from drifting further while the deliberation is in progress.

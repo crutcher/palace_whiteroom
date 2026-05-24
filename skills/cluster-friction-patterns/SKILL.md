@@ -10,7 +10,7 @@ The Meta-Critic's analytical move. The per-cycle agents produce friction signals
 
 ## When to invoke
 
-- **Meta-Critic**, at the start of every meta-review session (every 10 cycles or manual).
+- **Meta-Critic**, at the start of every meta-review session (every 3 cycles per `config.toml`, or manual).
 
 ## Inputs
 
