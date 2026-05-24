@@ -4,13 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-This repo is **pre-bootstrap**: it currently contains only `BOOTSTRAP.md` and a freshly-initialized git tree (no commits, no code). `BOOTSTRAP.md` is the build specification — it is the source of truth for what to construct, in what order, and why. Read it before doing anything substantive here.
+Pre-Phase-0 scaffolding is in place: this `CLAUDE.md`, `BOOTSTRAP.md`, the mdBook under `book/` (methodology overview, L4 calculus draft, meta-review procedure, one hand-drafted CG slice), the `problems/` channel, and the `reference/` clones. The agent-loop infrastructure (`questions.md`, `lessons.md`, `episodic.jsonl`, `config.toml`, `schemas/`, `prompts/`, `mcp/codemap/`, `orchestrator/`) does **not** yet exist — that is what Phases 0–5 of `BOOTSTRAP.md` build.
+
+`BOOTSTRAP.md` is the build specification — the source of truth for what to construct, in what order, and why. Read it before doing anything substantive here.
 
 When you implement a phase, follow the DONE criteria in `BOOTSTRAP.md` literally. Each phase has explicit completion checks; do not skip ahead and do not add scope not described in the document (no UIs, no databases, no embedding stores — those are Phase 9+ concerns).
 
 ## What this system is
 
-A multi-agent pipeline that dissects an external target simulator's source code into an **incremental impedance-matching stack** of algorithmic representations (see *Extraction goal* below), where every claim cites `file:line` in the target and every cross-layer rotation carries an explicit equivalence justification. The agents grow a typed knowledge graph stored as plain files committed to git per loop iteration — git is the audit trail. (The single-file `spec.md` described in `BOOTSTRAP.md` is the original design; the layered structure replaces it, and BOOTSTRAP.md will need a corresponding revision when we kick off.)
+A multi-agent pipeline that dissects an external target simulator's source code into an **incremental impedance-matching stack** of algorithmic representations (see *Extraction goal* below), where every claim cites `file:line` in the target and every cross-layer rotation carries an explicit equivalence justification. The agents grow a typed knowledge graph stored as plain files committed to git per loop iteration — git is the audit trail.
 
 Roles, each invoked as a **separate API call with an isolated context** and its own system prompt from `prompts/<role>.md`. Per-cycle roles run continuously during the normal loop; the meta-cycle role runs only when the meta-review is triggered (see *Meta-review* below).
 
@@ -28,7 +30,7 @@ Meta-cycle:
 ## Layout that will exist after Phase 0
 
 ```
-BOOTSTRAP.md         # original phased build spec for the agent system
+BOOTSTRAP.md         # phased build spec for the agent system
 CLAUDE.md            # this file — operational guidance for agents
 Makefile.toml        # cargo-make tasks: `cargo make book` / `book-serve` / `book-clean`
 book/                # the spec, rendered as an mdBook
@@ -51,8 +53,7 @@ book/                # the spec, rendered as an mdBook
 problems/            # out-of-band concern channel — see problems/README.md
 reference/           # local clones of palace, bunsen, burn, tensorflow-java (gitignored)
 
-# Files that BOOTSTRAP.md describes but that may move or change shape
-# during BOOTSTRAP revision (TBD on kickoff):
+# Files Phase 0 of BOOTSTRAP.md creates (agent-loop infrastructure):
 questions.md         # open/closed question ledger — surfaces unknowns
 lessons.md           # cross-run lessons appended by the Critic
 episodic.jsonl       # append-only per-cycle log (becomes the research record)
@@ -136,12 +137,12 @@ The process is **not** waterfall through the stack. Do not write all of L1, then
 2. **Push-back when friction surfaces.** While working at layer N+1, if a different framing of layer N would make N+1 dramatically easier, unify multiple algorithms at N+1, or eliminate an awkward corner — restructure layer N. The change ripples down to L0 (new questions / re-explorations) and back up to N+1 as a now-easier rotation.
 3. **Move sideways.** When one slice is pushed high enough that progress is blocked on infrastructure rather than its own substance, switch to a different slice. Use the sideways move to surface unification opportunities ("L2 for X and L2 for Y look similar — could they share a primitive?").
 
-Consequences for the agent loop, all of which require `BOOTSTRAP.md` revisions when we kick off:
+Implications for the agent loop, encoded in `BOOTSTRAP.md`:
 
-- **The Planner's job is not "pick the next open question from a ledger."** It is **pick the next push** — forward at some slice, back from a friction point, or sideways for unification. The current planner prompt models the wrong loop.
-- **"Done" is not "every claim has a citation and the spec is complete."** It is "the friction has been worked out — the lower layers are unified enough that adding a new algorithm at L1 propagates upward easily, and L4 has at least one worked sample showing the rotation chain end-to-end." The Phase 6 / Phase 8 rubrics need rewriting.
-- **The episodic log becomes a research record.** Every push (forward, back, sideways) is logged with the friction observed and the structural change made. The log is part of the artifact, not just operational telemetry.
-- **The question ledger still exists** but it surfaces what's *unknown*, not what's *to-do*. The to-do is whatever push the current friction suggests.
+- **The Planner picks the next push**, not the next open question from a ledger — forward at some slice, back from a friction point, or sideways for unification.
+- **"Done" is friction-resolved**, not citation-complete: the lower layers are unified enough that adding a new algorithm at L1 propagates upward easily, and L4 has at least one worked sample showing the rotation chain end-to-end. Count-based criteria (citations present, N slices to L4) are necessary scaffolding, not sufficient closure.
+- **The episodic log is a research record**, not just telemetry. Every push (forward, back, sideways) records the friction observed and the structural change made. The log is part of the artifact.
+- **The question ledger surfaces unknowns**, not to-dos. The to-do is whatever push the current friction suggests.
 
 ### Role contracts
 
@@ -151,9 +152,9 @@ Roles operate within the push-forward / push-back process above. Per slice the l
 - **Synthesizer** produces just-enough L1 to enable L2 for the current slice, just-enough L2 to enable L3, and so on (depth-first per slice, not breadth-first per layer). It proposes the L1→L2 rotation (fusion-unfolded algebraic decomposition) and L2→L3 (field-transition) **when those become reachable for the slice in hand** — explicitly leaving "no global lift found, obstruction = X" as a valid L3 outcome. It also **flags push-back opportunities**: when the L1 form forces a labored L2 rotation, or L2 forces an awkward L3, propose a structural change to the lower layer rather than absorbing the awkwardness silently.
 - **Critic** checks each per-edge rotation the Synthesizer has proposed: does the source support L1; does L1 algebraically equal L2 after unfolding the noted optimization tricks; does L2 equal L3 as a field-transition. Insufficient justification is `missing_case` or `unclear`; an outright rotation mismatch is `control_flow_mismatch` or `contradicts_existing_spec`. **The Critic also surfaces friction-as-a-signal:** a rotation that's technically correct but obviously forced — special cases, exception branches, special-pleading conditions — is a push-back candidate; flag it as `unclear` with an explicit "would lower-layer change X eliminate this friction?" suggestion.
 
-The current `claim.kind` enum in `BOOTSTRAP.md` (`fact`, `invariant`, `update_rule`, `contract`, `pseudocode`) and the Phase 4 role prompts don't yet encode this layering. They will need extension when we kick off — adding a `rotation` kind with sub-fields naming the edge, the justification, and the kind of evidence, plus corresponding Critic checks. **Do not modify those files yet**; the user has explicitly held off the kickoff.
+The schemas and prompts encoding this discipline live in `BOOTSTRAP.md` Phases 3–4: `schemas/rotation_claim.json` with `justification_kind ∈ {algebraic, structural, reduction_chain, empirical_match, obstruction}`, the Explorer prompt's mutation-pattern enum, the Synthesizer's transparent-vs-load-bearing distinction, and the Critic's per-edge rotation checks.
 
-Patterns to expect, and how they should appear in `spec.md`:
+Patterns to expect, and how they should appear in the spec:
 
 | Palace (C++/HPC, mutating)                | L1 form (mutation-lifted, pure-functional)           |
 |-------------------------------------------|------------------------------------------------------|
@@ -187,13 +188,11 @@ Concrete implications for Explorers:
 - Distributed mesh partitioning, parallel I/O, and rank-aware assembly are out of scope. Single-rank assembly and the solver pipeline that consumes assembled operators are in scope.
 - The pure-functional / COW lifting (above) still fully applies — burn's GPU backends are why we need it.
 
-**Solvers in scope: all five.** Electrostatic, magnetostatic, eigenmode, driven (frequency-domain), transient (time-domain). They share substantial infrastructure (FE spaces, operator assembly, linear/eigenvalue solvers) — Phase 2's `questions.md` seed should include a top-level question per solver in addition to the generic Q1–Q3, so the Planner can interleave shared-infrastructure questions with solver-specific ones rather than getting stuck in one solver's silo.
+**Solvers in scope: all five.** Electrostatic, magnetostatic, eigenmode, driven (frequency-domain), transient (time-domain). They share substantial infrastructure (FE spaces, operator assembly, linear/eigenvalue solvers) — Phase 2's `questions.md` seed includes a top-level question per solver in addition to the generic shared-infrastructure questions, so the Planner can interleave the two rather than getting stuck in one solver's silo.
 
-Open scope question still to resolve before Phase 0:
+**Mesh / FE-space construction is in scope** (resolved 2026-05-23). The spec dissects MFEM-equivalent FE assembly — quadrature, basis tables, geometric-factor computation, sparse-assembly patterns — alongside the five solver pipelines. Drawing the boundary at the assembled-operator interface would have been narrower but the user took the more ambitious option deliberately: full-pipeline spec.
 
-- **Is mesh / FE-space construction in scope, or only the assembled-operator-onwards pipeline?** Porting MFEM-equivalent FE assembly into burn is a much larger undertaking than porting the solvers that consume assembled operators. With all five solvers in scope, this question matters more: the solvers diverge in algorithms but converge on the same assembled-operator interface, so drawing the boundary there bounds the work substantially.
-
-The Phase 4 prompts in `BOOTSTRAP.md` (`prompts/explorer.md`, `prompts/synthesizer.md`, `prompts/critic.md`) will need to be extended with the above lifting discipline when we get there — they don't currently mention mutation/dataflow capture.
+Practical consequence: Phase 2's `questions.md` seed includes mesh/FE-space top-level questions in addition to the per-solver questions. When choosing a Phase 6 smoke-test slice, prefer assembled-operator algorithms first (GMRES, per `BOOTSTRAP.md`) — mesh/FE assembly is a substantial separate surface that benefits from being tackled after the solver pipeline has been validated.
 
 ## Target system
 
@@ -224,7 +223,7 @@ The methodology being applied to Palace was developed in the bunsen project. Its
 - `conway/{life2d,life3d}.rs` — Conway's Game of Life. The textbook iteration-to-tensor-field lift: per-cell scan with neighbor-counting becomes `unfold` + `sum_dims` + elementwise rule. The floor of the methodology's range — minimal but complete.
 - `lbm/d2q9/` — Lattice-Boltzmann fluid simulation (D2Q9), decomposed into separate modules for `streaming`, `collision`, `reflection`, `relaxation`, `space`, `thermal`, and the `simulation` orchestrator. Mid-range example with multi-operator composition, boundary handling, and conservation-checking tests.
 
-Conventions visible in those examples that should propagate into Palace's `spec.md`:
+Conventions visible in those examples that should propagate into Palace's spec:
 
 - **Pure tensor-in / tensor-out functions are the algebra.** `pub fn outflow_clipping_stream<B>(dist: Tensor<B,4>) -> Tensor<B,4>` is the canonical L1 form. State-bearing structs (`ConwayLife2DState`) are *thin* wrappers whose `step()` is `self.state = pure_step(self.state.clone())`. The mutation lives in the wrapper; the algebra is pure.
 - **Decompose into named algebraic pieces.** LBM does *not* fuse streaming + collision + boundary handling into one `step()`. They are separate functions in separate files. Palace's spec should decompose each solver the same way — each piece independently citeable and independently testable.
@@ -240,7 +239,7 @@ Conway is the floor; LBM is roughly mid-range. **Palace's solvers will sit above
 
 Violating any of these defeats the architecture — do not "improve" them away:
 
-- **Citations are mandatory.** Every claim in `spec.md` must carry `(file, start_line, end_line)`. No citation, no claim. The Explorer prompt enforces this; the Critic verifies it.
+- **Citations are mandatory.** Every claim in the spec must carry `(file, start_line, end_line)`. No citation, no claim. The Explorer prompt enforces this; the Critic verifies it.
 - **`read_range` is the only source-returning MCP tool.** All other tools (`list_files`, `get_file_subtree`, `get_symbol_def`, `get_call_sites`, `list_dependencies`, `search_text`) return structure or locations, never source text. This forces Explorers to localize before reading.
 - **Roles do not share context.** Each role gets its own API call, its own system prompt, no conversation history from other roles. The Critic in particular must not see the Explorer's chain-of-thought — reasoning is persuasive in the wrong direction.
 - **Synthesizer outputs diffs, not rewrites.** Spec growth must be monotonic and visible in `git log`.

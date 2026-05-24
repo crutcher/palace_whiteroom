@@ -116,9 +116,28 @@ The spec itself **already exists** as `book/src/spec/` (slice index + per-slice 
 
 Questions surface **unknowns** about the target source. They are not the to-do list; that comes from push direction (see *Planner* prompt). The Planner reads this ledger to ground its push choices and to surface things that need source-level exploration before the next push is possible.
 
+The seed below names one question per solver plus shared-infrastructure and mesh/FE-space anchors, so the Planner can interleave them rather than getting stuck in one solver's silo. Path hints are starting points — Explorers verify and narrow before reading.
+
 ## Open
 
-(empty — the first slice's Explorer will populate this on its first Q1-equivalent exploration)
+### Shared infrastructure (cross-solver)
+
+- **Q-shared-1.** What is the top-level entry point in Palace, and how does it dispatch between solvers? (Starting point: `palace/main.cpp`; the dispatched solvers live under `palace/drivers/`, base class likely `palace/drivers/basesolver.cpp`.)
+- **Q-shared-2.** How are FE spaces constructed and registered? What is the assembled-operator interface that all five solvers consume? (Starting point: `palace/fem/`; MFEM `BilinearForm` / `MixedBilinearForm` are the upstream surface.)
+- **Q-shared-3.** Which Krylov / preconditioner / eigensolver machinery is shared across solvers, and which is per-solver? (Starting point: `palace/linalg/`.)
+
+### Mesh / FE-space construction (in scope per CLAUDE.md *Scope*)
+
+- **Q-mesh-1.** How is the mesh loaded, partitioned (locally — MPI is out of scope), and refined? What basis types are supported (H1, Nédélec, Raviart-Thomas, L2) and how do they compose into mixed forms?
+- **Q-mesh-2.** What does the FE assembly pipeline look like end-to-end — from `BilinearForm` declaration through quadrature-rule selection and geometric-factor computation to the assembled (sparse or partial-assembly) operator? Where are libCEED's exascale kernels invoked vs. MFEM's local-assembly paths?
+
+### Per-solver
+
+- **Q-electrostatic.** What is the electrostatic solver's top-level algorithm and what variational form drives it? (`palace/drivers/electrostaticsolver.cpp`.)
+- **Q-magnetostatic.** Same for magnetostatic. (`palace/drivers/magnetostaticsolver.cpp`.)
+- **Q-eigenmode.** Which eigensolver is used (LOBPCG, Arnoldi, …), what shift / spectral transformation, what preconditioning? (`palace/drivers/eigensolver.cpp`; also `palace/models/modeeigensolver.cpp` for the mode-decomposition step. Note: `palace/drivers/boundarymodesolver.cpp` is a related solver; clarify whether it's a sub-component of the eigenmode pipeline or independent.)
+- **Q-driven.** What does the per-frequency sweep look like, and how is the linear solve structured? (`palace/drivers/drivensolver.cpp`.)
+- **Q-transient.** What time-stepping scheme (Newmark, Runge-Kutta, …), what update structure, what stability / consistency conditions? (`palace/drivers/transientsolver.cpp`.)
 
 ## Closed
 
@@ -127,23 +146,26 @@ Questions surface **unknowns** about the target source. They are not the to-do l
 
 `lessons.md`: empty file with header `# Lessons` and a one-line description: "Cross-cycle observations the Critic finds worth carrying forward. Updated on disagreement *and* on validated non-obvious choices."
 
-`episodic.jsonl`: empty file. One JSON object per line per cycle, recording at minimum:
+`episodic.jsonl`: empty file. **The log is a research record, not just operational telemetry.** Every push records the friction observed and the structural change made; the accumulated log is part of the project artifact (the Meta-Critic reads it across cycles; the human reads it as the dissection's narrative). One JSON object per line per cycle, recording at minimum:
 
 ```json
 {
   "cycle_id": "...",
   "push_kind": "forward | back | sideways",
   "slice": "<slice-name>",
-  "edge": "L1→L2 | L2→L3 | ...",
+  "edge": "L0→L1 | L1→L2 | L2→L3 | L3→L4 | (n/a for back/sideways)",
   "verdict": "pass | revise | reject",
+  "friction_observed": "Short description of what made this push hard (empty for clean forward pushes). Examples: 'L1 form forced verbose L2 unfold for fused FE-operator kernel'; 'L2→L3 obstruction — Gauss-Seidel sequentiality blocks global field lift'; 'concept name collision between gmres and cg synthesizers'.",
+  "structural_change": "What changed in the spec / concepts / lower-layer forms as a result (empty for forward pushes with no restructuring). Examples: 'pushed back L1 to record alias_with_input on workspace_v'; 'extracted axpy to concepts/axpy.md'; 'L4 calculus gained §3.8 demand-driven pruning rule'.",
   "push_back_signals": ["..."],
+  "concepts_touched": ["<concept-slug>", "..."],
   "tokens_in": 0,
   "tokens_out": 0,
   "wallclock_ms": 0
 }
 ```
 
-**Push-back signals are first-class** in the episodic log — the Meta-Critic reads these to detect friction patterns.
+**`friction_observed` and `push_back_signals` are first-class** — the Meta-Critic reads them together to detect cross-cycle friction patterns. **`structural_change` and `concepts_touched`** make the unification trail readable without diffing the whole `book/src/`.
 
 **DONE when:** all three files exist with the structure above, committed; the meta-review procedure (`book/src/meta-reviews/index.md`) is reachable from CLAUDE.md and BOOTSTRAP.md links.
 
@@ -698,10 +720,12 @@ Then run `--continuous` for ten cycles (extending GMRES through restart variants
 
 - Per-edge rotation claims and source citations accumulate monotonically; nothing is silently rewritten.
 - Token spend per cycle is within `cycle_token_budget`.
-- The episodic log shows non-trivial push-back signals being recorded.
+- The episodic log records non-trivial `friction_observed` and `structural_change` on at least one push (a ten-cycle run with all friction fields empty signals the loop isn't exercising its full push vocabulary).
+- At least one BACK push is scheduled and executed in response to a push-back signal — i.e., the loop demonstrates productive friction resolution, not just forward motion.
+- At least one SIDEWAYS push surfaces a unification opportunity (e.g., extracting `arnoldi_step` to `concepts/` because GMRES and a future eigensolver share it).
 - The 10-cycle threshold fires a meta-review automatically.
 
-**DONE when:** GMRES hand-verification passes for the first three claims (against the source, not against a hand-drafted reference), ten continuous cycles complete cleanly, and one meta-review fires and completes (even if it has little to act on — the trigger path is what's being tested).
+**DONE when:** GMRES is pushed to L4 with all rotation chains explicit and verified; hand-verification passes for the first three rotation claims (against the source, not against a hand-drafted reference); the ten continuous cycles produce at least one BACK push, at least one concept-extracting SIDEWAYS push, and a meta-review that fires automatically and completes. "Completes cleanly" is **not** the bar — a run that records no friction events is a failure to exercise the loop, not a success. (See CLAUDE.md *Process* and the verification rubric below for why count-based "done" misses the point.)
 
 **Note.** The hand-drafted CG slice (`book/src/spec/slices/cg.md`) remains as a calibration target — the methodology should not produce an *incompatible* version of CG when re-run, even if it doesn't exactly reproduce the hand-drafted prose. A follow-on validation step (after Phase 6 DONE) is to re-push CG through the loop and verify the agent-produced version overlaps the hand-drafted one by ≥80% on cited source ranges and uses the same `concepts/` primitives.
 
@@ -730,7 +754,13 @@ Defer until Phase 6 passes cleanly. Then:
 3. Critic remains sequential, processing per-cycle outputs in arrival order. On conflicting concept-promotion proposals from parallel synthesizers, the second-arriving proposal becomes a push-back signal instead of being applied directly — let the next cycle re-explore.
 4. Raise `max_parallel_slices` in `config.toml` incrementally; watch for token-budget overruns and concept-name collisions.
 
-**DONE when:** running with `max_parallel_slices = 4` produces the same eventual layered spec (within reproducibility tolerance — see rubric) as the sequential run for the first five Palace solvers.
+**DONE when:** running with `max_parallel_slices = 4` produces the same eventual layered spec (within reproducibility tolerance — see rubric) as the sequential run for the first five Palace solvers, AND:
+
+- Concept name collisions between parallel synthesizers are detected and resolved into unified concept entries — not duplicated under different names.
+- Push-back signals raised by one slice that affect a layer shared with another slice propagate as scheduled BACK pushes in the next cycle: no silent overwriting, no lost friction.
+- Token spend stays within `cycle_token_budget * max_parallel_slices` under sustained load.
+
+A parallel run that reproduces the sequential spec but bypasses the concepts library (parallel synthesizers proposing duplicates) has not demonstrated parallel scale — it has demonstrated that two synthesizers can run without crashing, which is necessary but not sufficient.
 
 ---
 
@@ -750,15 +780,26 @@ Defer until Phase 6 passes cleanly. Then:
 
 ## Verification rubric (definition of done for the whole system)
 
-The system is "working" when:
+The system is "done" not when the spec is exhaustively complete, but when **friction has been worked out**: the lower layers are stable enough that adding a new algorithm at L1 propagates upward without forcing structural restructuring, and the rotation chain has been exercised end-to-end. CLAUDE.md *Process* is the framing source-of-truth; this rubric translates it into checks. Count-based criteria are necessary scaffolding; friction-resolution criteria are sufficient closure.
+
+### Scaffolding criteria (necessary — the mechanics work)
 
 - **Every rotation claim has at least one citation.** Random spot-check of ten claims yields ≥9 where the cited source supports the claim (manual review by a domain-competent human).
 - **At least three Palace slices** (CG + two others — GMRES and an eigenmode or time-stepping slice) have been pushed end-to-end to L4 against the v0.2-or-later L4 calculus.
 - **Negative L3 results are present and properly justified** for at least the Krylov methods, with the obstruction explanation reading as a genuine algorithmic constraint, not a missing rotation.
 - **The concepts/ library** has at least the primitives required by the worked slices (`axpy`, `dot`, `matvec`, `apply_linop`, `norml2` at minimum), each with a signature, a definition, and use-by links to slices.
-- **One meta-review has completed** with a refinement plan that the human approved and the loop enacted; the plan made non-trivial changes (not just typo fixes).
-- **The episodic log shows non-trivial branching** — push-back signals recorded, BACK pushes scheduled and executed, sideways comparisons that yielded concept-promotions or unification findings.
 - **A second independent run from the same seed slice** produces a slice file that overlaps the first by ≥80% on cited `file:line` ranges (reproducibility check; lower than this suggests the prompts admit too much path-dependence).
+
+### Closure criteria (sufficient — friction has been worked out)
+
+- **A new slice at L1 propagates upward without forcing lower-layer restructuring.** Concretely: when a fourth slice is added (after the three required above), its L1→L2 rotation reuses ≥70% of existing concept entries; the L2→L3 and L3→L4 rotations encounter no obstructions that require revising lower layers of the already-completed slices. If they do, the system is not yet done — the friction needs another round of integration.
+- **Push-back signals resolve within bounded cycles.** Over the meta-review window, every push-back signal raised is followed within ≤3 cycles by a BACK push that addresses it (or an explicit decision to absorb it, logged as a `lesson`). Signals accumulating without resolution mean the loop is generating friction faster than it integrates — an escalation trigger.
+- **The L4 worked sample is end-to-end.** At least one slice carries an explicit rotation chain L0→L1→L2→L3→L4, with each rotation's justification readable and the Critic having verified each edge separately.
+- **One meta-review has completed** with a refinement plan that the human approved and the loop enacted; the plan made non-trivial changes (not just typo fixes).
+- **The episodic log shows non-trivial branching** — `friction_observed` populated on non-clean pushes, BACK pushes scheduled and executed, sideways comparisons that yielded concept-promotions or unification findings.
+- **The concepts/ library is reused, not bypassed.** New slices reach for existing concept entries before proposing new ones; meta-review records show concept-name unifications rather than unchecked proliferation.
+
+A system that satisfies the scaffolding criteria but where push-back signals accumulate without resolution, or where the concepts library is bypassed by parallel synthesizers proposing duplicates, has built the mechanics without exercising the loop. The closure criteria are what make the dissection actually work.
 
 ---
 
