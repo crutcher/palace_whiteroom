@@ -34,6 +34,11 @@ graph BT
   %% Empty — populate as concepts are extracted.
   placeholder[(no concepts yet)]
   orthogonalize_column --> variant-absorption
+  gmres --> constructed-operators
+  gmres --> variant-absorption
+  gmres --> orthogonalization
+  gmres --> incremental-least-squares
+  incremental-least-squares --> orthogonalization
 ```
 
 ## L2 — algebraic decompositions
