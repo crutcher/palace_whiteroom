@@ -320,6 +320,47 @@ async def run_normal_cycle(
     push = call_planner(state=state, cfg=cfg, client=client, dry_run=dry_run)
     print(f"[cycle {state.cycle_id}] planner: {push}")
 
+    # Precondition: a SIDEWAYS push must name ≥2 concrete slices that exist
+    # on disk. Cycle 22 fired SIDEWAYS with slice='unknown' because the
+    # Planner output's `slices=a,b` field was ignored by the parser; the
+    # parser now populates `comparison_slices`, and here we validate.
+    # Added meta-review #8.
+    if push["kind"] == "sideways":
+        cs = push.get("comparison_slices") or []
+        if len(cs) < 2:
+            print(
+                f"[cycle {state.cycle_id}] SIDEWAYS precondition failed: "
+                f"comparison_slices={cs!r} (need ≥2). Rejecting and recording as escalate."
+            )
+            # Convert to an escalate so the cycle records but doesn't run a
+            # degenerate Synthesizer call.
+            push = {
+                "kind": "escalate",
+                "reason": (
+                    f"SIDEWAYS dispatched without ≥2 named slices "
+                    f"(got comparison_slices={cs!r}). Planner-prompt defect."
+                ),
+            }
+        else:
+            # Sanity-check each slice exists on disk.
+            missing = [
+                s for s in cs
+                if not (state.repo_root / "book/src/spec/slices" / f"{s}.md").exists()
+                and not (state.repo_root / "book/src/spec/slices" / s / "index.md").exists()
+            ]
+            if missing:
+                print(
+                    f"[cycle {state.cycle_id}] SIDEWAYS precondition failed: "
+                    f"slices {missing!r} not on disk. Rejecting."
+                )
+                push = {
+                    "kind": "escalate",
+                    "reason": (
+                        f"SIDEWAYS dispatched with non-existent slices: "
+                        f"{missing!r}. Planner-prompt defect."
+                    ),
+                }
+
     if push["kind"] == "escalate":
         entry = format_cycle_entry(
             cycle_id=state.cycle_id,

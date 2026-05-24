@@ -197,6 +197,15 @@ through meta-review.
 - Adding a new `## Heading` section to ANY OTHER existing file (e.g., a
   scaffolding decision doc, or a non-concept book page): use
   `section_appends`.
+- **Concept existence check** (added meta-review #8). Before emitting a
+  `concept_writes` entry with `mode="create"`, verify the concept page
+  does NOT already exist in `book/src/concepts/`. The current concept
+  index is provided in your input — read it. If the concept already
+  exists (e.g., `nrm2`, `dot` from prior cycles), use `mode="append-section"`
+  with a section heading that names the angle being added (e.g.,
+  "## L2 use in GMRES"). The orchestrator silently skips create-on-existing
+  (it's a no-op, not a failure) — the writes are lost without a clear
+  signal back. Verify before emitting.
 
 **Verify path existence before choosing a channel.** The `current_slice
 content` you receive in the user message indicates whether the slice
@@ -223,6 +232,41 @@ The orchestrator's integrator is initially serial (one plan per cycle —
 same throughput as the prior code path). Phase 8 parallel cycles
 process plans serially through the integrator; that's where the
 "plans, not git merges" architecture earns its keep.
+
+### Mutation pseudocode discipline (added meta-review #8)
+
+When emitting L2+ pseudocode that includes in-place mutating primitives,
+make the mutation pattern legible from the pseudocode alone — readers
+reconstructing the dataflow from L2 should not need to consult the
+primitive's signature in `concepts/` to tell whether an operand is being
+aliased.
+
+**Acceptable forms** (mutation pattern is unambiguous):
+
+- `axpy(α, x, y)` — the y-as-accumulator is implicit in `axpy`'s signature
+  (`y ← α·x + y`); no annotation needed.
+- `scal(α, x)` — x-in-place is implicit in `scal`'s signature.
+- `t ← copy(x); axpy(α, y, t)` — explicit copy before mutation; t is a
+  fresh buffer that gets accumulated.
+- `t = apply_linop(A, x)` — pure functional form; t is a fresh result.
+
+**Unacceptable forms** (silently aliasing assignment):
+
+- `t = x` followed by mutation of `t` — looks pure, is aliased mutation.
+  Use `t ← copy(x)` to mark the copy explicitly, or restructure to use
+  the source directly.
+- `r ← b; axpy(-1, Ax, r)` — `b` MIGHT be aliased to `r` depending on
+  upstream caller; mark the copy: `r ← copy(b); axpy(-1, Ax, r)`.
+
+Originating example: cycle 24's GMRES L2 used `r0 ← b` in
+`initial_residual` followed by `r0` mutation; a reader could not tell
+from the L2 alone whether `b` was being preserved or clobbered. The rule
+exists to make that question answerable at L2 without consulting L0.
+
+This is also a load-bearing distinction for L3 (where the global form
+may or may not need to materialize the copy) and L4 (where the linear
+type system / monad structure makes the copy / sharing explicit). Getting
+the L2 form unambiguous up-front prevents downstream re-derivation.
 
 ### Diff hygiene (for existing-file edits only)
 

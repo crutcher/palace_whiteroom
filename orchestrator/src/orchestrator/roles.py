@@ -78,6 +78,16 @@ def parse_push_line(line: str) -> dict:
     reason_match = re.search(r"reason=(.+)$", rest)
     if reason_match:
         fields["reason"] = reason_match.group(1).strip()
+    # For SIDEWAYS pushes, the `slices=a,b` field carries multiple slice names.
+    # Expose them as `comparison_slices` (list) and synthesize a `slice` of the
+    # form "a,b" for log/commit message use. (Added meta-review #8 after cycle
+    # 22 dispatched SIDEWAYS with slice='unknown' because the parser ignored
+    # the `slices=` field entirely.)
+    if kind == "sideways" and "slices" in fields:
+        comparison_slices = [s.strip() for s in fields["slices"].split(",") if s.strip()]
+        fields["comparison_slices"] = comparison_slices
+        if "slice" not in fields:
+            fields["slice"] = ",".join(comparison_slices)
     return {"kind": kind, **fields}
 
 

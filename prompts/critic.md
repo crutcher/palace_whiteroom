@@ -145,34 +145,56 @@ because the unified-diff failed. With this rule, those cycles would
 have been auto-downgraded to `revise`, prompting the next cycle to
 re-emit (and now, via `file_creates`, succeed).
 
-### Exercised-checks enumeration (added 2026-05-24 meta-review #6)
+### Exercised-checks enumeration (added meta-review #6; promoted to structured field meta-review #8)
 
-To make downgrade-dominated cycles auditable, **the Critic's content
-judgment is preserved separately from the orchestrator's downgrade**.
-The orchestrator records `verdict_original` and `downgrade_applied`
-in the episodic record alongside the final `verdict`. Two
-implications:
+**The Critic's content judgment is preserved separately from the orchestrator's
+downgrade.** The orchestrator records `verdict_original` and `downgrade_applied`
+in the episodic record alongside the final `verdict`. Two implications:
 
 1. **Always verdict based on content quality.** Even when you suspect
    the apply may fail (e.g., the diff looks malformed), verdict based
    on what the claims and content say, not on apply-time tooling
    concerns. The orchestrator handles the downgrade.
 
-2. **List exercised checks in the `description` of issues OR in the
-   `lesson` field.** When you pass a cycle, briefly note which of
-   the substantive checks (#1 citation, #2 reduction chain, #3
-   mutation pattern, #4 ownership, #5 missing case, #6 trick
-   classification, #7 test consistency, #8 rotation quality, #9
-   variant absorption, #10 prose alignment, #11 setup schema) were
-   *exercised* on the proposed content. This is the analogue of the
-   frictionless-pass sanity rule from meta-review #4, extended to
-   support post-hoc audit when the orchestrator downgrades. The
-   Meta-Critic uses these annotations to distinguish "content sound,
-   tooling failed" from "content unverified AND tooling failed".
+2. **The verdict JSON MUST include an `exercised_checks` array** (REQUIRED
+   on pass verdicts, optional on revise/reject — see
+   `schemas/critic_verdict.json`). Each entry is
+   `{check: <1-11>, outcome: "exercised" | "trivially_carried" | "not_applicable", note?: "..."}`.
 
-Keep the enumeration brief (one line). Only mark a check as
-exercised if you actually evaluated the relevant content; "not
-applicable" / "carried through trivially" are acceptable answers.
+   - **exercised** — you actually evaluated the relevant content on this
+     cycle. The `note` should be specific: which part of the diff was
+     checked, what was verified, what you found. Example: `{"check": 9,
+     "outcome": "exercised", "note": "L1 procedural absorption of pc_side
+     verified — single dispatch site at apply_BA, primitive sequence
+     identical across LEFT/RIGHT/null"}`.
+   - **trivially_carried** — the prior layer's resolution of this check
+     still holds; the current cycle didn't introduce content that would
+     change it. Example: `{"check": 1, "outcome": "trivially_carried",
+     "note": "citations are inherited from L1; no new source references at L2"}`.
+   - **not_applicable** — the check's preconditions don't apply to this
+     slice. Example: `{"check": 6, "outcome": "not_applicable", "note": "no
+     load-bearing numerical tricks in this slice"}`.
+
+   **All 11 checks should appear** in the array (pass verdicts), even
+   if most are `trivially_carried` or `not_applicable`. This is the
+   sanity-audit surface: a pass with all 11 marked `not_applicable` is
+   a red flag (under-examined pass); a pass with 7+ marked `exercised`
+   is a substantive review. The Meta-Critic uses this to distinguish
+   "content sound, tooling failed" from "content unverified AND tooling
+   failed" in downgrade-dominated cycles.
+
+The 11 checks (named):
+  1. citation_does_not_support
+  2. rotation_chain_breaks (reduction-chain mechanical-ness)
+  3. mutation_pattern_mismatch
+  4. ownership_misclassified
+  5. missing_case
+  6. load_bearing_trick_classified_as_transparent
+  7. test_consistency
+  8. rotation_quality (state hiding / coarser substitution / threaded-state compression)
+  9. variant_absorption (invariant / procedural / primitive-sequence)
+  10. prose_rotation_alignment
+  11. setup_state_schema_for_variant_absorption
 
 ALSO surface FRICTION SIGNALS: if a rotation is technically correct but obviously
 labored — special cases, exception branches, forced-fit transformations — that

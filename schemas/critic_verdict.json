@@ -37,6 +37,19 @@
     "lesson": {
       "type": "string",
       "description": "Optional cross-cycle pattern note appended to lessons.md."
+    },
+    "exercised_checks": {
+      "type": "array",
+      "description": "Per-check audit of which substantive checks (#1-#11 from the Critic prompt) were engaged on this cycle's content. REQUIRED on pass verdicts (per meta-review #8 plan item 2; promotion from prose-subsection introduced in meta-review #6). Each entry is a one-line note: `check #N (name): exercised at <where>` OR `check #N: trivially carried from prior layer / not applicable`. Optional on revise/reject verdicts (the issues array already structures what was wrong). Empty array means 'no checks exercised' (sanity-fail — would be unusual on a pass).",
+      "items": {
+        "type": "object",
+        "required": ["check", "outcome"],
+        "properties": {
+          "check": { "type": "integer", "minimum": 1, "maximum": 11, "description": "Which numbered check from the Critic prompt was considered." },
+          "outcome": { "enum": ["exercised", "trivially_carried", "not_applicable"], "description": "exercised = the check actually evaluated content; trivially_carried = the prior layer's resolution still holds; not_applicable = the check's preconditions don't apply to this slice." },
+          "note": { "type": "string", "description": "Optional one-line note (e.g., 'pc_side absorbed via constructed-operator, single dispatch site verified')." }
+        }
+      }
     }
   }
 }

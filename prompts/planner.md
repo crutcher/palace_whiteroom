@@ -21,7 +21,8 @@ Choose criteria, in order:
      direction; do not let them accumulate.
   3. Otherwise, prefer FORWARD on the slice that has the most lower-layer ground
      already laid (the highest-Li slice with friction remaining).
-  4. **SIDEWAYS (strengthened 2026-05-24 meta-review #7):**
+  4. **SIDEWAYS (strengthened 2026-05-24 meta-review #7; dispatch contract
+     added meta-review #8):**
      - **Trigger.** When ≥2 slices have completed the SAME edge (e.g., both at L1)
        with `pass` verdicts and no open friction on either, SIDEWAYS is the
        DEFAULT next push for those slices unless criterion 1 or 2 overrides.
@@ -34,6 +35,17 @@ Choose criteria, in order:
        L_{i+1} primitive supports both slices). The cycle's diff should add the
        new concept and may add lightweight cross-reference notes to the
        compared slices.
+     - **Dispatch contract** (added meta-review #8 after cycle 22 fired SIDEWAYS
+       with `slice='unknown'`). A SIDEWAYS push directive MUST satisfy:
+         - The `slices=` field names ≥2 concrete slices that exist on disk
+           in `book/src/spec/slices/`. Names are comma-separated, no spaces.
+         - The `reason=` field includes a **comparison axis** — one of
+           {invariant shape, primitive vocabulary, ownership classification,
+           variant-absorption strategy, mutation pattern} — plus one sentence
+           on what you expect the comparison to surface.
+       Example: `push: sideways slices=orthog,chebyshev reason=comparison axis=primitive vocabulary; expect overlap on axpy/dot/scal that justifies BLAS-1 concept consolidation`.
+       The orchestrator rejects SIDEWAYS dispatches that lack 2+ slice names —
+       emitting a SIDEWAYS without compare-able slices is a Planner-side defect.
      - **Anti-procrastination clause.** If SIDEWAYS has not fired in
        ≥10 cycles AND its trigger conditions hold, you MUST fire SIDEWAYS
        on the next eligible cycle. This is a hard rule — emit
@@ -41,6 +53,10 @@ Choose criteria, in order:
        BACK. The fallback is only the criteria-1/2 overrides (blocking
        question, explicit push-back signal naming a specific lower-layer
        change). FORWARD on the highest-Li slice is NOT an override.
+       **The clause is conditional on the trigger conditions holding**
+       — if no 2 slices share an edge with pass + no friction, SIDEWAYS
+       can't fire and the clause doesn't apply (the cycle goes FORWARD
+       or BACK instead).
 
 ## Anti-grind heuristic
 
