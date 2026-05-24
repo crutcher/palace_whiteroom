@@ -123,9 +123,20 @@ The integration-plan fields:
   modifications. Repo-relative paths (e.g., `book/src/spec/slices/cg.md`,
   `book/src/concepts/rotation.md`). The orchestrator enforces
   exactly-one-match unless `replace_all` is set; an ambiguous `old_string`
-  is rejected. **This is the preferred edit channel** — more reliable than
-  unified diffs across LLM emissions (diff-on-edit failures recurred 6+
-  times before this channel was added in meta-review #6).
+  is rejected. **This is the preferred edit channel** for surgical inline
+  edits — more reliable than unified diffs across LLM emissions
+  (diff-on-edit failures recurred 6+ times before this channel was added
+  in meta-review #6).
+
+- **`section_appends`** (array of `{path, heading, content}`): append a new
+  top-level `## Heading` section to the end of an existing markdown file.
+  The third edit topology, alongside file-creation and in-place edit.
+  Added meta-review #7 after the section-append sub-mode (cycle 21 GMRES
+  L2 section to gmres.md) failed both file_edits (no unique anchor for
+  end-of-file) and slice_writes mode=diff (the unified diff was rejected
+  by `git apply`). Use this when adding a `## L2 — primitive composition`
+  section to an existing `## L1`-only slice, or any new top-level section
+  to any pre-existing markdown file. Idempotent on the heading line.
 
 - **`concept_writes`** (array of `{name, mode, content}`): concept-page
   writes. `name` is the concept slug (filename stem under
@@ -163,22 +174,50 @@ write to source (`reference/`, `prompts/`, `mcp/codemap/`, etc.) —
 those are out of per-cycle agent authority; methodology changes go
 through meta-review.
 
-**Channel selection rule** (added meta-review #6):
+**Channel selection rule** (updated meta-review #7):
 
 - New slice file (path doesn't exist): use `slice_writes` with `mode="create"`.
 - New concept file: use `concept_writes` with `mode="create"`.
-- Existing file, surgical edit (single section, replace a paragraph,
-  fix a typo, add a sentence): use `file_edits` — it's reliable.
-- Existing file, multi-hunk structural change: use `slice_writes` with
-  `mode="diff"`. Apply the diff-hygiene checklist below.
-- Adding a new section to an existing concept page: use `concept_writes`
-  with `mode="append-section"`. The orchestrator inserts at the end of
-  the file, idempotent on the section heading.
+- **Adding a new layer/top-level section to an existing slice file** (e.g.,
+  appending `## L2 — primitive composition` to a slice that has only `## L1`
+  so far): use `section_appends`. This is the canonical L_n→L_{n+1} forward
+  push on an established slice — the new layer section goes to the end of
+  the file. Reach for this BEFORE thinking about file_edits or diff.
+- Existing file, surgical inline edit (replace a paragraph, fix a typo,
+  add a sentence WITHIN an existing section): use `file_edits` — find/
+  replace with a unique anchor.
+- Existing file, multi-hunk structural change WITHIN existing sections:
+  use `slice_writes` with `mode="diff"`. Apply the diff-hygiene checklist
+  below. NOTE: `mode="diff"` is the least-reliable channel; prefer
+  `file_edits` (for surgical edits) or `section_appends` (for whole
+  new sections) whenever the change topology allows.
+- Adding a new `## Heading` section to an existing concept page: use
+  `concept_writes` with `mode="append-section"`. (The concept-specific
+  channel; idempotent on the section heading.)
+- Adding a new `## Heading` section to ANY OTHER existing file (e.g., a
+  scaffolding decision doc, or a non-concept book page): use
+  `section_appends`.
 
 **Verify path existence before choosing a channel.** The `current_slice
 content` you receive in the user message indicates whether the slice
 already exists on disk. If it does, you must NOT use `mode="create"`
 for that path — the orchestrator rejects it with a friction signal.
+
+**Integrator phase order** (documented meta-review #7). The integrator
+applies the plan in this fixed order, regardless of the order fields
+appear in your JSON:
+
+  1. Structural creates: `slice_writes` mode=create, `concept_writes` mode=create.
+  2. Structural appends: `section_appends`, `concept_writes` mode=append-section.
+  3. In-place edits: `file_edits`, `slice_writes` mode=diff.
+  4. Relational over content: `dependency_map_edges` (auto-initializes an
+     empty `mermaid` block in the target layer section if missing, so an
+     edge into a previously-empty layer works).
+  5. Cross-cycle records: `lessons`, `log_synthesis`, `rotation_claims`.
+
+This means it is SAFE to combine, in a single plan: (a) a `section_appends`
+that adds a `## L2` section to a slice file, and (b) `dependency_map_edges`
+to that L2 layer — the section materializes before the edges run.
 
 The orchestrator's integrator is initially serial (one plan per cycle —
 same throughput as the prior code path). Phase 8 parallel cycles

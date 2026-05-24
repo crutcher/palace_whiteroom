@@ -160,7 +160,22 @@ class State:
         # Find the first ```mermaid block in this section.
         m = re.search(r"```mermaid\n(.*?)\n```", section_text, re.DOTALL)
         if not m:
-            raise RuntimeError(f"no ```mermaid block in section {header_prefix!r}")
+            # Auto-initialize an empty mermaid block at the section's start
+            # (added 2026-05-24 meta-review #7: cycle 21 had its L2 layer in
+            # the map prose-only, no mermaid block, so all 8 edge inserts
+            # crashed). The map's sections are stable; auto-init is
+            # idempotent because subsequent calls find the new block.
+            # Insert directly after the section heading + blank line.
+            header_end = section_text.find("\n", 0)  # end of header line
+            insert_at = section_text.find("\n", header_end + 1)  # after blank line
+            if insert_at < 0:
+                insert_at = len(section_text)
+            init_block = "\n```mermaid\ngraph BT\n```\n"
+            section_text = section_text[:insert_at] + init_block + section_text[insert_at:]
+            text = text[:sec_start] + section_text + text[next_section:]
+            path.write_text(text)
+            m = re.search(r"```mermaid\n(.*?)\n```", section_text, re.DOTALL)
+            assert m, "mermaid block auto-init failed"
         body = m.group(1)
         new_lines: list[str] = []
         for to_ in to_list:
@@ -178,6 +193,29 @@ class State:
         text = text[:sec_start] + new_section + text[next_section:]
         path.write_text(text)
         return len(new_lines)
+
+    def append_section(self, rel_path: str, heading: str, content: str) -> bool:
+        """Append a new top-level `## Heading` section to the end of an
+        existing markdown file. Idempotent: if the heading line already
+        exists in the file, returns False without changing anything.
+        Raises FileNotFoundError if the file doesn't exist.
+
+        Added 2026-05-24 meta-review #7 for the section-append edit
+        topology (gmres L2 section-append to gmres.md was the originating
+        failure)."""
+        path = self.repo_root / rel_path
+        if not path.exists():
+            raise FileNotFoundError(f"section_append target does not exist: {rel_path}")
+        heading_line = heading.strip()
+        if not heading_line.startswith("##"):
+            raise ValueError(f"heading must start with `##`; got: {heading!r}")
+        text = path.read_text()
+        if heading_line in text:
+            return False  # idempotent
+        content = content.strip()
+        new_block = f"\n\n{heading_line}\n\n{content}\n"
+        path.write_text(text.rstrip() + new_block)
+        return True
 
     def write_meta_review_pending(self, plan_md: str) -> Path:
         """Write the file-based meta-review handshake. Returns the path

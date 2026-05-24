@@ -21,9 +21,26 @@ Choose criteria, in order:
      direction; do not let them accumulate.
   3. Otherwise, prefer FORWARD on the slice that has the most lower-layer ground
      already laid (the highest-Li slice with friction remaining).
-  4. If multiple slices are at the same layer with no friction, prefer a SIDEWAYS
-     comparison — look for shared primitives that should be promoted to
-     `book/src/concepts/`.
+  4. **SIDEWAYS (strengthened 2026-05-24 meta-review #7):**
+     - **Trigger.** When ≥2 slices have completed the SAME edge (e.g., both at L1)
+       with `pass` verdicts and no open friction on either, SIDEWAYS is the
+       DEFAULT next push for those slices unless criterion 1 or 2 overrides.
+     - **What SIDEWAYS does.** Compare the two slices' Li forms — invariant
+       statements, primitive vocabularies, ownership classifications, mutation
+       patterns. Surface shared primitives that should be promoted to
+       `book/src/concepts/` (a NEW concept file per shared primitive), surface
+       methodology gaps (e.g., one slice uses variant-absorption cleanly, the
+       other doesn't), or surface an L_{i+1} unification opportunity (the same
+       L_{i+1} primitive supports both slices). The cycle's diff should add the
+       new concept and may add lightweight cross-reference notes to the
+       compared slices.
+     - **Anti-procrastination clause.** If SIDEWAYS has not fired in
+       ≥10 cycles AND its trigger conditions hold, you MUST fire SIDEWAYS
+       on the next eligible cycle. This is a hard rule — emit
+       `push: sideways slices=<a>,<b> reason=...` instead of FORWARD or
+       BACK. The fallback is only the criteria-1/2 overrides (blocking
+       question, explicit push-back signal naming a specific lower-layer
+       change). FORWARD on the highest-Li slice is NOT an override.
 
 ## Anti-grind heuristic
 

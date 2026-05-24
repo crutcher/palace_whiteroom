@@ -173,6 +173,36 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
             push_back_signals.append(f"concept_write failed for {name}: {e}")
             apply_failed = True
 
+    # 3a-pre. section_appends (the THIRD edit topology — added meta-review
+    #     #7 after section-append-via-diff failed in cycle 21). Append a new
+    #     `## Heading` section to the end of an existing file. Idempotent
+    #     on the heading line.
+    for sa in plan.get("section_appends") or []:
+        rel = sa.get("path", "") if isinstance(sa, dict) else ""
+        heading = sa.get("heading", "") if isinstance(sa, dict) else ""
+        content = sa.get("content", "") if isinstance(sa, dict) else ""
+        if not rel or not heading:
+            push_back_signals.append("section_append rejected: missing path or heading")
+            apply_failed = True
+            continue
+        if not _is_safe_create_path(rel):
+            push_back_signals.append(f"section_append rejected (unsafe path): {rel!r}")
+            apply_failed = True
+            continue
+        try:
+            state.append_section(rel, heading, content)
+        except FileNotFoundError:
+            push_back_signals.append(
+                f"section_append rejected (path doesn't exist; use slice_writes mode=create): {rel}"
+            )
+            apply_failed = True
+        except ValueError as e:
+            push_back_signals.append(f"section_append rejected for {rel}: {e}")
+            apply_failed = True
+        except Exception as e:
+            push_back_signals.append(f"section_append failed for {rel}: {e}")
+            apply_failed = True
+
     # 3a. file_edits (find/replace on existing files; preferred edit channel
     #     per meta-review #6 after diff-on-edit recurrences).
     for fe in plan.get("file_edits") or []:
