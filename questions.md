@@ -6,6 +6,14 @@ The seed below names one question per solver plus shared-infrastructure and mesh
 
 ## Open
 
+### Phase 6 smoke-test target — PRIORITY
+
+- **Q-gmres-phase6.** **PHASE 6 SMOKE-TEST.** Push the GMRES slice end-to-end through the layer stack as the inaugural full-loop exercise of the methodology. Prefer this as the next forward push when scheduling cycles, until GMRES has reached L4 (or surfaced a principled obstruction).
+  - **Source target:** `palace/palace/linalg/iterative.cpp` — `GmresSolver<Operator>::Mult` and its helper methods (Arnoldi-step inner loop, Hessenberg-matrix update, Givens-rotation application, restart logic). Also `palace/palace/linalg/iterative.hpp` for the declaration.
+  - **Slice shape:** GMRES is **large**; use the multi-file slice subdirectory convention from the start: `book/src/spec/slices/gmres/` with per-aspect files (best Synthesizer judgment — likely `step.md`, `arnoldi.md`, `restart.md`, `convergence.md` or similar). See `book/src/spec/index.md`.
+  - **Cross-cuts:** GMRES should reuse the existing CG-slice concepts (`axpy`, `dot`, `matvec`, `apply_linop`) and propose new ones (`arnoldi_step`, `givens_rotation`, `hessenberg_extend`) — that cross-slice unification is part of the Phase 6 DONE criteria.
+  - **Negative-L3 expected:** the outer iteration and the per-step Arnoldi orthogonalization sequence are likely L2→L3 obstructions (sequentiality). Record them as such; obstructions are first-class output.
+
 ### Shared infrastructure (cross-solver)
 
 - **Q-shared-1.** What is the top-level entry point in Palace, and how does it dispatch between solvers? (Starting point: `palace/main.cpp`; the dispatched solvers live under `palace/drivers/`, base class likely `palace/drivers/basesolver.cpp`.)
