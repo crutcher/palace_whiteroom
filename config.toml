@@ -1,0 +1,38 @@
+# Palace whiteroom — agent-loop configuration
+#
+# Read by the Phase 5 orchestrator and (where applicable) by the Phase 1
+# MCP codemap server. See BOOTSTRAP.md for the build order and CLAUDE.md
+# for the methodology.
+
+[target]
+# Path to the Palace clone, relative to repo root.
+# The clone lives under `reference/` (gitignored).
+repo     = "reference/palace"
+language = "cpp"
+
+[models]
+# Per-role model IDs. Planner is cheap routing; the substantive roles
+# (Explorer / Synthesizer / Critic / Meta-Critic) all use Opus.
+# Quality matters most for the Critic.
+planner      = "claude-haiku-4-5-20251001"
+explorer     = "claude-opus-4-7"
+synthesizer  = "claude-opus-4-7"
+critic       = "claude-opus-4-7"
+meta_critic  = "claude-opus-4-7"
+
+[limits]
+# Per-Explorer input ceiling. Exceeding this means the scope is too
+# coarse — the slice needs to subdivide. See BOOTSTRAP.md Escalation
+# triggers.
+explorer_max_input_tokens  = 60000
+
+# Soft budget per cycle across all roles. The orchestrator should warn
+# (not crash) on exceed, and surface as a friction signal.
+cycle_token_budget         = 200000
+
+# Maximum slices the orchestrator may process in parallel. 1 until
+# Phase 6 passes; then Phase 8 raises incrementally.
+max_parallel_slices        = 1
+
+# Meta-review trigger: every N completed cycles, plus manual invocation.
+meta_review_every_n_cycles = 10
