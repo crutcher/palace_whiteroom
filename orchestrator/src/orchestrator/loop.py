@@ -173,7 +173,52 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
             push_back_signals.append(f"concept_write failed for {name}: {e}")
             apply_failed = True
 
-    # 3. dependency_map_edges (idempotent)
+    # 3a. file_edits (find/replace on existing files; preferred edit channel
+    #     per meta-review #6 after diff-on-edit recurrences).
+    for fe in plan.get("file_edits") or []:
+        rel = fe.get("path", "") if isinstance(fe, dict) else ""
+        old_string = fe.get("old_string", "") if isinstance(fe, dict) else ""
+        new_string = fe.get("new_string", "") if isinstance(fe, dict) else ""
+        replace_all = bool(fe.get("replace_all", False)) if isinstance(fe, dict) else False
+        if not rel:
+            push_back_signals.append("file_edit rejected: missing path")
+            apply_failed = True
+            continue
+        if not _is_safe_create_path(rel):
+            push_back_signals.append(f"file_edit rejected (unsafe path): {rel!r}")
+            apply_failed = True
+            continue
+        full_path = state.repo_root / rel
+        if not full_path.exists():
+            push_back_signals.append(
+                f"file_edit rejected (path doesn't exist; use file_creates / slice_writes mode=create): {rel}"
+            )
+            apply_failed = True
+            continue
+        try:
+            text = full_path.read_text()
+            occurrences = text.count(old_string) if old_string else 0
+            if occurrences == 0:
+                push_back_signals.append(
+                    f"file_edit rejected (old_string not found in {rel}): {old_string[:80]!r}"
+                )
+                apply_failed = True
+                continue
+            if occurrences > 1 and not replace_all:
+                push_back_signals.append(
+                    f"file_edit rejected (old_string ambiguous in {rel}: {occurrences} matches; "
+                    f"either anchor more uniquely or set replace_all=true)"
+                )
+                apply_failed = True
+                continue
+            new_text = text.replace(old_string, new_string) if replace_all else \
+                       text.replace(old_string, new_string, 1)
+            full_path.write_text(new_text)
+        except Exception as e:
+            push_back_signals.append(f"file_edit failed for {rel}: {e}")
+            apply_failed = True
+
+    # 3b. dependency_map_edges (idempotent)
     for edge in plan.get("dependency_map_edges") or []:
         try:
             state.add_dependency_map_edge(
@@ -355,10 +400,17 @@ async def run_normal_cycle(
     # Verdict-downgrade rule (meta-review #5 plan item 3): a cycle whose
     # writes didn't land has no persistent artifact; do not advance the
     # scoreboard. pass → revise.
+    # Also capture the Critic's ORIGINAL verdict so a downgrade doesn't
+    # erase the Critic's content judgment (meta-review #6 item 2: when
+    # downgrade dominates, the human/Meta-Critic loses the content signal).
+    verdict["verdict_original"] = verdict.get("verdict")
+    verdict["downgrade_applied"] = False
     if verdict["verdict"] == "pass" and apply_failed:
         verdict["verdict"] = "revise"
+        verdict["downgrade_applied"] = True
         push_back_signals.append(
-            "verdict auto-downgraded pass→revise: one or more writes did not land"
+            "verdict auto-downgraded pass→revise: one or more writes did not land "
+            f"(original Critic verdict was 'pass'; see verdict_original in episodic)"
         )
         print(f"[cycle {state.cycle_id}] verdict auto-downgraded pass→revise (apply failure)")
 
@@ -409,6 +461,8 @@ async def run_normal_cycle(
         "slice": slice_name,
         "edge": edge,
         "verdict": verdict["verdict"],
+        "verdict_original": verdict.get("verdict_original", verdict["verdict"]),
+        "downgrade_applied": verdict.get("downgrade_applied", False),
         "friction_observed": friction_summary,
         "structural_change": structural_change,
         "push_back_signals": push_back_signals,

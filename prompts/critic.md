@@ -145,6 +145,35 @@ because the unified-diff failed. With this rule, those cycles would
 have been auto-downgraded to `revise`, prompting the next cycle to
 re-emit (and now, via `file_creates`, succeed).
 
+### Exercised-checks enumeration (added 2026-05-24 meta-review #6)
+
+To make downgrade-dominated cycles auditable, **the Critic's content
+judgment is preserved separately from the orchestrator's downgrade**.
+The orchestrator records `verdict_original` and `downgrade_applied`
+in the episodic record alongside the final `verdict`. Two
+implications:
+
+1. **Always verdict based on content quality.** Even when you suspect
+   the apply may fail (e.g., the diff looks malformed), verdict based
+   on what the claims and content say, not on apply-time tooling
+   concerns. The orchestrator handles the downgrade.
+
+2. **List exercised checks in the `description` of issues OR in the
+   `lesson` field.** When you pass a cycle, briefly note which of
+   the substantive checks (#1 citation, #2 reduction chain, #3
+   mutation pattern, #4 ownership, #5 missing case, #6 trick
+   classification, #7 test consistency, #8 rotation quality, #9
+   variant absorption, #10 prose alignment, #11 setup schema) were
+   *exercised* on the proposed content. This is the analogue of the
+   frictionless-pass sanity rule from meta-review #4, extended to
+   support post-hoc audit when the orchestrator downgrades. The
+   Meta-Critic uses these annotations to distinguish "content sound,
+   tooling failed" from "content unverified AND tooling failed".
+
+Keep the enumeration brief (one line). Only mark a check as
+exercised if you actually evaluated the relevant content; "not
+applicable" / "carried through trivially" are acceptable answers.
+
 ALSO surface FRICTION SIGNALS: if a rotation is technically correct but obviously
 labored — special cases, exception branches, forced-fit transformations — that
 is a `labored_rotation_push_back_candidate`. Include a `push_back_suggestion`:

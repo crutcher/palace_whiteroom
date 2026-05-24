@@ -32,3 +32,4 @@
   - [2026-05-24 — third meta-review (cycles 7–9)](./meta-reviews/2026-05-24-cycles-7-9.md)
   - [2026-05-24 — fourth meta-review (cycles 10–12)](./meta-reviews/2026-05-24-cycles-10-12.md)
   - [2026-05-24 — fifth meta-review (cycles 13–15)](./meta-reviews/2026-05-24-cycles-13-15.md)
+  - [2026-05-24 — sixth meta-review (cycles 16–18)](./meta-reviews/2026-05-24-cycles-16-18.md)

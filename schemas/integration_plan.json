@@ -8,7 +8,7 @@
   "properties": {
     "slice_writes": {
       "type": "array",
-      "description": "Per-slice file writes. Each entry creates a new slice file or modifies an existing one.",
+      "description": "Per-slice file writes. Each entry creates a new slice file or modifies an existing one. Prefer file_edits below for surgical edits to existing files.",
       "items": {
         "type": "object",
         "required": ["path"],
@@ -18,10 +18,24 @@
             "type": "string",
             "enum": ["create", "diff"],
             "default": "create",
-            "description": "`create` for new files (write content directly); `diff` for modifications to existing files (apply as unified diff)."
+            "description": "`create` for new files (write content directly); `diff` for modifications to existing files (apply as unified diff). For surgical edits, prefer the top-level `file_edits` field which is more reliable than unified diffs."
           },
           "content": { "type": "string", "description": "For mode=create: the full file content." },
           "diff": { "type": "string", "description": "For mode=diff: a unified-diff string targeting the existing file." }
+        }
+      }
+    },
+    "file_edits": {
+      "type": "array",
+      "description": "Find-replace edits to existing files (any path under book/src/, scaffolding/, or problems/). Symmetric to file_creates but for existing files. Each entry replaces the exact match of `old_string` with `new_string` in the named file. The orchestrator enforces exactly-one-match unless `replace_all` is true; an ambiguous old_string is rejected. This is the preferred edit channel — more reliable than unified diffs across LLM emissions. Added 2026-05-24 meta-review #6 after diff-on-edit failures recurred 6+ times.",
+      "items": {
+        "type": "object",
+        "required": ["path", "old_string", "new_string"],
+        "properties": {
+          "path": { "type": "string", "description": "Repo-relative path to an EXISTING file. Same safe-path policy as file_creates (book/src/, scaffolding/, problems/)." },
+          "old_string": { "type": "string", "description": "Exact text to replace. Must match the file content unambiguously (one occurrence) unless replace_all is true. Multi-line strings are supported." },
+          "new_string": { "type": "string", "description": "Replacement text. May be empty (deletion)." },
+          "replace_all": { "type": "boolean", "default": false, "description": "If true, replaces every occurrence. Default false (exactly-one-match required)." }
         }
       }
     },

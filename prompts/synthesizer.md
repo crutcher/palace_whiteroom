@@ -115,7 +115,17 @@ The integration-plan fields:
 - **`slice_writes`** (array of `{path, mode, content?, diff?}`): per-slice
   file writes. `path` is relative to `book/src/spec/slices/`. `mode` is
   `"create"` (new file; write `content`) or `"diff"` (modify existing
-  file; apply `diff` as unified diff).
+  file; apply `diff` as unified diff). For surgical edits to existing
+  slice files, prefer `file_edits` below.
+
+- **`file_edits`** (array of `{path, old_string, new_string, replace_all?}`):
+  find-replace edits to existing files. Symmetric to file-creation but for
+  modifications. Repo-relative paths (e.g., `book/src/spec/slices/cg.md`,
+  `book/src/concepts/rotation.md`). The orchestrator enforces
+  exactly-one-match unless `replace_all` is set; an ambiguous `old_string`
+  is rejected. **This is the preferred edit channel** — more reliable than
+  unified diffs across LLM emissions (diff-on-edit failures recurred 6+
+  times before this channel was added in meta-review #6).
 
 - **`concept_writes`** (array of `{name, mode, content}`): concept-page
   writes. `name` is the concept slug (filename stem under
@@ -145,12 +155,30 @@ The integration-plan fields:
 - **`rotation_claims`** (array): per-edge claims, each validating
   against `schemas/rotation_claim.json`. Same as before.
 
-Safety: all paths in `slice_writes` and `concept_writes` are confined
-to `book/src/spec/slices/` and `book/src/concepts/` respectively; the
-orchestrator rejects anything else. The agent loop does NOT write to
-source (`reference/`, `prompts/`, `mcp/codemap/`, etc.) — those are
-out of per-cycle agent authority; methodology changes go through
-meta-review.
+Safety: all paths in `slice_writes` are confined to
+`book/src/spec/slices/`; `concept_writes` to `book/src/concepts/`;
+`file_edits` to `book/src/`, `scaffolding/`, or `problems/`.
+The orchestrator rejects anything else. The agent loop does NOT
+write to source (`reference/`, `prompts/`, `mcp/codemap/`, etc.) —
+those are out of per-cycle agent authority; methodology changes go
+through meta-review.
+
+**Channel selection rule** (added meta-review #6):
+
+- New slice file (path doesn't exist): use `slice_writes` with `mode="create"`.
+- New concept file: use `concept_writes` with `mode="create"`.
+- Existing file, surgical edit (single section, replace a paragraph,
+  fix a typo, add a sentence): use `file_edits` — it's reliable.
+- Existing file, multi-hunk structural change: use `slice_writes` with
+  `mode="diff"`. Apply the diff-hygiene checklist below.
+- Adding a new section to an existing concept page: use `concept_writes`
+  with `mode="append-section"`. The orchestrator inserts at the end of
+  the file, idempotent on the section heading.
+
+**Verify path existence before choosing a channel.** The `current_slice
+content` you receive in the user message indicates whether the slice
+already exists on disk. If it does, you must NOT use `mode="create"`
+for that path — the orchestrator rejects it with a friction signal.
 
 The orchestrator's integrator is initially serial (one plan per cycle —
 same throughput as the prior code path). Phase 8 parallel cycles
