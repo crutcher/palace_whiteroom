@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-24 cycle-19 — forward chebyshev [L0→L1] — pass
+
+- Synthesis: L0→L1 consolidation for chebyshev: tighten 1st-kind state schema (theta/delta persist, lambda_max/min are transient), clarify variant encoding via class identity, and flag unreachable complex-transpose template specializations.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 1 lesson(s); 2 rotation_claim(s).
 ## 2026-05-24 cycle-18 — back orthog — revise
 
 - Synthesis: L0→L1 for orthog: orthogonalize_column primitive with variant∈{MGS,CGS,CGS2} absorbed parametrically; dot_op hook absorbs inner-product weighting; MPI collective shape disclosed as residual L2 cost axis.

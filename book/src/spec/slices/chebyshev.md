@@ -25,11 +25,15 @@ procedure does not re-inspect the variant.
 - Captured at `setup` (immutable through `apply_linop` calls):
   - `A` — SPD operator (by reference).
   - `dinv` — vector of `1 / diag(A)`, length `A.height`.
-  - `lambda_max` — scalar, scaled spectral upper bound.
-  - `lambda_min` — scalar, only for 1st-kind; from user `sf_min` or
-    Phillips & Fischer (2022) eq. 2.24 default
-    `1.69 / (order^{1.68} + 2.11*order + 1.98)`.
-  - `order`, `pc_it`, `variant ∈ {4th-kind, 1st-kind}` — fixed.
+  - Variant-specific persisted scalars (set in `setup`, used in `apply`):
+    - **4th-kind**: `lambda_max` — scaled spectral upper bound.
+    - **1st-kind**: `theta := (lambda_max + lambda_min)/2`,
+      `delta := (lambda_max - lambda_min)/2`. The bounds
+      `lambda_max`, `lambda_min` themselves are transient setup
+      values and do not persist past `setup`.
+  - `order`, `pc_it` — fixed. `variant` is encoded by the
+    constructed-operator class identity, not stored as a runtime
+    field.
 - Ephemeral per `apply_linop` call: residual `r`, direction `d`
   (both length `A.height`); workspace.
 
@@ -41,9 +45,14 @@ procedure does not re-inspect the variant.
    `D^{-1} A` via a Hermitian spectral-norm primitive (power
    iteration; SLEPc when configured). See
    `concepts/spectrum-estimate.md`.
-3. If `variant = 1st-kind`: also set `lambda_min` (from `sf_min` or
-   the default formula); precompute `theta := (lambda_max +
-   lambda_min)/2`, `delta := (lambda_max - lambda_min)/2`.
+3. If `variant = 1st-kind`: derive `sf_min` (from user input or
+   the Phillips & Fischer (2022) eq. 2.24 default
+   `1.69 / (order^{1.68} + 2.11*order + 1.98)` when the user
+   supplies a non-positive value); set
+   `lambda_min := sf_min * lambda_max`; persist
+   `theta := (lambda_max + lambda_min)/2`,
+   `delta := (lambda_max - lambda_min)/2`. `lambda_max` and
+   `lambda_min` are discarded after this step.
 
 ### Apply (`apply_linop`: given rhs `x`, accumulator `y`, optional `initial_guess`)
 
@@ -95,6 +104,11 @@ The smoother is a leaf in the preconditioner stack: it consumes `A`
 - MPI involvement is confined to `spectrum_estimate` (parallel norms
   inside power iteration); the polynomial recurrence itself is
   local.
+- The complex `Transpose=true` template specializations of the
+  inner kernels exist but are unreachable: `MultTranspose` forwards
+  to `Mult` under the symmetry assumption, so the transpose-conjugate
+  paths are dead code under current wiring. Flagged for future
+  cleanup or for use by an asymmetric variant.
 
 ## Concept references
 
