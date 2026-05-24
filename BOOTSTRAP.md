@@ -669,12 +669,16 @@ Cascade categorization:
   MEDIUM — prompt revisions that change agent behavior; methodology adjustments
             within the established framework; updates to BOOTSTRAP.md workflow
             steps; restructuring of slice conventions; new `concepts/` entries
-            promoted from inline definitions. BUNDLE INTO A REFINEMENT PLAN
-            requiring human approval before enactment.
+            promoted from inline definitions; **role-granularity shifts**
+            (subdividing / merging / narrowing existing roles); **MCP server
+            service changes** (adding tools, changing signatures, deprecating
+            tools). BUNDLE INTO A REFINEMENT PLAN requiring human approval
+            before enactment.
   HIGH   — changes to the layer count or layer semantics; revisions to the L4
             calculus design; changes to "what the spec is for" or the core
-            push-forward / push-back process; introduction of new agent roles.
-            SURFACE AS ESCALATION; do not propose changes.
+            push-forward / push-back process; **introduction of a new agent
+            role** (a 6th — subdividing an existing role into two is Medium,
+            not High). SURFACE AS ESCALATION; do not propose changes.
 
 For each issue, decide its category. Err toward Medium-as-escalation rather than
 Medium-as-direct-action when the cascade trace is uncertain. The bar is "the

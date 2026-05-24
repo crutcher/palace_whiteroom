@@ -306,8 +306,8 @@ Full procedure: `book/src/meta-reviews/index.md`.
 **Driver**: a distinct **Meta-Critic** role (not the per-cycle Critic) with its own system prompt, isolated context, and incremental project history built from prior meta-review records. The Meta-Critic carries **medium-cascade authority**:
 
 - **Low** (typos, single-file clarifications, prompt-wording polish): applied directly.
-- **Medium** (prompt revisions, methodology adjustments within the framework, slice-convention restructuring, new `concepts/` entries): **bundled into a refinement plan, requires human approval before enactment.**
-- **High** (layer-count or layer-semantics changes, L4 calculus revisions, core process-model changes, new agent roles): **surfaced as escalation, not acted on** — design-level conversation with the human follows.
+- **Medium** (prompt revisions, methodology adjustments within the framework, slice-convention restructuring, new `concepts/` entries, **role-granularity shifts** — subdividing / merging / narrowing existing roles — and **MCP server service changes** — adding tools, changing signatures, deprecating tools): **bundled into a refinement plan, requires human approval before enactment.**
+- **High** (layer-count or layer-semantics changes, L4 calculus revisions, core process-model changes, **introducing a new agent role** — a 6th; subdividing an existing role into two is Medium, not High): **surfaced as escalation, not acted on** — design-level conversation with the human follows.
 
 Each pass produces two artifacts in `book/src/meta-reviews/`:
 
