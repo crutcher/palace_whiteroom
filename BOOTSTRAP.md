@@ -418,6 +418,11 @@ Choose criteria, in order:
      comparison — look for shared primitives that should be promoted to
      `book/src/concepts/`.
 
+Apply the `survey-friction-window` skill (`skills/survey-friction-window/SKILL.md`)
+for the workflow of clustering recent push-back signals, identifying recurrence,
+and routing to FORWARD / BACK / SIDEWAYS / ESCALATE. The criteria above are the
+rule; the skill is the procedure.
+
 Output (single line, no prose):
 
   push: forward slice=<name> from=Lk to=Lk+1 reason=<short>
@@ -461,7 +466,10 @@ Method:
      tests are L0-equivalent evidence (a test constructs an input, calls
      the code, and asserts a result; that's direct evidence of mutation
      pattern and semantics). If no test exists, note "no test found" and
-     proceed; tests are supplement, not prerequisite.
+     proceed; tests are supplement, not prerequisite. Apply the
+     `find-tests-for-region` skill (`skills/find-tests-for-region/SKILL.md`)
+     for the full procedure (linkage discovery, scaffolding write-back, edge
+     cases).
   5. Lift each source operation into pure-functional dataflow (L1): record the
      input set, output set, and the mutation pattern you observed
      (in_place_overwrite, accumulator, alias_with_input, scratch_buffer, pure).
@@ -516,7 +524,10 @@ For every rotation you propose, emit a `rotation_claim` JSON validating against
 algebraic argument, a reduction-chain sketch, an obstruction explanation, or an
 `empirical_match` against a cited test. **Prefer `empirical_match` over a pure
 algebraic argument when both are available** — an executed test is harder
-evidence than an argument.
+evidence than an argument. Apply the `propose-rotation` skill
+(`skills/propose-rotation/SKILL.md`) for the full procedure (edge identification,
+justification-kind preference order, push-back flagging, alternative-formulation
+handling).
 
 ALSO flag PUSH-BACK opportunities: when a current Li form forces a labored
 Li+1 rotation, propose a structural change to Li (or to the L4 calculus design,
@@ -545,7 +556,9 @@ the Synthesizer produced; the cited source ranges (provided pre-fetched); the
 relevant prior-layer claims for context. You do NOT see the Synthesizer's chain-
 of-thought — only the claims and the source.
 
-For each rotation_claim, verify:
+For each rotation_claim, verify (apply the `verify-rotation-citation` skill —
+`skills/verify-rotation-citation/SKILL.md` — for the full procedure including
+verdict assembly and cross-cycle lesson extraction):
 
   1. Does the cited source range actually contain what the from_form / to_form
      asserts? (citation_does_not_support)
@@ -602,7 +615,10 @@ You see, in addition to your history:
   - New entries in `lessons.md` since the last meta-review.
   - The current state of `BOOTSTRAP.md`, `CLAUDE.md`, and the role prompts.
 
-Your job: categorize accumulated friction and produce a refinement plan.
+Your job: categorize accumulated friction and produce a refinement plan. Apply
+the `cluster-friction-patterns` skill (`skills/cluster-friction-patterns/SKILL.md`)
+for the full procedure (signal enumeration, axis-clustering, recurrence
+identification against prior meta-review records, cascade routing).
 
 Cascade categorization:
 

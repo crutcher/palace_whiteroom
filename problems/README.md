@@ -9,6 +9,7 @@ The temperature for filing here is **conservative**. The channel exists for cros
 - **Out-of-role conflicts** — the agent notices something that belongs to a different role's authority. Example: a Critic notices that the Synthesizer prompt is consistently producing claims at the wrong layer; that's a Synthesizer-prompt issue, not a per-claim Critic verdict.
 - **In-line framing concerns** — the agent notices that the methodology framing, as currently described, doesn't fit the slice in hand, in a way that exceeds the agent's responsibility to handle. Example: an Explorer realizes the L0/L1 boundary is unclear for a particular file (generated code, heavy macros, language extensions) and is being asked to make a judgment call the prompt doesn't address.
 - **Tooling / infrastructure gaps** — the agent hits a wall it can't work around within its own role. Example: a tree-sitter query that should localize a region returns nothing because the grammar doesn't parse that file's dialect; a citation comes back empty for a reason the prompt didn't anticipate.
+- **Skill friction** — a skill the agent invoked (per `skills/<name>/SKILL.md`) consistently fights its task: the procedure doesn't fit recurring cases, its output format forces awkward fits, the schema it produces is structurally inadequate, or the assumed MCP tools don't behave as expected. Per-cycle agents do not modify skills (skill management is Meta-Critic / meta-review work, Medium cascade); they flag. Example: the Critic invokes `verify-rotation-citation` and finds the `kind` enum in `critic_verdict.json` has no category for the failure they're observing. **Single-edge-case is not skill-friction; recurring mismatch is** — the conservative-temperature rule still applies.
 
 ## When *not* to file a problem
 
@@ -40,7 +41,7 @@ created: 2026-05-23T143500Z
 agent_role: critic            # explorer | synthesizer | planner | critic | other
 cycle_id: 42                  # the agent cycle this surfaced in; null if outside any cycle
 slice: cg_solver              # the algorithm/routine being worked on; or "global"
-kind: role-conflict           # role-conflict | framing-concern | tooling-gap | other
+kind: role-conflict           # role-conflict | framing-concern | tooling-gap | skill-friction | other
 ---
 
 # {one-line title}

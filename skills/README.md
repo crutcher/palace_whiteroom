@@ -57,3 +57,11 @@ The `description` field is load-bearing: it's what an invoker reads to decide wh
 - **Not the methodology.** Methodology lives in `CLAUDE.md` and the book. Skills are procedures *applying* the methodology.
 - **Not role prompts.** A role's system prompt (`prompts/<role>.md`, forthcoming in Phase 4) is the role contract. Skills are tools the role may apply within that contract.
 - **Not scaffolding.** A speculative idea about how to do something belongs in `scaffolding/` until it stabilizes into an applicable procedure. Premature crystallization into a skill is its own anti-pattern.
+
+## Friction with a skill → `problems/`
+
+A skill that consistently fights its task — its procedure doesn't fit cases that recur, its output format forces awkward fits, the schema it produces is structurally inadequate, the MCP tools the procedure assumes don't exist or work differently — is a **friction signal that exceeds the invoking agent's role authority**. Per-cycle agents do not modify skills (skill management is Meta-Critic / meta-review work, Medium cascade). They flag the friction.
+
+The right channel is `problems/` (see `problems/README.md` *kind*: `skill-friction`). The Meta-Critic reads `problems/` during meta-review and decides whether the resolution is a skill refinement (Medium-direct-action), a methodology change (Medium-plan-item or High-escalation), or whether the friction is the cost of an honest constraint and the skill is fine.
+
+Each individual skill body includes its own "Friction → `problems/`" section noting the kinds of failure that warrant filing. Per-cycle agents should default to flagging rather than working around — silent workarounds break the friction-driven feedback loop the meta-review depends on.
