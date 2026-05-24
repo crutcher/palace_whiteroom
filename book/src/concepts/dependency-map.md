@@ -43,9 +43,19 @@ graph BT
 
 ## L2 — algebraic decompositions
 
+```mermaid
+graph BT
+  orthog --> dot
+  orthog --> axpy
+  orthog --> gemv-basis
+  orthog --> allreduce-sum
+  gemv-basis --> axpy
+```
+
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.
 
 (Empty as of 2026-05-23. Will populate as L1→L2 rotations land.)
+s L1→L2 rotations land.)
 
 ## L3 — global tensor-field operations
 
