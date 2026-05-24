@@ -274,13 +274,15 @@ def call_synthesizer(
     edge: str,
     slice_name: str,
     dry_run: bool = False,
-) -> tuple[str, list[dict], TokenUsage]:
-    """Returns (unified_diff, [rotation_claims], TokenUsage).
+) -> tuple[str, list[dict], list[dict], TokenUsage]:
+    """Returns (unified_diff, [rotation_claims], [file_creates], TokenUsage).
 
-    The orchestrator's user message requires the Synthesizer to wrap its
-    output as a single JSON object {diff: "...", rotation_claims: [...]}.
-    This is an orchestrator-imposed format on top of the role contract;
-    the role prompt itself describes the substance.
+    `file_creates` is a list of {path, content} dicts for brand-new files
+    the synthesizer wants to create. Added meta-review #5 to bypass the
+    unified-diff failure mode for new-file emission (recurrences in cycles
+    2/12/13/14/15 all hit `@@`-header line-count drift on new files).
+    The orchestrator writes these directly; safety checks live in
+    `loop._is_safe_create_path`.
     """
     usage = TokenUsage()
 
@@ -295,7 +297,7 @@ def call_synthesizer(
         }
         errors = validate(schemas, "rotation_claim", canned_claim)
         assert not errors, f"dry-run canned claim fails schema: {errors}"
-        return "", [canned_claim], usage
+        return "", [canned_claim], [], usage
 
     assert client is not None
     system_prompt = _load_prompt(state.repo_root, "synthesizer")
@@ -311,19 +313,24 @@ def call_synthesizer(
             f"Explorer's ExplorationFinding:\n```json\n{json.dumps(finding, indent=2)}\n```\n\n"
             if finding else ""
         )
-        + f"Produce the {edge} rotation for this slice. Output a SINGLE JSON object with two fields:\n"
-        f"  - `diff`: a unified diff (string) against the relevant book/src/spec/slices/<slice>.md "
-        f"file. Use standard `diff -u` format with `--- a/<path>` and `+++ b/<path>` headers. "
-        f"If the slice file doesn't exist yet, the diff creates it.\n"
-        f"  - `rotation_claims`: an array of one or more rotation_claim objects, each validating "
-        f"against the schema below.\n\n"
+        + f"Produce the {edge} rotation for this slice. Output a SINGLE JSON object with THREE fields:\n"
+        f"  - `file_creates`: an array of `{{path, content}}` objects, one per NEW file the\n"
+        f"    cycle should create. Use this for slice files that don't exist yet, new concept\n"
+        f"    entries, etc. `path` must be under `book/src/`, `scaffolding/`, or `problems/`.\n"
+        f"    The orchestrator writes these directly — NO unified-diff parsing, NO `@@` header\n"
+        f"    counting. Use this channel for all new-file emission.\n"
+        f"  - `diff`: a unified diff (string) for MODIFICATIONS to existing files. Standard\n"
+        f"    `diff -u` format with `--- a/<path>` and `+++ b/<path>` headers. Do NOT include\n"
+        f"    new-file creation in this field — use `file_creates`. The diff-hygiene checklist\n"
+        f"    (count `+` and `-` lines, verify against `@@` header) applies here.\n"
+        f"  - `rotation_claims`: an array of one or more rotation_claim objects, each validating\n"
+        f"    against the schema below.\n\n"
         f"rotation_claim schema:\n```json\n{schema_text}\n```\n\n"
         f"OUTPUT FORMAT: the FIRST character of your response must be `{{` and the LAST must "
         f"be `}}`. No prose preamble (no '# Heading', no 'Here is...', no math notation like "
         f"`{{r_0, Ar_0, ...}}`), no markdown fence, no trailing commentary. ANY content outside "
         f"the single top-level JSON object will be parsed as the JSON output and fail. Use the "
-        f"`diff` string field for ALL prose / math / commentary that belongs in the slice file "
-        f"content."
+        f"`file_creates[i].content` field for ALL slice-file prose / math / commentary."
     )
 
     response = client.messages.create(
@@ -337,13 +344,14 @@ def call_synthesizer(
         b.text for b in response.content if getattr(b, "type", "") == "text"
     ).strip()
     parsed = _parse_json_response(final_text)
-    diff = parsed.get("diff", "")
-    claims = parsed.get("rotation_claims", [])
+    diff = parsed.get("diff", "") or ""
+    claims = parsed.get("rotation_claims", []) or []
+    file_creates = parsed.get("file_creates", []) or []
     for i, claim in enumerate(claims):
         errors = validate(schemas, "rotation_claim", claim)
         if errors:
             raise ValueError(f"Synthesizer claim {i} failed schema: {errors}\nClaim: {claim}")
-    return diff, claims, usage
+    return diff, claims, file_creates, usage
 
 
 # ───────────────────────────── Critic ─────────────────────────────

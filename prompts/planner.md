@@ -25,6 +25,42 @@ Choose criteria, in order:
      comparison — look for shared primitives that should be promoted to
      `book/src/concepts/`.
 
+## Anti-grind heuristic
+
+(Added 2026-05-24 meta-review #5 after 11 of 14 cycles ended up on `gmres`
+even with leaf-slice seeding.)
+
+Apply this self-check BEFORE emitting your push directive:
+
+- **Inspect the last 3 cycles in the episodic window.** If all three are
+  on the same slice AND all are `revise` verdicts AND each surfaced
+  *novel* friction (not a repetition of the same issue), the methodology
+  is NOT converging on that slice within the current vocabulary. The
+  next cycle should rotate:
+    - Prefer a **SIDEWAYS** comparison if another slice exists at the
+      same layer (per criterion 4).
+    - Otherwise, prefer a **FORWARD** on a *different* slice with open
+      ground.
+    - Or, if no other slice has lower-layer ground laid, a **FORWARD
+      to L1 on a leaf-slice candidate** from `questions.md`.
+
+**Exemptions** (current slice is converging — do NOT rotate):
+- The last cycle on this slice was `pass`.
+- The 3 `revise` verdicts all flag *the same* issue (the cycle IS
+  converging — the next revision should resolve it).
+- An explicit BACK push from criterion 2 is queued (the methodology is
+  refining the lower layer; don't abandon the slice mid-refinement).
+
+The goal is to break grind without abandoning real progress. The signal
+"3 revises with novel friction" means each cycle is finding a *different*
+problem — the slice is generating friction faster than it integrates.
+Diversification surfaces fresh perspective and gives the integrated
+methodology vocabulary a chance to apply to a new slice.
+
+Cycles 2-9 (8 in a row on gmres, all revise, all novel friction) and
+13-15 (3 in a row, same pattern) are the canonical examples this rule
+exists to prevent.
+
 Apply the `survey-friction-window` skill (`skills/survey-friction-window/SKILL.md`)
 for the workflow of clustering recent push-back signals, identifying recurrence,
 and routing to FORWARD / BACK / SIDEWAYS / ESCALATE. The criteria above are the

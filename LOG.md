@@ -29,6 +29,14 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-24 meta-review (cycles 13–15) — enacted (with 2 implementation deviations)
+
+- Window: 3 cycles. Push breakdown: 2 FORWARD, 1 BACK, 0 SIDEWAYS. All three on `gmres`. All three diff-applies FAILED (corrupt patch / line-count mismatch) — recurrence #2 of the diff-hygiene problem fired the escalation watch.
+- Cascade: 0 LOW; 4 MEDIUM plan items approved and enacted; 0 HIGH escalated.
+- Plan items enacted: (1) **`file_creates` channel** added to Synthesizer output (orchestrator-side) bypassing unified-diff for new files — deviation from Meta-Critic's "MCP server tool" proposal, same intent simpler implementation; (2) anti-grind heuristic in `prompts/planner.md` (3 consecutive revises with novel friction → rotate); (3) orchestrator-side **verdict downgrade** rule (apply failure → pass becomes revise) — deviation from Meta-Critic's "Critic-side rule" proposal (Critic verdicts before apply; failure visible only orchestrator-side); (4) **first lessons-promotion** fired: FGMRES per-step variant lesson → new "Limits of constructed-operator absorption" section in `constructed-operators.md` + cross-ref in `variant-absorption.md`.
+- Watch updates: diff-apply mismatch recurrence #2 → enacted file_creates intervention (watch resets for new failure modes); pass-with-failed-diff → orchestrator hard rule (should not recur structurally); same-slice grind → anti-grind heuristic (watch whether it fires in cycle 16+); variant-absorption cluster reaches recurrence #4 (still same-slice; cross-slice recurrence escalates to High); NEW watch: Meta-Critic implementation-location proposals were deflected twice this round.
+- Full record: `book/src/meta-reviews/2026-05-24-cycles-13-15.md`.
+
 ## 2026-05-24 cycle-15 — back gmres — pass
 
 - Synthesis: 2 rotation_claim(s); diff applied

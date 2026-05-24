@@ -102,6 +102,43 @@ Constructed operators are **the realization of "operator internal parameters as 
 - **Not a free pass on per-call cost.** Construction cost is real. The value is amortizing across many applies. Single-use operators are overkill — call the inner function directly.
 - **Not a way to hide load-bearing spec content.** If a variant's behavior is load-bearing (changes numerical properties, convergence guarantees, condition numbers), construction must not hide it. The constructed operator's **contract** captures what `apply` does for each construction; the internal state is hidden, the *observable behavior* is not. The contract belongs in the slice; the implementation belongs in the constructor.
 
+## Limits of constructed-operator absorption
+
+(Added 2026-05-24 meta-review #5, from cycle 14's FGMRES friction — the 4th instance of the variant-absorption recurrence cluster, all on `gmres`.)
+
+Constructed operators absorb variants when the variant is **bound once at construction and applied many times** without changing. They DO NOT absorb variants when the variant is **per-step** — when the operator changes between applications during a single solve.
+
+### When the pattern works
+
+- Preconditioner choice + side at solve start: `M` is fixed for the whole solve. `op = construct_krylov_op(A, M, side)` absorbs all three axes (kind, side, identity-vs-nontrivial).
+- Mesh + basis tables at simulation start: computed once, reused per timestep.
+- Time-step coefficients in fixed-step integration.
+
+### When the pattern fails (per-step variants)
+
+- **Flexible preconditioners (FGMRES, etc.)**: the preconditioner `M_k` is allowed to change between Arnoldi steps in a single solve. `construct_krylov_op(A, M, side)` cannot internalize `M_k` because there is no single `M` to bind at construction.
+- **Time-varying operators**: when `A_k` depends on the iteration index (active-set methods, IMEX integrators).
+- **Adaptive parameters**: when an operator's behavior depends on a value computed mid-cycle.
+
+### The fix: threaded state, not just constructed state
+
+For per-step variants, the **threaded state itself** must change — the variant becomes part of the sim-state schema, not the operator-internal-parameters schema. Concretely for FGMRES:
+
+- **Standard GMRES L1 state**: `{x, V, H, s, cs, sn, …}`. The preconditioner lives in the constructed `op`.
+- **FGMRES L1 state**: `{x, V, H, s, cs, sn, Z, …}`. The per-step preconditioned basis `Z` is threaded because each `Z[j] = M_j · V[j]` may use a different `M_j`. The L4 ownership category for `Z` is **sim state** (evolves per step), not operator-internal-parameters.
+
+The L1 state schema's expansion is **required**. Trying to absorb FGMRES into the standard `construct_krylov_op` interface fails primitive-sequence absorption (per `variant-absorption.md` *Levels of absorption*, criterion (c)): the cycle-close primitive sequence diverges (`x = x_0 + V_m y_m` for GMRES vs. `x = x_0 + Z_m y_m` for FGMRES).
+
+### Decision rule
+
+When considering a constructed-operator absorption for a variant:
+
+1. **Is the variant bound at construction or per-step?**
+2. If **construction**: constructed-operator pattern works; proceed.
+3. If **per-step**: constructed-operator pattern fails. The variant must enter the threaded sim-state schema. Add the per-step value (e.g., the `Z` basis) to L1 state, and document it as sim state in L4 ownership categories.
+
+Mixed cases (some parameters at construction, others per-step) are common — the construction-side absorbs what it can; the threaded state carries the rest.
+
 ## Signature pattern
 
 Spec form (Haskell/Scheme-flavored, per `CLAUDE.md`):

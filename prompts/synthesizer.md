@@ -97,46 +97,58 @@ content; the spec is technical reference, not prose.
 
 (Added 2026-05-24 meta-review.)
 
-### Diff hygiene
+### File-create vs diff (output channels)
 
-(Strengthened 2026-05-24 meta-review #4 after recurrence #1 — cycles
-2 and 12 both failed with header/body line-count mismatch despite
-this rule existing since meta-review #1.)
+(Added 2026-05-24 meta-review #5 after recurrence #2 — cycles 13/14/15
+all failed `git apply` on new-file unified diffs despite the strengthened
+producer-side checklist. Per the cycles-10-12 watch list, recurrence #2
+escalated to a tooling-level intervention.)
 
-Your diffs are applied via `git apply`. They MUST parse:
+Your JSON output now carries TWO write channels:
+
+- **`file_creates`** (array of `{path, content}`): for **brand-new files**
+  that don't exist yet. The orchestrator writes them directly. NO unified
+  diff parsing, NO `@@` header counting. Always use this for new slice
+  files, new concept entries, new design artifacts.
+- **`diff`** (unified-diff string): for **modifications to existing
+  files**. Standard `--- a/<path>` / `+++ b/<path>` headers; the
+  diff-hygiene checklist (below) still applies here.
+
+Use `file_creates` for any file that doesn't exist on disk. Use `diff`
+for any file that does. The orchestrator checks existence and refuses to
+mix them (a `file_creates` entry for a path that exists is an error; a
+diff that targets a missing file should have been a `file_creates`).
+
+Safety: `file_creates` paths must be under repo-tracked spec paths
+(`book/`, `scaffolding/`, `concepts/`, etc.); the orchestrator rejects
+anything else. The agent loop does NOT write to source (`reference/`,
+`prompts/`, `mcp/codemap/`, etc.) — those are out of the per-cycle
+agent's authority; methodology changes go through meta-review.
+
+### Diff hygiene (for existing-file edits only)
+
+(Strengthened 2026-05-24 meta-review #4. Scope clarified meta-review #5:
+applies only to the `diff` channel above, not to `file_creates`.)
+
+Your `diff` field is applied via `git apply`. It MUST parse:
 
 - The `@@ -A,B +C,D @@` hunk-header line counts must match the body
-  exactly. For a new-file diff: `@@ -0,0 +1,N @@` — N is the number of `+`
-  lines in the hunk body. Off-by-one or off-by-many means corrupt patch.
+  exactly. Off-by-one or off-by-many means corrupt patch.
 - Every diff ends with a trailing newline.
-- Do not hand-craft `@@` headers — count actual `+` lines and let that
-  count drive the header.
+- Do not hand-craft `@@` headers — count actual `+` / `-` lines and
+  let that count drive the header.
 
-**Pre-emit checklist (mandatory).** Before emitting a diff:
+**Pre-emit checklist (mandatory for existing-file diffs).** Before
+emitting a diff:
 
-1. **Count the `+` lines** between the `+++` header and the end of the
-   diff. This count is N.
-2. **Verify N matches the `@@ -X,Y +Z,N @@` header**. If you wrote
-   `@@ -0,0 +1,166 @@`, the body must contain exactly 166 lines starting
-   with `+`. Off-by-one off-by-many → corrupt patch → diff rejected.
-3. **Restate the line count in the diff's surrounding text** so a
-   pre-commit reviewer (or your own next-pass review) can spot the
-   mismatch. Example: "Diff body: 118 `+` lines, matching the
-   `@@ -0,0 +1,118 @@` header."
+1. **Count the `+` and `-` lines** between the `+++` header and the end
+   of the hunk.
+2. **Verify the counts match the `@@` header**.
+3. **Restate the counts in surrounding text** for review reproducibility.
 
-**For new files, the safest pattern** is `--- /dev/null` for the "from"
-side and `+++ b/path/to/new/file.md` for the "to" side. This avoids any
-ambiguity about whether the file pre-existed.
-
-**Future tooling note.** If diff-apply failures recur a third time
-across all slices, the loop will gain an MCP file-creation tool (Medium
-MCP service change per the meta-review protocol) so new-file emission
-no longer goes through unified-diff parsing. Until then, the per-emit
-checklist above is the protection.
-
-A `git apply` failure is a friction signal that gets recorded against
-the cycle. Recurring failures escalate to tooling changes — your
-pre-emit checklist is the producer-side prevention.
+A `git apply` failure on existing-file edits is a friction signal that
+gets recorded against the cycle. New-file emission should use
+`file_creates` (above) — that path avoids the failure mode entirely.
 
 ### Rotation_claim coverage
 

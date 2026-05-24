@@ -75,6 +75,8 @@ The L_{n+1} primitive chain is the **same shape** across parameter values, with 
 
 A rotation whose L_{n+1} chain has different lengths or different primitives per parameter value is **not** primitive-sequence absorbed. Cycle 7's GMRES (right-fixed-M needs trailing `M.apply`; left and FGMRES don't) is the worked counter-example — three sequences masquerading as one.
 
+**Note (added 2026-05-24 meta-review #5):** Achieving primitive-sequence absorption may require **state-schema changes**, not just a constructed operator. When the variant is *per-step* (e.g., FGMRES with `M_k` changing between Arnoldi iterations), constructing an operator can't absorb the variant — the threaded sim state itself must expand (add the per-step preconditioned basis `Z` to L1 state). See `constructed-operators.md` *Limits of constructed-operator absorption* for the worked GMRES↔FGMRES example and the decision rule.
+
 ## Partial absorption: how to disclose
 
 A rotation that achieves (a) but not (b) or (c) is **partially absorbed**. The slice must say so explicitly — silent partial absorption is the failure mode this concept addresses.

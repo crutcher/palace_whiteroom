@@ -124,6 +124,27 @@ the per-cycle Critic missed at emit time. The sanity statement
 exposes "pass-without-exercise" before it accumulates as silent
 methodology drift.
 
+### Diff-apply override (added 2026-05-24 meta-review #5)
+
+The orchestrator applies a hard rule: **if a cycle's diff fails to
+apply (corrupt patch, path not found, etc.), the verdict is
+auto-downgraded from `pass` to `revise`** regardless of the Critic's
+assessment of the claims. A cycle whose diff did not apply has not
+produced any persistent artifact; passing it would falsely advance
+the project scoreboard.
+
+The Critic does not need to detect diff-apply failure (the Critic
+verdicts before apply runs). This rule lives in the orchestrator's
+`run_normal_cycle` and is automatic. The Critic should still verdict
+based on claim quality; the override only fires when the diff
+materially didn't land.
+
+Cycles 13 and 15 are the originating examples: both verdicted `pass`
+on substantive claims, but `gmres.md` was not created on disk
+because the unified-diff failed. With this rule, those cycles would
+have been auto-downgraded to `revise`, prompting the next cycle to
+re-emit (and now, via `file_creates`, succeed).
+
 ALSO surface FRICTION SIGNALS: if a rotation is technically correct but obviously
 labored — special cases, exception branches, forced-fit transformations — that
 is a `labored_rotation_push_back_candidate`. Include a `push_back_suggestion`:

@@ -28,6 +28,28 @@ from .schemas import SchemaSet, load_schemas
 from .state import State
 
 
+_SAFE_CREATE_PREFIXES = (
+    "book/src/",
+    "scaffolding/",
+    "problems/",
+)
+
+
+def _is_safe_create_path(rel: str) -> bool:
+    """True iff `rel` is a path the agent loop is allowed to create directly.
+
+    Safe prefixes: book/src/, scaffolding/, problems/. The cycle commits
+    apply only to CYCLE_OWNED_PATHS (per state.py); creating outside those
+    paths would be staged-but-not-committed, OR worse, written into
+    infrastructure code the loop must not modify.
+
+    Also rejects path traversal (`..`), absolute paths, and empty paths.
+    """
+    if not rel or rel.startswith("/") or ".." in rel.split("/"):
+        return False
+    return any(rel.startswith(p) for p in _SAFE_CREATE_PREFIXES)
+
+
 def _next_cycle_id(state: State) -> int:
     entries = state.read_episodic_window(10_000)
     if not entries:
@@ -129,7 +151,7 @@ async def run_normal_cycle(
             total_usage.input_tokens += ex_usage.input_tokens
             total_usage.output_tokens += ex_usage.output_tokens
 
-    diff, claims, syn_usage = call_synthesizer(
+    diff, claims, file_creates, syn_usage = call_synthesizer(
         state=state,
         cfg=cfg,
         client=client,
@@ -173,7 +195,38 @@ async def run_normal_cycle(
     # embedded problems for iterative refinement). 8 GMRES cycles produced
     # 0 bytes of accumulated spec content.
     push_back_signals: list[str] = []
+    apply_failed = False
     if verdict["verdict"] in ("pass", "revise"):
+        # 1. file_creates first (new files) — added meta-review #5 to bypass
+        #    the unified-diff failure mode for new files (recurrences in
+        #    cycles 2, 12, 13, 14, 15 all hit `@@`-header line-count drift).
+        for create in (file_creates or []):
+            path = create.get("path", "") if isinstance(create, dict) else ""
+            content = create.get("content", "") if isinstance(create, dict) else ""
+            if not _is_safe_create_path(path):
+                push_back_signals.append(
+                    f"file_create rejected (unsafe path): {path!r}"
+                )
+                apply_failed = True
+                continue
+            full_path = state.repo_root / path
+            if full_path.exists():
+                push_back_signals.append(
+                    f"file_create rejected (path exists; use diff field): {path}"
+                )
+                apply_failed = True
+                continue
+            if dry_run:
+                print(f"[dry-run] would create {path} ({len(content)} bytes)")
+            else:
+                try:
+                    full_path.parent.mkdir(parents=True, exist_ok=True)
+                    full_path.write_text(content)
+                except Exception as e:
+                    push_back_signals.append(f"file_create failed for {path}: {e}")
+                    apply_failed = True
+
+        # 2. Apply diff for existing-file modifications.
         if diff.strip():
             if dry_run:
                 print(f"[dry-run] would apply diff ({diff.count(chr(10))} lines) "
@@ -183,6 +236,18 @@ async def run_normal_cycle(
                     state.apply_unified_diff(diff)
                 except RuntimeError as e:
                     push_back_signals.append(f"diff-apply failed: {e}")
+                    apply_failed = True
+
+    # Verdict-downgrade rule (meta-review #5 plan item 3): a cycle whose
+    # writes didn't land has no persistent artifact; do not advance the
+    # scoreboard. pass → revise.
+    if verdict["verdict"] == "pass" and apply_failed:
+        verdict["verdict"] = "revise"
+        push_back_signals.append(
+            "verdict auto-downgraded pass→revise: one or more writes did not land"
+        )
+        print(f"[cycle {state.cycle_id}] verdict auto-downgraded pass→revise (apply failure)")
+
     # For revise (and reject), also collect labored-rotation issues as push-back
     # signals so the next cycle's Planner can see them.
     if verdict["verdict"] != "pass":
