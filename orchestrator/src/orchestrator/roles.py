@@ -318,7 +318,12 @@ def call_synthesizer(
         f"  - `rotation_claims`: an array of one or more rotation_claim objects, each validating "
         f"against the schema below.\n\n"
         f"rotation_claim schema:\n```json\n{schema_text}\n```\n\n"
-        f"Output JSON ONLY — no prose, no markdown fence."
+        f"OUTPUT FORMAT: the FIRST character of your response must be `{{` and the LAST must "
+        f"be `}}`. No prose preamble (no '# Heading', no 'Here is...', no math notation like "
+        f"`{{r_0, Ar_0, ...}}`), no markdown fence, no trailing commentary. ANY content outside "
+        f"the single top-level JSON object will be parsed as the JSON output and fail. Use the "
+        f"`diff` string field for ALL prose / math / commentary that belongs in the slice file "
+        f"content."
     )
 
     response = client.messages.create(
@@ -484,11 +489,17 @@ def _parse_json_response(text: str) -> dict:
     Tolerant of:
     - leading/trailing whitespace
     - fenced code blocks (```json ... ``` or just ``` ... ```)
-    - leading or trailing prose around the JSON object (locates the first
-      `{` and its matching closing `}` via brace-depth tracking)
+    - leading / trailing / interspersed prose around the JSON object.
 
-    Raises ValueError with a snippet of the raw text if no JSON object can
-    be extracted — failing loud beats failing silent.
+    Strategy:
+    1. Strip surrounding fence if present, try parsing the whole text.
+    2. Otherwise: scan ALL top-level balanced `{...}` substrings and try
+       parsing each, longest first. The Synthesizer sometimes writes
+       prose containing math notation like `{r_0, Ar_0, ...}` BEFORE the
+       real JSON; the longest balanced substring is almost always the
+       real output, since JSON payloads are much longer than incidental
+       brace pairs in prose.
+    3. If none parse, raise with a snippet of the raw text.
     """
     raw = text
     text = text.strip()
@@ -505,24 +516,21 @@ def _parse_json_response(text: str) -> dict:
             lines = lines[:-1]
         text = "\n".join(lines).strip()
 
-    # Direct parse first.
+    # Try the whole text first — happens when the agent followed instructions.
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
 
-    # Brace-depth scan: locate the first balanced { ... } substring.
-    start = text.find("{")
-    if start < 0:
-        snippet = raw if len(raw) < 400 else raw[:400] + "...[truncated]"
-        raise ValueError(
-            f"no '{{' found in agent response; raw text (head): {snippet!r}"
-        )
+    # Collect ALL top-level balanced `{...}` substrings via single scan.
+    # "Top-level" = depth went from 0 → 1 at the opening `{` and back to 0
+    # at the closing `}`. Nested braces inside one candidate are handled.
+    candidates: list[str] = []
     depth = 0
+    start = -1
     in_string = False
     escape = False
-    for i in range(start, len(text)):
-        ch = text[i]
+    for i, ch in enumerate(text):
         if in_string:
             if escape:
                 escape = False
@@ -530,24 +538,41 @@ def _parse_json_response(text: str) -> dict:
                 escape = True
             elif ch == '"':
                 in_string = False
-        else:
-            if ch == '"':
-                in_string = True
-            elif ch == "{":
-                depth += 1
-            elif ch == "}":
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            if depth > 0:
                 depth -= 1
-                if depth == 0:
-                    candidate = text[start : i + 1]
-                    try:
-                        return json.loads(candidate)
-                    except json.JSONDecodeError as e:
-                        snippet = candidate if len(candidate) < 400 else candidate[:400] + "...[truncated]"
-                        raise ValueError(
-                            f"located JSON object did not parse: {e}\nCandidate (head): {snippet!r}"
-                        )
-    snippet = raw if len(raw) < 400 else raw[:400] + "...[truncated]"
+                if depth == 0 and start >= 0:
+                    candidates.append(text[start : i + 1])
+                    start = -1
+
+    if not candidates:
+        snippet = raw if len(raw) < 400 else raw[:400] + "...[truncated]"
+        raise ValueError(
+            f"no balanced '{{...}}' found in agent response; raw text (head): {snippet!r}"
+        )
+
+    # Longest candidate first — JSON payloads dwarf incidental brace pairs.
+    last_err = None
+    for cand in sorted(candidates, key=len, reverse=True):
+        try:
+            return json.loads(cand)
+        except json.JSONDecodeError as e:
+            last_err = e
+            continue
+
+    snippet_text = raw if len(raw) < 400 else raw[:400] + "...[truncated]"
+    candidate_snippets = "; ".join(
+        f"{c[:80]!r}..." if len(c) > 80 else repr(c) for c in candidates[:5]
+    )
     raise ValueError(
-        f"unbalanced braces in agent response; could not extract JSON. "
-        f"Raw text (head): {snippet!r}"
+        f"found {len(candidates)} balanced '{{...}}' candidate(s); none parsed as JSON. "
+        f"Last error: {last_err}. Candidate heads: {candidate_snippets}. "
+        f"Raw text (head): {snippet_text!r}"
     )
