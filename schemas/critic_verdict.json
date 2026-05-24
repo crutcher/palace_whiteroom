@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://palace-whiteroom/schemas/critic_verdict.json",
+  "title": "CriticVerdict",
+  "description": "Produced by the per-cycle Critic for each Synthesizer output. Pass / revise / reject plus per-claim issues.",
+  "type": "object",
+  "required": ["verdict", "issues"],
+  "properties": {
+    "verdict": { "enum": ["pass", "revise", "reject"] },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["claim_index", "kind", "description"],
+        "properties": {
+          "claim_index": { "type": "integer" },
+          "kind": {
+            "enum": [
+              "citation_does_not_support",
+              "rotation_chain_breaks",
+              "mutation_pattern_mismatch",
+              "ownership_misclassified",
+              "missing_case",
+              "load_bearing_trick_classified_as_transparent",
+              "unclear",
+              "labored_rotation_push_back_candidate"
+            ]
+          },
+          "description": { "type": "string" },
+          "push_back_suggestion": {
+            "type": "string",
+            "description": "For labored_rotation_push_back_candidate: which lower-layer change would eliminate the friction?"
+          }
+        }
+      }
+    },
+    "lesson": {
+      "type": "string",
+      "description": "Optional cross-cycle pattern note appended to lessons.md."
+    }
+  }
+}

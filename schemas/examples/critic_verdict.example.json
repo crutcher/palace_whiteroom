@@ -1,0 +1,17 @@
+{
+  "verdict": "revise",
+  "issues": [
+    {
+      "claim_index": 0,
+      "kind": "mutation_pattern_mismatch",
+      "description": "L1 claim 0 records mutation_pattern=in_place_overwrite for r := b - A.x. Reading iterative.cpp:380 shows the source path is `A.Mult(x, r); r.Add(-1.0, b); r *= -1;` — the second operation accumulates into r (Add is read-modify-write), so the L1 pattern should be `accumulator`, not `in_place_overwrite`."
+    },
+    {
+      "claim_index": 1,
+      "kind": "labored_rotation_push_back_candidate",
+      "description": "L1→L2 for p update treats the alias_with_input on p as something to erase at L2. The Synthesizer's push_back_proposal asks whether L1 needs alias semantics at all — this is the right question. Recommend a BACK push on the cg slice to simplify L1 for p.",
+      "push_back_suggestion": "Change L1 mutation_pattern for the p buffer from alias_with_input to in_place_overwrite, dropping the alias-tracking annotation that L2 erases anyway. This removes labor from every L1→L2 rotation that touches an iterate buffer."
+    }
+  ],
+  "lesson": "When L2 erases an L1 distinction (e.g., aliasing), the L1 record should not carry that distinction unless it's load-bearing for some other layer."
+}

@@ -1,0 +1,12 @@
+{
+  "slice": "cg",
+  "edge": "L1→L2",
+  "from_form": "r := b - A.x;  p := r;  for k in 0..N: alpha := <r,r>/<p, A.p>; x += alpha*p; r_new := r - alpha*A.p; beta := <r_new,r_new>/<r,r>; p := r_new + beta*p; r := r_new.",
+  "to_form": "step(state) = let A_p = apply_linop(A, state.p) in let alpha = dot(state.r, state.r) / dot(state.p, A_p) in let x' = axpy(alpha, state.p, state.x) in let r' = axpy(-alpha, A_p, state.r) in let beta = dot(r', r') / dot(state.r, state.r) in let p' = axpy(beta, state.p, r') in { x: x', r: r', p: p', rr: dot(r', r') }",
+  "justification_kind": "algebraic",
+  "justification": "Unfold the source's fused inner-product / axpy kernels into named primitives: apply_linop (was A.Mult(p, A_p)), dot (was operator*(a,b) returning the scalar), axpy (was x.Add(alpha, p)). The expression-level equivalence is mechanical — each L1 fused step decomposes into one or two L2 primitive applications with no algebraic identity invoked. The state record { x, r, p, rr } captures the four buffers the source mutates; the per-step output is the new record. The L1 alias_with_input on p is erased — at L2 we describe the algebraic update p' = beta*p + r' regardless of buffer identity.",
+  "push_back_proposal": {
+    "target_layer": "L1",
+    "proposal": "L1 currently records alias_with_input on p. Consider whether the L2 form needs L1 to carry alias semantics at all — the L2 form is alias-free by construction. Could simplify L1 to in_place_overwrite for the buffer p and lose nothing semantic."
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://palace-whiteroom/schemas/refinement_plan.json",
+  "title": "RefinementPlan",
+  "description": "Produced by the Meta-Critic during meta-review. Categorized friction, direct (LOW) actions, MEDIUM plan items requiring human approval, and HIGH escalations.",
+  "type": "object",
+  "required": ["meta_review_date", "cycles_covered", "categorized_issues", "direct_actions", "plan_items", "escalations"],
+  "properties": {
+    "meta_review_date": { "type": "string", "format": "date" },
+    "cycles_covered":   { "type": "array", "items": { "type": "integer" } },
+    "categorized_issues": {
+      "type": "object",
+      "properties": {
+        "low":    { "type": "array", "items": { "type": "string" } },
+        "medium": { "type": "array", "items": { "type": "string" } },
+        "high":   { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "direct_actions": {
+      "type": "array",
+      "description": "LOW-cascade items applied directly during the meta-review.",
+      "items": {
+        "type": "object",
+        "required": ["issue", "file", "change_summary"],
+        "properties": {
+          "issue": { "type": "string" },
+          "file":  { "type": "string" },
+          "change_summary": { "type": "string" }
+        }
+      }
+    },
+    "plan_items": {
+      "type": "array",
+      "description": "MEDIUM-cascade items requiring human approval before enactment. Includes prompt revisions, methodology adjustments, slice-convention changes, new concepts/ entries, role-granularity shifts, and MCP server service changes.",
+      "items": {
+        "type": "object",
+        "required": ["issue", "proposed_change", "cascade_trace", "risk_notes"],
+        "properties": {
+          "issue": { "type": "string" },
+          "proposed_change": {
+            "type": "object",
+            "properties": {
+              "file":  { "type": "string" },
+              "edit_description": { "type": "string" }
+            }
+          },
+          "cascade_trace": { "type": "array", "items": { "type": "string" } },
+          "risk_notes":    { "type": "string" },
+          "depends_on":    { "type": "array", "items": { "type": "integer" } }
+        }
+      }
+    },
+    "escalations": {
+      "type": "array",
+      "description": "HIGH-cascade items the Meta-Critic surfaces but does not propose changes for. Layer-count/semantics changes, L4 calculus revisions, core process-model changes, introduction of a new agent role.",
+      "items": {
+        "type": "object",
+        "required": ["issue", "why_high"],
+        "properties": {
+          "issue": { "type": "string" },
+          "why_high": { "type": "string" }
+        }
+      }
+    }
+  }
+}

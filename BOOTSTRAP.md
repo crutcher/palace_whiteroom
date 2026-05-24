@@ -215,7 +215,7 @@ New entries are **prepended**, not appended — newest below the `---`, above ol
 
 ## Phase 3 — Typed schemas
 
-Three JSON Schemas under `schemas/`:
+Four JSON Schemas under `schemas/`:
 
 ### `schemas/exploration_finding.json`
 

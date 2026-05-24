@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://palace-whiteroom/schemas/exploration_finding.json",
+  "title": "ExplorationFinding",
+  "description": "Produced by the Explorer (per-cycle role). Provides L0 (cited source ranges) + L1 (pure-functional dataflow form) for one slice scope.",
+  "type": "object",
+  "required": ["slice", "scope_question", "citations", "l1_claims", "confidence"],
+  "properties": {
+    "slice": { "type": "string" },
+    "scope_question": { "type": "string" },
+    "citations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["file", "start_line", "end_line", "kind"],
+        "properties": {
+          "file": { "type": "string" },
+          "start_line": { "type": "integer", "minimum": 1 },
+          "end_line": { "type": "integer", "minimum": 1 },
+          "kind": { "enum": ["declaration", "definition", "call_site", "type", "comment"] }
+        }
+      }
+    },
+    "l1_claims": {
+      "type": "array",
+      "description": "Pure-functional dataflow form of the source ops. Explicit input set, output set, mutation/aliasing pattern observed.",
+      "items": {
+        "type": "object",
+        "required": ["statement", "inputs", "outputs", "mutation_pattern", "citation_indices"],
+        "properties": {
+          "statement": { "type": "string" },
+          "inputs":  { "type": "array", "items": { "type": "string" } },
+          "outputs": { "type": "array", "items": { "type": "string" } },
+          "mutation_pattern": { "enum": ["pure", "in_place_overwrite", "accumulator", "alias_with_input", "scratch_buffer", "complex_see_notes"] },
+          "citation_indices": { "type": "array", "items": { "type": "integer" } },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["question", "priority"],
+        "properties": {
+          "question": { "type": "string" },
+          "priority": { "enum": ["low", "medium", "high"] }
+        }
+      }
+    },
+    "confidence": { "enum": ["low", "medium", "high"] }
+  }
+}

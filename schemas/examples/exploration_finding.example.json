@@ -1,0 +1,43 @@
+{
+  "slice": "cg",
+  "scope_question": "How does CgSolver::Mult interact with the residual and search-direction vectors? Identify the in-place mutation pattern.",
+  "citations": [
+    {
+      "file": "palace/palace/linalg/iterative.hpp",
+      "start_line": 117,
+      "end_line": 150,
+      "kind": "declaration"
+    },
+    {
+      "file": "palace/palace/linalg/iterative.cpp",
+      "start_line": 360,
+      "end_line": 486,
+      "kind": "definition"
+    }
+  ],
+  "l1_claims": [
+    {
+      "statement": "r := b - A·x   (initial residual)",
+      "inputs": ["b", "x", "A"],
+      "outputs": ["r"],
+      "mutation_pattern": "in_place_overwrite",
+      "citation_indices": [1],
+      "notes": "Source writes into r via A.Mult then r.Add(-1, b); the workspace buffer is named r throughout the function body."
+    },
+    {
+      "statement": "p_{k+1} := r_{k+1} + (beta_k) * p_k   (CG search-direction update)",
+      "inputs": ["r_kp1", "p_k", "beta_k"],
+      "outputs": ["p_kp1"],
+      "mutation_pattern": "alias_with_input",
+      "citation_indices": [1],
+      "notes": "p is updated in place; the source uses p.Add(beta, p_prev) where p and p_prev are the same buffer aliased to the iteration index. Load-bearing aliasing — record it."
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Does the Mult interface guarantee y != x when A is structurally symmetric, or is in-place safe?",
+      "priority": "medium"
+    }
+  ],
+  "confidence": "high"
+}
