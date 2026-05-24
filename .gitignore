@@ -21,3 +21,14 @@ target/
 # File-based meta-review handshake — never committed; the file is the human
 # approval interface and gets cleared by the orchestrator after enactment.
 meta-review-pending.md
+
+# Secrets / credentials — never committed. The orchestrator reads
+# ANTHROPIC_API_KEY from the process environment, not from any file in
+# the repo, but if you set up direnv / a dotenv loader, these patterns
+# keep the key out of git.
+.env
+.env.*
+.envrc
+*.secret
+*.secrets
+**/credentials.json
