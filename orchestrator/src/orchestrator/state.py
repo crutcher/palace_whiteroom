@@ -114,11 +114,36 @@ class State:
                 f"git apply failed:\nSTDERR:\n{result.stderr}\nDIFF:\n{diff_text}"
             )
 
+    # Paths the orchestrator considers cycle-owned. `git add` is run against
+    # each (existence-tolerant) before commit. Anything outside these paths
+    # is left in the working tree — a developer making concurrent edits, an
+    # unrelated rename, etc., will NOT be captured by the cycle's audit
+    # commit.
+    #
+    # This was a real friction in the first end-to-end cycle (commit 8e5a480):
+    # the original implementation used `git add -A` which swept developer
+    # changes into the cycle commit. See scaffolding/decisions/.
+    CYCLE_OWNED_PATHS = (
+        "episodic.jsonl",
+        "LOG.md",
+        "lessons.md",
+        "questions.md",
+        "book",            # spec/, concepts/, design/, meta-reviews/
+        "scaffolding",     # cross-cutting notes the agents write
+        "problems",        # agent-filed out-of-band concerns
+    )
+
     def commit(self, message: str) -> str | None:
-        """git add -A && git commit -m <message>. Returns the new commit's
-        sha, or None if there was nothing to commit."""
-        subprocess.run(["git", "add", "-A"], cwd=self.repo_root, check=True)
-        # Check whether anything is actually staged.
+        """git add the cycle-owned paths; git commit if anything is staged.
+        Returns the new commit's sha, or None if there was nothing to commit.
+        """
+        for relpath in self.CYCLE_OWNED_PATHS:
+            full = self.repo_root / relpath
+            if not full.exists():
+                continue
+            # check=False — `git add` returns non-zero if the path is
+            # entirely untracked AND empty, which we don't care about.
+            subprocess.run(["git", "add", "--", relpath], cwd=self.repo_root, check=False)
         diff_check = subprocess.run(
             ["git", "diff", "--cached", "--quiet"],
             cwd=self.repo_root,
