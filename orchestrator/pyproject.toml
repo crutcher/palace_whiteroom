@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "palace-whiteroom-orchestrator"
+version = "0.1.0"
+description = "Per-cycle and meta-cycle agent loop for the Palace whiteroom dissection (BOOTSTRAP.md Phase 5)."
+requires-python = ">=3.11"
+license = { text = "MIT OR Apache-2.0" }
+
+dependencies = [
+    "anthropic>=0.40",      # Claude API SDK; prompt caching, tool use, retries.
+    "mcp>=1.0",             # Model Context Protocol Python SDK; client to codemap server.
+    "jsonschema>=4.0",      # Validates Explorer / Synthesizer / Critic / Meta-Critic outputs.
+    "click>=8.0",           # CLI.
+]
+
+[project.scripts]
+palace-orchestrator = "orchestrator.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["orchestrator*"]

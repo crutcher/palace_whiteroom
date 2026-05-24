@@ -11,7 +11,13 @@ target/
 # for shared config like mcp.json; the *.local.json files are not).
 .claude/*.local.json
 
-# Python virtual environments and bytecode caches anywhere under tools/.
-tools/**/.venv/
-tools/**/__pycache__/
-tools/**/*.pyc
+# Python virtual environments, bytecode caches, and editable-install metadata.
+# Applies repo-wide — orchestrator/, tools/, and any future Python project.
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/*.egg-info/
+
+# File-based meta-review handshake — never committed; the file is the human
+# approval interface and gets cleared by the orchestrator after enactment.
+meta-review-pending.md
