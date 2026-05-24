@@ -1,0 +1,28 @@
+[package]
+name = "palace-codemap"
+version = "0.1.0"
+edition = "2021"
+description = "MCP code-map server for the Palace whiteroom — tree-sitter-backed C++ navigation for the agent loop."
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "palace-codemap"
+path = "src/main.rs"
+
+[dependencies]
+rmcp            = { version = "1.7", features = ["server", "transport-io", "macros", "schemars"] }
+tree-sitter     = "0.25"
+tree-sitter-cpp = "0.23"
+tokio           = { version = "1", features = ["full"] }
+serde           = { version = "1", features = ["derive"] }
+serde_json      = "1"
+walkdir         = "2"
+globset         = "0.4"
+grep-searcher   = "0.1"
+grep-regex      = "0.1"
+toml            = "0.8"
+clap            = { version = "4", features = ["derive"] }
+anyhow          = "1"
+tracing         = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+schemars        = "1"

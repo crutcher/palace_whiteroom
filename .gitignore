@@ -3,3 +3,10 @@ reference/
 
 # mdBook build output (per book.toml build-dir = "book").
 book/book/
+
+# Cargo build artifacts (any crate under the tree).
+target/
+
+# Claude Code machine-local settings (the .claude/ dir itself IS tracked
+# for shared config like mcp.json; the *.local.json files are not).
+.claude/*.local.json

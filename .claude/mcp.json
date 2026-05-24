@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "palace-codemap": {
+      "command": "mcp/codemap/target/release/palace-codemap",
+      "args": ["--config", "config.toml"]
+    }
+  }
+}
