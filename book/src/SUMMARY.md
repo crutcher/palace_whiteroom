@@ -14,6 +14,7 @@
 # Concepts (shared library)
 
 - [Index](./concepts/index.md)
+  - [Dependency map](./concepts/dependency-map.md)
   - [rotation — methodology concept](./concepts/rotation.md)
   - [variant absorption — methodology concept](./concepts/variant-absorption.md)
   - [constructed operators — methodology concept](./concepts/constructed-operators.md)

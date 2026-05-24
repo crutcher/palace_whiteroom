@@ -70,6 +70,24 @@ existing concept entries by name where applicable, and propose new
 ones (as additional diff content in `book/src/concepts/<new>.md`) where
 the primitive doesn't exist yet.
 
+**Concept dependency map.** When a slice diff introduces a new concept
+entry (or substantially modifies an existing one's dependencies), the
+SAME diff MUST update `book/src/concepts/dependency-map.md`:
+- Add the new concept under the appropriate layer subsection.
+- List its dependencies (other concepts referenced in its body).
+- Update the mermaid graph for that layer.
+
+A concept entry that exists in `book/src/concepts/` but is not
+represented in the dependency map is structurally orphaned and fails
+slice-acceptance. The map is the cross-cutting view of the vocabulary;
+it is part of the spec, not a sidecar artifact.
+
+Optionally, the Synthesizer may also update the WIP scaffolding map at
+`scaffolding/concept-dependency-map.md` — to note a pending concept
+extraction observed in this cycle that wasn't completed (so the next
+Planner can schedule it), or to note a cross-cutting pattern that
+isn't yet a methodology concept but should be tracked.
+
 Output: a unified diff covering the relevant `book/src/spec/slices/<slice>.md`
 file (and possibly `book/src/concepts/<concept>.md` for new extractions), plus
 one or more `rotation_claim` JSON objects. Do not editorialize in the spec
