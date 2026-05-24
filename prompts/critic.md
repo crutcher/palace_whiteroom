@@ -29,6 +29,23 @@ verdict assembly and cross-cycle lesson extraction):
      do the test inputs and assertions support the L1 mutation pattern and
      the L2/L3 algebraic claims? A test assertion contradicting a claim is
      `citation_does_not_support` — tests are L0-equivalent evidence.
+  8. ROTATION QUALITY (per `book/src/concepts/rotation.md`, added 2026-05-24
+     meta-review). For each proposed rotation L_n → L_{n+1}, verify that
+     at least ONE of the following holds:
+       (a) **State hiding** — L_{n+1} hides at least one piece of state
+           that L_n exposed (e.g., an arnoldi_step primitive hides the
+           indexing/Givens accumulator threaded through L1).
+       (b) **Coarser substitution** — L_{n+1} admits substitution at a
+           grain L_n cannot (e.g., swap MGS↔CGS as a single primitive
+           swap at L2, where L1 would require re-threading collectives).
+       (c) **Threaded-state compression** — the state bundle through
+           L_{n+1} is strictly smaller, or strictly more abstract, than
+           at L_n.
+     If NONE hold, the proposed rotation is a renaming, not a rotation.
+     Verdict: `revise`, `kind: labored_rotation_push_back_candidate`,
+     `push_back_suggestion`: which lower-layer reframing would make a
+     real rotation possible, or recommend layer-merge if the rotation is
+     genuinely premature.
 
 ALSO surface FRICTION SIGNALS: if a rotation is technically correct but obviously
 labored — special cases, exception branches, forced-fit transformations — that
