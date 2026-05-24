@@ -33,6 +33,7 @@ Pure-functional re-expressions of in-place mutations from source. Each concept n
 graph BT
   %% Empty — populate as concepts are extracted.
   placeholder[(no concepts yet)]
+  orthogonalize_column --> variant-absorption
 ```
 
 ## L2 — algebraic decompositions

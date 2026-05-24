@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-24 cycle-18 — back orthog — revise
+
+- Synthesis: L0→L1 for orthog: orthogonalize_column primitive with variant∈{MGS,CGS,CGS2} absorbed parametrically; dot_op hook absorbs inner-product weighting; MPI collective shape disclosed as residual L2 cost axis.
+- Verdict: revise.
+- Friction: slice_write rejected (path exists; use mode=diff): book/src/spec/slices/orthog.md; verdict auto-downgraded pass→revise: one or more writes did not land.
+- Structural change: none.
 ## 2026-05-24 cycle-17 — forward divfree [L0→L1] — revise
 
 - Synthesis: divfree L0→L1 consolidated: corrected Mult(x,y) mutation pattern from alias_with_input to pure (per 2026-05-24 lesson on out-of-place wrappers); confirmed WeakDiv sign convention from explorer citations; surfaced NLEPS-exposes-but-doesn't-use observation as open question.
