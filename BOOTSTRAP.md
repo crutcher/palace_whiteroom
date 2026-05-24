@@ -167,7 +167,49 @@ The seed below names one question per solver plus shared-infrastructure and mesh
 
 **`friction_observed` and `push_back_signals` are first-class** — the Meta-Critic reads them together to detect cross-cycle friction patterns. **`structural_change` and `concepts_touched`** make the unification trail readable without diffing the whole `book/src/`.
 
-**DONE when:** all three files exist with the structure above, committed; the meta-review procedure (`book/src/meta-reviews/index.md`) is reachable from CLAUDE.md and BOOTSTRAP.md links.
+`LOG.md`: human-readable per-cycle narrative at the repo root. **Newest entry on top** (reverse chronological — the file is read top-down; the most recent state is what a reader most often wants). Written by the orchestrator at the end of every cycle (per-cycle AND meta-cycle) as part of the same atomic commit as the rest of the cycle's writes.
+
+LOG.md is the **narrative**; `episodic.jsonl` is the **structured data**; `book/src/meta-reviews/` is the **full meta-review record**. Each has its own audience: LOG.md for a human glancing in to see what the loop has been doing; `episodic.jsonl` for cross-cycle programmatic analysis; meta-review records for the detailed friction-integration history.
+
+Initial seed:
+
+```markdown
+# Cycle log
+
+Per-cycle human-readable summaries, newest first. Full structured detail in
+`episodic.jsonl`; full meta-review records in `book/src/meta-reviews/`.
+
+---
+
+(no entries yet)
+```
+
+Per-cycle entry format (prepended immediately below the `---` separator, above prior entries):
+
+```markdown
+## YYYY-MM-DD cycle-<N> — <push-kind> <slice> [<edge>] — <verdict>
+
+- Synthesis: <one-line summary of what the cycle produced>.
+- Verdict: <pass | revise | reject>. <Brief issues if not pass.>
+- Friction: <none | one-line>.
+- Structural change: <none | one-line>.
+```
+
+Meta-review entry format:
+
+```markdown
+## YYYY-MM-DD meta-review (cycles <N>–<M>) — <enacted | partial | deferred>
+
+- Window: <N> cycles. Push breakdown: <X FORWARD, Y BACK, Z SIDEWAYS>.
+- Cascade: <a> LOW applied; <b> MEDIUM plan items <approved|deferred>; <c> HIGH escalated.
+- Plan items enacted: <one-line summaries, semicolon-separated, or "none">.
+- Recurring patterns: <none | one-line description>.
+- Full record: `book/src/meta-reviews/YYYY-MM-DD.md`.
+```
+
+New entries are **prepended**, not appended — newest below the `---`, above older entries. The orchestrator's `prepend_log_entry` helper handles the prepend; do not append.
+
+**DONE when:** all four files (`questions.md`, `lessons.md`, `episodic.jsonl`, `LOG.md`) exist with the structure above, committed; the meta-review procedure (`book/src/meta-reviews/index.md`) is reachable from CLAUDE.md and BOOTSTRAP.md links.
 
 ---
 
@@ -689,20 +731,22 @@ def run_normal_cycle():
     cited_source = prefetch_citations(rotation_claims)
     verdict = call_critic(rotation_claims, cited_source)   # ISOLATED context
 
+    # All writes first — single atomic commit per cycle below.
     if verdict["verdict"] == "pass":
         apply_diff_to_book(rotation_claims)
-        commit(f"cycle: {push['kind']} {push.get('slice', '...')} → pass")
     else:
         for issue in verdict["issues"]:
             if issue["kind"] == "labored_rotation_push_back_candidate":
                 log_push_back_signal(issue)
             else:
                 update_questions_or_revise(issue)
-        commit(f"cycle: {push['kind']} {push.get('slice', '...')} → {verdict['verdict']}")
 
     if lesson := verdict.get("lesson"):
         append_lessons(lesson)
     append_episodic(push, rotation_claims, verdict)
+    prepend_log_entry(format_cycle_log_entry(push, rotation_claims, verdict))
+
+    commit(f"cycle: {push['kind']} {push.get('slice', '...')} → {verdict['verdict']}")
 
 def run_meta_review():
     """Pause-the-world meta-review. The normal loop is fully paused here."""
@@ -718,6 +762,7 @@ def run_meta_review():
 
     write_meta_review_record(plan, applied=...)
     annotate_resolved_problems(plan)
+    prepend_log_entry(format_meta_review_log_entry(plan))
     commit("meta-review: <date>")
 ```
 

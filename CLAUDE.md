@@ -59,6 +59,7 @@ reference/           # local clones of palace, bunsen, burn, tensorflow-java (gi
 questions.md         # open/closed question ledger — surfaces unknowns
 lessons.md           # cross-run lessons appended by the Critic
 episodic.jsonl       # append-only per-cycle log (becomes the research record)
+LOG.md               # human-readable per-cycle narrative — newest entry on top
 config.toml          # target paths, language, model ids, budgets
 schemas/             # exploration_finding.json, critic_verdict.json
 prompts/             # planner.md, explorer.md, synthesizer.md, critic.md
