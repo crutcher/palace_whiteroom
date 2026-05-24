@@ -79,6 +79,106 @@ class State:
             text = text.rstrip() + f"\n{date}  {lesson}\n"
         path.write_text(text)
 
+    def append_lesson_unique(self, lesson: str) -> bool:
+        """Dedupe-on-append lesson. Returns True if appended, False if the
+        exact line already exists. Date prefix is added at write time."""
+        path = self.repo_root / "lessons.md"
+        text = path.read_text()
+        if lesson.strip() in text:
+            return False
+        self.append_lessons(lesson)
+        return True
+
+    def create_concept_file(self, name: str, content: str) -> bool:
+        """Write a new concept file at book/src/concepts/<name>.md. Returns
+        True if created, False if already exists (no-op; caller may want
+        append_concept_section instead)."""
+        path = self.repo_root / "book/src/concepts" / f"{name}.md"
+        if path.exists():
+            return False
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not content.endswith("\n"):
+            content += "\n"
+        path.write_text(content)
+        return True
+
+    def append_concept_section(self, name: str, section_md: str) -> bool:
+        """Append a `## Heading`-led section to an existing concept file.
+        `section_md` MUST start with the leading `## Heading` line.
+        Idempotent on the heading: returns False (no append) if the exact
+        heading line already exists in the file. Raises FileNotFoundError
+        if the concept file doesn't exist."""
+        path = self.repo_root / "book/src/concepts" / f"{name}.md"
+        if not path.exists():
+            raise FileNotFoundError(
+                f"concept file does not exist: {path.relative_to(self.repo_root)}"
+            )
+        section_md = section_md.strip()
+        first_line = section_md.splitlines()[0] if section_md else ""
+        if not first_line.startswith("##"):
+            raise ValueError(
+                f"append_concept_section expects a leading `## Heading` line; got: {first_line!r}"
+            )
+        text = path.read_text()
+        if first_line in text:
+            return False  # section already present (idempotent)
+        text = text.rstrip() + "\n\n" + section_md + "\n"
+        path.write_text(text)
+        return True
+
+    _DEPMAP_LAYER_HEADERS = {
+        "methodology": "## Methodology concepts",
+        "L1":          "## L1 —",
+        "L2":          "## L2 —",
+        "L3":          "## L3 —",
+        "L4":          "## L4 —",
+    }
+
+    def add_dependency_map_edge(self, layer: str, from_: str, to_list: list[str]) -> int:
+        """Add edges to `book/src/concepts/dependency-map.md`'s mermaid block
+        for the given layer. Idempotent: each edge is added only if not
+        already present in the mermaid block (text-substring check).
+        Returns the number of NEW edges added (0 if all already present).
+
+        When `to_list` is empty, just records the node (currently a no-op
+        for the mermaid syntax — mermaid auto-creates nodes from edges; an
+        isolated node has no rendering. The node appears once it gets an
+        edge.)"""
+        import re
+        path = self.repo_root / "book/src/concepts/dependency-map.md"
+        text = path.read_text()
+        header_prefix = self._DEPMAP_LAYER_HEADERS.get(layer)
+        if not header_prefix:
+            raise ValueError(f"unknown layer: {layer!r} (expected one of {list(self._DEPMAP_LAYER_HEADERS)})")
+        sec_start = text.find(header_prefix)
+        if sec_start < 0:
+            raise RuntimeError(f"layer section {header_prefix!r} not found in dependency-map.md")
+        next_section = text.find("\n## ", sec_start + 1)
+        if next_section < 0:
+            next_section = len(text)
+        section_text = text[sec_start:next_section]
+        # Find the first ```mermaid block in this section.
+        m = re.search(r"```mermaid\n(.*?)\n```", section_text, re.DOTALL)
+        if not m:
+            raise RuntimeError(f"no ```mermaid block in section {header_prefix!r}")
+        body = m.group(1)
+        new_lines: list[str] = []
+        for to_ in to_list:
+            edge_line = f"  {from_} --> {to_}"
+            if edge_line not in body:
+                new_lines.append(edge_line)
+        if not new_lines:
+            return 0
+        new_body = body.rstrip() + "\n" + "\n".join(new_lines)
+        new_section = section_text.replace(
+            f"```mermaid\n{body}\n```",
+            f"```mermaid\n{new_body}\n```",
+            1,
+        )
+        text = text[:sec_start] + new_section + text[next_section:]
+        path.write_text(text)
+        return len(new_lines)
+
     def write_meta_review_pending(self, plan_md: str) -> Path:
         """Write the file-based meta-review handshake. Returns the path
         written. The marker at the bottom is the human-toggled approval."""

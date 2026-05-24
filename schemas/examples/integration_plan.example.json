@@ -1,0 +1,42 @@
+{
+  "slice_writes": [
+    {
+      "path": "gmres/step.md",
+      "mode": "create",
+      "content": "# gmres — step\n\n(Slice content here. Multi-file gmres slice uses a subdirectory.)\n"
+    }
+  ],
+  "concept_writes": [
+    {
+      "name": "arnoldi_step",
+      "mode": "create",
+      "content": "# arnoldi_step\n\nOne step of Arnoldi orthogonalization: extend a Krylov basis V by orthogonalizing A·V[j] against V[0..j], producing v_{j+1} and a new column of the Hessenberg matrix H.\n\n## Signature\n\n```\narnoldi_step :: KrylovOp -> Basis -> (Basis, HessenbergColumn)\n```\n\n## Dependencies\n\n- `matvec` (the A·v step)\n- `dot` (per-vector inner product)\n- `axpy` (subtraction of projections)\n- `norml2` (normalization)\n"
+    },
+    {
+      "name": "rotation",
+      "mode": "append-section",
+      "content": "## Constructed-operator route\n\nFor rotations where the hidden state is a config + tables that don't change during a solve, the construct-an-operator pattern is the canonical satisfaction of criterion (1). See `constructed-operators.md`.\n"
+    }
+  ],
+  "dependency_map_edges": [
+    { "layer": "L1", "from": "arnoldi_step", "to": ["matvec", "dot", "axpy", "norml2"] },
+    { "layer": "L1", "from": "matvec", "to": [] },
+    { "layer": "L1", "from": "dot", "to": [] },
+    { "layer": "L1", "from": "axpy", "to": [] },
+    { "layer": "L1", "from": "norml2", "to": [] }
+  ],
+  "lessons": [
+    "When the Synthesizer extracts arnoldi_step as a primitive, it should also extract the four L1 primitives it depends on (matvec, dot, axpy, norml2) in the same cycle if they don't already exist — the dependency map needs all the nodes to render coherently."
+  ],
+  "log_synthesis": "Extracted arnoldi_step concept from gmres slice; cross-referenced from rotation.md.",
+  "rotation_claims": [
+    {
+      "slice": "gmres",
+      "edge": "L1→L2",
+      "from_form": "GMRES L1 inner loop with inlined matvec / dot / axpy steps",
+      "to_form": "Composition: arnoldi_step ∘ givens_qr_step over the Krylov sequence",
+      "justification_kind": "structural",
+      "justification": "State hiding: the arnoldi_step primitive hides V[0..j] indexing, H column slot, scratch w buffer. Caller writes (basis', H_col) = arnoldi_step(op, basis) rather than threading the full state. Carry-through: matvec, dot, axpy carry through unchanged (already idiomatic at L2)."
+    }
+  ]
+}

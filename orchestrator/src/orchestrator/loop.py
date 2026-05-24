@@ -50,6 +50,156 @@ def _is_safe_create_path(rel: str) -> bool:
     return any(rel.startswith(p) for p in _SAFE_CREATE_PREFIXES)
 
 
+def _summarize_plan_for_critic(plan: dict) -> str:
+    """Build a text rendering of the plan's writes for the Critic to verify.
+    The Critic doesn't see the structured plan; it sees a readable summary
+    of what the plan will do (concept-writes, slice-writes paths and modes,
+    plus the diff strings if any). This preserves the Critic's existing
+    `diff` input contract while the underlying plan is structured."""
+    chunks: list[str] = []
+    for sw in plan.get("slice_writes", []) or []:
+        path = sw.get("path", "?")
+        mode = sw.get("mode", "create")
+        if mode == "create":
+            content = sw.get("content", "")
+            chunks.append(f"=== slice create: book/src/spec/slices/{path} ({len(content)} bytes) ===\n{content}")
+        elif mode == "diff":
+            chunks.append(f"=== slice diff: {path} ===\n{sw.get('diff', '')}")
+    for cw in plan.get("concept_writes", []) or []:
+        name = cw.get("name", "?")
+        mode = cw.get("mode", "create")
+        content = cw.get("content", "")
+        chunks.append(f"=== concept {mode}: book/src/concepts/{name}.md ({len(content)} bytes) ===\n{content}")
+    if plan.get("dependency_map_edges"):
+        edges = plan["dependency_map_edges"]
+        chunks.append(
+            "=== dependency_map_edges ===\n"
+            + "\n".join(f"{e.get('layer','?')}: {e.get('from','?')} -> {e.get('to', [])}" for e in edges)
+        )
+    if plan.get("lessons"):
+        chunks.append(
+            "=== lessons (append-dedupe) ===\n"
+            + "\n".join(f"- {l}" for l in plan["lessons"])
+        )
+    if plan.get("log_synthesis"):
+        chunks.append(f"=== log_synthesis ===\n{plan['log_synthesis']}")
+    return "\n\n".join(chunks)
+
+
+def _summarize_plan_dry_run(plan: dict) -> None:
+    sw_count = len(plan.get("slice_writes") or [])
+    cw_count = len(plan.get("concept_writes") or [])
+    de_count = len(plan.get("dependency_map_edges") or [])
+    le_count = len(plan.get("lessons") or [])
+    print(
+        f"[dry-run] would apply integration plan: "
+        f"{sw_count} slice_writes, {cw_count} concept_writes, "
+        f"{de_count} dependency_map_edges, {le_count} lessons"
+    )
+
+
+def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[str]) -> bool:
+    """Apply an integration plan to the project surface. Mutates state via
+    State's helpers. Appends any errors to push_back_signals. Returns True
+    iff any write failed (caller may downgrade verdict)."""
+    apply_failed = False
+
+    # 1. slice_writes
+    for sw in plan.get("slice_writes") or []:
+        rel = sw.get("path", "")
+        if not rel:
+            push_back_signals.append("slice_write rejected: missing path")
+            apply_failed = True
+            continue
+        full_rel = f"book/src/spec/slices/{rel.lstrip('/')}"
+        if not _is_safe_create_path(full_rel):
+            push_back_signals.append(f"slice_write rejected (unsafe path): {full_rel!r}")
+            apply_failed = True
+            continue
+        mode = sw.get("mode", "create")
+        full_path = state.repo_root / full_rel
+        if mode == "create":
+            if full_path.exists():
+                push_back_signals.append(
+                    f"slice_write rejected (path exists; use mode=diff): {full_rel}"
+                )
+                apply_failed = True
+                continue
+            try:
+                content = sw.get("content", "")
+                full_path.parent.mkdir(parents=True, exist_ok=True)
+                if not content.endswith("\n"):
+                    content += "\n"
+                full_path.write_text(content)
+            except Exception as e:
+                push_back_signals.append(f"slice_write create failed for {full_rel}: {e}")
+                apply_failed = True
+        elif mode == "diff":
+            try:
+                state.apply_unified_diff(sw.get("diff", ""))
+            except RuntimeError as e:
+                push_back_signals.append(f"slice_write diff failed for {full_rel}: {e}")
+                apply_failed = True
+        else:
+            push_back_signals.append(f"slice_write unknown mode {mode!r}")
+            apply_failed = True
+
+    # 2. concept_writes
+    for cw in plan.get("concept_writes") or []:
+        name = cw.get("name", "")
+        mode = cw.get("mode", "")
+        content = cw.get("content", "")
+        if not name or "/" in name or name.startswith("."):
+            push_back_signals.append(f"concept_write rejected (bad name): {name!r}")
+            apply_failed = True
+            continue
+        try:
+            if mode == "create":
+                created = state.create_concept_file(name, content)
+                if not created:
+                    push_back_signals.append(
+                        f"concept_write create skipped (already exists; use append-section): {name}"
+                    )
+                    # not a failure — the next cycle can refine
+            elif mode == "append-section":
+                state.append_concept_section(name, content)
+            else:
+                push_back_signals.append(f"concept_write unknown mode {mode!r}")
+                apply_failed = True
+        except FileNotFoundError as e:
+            push_back_signals.append(f"concept_write append-section failed: {e}")
+            apply_failed = True
+        except Exception as e:
+            push_back_signals.append(f"concept_write failed for {name}: {e}")
+            apply_failed = True
+
+    # 3. dependency_map_edges (idempotent)
+    for edge in plan.get("dependency_map_edges") or []:
+        try:
+            state.add_dependency_map_edge(
+                layer=edge.get("layer", ""),
+                from_=edge.get("from", ""),
+                to_list=edge.get("to", []),
+            )
+        except Exception as e:
+            push_back_signals.append(
+                f"dependency_map_edge failed for {edge.get('from','?')}: {e}"
+            )
+            apply_failed = True
+
+    # 4. lessons (dedupe-on-append)
+    for lesson in plan.get("lessons") or []:
+        if not isinstance(lesson, str) or not lesson.strip():
+            continue
+        try:
+            state.append_lesson_unique(lesson)
+        except Exception as e:
+            push_back_signals.append(f"lesson append failed: {e}")
+            apply_failed = True
+
+    return apply_failed
+
+
 def _next_cycle_id(state: State) -> int:
     entries = state.read_episodic_window(10_000)
     if not entries:
@@ -151,7 +301,7 @@ async def run_normal_cycle(
             total_usage.input_tokens += ex_usage.input_tokens
             total_usage.output_tokens += ex_usage.output_tokens
 
-    diff, claims, file_creates, syn_usage = call_synthesizer(
+    plan, syn_usage = call_synthesizer(
         state=state,
         cfg=cfg,
         client=client,
@@ -164,6 +314,10 @@ async def run_normal_cycle(
     total_usage.input_tokens += syn_usage.input_tokens
     total_usage.output_tokens += syn_usage.output_tokens
 
+    # Extract structured fields from the integration plan for downstream use.
+    claims = plan.get("rotation_claims") or []
+    diff_for_critic = _summarize_plan_for_critic(plan)
+
     cited_source = _prefetch_citations_from_claims(state, claims)
     verdict, cr_usage = call_critic(
         state=state,
@@ -172,71 +326,31 @@ async def run_normal_cycle(
         schemas=schemas,
         claims=claims,
         cited_source=cited_source,
-        diff=diff,
+        diff=diff_for_critic,
         dry_run=dry_run,
     )
     total_usage.input_tokens += cr_usage.input_tokens
     total_usage.output_tokens += cr_usage.output_tokens
     print(f"[cycle {state.cycle_id}] critic verdict: {verdict['verdict']}")
 
-    # ─────── writes ───────
-    # In dry-run mode: log what WOULD happen but skip all persistent state
-    # mutation (no diff apply, no episodic append, no LOG prepend, no commit).
-    #
-    # APPLY DISCIPLINE (clarified 2026-05-23 user feedback):
-    # - `pass`   → apply diff (clean accumulation; no friction embedded).
-    # - `revise` → APPLY diff (the surface accumulates with embedded friction;
-    #              the next cycle's Synthesizer reads the current slice + the
-    #              recent episodic + lessons + push_back_signals and refines).
-    # - `reject` → do NOT apply (content is fundamentally unsalvageable).
-    #
-    # The prior behavior was "pass apply; revise/reject block" — that broke
-    # the methodology's design intent (accumulate a working surface with
-    # embedded problems for iterative refinement). 8 GMRES cycles produced
-    # 0 bytes of accumulated spec content.
+    # ─────── integrator: apply the integration plan ───────
+    # The integrator processes each plan section with semantic-merge
+    # discipline:
+    # - slice_writes: file_creates (path-safe) and diffs (git apply)
+    # - concept_writes: create-or-append-section to concepts/ files
+    # - dependency_map_edges: idempotent edge addition to mermaid graphs
+    # - lessons: dedupe-on-append
+    # - log_synthesis: passed to the LOG.md entry builder below
+    # See `scaffolding/decisions/integration-plan-architecture.md` for design
+    # rationale. In serial cycles (current state), the integrator is single-
+    # threaded; Phase 8 parallelizes by queuing plans for serial application.
     push_back_signals: list[str] = []
     apply_failed = False
     if verdict["verdict"] in ("pass", "revise"):
-        # 1. file_creates first (new files) — added meta-review #5 to bypass
-        #    the unified-diff failure mode for new files (recurrences in
-        #    cycles 2, 12, 13, 14, 15 all hit `@@`-header line-count drift).
-        for create in (file_creates or []):
-            path = create.get("path", "") if isinstance(create, dict) else ""
-            content = create.get("content", "") if isinstance(create, dict) else ""
-            if not _is_safe_create_path(path):
-                push_back_signals.append(
-                    f"file_create rejected (unsafe path): {path!r}"
-                )
-                apply_failed = True
-                continue
-            full_path = state.repo_root / path
-            if full_path.exists():
-                push_back_signals.append(
-                    f"file_create rejected (path exists; use diff field): {path}"
-                )
-                apply_failed = True
-                continue
-            if dry_run:
-                print(f"[dry-run] would create {path} ({len(content)} bytes)")
-            else:
-                try:
-                    full_path.parent.mkdir(parents=True, exist_ok=True)
-                    full_path.write_text(content)
-                except Exception as e:
-                    push_back_signals.append(f"file_create failed for {path}: {e}")
-                    apply_failed = True
-
-        # 2. Apply diff for existing-file modifications.
-        if diff.strip():
-            if dry_run:
-                print(f"[dry-run] would apply diff ({diff.count(chr(10))} lines) "
-                      f"under verdict={verdict['verdict']}")
-            else:
-                try:
-                    state.apply_unified_diff(diff)
-                except RuntimeError as e:
-                    push_back_signals.append(f"diff-apply failed: {e}")
-                    apply_failed = True
+        if dry_run:
+            _summarize_plan_dry_run(plan)
+        else:
+            apply_failed = _apply_integration_plan(state, plan, push_back_signals)
 
     # Verdict-downgrade rule (meta-review #5 plan item 3): a cycle whose
     # writes didn't land has no persistent artifact; do not advance the
@@ -267,9 +381,27 @@ async def run_normal_cycle(
     elif verdict["verdict"] != "pass":
         friction_summary = f"verdict={verdict['verdict']}, {len(verdict.get('issues', []))} issue(s)"
 
+    # Structural-change summary built from the plan's contents and the apply result.
     structural_change = ""
-    if verdict["verdict"] == "pass" and diff.strip():
-        structural_change = f"applied diff ({diff.count(chr(10))} lines); {len(claims)} rotation_claim(s)"
+    if verdict["verdict"] in ("pass", "revise") and not apply_failed:
+        parts: list[str] = []
+        sw = len(plan.get("slice_writes") or [])
+        cw = len(plan.get("concept_writes") or [])
+        de = len(plan.get("dependency_map_edges") or [])
+        le = len(plan.get("lessons") or [])
+        if sw: parts.append(f"{sw} slice_write(s)")
+        if cw: parts.append(f"{cw} concept_write(s)")
+        if de: parts.append(f"{de} dep-map edge(s)")
+        if le: parts.append(f"{le} lesson(s)")
+        if parts:
+            structural_change = (
+                f"applied: {', '.join(parts)}; {len(claims)} rotation_claim(s)"
+            )
+
+    concepts_touched = [
+        cw.get("name", "") for cw in (plan.get("concept_writes") or [])
+        if isinstance(cw, dict) and cw.get("name")
+    ]
 
     episodic_entry = {
         "cycle_id": state.cycle_id,
@@ -280,7 +412,7 @@ async def run_normal_cycle(
         "friction_observed": friction_summary,
         "structural_change": structural_change,
         "push_back_signals": push_back_signals,
-        "concepts_touched": [],  # v2 — extract from diff
+        "concepts_touched": concepts_touched,
         "tokens_in": total_usage.input_tokens,
         "tokens_out": total_usage.output_tokens,
         "wallclock_ms": int((time.monotonic() - start) * 1000),
@@ -292,8 +424,8 @@ async def run_normal_cycle(
         edge=edge,
         verdict=verdict["verdict"],
         synthesis=(
-            f"{len(claims)} rotation_claim(s); "
-            f"{'diff applied' if (verdict['verdict']=='pass' and diff.strip()) else 'no diff applied'}"
+            plan.get("log_synthesis")
+            or f"{len(claims)} rotation_claim(s); {structural_change or 'no writes applied'}"
         ),
         friction=friction_summary or None,
         structural_change=structural_change or None,

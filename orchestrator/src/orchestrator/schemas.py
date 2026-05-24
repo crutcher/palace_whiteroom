@@ -15,6 +15,7 @@ SCHEMA_NAMES = (
     "rotation_claim",
     "critic_verdict",
     "refinement_plan",
+    "integration_plan",
 )
 
 

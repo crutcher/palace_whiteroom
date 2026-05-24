@@ -274,15 +274,17 @@ def call_synthesizer(
     edge: str,
     slice_name: str,
     dry_run: bool = False,
-) -> tuple[str, list[dict], list[dict], TokenUsage]:
-    """Returns (unified_diff, [rotation_claims], [file_creates], TokenUsage).
+) -> tuple[dict, TokenUsage]:
+    """Returns (integration_plan_dict, TokenUsage).
 
-    `file_creates` is a list of {path, content} dicts for brand-new files
-    the synthesizer wants to create. Added meta-review #5 to bypass the
-    unified-diff failure mode for new-file emission (recurrences in cycles
-    2/12/13/14/15 all hit `@@`-header line-count drift on new files).
-    The orchestrator writes these directly; safety checks live in
-    `loop._is_safe_create_path`.
+    The integration_plan validates against schemas/integration_plan.json
+    and structures all the cycle's writes (slice_writes, concept_writes,
+    dependency_map_edges, lessons, log_synthesis, rotation_claims).
+    The orchestrator's integrator (in loop.py) applies the plan.
+
+    Refactored 2026-05-23 from the prior (diff, claims, file_creates,
+    usage) shape per `scaffolding/decisions/integration-plan-architecture.md`.
+    Cuts over cleanly — no backward compatibility with the legacy shape.
     """
     usage = TokenUsage()
 
@@ -295,14 +297,25 @@ def call_synthesizer(
             "justification_kind": "structural",
             "justification": "[dry-run canned] no real synthesis happened",
         }
-        errors = validate(schemas, "rotation_claim", canned_claim)
-        assert not errors, f"dry-run canned claim fails schema: {errors}"
-        return "", [canned_claim], [], usage
+        plan = {
+            "slice_writes": [],
+            "concept_writes": [],
+            "dependency_map_edges": [],
+            "lessons": [],
+            "log_synthesis": "[dry-run canned] no real synthesis",
+            "rotation_claims": [canned_claim],
+        }
+        errors = validate(schemas, "integration_plan", plan)
+        assert not errors, f"dry-run canned plan fails schema: {errors}"
+        return plan, usage
 
     assert client is not None
     system_prompt = _load_prompt(state.repo_root, "synthesizer")
     current_slice = state.read_slice(slice_name)
-    schema_text = json.dumps(
+    plan_schema_text = json.dumps(
+        schemas.validators["integration_plan"].schema, indent=2,
+    )
+    claim_schema_text = json.dumps(
         schemas.validators["rotation_claim"].schema, indent=2,
     )
 
@@ -313,24 +326,18 @@ def call_synthesizer(
             f"Explorer's ExplorationFinding:\n```json\n{json.dumps(finding, indent=2)}\n```\n\n"
             if finding else ""
         )
-        + f"Produce the {edge} rotation for this slice. Output a SINGLE JSON object with THREE fields:\n"
-        f"  - `file_creates`: an array of `{{path, content}}` objects, one per NEW file the\n"
-        f"    cycle should create. Use this for slice files that don't exist yet, new concept\n"
-        f"    entries, etc. `path` must be under `book/src/`, `scaffolding/`, or `problems/`.\n"
-        f"    The orchestrator writes these directly — NO unified-diff parsing, NO `@@` header\n"
-        f"    counting. Use this channel for all new-file emission.\n"
-        f"  - `diff`: a unified diff (string) for MODIFICATIONS to existing files. Standard\n"
-        f"    `diff -u` format with `--- a/<path>` and `+++ b/<path>` headers. Do NOT include\n"
-        f"    new-file creation in this field — use `file_creates`. The diff-hygiene checklist\n"
-        f"    (count `+` and `-` lines, verify against `@@` header) applies here.\n"
-        f"  - `rotation_claims`: an array of one or more rotation_claim objects, each validating\n"
-        f"    against the schema below.\n\n"
-        f"rotation_claim schema:\n```json\n{schema_text}\n```\n\n"
-        f"OUTPUT FORMAT: the FIRST character of your response must be `{{` and the LAST must "
-        f"be `}}`. No prose preamble (no '# Heading', no 'Here is...', no math notation like "
-        f"`{{r_0, Ar_0, ...}}`), no markdown fence, no trailing commentary. ANY content outside "
+        + f"Produce the {edge} rotation as an INTEGRATION PLAN — a single JSON object validating "
+        f"against the schema below. Per `prompts/synthesizer.md` *Integration-plan output*, the "
+        f"plan structures all the cycle's writes (slice_writes, concept_writes, "
+        f"dependency_map_edges, lessons, log_synthesis, rotation_claims). The orchestrator's "
+        f"integrator applies them with semantic-merge discipline.\n\n"
+        f"integration_plan schema:\n```json\n{plan_schema_text}\n```\n\n"
+        f"rotation_claim schema (referenced by `rotation_claims`):\n```json\n{claim_schema_text}\n```\n\n"
+        f"OUTPUT FORMAT: the FIRST character of your response must be `{{` and the LAST must be "
+        f"`}}`. No prose preamble, no markdown fence, no trailing commentary. ANY content outside "
         f"the single top-level JSON object will be parsed as the JSON output and fail. Use the "
-        f"`file_creates[i].content` field for ALL slice-file prose / math / commentary."
+        f"`slice_writes[i].content` and `concept_writes[i].content` fields for ALL slice/concept "
+        f"prose, math, and commentary."
     )
 
     response = client.messages.create(
@@ -343,15 +350,21 @@ def call_synthesizer(
     final_text = "".join(
         b.text for b in response.content if getattr(b, "type", "") == "text"
     ).strip()
-    parsed = _parse_json_response(final_text)
-    diff = parsed.get("diff", "") or ""
-    claims = parsed.get("rotation_claims", []) or []
-    file_creates = parsed.get("file_creates", []) or []
-    for i, claim in enumerate(claims):
+    plan = _parse_json_response(final_text)
+
+    # Validate the plan envelope.
+    errors = validate(schemas, "integration_plan", plan)
+    if errors:
+        raise ValueError(f"Synthesizer plan failed schema: {errors}\nPlan keys: {list(plan.keys())}")
+
+    # Validate each rotation_claim individually (the plan schema accepts
+    # any object in rotation_claims; per-claim validation is here).
+    for i, claim in enumerate(plan.get("rotation_claims") or []):
         errors = validate(schemas, "rotation_claim", claim)
         if errors:
-            raise ValueError(f"Synthesizer claim {i} failed schema: {errors}\nClaim: {claim}")
-    return diff, claims, file_creates, usage
+            raise ValueError(f"Synthesizer plan rotation_claims[{i}] failed schema: {errors}\nClaim: {claim}")
+
+    return plan, usage
 
 
 # ───────────────────────────── Critic ─────────────────────────────

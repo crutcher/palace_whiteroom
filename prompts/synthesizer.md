@@ -97,33 +97,65 @@ content; the spec is technical reference, not prose.
 
 (Added 2026-05-24 meta-review.)
 
-### File-create vs diff (output channels)
+### Integration-plan output (replaces previous diff/file_creates fields)
 
-(Added 2026-05-24 meta-review #5 after recurrence #2 — cycles 13/14/15
-all failed `git apply` on new-file unified diffs despite the strengthened
-producer-side checklist. Per the cycles-10-12 watch list, recurrence #2
-escalated to a tooling-level intervention.)
+(Added 2026-05-23 user direction to switch to integration-plan-based
+unification — see `scaffolding/decisions/integration-plan-architecture.md`.
+Supersedes the file_creates + diff fields from meta-review #5.)
 
-Your JSON output now carries TWO write channels:
+Your entire JSON output is now an **integration plan** validating against
+`schemas/integration_plan.json`. The plan is a structured description of
+all the writes the cycle wants to make to the project surface. The
+orchestrator's integrator applies the plan section by section with
+semantic-merge discipline (idempotent edges, append-section semantics for
+concept extensions, dedupe-on-append for lessons).
 
-- **`file_creates`** (array of `{path, content}`): for **brand-new files**
-  that don't exist yet. The orchestrator writes them directly. NO unified
-  diff parsing, NO `@@` header counting. Always use this for new slice
-  files, new concept entries, new design artifacts.
-- **`diff`** (unified-diff string): for **modifications to existing
-  files**. Standard `--- a/<path>` / `+++ b/<path>` headers; the
-  diff-hygiene checklist (below) still applies here.
+The integration-plan fields:
 
-Use `file_creates` for any file that doesn't exist on disk. Use `diff`
-for any file that does. The orchestrator checks existence and refuses to
-mix them (a `file_creates` entry for a path that exists is an error; a
-diff that targets a missing file should have been a `file_creates`).
+- **`slice_writes`** (array of `{path, mode, content?, diff?}`): per-slice
+  file writes. `path` is relative to `book/src/spec/slices/`. `mode` is
+  `"create"` (new file; write `content`) or `"diff"` (modify existing
+  file; apply `diff` as unified diff).
 
-Safety: `file_creates` paths must be under repo-tracked spec paths
-(`book/`, `scaffolding/`, `concepts/`, etc.); the orchestrator rejects
-anything else. The agent loop does NOT write to source (`reference/`,
-`prompts/`, `mcp/codemap/`, etc.) — those are out of the per-cycle
-agent's authority; methodology changes go through meta-review.
+- **`concept_writes`** (array of `{name, mode, content}`): concept-page
+  writes. `name` is the concept slug (filename stem under
+  `book/src/concepts/`). `mode` is `"create"` (new concept entry; write
+  `content`) or `"append-section"` (extend an existing concept page; the
+  `content` MUST start with the leading `## Heading` line of the new
+  section, and the orchestrator skips silently if that heading already
+  exists). Multiple cycles touching the same concept page accumulate
+  non-conflictingly when they target distinct sections.
+
+- **`dependency_map_edges`** (array of `{layer, from, to}`): edges to
+  add to the concept dependency map's mermaid graph. `layer` is one of
+  `methodology / L1 / L2 / L3 / L4`. Idempotent: edges already present
+  are silently skipped. Use this to keep the dependency map in sync
+  with concept extractions — the slice prompt's "Concept dependency map"
+  requirement is now satisfied via this field, not via direct edits to
+  the map file.
+
+- **`lessons`** (array of strings): lesson lines to append to
+  `lessons.md`. Dedupe-on-append: identical lines already present are
+  silently skipped. Date prefix is added by the integrator.
+
+- **`log_synthesis`** (string): one-line summary of what the cycle
+  produced. The integrator builds the LOG.md entry from this plus
+  cycle metadata; do NOT format the LOG entry yourself.
+
+- **`rotation_claims`** (array): per-edge claims, each validating
+  against `schemas/rotation_claim.json`. Same as before.
+
+Safety: all paths in `slice_writes` and `concept_writes` are confined
+to `book/src/spec/slices/` and `book/src/concepts/` respectively; the
+orchestrator rejects anything else. The agent loop does NOT write to
+source (`reference/`, `prompts/`, `mcp/codemap/`, etc.) — those are
+out of per-cycle agent authority; methodology changes go through
+meta-review.
+
+The orchestrator's integrator is initially serial (one plan per cycle —
+same throughput as the prior code path). Phase 8 parallel cycles
+process plans serially through the integrator; that's where the
+"plans, not git merges" architecture earns its keep.
 
 ### Diff hygiene (for existing-file edits only)
 

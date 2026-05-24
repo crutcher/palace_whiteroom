@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://palace-whiteroom/schemas/integration_plan.json",
+  "title": "IntegrationPlan",
+  "description": "Produced by the Synthesizer per cycle. A structured description of all the writes the cycle wants to make to the project surface — slices, concepts, dependency-map edges, lessons, log entries. The orchestrator's integrator applies these section by section with semantic-merge discipline (idempotent edges, append-section semantics for concept extensions, dedupe-on-append for lessons). Designed to be the data structure the Phase-8 parallel-cycle integrator consumes; in the current serial model the integrator processes one plan per cycle. See `scaffolding/decisions/integration-plan-architecture.md` for design rationale.",
+  "type": "object",
+  "required": ["rotation_claims"],
+  "properties": {
+    "slice_writes": {
+      "type": "array",
+      "description": "Per-slice file writes. Each entry creates a new slice file or modifies an existing one.",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string", "description": "Relative path under book/src/spec/slices/, e.g., 'gmres/step.md' or 'orthog.md'." },
+          "mode": {
+            "type": "string",
+            "enum": ["create", "diff"],
+            "default": "create",
+            "description": "`create` for new files (write content directly); `diff` for modifications to existing files (apply as unified diff)."
+          },
+          "content": { "type": "string", "description": "For mode=create: the full file content." },
+          "diff": { "type": "string", "description": "For mode=diff: a unified-diff string targeting the existing file." }
+        }
+      }
+    },
+    "concept_writes": {
+      "type": "array",
+      "description": "Concept-page writes. Each entry creates a new concept entry or extends an existing one with a new section. Multiple cycles touching the same concept page accumulate non-conflictingly when they target distinct sections.",
+      "items": {
+        "type": "object",
+        "required": ["name", "mode"],
+        "properties": {
+          "name": { "type": "string", "description": "Concept slug, matches the filename stem under book/src/concepts/." },
+          "mode": {
+            "type": "string",
+            "enum": ["create", "append-section"],
+            "description": "`create` for new concept files; `append-section` to add a new ## section to an existing concept page."
+          },
+          "content": { "type": "string", "description": "For mode=create: the full concept-page content. For mode=append-section: the section content INCLUDING the leading `## Heading` line." }
+        }
+      }
+    },
+    "dependency_map_edges": {
+      "type": "array",
+      "description": "Edges to add to the concept dependency map (book/src/concepts/dependency-map.md). Idempotent: an edge that already exists is silently skipped. New nodes are added implicitly; new layer subsections need to be added via a separate slice_writes entry editing the file.",
+      "items": {
+        "type": "object",
+        "required": ["layer", "from", "to"],
+        "properties": {
+          "layer": { "type": "string", "enum": ["methodology", "L1", "L2", "L3", "L4"], "description": "Which layer subsection of the dependency map this edge belongs to." },
+          "from": { "type": "string", "description": "The concept that depends on the to-concepts." },
+          "to": { "type": "array", "items": { "type": "string" }, "description": "The concept(s) the from-concept depends on. May be empty for root concepts (just adds the node)." }
+        }
+      }
+    },
+    "lessons": {
+      "type": "array",
+      "description": "Lesson lines to append to lessons.md. Dedupe-on-append: if an identical line already exists in lessons.md, it's skipped. Date-prefix is added by the integrator.",
+      "items": { "type": "string" }
+    },
+    "log_synthesis": {
+      "type": "string",
+      "description": "One-line summary of what the cycle produced. The integrator builds the LOG.md entry from this plus cycle metadata (verdict, friction, structural_change) — the Synthesizer does NOT format the LOG entry directly."
+    },
+    "rotation_claims": {
+      "type": "array",
+      "description": "Per-edge rotation_claims, validating against schemas/rotation_claim.json. The Synthesizer's primary output for verification purposes.",
+      "items": { "type": "object" }
+    }
+  }
+}
