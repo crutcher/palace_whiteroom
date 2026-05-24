@@ -16,6 +16,8 @@ For a proposed L_n → L_{n+1} rotation to count, **at least ONE** of the follow
 
 L_{n+1} hides at least one piece of state that L_n exposed.
 
+**Canonical route: constructed operators.** When the state to be hidden is a config, table, or factorization that's set once and applied many times, the standard pattern is to **construct an operator** at the appropriate scope and call its `apply` method. The construction-time inputs are hidden inside the operator; the apply-time caller doesn't see them. See `book/src/concepts/constructed-operators.md`.
+
 **Worked example (GMRES, cycle 3 friction).** L1 threads `(V, H, s, cs, sn, j, w-scratch)` through the inner loop; the indexing arithmetic — `H.data() + j*(max_dim+1)`, `Hj[k] = …` for `k=0..j`, `V[0..j_final]` — is visible to the reader of L1. A genuine L2 rotation introduces an `arnoldi_step` primitive whose signature hides those threaded buffers: the caller writes `(state', residual_norm) = arnoldi_step(state, A, B)`. The Givens accumulator, the Hessenberg column slot, the orthogonalization scratch — all hidden inside the primitive's contract.
 
 If the proposed L2 still says `arnoldi_with_givens(V, H, j, ...)` with the same indices threading, no state was hidden, and (1) does not hold.

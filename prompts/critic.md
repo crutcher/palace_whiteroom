@@ -52,17 +52,46 @@ verdict assembly and cross-cycle lesson extraction):
      carrying through unchanged (with named idiomaticity at L_{n+1})
      passes this check provided at least one rotation happened.
   9. VARIANT ABSORPTION (per `book/src/concepts/variant-absorption.md`,
-     added 2026-05-24 meta-review #2). For each slice that contains
-     orthogonal axes of variation (e.g., FGMRES vs GMRES, MGS vs CGS2,
-     LEFT vs RIGHT vs NONE preconditioner side), verify that the L1
-     form either (a) absorbs the variants parametrically (variants are
-     parameter values of the main statement), or (b) explicitly scopes
-     out the variant to "Open questions" or a separate slice. Variants
-     bolted on at the end of L1 as appended paragraphs ("FGMRES delta
-     from GMRES: ...") fail this check. Verdict: `revise`,
+     added 2026-05-24 meta-review #2; expanded meta-review #3 with
+     levels of absorption). For each slice that contains orthogonal
+     axes of variation, verify the L1 form achieves all THREE levels:
+       (a) **Invariant-level**: the mathematical statement unifies.
+       (b) **Procedural**: the L1 procedure mentions the variant
+           parameter at most once (binding / dispatch), never
+           re-inspects it at multiple sites.
+       (c) **Primitive-sequence**: the L_{n+1} primitive chain has
+           the same shape across parameter values; the variant binds
+           only operands, not the chain.
+     Partial absorption (typically (a) without (b)/(c)) is acceptable
+     ONLY when the slice explicitly declares residual axes — listing
+     parameter re-inspection sites in L1 procedure and primitive-
+     sequence divergences in L_{n+1}. Silent partial absorption fails.
+     **Constructed operators** (per `book/src/concepts/constructed-
+     operators.md`) are a legitimate path to all three levels when
+     a variant would otherwise be deep-plumbed; a slice that uses
+     constructed operators to absorb variants passes this check.
+     Verdict on failure: `revise`,
      `kind: labored_rotation_push_back_candidate`,
-     `push_back_suggestion`: which parameter would unify the variants,
-     or which slice should hold the scoped-out variant.
+     `push_back_suggestion`: which parameter would unify the variants
+     (e.g., constructed operator with the variant internalized), or
+     which slice should hold a scoped-out variant.
+ 10. PROSE-ROTATION ALIGNMENT (added 2026-05-24 meta-review #3, from
+     cycle 8 friction). For each rotation_claim that passes the
+     structural rotation-quality check (#8), additionally verify the
+     L_n prose does not name the hidden machinery using L_{n+1}
+     mechanism terms. Distinguish in the verdict:
+       - **Structural** (check #8): the rotation didn't happen.
+       - **Prose-only** (check #10): the rotation happened structurally
+         but the L_n prose betrays it by naming the hidden mechanism.
+     Acceptable at L_n: naming the *role* the hidden machinery plays
+     (e.g., "incremental least-squares update"); one-line forward
+     references ("the QR update lives at L2"). Unacceptable at L_n:
+     using L_{n+1} mechanism terms inside the L_n procedural statement
+     (e.g., "maintain QR factorization of H̄_m via Givens rotations").
+     Verdict on failure: `revise`,
+     `kind: labored_rotation_push_back_candidate`, with
+     `push_back_suggestion` naming the specific prose terms to rewrite
+     and the role-level replacement.
 
 ALSO surface FRICTION SIGNALS: if a rotation is technically correct but obviously
 labored — special cases, exception branches, forced-fit transformations — that

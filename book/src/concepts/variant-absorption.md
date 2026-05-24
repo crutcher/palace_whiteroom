@@ -51,6 +51,49 @@ For each orthogonal axis of variation a slice exposes, ask: **can the variant be
 
 The "no, and bolt it on" path is **not** an option — that's the failure mode this concept exists to prevent.
 
+## Levels of absorption
+
+(Added 2026-05-24 meta-review #3, in response to cycles 7+9 friction where invariant-level absorption was achieved but procedural and primitive-sequence levels were not.)
+
+Variant absorption operates at three levels. A genuine absorption holds at **all three**; partial absorption — typically (a) without (b) or (c) — must be explicitly declared.
+
+### (a) Invariant-level absorption
+
+The mathematical statement unifies. Example: `x = x_0 + W_m y_m` with `W_m = V_m` for GMRES and `W_m = Z_m` for FGMRES is invariant-level absorbed — one equation, parameter binding chooses the variant.
+
+This is the level the original `variant-absorption.md` "parametric vs appended" test catches. Necessary but not sufficient.
+
+### (b) Procedural absorption
+
+The L1 procedure mentions the variant parameter **at most once**, in a binding or dispatch step, and never re-inspects it. Example: a procedure that says "let `op = construct_krylov_operator(A, M, side)`; then for each step, `w = op.apply(v)`" is procedurally absorbed — `side` appears once, at construction.
+
+A procedure that re-inspects the variant at multiple steps (`if side == LEFT: ...; elif side == RIGHT: ...`) is **not** procedurally absorbed even if the invariant unifies. Cycle 9's GMRES (`W ∈ {V, Z}` selector referenced at Arnoldi step AND solution update) is the worked counter-example.
+
+### (c) Primitive-sequence absorption
+
+The L_{n+1} primitive chain is the **same shape** across parameter values, with the parameter binding only the operands (not the chain itself). Example: `[matvec, dot, axpy]` for all `side` values, with the matvec's operator argument changing.
+
+A rotation whose L_{n+1} chain has different lengths or different primitives per parameter value is **not** primitive-sequence absorbed. Cycle 7's GMRES (right-fixed-M needs trailing `M.apply`; left and FGMRES don't) is the worked counter-example — three sequences masquerading as one.
+
+## Partial absorption: how to disclose
+
+A rotation that achieves (a) but not (b) or (c) is **partially absorbed**. The slice must say so explicitly — silent partial absorption is the failure mode this concept addresses.
+
+Required disclosure when ≥1 of (b)/(c) fails:
+
+- List the **parameter sites in L1 procedure** where the variant is re-inspected. The Critic uses this to verify completeness.
+- List the **primitive-sequence divergences in L_{n+1}** as **residual axes**. The Critic verifies these are necessary (genuinely irreducible) rather than absorbable through a different framing (e.g., constructed operators — see `constructed-operators.md`).
+
+A slice that achieves all three levels does not need a "residual axes" section. A slice that achieves only (a) and silently glosses over (b)/(c) fails Critic check #9.
+
+## Routes to full absorption
+
+When (b) or (c) fails, consider the canonical fixes:
+
+- **Constructed operators** (see `constructed-operators.md`). Construct an operator that internalizes the variant at construct time; per-step procedure is uniform. Resolves both (b) and (c) when the variant influences operator behavior but not algorithm shape.
+- **Restructure to eliminate the variant axis.** If the variant is forcing structural divergence at L_{n+1}, the variant may not actually be orthogonal — split the slice into per-variant slices that share L2 concepts.
+- **Accept partial absorption and document residual axes** (the disclosure path above). Acceptable when the variant is genuinely structural and constructed-operator absorption is not appropriate (e.g., the variant changes asymptotic convergence behavior, not just per-step machinery).
+
 ## What this is NOT
 
 - **Not a requirement that every axis be parametric.** Scoping-out is equally acceptable when the variant is genuinely deferable.

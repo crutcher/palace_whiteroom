@@ -138,23 +138,67 @@ check #8 verifies the named entities are real.
 
 ### Variant absorption
 
-(Added 2026-05-24 meta-review #2.)
+(Added 2026-05-24 meta-review #2; expanded meta-review #3 with levels of absorption + constructed-operator route.)
 
 When a slice has orthogonal axes of variation (e.g., GMRES's
 preconditioner side × orthogonalization variant × flexible vs. fixed
-preconditioner × restart vs. full), the L1 form must absorb them
-**parametrically** — variants are parameter values of one statement,
-not appended paragraphs.
+preconditioner × restart vs. full), the L1 form must absorb them at
+**all three levels** per `book/src/concepts/variant-absorption.md`:
+
+- **(a) Invariant-level**: the mathematical statement unifies.
+- **(b) Procedural**: the L1 procedure mentions the variant parameter
+  at most once (binding/dispatch), never re-inspects it.
+- **(c) Primitive-sequence**: the L_{n+1} primitive chain is the same
+  shape across parameter values.
+
+Partial absorption (typically (a) without (b)/(c)) is acceptable ONLY
+when explicitly disclosed — list parameter sites in L1 procedure and
+primitive-sequence divergences as residual axes. Silent partial
+absorption fails Critic check #9.
 
 Before emitting L1, enumerate the orthogonal variation axes the slice
 exposes. For each axis, choose:
 
-- **Parametric.** The variant is a parameter of the main L1 statement
-  (e.g., `W_m` = update basis = V for GMRES = Z for FGMRES; the L1
-  form says `x_m = x_0 + W_m y_m` with `W` as a parameter).
-- **Scoped out.** The variant is explicitly *out of scope for this
-  slice* and named in the slice's "Open questions" or in a separate
-  slice. Bolting the variant on at the end of L1 as an appended
-  paragraph is **not** an option.
+- **Parametric** (achieves all three levels). The variant is a
+  parameter of the main L1 statement; downstream sites do not
+  re-inspect it.
+- **Constructed-operator absorption** (achieves (b) and (c) when (a)
+  is awkward). Construct an operator at solve start that internalizes
+  the variant; the per-step procedure calls `op.apply(...)` uniformly.
+  See `book/src/concepts/constructed-operators.md` — the canonical
+  route when configs/tables/selectors would otherwise be deep-plumbed
+  through every layer.
+- **Scoped out.** The variant is explicitly out of scope for this
+  slice and named in "Open questions" or a separate slice. Bolting
+  the variant on at the end of L1 as an appended paragraph is **not**
+  an option.
 
-See `book/src/concepts/variant-absorption.md`.
+### Prose-rotation alignment
+
+(Added 2026-05-24 meta-review #3, from cycle 8 friction.)
+
+After a rotation_claim names what is hidden at L_n, the surrounding
+L_n prose must **not name the hidden machinery** using L_{n+1} (or
+L_{n-1}) mechanism terms. A structurally-valid rotation whose prose
+betrays the rotation by mentioning the hidden machinery is
+"half-rotated" — the structure rotated but the words didn't.
+
+Required pre-emit self-check: for each rotation_claim, scan the L_n
+description for any terms that appear in the rotation's `hidden_at_L_n`
+list or in the L_{n+1} citations. Flag and rewrite.
+
+- **Acceptable** at L_n: naming the **role** the hidden machinery
+  plays. Example: "incremental least-squares update" describes the
+  role; "Givens rotations applied to the Hessenberg column" describes
+  the L2 mechanism.
+- **Acceptable** at L_n: one-line forward references like "the QR
+  update lives at L2" — readers benefit from knowing what is being
+  abstracted.
+- **Unacceptable** at L_n: using L_{n+1} mechanism terms inside the
+  L_n procedural statement. Example: "maintain a QR factorization of
+  H̄_m via Givens rotations" in L1 — that's L2 machinery the rotation
+  was supposed to hide.
+
+Cycle 8's GMRES L1 is the worked counter-example: the rotation
+structurally hid the Givens / Hessenberg / QR machinery, but L1 prose
+still named all three. Critic check #10 verifies this.
