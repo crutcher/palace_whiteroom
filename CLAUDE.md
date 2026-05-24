@@ -51,6 +51,8 @@ book/                # the spec, rendered as an mdBook
     meta-reviews/
       index.md       # records of friction-integration passes
 problems/            # out-of-band concern channel — see problems/README.md
+scaffolding/         # agent-side workshop (cross-cutting notes, decisions) — see scaffolding/README.md
+skills/              # agent-invocable procedures — see skills/README.md
 reference/           # local clones of palace, bunsen, burn, tensorflow-java (gitignored)
 
 # Files Phase 0 of BOOTSTRAP.md creates (agent-loop infrastructure):
@@ -136,6 +138,7 @@ The process is **not** waterfall through the stack. Do not write all of L1, then
 1. **Push-forward, one slice at a time.** Take a slice of Palace (one algorithm, one routine, one piece of state). Build L1 for that slice *only to the point that L2 concepts can begin to be described*. Then build L2 only to the point that L3 can begin. Same for L4. **A layer's job ends as soon as the next layer can speak.** Completing a layer breadth-first across all algorithms before moving up is wrong; the cross-algorithm pressure that drives unification doesn't show up until you've reached for the next layer.
 2. **Push-back when friction surfaces.** While working at layer N+1, if a different framing of layer N would make N+1 dramatically easier, unify multiple algorithms at N+1, or eliminate an awkward corner — restructure layer N. The change ripples down to L0 (new questions / re-explorations) and back up to N+1 as a now-easier rotation.
 3. **Move sideways.** When one slice is pushed high enough that progress is blocked on infrastructure rather than its own substance, switch to a different slice. Use the sideways move to surface unification opportunities ("L2 for X and L2 for Y look similar — could they share a primitive?").
+4. **Explore alternative formulations when they exist; coalesce by use.** At any layer, when a piece of work admits multiple plausible representations (alternative L2 algebraic decompositions, alternative L4 record shapes, alternative concept formulations), write multiple in parallel rather than forcing premature commitment to one. Refine through cross-slice pressure, Critic review, and observed friction. **Persistent duals are permitted** when the alternatives capture genuinely distinct aspects (e.g., matrix-view vs. operator-view of the same operation). **Hard constraint**: duals must not cause duplication explosion in adjacent layers — if two L2 forms force two L3 paths *and* two L4 paths *and* two concept entries, they are competing designs (one needs to win), not duals (which coexist by capturing different aspects). The cost of a real dual is bounded by sharing the interface at the layer above. `scaffolding/decisions/<topic>.md` is the natural home for the trade-off comparison while the dual persists.
 
 Implications for the agent loop, encoded in `BOOTSTRAP.md`:
 
@@ -264,6 +267,22 @@ Three categories qualify:
 Things that **do not** belong here: target-code unknowns (→ `questions.md`), agent mistakes recognized in retrospect (→ `lessons.md`), normal layer push-back (→ Synthesizer, expected process), per-claim rotation failures (→ Critic verdict). Conservative temperature — if it fits any of those channels, use them.
 
 Problems are reviewed out-of-cycle by the human, not by the agent loop. Resolved problems are annotated in place; never deleted (they're part of the research record).
+
+## Scaffolding — agent-side workshop
+
+`scaffolding/` is the agent-side workshop: cross-cutting notes, hypotheses, decision logs, and breadcrumbs that don't belong to any one slice and aren't otherwise channeled. The book is the deliverable; scaffolding is the workshop — not pruned for the deliverable's neatness. Full protocol in `scaffolding/README.md`.
+
+Discipline (in brief): append-only structurally; small-scope speculative content is default-accepted; stale entries are marked rather than deleted; promotion to the book leaves a stub. Per-cycle agents read prior cycles' scaffolding as input; the no-shared-context invariant filters the in-flight cycle's scaffolding from the Critic the same way it filters live chains-of-thought.
+
+What scaffolding is *not*: slice-local notes (those live in the slice's `## Working Notes`), source-code unknowns (`questions.md`), out-of-role concerns (`problems/`), Critic cross-cycle observations (`lessons.md`), per-cycle telemetry (`episodic.jsonl`).
+
+## Skills — agent-invocable procedures
+
+`skills/` holds agent-invocable procedures (verbs, where `scaffolding/` is nouns). Each skill is a directory containing `SKILL.md` with Claude-Code-style frontmatter (`name`, `description`, `status`). Full protocol in `skills/README.md`.
+
+Authority: skill creation, refinement, and retirement is Meta-Critic / meta-review work (Medium cascade). Per-cycle agents *invoke* skills; they do not create or modify them. Pre-orchestrator, this Claude Code session acts in the meta-cycle capacity.
+
+Small-scope speculative skills are default-accepted; the expected pattern is *write small, use, observe friction, refine* rather than design-from-imagination.
 
 ## Meta-review — out-of-cycle friction integration
 
