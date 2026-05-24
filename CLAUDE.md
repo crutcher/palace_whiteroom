@@ -157,6 +157,18 @@ Roles operate within the push-forward / push-back process above. Per slice the l
 
 The schemas and prompts encoding this discipline live in `BOOTSTRAP.md` Phases 3–4: `schemas/rotation_claim.json` with `justification_kind ∈ {algebraic, structural, reduction_chain, empirical_match, obstruction}`, the Explorer prompt's mutation-pattern enum, the Synthesizer's transparent-vs-load-bearing distinction, and the Critic's per-edge rotation checks.
 
+### Tests as semantic supplement
+
+Palace's existing unittests (`reference/palace/test/unit/test-<topic>.cpp`, also `reference/palace/test/examples/`) are **semantic documentation**, not just regression scaffolding. A test that constructs an input, calls a function, and asserts on the resulting state is direct evidence of mutation pattern, algebraic semantics, and whether a numerical trick is load-bearing (a test that fails under naïve reordering proves the trick is load-bearing). For ambiguous source — heavy templates, macro expansion, complex control flow — tests are often the most authoritative semantic statement available.
+
+The linkage from source to test is often **not directory-co-located**: Palace's tests live in a parallel topic-keyed tree, not alongside the source they exercise. Discovering and recording the linkages is itself work — `scaffolding/test-linkages/` is the accumulating source→test registry.
+
+Operational consequences for the roles:
+
+- **Explorers** look for tests when localizing a source region (search by symbol/function/type name; check `scaffolding/test-linkages/` for already-known mappings). Cite tests alongside source ranges — tests are L0-equivalent evidence. If no test exists, note "no test found" and proceed; tests are supplement, not prerequisite.
+- **Critic** consults tests for the cited region when verifying rotation claims. A test assertion contradicting an L1/L2 claim is `citation_does_not_support` — tests are evidence on equal footing with source.
+- **Synthesizer** prefers `justification_kind = empirical_match` (with a test citation) over pure algebraic argument when both are available — an executed test is harder evidence than an argument.
+
 Patterns to expect, and how they should appear in the spec:
 
 | Palace (C++/HPC, mutating)                | L1 form (mutation-lifted, pure-functional)           |

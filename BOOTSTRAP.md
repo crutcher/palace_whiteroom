@@ -452,14 +452,24 @@ Method:
   2. Read source only for the regions you will cite.
   3. Every claim you make MUST cite (file, start_line, end_line) from a region
      you actually read. No citation, no claim.
-  4. Lift each source operation into pure-functional dataflow (L1): record the
+  4. Look for TESTS exercising the source region. Palace's tests live under
+     `reference/palace/test/unit/test-<topic>.cpp` (and `test/examples/`), in
+     a parallel topic-keyed tree — e.g., `test/unit/test-vector.cpp` covers
+     `palace/linalg/vector.cpp`. Search by symbol/function/type name. Check
+     `scaffolding/test-linkages/` for already-known mappings, and write back
+     any new linkages you discover. Cite tests alongside source ranges —
+     tests are L0-equivalent evidence (a test constructs an input, calls
+     the code, and asserts a result; that's direct evidence of mutation
+     pattern and semantics). If no test exists, note "no test found" and
+     proceed; tests are supplement, not prerequisite.
+  5. Lift each source operation into pure-functional dataflow (L1): record the
      input set, output set, and the mutation pattern you observed
      (in_place_overwrite, accumulator, alias_with_input, scratch_buffer, pure).
      Workspace/scratch buffers are erased; aliasing that is semantically
      load-bearing is preserved as `alias_with_input` with notes.
-  5. MPI-related code paths are OUT OF SCOPE — flag once in notes and skip; do not
+  6. MPI-related code paths are OUT OF SCOPE — flag once in notes and skip; do not
      log as questions or claims. (See CLAUDE.md *Scope*.)
-  6. If you discover a tangential question outside your scope, log it as an
+  7. If you discover a tangential question outside your scope, log it as an
      open_question with appropriate priority — do not chase it.
 
 Output: a single JSON object validating against `schemas/exploration_finding.json`.
@@ -503,7 +513,10 @@ Per-edge rotations you may propose:
 
 For every rotation you propose, emit a `rotation_claim` JSON validating against
 `schemas/rotation_claim.json`. The justification field must be substantive — an
-algebraic argument, a reduction-chain sketch, or an obstruction explanation.
+algebraic argument, a reduction-chain sketch, an obstruction explanation, or an
+`empirical_match` against a cited test. **Prefer `empirical_match` over a pure
+algebraic argument when both are available** — an executed test is harder
+evidence than an argument.
 
 ALSO flag PUSH-BACK opportunities: when a current Li form forces a labored
 Li+1 rotation, propose a structural change to Li (or to the L4 calculus design,
@@ -547,6 +560,12 @@ For each rotation_claim, verify:
      (missing_case)
   6. Is a load-bearing numerical trick classified as a transparent optimization
      trick? (load_bearing_trick_classified_as_transparent)
+  7. TEST CONSISTENCY. Where tests exist for the cited source range (Explorer
+     should have surfaced them; otherwise check `test/unit/test-<topic>.cpp`
+     for likely coverage and `scaffolding/test-linkages/` for known mappings),
+     do the test inputs and assertions support the L1 mutation pattern and
+     the L2/L3 algebraic claims? A test assertion contradicting a claim is
+     `citation_does_not_support` — tests are L0-equivalent evidence.
 
 ALSO surface FRICTION SIGNALS: if a rotation is technically correct but obviously
 labored — special cases, exception branches, forced-fit transformations — that
