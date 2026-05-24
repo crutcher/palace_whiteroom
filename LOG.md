@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-24 cycle-10 — forward orthog [L0→L1] — pass
+
+- Synthesis: 1 rotation_claim(s); diff applied
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied diff (111 lines); 1 rotation_claim(s).
 ## 2026-05-24 meta-review (cycles 7–9) — enacted (with constructed-operators bonus)
 
 - Window: 3 cycles. Push breakdown: 1 FORWARD, 2 BACK, 0 SIDEWAYS. Still no SIDEWAYS — same-slice grind continues (8 consecutive GMRES cycles).
