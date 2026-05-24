@@ -112,7 +112,7 @@ The smoother is a leaf in the preconditioner stack: it consumes `A`
 
 ## Concept references
 
-- `concepts/apply-linop.md` — the apply interface.
+- `concepts/apply_linop.md` — the apply interface.
 - `concepts/axpy.md`, `concepts/elementwise-product.md` —
   primitives used by the inner recurrence.
 - `concepts/extract-diagonal.md`, `concepts/reciprocal.md` — setup

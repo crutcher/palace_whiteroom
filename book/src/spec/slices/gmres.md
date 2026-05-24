@@ -134,7 +134,7 @@ The L1 building blocks unfold into the named tensor/scalar primitives below. The
 - `dot(x, y) → r`: Euclidean / Hermitian inner product. See [concept: dot](../../concepts/dot.md).
 - `nrm2(x) → ‖x‖₂`: realised as `sqrt(dot(x, x).real)`. See [concept: nrm2](../../concepts/nrm2.md).
 - `scal(α, x) → x'`: `x' = α·x` (in-place rescale).
-- `apply_linop(L, x, y) → y`: `y ← L·x`. The single primitive through which `A`, `M`, and `BA`-composites act. See [concept: apply-linop](../../concepts/apply-linop.md).
+- `apply_linop(L, x, y) → y`: `y ← L·x`. The single primitive through which `A`, `M`, and `BA`-composites act. See [concept: apply_linop](../../concepts/apply_linop.md).
 - `givens_generate(a, b) → (c, s)`: produce a 2×2 unitary `[[c, s*]; [−s, c]]` such that `c·a + s*·b = r ≥ 0`, `−s·a + c·b = 0`. Cites L0.3.
 - `givens_apply((c, s), (a, b)) → (a', b')`: in-place 2×2 unitary update; `a' = c·a + s*·b`, `b' = −s·a + c·b`. Cites L0.4.
 

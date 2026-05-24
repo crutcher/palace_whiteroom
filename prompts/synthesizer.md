@@ -212,6 +212,24 @@ content` you receive in the user message indicates whether the slice
 already exists on disk. If it does, you must NOT use `mode="create"`
 for that path — the orchestrator rejects it with a friction signal.
 
+**Auto-registration in SUMMARY.md** (added post meta-review #8). When
+you create a new slice (`slice_writes mode=create`) or concept
+(`concept_writes mode=create`), the orchestrator automatically appends
+an entry to `book/src/SUMMARY.md` so mdBook renders the new file. You
+do NOT need to emit a SUMMARY.md `file_edits` entry. If you want a
+richer link title than the auto-derived one (slice slug → spaces; concept
+slug verbatim), emit a `slice_writes[i].title` field (slices) or refine
+later via `file_edits`.
+
+**Slice status-table update** (added post meta-review #8). When a cycle
+advances a slice's highest layer (e.g., orthog L1 → L2), you MUST update
+the corresponding row in `book/src/spec/index.md`'s status table via a
+`file_edits` entry — bumping the "Highest layer" and "Last touched"
+columns, adding a one-line status note. The orchestrator does NOT
+auto-update the status table (it doesn't know your content); this is
+your responsibility per cycle. New slices need a new table row added
+(via `file_edits` adding a new row before the next non-table content).
+
 **Integrator phase order** (documented meta-review #7). The integrator
 applies the plan in this fixed order, regardless of the order fields
 appear in your JSON:

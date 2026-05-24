@@ -131,6 +131,22 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
                 if not content.endswith("\n"):
                     content += "\n"
                 full_path.write_text(content)
+                # Auto-register the new slice in SUMMARY.md (post meta-8 user
+                # surface: cycles 1-24 created 5 slices, none of which were
+                # registered, so mdBook didn't render them). The orchestrator
+                # does this mechanically; the Synthesizer can refine the title
+                # via file_edits if desired.
+                title = sw.get("title") or rel.removesuffix(".md").replace("_", " ")
+                try:
+                    state.register_in_summary(
+                        category="slice",
+                        link_title=title,
+                        rel_path=f"./spec/slices/{rel.lstrip('/')}",
+                    )
+                except Exception as e_reg:
+                    push_back_signals.append(f"slice auto-register failed for {full_rel}: {e_reg}")
+                    # Don't mark apply_failed — the slice file IS on disk;
+                    # registration is best-effort.
             except Exception as e:
                 push_back_signals.append(f"slice_write create failed for {full_rel}: {e}")
                 apply_failed = True
@@ -161,6 +177,18 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
                         f"concept_write create skipped (already exists; use append-section): {name}"
                     )
                     # not a failure — the next cycle can refine
+                else:
+                    # Auto-register in SUMMARY.md (same rationale as slice).
+                    try:
+                        state.register_in_summary(
+                            category="concept",
+                            link_title=name,
+                            rel_path=f"./concepts/{name}.md",
+                        )
+                    except Exception as e_reg:
+                        push_back_signals.append(
+                            f"concept auto-register failed for {name}: {e_reg}"
+                        )
             elif mode == "append-section":
                 state.append_concept_section(name, content)
             else:

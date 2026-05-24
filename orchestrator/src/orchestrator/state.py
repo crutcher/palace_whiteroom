@@ -217,6 +217,58 @@ class State:
         path.write_text(text.rstrip() + new_block)
         return True
 
+    def register_in_summary(self, category: str, link_title: str, rel_path: str) -> bool:
+        """Append a child entry to SUMMARY.md under the appropriate section
+        (Specification → slices, Concepts → concepts). Idempotent on rel_path.
+        Returns True if added, False if already present.
+
+        Added 2026-05-24 (post meta-review #8) after the user surfaced that
+        cycles 1-24 had created 5 slices and 10+ concepts that were never
+        registered in SUMMARY.md, so mdBook didn't render them.
+
+        category ∈ {"slice", "concept"}. The orchestrator calls this after
+        successful slice_writes mode=create / concept_writes mode=create.
+        The Synthesizer can override the auto-generated title later via
+        file_edits if a richer title is desired.
+        """
+        path = self.repo_root / "book/src/SUMMARY.md"
+        text = path.read_text()
+
+        if category == "slice":
+            section_header = "# Specification"
+            section_anchor = "- [Index — Slice Status](./spec/index.md)"
+        elif category == "concept":
+            section_header = "# Concepts (shared library)"
+            section_anchor = "- [Index](./concepts/index.md)"
+        else:
+            raise ValueError(f"unknown category: {category!r}")
+
+        # Idempotent — skip if the link target is already in SUMMARY.
+        if f"]({rel_path})" in text:
+            return False
+
+        section_pos = text.find(section_header)
+        if section_pos < 0:
+            raise RuntimeError(f"SUMMARY.md missing section header: {section_header!r}")
+        anchor_pos = text.find(section_anchor, section_pos)
+        if anchor_pos < 0:
+            raise RuntimeError(f"SUMMARY.md missing anchor: {section_anchor!r}")
+        next_section = text.find("\n# ", anchor_pos)
+        if next_section < 0:
+            next_section = len(text)
+
+        # Trim trailing whitespace inside the section block, then append the
+        # new entry on its own indented line.
+        block = text[anchor_pos:next_section].rstrip()
+        new_entry = f"\n  - [{link_title}]({rel_path})"
+        new_text = text[:anchor_pos] + block + new_entry + text[next_section:]
+        # Ensure the section ends with a blank line before the next # heading.
+        if not new_text[len(text[:anchor_pos] + block + new_entry):].startswith("\n\n"):
+            insert_at = len(text[:anchor_pos] + block + new_entry)
+            new_text = new_text[:insert_at] + "\n" + new_text[insert_at:]
+        path.write_text(new_text)
+        return True
+
     def write_meta_review_pending(self, plan_md: str) -> Path:
         """Write the file-based meta-review handshake. Returns the path
         written. The marker at the bottom is the human-toggled approval."""

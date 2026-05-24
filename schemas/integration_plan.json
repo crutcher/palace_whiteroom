@@ -21,7 +21,8 @@
             "description": "`create` for new files (write content directly); `diff` for modifications to existing files (apply as unified diff). For surgical edits, prefer the top-level `file_edits` field which is more reliable than unified diffs."
           },
           "content": { "type": "string", "description": "For mode=create: the full file content." },
-          "diff": { "type": "string", "description": "For mode=diff: a unified-diff string targeting the existing file." }
+          "diff": { "type": "string", "description": "For mode=diff: a unified-diff string targeting the existing file." },
+          "title": { "type": "string", "description": "Optional. For mode=create: the human-readable title to use in the SUMMARY.md auto-registration entry (e.g., 'GMRES' for the gmres slice). If omitted, the orchestrator derives a title from the slug. Added post meta-review #8 with SUMMARY.md auto-registration." }
         }
       }
     },

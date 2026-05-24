@@ -47,9 +47,9 @@ graph BT
 graph BT
   orthog --> dot
   orthog --> axpy
-  orthog --> gemv-basis
-  orthog --> allreduce-sum
-  gemv-basis --> axpy
+  orthog --> gemv_basis
+  orthog --> allreduce_sum
+  gemv_basis --> axpy
   nrm2 --> dot
   orthogonalization --> dot
   orthogonalization --> axpy
@@ -57,7 +57,7 @@ graph BT
   gmres --> axpy
   gmres --> dot
   gmres --> nrm2
-  gmres --> apply-linop
+  gmres --> apply_linop
   gmres --> orthogonalization
   gmres --> constructed-operators
   gmres --> variant-absorption

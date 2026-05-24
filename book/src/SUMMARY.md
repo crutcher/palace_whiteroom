@@ -10,6 +10,10 @@
 
 - [Index — Slice Status](./spec/index.md)
   - [CG — Preconditioned Conjugate Gradient](./spec/slices/cg.md)
+  - [GMRES](./spec/slices/gmres.md)
+  - [Orthogonalisation (MGS / CGS / CGS2)](./spec/slices/orthog.md)
+  - [Divergence-free projection](./spec/slices/divfree.md)
+  - [Chebyshev smoother](./spec/slices/chebyshev.md)
 
 # Concepts (shared library)
 
@@ -18,6 +22,16 @@
   - [rotation — methodology concept](./concepts/rotation.md)
   - [variant absorption — methodology concept](./concepts/variant-absorption.md)
   - [constructed operators — methodology concept](./concepts/constructed-operators.md)
+  - [apply_linop](./concepts/apply_linop.md)
+  - [axpy](./concepts/axpy.md)
+  - [dot](./concepts/dot.md)
+  - [nrm2](./concepts/nrm2.md)
+  - [scal](./concepts/scal.md)
+  - [givens](./concepts/givens.md)
+  - [trsv](./concepts/trsv.md)
+  - [gemv_basis](./concepts/gemv_basis.md)
+  - [orthogonalization](./concepts/orthogonalization.md)
+  - [incremental-least-squares](./concepts/incremental-least-squares.md)
 
 # Design Artifacts
 
