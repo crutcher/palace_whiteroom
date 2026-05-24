@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import subprocess
+import sys
 import time
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime, timezone
@@ -346,10 +348,49 @@ async def run_meta_review(
     )
 
     plan_md = _render_plan_md(plan)
-    pending_path = state.write_meta_review_pending(plan_md)
-    print(f"[meta-review] plan written to {pending_path.relative_to(state.repo_root)}; "
-          f"awaiting APPROVAL marker.")
+    if dry_run:
+        # No filesystem mutation in dry-run; print the rendered plan to stdout
+        # so the operator can see what *would* be written.
+        print("[dry-run] would write meta-review-pending.md with the following content:")
+        print("─" * 60)
+        print(plan_md)
+        print("─" * 60)
+    else:
+        pending_path = state.write_meta_review_pending(plan_md)
+        print(f"[meta-review] plan written to {pending_path.relative_to(state.repo_root)}; "
+              f"awaiting APPROVAL marker.")
     return False
+
+
+def _rebuild_book(repo_root: Path, *, dry_run: bool) -> None:
+    """Rebuild the mdBook so the rendered HTML is fresh when the human
+    sits down to review the meta-review pending plan. Runs `cargo make
+    book` from repo_root. Failures are logged but non-fatal — the human
+    can still inspect book/src/ markdown directly.
+
+    Called immediately before every meta-review invocation.
+    """
+    if dry_run:
+        print("[dry-run] would rebuild book (cargo make book)", file=sys.stderr)
+        return
+    print("[meta-review] rebuilding book before pause for human review...", file=sys.stderr)
+    result = subprocess.run(
+        ["cargo", "make", "book"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        # Don't crash the meta-review on book-build failure — surface clearly
+        # and proceed.
+        print(
+            f"[meta-review] book rebuild FAILED (exit {result.returncode}); "
+            f"plan will still be written and the markdown source is current. "
+            f"stderr tail:\n{result.stderr[-1000:]}",
+            file=sys.stderr,
+        )
+    else:
+        print("[meta-review] book rebuild OK", file=sys.stderr)
 
 
 async def main_loop_async(
@@ -378,6 +419,7 @@ async def main_loop_async(
             return await coro(cmc)
 
     if meta_only:
+        _rebuild_book(state.repo_root, dry_run=dry_run)
         await with_mcp(lambda _: run_meta_review(
             cfg=cfg, state=state, schemas=schemas, client=client, dry_run=dry_run,
         ))
@@ -387,6 +429,7 @@ async def main_loop_async(
     while True:
         # Check pending meta-review handshake first
         if state.read_meta_review_pending() is not None:
+            _rebuild_book(state.repo_root, dry_run=dry_run)
             done = await run_meta_review(
                 cfg=cfg, state=state, schemas=schemas, client=client, dry_run=dry_run,
             )
@@ -400,6 +443,7 @@ async def main_loop_async(
 
         # Check meta-review trigger
         if state.count_cycles_since_meta() >= cfg.meta_review_every_n_cycles:
+            _rebuild_book(state.repo_root, dry_run=dry_run)
             done = await run_meta_review(
                 cfg=cfg, state=state, schemas=schemas, client=client, dry_run=dry_run,
             )
