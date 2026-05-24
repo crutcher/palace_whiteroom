@@ -18,8 +18,8 @@
       "description": "Algebraic argument / reduction-chain steps / measurement / obstruction explanation. Substantive — not hand-waving."
     },
     "push_back_proposal": {
-      "type": "object",
-      "description": "Optional. If the rotation is labored, what change to a lower layer would make it natural?",
+      "type": ["object", "null"],
+      "description": "Optional. If the rotation is labored, what change to a lower layer would make it natural? `null` is accepted as 'no proposal' (equivalent to omitting the field).",
       "properties": {
         "target_layer": { "enum": ["L1", "L2", "L3", "L4-calculus"] },
         "proposal": { "type": "string" }
