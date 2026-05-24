@@ -841,6 +841,8 @@ Defer until Phase 6 passes cleanly. Then:
 3. Critic remains sequential, processing per-cycle outputs in arrival order. On conflicting concept-promotion proposals from parallel synthesizers, the second-arriving proposal becomes a push-back signal instead of being applied directly — let the next cycle re-explore.
 4. Raise `max_parallel_slices` in `config.toml` incrementally; watch for token-budget overruns and concept-name collisions.
 
+**Prerequisite: integration-plan architecture.** Per `scaffolding/decisions/integration-plan-architecture.md` (captured 2026-05-23 during meta-review #5 enactment), parallel cycles will conflict on cross-cutting writes (shared concept entries, `dependency-map.md`, `lessons.md`, `LOG.md`). Git merge does not handle semantic graph / concept edits well. Before raising `max_parallel_slices > 1`, the Synthesizer's output format and the orchestrator's write pipeline should be refactored to emit and apply structured "integration plans" rather than raw diffs to shared paths. The scaffolding entry sketches the schema, integrator responsibilities, and refactor scope. This is a Phase 8 prerequisite, not a separate phase.
+
 **DONE when:** running with `max_parallel_slices = 4` produces the same eventual layered spec (within reproducibility tolerance — see rubric) as the sequential run for the first five Palace solvers, AND:
 
 - Concept name collisions between parallel synthesizers are detected and resolved into unified concept entries — not duplicated under different names.
