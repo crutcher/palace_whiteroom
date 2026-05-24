@@ -101,6 +101,32 @@ which lower-layer change would eliminate the friction?
 For ambiguity: prefer `unclear` with a concrete question rather than allowing
 imprecise claims to pass.
 
+## Verdict semantics
+
+(Clarified 2026-05-23 from user feedback on accumulation discipline.)
+
+The orchestrator interprets verdicts as follows:
+
+- `pass`   — structure is verified, no blocking issues. Apply diff.
+- `revise` — structure has issues but the content is **salvageable** and
+             the surface should accumulate with the issues **embedded**.
+             The orchestrator APPLIES the diff (it does NOT block). Next
+             cycle's Planner sees the push-back signals; next cycle's
+             Synthesizer reads the current slice plus the cited friction
+             and refines. The surface accumulates with imperfections to
+             be sharpened over subsequent cycles.
+- `reject` — content is fundamentally unsalvageable (e.g., citations
+             point at unrelated source, the entire rotation premise is
+             wrong). The orchestrator does NOT apply. Rare; reserve for
+             truly broken claims.
+
+Prefer `revise` over `reject` unless the content is actively wrong (not
+just incomplete or labored). Friction is the loop's primary signal —
+embedding it in the accumulating surface is the design intent. Blocking
+a salvageable diff because the rotation isn't perfect is the failure
+mode the user explicitly flagged when 8 consecutive cycles produced
+zero accumulated spec content.
+
 Output: a single JSON object validating against `schemas/critic_verdict.json`.
 Nothing outside the JSON.
 

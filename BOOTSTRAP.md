@@ -736,9 +736,12 @@ def run_normal_cycle():
     verdict = call_critic(rotation_claims, cited_source)   # ISOLATED context
 
     # All writes first — single atomic commit per cycle below.
-    if verdict["verdict"] == "pass":
+    # APPLY DISCIPLINE (clarified 2026-05-23): pass AND revise both apply
+    # the diff. The surface accumulates with embedded friction; only
+    # `reject` blocks. See CLAUDE.md *Process* #5.
+    if verdict["verdict"] in ("pass", "revise"):
         apply_diff_to_book(rotation_claims)
-    else:
+    if verdict["verdict"] != "pass":
         for issue in verdict["issues"]:
             if issue["kind"] == "labored_rotation_push_back_candidate":
                 log_push_back_signal(issue)

@@ -160,17 +160,32 @@ async def run_normal_cycle(
     # ─────── writes ───────
     # In dry-run mode: log what WOULD happen but skip all persistent state
     # mutation (no diff apply, no episodic append, no LOG prepend, no commit).
+    #
+    # APPLY DISCIPLINE (clarified 2026-05-23 user feedback):
+    # - `pass`   → apply diff (clean accumulation; no friction embedded).
+    # - `revise` → APPLY diff (the surface accumulates with embedded friction;
+    #              the next cycle's Synthesizer reads the current slice + the
+    #              recent episodic + lessons + push_back_signals and refines).
+    # - `reject` → do NOT apply (content is fundamentally unsalvageable).
+    #
+    # The prior behavior was "pass apply; revise/reject block" — that broke
+    # the methodology's design intent (accumulate a working surface with
+    # embedded problems for iterative refinement). 8 GMRES cycles produced
+    # 0 bytes of accumulated spec content.
     push_back_signals: list[str] = []
-    if verdict["verdict"] == "pass":
+    if verdict["verdict"] in ("pass", "revise"):
         if diff.strip():
             if dry_run:
-                print(f"[dry-run] would apply diff ({diff.count(chr(10))} lines)")
+                print(f"[dry-run] would apply diff ({diff.count(chr(10))} lines) "
+                      f"under verdict={verdict['verdict']}")
             else:
                 try:
                     state.apply_unified_diff(diff)
                 except RuntimeError as e:
                     push_back_signals.append(f"diff-apply failed: {e}")
-    else:
+    # For revise (and reject), also collect labored-rotation issues as push-back
+    # signals so the next cycle's Planner can see them.
+    if verdict["verdict"] != "pass":
         for issue in verdict.get("issues", []):
             if issue.get("kind") == "labored_rotation_push_back_candidate":
                 push_back_signals.append(issue.get("description", ""))

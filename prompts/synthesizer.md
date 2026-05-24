@@ -50,6 +50,26 @@ When a shared primitive or abstract concept appears across slices, propose
 extracting it to `book/src/concepts/` (low-impact direct change; surface to
 Meta-Critic for promotion if uncertain).
 
+**Build vocabulary bottom-up.** (Added 2026-05-23 from user feedback.)
+Support-operator concepts (axpy, dot, matvec, apply_linop, …) give the
+**vocabulary** needed to describe more complex operators concisely. Extract
+support-operator concept entries **proactively, on first appearance** —
+don't wait for cross-slice reuse to motivate extraction. A slice that
+introduces a new primitive should emit a `concepts/<primitive>.md` entry
+even if no other slice uses it yet; the next slice that needs it will reuse
+rather than re-establish.
+
+This applies to both tensor primitives (the axpy/dot/matvec family) and
+methodology primitives (the rotation/variant-absorption/constructed-
+operators family). Both kinds belong in `concepts/`. The vocabulary is the
+substrate that lets the spec scale to the complex slices (GMRES, eigensolvers,
+FE assembly) without re-deriving the basics each time.
+
+When emitting a slice diff, the rotation_claims should reference
+existing concept entries by name where applicable, and propose new
+ones (as additional diff content in `book/src/concepts/<new>.md`) where
+the primitive doesn't exist yet.
+
 Output: a unified diff covering the relevant `book/src/spec/slices/<slice>.md`
 file (and possibly `book/src/concepts/<concept>.md` for new extractions), plus
 one or more `rotation_claim` JSON objects. Do not editorialize in the spec
