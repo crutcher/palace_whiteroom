@@ -29,6 +29,26 @@ def _resolve_repo_root() -> Path:
     )
 
 
+def _load_dotenv(path: Path) -> None:
+    """Populate os.environ from a .env file (KEY=value per line) — minimal,
+    no external dep. Existing env vars are NOT overwritten (live shell wins).
+    Tolerates comments (#) and quoted values."""
+    if not path.is_file():
+        return
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip()
+        # Strip surrounding quotes (single OR double, balanced).
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+            value = value[1:-1]
+        # Don't clobber an existing env var — interactive shell takes precedence.
+        os.environ.setdefault(key, value)
+
+
 @click.command()
 @click.option("--one-cycle", is_flag=True, help="Run a single cycle, then exit.")
 @click.option("--continuous", is_flag=True, help="Run cycles until interrupted or meta-review pause.")
@@ -41,6 +61,9 @@ def main(one_cycle: bool, continuous: bool, meta_only: bool, dry_run: bool) -> N
         )
 
     repo_root = _resolve_repo_root()
+    # Load <repo>/.env into the process env BEFORE anything reads
+    # ANTHROPIC_API_KEY. Live shell env always wins (setdefault).
+    _load_dotenv(repo_root / ".env")
     config_path = repo_root / "config.toml"
     cfg = load_config(config_path)
     schemas = load_schemas(repo_root)
