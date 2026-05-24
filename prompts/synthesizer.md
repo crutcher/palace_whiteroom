@@ -91,3 +91,70 @@ not a stylistic preference. The Synthesizer must not submit a diff
 without claims; if a rotation feels too obvious to carry a claim, that
 is signal that the rotation may not actually be rotating anything
 (see `book/src/concepts/rotation.md` — rotation quality criteria).
+
+### Claim granularity and canonicalization
+
+(Added 2026-05-24 meta-review #2, from cycle 4 friction.)
+
+- **Granularity.** One rotation_claim covers exactly **one** primitive
+  substitution or one state-hiding step. If an Li→Li+1 step introduces
+  N primitives, emit N claims. This is the level at which the Critic
+  can verify mechanical equivalence; aggregated claims hide errors.
+- **Canonicalization.** The Li+1 `to_form` must pin **one** canonical
+  primitive — not a disjunction. If two Li+1 expressions denote the
+  same semantics (e.g., `gemv` vs. `k * axpy`), the coarser one is
+  canonical at Li+1; the finer is Li+2 implementation detail, not an
+  Li+1 alternative. The `to_form` field of a rotation_claim cannot
+  read like "either A or B"; pick A and move B down a layer.
+- **No equivocation in justification.** Phrases like "whether realized
+  as X or Y is a transparent optimization" are signals that the L_i+1
+  form has not actually pinned down a canonical primitive — re-emit
+  with the coarser choice as `to_form` and a separate claim or note
+  explaining the implementation freedom at L_i+2.
+
+### Rotation self-check (pre-emit)
+
+(Added 2026-05-24 meta-review #2, with carry-through allowance.)
+
+Before emitting any rotation_claim for an L_n → L_{n+1} edge, the
+Synthesizer's `justification` field must:
+
+1. **Name which of the three rotation-quality criteria** the rotation
+   satisfies for the **changed portion** of the slice — per
+   `book/src/concepts/rotation.md`:
+     (a) state hiding — name the specific state hidden,
+     (b) coarser substitution — name the specific substitution interface,
+     (c) threaded-state compression — name the shrunk / abstracted bundle.
+2. **Optionally identify concepts that carry through unchanged** from
+   L_n to L_{n+1} and briefly note why they are already idiomatic at
+   L_{n+1} — see `book/src/concepts/rotation.md` *Carry-through*. Not
+   every concept must rotate; the rule is "something has to move",
+   not "everything has to move".
+
+A claim that names **neither** a criterion satisfaction **nor** an
+honest carry-through fails the producer-side self-check and should be
+revised before emission rather than emitted-and-rejected. The Critic's
+check #8 verifies the named entities are real.
+
+### Variant absorption
+
+(Added 2026-05-24 meta-review #2.)
+
+When a slice has orthogonal axes of variation (e.g., GMRES's
+preconditioner side × orthogonalization variant × flexible vs. fixed
+preconditioner × restart vs. full), the L1 form must absorb them
+**parametrically** — variants are parameter values of one statement,
+not appended paragraphs.
+
+Before emitting L1, enumerate the orthogonal variation axes the slice
+exposes. For each axis, choose:
+
+- **Parametric.** The variant is a parameter of the main L1 statement
+  (e.g., `W_m` = update basis = V for GMRES = Z for FGMRES; the L1
+  form says `x_m = x_0 + W_m y_m` with `W` as a parameter).
+- **Scoped out.** The variant is explicitly *out of scope for this
+  slice* and named in the slice's "Open questions" or in a separate
+  slice. Bolting the variant on at the end of L1 as an appended
+  paragraph is **not** an option.
+
+See `book/src/concepts/variant-absorption.md`.

@@ -41,11 +41,28 @@ verdict assembly and cross-cycle lesson extraction):
        (c) **Threaded-state compression** — the state bundle through
            L_{n+1} is strictly smaller, or strictly more abstract, than
            at L_n.
-     If NONE hold, the proposed rotation is a renaming, not a rotation.
-     Verdict: `revise`, `kind: labored_rotation_push_back_candidate`,
-     `push_back_suggestion`: which lower-layer reframing would make a
-     real rotation possible, or recommend layer-merge if the rotation is
-     genuinely premature.
+     If NONE hold for the changed portion of the slice, the proposed
+     rotation is a renaming, not a rotation. Verdict: `revise`,
+     `kind: labored_rotation_push_back_candidate`, `push_back_suggestion`:
+     which lower-layer reframing would make a real rotation possible, or
+     recommend layer-merge if the rotation is genuinely premature.
+     **Note:** carry-through is legitimate — see `book/src/concepts/
+     rotation.md` *Carry-through*. A claim that explicitly identifies
+     some concepts as rotated (with named criterion) and others as
+     carrying through unchanged (with named idiomaticity at L_{n+1})
+     passes this check provided at least one rotation happened.
+  9. VARIANT ABSORPTION (per `book/src/concepts/variant-absorption.md`,
+     added 2026-05-24 meta-review #2). For each slice that contains
+     orthogonal axes of variation (e.g., FGMRES vs GMRES, MGS vs CGS2,
+     LEFT vs RIGHT vs NONE preconditioner side), verify that the L1
+     form either (a) absorbs the variants parametrically (variants are
+     parameter values of the main statement), or (b) explicitly scopes
+     out the variant to "Open questions" or a separate slice. Variants
+     bolted on at the end of L1 as appended paragraphs ("FGMRES delta
+     from GMRES: ...") fail this check. Verdict: `revise`,
+     `kind: labored_rotation_push_back_candidate`,
+     `push_back_suggestion`: which parameter would unify the variants,
+     or which slice should hold the scoped-out variant.
 
 ALSO surface FRICTION SIGNALS: if a rotation is technically correct but obviously
 labored — special cases, exception branches, forced-fit transformations — that

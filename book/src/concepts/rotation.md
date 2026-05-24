@@ -45,6 +45,29 @@ The proposed rotation is a **renaming**, not a rotation. The L_{n+1} form is L_n
 
 Either response is recorded as a `labored_rotation_push_back_candidate` in the Critic's verdict, with the `push_back_suggestion` naming the route.
 
+## Carry-through: not every concept must rotate
+
+(Added 2026-05-24 meta-review #2, in response to user feedback that the original criteria risked false-positive `revise` verdicts on legitimate-but-modest rotations.)
+
+A genuine rotation moves *some* of the slice forward (via (1) state hiding, (2) coarser substitution, or (3) threaded-state compression). It does **not** require every concept in the slice to be transformed.
+
+A concept that **carries through unchanged** from L_n to L_{n+1} is **legitimate** when:
+
+- **Idiomatic at L_{n+1}.** Its current shape is at the right grain for L_{n+1}'s abstraction; "rotating" it would be cosmetic — a renaming for renaming's sake.
+- **Not in conflict with L_{n+1}'s framing.** The rotation of *other* parts of the slice doesn't expose tension with this carry-through (e.g., the carried-through concept doesn't force the rotated parts to re-expose state they hid).
+
+The renaming anti-pattern is **"ALL concepts carry through unchanged with new names"** — nothing moved toward the next layer. A genuine rotation may pass some concepts through unchanged; what matters is that **something** rotated.
+
+**Worked example.** In a hypothetical CG L1→L2 rotation:
+- The `axpy(α, x, y)` primitive is already at the right grain for L2 (it's an algebraic operation, not an iterative mutation pattern). L1 already uses `axpy` because the Synthesizer extracted it from the source's `x.Add(α, y)`. At L2, `axpy` carries through unchanged — **legitimate carry-through**.
+- The `dot(x, y)` primitive likewise carries through unchanged from L1 to L2 — already idiomatic at L2.
+- The actual rotation work at L1→L2 is hiding the explicit per-step indexing of `r_k → r_{k+1}` behind a `cg_step(state) → state'` primitive. That's the **state-hiding** criterion (1) firing for the changed portion.
+- A rotation_claim covering this step honestly identifies: criterion (1) state-hiding satisfied for the iteration-index threading; `axpy`/`dot` carry through as already-idiomatic L2 primitives.
+
+The Critic's check #8 (per `prompts/critic.md`) verifies the rotated portion satisfies a criterion. Concepts carrying through are **not** failures unless ALL concepts carry through — that's the genuine-rename anti-pattern.
+
+When emitting a rotation_claim, the Synthesizer's pre-emit self-check (per `prompts/synthesizer.md` *Rotation self-check*) requires identifying both the rotated portion (with named criterion) and any carry-through (with named idiomaticity), so the Critic can verify both halves.
+
 ## What this is NOT
 
 - **Not a quality-of-prose test.** A rotation can be terse or verbose; what matters is whether it changes the abstraction shape.
