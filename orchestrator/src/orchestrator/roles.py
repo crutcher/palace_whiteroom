@@ -342,11 +342,21 @@ def call_synthesizer(
 
     response = client.messages.create(
         model=cfg.models["synthesizer"],
-        max_tokens=8192,
+        # Larger slices (GMRES, multigrid) need substantial JSON output for the
+        # plan envelope. Cycle 20 (GMRES L0→L1) was truncated at 8192. Opus
+        # 4.7 supports up to 32k output; 16k is the safety sweet spot.
+        max_tokens=16384,
         system=_system_block(system_prompt),
         messages=[{"role": "user", "content": user_message}],
     )
     usage.add(response.usage)
+    if response.stop_reason == "max_tokens":
+        raise ValueError(
+            "Synthesizer response was truncated by max_tokens. The plan JSON is incomplete and "
+            "cannot be parsed. Either increase max_tokens or split the slice across multiple "
+            "cycles (smaller scope per cycle). Truncated response head: "
+            + "".join(b.text for b in response.content if getattr(b, "type", "") == "text")[:400]
+        )
     final_text = "".join(
         b.text for b in response.content if getattr(b, "type", "") == "text"
     ).strip()
