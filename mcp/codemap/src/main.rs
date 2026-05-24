@@ -130,9 +130,9 @@ impl CodemapServer {
     pub async fn list_files(
         &self,
         Parameters(args): Parameters<ListFilesArgs>,
-    ) -> Result<rmcp::Json<Vec<String>>, rmcp::ErrorData> {
+    ) -> Result<rmcp::Json<types::ListFilesResult>, rmcp::ErrorData> {
         tools::list_files(&self.inner.target_root, args.glob.as_deref())
-            .map(rmcp::Json)
+            .map(|files| rmcp::Json(types::ListFilesResult { files }))
             .map_err(to_mcp_err)
     }
 
@@ -153,9 +153,9 @@ impl CodemapServer {
     pub async fn search_text(
         &self,
         Parameters(args): Parameters<SearchTextArgs>,
-    ) -> Result<rmcp::Json<Vec<types::SearchHit>>, rmcp::ErrorData> {
+    ) -> Result<rmcp::Json<types::SearchHits>, rmcp::ErrorData> {
         tools::search_text(&self.inner.target_root, &args.pattern, args.glob.as_deref())
-            .map(rmcp::Json)
+            .map(|hits| rmcp::Json(types::SearchHits { hits }))
             .map_err(to_mcp_err)
     }
 
@@ -165,9 +165,9 @@ impl CodemapServer {
     pub async fn list_dependencies(
         &self,
         Parameters(args): Parameters<ListDependenciesArgs>,
-    ) -> Result<rmcp::Json<Vec<types::Include>>, rmcp::ErrorData> {
+    ) -> Result<rmcp::Json<types::IncludeList>, rmcp::ErrorData> {
         tools::list_dependencies(&self.inner.target_root, &args.path)
-            .map(rmcp::Json)
+            .map(|includes| rmcp::Json(types::IncludeList { includes }))
             .map_err(to_mcp_err)
     }
 
@@ -191,9 +191,9 @@ impl CodemapServer {
     pub async fn get_symbol_def(
         &self,
         Parameters(args): Parameters<GetSymbolDefArgs>,
-    ) -> Result<rmcp::Json<Vec<types::SymbolDef>>, rmcp::ErrorData> {
+    ) -> Result<rmcp::Json<types::SymbolDefs>, rmcp::ErrorData> {
         tools::get_symbol_def(&self.inner.target_root, &args.name, args.kind.as_deref())
-            .map(rmcp::Json)
+            .map(|symbols| rmcp::Json(types::SymbolDefs { symbols }))
             .map_err(to_mcp_err)
     }
 
@@ -204,9 +204,9 @@ impl CodemapServer {
     pub async fn get_call_sites(
         &self,
         Parameters(args): Parameters<GetCallSitesArgs>,
-    ) -> Result<rmcp::Json<Vec<types::CallSite>>, rmcp::ErrorData> {
+    ) -> Result<rmcp::Json<types::CallSitesResult>, rmcp::ErrorData> {
         tools::get_call_sites(&self.inner.target_root, &args.name)
-            .map(rmcp::Json)
+            .map(|sites| rmcp::Json(types::CallSitesResult { sites }))
             .map_err(to_mcp_err)
     }
 }

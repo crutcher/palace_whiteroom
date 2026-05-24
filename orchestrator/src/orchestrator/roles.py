@@ -115,16 +115,19 @@ def call_planner(
         "Recent episodic entries (last 5):\n```json\n" +
         "\n".join(json.dumps(e, separators=(",", ":")) for e in recent_episodic) +
         "\n```\n\n"
-        "Emit the next push directive (single line per the spec). If you would "
-        "schedule a FORWARD-to-L1 cycle on a seed question, ALSO include the "
-        "question text after the directive, formatted as:\n\n"
+        "OUTPUT FORMAT — produce ONLY these one or two lines, NO analysis, NO "
+        "preamble, NO markdown headers, NO reasoning prose. Just the directive:\n\n"
         "  push: forward slice=<name> from=L0 to=L1 reason=<short>\n"
         "  scope_question: <full question text>\n"
+        "\n"
+        "(Or one of the other push kinds: `push: back ...`, `push: sideways ...`, "
+        "`push: escalate ...`. The `scope_question:` line is only required when "
+        "the push is a FORWARD-to-L1 cycle on a seed question.)\n"
     )
 
     response = client.messages.create(
         model=cfg.models["planner"],
-        max_tokens=512,
+        max_tokens=2048,
         system=_system_block(system_prompt),
         messages=[{"role": "user", "content": user_message}],
     )
@@ -476,16 +479,75 @@ def call_meta_critic(
 
 
 def _parse_json_response(text: str) -> dict:
-    """Parse a JSON object out of an agent's response. Tolerates a single
-    fenced code block (```json ... ```) wrapping the JSON, which agents
-    sometimes emit despite being told not to."""
+    """Parse a JSON object out of an agent's response.
+
+    Tolerant of:
+    - leading/trailing whitespace
+    - fenced code blocks (```json ... ``` or just ``` ... ```)
+    - leading or trailing prose around the JSON object (locates the first
+      `{` and its matching closing `}` via brace-depth tracking)
+
+    Raises ValueError with a snippet of the raw text if no JSON object can
+    be extracted — failing loud beats failing silent.
+    """
+    raw = text
     text = text.strip()
+
+    if not text:
+        raise ValueError("agent response is empty (no text content at all)")
+
+    # Strip a single surrounding code fence if present.
     if text.startswith("```"):
-        # Strip leading fence ```json or ```
         lines = text.splitlines()
         if lines[0].startswith("```"):
             lines = lines[1:]
         if lines and lines[-1].strip() == "```":
             lines = lines[:-1]
         text = "\n".join(lines).strip()
-    return json.loads(text)
+
+    # Direct parse first.
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Brace-depth scan: locate the first balanced { ... } substring.
+    start = text.find("{")
+    if start < 0:
+        snippet = raw if len(raw) < 400 else raw[:400] + "...[truncated]"
+        raise ValueError(
+            f"no '{{' found in agent response; raw text (head): {snippet!r}"
+        )
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+        else:
+            if ch == '"':
+                in_string = True
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    candidate = text[start : i + 1]
+                    try:
+                        return json.loads(candidate)
+                    except json.JSONDecodeError as e:
+                        snippet = candidate if len(candidate) < 400 else candidate[:400] + "...[truncated]"
+                        raise ValueError(
+                            f"located JSON object did not parse: {e}\nCandidate (head): {snippet!r}"
+                        )
+    snippet = raw if len(raw) < 400 else raw[:400] + "...[truncated]"
+    raise ValueError(
+        f"unbalanced braces in agent response; could not extract JSON. "
+        f"Raw text (head): {snippet!r}"
+    )

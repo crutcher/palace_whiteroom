@@ -68,3 +68,34 @@ pub struct SearchHit {
     pub line: u32,
     pub snippet: String,
 }
+
+// ─────────── per-tool array wrappers ───────────
+//
+// MCP spec requires every tool's outputSchema to have root type `object`.
+// rmcp's `Json<Vec<T>>` would emit `{type: array}`, which fails the check at
+// tool-registration time. We wrap each array return in a one-field struct.
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ListFilesResult {
+    pub files: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct SearchHits {
+    pub hits: Vec<SearchHit>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct IncludeList {
+    pub includes: Vec<Include>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct SymbolDefs {
+    pub symbols: Vec<SymbolDef>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct CallSitesResult {
+    pub sites: Vec<CallSite>,
+}

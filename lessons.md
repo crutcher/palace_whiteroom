@@ -10,4 +10,4 @@ YYYY-MM-DD  <one-line pattern note>
 
 ## Entries
 
-(none yet)
+2026-05-24  When a slice's own 'Open questions' section contains a link that is load-bearing for the reduction chain, the L0→L1 rotation is not closed and should be split or deferred rather than asserted.

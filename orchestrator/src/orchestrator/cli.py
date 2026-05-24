@@ -32,13 +32,22 @@ def _resolve_repo_root() -> Path:
 def _load_dotenv(path: Path) -> None:
     """Populate os.environ from a .env file (KEY=value per line) — minimal,
     no external dep. Existing env vars are NOT overwritten (live shell wins).
-    Tolerates comments (#) and quoted values."""
+
+    Tolerates:
+    - blank lines and `#` comments
+    - leading `export ` prefix (shell-style; allows the same file to be
+      `source`d in a shell AND parsed here)
+    - single- or double-quoted values
+    """
     if not path.is_file():
         return
     for raw in path.read_text().splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
+        # Strip optional `export ` (shell convention).
+        if line.startswith("export "):
+            line = line[len("export "):].lstrip()
         key, _, value = line.partition("=")
         key = key.strip()
         value = value.strip()
