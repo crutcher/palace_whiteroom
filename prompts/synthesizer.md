@@ -99,6 +99,10 @@ content; the spec is technical reference, not prose.
 
 ### Diff hygiene
 
+(Strengthened 2026-05-24 meta-review #4 after recurrence #1 — cycles
+2 and 12 both failed with header/body line-count mismatch despite
+this rule existing since meta-review #1.)
+
 Your diffs are applied via `git apply`. They MUST parse:
 
 - The `@@ -A,B +C,D @@` hunk-header line counts must match the body
@@ -108,8 +112,31 @@ Your diffs are applied via `git apply`. They MUST parse:
 - Do not hand-craft `@@` headers — count actual `+` lines and let that
   count drive the header.
 
+**Pre-emit checklist (mandatory).** Before emitting a diff:
+
+1. **Count the `+` lines** between the `+++` header and the end of the
+   diff. This count is N.
+2. **Verify N matches the `@@ -X,Y +Z,N @@` header**. If you wrote
+   `@@ -0,0 +1,166 @@`, the body must contain exactly 166 lines starting
+   with `+`. Off-by-one off-by-many → corrupt patch → diff rejected.
+3. **Restate the line count in the diff's surrounding text** so a
+   pre-commit reviewer (or your own next-pass review) can spot the
+   mismatch. Example: "Diff body: 118 `+` lines, matching the
+   `@@ -0,0 +1,118 @@` header."
+
+**For new files, the safest pattern** is `--- /dev/null` for the "from"
+side and `+++ b/path/to/new/file.md` for the "to" side. This avoids any
+ambiguity about whether the file pre-existed.
+
+**Future tooling note.** If diff-apply failures recur a third time
+across all slices, the loop will gain an MCP file-creation tool (Medium
+MCP service change per the meta-review protocol) so new-file emission
+no longer goes through unified-diff parsing. Until then, the per-emit
+checklist above is the protection.
+
 A `git apply` failure is a friction signal that gets recorded against
-the cycle; recurring failures will escalate to a meta-review item.
+the cycle. Recurring failures escalate to tooling changes — your
+pre-emit checklist is the producer-side prevention.
 
 ### Rotation_claim coverage
 

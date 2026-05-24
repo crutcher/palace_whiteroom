@@ -51,6 +51,16 @@ The Meta-Critic should err toward Medium-as-escalation rather than Medium-as-dir
 9. **Record committed.** `book/src/meta-reviews/<YYYY-MM-DD>.md` captures: cycles covered, what was reviewed, categorizations, direct actions, the plan + any human edits, applied changes, escalations, and any new patterns the Meta-Critic noticed for future meta-reviews to inherit.
 10. **Normal loop resumes.**
 
+## Lessons promotion (added 2026-05-24 meta-review #4)
+
+At each meta-review, the Meta-Critic scans `lessons.md` entries added since the last meta-review and explicitly flags each as one of:
+
+- **(a) Concept-shaped — promote.** The lesson captures a methodology pattern that other slices will hit. Becomes a normal MEDIUM plan item: create a concept page in `book/src/concepts/<name>.md`, add a Critic check that applies it, add a Synthesizer prompt reference. This formalizes the pattern meta-review #1 (rotation), #2 (variant-absorption), and #3 (constructed-operators, levels-of-absorption) followed ad-hoc.
+- **(b) Critic-private heuristic — keep in lessons.md.** The lesson is a verification-time check the Critic should apply but isn't load-bearing enough to be a public concept. Stays as a `lessons.md` entry.
+- **(c) Slice-specific observation — retire on closure.** The lesson is about one particular slice's quirks and won't generalize. Annotate the lesson with `slice: <name>` and retire (move to a `## Retired` section, or strikethrough with a closing note) once that slice closes its rotation chain.
+
+Promotion threshold: per-meta-review judgment, biased toward "promote when a second instance of the same pattern appears in lessons across different slices, or when a single instance is clearly going to recur." Avoid over-promotion (concept proliferation) by deferring to the next meta-review when uncertain. If a lesson is promoted, the meta-review record names it explicitly under *Lessons promoted*.
+
 ## File conventions
 
 - **`book/src/meta-reviews/<YYYY-MM-DD>.md`** — the meta-review record. Immutable once committed (subsequent meta-reviews create new files; do not edit priors). The accumulating record set *is* the Meta-Critic's incremental project history.
@@ -100,4 +110,7 @@ trigger: cycle-count | manual
 
 | Date | Cycles covered | Direct actions | Plan items | Escalations | Notes |
 |------|---------------|----------------|------------|-------------|-------|
-| _(none yet)_ | — | — | — | — | — |
+| [2026-05-24](./2026-05-24.md) | 1–3 | 0 | 3 | 0 | First meta-review; codified rotation concept + Critic check #8; reframed slice scoping; required rotation_claim coverage. |
+| [2026-05-24 (cycles 4–6)](./2026-05-24-cycles-4-6.md) | 4–6 | 0 | 3 | 0 | First BACK pushes; rotation-as-renaming recurrence #1; added producer-side rotation self-check; user-introduced carry-through clause. |
+| [2026-05-24 (cycles 7–9)](./2026-05-24-cycles-7-9.md) | 7–9 | 0 | 3 | 0 | Variant-absorption recurrence (within-concept, within-slice); levels-of-absorption refinement; prose-rotation alignment check #10; user-introduced constructed-operators concept. |
+| [2026-05-24 (cycles 10–12)](./2026-05-24-cycles-10-12.md) | 10–12 | 0 | 3 | 0 | First batch with apply-on-revise active; 3 leaf slices landed (orthog, divfree; chebyshev failed diff-apply). Diff-hygiene recurrence #1 → strengthen. Frictionless-pass sanity (check #11 + critic note). Lessons-promotion procedure formalized. |

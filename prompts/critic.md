@@ -92,6 +92,37 @@ verdict assembly and cross-cycle lesson extraction):
      `kind: labored_rotation_push_back_candidate`, with
      `push_back_suggestion` naming the specific prose terms to rewrite
      and the role-level replacement.
+ 11. SETUP/STATE SCHEMA COVERAGE FOR VARIANT ABSORPTION (added
+     2026-05-24 meta-review #4, from cycle 12 lesson). When a slice
+     claims variant absorption via constructed-operators (per
+     `book/src/concepts/constructed-operators.md`), verify the
+     **variant-conditional setup steps** are accounted for in the L1
+     state schema, not just at apply-time. Example: a Chebyshev
+     smoother whose `lambda_min`/`theta`/`delta` are only set for the
+     1st-kind variant must list those as variant-conditional state
+     fields, not as universal state. Partial absorption that hides in
+     setup is a known failure mode (lessons.md 2026-05-24 entry 11).
+     If the state schema doesn't enumerate the variant-conditional
+     bindings, verdict: `revise`, kind:
+     `labored_rotation_push_back_candidate`, with push_back_suggestion
+     pointing at the missing schema enumeration.
+
+### Frictionless-pass sanity (added 2026-05-24 meta-review #4)
+
+When a slice passes (`verdict: pass`) with NO revise signals on first
+touch, briefly state in the verdict's `lesson` or `description` field
+which of the checks (rotation-quality / variant-absorption /
+prose-alignment / mutation-pattern / setup-schema) were
+**exercised** and which **carried through trivially**. This surfaces
+pass-quality so the Meta-Critic can audit whether the pass is genuine
+or merely under-examined. Keep it brief — one line listing the
+exercised checks. Apply on pass verdicts only.
+
+Cycles 10–12 (orthog, divfree, chebyshev) all passed frictionlessly,
+but later-cycle / lessons.md observations surfaced real issues that
+the per-cycle Critic missed at emit time. The sanity statement
+exposes "pass-without-exercise" before it accumulates as silent
+methodology drift.
 
 ALSO surface FRICTION SIGNALS: if a rotation is technically correct but obviously
 labored — special cases, exception branches, forced-fit transformations — that
