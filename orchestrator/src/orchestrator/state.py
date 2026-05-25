@@ -506,7 +506,7 @@ class State:
     # changes into the cycle commit. See scaffolding/decisions/.
     CYCLE_OWNED_PATHS = (
         "episodic.jsonl",
-        "LOG.md",
+        "log",             # per-cycle and per-meta entries (replaces LOG.md as of 2026-05-26)
         "lessons.md",
         "questions.md",
         "book",            # spec/, concepts/, design/, meta-reviews/

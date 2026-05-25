@@ -14,7 +14,13 @@ from pathlib import Path
 from anthropic import Anthropic
 
 from .config import Config
-from .log_entry import format_cycle_entry, format_meta_review_entry, prepend_log_entry
+from .log_entry import (
+    format_cycle_entry,
+    format_meta_review_entry,
+    prepend_log_entry,  # legacy
+    write_cycle_log,
+    write_meta_log,
+)
 from .mcp_client import CodemapClient
 from .roles import (
     TokenUsage,
@@ -783,7 +789,7 @@ async def run_normal_cycle(
                 "tokens_out": total_usage.output_tokens,
                 "wallclock_ms": int((time.monotonic() - start) * 1000),
             })
-            prepend_log_entry(state.repo_root, entry)
+            write_cycle_log(repo_root=state.repo_root, cycle_id=state.cycle_id, entry_md=entry)
             state.commit(commit_msg)
         return False
 
@@ -1037,11 +1043,11 @@ async def run_normal_cycle(
 
     if dry_run:
         print(f"[dry-run] would append episodic: cycle_id={state.cycle_id}, verdict={verdict['verdict']}")
-        print(f"[dry-run] would prepend LOG.md: {log_entry.splitlines()[0]}")
+        print(f"[dry-run] would write log/cycle-{state.cycle_id:03d}.md: {log_entry.splitlines()[0]}")
         print(f"[dry-run] would commit: {commit_msg}")
     else:
         state.append_episodic(episodic_entry)
-        prepend_log_entry(state.repo_root, log_entry)
+        write_cycle_log(repo_root=state.repo_root, cycle_id=state.cycle_id, entry_md=log_entry)
         state.commit(commit_msg)
     return True
 
@@ -1126,7 +1132,7 @@ async def run_meta_review(
                 recurring_patterns=None,
                 record_path="(no record written — plan rejected)",
             )
-            prepend_log_entry(state.repo_root, entry)
+            write_cycle_log(repo_root=state.repo_root, cycle_id=state.cycle_id, entry_md=entry)
             state.append_episodic({
                 "cycle_id": state.cycle_id,
                 "push_kind": "meta",

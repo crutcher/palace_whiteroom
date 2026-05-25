@@ -1,0 +1,8 @@
+## 2026-05-24 meta-review (cycles 19–21) — enacted
+
+- Window: 3 cycles. **GMRES finally landed**: cycle 20 created gmres.md (180 lines L1) and incremental-least-squares concept; cycle 21 extracted 7 support concepts (apply_linop, axpy, dot, givens, nrm2, scal, trsv — bottom-up vocabulary). Cycle 21's L2 prose for gmres.md was beautiful but didn't apply (section-append topology not covered by any channel).
+- Cascade: 0 LOW; 3 MEDIUM plan items enacted + 1 bonus integrator fix; 0 HIGH.
+- Plan items enacted: (1) `section_appends` channel — the third edit topology (alongside file-creation and in-place edit); `state.append_section(path, heading, content)` with idempotency on heading line; (2) Synthesizer prompt documents the integrator's 5-phase order so plans can be designed to take advantage of structural→relational ordering; (3) `prompts/planner.md` criterion 4 rewritten: concrete trigger ("≥2 slices same edge with pass + no open friction → SIDEWAYS is DEFAULT") + anti-procrastination ("if SIDEWAYS hasn't fired in ≥10 cycles AND trigger conditions hold, MUST emit SIDEWAYS next"). **Bonus**: `add_dependency_map_edge` auto-initializes empty mermaid blocks in layer sections that have prose only (directly resolves cycle-21's 8 edge crashes).
+- Diff-apply pattern now closed across THREE sub-modes: new files (file_creates), in-place edits (file_edits), section appends (section_appends). The diff channel survives only as last-resort.
+- SIDEWAYS escalation: if cycles 22+ still don't fire SIDEWAYS, the anti-procrastination clause is broken and requires a further meta-cycle.
+- Full record: `book/src/meta-reviews/2026-05-24-cycles-19-21.md`.

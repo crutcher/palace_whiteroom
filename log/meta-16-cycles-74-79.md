@@ -1,0 +1,7 @@
+## 2026-05-25 meta-review (cycles 74–79) — enacted — chebyshev at L4
+
+- Window: 6 cycles. **chebyshev reached L4** (cycle 78 — fourth slice past L4 after cg/gmres/orthog). gmres L4 emission again (75); cg L4 tightenings (74, 76); orthog L2→L3 (77). Cycle 79 SIDEWAYS cg+gmres was recurrence #4 of mode=create-on-existing — meta-11 watch trigger for integrator-side enforcement fired.
+- Cascade: 1 LOW; 3 MEDIUM plan items enacted; 0 HIGH.
+- Plan items enacted: (LOW) Concept-existence exemplar list expanded to all BLAS-style + methodology concepts; (1) **Integrator-side enforcement** — `concept_writes mode=create` on existing path is now `_record_fail` with structured push-back (was silent skip; SIDEWAYS recurrence #4 forced the loud-failure conversion); (2) **Retroactive-backfill budget** in Planner — when ≥2 of last 3 cycles on slice were retroactive_claims, next push MUST be forward/sideways; (3) **Critic check #15 — skill-invocation visibility** — when content matches skill trigger AND prescribed artifact missing AND no explanation in log_synthesis, verdict revise; makes uptake of `classify-variant-axis` and `verify-citation-range` measurable.
+- **README regeneration trigger**: this meta-cycle is the first where `prompts/readme_builder.md` is active. README.md regenerated as the final step per CLAUDE.md *Meta-review* (commit `readme: regenerate post-meta-17`).
+- Full record: `book/src/meta-reviews/2026-05-25-cycles-74-79.md`.

@@ -1,0 +1,6 @@
+## 2026-05-25 cycle-62 — back chebyshev — pass
+
+- Synthesis: Retroactive L0→L1 rotation_claim for chebyshev: documents the on-disk L1 form's three rotations (state stratification, constructed-operator variant absorption, coarser-substitution collapse of the transpose path). retroactive_claim_evidence: {claim_index: 0, on_disk_path: book/src/spec/slices/chebyshev.md, section: ## L1, quoted_lines: 'Captured at `setup` (immutable through `apply_linop` calls): A — SPD operator (by reference). dinv — vector of `1 / diag(A)`. Variant-specific persisted scalars (set in `setup`, used in `apply`): 4th-kind: lambda_max — scaled spectral upper bound. 1st-kind: theta := (lambda_max + lambda_min)/2, delta := (lambda_max - lambda_min)/2. The bounds lambda_max, lambda_min themselves are transient setup values and do not persist past `setup`. order, pc_it — fixed. variant is encoded by the constructed-operator class identity, not stored as a runtime field. Ephemeral per `apply_linop` call: residual r, direction d.' and from Apply: 'Repeat `pc_it` times the Richardson-like sweep ... The polynomial coefficients (alpha_0, sd_k, sr_k) are determined by variant and the spectral bounds; their concrete recurrences are L2 detail.' and 'MultTranspose aliases Mult under the symmetry assumption.'}
+- Verdict: pass.
+- Friction: none.
+- Structural change: none.
