@@ -163,3 +163,72 @@ Per mutation-pseudocode discipline, the in-place writes are visible in the primi
 - `apply_linop(T, V[j])` — pure functional form returning a fresh `w` (the buffer pre-allocation is an L0 storage detail, invisible at L2).
 
 No silently-aliasing assignment appears; the four-line composition is unambiguous about which buffers are mutated and which are read.
+
+## L3 — tensor-field lift
+
+The L2 composition is a sequence of four primitives operating on global DoF-space vectors with one small-dense accumulator-write into the j-th Hessenberg column. Lifting to L3 means asking whether the per-step procedure can be re-expressed as a single global tensor-field operation, in the sense of [tensor-field-lift](../../concepts/tensor-field-lift.md).
+
+The answer is **partial lift with a sequential obstruction**. Three of the four primitives lift cleanly; the fourth (`orthogonalize` in its MGS form) carries a [sequential-obstruction](../../concepts/sequential-obstruction.md) that is irreducible at L3 under the MGS variant, and is only partially lifted under CGS / CGS2.
+
+### Field-side lift of the three uncontested primitives
+
+- **`apply_BA`** is the global operator apply `w ← T · V[j]`. The operator `T` is a constructed linear operator over the DoF tensor field; one application is a single global field-side operation by construction. See [apply_linop](../../concepts/apply_linop.md) — already a tensor-field operation; nothing to lift.
+- **`subdiag_norm`** is `H[j+1,j] ← ‖w‖₂`, a single global reduction over the DoF-tensor field. The MPI allreduce is the lift's realisation. See [nrm2](../../concepts/nrm2.md).
+- **`normalize`** is `w ← (1/α) · w`, an element-wise scaling over the DoF tensor field with a broadcast scalar. Pointwise, embarrassingly parallel. See [scal](../../concepts/scal.md).
+
+All three are already in tensor-field form at L2; the L3 lift is identity-shaped (no new structure to surface). They are listed here for completeness — the L2→L3 edge is a no-op rotation for each.
+
+### Orthogonalisation: variant-dependent lift
+
+The orthogonalisation primitive `H[0..j] ← project(w, V[0..j]; gs_orthog)` is the only step whose lift depends on the residual variant axis. Under each `gs_orthog` value the global form differs:
+
+- **CGS (classical Gram-Schmidt)**: the entire projection is a single batched operation
+
+      H[0..j]  ←  V[0..j]ᵀ · w      -- one batched dot, one MPI allreduce
+      w         ←  w − V[0..j] · H[0..j]      -- one batched axpy / gemv
+
+  This is a clean tensor-field lift: `V[0..j]` is a `(n_dof, j+1)` global tensor; `H[0..j]` is a `(j+1)`-vector; the two operations are global [gemv_basis](../../concepts/gemv_basis.md) calls. One allreduce, no per-`i` sequencing. CGS achieves full L3 lift.
+
+- **CGS2 (CGS with one reorthogonalisation pass)**: CGS twice. Two batched gemv pairs, two allreduces. Same shape as CGS, so the L3 lift is the CGS form applied twice in sequence. The two passes are themselves sequentially dependent (the second pass projects against the residual of the first), but each pass is a global tensor-field operation. L3-lifted modulo the outer two-pass sequencing, which is finite and shape-invariant — not a true sequential obstruction.
+
+- **MGS (modified Gram-Schmidt)**: the loop
+
+      for i = 0..j:
+          H[i,j] ← ⟨w, V[i]⟩       -- one allreduce per i
+          w       ← w − H[i,j] · V[i]   -- one axpy per i, depends on H[i,j]
+
+  carries a [sequential-obstruction](../../concepts/sequential-obstruction.md): the `i+1`-th dot product reads `w` after the `i`-th axpy has updated it, so the projection coefficients `H[0..j]` cannot be computed as a single batched `V[0..j]ᵀ · w`. The data dependency `H[i+1,j]` ← f(w_after_axpy_i) ← f(H[i,j])` is genuinely sequential under MGS semantics. The lift is **obstructed at L3** for the MGS variant; the obstruction is the algorithmic distinction that motivates MGS over CGS (better backward stability per iteration through the sequential refresh of `w`).
+
+This is a textbook variant-dependent obstruction: changing `gs_orthog` from CGS to MGS removes the L3 lift. The obstruction is not eliminable by reformulation — it is the defining feature of the MGS algorithm.
+
+### Hessenberg-column write
+
+The small-dense write `H[0..j] ← ⟨w, V[0..j]⟩` is into a `(j+1)`-vector indexed by the small Hessenberg-column space, not the DoF tensor field. It is L3-trivial: small-dense scalar accumulation, no parallelism question. The interesting structural property is that this small-dense vector becomes input to the [incremental-least-squares](../../concepts/incremental-least-squares.md) machinery in the outer GMRES slice — a separate small-dense tensor-field over the Krylov-subspace index space.
+
+### Combined L3 form
+
+Under CGS / CGS2 the entire step lifts to a sequence of global tensor-field operations:
+
+```
+arnoldi_step_L3_cgs(V, j, T) -> (V[j+1], H[:,j]):
+  w        ← apply_linop(T, V[j])                 -- field-side, global
+  H[0..j]  ← V[0..j]ᵀ · w                          -- global gemv_basis (batched dot), 1 allreduce
+  w        ← w − V[0..j] · H[0..j]                 -- global gemv (batched axpy), no comm
+  -- CGS2 only: repeat the above two lines, accumulating into H[0..j]
+  H[j+1,j] ← nrm2(w)                                -- 1 allreduce
+  scal(1 / H[j+1,j], w)                             -- pointwise
+```
+
+Under MGS the orthogonalisation block is irreducibly the per-`i` loop; the surrounding three primitives lift cleanly, but the step as a whole carries the MGS sequential obstruction at L3.
+
+The L2→L3 edge is therefore a **conditional lift**: clean under CGS / CGS2, obstructed under MGS. The variant axis `gs_orthog` is the structural switch that determines whether L3 reveals a global form or preserves the sequential one. This is recorded as a first-class negative result per the L2→L3 obstruction-as-output discipline.
+
+### MPI-collective shape (L3 observable)
+
+The L3 view makes the MPI-collective shape per step explicit:
+
+- MGS: `j+1` allreduces in the orthogonalisation block, `+1` for `nrm2`, total `j+2`.
+- CGS: 1 allreduce (batched orthogonalisation), `+1` for `nrm2`, total 2.
+- CGS2: 2 allreduces (two CGS passes), `+1` for `nrm2`, total 3.
+
+This is the load-bearing distinction that motivates the variant axis in distributed-memory practice: MGS pays an allreduce per inner iteration; CGS / CGS2 pay a constant number. The L3 form is where this shape becomes a first-class property of the algorithm rather than an implementation incident.

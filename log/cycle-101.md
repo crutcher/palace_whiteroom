@@ -1,0 +1,6 @@
+## 2026-05-25 cycle-101 — forward arnoldi_step [L2→L3] — pass
+
+- Synthesis: arnoldi_step L2→L3: conditional lift. apply_BA/subdiag_norm/normalize lift identity-shaped (already tensor-field at L2). Orthogonalisation lifts cleanly under CGS/CGS2 (single batched gemv_basis pair) and is obstructed under MGS (per-i sequential dependence on w). First-class negative result per L2→L3 obstruction-as-output discipline. MPI-collective shape becomes an L3 observable: MGS pays j+2 allreduces/step, CGS pays 2, CGS2 pays 3. skills_consulted: [classify-variant-axis (n/a — variant axis already classified at L1 as residual axis), verify-citation-range (n/a — no new L0 citations), skill-selection (applied — only relevant skills are L0-citation-side or L1-variant-side; this is L2→L3)].
+- Verdict: pass.
+- Friction: slice_index_update: slice_index_update: no row found for slice 'arnoldi_step' (looked for anchors ['./slices/arnoldi_step.md', './slices/arnoldi_step/index.md']). Add a row via file_edits/section_appends first, or the integrator can be extended with an append-by-slug fallback.; bookkeeping_incomplete: 4 substantive writes landed; only bookkeeping (index/TOC) write(s) failed. Verdict held pass per meta-9 item 2; next cycle on this slice should re-attempt the bookkeeping update..
+- Structural change: none.

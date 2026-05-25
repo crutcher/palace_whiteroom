@@ -231,6 +231,12 @@ graph BT
   cg --> dot
   cg --> sequential-obstruction
   cg --> tensor-field-lift
+  arnoldi_step --> apply_linop
+  arnoldi_step --> nrm2
+  arnoldi_step --> scal
+  arnoldi_step --> gemv_basis
+  arnoldi_step --> tensor-field-lift
+  arnoldi_step --> sequential-obstruction
 ```
 
 Whole-tensor operations replacing per-element iteration; or `obstruction` results documenting genuine sequentiality.
