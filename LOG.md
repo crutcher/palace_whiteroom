@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-36 — back gmres — pass
+
+- Synthesis: GMRES slice already exists with L0-L4 content; no edits needed. Emitting retroactive L0→L1 rotation_claims covering the L0 cited regions → L1 state schema + building blocks + procedure rotation, with variant-absorption disclosure.
+- Verdict: pass.
+- Friction: none.
+- Structural change: none.
 ## 2026-05-25 cycle-35 — forward gmres [L4→L4] — revise
 
 - Synthesis: Cycle on gmres L4→L4: tighten the L4 form by collapsing the over-articulated StopTag/hit_limit_converged plumbing into a single typed Outcome flowed through SimState, removing the calculus-level friction flagged as an open question; preserves variant absorption and sequential-obstruction placement.
