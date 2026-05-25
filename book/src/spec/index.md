@@ -10,9 +10,9 @@ This index is maintained by the Synthesizer after every push. It is the **first 
 |-------|---------------|--------------|--------------|
 | [CG](./slices/cg.md) | L1 | 2026-05-25 | Slice opened. L0 citations in iterative.{hpp,cpp}; L1 procedure with parametric absorption of use_initial_guess, use_true_residual, and the preconditioner. |
 | [GMRES](./slices/gmres.md) | L1 | 2026-05-25 | Slice opened. L0 citations covering GmresSolver + FgmresSolver; L1 procedure absorbs preconditioner-side (LEFT/RIGHT) and standard-vs-flexible via constructed-operators, orthogonalization variant parametrically; use_true_residual disclosed as residual axis. |
-| [Orthogonalisation](./slices/orthog.md) | L4 | 2026-05-25 | Block Gram-Schmidt (MGS/CGS/CGS2) lifted to Solve-monad form with state stratification; variant is a constructed-operator param, MGS's sequential obstruction surfaces as a non-commuting get/modify chain on the w-field. |
-| [Divergence-free projection](./slices/divfree.md) | L4 | 2026-05-25 | L4 calculus form: SolveM monadic apply with state-stratified DivFreeParams (internal params) over SimState (sim state); scratch buffers explicitly classified as internal-parameter storage, not sim state. Eigensolver composition shown. |
-| [chebyshev](./slices/chebyshev.md) | L4 | 2026-05-25 | L4 form expressed against the calculus: setup produces an immutable operator closure carrying variant-specific scalar generators; apply is a Solve-monad action with explicit forM_/foldM binds carrying both sequential obstructions from L3. |
+| [orthog](./slices/orthog.md) | L1 | 2026-05-25 | L0 citations + L1 invariant/procedure for block orthogonalization against a B-orthonormal basis. CGS/CGS2/MGS scheme remains residual axis at L1 (level-c absorption breaks); B-inner-product absorbed via constructed dot_B. |
+| [divfree](./slices/divfree.md) | L1 | 2026-05-25 | L0 citations + L1 invariant/procedure for divergence-free projection via nodal weighted-Laplacian solve and gradient subtraction. All runtime variant axes absorbed at L1 (inner-KSP via ksp_solve, M_ε / boundary conditions operator-internal). |
+| [chebyshev](./slices/chebyshev.md) | L1 | 2026-05-25 | L0 citations + L1 invariant/procedure for 4th-kind Chebyshev smoother (Phillips & Fischer 2022). Reduction-free two-term recurrence; degree/λ_max/D⁻¹ form all operator-internal or absorbed via apply_linop. No L1 residual axis. |
 
 ## Slice conventions
 

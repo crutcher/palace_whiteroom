@@ -129,6 +129,17 @@ graph BT
   cg --> variant-absorption
   gmres --> axpy
   gmres --> dot
+  orthog --> dot
+  orthog --> axpy
+  orthog --> apply_linop
+  orthog --> constructed-operators
+  orthog --> variant-absorption
+  divfree --> ksp_solve
+  divfree --> apply_linop
+  divfree --> axpy
+  chebyshev --> apply_linop
+  chebyshev --> axpy
+  chebyshev --> elementwise-product
 ```
 
 ## L2 — algebraic decompositions
