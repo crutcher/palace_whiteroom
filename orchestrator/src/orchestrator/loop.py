@@ -532,6 +532,42 @@ async def run_normal_cycle(
     push = call_planner(state=state, cfg=cfg, client=client, dry_run=dry_run)
     print(f"[cycle {state.cycle_id}] planner: {push}")
 
+    # Retroactive-backfill budget enforcement (meta-18 item 1). If the
+    # Planner's last 2 cycles on this slice were retroactive_claims, the
+    # next push on the same slice must NOT be another retroactive_claims —
+    # AND if the consecutive count reaches 3, the orchestrator escalates
+    # automatically (the Planner's hard-gate prompt rule failed).
+    if push["kind"] in ("forward", "back"):
+        target_slice = push.get("slice", "")
+        if target_slice:
+            recent = state.read_episodic_window(10)
+            consec = 0
+            for e in reversed(recent):
+                if e.get("slice") == target_slice:
+                    if e.get("plan_kind") == "retroactive_claims":
+                        consec += 1
+                    else:
+                        break
+                # Cycles on other slices don't break the count (we're
+                # measuring same-slice consecutive retroactives).
+            if consec >= 3:
+                print(
+                    f"[cycle {state.cycle_id}] orchestrator escalation: "
+                    f"slice {target_slice!r} has had {consec} consecutive "
+                    f"retroactive_claims cycles. Auto-escalating per meta-18 "
+                    f"item 1 hard-gate enforcement."
+                )
+                push = {
+                    "kind": "escalate",
+                    "reason": (
+                        f"Retroactive-budget hard gate fired: "
+                        f"{consec} consecutive retroactive_claims on slice "
+                        f"{target_slice!r}. Planner-prompt rule (meta-18 "
+                        f"item 1) was not consulted. Surface for human "
+                        f"review."
+                    ),
+                }
+
     # Precondition: a SIDEWAYS push must name ≥2 concrete slices that exist
     # on disk. Cycle 22 fired SIDEWAYS with slice='unknown' because the
     # Planner output's `slices=a,b` field was ignored by the parser; the

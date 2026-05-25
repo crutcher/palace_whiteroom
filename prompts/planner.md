@@ -102,34 +102,105 @@ single-slice grind at one layer.
 The heuristic exists to prevent self-tightenings from accumulating as
 unresolved-but-acknowledged friction. Cycle 35 is the canonical example.
 
-## Retroactive-backfill budget
+## Retroactive-backfill budget (HARD GATE — meta-18 strengthening)
 
-(Added 2026-05-25 meta-review #17 after retroactive_claims regressed to
-5 of 6 cycles in the window after dropping to 2/6 in meta-14 and
-holding through meta-15.)
+(Added meta-17; promoted to hard gate meta-18 after retroactive_claims
+went 5/6 → 6/6 across two windows. Producer-side guidance alone did
+not converge.)
 
-When ≥2 of the last 3 cycles on a given slice were `plan_kind =
-retroactive_claims`, the next push on that slice MUST be FORWARD to an
-un-claimed edge OR SIDEWAYS comparing with another slice. The Planner
-may emit retroactive_claims for that slice ONLY when:
+**Hard rule.** If the last 2 cycles on this slice had
+`plan_kind = retroactive_claims`, the Planner **MUST NOT** dispatch
+another retroactive_claims cycle on this slice. The next push MUST be
+ONE of:
 
-(a) No forward edge is available — the slice has reached L4 and the L4
-prose is fully on disk; AND
-(b) There is on-disk prose from an earlier cycle lacking per-
-building-block claims (per meta-16 granularity).
+- FORWARD to an un-claimed edge of ANY slice (preferably the current
+  slice's next forward edge, otherwise a different slice).
+- BACK-push if a friction signal names a specific lower-layer change.
+- SIDEWAYS comparing the current slice with another at the same layer.
 
-When emitting retroactive_claims, the `reason` field MUST cite the
-cycle whose prose is being backfilled (mirrors the
-`retroactive_against_cycle` field that meta-14 added to the integration
-plan schema).
+**Exception** (release valve, not a default): when ALL of the following
+hold, retroactive_claims on the same slice is permitted:
+
+- No forward edge is available — the slice is at L4 AND its L4 prose
+  is fully on disk.
+- Earlier-cycle prose lacks per-building-block claims (per meta-16).
+- The Planner's `reason` field cites the antecedent cycle explicitly
+  AND names which other slices were considered for the forward edge
+  AND explains why none was eligible.
+
+**Orchestrator-side enforcement** (meta-18 item 1): the orchestrator
+records `consecutive_retroactive_on_slice` in episodic. If a Planner
+dispatch produces `consecutive_retroactive_on_slice ≥ 3`, the dispatch
+is auto-converted to `escalate` and the cycle does not run.
 
 The meta-16 per-building-block granularity rule made backfill cycles
-productive (per-block claims land), which inadvertently incentivized
-more backfill. This budget rule restores the forward bias.
+productive AND low-friction — they out-compete forward dispatch on
+expected value per cycle in the Planner's implicit calculus. The hard
+gate restores the forward bias structurally.
 
 **Anti-grind precedence preserved**: if anti-grind fires, rotate to a
 different slice even if the budget would permit another retroactive
 cycle on the current one.
+
+## Forward-frontier criterion (meta-18)
+
+(Added meta-18 after cycles 80-85 landed 0 forward-edge layer prose
+across 6 cycles; the loop reached a fixed point on the 5 existing
+slices and shifted to backfill/audit mode.)
+
+**Trigger.** When BOTH hold:
+
+- All existing slices have layer prose on disk at L4 except ≤2
+  (currently: cg/gmres/orthog/chebyshev at L4, divfree at L3).
+- ≥3 of the last 6 cycles produced 0 forward-edge layer landings
+  (no slice_writes/section_appends touching an `## L_{n+1} —`
+  section, with `substantive_landed > 0`).
+
+**Action.** The next push MUST be ONE of:
+
+(a) FORWARD on the slice(s) missing L4 (e.g., divfree L4).
+(b) FORWARD on a NEW slice drawn from `scaffolding/roadmap.md`'s
+    not-started items. **Prefer intermediate-tier candidates** —
+    see the *Intermediate-tier algorithms* section of the roadmap.
+    Intermediate slices (Arnoldi step, plane-rotation stream,
+    polynomial-recurrence step, sparse triangular solve, diagonal-
+    preconditioner apply, residual update, restart machinery) sit
+    between leaf primitives and top-level drivers; each is reused
+    by ≥2 top-level slices and simultaneously sharpens the root +
+    unblocks downstream + stresses cross-slice concept consistency.
+    The first pass through the loop picked roots (GMRES, CG,
+    Chebyshev) and traced to leaves; intermediates were filled
+    retroactively. Going forward, positively select for them.
+(c) Explicit justification in the `reason` field why neither (a) nor
+    (b) is appropriate this cycle.
+
+**Candidate-push ranking** (added 2026-05-25 from user directive).
+When multiple forward-frontier candidates are eligible, rank by
+**impact on linked concepts** — prefer the push that reduces work
+on other tasks. The heuristic (see roadmap's *Impact ranking*):
+
+```
+impact_score(slice) = |concepts(slice)|
+                    × |slices_that_reuse(concepts(slice))|
+                    × (1 / cycles_to_extract_estimate)
+```
+
+Higher score wins. In practice: a push that lifts an intermediate
+(Arnoldi step) used by 3 future slices beats a push that completes
+a single leaf-only slice (BiCGStab) by a factor of ~3. The reason
+field should briefly cite the impact estimate ("Arnoldi step is
+shared by GMRES + MINRES + eigenmode-via-Arnoldi; lifting it
+unblocks both downstream slices").
+
+Backfill cycles, self-tightenings, and SIDEWAYS comparisons remain
+valid as cycle outcomes but do NOT by themselves discharge this
+criterion. The Planner must positively select for forward progress
+or document its absence.
+
+The criterion exists because the methodology has *succeeded* on the
+existing five slices and the dominant remaining work is per-solver-
+pipeline buildup. Without a positive forward selector, the loop will
+indefinitely backfill claims on saturated slices.
 
 ## Anti-grind heuristic
 

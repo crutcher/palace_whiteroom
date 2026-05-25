@@ -38,6 +38,21 @@
       "type": "string",
       "description": "Optional cross-cycle pattern note appended to lessons.md."
     },
+    "skill_uptake": {
+      "type": "array",
+      "description": "Per-skill audit of whether applicable skills were invoked. Added meta-18 item 3 to make skill-uptake observable in episodic (previously check #15 was verdict-only). Required when the Critic detects that at least one skill's trigger condition holds for the cycle's content. Each entry records (a) whether the trigger fired, (b) whether the prescribed artifact is present in the diff, (c) whether the log_synthesis explains non-applicability, and (d) the resulting decision.",
+      "items": {
+        "type": "object",
+        "required": ["skill_name", "triggered", "decision"],
+        "properties": {
+          "skill_name": { "type": "string", "description": "The skill's slug, matching skills/<name>/SKILL.md." },
+          "triggered": { "type": "boolean", "description": "Did the skill's trigger condition hold for this cycle's content?" },
+          "artifact_present": { "type": "boolean", "description": "Did the prescribed output artifact appear in the diff? (e.g., `## Variant axes` block for classify-variant-axis)." },
+          "log_explanation_present": { "type": "boolean", "description": "Did log_synthesis explicitly explain non-applicability or non-invocation?" },
+          "decision": { "type": "string", "enum": ["artifact_landed", "explained_non_applicable", "missed"], "description": "Critic's classification of the cycle's skill-uptake. `missed` = trigger fired AND no artifact AND no explanation → verdict revise." }
+        }
+      }
+    },
     "exercised_checks": {
       "type": "array",
       "description": "Per-check audit of which substantive checks (#1-#12 from the Critic prompt) were engaged on this cycle's content. REQUIRED on pass verdicts (per meta-review #8 plan item 2; promotion from prose-subsection introduced in meta-review #6; check #12 added meta-review #11 for retroactive-claims evidence). Each entry is a one-line note: `check #N (name): exercised at <where>` OR `check #N: trivially carried from prior layer / not applicable`. Optional on revise/reject verdicts (the issues array already structures what was wrong). Empty array means 'no checks exercised' (sanity-fail — would be unusual on a pass).",

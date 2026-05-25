@@ -51,7 +51,7 @@ Components that underlie all five solver pipelines.
 
 ### Projections and auxiliary operators
 
-- [~] **Divergence-free projection** (divfree slice) — at L3, L4 in flight.
+- [~] **Divergence-free projection** (divfree slice) — at L3, L4 in flight. (Status unchanged through meta-18; no L4 landing in cycles 80-85.)
 - [ ] **Curl-curl projector** — predicted similar-pattern to divfree.
 
 ### FE assembly
@@ -67,6 +67,38 @@ Components that underlie all five solver pipelines.
 - [ ] **Frequency sweep** (driven): adaptive parameter sweep, output collection.
 - [ ] **Eigenpair extraction** (eigenmode): Arnoldi/Lanczos restart, residual selection.
 - [ ] **Output / I/O** — VTK/ParaView field outputs, S-parameters, port modes.
+
+## Intermediate-tier algorithms (added 2026-05-25 from user directive)
+
+A tier of algorithmic primitives that sit BETWEEN leaf primitives (axpy, dot, apply_linop, …) and top-level driver algorithms (CG, GMRES, Chebyshev). Each intermediate is reused by multiple top-level algorithms and packages a meaningful chunk of shared concept vocabulary. Solving these gives **large bang-for-buck**: one intermediate slice unblocks several downstream slices and exercises cross-slice consistency on the concepts it uses.
+
+**Targeting principle.** Per the user 2026-05-25 directive: the Planner should prioritize intermediate-tier slices over top-level roots when forward-frontier work is available. The loop's first pass picked roots (GMRES, CG, Chebyshev) and traced down to leaves; intermediates were filled retroactively. Going forward, intermediates that aren't yet extracted as standalone slices should be picked positively, ranked by **concept-overlap × downstream-slice-count**.
+
+Candidates, roughly ordered by impact:
+
+- [ ] **Arnoldi step** (one inner-loop iteration of Krylov-subspace construction). Reused by: GMRES, FGMRES, MINRES (variant), eigenmode-via-Arnoldi. Concept overlap: `apply_linop`, `orthogonalize`, `dot`, `axpy`, `nrm2`, `scal`. Currently exists *only* as an embedded paragraph inside `gmres.md` L1/L2; lifting to a sibling slice would simplify GMRES + enable MINRES + eigenmode reuse.
+- [ ] **Plane-rotation stream** (Givens-rotation accumulator + replay for least-squares update). Reused by: GMRES (Hessenberg LS update), eigenmode (QR algorithm), driven (complex Givens). Concept overlap: `givens` (generate + apply). Currently embedded in `gmres.md` ls_update_column; lifting unblocks eigenmode + driven.
+- [ ] **Polynomial-recurrence step** (degree-k Chebyshev / Richardson / Jacobi recurrence body). Reused by: Chebyshev 1st/4th-kind, Jacobi smoother, Richardson iteration. Concept overlap: `axpy`, `elementwise_product`, `scal`. Currently embedded in `chebyshev.md`; lifting unblocks Jacobi + Richardson + future polynomial preconditioners.
+- [ ] **Sparse triangular solve** (TRSV variant). Reused by: ILU(0), ILU(k), AMS (smoother), Gauss-Seidel preconditioner, back-solve in direct solvers. Concept overlap: `trsv` (already a leaf concept; this is the *sweep* over a sparse triangular factor). Lifting unblocks ILU + Gauss-Seidel + AMS smoother.
+- [ ] **Diagonal-preconditioner apply** (extract diagonal + reciprocal + elementwise multiply). Reused by: Jacobi, Chebyshev (already uses it), block-Jacobi, polynomial preconditioners. Concept overlap: `extract_diagonal`, `reciprocal`, `elementwise_product`. Lifting consolidates the pattern across smoothers.
+- [ ] **Residual update** (`r ← b - A·x` or accumulator form). Reused by: every iterative solver (CG, GMRES, MINRES, BiCGStab, Chebyshev, multigrid). Already implicit; making it a named intermediate clarifies the residual-management invariant across solvers.
+- [ ] **Restart machinery** (state save / reset / re-initialize for restarted Krylov). Reused by: restarted GMRES, restarted Arnoldi, multigrid level-recurrence. Concept overlap: state-stratification, solve-monad. Currently embedded.
+
+**Impact ranking heuristic** (used by Planner per `prompts/planner.md` forward-frontier criterion). For each candidate, score:
+
+```
+impact_score(slice) = |concepts(slice)|
+                    × |slices_that_reuse(concepts(slice))|
+                    × (1 / cycles_to_extract_estimate)
+```
+
+The intermediate-tier candidates above have impact scores estimated as: Arnoldi step ≫ Plane-rotation stream ≈ Polynomial-recurrence step > Sparse triangular solve > Diagonal-preconditioner apply > Residual update > Restart machinery.
+
+The Planner uses this list (and the impact score) as input to the forward-frontier criterion (`prompts/planner.md`). Lifting any of these from "embedded in a root slice" to a standalone intermediate slice simultaneously:
+
+1. Sharpens the root slice (clearer separation of concerns).
+2. Unblocks downstream slices that reuse the intermediate.
+3. Stresses concept vocabulary on cross-slice reuse (driving canonicalization).
 
 ## Methodology infrastructure
 

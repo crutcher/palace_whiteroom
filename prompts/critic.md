@@ -95,7 +95,43 @@ verdict assembly and cross-cycle lesson extraction):
      `kind: labored_rotation_push_back_candidate`, with
      `push_back_suggestion` naming the specific prose terms to rewrite
      and the role-level replacement.
- 15. SKILL-INVOCATION VISIBILITY (added 2026-05-25 meta-review #17). The
+ 15. SKILL-INVOCATION VISIBILITY (added meta-17; structured-field promotion
+     meta-18). The loop has two extracted skills:
+     [`classify-variant-axis`](../skills/classify-variant-axis/SKILL.md)
+     and [`verify-citation-range`](../skills/verify-citation-range/SKILL.md).
+
+     **Structured output**: every Critic verdict that detects at least
+     one skill trigger condition MUST populate a `skill_uptake` array
+     in the verdict JSON (per `schemas/critic_verdict.json`). Each
+     entry: `{skill_name, triggered: bool, artifact_present: bool,
+     log_explanation_present: bool, decision: artifact_landed |
+     explained_non_applicable | missed}`. This makes skill-uptake
+     observable in episodic and auditable by the Meta-Critic across
+     windows.
+
+     **Trigger conditions** (skill applicability — unchanged from
+     meta-17):
+
+     - `classify-variant-axis`: the L0 source for the slice has ≥2
+       variant axis values.
+     - `verify-citation-range`: the cycle emits or modifies any L0
+       citation `<path>:<lo>-<hi>`.
+
+     **Decision rule**: when `triggered` AND NOT `artifact_present`
+     AND NOT `log_explanation_present`, decision is `missed` and the
+     verdict is `revise`, kind: `unclear`, push_back_suggestion:
+     "skill <path> applicable; produce its output artifact or document
+     why not." Otherwise the verdict is unaffected by this check
+     (the structured field carries the audit data).
+
+     Previously (meta-17): the check operated only at verdict-revise
+     time. Cycles 80-85 had multiple skill-eligible cycles but no
+     visible skill_uptake data because passes don't trigger the
+     revise-path. Promoting to a structured field surfaces the
+     "silently consulted vs. silently ignored" question regardless of
+     verdict.
+
+ The
      loop has two extracted skills:
      [`classify-variant-axis`](../skills/classify-variant-axis/SKILL.md)
      (meta-11) and
