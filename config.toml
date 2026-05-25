@@ -37,4 +37,4 @@ max_parallel_slices        = 1
 # Meta-review trigger: every N completed cycles, plus manual invocation.
 # Tighter cadence (3) during shake-down means friction integrates fast;
 # can be ratcheted higher once the loop has matured.
-meta_review_every_n_cycles = 6
+meta_review_every_n_cycles = 12
