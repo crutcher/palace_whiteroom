@@ -19,6 +19,13 @@ graph BT
   constructed-operators --> variant-absorption
   sequential-obstruction --> rotation
   sequential-obstruction --> tensor-field-lift
+  state-stratification --> variant-absorption
+  state-stratification --> constructed-operators
+  state-stratification --> sequential-obstruction
+  solve-monad --> state-stratification
+  solve-monad --> sequential-obstruction
+  solve-monad --> constructed-operators
+  solve-monad --> variant-absorption
 ```
 
 - [`rotation`](./rotation.md) — root methodology concept. Defines what counts as a genuine rotation (state hiding / coarser substitution / threaded-state compression) vs. a renaming. Codified meta-review #1; expanded with carry-through clause meta-review #2.
@@ -117,6 +124,11 @@ graph BT
   gmres-L4 --> constructed-operators
   gmres-L4 --> variant-absorption
   gmres-L4 --> sequential-obstruction
+  gmres --> state-stratification
+  gmres --> solve-monad
+  gmres --> constructed-operators
+  gmres --> variant-absorption
+  gmres --> sequential-obstruction
 ```
 
 The L4 calculus has its own design artifact at [`book/src/design/l4_calculus.md`](../design/l4_calculus.md). L4 concepts (grammar productions, reduction rules, ownership categories) are not currently tracked here — the calculus is a single document with its own internal structure. If L4 grows to need cross-cycle concept tracking, add a section here at that time.
