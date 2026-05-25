@@ -35,6 +35,8 @@
   - [gmres](./concepts/gmres.md)
   - [set_subvector_zero](./concepts/set_subvector_zero.md)
   - [ksp_solve](./concepts/ksp_solve.md)
+  - [tensor-field-lift](./concepts/tensor-field-lift.md)
+  - [sequential-obstruction](./concepts/sequential-obstruction.md)
 
 # Design Artifacts
 

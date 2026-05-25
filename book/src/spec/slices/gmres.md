@@ -231,3 +231,92 @@ This primitive sequence is shape-invariant across all variant axes (orthogonalis
 
 - The per-variant `dot`/`axpy` ordering for `orthogonalize` (MGS sequential vs. CGS batched vs. CGS2 repeat-once) is deferred to the `orthog` slice; the L2 primitive set is fixed here but the L3 global-tensor form will distinguish.
 - The complex specialisation of `givens_generate` (L0.3) has additional branches for `dx = 0`, `|dx| ≥ |dy|` vs. `|dy| > |dx|` scaling; these are L2 numerical details, not new primitives.
+
+## L3 — global tensor-field form
+
+The L2 primitive composition lifts cleanly to global tensor-field operations for the field-level state (`x`, `b`, `V[k]`, `Z[k]`) — these are the per-DoF vectors over the mesh on which `A`, `M` act. The LS-side state (`H`, `s`, `cs`, `sn`, `y`) is small dense (size O(j) ≤ O(max_dim)) and is **not** field state; it does not lift. The inner Arnoldi step has one genuine sequential obstruction (incremental LS triangularisation), which is recorded as a first-class L3 result.
+
+### What lifts to a global form
+
+The field-side primitives identified at L2 each have a canonical global form:
+
+- `axpy(α, x, y)`, `scal(α, x)`, `dot(x, y)`, `nrm2(x)` — pointwise / reduction over the global DoF index set. See [concept: tensor-field-lift](../../concepts/tensor-field-lift.md) for the L2→L3 lift template for the support-operator family.
+- `apply_linop(L, x, y)` — `y = L · x` as a global linear map over the DoF field. `A` is an assembled (or matrix-free) operator on the field; `M` is the preconditioner as a field-to-field linear map. No per-element loop survives at L3.
+
+With these lifts, the L2 sub-procedures rewrite as global statements:
+
+**`initial_residual` (global).**
+```
+r0 = (initial_guess ? b − A·x : b);  x0 = (initial_guess ? x : 0)
+r  = (pc_side == LEFT ? M · r0 : r0)
+```
+
+**`apply_BA` (global).**
+```
+pc_side == RIGHT:    z = M · v;   w = A · z
+pc_side == LEFT:     w = M · A · v;   z = ⊥
+pc_side == NONE:     w = A · v;       z = ⊥
+```
+The constructed operator at the field level is the composition `M ∘ A` (LEFT) or `A ∘ M` (RIGHT), with the FGMRES per-step `M_k` realised by re-evaluating `M·v` and threading `z` into `Z[k]`.
+
+**`orthogonalize` (global, CGS shape).**
+```
+h[0..j] = Vᴴ_{0..j} · w           // batched projection: a single (j+1)×n × n vector product
+w       = w − V_{0..j} · h[0..j]   // batched subtraction: a single n × (j+1) × (j+1) update
+h[j+1]  = ‖w‖₂
+w       = w / h[j+1]
+```
+This is the CGS / CGS2 form; the global tensor view treats `V_{0..j}` as an `n × (j+1)` tall-skinny matrix and the projection as a single tall-skinny-matrix transpose-times-vector reduction. MGS does not have a single-shot global form (its sequential `dot`+`axpy` per `k` is its defining characteristic) — this is an internal-to-`orthogonalize` obstruction routed to the `orthog` slice; the L1 dispatch site is unchanged.
+
+**`apply_correction` (global).**
+```
+flexible:               x = x + Z_{0..j} · y     // tall-skinny × small dense: a single n×(j+1) × (j+1) product
+pc_side == RIGHT:       t = V_{0..j} · y;  x = x + M · t
+other:                  x = x + V_{0..j} · y
+```
+The `Σ_k y[k] · V[k]` accumulator collapses to one tall-skinny gemv at the field level.
+
+### Obstruction: incremental LS triangularisation
+
+**Claim (L3 obstruction).** `ls_update_column` does **not** lift to a global tensor-field operation, and this is structural rather than an artifact of presentation.
+
+Reasoning. The inner Arnoldi loop maintains, after step `j`, a QR factorisation of `H̄_j` whose `R` factor is stored implicitly via the rotation registers `(cs, sn)` and the accumulated RHS `s`. Step `j+1` must:
+
+1. Replay rotations `0..j` on the new column in order — rotation `k+1` operates on the output of rotation `k`. This is a sequential reduction over `k` with no associativity (the rotation matrices do not commute), so it does not collapse to a parallel reduction.
+2. Read the resulting `(h[j], h[j+1])` pair to generate rotation `j` — a data dependency from the replay output to the generator.
+3. Apply rotation `j` to the column tail and to the RHS `s` — uses the just-generated rotation.
+
+The loop-carried dependency is on a small dense O(j) state (the rotation registers and the RHS), not on field state. No global field operation hides this; at the field level the inner step is a *scalar* recurrence over the rotation index. The LS state is not a tensor field in the L3 sense (no DoF index set), so there is no global form to lift into.
+
+This is a classical *sequential algorithm* obstruction in the sense of [concept: sequential-obstruction](../../concepts/sequential-obstruction.md): the recurrence is on dense state of size O(j) where `j ≤ max_dim` is typically O(10²)–O(10³). The obstruction is benign — the per-step cost is O(j) FLOPS on a buffer that fits in cache, and the field-side work (one `apply_linop`, one batched orthogonalisation) dominates. There is nothing to vectorise; there is no field-level form. The L1 form of `ls_update_column` (incremental LS) is the L3 form, unchanged.
+
+Alternative formulations considered: batched re-triangularisation of the full `H̄_j` from scratch each step (replaces an O(j) recurrence with an O(j²) blocked operation) — strictly worse cost and gains no parallelism in the regime where `j` is small enough to live in cache. Not pursued.
+
+### `back_solve` (also not field state)
+
+The terminal `back_solve(K, j)` operates on the same small dense `(j+1)×(j+1)` triangular state. The serial back-substitution is the textbook sequential triangular solve. As with `ls_update_column`, this is not field state and not a tensor-field operation; the L1 form is the L3 form. We mark it as a deferred-once, end-of-cycle scalar operation (no per-iteration cost in the inner loop) — see [concept: sequential-obstruction](../../concepts/sequential-obstruction.md) for the small-dense-state class.
+
+### L3 inner-step shape
+
+With the lifts and obstructions resolved, a single inner Arnoldi step at L3 is:
+
+```
+1. w = (pc_side-determined composition of A, M, optionally storing z into Z[j])    // global apply_linop chain
+2. (h[0..j], w) = batched_project_and_subtract(V_{0..j}, w)                          // global CGS form
+   h[j+1] = ‖w‖₂;  w = w / h[j+1]                                                    // global nrm2 + scal
+3. ls_update_column(K, j, h)                                                          // sequential recurrence on O(j) dense state — does NOT lift
+```
+
+The field-side work (step 1, step 2) is fully global / tensor-field; the LS-side work (step 3) is an explicitly-recorded sequential obstruction on small dense state. Variant absorption is preserved: `pc_side` selects the global operator composition in step 1; `gs_orthog` selects the global form in step 2 (CGS / CGS2 are global; MGS is itself sequential and routed to `orthog`); `flexible` selects whether `z` is captured in step 1. The procedure shape is unchanged from L2.
+
+### Citations
+
+- The field-side lifts of `axpy` / `dot` / `nrm2` / `scal` / `apply_linop` follow the standard support-operator template — see [concept: tensor-field-lift](../../concepts/tensor-field-lift.md).
+- The sequential-obstruction classification follows [concept: sequential-obstruction](../../concepts/sequential-obstruction.md); GMRES's `ls_update_column` and `back_solve` are recorded as the small-dense-state subcase.
+- L0 backing for the sequential structure: `palace/linalg/iterative.cpp:616–668` (inner loop, the rotation replay / generate / apply sequence) and `palace/linalg/iterative.cpp:669–706` (back-solve).
+
+### Open questions (L3-specific)
+
+- The L3 form of `orthogonalize` for `gs_orthog == MGS` is itself a sequential obstruction (per-`k` `dot`+`axpy` chain). This is internal to the `orthog` slice and is the natural place to record that obstruction; the GMRES slice's L1 dispatch contract is unaffected.
+- The CGS2 form (one CGS sweep, then a second corrective sweep) is two global batched operations in sequence; the second sweep's coefficients depend on the first sweep's output, so it does not collapse further. Also routed to `orthog`.
+- Whether the FGMRES `Z[k]` storage admits a streaming / out-of-core form at the field level (avoiding `O(max_dim · n)` memory) is a memory-layout concern below L3 and is not pursued here.

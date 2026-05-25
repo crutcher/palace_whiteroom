@@ -17,6 +17,8 @@ graph BT
   variant-absorption --> rotation
   constructed-operators --> rotation
   constructed-operators --> variant-absorption
+  sequential-obstruction --> rotation
+  sequential-obstruction --> tensor-field-lift
 ```
 
 - [`rotation`](./rotation.md) — root methodology concept. Defines what counts as a genuine rotation (state hiding / coarser substitution / threaded-state compression) vs. a renaming. Codified meta-review #1; expanded with carry-through clause meta-review #2.
@@ -88,9 +90,20 @@ s L1→L2 rotations land.)
 
 ## L3 — global tensor-field operations
 
+```mermaid
+graph BT
+  tensor-field-lift --> axpy
+  tensor-field-lift --> dot
+  tensor-field-lift --> nrm2
+  tensor-field-lift --> apply_linop
+  gmres-L3 --> tensor-field-lift
+  gmres-L3 --> sequential-obstruction
+```
+
 Whole-tensor operations replacing per-element iteration; or `obstruction` results documenting genuine sequentiality.
 
 (Empty as of 2026-05-23. Will populate as L2→L3 rotations land. Expect Krylov outer loops and Arnoldi orthogonalization to be obstructions, not lifts.)
+bstructions, not lifts.)
 
 ## L4 — formal calculus terms
 
