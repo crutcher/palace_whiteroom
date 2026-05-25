@@ -10,6 +10,9 @@ Your job: pick the NEXT PUSH for the next cycle. A push is one of:
   - BACK:    restructure a lower layer of a slice in response to a push-back signal
              logged in the episodic record.
   - SIDEWAYS: surface a unification opportunity by comparing two slices' Li forms.
+  - REFINEMENT: re-examine existing work in light of subsequent improvements to
+             touching components (linked concepts, slices above/below, methodology
+             additions). Conservative by design. Added 2026-05-26 per user directive.
 
 Choose criteria, in order:
 
@@ -57,6 +60,49 @@ Choose criteria, in order:
        — if no 2 slices share an edge with pass + no friction, SIDEWAYS
        can't fire and the clause doesn't apply (the cycle goes FORWARD
        or BACK instead).
+
+## Refinement (added 2026-05-26 from user directive)
+
+Refinement is a primary-phase push that **re-examines completed work** in light of subsequent improvements — to the work above (higher layers), the work below (lower layers), or to the concepts the work uses. The premise: when a touching component has been updated since this work was last touched, the work *may* benefit from a small revision that takes advantage of clearer representations, resolved questions, or newly-extracted vocabulary.
+
+### Trigger sources
+
+Refinement is a *candidate* push when any of these hold:
+
+(a) **Touching-component update**: a slice or concept that the candidate work references has been updated more recently than the candidate. The orchestrator surfaces this via `state.list_refinement_candidates()`; the list is provided to the Planner alongside the episodic window.
+
+(b) **Periodic least-recently-touched scan**: the orchestrator's `state.list_least_recently_touched()` returns slices and concepts ranked by `mtime`, oldest first. The least-recently-touched slice in the spec is always a refinement candidate (so we eventually re-examine all work).
+
+(c) **Methodology addition**: when a meta-review introduces a new concept, prompt rule, or skill, prior slices may benefit from re-examination under the new lens. The Meta-Critic should flag this in its plan when applicable.
+
+### Dispatch criteria
+
+Refinement is the right push when:
+
+- The candidate work landed at least one cycle ago.
+- A touching component has been updated since (or LRT scan surfaces the candidate).
+- No higher-priority push is queued (forward-frontier, BACK on open friction, SIDEWAYS-eligible pair).
+
+Output form:
+
+```
+push: refinement slice=<name> reason=<which touching component changed and what to re-examine>
+```
+
+### Conservative discipline
+
+Refinement is **conservative by design**:
+
+- Propose small revisions via the existing `file_edits` / `section_appends` channels.
+- Do NOT restructure the slice's layer composition (that's BACK or FORWARD).
+- Do NOT change the rotation chain (that's FORWARD or BACK).
+- DO update prose to cite newly-extracted concepts, clarify ambiguities resolved by subsequent slices, or remove now-redundant explanations.
+
+### Escalation: major discrepancy → problems/
+
+If refinement surfaces a **major discrepancy** — the candidate work makes a claim that subsequent work contradicts, or relies on a representation that's been superseded structurally — DO NOT silently fix it. File a `problems/${YYYY-MM-DDTHHMMSS}Z.md` entry naming the discrepancy and the touching components involved, surface it for meta-review, and have the cycle emit a no-op refinement (or a small annotation noting "see problems/...md") rather than the substantive fix.
+
+The bar: refinement edits that change prose are conservative; refinement findings that change semantics are problems.
 
 ## Self-rotation tightening consumption
 

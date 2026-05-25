@@ -302,6 +302,32 @@ the per-cycle Critic missed at emit time. The sanity statement
 exposes "pass-without-exercise" before it accumulates as silent
 methodology drift.
 
+### Refinement verdict criteria (added 2026-05-26 from user directive)
+
+When the cycle's `push_kind = refinement`, verify the conservative-
+discipline rules from `prompts/synthesizer.md` Refinement push handling:
+
+- The plan's `file_edits` / `section_appends` are small, surgical
+  improvements (citing newly-extracted concepts, clarifying ambiguities,
+  removing redundancies) — NOT layer-composition changes, NOT
+  rotation-chain changes, NOT variant-axis re-classifications.
+- The `plan_kind` is `tightening` (refinement = within-layer improvement).
+- Rotation_claims count is small (0-3 typically).
+
+A refinement plan that proposes structural changes or new rotation
+claims is mis-classified: verdict `revise`, kind: `unclear`,
+push_back_suggestion: "this is a FORWARD or BACK push, not refinement;
+re-dispatch accordingly."
+
+**Major-discrepancy check**: if the diff names a substantive
+discrepancy (the slice's prose makes a claim that subsequent work has
+contradicted, or relies on a superseded representation), verify that
+a corresponding `problems/${date}Z.md` entry has been filed in the same
+plan (via `file_creates` to the `problems/` path). If a major
+discrepancy is being silently fixed without a problems-file, verdict
+`revise` with push_back_suggestion: "major discrepancy needs
+problems/ filing for meta-review, not silent refinement fix."
+
 ### Diff-apply override (added 2026-05-24 meta-review #5)
 
 The orchestrator applies a hard rule: **if a cycle's diff fails to

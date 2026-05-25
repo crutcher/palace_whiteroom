@@ -437,6 +437,39 @@ verdict field (check #15). If the Synthesizer omits the consultation
 record, the Critic's `log_explanation_present` field is `false`,
 and missing-artifact cases will downgrade.
 
+**Refinement push handling** (added 2026-05-26 from user directive).
+When the Planner dispatches `push: refinement slice=<name> reason=...`,
+treat it as a re-examination of the named slice in light of touching
+components (linked concepts, slices above/below, methodology additions
+since the slice was last touched). Apply the [`skill-selection`]
+(../skills/skill-selection/SKILL.md) procedure as usual.
+
+**Conservative discipline.** Refinement plans:
+
+- Use `file_edits` / `section_appends` to make small, surgical
+  improvements: cite a newly-extracted concept, clarify an
+  ambiguity that a subsequent slice resolved, remove a redundant
+  paragraph.
+- Set `plan_kind: tightening` (refinement is a within-layer
+  improvement, not a layer advance).
+- Emit at most 2-3 `rotation_claims` per refinement cycle (these
+  are typically prose-level and small).
+- Do NOT change the rotation chain, the layer composition, or
+  the slice's variant-axis classifications. Those changes belong
+  to FORWARD or BACK pushes.
+
+**Major-discrepancy escalation.** If your refinement examination
+surfaces a **major discrepancy** — the slice makes a claim that
+subsequent work has contradicted, or it relies on a representation
+that's been semantically superseded — file a `problems/${YYYY-MM-
+DDTHHMMSS}Z.md` entry naming the discrepancy and the touching
+components, AND emit a no-op refinement plan (or a small annotation
+noting "see problems/...md"). Do NOT silently fix major
+discrepancies via refinement — they belong to meta-review.
+
+The bar: refinement edits that change prose are conservative;
+refinement findings that change semantics are problems.
+
 **Plan kind classification** (added meta-10 item 2; tightened meta-13
 item 1 after cycles 50-55 had 5/6 cycles classified as retroactive_claims
 despite containing substantive layer-content writes — synthesizers were

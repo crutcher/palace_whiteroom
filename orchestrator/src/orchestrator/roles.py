@@ -59,7 +59,7 @@ def _system_block(text: str) -> list[dict]:
 
 
 _PUSH_LINE_RE = re.compile(
-    r"^push:\s*(forward|back|sideways|escalate)\b(.*)$",
+    r"^push:\s*(forward|back|sideways|refinement|escalate)\b(.*)$",
     re.MULTILINE,
 )
 
@@ -117,6 +117,8 @@ def call_planner(
     lessons = state.read_lessons()
     spec_index = state.read_spec_index()
     recent_episodic = state.read_episodic_window(5)
+    refinement_candidates = state.list_refinement_candidates()
+    lrt_list = state.list_least_recently_touched(n=5)
 
     user_message = (
         "Current spec slice index:\n```\n" + spec_index + "\n```\n\n"
@@ -125,14 +127,19 @@ def call_planner(
         "Recent episodic entries (last 5):\n```json\n" +
         "\n".join(json.dumps(e, separators=(",", ":")) for e in recent_episodic) +
         "\n```\n\n"
+        "Refinement candidates (linked component updated more recently than work):\n```json\n" +
+        json.dumps(refinement_candidates[:5], indent=2) + "\n```\n\n"
+        "Least-recently-touched slices (periodic refinement candidates):\n```json\n" +
+        json.dumps(lrt_list, indent=2) + "\n```\n\n"
         "OUTPUT FORMAT — produce ONLY these one or two lines, NO analysis, NO "
         "preamble, NO markdown headers, NO reasoning prose. Just the directive:\n\n"
         "  push: forward slice=<name> from=L0 to=L1 reason=<short>\n"
         "  scope_question: <full question text>\n"
         "\n"
         "(Or one of the other push kinds: `push: back ...`, `push: sideways ...`, "
-        "`push: escalate ...`. The `scope_question:` line is only required when "
-        "the push is a FORWARD-to-L1 cycle on a seed question.)\n"
+        "`push: refinement slice=<name> reason=<short>`, `push: escalate ...`. "
+        "The `scope_question:` line is only required when the push is a "
+        "FORWARD-to-L1 cycle on a seed question.)\n"
     )
 
     response = client.messages.create(

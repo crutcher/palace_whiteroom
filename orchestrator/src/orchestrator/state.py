@@ -330,6 +330,81 @@ class State:
         path.write_text(text)
         return True
 
+    def list_refinement_candidates(self, lookback_days: int = 30) -> list[dict]:
+        """List slices/concepts where a touching component (linked concept,
+        slice it references, or methodology file under prompts/) has been
+        updated more recently than the candidate itself.
+
+        Returns a list of {path, slice_or_concept, mtime, reason} dicts,
+        ranked by how recently the touching component was updated.
+
+        Coarse-grained — uses file mtimes and a regex-based reference scan.
+        Refinement candidates surfaced here are PROPOSALS; the Planner
+        decides whether to dispatch.
+
+        Added 2026-05-26 from user directive (Refinement as a primary-phase
+        operation). Conservative implementation: no concept-graph traversal,
+        no deep semantic analysis. The Planner reads this list and the
+        prose around it picks the candidate."""
+        import re
+        candidates: list[dict] = []
+        slices_dir = self.repo_root / "book/src/spec/slices"
+        concepts_dir = self.repo_root / "book/src/concepts"
+        if not slices_dir.exists() or not concepts_dir.exists():
+            return candidates
+
+        # For each slice, gather (a) its own mtime, (b) the mtimes of
+        # concepts it references and slices it cross-references. If any
+        # referenced thing is newer, the slice is a candidate.
+        link_pattern = re.compile(r"\.\./(?:\.\./)?(?:concepts|spec/slices)/([\w_-]+)(?:/[\w_-]+)?\.md")
+        for slice_path in sorted(slices_dir.glob("*.md")):
+            slice_mtime = slice_path.stat().st_mtime
+            text = slice_path.read_text()
+            newest_link_mtime = 0.0
+            newest_link_target = None
+            for m in link_pattern.finditer(text):
+                target_name = m.group(1)
+                target_concept = concepts_dir / f"{target_name}.md"
+                target_slice = slices_dir / f"{target_name}.md"
+                target_subdir = slices_dir / target_name / "index.md"
+                for target in (target_concept, target_slice, target_subdir):
+                    if target.exists():
+                        target_mtime = target.stat().st_mtime
+                        if target_mtime > newest_link_mtime:
+                            newest_link_mtime = target_mtime
+                            newest_link_target = target.relative_to(self.repo_root)
+            if newest_link_mtime > slice_mtime:
+                candidates.append({
+                    "path": str(slice_path.relative_to(self.repo_root)),
+                    "kind": "slice",
+                    "slice_or_concept": slice_path.stem,
+                    "mtime": slice_mtime,
+                    "newest_link_mtime": newest_link_mtime,
+                    "newest_link_target": str(newest_link_target) if newest_link_target else None,
+                    "reason": f"linked component {newest_link_target} updated more recently",
+                })
+        candidates.sort(key=lambda c: c["newest_link_mtime"], reverse=True)
+        return candidates
+
+    def list_least_recently_touched(self, n: int = 5) -> list[dict]:
+        """Return the N slices/concepts with the oldest mtime — refinement
+        candidates by the periodic-scan path (per `prompts/planner.md`
+        Refinement trigger source (b)).
+
+        Added 2026-05-26 from user directive."""
+        slices_dir = self.repo_root / "book/src/spec/slices"
+        items: list[dict] = []
+        if slices_dir.exists():
+            for slice_path in slices_dir.glob("*.md"):
+                items.append({
+                    "path": str(slice_path.relative_to(self.repo_root)),
+                    "kind": "slice",
+                    "slice_or_concept": slice_path.stem,
+                    "mtime": slice_path.stat().st_mtime,
+                })
+        items.sort(key=lambda i: i["mtime"])  # oldest first
+        return items[:n]
+
     def update_slice_index_row(
         self,
         slice: str,

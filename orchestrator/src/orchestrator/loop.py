@@ -739,6 +739,22 @@ async def run_normal_cycle(
                     ),
                 }
 
+    # Refinement push (added 2026-05-26 from user directive). The
+    # dispatch shape is similar to FORWARD on an existing slice, but the
+    # cycle's content is re-examination (conservative, with major-
+    # discrepancy escalation to problems/). The Synthesizer prompt
+    # describes the discipline; the orchestrator just routes the push to
+    # the standard Synthesizer call with the refinement slice as context.
+    # Treat refinement as edge=L_n→L_n (within-layer) for downstream
+    # bookkeeping; the actual layer the refinement touches is determined
+    # by what the slice currently has on disk.
+    if push["kind"] == "refinement":
+        # Map refinement to the standard forward-style dispatch path
+        # below; the Synthesizer's prompt + the push['kind'] == 'refinement'
+        # signal carry the discipline. Set edge to something sensible.
+        push["from"] = push.get("from", "Ln")
+        push["to"] = push.get("to", "Ln")
+
     if push["kind"] == "escalate":
         entry = format_cycle_entry(
             cycle_id=state.cycle_id,
@@ -776,7 +792,14 @@ async def run_normal_cycle(
     finding: dict | None = None
 
     # ─────── role calls ───────
-    if push["kind"] == "forward":
+    if push["kind"] == "refinement":
+        # Refinement uses the Synthesizer/Critic path identical to a
+        # within-slice push; the prompt's *Refinement push handling*
+        # subsection drives behavior. No Explorer call (refinement
+        # examines existing on-disk content, not new source).
+        edge = f"{push.get('from', 'Ln')}→{push.get('to', 'Ln')}"
+        # fall through to the synthesizer/critic flow below
+    elif push["kind"] == "forward":
         from_layer = push.get("from", "L0")
         to_layer = push.get("to", "L1")
         edge = f"{from_layer}→{to_layer}"
