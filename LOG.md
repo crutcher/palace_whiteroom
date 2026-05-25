@@ -29,6 +29,25 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-63 — forward cg [L4→L4] — pass
+
+- Synthesis: CG L4→L4 self-rotation: emit rotation_claim for the v0.4 state-schema tightening (derived-view hoisting of `res = sqrt|beta|` from CgState/PCgState to step-output `residual_norm`), already landed on-disk in the slice's `## L4 v0.4 — state-schema tightening` section. retroactive_claim_evidence quotes the on-disk prose; no new content writes this cycle.
+
+retroactive_claim_evidence:
+  - claim_index: 0
+    on_disk_path: book/src/spec/slices/cg.md
+    section: ## L4 v0.4 — state-schema tightening
+    quoted_lines: |
+      **v0.4 vs. v0.3 (this revision).** The L4 v0.3 form (above) stores `res` neither in `CgState` nor `PCgState` — it is computed inside `cg_step` / `pcg_step` and returned as the step-output `residual_norm`. **v0.4 is a no-op on the state schema** (the v0.3 form was already correct on this axis) and adds an explicit comment to that effect: `res` is a *derived view* of `beta` (specifically `sqrt|beta|`); storing it in the iteration state would duplicate `beta`'s information and create a redundant invariant the step must maintain (`s.res == sqrt|s.beta|`) on every transition.
+
+      1. **State schema** — `CgState`/`PCgState` carry `beta` only; `res` is not a field. Saved: 1 scalar per state record × 2 schemas.
+      2. **Step body** — `let res' = sqrt (abs beta')` is a step-local binding; it flows into the step's return record (`residual_norm: res'`), not into the next state's `res` field.
+      3. **Step output record** — `{ state: CgState<S>, residual_norm: Scalar }` separates iteration-threaded state from step-observable outputs. The split makes pruning targetable.
+
+      A reader looking at `CgState<S>` v0.4 cannot tell — and **does not need to know** — whether downstream consumers will read the residual history.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 2 lesson(s); 1 rotation_claim(s).
 ## 2026-05-25 cycle-62 — back chebyshev — pass
 
 - Synthesis: Retroactive L0→L1 rotation_claim for chebyshev: documents the on-disk L1 form's three rotations (state stratification, constructed-operator variant absorption, coarser-substitution collapse of the transpose path). retroactive_claim_evidence: {claim_index: 0, on_disk_path: book/src/spec/slices/chebyshev.md, section: ## L1, quoted_lines: 'Captured at `setup` (immutable through `apply_linop` calls): A — SPD operator (by reference). dinv — vector of `1 / diag(A)`. Variant-specific persisted scalars (set in `setup`, used in `apply`): 4th-kind: lambda_max — scaled spectral upper bound. 1st-kind: theta := (lambda_max + lambda_min)/2, delta := (lambda_max - lambda_min)/2. The bounds lambda_max, lambda_min themselves are transient setup values and do not persist past `setup`. order, pc_it — fixed. variant is encoded by the constructed-operator class identity, not stored as a runtime field. Ephemeral per `apply_linop` call: residual r, direction d.' and from Apply: 'Repeat `pc_it` times the Richardson-like sweep ... The polynomial coefficients (alpha_0, sd_k, sr_k) are determined by variant and the spectral bounds; their concrete recurrences are L2 detail.' and 'MultTranspose aliases Mult under the symmetry assumption.'}
