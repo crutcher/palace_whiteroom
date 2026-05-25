@@ -82,7 +82,19 @@ def _summarize_plan_for_critic(plan: dict) -> str:
             + "\n".join(f"- {l}" for l in plan["lessons"])
         )
     if plan.get("log_synthesis"):
-        chunks.append(f"=== log_synthesis ===\n{plan['log_synthesis']}")
+        # Render either string or structured-object form.
+        ls = plan["log_synthesis"]
+        if isinstance(ls, dict):
+            chunks.append(
+                "=== log_synthesis ===\n"
+                + ls.get("summary", "")
+                + (
+                    ("\n\nretroactive_claim_evidence:\n" + __import__("json").dumps(ls["retroactive_claim_evidence"], indent=2))
+                    if ls.get("retroactive_claim_evidence") else ""
+                )
+            )
+        else:
+            chunks.append(f"=== log_synthesis ===\n{ls}")
     return "\n\n".join(chunks)
 
 
@@ -812,7 +824,14 @@ async def run_normal_cycle(
         edge=edge,
         verdict=verdict["verdict"],
         synthesis=(
-            plan.get("log_synthesis")
+            # log_synthesis can be either a string (legacy) or a structured
+            # object with .summary + .retroactive_claim_evidence (meta-17
+            # schema extension). Extract the summary either way.
+            (
+                plan["log_synthesis"]["summary"]
+                if isinstance(plan.get("log_synthesis"), dict)
+                else plan.get("log_synthesis")
+            )
             or f"{len(claims)} rotation_claim(s); {structural_change or 'no writes applied'}"
         ),
         friction=friction_summary or None,

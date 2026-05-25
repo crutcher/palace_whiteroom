@@ -115,8 +115,31 @@
       "items": { "type": "string" }
     },
     "log_synthesis": {
-      "type": "string",
-      "description": "One-line summary of what the cycle produced. The integrator builds the LOG.md entry from this plus cycle metadata (verdict, friction, structural_change) — the Synthesizer does NOT format the LOG entry directly."
+      "description": "Summary of what the cycle produced. Either a plain string (one-line summary; legacy simple form) OR a structured object with a `summary` field plus optional `retroactive_claim_evidence` array (required when plan_kind=retroactive_claims OR when check #12 structural condition holds per meta-15). The integrator extracts `.summary` (or the whole string) for the LOG.md entry. Schema updated meta-17 after cycle 74 emitted the structured object form that the meta-11 prompt required but the original string-only schema rejected.",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "required": ["summary"],
+          "properties": {
+            "summary": { "type": "string", "description": "One-line summary used as the LOG.md entry." },
+            "retroactive_claim_evidence": {
+              "type": "array",
+              "description": "Per-claim quoted on-disk prose supporting each rotation_claim. Required when the plan emits rotation_claims against existing on-disk surface with no new layer prose in the same plan (Critic check #12).",
+              "items": {
+                "type": "object",
+                "required": ["claim_index", "on_disk_path", "quoted_lines"],
+                "properties": {
+                  "claim_index": { "type": "integer", "minimum": 0 },
+                  "on_disk_path": { "type": "string", "description": "Repo-relative path to the file containing the quoted prose." },
+                  "section": { "type": "string", "description": "Optional section heading where the quote lives, e.g., '## L4 v0.4 — derived-view hoisting'." },
+                  "quoted_lines": { "type": "string", "description": "The actual quoted prose supporting the claim." }
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "rotation_claims": {
       "type": "array",
