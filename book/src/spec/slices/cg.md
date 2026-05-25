@@ -18,7 +18,8 @@ Cited source ranges, relative to `reference/`:
 - `palace/palace/linalg/iterative.cpp:360-486` — `CgSolver<OperType>::Mult(const VecType &b, VecType &x) const`. The full preconditioned-CG body, including:
   - `360-374` — setup: scalar workspace, size assertions, `r/z/p.SetSize(...)`, device flags.
   - `376-394` — initialization: if `initial_guess`, compute `r ← b − A·x`; otherwise `r ← b, x ← 0`. Then apply preconditioner `z ← B·r` (or `z ← r` if `B` is null).
-  - `395-418` — initial scalars: `beta ← (z, r)`, `res ← √|beta|`; compute reference norm `initial_res` for the relative-tolerance test; check initial convergence.
+  - `395-418` — initial scalars: `beta ← (z, r)`, `res ← √|beta|`; compute reference norm `initial_res` for the relative-tolerance test; check initial convergence. **Quirk**: at lines 407-411 (the `!B && initial_guess` branch), `initial_res = sqrt|Norml2(b)| = (b·b)^{1/4}`, NOT `‖b‖₂` — see Working Notes.
+  - `244-250` — `CheckDot<T>(d, msg)`: partial-function guard; asserts `d` is finite and (for real `T`) non-negative; aborts with `msg` otherwise. Invoked at lines 396, 412, 444, 461 after each β-update.
   - `421-464` — main loop:
     - `434-441` — search direction `p`: first iteration `p ← z`; subsequent `p ← z + (beta/beta_prev)·p`.
     - `443-446` — `z ← A·p`; `denom ← (z, p)`; `alpha ← beta / denom`.
@@ -33,7 +34,8 @@ Linear-algebra primitives invoked (defined in `palace/palace/linalg/` but treate
 - `linalg::Dot(comm, u, v)` — `(u, v)`, MPI-reduced. (palace/palace/linalg/iterative.cpp:395, 444, 460)
 - `linalg::Norml2(comm, v)` — `‖v‖₂`. (palace/palace/linalg/iterative.cpp:408)
 - `x.Add(α, y)` (MFEM Vector method) — `x ← x + α·y`. (palace/palace/linalg/iterative.cpp:448, 449)
-- `ApplyB(B, r, z, ...)` — preconditioner application, `z ← B·r`. (palace/palace/linalg/iterative.cpp:389, 403, 454)
+- `ApplyB(B, r, z, ...)` — preconditioner application, `z ← B·r`. Wraps `B->Mult` inside a `BlockTimer` scope; asserts `B` is non-null. (palace/palace/linalg/iterative.cpp:389, 403, 454)
+- `CheckDot<T>(d, msg)` — partial-function guard on inner products. (palace/palace/linalg/iterative.cpp:244-250, invoked at 396, 412, 444, 461)
 
 ## L1
 
@@ -77,6 +79,7 @@ iterate from (x = x₀, r = r₀, z = z₀, p = ⊥, beta = beta₀, beta_prev =
     let res' = sqrt |beta'|
     let converged' = res' < eps
     let it' = it + 1
+    check_dot beta'                                // partial-function guard; aborts on non-finite
     -- (printed residual: ‖r‖_B = res', see effects discussion)
     continue with (x = x', r = r', z = z', p = p', beta = beta', beta_prev = beta, res = res', it = it')
 ```
@@ -88,6 +91,8 @@ Notes:
 - `linalg::AXPBY(α, x, β, y)` mutates `y` in place; L1 makes the destination explicit as the result of the call.
 - The `initial_guess` branch reuses `p` as scratch for computing `(Bb, b)`; L1 binds it to a local `p_tmp` since it is not the iteration's search direction.
 - The `if it == 0` branch in the search-direction update is a bookkeeping convenience (avoid a divide-by-zero on `beta_prev`). It survives unchanged through L1–L2; at L4 it folds naturally into the first iteration's special-case via the `iterate_while` initial value.
+- `check_dot` (Palace's `CheckDot`, [palace/linalg/iterative.cpp:244-250](../../../../reference/palace/linalg/iterative.cpp#L244-L250)) is a partial-function guard at each new inner-product site: it aborts execution if the result is non-finite or, on real SPD systems, negative (signalling loss of positive-definiteness). L1 surfaces it as a `check_dot β'` assertion; at L4 the guard maps to the precondition `β > 0` on `cg_step`'s call-site, not a runtime branch in the pure-functional form.
+- **Initial-residual quirk in the no-preconditioner branch (`!B && initial_guess`).** Palace computes `beta_rhs = Norml2(b) = sqrt|(b,b)|` then sets `initial_res = sqrt|beta_rhs|`, yielding `initial_res = (b·b)^{1/4}` — not `‖b‖₂`. The preconditioned branch computes the correct `sqrt|(Bb, b)|`. L1 preserves Palace's source behavior; the L4 modeling and Working Notes flag this as a likely Palace bug (asymmetry with the `B` branch suggests the author intended `Dot(b,b)` not `Norml2(b)`).
 
 ## L2
 
@@ -187,7 +192,9 @@ cg_init opA b x_initial initial_guess =
       else { r0: b, x0: zeros_like b } in
   let beta0 = dot r0 r0 in
   let res0  = sqrt (abs beta0) in
-  let init_res = if initial_guess then sqrt (abs (dot b b)) else res0 in
+  -- Palace quirk: in the !B branch, initial_res is sqrt|Norml2(b)| = (b·b)^{1/4}, not ‖b‖₂.
+  -- See Working Notes; preserved here as a faithful L4 rendering of the source behavior.
+  let init_res = if initial_guess then sqrt (sqrt (abs (dot b b))) else res0 in
   { state: { x: x0, r: r0, p: zeros_like b,
              beta: beta0, beta_prev: 0,
              it: 0, converged: False },
@@ -270,7 +277,10 @@ The step-level correspondence is mechanical (β, let, spread, δ-rules). Notable
 
 ## Working Notes
 
-- v0.1 of this slice (against L4 v0.2) raised push-back signals about residual-norm logging requiring a Writer effect; **resolved by L4 v0.3's demand-driven pruning**. Updated v0.2 here.
+- v0.1 of this slice (against L4 v0.2) raised push-back signals about residual-norm logging requiring a Writer effect; **resolved by L4 v0.3's demand-driven pruning**. Updated v0.2 here. v0.3 (this revision) audits L0/L1 against source per Explorer cycle, surfacing two prior gaps (CheckDot partial-function guard; initial-residual quirk in `!B && initial_guess` branch).
+- **Initial-residual quirk (likely Palace bug).** At [palace/linalg/iterative.cpp:399-412](../../../../reference/palace/linalg/iterative.cpp#L399-L412), when `initial_guess && !B`, Palace assigns `beta_rhs = linalg::Norml2(comm, b)` (already `sqrt|Dot(b,b)|`) then `initial_res = sqrt|beta_rhs|`. Net: `initial_res = (b·b)^{1/4}`. The preconditioned branch sets `beta_rhs = Dot(Bb, b)` (an inner product, NOT a norm), then `initial_res = sqrt|beta_rhs| = sqrt|(Bb,b)|`. The asymmetry — `Norml2` vs `Dot` — strongly suggests an intended `Dot(b, b)` in the unpreconditioned line that would yield `initial_res = ‖b‖₂` matching the energy-norm interpretation of the B-branch. L0/L1/L4 preserve the source behavior faithfully; consumers of the relative-tolerance test (`eps = max(rel_tol·initial_res, abs_tol)`) should be aware that the convergence threshold's scale differs from a pure ‖b‖ formulation in this branch.
+- **`CheckDot` modeling.** Palace's `CheckDot` ([iterative.cpp:244-250](../../../../reference/palace/linalg/iterative.cpp#L244-L250)) asserts the dot-product result is finite and (for real systems) non-negative. It is invoked after every β-update at [iterative.cpp:396, 412, 444, 461](../../../../reference/palace/linalg/iterative.cpp#L396-L461). Modeled at L1 as `check_dot β'` partial-function guard; at L4 as a precondition on the SPD assumption (no runtime branch in the pure form).
+- **Unit-test coverage.** Per Explorer cycle: no unit tests under `test/unit/` reference `CgSolver` or `PCG` directly (`test-orthog.cpp` is the closest topical sibling but exercises orthogonalization, not CG). CG is exercised only through integration tests under `test/examples/`. The L1–L4 forms remain unverified at the unit level; the L0→L1 rotation here rests on algebraic argument + source-citation, not `empirical_match`.
 - **Open**: the L3 primitives invoked (`axpy`, `axpby`, `dot`, `apply_linop`, `norml2`) need `concepts/` entries. Highest priority: `axpy`, `dot`, `apply_linop`. To be written when the next slice (GMRES) is started or when this slice is re-pushed by the agent loop.
 - **Open**: complex-valued case (`OperType = ComplexOperator`) is templated together with the real case in the Palace source. The L4 form does not distinguish them; `Scalar` and `Tensor[S]` are intended to admit both. Worth re-examining when a complex-valued slice (driven solver, eigenmode) is written.
 - **Open**: MPI is out of scope per CLAUDE.md; `linalg::Dot(comm, ...)` is read as the local dot product. Single-machine assumption is preserved throughout.
