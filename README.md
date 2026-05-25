@@ -5,8 +5,24 @@ A layered-spec multi-agent system that dissects [AWS Labs Palace](https://github
 ## Status
 
 - **Phase 6 DONE.** Phase 6+ continuation underway since meta-review #10.
-- **Most recent milestone (meta-17, cycles 74–79):** chebyshev reached L4 — the fourth slice to complete the full layer stack after cg, gmres, orthog. Integrator-side enforcement of concept-existence checks landed (recurrence #4 of SIDEWAYS mode=create-on-existing forced the loud-failure conversion).
-- **Quantitative snapshot:** 79 normal cycles completed; 17 meta-reviews fired; 2 skills extracted (`classify-variant-axis`, `verify-citation-range`); 24 concepts on disk.
+- **Most recent milestone (meta-17, cycles 74–79):** chebyshev reached L4 — the fourth slice to complete the full layer stack after cg, gmres, orthog. Integrator-side enforcement of concept-existence checks landed; Planner retroactive-backfill budget restored forward-dispatch bias.
+- **Quantitative snapshot:** 79 normal cycles completed; 17 meta-reviews fired; 2 skills extracted; 24 concepts on disk.
+
+## Relative Progress
+
+Reported against [`scaffolding/roadmap.md`](scaffolding/roadmap.md). The roadmap is reviewed by the Meta-Critic at every meta-cycle; items move between not-started / in-flight / done as work lands.
+
+- **Solver pipelines** — 0/5 fully covered to L4 (no single physics pipeline complete; the Krylov-only footprint shared across all 5 is largely done).
+- **Krylov solvers** — 2/4 at L4 (CG, GMRES; pending MINRES, BiCGStab).
+- **Orthogonalisation** — 1/2 at L4 (MGS/CGS/CGS2 family at L4; Householder QR pending as sibling slice per structurally-distinct-variant pattern).
+- **Smoothers and preconditioners** — 1/6 at L4 (Chebyshev 1st-kind + 4th-kind; pending Jacobi, symmetric Gauss-Seidel, ILU, AMS, geometric multigrid V-cycle).
+- **Projections and auxiliary operators** — 0/2 at L4 (divfree at L3, L4 in flight; curl-curl projector not yet started — predicted to follow divfree's pattern).
+- **FE assembly** — 0/4 components started (mesh + FE-space construction, sparse-assembly patterns, operator composition, boundary conditions).
+- **Coordination and post-processing** — 0/4 components started (time-stepping, frequency sweep, eigenpair extraction, I/O).
+- **Methodology infrastructure** — roles 6/6 done (5 per-cycle + README Builder meta-cycle finaliser); skills extracted 2 (growth on demand); concepts 24 on disk; 15 numbered Critic checks; integrator channel set complete.
+- **Phase progression** — 7/10+ phases done (Phases 0–6 complete; **Phase 6+** in flight; Phase 7 execution grounding, Phase 8 parallel cycles, Phase 9+ UI/embeddings ahead).
+
+The dominant remaining surface is **per-solver pipeline buildup**: FE assembly, boundary conditions, and time-stepping infrastructure are untouched, and no full physics pipeline (electrostatic / magnetostatic / eigenmode / driven / transient) is yet covered end-to-end. The Krylov + orthogonalisation + Chebyshev footprint that's done is *shared* across all five pipelines.
 
 ## The Layered Stack
 
@@ -30,13 +46,13 @@ The dissection lifts each slice through five layers; each rotation removes one s
 
 ## Methodology Surface
 
-- **Agent roles** — 5 (planner, explorer, synthesizer, critic, meta-critic) running in isolated API contexts with prompts under `prompts/`. A sixth meta-cycle-only prompt (`prompts/readme_builder.md`) regenerates this README at every meta-cycle end.
+- **Agent roles** — 6 (planner, explorer, synthesizer, critic, meta-critic per-cycle/meta-cycle + README builder meta-cycle finaliser) running in isolated API contexts with prompts under `prompts/`.
 - **Critic checks** — 15 numbered checks (`prompts/critic.md`). Recent additions: `#13` original-emission claim discipline with per-building-block granularity, `#14` rotation_claims-require-surface (symmetric inverse of #13), `#15` skill-invocation visibility (meta-17).
 - **Invocable skills** — 2 active under `skills/`:
   - `classify-variant-axis` — given a variant axis with N values, classify each as constructed-operator / parametric / scope-out / residual-axis (meta-11 extraction).
-  - `verify-citation-range` — verify L0 citation `<path>:<lo>-<hi>` doesn't cross the named symbol's lexical boundary; intra-function ±1-3 line drift OK, cross-function-boundary drift not OK (meta-16 extraction).
+  - `verify-citation-range` — verify L0 citation `<path>:<lo>-<hi>` doesn't cross the named symbol's lexical boundary (meta-16 extraction).
 - **Concepts on disk** — 24, categorized: 3 methodology, 4 algorithm, 10 primitive, 6 layer-pattern, 1 auxiliary. Auto-maintained in `book/src/concepts/index.md` and `book/src/SUMMARY.md` on every `concept_writes mode=create`.
-- **Notable infrastructure from meta-17:** integrator-side enforcement converted silent concept-existence skips into loud `_record_fail` events with structured push-back; Planner retroactive-backfill budget restored forward-dispatch bias after a 2/6 → 5/6 regression.
+- **Notable infrastructure from meta-17:** integrator-side enforcement converted silent concept-existence skips into loud `_record_fail` events; Planner retroactive-backfill budget restored forward-dispatch bias after a 2/6 → 5/6 regression.
 
 ## Recent Meta-Reviews
 
@@ -57,10 +73,11 @@ The dissection lifts each slice through five layers; each rotation removes one s
 
 ## Pointers
 
+- [`scaffolding/roadmap.md`](scaffolding/roadmap.md) — abstract roadmap; the denominator for *Relative Progress*.
 - [`CLAUDE.md`](CLAUDE.md) — agent operating instructions; methodology surface.
 - [`BOOTSTRAP.md`](BOOTSTRAP.md) — phased build spec for the agent system.
 - [`book/src/SUMMARY.md`](book/src/SUMMARY.md) — full TOC of the dissection artifact.
 - [`book/src/meta-reviews/`](book/src/meta-reviews/) — immutable meta-review records (17 to date).
-- [`prompts/`](prompts/) — five role prompts plus `readme_builder.md` (this README's source).
+- [`prompts/`](prompts/) — six role/meta-cycle prompts.
 - [`skills/`](skills/) — invocable agent procedures (verbs).
-- [`scaffolding/`](scaffolding/) — agent-side workshop notes (cross-cutting, decision logs).
+- [`scaffolding/`](scaffolding/) — agent-side workshop notes (cross-cutting, decision logs, the roadmap).

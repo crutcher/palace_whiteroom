@@ -24,6 +24,7 @@ like *now* — not just a static description.
 
 Read these every time. Don't invent state; derive everything.
 
+- **`scaffolding/roadmap.md`** — **the abstract scope map.** Authoritative source for proportional coverage. The README's *Relative Progress* section reports `[x]` / `[~]` / `[ ]` counts per category against this file. The Meta-Critic updates this file at every meta-cycle (per `prompts/meta_critic.md` *Roadmap review*); the README builder reads it as-is.
 - `CLAUDE.md` — methodology and operational rules. Read the *Repository status*,
   *What this system is*, *Extraction goal*, *Scope*, and *Meta-review* sections
   in particular. These provide the framing that doesn't change cycle-to-cycle.
@@ -71,6 +72,33 @@ Two or three short lines:
   meta-reviews fired (from meta-review file count), skills extracted
   (from `skills/` count), concepts on disk (from concepts/index.md row
   count).
+
+### `## Relative Progress`
+
+The proportional-coverage report **against `scaffolding/roadmap.md`**.
+This is what makes the README a relative-progress report rather than a
+static description. The roadmap is the denominator; the spec slices +
+methodology surface are the numerator.
+
+Render as a bulleted list, one category per line. For each category in
+the roadmap, count `[x]` / `[~]` / `[ ]` items and report:
+
+- **Solver pipelines** — N/5 fully covered to L4 (state the shared-Krylov caveat if relevant).
+- **Krylov solvers** — N/total at L4; list the in-flight or pending names.
+- **Orthogonalisation** — N/total at L4.
+- **Smoothers and preconditioners** — N/total at L4.
+- **Projections and auxiliary operators** — N/total at L4.
+- **FE assembly** — N/total components.
+- **Coordination and post-processing** — N/total.
+- **Methodology infrastructure** — roles N/N done; skills extracted N (growth on demand); concepts N on disk.
+- **Phase progression** — N/total phases done; current phase named.
+
+Wherever a category has zero `[x]`s, say so explicitly ("none yet")
+rather than omitting the line.
+
+If `scaffolding/roadmap.md` does not exist (early bootstrap state), write
+"Roadmap not yet established; see CLAUDE.md *Scope* for in-scope surface."
+and skip the per-category breakdown. Do NOT invent a roadmap.
 
 ### `## The Layered Stack`
 

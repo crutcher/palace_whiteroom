@@ -77,6 +77,32 @@ a skill about applying or composing other skills — e.g.,
 Meta-Critic) should do when considering skill creation. Treat these
 the same as ordinary skills.
 
+## Roadmap review (added 2026-05-25 from user feedback)
+
+At every meta-cycle, **review `scaffolding/roadmap.md`** as part of the
+enactment. The roadmap is the abstract scope map against which the
+README's *Relative Progress* section reports proportional coverage.
+Two responsibilities:
+
+1. **Status updates.** Move items between `[ ]` (not-started), `[~]`
+   (in-progress), and `[x]` (done) based on what landed in the window.
+   Examples: when a slice reaches L4, the corresponding shared-
+   infrastructure or solver item moves to `[x]`. When a new slice
+   surfaces work on a previously-not-started item, move it to `[~]`.
+
+2. **Scope adjustments.** If the window's work reveals an in-scope
+   component the roadmap missed, add it (with `[ ]` or `[~]`). If
+   methodology changes rule something genuinely out of scope, strike
+   through (`~~text~~`) with a meta-review note — do NOT delete; the
+   roadmap is part of the audit trail.
+
+Surface roadmap edits in the meta-review record's plan items as a LOW
+direct action (typically). Major roadmap restructurings (adding a
+category, removing a phase, changing the proportional-coverage
+denominators) are Medium plan items.
+
+The roadmap is committed alongside the other meta-cycle artifacts.
+
 **Conservative bar examples:**
 
 - Skill candidate: "How the Explorer locates a source range when the
