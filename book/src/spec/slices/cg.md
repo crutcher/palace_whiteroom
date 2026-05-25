@@ -159,11 +159,16 @@ type CgState<S> = {
   x:         Tensor[S],     // current iterate
   r:         Tensor[S],     // current residual: r = b - A·x
   p:         Tensor[S],     // search direction
-  beta:      Scalar,        // (r, r)
+  beta:      Scalar,        // (r, r); res = sqrt|beta| is a derived view, not stored
   beta_prev: Scalar,        // previous (r, r), 0 on iteration 0
   it:        Int,
   converged: Bool,
 }
+
+// `res = sqrt|beta|` is intentionally NOT in CgState — it is a pure function of
+// beta. Storing it would duplicate the iteration's scalar state; instead the
+// step exposes `residual_norm` as a step-output field, subject to §3.8
+// demand-driven pruning.
 
 cg_step
   :: LinOp<S> -> Scalar -> CgState<S>
@@ -226,7 +231,7 @@ type PCgState<S> = {
   r:         Tensor[S],
   z:         Tensor[S],     // preconditioned residual: z = B·r
   p:         Tensor[S],
-  beta:      Scalar,        // (z, r)
+  beta:      Scalar,        // (z, r); res = sqrt|beta| is derived, not stored
   beta_prev: Scalar,
   it:        Int,
   converged: Bool,
@@ -286,3 +291,29 @@ The step-level correspondence is mechanical (β, let, spread, δ-rules). Notable
 - **Open**: MPI is out of scope per CLAUDE.md; `linalg::Dot(comm, ...)` is read as the local dot product. Single-machine assumption is preserved throughout.
 - **Push-back to L3 (still open)**: the "first iteration takes `p = r`" (or `z`) branch survives all the way to L4 as a step-internal `if`. Could it be hoisted out by unrolling the first iteration before `iterate_while`? That is an L4 readability transformation that doesn't change semantics. Not pursued here — could be done in a later iteration if the special-case clutter becomes a friction point across multiple Krylov slices.
 - **Push-back to L4 (potential, not pursued)**: `iterate_while`'s trajectory shape is `[{ residual_norm: Scalar }]` — a list of single-field records. Sugar like `iterate_while_scan` returning `[Scalar]` directly would be lighter, but it adds API surface for a minor convenience. Held pending evidence that the verbosity actually hurts readability.
+
+## L4 v0.4 — state-schema tightening
+
+**v0.4 vs. v0.3 (this revision).** The L4 v0.3 form (above) stores `res` neither in `CgState` nor `PCgState` — it is computed inside `cg_step` / `pcg_step` and returned as the step-output `residual_norm`. **v0.4 is a no-op on the state schema** (the v0.3 form was already correct on this axis) and adds an explicit comment to that effect: `res` is a *derived view* of `beta` (specifically `sqrt|beta|`); storing it in the iteration state would duplicate `beta`'s information and create a redundant invariant the step must maintain (`s.res == sqrt|s.beta|`) on every transition.
+
+### Self-rotation: state-field elimination via derived-view hoisting
+
+The L4 v0.3 state schema correctly omitted `res`, but the rotation was implicit. This revision makes the rotation explicit per `book/src/concepts/rotation.md` *State hiding*: the derivable scalar `res = sqrt|beta|` is hoisted from "hypothetical iteration-state field" to "step-output field, demand-pruned per §3.8". The structural change is observable in three places:
+
+1. **State schema** — `CgState`/`PCgState` carry `beta` only; `res` is not a field. Saved: 1 scalar per state record × 2 schemas.
+2. **Step body** — `let res' = sqrt (abs beta')` is a step-local binding; it flows into the step's return record (`residual_norm: res'`), not into the next state's `res` field.
+3. **Step output record** — `{ state: CgState<S>, residual_norm: Scalar }` separates iteration-threaded state from step-observable outputs. The split makes pruning targetable: `iterate_while`'s trajectory accumulates `residual_norm`s; consumers reading `.residual_history` cause materialization, consumers reading only `.final_state` cause pruning.
+
+### What this rotation hides
+
+A reader looking at `CgState<S>` v0.4 cannot tell — and **does not need to know** — whether downstream consumers will read the residual history. The state schema is the same in both cases. The decision "compute residual norms or not" is pushed entirely to §3.8 demand analysis at the call site, where it belongs.
+
+Contrast with a hypothetical v0.2-style schema that included `res: Scalar` as a state field: such a schema *forces* the step to compute `res` on every iteration (to maintain the field), defeating §3.8 pruning. The state-schema choice is therefore load-bearing for the demand-driven-output property.
+
+### Equivalence to v0.3
+
+The v0.4 form is **observably identical** to v0.3. The change is documentary: v0.3 had the right schema but did not name the rotation that produced it. v0.4 names it, making the design rationale auditable for readers (and for the GMRES slice, which will face the same choice for its own residual-tracking field).
+
+### Carry-through from v0.3
+
+Unchanged at L4 v0.4: `cg_step`, `cg_init`, `cg_solve`, `pcg_step`, the equivalence note (`pcg_step opA Identity ≡ cg_step opA ∘ forget_z`), the ownership analysis, and the L3↔L4 correspondence. Only the state-schema commentary and this section are added.

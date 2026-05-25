@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-57 — forward cg [L4→L4] — pass
+
+- Synthesis: CG L4→L4 self-rotation: extract residual_norm from PCgState by promoting it to a step-output field, mirroring the cg_step shape. Eliminates a redundant state field (res is a derived view of beta); state schema shrinks by one scalar; observably equal to the prior form.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 1 concept_write(s), 1 dep-map edge(s), 2 lesson(s); 2 rotation_claim(s).
 ## 2026-05-25 cycle-56 — forward cg [L3→L4] — pass
 
 - Synthesis: CG L3→L4 rotation_claims emitted retroactively against the on-disk slice (v0.3, L4 against calculus v0.3). Four claims cover: (1) step-body lifting to pure cg_step + iterate_while discharging the L3 sequentiality obstruction; (2) residual-norm logging resolved via L4 v0.3 demand-driven pruning (no Writer effect needed); (3) preconditioner axis absorbed via primary/variant pair with Identity-equivalence; (4) CheckDot guard rotated to an SPD precondition on the operator-instance contract. No new slice content; claims-only cycle. retroactive_claim_evidence below.

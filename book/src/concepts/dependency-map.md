@@ -26,6 +26,7 @@ graph BT
   solve-monad --> sequential-obstruction
   solve-monad --> constructed-operators
   solve-monad --> variant-absorption
+  derived-view-hoisting --> rotation
 ```
 
 - [`rotation`](./rotation.md) — root methodology concept. Defines what counts as a genuine rotation (state hiding / coarser substitution / threaded-state compression) vs. a renaming. Codified meta-review #1; expanded with carry-through clause meta-review #2.

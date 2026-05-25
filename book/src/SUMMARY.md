@@ -42,6 +42,7 @@
   - [convergence-test](./concepts/convergence-test.md)
   - [chebyshev-iteration](./concepts/chebyshev-iteration.md)
   - [elementwise-product](./concepts/elementwise-product.md)
+  - [derived-view-hoisting](./concepts/derived-view-hoisting.md)
 
 # Design Artifacts
 
