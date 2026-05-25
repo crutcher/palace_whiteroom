@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-83 — forward gmres [L1→L2] — pass
+
+- Synthesis: Retroactive L1→L2 rotation_claims for the 6 building blocks of GMRES L2 (landed cycle 21): initial_residual, apply_BA, orthogonalize, ls_update_column, back_solve, apply_correction. Per-building-block granularity per meta-16 item 1; back_solve marked as carry-through.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 2 lesson(s); 6 rotation_claim(s).
 ## 2026-05-25 cycle-82 — forward cg [L4→L4] — pass
 
 - Synthesis: CG L4→L4 self-rotation: named the derived-view hoisting of `res = sqrt|beta|` out of CgState into a step-output field, documented as v0.4 in the slice and extracted `derived-view-hoisting` as a methodology concept for reuse by future Krylov/iteration slices.
