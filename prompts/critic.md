@@ -51,7 +51,10 @@ verdict assembly and cross-cycle lesson extraction):
      some concepts as rotated (with named criterion) and others as
      carrying through unchanged (with named idiomaticity at L_{n+1})
      passes this check provided at least one rotation happened.
-  9. VARIANT ABSORPTION (per `book/src/concepts/variant-absorption.md`,
+  9. VARIANT ABSORPTION (refined meta-12: verify `## Variant axes` block
+     is present when L0 source exposes ≥2 axes; absence is the silent-
+     partial-absorption signal; see `skills/classify-variant-axis/SKILL.md`
+     output contract). Per `book/src/concepts/variant-absorption.md`,
      added 2026-05-24 meta-review #2; expanded meta-review #3 with
      levels of absorption). For each slice that contains orthogonal
      axes of variation, verify the L1 form achieves all THREE levels:
@@ -92,6 +95,20 @@ verdict assembly and cross-cycle lesson extraction):
      `kind: labored_rotation_push_back_candidate`, with
      `push_back_suggestion` naming the specific prose terms to rewrite
      and the role-level replacement.
+ 13. ORIGINAL-EMISSION CLAIM DISCIPLINE (added 2026-05-25 meta-review
+     #12). When `plan_kind ∈ {new_content, back_correction}` AND
+     substantive_landed > 0 AND any write touches an `## Ln —` layer
+     section (slice_writes with layer content; section_appends to
+     layer headings; file_edits adding layer content), the plan MUST
+     emit `rotation_claims` for the edges that layer touches. Empty
+     `rotation_claims` on a layer-content emission is a discipline
+     failure — the rotation reasoning was deferred rather than
+     captured at content time. Verdict on failure: `revise`, kind:
+     `unclear`, with push_back_suggestion: "emit at least one
+     rotation_claim per layer-section touched in this cycle." This
+     check exists to compress the retroactive_claims backlog that
+     dominated cycles 38-49.
+
  12. RETROACTIVE-CLAIMS EVIDENCE (added 2026-05-25 meta-review #11).
      When the integration plan has `plan_kind = retroactive_claims`,
      verify the plan includes a `retroactive_claim_evidence` block in

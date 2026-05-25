@@ -60,3 +60,14 @@ follow-web-links = false
 traverse-parent-directories = true
 warning-policy = "warn"
 cache-timeout = 86400
+# Exclude paths linkcheck2 can't meaningfully verify:
+# - reference/<repo>/... — the citation links use `#L<start>-L<end>`
+#   line-anchor fragments which linkcheck2 treats as part of the
+#   filename (treats `iterative.cpp#L244-L250` as a file). The links
+#   are semantically correct; linkcheck2 just can't validate them.
+# - skills/... — skill files live outside the book; existence-check
+#   would require running linkcheck2 with full repo scope.
+exclude = [
+  '.*reference/.*',
+  '.*/skills/.*',
+]

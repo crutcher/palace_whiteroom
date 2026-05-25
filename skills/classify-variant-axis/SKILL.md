@@ -28,18 +28,31 @@ The right path is determined by *which absorption level the variant fails*:
 
 Avoid silent partial absorption: if level (c) breaks and you don't disclose the residual axis, the L1 form is misrepresenting the algorithm.
 
-## Output
+## Output contract (refined meta-12 item 2)
 
-For each axis-value, emit a one-line classification in the slice's `## Working Notes` or `## Scope`:
+When the L0 source exposes **≥2 variant axes** (or ≥2 values on a single
+axis), the slice MUST include a `## Variant axes` block in the L1
+section (or L2 if the divergence first surfaces there) enumerating each
+axis with its absorption path:
 
+```markdown
+## Variant axes
+
+- `<axis_name>` ∈ { <v_a>, <v_b>, ... }: <constructed-operator (via <op_name>) | parametric (scalar `<param>`) | residual-axis (primitive-sequence diverges; see L2 §<sect>) | scoped out (sibling slice `<slice>`)>
 ```
-variant axis `<axis_name>`: { v_a: constructed-operator (via <op_name>),
-                              v_b: parametric (scalar `<param>`),
-                              v_c: residual-axis (primitive-sequence diverges; see L2 §<sect>),
-                              v_d: scoped out (sibling slice `<slice>`) }
-```
 
-The slice's `## L1` state schema and procedure must be consistent with this classification — variant-conditional state fields named, dispatch points enumerated, scoped-out values noted.
+The slice's L1 state schema and procedure must be consistent with this
+classification — variant-conditional state fields named, dispatch points
+enumerated, scoped-out values noted.
+
+Critic check #9 (variant absorption) verifies the block is present
+when the L0 source has visible axis variability. Single-variant slices
+do NOT need the block; check #9 doesn't fire.
+
+The block format makes skill uptake measurable: a cycle that touches a
+multi-variant L0 source should produce a `## Variant axes` block. Absence
+is the signal that classification was skipped (silent partial
+absorption).
 
 ## Cross-references
 

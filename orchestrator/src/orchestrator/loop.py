@@ -145,6 +145,73 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
         if not _is_bookkeeping_path(path):
             substantive_landed += 1
 
+    # 0. Same-cycle create+edit merge (meta-12 item 3). If a file_edits
+    #    entry targets a path that a slice_writes mode=create or
+    #    concept_writes mode=create in this same plan creates, fold the
+    #    find/replace into the create payload. The synthesizer-side bug
+    #    (anchor-from-memory) produces file_edits whose old_string was
+    #    constructed from intended-emission text rather than disk text;
+    #    they fail when applied after create because disk match drifts.
+    #    Folding into the create payload eliminates the failure path —
+    #    or, if old_string isn't in the create content either, the find/
+    #    replace fails fast with a clear error.
+    create_payloads: dict[str, dict] = {}
+    for sw in plan.get("slice_writes") or []:
+        if isinstance(sw, dict) and sw.get("mode", "create") == "create":
+            rel = sw.get("path", "")
+            if rel:
+                create_payloads[f"book/src/spec/slices/{rel.lstrip('/')}"] = sw
+    for cw in plan.get("concept_writes") or []:
+        if isinstance(cw, dict) and cw.get("mode") == "create":
+            name = cw.get("name", "")
+            if name and "/" not in name and not name.startswith("."):
+                create_payloads[f"book/src/concepts/{name}.md"] = cw
+
+    remaining_file_edits: list = []
+    for fe in plan.get("file_edits") or []:
+        if not isinstance(fe, dict):
+            remaining_file_edits.append(fe)
+            continue
+        fe_path = fe.get("path", "")
+        create_entry = create_payloads.get(fe_path)
+        if create_entry is None:
+            remaining_file_edits.append(fe)
+            continue
+        old_string = fe.get("old_string", "")
+        new_string = fe.get("new_string", "")
+        replace_all = bool(fe.get("replace_all", False))
+        content = create_entry.get("content", "")
+        if not old_string:
+            remaining_file_edits.append(fe)
+            continue
+        count = content.count(old_string)
+        if count == 0:
+            push_back_signals.append(
+                f"same-cycle file_edit on same-plan-created file {fe_path}: "
+                f"old_string not present in create content. Synthesizer "
+                f"likely built the anchor from intended emission rather "
+                f"than disk. Fold the edit into the create content or "
+                f"remove the file_edits entry. old_string head: "
+                f"{old_string[:80]!r}"
+            )
+            _record_fail("file_edit_merge", fe_path)
+            continue  # consumed (with error); don't run later
+        if count > 1 and not replace_all:
+            push_back_signals.append(
+                f"same-cycle file_edit on same-plan-created {fe_path}: "
+                f"old_string ambiguous ({count} matches). Set replace_all=true "
+                f"or anchor more uniquely."
+            )
+            _record_fail("file_edit_merge", fe_path)
+            continue
+        create_entry["content"] = (
+            content.replace(old_string, new_string)
+            if replace_all
+            else content.replace(old_string, new_string, 1)
+        )
+        # The file_edits entry has been folded; skip in normal pass.
+    plan["file_edits"] = remaining_file_edits
+
     # 1. slice_writes
     for sw in plan.get("slice_writes") or []:
         rel = sw.get("path", "")

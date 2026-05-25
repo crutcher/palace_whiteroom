@@ -252,6 +252,32 @@ on `spec/index.md` is reserved for non-row edits (headers,
 conventions); status-table row updates MUST use
 `slice_index_updates`.
 
+**Rotation-claim emission at content time** (added meta-12 item 1 after
+cycles 38-49 had 7+ retroactive_claims cycles emitting claims for
+content landed earlier). When a plan introduces new layer content —
+`slice_writes` mode=create, `section_appends` to an `## Ln —` heading,
+or `file_edits` adding layer content — `rotation_claims` for that
+layer's edges MUST be emitted in the SAME plan. The retroactive_claims
+plan_kind remains valid for cycles that explicitly audit prior on-disk
+content (set `plan_kind: retroactive_claims` then), but for
+`plan_kind ∈ {new_content, back_correction}` with layer-content writes,
+deferring claims is a discipline failure. Critic check #13 enforces.
+
+Concretely: a plan with `plan_kind: new_content`, substantive_landed > 0,
+a layer-section touched, AND empty `rotation_claims` is auto-downgraded.
+
+**Same-cycle create-then-edit** (added meta-12 LOW item after cycle 48
+file_edit on same-plan-created cg.md failed because anchor was built
+from memory of emission rather than disk content). When a plan creates
+a file and then needs to refine that file's content in the same plan,
+PREFER folding the edit into the create content rather than emitting
+a separate file_edits entry. The orchestrator now merges file_edits
+into same-plan creates automatically (per meta-12 item 3), but the
+clean form is to emit a single coherent create payload. If you must
+emit a separate file_edits, keep `old_string` short (≤3 lines, no
+fenced code-block boundary, no trailing whitespace) — long multi-line
+anchors are brittle across LLM emission boundaries.
+
 **Retroactive-claims quoted prose requirement** (added meta-11 item 1).
 When `plan_kind = retroactive_claims`, the integration plan MUST
 include in `log_synthesis` a quoted prose block per rotation_claim,
