@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-25 cycle-94 — forward orthog [L1→L2] — pass](cycle-094.md)
 - [2026-05-25 cycle-93 — forward gmres [L2→L3] — pass](cycle-093.md)
 - [2026-05-25 cycle-92 — forward gmres [L1→L2] — pass](cycle-092.md)
 - [2026-05-26 meta-review (cycles 86–91) — enacted — third skill extraction (skill-selection meta-skill)](meta-18-cycles-86-91.md)
