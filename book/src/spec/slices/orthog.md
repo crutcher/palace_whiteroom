@@ -241,3 +241,71 @@ Unchanged. The L3 lift introduces no new correctness obligations: the CGS/CGS2 p
 
 - Block-MGS as a hybrid (CGS within block, MGS across blocks) is a known numerical/parallel compromise; recording for future consideration. Not in Palace today.
 - The `Vᴴ w` operation, on a *distributed* basis where each rank holds full-length columns of `V`, has a specific MPI collective shape (one allreduce of size m) that matches the L2 cost annotation. Formalizing this as a cost claim is deferred to whenever a cost-annotation slice lands; the L3 form itself does not depend on it.
+
+## L4 — calculus form
+
+### State stratification
+
+The L4 form distinguishes three categories of state per [state-stratification](../../concepts/state-stratification.md):
+
+- **Sim state** (the algorithm's externally-visible payload): the candidate vector `w` (mutated to `w'`) and the produced coefficient vector `H`. The stored basis `V[0..m-1]` is sim state owned by the caller (GMRES's Arnoldi loop, SLEPc's BV) and threaded through read-only.
+- **Operator internal params** (constructed at solve-start, immutable for the call): the variant tag `variant ∈ {MGS, CGS, CGS2}`, the inner-product hook `dot_op`, and the basis-size `m`.
+- **Ephemeral intermediates**: the per-pass local-dot buffer `h_local` (CGS/CGS2), the reduction temporaries inside `allreduce_sum`, and the correction coefficients `dH` (CGS2). None of these survive the call.
+
+### L4 form
+
+```
+type OrthogParams = {
+  variant   : Variant,             // MGS | CGS | CGS2 — constructed at solve start
+  dotOp     : (Vec, Vec) -> Scalar // local inner-product hook
+}
+
+type OrthogState = {
+  V : Basis,    // read-only basis of m columns (caller-owned)
+  w : Vec,      // candidate; mutated to w'
+  H : Vec_m     // coefficients; written
+}
+
+// The orthogonalization step is a Solve-monad action threading OrthogState.
+// Variant is dispatched once at the top of `orthogonalize`; the per-step body
+// is uniform up to the choice of pass-kernel.
+
+orthogonalize : OrthogParams -> Solve OrthogState ()
+orthogonalize params = do
+  case params.variant of
+    MGS  -> mgsPass  params.dotOp
+    CGS  -> cgsPass  params.dotOp
+    CGS2 -> do { cgsPass params.dotOp
+               ; (dH, _) <- cgsPassAccum params.dotOp
+               ; modify (\s -> s { H = axpy 1.0 dH s.H }) }
+
+// cgsPass / cgsPassAccum write H and w to the state; mgsPass threads the
+// per-j update through the same state (the sequential dependency is on the
+// w field of OrthogState, which subsequent dotOp calls re-read).
+```
+
+The Solve-monadic structure ([solve-monad](../../concepts/solve-monad.md)) makes the read-only-ness of `V` and the write-discipline on `w` and `H` explicit: `mgsPass` is a sequence of `get s.w; modify (\s -> s { H[j] = ..., w = axpy(-H[j], V[j], s.w) })` actions whose order is load-bearing; `cgsPass` is a single `modify` that writes both fields atomically from values computed against a snapshot of `s.w`.
+
+### Variant as constructed-operator parameter
+
+The variant tag is an [operator internal param](../../concepts/constructed-operators.md): once `params.variant` is fixed at solve-start, the per-call body does not re-inspect it (the `case` above dispatches into one of three closures and stays there). This matches the L1/L2/L3 absorption story — the variant is bound once and threaded as a constructed-operator parameter, not as a per-step branch.
+
+### Sequential obstruction at L4
+
+The MGS branch's body is `for j in 0..m-1: ⟨get s.w, V[j]⟩ ; modify (..axpy..)`. The `get s.w` in iteration `j+1` reads the `s.w` written by iteration `j`'s `modify` — this is the same sequential dependency the L3 form named as obstruction ([sequential-obstruction](../../concepts/sequential-obstruction.md)), and the Solve monad expresses it as a sequence of `get`-then-`modify` actions that does not commute. Within the calculus the obstruction is no longer something the slice must apologize for — it is the *typical* shape of a Solve-monad action on a single state field. CGS and CGS2 are the *atypical* shape (one snapshot read, one atomic write), and at L4 this is just the difference between `do { x <- get ; modify (f x) ; modify (g x) }` and `do { x <- get ; modify (\s -> g (f x) s) }`.
+
+### Citations
+
+- [palace/linalg/orthog.hpp:18-23](../../../../reference/palace/linalg/orthog.hpp#L18-L23) — header contract: `V` read-only, `w` mutated, `H` written; this is the OrthogState write-discipline.
+- [palace/linalg/orthog.hpp:25-36](../../../../reference/palace/linalg/orthog.hpp#L25-L36) — MGS body: per-j `get s.w` followed by `modify (axpy)`, the Solve-monad shape of the sequential obstruction.
+- [palace/linalg/orthog.hpp:38-53](../../../../reference/palace/linalg/orthog.hpp#L38-L53) — CGS/CGS2 body: single snapshot read of `w` (across the m local dots), single batched modify; the atomic-modify shape.
+- [palace/linalg/iterative.cpp:307-326](../../../../reference/palace/linalg/iterative.cpp#L307-L326) — `OrthogonalizeIteration` dispatch helper: confirms the variant is bound at solver-construction and not re-inspected per step.
+
+### Test linkage
+
+Unchanged. The L4 form is a notational compression of L3 plus state-stratification; no new correctness obligations are introduced.
+
+### Open questions
+
+- Whether the caller-normalizes asymmetry (`w'` not normalized) belongs as a separate Solve-monad action `normalize` chained after `orthogonalize`, or fused. Header has a TODO; deferred consistently with L1.
+- The Solve-monad treatment of `V` as caller-owned read-only state suggests a `Reader`-flavored sub-effect; folding this into a richer monad stack is a calculus-level question, not slice-level, and is left to the L4 calculus design doc.
