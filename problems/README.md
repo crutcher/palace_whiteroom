@@ -2,6 +2,8 @@
 
 This directory is the **out-of-band concern channel** for agents working in this repository. An agent files a problem when it notices something *outside its own role's scope* that the global process should review — not solve, just review.
 
+**Filing rate is self-tuned.** The bar described below is the *default* (sensitivity 3). The actual sensitivity is set in `scaffolding/problems-sensitivity.md` and ranges 1-5; the orchestrator injects `problems_sensitivity: <N>` into per-cycle agent prompts. Target rate: **1 problem filed per 15 agent runs**. The Meta-Critic recalibrates the sensitivity at each meta-cycle based on the actual rate over the last 2 windows.
+
 ## When to file a problem
 
 The temperature for filing here is **conservative**. The channel exists for cross-cutting concerns that don't fit any of the regular per-cycle channels. Specifically:
