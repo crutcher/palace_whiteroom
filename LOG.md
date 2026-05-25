@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-42 — back orthog — pass
+
+- Synthesis: Orthog slice already has L1+L2 content on disk from a prior cycle; this cycle backfills the missing L0→L1 rotation_claims (variant absorption, dot_op hook, normalization-out, MGS/CGS/CGS2 substitutability) against the existing prose with file:line citations into palace/linalg/orthog.hpp and test-orthog.cpp.
+- Verdict: pass.
+- Friction: none.
+- Structural change: none.
 ## 2026-05-25 cycle-41 — back orthog — revise
 
 - Synthesis: orthog L0→L1 retroactive rotation claims: variant-parametric primitive with local-dot + routine-owns-reduction contract; three claims covering state-hiding (per-variant kernel sequencing), variant absorption (algorithm tag absorbed at one dispatch site), and inner-product abstraction (dot_op hook); confirmed against test-orthog substitutability tests.
