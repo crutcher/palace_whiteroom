@@ -29,6 +29,26 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-54 — forward cg [L2→L3] — pass
+
+- Synthesis: Retroactive L2→L3 rotation_claim for cg slice — formalizes the negative-L3-with-positive-step-body result already on disk in `## L3` section of book/src/spec/slices/cg.md (lines describing genuine algorithmic sequentiality as the obstruction at the outer loop, plus per-step composition lifting cleanly). No new structural writes; the L3 section was emitted in a prior cycle without a corresponding rotation_claim. Quoted-prose evidence below.
+
+retroactive_claim_evidence:
+  - claim_index: 0
+    on_disk_path: book/src/spec/slices/cg.md
+    section: ## L3
+    quoted_lines: |
+      CG is an inherently **sequential** algorithm at the outer-loop level: iteration `k` depends on iteration `k−1` through the residual, search direction, and scalar accumulators. There is no global-tensor-field rewrite of the entire CG iteration. **This is a negative L3 result for the outer loop**, and it is correct — the obstruction is genuine algorithmic sequentiality, not a missing transformation.
+  - claim_index: 1
+    on_disk_path: book/src/spec/slices/cg.md
+    section: ## L3
+    quoted_lines: |
+      The **per-step** body, however, *is* a composition of L3 primitives — each of `apply A`, `apply B`, `axpy`, `dot`, `axpby`, scalar arithmetic — is a whole-tensor operation with no element loop. L3 for CG is therefore:
+      - **Inner step body**: positive L3 result — pure tensor-algebra composition (already given in §L2 above).
+      - **Outer iteration**: negative L3 result, **obstruction = genuine algorithmic sequentiality**. The L2→L3 rotation does not apply to the loop itself; the iteration survives into L4 as `iterate_while`.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 1 dep-map edge(s), 1 lesson(s); 1 rotation_claim(s).
 ## 2026-05-25 cycle-53 — forward gmres [L3→L4] — pass
 
 - Synthesis: GMRES L3→L4 rotation: the L4 section already exists on disk (see slice content); this cycle emits the rotation_claims that the prior synthesis cycle deferred. Three claims cover (1) state stratification SimState/OpParams/Krylov hiding the Krylov bundle from the externally-visible state, (2) monadic coordination via StateT SimState collapsing the L3 imperative `state.field = ...` updates to scoped do-blocks with a single Outcome ADT subsuming the L3 termination triple, and (3) convergence-criterion absorption into a Convergence value built once per restart cycle, pulling rel_tol/abs_tol/initial_res reads out of the main control flow. Sequential obstructions on small-dense state (ls_update_column, back_solve) carry through unchanged as pure functions on Krylov.
