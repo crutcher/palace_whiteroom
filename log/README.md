@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 meta-review (cycles 86–91) — enacted — third skill extraction (skill-selection meta-skill)](meta-18-cycles-86-91.md)
 - [2026-05-25 cycle-91 — forward cg [L1→L2] — pass](cycle-091.md)
 - [2026-05-25 cycle-90 — sideways orthog,divfree,chebyshev — revise](cycle-090.md)
 - [2026-05-25 cycle-89 — escalate - — escalate](cycle-089.md)
