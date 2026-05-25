@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-74 — forward cg [L4→L4] — pass
+
+- Synthesis: Retroactive rotation_claims for cg L3→L4: derived-view hoisting of `res` from state to step-output, unpreconditioned-as-primary variant absorption with forget_z projection, and iterate_while threaded-state compression replacing the mutated outer for-loop and print-flag gating.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 1 lesson(s); 3 rotation_claim(s).
 ## 2026-05-25 meta-review (cycles 68–73) — enacted — second skill extraction
 
 - Window: 6 cycles. orthog L1→L2 + gmres restored cleanly through L0/L1/L2/L3 (cycles 69-73). meta-15 self-tightening termination held — no grind. Two refinement patterns: (i) retroactive_claims granularity regression — cycles 71-73 backfilled per-building-block claims for cycle-21 L2 surface, 50-cycle gap; (ii) citation-tightening as recurring L0→L1 self-rotation needs a skill.
