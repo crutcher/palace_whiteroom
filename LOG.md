@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-86 — escalate - — escalate
+
+- Synthesis: Retroactive-budget hard gate fired: 3 consecutive retroactive_claims on slice 'cg'. Planner-prompt rule (meta-18 item 1) was not consulted. Surface for human review.
+- Verdict: escalate.
+- Friction: Planner could not find a productive push.
+- Structural change: none.
 ## 2026-05-25 meta-review (cycles 80–85) — enacted — forward-frontier + intermediate-tier prioritization
 
 - Window: 6 cycles. **Six clean passes, zero new layer prose.** All 6 were retroactive_claims (meta-13 2/6 → meta-17 5/6 → meta-18 6/6). The loop reached a fixed point on cg/gmres/orthog/chebyshev at L4 and switched to backfill mode; meta-17 budget rule was guidance, not enforcement.
