@@ -96,18 +96,24 @@ verdict assembly and cross-cycle lesson extraction):
      `push_back_suggestion` naming the specific prose terms to rewrite
      and the role-level replacement.
  15. SKILL-INVOCATION VISIBILITY (added meta-17; structured-field promotion
-     meta-18). The loop has two extracted skills:
-     [`classify-variant-axis`](../skills/classify-variant-axis/SKILL.md)
-     and [`verify-citation-range`](../skills/verify-citation-range/SKILL.md).
+     meta-18; uptake-on-every-verdict meta-19). The loop has three
+     extracted skills:
+     [`classify-variant-axis`](../skills/classify-variant-axis/SKILL.md),
+     [`verify-citation-range`](../skills/verify-citation-range/SKILL.md),
+     and [`skill-selection`](../skills/skill-selection/SKILL.md) (meta-skill).
 
-     **Structured output**: every Critic verdict that detects at least
-     one skill trigger condition MUST populate a `skill_uptake` array
-     in the verdict JSON (per `schemas/critic_verdict.json`). Each
-     entry: `{skill_name, triggered: bool, artifact_present: bool,
-     log_explanation_present: bool, decision: artifact_landed |
-     explained_non_applicable | missed}`. This makes skill-uptake
-     observable in episodic and auditable by the Meta-Critic across
-     windows.
+     **Apply the [skill-selection skill](../skills/skill-selection/SKILL.md)
+     procedure pre-verdict**: survey active skills, check triggers, populate
+     the `skill_uptake` array on EVERY verdict (pass AND revise AND reject) —
+     not just verdict-revise paths. Meta-18 introduced the structured field
+     but only fired on revise; meta-19 extends to all verdicts so the
+     uptake signal is observable on the dominant pass-verdict path too.
+
+     Each `skill_uptake` entry: `{skill_name, triggered: bool,
+     artifact_present: bool, log_explanation_present: bool, decision:
+     artifact_landed | explained_non_applicable | missed}`. List every
+     active skill (not just triggered ones); `triggered: false` is a
+     valid and informative state.
 
      **Trigger conditions** (skill applicability — unchanged from
      meta-17):

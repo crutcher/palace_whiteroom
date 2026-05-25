@@ -418,6 +418,25 @@ citation_does_not_support, but for on-disk content rather than source).
 A retroactive_claims plan without this block should be downgraded by
 the Critic to `revise`.
 
+**Skills consulted** (added meta-19 item 3). Apply the
+[`skill-selection`](../skills/skill-selection/SKILL.md) procedure
+before emitting your integration plan. For every active skill in
+`skills/`, determine whether its trigger condition holds for this
+cycle's content. Record the result in `log_synthesis`:
+
+- **String form** (legacy): include a phrase like `skills_consulted:
+  [classify-variant-axis (applied, ## Variant axes block landed),
+  verify-citation-range (n/a — no L0 edits this cycle)]` at the end
+  of the summary.
+- **Structured form** (preferred when log_synthesis is the object
+  form): a `skills_consulted` array `[{skill, decision: "applied" |
+  "not_applicable" | "deferred", note}]`.
+
+The Critic uses this signal to populate its own `skill_uptake`
+verdict field (check #15). If the Synthesizer omits the consultation
+record, the Critic's `log_explanation_present` field is `false`,
+and missing-artifact cases will downgrade.
+
 **Plan kind classification** (added meta-10 item 2; tightened meta-13
 item 1 after cycles 50-55 had 5/6 cycles classified as retroactive_claims
 despite containing substantive layer-content writes — synthesizers were

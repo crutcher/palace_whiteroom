@@ -151,6 +151,70 @@ def call_planner(
     return push
 
 
+def call_planner_with_addendum(
+    *,
+    state: State,
+    cfg: Config,
+    client: Anthropic | None,
+    addendum: str,
+    dry_run: bool = False,
+) -> dict | None:
+    """Re-invoke the Planner with an explicit text addendum (e.g., the
+    retroactive-budget hard-gate recovery message from meta-19 item 1).
+    The addendum is appended to the user-message after the standard
+    spec_index/questions/lessons/episodic context. The Planner emits a
+    fresh dispatch.
+
+    Returns the parsed push dict, or None on failure (the caller
+    should fall back to escalate in that case). Same dry-run contract
+    as call_planner.
+    """
+    if dry_run:
+        # In dry-run, just return None — the caller will fall back to
+        # escalate, which is the correct behavior for a non-real run.
+        return None
+
+    assert client is not None
+    system_prompt = _load_prompt(state.repo_root, "planner")
+    questions = state.read_questions()
+    lessons = state.read_lessons()
+    spec_index = state.read_spec_index()
+    recent_episodic = state.read_episodic_window(5)
+
+    user_message = (
+        "Current spec slice index:\n```\n" + spec_index + "\n```\n\n"
+        "Current questions ledger:\n```\n" + questions + "\n```\n\n"
+        "Current lessons:\n```\n" + lessons + "\n```\n\n"
+        "Recent episodic entries (last 5):\n```json\n" +
+        "\n".join(json.dumps(e, separators=(",", ":")) for e in recent_episodic) +
+        "\n```\n\n"
+        + addendum +
+        "\n\nOUTPUT FORMAT — produce ONLY these one or two lines, NO analysis, NO "
+        "preamble, NO markdown headers, NO reasoning prose. Just the directive:\n\n"
+        "  push: forward slice=<name> from=L0 to=L1 reason=<short>\n"
+        "  scope_question: <full question text>\n"
+        "\n"
+        "(Or one of the other push kinds: `push: back ...`, `push: sideways ...`, "
+        "`push: escalate ...`.)\n"
+    )
+
+    try:
+        response = client.messages.create(
+            model=cfg.models["planner"],
+            max_tokens=2048,
+            system=_system_block(system_prompt),
+            messages=[{"role": "user", "content": user_message}],
+        )
+        text = "".join(b.text for b in response.content if getattr(b, "type", "") == "text").strip()
+        push = parse_push_line(text)
+        scope_match = re.search(r"^scope_question:\s*(.+)$", text, re.MULTILINE)
+        if scope_match:
+            push["scope_question"] = scope_match.group(1).strip()
+        return push
+    except Exception:
+        return None
+
+
 # ───────────────────────────── Explorer ─────────────────────────────
 
 

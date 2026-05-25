@@ -70,3 +70,4 @@
   - [2026-05-25 — sixteenth meta-review (cycles 68–73) — second skill](./meta-reviews/2026-05-25-cycles-68-73.md)
   - [2026-05-25 — seventeenth meta-review (cycles 74–79) — chebyshev at L4](./meta-reviews/2026-05-25-cycles-74-79.md)
   - [2026-05-25 — eighteenth meta-review (cycles 80–85) — forward-frontier + intermediate-tier](./meta-reviews/2026-05-25-cycles-80-85.md)
+  - [2026-05-26 — nineteenth meta-review (cycles 86–91) — third skill (skill-selection)](./meta-reviews/2026-05-26-cycles-86-91.md)

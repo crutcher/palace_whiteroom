@@ -22,6 +22,7 @@ from .roles import (
     call_explorer,
     call_meta_critic,
     call_planner,
+    call_planner_with_addendum,
     call_synthesizer,
 )
 from .schemas import SchemaSet, load_schemas
@@ -156,6 +157,84 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
         nonlocal substantive_landed
         if not _is_bookkeeping_path(path):
             substantive_landed += 1
+
+    # 00. SIDEWAYS auto-rewrite (meta-19 item 2). For every
+    #     slice_writes/concept_writes with mode=create whose target path
+    #     already exists, auto-rewrite to mode=append-section (slices) or
+    #     mode=append-section (concepts). Log a push-back signal but do
+    #     NOT silently drop. Closes the 5-recurrence Synthesizer-side
+    #     SIDEWAYS defect (cycles 22/25/40/79/90) at the orchestrator level.
+    sideways_rewrite_log: list[str] = []
+    for sw in plan.get("slice_writes") or []:
+        if not isinstance(sw, dict):
+            continue
+        if sw.get("mode", "create") != "create":
+            continue
+        rel = sw.get("path", "")
+        if not rel:
+            continue
+        full_rel = f"book/src/spec/slices/{rel.lstrip('/')}"
+        full_path = state.repo_root / full_rel
+        if full_path.exists():
+            # Auto-rewrite to mode=diff with a section_appends-style append.
+            # We can't directly convert to section_appends because slice_writes
+            # only knows mode=create/diff. Convert to a section_appends entry
+            # instead (which the integrator handles cleanly), and drop the
+            # slice_writes entry. Move it across:
+            content = sw.get("content", "")
+            # Try to peel a leading `## Heading` from the content to use as
+            # the section_appends heading; if none, use a fallback.
+            heading = None
+            lines = content.splitlines()
+            for line in lines:
+                if line.strip().startswith("## "):
+                    heading = line.strip()
+                    break
+            if heading is None:
+                # Fallback: SIDEWAYS-style cross-comparison heading.
+                heading = "## Cross-slice notes (auto-rewritten from mode=create)"
+            # Remove the heading line from content if present
+            if heading in content:
+                body = content.replace(heading, "", 1).lstrip()
+            else:
+                body = content
+            sa_entry = {"path": full_rel, "heading": heading, "content": body}
+            plan.setdefault("section_appends", []).append(sa_entry)
+            sw["_auto_rewritten"] = True  # tag for filtering below
+            sideways_rewrite_log.append(
+                f"slice_writes mode=create on existing {full_rel} auto-"
+                f"rewritten to section_appends with heading {heading!r}"
+            )
+    for cw in plan.get("concept_writes") or []:
+        if not isinstance(cw, dict):
+            continue
+        if cw.get("mode") != "create":
+            continue
+        name = cw.get("name", "")
+        if not name or "/" in name or name.startswith("."):
+            continue
+        concept_path = state.repo_root / "book/src/concepts" / f"{name}.md"
+        if concept_path.exists():
+            # Rewrite to mode=append-section. Need a leading `## Heading`.
+            content = cw.get("content", "")
+            lines = content.splitlines()
+            has_heading = any(l.strip().startswith("## ") for l in lines)
+            if not has_heading:
+                content = f"## Additional notes (auto-rewritten from mode=create)\n\n{content}"
+            cw["mode"] = "append-section"
+            cw["content"] = content
+            sideways_rewrite_log.append(
+                f"concept_writes mode=create on existing {name} auto-rewritten "
+                f"to mode=append-section"
+            )
+    # Filter out the slice_writes entries that were auto-rewritten to section_appends.
+    if any(sw.get("_auto_rewritten") for sw in plan.get("slice_writes") or [] if isinstance(sw, dict)):
+        plan["slice_writes"] = [
+            sw for sw in plan.get("slice_writes") or []
+            if not (isinstance(sw, dict) and sw.get("_auto_rewritten"))
+        ]
+    for msg in sideways_rewrite_log:
+        push_back_signals.append(f"auto-rewrite: {msg}")
 
     # 0. Same-cycle create+edit merge (meta-12 item 3). If a file_edits
     #    entry targets a path that a slice_writes mode=create or
@@ -532,11 +611,14 @@ async def run_normal_cycle(
     push = call_planner(state=state, cfg=cfg, client=client, dry_run=dry_run)
     print(f"[cycle {state.cycle_id}] planner: {push}")
 
-    # Retroactive-backfill budget enforcement (meta-18 item 1). If the
-    # Planner's last 2 cycles on this slice were retroactive_claims, the
-    # next push on the same slice must NOT be another retroactive_claims —
-    # AND if the consecutive count reaches 3, the orchestrator escalates
-    # automatically (the Planner's hard-gate prompt rule failed).
+    # Retroactive-backfill budget enforcement (meta-18 item 1; recovery
+    # path added meta-19 item 1). If the Planner's last 2 cycles on this
+    # slice were retroactive_claims, the next push on the same slice must
+    # NOT be another retroactive_claims. Meta-19 fix: instead of converting
+    # to escalate immediately (which produced the cycles 86-89 escalate-
+    # storm), give the Planner ONE second-chance retry with an addendum
+    # listing forward-frontier alternatives. Only convert to escalate if
+    # the retry is ALSO a retroactive on the same slice.
     if push["kind"] in ("forward", "back"):
         target_slice = push.get("slice", "")
         if target_slice:
@@ -548,25 +630,73 @@ async def run_normal_cycle(
                         consec += 1
                     else:
                         break
-                # Cycles on other slices don't break the count (we're
-                # measuring same-slice consecutive retroactives).
             if consec >= 3:
-                print(
-                    f"[cycle {state.cycle_id}] orchestrator escalation: "
-                    f"slice {target_slice!r} has had {consec} consecutive "
-                    f"retroactive_claims cycles. Auto-escalating per meta-18 "
-                    f"item 1 hard-gate enforcement."
+                # Meta-19: retry the Planner with explicit forward-frontier
+                # addendum naming the gate trigger and the eligible
+                # intermediate-tier candidates. The orchestrator can't
+                # synthesize a new push directive itself; the Planner is
+                # the only role that can. So we re-invoke it once with the
+                # extra context.
+                addendum = (
+                    f"\n\n## ORCHESTRATOR ADDENDUM (meta-19 hard-gate recovery)\n\n"
+                    f"The retroactive-budget hard gate has triggered: slice "
+                    f"{target_slice!r} has had {consec} consecutive retroactive "
+                    f"cycles. Your prior dispatch ({push['kind']} {target_slice}) "
+                    f"would be the {consec + 1}th — REJECTED.\n\n"
+                    f"You MUST emit a NEW dispatch that is one of:\n\n"
+                    f"(a) FORWARD on a DIFFERENT slice (not {target_slice!r}). "
+                    f"Eligible forward-frontier candidates from "
+                    f"scaffolding/roadmap.md include the intermediate-tier "
+                    f"slices (arnoldi-step, plane-rotation-stream, "
+                    f"polynomial-recurrence-step, sparse-triangular-solve, "
+                    f"diagonal-preconditioner-apply, residual-update, "
+                    f"restart-machinery) ranked by impact score. divfree L4 "
+                    f"is also a forward-frontier target.\n\n"
+                    f"(b) SIDEWAYS comparing two or more concrete on-disk "
+                    f"slices.\n\n"
+                    f"(c) BACK on a specific lower-layer change motivated by "
+                    f"a friction signal.\n\n"
+                    f"(d) push: escalate — ONLY if (a), (b), and (c) are "
+                    f"genuinely unavailable. Justify why.\n"
                 )
-                push = {
-                    "kind": "escalate",
-                    "reason": (
-                        f"Retroactive-budget hard gate fired: "
-                        f"{consec} consecutive retroactive_claims on slice "
-                        f"{target_slice!r}. Planner-prompt rule (meta-18 "
-                        f"item 1) was not consulted. Surface for human "
-                        f"review."
-                    ),
-                }
+                print(
+                    f"[cycle {state.cycle_id}] retroactive hard gate fired "
+                    f"({consec} consec. on {target_slice!r}); retrying "
+                    f"Planner with forward-frontier addendum."
+                )
+                # Re-invoke Planner with addendum
+                try:
+                    push_retry = call_planner_with_addendum(
+                        state=state, cfg=cfg, client=client,
+                        addendum=addendum, dry_run=dry_run,
+                    )
+                except Exception as e:
+                    print(f"[cycle {state.cycle_id}] retry call_planner failed: {e}")
+                    push_retry = None
+                if push_retry is None or (
+                    push_retry.get("kind") in ("forward", "back")
+                    and push_retry.get("slice") == target_slice
+                ):
+                    print(
+                        f"[cycle {state.cycle_id}] retry also targeted "
+                        f"{target_slice!r}; escalating per meta-18 hard-gate "
+                        f"final fallback."
+                    )
+                    push = {
+                        "kind": "escalate",
+                        "reason": (
+                            f"Retroactive-budget hard gate: {consec} consecutive "
+                            f"retroactive on {target_slice!r}; retry also "
+                            f"targeted the same slice. Genuine forward-frontier "
+                            f"dispatch unavailable or Planner not converging."
+                        ),
+                    }
+                else:
+                    print(
+                        f"[cycle {state.cycle_id}] retry succeeded: "
+                        f"{push_retry.get('kind')} {push_retry.get('slice', '')}"
+                    )
+                    push = push_retry
 
     # Precondition: a SIDEWAYS push must name ≥2 concrete slices that exist
     # on disk. Cycle 22 fired SIDEWAYS with slice='unknown' because the
