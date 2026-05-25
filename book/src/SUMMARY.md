@@ -40,6 +40,7 @@
   - [state-stratification](./concepts/state-stratification.md)
   - [solve-monad](./concepts/solve-monad.md)
   - [convergence-test](./concepts/convergence-test.md)
+  - [chebyshev-iteration](./concepts/chebyshev-iteration.md)
 
 # Design Artifacts
 

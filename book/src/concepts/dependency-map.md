@@ -49,6 +49,9 @@ graph BT
   gmres --> incremental-least-squares
   incremental-least-squares --> orthogonalization
   gmres --> apply_linop
+  orthogonalization --> variant-absorption
+  chebyshev-iteration --> apply_linop
+  chebyshev-iteration --> axpy
 ```
 
 ## L2 — algebraic decompositions
