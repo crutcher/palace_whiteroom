@@ -192,6 +192,7 @@ graph BT
   arnoldi_step --> scal
   arnoldi_step --> constructed-operators
   arnoldi_step --> variant-absorption
+  arnoldi_step --> orthogonalization
 ```
 
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.

@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-25 cycle-100 — forward arnoldi_step [L1→L2] — pass](cycle-100.md)
 - [2026-05-25 cycle-99 — forward arnoldi_step [L1→L2] — revise](cycle-099.md)
 - [2026-05-25 cycle-98 — forward arnoldi_step [L0→L1] — pass](cycle-098.md)
 - [2026-05-25 cycle-97 — forward cg [L3→L4] — pass](cycle-097.md)
