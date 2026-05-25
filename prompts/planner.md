@@ -82,6 +82,23 @@ even though tightening would otherwise be the right next push. The
 tightening returns to the queue when the slice's friction window
 clears.
 
+**Termination criterion (added 2026-05-25 meta-review #15 after cycles
+63-67 ran five consecutive cg L4→L4 self-rotations).** Look back at
+the last 2 cycles on the slice being considered for a tightening
+push. If BOTH had `edge = L_n → L_n` for the SAME `n`, the next push
+on that slice MUST NOT be another `L_n → L_n` self-rotation. The
+Planner must EITHER:
+
+- Advance to a different slice (FORWARD on another slice, or
+  SIDEWAYS if eligible), OR
+- BACK-push to a different layer of the same slice.
+
+The slice itself isn't blocked — only the same `L_n → L_n` edge. If
+the work genuinely needs another self-rotation pass, a BACK or
+cross-slice detour breaks the count and the tightening returns
+later. This prevents the self-tightening heuristic from creating
+single-slice grind at one layer.
+
 The heuristic exists to prevent self-tightenings from accumulating as
 unresolved-but-acknowledged friction. Cycle 35 is the canonical example.
 

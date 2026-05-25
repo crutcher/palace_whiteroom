@@ -147,7 +147,32 @@ verdict assembly and cross-cycle lesson extraction):
      enforce that rotation reasoning is captured at content emission
      time, not deferred.
 
- 12. RETROACTIVE-CLAIMS EVIDENCE (added 2026-05-25 meta-review #11).
+ 12. RETROACTIVE-CLAIMS EVIDENCE (added meta-11; strengthened meta-15).
+
+     **Trigger by structural condition, not by plan_kind label**
+     (added meta-15 after cycle 65 declared `plan_kind=tightening` to
+     evade the plan_kind=retroactive_claims literal trigger while still
+     emitting claims against on-disk surface with no new prose).
+
+     The check fires whenever BOTH hold:
+
+     (a) The plan has zero `slice_writes mode=create`, zero
+         `section_appends` carrying L_{n+1} content for the slices the
+         rotation_claims target, and zero `file_edits` adding L_{n+1}
+         content — i.e., **no new L_{n+1} prose lands in the plan**.
+
+     (b) The plan emits `rotation_claims` whose target edges reference
+         the `L_{n+1}` layer.
+
+     When both hold (regardless of `plan_kind` label being
+     `retroactive_claims`, `tightening`, or anything else), the plan
+     MUST include `log_synthesis.retroactive_claim_evidence` quoting the
+     on-disk prose each claim references. Without it, verdict `revise`,
+     kind: `citation_does_not_support`. The discriminator is **what
+     landed on disk** vs. **what's being claimed**, not the
+     declarative label.
+
+
      When the integration plan has `plan_kind = retroactive_claims`,
      verify the plan includes a `retroactive_claim_evidence` block in
      `log_synthesis` quoting on-disk prose that supports each

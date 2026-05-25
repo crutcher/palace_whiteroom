@@ -209,7 +209,9 @@ through meta-review.
   `ksp_solve`, `apply_linop`, `axpy`, `dot`, `nrm2`, `scal`,
   `givens`, `trsv`, `gemv_basis`, `orthogonalization`,
   `incremental-least-squares`, `gmres`, `tensor-field-lift`,
-  `sequential-obstruction`. The orchestrator silently skips
+  `sequential-obstruction`, `derived-view-hoisting`,
+  `convergence-test`, `chebyshev-iteration`, `elementwise-product`.
+  The orchestrator silently skips
   create-on-existing (no-op, not a failure) — writes are lost
   without a clear signal back. **This is the most-recurring
   Synthesizer-side defect**; double-check before emitting any
@@ -251,6 +253,29 @@ the cells. You no longer need to copy the row verbatim. `file_edits`
 on `spec/index.md` is reserved for non-row edits (headers,
 conventions); status-table row updates MUST use
 `slice_index_updates`.
+
+**Edge-label fidelity** (added meta-15 item 2 after cycle 64 labeled
+an L4→L4 self-rotation as L3→L4 with a hypothetical-L3 from_form).
+A rotation_claim labeled `edge: L_n → L_{n+1}` MUST have its `from_form`
+drawn from the **actual on-disk L_n prose** of the slice (quoted or
+faithfully paraphrased), not from a hypothetical alternative form
+that does not exist on disk.
+
+If the structural change is within `L_{n+1}` — schema tightening,
+derived-view hoisting, state-bundle restructuring — label the edge
+`L_{n+1} → L_{n+1}` (the self-rotation edge is first-class; see
+meta-10 self-tightening rule). Don't re-attribute L_{n+1}-internal
+work to the L_n → L_{n+1} edge by inventing a fictional L_n form
+that the actual L_n prose doesn't carry.
+
+A plan MAY include rotation_claims on both `L_n → L_{n+1}` AND
+`L_{n+1} → L_{n+1}` edges if the cycle's work genuinely spans both —
+but each claim's `from_form` must match its declared edge's actual
+prose.
+
+See [`rotation`](../book/src/concepts/rotation.md) for the rotation
+criteria; the edge-label tells the reader which layer's prose to
+read for the from_form.
 
 **rotation_claims require surface** (added meta-14 item 1, symmetric to
 check #13 from the other direction). Every rotation_claim targeting an
