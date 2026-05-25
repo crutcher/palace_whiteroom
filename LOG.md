@@ -29,6 +29,14 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 meta-review (cycles 37–43) — enacted — first skill extraction
+
+- Window: 7 cycles. Initial Meta-Critic emission failed JSON parse; retry succeeded. All three meta-10 architecture changes worked end-to-end: Planner self-tightening fired on cycle 37; slice_index_updates channel adopted; plan_kind classification surfaced 5-of-7 retroactive_claims cycles.
+- Cascade: 1 LOW; 3 MEDIUM plan items enacted + 1 bonus build-config; 0 HIGH.
+- Plan items enacted: (LOW) SIDEWAYS channel-selection pre-emit gate (recurrence #3 of mode=create-on-existing across cycles 22/25/40); (1) Retroactive-claims quoted-prose requirement — log_synthesis.retroactive_claim_evidence must quote on-disk lines per claim; Critic check #12 added; (2) variant-absorption.md "Structurally-distinct variants in otherwise-uniform families" section (Householder/FGMRES pattern + two fix paths); (3) **FIRST SKILL EXTRACTION**: skills/classify-variant-axis/SKILL.md — promoted variant-axis classification procedure from inline Synthesizer prose to invocable skill (validates the user-directed skill-extraction directive from meta-pass prompt update). Bonus: book.toml traverse-parent-directories=true so citation links to reference/ and skill links to skills/ are buildable.
+- Watch: does the skill get consulted, or does the Synthesizer rely only on the 2-line inline summary?
+- Full record: `book/src/meta-reviews/2026-05-25-cycles-37-43.md`.
+
 ## 2026-05-25 cycle-43 — forward gmres [L2→L3] — pass
 
 - Synthesis: Emit retroactive L2→L3 rotation_claims for the gmres slice's existing on-disk L3 section (field-side lifts for initial_residual / apply_BA / orthogonalize-CGS / apply_correction, plus the ls_update_column and back_solve sequential-obstruction records). No new structural writes; the L3 content already exists at book/src/spec/slices/gmres.md §'L3 — global tensor-field form'. Per-claim citations point at that section and at the concepts it references.
