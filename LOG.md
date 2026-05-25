@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-29 — back chebyshev — pass
+
+- Synthesis: Chebyshev L0→L1 already on disk; cycle is a no-op for slice writes — verifying the existing L1 against rotation-quality criteria and emitting the per-claim rotation_claims that were missing from the initial commit.
+- Verdict: pass.
+- Friction: none.
+- Structural change: none.
 ## 2026-05-25 cycle-28 — forward chebyshev [L1→L2] — revise
 
 - Synthesis: chebyshev L1→L2 unfold: Richardson-like sweep expressed as copy/zero/elementwise_product/scal/axpy/apply_linop composition; variant absorption preserved at primitive-sequence level (only the scalar generator branches on variant); fused-kernel realization treated as transparent optimization; non-associative reduction order preserved.
