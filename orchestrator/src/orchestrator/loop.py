@@ -290,8 +290,13 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
                 created = state.create_concept_file(name, content)
                 if not created:
                     push_back_signals.append(
-                        f"concept_write create skipped (already exists; use append-section): {name}"
+                        f"concept_write REJECTED for {name!r}: target "
+                        f"book/src/concepts/{name}.md already exists. "
+                        f"Use mode=append-section instead (per channel-selection "
+                        f"rule). Cycle 79 SIDEWAYS recurrence #4 triggered the "
+                        f"integrator-side enforcement of this rule (meta-17 item 1)."
                     )
+                    _record_fail("concept_write_create_on_existing", concept_rel)
                 else:
                     _record_success(concept_rel)
                     try:

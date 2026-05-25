@@ -68,3 +68,4 @@
   - [2026-05-25 — fourteenth meta-review (cycles 56–61) — orthog at L4](./meta-reviews/2026-05-25-cycles-56-61.md)
   - [2026-05-25 — fifteenth meta-review (cycles 62–67)](./meta-reviews/2026-05-25-cycles-62-67.md)
   - [2026-05-25 — sixteenth meta-review (cycles 68–73) — second skill](./meta-reviews/2026-05-25-cycles-68-73.md)
+  - [2026-05-25 — seventeenth meta-review (cycles 74–79) — chebyshev at L4](./meta-reviews/2026-05-25-cycles-74-79.md)

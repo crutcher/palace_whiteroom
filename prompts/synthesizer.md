@@ -210,8 +210,18 @@ through meta-review.
   `givens`, `trsv`, `gemv_basis`, `orthogonalization`,
   `incremental-least-squares`, `gmres`, `tensor-field-lift`,
   `sequential-obstruction`, `derived-view-hoisting`,
-  `convergence-test`, `chebyshev-iteration`, `elementwise-product`.
-  The orchestrator silently skips
+  `convergence-test`, `chebyshev-iteration`, `elementwise-product`,
+  `rotation`. **All BLAS-style support concepts** (apply_linop, axpy,
+  dot, nrm2, scal, givens, trsv) **and all core methodology concepts**
+  (rotation, variant-absorption, constructed-operators,
+  state-stratification, solve-monad, derived-view-hoisting) have
+  existed on disk since cycles 20-30; SIDEWAYS cycles in particular
+  MUST NOT mode=create them. **Integrator-side enforcement** (added
+  meta-17 item 1): the orchestrator now rejects mode=create on
+  already-existing paths with a structured push-back signal naming
+  the substitution; the verdict downgrades. Previously this was a
+  silent skip — the integrator now makes it a loud failure with a
+  clear remediation. The orchestrator silently skips
   create-on-existing (no-op, not a failure) — writes are lost
   without a clear signal back. **This is the most-recurring
   Synthesizer-side defect**; double-check before emitting any

@@ -102,6 +102,35 @@ single-slice grind at one layer.
 The heuristic exists to prevent self-tightenings from accumulating as
 unresolved-but-acknowledged friction. Cycle 35 is the canonical example.
 
+## Retroactive-backfill budget
+
+(Added 2026-05-25 meta-review #17 after retroactive_claims regressed to
+5 of 6 cycles in the window after dropping to 2/6 in meta-14 and
+holding through meta-15.)
+
+When ≥2 of the last 3 cycles on a given slice were `plan_kind =
+retroactive_claims`, the next push on that slice MUST be FORWARD to an
+un-claimed edge OR SIDEWAYS comparing with another slice. The Planner
+may emit retroactive_claims for that slice ONLY when:
+
+(a) No forward edge is available — the slice has reached L4 and the L4
+prose is fully on disk; AND
+(b) There is on-disk prose from an earlier cycle lacking per-
+building-block claims (per meta-16 granularity).
+
+When emitting retroactive_claims, the `reason` field MUST cite the
+cycle whose prose is being backfilled (mirrors the
+`retroactive_against_cycle` field that meta-14 added to the integration
+plan schema).
+
+The meta-16 per-building-block granularity rule made backfill cycles
+productive (per-block claims land), which inadvertently incentivized
+more backfill. This budget rule restores the forward bias.
+
+**Anti-grind precedence preserved**: if anti-grind fires, rotate to a
+different slice even if the budget would permit another retroactive
+cycle on the current one.
+
 ## Anti-grind heuristic
 
 (Added 2026-05-24 meta-review #5 after 11 of 14 cycles ended up on `gmres`

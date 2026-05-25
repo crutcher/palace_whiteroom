@@ -95,6 +95,39 @@ verdict assembly and cross-cycle lesson extraction):
      `kind: labored_rotation_push_back_candidate`, with
      `push_back_suggestion` naming the specific prose terms to rewrite
      and the role-level replacement.
+ 15. SKILL-INVOCATION VISIBILITY (added 2026-05-25 meta-review #17). The
+     loop has two extracted skills:
+     [`classify-variant-axis`](../skills/classify-variant-axis/SKILL.md)
+     (meta-11) and
+     [`verify-citation-range`](../skills/verify-citation-range/SKILL.md)
+     (meta-16). Neither has produced visible artifacts in cycles
+     immediately after extraction — silently consulted vs. silently
+     ignored is unmeasurable.
+
+     **Trigger conditions** (skill applicability):
+
+     - `classify-variant-axis`: the L0 source for the slice has ≥2
+       variant axis values (template parameters, enums, runtime flags
+       selecting between implementations).
+     - `verify-citation-range`: the cycle emits or modifies any L0
+       citation of the form `<path>:<lo>-<hi>`.
+
+     **Check**: when a trigger condition holds for the cycle's content
+     AND the prescribed artifact is missing (no `## Variant axes` block
+     for classify-variant-axis; no citation-range narrowing for
+     verify-citation-range), AND the `log_synthesis` does NOT explain
+     why the skill was not applied (e.g., "variants absorbed parametrically
+     at L1; no axis-level enumeration needed at L4"), verdict `revise`,
+     kind: `unclear`, push_back_suggestion: "skill <path> applicable;
+     produce its output artifact or document why not."
+
+     This is **pure visibility, not invocation enforcement**. The check
+     surfaces skill uptake to episodic so the Meta-Critic can measure
+     whether the skill-extraction directive (user-introduced 2026-05-25)
+     is producing usable verbs. False positives produce a one-line
+     log entry; only the artifact-missing-AND-no-explanation case
+     verdict-revises.
+
  14. ROTATION_CLAIMS REQUIRE SURFACE (added 2026-05-25 meta-review #14
      after cycle 61 emitted L4 rotation_claims + dep-map edges + lessons
      but no slice prose for L4 on disk — claims pointed at surface that
