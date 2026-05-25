@@ -98,23 +98,64 @@ def _summarize_plan_dry_run(plan: dict) -> None:
     )
 
 
-def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[str]) -> bool:
+# Bookkeeping paths: the index/TOC files whose failure should NOT downgrade
+# a content-pass verdict (per meta-review #9 item 2). When ALL failed writes
+# target these paths AND at least one substantive write succeeded, the
+# orchestrator records `bookkeeping_incomplete` and leaves the verdict alone;
+# the next cycle on the same slice should re-attempt the bookkeeping write.
+_BOOKKEEPING_PATHS = (
+    "book/src/spec/index.md",
+    "book/src/meta-reviews/index.md",
+    "book/src/SUMMARY.md",
+)
+
+
+def _is_bookkeeping_path(rel: str) -> bool:
+    """True if the given repo-relative path is a bookkeeping (index/TOC)
+    file rather than substantive content. See meta-review #9 item 2."""
+    return any(rel == p or rel.startswith(p + "#") for p in _BOOKKEEPING_PATHS)
+
+
+def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[str]) -> dict:
     """Apply an integration plan to the project surface. Mutates state via
-    State's helpers. Appends any errors to push_back_signals. Returns True
-    iff any write failed (caller may downgrade verdict)."""
+    State's helpers. Appends any errors to push_back_signals.
+
+    Returns a result dict with keys:
+      - apply_failed: True iff any write failed.
+      - substantive_landed: count of non-bookkeeping writes that succeeded
+        (slice creates, concept creates, section_appends to non-index files,
+        non-index file_edits, dep-map edges, lessons).
+      - failed_paths: list of {kind, path} for each failed write (used by the
+        caller to classify bookkeeping vs content failures).
+      - bookkeeping_only_failure: True iff at least one substantive write
+        succeeded AND all failed writes targeted bookkeeping paths. Caller
+        uses this to skip the verdict downgrade per meta-review #9 item 2.
+    """
     apply_failed = False
+    substantive_landed = 0
+    failed_paths: list[dict] = []
+
+    def _record_fail(kind: str, path: str) -> None:
+        nonlocal apply_failed
+        apply_failed = True
+        failed_paths.append({"kind": kind, "path": path})
+
+    def _record_success(path: str) -> None:
+        nonlocal substantive_landed
+        if not _is_bookkeeping_path(path):
+            substantive_landed += 1
 
     # 1. slice_writes
     for sw in plan.get("slice_writes") or []:
         rel = sw.get("path", "")
         if not rel:
             push_back_signals.append("slice_write rejected: missing path")
-            apply_failed = True
+            _record_fail("slice_write", "<missing>")
             continue
         full_rel = f"book/src/spec/slices/{rel.lstrip('/')}"
         if not _is_safe_create_path(full_rel):
             push_back_signals.append(f"slice_write rejected (unsafe path): {full_rel!r}")
-            apply_failed = True
+            _record_fail("slice_write", full_rel)
             continue
         mode = sw.get("mode", "create")
         full_path = state.repo_root / full_rel
@@ -123,7 +164,7 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
                 push_back_signals.append(
                     f"slice_write rejected (path exists; use mode=diff): {full_rel}"
                 )
-                apply_failed = True
+                _record_fail("slice_write", full_rel)
                 continue
             try:
                 content = sw.get("content", "")
@@ -131,11 +172,7 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
                 if not content.endswith("\n"):
                     content += "\n"
                 full_path.write_text(content)
-                # Auto-register the new slice in SUMMARY.md (post meta-8 user
-                # surface: cycles 1-24 created 5 slices, none of which were
-                # registered, so mdBook didn't render them). The orchestrator
-                # does this mechanically; the Synthesizer can refine the title
-                # via file_edits if desired.
+                _record_success(full_rel)
                 title = sw.get("title") or rel.removesuffix(".md").replace("_", " ")
                 try:
                     state.register_in_summary(
@@ -145,29 +182,29 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
                     )
                 except Exception as e_reg:
                     push_back_signals.append(f"slice auto-register failed for {full_rel}: {e_reg}")
-                    # Don't mark apply_failed — the slice file IS on disk;
-                    # registration is best-effort.
             except Exception as e:
                 push_back_signals.append(f"slice_write create failed for {full_rel}: {e}")
-                apply_failed = True
+                _record_fail("slice_write", full_rel)
         elif mode == "diff":
             try:
                 state.apply_unified_diff(sw.get("diff", ""))
+                _record_success(full_rel)
             except RuntimeError as e:
                 push_back_signals.append(f"slice_write diff failed for {full_rel}: {e}")
-                apply_failed = True
+                _record_fail("slice_write", full_rel)
         else:
             push_back_signals.append(f"slice_write unknown mode {mode!r}")
-            apply_failed = True
+            _record_fail("slice_write", full_rel)
 
     # 2. concept_writes
     for cw in plan.get("concept_writes") or []:
         name = cw.get("name", "")
         mode = cw.get("mode", "")
         content = cw.get("content", "")
+        concept_rel = f"book/src/concepts/{name}.md"
         if not name or "/" in name or name.startswith("."):
             push_back_signals.append(f"concept_write rejected (bad name): {name!r}")
-            apply_failed = True
+            _record_fail("concept_write", concept_rel)
             continue
         try:
             if mode == "create":
@@ -176,9 +213,8 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
                     push_back_signals.append(
                         f"concept_write create skipped (already exists; use append-section): {name}"
                     )
-                    # not a failure — the next cycle can refine
                 else:
-                    # Auto-register in SUMMARY.md (same rationale as slice).
+                    _record_success(concept_rel)
                     try:
                         state.register_in_summary(
                             category="concept",
@@ -191,48 +227,46 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
                         )
             elif mode == "append-section":
                 state.append_concept_section(name, content)
+                _record_success(concept_rel)
             else:
                 push_back_signals.append(f"concept_write unknown mode {mode!r}")
-                apply_failed = True
+                _record_fail("concept_write", concept_rel)
         except FileNotFoundError as e:
             push_back_signals.append(f"concept_write append-section failed: {e}")
-            apply_failed = True
+            _record_fail("concept_write", concept_rel)
         except Exception as e:
             push_back_signals.append(f"concept_write failed for {name}: {e}")
-            apply_failed = True
+            _record_fail("concept_write", concept_rel)
 
-    # 3a-pre. section_appends (the THIRD edit topology — added meta-review
-    #     #7 after section-append-via-diff failed in cycle 21). Append a new
-    #     `## Heading` section to the end of an existing file. Idempotent
-    #     on the heading line.
+    # 3a-pre. section_appends
     for sa in plan.get("section_appends") or []:
         rel = sa.get("path", "") if isinstance(sa, dict) else ""
         heading = sa.get("heading", "") if isinstance(sa, dict) else ""
         content = sa.get("content", "") if isinstance(sa, dict) else ""
         if not rel or not heading:
             push_back_signals.append("section_append rejected: missing path or heading")
-            apply_failed = True
+            _record_fail("section_append", rel or "<missing>")
             continue
         if not _is_safe_create_path(rel):
             push_back_signals.append(f"section_append rejected (unsafe path): {rel!r}")
-            apply_failed = True
+            _record_fail("section_append", rel)
             continue
         try:
             state.append_section(rel, heading, content)
+            _record_success(rel)
         except FileNotFoundError:
             push_back_signals.append(
                 f"section_append rejected (path doesn't exist; use slice_writes mode=create): {rel}"
             )
-            apply_failed = True
+            _record_fail("section_append", rel)
         except ValueError as e:
             push_back_signals.append(f"section_append rejected for {rel}: {e}")
-            apply_failed = True
+            _record_fail("section_append", rel)
         except Exception as e:
             push_back_signals.append(f"section_append failed for {rel}: {e}")
-            apply_failed = True
+            _record_fail("section_append", rel)
 
-    # 3a. file_edits (find/replace on existing files; preferred edit channel
-    #     per meta-review #6 after diff-on-edit recurrences).
+    # 3a. file_edits
     for fe in plan.get("file_edits") or []:
         rel = fe.get("path", "") if isinstance(fe, dict) else ""
         old_string = fe.get("old_string", "") if isinstance(fe, dict) else ""
@@ -240,18 +274,18 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
         replace_all = bool(fe.get("replace_all", False)) if isinstance(fe, dict) else False
         if not rel:
             push_back_signals.append("file_edit rejected: missing path")
-            apply_failed = True
+            _record_fail("file_edit", "<missing>")
             continue
         if not _is_safe_create_path(rel):
             push_back_signals.append(f"file_edit rejected (unsafe path): {rel!r}")
-            apply_failed = True
+            _record_fail("file_edit", rel)
             continue
         full_path = state.repo_root / rel
         if not full_path.exists():
             push_back_signals.append(
                 f"file_edit rejected (path doesn't exist; use file_creates / slice_writes mode=create): {rel}"
             )
-            apply_failed = True
+            _record_fail("file_edit", rel)
             continue
         try:
             text = full_path.read_text()
@@ -260,35 +294,38 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
                 push_back_signals.append(
                     f"file_edit rejected (old_string not found in {rel}): {old_string[:80]!r}"
                 )
-                apply_failed = True
+                _record_fail("file_edit", rel)
                 continue
             if occurrences > 1 and not replace_all:
                 push_back_signals.append(
                     f"file_edit rejected (old_string ambiguous in {rel}: {occurrences} matches; "
                     f"either anchor more uniquely or set replace_all=true)"
                 )
-                apply_failed = True
+                _record_fail("file_edit", rel)
                 continue
             new_text = text.replace(old_string, new_string) if replace_all else \
                        text.replace(old_string, new_string, 1)
             full_path.write_text(new_text)
+            _record_success(rel)
         except Exception as e:
             push_back_signals.append(f"file_edit failed for {rel}: {e}")
-            apply_failed = True
+            _record_fail("file_edit", rel)
 
-    # 3b. dependency_map_edges (idempotent)
+    # 3b. dependency_map_edges (idempotent; substantive — relational content)
     for edge in plan.get("dependency_map_edges") or []:
+        edge_path = "book/src/concepts/dependency-map.md"
         try:
             state.add_dependency_map_edge(
                 layer=edge.get("layer", ""),
                 from_=edge.get("from", ""),
                 to_list=edge.get("to", []),
             )
+            _record_success(edge_path)
         except Exception as e:
             push_back_signals.append(
                 f"dependency_map_edge failed for {edge.get('from','?')}: {e}"
             )
-            apply_failed = True
+            _record_fail("dependency_map_edge", edge_path)
 
     # 4. lessons (dedupe-on-append)
     for lesson in plan.get("lessons") or []:
@@ -296,11 +333,22 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
             continue
         try:
             state.append_lesson_unique(lesson)
+            _record_success("lessons.md")
         except Exception as e:
             push_back_signals.append(f"lesson append failed: {e}")
-            apply_failed = True
+            _record_fail("lesson", "lessons.md")
 
-    return apply_failed
+    bookkeeping_only_failure = (
+        apply_failed
+        and substantive_landed > 0
+        and all(_is_bookkeeping_path(fp["path"]) for fp in failed_paths)
+    )
+    return {
+        "apply_failed": apply_failed,
+        "substantive_landed": substantive_landed,
+        "failed_paths": failed_paths,
+        "bookkeeping_only_failure": bookkeeping_only_failure,
+    }
 
 
 def _next_cycle_id(state: State) -> int:
@@ -490,28 +538,48 @@ async def run_normal_cycle(
     # threaded; Phase 8 parallelizes by queuing plans for serial application.
     push_back_signals: list[str] = []
     apply_failed = False
+    bookkeeping_only_failure = False
+    substantive_landed = 0
     if verdict["verdict"] in ("pass", "revise"):
         if dry_run:
             _summarize_plan_dry_run(plan)
         else:
-            apply_failed = _apply_integration_plan(state, plan, push_back_signals)
+            result = _apply_integration_plan(state, plan, push_back_signals)
+            apply_failed = result["apply_failed"]
+            bookkeeping_only_failure = result["bookkeeping_only_failure"]
+            substantive_landed = result["substantive_landed"]
 
-    # Verdict-downgrade rule (meta-review #5 plan item 3): a cycle whose
-    # writes didn't land has no persistent artifact; do not advance the
-    # scoreboard. pass → revise.
-    # Also capture the Critic's ORIGINAL verdict so a downgrade doesn't
-    # erase the Critic's content judgment (meta-review #6 item 2: when
-    # downgrade dominates, the human/Meta-Critic loses the content signal).
+    # Verdict-downgrade rule (meta-5 + refined meta-9 item 2):
+    # - pass + apply_failed + bookkeeping-only failure → hold pass, set
+    #   bookkeeping_incomplete flag (content landed; the index/TOC write
+    #   failed but is recoverable next cycle).
+    # - pass + apply_failed + ANY substantive failure → downgrade to revise
+    #   (the cycle's substantive content did not fully land).
+    # Capture original verdict either way so audit can distinguish content
+    # judgment from orchestrator action (meta-6 item 2).
     verdict["verdict_original"] = verdict.get("verdict")
     verdict["downgrade_applied"] = False
+    verdict["bookkeeping_incomplete"] = False
     if verdict["verdict"] == "pass" and apply_failed:
-        verdict["verdict"] = "revise"
-        verdict["downgrade_applied"] = True
-        push_back_signals.append(
-            "verdict auto-downgraded pass→revise: one or more writes did not land "
-            f"(original Critic verdict was 'pass'; see verdict_original in episodic)"
-        )
-        print(f"[cycle {state.cycle_id}] verdict auto-downgraded pass→revise (apply failure)")
+        if bookkeeping_only_failure:
+            verdict["bookkeeping_incomplete"] = True
+            push_back_signals.append(
+                f"bookkeeping_incomplete: {substantive_landed} substantive writes landed; "
+                "only bookkeeping (index/TOC) write(s) failed. Verdict held pass per meta-9 "
+                "item 2; next cycle on this slice should re-attempt the bookkeeping update."
+            )
+            print(
+                f"[cycle {state.cycle_id}] verdict held pass (bookkeeping_incomplete; "
+                f"{substantive_landed} substantive writes landed)"
+            )
+        else:
+            verdict["verdict"] = "revise"
+            verdict["downgrade_applied"] = True
+            push_back_signals.append(
+                "verdict auto-downgraded pass→revise: substantive write(s) did not land "
+                f"(original Critic verdict was 'pass'; see verdict_original in episodic)"
+            )
+            print(f"[cycle {state.cycle_id}] verdict auto-downgraded pass→revise (apply failure)")
 
     # For revise (and reject), also collect labored-rotation issues as push-back
     # signals so the next cycle's Planner can see them.
@@ -562,6 +630,8 @@ async def run_normal_cycle(
         "verdict": verdict["verdict"],
         "verdict_original": verdict.get("verdict_original", verdict["verdict"]),
         "downgrade_applied": verdict.get("downgrade_applied", False),
+        "bookkeeping_incomplete": verdict.get("bookkeeping_incomplete", False),
+        "substantive_landed": substantive_landed,
         "friction_observed": friction_summary,
         "structural_change": structural_change,
         "push_back_signals": push_back_signals,

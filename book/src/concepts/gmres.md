@@ -12,7 +12,7 @@ The **minimum-residual property** is the defining feature: residual norms are mo
 
 GMRES sits one level above the Arnoldi process: GMRES = Arnoldi (to build an orthonormal Krylov basis) + a small least-squares problem (to pick the minimizing iterate within the basis). The least-squares solve is performed incrementally as the basis grows.
 
-- **Builds on:** [orthogonalization](./orthogonalization.md) (used inside Arnoldi to grow the basis), [apply_linop](./apply-linop.md) (one matvec per step), [variant absorption](./variant-absorption.md) (preconditioner side, restart, flexibility).
+- **Builds on:** [orthogonalization](./orthogonalization.md) (used inside Arnoldi to grow the basis), [apply_linop](./apply_linop.md) (one matvec per step), [variant absorption](./variant-absorption.md) (preconditioner side, restart, flexibility).
 - **Composes into:** outer nonlinear / time-stepping loops that call GMRES as their linear-solve subroutine.
 
 ## Variant axes

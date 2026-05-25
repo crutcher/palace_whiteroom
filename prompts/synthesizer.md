@@ -221,14 +221,58 @@ richer link title than the auto-derived one (slice slug → spaces; concept
 slug verbatim), emit a `slice_writes[i].title` field (slices) or refine
 later via `file_edits`.
 
-**Slice status-table update** (added post meta-review #8). When a cycle
-advances a slice's highest layer (e.g., orthog L1 → L2), you MUST update
-the corresponding row in `book/src/spec/index.md`'s status table via a
-`file_edits` entry — bumping the "Highest layer" and "Last touched"
-columns, adding a one-line status note. The orchestrator does NOT
-auto-update the status table (it doesn't know your content); this is
-your responsibility per cycle. New slices need a new table row added
-(via `file_edits` adding a new row before the next non-table content).
+**Slice status-table update** (added post meta-review #8; refined
+meta-review #9). When a cycle advances a slice's highest layer, you
+SHOULD update the corresponding row in `book/src/spec/index.md`'s
+status table via a `file_edits` entry — bumping the "Highest layer"
+and "Last touched" columns, adding a one-line status note. **The
+orchestrator no longer downgrades a content-pass verdict on a
+bookkeeping-only failure** (per meta-9 item 2): if the index.md edit
+fails but the substantive writes (slice content, concepts, dep-map
+edges) landed, the verdict stays pass with a `bookkeeping_incomplete`
+flag and the next cycle on the same slice should retry the
+index-update. So: emit the index update, but don't twist your plan
+to make a perfect anchor — a failed bookkeeping write is recoverable.
+
+**`file_edits` anchor verification** (added meta-9 item 1 after
+cycles 26/28/30 all failed index.md anchor matches). Before emitting
+a `file_edits` entry, the `old_string` MUST match the live file
+content character-for-character (whitespace, em-dashes, link
+formatting). For `book/src/spec/index.md` status-table updates
+specifically:
+
+- The file is provided to you in the user message (or via the
+  current_slice / spec_index input). Copy the target row verbatim
+  including pipe characters and surrounding whitespace.
+- Include enough context to make the anchor unambiguous —
+  ideally the full table row plus the adjacent row above OR below
+  as the `old_string`. A row of the form
+  `| [<slice>](./slices/<slice>.md) | L<n> | <date> | <notes> |`
+  is unique on `slice` slug; the slug-anchored row alone is usually
+  enough.
+- If you cannot confirm the live row content, fall back to
+  proposing the index update as a `section_appends` add-a-new-row
+  via the table-edit format, OR omit the bookkeeping write entirely
+  (it becomes a follow-up). DO NOT guess `old_string` content.
+
+**SIDEWAYS output discipline** (added meta-9 item 3 after cycle 25 used
+mode=create on existing slices). A SIDEWAYS push compares two slices
+that already exist on disk; do NOT emit `slice_writes mode=create`
+for them. Typical SIDEWAYS shape:
+
+- **`section_appends` on BOTH compared slices** with heading
+  `## Cross-slice: comparison with <other>` — surface shared
+  primitives, divergent vocabulary, and consolidation candidates.
+- **`concept_writes`** to extract a primitive present in both
+  slices: `mode=append-section` if the concept already exists,
+  `mode=create` only if genuinely new.
+- **Optional `dependency_map_edges`** linking the slices via the
+  shared concepts.
+- SIDEWAYS does NOT emit `slice_writes mode=create` for the compared
+  slices themselves (precondition: they exist) and rarely needs
+  `slice_writes mode=diff` (the comparison surfaces *cross-slice*
+  pattern, not in-slice corrections). Phrase exceptions in the
+  plan's `log_synthesis` so the Critic can verify.
 
 **Integrator phase order** (documented meta-review #7). The integrator
 applies the plan in this fixed order, regardless of the order fields
