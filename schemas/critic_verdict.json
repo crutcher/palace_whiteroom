@@ -40,12 +40,12 @@
     },
     "exercised_checks": {
       "type": "array",
-      "description": "Per-check audit of which substantive checks (#1-#11 from the Critic prompt) were engaged on this cycle's content. REQUIRED on pass verdicts (per meta-review #8 plan item 2; promotion from prose-subsection introduced in meta-review #6). Each entry is a one-line note: `check #N (name): exercised at <where>` OR `check #N: trivially carried from prior layer / not applicable`. Optional on revise/reject verdicts (the issues array already structures what was wrong). Empty array means 'no checks exercised' (sanity-fail — would be unusual on a pass).",
+      "description": "Per-check audit of which substantive checks (#1-#12 from the Critic prompt) were engaged on this cycle's content. REQUIRED on pass verdicts (per meta-review #8 plan item 2; promotion from prose-subsection introduced in meta-review #6; check #12 added meta-review #11 for retroactive-claims evidence). Each entry is a one-line note: `check #N (name): exercised at <where>` OR `check #N: trivially carried from prior layer / not applicable`. Optional on revise/reject verdicts (the issues array already structures what was wrong). Empty array means 'no checks exercised' (sanity-fail — would be unusual on a pass).",
       "items": {
         "type": "object",
         "required": ["check", "outcome"],
         "properties": {
-          "check": { "type": "integer", "minimum": 1, "maximum": 11, "description": "Which numbered check from the Critic prompt was considered." },
+          "check": { "type": "integer", "minimum": 1, "maximum": 12, "description": "Which numbered check from the Critic prompt was considered. 1: citation_does_not_support; 2: rotation_chain_breaks; 3: mutation_pattern_mismatch; 4: ownership_misclassified; 5: missing_case; 6: load_bearing_trick_classified_as_transparent; 7: test_consistency; 8: rotation_quality; 9: variant_absorption; 10: prose_rotation_alignment; 11: setup_state_schema_for_variant_absorption; 12: retroactive_claims_evidence (meta-11)." },
           "outcome": { "enum": ["exercised", "trivially_carried", "not_applicable"], "description": "exercised = the check actually evaluated content; trivially_carried = the prior layer's resolution still holds; not_applicable = the check's preconditions don't apply to this slice." },
           "note": { "type": "string", "description": "Optional one-line note (e.g., 'pc_side absorbed via constructed-operator, single dispatch site verified')." }
         }
