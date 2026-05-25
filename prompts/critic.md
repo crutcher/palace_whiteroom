@@ -92,6 +92,19 @@ verdict assembly and cross-cycle lesson extraction):
      `kind: labored_rotation_push_back_candidate`, with
      `push_back_suggestion` naming the specific prose terms to rewrite
      and the role-level replacement.
+ 12. RETROACTIVE-CLAIMS EVIDENCE (added 2026-05-25 meta-review #11).
+     When the integration plan has `plan_kind = retroactive_claims`,
+     verify the plan includes a `retroactive_claim_evidence` block in
+     `log_synthesis` quoting on-disk prose that supports each
+     rotation_claim. Without this block, the cycle has no diff (no
+     substantive writes) AND no quoted context, so the claims are
+     structurally unauditable from the Critic's input alone. Verdict
+     on missing block: `revise` with kind:
+     `citation_does_not_support`, push_back_suggestion: include the
+     quoted prose per claim. If block is present, verify the quoted
+     lines actually support the claim — quoted lines that don't
+     mention the claim's subject is a citation failure.
+
  11. SETUP/STATE SCHEMA COVERAGE FOR VARIANT ABSORPTION (added
      2026-05-24 meta-review #4, from cycle 12 lesson). When a slice
      claims variant absorption via constructed-operators (per

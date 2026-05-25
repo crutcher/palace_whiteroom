@@ -252,6 +252,27 @@ on `spec/index.md` is reserved for non-row edits (headers,
 conventions); status-table row updates MUST use
 `slice_index_updates`.
 
+**Retroactive-claims quoted prose requirement** (added meta-11 item 1).
+When `plan_kind = retroactive_claims`, the integration plan MUST
+include in `log_synthesis` a quoted prose block per rotation_claim,
+giving the Critic enough on-disk context to verify the claim:
+
+```
+retroactive_claim_evidence:
+  - claim_index: 0
+    on_disk_path: book/src/spec/slices/gmres.md
+    section: ## L2 — primitive composition
+    quoted_lines: <verbatim 3-10 lines from the on-disk section that
+                   the rotation_claim asserts about>
+```
+
+The "enough context to verify the specific claim" rule applies — quote
+the local lines, not the entire L_{n+1} section. The Critic checks that
+the quoted prose actually supports the claim (analogue of check #1
+citation_does_not_support, but for on-disk content rather than source).
+A retroactive_claims plan without this block should be downgraded by
+the Critic to `revise`.
+
 **Plan kind classification** (added meta-10 item 2 after cycle 36
 produced a 0-substantive-writes pass that looked like a no-op).
 Set the optional top-level `plan_kind` field on every plan to one of:
@@ -294,10 +315,17 @@ specifically:
   via the table-edit format, OR omit the bookkeeping write entirely
   (it becomes a follow-up). DO NOT guess `old_string` content.
 
-**SIDEWAYS output discipline** (added meta-9 item 3 after cycle 25 used
-mode=create on existing slices). A SIDEWAYS push compares two slices
-that already exist on disk; do NOT emit `slice_writes mode=create`
-for them. Typical SIDEWAYS shape:
+**SIDEWAYS output discipline** (added meta-9 item 3; LOW-item gate added
+meta-11). A SIDEWAYS push compares two slices that already exist on
+disk. **Before emitting the integration plan, verify**: every
+`slice_writes` and `concept_writes` entry for an already-existing
+target uses `mode=append-section` (concepts) or routes to
+`section_appends` / `file_edits` (slices) — NEVER `mode=create`. The
+SIDEWAYS precondition guarantees both compared slices exist, and
+shared concepts being consolidated typically exist too. Channel-
+selection rule violations on SIDEWAYS pushes have recurred across
+cycles 22, 25, 40 — this gate exists because rule alone wasn't
+enough. Typical SIDEWAYS shape:
 
 - **`section_appends` on BOTH compared slices** with heading
   `## Cross-slice: comparison with <other>` — surface shared
@@ -528,6 +556,28 @@ A claim that names **neither** a criterion satisfaction **nor** an
 honest carry-through fails the producer-side self-check and should be
 revised before emission rather than emitted-and-rejected. The Critic's
 check #8 verifies the named entities are real.
+
+### Variant axis classification — invoke `classify-variant-axis` skill
+
+(Added meta-11 item 3 — first skill extraction from the loop. The
+inline rules previously here have crystallized into a procedure
+suitable for an invocable skill.)
+
+When a slice exposes a variant axis at L0 (an enum, template parameter,
+or runtime flag selecting between implementations of the same role),
+invoke the [`classify-variant-axis`](../skills/classify-variant-axis/SKILL.md)
+skill before emitting the L1 form. The skill enumerates the four
+resolution paths (constructed-operator, parametric, scope-out,
+residual-axis) and the decision criterion (which absorption level the
+variant breaks). The slice's `## L1` state schema and procedure must be
+consistent with the classification.
+
+Two-line summary kept inline for reading speed (the full procedure is
+in the skill):
+
+- **Decide which level (a/b/c) the variant breaks**; that determines the path.
+- **Avoid silent partial absorption**: if level (c) breaks and you don't
+  disclose the residual axis, the L1 form misrepresents the algorithm.
 
 ### Variant absorption
 

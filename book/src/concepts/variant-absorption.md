@@ -119,3 +119,26 @@ Codified during the **2026-05-24 meta-review #2 enactment** (cycles 4–6). Cycl
 - The boundary between "orthogonal variant" and "fundamentally different algorithm" is fuzzy. FGMRES is parametrically absorbable into GMRES because they share the Arnoldi skeleton; LOBPCG vs. Arnoldi is not parametric — those are different slices. The test is whether the shared abstraction (Arnoldi-like inner loop, Krylov-basis-with-Galerkin-projection) is the same across variants; if yes, parametric is possible.
 - The cycle 6 observation that suggested unifying `W_m = V_m | Z_m` is a clean example of variant absorption emerging from Critic friction. Future meta-reviews should look for similar friction-driven unifications — the loop is producing methodology, not just slices.
 - This concept's relationship to `rotation.md`: variant absorption is *necessary* for criterion (1) state hiding to hold robustly. If the L1 form bolts on FGMRES paragraphs, an L1→L2 attempt either hides the variant logic (in which case the L1 form was over-detailed) or exposes it (in which case the L2 form has parallel branches that defeat state-hiding). Parametric L1 → clean L2.
+
+## Structurally-distinct variants in otherwise-uniform families
+
+(Added 2026-05-25 meta-review #11 after cycle 40 surfaced the pattern on the orthogonalization-family slice; predicted recurrence on the curl-curl projector slice and on FGMRES per-step preconditioner — the latter was the originating signal in cycle 7.)
+
+A common variant family has the shape *N members share threaded-state structure but ONE member has fundamentally different state*. The shared-structure members absorb cleanly at all three levels under either parametric or constructed-operator strategies; the outlier breaks level-(c) primitive-sequence absorption no matter what strategy you reach for.
+
+**Canonical examples**:
+
+- Orthogonalization at `{MGS, CGS, CGS2, Householder}`. MGS/CGS/CGS2 thread the same state (the basis `V[0..j]` plus the projection coefficients column) and absorb at all three levels under residual-axis disclosure for the L2 collective shape. Householder threads a *reflector sequence* — fundamentally different state shape — and its L_{n+1} chain is `[reflect_apply, reflect_zero]` instead of `[dot, axpy]`.
+- Preconditioner side at `{LEFT, RIGHT, none, flexible}`. The first three absorb into a constructed `apply_BA` (level-(c) primitive sequence is identical: 1–2 `apply_linop` calls). `flexible` (FGMRES) threads a *per-step basis* `Z[k]` distinct from `V[k]`, which is structurally different state.
+
+**The fix paths**:
+
+1. **Declare a residual axis at L1 with variant-conditional state schema.** The L1 state types include the outlier's extra state (`Z: Vec[]` for FGMRES; `reflectors: (Vec, real)[]` for Householder) marked conditional on the variant value. The L1 procedure inspects the variant exactly once (dispatch) and threads the variant-conditional state accordingly. Level-(c) is officially residual; the L_{n+1} prose enumerates the divergent primitive sequences.
+
+2. **Split the outlier into a sibling slice with shared concept references.** The main slice's `## Scope` declares the outlier scoped out; the sibling slice shares concept references for the common primitives (`apply_linop`, `dot`, …) and provides its own L1/L2 forms. Level-(c) absorption is full *within each slice*; the inter-slice consolidation lives in cross-references and the shared concept entries.
+
+**How to choose**: option (1) is preferred when the outlier is a small minority (1 of 4 members) and the conditional state is bounded in size (one extra array, not a tree of new types). Option (2) is preferred when the outlier's primitives are substantially distinct enough that the residual-axis prose would dominate the slice. The Synthesizer applies the [`classify-variant-axis`](../../../skills/classify-variant-axis/SKILL.md) skill to make the call.
+
+**What's NOT this pattern**: differing *collective shape* / *cost annotation* across variants (e.g., CGS2 has 2× the dots-and-reductions of CGS) does NOT trigger structurally-distinct-variant treatment. That is cost annotation, captured per the `## L2` numerical-claim register. Per cycle 23 lesson: "cost annotation is not absorption failure."
+
+Cross-reference: [`constructed-operators`](./constructed-operators.md) *Limits of constructed-operator absorption*.

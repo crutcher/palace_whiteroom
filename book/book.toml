@@ -53,6 +53,10 @@ heading-split-level = 3
 [output.linkcheck2]
 command = "mdbook-linkcheck2"
 follow-web-links = false
-traverse-parent-directories = false
+# Allow links to traverse outside book/src/ — the spec deliberately links
+# to `reference/<repo>/...` shallow-git checkouts and `skills/...` agent-
+# invocable procedures (both live at the repo root, outside the book).
+# Added 2026-05-25 with the clickable-citation methodology change.
+traverse-parent-directories = true
 warning-policy = "warn"
 cache-timeout = 86400
