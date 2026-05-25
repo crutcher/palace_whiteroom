@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-39 — forward chebyshev [L1→L2] — pass
+
+- Synthesis: Chebyshev L1→L2 rotation_claims emitted retroactively against the existing L2 section in book/src/spec/slices/chebyshev.md (lines covering setup unfold, apply unfold, primitive inventory, and variant absorption).
+- Verdict: pass.
+- Friction: none.
+- Structural change: none.
 ## 2026-05-25 cycle-38 — forward divfree [L1→L2] — pass
 
 - Synthesis: divfree L1→L2: retroactive rotation_claims for the on-disk L2 (apply_linop · set_subvector_zero · ksp_solve · axpy chain); dep-map edges divfree → {apply_linop, set_subvector_zero, ksp_solve, axpy}; index status row bumped to L2.
