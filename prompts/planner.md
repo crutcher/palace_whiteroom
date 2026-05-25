@@ -58,6 +58,33 @@ Choose criteria, in order:
        can't fire and the clause doesn't apply (the cycle goes FORWARD
        or BACK instead).
 
+## Self-rotation tightening consumption
+
+(Added 2026-05-25 meta-review #10 after cycle 35 surfaced an L4→L4
+self-rotation tightening — `Outcome ADT carrying boolean re-encodes
+information available at call site` — and the next forward push
+deferred it instead of consuming.)
+
+When the most recent cycle on a slice produced a `revise` verdict on
+an `L_n → L_n` self-rotation push (or a `back` verdict on layer `L_n`
+where the push-back-signals name a tightening that would change `L_n`
+content), the next push on that slice SHOULD be the layer-tightening
+forward, NOT a layer advancement.
+
+- **Push form**: `push: forward slice=<name> from=L_n to=L_n reason=<tightening as named in the prior friction>`.
+- **Plan kind**: the Synthesizer sets `plan_kind: tightening` on the
+  emitted integration plan (per `prompts/synthesizer.md` Plan kind
+  classification).
+
+**Precedence with anti-grind**: anti-grind wins. If the slice has 3
+consecutive revises with novel friction, rotate to another slice
+even though tightening would otherwise be the right next push. The
+tightening returns to the queue when the slice's friction window
+clears.
+
+The heuristic exists to prevent self-tightenings from accumulating as
+unresolved-but-acknowledged friction. Cycle 35 is the canonical example.
+
 ## Anti-grind heuristic
 
 (Added 2026-05-24 meta-review #5 after 11 of 14 cycles ended up on `gmres`

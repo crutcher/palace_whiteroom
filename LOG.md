@@ -29,6 +29,14 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 meta-review (cycles 31–36) — enacted — PHASE 6 DONE
+
+- Window: 6 cycles. **GMRES reached L4** (cycles 31/32/34 — multiple emissions converged the L4 form). The meta-9 refined downgrade rule worked end-to-end: 4 of 6 cycles held pass via `bookkeeping_incomplete` instead of false-downgrading the L4 milestone. **All five Phase 6 DONE criteria are now satisfied.**
+- Cascade: 1 LOW; 3 MEDIUM plan items enacted; 0 HIGH.
+- Plan items enacted: (LOW) Concept existence-check strengthened with explicit list of existing concept pages; (1) `slice_index_updates` dedicated channel — schema + `state.update_slice_index_row()` + integrator + prompt update — recurrence #2 of `file_edits` anchor mismatch on `spec/index.md` triggers the mechanical channel intervention per meta-9 watch; (2) `plan_kind` enum field — classify cycles as `new_content` / `retroactive_claims` / `tightening` / `back_correction` so 0-substantive-writes passes are distinguishable from no-ops; (3) Planner self-rotation tightening heuristic — consume open `L_n→L_n` friction in the next push rather than defer.
+- Phase 6 DONE: 5 active slices, 22 concepts on disk, GMRES at L4 with the expected character (outer-loop obstruction + per-step positive lift + L4 calculus binding). Next decision is human-side: continue Krylov accumulation, pivot to mesh/FE slices, or move to Phase 7 (execution grounding).
+- Full record: `book/src/meta-reviews/2026-05-25-cycles-31-36.md`.
+
 ## 2026-05-25 cycle-36 — back gmres — pass
 
 - Synthesis: GMRES slice already exists with L0-L4 content; no edits needed. Emitting retroactive L0→L1 rotation_claims covering the L0 cited regions → L1 state schema + building blocks + procedure rotation, with variant-absorption disclosure.

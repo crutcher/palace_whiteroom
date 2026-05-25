@@ -57,3 +57,4 @@
   - [2026-05-24 — seventh meta-review (cycles 19–21)](./meta-reviews/2026-05-24-cycles-19-21.md)
   - [2026-05-24 — eighth meta-review (cycles 22–24)](./meta-reviews/2026-05-24-cycles-22-24.md)
   - [2026-05-25 — ninth meta-review (cycles 25–30)](./meta-reviews/2026-05-24-cycles-25-30.md)
+  - [2026-05-25 — tenth meta-review (cycles 31–36) — Phase 6 DONE](./meta-reviews/2026-05-25-cycles-31-36.md)

@@ -327,6 +327,46 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
             )
             _record_fail("dependency_map_edge", edge_path)
 
+    # 3c. slice_index_updates (mechanical row-rewrite; meta-10 item 1
+    #     after recurrence #2 of file_edits anchor mismatch on spec/index.md).
+    #     Tracked as bookkeeping — successful updates don't count toward
+    #     substantive_landed; failed updates still trigger
+    #     bookkeeping_only_failure when they're the only failure.
+    index_md_path = "book/src/spec/index.md"
+    for siu in plan.get("slice_index_updates") or []:
+        slice_name = siu.get("slice", "") if isinstance(siu, dict) else ""
+        layer = siu.get("layer", "") if isinstance(siu, dict) else ""
+        date = (siu.get("date") if isinstance(siu, dict) else "") or \
+               __import__("datetime").datetime.now(__import__("datetime").timezone.utc).strftime("%Y-%m-%d")
+        summary = siu.get("summary", "") if isinstance(siu, dict) else ""
+        link_title = siu.get("link_title") if isinstance(siu, dict) else None
+        if not slice_name or not layer:
+            push_back_signals.append(
+                f"slice_index_update rejected: missing slice or layer "
+                f"(slice={slice_name!r}, layer={layer!r})"
+            )
+            _record_fail("slice_index_update", index_md_path)
+            continue
+        try:
+            state.update_slice_index_row(
+                slice=slice_name,
+                layer=layer,
+                date=date,
+                summary=summary,
+                link_title=link_title,
+            )
+            # Track but classify as bookkeeping (path is index.md).
+            # _record_success uses _is_bookkeeping_path so this stays correct.
+        except FileNotFoundError as e:
+            push_back_signals.append(
+                f"slice_index_update: {e}. Add a row via file_edits/section_appends first, "
+                "or the integrator can be extended with an append-by-slug fallback."
+            )
+            _record_fail("slice_index_update", index_md_path)
+        except Exception as e:
+            push_back_signals.append(f"slice_index_update failed: {e}")
+            _record_fail("slice_index_update", index_md_path)
+
     # 4. lessons (dedupe-on-append)
     for lesson in plan.get("lessons") or []:
         if not isinstance(lesson, str) or not lesson.strip():
@@ -632,6 +672,7 @@ async def run_normal_cycle(
         "downgrade_applied": verdict.get("downgrade_applied", False),
         "bookkeeping_incomplete": verdict.get("bookkeeping_incomplete", False),
         "substantive_landed": substantive_landed,
+        "plan_kind": (plan or {}).get("plan_kind", "new_content") if isinstance(plan, dict) else "new_content",
         "friction_observed": friction_summary,
         "structural_change": structural_change,
         "push_back_signals": push_back_signals,

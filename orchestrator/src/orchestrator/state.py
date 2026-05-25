@@ -269,6 +269,61 @@ class State:
         path.write_text(new_text)
         return True
 
+    def update_slice_index_row(
+        self,
+        slice: str,
+        layer: str,
+        date: str,
+        summary: str,
+        link_title: str | None = None,
+    ) -> bool:
+        """Update the status-table row for `slice` in `book/src/spec/index.md`.
+        Anchors on the link target `(./slices/<slug>.md)` or
+        `(./slices/<slug>/index.md)` for subdirectory slices.
+
+        Idempotent: if the existing row already matches the requested content,
+        returns False (no write). Raises FileNotFoundError if the slice has no
+        row in the table; the caller decides whether to append-row or fall
+        through. Added meta-review #10 after cycles 31-34 hit `file_edits`
+        anchor mismatches on this exact row-update path."""
+        import re
+        path = self.repo_root / "book/src/spec/index.md"
+        text = path.read_text()
+
+        anchors = [f"./slices/{slice}.md", f"./slices/{slice}/index.md"]
+        anchor_pos = -1
+        matched_anchor: str | None = None
+        for a in anchors:
+            pos = text.find(f"({a})")
+            if pos >= 0:
+                anchor_pos = pos
+                matched_anchor = a
+                break
+        if anchor_pos < 0:
+            raise FileNotFoundError(
+                f"slice_index_update: no row found for slice {slice!r} "
+                f"(looked for anchors {anchors!r})"
+            )
+
+        row_start = text.rfind("\n", 0, anchor_pos) + 1
+        row_end = text.find("\n", anchor_pos)
+        if row_end < 0:
+            row_end = len(text)
+        old_row = text[row_start:row_end]
+
+        title_match = re.search(
+            r"\[([^\]]+)\]\(" + re.escape(matched_anchor) + r"\)",
+            old_row,
+        )
+        title = link_title or (title_match.group(1) if title_match else slice)
+        new_row = f"| [{title}]({matched_anchor}) | {layer} | {date} | {summary} |"
+
+        if old_row == new_row:
+            return False
+        text = text[:row_start] + new_row + text[row_end:]
+        path.write_text(text)
+        return True
+
     def write_meta_review_pending(self, plan_md: str) -> Path:
         """Write the file-based meta-review handshake. Returns the path
         written. The marker at the bottom is the human-toggled approval."""

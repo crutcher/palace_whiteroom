@@ -26,6 +26,26 @@
         }
       }
     },
+    "plan_kind": {
+      "type": "string",
+      "enum": ["new_content", "retroactive_claims", "tightening", "back_correction"],
+      "description": "Optional. The kind of work this cycle does. Default `new_content`. Added meta-10 item 2 after cycle 36 produced a 0-substantive-writes pass that the Meta-Critic couldn't distinguish from a no-op. Values: `new_content` = produces new slice/concept content on disk; `retroactive_claims` = emits rotation_claims for content that already exists on disk; `tightening` = revises an existing layer's content for internal correctness (no layer advancement); `back_correction` = restructures a lower layer in response to a push-back signal."
+    },
+    "slice_index_updates": {
+      "type": "array",
+      "description": "Status-table row updates for `book/src/spec/index.md`. Added meta-10 item 1 (recurrence #2 of `file_edits` anchor mismatch on spec/index.md). The integrator locates the row by link-target anchor (`(./slices/<slug>.md)` or `(./slices/<slug>/index.md)`) and rewrites the layer/date/summary cells mechanically. The Synthesizer no longer needs to copy the row verbatim. Idempotent on (slice, layer, date, summary). Reserved for the in-table row update; `file_edits` on `spec/index.md` remains valid for non-row edits (headers, conventions).",
+      "items": {
+        "type": "object",
+        "required": ["slice", "layer", "summary"],
+        "properties": {
+          "slice": { "type": "string", "description": "The slice slug; must match the path in `book/src/spec/slices/<slug>.md` or `<slug>/index.md`." },
+          "layer": { "type": "string", "description": "The new highest layer text (e.g., 'L4', 'L2 (slice v0.3)')." },
+          "date": { "type": "string", "description": "Optional. The 'last touched' value. Defaults to today's UTC date if omitted." },
+          "summary": { "type": "string", "description": "The status notes cell — a sentence or two describing the current slice state." },
+          "link_title": { "type": "string", "description": "Optional. Override the link display text in the row. Defaults to the existing title or the slug." }
+        }
+      }
+    },
     "section_appends": {
       "type": "array",
       "description": "Append a new top-level section (`## Heading`) to the end of an existing file. The THIRD edit topology, alongside file-creation (slice_writes mode=create / concept_writes mode=create) and in-place modification (file_edits). Added 2026-05-24 meta-review #7 after diff-on-edit failures recurred in the section-append sub-mode. Each entry locates the file, verifies the exact heading line does NOT already exist (idempotency check), and inserts the new section at the end of the file. Use this for adding a new layer section (## L2, ## L3, ...) to an existing slice file, OR a new top-level section to any existing markdown file under book/src/ or scaffolding/.",

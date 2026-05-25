@@ -197,15 +197,23 @@ through meta-review.
 - Adding a new `## Heading` section to ANY OTHER existing file (e.g., a
   scaffolding decision doc, or a non-concept book page): use
   `section_appends`.
-- **Concept existence check** (added meta-review #8). Before emitting a
-  `concept_writes` entry with `mode="create"`, verify the concept page
-  does NOT already exist in `book/src/concepts/`. The current concept
-  index is provided in your input — read it. If the concept already
-  exists (e.g., `nrm2`, `dot` from prior cycles), use `mode="append-section"`
-  with a section heading that names the angle being added (e.g.,
-  "## L2 use in GMRES"). The orchestrator silently skips create-on-existing
-  (it's a no-op, not a failure) — the writes are lost without a clear
-  signal back. Verify before emitting.
+- **Concept existence check** (added meta-review #8; strengthened
+  meta-10 LOW item after cycles 32/33/34 silent-skipped four
+  concepts each). Before emitting a `concept_writes` entry with
+  `mode="create"`, **verify the concept page does NOT already exist**
+  in `book/src/concepts/`. The current concept index is provided in
+  your input — read it. Concrete examples of concept pages that
+  ALREADY EXIST and require `mode="append-section"` rather than
+  `mode="create"` (silent-skipped in recent cycles):
+  `state-stratification`, `solve-monad`, `set_subvector_zero`,
+  `ksp_solve`, `apply_linop`, `axpy`, `dot`, `nrm2`, `scal`,
+  `givens`, `trsv`, `gemv_basis`, `orthogonalization`,
+  `incremental-least-squares`, `gmres`, `tensor-field-lift`,
+  `sequential-obstruction`. The orchestrator silently skips
+  create-on-existing (no-op, not a failure) — writes are lost
+  without a clear signal back. **This is the most-recurring
+  Synthesizer-side defect**; double-check before emitting any
+  `concept_writes mode="create"`.
 
 **Verify path existence before choosing a channel.** The `current_slice
 content` you receive in the user message indicates whether the slice
@@ -233,6 +241,37 @@ edges) landed, the verdict stays pass with a `bookkeeping_incomplete`
 flag and the next cycle on the same slice should retry the
 index-update. So: emit the index update, but don't twist your plan
 to make a perfect anchor — a failed bookkeeping write is recoverable.
+
+**Slice index status-table updates** (added meta-10 item 1 after the
+`file_edits` anchor-mismatch failure recurred 4 cycles in a row).
+Use the dedicated `slice_index_updates` channel — array of
+`{slice, layer, date?, summary, link_title?}`. The integrator
+locates the row mechanically by the link-target anchor and rewrites
+the cells. You no longer need to copy the row verbatim. `file_edits`
+on `spec/index.md` is reserved for non-row edits (headers,
+conventions); status-table row updates MUST use
+`slice_index_updates`.
+
+**Plan kind classification** (added meta-10 item 2 after cycle 36
+produced a 0-substantive-writes pass that looked like a no-op).
+Set the optional top-level `plan_kind` field on every plan to one of:
+
+- `new_content` (default) — the plan produces new slice/concept
+  content on disk.
+- `retroactive_claims` — the plan emits `rotation_claims` for content
+  that already exists on disk; no new structural writes are expected.
+  When you set this, `log_synthesis` MUST cite the on-disk content the
+  claims refer to (file + section).
+- `tightening` — the plan revises an existing layer for internal
+  correctness (no layer advancement). Typical of `L_n→L_n`
+  self-rotations.
+- `back_correction` — the plan restructures a lower layer in response
+  to a push-back signal from a prior cycle.
+
+The Meta-Critic uses `plan_kind` to distinguish productive cycle
+classes from no-op cycles. Mis-classification (e.g., `plan_kind:
+retroactive_claims` with new section_appends) is a Critic-visible
+inconsistency.
 
 **`file_edits` anchor verification** (added meta-9 item 1 after
 cycles 26/28/30 all failed index.md anchor matches). Before emitting
