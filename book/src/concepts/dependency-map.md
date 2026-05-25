@@ -88,6 +88,7 @@ graph BT
   chebyshev --> spectrum-estimate
   chebyshev --> constructed-operators
   chebyshev --> variant-absorption
+  ksp_solve --> constructed-operators
 ```
 
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.
