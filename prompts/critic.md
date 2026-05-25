@@ -302,6 +302,18 @@ the per-cycle Critic missed at emit time. The sanity statement
 exposes "pass-without-exercise" before it accumulates as silent
 methodology drift.
 
+### Problems-sensitivity (added 2026-05-26 from user directive)
+
+The user-message includes a `problems_sensitivity: <N>` line (N = 1-5, default 3). It tunes how readily you should file a `problems/${date}Z.md` entry when you notice an out-of-role concern, framing issue exceeding your responsibility, or tooling/infrastructure gap. Scale (per `scaffolding/problems-sensitivity.md`):
+
+- **1**: very conservative — only egregious immediate-blockers.
+- **2**: conservative — concrete evidence required.
+- **3**: default — standard bar per `problems/README.md`.
+- **4**: eager — surface cross-cutting observations you're not sure about.
+- **5**: very eager — file even speculative concerns when a pattern is suspected.
+
+Target rate: 1 problem filed per 15 agent runs. The Meta-Critic recalibrates the sensitivity at each meta-cycle based on the actual rate.
+
 ### Refinement verdict criteria (added 2026-05-26 from user directive)
 
 When the cycle's `push_kind = refinement`, verify the conservative-

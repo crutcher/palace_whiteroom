@@ -152,6 +152,23 @@ the meta-cycle's skill considerations. Format:
 An empty `skill_pass` with no `no_candidates_reason` is a discipline
 failure — the consideration step was skipped.
 
+## Problems-sensitivity calibration (added 2026-05-26 from user directive)
+
+Target: **1 problem filed per 15 agent runs**. At each meta-cycle, recalibrate the sensitivity knob in `scaffolding/problems-sensitivity.md` based on the actual rate over the last 2 meta-cycle windows.
+
+Procedure:
+
+1. Count problem files created in the last 2 windows (combined). Use the orchestrator helper `state.count_recent_problem_filings()` or `ls problems/*Z.md | wc -l` against the cycle-count boundary.
+2. Compute `actual_rate = problems / cycles` over the combined window.
+3. Compare to `target_rate = 1/15 ≈ 0.067`:
+   - `actual > 1.5 × target` → decrease `sensitivity` by 1 (floor at 1). Agents are filing too readily.
+   - `actual < 0.5 × target` → increase `sensitivity` by 1 (cap at 5). Agents are filing too rarely.
+   - Otherwise → hold.
+4. Update the `sensitivity:` value and the `last_calibrated:` field in `scaffolding/problems-sensitivity.md`. Append a row to the *Calibration history* table.
+5. Surface the calibration as a LOW direct action in the refinement plan (it's a single-file edit, mechanical).
+
+The per-cycle agents (Critic, Synthesizer, Explorer) read the current sensitivity from their user-message context line `problems_sensitivity: <N>` injected by the orchestrator on every cycle.
+
 ## Roadmap review (added 2026-05-25 from user feedback)
 
 At every meta-cycle, **review `scaffolding/roadmap.md`** as part of the

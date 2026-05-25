@@ -119,6 +119,7 @@ def call_planner(
     recent_episodic = state.read_episodic_window(5)
     refinement_candidates = state.list_refinement_candidates()
     lrt_list = state.list_least_recently_touched(n=5)
+    problems_sensitivity = state.read_problems_sensitivity()
 
     user_message = (
         "Current spec slice index:\n```\n" + spec_index + "\n```\n\n"
@@ -131,6 +132,8 @@ def call_planner(
         json.dumps(refinement_candidates[:5], indent=2) + "\n```\n\n"
         "Least-recently-touched slices (periodic refinement candidates):\n```json\n" +
         json.dumps(lrt_list, indent=2) + "\n```\n\n"
+        f"problems_sensitivity: {problems_sensitivity}  (target 1/15 cycles; "
+        f"see scaffolding/problems-sensitivity.md)\n\n"
         "OUTPUT FORMAT — produce ONLY these one or two lines, NO analysis, NO "
         "preamble, NO markdown headers, NO reasoning prose. Just the directive:\n\n"
         "  push: forward slice=<name> from=L0 to=L1 reason=<short>\n"
@@ -267,11 +270,14 @@ async def call_explorer(
     system_prompt = _load_prompt(state.repo_root, "explorer")
     lessons = state.read_lessons()
     current_l1 = state.read_slice(slice_name)
+    sensitivity = state.read_problems_sensitivity()
     schema_text = json.dumps(
         schemas.validators["exploration_finding"].schema, indent=2,
     )
 
     user_message = (
+        f"problems_sensitivity: {sensitivity}  (target 1/15 cycles; "
+        f"see scaffolding/problems-sensitivity.md for the 1-5 scale)\n\n"
         f"Scope: {scope_question}\n\n"
         f"Slice: {slice_name}\n\n"
         f"Current L1 content (empty if this is the first cycle on this slice):\n"
@@ -393,6 +399,7 @@ def call_synthesizer(
     assert client is not None
     system_prompt = _load_prompt(state.repo_root, "synthesizer")
     current_slice = state.read_slice(slice_name)
+    sensitivity = state.read_problems_sensitivity()
     plan_schema_text = json.dumps(
         schemas.validators["integration_plan"].schema, indent=2,
     )
@@ -401,6 +408,8 @@ def call_synthesizer(
     )
 
     user_message = (
+        f"problems_sensitivity: {sensitivity}  (target 1/15 cycles; "
+        f"see scaffolding/problems-sensitivity.md for the 1-5 scale)\n\n"
         f"Slice: {slice_name}\nEdge: {edge}\n\n"
         f"Current slice content:\n```markdown\n{current_slice or '(empty — first push on this slice)'}\n```\n\n"
         + (
@@ -491,6 +500,7 @@ def call_critic(
 
     assert client is not None
     system_prompt = _load_prompt(state.repo_root, "critic")
+    sensitivity = state.read_problems_sensitivity()
     schema_text = json.dumps(
         schemas.validators["critic_verdict"].schema, indent=2,
     )
@@ -500,6 +510,8 @@ def call_critic(
     ) if cited_source else "(no source pre-fetched; consult MCP tools if needed but the schema only accepts text input here)"
 
     user_message = (
+        f"problems_sensitivity: {sensitivity}  (target 1/15 cycles; "
+        f"see scaffolding/problems-sensitivity.md for the 1-5 scale)\n\n"
         f"Rotation claims to verify:\n```json\n{json.dumps(claims, indent=2)}\n```\n\n"
         f"Proposed diff (the Synthesizer's spec edit):\n```diff\n{diff or '(empty diff)'}\n```\n\n"
         f"Cited source ranges (pre-fetched):\n```\n{source_block}\n```\n\n"

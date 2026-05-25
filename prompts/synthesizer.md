@@ -437,6 +437,14 @@ verdict field (check #15). If the Synthesizer omits the consultation
 record, the Critic's `log_explanation_present` field is `false`,
 and missing-artifact cases will downgrade.
 
+**Problems-sensitivity** (added 2026-05-26 from user directive). The
+user-message includes a `problems_sensitivity: <N>` line (N = 1-5,
+default 3) that tunes how readily you should file a `problems/${date}Z.md`
+entry. Levels per `scaffolding/problems-sensitivity.md`:
+1 very conservative; 2 conservative; 3 default (standard bar); 4
+eager; 5 very eager. Target rate: 1/15 cycles. The Meta-Critic
+recalibrates each meta-cycle.
+
 **Refinement push handling** (added 2026-05-26 from user directive).
 When the Planner dispatches `push: refinement slice=<name> reason=...`,
 treat it as a re-examination of the named slice in light of touching

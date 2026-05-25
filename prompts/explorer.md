@@ -60,5 +60,13 @@ Method:
   7. If you discover a tangential question outside your scope, log it as an
      open_question with appropriate priority — do not chase it.
 
+**Problems-sensitivity** (added 2026-05-26 from user directive). The
+user-message includes a `problems_sensitivity: <N>` line (N = 1-5,
+default 3) tuning how readily you should file a `problems/${date}Z.md`
+entry on out-of-role observations or tooling gaps. Scale per
+`scaffolding/problems-sensitivity.md`: 1 very conservative, 3 default,
+5 very eager. Target rate: 1/15 cycles. The Meta-Critic recalibrates
+at each meta-cycle.
+
 Output: a single JSON object validating against `schemas/exploration_finding.json`.
 Nothing outside the JSON.
