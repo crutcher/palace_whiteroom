@@ -33,6 +33,8 @@
   - [orthogonalization](./concepts/orthogonalization.md)
   - [incremental-least-squares](./concepts/incremental-least-squares.md)
   - [gmres](./concepts/gmres.md)
+  - [set_subvector_zero](./concepts/set_subvector_zero.md)
+  - [ksp_solve](./concepts/ksp_solve.md)
 
 # Design Artifacts
 

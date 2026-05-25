@@ -37,3 +37,18 @@ The special case where `L` is a concrete sparse matrix and `apply_linop(L, x, y)
 - Palace `Operator::Mult(x, y)` and `ComplexOperator::Mult(x, y)` are the in-tree realisations of this primitive.
 - The `OperType` template parameter on `GmresSolver` and `IterativeSolver` (`palace/linalg/iterative.hpp:152–217`) parametrises which `apply_linop` variant is instantiated.
 - Any class implementing the operator-action interface (preconditioners, FE assembly closures, sum/product operators).
+
+## L2 use in divfree
+
+The `divfree` slice uses `apply_linop` for both forward operator actions in
+the per-apply path:
+
+- `rhs ← apply_linop(WeakDiv, y)` — partially-assembled Nedelec→H1 weak
+  divergence applied to a Nedelec field.
+- `t   ← apply_linop(Grad, psi)` — H1→Nedelec discrete gradient applied to
+  the H1 correction potential.
+
+Both are pure functional in the L2 surface. The construction-time
+distinction between matrix-assembled and partial-assembly operators is
+transparent at L2 — `apply_linop` is the uniform interface, and the
+operator's internal representation is its own concern.

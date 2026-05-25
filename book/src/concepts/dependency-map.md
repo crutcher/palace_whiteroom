@@ -62,6 +62,12 @@ graph BT
   gmres --> orthogonalization
   gmres --> constructed-operators
   gmres --> variant-absorption
+  ksp_solve --> apply_linop
+  divfree --> apply_linop
+  divfree --> set_subvector_zero
+  divfree --> ksp_solve
+  divfree --> axpy
+  divfree --> copy
 ```
 
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.

@@ -116,3 +116,98 @@ and the underlying CG path treats the two halves uniformly.
   the natural unit-test surface if one were added.
 - `WeakDiv` sign-convention claim (that `MixedVectorWeakDivergenceIntegrator`
   encodes the negative-divergence sign, making `+Grad·ψ` the correction)
+
+## L2 — primitive composition
+
+### Construction (once per solver instance)
+
+Given `mat_op` (material operator carrying ε), `nd_fespace` (Nedelec target
+space), `h1_fespaces` (H1 hierarchy), and `bdr_tdof_list` (essential H1
+boundary true dofs):
+
+```
+construct(mat_op, nd_fespace, h1_fespaces, bdr_tdof_list, tol, max_it):
+    M        ← assemble_h1_mass_hierarchy(mat_op, h1_fespaces, bdr_tdof_list)
+    WeakDiv  ← assemble_weak_divergence(mat_op, nd_fespace, h1_fespaces.finest())
+    Grad     ← assemble_discrete_gradient(h1_fespaces.finest(), nd_fespace)
+    bdr_eff  ← pin_one_dof_if_empty(bdr_tdof_list, h1_fespaces.finest())
+    pc       ← build_mg_or_amg(M, h1_fespaces)
+    ksp      ← cg_solver(operator=M, preconditioner=pc, tol, max_it)
+    psi      ← alloc_h1_vector()
+    rhs      ← alloc_h1_vector()
+    return DivFreeSolver{M, WeakDiv, Grad, bdr_eff, ksp, psi, rhs}
+```
+
+The construction-time variants (H1 hierarchy depth → MG vs AMG choice;
+empty-boundary degeneracy → synthetic pin) are absorbed inside
+`build_mg_or_amg` and `pin_one_dof_if_empty`. The per-apply path below does
+not re-inspect them.
+
+### Apply — real path (`P y` in place)
+
+```
+apply(self, y: Vector):
+    # Step 1: H1 residual rhs ← WeakDiv · y
+    rhs ← apply_linop(self.WeakDiv, y)
+
+    # Step 2: enforce essential BC on rhs
+    set_subvector_zero(rhs, self.bdr_eff)
+
+    # Step 3: projected H1 solve  M · psi = rhs
+    psi ← ksp_solve(self.ksp, rhs)        # M is bound at construction
+
+    # Step 4: gradient correction  y ← y + Grad · psi
+    t   ← apply_linop(self.Grad, psi)
+    axpy(1.0, t, y)
+```
+
+Primitive vocabulary used: `apply_linop`, `set_subvector_zero`,
+`ksp_solve`, `axpy`. All are pure functional in their result
+(`apply_linop`, `ksp_solve`) or carry an in-place semantics legible from
+the primitive's signature (`axpy` on `y`, `set_subvector_zero` on `rhs`).
+
+The two-argument `(x, y)` form is `y ← copy(x); apply(y)` — the copy is
+explicit, no silent aliasing.
+
+### Apply — complex specialization
+
+For `y : ComplexVector`, steps 1, 2, 4 act componentwise on `Re(y)` and
+`Im(y)` with the same real operators; step 3 is a single
+`ksp_solve` on the `ComplexOperator`-typed system whose internal CG
+recursion is component-blind:
+
+```
+apply(self, y: ComplexVector):
+    rhs ← apply_linop(self.WeakDiv, y)        # acts as block-diag Re/Im
+    set_subvector_zero(rhs.re, self.bdr_eff)
+    set_subvector_zero(rhs.im, self.bdr_eff)
+    psi ← ksp_solve(self.ksp, rhs)            # ComplexOperator path
+    t   ← apply_linop(self.Grad, psi)
+    axpy(1.0, t.re, y.re)
+    axpy(1.0, t.im, y.im)
+```
+
+The complex apply is a primitive-level unrolling of the real apply over
+`{re, im}`; the primitive chain is the same shape. No new primitives are
+introduced — `apply_linop` and `axpy` are overloaded on the vector type,
+and `ComplexOperator` is the construction-time wrapper that makes
+`ksp_solve` component-blind.
+
+### Optimization opacity
+
+The following are **transparent** at L2 and unfolded silently:
+
+- Whether `WeakDiv` is matrix-assembled or apply-only (partial assembly).
+- Whether `pc` is a GMG-wrapped BoomerAMG or BoomerAMG directly.
+- Whether the `ksp` CG iteration uses re-orthogonalization or not.
+- Whether `apply_linop(Grad, psi)` materializes `t` or fuses with `axpy`.
+
+The following are **load-bearing** and preserved as explicit L2 claims:
+
+- The sign convention on `WeakDiv` (so that the correction is `+Grad·ψ`,
+  not `−Grad·ψ`). This is an L0/L1 claim that L2 must honor verbatim.
+- The `set_subvector_zero(rhs, bdr_eff)` step ordering: it must run
+  **after** `apply_linop(WeakDiv, y)` and **before** `ksp_solve`. Reorder
+  changes the solution.
+- `ksp_solve` returns the converged `ψ`; convergence tolerance is
+  baked into the ksp at construction.

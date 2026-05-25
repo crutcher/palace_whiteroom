@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-26 — forward divfree [L1→L2] — revise
+
+- Synthesis: divfree L1→L2: composed apply as apply_linop(WeakDiv) → set_subvector_zero → ksp_solve → apply_linop(Grad) + axpy. Extracted set_subvector_zero and ksp_solve as new concept entries; appended divfree-use section to apply_linop. Sign convention and BC ordering preserved as load-bearing L2 claims; MG-vs-AMG preconditioner choice and partial-vs-full assembly recorded as transparent optimizations.
+- Verdict: revise.
+- Friction: file_edit rejected (old_string not found in book/src/spec/index.md): '| `divfree` | L1 | C-7 | Divergence-free projector. Constructed-operator absorpt'; verdict auto-downgraded pass→revise: one or more writes did not land (original Critic verdict was 'pass'; see verdict_original in episodic).
+- Structural change: none.
 ## 2026-05-25 cycle-25 — sideways gmres,orthog — revise
 
 - Synthesis: Established gmres and orthog slices at L1 with concept entries; the parent gmres slice scopes orthogonalization-variant axes to the orthog slice via forward reference, achieving variant absorption (a/b/c) on the GMRES axes (preconditioner side, restart, flexibility) and explicitly deferring the orthogonalization axes to the kernel slice.
