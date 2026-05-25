@@ -39,6 +39,7 @@ graph BT
   gmres --> orthogonalization
   gmres --> incremental-least-squares
   incremental-least-squares --> orthogonalization
+  gmres --> apply_linop
 ```
 
 ## L2 — algebraic decompositions

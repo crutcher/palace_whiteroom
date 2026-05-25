@@ -32,6 +32,7 @@
   - [gemv_basis](./concepts/gemv_basis.md)
   - [orthogonalization](./concepts/orthogonalization.md)
   - [incremental-least-squares](./concepts/incremental-least-squares.md)
+  - [gmres](./concepts/gmres.md)
 
 # Design Artifacts
 
