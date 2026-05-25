@@ -350,18 +350,21 @@ def call_synthesizer(
         f"prose, math, and commentary."
     )
 
-    response = client.messages.create(
+    # max_tokens history: 8192 (init) → 16384 (cycle 20 truncated)
+    #                   → 24576 (cycle 63 truncated on SIDEWAYS cg+gmres).
+    # The Anthropic SDK forces streaming at max_tokens above ~18k because
+    # the predicted wall-clock would exceed its 10-minute non-streaming
+    # limit. Use the streaming API to collect the response — same result,
+    # avoids the SDK's preemptive ValueError.
+    with client.messages.stream(
         model=cfg.models["synthesizer"],
-        # Larger slices (GMRES, multigrid) need substantial JSON output for the
-        # plan envelope. Cycle 20 (GMRES L0→L1) was truncated at 8192; bumped
-        # to 16384. Cycle 63 (SIDEWAYS cg+gmres comparing two full-stack L4
-        # slices) was truncated at 16384; bumped to 24576. Opus 4.7 supports
-        # up to 32k output; 24k is a sweet spot that handles SIDEWAYS plus
-        # any reasonable single-slice emission.
         max_tokens=24576,
         system=_system_block(system_prompt),
         messages=[{"role": "user", "content": user_message}],
-    )
+    ) as stream:
+        for _ in stream.text_stream:
+            pass  # drain stream; we want the final message, not incremental
+        response = stream.get_final_message()
     usage.add(response.usage)
     if response.stop_reason == "max_tokens":
         raise ValueError(
