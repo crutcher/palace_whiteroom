@@ -5,30 +5,33 @@ Lifts Palace's restarted GMRES and FGMRES solvers into L0 cited regions and an L
 ## L0 — cited regions
 
 **Class definitions.**
-- L0.1 `GmresSolver` class declaration. `palace/linalg/iterative.hpp:152–217` (definition). Template over `OperType ∈ {Operator, ComplexOperator}`; configuration setters for `gs_orthog`, `pc_side`, `max_dim`; workspace fields `V`, `H`, `s`, `cs`, `sn`.
-- L0.2 `FgmresSolver` class declaration. `palace/linalg/iterative.hpp:219–276` (definition). Inherits from `GmresSolver`; constructor forces `pc_side = RIGHT`; `SetPreconditionerSide` rejects `LEFT` via `MFEM_VERIFY`; adds basis storage `Z`.
+- L0.1 `GmresSolver` class declaration. [`palace/linalg/iterative.hpp:155-217`](../../../../reference/palace/linalg/iterative.hpp#L155-L217) (definition; lines 152–154 are the doc-comment header, audit-tolerable extent). Template over `OperType ∈ {Operator, ComplexOperator}`; configuration setters for `gs_orthog`, `pc_side`, `max_dim`; workspace fields `V`, `H`, `s`, `cs`, `sn`.
+- L0.2 `FgmresSolver` class declaration. [`palace/linalg/iterative.hpp:222-275`](../../../../reference/palace/linalg/iterative.hpp#L222-L275) (definition; lines 219–221 are the class-doc header, audit-tolerable extent). Inherits from `GmresSolver`; constructor forces `pc_side = RIGHT`; `SetPreconditionerSide` rejects `LEFT` via `MFEM_VERIFY`; adds basis storage `Z`. Note: the inherited workspace field `r` (declared in `GmresSolver` at iterative.hpp:194) is structurally dead in FGMRES — `FgmresSolver::Mult` never calls `r.SetSize` and uses `Z[0]` for the initial residual and `V[0]` as the unused LEFT-scratch parameter to `InitialResidual`.
 
 **Scalar / kernel routines.**
-- L0.3 `GeneratePlaneRotation(dx, dy) → (cs, sn)`. `palace/linalg/iterative.cpp:73–108` (definition). LAPACK-style scaled Givens generation; real and complex specialisations.
-- L0.4 `ApplyPlaneRotation(dx, dy, cs, sn)`. `palace/linalg/iterative.cpp:227–241` (definition). In-place 2×2 unitary update.
-- L0.5a `ApplyB(B, x, y)` helper. `palace/linalg/iterative.cpp:245–251` (definition). Single LEFT-side preconditioner apply primitive used by `InitialResidual` and by the GMRES correction step.
-- L0.5 `InitialResidual(pc_side, A, B, b, x, r, z, initial_guess)`. `palace/linalg/iterative.cpp:253–286` (definition). Branches on `(pc_side, initial_guess)`; calls `ApplyB` on the LEFT branch.
-- L0.6 `ApplyBA(pc_side, A, B, x, y, z)`. `palace/linalg/iterative.cpp:288–306` (definition). The variant-absorbed operator action; `z` is the preconditioned input on the `RIGHT` branch (live for FGMRES, scratch-overwritten for fixed-`M` GMRES).
+- L0.3a `GeneratePlaneRotation` (real specialisation). [`palace/linalg/iterative.cpp:73-109`](../../../../reference/palace/linalg/iterative.cpp#L73-L109) (definition). LAPACK-style scaled Givens generation, real path.
+- L0.3b `GeneratePlaneRotation` (complex specialisation). [`palace/linalg/iterative.cpp:112-224`](../../../../reference/palace/linalg/iterative.cpp#L112-L224) (definition). The complex path has substantially more branches than the real path (handling `dx = 0`, `|dx| ≥ |dy|` vs. `|dy| > |dx|` scaling); see the L2 open question.
+- L0.4 `ApplyPlaneRotation(dx, dy, cs, sn)`. [`palace/linalg/iterative.cpp:227-241`](../../../../reference/palace/linalg/iterative.cpp#L227-L241) (definition; spans the real specialisation 227–232 and the complex specialisation 235–241, with the inter-function blank lines at 233–234). In-place 2×2 unitary update.
+- L0.5a `ApplyB(B, x, y)` helper. [`palace/linalg/iterative.cpp:244-250`](../../../../reference/palace/linalg/iterative.cpp#L244-L250) (definition). Single LEFT-side preconditioner apply primitive used by `InitialResidual` and by the GMRES correction step.
+- L0.5 `InitialResidual(pc_side, A, B, b, x, r, z, initial_guess)`. [`palace/linalg/iterative.cpp:253-285`](../../../../reference/palace/linalg/iterative.cpp#L253-L285) (definition). Branches on `(pc_side, initial_guess)`; calls `ApplyB` on the LEFT branch.
+- L0.6 `ApplyBA(pc_side, A, B, x, y, z)`. [`palace/linalg/iterative.cpp:288-305`](../../../../reference/palace/linalg/iterative.cpp#L288-L305) (definition). The variant-absorbed operator action; `z` is the preconditioned input on the `RIGHT` branch (live for FGMRES, scratch-overwritten for fixed-`M` GMRES).
 
 **Workspace allocation.**
-- L0.8 `GmresSolver::Initialize / Update`. `palace/linalg/iterative.cpp:488–542` (definition). Lazy/incremental allocation of `V`, `H`, `s`, `cs`, `sn`.
-- L0.9 `FgmresSolver::Initialize / Update`. `palace/linalg/iterative.cpp:707–731` (definition). Adds `Z` allocation.
+- L0.8a `GmresSolver::Initialize`. [`palace/linalg/iterative.cpp:489-516`](../../../../reference/palace/linalg/iterative.cpp#L489-L516) (definition). Lazy allocation of `V`, `H`, `s`, `cs`, `sn` at `init_size = 5`.
+- L0.8b `GmresSolver::Update`. [`palace/linalg/iterative.cpp:519-541`](../../../../reference/palace/linalg/iterative.cpp#L519-L541) (definition). Incremental growth (`add_size = 10`) of the same workspace.
+- L0.9a `FgmresSolver::Initialize`. [`palace/linalg/iterative.cpp:708-718`](../../../../reference/palace/linalg/iterative.cpp#L708-L718) (definition). Adds `Z` allocation on top of `GmresSolver::Initialize`.
+- L0.9b `FgmresSolver::Update`. [`palace/linalg/iterative.cpp:721-731`](../../../../reference/palace/linalg/iterative.cpp#L721-L731) (definition). Adds `Z` incremental growth.
 
 **Main solve loops.**
-- L0.10 `GmresSolver::Mult` body — outer restart loop + initial-residual / convergence-test setup. `palace/linalg/iterative.cpp:545–614` (definition).
-- L0.11 `GmresSolver::Mult` body — inner Arnoldi / Givens loop (`for(;; j++, it++)` over lines 619–649). `palace/linalg/iterative.cpp:616–650` (definition).
-- L0.11a `GmresSolver::Mult` body — restart-cycle drift-warning compare (`|beta − true_beta| > 0.1·true_beta` ⇒ optional warning). `palace/linalg/iterative.cpp:595–605` (definition). Observability only; does NOT alter dataflow.
-- L0.12 `GmresSolver::Mult` body — back-solve (652–661) and solution update with LEFT/RIGHT split (662–680), plus the post-correction convergence check. `palace/linalg/iterative.cpp:651–685` (definition). The RIGHT branch reuses `r` and `V[0]` as scratch for the `M·t` accumulator + apply.
-- L0.13 `FgmresSolver::Mult`. `palace/linalg/iterative.cpp:733–875` (definition). Differs from `GmresSolver::Mult` only in: (a) initial residual into `Z[0]`; (b) `ApplyBA(RIGHT, …, Z[j])` threading the preconditioned input into the basis; (c) uniform solution reconstruction `x ← x + Σ s[k] · Z[k]` with no terminal `M`-apply.
+- L0.10 `GmresSolver::Mult` body — outer restart loop + initial-residual / convergence-test setup. [`palace/linalg/iterative.cpp:544-611`](../../../../reference/palace/linalg/iterative.cpp#L544-L611) (definition). Ends at the V[0]/s reset line, strictly before the inner-loop `int j = 0;` initialisation.
+- L0.11 `GmresSolver::Mult` body — inner Arnoldi / Givens loop. [`palace/linalg/iterative.cpp:613-648`](../../../../reference/palace/linalg/iterative.cpp#L613-L648) (definition). The `int j = 0;` init at 613 and the `for (;; j++, it++) {` header at 614 frame the loop body 615–647, with the closing brace at 648.
+- L0.11a `GmresSolver::Mult` body — restart-cycle drift-warning compare (`|beta − true_beta| > 0.1·true_beta` ⇒ optional warning). [`palace/linalg/iterative.cpp:592-600`](../../../../reference/palace/linalg/iterative.cpp#L592-L600) (definition). The 10% threshold comparison is at line 592. Observability only; does NOT alter dataflow.
+- L0.12 `GmresSolver::Mult` body — back-solve (651–659), solution update with LEFT/RIGHT split (660–678), and the post-correction convergence check (679–682). [`palace/linalg/iterative.cpp:651-682`](../../../../reference/palace/linalg/iterative.cpp#L651-L682) (definition). The RIGHT branch reuses `r` and `V[0]` as scratch for the `M·t` accumulator + apply.
+- L0.13 `FgmresSolver::Mult`. [`palace/linalg/iterative.cpp:734-871`](../../../../reference/palace/linalg/iterative.cpp#L734-L871) (definition). Differs from `GmresSolver::Mult` only in: (a) initial residual into `Z[0]` (the `V[0]` argument to `InitialResidual` at lines 754–755 is the unused LEFT-scratch parameter on a RIGHT-side call); (b) `ApplyBA(RIGHT, …, Z[j])` threading the preconditioned input into the basis; (c) uniform solution reconstruction `x ← x + Σ s[k] · Z[k]` (lines 833–846) with no terminal `M`-apply.
 
 **Top-level dispatch.**
-- L0.14 `IterativeSolver` explicit-template-instantiation declarations. `palace/linalg/iterative.cpp:877–880` (declaration).
-- L0.15 `ksp.cpp` configuration call sites. `palace/linalg/ksp.cpp:40–96` (call_site). Constructs `GmresSolver` or `FgmresSolver` and wires `linear.max_size`, `linear.pc_side`, `linear.gs_orthog`.
+- L0.14 `GmresSolver` / `FgmresSolver` explicit-template-instantiation declarations. [`palace/linalg/iterative.cpp:877-880`](../../../../reference/palace/linalg/iterative.cpp#L877-L880) (declaration). The `{Gmres,Fgmres}Solver<{Operator,ComplexOperator}>` instantiations.
+- L0.15 `ksp.cpp` configuration call sites. [`palace/linalg/ksp.cpp:39-96`](../../../../reference/palace/linalg/ksp.cpp#L39-L96) (call_site). The `case KrylovSolver::GMRES:` branch starts at line 39; constructs `GmresSolver` or `FgmresSolver` and wires `linear.max_size`, `linear.pc_side`, `linear.gs_orthog`.
 
 ## L1 — pure-functional dataflow
 
@@ -123,7 +126,7 @@ Variant absorption at all three levels per [concept: variant-absorption](../../c
 ## Open questions
 
 - The `OrthogonalizeColumnMGS / CGS / CGS2` internals (MPI collective shape, CGS2 refinement semantics) belong to a separate `orthog` slice. The L1 contract here is that `orthogonalize` is the sole dispatch point.
-- No dedicated GMRES/FGMRES unit test exists under `palace/test/`; coverage is via `models/modeeigensolver.cpp` and `ksp.cpp` consumers. A regression-test slice may be warranted.
+- No dedicated GMRES/FGMRES unit test exists under `palace/test/`; the `palace/test/**/*iterative*` glob returns empty. Coverage is via `models/modeeigensolver.cpp` and `ksp.cpp` consumers. A regression-test slice may be warranted.
 - `GeneratePlaneRotation` complex specialisation has substantially more branches than the real one — numerical equivalence on real-cast-to-complex inputs is an L2 / numerics concern.
 - `CheckDot` NaN/Inf gating semantics (referenced from the inner loop's residual checks) is cross-cutting across all iterative solvers and not pinned here.
 - The recurrence-vs-direct residual drift check at restart (`|beta − true_beta| > 0.1·true_beta` ⇒ warning; L0.11a, `iterative.cpp:595–605`) is an observability hook on a known numerical drift between the LS-proxy residual `|s[j+1]|` and the explicit `‖b − A·x‖`. The 10% threshold is currently an unmotivated constant. Deferred to a numerics slice.
