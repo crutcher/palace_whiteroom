@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-77 — forward orthog [L2→L3] — pass
+
+- Synthesis: orthog L2→L3 retroactive rotation_claims: CGS and CGS2 lift to projector form (Vᴴw, VH) with tighter variant absorption; MGS records a structural sequential-obstruction. Four claims back-fill the on-disk L3 section landed in cycle 75.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 2 lesson(s); 4 rotation_claim(s).
 ## 2026-05-25 cycle-76 — forward cg [L4→L4] — pass
 
 - Synthesis: Retroactive L4→L4 rotation_claim for cg: name the derived-view hoisting of `res` from CgState into cg_step's output record as a state-hiding rotation enabling §3.8 demand-driven pruning. Schema, step body, and equivalence note are unchanged from v0.3; the claim audits the on-disk v0.4 commentary against rotation.md criterion (a).
