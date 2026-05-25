@@ -326,6 +326,8 @@ Each pass produces two artifacts in `book/src/meta-reviews/`:
 
 Recurring patterns across meta-review records are first-class signal — a problem resolved once that recurs is evidence the resolution didn't stick, and may escalate from Medium to High on the third hit.
 
+**Final step of every meta-cycle enactment**: regenerate `README.md` using the `prompts/readme_builder.md` prompt. The README is a relative-progress report — it must reflect what was just enacted (the meta-cycle that fired). The prompt is invoked with isolated context (like a role prompt); it reads the current project state from `LOG.md`, `book/src/spec/index.md`, `book/src/concepts/index.md`, `episodic.jsonl`, the `book/src/meta-reviews/` records, and the `prompts/` + `skills/` directory listings, and emits a fresh `README.md`. The new README is committed alongside the meta-review enactment (or as an immediate follow-up commit with message `readme: regenerate post-meta-N`).
+
 ## Pinned conventions (confirmed)
 
 - **Layer count: 4 above L0.** L1 mutation, L2 fusion-unfolded algebra, L3 field-transition, L4 formal graph-evaluation calculus. Not collapsed.
