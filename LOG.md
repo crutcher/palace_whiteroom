@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-61 — forward chebyshev [L3→L4] — revise
+
+- Synthesis: Chebyshev L3→L4 rotation: state-stratified into sim (x,y) / operator-internal (A,dinv,order,pc_it,scalars-closure) / ephemeral (r,d,t,Ay,Ad,rho_prev); apply expressed as Solve-monad action with explicit forM_ over pc_it and foldM over inner k-recurrence carrying (r,d,scalar_state); setup expressed as a separate monadic action producing the immutable operator closure that absorbs the 4th-kind/1st-kind variant axis into the scalar-generator function.
+- Verdict: revise.
+- Friction: The claimed L4 form `foldM (innerStep op) (r, d0, st0) [1..order-1]` is plausible and the state-hiding argument is sound (check #8 (a) holds: rho_prev, t, Ay, Ad disappear into accumulator), BUT the rotation cannot be audited without the actual prose/code landed in the slice file. The claim is structurally well-formed but unverifiable against the surface.; The setup-side rotation claim invokes both state-stratification and (c)-level variant absorption via constructed-operators — but check #11 (setup/state schema coverage for variant absorption) cannot be verified: the L4 record `{ A, dinv, order, pc_it, scalars }` is asserted but the variant-conditional setup state (1st-kind needs lambda_min/theta/delta/rho_prev seed; 4th-kind needs different scalars) is collapsed into 'scalars closure' without enumeration of what each variant's closure captures. This is exactly the silent-partial-absorption-in-setup failure mode flagged in the 2026-05-24 meta-review #4 lesson..
+- Structural change: applied: 1 dep-map edge(s), 2 lesson(s); 2 rotation_claim(s).
 ## 2026-05-25 cycle-60 — back divfree — pass
 
 - Synthesis: Retroactive L0→L1 rotation_claim for divfree slice. The slice already has L1, L2, L3, L4 content on disk (cycles prior to this audit); the producer-side claim for the L0→L1 edge was missing. Plan_kind=retroactive_claims with retroactive_claim_evidence below.

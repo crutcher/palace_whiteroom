@@ -12,7 +12,7 @@ This index is maintained by the Synthesizer after every push. It is the **first 
 | [GMRES](./slices/gmres.md) | L4 | 2026-05-25 | L0–L4 complete. L4 stratifies SimState / OpParams / Krylov; threads SimState via StateT monad; absorbs convergence policy into a built-once Convergence value; types ls_update_column / back_solve as pure functions on small-dense Krylov state (sequential obstruction carried through). FGMRES is the same calculus with flexible=true. |
 | [Orthogonalisation](./slices/orthog.md) | L4 | 2026-05-25 | Block Gram-Schmidt (MGS/CGS/CGS2) lifted to Solve-monad form with state stratification; variant is a constructed-operator param, MGS's sequential obstruction surfaces as a non-commuting get/modify chain on the w-field. |
 | [Divergence-free projection](./slices/divfree.md) | L4 | 2026-05-25 | L4 calculus form: SolveM monadic apply with state-stratified DivFreeParams (internal params) over SimState (sim state); scratch buffers explicitly classified as internal-parameter storage, not sim state. Eigensolver composition shown. |
-| [chebyshev](./slices/chebyshev.md) | L3 | 2026-05-25 | L3 lifts the inner-step body to a global tensor-field expression; inner `k` recurrence and outer `pc_it` sweep recorded as sequential obstructions with cited rationale (Phillips & Fischer 2022 §2). |
+| [chebyshev](./slices/chebyshev.md) | L4 | 2026-05-25 | L4 form expressed against the calculus: setup produces an immutable operator closure carrying variant-specific scalar generators; apply is a Solve-monad action with explicit forM_/foldM binds carrying both sequential obstructions from L3. |
 
 ## Slice conventions
 

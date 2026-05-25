@@ -286,3 +286,117 @@ The 1st-kind variant carries a scalar $\rho_k$ across `k` via $\rho_k = 1/(2\the
 
 - [`sequential-obstruction`](../../concepts/sequential-obstruction.md) — the classification used for both the `k` and `pc_it` loops.
 - [`tensor-field-lift`](../../concepts/tensor-field-lift.md) — body-lifts-but-loop-doesn't is the canonical partial case.
+
+## L4 — calculus form
+
+Against the [L4 calculus](../../design/l4_calculus.md), the Chebyshev smoother is a `Solver<OperType>` constructed once at setup time and then invoked as a pure `apply_linop` action inside an outer [solve monad](../../concepts/solve-monad.md) (the multigrid V-cycle or distributive-relaxation iteration). The L3 sequential obstructions in `k` and `pc_it` survive into L4 as explicit monadic `forM_` binds; they do not collapse.
+
+### State stratification
+
+Per [`state-stratification`](../../concepts/state-stratification.md), the L4 form distinguishes three kinds of state:
+
+- **Sim state** (caller-owned, threaded by the outer solve monad): `x` (rhs), `y` (accumulator / iterate).
+- **Operator internal params** (captured at `setup`, immutable across `apply` calls): `A`, `dinv`, `order`, `pc_it`, and the variant-specific scalars (`lam_max` for 4th-kind, `theta`/`delta` for 1st-kind). These live inside the constructed-operator closure ([`constructed-operators`](../../concepts/constructed-operators.md)).
+- **Ephemeral intermediates** (allocated per `apply_linop` call, discarded on return): `r`, `d`, `t`, `Ay`, `Ad`, and the carried scalar `rho_prev` for the 1st-kind variant.
+
+```ts
+// Operator internal params (immutable post-setup)
+type ChebOp<E> = {
+  A: LinOp<E>;                  // SPD operator, by reference
+  dinv: Field<E>;               // 1 / diag(A)
+  order: int;
+  pc_it: int;
+  scalars: (k: int, st: ScalarState) => { a0?: E; sd?: E; sr?: E; st: ScalarState };
+  // ScalarState is unit for 4th-kind, { rho_prev: E } for 1st-kind.
+};
+
+// Sim-state slice consumed/produced by apply_linop
+type ChebSim<E> = { x: Field<E>; y: Field<E> };
+```
+
+### Apply as a monadic action
+
+The outer `pc_it` loop and the inner `k` loop are sequential by L3 obstruction; in L4 they become explicit `forM_` binds in the `Solve` monad. Each step is a pure tensor-field expression on the field algebra; the monad threads the ephemeral `r`, `d` buffers and the scalar-state `rho_prev`.
+
+```haskell
+apply :: ChebOp E -> Field E -> Bool -> Solve (Field E) (Field E) ()
+apply op x initial_guess = do
+  forM_ [1 .. op.pc_it] $ \it -> do
+    -- 1. residual
+    r <- if it == 1 && not initial_guess
+            then do { setZero y; pure (copy x) }
+            else do
+              ay <- applyLinop op.A y
+              pure (x .-. ay)             -- r = x - A y
+
+    -- 2. initial direction d_0 = alpha_0 * dinv .* r
+    let (c0, st0) = op.scalars 0 unitState
+    let d0 = c0.a0 .* (op.dinv .*. r)
+
+    -- 3. inner k-recurrence (sequential obstruction in k)
+    (rN, dN, stN) <- foldM (innerStep op) (r, d0, st0) [1 .. op.order - 1]
+
+    -- 4. final accumulation
+    modifyY (\y -> y .+. dN)
+  where
+    innerStep op (r, d, st) k = do
+      modifyY (\y -> y .+. d)            -- y += d
+      ad <- applyLinop op.A d
+      let r'        = r .-. ad           -- r -= A d
+      let (c, st')  = op.scalars k st
+      let t         = op.dinv .*. r'
+      let d'        = c.sd .* d .+. c.sr .* t
+      pure (r', d', st')
+```
+
+`modifyY` is the sim-state mutator the outer monad exposes; `applyLinop`, `(.*.)`  (elementwise product), `(.+.)`, `(.-.)`, `(.*)` are the field-algebra primitives carried over from L2/L3.
+
+### Setup as a separate monadic action
+
+Setup is itself a `Solve`-monad action (it issues a `spectrum_estimate` sub-solve), but its product is an **immutable operator closure**, not new sim-state. The closure embeds the variant choice ([`constructed-operators`](../../concepts/constructed-operators.md)):
+
+```haskell
+setup :: LinOp E -> SetupParams -> Variant -> Solve s (ChebOp E)
+setup A p variant = do
+  let dinv = recip (extractDiagonal A)
+  lam_max <- (p.sf_max *) <$> spectrumEstimate A dinv
+  case variant of
+    Kind4 -> pure ChebOp
+      { A, dinv, order = p.order, pc_it = p.pc_it
+      , scalars = scalars4 lam_max }
+    Kind1 -> do
+      let sf_min_eff = if p.sf_min > 0 then p.sf_min
+                       else 1.69 / (p.order**1.68 + 2.11*p.order + 1.98)
+      let lam_min = sf_min_eff * lam_max
+      let theta   = (lam_max + lam_min) / 2
+      let delta   = (lam_max - lam_min) / 2
+      pure ChebOp
+        { A, dinv, order = p.order, pc_it = p.pc_it
+        , scalars = scalars1 theta delta }
+```
+
+Here `scalars4` and `scalars1` are pure scalar-recurrence functions; they close over the persisted spectral bounds and produce the per-`k` `(alpha_0, sd_k, sr_k)` tuple. The variant axis is fully absorbed into the closure — `apply` does not branch on variant. This is the L4 realization of (c)-level [variant absorption](../../concepts/variant-absorption.md).
+
+### Sequential obstructions at L4
+
+- The `forM_ [1 .. pc_it]` outer bind is the L4 surface of the Richardson-sweep sequentiality recorded at L3.
+- The `foldM (innerStep op)` is the L4 surface of the three-term-recurrence sequentiality in `k`. The accumulator threads `(r, d, scalar_state)`; each `innerStep` consumes the previous tuple. This is the canonical L4 shape for a [sequential-obstruction](../../concepts/sequential-obstruction.md) that lifted only at the body level — `foldM` over a finite range, body is pure field arithmetic.
+- The 1st-kind `rho_k` scalar update rides inside `ScalarState` and is threaded by the same `foldM`; it is `O(1)` work per step and does not introduce additional state-monad complexity.
+
+### Pure-action discipline
+
+The `apply` action does **not** mutate `op` (the operator closure). All mutation lives in the sim-state slice — and even there, only `y` is mutated; `x` is read-only. The ephemeral fields `r`, `d`, `t`, `Ay`, `Ad` are L4-pure values (returned by field-algebra expressions, not mutated in-place); whether the L2/runtime implementation realizes them via in-place `axpy`/`scal` is the standard transparent optimization handled at L2.
+
+The `MultTranspose` alias under the symmetry assumption is L4-trivial: `applyTranspose op = apply op` for SPD `A`.
+
+### What carries through from L3
+
+- The body's tensor-field expressions ([`tensor-field-lift`](../../concepts/tensor-field-lift.md)) carry through verbatim as field-algebra expressions.
+- Both sequential obstructions are made explicit as monadic binds; nothing pretends to be parallel.
+- Variant absorption stays at level (c): one closure shape, one `apply` body, scalar-generator selected at setup.
+
+### Concept references added at L4
+
+- [`solve-monad`](../../concepts/solve-monad.md) — the outer monad threading sim state through `forM_` and `foldM`.
+- [`state-stratification`](../../concepts/state-stratification.md) — the three-way split of sim / operator-internal / ephemeral state.
+- [`constructed-operators`](../../concepts/constructed-operators.md) — the closure that absorbs the variant axis at L4.
