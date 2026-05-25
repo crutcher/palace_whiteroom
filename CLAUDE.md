@@ -60,7 +60,7 @@ reference/           # local clones of palace, bunsen, burn, tensorflow-java (gi
 questions.md         # open/closed question ledger — surfaces unknowns
 lessons.md           # cross-run lessons appended by the Critic
 episodic.jsonl       # append-only per-cycle log (becomes the research record)
-LOG.md               # human-readable per-cycle narrative — newest entry on top
+log/                 # human-readable per-cycle and per-meta entries (1 file each) + README.md index — replaced monolithic LOG.md 2026-05-26
 config.toml          # target paths, language, model ids, budgets
 schemas/             # exploration_finding.json, critic_verdict.json
 prompts/             # planner.md, explorer.md, synthesizer.md, critic.md
@@ -326,7 +326,7 @@ Each pass produces two artifacts in `book/src/meta-reviews/`:
 
 Recurring patterns across meta-review records are first-class signal — a problem resolved once that recurs is evidence the resolution didn't stick, and may escalate from Medium to High on the third hit.
 
-**Final step of every meta-cycle enactment**: regenerate `README.md` using the `prompts/readme_builder.md` prompt. The README is a relative-progress report — it must reflect what was just enacted (the meta-cycle that fired). The prompt is invoked with isolated context (like a role prompt); it reads the current project state from `LOG.md`, `book/src/spec/index.md`, `book/src/concepts/index.md`, `episodic.jsonl`, the `book/src/meta-reviews/` records, and the `prompts/` + `skills/` directory listings, and emits a fresh `README.md`. The new README is committed alongside the meta-review enactment (or as an immediate follow-up commit with message `readme: regenerate post-meta-N`).
+**Final step of every meta-cycle enactment**: regenerate `README.md` using the `prompts/readme_builder.md` prompt. The README is a relative-progress report — it must reflect what was just enacted (the meta-cycle that fired). The prompt is invoked with isolated context (like a role prompt); it reads the current project state from `log/README.md` (with spot-reads of individual `log/*.md` entries), `book/src/spec/index.md`, `book/src/concepts/index.md`, `episodic.jsonl`, the `book/src/meta-reviews/` records, and the `prompts/` + `skills/` directory listings, and emits a fresh `README.md`. The new README is committed alongside the meta-review enactment (or as an immediate follow-up commit with message `readme: regenerate post-meta-N`).
 
 ## Pinned conventions (confirmed)
 

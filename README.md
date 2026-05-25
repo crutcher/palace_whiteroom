@@ -68,7 +68,7 @@ The dissection lifts each slice through five layers; each rotation removes one s
 - Build the book: `cargo make book` (one-time tooling install on first run).
 - Live preview: `cargo make book-serve` (browse `book/book/html/`).
 - Run the agent loop continuously: `orchestrator/.venv/bin/python -m orchestrator --continuous`. Requires `ANTHROPIC_API_KEY` in `.env` (see `.env.example`).
-- Read per-cycle history: `LOG.md` (human-readable, newest first).
+- Read per-cycle history: [`log/README.md`](log/README.md) (newest-first index); individual entries at `log/cycle-NNN.md` and `log/meta-NN-cycles-A-B.md`.
 - Read structured per-cycle records: `episodic.jsonl` (one JSON line per cycle).
 - Read the spec deliverable: `cargo make book-serve` then browse the rendered mdBook.
 

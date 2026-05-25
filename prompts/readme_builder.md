@@ -13,7 +13,7 @@ GitHub visitors and project newcomers land on `README.md` first. It must:
 1. Tell them what this project IS (one paragraph; not a tutorial).
 2. Tell them WHERE IT IS (current phase, recent milestone, what was added since
    the last meta-cycle).
-3. Tell them WHAT TO READ NEXT (the book, BOOTSTRAP.md, CLAUDE.md, LOG.md).
+3. Tell them WHAT TO READ NEXT (the book, BOOTSTRAP.md, CLAUDE.md, `log/README.md` index).
 4. Tell them HOW TO RUN IT (build the book, invoke the loop).
 
 The relative-progress framing means: every meta-cycle, the README reflects the
@@ -31,8 +31,7 @@ Read these every time. Don't invent state; derive everything.
 - `BOOTSTRAP.md` — phased build spec; identify which phase the project is
   currently in (Phase 6 was DONE as of meta-10; subsequent meta-reviews note
   "Phase 6+ continuation").
-- `LOG.md` — newest-first per-cycle and meta-review summaries. Read the top
-  ~30 entries to derive the recent activity arc.
+- `log/README.md` — newest-first index of per-cycle and per-meta-review entries (each entry is a separate file under `log/`; the README indexes them). Read the index for the recent activity arc; spot-read individual entries via `log/cycle-NNN.md` / `log/meta-NN-cycles-A-B.md` as needed. (Replaced the monolithic `LOG.md` 2026-05-26 per user directive.)
 - `book/src/spec/index.md` — slice status table. Authoritative source for
   per-slice highest-layer values.
 - `book/src/concepts/index.md` — concepts index table. Count rows for the
@@ -161,7 +160,7 @@ A short list of commands and entry points:
 - Run the agent loop continuously: `orchestrator/.venv/bin/python -m
   orchestrator --continuous`. Requires `ANTHROPIC_API_KEY` in `.env` (see
   `.env.example`).
-- Read per-cycle history: `LOG.md` (human-readable, newest first).
+- Read per-cycle history: `log/README.md` index (newest first), then individual `log/cycle-NNN.md` / `log/meta-NN-cycles-A-B.md` files as needed.
 - Read structured per-cycle records: `episodic.jsonl` (one JSON line per
   cycle).
 
@@ -199,7 +198,7 @@ meta-review plan items have been committed. The orchestrator (or the
 human enactor) reads the current project state and produces the README.
 
 Concretely: when a meta-review is committed (`book/src/meta-reviews/
-<date>-cycles-A-B.md` lands plus its associated `LOG.md`, `episodic.jsonl`,
+<date>-cycles-A-B.md` lands plus its associated `log/` entries, `episodic.jsonl`,
 and `SUMMARY.md` entries), the README regeneration runs before the meta-
 cycle is considered complete. The new `README.md` is committed in the
 same atomic commit as the meta-review, or as an immediate follow-up commit
