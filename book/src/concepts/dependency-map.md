@@ -133,6 +133,10 @@ graph BT
   state-stratification --> constructed-operators
   state-stratification --> variant-absorption
   state-stratification --> sequential-obstruction
+  convergence-test --> constructed-operators
+  convergence-test --> variant-absorption
+  convergence-test --> solve-monad
+  gmres --> convergence-test
 ```
 
 The L4 calculus has its own design artifact at [`book/src/design/l4_calculus.md`](../design/l4_calculus.md). L4 concepts (grammar productions, reduction rules, ownership categories) are not currently tracked here — the calculus is a single document with its own internal structure. If L4 grows to need cross-cycle concept tracking, add a section here at that time.

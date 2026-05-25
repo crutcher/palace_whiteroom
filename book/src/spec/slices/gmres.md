@@ -325,7 +325,27 @@ The field-side work (step 1, step 2) is fully global / tensor-field; the LS-side
 
 The L3 form distinguished field-side state (`x`, `b`, `V[k]`, `Z[k]`) from small-dense LS-side state (`H`, `s`, `cs`, `sn`, `y`), and recorded `ls_update_column` / `back_solve` as sequential obstructions on dense O(j) state. L4 makes that distinction structural: sim state, operator internal params, and ephemeral per-cycle Krylov state are typed separately, and the inner solve threads the Krylov bundle monadically. The form is code-like-but-not-runnable; it pins the calculus contract the implementation must respect.
 
-See [concept: state-stratification](../../concepts/state-stratification.md) and [concept: solve-monad](../../concepts/solve-monad.md) for the cross-cutting forms.
+See [concept: state-stratification](../../concepts/state-stratification.md) and [concept: solve-monad](../../concepts/solve-monad.md) for the cross-cutting forms. The constructed-operator helpers (`initial_residual`, `apply_BA`, `apply_correction`) are the operator-internal surface through which variant absorption is preserved at L4 — they are the *only* sites that read `op.pc_side`, `op.gs_orthog`, `op.flexible`.
+
+### Convergence-criterion absorption
+
+The convergence test the inner loop fires on (`K.beta < ε` with `ε = max(rel_tol·initial_res, abs_tol)`) is the third constructed-operator surface at L4. The main `solve_loop` / `restart_cycle` / `inner_loop` never reads `op.rel_tol`, `op.abs_tol`, or `s.initial_res` directly; instead a `Convergence` value is built once per restart cycle and applied as a pure predicate. This pulls the residual-policy decisions (relative vs. absolute, initial-residual scaling, LEFT-side `M·b` rescaling for `initial_guess = false`) out of the main control flow and into a single dispatch surface — symmetric with how `apply_BA` absorbs `pc_side`.
+
+```haskell
+data Convergence = Convergence { epsilon :: real, satisfied :: real -> Bool }
+
+build_convergence :: OpParams -> Vec -> real -> real -> Convergence
+build_convergence op b β prior_initial_res =
+  let ε0 = if isUnset prior_initial_res
+             then if op.initial_guess
+                     then (if op.pc_side == LEFT then nrm2 (op.M · b) else nrm2 b)
+                     else β
+             else prior_initial_res
+      ε  = max (op.rel_tol * ε0) op.abs_tol
+  in Convergence { epsilon = ε, satisfied = \β' -> β' < ε }
+```
+
+The inner loop and the post-correction test below take a `Convergence` value and call `.satisfied` — they do not re-derive `ε`.
 
 ### State stratification
 
@@ -411,30 +431,25 @@ restart_cycle op b = do
   s <- get
   let (r0, x') = initial_residual op b s.x
       β        = nrm2 r0
-      ε0       = if isUnset s.initial_res
-                    then if op.initial_guess
-                            then (if op.pc_side == LEFT then nrm2 (op.M · b) else nrm2 b)
-                            else β
-                    else s.initial_res
-  put s{ x = x', initial_res = ε0 }
-  let ε = max (op.rel_tol * ε0) op.abs_tol
-  if β < ε
+      conv     = build_convergence op b β s.initial_res
+  put s{ x = x', initial_res = (if isUnset s.initial_res then derive_ir op b β else s.initial_res) }
+  if conv.satisfied β
     then do modify (\s -> s{ converged = True, final_res = β }) ; pure (Done True)
     else do
       let K0 = fresh_krylov op β r0          -- V[0] = r0/β, s[0] = β, j=0, Z if flexible
-      K <- inner_loop op ε K0
+      K <- inner_loop op conv K0
       let y = back_solve K
       modify (\s -> s{ x = apply_correction op K y s.x, final_res = K.beta })
       s' <- get
-      pure $ if K.beta < ε       then Done True
-             else if s'.it == op.max_it then Done False
-             else                            Continue   -- hit max_dim ⇒ restart
+      pure $ if conv.satisfied K.beta    then Done True
+             else if s'.it == op.max_it  then Done False
+             else                             Continue   -- hit max_dim ⇒ restart
 
 -- Inner Arnoldi loop: pure on Krylov, increments SimState.it via the monad.
 -- Stops on the first of: LS residual < ε, basis full (j+1 == max_dim), or total
 -- iteration budget exhausted. The reason is recoverable from (K.beta, K.j, s.it).
-inner_loop :: OpParams -> real -> Krylov -> Solve Krylov
-inner_loop op ε K = do
+inner_loop :: OpParams -> Convergence -> Krylov -> Solve Krylov
+inner_loop op conv K = do
   let (w, z)      = apply_BA op K.j K.V[K.j]
       K1          = if op.flexible then K{ Z = K.Z `with` (K.j, z) } else K
       (v_next, h) = orthogonalize op (K1.V[0..K1.j]) w
@@ -442,9 +457,9 @@ inner_loop op ε K = do
       K3          = ls_update_column K2 h
   modify (\s -> s{ it = s.it + 1 })
   s <- get
-  if K3.beta < ε || K3.j + 1 == op.max_dim || s.it == op.max_it
+  if conv.satisfied K3.beta || K3.j + 1 == op.max_dim || s.it == op.max_it
     then pure K3
-    else inner_loop op ε K3{ j = K3.j + 1 }
+    else inner_loop op conv K3{ j = K3.j + 1 }
 ```
 
 The `do`-blocks mark the points where `SimState` is read or written; everywhere else the code is pure on `OpParams` and `Krylov`. The inner loop's only `SimState` interaction is the `it`-counter increment — the iterate `x` is updated exactly once per restart cycle, after `back_solve`. This is the structural realisation of the L1 / L2 / L3 claim that the inner loop does not touch field state on `x` until correction time.

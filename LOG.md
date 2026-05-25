@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-37 — forward gmres [L4→L4] — pass
+
+- Synthesis: GMRES L4→L4 tightening: extracted the convergence test into a `Convergence` constructed-operator surface (third absorption surface alongside `apply_BA` / `apply_correction`); new concept `convergence-test`; inner loop now closes over `Convergence` rather than re-reading `op.rel_tol`/`op.abs_tol`/`s.initial_res`.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 1 concept_write(s), 2 dep-map edge(s), 1 lesson(s); 2 rotation_claim(s).
 ## 2026-05-25 meta-review (cycles 31–36) — enacted — PHASE 6 DONE
 
 - Window: 6 cycles. **GMRES reached L4** (cycles 31/32/34 — multiple emissions converged the L4 form). The meta-9 refined downgrade rule worked end-to-end: 4 of 6 cycles held pass via `bookkeeping_incomplete` instead of false-downgrading the L4 milestone. **All five Phase 6 DONE criteria are now satisfied.**
