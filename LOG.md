@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-50 — forward cg [L1→L2] — revise
+
+- Synthesis: Retroactive L1→L2 rotation_claims for cg slice; the L2 section already exists on disk (see ## L2 in book/src/spec/slices/cg.md), but the prior cycle that landed it did not emit per-edge rotation_claims. This cycle audits the on-disk L2 against L1 and emits the claims.
+- Verdict: revise.
+- Friction: The claim's own justification concedes the rotation is 'essentially trivial' and 'the rest is consolidation'. Per check #8, a rotation must achieve at least one of (a) state hiding, (b) coarser substitution, (c) threaded-state compression. The justification explicitly states 'No new state is hidden between L1 and L2' (rules out (a)) and 'the L1 state schema ... survives into L2 unchanged' (rules out (c)). The remaining argument for (b) coarser substitution reduces to renaming `+` and `-` as `axpy` calls — but L1 already used `axpby` for the search-direction update, so this is naming consistency within an already-BLAS-flavored L1, not a coarser substitution interface. A genuine L1→L2 coarser substitution would, for example, package `apply A`, the two axpy updates, and the dot product as a fused `cg_inner_update` primitive that admits substitution against a CGNE/MINRES variant. As stated, claim 0 is a renaming..
+- Structural change: none.
 ## 2026-05-25 meta-review (cycles 44–49) — enacted
 
 - Window: 6 cycles. Substantive batch: cycle 45 landed GMRES L4 fully; cycles 46/47 lifted divfree/orthog to L3; cycle 44 chebyshev L1→L2. 5 of 6 cycles were retroactive_claims; meta-11's evidence-quoting requirement (check #12) made them auditable but didn't reduce frequency.
