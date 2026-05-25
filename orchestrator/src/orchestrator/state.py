@@ -269,6 +269,67 @@ class State:
         path.write_text(new_text)
         return True
 
+    def add_to_concepts_index(self, name: str, kind: str = "primitive") -> bool:
+        """Add a row to `book/src/concepts/index.md`'s `## Index` table.
+        Idempotent on `name`: returns False if a row for the named concept
+        already exists. Rows are kept alphabetically sorted by concept name.
+
+        Added meta-review #15 after the user surfaced that the index table
+        had stayed empty across 24+ concept creates — the meta-7 auto-register
+        added concepts to SUMMARY.md but did not touch this table. This
+        helper is called from the integrator alongside register_in_summary.
+
+        `kind` is one of: methodology, algorithm, primitive, layer-pattern,
+        auxiliary. Defaults to `primitive` if the Synthesizer doesn't specify.
+        """
+        path = self.repo_root / "book/src/concepts/index.md"
+        text = path.read_text()
+
+        new_row = f"| [{name}](./{name}.md) | {kind} |"
+        if new_row in text:
+            return False  # exact idempotency
+        # Also dedupe on the link path alone (different kind, same concept).
+        if f"](./{name}.md)" in text:
+            return False
+
+        # Locate the table: find the header row, then the alignment row, then
+        # walk through the existing data rows and insert in alphabetical order.
+        header_match = "| Concept | Kind |"
+        header_pos = text.find(header_match)
+        if header_pos < 0:
+            raise RuntimeError(
+                f"concepts/index.md missing expected header: {header_match!r}. "
+                "The table format may have been manually restructured; the "
+                "auto-register helper assumes the meta-15 schema."
+            )
+        # Skip header line + alignment line.
+        after_header = text.find("\n", header_pos)
+        after_align = text.find("\n", after_header + 1)
+        # Walk data rows.
+        cursor = after_align + 1
+        insert_pos = cursor
+        while cursor < len(text):
+            line_end = text.find("\n", cursor)
+            if line_end < 0:
+                line_end = len(text)
+            line = text[cursor:line_end]
+            if not line.startswith("| ["):
+                # End of table.
+                insert_pos = cursor
+                break
+            # Extract concept name from `| [<name>](`...
+            import re
+            m = re.match(r"\|\s*\[([^\]]+)\]", line)
+            if m and m.group(1) > name:
+                insert_pos = cursor
+                break
+            insert_pos = line_end + 1
+            cursor = line_end + 1
+
+        text = text[:insert_pos] + new_row + "\n" + text[insert_pos:]
+        path.write_text(text)
+        return True
+
     def update_slice_index_row(
         self,
         slice: str,

@@ -292,6 +292,18 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
                         push_back_signals.append(
                             f"concept auto-register failed for {name}: {e_reg}"
                         )
+                    # Also add to the concepts/index.md table (meta-15
+                    # follow-on after the user surfaced that the table
+                    # had never been populated across 24+ creates).
+                    concept_kind = (
+                        cw.get("kind", "primitive") if isinstance(cw, dict) else "primitive"
+                    )
+                    try:
+                        state.add_to_concepts_index(name=name, kind=concept_kind)
+                    except Exception as e_ix:
+                        push_back_signals.append(
+                            f"concept index auto-update failed for {name}: {e_ix}"
+                        )
             elif mode == "append-section":
                 state.append_concept_section(name, content)
                 _record_success(concept_rel)

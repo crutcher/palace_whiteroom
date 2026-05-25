@@ -91,7 +91,8 @@
             "enum": ["create", "append-section"],
             "description": "`create` for new concept files; `append-section` to add a new ## section to an existing concept page."
           },
-          "content": { "type": "string", "description": "For mode=create: the full concept-page content. For mode=append-section: the section content INCLUDING the leading `## Heading` line." }
+          "content": { "type": "string", "description": "For mode=create: the full concept-page content. For mode=append-section: the section content INCLUDING the leading `## Heading` line." },
+          "kind": { "type": "string", "enum": ["methodology", "algorithm", "primitive", "layer-pattern", "auxiliary"], "description": "Optional, for mode=create. The category for the concepts/index.md table row. Defaults to `primitive` if omitted. Added meta-15." }
         }
       }
     },

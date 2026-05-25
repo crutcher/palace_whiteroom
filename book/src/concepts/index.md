@@ -50,6 +50,38 @@ The `Context` and `Working Notes` sections are general agent-facing affordances 
 
 ## Index
 
-| Concept | Kind | Used by |
-|---------|------|---------|
-| _(none yet)_ | — | — |
+Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a row here (analogous to the `SUMMARY.md` auto-register added in meta-7). `Used by` was removed in meta-15 as too expensive to keep accurate — `dependency-map.md` gives the layered cross-reference view, and `grep -l "concepts/<name>.md" book/src/spec/slices/*.md` answers the "where is this used" question reliably.
+
+**Kind values**:
+- `methodology` — concepts about the dissection process itself (rotation, variant-absorption, …).
+- `algorithm` — top-level algorithmic patterns (gmres, chebyshev-iteration, orthogonalization, …).
+- `primitive` — base tensor/linear-algebra operations (axpy, dot, apply_linop, …).
+- `layer-pattern` — concepts naming how L1/L2/L3/L4 work (state-stratification, solve-monad, tensor-field-lift, …).
+- `auxiliary` — supporting concepts that don't fit the other categories.
+
+| Concept | Kind |
+|---------|------|
+| [apply_linop](./apply_linop.md) | primitive |
+| [axpy](./axpy.md) | primitive |
+| [chebyshev-iteration](./chebyshev-iteration.md) | algorithm |
+| [constructed-operators](./constructed-operators.md) | methodology |
+| [convergence-test](./convergence-test.md) | auxiliary |
+| [derived-view-hoisting](./derived-view-hoisting.md) | layer-pattern |
+| [dot](./dot.md) | primitive |
+| [elementwise-product](./elementwise-product.md) | primitive |
+| [gemv_basis](./gemv_basis.md) | primitive |
+| [givens](./givens.md) | primitive |
+| [gmres](./gmres.md) | algorithm |
+| [incremental-least-squares](./incremental-least-squares.md) | algorithm |
+| [ksp_solve](./ksp_solve.md) | layer-pattern |
+| [nrm2](./nrm2.md) | primitive |
+| [orthogonalization](./orthogonalization.md) | algorithm |
+| [rotation](./rotation.md) | methodology |
+| [scal](./scal.md) | primitive |
+| [sequential-obstruction](./sequential-obstruction.md) | layer-pattern |
+| [set_subvector_zero](./set_subvector_zero.md) | primitive |
+| [solve-monad](./solve-monad.md) | layer-pattern |
+| [state-stratification](./state-stratification.md) | layer-pattern |
+| [tensor-field-lift](./tensor-field-lift.md) | layer-pattern |
+| [trsv](./trsv.md) | primitive |
+| [variant-absorption](./variant-absorption.md) | methodology |
