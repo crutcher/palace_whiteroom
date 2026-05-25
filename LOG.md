@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-78 — forward chebyshev [L3→L4] — pass
+
+- Synthesis: Chebyshev L3→L4 retroactive claims against on-disk L4 calculus form: state stratification (sim/op-internal/ephemeral), forM_/foldM surface for the two sequential obstructions, constructed-operator variant absorption strengthened, setup as Solve-monad action.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 1 dep-map edge(s), 2 lesson(s); 4 rotation_claim(s).
 ## 2026-05-25 cycle-77 — forward orthog [L2→L3] — pass
 
 - Synthesis: orthog L2→L3 retroactive rotation_claims: CGS and CGS2 lift to projector form (Vᴴw, VH) with tighter variant absorption; MGS records a structural sequential-obstruction. Four claims back-fill the on-disk L3 section landed in cycle 75.

@@ -178,6 +178,9 @@ graph BT
   chebyshev --> apply_linop
   chebyshev --> tensor-field-lift
   chebyshev --> sequential-obstruction
+  chebyshev --> axpy
+  chebyshev --> elementwise-product
+  chebyshev --> spectrum-estimate
 ```
 
 The L4 calculus has its own design artifact at [`book/src/design/l4_calculus.md`](../design/l4_calculus.md). L4 concepts (grammar productions, reduction rules, ownership categories) are not currently tracked here — the calculus is a single document with its own internal structure. If L4 grows to need cross-cycle concept tracking, add a section here at that time.
