@@ -140,6 +140,12 @@ graph BT
   chebyshev --> apply_linop
   chebyshev --> axpy
   chebyshev --> elementwise-product
+  arnoldi_step --> apply_linop
+  arnoldi_step --> orthogonalization
+  arnoldi_step --> nrm2
+  arnoldi_step --> scal
+  arnoldi_step --> constructed-operators
+  arnoldi_step --> variant-absorption
 ```
 
 ## L2 — algebraic decompositions

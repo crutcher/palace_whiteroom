@@ -14,6 +14,7 @@
   - [Orthogonalisation (MGS / CGS / CGS2)](./spec/slices/orthog.md)
   - [Divergence-free projection](./spec/slices/divfree.md)
   - [Chebyshev smoother](./spec/slices/chebyshev.md)
+  - [Arnoldi step](./spec/slices/arnoldi_step.md)
 
 # Concepts (shared library)
 
