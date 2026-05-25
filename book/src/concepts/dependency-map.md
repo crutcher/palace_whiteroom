@@ -137,6 +137,7 @@ graph BT
   cg --> axpby
   cg --> dot
   cg --> sequential-obstruction
+  cg --> tensor-field-lift
 ```
 
 Whole-tensor operations replacing per-element iteration; or `obstruction` results documenting genuine sequentiality.

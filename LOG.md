@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-80 — forward cg [L2→L3] — pass
+
+- Synthesis: CG L2→L3 retroactive_claims: emit per-edge claims for the negative L3 result on the outer iteration (sequential obstruction) and the positive carry-through for the step body, both already documented in the on-disk ## L3 section.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 1 dep-map edge(s), 1 lesson(s); 2 rotation_claim(s).
 ## 2026-05-25 meta-review (cycles 74–79) — enacted — chebyshev at L4
 
 - Window: 6 cycles. **chebyshev reached L4** (cycle 78 — fourth slice past L4 after cg/gmres/orthog). gmres L4 emission again (75); cg L4 tightenings (74, 76); orthog L2→L3 (77). Cycle 79 SIDEWAYS cg+gmres was recurrence #4 of mode=create-on-existing — meta-11 watch trigger for integrator-side enforcement fired.
