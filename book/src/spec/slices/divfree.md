@@ -296,3 +296,97 @@ uniformly:
   the iterative-solver map, not exact inversion. The defining
   condition `Gᵀ M (P y) = 0` holds up to the ksp's convergence
   tolerance on the non-essential dofs.
+
+## L4 — calculus form
+
+The divfree slice is a *projector operator* whose construction allocates internal state once and whose application threads only the simulation state being projected. It expresses cleanly as a `SolveM` computation over a stratified state record per the calculus in [L4 calculus draft](../../design/l4_calculus.md).
+
+### State stratification
+
+```ts
+// Internal parameters: constructed once, reused per apply.
+type DivFreeParams = {
+  M:       LinOp<VH1, VH1>;            // ε-weighted H1 mass (mg-hierarchy interior)
+  WeakDiv: LinOp<VNedelec, VH1>;        // sign-absorbed weak divergence
+  Grad:    LinOp<VH1, VNedelec>;        // discrete gradient
+  bdrEff:  DofSubset<VH1>;              // essential set (synthetic pin if user-empty)
+  ksp:     KSP<VH1>;                    // CG bound to M with mg/amg preconditioner
+};
+
+// Sim state: the field being projected.
+type SimState<V> = { y: V };  // V ∈ {Vector(VNedelec), ComplexVector(VNedelec)}
+
+// Ephemeral intermediates: not part of state, materialized per-apply.
+//   rhs : VH1     — H1 residual
+//   psi : VH1     — projected H1 solution
+//   t   : VNedelec — gradient correction
+```
+
+The `psi` and `rhs` scratch buffers visible in the L1 state schema are *internal-parameter storage*, not sim state: they are allocated at construction and reused across applies, but their per-call content is ephemeral and is overwritten on entry. The calculus distinction is that `M`, `WeakDiv`, `Grad`, `bdrEff`, and `ksp` participate in the operator's *identity*; the scratch slots participate only in its *implementation*.
+
+### Construction
+
+```haskell
+constructDivFree
+  :: MatOp -> NDFESpace -> H1Hierarchy -> DofSubset VH1 -> Tol -> MaxIt
+  -> SolveM DivFreeParams
+constructDivFree matOp nd h1 bdrUser tol maxIt = do
+  m       <- assembleH1MassHierarchy matOp h1 bdrUser
+  wd      <- assembleWeakDivergence  matOp nd (finest h1)
+  g       <- assembleDiscreteGradient (finest h1) nd
+  bdrEff  <- pinOneDofIfEmpty bdrUser (finest h1)
+  pc      <- buildMgOrAmg m h1
+  ksp     <- cgSolver { op = m, pc = pc, tol = tol, maxIt = maxIt }
+  return DivFreeParams { M = m, WeakDiv = wd, Grad = g, bdrEff, ksp }
+```
+
+The variant axes (H1-depth → mg-vs-amg, empty boundary → synthetic pin) are absorbed entirely inside `constructDivFree`; the returned `DivFreeParams` is a uniform interface. This is the [constructed-operators](../../concepts/constructed-operators.md) pattern at L4.
+
+### Apply
+
+The per-call form is a pure function over sim state, parameterized by the construction-time `DivFreeParams`:
+
+```haskell
+applyDivFree :: DivFreeParams -> SimState V -> SolveM (SimState V)
+applyDivFree p s = do
+  rhs  <- applyLinOp (WeakDiv p) (y s)
+  rhs' <- setSubvectorZero rhs (bdrEff p)
+  psi  <- kspSolve (ksp p) rhs'
+  t    <- applyLinOp (Grad p) psi
+  return s { y = y s + t }
+```
+
+The `SolveM` monad threads the ksp's iteration-count and convergence diagnostics as effects; the sim state `s` is updated in a single field. The four steps map one-to-one onto the L3 tensor-field form; the L4 form differs only in making the parameter/state/intermediate stratification explicit and in routing the ksp's internal effects through the monad.
+
+### Complex specialization
+
+The complex apply is the same `applyDivFree` over `SimState (ComplexVector VNedelec)`; the real-linearity of `WeakDiv`, `M`, `Grad` and the block-diagonal `ComplexOperator`-wrapping of `ksp` make the L4 form structurally identical to the real path. No separate calculus expression is needed:
+
+```haskell
+applyDivFreeC :: DivFreeParams -> SimState (ComplexVector VNedelec)
+                              -> SolveM (SimState (ComplexVector VNedelec))
+applyDivFreeC = applyDivFree  -- same function, polymorphic in V
+```
+
+The vector-type parameter `V` is absorbed by polymorphism over the field; `applyLinOp`, `setSubvectorZero`, and `kspSolve` are each defined on both `Vector` and `ComplexVector` instances at L4.
+
+### Composition into a driver
+
+The eigensolver-path use is composition over the outer Krylov iteration:
+
+```haskell
+eigStep :: EigParams -> DivFreeParams -> SimState V -> SolveM (SimState V)
+eigStep eig p s = do
+  s'  <- arnoldiOrLanczosStep eig s     -- candidate eigenvector
+  s'' <- applyDivFree p s'              -- project back to div-free subspace
+  return s''
+```
+
+`DivFreeParams` is constructed once at driver setup and threaded as an internal-parameter argument; the per-step monad threads only `SimState`. This is the operator-algebra pattern: the projector composes with other operators via plain function application in the monad.
+
+### Load-bearing claims preserved at L4
+
+- **Sign convention.** `WeakDiv` carries the absorbed minus sign at L0, so the L4 update is `y + t`, not `y - t`. This is a property of the constructed `WeakDiv : LinOp<VNedelec, VH1>` and is not re-derived at L4.
+- **Step ordering.** The `do`-notation pins the sequence `WeakDiv → setSubvectorZero → kspSolve → Grad`. The monad's sequential composition makes reordering a type-system-visible change.
+- **Approximate solve.** `kspSolve` returns the converged `ψ` up to the construction-time tolerance; the defining condition `Gᵀ M (P y) = 0` holds modulo ksp tolerance on the non-essential dofs, identical to the L3 caveat.
+- **Scratch reuse is non-observable.** That `psi` and `rhs` are allocated buffers inside `DivFreeParams` rather than fresh per-call values is an implementation detail of `applyLinOp` and `kspSolve`; at L4 the function is pure over `SimState` and the buffers do not appear in the calculus.

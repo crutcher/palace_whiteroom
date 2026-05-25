@@ -165,6 +165,12 @@ graph BT
   orthog --> solve-monad
   orthog --> constructed-operators
   orthog --> sequential-obstruction
+  divfree --> solve-monad
+  divfree --> state-stratification
+  divfree --> constructed-operators
+  divfree --> apply_linop
+  divfree --> set_subvector_zero
+  divfree --> ksp_solve
 ```
 
 The L4 calculus has its own design artifact at [`book/src/design/l4_calculus.md`](../design/l4_calculus.md). L4 concepts (grammar productions, reduction rules, ownership categories) are not currently tracked here — the calculus is a single document with its own internal structure. If L4 grows to need cross-cycle concept tracking, add a section here at that time.
