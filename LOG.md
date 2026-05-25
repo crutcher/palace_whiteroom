@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-27 — back divfree — pass
+
+- Synthesis: divfree L0→L1 already complete on disk (slice carries L1 + L2 sections); cycle records the rotation_claims that were missing from the prior emission and brings the dependency map / status table in sync.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 1 lesson(s); 1 rotation_claim(s).
 ## 2026-05-25 cycle-26 — forward divfree [L1→L2] — revise
 
 - Synthesis: divfree L1→L2: composed apply as apply_linop(WeakDiv) → set_subvector_zero → ksp_solve → apply_linop(Grad) + axpy. Extracted set_subvector_zero and ksp_solve as new concept entries; appended divfree-use section to apply_linop. Sign convention and BC ordering preserved as load-bearing L2 claims; MG-vs-AMG preconditioner choice and partial-vs-full assembly recorded as transparent optimizations.
