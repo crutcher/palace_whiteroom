@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-82 — forward cg [L4→L4] — pass
+
+- Synthesis: CG L4→L4 self-rotation: named the derived-view hoisting of `res = sqrt|beta|` out of CgState into a step-output field, documented as v0.4 in the slice and extracted `derived-view-hoisting` as a methodology concept for reuse by future Krylov/iteration slices.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 2 lesson(s); 1 rotation_claim(s).
 ## 2026-05-25 cycle-81 — forward cg [L3→L4] — pass
 
 - Synthesis: CG L3→L4 retroactive_claims: 4 per-edge claims (structural rotation, unprec-as-primary modeling, derived-view hoisting, CheckDot→precondition) backfilled against the existing on-disk L4 prose.
