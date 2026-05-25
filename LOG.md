@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-69 — forward gmres [L0→L1] — revise
+
+- Synthesis: gmres slice L0 citation-tightening + L1 fidelity pass: corrected ±2-line drift on L0.5/5a/6/7/10–12, added L0.11a drift-warning hook (iterative.cpp:595–605), disclosed L0 storage reuse vs. L1 fresh_krylov fiction, noted RIGHT-branch r/V[0] scratch reuse in apply_correction. No layer advancement; structural form unchanged.
+- Verdict: revise.
+- Friction: file_edit rejected (old_string not found in book/src/spec/slices/gmres.md): '- L0.7 `OrthogonalizeIteration(gs_orthog, V, w, Hj, j)`. `palace/linalg/iterativ'.
+- Structural change: none.
 ## 2026-05-25 cycle-68 — forward orthog [L1→L2] — pass
 
 - Synthesis: Emit retroactive L1→L2 rotation_claims for the orthog slice, whose L2 section already exists on disk (landed in a prior cycle alongside L3/L4). Three per-variant claims (MGS, CGS, CGS2) plus one structural claim for the allreduce_sum promotion. retroactive_claim_evidence quoted below.

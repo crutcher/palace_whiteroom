@@ -11,18 +11,19 @@ Lifts Palace's restarted GMRES and FGMRES solvers into L0 cited regions and an L
 **Scalar / kernel routines.**
 - L0.3 `GeneratePlaneRotation(dx, dy) → (cs, sn)`. `palace/linalg/iterative.cpp:73–108` (definition). LAPACK-style scaled Givens generation; real and complex specialisations.
 - L0.4 `ApplyPlaneRotation(dx, dy, cs, sn)`. `palace/linalg/iterative.cpp:227–241` (definition). In-place 2×2 unitary update.
-- L0.5 `InitialResidual(pc_side, A, B, b, x, r, z, initial_guess)`. `palace/linalg/iterative.cpp:244–250 / 252–284` (definition). Branches on `(pc_side, initial_guess)`.
-- L0.6 `ApplyBA(pc_side, A, B, x, y, z)`. `palace/linalg/iterative.cpp:286–305` (definition). The variant-absorbed operator action; `z` is the preconditioned input on the `RIGHT` branch.
-- L0.7 `OrthogonalizeIteration(gs_orthog, V, w, Hj, j)`. `palace/linalg/iterative.cpp:307–326` (definition). One-shot dispatch on `gs_orthog`.
+- L0.5a `ApplyB(B, x, y)` helper. `palace/linalg/iterative.cpp:245–251` (definition). Single LEFT-side preconditioner apply primitive used by `InitialResidual` and by the GMRES correction step.
+- L0.5 `InitialResidual(pc_side, A, B, b, x, r, z, initial_guess)`. `palace/linalg/iterative.cpp:253–286` (definition). Branches on `(pc_side, initial_guess)`; calls `ApplyB` on the LEFT branch.
+- L0.6 `ApplyBA(pc_side, A, B, x, y, z)`. `palace/linalg/iterative.cpp:288–306` (definition). The variant-absorbed operator action; `z` is the preconditioned input on the `RIGHT` branch (live for FGMRES, scratch-overwritten for fixed-`M` GMRES).
 
 **Workspace allocation.**
 - L0.8 `GmresSolver::Initialize / Update`. `palace/linalg/iterative.cpp:488–542` (definition). Lazy/incremental allocation of `V`, `H`, `s`, `cs`, `sn`.
 - L0.9 `FgmresSolver::Initialize / Update`. `palace/linalg/iterative.cpp:707–731` (definition). Adds `Z` allocation.
 
 **Main solve loops.**
-- L0.10 `GmresSolver::Mult` body — outer restart loop + initial-residual / convergence-test setup. `palace/linalg/iterative.cpp:543–615` (definition).
-- L0.11 `GmresSolver::Mult` body — inner Arnoldi / Givens loop. `palace/linalg/iterative.cpp:616–668` (definition).
-- L0.12 `GmresSolver::Mult` body — back-solve and solution update (LEFT / RIGHT split). `palace/linalg/iterative.cpp:669–706` (definition).
+- L0.10 `GmresSolver::Mult` body — outer restart loop + initial-residual / convergence-test setup. `palace/linalg/iterative.cpp:545–614` (definition).
+- L0.11 `GmresSolver::Mult` body — inner Arnoldi / Givens loop (`for(;; j++, it++)` over lines 619–649). `palace/linalg/iterative.cpp:616–650` (definition).
+- L0.11a `GmresSolver::Mult` body — restart-cycle drift-warning compare (`|beta − true_beta| > 0.1·true_beta` ⇒ optional warning). `palace/linalg/iterative.cpp:595–605` (definition). Observability only; does NOT alter dataflow.
+- L0.12 `GmresSolver::Mult` body — back-solve (652–661) and solution update with LEFT/RIGHT split (662–680), plus the post-correction convergence check. `palace/linalg/iterative.cpp:651–685` (definition). The RIGHT branch reuses `r` and `V[0]` as scratch for the `M·t` accumulator + apply.
 - L0.13 `FgmresSolver::Mult`. `palace/linalg/iterative.cpp:733–875` (definition). Differs from `GmresSolver::Mult` only in: (a) initial residual into `Z[0]`; (b) `ApplyBA(RIGHT, …, Z[j])` threading the preconditioned input into the basis; (c) uniform solution reconstruction `x ← x + Σ s[k] · Z[k]` with no terminal `M`-apply.
 
 **Top-level dispatch.**
@@ -69,16 +70,18 @@ type Krylov = {
 
 The `Krylov` bundle is *internal* to the solve; it is reset at every restart and discarded at return.
 
+**Storage-vs-value note.** L0.8 / L0.9 allocate `V`, `H`, `s`, `cs`, `sn` (and `Z` for FGMRES) incrementally (`init_size = 5`, `add_size = 10`) and **reuse** the buffers across restart cycles — only the logical values are zeroed at restart (`s ← 0`, `V[0] ← 0`). The L1 `fresh_krylov()` is a dataflow fiction: the *values* are fresh at every restart, the *storage* is reused. This distinction is invisible at L1 and is the correct level of abstraction for the dataflow rotation; it surfaces again at L2/L3 as a memory-layout concern.
+
 ### Building-block operations
 
 Each is a pure (or in-place-with-clear-output) function on the schema above. Per-element kernels are referenced by role; the L2 slice will substitute concrete primitives.
 
-- `initial_residual(op, b, x) → (r0, x')` — produces the quantity whose norm GMRES is minimising. For `pc_side = LEFT`: `r0 = M·(b − A·x)`. For `pc_side = RIGHT`: `r0 = b − A·x` (true residual; `M` is deferred to the update step). Honours `initial_guess`: when false, sets `x' ← 0` and `r0 = (LEFT ? M·b : b)`. Cites L0.5.
+- `initial_residual(op, b, x) → (r0, x')` — produces the quantity whose norm GMRES is minimising. For `pc_side = LEFT`: `r0 = M·(b − A·x)` (one `ApplyB` call, L0.5a). For `pc_side = RIGHT`: `r0 = b − A·x` (true residual; `M` is deferred to the update step). Honours `initial_guess`: when false, sets `x' ← 0` and `r0 = (LEFT ? M·b : b)`. Cites L0.5, L0.5a.
 - `apply_BA(op, v) → (w, z)` — the *constructed operator* that absorbs `pc_side`. For `LEFT`: `w = M·(A·v)`, `z` unused. For `RIGHT`: `z = M·v`, `w = A·z`. For no preconditioner: `w = A·v`. In FGMRES the returned `z` is the per-step preconditioned vector that gets *threaded into* the basis `Z`. Cites L0.6. See [concept: constructed-operators](../../concepts/constructed-operators.md).
 - `orthogonalize(gs_orthog, V[0..j], w) → (w', h)` — single-dispatch orthogonalisation; returns the projected vector and the column of projection coefficients of length `j+1`. Cites L0.7. See [concept: orthogonalization](../../concepts/orthogonalization.md).
 - `ls_update_column(K, j, h_new) → K'` — incremental least-squares update of the LS problem for `‖β·e₁ − H̄_j · y‖₂`. Replays previously-recorded rotations on the new column, generates one new rotation from the column tail, applies it to the column and to the RHS, advances `β ← |s[j+1]|`. Numerically realised by Givens-rotation kernels at L2 (cites L0.3, L0.4) — at L1 the role is incremental triangularisation of the LS system.
 - `back_solve(K, j) → y` — solve the (now triangular) upper-left `(j+1)×(j+1)` block of `H` against `s[0..j]`, in place. Cites L0.12.
-- `apply_correction(op, K, y, j, x) → x'` — produce the solution update. For GMRES with `pc_side ∈ {LEFT, none}`: `x' = x + Σ_{k=0..j} y[k]·V[k]`. For GMRES with `pc_side = RIGHT` (fixed `M`): `t = Σ y[k]·V[k]; x' = x + M·t` (terminal `M`-apply). For FGMRES: `x' = x + Σ y[k]·Z[k]` (no terminal apply — each `Z[k]` already carries its step-specific `M_k`). Cites L0.12, L0.13.
+- `apply_correction(op, K, y, j, x) → x'` — produce the solution update. For GMRES with `pc_side ∈ {LEFT, none}`: `x' = x + Σ_{k=0..j} y[k]·V[k]`. For GMRES with `pc_side = RIGHT` (fixed `M`): `t = Σ y[k]·V[k]; x' = x + M·t` (terminal `M`-apply). For FGMRES: `x' = x + Σ y[k]·Z[k]` (no terminal apply — each `Z[k]` already carries its step-specific `M_k`). Cites L0.12, L0.13. The pure-functional form abstracts a buffer detail visible at L0: the RIGHT branch physically realises `t` and `M·t` in the scratch slots `r` and `V[0]`, both of which are clobbered — safe because the basis is discarded at restart/return. The L2 form will re-expose this as a `scratch_buffer` mutation pattern; the L1 contract is purely functional.
 
 ### Procedure
 
@@ -123,6 +126,8 @@ Variant absorption at all three levels per [concept: variant-absorption](../../c
 - No dedicated GMRES/FGMRES unit test exists under `palace/test/`; coverage is via `models/modeeigensolver.cpp` and `ksp.cpp` consumers. A regression-test slice may be warranted.
 - `GeneratePlaneRotation` complex specialisation has substantially more branches than the real one — numerical equivalence on real-cast-to-complex inputs is an L2 / numerics concern.
 - `CheckDot` NaN/Inf gating semantics (referenced from the inner loop's residual checks) is cross-cutting across all iterative solvers and not pinned here.
+- The recurrence-vs-direct residual drift check at restart (`|beta − true_beta| > 0.1·true_beta` ⇒ warning; L0.11a, `iterative.cpp:595–605`) is an observability hook on a known numerical drift between the LS-proxy residual `|s[j+1]|` and the explicit `‖b − A·x‖`. The 10% threshold is currently an unmotivated constant. Deferred to a numerics slice.
+- The L1 dataflow form treats `Krylov` as fresh-per-restart; the L0 storage is physically reused (init_size=5, add_size=10 incremental allocation, zeroed-not-freed at restart per L0.8/L0.9). A memory-layout slice could pin the storage-reuse contract without affecting L1.
 
 ## L2 — primitive composition
 
