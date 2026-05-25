@@ -54,6 +54,12 @@ graph BT
   orthogonalization --> variant-absorption
   chebyshev-iteration --> apply_linop
   chebyshev-iteration --> axpy
+  cg --> apply_linop
+  cg --> axpy
+  cg --> dot
+  cg --> variant-absorption
+  gmres --> axpy
+  gmres --> dot
 ```
 
 ## L2 — algebraic decompositions

@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-79 — sideways cg,gmres — revise
+
+- Synthesis: L0→L1 for cg and gmres: L0 citations into palace/linalg/iterative.{hpp,cpp} and orthog.hpp; L1 algorithm statements with state schemas and variant-absorption decisions (cg parametric for initial-guess/true-residual/preconditioner; gmres constructed-operators for side and flexible-vs-standard, parametric for orthog variant, residual-axis for use_true_residual). New concepts: apply_linop, axpy, dot (primitives), constructed-operators and variant-absorption (methodology).
+- Verdict: revise.
+- Friction: slice_write rejected (path exists; use mode=diff): book/src/spec/slices/cg.md; slice_write rejected (path exists; use mode=diff): book/src/spec/slices/gmres.md; concept_write create skipped (already exists; use append-section): apply_linop; concept_write create skipped (already exists; use append-section): axpy; concept_write create skipped (already exists; use append-section): dot; concept_write create skipped (already exists; use append-section): constructed-operators; concept_write create skipped (already exists; use append-section): variant-absorption; verdict auto-downgraded pass→revise: substantive write(s) did not land (original Critic verdict was 'pass'; see verdict_original in episodic).
+- Structural change: none.
 ## 2026-05-25 cycle-78 — forward chebyshev [L3→L4] — pass
 
 - Synthesis: Chebyshev L3→L4 retroactive claims against on-disk L4 calculus form: state stratification (sim/op-internal/ephemeral), forM_/foldM surface for the two sequential obstructions, constructed-operator variant absorption strengthened, setup as Solve-monad action.

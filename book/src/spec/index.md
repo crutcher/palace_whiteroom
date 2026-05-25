@@ -8,8 +8,8 @@ This index is maintained by the Synthesizer after every push. It is the **first 
 
 | Slice | Highest layer | Last touched | Status notes |
 |-------|---------------|--------------|--------------|
-| [CG](./slices/cg.md) | L4 (slice v0.4) | 2026-05-25 | L0–L4 complete; v0.4 self-rotation names the derived-view hoisting that produced the v0.3 state schema. New concept entry `derived-view-hoisting` extracts the pattern for reuse by GMRES/LOBPCG slices. |
-| [GMRES](./slices/gmres.md) | L4 | 2026-05-25 | L0–L4 complete; tightening pass corrected ±2-line citation drift (L0.5/5a/6/7/10–12), added L0.11a drift-warning hook, and disclosed the storage-vs-value reuse contract that L1's `fresh_krylov()` abstracts. |
+| [CG](./slices/cg.md) | L1 | 2026-05-25 | Slice opened. L0 citations in iterative.{hpp,cpp}; L1 procedure with parametric absorption of use_initial_guess, use_true_residual, and the preconditioner. |
+| [GMRES](./slices/gmres.md) | L1 | 2026-05-25 | Slice opened. L0 citations covering GmresSolver + FgmresSolver; L1 procedure absorbs preconditioner-side (LEFT/RIGHT) and standard-vs-flexible via constructed-operators, orthogonalization variant parametrically; use_true_residual disclosed as residual axis. |
 | [Orthogonalisation](./slices/orthog.md) | L4 | 2026-05-25 | Block Gram-Schmidt (MGS/CGS/CGS2) lifted to Solve-monad form with state stratification; variant is a constructed-operator param, MGS's sequential obstruction surfaces as a non-commuting get/modify chain on the w-field. |
 | [Divergence-free projection](./slices/divfree.md) | L4 | 2026-05-25 | L4 calculus form: SolveM monadic apply with state-stratified DivFreeParams (internal params) over SimState (sim state); scratch buffers explicitly classified as internal-parameter storage, not sim state. Eigensolver composition shown. |
 | [chebyshev](./slices/chebyshev.md) | L4 | 2026-05-25 | L4 form expressed against the calculus: setup produces an immutable operator closure carrying variant-specific scalar generators; apply is a Solve-monad action with explicit forM_/foldM binds carrying both sequential obstructions from L3. |
