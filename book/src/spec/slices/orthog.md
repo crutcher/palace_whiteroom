@@ -173,3 +173,71 @@ Unchanged from L1; the L2 unfolding does not require new tests — the existing 
 
 - Whether `gemv_basis` deserves a dedicated concept entry (it appears here as the batched coefficient–basis combination; the same shape will appear in GMRES's `apply_basis_combination` step and in projection slices). Provisionally extracted in this cycle.
 - The cost annotation for `allreduce_sum` (m×1 vs. 1×m vs. 2×m) is named at L2 but not formalized; will become a proper cost claim if/when an L3 lift is attempted (likely an obstruction, since the sequential MGS chain has no global tensor-field form).
+
+## L3 — global tensor-field form (with sequential obstruction)
+
+### L3 form (CGS and CGS2)
+
+The L2 unfoldings for CGS and CGS2 already speak in batched, basis-wide primitives — the per-j loop of local dots collapses into one inner-products-with-a-basis operation, and the m sequential rank-1 `axpy`s fuse into one basis-combination operation. Promoting these to a tensor-field statement is a notational rotation only; no new structure appears.
+
+**Notation.** Let `V ∈ Sⁿˣᵐ` be the basis matrix whose columns are the stored basis vectors (S the scalar type; the columns are distributed in the per-rank layout the dot uses). Let `w ∈ Sⁿ` be the candidate. Write `⟨·, ·⟩` for the (globally reduced) inner product induced by `dot_op`, and let `Vᴴ w ∈ Sᵐ` denote the column-stacked vector of inner products `H[j] = ⟨V[j], w⟩`. All operations below are read as global (post-reduction) tensor operations.
+
+**CGS as a global statement.**
+```
+cgs_pass(V, w):
+    H := Vᴴ w                       # m-fold inner product, one global reduction
+    w := w − V H                     # basis combination, single matvec by V
+    return (H, w)
+```
+The two lines are the L3 form: `Vᴴ w` is one `gemv` of `Vᴴ` against `w` (its realization at L2 is the m local dots followed by an `allreduce_sum` of size m); `V H` is one `gemv` of `V` against `H`. This is the textbook *projector form* of one Gram-Schmidt sweep: `w ← (I − V Vᴴ) w` with `H = Vᴴ w` retained as the coefficient output. The L2-to-L3 step is a notational compression: `[dot × m, allreduce_sum, gemv_basis] ≡ [Vᴴ w, V H]`.
+
+**CGS2 as a global statement.**
+```
+cgs2(V, w):
+    H  := Vᴴ w
+    w  := w − V H
+    dH := Vᴴ w                       # second projector pass
+    w  := w − V dH
+    H  := H + dH
+    return (H, w)
+```
+Equivalently, `w ← (I − V Vᴴ)² w` with `H` accumulating both passes' coefficients. The non-fusion claim from L2 is preserved at L3: the second `Vᴴ w` reads the once-projected `w`, not a fused expression — `(I − V Vᴴ)²` is **not** `I − 2 V Vᴴ + V Vᴴ V Vᴴ` algebraically simplified, because `V` is only approximately orthonormal (the entire point of CGS2 is to handle the deviation), so the two projector applications do not collapse.
+
+**Variant absorption at L3.** CGS and CGS2 share a primitive shape at L3 (both are projector applications using `Vᴴ w` and `V H`); they differ only in the number of passes and in coefficient accumulation. This is a tighter unification than L2 achieved — at L2, CGS's chain and CGS2's chain were different lengths over different primitive sets; at L3, both are sequences of `(Vᴴ w, V H)` projector applications. The variant tag is inspected once at the top to choose 1-pass vs. 2-pass.
+
+### L3 obstruction (MGS)
+
+MGS does **not** lift to a global tensor-field form. The defining feature of MGS is that the j-th `axpy` (`w ← w − H[j] V[j]`) must complete before the (j+1)-th inner product (`H[j+1] = ⟨V[j+1], w⟩`) is computed, because each subsequent inner product is taken against the *progressively-updated* `w`, not against the original. Equivalently:
+
+- MGS computes `H[j] = ⟨V[j], (I − V[j−1] V[j−1]ᴴ)(I − V[j−2] V[j−2]ᴴ) ⋯ (I − V[0] V[0]ᴴ) w⟩` — a left-to-right composition of m rank-1 projectors, each applied serially.
+- CGS computes `H[j] = ⟨V[j], w⟩` — all m inner products taken against the same original `w`, in parallel.
+
+These are algebraically distinct (they produce different `H` vectors and different `w'`, identical only when `V` is exactly orthonormal — which it is not, by hypothesis: the orthogonalization exists because the input is not yet orthogonal to `V`). MGS therefore has no global form: it is a sequential rank-1 projector cascade, and any rewrite that touches all columns of `V` simultaneously is no longer MGS.
+
+This is a [sequential-obstruction](../../concepts/sequential-obstruction.md) of the canonical kind — sequential dependency on a progressively-updated state, structurally analogous to Gauss-Seidel relaxation (where the j-th unknown is updated using already-updated neighbors) and to triangular solves (where the j-th solution component depends on already-solved earlier components). The obstruction is **not** removable by reordering or refactoring; it is the algorithm.
+
+**What MGS does have at L3.** A *parallel-by-blocks* form exists at finer granularity: if the basis is partitioned into blocks `V = [V₁, V₂, …, V_b]`, one can run CGS-within-block and MGS-across-blocks (this is the block-MGS variant; some implementations use it as a numerical compromise). Palace does not currently expose block-MGS, and it is out of scope here; recording the option as a pointer for future slices.
+
+### Variant absorption at L3 (summary)
+
+Three-way variant absorption status at L3:
+
+- **CGS / CGS2.** Achieve all three absorption levels (invariant, procedure, primitive-sequence) at L3: both are projector-form statements over `Vᴴ w` and `V H`, differing only in pass count.
+- **MGS.** Achieves invariant-level absorption only — it satisfies the same L1 contract `⟨w', V[j]⟩ ≈ 0`. Procedural and primitive-sequence absorption are **structurally impossible** at L3 because MGS has no global form. This is disclosed at L3 as an obstruction, not silently dropped.
+
+The slice's overall variant-absorption posture at L3 is therefore: CGS and CGS2 unify at L3; MGS is a sequential-obstruction sibling that remains at L2.
+
+### Citations
+
+- [palace/linalg/orthog.hpp:25-36](../../../../reference/palace/linalg/orthog.hpp#L25-L36) — MGS body: per-j local dot of `V[j]` against the *current* (progressively-updated) `w`, immediately followed by `w.AXPY(-H[j], V[j])`. The interleaving of dot and axpy in the same j-loop body is the source-level witness of the sequential obstruction.
+- [palace/linalg/orthog.hpp:38-53](../../../../reference/palace/linalg/orthog.hpp#L38-L53) — CGS/CGS2 body: all m local dots of `V[j]` against the *same* original `w` (no in-loop mutation of `w`), single `Mpi::GlobalSum(m, H.data(), comm)`, then a loop of `AXPY`s that the L2 form fuses into `gemv_basis` and that the L3 form writes as `w ← w − V H`. The `refine` flag re-enters this body to produce CGS2; the second entry reads the once-orthogonalized `w`.
+- [test/unit/test-orthog.cpp:70-97](../../../../reference/test/unit/test-orthog.cpp#L70-L97) — substitutability test: all three variants achieve `⟨w', V[j]⟩ < 1e-12` on a well-separated basis, confirming the L1 contract holds across the L3-unifiable pair (CGS, CGS2) and the L3-obstructed sibling (MGS) alike.
+
+### Test linkage
+
+Unchanged. The L3 lift introduces no new correctness obligations: the CGS/CGS2 projector form is a notational compression of the L2 batched form (substitutability tests cover it), and the MGS obstruction is a structural claim (no algorithm change to test).
+
+### Open questions
+
+- Block-MGS as a hybrid (CGS within block, MGS across blocks) is a known numerical/parallel compromise; recording for future consideration. Not in Palace today.
+- The `Vᴴ w` operation, on a *distributed* basis where each rank holds full-length columns of `V`, has a specific MPI collective shape (one allreduce of size m) that matches the L2 cost annotation. Formalizing this as a cost claim is deferred to whenever a cost-annotation slice lands; the L3 form itself does not depend on it.

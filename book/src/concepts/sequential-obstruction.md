@@ -33,3 +33,16 @@ The Synthesizer's per-edge `rotation_claim` for an obstructed L2→L3 should use
 
 - [concept: tensor-field-lift](tensor-field-lift.md) — the lift that fails, and the conditions under which it succeeds.
 - [concept: rotation](rotation.md) — obstructions are *negative* rotations: the to_form is the from_form, with an explanation of why no rotation exists.
+
+## Example: MGS as sequential-obstruction
+
+Classical Gram-Schmidt (CGS) and modified Gram-Schmidt (MGS) compute the same orthogonalization in the exact-arithmetic, exactly-orthonormal-basis limit, but produce different intermediate states and different floating-point results in practice. The structural difference is a sequential-obstruction:
+
+- **CGS**: all m inner products `H[j] = ⟨V[j], w⟩` are taken against the same original `w`. The m dots are independent; the global form is `H = Vᴴ w` followed by `w ← w − V H`. This is a parallel tensor-field statement — one matvec by `Vᴴ`, one matvec by `V`.
+- **MGS**: the j-th inner product is taken against the partially-updated `w` (after subtracting the projections onto `V[0], …, V[j−1]`). The j-th rank-1 update must complete before the (j+1)-th dot. The composition is `(I − V[m−1] V[m−1]ᴴ) ⋯ (I − V[0] V[0]ᴴ) w` — m rank-1 projectors applied left-to-right, serially.
+
+MGS therefore has no global tensor-field form: any rewrite that touches all columns of `V` simultaneously is no longer MGS. The obstruction is structurally analogous to Gauss-Seidel relaxation (j-th unknown depends on already-updated earlier unknowns) and to triangular solves (j-th solution component depends on already-solved earlier components). In all three cases the sequential dependency is intrinsic to the algorithm's specification, not an artifact of implementation.
+
+A *parallel-by-blocks* variant exists (block-MGS: CGS within block, MGS across blocks); this trades stability against parallelism but does not eliminate the within-vs.-across distinction. Block-MGS is itself a hybrid, not a global lift of plain MGS.
+
+See the [orthog slice](../spec/slices/orthog.md) L3 section for the detailed treatment in the GMRES-orthogonalization context.

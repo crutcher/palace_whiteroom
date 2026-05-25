@@ -115,6 +115,10 @@ graph BT
   divfree --> axpy
   divfree --> tensor-field-lift
   divfree --> sequential-obstruction
+  orthog --> sequential-obstruction
+  orthog --> tensor-field-lift
+  orthog --> gemv_basis
+  orthog --> apply_linop
 ```
 
 Whole-tensor operations replacing per-element iteration; or `obstruction` results documenting genuine sequentiality.
