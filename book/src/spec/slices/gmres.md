@@ -384,67 +384,72 @@ apply_correction : OpParams → Krylov → DenseVec → Vec → Vec  -- closes o
 
 ### Monadic coordination
 
-The solve coordinates `SimState` evolution and `Krylov` lifecycle via a state monad over `(SimState, Krylov | ⊥)`. The Krylov bundle is born at restart, threaded through the inner step, and discarded at restart or return — it does not appear in `SimState`. See [concept: solve-monad](../../concepts/solve-monad.md).
+The solve coordinates `SimState` evolution and `Krylov` lifecycle via a state monad over `SimState`; `Krylov` is born at restart, threaded through the inner step as a plain value, and discarded at restart or return — it does not appear in `SimState`. See [concept: solve-monad](../../concepts/solve-monad.md).
+
+A single `Outcome` value records why the inner loop stopped; the outer loop folds it into `SimState` uniformly. There is no separate `StopTag` / `hit_limit_converged` plumbing.
 
 ```haskell
 -- The Solve monad threads SimState; Krylov lives within a single restart_cycle.
 type Solve a = StateT SimState Identity a
+
+-- Why the inner loop stopped. `Continue` ⇒ another restart cycle is warranted;
+-- `Done` ⇒ outer loop terminates. The boolean inside `Done` is the converged flag.
+data Outcome = Continue | Done Bool
 
 gmres_solve :: OpParams -> Vec -> Vec -> SimState
 gmres_solve op b x0 = execState (solve_loop op b) (SimState x0 0 False ∞ ⊥)
 
 solve_loop :: OpParams -> Vec -> Solve ()
 solve_loop op b = do
-  done <- restart_cycle op b
-  unless done $ solve_loop op b
+  outcome <- restart_cycle op b
+  case outcome of { Done _ -> pure () ; Continue -> solve_loop op b }
 
 -- One restart cycle: build a fresh Krylov, run the inner loop, fold the correction
--- back into SimState.x. Returns True if the outer loop should terminate.
-restart_cycle :: OpParams -> Vec -> Solve Bool
+-- back into SimState.x. The returned Outcome subsumes converged / max_it / max_dim.
+restart_cycle :: OpParams -> Vec -> Solve Outcome
 restart_cycle op b = do
   s <- get
   let (r0, x') = initial_residual op b s.x
       β        = nrm2 r0
-  s' <- if isUnset s.initial_res
-           then let ε0 = if op.initial_guess
-                           then (if op.pc_side == LEFT then nrm2 (op.M · b) else nrm2 b)
-                           else β
-                in pure s{ x = x', initial_res = ε0 }
-           else pure s{ x = x' }
-  put s'
-  let ε = max (op.rel_tol * s'.initial_res) op.abs_tol
+      ε0       = if isUnset s.initial_res
+                    then if op.initial_guess
+                            then (if op.pc_side == LEFT then nrm2 (op.M · b) else nrm2 b)
+                            else β
+                    else s.initial_res
+  put s{ x = x', initial_res = ε0 }
+  let ε = max (op.rel_tol * ε0) op.abs_tol
   if β < ε
-    then do modify $ \s -> s{ converged = True, final_res = β }; pure True
+    then do modify (\s -> s{ converged = True, final_res = β }) ; pure (Done True)
     else do
-      let K0 = fresh_krylov op β r0   -- V[0] = r0/β, s[0] = β, j=0, Z if flexible
-      (K, hit_limit) <- inner_loop op ε K0
-      let y  = back_solve K
-      modify $ \s -> s{ x = apply_correction op K y s.x, final_res = K.beta }
-      s'' <- get
-      pure (s''.converged || s''.it == op.max_it || hit_limit_converged hit_limit s''.final_res ε)
+      let K0 = fresh_krylov op β r0          -- V[0] = r0/β, s[0] = β, j=0, Z if flexible
+      K <- inner_loop op ε K0
+      let y = back_solve K
+      modify (\s -> s{ x = apply_correction op K y s.x, final_res = K.beta })
+      s' <- get
+      pure $ if K.beta < ε       then Done True
+             else if s'.it == op.max_it then Done False
+             else                            Continue   -- hit max_dim ⇒ restart
 
 -- Inner Arnoldi loop: pure on Krylov, increments SimState.it via the monad.
--- Returns the final Krylov and a tag for why it stopped (converged | max_dim | max_it).
-inner_loop :: OpParams -> real -> Krylov -> Solve (Krylov, StopTag)
+-- Stops on the first of: LS residual < ε, basis full (j+1 == max_dim), or total
+-- iteration budget exhausted. The reason is recoverable from (K.beta, K.j, s.it).
+inner_loop :: OpParams -> real -> Krylov -> Solve Krylov
 inner_loop op ε K = do
-  let (w, z)         = apply_BA op K.j K.V[K.j]
-      K1             = if op.flexible then K{ Z = K.Z `with` (K.j, z) } else K
-      (v_next, h)    = orthogonalize op (K1.V[0..K1.j]) w
-      h'             = h `with` (K1.j+1, nrm2_used_internally)   -- nrm2 + scal happen inside orthogonalize
-      K2             = K1{ V = K1.V `with` (K1.j+1, v_next) }
-      K3             = ls_update_column K2 h'
-  modify $ \s -> s{ it = s.it + 1 }
+  let (w, z)      = apply_BA op K.j K.V[K.j]
+      K1          = if op.flexible then K{ Z = K.Z `with` (K.j, z) } else K
+      (v_next, h) = orthogonalize op (K1.V[0..K1.j]) w
+      K2          = K1{ V = K1.V `with` (K1.j+1, v_next) }
+      K3          = ls_update_column K2 h
+  modify (\s -> s{ it = s.it + 1 })
   s <- get
-  let stop | K3.beta < ε              = Converged
-           | K3.j + 1 == op.max_dim   = HitMaxDim
-           | s.it    == op.max_it     = HitMaxIt
-           | otherwise                = KeepGoing
-  case stop of
-    KeepGoing -> inner_loop op ε K3{ j = K3.j + 1 }
-    tag       -> pure (K3, tag)
+  if K3.beta < ε || K3.j + 1 == op.max_dim || s.it == op.max_it
+    then pure K3
+    else inner_loop op ε K3{ j = K3.j + 1 }
 ```
 
 The `do`-blocks mark the points where `SimState` is read or written; everywhere else the code is pure on `OpParams` and `Krylov`. The inner loop's only `SimState` interaction is the `it`-counter increment — the iterate `x` is updated exactly once per restart cycle, after `back_solve`. This is the structural realisation of the L1 / L2 / L3 claim that the inner loop does not touch field state on `x` until correction time.
+
+The three termination paths (converged on the LS proxy, exhausted total iterations, hit per-cycle basis dimension) are resolved from `(K.beta, K.j, SimState.it)` at the outer-loop level — the inner loop returns a single `Krylov` value and the outer loop classifies. The `Outcome` type collapses the previously-articulated `StopTag` × `final_res` × `ε` decision table into one constructor.
 
 ### Sequential-obstruction placement
 
@@ -463,6 +468,5 @@ FGMRES is the same `gmres_solve` with `op.flexible = true`, `op.pc_side = RIGHT`
 
 ### Open questions (L4-specific)
 
-- The exact form of `nrm2_used_internally` in the inner loop sketch — whether `orthogonalize` returns the normaliser as part of `h_col` or as a side value — is a calculus-presentation choice; the L1 form already pins that `h[j+1]` is the norm and `v[j+1]` is the post-normalisation unit vector. Both encodings are equivalent.
-- The `StopTag` / `hit_limit_converged` plumbing in `restart_cycle` is over-articulated above; a tighter form folds the stop reason directly into `SimState` flags. The expanded form is kept here to make the three distinct termination paths (converged, max_dim restart, max_it terminal) visible.
+- The `orthogonalize` return contract: the form above has it return `(v_next, h)` where `h` already includes the `h[j+1] = ‖w_proj‖₂` entry and `v_next` is the post-normalisation unit vector. This matches the L1 building-block contract. An alternative — returning the normaliser separately — is equivalent in content and not pursued here.
 - The `Mk : int → LinOp` field models FGMRES's per-step preconditioner abstractly; in the implementation `M` is mutated externally between calls to `apply_BA`. Whether the L4 calculus draft prefers explicit step indexing or a side-effecting `M` will need to align with the cross-slice [L4 calculus draft](../../design/l4_calculus.md) — currently the explicit-indexing form is more faithful to the mathematical FGMRES contract.
