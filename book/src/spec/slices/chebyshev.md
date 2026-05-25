@@ -121,3 +121,110 @@ The smoother is a leaf in the preconditioner stack: it consumes `A`
 - `concepts/constructed-operators.md` — variant absorption route.
 - `concepts/variant-absorption.md` — invariant/procedural/primitive
   axes.
+
+## L2 — primitive composition
+
+The L1 Apply procedure unfolds into a sequence of named base primitives. Variant absorption is preserved: 4th-kind and 1st-kind share the same primitive shape; only the closed-form scalars `(alpha_0, sd_k, sr_k)` differ.
+
+### Setup primitives
+
+```
+setup(A, sf_max, sf_min, order, pc_it, variant):
+  d_diag   = extract_diagonal(A)                  # vector, length A.height
+  dinv     = reciprocal(d_diag)                   # vector, in-place ok
+  lam_max  = sf_max * spectrum_estimate(A, dinv)  # scalar
+  if variant == 1st-kind:
+    sf_min_eff = sf_min if sf_min > 0
+                  else 1.69 / (order^1.68 + 2.11*order + 1.98)
+    lam_min  = sf_min_eff * lam_max
+    theta    = (lam_max + lam_min) / 2
+    delta    = (lam_max - lam_min) / 2
+    persist: dinv, theta, delta, order, pc_it
+  else:  # 4th-kind
+    persist: dinv, lam_max, order, pc_it
+```
+
+Spectrum estimate is itself a sub-procedure (power iteration or SLEPc); see `concepts/spectrum-estimate.md`. It is opaque at this layer.
+
+### Apply primitives
+
+Let `op` denote the constructed smoother carrying `(A, dinv, order, pc_it, scalars)`. The variant-dependent scalar generator is
+
+```
+scalars(op, k):
+  if op.variant == 4th-kind:
+    # Phillips & Fischer 2022, eq. 2.12 (4th-kind Chebyshev coeffs)
+    alpha_0 = 4/3 / op.lam_max
+    sd_k    = (2k - 1) / (2k + 3)
+    sr_k    = (8k + 4) / ((2k + 3) * op.lam_max)
+  else:  # 1st-kind, three-term Chebyshev recurrence centered at theta
+    alpha_0 = 1 / op.theta
+    # rho_k tracked across k: rho_0 = delta / (2*theta), then
+    #   rho_k = 1 / (2*theta/delta - rho_{k-1}) for k >= 1
+    sd_k    = rho_k * rho_{k-1}              # = rho_k * rho_prev
+    sr_k    = 2 * rho_k / op.delta
+```
+
+The per-call apply procedure:
+
+```
+apply_linop(op, x, y, initial_guess):
+  for it in 1 .. op.pc_it:
+    # 1. residual r = x - A y  (or r = x if !initial_guess on first sweep)
+    if it == 1 and not initial_guess:
+      r ← copy(x)
+      zero(y)
+    else:
+      r ← copy(x)
+      Ay ← apply_linop(op.A, y)
+      axpy(-1, Ay, r)                         # r ← r - A y
+
+    # 2. initial direction:  d = alpha_0 * dinv .* r
+    a0 = scalars(op, 0).alpha_0
+    d  ← elementwise_product(dinv, r)
+    scal(a0, d)
+
+    # 3. inner recurrence k = 1 .. order - 1
+    for k in 1 .. op.order - 1:
+      axpy(1, d, y)                           # y ← y + d
+      Ad ← apply_linop(op.A, d)
+      axpy(-1, Ad, r)                         # r ← r - A d
+      (sd, sr) = scalars(op, k)
+      # d ← sd * d + sr * (dinv .* r)
+      t ← elementwise_product(dinv, r)
+      scal(sd, d)
+      axpy(sr, t, d)
+
+    # 4. final accumulation
+    axpy(1, d, y)                             # y ← y + d
+```
+
+### Primitive inventory
+
+| Primitive            | Role in Apply                                  |
+|----------------------|------------------------------------------------|
+| `copy`               | `r ← x` at sweep start                         |
+| `zero`               | `y ← 0` when no initial guess                  |
+| `apply_linop(A, ·)`  | residual `Ay` and direction-image `Ad`         |
+| `axpy(α, v, w)`      | residual update, direction accumulation, `y` accumulate |
+| `elementwise_product`| `D⁻¹` action: `dinv .* r`                      |
+| `scal(α, v)`         | scalar rescale of direction                    |
+
+The `d ← sd·d + sr·(dinv .* r)` update is canonically `scal` + `elementwise_product` + `axpy`. Whether an implementation fuses these into one kernel pass (single elementwise loop over `d`, `dinv`, `r`) is transparent at L2 — the fused kernel computes the same value modulo standard floating-point rules for the same operand order.
+
+### Variant absorption at L2
+
+The primitive *sequence* in `apply_linop` is identical across variants. Only the scalar-generator `scalars(op, k)` branches on variant. This is the (c) primitive-sequence axis of variant absorption per `concepts/variant-absorption.md`, achieved here because both polynomial families admit a uniform `(alpha_0, sd_k, sr_k)` recurrence parameterization — 4th-kind via closed-form, 1st-kind via a `rho_k` scalar carried across `k`.
+
+### Operator-kind support at L2
+
+Real vs. complex differs only at the primitive level: `axpy`, `scal`, `elementwise_product` dispatch on the operand element type; `apply_linop(A, ·)` honors the operator's element type. The transpose path, under the symmetry assumption, aliases to `Mult`; the conjugate of `dinv` mentioned in L1 is dead code at current wiring and would only become live for an asymmetric variant.
+
+### Numerical-claim preservation
+
+- The `axpy(-1, Ad, r)` step computes `r - Ad` in the standard left-to-right reduction; non-associative summation order matches the source.
+- The `elementwise_product(dinv, r)` then `axpy(sr, t, d)` route materializes a temporary `t`. A fused kernel `d ← sd·d + sr·dinv·r` is bit-identical for IEEE-754 only if the fused FMA pattern matches the unfused two-rounding pattern; treating fusion as transparent assumes the implementation does not promise bit-exact reproducibility against the unfused chain. This is the standard Palace assumption for smoothers (see Phillips & Fischer §3) and is preserved as a transparent optimization here.
+
+### Open questions deferred to L3
+
+- Whether the per-sweep loop body admits a global tensor-field form. The residual update `r ← r - A·d` and direction update `d ← sd·d + sr·dinv·r` are point-local once `A·d` is computed; the recurrence in `k` is sequential by construction (each iterate depends on the previous direction), so L3 will likely be a **partial obstruction**: the body is a tensor-field expression, but the `k`-recurrence is not global. Documented for the L2→L3 rotation.

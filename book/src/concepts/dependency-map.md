@@ -68,6 +68,17 @@ graph BT
   divfree --> ksp_solve
   divfree --> axpy
   divfree --> copy
+  chebyshev --> copy
+  chebyshev --> zero
+  chebyshev --> axpy
+  chebyshev --> scal
+  chebyshev --> elementwise-product
+  chebyshev --> apply_linop
+  chebyshev --> extract-diagonal
+  chebyshev --> reciprocal
+  chebyshev --> spectrum-estimate
+  chebyshev --> constructed-operators
+  chebyshev --> variant-absorption
 ```
 
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.
