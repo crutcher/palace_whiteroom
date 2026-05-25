@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-91 — forward cg [L1→L2] — pass
+
+- Synthesis: CG L1→L2 retroactive claims (3): state-bundle compression, load-bearing it==0 branch carry-through classification, and axpy renames making accumulator role canonical per mutation-pseudocode discipline. The L2 section landed at cycle 4 with one summary claim; this cycle backfills per-building-block granularity per meta-16 item 1.
+- Verdict: pass.
+- Friction: none.
+- Structural change: applied: 1 lesson(s); 3 rotation_claim(s).
 ## 2026-05-25 cycle-90 — sideways orthog,divfree,chebyshev — revise
 
 - Synthesis: Opened orthog, divfree, chebyshev slices at L0+L1 in a single multi-slice cycle: L0 citations against palace/linalg/{orthog,divfree,chebyshev}.{hpp,cpp}, L1 invariant + procedure for each, explicit Variant-axes-and-absorption-status subsections. Introduced one new primitive concept (elementwise-product) needed by chebyshev. All three slices reuse existing concepts (apply_linop, axpy, dot, ksp_solve, constructed-operators, variant-absorption); dependency-map edges added for the L1 layer. Orthog carries a residual axis (CGS/CGS2/MGS); divfree and chebyshev have no L1 residual axis.
