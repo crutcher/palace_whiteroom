@@ -8,7 +8,7 @@ This index is maintained by the Synthesizer after every push. It is the **first 
 
 | Slice | Highest layer | Last touched | Status notes |
 |-------|---------------|--------------|--------------|
-| [CG](./slices/cg.md) | L4 (slice v0.4) | 2026-05-25 | L4→L4 tightening: derived-view hoisting names the rotation that keeps `res = sqrt|beta|` out of the iteration state schema, enabling §3.8 demand-driven pruning of residual_norm. |
+| [CG](./slices/cg.md) | L4 (slice v0.4) | 2026-05-25 | L0–L4 complete; v0.4 self-rotation names the derived-view hoisting that produced the v0.3 state schema. New concept entry `derived-view-hoisting` extracts the pattern for reuse by GMRES/LOBPCG slices. |
 | [GMRES](./slices/gmres.md) | L4 | 2026-05-25 | L0–L4 complete. L4 stratifies SimState / OpParams / Krylov; threads SimState via StateT monad; absorbs convergence policy into a built-once Convergence value; types ls_update_column / back_solve as pure functions on small-dense Krylov state (sequential obstruction carried through). FGMRES is the same calculus with flexible=true. |
 | [Orthogonalisation](./slices/orthog.md) | L4 | 2026-05-25 | Block Gram-Schmidt (MGS/CGS/CGS2) lifted to Solve-monad form with state stratification; variant is a constructed-operator param, MGS's sequential obstruction surfaces as a non-commuting get/modify chain on the w-field. |
 | [Divergence-free projection](./slices/divfree.md) | L4 | 2026-05-25 | L4 calculus form: SolveM monadic apply with state-stratified DivFreeParams (internal params) over SimState (sim state); scratch buffers explicitly classified as internal-parameter storage, not sim state. Eigensolver composition shown. |
