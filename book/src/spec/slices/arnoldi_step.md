@@ -232,3 +232,84 @@ The L3 view makes the MPI-collective shape per step explicit:
 - CGS2: 2 allreduces (two CGS passes), `+1` for `nrm2`, total 3.
 
 This is the load-bearing distinction that motivates the variant axis in distributed-memory practice: MGS pays an allreduce per inner iteration; CGS / CGS2 pay a constant number. The L3 form is where this shape becomes a first-class property of the algorithm rather than an implementation incident.
+
+## L4 — calculus form
+
+The L3 form splits the step into a clean field-side composition plus an in-place small-dense Hessenberg-column write, with the orthogonalisation block carrying a [sequential-obstruction](../concepts/sequential-obstruction.md) under the MGS variant. The L4 lift expresses the step against the calculus of `book/src/design/l4_calculus.md`: explicit state stratification (sim / operator-internal / ephemeral), monadic coordination of the in-place writes, and a typed variant-axis surface that makes the residual `gs_orthog` choice a parameter of the operator-internal table rather than per-step runtime data.
+
+See [solve-monad](../concepts/solve-monad.md), [state-stratification](../concepts/state-stratification.md), and [derived-view-hoisting](../concepts/derived-view-hoisting.md) for the calculus-level patterns invoked below.
+
+### State stratification
+
+The per-step procedure touches three distinct state strata:
+
+```ts
+// Simulation state — evolves across solver steps; persisted across restarts.
+type ArnoldiSimState = {
+  V: BasisChunk[];                 // lazy-allocated orthonormal basis; V[0..j] is the prior subspace
+  H: HessenbergBuffer;             // (max_dim+1) x max_dim small-dense; H[:,0..j-1] populated
+  j: InnerIndex;                   // current inner iteration
+};
+
+// Operator-internal params — bound at solve setup; immutable across the step.
+type ArnoldiOpParams = {
+  T: ConstructedLinOp;             // BA / AB / A — pc_side absorbed; see apply_BA
+  comm: MpiComm;
+  gs_orthog: "MGS" | "CGS" | "CGS2";  // residual variant axis; dispatched once at setup
+};
+
+// Ephemeral intermediates — created and consumed within one step.
+type ArnoldiStepScratch = {
+  w: DofVector;                    // aliases the buffer that becomes V[j+1] on success
+  // FGMRES extension: Z[j] is teed off here; promoted to ArnoldiSimState in the FGMRES specialisation.
+};
+```
+
+The sim/op/ephemeral split makes three properties first-class. (1) `V` and `H` are the only writes that persist past the step return; the calculus monad sequences them. (2) `T` and `gs_orthog` are operator-internal and never appear as per-step arguments — the variant-absorption discipline at level (b) is expressed in the type: the step procedure does not take `gs_orthog` as a parameter, the orthogonalisation operator does, once, at construction. (3) `w` is ephemeral; its in-place mutation across the four primitives is contained to a single `do`-block and not observable outside it.
+
+### Monadic procedure
+
+```haskell
+arnoldiStep :: ArnoldiOp -> SolveM ArnoldiSimState ()
+arnoldiStep op = do
+  s <- get
+  let j     = s.j
+      V_j   = basisAt s.V j
+      V_pre = basisPrefix s.V j       -- derived view: V[0..j], hoisted per derived-view-hoisting
+      H_col = hessColumn s.H j         -- derived view: H[:,j]
+  withScratch DofVector $ \w -> do
+    applyLinop op.T V_j w                         -- field-side; produces w
+    orthogonalize op.orthog V_pre w (H_col[0..j]) -- field-side, allreduces per gs_orthog; mutates w, writes H[:,j] head
+    h_jp1 <- nrm2 op.comm w                       -- field-side reduction
+    writeAt H_col (j+1) h_jp1                     -- small-dense scalar write
+    scal (recip h_jp1) w                          -- pointwise; w aliases new basis slot
+    installBasisColumn s.V (j+1) w                -- transfers ephemeral w into sim state
+  modify (\s -> s { j = s.j + 1 })
+```
+
+The `SolveM ArnoldiSimState` monad is the [solve-monad](../concepts/solve-monad.md) specialised to this slice's sim state. `withScratch` brackets the ephemeral `w` so the in-place mutations are syntactically contained — the calculus expresses what the L2 mutation-pseudocode discipline expresses informally. `installBasisColumn` is the moment the ephemeral becomes sim state; it is the only write that escapes the `withScratch` bracket.
+
+### Derived views
+
+Two derived views are hoisted out of the sim state per [derived-view-hoisting](../concepts/derived-view-hoisting.md):
+
+- `basisPrefix s.V j` — the `(n_dof, j+1)` prior-basis view consumed by `orthogonalize`. Hoisted because the L3 CGS form treats it as a tensor-field operand (`V[0..j]ᵀ · w`); the calculus form makes the view a first-class operand rather than an index range.
+- `hessColumn s.H j` — the `(max_dim+1)`-vector view of the j-th Hessenberg column, written by `orthogonalize` (head) and `nrm2` (subdiagonal). Hoisting it surfaces the small-dense write target as a single named operand and lets the L4 form sequence the two writes monadically.
+
+No other state is hoisted; `T`, `gs_orthog`, and `comm` stay in `op` (operator-internal) and `w` stays ephemeral.
+
+### Variant axis at L4
+
+The `gs_orthog` axis is operator-internal: it parameterises the construction of `op.orthog` at solve setup but does not appear in `arnoldiStep`'s body. This is level-(b) [variant-absorption](../concepts/variant-absorption.md) realised in the type system: the step procedure has the same syntactic shape across MGS, CGS, and CGS2; only the operator-internal `orthog` field differs. The MGS sequential obstruction recorded at L3 is, at L4, a property of the `orthogonalize` primitive's implementation, not of the step's calculus form — the step is variant-independent at L4 even though its allreduce count is not.
+
+### Interaction with FGMRES
+
+The FGMRES specialisation extends `ArnoldiSimState` with `Z : BasisChunk[]` and promotes the apply's output buffer to sim state at the `installBasisColumn` step. The monadic form makes the extension localised: the four-line scratch block is unchanged; only the `withScratch` exit transfers an additional buffer. The L4 contract for the Arnoldi step itself is unchanged; the change is at the level of the sim-state type.
+
+### Obstruction recording
+
+The L2→L3 negative result (MGS orthogonalisation does not lift) is preserved at L4 as a property of the `orthogonalize` primitive's implementation, not erased by the calculus form. The calculus expresses *what* the step does monadically; it does not pretend the MGS sequential dependency between successive `H[i,j]` reads of `w` has disappeared. The obstruction is internal to `orthogonalize`'s `SolveM` implementation under the MGS variant, and the [sequential-obstruction](../concepts/sequential-obstruction.md) concept entry remains the load-bearing record.
+
+### Composition shape, restated
+
+Reading the L4 form top-to-bottom, the step is: bind sim state; derive two views; bracket an ephemeral DoF vector; perform four primitive operations on it (one field-side apply, one orthogonalisation, one reduction, one scaling); install the result; bump the inner index. The four-primitive composition shape from L2 is preserved; what's added at L4 is the typed account of which writes are sim-state versus ephemeral and the monadic sequencing of the in-place mutations.

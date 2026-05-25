@@ -1,0 +1,6 @@
+## 2026-05-25 cycle-102 — forward arnoldi_step [L3→L4] — pass
+
+- Synthesis: arnoldi_step L3→L4: monadic SolveM form with sim/op/ephemeral stratification; gs_orthog absorbed as operator-internal (level-b variant-absorption realised in the type system); MGS sequential obstruction preserved as orthogonalize-internal under variant binding; two derived views hoisted (basisPrefix, hessColumn); withScratch brackets the ephemeral w lifetime. Skills consulted: classify-variant-axis (applied — gs_orthog confirmed operator-internal at L4, no new residual axis surfaced); verify-citation-range (n/a — no new L0 citations in this cycle, the L4 section cites only concept pages).
+- Verdict: pass.
+- Friction: slice_index_update: slice_index_update: no row found for slice 'arnoldi_step' (looked for anchors ['./slices/arnoldi_step.md', './slices/arnoldi_step/index.md']). Add a row via file_edits/section_appends first, or the integrator can be extended with an append-by-slug fallback.; bookkeeping_incomplete: 4 substantive writes landed; only bookkeeping (index/TOC) write(s) failed. Verdict held pass per meta-9 item 2; next cycle on this slice should re-attempt the bookkeeping update..
+- Structural change: none.
