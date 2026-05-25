@@ -61,6 +61,55 @@
           "why_high": { "type": "string" }
         }
       }
+    },
+    "skill_pass": {
+      "type": "object",
+      "description": "Mandatory skill-pass entry. Added meta-19 per user directive +60% priority on skill propose/modify/split. Every meta-review's plan MUST include this field — either with at least one non-empty action OR with a `no_candidates_reason` explaining why this window produced no skill actions. An empty skill_pass without no_candidates_reason is a discipline failure (the consideration step was skipped).",
+      "properties": {
+        "propose": {
+          "type": "array",
+          "description": "New skill proposals. Each entry: skill name, rationale, and an inline SKILL.md skeleton (frontmatter + 2-4 sentences of body).",
+          "items": {
+            "type": "object",
+            "required": ["name", "rationale"],
+            "properties": {
+              "name": { "type": "string" },
+              "rationale": { "type": "string" },
+              "skeleton": { "type": "string" }
+            }
+          }
+        },
+        "modify": {
+          "type": "array",
+          "description": "Modifications to existing skills (output contract sharpening, trigger condition adjustment, new edge case, cross-reference update).",
+          "items": {
+            "type": "object",
+            "required": ["skill", "change"],
+            "properties": {
+              "skill":   { "type": "string", "description": "Existing skill name." },
+              "change":  { "type": "string", "description": "What changes and why." },
+              "cascade": { "enum": ["LOW", "MEDIUM"], "description": "Per the +60% priority calculus: prompt-wording polish is LOW; procedure change or output-contract sharpening is MEDIUM." }
+            }
+          }
+        },
+        "split": {
+          "type": "array",
+          "description": "Splits of an existing skill into ≥2 child skills when the body has grown to cover divergent sub-procedures.",
+          "items": {
+            "type": "object",
+            "required": ["parent", "into", "rationale"],
+            "properties": {
+              "parent":    { "type": "string", "description": "Existing skill being split." },
+              "into":      { "type": "array", "items": { "type": "string" }, "description": "Child skill names." },
+              "rationale": { "type": "string" }
+            }
+          }
+        },
+        "no_candidates_reason": {
+          "type": "string",
+          "description": "Required when propose+modify+split are all empty. Names why this window produced no skill actions (e.g., 'no procedural patterns surfaced; window dominated by tooling fixes')."
+        }
+      }
     }
   }
 }

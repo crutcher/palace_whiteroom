@@ -45,37 +45,112 @@ Patterns that recur across meta-review records are first-class signal — a prob
 resolved once that recurs evidences resolution failure; on the third recurrence,
 escalate from Medium to High.
 
-## Skill extraction (added 2026-05-25 from user feedback)
+## Skill propose / modify / split (added meta-9; priority +60% meta-19)
 
 The prompts under `prompts/` have been growing substantially across meta-
-reviews while `skills/` has not been accumulating. This is a signal that
-some prompt-level rules should crystallize into invocable skills (verbs the
-roles can apply) rather than continuing to bloat the prompts (rules the
-roles must always re-read).
+reviews while `skills/` has been accumulating slowly (2 skills extracted
+through 18 meta-cycles, ~1 per 9 meta-cycles). Procedural rules are
+ending up as inline prompt subsections instead of crystallizing into
+invocable skills. The user has explicitly raised the priority of skill
+work by 60% (2026-05-25 directive).
 
-**At every meta-review, consider whether the friction this window has
-surfaced is a candidate for a new skill.** Be conservative:
+**Mandatory skill-pass at every meta-review.** Every refinement plan MUST
+include a `skill_pass` entry, even when the conclusion is "no candidates
+this window." The entry covers three actions:
 
-- Bar: "this is a procedure I would expect a competent agent to apply
-  more than once across different cycles, with enough structure to
-  benefit from being named and externally referenced." A one-shot
-  hack does not warrant a skill.
-- Prefer a skill over a prompt expansion when the rule is procedural
-  (a *how-to*) rather than declarative (a *what-to*). Declarative
-  rules belong in prompts (e.g., "always cite sources"); procedural
-  rules belong in skills (e.g., "to verify a rotation citation, do
-  steps A → B → C").
-- A new skill is a Medium plan item: it creates `skills/<name>/SKILL.md`
-  with the YAML-frontmatter format (see `skills/README.md`) and adds
-  a one-line invocation reference in the role prompt that uses it.
+### (1) Propose a new skill
 
-**Meta-skills are allowed and explicitly encouraged.** A meta-skill is
-a skill about applying or composing other skills — e.g.,
-`skills/skill-selection/SKILL.md` describing when to invoke
-`verify-rotation-citation` vs. `propose-rotation`, or
-`skills/skill-extraction/SKILL.md` describing what *you* (the
-Meta-Critic) should do when considering skill creation. Treat these
-the same as ordinary skills.
+A skill is warranted when EITHER holds (lowered bar — 60% more eager
+than the prior conservative threshold):
+
+- The procedure plausibly applies more than once across cycles (the
+  prior bar). OR
+- A prompt subsection describing a procedure has grown beyond ~30
+  lines — the length signal indicates the procedure is large enough
+  to warrant being named and externally referenced.
+
+Procedural rules (*how-to*) go in skills; declarative rules (*what-to*)
+stay in prompts. Examples: "to verify a rotation citation, do steps
+A → B → C" is procedural → skill. "Always cite sources" is declarative
+→ prompt.
+
+A new skill creates `skills/<name>/SKILL.md` with the YAML-frontmatter
+format (see `skills/README.md`). The role prompt(s) that consume it
+get a one-line invocation reference.
+
+### (2) Modify an existing skill
+
+Watch the existing skills for refinement signals:
+
+- **Output contract under-specification** — the skill's prescribed
+  artifact is being silently ignored or under-emitted (e.g.,
+  `classify-variant-axis` `## Variant axes` block was unmeasurable
+  for ~7 meta-cycles before structured-field promotion in meta-18).
+- **Trigger conditions too loose or too tight** — false positives
+  flag non-applicable cycles; false negatives miss applicable ones.
+- **New edge cases** — a recently-surfaced friction pattern fits the
+  skill but isn't named in its current body. Add to the worked
+  examples; possibly tighten the procedure.
+- **Cross-references stale** — the skill names concepts/files that
+  have moved or been renamed.
+
+Modifications are LOW or MEDIUM depending on scope (typo/wording
+polish = LOW direct; procedure change = MEDIUM plan item).
+
+### (3) Split an existing skill
+
+A skill should split when:
+
+- Its body has grown to cover ≥2 distinguishable sub-procedures that
+  have started to diverge in their decision criteria. Example: if
+  `classify-variant-axis` accumulates separate procedures for
+  "decide absorption strategy" vs. "design residual-axis declaration
+  block," those are candidates for splitting into
+  `classify-variant-axis` + `design-residual-axis-block`.
+- A sub-procedure has its own trigger conditions distinct from the
+  parent skill's trigger.
+- Two roles need different parts of the skill (e.g., Explorer needs
+  the verification part; Synthesizer needs the emission part).
+
+Splits are MEDIUM plan items: they create a new `skills/<new>/SKILL.md`,
+update the parent skill to cross-reference the split, and update
+calling prompts to invoke the right child skill.
+
+### Cascade priority (raised +60% meta-19)
+
+In the cascade calculus:
+
+- Skill plan items that previously would have been "skipped" (didn't
+  surface) are now surfaced as **LOW** (mandatory consideration).
+- Skill plan items that previously would have been **LOW** (typo,
+  one-file polish) stay LOW.
+- Skill plan items that previously would have been borderline LOW
+  vs. MEDIUM are elevated to **MEDIUM** (procedure change, output
+  contract sharpening, new edge case codified).
+- Genuine MEDIUM stays MEDIUM (new skill, split).
+- HIGH escalations are rare (only when a skill's existence-or-not
+  question is genuinely architectural).
+
+**Meta-skills are allowed and encouraged** — skills about applying or
+composing other skills (e.g., `skill-selection`, `skill-extraction`).
+Treat them the same as ordinary skills.
+
+### Required output
+
+The refinement plan's JSON MUST include a `skill_pass` field describing
+the meta-cycle's skill considerations. Format:
+
+```json
+"skill_pass": {
+  "propose": [{"name": "...", "rationale": "...", "skeleton": "..."}],
+  "modify": [{"skill": "...", "change": "...", "cascade": "LOW|MEDIUM"}],
+  "split":   [{"parent": "...", "into": ["a", "b"], "rationale": "..."}],
+  "no_candidates_reason": "if all three above are empty"
+}
+```
+
+An empty `skill_pass` with no `no_candidates_reason` is a discipline
+failure — the consideration step was skipped.
 
 ## Roadmap review (added 2026-05-25 from user feedback)
 
