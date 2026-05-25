@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-55 — forward cg [L3→L4] — revise
+
+- Synthesis: cg L3→L4 rotation_claims emitted retroactively against on-disk slice content (slice already at L4 v0.2/v0.3); five claims cover the step-body rotation, the iterate_while loop coordination, the demand-driven residual-history pruning, the preconditioned-variant equivalence, and the L3 negative-result carry-through into iterate_while.
+- Verdict: revise.
+- Friction: verdict=revise, 5 issue(s).
+- Structural change: none.
 ## 2026-05-25 cycle-54 — forward cg [L2→L3] — pass
 
 - Synthesis: Retroactive L2→L3 rotation_claim for cg slice — formalizes the negative-L3-with-positive-step-body result already on disk in `## L3` section of book/src/spec/slices/cg.md (lines describing genuine algorithmic sequentiality as the obstruction at the outer loop, plus per-step composition lifting cleanly). No new structural writes; the L3 section was emitted in a prior cycle without a corresponding rotation_claim. Quoted-prose evidence below.
