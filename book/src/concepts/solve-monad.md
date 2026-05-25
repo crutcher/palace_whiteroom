@@ -43,3 +43,26 @@ The rule of thumb: if the action reads or writes `SimState`, it's in the monad; 
 - [state-stratification](./state-stratification.md) — the three-way type split this monad acts on.
 - [constructed-operators](./constructed-operators.md) — what the inner loop calls; the operator interface is variant-absorbed and lives outside the monad.
 - [sequential-obstruction](./sequential-obstruction.md) — small-dense recurrences are pure inside the monad, not monadic effects.
+
+## Worked example — GMRES (slice: gmres, L4)
+
+The GMRES L4 form coordinates the solve via `Solve a = StateT SimState Identity a` over the SimState bundle:
+
+- `gmres_solve op b x0 = execState (solve_loop op b) (SimState x0 0 False ∞ ⊥)` — entry point.
+- `solve_loop` recurses on `restart_cycle` until an `Outcome = Continue | Done Bool` value tells it to stop.
+- `restart_cycle` builds a fresh Krylov (`fresh_krylov`), runs `inner_loop`, folds the correction into `SimState.x` via `modify` exactly once.
+- `inner_loop` is pure on Krylov except for `modify (\s -> s{ it = s.it + 1 })` — the iteration counter is the sole SimState touch inside the inner loop. The iterate `x` is updated exactly once per restart cycle, after `back_solve`.
+
+The Krylov bundle is threaded as a plain value through `inner_loop`, not as a monadic effect, because it is reborn at each restart and discarded at return — encoding it monadically would mis-represent its lifecycle. Only SimState (which persists across the call) lives in the monad.
+
+### Termination as a sum type
+
+The three termination paths (converged on LS proxy, exhausted total iterations, hit per-cycle basis dimension) collapse into a single `Outcome = Continue | Done Bool` value:
+
+- `Done True` — converged on `K.beta < ε`.
+- `Done False` — exhausted `op.max_it`.
+- `Continue` — hit `op.max_dim`, another restart cycle warranted.
+
+`solve_loop` pattern-matches on Outcome; `restart_cycle` classifies the returned Krylov against `(K.beta, K.j, SimState.it, ε)` once at the boundary. This replaces the L3 form's scattered termination tests (multiple inner-loop break conditions, post-correction `K.beta < ε` re-test) with a single decision site. The Bool inside Done carries `converged`, so the outer loop's fold into SimState is uniform: `Done True ⇒ converged = True`; `Done False ⇒ converged = False`.
+
+This is the canonical pattern when an algorithm has multiple termination reasons that share a common return path: name the reasons in a sum type, classify once, fold uniformly.

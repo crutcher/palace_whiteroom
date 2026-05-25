@@ -33,3 +33,13 @@ The split makes two things structural that are merely conventional at L1–L3:
 - [solve-monad](./solve-monad.md) — the monadic coordination that consumes a state-stratified type signature.
 - [constructed-operators](./constructed-operators.md) — where the variant selectors live and get absorbed.
 - [sequential-obstruction](./sequential-obstruction.md) — small-dense ephemeral state often hosts sequential obstructions (Givens-replay, back-solve) that do not lift to a global form.
+
+## Worked example — GMRES (slice: gmres, L4)
+
+The GMRES slice's L4 form is a worked example of the three-bundle split:
+
+- **SimState** (externally-visible, persists across the `Mult` call): `x`, `it`, `converged`, `final_res`, `initial_res`. These are the quantities a caller observes after the solve returns.
+- **OpParams** (operator-internal, captured at construction, fixed across a `Mult` call): `A`, `M`, `Mk`, `pc_side`, `gs_orthog`, `max_dim`, `max_it`, `rel_tol`, `abs_tol`, `initial_guess`, `flexible`. The `readonly` marker is load-bearing: variant-axis fields are read ONLY by the constructed-operator helpers (`initial_residual`, `apply_BA`, `apply_correction`, `build_convergence`), never by the main control flow.
+- **Krylov** (ephemeral, solve-local, born at restart and discarded at restart-or-return): `V`, `Z`, `H`, `s`, `cs`, `sn`, `j`, `beta`. Mixes field-side state (`V`, `Z`) and small-dense LS-side state (`H`, `s`, `cs`, `sn`). The bundle is threaded through `inner_loop` as a plain value; it does NOT appear in SimState because it is reborn at each restart and discarded at return.
+
+The split mirrors Palace's L0 class layout: instance fields (configuration, persistent state) ↔ OpParams; lazy `Initialize`/`Update` workspace ↔ Krylov; the externally-observable `final_res` / `converged` flags ↔ SimState. Variant absorption is preserved at L4 because the bundles type the contract: `OpParams.flexible` determines whether `Krylov.Z` is present, but the main control flow does not branch on this — `apply_correction` closes over the right basis (V or Z) based on the captured OpParams.
