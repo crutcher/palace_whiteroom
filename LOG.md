@@ -29,6 +29,13 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 meta-review (cycles 68–73) — enacted — second skill extraction
+
+- Window: 6 cycles. orthog L1→L2 + gmres restored cleanly through L0/L1/L2/L3 (cycles 69-73). meta-15 self-tightening termination held — no grind. Two refinement patterns: (i) retroactive_claims granularity regression — cycles 71-73 backfilled per-building-block claims for cycle-21 L2 surface, 50-cycle gap; (ii) citation-tightening as recurring L0→L1 self-rotation needs a skill.
+- Cascade: 1 LOW; 2 MEDIUM plan items enacted; 0 HIGH.
+- Plan items enacted: (LOW) Same-cycle edit-then-edit guidance — second edit's `old_string` must reflect post-first-edit state; (1) **Per-building-block granularity** — K visibly-named blocks → ≥K rotation_claims (tolerance ±1); Critic check #13 strengthened with part (c) granularity gate; (2) **SECOND SKILL EXTRACTION**: `skills/verify-citation-range/SKILL.md` — 5-step procedure for verifying cited `<path>:<lo>-<hi>` ranges don't cross named-symbol lexical boundaries; codifies the 2026-05-25 cross-function-boundary lesson. Validates the meta-pass skill-extraction directive (first was `classify-variant-axis` in meta-11).
+- Full record: `book/src/meta-reviews/2026-05-25-cycles-68-73.md`.
+
 ## 2026-05-25 cycle-73 — forward gmres [L2→L3] — pass
 
 - Synthesis: Retroactive L2→L3 rotation_claims for the gmres slice's already-landed L3 section (cycle 23). Two claims: (1) field-side primitives (axpy/dot/nrm2/scal/apply_linop) lift to global tensor-field operations and the CGS-shape orthogonalize/apply_correction collapse to batched tall-skinny operations; (2) obstruction record for `ls_update_column` and `back_solve` as sequential recurrences on small-dense state with no DoF index set, classified per sequential-obstruction. retroactive_claim_evidence:

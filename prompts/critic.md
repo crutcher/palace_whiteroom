@@ -123,29 +123,39 @@ verdict assembly and cross-cycle lesson extraction):
      retroactive_claim_evidence — claims-without-surface.
 
  13. ORIGINAL-EMISSION CLAIM DISCIPLINE (added meta-12; strengthened
-     meta-13). Two parts:
+     meta-13; per-building-block granularity added meta-16). Three parts:
 
      (a) **Original-emission gate.** When `plan_kind ∈ {new_content,
      back_correction}` AND substantive_landed > 0 AND any write touches
      an `## Ln —` layer section, the plan MUST emit `rotation_claims`
      for the edges that layer touches. Empty `rotation_claims` on a
-     layer-content emission is a discipline failure. Verdict on failure:
-     `revise`, kind: `unclear`, push_back_suggestion: "emit at least one
-     rotation_claim per layer-section touched in this cycle."
+     layer-content emission is a discipline failure.
 
      (b) **plan_kind misclassification gate** (added meta-13). If
      `plan_kind = retroactive_claims` AND the plan contains any
      `slice_writes mode=create`, `concept_writes mode=create`, or
      `section_appends` to a layer section, downgrade to `revise` with
      note: "misclassified plan_kind: layer content present, should be
-     new_content or back_correction." This closes the route-around
-     where synthesizers declared retroactive_claims to bypass gate
-     (a). See cycles 50-55: 5 of 6 were so classified despite
-     containing substantive writes.
+     new_content or back_correction."
+
+     (c) **Per-building-block granularity** (added meta-16). When the
+     plan's layer-content writes introduce K visibly-named building
+     blocks (distinct named primitives, role names, constructed-
+     operator surfaces, or unfoldings of distinct L_n items) at the
+     target `L_{n+1}` layer, the `rotation_claims` array MUST contain
+     at least K entries (tolerance: ±1). One summary claim against
+     a multi-building-block emission is a granularity failure.
+     Verdict: `revise`, kind: `unclear`, push_back_suggestion: "emit
+     one rotation_claim per building block, not one summary claim."
+
+     Originating example: cycle 21 GMRES L2 introduced 6 building blocks
+     (initial_residual, apply_BA, orthogonalize, ls_update_column,
+     back_solve, apply_correction) but emitted 1 summary claim — 5 per-
+     block claims backfilled 50 cycles later in cycles 71-73.
 
      This check exists to compress the retroactive_claims backlog and
      enforce that rotation reasoning is captured at content emission
-     time, not deferred.
+     time, at the right granularity.
 
  12. RETROACTIVE-CLAIMS EVIDENCE (added meta-11; strengthened meta-15).
 

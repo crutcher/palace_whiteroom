@@ -306,6 +306,27 @@ deferring claims is a discipline failure. Critic check #13 enforces.
 Concretely: a plan with `plan_kind: new_content`, substantive_landed > 0,
 a layer-section touched, AND empty `rotation_claims` is auto-downgraded.
 
+**Per-building-block granularity** (added meta-16 item 1 after cycles
+71-73 backfilled per-building-block claims for an L2 section that
+landed back in cycle 21 with a single summary claim — a 50-cycle gap).
+When an L_{n+1} `section_append` or new-layer create introduces N
+named building blocks (distinct named primitives, role names,
+constructed-operator surfaces, or unfoldings of distinct L_n items),
+the SAME cycle's `rotation_claims` array MUST contain **at least N
+entries — one per building block**, not one summary claim.
+
+A "building block" is a distinct named primitive or role at the
+`L_{n+1}` layer that has its own paragraph, sub-section, or named
+unfolding (e.g., GMRES L2's `initial_residual`, `apply_BA`,
+`orthogonalize`, `ls_update_column`, `back_solve`,
+`apply_correction` — 6 blocks).
+
+Critic check #13 verifies: when a layer-content emission has K
+visibly-named building blocks, `rotation_claims < K` (tolerance: ±1)
+triggers revise with "claim granularity". The Critic gives a ±1
+tolerance because the building-block count is judgmental at the
+boundary.
+
 **Same-cycle create-then-edit** (added meta-12 LOW item after cycle 48
 file_edit on same-plan-created cg.md failed because anchor was built
 from memory of emission rather than disk content). When a plan creates
@@ -317,6 +338,32 @@ clean form is to emit a single coherent create payload. If you must
 emit a separate file_edits, keep `old_string` short (≤3 lines, no
 fenced code-block boundary, no trailing whitespace) — long multi-line
 anchors are brittle across LLM emission boundaries.
+
+**Same-cycle edit-then-edit** (added meta-16 LOW item after cycle 69
+emitted two file_edits in one plan where the second's anchor reflected
+the pre-first-edit state of the file). When two `file_edits` in one
+plan target the same path, the second's `old_string` must reflect the
+**post-first-edit state**, not the pre-edit state. The integrator
+applies edits in plan order; mental model: first edit applies to disk;
+second edit applies to (disk + first edit). Two clean forms:
+
+- **Chain into one edit**: combine the two changes into a single
+  `file_edits` entry whose `old_string` spans both regions and
+  `new_string` carries the combined replacement.
+- **Disjoint short anchors**: keep each `old_string` ≤3 lines with no
+  overlap between the regions the two edits touch.
+
+If you can't keep them disjoint, prefer the chained form.
+
+**Citation-range fidelity (skill)**: invoke
+[`verify-citation-range`](../skills/verify-citation-range/SKILL.md)
+before emitting L0 citation tightening or splitting. The skill names
+the procedure for checking that a cited `<path>:<lo>-<hi>` range
+does not cross the named symbol's lexical boundary. Cross-function-
+boundary drift is NOT audit-tolerable; intra-function ±1-3 line drift
+IS. Originating from cycles 69-70 on GMRES (FgmresSolver::Mult cited
+733-875 when function ends at 871; GeneratePlaneRotation citation
+spanned real + complex specializations without split).
 
 **Retroactive-claims quoted prose requirement** (added meta-11 item 1).
 When `plan_kind = retroactive_claims`, the integration plan MUST
