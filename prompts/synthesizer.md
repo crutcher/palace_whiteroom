@@ -232,6 +232,28 @@ content` you receive in the user message indicates whether the slice
 already exists on disk. If it does, you must NOT use `mode="create"`
 for that path — the orchestrator rejects it with a friction signal.
 
+**Dependency-map future markers** (added 2026-05-25 from user directive
+during meta-18 enactment). The dependency map at
+`book/src/concepts/dependency-map.md` includes BOTH on-disk concepts
+AND not-yet-extracted "planned" mechanisms as forward markers for
+pipeline work. Convention:
+
+- Solid-outline nodes: existing concepts (`.md` file exists).
+- Dashed-outline nodes (`:::planned`): future markers from
+  `scaffolding/roadmap.md`. Render with `classDef planned
+  stroke-dasharray: 5 5,stroke:#888;`.
+- Edges from `:::planned` → existing concept: forward commitment
+  (when extracted, this concept will reuse the listed primitives).
+- Edges between two `:::planned`: planned-pipeline edge (both future).
+
+When emitting a `dependency_map_edges` entry for a planned future
+concept, append `:::planned` to the node name in the mermaid block
+(handled in the section-content the orchestrator auto-init creates,
+not via the `dependency_map_edges` channel which works on existing
+nodes). When extracting a previously-planned concept, the same cycle
+that lands the concept file SHOULD also emit a `file_edits` removing
+the `:::planned` style from that node in the mermaid block.
+
 **Auto-registration in SUMMARY.md** (added post meta-review #8). When
 you create a new slice (`slice_writes mode=create`) or concept
 (`concept_writes mode=create`), the orchestrator automatically appends

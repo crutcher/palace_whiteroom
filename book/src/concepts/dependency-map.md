@@ -1,10 +1,19 @@
 # Concept dependency map
 
-Per-layer map of concepts in `book/src/concepts/`. Maintained by the Synthesizer when emitting new concept entries (per `prompts/synthesizer.md` *Build vocabulary bottom-up*).
+Per-layer map of concepts in `book/src/concepts/`. Maintained by the Synthesizer when emitting new concept entries (per `prompts/synthesizer.md` *Build vocabulary bottom-up*); future markers added by the Synthesizer/Meta-Critic when planning pipeline work.
 
-The map serves two purposes:
+The map serves three purposes:
+
 - **Bottom-up vocabulary.** Support-operator concepts at L1 give the vocabulary to describe complex L1 slices concisely; L2 algebraic decompositions give the vocabulary for L2 slices, etc. Reading the map answers "what primitives does this layer have available?"
 - **Cross-cutting framework discovery.** Methodology concepts (rotation, variant-absorption, constructed-operators) accumulate from cross-cycle friction integration. Reading the map answers "what methodology tools does the loop have available for handling cross-cutting concerns?"
+- **Forward projection** (added 2026-05-25 from user directive). The map also includes mechanisms that have NOT YET been provided — concepts and slices the roadmap names as in-scope but the loop hasn't extracted yet. These appear as **planned nodes** styled with `:::planned` (dashed outline). Reading the map this way answers "what's coming next, and which existing concepts will it build on?"
+
+**Node style convention:**
+
+- Solid-outline nodes are on-disk concepts (a file exists at `book/src/concepts/<name>.md`).
+- Dashed-outline nodes (`:::planned`) are future markers — items from `scaffolding/roadmap.md` not yet extracted. They depend on existing concepts via solid edges; their own placement names where they will sit in the layer hierarchy when extracted.
+- An edge from a `:::planned` node to an existing concept is a *forward commitment*: when this concept is extracted, it will build on these existing primitives.
+- An edge between two `:::planned` nodes is a *planned-pipeline edge*: both are future markers and the dependency is anticipated.
 
 The scaffolding WIP version at `scaffolding/concept-dependency-map.md` tracks pending extractions and hypothetical concepts that aren't yet stable enough for the book.
 
@@ -33,6 +42,66 @@ graph BT
 - [`rotation`](./rotation.md) — root methodology concept. Defines what counts as a genuine rotation (state hiding / coarser substitution / threaded-state compression) vs. a renaming. Codified meta-review #1; expanded with carry-through clause meta-review #2.
 - [`variant-absorption`](./variant-absorption.md) → depends on `rotation`. Parametric vs. appended absorption of orthogonal variants; levels-of-absorption refinement meta-review #3 (invariant / procedural / primitive-sequence).
 - [`constructed-operators`](./constructed-operators.md) → depends on `rotation`, `variant-absorption`. Standard graph-evaluation pattern: construct an operator with internal immutable state once, apply pure-function many times. Canonical route to full variant absorption (all three levels) when configs/tables would otherwise be deep-plumbed.
+
+## Intermediate-tier algorithms (planned — roadmap)
+
+Algorithmic primitives that sit between leaf primitives (axpy, dot, …) and top-level driver algorithms (CG, GMRES, …). Currently all dashed-outline (planned); none yet extracted. See `scaffolding/roadmap.md` *Intermediate-tier algorithms* for impact ranking. The Planner positively selects from this tier per `prompts/planner.md` Forward-frontier criterion.
+
+```mermaid
+graph BT
+  arnoldi-step:::planned --> apply_linop
+  arnoldi-step:::planned --> orthogonalization
+  arnoldi-step:::planned --> dot
+  arnoldi-step:::planned --> axpy
+  arnoldi-step:::planned --> nrm2
+
+  plane-rotation-stream:::planned --> givens
+  plane-rotation-stream:::planned --> incremental-least-squares
+
+  polynomial-recurrence-step:::planned --> axpy
+  polynomial-recurrence-step:::planned --> elementwise-product
+  polynomial-recurrence-step:::planned --> scal
+
+  sparse-triangular-solve:::planned --> trsv
+
+  diagonal-preconditioner-apply:::planned --> elementwise-product
+
+  residual-update:::planned --> apply_linop
+  residual-update:::planned --> axpy
+
+  restart-machinery:::planned --> state-stratification
+  restart-machinery:::planned --> solve-monad
+
+  %% Future top-level slices that consume intermediates:
+  minres:::planned --> arnoldi-step:::planned
+  minres:::planned --> plane-rotation-stream:::planned
+  eigenmode:::planned --> arnoldi-step:::planned
+  eigenmode:::planned --> plane-rotation-stream:::planned
+  bicgstab:::planned --> residual-update:::planned
+  jacobi:::planned --> diagonal-preconditioner-apply:::planned
+  jacobi:::planned --> polynomial-recurrence-step:::planned
+  ilu:::planned --> sparse-triangular-solve:::planned
+  gauss-seidel:::planned --> sparse-triangular-solve:::planned
+  ams:::planned --> sparse-triangular-solve:::planned
+  ams:::planned --> diagonal-preconditioner-apply:::planned
+  multigrid-v-cycle:::planned --> restart-machinery:::planned
+
+  %% Existing concepts that intermediates reuse (already on disk):
+  apply_linop
+  axpy
+  dot
+  nrm2
+  scal
+  givens
+  trsv
+  elementwise-product
+  orthogonalization
+  incremental-least-squares
+  state-stratification
+  solve-monad
+
+  classDef planned stroke-dasharray: 5 5,stroke:#888,fill:#fafafa;
+```
 
 ## L1 — mutation-lifted primitives
 
