@@ -107,6 +107,18 @@ bstructions, not lifts.)
 
 ## L4 — formal calculus terms
 
+```mermaid
+graph BT
+  solve-monad --> state-stratification
+  solve-monad --> constructed-operators
+  solve-monad --> sequential-obstruction
+  gmres-L4 --> state-stratification
+  gmres-L4 --> solve-monad
+  gmres-L4 --> constructed-operators
+  gmres-L4 --> variant-absorption
+  gmres-L4 --> sequential-obstruction
+```
+
 The L4 calculus has its own design artifact at [`book/src/design/l4_calculus.md`](../design/l4_calculus.md). L4 concepts (grammar productions, reduction rules, ownership categories) are not currently tracked here — the calculus is a single document with its own internal structure. If L4 grows to need cross-cycle concept tracking, add a section here at that time.
 
 ## Maintenance protocol

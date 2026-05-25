@@ -37,6 +37,8 @@
   - [ksp_solve](./concepts/ksp_solve.md)
   - [tensor-field-lift](./concepts/tensor-field-lift.md)
   - [sequential-obstruction](./concepts/sequential-obstruction.md)
+  - [state-stratification](./concepts/state-stratification.md)
+  - [solve-monad](./concepts/solve-monad.md)
 
 # Design Artifacts
 

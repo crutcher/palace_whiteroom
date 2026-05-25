@@ -320,3 +320,149 @@ The field-side work (step 1, step 2) is fully global / tensor-field; the LS-side
 - The L3 form of `orthogonalize` for `gs_orthog == MGS` is itself a sequential obstruction (per-`k` `dot`+`axpy` chain). This is internal to the `orthog` slice and is the natural place to record that obstruction; the GMRES slice's L1 dispatch contract is unaffected.
 - The CGS2 form (one CGS sweep, then a second corrective sweep) is two global batched operations in sequence; the second sweep's coefficients depend on the first sweep's output, so it does not collapse further. Also routed to `orthog`.
 - Whether the FGMRES `Z[k]` storage admits a streaming / out-of-core form at the field level (avoiding `O(max_dim · n)` memory) is a memory-layout concern below L3 and is not pursued here.
+
+## L4 — calculus form
+
+The L3 form distinguished field-side state (`x`, `b`, `V[k]`, `Z[k]`) from small-dense LS-side state (`H`, `s`, `cs`, `sn`, `y`), and recorded `ls_update_column` / `back_solve` as sequential obstructions on dense O(j) state. L4 makes that distinction structural: sim state, operator internal params, and ephemeral per-cycle Krylov state are typed separately, and the inner solve threads the Krylov bundle monadically. The form is code-like-but-not-runnable; it pins the calculus contract the implementation must respect.
+
+See [concept: state-stratification](../../concepts/state-stratification.md) and [concept: solve-monad](../../concepts/solve-monad.md) for the cross-cutting forms.
+
+### State stratification
+
+```ts
+// SimState — externally-visible, persists across the Mult call.
+type SimState = {
+  readonly x: Vec;            // current iterate (field)
+  readonly it: int;           // total inner iterations consumed
+  readonly converged: bool;
+  readonly final_res: real;   // last computed residual proxy β
+  readonly initial_res: real; // β set on first restart cycle (rel-tol scale)
+}
+
+// OpParams — fixed across a single Mult call. Includes the constructed operator.
+type OpParams = {
+  readonly A: LinOp;
+  readonly M: LinOp | null;          // fixed preconditioner; null for FGMRES
+  readonly Mk: (step: int) => LinOp; // per-step preconditioner; only used when flexible
+  readonly pc_side: 'LEFT' | 'RIGHT' | 'NONE';
+  readonly gs_orthog: 'MGS' | 'CGS' | 'CGS2';
+  readonly max_dim: int;
+  readonly max_it: int;
+  readonly rel_tol: real;
+  readonly abs_tol: real;
+  readonly initial_guess: bool;
+  readonly flexible: bool;            // true ⇒ FGMRES; forces pc_side = RIGHT
+}
+
+// Krylov — ephemeral, reborn at each restart, discarded at return.
+// Field-side: V, Z. LS-side: H, s, cs, sn — small dense, NOT field state.
+type Krylov = {
+  V: Vec[];                  // orthonormal field basis, length j+2 at step j
+  Z: Vec[] | null;           // preconditioned field basis (FGMRES only)
+  H: Dense;                  // upper-Hessenberg, small dense (max_dim+1)×max_dim
+  s: DenseVec;               // LS RHS, length max_dim+1
+  cs: DenseVec; sn: DenseVec; // rotation registers, length max_dim
+  j: int;                    // current Arnoldi index
+  beta: real;                // current LS residual proxy = |s[j+1]|
+}
+```
+
+The `readonly` markers on `SimState` and `OpParams` are load-bearing: the solve produces a new `SimState` value rather than mutating in place; `OpParams` is captured once and never re-read for variant dispatch outside the constructed-operator helpers `initial_residual`, `apply_BA`, `apply_correction`. `Krylov` is mutable internally but does not escape the solve.
+
+### Constructed-operator interface
+
+Variant absorption per [concept: variant-absorption](../../concepts/variant-absorption.md) is realised at L4 as a small set of operator-internal helpers that close over `OpParams`. The main solve never inspects `pc_side`, `gs_orthog`, or `flexible`.
+
+```
+initial_residual : OpParams → Vec → Vec → (Vec, Vec)         -- (r, x') ; honours initial_guess and pc_side
+apply_BA         : OpParams → int → Vec → (Vec, Vec | ⊥)     -- (w, z) ; step index lets Mk vary in FGMRES
+orthogonalize    : OpParams → Vec[] → Vec → (Vec, DenseVec)  -- (v_next_unit, h_col)
+ls_update_column : Krylov → DenseVec → Krylov                -- pure on small-dense state
+back_solve       : Krylov → DenseVec                          -- pure on small-dense state
+apply_correction : OpParams → Krylov → DenseVec → Vec → Vec  -- closes over the right basis (V or Z)
+```
+
+### Monadic coordination
+
+The solve coordinates `SimState` evolution and `Krylov` lifecycle via a state monad over `(SimState, Krylov | ⊥)`. The Krylov bundle is born at restart, threaded through the inner step, and discarded at restart or return — it does not appear in `SimState`. See [concept: solve-monad](../../concepts/solve-monad.md).
+
+```haskell
+-- The Solve monad threads SimState; Krylov lives within a single restart_cycle.
+type Solve a = StateT SimState Identity a
+
+gmres_solve :: OpParams -> Vec -> Vec -> SimState
+gmres_solve op b x0 = execState (solve_loop op b) (SimState x0 0 False ∞ ⊥)
+
+solve_loop :: OpParams -> Vec -> Solve ()
+solve_loop op b = do
+  done <- restart_cycle op b
+  unless done $ solve_loop op b
+
+-- One restart cycle: build a fresh Krylov, run the inner loop, fold the correction
+-- back into SimState.x. Returns True if the outer loop should terminate.
+restart_cycle :: OpParams -> Vec -> Solve Bool
+restart_cycle op b = do
+  s <- get
+  let (r0, x') = initial_residual op b s.x
+      β        = nrm2 r0
+  s' <- if isUnset s.initial_res
+           then let ε0 = if op.initial_guess
+                           then (if op.pc_side == LEFT then nrm2 (op.M · b) else nrm2 b)
+                           else β
+                in pure s{ x = x', initial_res = ε0 }
+           else pure s{ x = x' }
+  put s'
+  let ε = max (op.rel_tol * s'.initial_res) op.abs_tol
+  if β < ε
+    then do modify $ \s -> s{ converged = True, final_res = β }; pure True
+    else do
+      let K0 = fresh_krylov op β r0   -- V[0] = r0/β, s[0] = β, j=0, Z if flexible
+      (K, hit_limit) <- inner_loop op ε K0
+      let y  = back_solve K
+      modify $ \s -> s{ x = apply_correction op K y s.x, final_res = K.beta }
+      s'' <- get
+      pure (s''.converged || s''.it == op.max_it || hit_limit_converged hit_limit s''.final_res ε)
+
+-- Inner Arnoldi loop: pure on Krylov, increments SimState.it via the monad.
+-- Returns the final Krylov and a tag for why it stopped (converged | max_dim | max_it).
+inner_loop :: OpParams -> real -> Krylov -> Solve (Krylov, StopTag)
+inner_loop op ε K = do
+  let (w, z)         = apply_BA op K.j K.V[K.j]
+      K1             = if op.flexible then K{ Z = K.Z `with` (K.j, z) } else K
+      (v_next, h)    = orthogonalize op (K1.V[0..K1.j]) w
+      h'             = h `with` (K1.j+1, nrm2_used_internally)   -- nrm2 + scal happen inside orthogonalize
+      K2             = K1{ V = K1.V `with` (K1.j+1, v_next) }
+      K3             = ls_update_column K2 h'
+  modify $ \s -> s{ it = s.it + 1 }
+  s <- get
+  let stop | K3.beta < ε              = Converged
+           | K3.j + 1 == op.max_dim   = HitMaxDim
+           | s.it    == op.max_it     = HitMaxIt
+           | otherwise                = KeepGoing
+  case stop of
+    KeepGoing -> inner_loop op ε K3{ j = K3.j + 1 }
+    tag       -> pure (K3, tag)
+```
+
+The `do`-blocks mark the points where `SimState` is read or written; everywhere else the code is pure on `OpParams` and `Krylov`. The inner loop's only `SimState` interaction is the `it`-counter increment — the iterate `x` is updated exactly once per restart cycle, after `back_solve`. This is the structural realisation of the L1 / L2 / L3 claim that the inner loop does not touch field state on `x` until correction time.
+
+### Sequential-obstruction placement
+
+The small-dense recurrences identified at L3 — `ls_update_column` and `back_solve` — appear in the calculus as pure functions on `Krylov` (which is small-dense on the LS side). They are NOT lifted to a tensor-field operation; the L4 form simply types them as `Krylov → Krylov` and `Krylov → DenseVec` respectively. The calculus reflects the obstruction by *not* hiding it: there is no monadic effect, no field-level operator, no parallel reduction; the sequential nature is visible as a plain functional recurrence on small-dense state. See [concept: sequential-obstruction](../../concepts/sequential-obstruction.md).
+
+### FGMRES variant
+
+FGMRES is the same `gmres_solve` with `op.flexible = true`, `op.pc_side = RIGHT`, and `op.Mk` supplying the per-step preconditioner. The `apply_BA` constructed operator threads `z = Mk(j) · v` into `K.Z[j]`; `apply_correction` closes over `K.Z` instead of `K.V`. No control flow in `solve_loop` / `restart_cycle` / `inner_loop` is conditioned on `flexible` — the variant is fully absorbed in the constructed-operator helpers, preserving the variant-absorption invariant at L4.
+
+### Citations
+
+- The `SimState` / `OpParams` / `Krylov` split mirrors the L1 state schema (this slice, §L1) and the L0 class layout (L0.1, L0.2, L0.8, L0.9).
+- The monadic outer/inner structure mirrors L0.10–L0.13 (`GmresSolver::Mult` and `FgmresSolver::Mult` bodies).
+- The constructed-operator interface is the L4 realisation of the L1 building-block contract; see also [concept: constructed-operators](../../concepts/constructed-operators.md).
+- The sequential-obstruction typing of `ls_update_column` / `back_solve` follows the L3 obstruction record (this slice, §L3).
+
+### Open questions (L4-specific)
+
+- The exact form of `nrm2_used_internally` in the inner loop sketch — whether `orthogonalize` returns the normaliser as part of `h_col` or as a side value — is a calculus-presentation choice; the L1 form already pins that `h[j+1]` is the norm and `v[j+1]` is the post-normalisation unit vector. Both encodings are equivalent.
+- The `StopTag` / `hit_limit_converged` plumbing in `restart_cycle` is over-articulated above; a tighter form folds the stop reason directly into `SimState` flags. The expanded form is kept here to make the three distinct termination paths (converged, max_dim restart, max_it terminal) visible.
+- The `Mk : int → LinOp` field models FGMRES's per-step preconditioner abstractly; in the implementation `M` is mutated externally between calls to `apply_BA`. Whether the L4 calculus draft prefers explicit step indexing or a side-effecting `M` will need to align with the cross-slice [L4 calculus draft](../../design/l4_calculus.md) — currently the explicit-indexing form is more faithful to the mathematical FGMRES contract.

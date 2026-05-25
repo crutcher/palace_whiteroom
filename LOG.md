@@ -29,6 +29,12 @@ New entries are **prepended** immediately below the `---` separator, above prior
 
 ---
 
+## 2026-05-25 cycle-31 — forward gmres [L3→L4] — pass
+
+- Synthesis: GMRES L3→L4: typed state stratification (SimState / OpParams / Krylov), monadic outer/inner coordination over SimState with Krylov as let-bound bundle, constructed-operator helpers absorb pc_side/gs_orthog/flexible by typing, sequential obstructions appear as pure functions on small-dense state. Extracted concepts: state-stratification, solve-monad.
+- Verdict: pass.
+- Friction: file_edit rejected (old_string not found in book/src/spec/index.md): '| [gmres](./slices/gmres.md) | L3 | 2026-05-25 | GMRES + FGMRES; L3 lifts field-'; bookkeeping_incomplete: 8 substantive writes landed; only bookkeeping (index/TOC) write(s) failed. Verdict held pass per meta-9 item 2; next cycle on this slice should re-attempt the bookkeeping update..
+- Structural change: none.
 ## 2026-05-25 meta-review (cycles 25–30) — enacted
 
 - Window: 6 cycles (first under depth-6 cadence). **GMRES reached L3** (cycle 30): outer-loop sequential obstruction (negative L3 per Phase 6 charter), per-step body positive lift via support-operator template. SIDEWAYS dispatch contract from meta-8 worked (comparison_slices populated). But 4 of 6 cycles auto-downgraded — every downgrade was a *bookkeeping-only* failure (substantive content landed; spec/index.md row update failed). The downgrade rule was conflating two distinct failure categories.
