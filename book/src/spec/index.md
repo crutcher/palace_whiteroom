@@ -12,7 +12,7 @@ This index is maintained by the Synthesizer after every push. It is the **first 
 | [GMRES](./slices/gmres.md) | L4 | 2026-05-25 | L0/L1/L2/L3/L4 complete; L4 stratifies SimState/OpParams/Krylov, threads the solve monadically with Outcome-typed termination, absorbs convergence policy as a constructed-operator surface, types LS recurrences as pure on small-dense state per L3 obstruction. Open: orthog slice for MGS sequential form; Mk indexing vs. side-effecting M alignment with L4 calculus draft. |
 | [Orthogonalisation](./slices/orthog.md) | L3 | 2026-05-25 | L0/L1/L2/L3 landed. CGS and CGS2 unify at L3 as the projector form (w ← w − V Vᴴ w, with H = Vᴴ w retained); MGS recorded as a sequential-obstruction sibling with no global form. Tracks Saad 2003 ch. 6.3; structural analogue to Gauss-Seidel and triangular-solve obstructions. |
 | [Divergence-free projection](./slices/divfree.md) | L3 | 2026-05-25 | L3 tensor-field form: P = y + Grad·K⁻¹(Z_bdr·WeakDiv·y). Four global ops, no per-element loop. Sequential obstruction confined to ksp_solve interior (cg slice). |
-| [chebyshev](./slices/chebyshev.md) | L2 | 2026-05-25 | L2 primitive composition on disk; Richardson-like apply unfolds to copy / zero / apply_linop / axpy / elementwise_product / scal. Variant absorption preserved at the primitive-sequence axis (4th-kind closed-form vs. 1st-kind ρ_k recurrence differ only inside `scalars(op,k)`). L1→L2 rotation_claims emitted retroactively this cycle. |
+| [chebyshev](./slices/chebyshev.md) | L3 | 2026-05-25 | L3 lifts the inner-step body to a global tensor-field expression; inner `k` recurrence and outer `pc_it` sweep recorded as sequential obstructions with cited rationale (Phillips & Fischer 2022 §2). |
 
 ## Slice conventions
 

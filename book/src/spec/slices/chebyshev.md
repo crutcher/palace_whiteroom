@@ -228,3 +228,61 @@ Real vs. complex differs only at the primitive level: `axpy`, `scal`, `elementwi
 ### Open questions deferred to L3
 
 - Whether the per-sweep loop body admits a global tensor-field form. The residual update `r ← r - A·d` and direction update `d ← sd·d + sr·dinv·r` are point-local once `A·d` is computed; the recurrence in `k` is sequential by construction (each iterate depends on the previous direction), so L3 will likely be a **partial obstruction**: the body is a tensor-field expression, but the `k`-recurrence is not global. Documented for the L2→L3 rotation.
+
+## L3 — tensor-field form (partial obstruction)
+
+The L2 procedure is a `pc_it`-times outer Richardson sweep wrapping a degree-`order` polynomial recurrence in `k`. Both the outer `pc_it` loop and the inner `k` loop are sequential by construction. We lift the **body** to a global tensor-field expression and record the **loop structure** as an obstruction.
+
+### Tensor-field body (per inner step `k`)
+
+Fix the inner-step body that runs once for each `k ∈ {1, …, order-1}`. With $A \in \mathbb{R}^{n \times n}$ SPD, $D^{-1} = \operatorname{diag}(\text{dinv}) \in \mathbb{R}^{n \times n}$, and the three carried fields $r_k, d_k, y_k \in \mathbb{R}^n$, the body is the simultaneous global update
+
+$$
+\begin{aligned}
+y_{k+1} &= y_k + d_k, \\
+r_{k+1} &= r_k - A\, d_k, \\
+d_{k+1} &= \sigma_k^{\mathrm{d}}\, d_k + \sigma_k^{\mathrm{r}}\, D^{-1} r_{k+1},
+\end{aligned}
+$$
+
+with scalar coefficients $(\sigma_k^{\mathrm{d}}, \sigma_k^{\mathrm{r}}) = (\text{sd}_k, \text{sr}_k)$ from the L2 `scalars(op, k)` generator. Each line is a fully global field expression — `axpy`, `apply_linop(A, ·)`, and `elementwise_product(dinv, ·)` are all defined as global tensor-field operations (see [`apply_linop`](../../concepts/apply_linop.md), [`axpy`](../../concepts/axpy.md), [`elementwise-product`](../../concepts/elementwise-product.md)). There is no per-element dependence within a line; the body **lifts cleanly**.
+
+Similarly, the L2 *initial-direction* step
+$$d_0 = \alpha_0\, D^{-1} r_0, \qquad r_0 = x - A y_{\mathrm{in}} \;\text{ (or } x \text{ when no initial guess)}$$
+is a single global field expression, and the *final accumulation* $y_{\text{order}} = y_{\text{order}-1} + d_{\text{order}-1}$ is global.
+
+### Sequential obstruction in `k`
+
+The map $(r_k, d_k, y_k) \mapsto (r_{k+1}, d_{k+1}, y_{k+1})$ is genuinely sequential: $d_{k+1}$ depends on $r_{k+1}$, which depends on $d_k$. The order-`order` polynomial $p_{\text{order}}(D^{-1} A)$ admits a closed-form coefficient expansion, so a *symbolic* global form
+
+$$y_{\mathrm{out}} = y_{\mathrm{in}} + p_{\text{order}}(D^{-1} A)\, r_0$$
+
+exists; but evaluating the polynomial as a matrix-free action on $r_0$ in practice **re-derives** the same three-term recurrence (Horner / Clenshaw form). Replacing the recurrence with an explicit sum of monomials $\sum_{j=0}^{\text{order}-1} c_j (D^{-1} A)^{j+1} r_0$ is numerically unstable for the operative `order` range (Phillips & Fischer 2022 §2 motivates the recurrence form specifically for this reason). The sequentiality is **fundamental to the smoother's numerical behavior**, not an artifact of the implementation.
+
+This is a [sequential obstruction](../../concepts/sequential-obstruction.md) at L3 in the inner `k` loop. See also [`tensor-field-lift`](../../concepts/tensor-field-lift.md) — the body lifts, the recurrence does not.
+
+### Sequential obstruction in `pc_it`
+
+The outer `for it in 1 .. pc_it` loop is also sequential — each Richardson sweep consumes the previous sweep's accumulated `y`. The composition $y_{\text{out}} = (I - p_{\text{order}}(D^{-1} A) (I - A \cdot))^{\text{pc\_it}} y_{\text{in}} + (\text{terms in } x)$ is the closed-form global statement, but evaluating it requires iterating the sweep — again, no parallelism in `it` is exposed. Standard outer-iteration sequentiality.
+
+### What lifts vs. what does not
+
+| Element                                         | L3 status                                          |
+|-------------------------------------------------|----------------------------------------------------|
+| Single inner-step body (the three assignments)  | Lifts to a global tensor-field expression.         |
+| Initial direction $d_0 = \alpha_0 D^{-1} r_0$  | Lifts.                                             |
+| Final accumulation $y \mathrel{+}= d$           | Lifts.                                             |
+| Inner loop `k = 1 .. order-1`                  | **Obstructed** — sequential three-term recurrence. |
+| Outer loop `it = 1 .. pc_it`                   | **Obstructed** — Richardson sweep sequentiality.   |
+| Variant branching (4th- vs. 1st-kind)           | Lifts trivially — scalars are pure functions of $k$ (and of $\rho_{k-1}$ for 1st-kind, itself sequential in $k$ but $O(1)$ work per step). |
+
+The L3 form is therefore a **partial obstruction**: the body is expressed as global field arithmetic, and the loop structure is recorded as a witnessed sequential obstruction with a cited reason for non-removability (Phillips & Fischer 2022 §2 — recurrence form chosen for numerical stability over explicit polynomial expansion).
+
+### Scalar-recurrence side note (1st-kind)
+
+The 1st-kind variant carries a scalar $\rho_k$ across `k` via $\rho_k = 1/(2\theta/\delta - \rho_{k-1})$. This is a scalar (length-1) sequential update — trivially "sequential" but $O(1)$ memory and arithmetic, and not part of the tensor-field state. It rides alongside the field recurrence as a coefficient generator; it does not affect the tensor-field lift status of the body.
+
+### Concept references added at L3
+
+- [`sequential-obstruction`](../../concepts/sequential-obstruction.md) — the classification used for both the `k` and `pc_it` loops.
+- [`tensor-field-lift`](../../concepts/tensor-field-lift.md) — body-lifts-but-loop-doesn't is the canonical partial case.

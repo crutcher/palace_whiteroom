@@ -119,6 +119,11 @@ graph BT
   orthog --> tensor-field-lift
   orthog --> gemv_basis
   orthog --> apply_linop
+  chebyshev --> tensor-field-lift
+  chebyshev --> sequential-obstruction
+  chebyshev --> apply_linop
+  chebyshev --> axpy
+  chebyshev --> elementwise-product
 ```
 
 Whole-tensor operations replacing per-element iteration; or `obstruction` results documenting genuine sequentiality.
