@@ -186,6 +186,12 @@ graph BT
   chebyshev --> constructed-operators
   chebyshev --> variant-absorption
   ksp_solve --> constructed-operators
+  arnoldi_step --> apply_linop
+  arnoldi_step --> orthog
+  arnoldi_step --> nrm2
+  arnoldi_step --> scal
+  arnoldi_step --> constructed-operators
+  arnoldi_step --> variant-absorption
 ```
 
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.

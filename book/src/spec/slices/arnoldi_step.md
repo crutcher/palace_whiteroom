@@ -106,3 +106,60 @@ The procedure mentions the variant tag `gs_orthog` exactly once, at the orthogon
 - The post-Arnoldi small-dense Givens-QR triangularisation has been recorded across prior cycles as a distinct sequential obstruction. Currently this slice excludes it (it belongs to the GMRES outer loop's incremental-least-squares concept). Should it instead be folded in here as a logical third phase? Current call: keep separate — the Arnoldi step is the field-side / boundary kernel; the small-dense update is consumed elsewhere.
 - The eigensolver path (SLEPc Krylov-Schur, ARPACK) provides an external Arnoldi implementation reached via a constructed-operator binding at configure time. Scoped out of this slice; tracked under [eigensolver](./eigensolver.md).
 - No unit test exercises `OrthogonalizeIteration` or the Arnoldi step in isolation; integration is via end-to-end examples only. Flagged as a tooling gap (low priority).
+
+## L2 — primitive composition
+
+The L1 procedure unfolds into four named primitive invocations. Three are field-side (MPI-collective vectors over the global DoF space); one is dispatch over the [orthog](./orthog.md) variant, itself a small composition of field-side primitives plus a residual choice.
+
+```
+arnoldi_step_L2(V, j, T, gs_orthog) -> (V[j+1], H[:,j]):
+  apply_BA       :  w        ← apply_linop(T, V[j])
+  orthogonalize  :  H[0..j]  ← orthogonalize(gs_orthog, comm, V[0..j], w)   -- mutates w in place
+  subdiag_norm   :  H[j+1,j] ← nrm2(comm, w)
+  normalize      :  scal(1 / H[j+1,j], w)                                    -- w aliases V[j+1]
+```
+
+The four building blocks correspond to four L0 lines and four distinct concept entries:
+
+### apply_BA
+
+The operator apply `w ← T(V[j])` is the constructed-operator surface [apply_BA](./gmres/apply_BA.md). At L2 it reads as a single uniform call `apply_linop(T, V[j])` regardless of preconditioner side (`LEFT`, `RIGHT`, `NONE`) — the `pc_side` variant is internalised at solve setup per [constructed-operators](../concepts/constructed-operators.md) and does not appear in the per-step composition. The output `w` is a fresh DoF-space vector aliased to the buffer that will become `V[j+1]` after the remaining three primitives. See [apply_linop](../concepts/apply_linop.md).
+
+FGMRES additionally retains the per-step preconditioned column `Z[j]` from this apply as threaded state; the Arnoldi-step composition at L2 is unchanged, but the GMRES outer loop tees off `Z[j]` here. The teeing-off is a write to a separate buffer, not a transformation of `w`, so it does not alter the four-primitive shape.
+
+### orthogonalize
+
+The projection `H[0..j] ← project(w, V[0..j]; gs_orthog)` with in-place subtraction `w ← w − Σ H[i,j]·V[i]` unfolds into the [orthog](./orthog.md) slice, which is itself a composition of [dot](../concepts/dot.md) and [axpy](../concepts/axpy.md) (plus a batched [gemv_basis](../concepts/gemv_basis.md) call for CGS/CGS2 to amortise the MPI allreduce). The residual variant axis `gs_orthog ∈ {MGS, CGS, CGS2}` is bound at solve setup and dispatched here exactly once; the L2 composition for the Arnoldi step itself is variant-independent — only the unfolding of `orthogonalize` into its inner primitive chain differs. See [orthog](./orthog.md) §L2 for the inner unfolding and [variant-absorption](../concepts/variant-absorption.md) level (b) for the dispatch-once discipline.
+
+The procedure both reads `V[0..j]` and writes the j-th column of `H` (an accumulator-style write into the small-dense Hessenberg buffer) and mutates `w` in place. The Hessenberg write `H[0..j]` is a small-dense scalar accumulation; the global-vector mutation `w` is the load-bearing field-side work.
+
+### subdiag_norm
+
+The subdiagonal entry `H[j+1,j] = ‖w‖₂` is the [nrm2](../concepts/nrm2.md) primitive over the post-orthogonalisation residual, with one MPI allreduce. It is a pure read on `w` — no mutation — producing a single scalar written into the Hessenberg column. Breakdown detection at L1 reads off this scalar (`H[j+1,j] = 0` ⇒ `T`-invariant subspace).
+
+### normalize
+
+The final `w ← w / H[j+1,j]` is in-place [scal](../concepts/scal.md) with reciprocal scalar. Because `w` and `V[j+1]` alias the same buffer (the basis array entry was the destination of `apply_BA`), this primitive is also the act of installing the new basis column. No `copy` is needed.
+
+### Composition shape
+
+The four primitives have no internal data dependency cycle:
+
+- `apply_BA` produces `w` from `V[j]` and the constructed operator.
+- `orthogonalize` reads `V[0..j]` and `w`, writes `H[0..j]`, mutates `w`.
+- `subdiag_norm` reads `w`, writes `H[j+1,j]`.
+- `normalize` reads `H[j+1,j]`, mutates `w`.
+
+The sequential chain `apply_BA → orthogonalize → subdiag_norm → normalize` is forced by these dataflow edges: `orthogonalize` needs `w` after apply; `subdiag_norm` needs `w` after orthogonalisation; `normalize` needs the scalar from `subdiag_norm`. No reordering is possible without changing semantics. The chain shape is invariant across `gs_orthog` and `pc_side` — both variants are absorbed at the primitive boundary (`orthogonalize` and `apply_linop` respectively).
+
+The small-dense Hessenberg-column triangularisation (replay Givens 1..j, generate new rotation, apply to `H[:,j]` and the residual-norm vector) is **not** part of this composition — it is consumed by the GMRES outer loop's [incremental-least-squares](../concepts/incremental-least-squares.md) update, deliberately scoped out per the slice's L1 statement.
+
+### Mutation legibility
+
+Per mutation-pseudocode discipline, the in-place writes are visible in the primitive names:
+
+- `orthogonalize(..., w)` — `w` is the accumulator-mutation argument (signature of [orthog](./orthog.md) makes this explicit).
+- `scal(α, w)` — in-place by definition of [scal](../concepts/scal.md).
+- `apply_linop(T, V[j])` — pure functional form returning a fresh `w` (the buffer pre-allocation is an L0 storage detail, invisible at L2).
+
+No silently-aliasing assignment appears; the four-line composition is unambiguous about which buffers are mutated and which are read.
