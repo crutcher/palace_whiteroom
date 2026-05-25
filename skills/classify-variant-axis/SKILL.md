@@ -28,31 +28,54 @@ The right path is determined by *which absorption level the variant fails*:
 
 Avoid silent partial absorption: if level (c) breaks and you don't disclose the residual axis, the L1 form is misrepresenting the algorithm.
 
-## Output contract (refined meta-12 item 2)
+## Output contract (refined meta-12 item 2; sharpened meta-14 item 2)
 
 When the L0 source exposes **≥2 variant axes** (or ≥2 values on a single
 axis), the slice MUST include a `## Variant axes` block in the L1
-section (or L2 if the divergence first surfaces there) enumerating each
-axis with its absorption path:
+section (or L2 if the divergence first surfaces there). For each axis,
+enumerate per-axis-value:
+
+1. The absorption path: `constructed-operator` / `parametric` / `residual-axis` / `scope-out`.
+2. **WHICH primitive carries the load-bearing variant-conditional behavior** (the primitive that differs across values; named explicitly).
+3. **WHICH state fields the setup binds** (variant-conditional state, per axis-value, named).
+
+Generic placeholders fail the contract:
+
+- ❌ "scalars closure captures variant" — does not name primitive or state.
+- ❌ "one polymorphic function over V" — does not name the primitive lift.
+- ❌ "constructed-operator absorbs variant" alone — does not enumerate state binding.
+
+Correct form (block-diagonal lift from cycle 59 divfree):
 
 ```markdown
 ## Variant axes
 
-- `<axis_name>` ∈ { <v_a>, <v_b>, ... }: <constructed-operator (via <op_name>) | parametric (scalar `<param>`) | residual-axis (primitive-sequence diverges; see L2 §<sect>) | scoped out (sibling slice `<slice>`)>
+- `scalar_type` ∈ {`Vector`, `ComplexVector`}: parametric (load-bearing primitive: `kspSolve`)
+  - `Vector`: `kspSolve_real(L, b, x)` operates on real vectors directly.
+  - `ComplexVector`: `kspSolve_complex(L, b, x) = block_diag(kspSolve_real ∘ Re, kspSolve_real ∘ Im)` — the polymorphic instance is the block-diagonal lift of the real solve. Setup binds the real solver instance and the complex view-pair into the closure.
+  - State binding: both share `(L, M, tol, maxiter)`; complex additionally captures `(view_real, view_imag)`.
 ```
 
-The slice's L1 state schema and procedure must be consistent with this
-classification — variant-conditional state fields named, dispatch points
-enumerated, scoped-out values noted.
+Or for orthogonalization (cycle 23):
 
-Critic check #9 (variant absorption) verifies the block is present
-when the L0 source has visible axis variability. Single-variant slices
-do NOT need the block; check #9 doesn't fire.
+```markdown
+## Variant axes
 
-The block format makes skill uptake measurable: a cycle that touches a
-multi-variant L0 source should produce a `## Variant axes` block. Absence
-is the signal that classification was skipped (silent partial
-absorption).
+- `gs_orthog` ∈ {`MGS`, `CGS`, `CGS2`}: residual-axis (primitive-sequence diverges; see L2 §collective-shape)
+  - `MGS`: sequential `[dot, axpy] × m` — load-bearing primitive: per-step `dot` + `axpy` with sync-per-step.
+  - `CGS`: batched `[dot × m, allreduce_sum, gemv_basis]` — load-bearing primitive: `gemv_basis` (rank-1 fused).
+  - `CGS2`: `[CGS chain] × 2 + [axpy_scalar]` — load-bearing primitive: refinement re-entry with stability threshold scalar.
+  - State binding: shared `V[0..j]` basis; CGS2 additionally captures `refine_threshold` scalar in setup.
+```
+
+The slice's L1 state schema and procedure must be consistent — each
+named state binding appears in the state types; each named primitive
+appears in the procedure.
+
+Critic check #9 verifies the block is present when L0 source has
+visible axis variability; check #11 verifies the named state bindings
+appear in the L1 state schema. Single-variant slices do NOT need
+the block; check #9 doesn't fire.
 
 ## Cross-references
 

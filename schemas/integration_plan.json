@@ -29,7 +29,12 @@
     "plan_kind": {
       "type": "string",
       "enum": ["new_content", "retroactive_claims", "tightening", "back_correction"],
-      "description": "Optional. The kind of work this cycle does. Default `new_content`. Added meta-10 item 2 after cycle 36 produced a 0-substantive-writes pass that the Meta-Critic couldn't distinguish from a no-op. Values: `new_content` = produces new slice/concept content on disk; `retroactive_claims` = emits rotation_claims for content that already exists on disk; `tightening` = revises an existing layer's content for internal correctness (no layer advancement); `back_correction` = restructures a lower layer in response to a push-back signal."
+      "description": "Optional. The kind of work this cycle does. Default `new_content`. Added meta-10 item 2 after cycle 36 produced a 0-substantive-writes pass that the Meta-Critic couldn't distinguish from a no-op. Tightened meta-13: retroactive_claims is RESERVED for cycles whose ONLY writes are rotation_claims/lessons/dep-map-edges (no slice creates or layer-section appends). Values: `new_content` = produces new slice/concept content on disk; `retroactive_claims` = emits rotation_claims for content that already exists on disk; `tightening` = revises an existing layer's content for internal correctness (no layer advancement); `back_correction` = restructures a lower layer in response to a push-back signal."
+    },
+    "retroactive_against_cycle": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Optional. When plan_kind=retroactive_claims, the cycle_id whose on-disk content is being claimed against. Added meta-14 item 3 to make legitimate backfills auditable from episodic alone (Meta-Critic can verify cycle N+k retroactive_claims actually point at on-disk content from cycle N). If the prose has accumulated over multiple cycles, name the most recent landing cycle."
     },
     "slice_index_updates": {
       "type": "array",

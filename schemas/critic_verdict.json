@@ -45,7 +45,7 @@
         "type": "object",
         "required": ["check", "outcome"],
         "properties": {
-          "check": { "type": "integer", "minimum": 1, "maximum": 13, "description": "Which numbered check from the Critic prompt was considered. 1: citation_does_not_support; 2: rotation_chain_breaks; 3: mutation_pattern_mismatch; 4: ownership_misclassified; 5: missing_case; 6: load_bearing_trick_classified_as_transparent; 7: test_consistency; 8: rotation_quality; 9: variant_absorption; 10: prose_rotation_alignment; 11: setup_state_schema_for_variant_absorption; 12: retroactive_claims_evidence (meta-11); 13: original_emission_claim_discipline (meta-12)." },
+          "check": { "type": "integer", "minimum": 1, "maximum": 14, "description": "Which numbered check from the Critic prompt was considered. 1: citation_does_not_support; 2: rotation_chain_breaks; 3: mutation_pattern_mismatch; 4: ownership_misclassified; 5: missing_case; 6: load_bearing_trick_classified_as_transparent; 7: test_consistency; 8: rotation_quality; 9: variant_absorption; 10: prose_rotation_alignment; 11: setup_state_schema_for_variant_absorption; 12: retroactive_claims_evidence (meta-11); 13: original_emission_claim_discipline (meta-12, meta-13); 14: rotation_claims_require_surface (meta-14)." },
           "outcome": { "enum": ["exercised", "trivially_carried", "not_applicable"], "description": "exercised = the check actually evaluated content; trivially_carried = the prior layer's resolution still holds; not_applicable = the check's preconditions don't apply to this slice." },
           "note": { "type": "string", "description": "Optional one-line note (e.g., 'pc_side absorbed via constructed-operator, single dispatch site verified')." }
         }

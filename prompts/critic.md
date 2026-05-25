@@ -95,6 +95,33 @@ verdict assembly and cross-cycle lesson extraction):
      `kind: labored_rotation_push_back_candidate`, with
      `push_back_suggestion` naming the specific prose terms to rewrite
      and the role-level replacement.
+ 14. ROTATION_CLAIMS REQUIRE SURFACE (added 2026-05-25 meta-review #14
+     after cycle 61 emitted L4 rotation_claims + dep-map edges + lessons
+     but no slice prose for L4 on disk — claims pointed at surface that
+     does not exist). Inverse of check #13 (which catches
+     content-without-claims).
+
+     For each rotation_claim targeting an edge `L_n → L_{n+1}` with
+     n+1 ≥ 1, verify that EITHER:
+
+     (a) The plan includes a `slice_writes mode=create` for the named
+         slice OR a `section_appends` whose heading matches the
+         `## L_{n+1}` section of the named slice, carrying the actual
+         L_{n+1} prose; OR
+
+     (b) `plan_kind = retroactive_claims` AND `log_synthesis` includes
+         a `retroactive_claim_evidence` block quoting existing on-disk
+         L_{n+1} prose for the named slice (per check #12).
+
+     If neither holds, the rotation_claim points at surface that does
+     not exist — verdict `revise`, kind: `citation_does_not_support`,
+     push_back_suggestion: "Either emit the L_{n+1} prose in this cycle
+     OR set plan_kind=retroactive_claims with quoted evidence."
+
+     Cycle 61 (chebyshev L3→L4) is the originating example: 4
+     rotation_claims for L3→L4, zero `## L4` section-appends, no
+     retroactive_claim_evidence — claims-without-surface.
+
  13. ORIGINAL-EMISSION CLAIM DISCIPLINE (added meta-12; strengthened
      meta-13). Two parts:
 

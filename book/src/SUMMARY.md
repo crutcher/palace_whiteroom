@@ -65,3 +65,4 @@
   - [2026-05-25 — eleventh meta-review (cycles 37–43) — first skill extraction](./meta-reviews/2026-05-25-cycles-37-43.md)
   - [2026-05-25 — twelfth meta-review (cycles 44–49)](./meta-reviews/2026-05-25-cycles-44-49.md)
   - [2026-05-25 — thirteenth meta-review (cycles 50–55)](./meta-reviews/2026-05-25-cycles-50-55.md)
+  - [2026-05-25 — fourteenth meta-review (cycles 56–61) — orthog at L4](./meta-reviews/2026-05-25-cycles-56-61.md)

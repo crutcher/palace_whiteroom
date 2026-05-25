@@ -252,6 +252,21 @@ on `spec/index.md` is reserved for non-row edits (headers,
 conventions); status-table row updates MUST use
 `slice_index_updates`.
 
+**rotation_claims require surface** (added meta-14 item 1, symmetric to
+check #13 from the other direction). Every rotation_claim targeting an
+edge `L_n → L_{n+1}` MUST be accompanied by ONE of:
+
+- A `slice_writes mode=create` or `section_appends` whose target
+  heading matches `## L_{n+1}` of the named slice — i.e., the L_{n+1}
+  prose lands in this cycle.
+- `plan_kind = retroactive_claims` PLUS a `log_synthesis.retroactive_claim_evidence`
+  block quoting the existing on-disk L_{n+1} prose for the slice.
+
+Plans that emit rotation_claims with no L_{n+1} surface (no same-cycle
+section_append AND no retroactive evidence) — typical pattern: emit
+dep-map edges + concept_writes + lessons but skip the slice prose —
+are flagged by Critic check #14 and downgraded.
+
 **Rotation-claim emission at content time** (added meta-12 item 1 after
 cycles 38-49 had 7+ retroactive_claims cycles emitting claims for
 content landed earlier). When a plan introduces new layer content —
@@ -318,7 +333,13 @@ Set the optional top-level `plan_kind` field on every plan to one of:
   `concept_writes mode=append-section` documenting prior structural
   work. **NOT permitted** when the plan has slice/concept creates or
   layer-section appends. When you set this, `log_synthesis.retroactive_claim_evidence`
-  MUST quote the on-disk prose each claim references.
+  MUST quote the on-disk prose each claim references, AND you MUST
+  set `retroactive_against_cycle` (top-level integer field, added
+  meta-14 item 3) to the cycle_id whose on-disk content the claims
+  reference. If the prose accumulated over multiple cycles, name the
+  most recent landing cycle. This links the backfill to its source
+  so the Meta-Critic can audit retroactive cycles against their
+  declared antecedents.
 - `tightening` — the plan revises an existing layer for internal
   correctness (no layer advancement). Typical of `L_n→L_n`
   self-rotations.
