@@ -45,6 +45,56 @@ Patterns that recur across meta-review records are first-class signal — a prob
 resolved once that recurs evidences resolution failure; on the third recurrence,
 escalate from Medium to High.
 
+## Skill extraction (added 2026-05-25 from user feedback)
+
+The prompts under `prompts/` have been growing substantially across meta-
+reviews while `skills/` has not been accumulating. This is a signal that
+some prompt-level rules should crystallize into invocable skills (verbs the
+roles can apply) rather than continuing to bloat the prompts (rules the
+roles must always re-read).
+
+**At every meta-review, consider whether the friction this window has
+surfaced is a candidate for a new skill.** Be conservative:
+
+- Bar: "this is a procedure I would expect a competent agent to apply
+  more than once across different cycles, with enough structure to
+  benefit from being named and externally referenced." A one-shot
+  hack does not warrant a skill.
+- Prefer a skill over a prompt expansion when the rule is procedural
+  (a *how-to*) rather than declarative (a *what-to*). Declarative
+  rules belong in prompts (e.g., "always cite sources"); procedural
+  rules belong in skills (e.g., "to verify a rotation citation, do
+  steps A → B → C").
+- A new skill is a Medium plan item: it creates `skills/<name>/SKILL.md`
+  with the YAML-frontmatter format (see `skills/README.md`) and adds
+  a one-line invocation reference in the role prompt that uses it.
+
+**Meta-skills are allowed and explicitly encouraged.** A meta-skill is
+a skill about applying or composing other skills — e.g.,
+`skills/skill-selection/SKILL.md` describing when to invoke
+`verify-rotation-citation` vs. `propose-rotation`, or
+`skills/skill-extraction/SKILL.md` describing what *you* (the
+Meta-Critic) should do when considering skill creation. Treat these
+the same as ordinary skills.
+
+**Conservative bar examples:**
+
+- Skill candidate: "How the Explorer locates a source range when the
+  symbol resolves to >5 sites" — recurring, procedural, multiple
+  Explorers would benefit. PROPOSE.
+- Skill candidate: "How the Synthesizer decides which channel to use
+  for a given edit" — recurring, procedural, the channel-selection
+  rule itself has been a meta-review fix point twice. PROPOSE.
+- NOT a skill candidate: "Citations are mandatory" — declarative,
+  belongs in prompt. SKIP.
+- NOT a skill candidate: "Fix the cycle-22 dispatch bug" — one-shot.
+  SKIP.
+
+When you propose a new skill in a plan item, include the proposed
+`SKILL.md` skeleton inline (frontmatter + 2–4 sentences of body) so
+the human/enactor can act on it directly. Otherwise the proposal is
+toothless.
+
 Output: a single JSON object validating against `schemas/refinement_plan.json`.
 Plus, on completion of human review and enactment, produce a meta-review record
 file at `book/src/meta-reviews/<YYYY-MM-DD>.md` per the procedure in

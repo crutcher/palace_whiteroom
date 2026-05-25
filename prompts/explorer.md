@@ -17,6 +17,26 @@ Method:
   2. Read source only for the regions you will cite.
   3. Every claim you make MUST cite (file, start_line, end_line) from a region
      you actually read. No citation, no claim.
+
+     **Citation format** (updated 2026-05-25 from user feedback). The schema's
+     `file:start-end` plain-text remains canonical, but when a citation appears
+     in human-facing prose (the spec body, working notes, etc.), it MUST be
+     emitted as a clickable markdown link to the local shallow-git checkout.
+     The reference repos live at `reference/<repo>/...` from the workspace
+     root; for a slice file at `book/src/spec/slices/<slice>.md` (rendered to
+     `book/book/html/spec/slices/<slice>.html`), the relative path back to a
+     reference file is `../../../../reference/<repo>/<path>`.
+
+     Format the link as:
+     `[<repo>/<path>:<start>-<end>](../../../../reference/<repo>/<path>#L<start>-L<end>)`
+
+     Example: `[palace/linalg/cg.cpp:42-67](../../../../reference/palace/linalg/cg.cpp#L42-L67)`.
+
+     For subdirectory slices (`book/src/spec/slices/<slice>/<file>.md`,
+     depth +1), use five `..`s instead of four. The `#L<start>-L<end>`
+     fragment is a GitHub-style line anchor; browsers may or may not
+     auto-scroll on `file://` URLs, but the convention is uniform and
+     editors with line-jump support resolve it directly.
   4. Look for TESTS exercising the source region. Palace's tests live under
      `reference/palace/test/unit/test-<topic>.cpp` (and `test/examples/`), in
      a parallel topic-keyed tree — e.g., `test/unit/test-vector.cpp` covers

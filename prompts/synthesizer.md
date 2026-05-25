@@ -394,6 +394,78 @@ A `git apply` failure on existing-file edits is a friction signal that
 gets recorded against the cycle. New-file emission should use
 `file_creates` (above) — that path avoids the failure mode entirely.
 
+### Citation format — clickable links (added 2026-05-25)
+
+Citations are clickable hyperlinks in the slice/concept prose, not bare
+symbolic strings. The schema's `(file, start_line, end_line)` JSON shape
+stays unchanged for rotation_claim records, but the prose body of the
+slice/concept SHOULD use markdown links:
+
+**Source citations** — reference to a region in a local shallow-git
+checkout under `reference/<repo>/<path>`. Format:
+
+```
+[<repo>/<path>:<start>-<end>](<rel-path>#L<start>-L<end>)
+```
+
+where `<rel-path>` is the relative path from the source markdown file
+to the reference file. Depths:
+
+- Slice at `book/src/spec/slices/<slice>.md` → `../../../../reference/<repo>/<path>` (4 `..`s).
+- Subdirectory-slice file at `book/src/spec/slices/<slice>/<file>.md` → `../../../../../reference/...` (5 `..`s).
+- Concept at `book/src/concepts/<name>.md` → `../../../reference/<repo>/<path>` (3 `..`s).
+
+Example (from a slice file):
+`[palace/linalg/cg.cpp:42-67](../../../../reference/palace/linalg/cg.cpp#L42-L67)`
+
+**In-book cross-references** — links to other pages in the mdbook (other
+slices, concepts, design docs). Standard markdown link with `.md`
+extension; mdbook resolves it. Examples:
+
+- From a slice to a concept: `[apply_linop concept](../../concepts/apply_linop.md)`
+- From a concept to a slice: `[gmres slice](../spec/slices/gmres.md)`
+- From a concept to another concept: `[rotation](./rotation.md)`
+
+Do NOT emit bare symbolic citations like `palace/linalg/cg.cpp:42-67` in
+prose — emit the link form. The bare form remains in JSON
+`rotation_claim` records (the schema field is symbolic). Backfill of
+existing bare citations is not required but is welcome when you touch a
+file for other reasons.
+
+### Background sections (added 2026-05-25)
+
+The material being dissected (Krylov methods, FE assembly, multigrid,
+operator-algebra preconditioners, …) is well-documented in standard
+references. When a slice introduces a concept whose textbook treatment
+helps orient the reader, include a short **`## Background`** section
+near the top of the slice (after `## Context`, before `## L0`) — at
+most a few paragraphs — that:
+
+- Names the standard formulation of the algorithm (the canonical
+  reference identifies the algorithm form: "Saad 2003 ch. 6.5
+  restarted GMRES", "Phillips & Fischer 2022 §3 4th-kind Chebyshev",
+  "Trottenberg/Oosterlee/Schüller 2001 §2 V-cycle").
+- Notes any deviations Palace takes from the textbook (e.g.,
+  scaled Givens, mixed-precision intermediates, specific
+  variant-axis defaults).
+- Provides 1–3 short textual citations of form `Author Year, chapter
+  or section` for the algorithm and key variants. Full external
+  hyperlinks are NOT required; the goal is orientation, not a
+  bibliography.
+
+This strengthens the dissection by anchoring it in the literature the
+reader (human or LLM) most likely already knows. It also clarifies
+*which* algorithm Palace implements when there are multiple
+similarly-named variants in the field (e.g., 1st-kind vs. 4th-kind
+Chebyshev, MGS vs. CGS2, restarted vs. truncated Krylov).
+
+Concept pages SHOULD include a similar `## Background` paragraph when
+the primitive has a standard textbook treatment (`apply_linop` ↔ BLAS
+SpMV / matrix-free op; `givens` ↔ Givens rotations as classical
+unitary 2×2 transforms; etc.). For purely-methodology concepts
+(rotation, variant-absorption, constructed-operators), the Background
+section may be omitted — the concept is internal to this project.
+
 ### Rotation_claim coverage
 
 **Every L1 assertion that compresses one or more L0 facts must carry a
