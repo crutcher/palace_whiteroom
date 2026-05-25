@@ -52,3 +52,26 @@ Both are pure functional in the L2 surface. The construction-time
 distinction between matrix-assembled and partial-assembly operators is
 transparent at L2 — `apply_linop` is the uniform interface, and the
 operator's internal representation is its own concern.
+
+## L3 tensor-field form
+
+As a global tensor-field operation, `apply_linop(A, x)` is the linear
+map `A : V → W` evaluated at `x ∈ V`, returning `A x ∈ W`. At L2 the
+implementation may iterate over rows / quadrature points / element
+contributions; at L3 those iterations disappear and `A` is a single
+linear-map node.
+
+The lift is clean for assembled-matrix operators (the matvec is
+embarrassingly data-parallel modulo reduction associativity choices),
+and for matrix-free operators (each element-local apply is
+independent, with a reduction collecting contributions). The reduction
+associativity is a load-bearing claim when `A` involves quadrature
+summation in non-deterministic order; see `dot` for the analogous
+concern. For exactly-representable element-local applies followed by
+assembly via `Z_S`-like masking, no such concern arises.
+
+When `A` is itself constructed from a composition (e.g., a triple
+product `Gᵀ M G`), L3 may either keep the composition explicit
+(`apply_linop(Gᵀ, apply_linop(M, apply_linop(G, x)))`) or fuse it into
+a single operator-valued node, depending on whether the slice cares
+about the intermediate fields.

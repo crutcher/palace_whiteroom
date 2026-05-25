@@ -109,6 +109,12 @@ graph BT
   tensor-field-lift --> apply_linop
   gmres-L3 --> tensor-field-lift
   gmres-L3 --> sequential-obstruction
+  divfree --> apply_linop
+  divfree --> set_subvector_zero
+  divfree --> ksp_solve
+  divfree --> axpy
+  divfree --> tensor-field-lift
+  divfree --> sequential-obstruction
 ```
 
 Whole-tensor operations replacing per-element iteration; or `obstruction` results documenting genuine sequentiality.

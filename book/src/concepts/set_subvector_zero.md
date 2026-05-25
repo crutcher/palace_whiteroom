@@ -40,3 +40,20 @@ implementation.
 Globally, `set_subvector_zero(x, idx)` is `x ← (I − P_idx) x` where `P_idx`
 is the projection onto the dofs in `idx`. The L3 tensor-field form is a
 mask-multiply; the L2 primitive is the in-place realization.
+
+## L3 tensor-field form
+
+As a global tensor-field operation, `set_subvector_zero(x, S)` is the
+linear projector `Z_S : V → V` with
+
+    (Z_S x)_i = 0 if i ∈ S else x_i
+
+i.e., the identity minus the indicator-of-S projector. It is idempotent
+(`Z_S ∘ Z_S = Z_S`), self-adjoint with respect to the standard inner
+product, and commutes with any operator whose support is disjoint from
+`S`. At L2 the implementation is a per-dof loop over `S`; at L3 the
+per-dof iteration disappears and `Z_S` is a single tensor-field map.
+
+This lift is clean — no sequential dependency exists across the `i ∈ S`
+updates (they are independent writes), so the per-element form rotates
+directly to the global form without an obstruction.

@@ -211,3 +211,88 @@ The following are **load-bearing** and preserved as explicit L2 claims:
   changes the solution.
 - `ksp_solve` returns the converged `ψ`; convergence tolerance is
   baked into the ksp at construction.
+
+## L3 — tensor-field form
+
+The L2 apply is a fixed-length sequence of global tensor-field operations on H1- and Nedelec-sized fields. Each L2 primitive lifts to a global operation; no per-element iteration remains exposed.
+
+### Global apply (real path)
+
+Let `y ∈ V_Nedelec`, `WeakDiv : V_Nedelec → V_H1`, `M : V_H1 → V_H1`,
+`Grad : V_H1 → V_Nedelec`, `bdr_eff ⊂ dofs(V_H1)` the effective essential
+set, and `K = ksp(M, pc, tol, max_it)` the operator-bound solver. Then
+`P : V_Nedelec → V_Nedelec` is
+
+    P(y) = y + Grad · K⁻¹( Z_bdr_eff( WeakDiv · y ) )
+
+where `Z_S : V_H1 → V_H1` is the global zero-on-subset operator
+`(Z_S z)_i = 0 if i ∈ S else z_i`, and `K⁻¹` denotes the (approximate)
+solve `M ψ = rhs` realized by `ksp_solve(K, rhs)`.
+
+Equivalently, in monadic notation collecting the ksp's internal
+iteration count and the projected H1 nullspace pin as effects:
+
+    P(y) = do
+        rhs  ← apply_linop WeakDiv y
+        rhs' ← set_subvector_zero rhs bdr_eff
+        ψ    ← ksp_solve K rhs'
+        t    ← apply_linop Grad ψ
+        return (y + t)
+
+The four steps are total tensor-field operations: `apply_linop` is a
+linear map between finite-dimensional function spaces, `set_subvector_zero`
+is the identity-minus-indicator-projector on the boundary subset,
+`ksp_solve` is the global linear solve, and `y + t` is the global vector
+addition. There is no exposed elementwise loop at this layer.
+
+### Complex specialization
+
+The complex `P : V_Nedelec ⊗ ℂ → V_Nedelec ⊗ ℂ` factors as the same
+formula over ℂ-valued fields. Because `WeakDiv`, `M`, and `Grad` are
+real-linear, the action on `y = y_re + i·y_im` is block-diagonal:
+
+    P(y_re + i·y_im) = P_re(y_re) + i · P_re(y_im)
+
+where `P_re` is the real apply above. The `ksp_solve` step at L2 invokes
+the `ComplexOperator` path; at L3 this is the block-diagonal lift of the
+real solve onto `V_H1 ⊗ ℂ`, and the two components are independent.
+
+### Sequential obstruction lives at L2.5, not here
+
+`ksp_solve(K, rhs')` is a global tensor-field operation as a *map* — its
+input is `rhs' ∈ V_H1` and its output is `ψ ∈ V_H1`. The CG iteration
+internal to `K` is sequential (the standard Krylov sequential
+obstruction; see `sequential-obstruction` concept and the `cg` slice).
+That obstruction is interior to the `ksp_solve` primitive and does not
+leak into the L3 apply. The L3 form of `divfree` is global: the four
+steps each lift cleanly, and the only sequential machinery is hidden
+inside the named `ksp_solve` primitive whose own L3 obstruction is
+recorded in the `cg` slice.
+
+This is a clean L2→L3 lift: no per-step state thread, no residual
+sequential axis, no `for`-loop survives at L3.
+
+### Variant absorption at L3
+
+All three L2 variant axes (VecType, H1-depth, empty-boundary) lift
+uniformly:
+
+- **VecType.** The complex lift is block-diagonal on `V ⊗ ℂ`; same
+  formula.
+- **H1-depth.** Absorbed inside `K`; the L3 formula references `K⁻¹`
+  abstractly, not the preconditioner choice.
+- **Empty-boundary.** Absorbed inside `bdr_eff`; the L3 formula
+  references the subset abstractly, not the pin-construction logic.
+
+### Load-bearing claims preserved from L2
+
+- The sign convention on `WeakDiv` is preserved: the formula is
+  `y + Grad · ψ`, not `y − Grad · ψ`. This is a property of the
+  `WeakDiv` operator's L0 definition (sign baked into
+  `MixedVectorWeakDivergenceIntegrator`).
+- The step ordering is preserved: `Z_bdr_eff` composes between
+  `WeakDiv` and `ksp_solve`. Reordering changes the result.
+- `ksp_solve` is an approximate solve; the L3 formula's `K⁻¹` denotes
+  the iterative-solver map, not exact inversion. The defining
+  condition `Gᵀ M (P y) = 0` holds up to the ksp's convergence
+  tolerance on the non-essential dofs.
