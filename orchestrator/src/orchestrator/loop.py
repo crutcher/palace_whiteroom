@@ -705,7 +705,51 @@ async def run_normal_cycle(
     if push_back_signals:
         friction_summary = "; ".join(push_back_signals)
     elif verdict["verdict"] != "pass":
-        friction_summary = f"verdict={verdict['verdict']}, {len(verdict.get('issues', []))} issue(s)"
+        # Surface Critic-flagged issue text into friction_observed so the
+        # Meta-Critic can audit revise cycles (meta-13 item 3). Previously
+        # captured only "N issue(s)" count which blinded the Meta-Critic
+        # for revise cycles — exactly the cycles where friction is highest.
+        issues = verdict.get("issues", [])
+        if issues:
+            issue_msgs: list[str] = []
+            for iss in issues:
+                if not isinstance(iss, dict):
+                    continue
+                kind = iss.get("kind", "?")
+                desc = iss.get("description", "")
+                msg = f"[{kind}] {desc}"
+                if iss.get("push_back_suggestion"):
+                    msg += f" → push_back: {iss['push_back_suggestion']}"
+                issue_msgs.append(msg)
+            friction_summary = "; ".join(issue_msgs)
+            if len(friction_summary) > 4000:
+                friction_summary = friction_summary[:4000] + "...[truncated]"
+        else:
+            friction_summary = f"verdict={verdict['verdict']}, 0 issue(s) (no friction text)"
+
+    # plan_kind classification check (meta-13 item 1): if Synthesizer
+    # declared retroactive_claims but the plan contains layer-touching
+    # writes, log a misclassification warning to episodic. The Critic
+    # check #13 strengthening handles the verdict; this surfaces the
+    # pattern even when the Critic accidentally passes.
+    plan_kind_declared = (plan or {}).get("plan_kind", "new_content") if isinstance(plan, dict) else "new_content"
+    plan_kind_misclassification = ""
+    if plan_kind_declared == "retroactive_claims":
+        has_layer_writes = False
+        for sw in (plan.get("slice_writes") or []) if isinstance(plan, dict) else []:
+            if isinstance(sw, dict) and sw.get("mode", "create") == "create":
+                has_layer_writes = True
+                break
+        for sa in (plan.get("section_appends") or []) if isinstance(plan, dict) else []:
+            if isinstance(sa, dict) and "L" in sa.get("heading", ""):
+                has_layer_writes = True
+                break
+        if has_layer_writes:
+            plan_kind_misclassification = (
+                "plan_kind=retroactive_claims but plan contains layer-section "
+                "creates/appends; should be new_content or back_correction"
+            )
+            push_back_signals.append(plan_kind_misclassification)
 
     # Structural-change summary built from the plan's contents and the apply result.
     structural_change = ""
@@ -739,7 +783,8 @@ async def run_normal_cycle(
         "downgrade_applied": verdict.get("downgrade_applied", False),
         "bookkeeping_incomplete": verdict.get("bookkeeping_incomplete", False),
         "substantive_landed": substantive_landed,
-        "plan_kind": (plan or {}).get("plan_kind", "new_content") if isinstance(plan, dict) else "new_content",
+        "plan_kind": plan_kind_declared,
+        "plan_kind_misclassification": plan_kind_misclassification,
         "friction_observed": friction_summary,
         "structural_change": structural_change,
         "push_back_signals": push_back_signals,

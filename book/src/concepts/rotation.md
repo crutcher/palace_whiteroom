@@ -93,3 +93,48 @@ Codified during the **2026-05-24 meta-review enactment**, in response to cycle 3
 
 - The criteria may be too sharp; the meta-review's risk-notes flagged the possibility of false-positive `revise` verdicts on legitimate-but-modest rotations. Watch the next 3 cycles. If genuine rotations are being rejected, soften the framing (e.g., require "approximately one of (1)/(2)/(3) plus a justification" rather than strict one-of).
 - Subsequent meta-reviews should check whether the L3→L4 calculus rotation has its own quality criteria. The (1)/(2)/(3) shape here is most natural for L1→L2 and L2→L3 rotations of imperative-style content; L3→L4 (algebraic-spec → formal calculus) may benefit from a different set of tests (e.g., "does the formal version expose a substitution / equation theorem the algebraic version cannot state?").
+
+## Renaming vs. coarser substitution — the algorithmic-substitution test
+
+(Added 2026-05-25 meta-review #13 after cycle 50 — CG L1→L2 — emitted a rotation_claim whose own justification said "No new state is hidden" and "state schema survives unchanged" yet was still emitted. The Critic caught it via check #8, but the producer-side self-check needed sharpening.)
+
+The trap is that criterion (2) "coarser substitution" can be misread as "uses primitive names instead of operations" — but renaming an operation does NOT make a coarser substitution. The substitution must be *algorithmic*, not nominal.
+
+### The test
+
+Before claiming criterion (2), ask:
+
+> Could a reader replace the L_{n+1} primitive with a **different algorithm** (not just a different implementation of the same algorithm) and still satisfy the L_n contract?
+
+If the answer is "no — the L_{n+1} primitive is just a named version of the L_n operation," it is renaming. If "yes — multiple distinct algorithms could occupy this primitive's slot," it is coarser substitution.
+
+### Worked counter-example: CG L1 → L2 (cycle 50)
+
+**L1 form (CG inner step):**
+```
+r ← r - α·Ap        # axpby in-place
+β ← (r·r)_new / (r·r)_old
+p ← r + β·p         # axpby in-place
+```
+
+**Proposed L2 form:**
+```
+axpby(α, Ap, -1, r)
+β ← dot(r, r) / dot(r_old, r_old)
+axpby(1, r, β, p)
+```
+
+The L2 form names BLAS-1 primitives but does not enable algorithmic substitution. The reader cannot replace `axpby` with "a different algorithm that also satisfies the L1 contract `r ← r - α·Ap`" — there IS only one operation. Same for `dot`. The L2 is a faithful name-mapping of L1, not a rotation.
+
+**Genuine L2 form (alternative):**
+```
+inner_update := cg_step(state, A) | cgne_step(state, A) | minres_step(state, A)
+```
+
+Where `cg_step` performs the three-line update above, `cgne_step` performs the normal-equation variant, and `minres_step` performs the symmetric-indefinite Lanczos-three-term recurrence. Now the L2 primitive `inner_update` admits genuine algorithmic substitution at a coarser grain — the L1 contract "advance the iterate, decrease the residual" is satisfied by multiple distinct algorithms.
+
+### The carry-through escape hatch
+
+Renaming-shaped claims pass the gate when the cycle ALSO rotates other parts of the slice — state hiding on the outer loop, coarser substitution on a different primitive, threaded-state compression on the overall state bundle. Explicitly mark renaming claims as carry-through with criterion-(1)/(2)/(3) at the slice level; the gate fires only when NO claim in the cycle achieves an actual rotation.
+
+The Synthesizer applies this test pre-emit (per `prompts/synthesizer.md` Rotation self-check); the Critic verifies via check #8.

@@ -95,19 +95,30 @@ verdict assembly and cross-cycle lesson extraction):
      `kind: labored_rotation_push_back_candidate`, with
      `push_back_suggestion` naming the specific prose terms to rewrite
      and the role-level replacement.
- 13. ORIGINAL-EMISSION CLAIM DISCIPLINE (added 2026-05-25 meta-review
-     #12). When `plan_kind ∈ {new_content, back_correction}` AND
-     substantive_landed > 0 AND any write touches an `## Ln —` layer
-     section (slice_writes with layer content; section_appends to
-     layer headings; file_edits adding layer content), the plan MUST
-     emit `rotation_claims` for the edges that layer touches. Empty
-     `rotation_claims` on a layer-content emission is a discipline
-     failure — the rotation reasoning was deferred rather than
-     captured at content time. Verdict on failure: `revise`, kind:
-     `unclear`, with push_back_suggestion: "emit at least one
-     rotation_claim per layer-section touched in this cycle." This
-     check exists to compress the retroactive_claims backlog that
-     dominated cycles 38-49.
+ 13. ORIGINAL-EMISSION CLAIM DISCIPLINE (added meta-12; strengthened
+     meta-13). Two parts:
+
+     (a) **Original-emission gate.** When `plan_kind ∈ {new_content,
+     back_correction}` AND substantive_landed > 0 AND any write touches
+     an `## Ln —` layer section, the plan MUST emit `rotation_claims`
+     for the edges that layer touches. Empty `rotation_claims` on a
+     layer-content emission is a discipline failure. Verdict on failure:
+     `revise`, kind: `unclear`, push_back_suggestion: "emit at least one
+     rotation_claim per layer-section touched in this cycle."
+
+     (b) **plan_kind misclassification gate** (added meta-13). If
+     `plan_kind = retroactive_claims` AND the plan contains any
+     `slice_writes mode=create`, `concept_writes mode=create`, or
+     `section_appends` to a layer section, downgrade to `revise` with
+     note: "misclassified plan_kind: layer content present, should be
+     new_content or back_correction." This closes the route-around
+     where synthesizers declared retroactive_claims to bypass gate
+     (a). See cycles 50-55: 5 of 6 were so classified despite
+     containing substantive writes.
+
+     This check exists to compress the retroactive_claims backlog and
+     enforce that rotation reasoning is captured at content emission
+     time, not deferred.
 
  12. RETROACTIVE-CLAIMS EVIDENCE (added 2026-05-25 meta-review #11).
      When the integration plan has `plan_kind = retroactive_claims`,

@@ -41,6 +41,7 @@
   - [solve-monad](./concepts/solve-monad.md)
   - [convergence-test](./concepts/convergence-test.md)
   - [chebyshev-iteration](./concepts/chebyshev-iteration.md)
+  - [elementwise-product](./concepts/elementwise-product.md)
 
 # Design Artifacts
 
@@ -62,3 +63,4 @@
   - [2026-05-25 — tenth meta-review (cycles 31–36) — Phase 6 DONE](./meta-reviews/2026-05-25-cycles-31-36.md)
   - [2026-05-25 — eleventh meta-review (cycles 37–43) — first skill extraction](./meta-reviews/2026-05-25-cycles-37-43.md)
   - [2026-05-25 — twelfth meta-review (cycles 44–49)](./meta-reviews/2026-05-25-cycles-44-49.md)
+  - [2026-05-25 — thirteenth meta-review (cycles 50–55)](./meta-reviews/2026-05-25-cycles-50-55.md)

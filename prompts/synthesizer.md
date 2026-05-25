@@ -299,21 +299,35 @@ citation_does_not_support, but for on-disk content rather than source).
 A retroactive_claims plan without this block should be downgraded by
 the Critic to `revise`.
 
-**Plan kind classification** (added meta-10 item 2 after cycle 36
-produced a 0-substantive-writes pass that looked like a no-op).
+**Plan kind classification** (added meta-10 item 2; tightened meta-13
+item 1 after cycles 50-55 had 5/6 cycles classified as retroactive_claims
+despite containing substantive layer-content writes — synthesizers were
+routing around check #13 by declaring retroactive_claims even when
+new content landed).
+
 Set the optional top-level `plan_kind` field on every plan to one of:
 
 - `new_content` (default) — the plan produces new slice/concept
-  content on disk.
-- `retroactive_claims` — the plan emits `rotation_claims` for content
-  that already exists on disk; no new structural writes are expected.
-  When you set this, `log_synthesis` MUST cite the on-disk content the
-  claims refer to (file + section).
+  content on disk. **Use this whenever** the plan contains any
+  `slice_writes mode=create`, `concept_writes mode=create`, OR
+  `section_appends` to a layer section (`## L1 —`, `## L2 —`, etc.).
+  This is the case even if some `rotation_claims` in the same plan
+  reference earlier-cycle content.
+- `retroactive_claims` — RESERVED for cycles whose ONLY writes are
+  `rotation_claims`, `lessons`, `dependency_map_edges`, and (optionally)
+  `concept_writes mode=append-section` documenting prior structural
+  work. **NOT permitted** when the plan has slice/concept creates or
+  layer-section appends. When you set this, `log_synthesis.retroactive_claim_evidence`
+  MUST quote the on-disk prose each claim references.
 - `tightening` — the plan revises an existing layer for internal
   correctness (no layer advancement). Typical of `L_n→L_n`
   self-rotations.
 - `back_correction` — the plan restructures a lower layer in response
   to a push-back signal from a prior cycle.
+
+The orchestrator logs `plan_kind_misclassification` to episodic when
+`plan_kind=retroactive_claims` but the plan contains layer-touching
+writes; Critic check #13 downgrades to revise.
 
 The Meta-Critic uses `plan_kind` to distinguish productive cycle
 classes from no-op cycles. Mis-classification (e.g., `plan_kind:
@@ -558,6 +572,39 @@ is signal that the rotation may not actually be rotating anything
   form has not actually pinned down a canonical primitive — re-emit
   with the coarser choice as `to_form` and a separate claim or note
   explaining the implementation freedom at L_i+2.
+
+### Rotation self-check (pre-emit; sharpened meta-13 after CG L1→L2 recurrence)
+
+**The renaming gate.** Cycle 50 (CG L1→L2) emitted a rotation_claim whose
+justification literally said "No new state is hidden" and "state schema
+survives unchanged" — i.e., it conceded the rotation was a renaming —
+yet was emitted anyway. The Critic caught it via check #8, but the
+producer-side self-check is supposed to prevent this in the first place.
+
+Before emitting an L_n→L_{n+1} rotation_claim, ask:
+
+> Could a reader replace the L_{n+1} primitive with a DIFFERENT
+> algorithm (not just a different implementation of the same algorithm)
+> and still satisfy the L_n contract?
+
+If NO, the rotation is renaming. Examples:
+
+- Renaming: L1 says `x ← x + α·p`; L2 says `axpy(α, p, x)`. The L2
+  primitive name is just a rename of the L1 operation. A reader cannot
+  substitute a different algorithm here — there IS only one operation.
+- Genuine rotation: L1 says `step(state)` (one Krylov inner iteration);
+  L2 says `arnoldi_step(state) | minres_step(state) | gmres_step(state)`.
+  L1's contract (advance the iterate, decrease the residual) admits
+  multiple L2-level algorithmic substitutions.
+
+**The carry-through clause** (meta-2) remains valid: if some claims in
+a slice are renaming-shaped but the cycle ALSO rotates other parts
+(state hiding, coarser substitution, threaded-state compression),
+explicitly mark the carry-through claims and they pass. The gate
+fires when NO claim in the cycle achieves an actual rotation criterion.
+
+See `book/src/concepts/rotation.md` "Renaming vs. coarser substitution"
+for the worked counter-example with the CG L1→L2 cycle-50 case.
 
 ### Rotation self-check (pre-emit)
 
