@@ -353,9 +353,12 @@ def call_synthesizer(
     response = client.messages.create(
         model=cfg.models["synthesizer"],
         # Larger slices (GMRES, multigrid) need substantial JSON output for the
-        # plan envelope. Cycle 20 (GMRES L0→L1) was truncated at 8192. Opus
-        # 4.7 supports up to 32k output; 16k is the safety sweet spot.
-        max_tokens=16384,
+        # plan envelope. Cycle 20 (GMRES L0→L1) was truncated at 8192; bumped
+        # to 16384. Cycle 63 (SIDEWAYS cg+gmres comparing two full-stack L4
+        # slices) was truncated at 16384; bumped to 24576. Opus 4.7 supports
+        # up to 32k output; 24k is a sweet spot that handles SIDEWAYS plus
+        # any reasonable single-slice emission.
+        max_tokens=24576,
         system=_system_block(system_prompt),
         messages=[{"role": "user", "content": user_message}],
     )
