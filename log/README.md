@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-127 — forward arnoldi_step [L2→L3] — pass](cycle-127.md)
 - [2026-05-26 cycle-126 — forward chebyshev [L1→L2] — pass](cycle-126.md)
 - [2026-05-26 cycle-125 — refinement gmres [Ln→Ln] — revise](cycle-125.md)
 - [2026-05-26 cycle-124 — forward plane_rotation_stream [L1→L2] — pass](cycle-124.md)
