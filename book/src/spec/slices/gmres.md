@@ -1008,3 +1008,137 @@ The stylistic cost is one new tag type (`Position`) and a four-arm case (countin
 
 - The `error "PostKrylov classify on a non-stopped Krylov"` arm encodes an invariant that could alternatively be expressed by refining the `PostKrylov` constructor to carry a witness of the stop condition (e.g., `PostKrylov Krylov StoppedAt` where `StoppedAt ∈ {Conv, MaxIt, MaxDim}`). The witness form would push the dispatch into the `inner_loop` body (where the stop condition is determined) and reduce `classify`'s `PostKrylov` arm to a pure pattern-match on the witness. This is a further [derived-view-hoisting](../../concepts/derived-view-hoisting.md) move — the witness is a derived view of the (Krylov, total_it, conv) state at the stop point — and could be pursued in a v0.6 tightening if a downstream slice motivates it. Not pursued here because the current form's `error` arm is informative enough.
 - Whether the `op.flexible` read inside `inner_loop` (the one remaining variant-axis read in the main loop body) admits a similar consolidation — e.g., by always allocating a `Z` slot in `Krylov` and threading `⊥` in the non-flexible case, then moving the `op.flexible` read into `apply_BA` itself — is a separate question on a different axis. The current form preserves the v0.1 convention of capture-at-call-site for performance reasons (no `Z` allocation when not needed); a memory-vs-uniformity tradeoff that belongs to a memory-layout slice.
+
+## L4 v0.6 — stop-witness extraction (eliminating the `error` arm)
+
+The v0.5 form unified `classify_entry` / `classify_outcome` into a single `classify` function dispatching on a `Position` sum type, and concentrated the residual-policy write at `commit_outcome`. The v0.5 *Open questions* surfaced one residual asymmetry: the `PostKrylov` arm of `classify` contains an `error "PostKrylov classify on a non-stopped Krylov"` fallthrough that encodes a control-flow invariant (the `PostKrylov` arm is only reached after `inner_loop` returned because its stop check fired) as a partial pattern rather than a typed witness.
+
+This v0.6 tightening (L4→L4 self-rotation, no layer advancement) eliminates the `error` arm by carrying the stop reason as a sum-typed witness on the `PostKrylov` constructor itself. The witness is computed at the *one* site where the stop condition is actually known — inside `inner_loop`, at the moment the loop decides to return — and `classify` becomes a total pattern match on the witness.
+
+This is the [derived-view-hoisting](../../concepts/derived-view-hoisting.md) move v0.5 explicitly deferred: the witness is a derived view of `(K.beta, K.j, total_it, conv, op.max_dim, op.max_it)` at the stop point, and v0.5 recomputed it at the `classify` call site after `inner_loop` had already determined it. v0.6 hoists the computation to the determining site.
+
+### Stop-witness as a sum type
+
+```haskell
+-- The reason the inner_loop stopped, witnessed at the stop site.
+data StopReason
+  = StoppedConverged    -- conv.satisfied K.beta fired
+  | StoppedMaxIt        -- total_it == op.max_it fired
+  | StoppedMaxDim       -- K.j + 1 == op.max_dim fired (restart)
+
+-- The classifier position. PreKrylov carries the entry residual β;
+-- PostKrylov carries the post-inner-loop Krylov AND the witness of why
+-- inner_loop stopped. PostKrylov is no longer constructible without a witness.
+data Position = PreKrylov real | PostKrylov Krylov StopReason
+```
+
+The `Position` type's `PostKrylov` constructor now requires a `StopReason` field. There is no longer a way to construct a `PostKrylov` value without committing to which stop condition fired — so the `classify` `PostKrylov` arm cannot encounter a non-stopped Krylov.
+
+### Unified classifier becomes total
+
+```haskell
+classify :: OpParams -> Convergence -> Position -> int -> Outcome
+classify op conv pos total_it = case pos of
+  PreKrylov β ->
+    if conv.satisfied β            then Done True
+    else if total_it == op.max_it  then Done False
+    else                                Continue
+  PostKrylov _ StoppedConverged  -> Done True
+  PostKrylov _ StoppedMaxIt      -> Done False
+  PostKrylov _ StoppedMaxDim     -> Continue
+```
+
+The `PostKrylov` arms are now three pure pattern matches on the witness, each total over its constructor. The `op.max_it` / `op.max_dim` reads that v0.5 performed inside the `PostKrylov` body are gone from `classify`: they happened earlier, inside `inner_loop`, at the site that produced the `StopReason`. The `PreKrylov` arm is unchanged from v0.5.
+
+Note the `Krylov` payload of `PostKrylov` is now unused in the `classify` body (the witness alone determines the outcome). It remains on the constructor because `restart_cycle` consumes it for `back_solve` and `apply_correction` after the `classify` call. An alternative shape would split the post-classification handoff so `classify` takes only the witness; the current form keeps the `Krylov` and witness paired in transit, which matches their actual lifetime as a single returned value from `inner_loop`.
+
+### `inner_loop` produces the witness
+
+```haskell
+-- The stop check now produces a StopReason at the site where the condition
+-- is determined, eliminating the recomputation in classify.
+check_stop :: OpParams -> Convergence -> Krylov -> int -> Maybe StopReason
+check_stop op conv K total_it
+  | conv.satisfied K.beta        = Just StoppedConverged
+  | total_it == op.max_it        = Just StoppedMaxIt
+  | K.j + 1 == op.max_dim        = Just StoppedMaxDim
+  | otherwise                    = Nothing
+
+inner_loop :: OpParams -> Convergence -> Krylov -> Solve (Krylov, StopReason)
+inner_loop op conv K = do
+  let (w, z)      = apply_BA op K.j K.V[K.j]
+      K1          = if op.flexible then K{ Z = K.Z `with` (K.j, z) } else K
+      (v_next, h) = orthogonalize op (K1.V[0..K1.j]) w
+      K2          = K1{ V = K1.V `with` (K1.j+1, v_next) }
+      K3          = ls_update_column K2 h
+  modify (\s -> s{ it = s.it + 1 })
+  s <- get
+  case check_stop op conv K3 s.it of
+    Just reason -> pure (K3, reason)
+    Nothing     -> inner_loop op conv K3{ j = K3.j + 1 }
+```
+
+`inner_loop` now returns `(Krylov, StopReason)` rather than `(Krylov, Outcome)`. The `Outcome` is derived from the `StopReason` at the `classify` site; the `StopReason` is the more primitive notion (it names *what fired*; the `Outcome` names *what the outer loop should do*). Separating them lets `classify` be the sole `Outcome`-producing site.
+
+### v0.6 `restart_cycle`
+
+```haskell
+restart_cycle :: OpParams -> Vec -> Solve Outcome
+restart_cycle op b = do
+  s <- get
+  let (r0, x') = initial_residual op b s.x
+      β        = nrm2 r0
+      conv     = build_convergence op b β s.initial_res
+  put s{ x = x', initial_res = conv.initial_residual }
+  s0 <- get
+  case classify op conv (PreKrylov β) s0.it of
+    Done flag -> do commit_outcome β (Done flag) ; pure (Done flag)
+    Continue  -> do
+      let K0 = fresh_krylov op β r0
+      (K, reason) <- inner_loop op conv K0
+      let y       = back_solve K
+          outcome = classify op conv (PostKrylov K reason) (error "total_it unused")
+      modify (\s -> s{ x = apply_correction op K y s.x })
+      commit_outcome K.beta outcome
+      pure outcome
+```
+
+The `total_it` parameter to `classify` is dead in the `PostKrylov` arms after the witness hoist — `classify` reaches its decision from `(pos, conv)` alone in the `PostKrylov` case. The `error "total_it unused"` in the call site marks this; a cleaner v0.7 would split the classifier signature so the `PostKrylov` form doesn't take `total_it` at all. We retain the current form because eliminating the unused parameter is a separate concern (signature compaction) from the witness extraction this section addresses; see Open questions.
+
+### Why v0.5 was tight-but-leaky
+
+v0.5's `classify` had a four-arm `PostKrylov` body — three productive arms plus the `error` fallthrough. The fallthrough encoded a control-flow invariant: "the `PostKrylov` position is only reached after `inner_loop` stopped because some condition fired". v0.5 made this invariant visible (the `error` message names it) but not type-enforced. A reader inspecting `classify` in isolation could not see *why* the fallthrough is unreachable — they had to read `inner_loop` and verify its return is gated on at least one stop condition firing.
+
+v0.6 makes the invariant type-enforced: `PostKrylov` is constructible only with a `StopReason`, and `StopReason` is produced only by `check_stop` returning `Just`, and `check_stop` returns `Just` only when one of the three stop conditions fires. The chain from "PostKrylov is constructed" to "a stop condition fired" is now a sequence of typed constructors rather than a comment-load-bearing control-flow assumption.
+
+This is [derived-view-hoisting](../../concepts/derived-view-hoisting.md) at the *witness layer*: the stop reason is a derived view of the (Krylov, total_it, conv, OpParams) state at the stop point, and v0.5 forced `classify` to re-derive it. v0.6 hoists the derivation to `check_stop`, the single site where the derivation is determinative.
+
+### v0.6 constructed-operator surface
+
+| helper                | reads                                                         | role                                                |
+|-----------------------|---------------------------------------------------------------|-----------------------------------------------------|
+| `initial_residual`    | `pc_side`, `initial_guess`                                   | residual at restart entry                            |
+| `apply_BA`            | `pc_side`, (`Mk` if flexible)                                | constructed Krylov operator                          |
+| `orthogonalize`       | `gs_orthog`                                                  | MGS/CGS/CGS2 dispatch                                |
+| `apply_correction`    | `pc_side`, `flexible`                                        | basis selection + terminal M-apply                   |
+| `build_convergence`   | `pc_side`, `initial_guess`, `rel_tol`, `abs_tol`             | ε + initial-residual scale                           |
+| `check_stop`          | `max_it`, `max_dim`                                          | stop-witness producer (one site, total over inputs)  |
+| `classify`            | (PreKrylov only: `max_it`)                                   | Outcome from Position + Convergence (total)          |
+| `commit_outcome`      | —                                                            | single SimState write site for `converged`/`final_res` |
+
+The surface grew by one row (`check_stop`) but every row is now total over its declared input domain. There is no `error` arm anywhere in the L4 form. The `PostKrylov` arm of `classify` reads zero `OpParams` fields — the witness has already absorbed the dispatch.
+
+Variant absorption per [variant-absorption](../../concepts/variant-absorption.md) is preserved at all three levels: (a) the invariant is unchanged; (b) the budget axes `max_it` / `max_dim` are now read at exactly one site (`check_stop`) rather than at one site in `classify` plus zero elsewhere — strictly tighter; (c) the primitive sequence is unchanged.
+
+### Citations
+
+- The v0.5 `error` arm: this slice, §L4 v0.5 — the `classify` definition contains `| else → error "PostKrylov classify on a non-stopped Krylov"` as the `PostKrylov` fallthrough.
+- The v0.5 open question naming the witness route: this slice, §L4 v0.5 *Open questions* — "the `error` arm encodes an invariant that could alternatively be expressed by refining the `PostKrylov` constructor to carry a witness of the stop condition (e.g., `PostKrylov Krylov StoppedAt` where `StoppedAt ∈ {Conv, MaxIt, MaxDim}`)". This is the v0.6 form, with `StopReason` replacing the open-question's `StoppedAt`.
+- The witness-extraction pattern is [derived-view-hoisting](../../concepts/derived-view-hoisting.md) applied at the constructor layer: the derived view (the stop reason) is materialised at the construction site rather than recomputed at the consumption site.
+- The `check_stop` / `classify` separation realises [variant-absorption](../../concepts/variant-absorption.md) level (b) at strictly-tighter granularity than v0.5: budget-axis reads collapse from "once at the `inner_loop` body's case, once at the `classify` PostKrylov body" (v0.5) to "once at `check_stop`, never at `classify`'s PostKrylov" (v0.6).
+
+### Open questions (L4 v0.6-specific)
+
+- The `total_it` parameter to `classify` is dead in the `PostKrylov` case after the witness hoist; the v0.6 `restart_cycle` call site marks this with `error "total_it unused"`. A v0.7 would split `classify` into two functions (`classify_entry :: OpParams → Convergence → real → int → Outcome` and `classify_post :: Convergence → StopReason → Outcome`) to remove the dead parameter. This re-introduces two function names, which v0.5 deliberately consolidated — but the v0.7 split is on a different axis (signature compaction, not residual-policy unification), so it would not regress v0.5's level-(b) achievement. Not pursued here because the current `error "total_it unused"` is a minor blemish.
+- Whether `check_stop` should return `Maybe StopReason` or `Either Krylov StopReason` (i.e., return the still-running Krylov in the Nothing case) is a stylistic question; the current form keeps `inner_loop`'s recursion structure obvious (the `Nothing` branch recurses, the `Just` branch returns) and is preferred.
+- The witness approach generalises: any classifier whose dispatch tag is determined upstream of the classification site can be migrated to carry the tag as a constructor field. This is a candidate methodology concept ("witness-typed dispatch") that may warrant extraction if it recurs in other slices (Chebyshev's convergence-by-eigenvalue-band, GMG's coarse-grid-direct-solve trigger). Deferred until a second instance lands.
