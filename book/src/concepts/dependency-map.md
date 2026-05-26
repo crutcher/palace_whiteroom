@@ -149,6 +149,17 @@ graph BT
   plane_rotation_stream --> givens
   cg --> state-stratification
   gmres --> state-stratification
+  cg_preconditioning_framework --> solver_as_operator
+  cg_preconditioning_framework --> two_operator_split
+  cg_preconditioning_framework --> complex_from_real_lift
+  cg_preconditioning_framework --> constructed-operators
+  cg_preconditioning_framework --> variant-absorption
+  cg_preconditioning_framework --> apply_linop
+  solver_as_operator --> apply_linop
+  two_operator_split --> constructed-operators
+  two_operator_split --> solver_as_operator
+  complex_from_real_lift --> solver_as_operator
+  complex_from_real_lift --> variant-absorption
 ```
 
 ## L2 — algebraic decompositions

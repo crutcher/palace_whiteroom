@@ -64,6 +64,7 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [apply_linop](./apply_linop.md) | primitive |
 | [axpy](./axpy.md) | primitive |
 | [chebyshev-iteration](./chebyshev-iteration.md) | algorithm |
+| [complex_from_real_lift](./complex_from_real_lift.md) | primitive |
 | [constructed-operators](./constructed-operators.md) | methodology |
 | [convergence-test](./convergence-test.md) | auxiliary |
 | [derived-view-hoisting](./derived-view-hoisting.md) | layer-pattern |
@@ -81,7 +82,9 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [sequential-obstruction](./sequential-obstruction.md) | layer-pattern |
 | [set_subvector_zero](./set_subvector_zero.md) | primitive |
 | [solve-monad](./solve-monad.md) | layer-pattern |
+| [solver_as_operator](./solver_as_operator.md) | primitive |
 | [state-stratification](./state-stratification.md) | layer-pattern |
 | [tensor-field-lift](./tensor-field-lift.md) | layer-pattern |
 | [trsv](./trsv.md) | primitive |
+| [two_operator_split](./two_operator_split.md) | methodology |
 | [variant-absorption](./variant-absorption.md) | methodology |

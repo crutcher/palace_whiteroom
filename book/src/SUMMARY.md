@@ -17,6 +17,7 @@
   - [Arnoldi step](./spec/slices/arnoldi_step.md)
   - [Plane rotation stream](./spec/slices/plane_rotation_stream.md)
   - [Sparse triangular solve (negative result)](./spec/slices/sparse_triangular_solve.md)
+  - [CG Preconditioning Framework](./spec/slices/cg_preconditioning_framework.md)
 
 # Concepts (shared library)
 
@@ -46,6 +47,9 @@
   - [chebyshev-iteration](./concepts/chebyshev-iteration.md)
   - [elementwise-product](./concepts/elementwise-product.md)
   - [derived-view-hoisting](./concepts/derived-view-hoisting.md)
+  - [solver_as_operator](./concepts/solver_as_operator.md)
+  - [two_operator_split](./concepts/two_operator_split.md)
+  - [complex_from_real_lift](./concepts/complex_from_real_lift.md)
 
 # Design Artifacts
 
