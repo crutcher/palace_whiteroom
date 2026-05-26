@@ -75,6 +75,7 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [gmres](./gmres.md) | algorithm |
 | [incremental-least-squares](./incremental-least-squares.md) | algorithm |
 | [ksp_solve](./ksp_solve.md) | layer-pattern |
+| [negative-result-slice](./negative-result-slice.md) | methodology |
 | [nrm2](./nrm2.md) | primitive |
 | [orthogonalization](./orthogonalization.md) | algorithm |
 | [rotation](./rotation.md) | methodology |

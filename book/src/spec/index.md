@@ -17,6 +17,7 @@ This index is maintained by the Synthesizer after every push. It is the **first 
 | [arnoldi step](./slices/arnoldi_step.md) | L4 | 2026-05-26 | Full chain L0–L4; L1 cross-references the L3 MGS sequential obstruction; variant axes (apply_BA, gs_orthog, GMRES/FGMRES) classified per skill. |
 | [sparse triangular solve](./slices/sparse_triangular_solve.md) | L0 (obstruction) | 2026-05-26 | Negative result: no Palace-level sparse triangular solve. Palace forwards into MFEM-wrapped SuperLU/STRUMPACK/MUMPS as opaque ksp_solve. L0→L1 rotation declared out-of-scope-obstructed; follow-up slice `sparse_direct_solver_wrapper` proposed. |
 | [cg_preconditioning_framework](./slices/cg_preconditioning_framework.md) | L1 | 2026-05-26 | L0 source facts + L1 invariant for Palace's KSP composition: solver-as-operator type, (op, pc_op) split, complex-from-real lift, four absorbed variant axes (Krylov method, preconditioner type, multigrid composition, scalar field). |
+| [polynomial recurrence step](./slices/polynomial_recurrence_step.md) | L1 | 2026-05-26 | Negative-result catalog: no Palace-level `polynomial_recurrence_step` kernel. Three independent sites (Chebyshev-4th-kind, Chebyshev-1st-kind, GMRES Givens stream) catalogued with state schemas; eigenvalue-tracking branch obstructed (below Palace boundary, delegated to SLEPc/ARPACK). |
 
 ## Slice conventions
 

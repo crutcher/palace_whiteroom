@@ -37,6 +37,8 @@ graph BT
   solve-monad --> variant-absorption
   derived-view-hoisting --> rotation
   derived-view-hoisting --> solve-monad
+  negative-result-slice --> sequential-obstruction
+  negative-result-slice --> variant-absorption
 ```
 
 - [`rotation`](./rotation.md) — root methodology concept. Defines what counts as a genuine rotation (state hiding / coarser substitution / threaded-state compression) vs. a renaming. Codified meta-review #1; expanded with carry-through clause meta-review #2.
@@ -160,6 +162,9 @@ graph BT
   two_operator_split --> solver_as_operator
   complex_from_real_lift --> solver_as_operator
   complex_from_real_lift --> variant-absorption
+  polynomial_recurrence_step --> negative-result-slice
+  polynomial_recurrence_step --> elementwise-product
+  polynomial_recurrence_step --> givens
 ```
 
 ## L2 — algebraic decompositions

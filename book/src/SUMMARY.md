@@ -18,6 +18,7 @@
   - [Plane rotation stream](./spec/slices/plane_rotation_stream.md)
   - [Sparse triangular solve (negative result)](./spec/slices/sparse_triangular_solve.md)
   - [CG Preconditioning Framework](./spec/slices/cg_preconditioning_framework.md)
+  - [Polynomial recurrence step](./spec/slices/polynomial_recurrence_step.md)
 
 # Concepts (shared library)
 
@@ -50,6 +51,7 @@
   - [solver_as_operator](./concepts/solver_as_operator.md)
   - [two_operator_split](./concepts/two_operator_split.md)
   - [complex_from_real_lift](./concepts/complex_from_real_lift.md)
+  - [negative-result-slice](./concepts/negative-result-slice.md)
 
 # Design Artifacts
 

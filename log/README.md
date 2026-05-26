@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-130 — forward polynomial_recurrence_step [L0→L1] — pass](cycle-130.md)
 - [2026-05-26 cycle-129 — forward cg [L2→L3] — pass](cycle-129.md)
 - [2026-05-26 cycle-128 — forward cg [L1→L2] — pass](cycle-128.md)
 - [2026-05-26 meta-review (cycles 116–127) — enacted — framework slice extracted + refinement-surface integrator gate + sensitivity at cap](meta-21-cycles-116-127.md)
