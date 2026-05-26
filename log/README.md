@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-150 — refinement cg [Ln→Ln] — pass](cycle-150.md)
 - [2026-05-26 cycle-149 — refinement arnoldi_step [Ln→Ln] — pass](cycle-149.md)
 - [2026-05-26 cycle-148 — refinement chebyshev [Ln→Ln] — pass](cycle-148.md)
 - [2026-05-26 cycle-147 — refinement chebyshev [Ln→Ln] — revise](cycle-147.md)

@@ -480,3 +480,27 @@ Unchanged: the `residual_norm` output-extra and §3.8 pruning (v0.4 derived-view
 ### What v0.5 does NOT do
 
 v0.5 does not change the L0/L1/L2/L3 forms. Palace's source still has the `if it == 0` branch inside the loop (`palace/linalg/iterative.cpp:434-441`); L0 cites it; L1 surfaces it as a step-local conditional; L2 names it load-bearing. The v0.5 form is a *purely L4-level* rearrangement — a different rendering of the same algorithm in the calculus, chosen for branch-free steady-state legibility. This is consistent with the L4 calculus's role as *the layer at which algorithm presentation choices live*; v0.4 and v0.5 are both valid renderings, and the slice now exhibits both so downstream slices can pattern-match against either.
+
+## L4 v0.5 — first-iteration unrolling (self-rotation, claim ratification)
+
+**Status.** The L4 v0.5 form above (cycle 132) landed without an accompanying `rotation_claim`. This section, added cycle 137, backfills the per-edge claim under the meta-21 *self-rotation surface-or-evidence* discipline — the on-disk prose IS the surface; the claim ratifies it. `plan_kind: tightening`.
+
+### Claim: state hiding (criterion (a) of `book/src/concepts/rotation.md`)
+
+The `beta_prev: Scalar` field is hidden from the steady-state `CgState<S>` schema by hoisting it out of the iteration-threaded record and into the loop driver as a closure-captured scalar. Symmetrically, the iteration-zero special-case branch `if s.it == 0 then s.r else axpby ... s.p` — load-bearing only because `beta_prev = 0` on entry — is hoisted out of the per-step body into a separate `cg_first_step` call before `iterate_while_with_prev`.
+
+The rotation is **L4 → L4**: no semantic change relative to v0.4; the `forget_beta_prev` projection makes the equivalence formal (see *Equivalence to v0.4* above). The work is documentary in the sense of preserving observable behavior, but **structural** in the sense of changing what the steady-state schema must carry — a strict reduction of state-record fields and step-body branches.
+
+### Why this satisfies criterion (a) and not merely renaming
+
+The renaming gate from the Synthesizer prompt asks: *could a reader replace the v0.5 steady-state primitive with a different algorithm and still satisfy the v0.4 contract?* The answer is yes in a meaningful sense: v0.5's `cg_steady_step` exposes a precondition (`beta_prev > 0`, `it >= 1`) that v0.4's `cg_step` does not — a downstream slice (e.g., MINRES, BiCGStab) reusing the *same skeleton* could substitute its own first-iteration setup and a structurally identical steady step, without needing to thread an iteration counter through the state for branch dispatch. v0.4's `cg_step` cannot be reused this way: the `if s.it == 0` branch ties the steady-state algorithm to its specific bootstrap.
+
+In the language of `book/src/concepts/first-iteration-unrolling.md` (concept introduced cycle 132), v0.5 makes CG fit a *generalizable* pattern; v0.4 has the same algorithm mathematically but a less reusable presentation.
+
+### Carry-through
+
+Unchanged from v0.4: the `residual_norm` output-extra and §3.8 pruning (v0.4 derived-view hoisting); the `LinOp<S>`/`CgConfig` shared types; the ownership analysis (the now-closure `beta_prev` is an ephemeral intermediate localized to the loop driver); the L3↔L4 correspondence on inner-kernel primitives; the `pcg_*` ↔ `cg_*` equivalence via `forget_z`. The L2→L3 negative obstruction (cycle 116) is untouched — first-iteration unrolling rearranges the L4 form; it does not change the L2→L3 verdict.
+
+### Why the claim is emitted now and not at cycle 132
+
+Cycle 132 emitted the v0.5 prose as a refinement push but did not pair it with a `rotation_claim`. Under the meta-21 discipline (added after cycle 115's analogous omission), self-rotation cycles must include either the surface edit AND its claim, or retroactive-evidence quoting the on-disk prose. The v0.5 surface landed; this cycle (137) emits the missing claim against that surface. No further prose changes are made.
