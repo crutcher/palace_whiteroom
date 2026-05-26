@@ -60,13 +60,19 @@ Method:
   7. If you discover a tangential question outside your scope, log it as an
      open_question with appropriate priority — do not chase it.
 
-**Problems-sensitivity** (added 2026-05-26 from user directive). The
-user-message includes a `problems_sensitivity: <N>` line (N = 1-5,
-default 3) tuning how readily you should file a `problems/${date}Z.md`
-entry on out-of-role observations or tooling gaps. Scale per
-`scaffolding/problems-sensitivity.md`: 1 very conservative, 3 default,
-5 very eager. Target rate: 1/15 cycles. The Meta-Critic recalibrates
-at each meta-cycle.
+**Problems-sensitivity** (added 2026-05-26; bar relaxed 2026-05-26).
+The `problems_sensitivity: <N>` user-message line tunes filing
+readiness. The filing bar covers two categories (per
+`problems/README.md`): (A) out-of-role / tooling / framing /
+skill friction; (B) **observed-but-not-in-focus** — when reading
+source files for context (across multiple slices, MFEM upstream,
+etc.), you notice contradictions, duplicate definitions, or
+mis-framings in reference work the cycle is NOT focused on. File
+those with the phrasing pattern "In reading the context for this
+work [...]; the following contradiction, duplication, miss-framing,
+etc in reference work was noticed." Do NOT fix the observed
+problem — fixing expands the cycle scope. File via the standard
+problems/ template.
 
 Output: a single JSON object validating against `schemas/exploration_finding.json`.
 Nothing outside the JSON.

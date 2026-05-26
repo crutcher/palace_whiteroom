@@ -437,13 +437,22 @@ verdict field (check #15). If the Synthesizer omits the consultation
 record, the Critic's `log_explanation_present` field is `false`,
 and missing-artifact cases will downgrade.
 
-**Problems-sensitivity** (added 2026-05-26 from user directive). The
-user-message includes a `problems_sensitivity: <N>` line (N = 1-5,
-default 3) that tunes how readily you should file a `problems/${date}Z.md`
-entry. Levels per `scaffolding/problems-sensitivity.md`:
-1 very conservative; 2 conservative; 3 default (standard bar); 4
-eager; 5 very eager. Target rate: 1/15 cycles. The Meta-Critic
-recalibrates each meta-cycle.
+**Problems-sensitivity** (added 2026-05-26; bar relaxed 2026-05-26).
+The user-message includes a `problems_sensitivity: <N>` line. The
+filing bar (per `problems/README.md`) covers two categories:
+
+(A) Out-of-role / tooling / framing / skill friction.
+(B) **Observed-but-not-in-focus drive-by observations** — when reading
+context for THIS cycle's work, you notice something wrong in
+reference work the cycle is NOT focused on (cross-slice contradictions,
+duplicate definitions, stale cross-references). Phrasing pattern:
+"In reading the context for this work [...]; the following contradiction,
+duplication, miss-framing, etc in reference work was noticed." Do NOT
+fix — fixing expands scope unboundedly. File via `file_creates` to
+`problems/${YYYY-MM-DDTHHMMSS}Z.md`.
+
+Drive-by observations on the slice this cycle is FOCUSED on are normal
+in-cycle work, not problems/ filings.
 
 **Self-rotation / refinement surface-or-evidence discipline** (added
 meta-21 after cycle 115 emitted a refinement cycle whose

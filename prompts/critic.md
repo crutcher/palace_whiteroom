@@ -331,9 +331,22 @@ the per-cycle Critic missed at emit time. The sanity statement
 exposes "pass-without-exercise" before it accumulates as silent
 methodology drift.
 
-### Problems-sensitivity (added 2026-05-26 from user directive)
+### Problems-sensitivity (added 2026-05-26; bar relaxed 2026-05-26)
 
-The user-message includes a `problems_sensitivity: <N>` line (N = 1-5, default 3). It tunes how readily you should file a `problems/${date}Z.md` entry when you notice an out-of-role concern, framing issue exceeding your responsibility, or tooling/infrastructure gap. Scale (per `scaffolding/problems-sensitivity.md`):
+The user-message includes a `problems_sensitivity: <N>` line (N = 1-5, default 3). It tunes how readily you should file a `problems/${date}Z.md` entry.
+
+**The filing bar covers TWO categories** (per `problems/README.md`):
+
+(A) **Out-of-role / tooling / framing / skill friction** — the original bar (out-of-role conflicts, in-line framing concerns exceeding agent responsibility, tooling gaps, recurring skill mismatches).
+
+(B) **Observed-but-not-in-focus drive-by observations** — when reading context for the current cycle's work (other slice files, concept pages, methodology docs), the agent notices something WRONG in the reference work the cycle is NOT focused on (contradictions between slices, duplicate definitions, mis-framings, stale cross-references). Use the phrasing pattern: "In reading the context for this work [...]; the following contradiction, duplication, miss-framing, etc in reference work was noticed." The agent does NOT fix the observed problem — fixing would expand the cycle's scope unboundedly. The agent files; meta-review consumes.
+
+Examples that qualify under (B):
+- Reading cg.md for cross-slice context, notice cg and gmres describe the same primitive with different signatures.
+- Reading a concept page, notice it cites a renamed slice via stale link.
+- Reading variant-absorption.md for the levels-of-absorption rule, notice two adjacent sections partially contradict each other.
+
+Do NOT file drive-by observations on the slice/concept this cycle is FOCUSED on — those are normal in-cycle work. Scale (per `scaffolding/problems-sensitivity.md`):
 
 - **1**: very conservative — only egregious immediate-blockers.
 - **2**: conservative — concrete evidence required.
