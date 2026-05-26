@@ -1,6 +1,14 @@
 # BOOTSTRAP.md — Layered-Spec Multi-Agent System
 
-## Purpose
+> **SUPERSEDED (2026-05-26).** This document specified the original phased build of the multi-agent system (Phases 0–9+). Phases 0–5 executed and ran 172 cycles + 25 meta-reviews under the slice-vertical-artifact methodology.
+>
+> On 2026-05-26 the project underwent a **structural redirect**:
+> 1. **Artifact**: from slice-vertical (per-algorithm L1→L4 progression) to layered L4→L0 with themed lowering layers and a Part/Chapter mdBook structure.
+> 2. **Agents**: from a Python orchestrator running 5 prompted roles (Planner / Explorer / Synthesizer / Critic + Meta-Critic) to a Claude Code subagent flow of 13 agents in a 6-phase cycle (plan / dispatch / critique / repair / integrate / meta).
+>
+> The redirect is fully specified in **`MIGRATION.md`** at the repo root. Operational guidance is in **`CLAUDE.md`**. This BOOTSTRAP.md is preserved as **historical record** — the design that produced the Phase 1 corpus and the methodology vocabulary that the new flow inherits. Do not follow the phases below to build the system; the system already exists in its post-redirect form.
+
+## Purpose (historical)
 
 Bootstrap a multi-agent system that incrementally produces, for the AWS Labs **Palace** simulator, a **layered, citation-grounded specification** of its algorithms — pushed depth-first per slice through a four-layer impedance-matching stack culminating in a formally-defined graph-evaluation calculus (the **L4** calculus, drafted under `book/src/design/l4_calculus.md`).
 

@@ -1,356 +1,256 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Operational guide for Claude Code working in this repository. The project is a multi-agent pipeline that dissects AWS Labs **Palace** (C++ electromagnetic simulator) into a **layered, citation-grounded specification** organized as an incremental impedance-matching stack L4→L0.
+
+This file replaces the original CLAUDE.md (slice-vertical era, cycles 1–172) after the **structural redirect of 2026-05-26**. The redirect is fully specified in `MIGRATION.md`; this CLAUDE.md is its operational distillation. The previous `BOOTSTRAP.md` is superseded and kept only as historical record.
 
 ## Repository status
 
-Pre-Phase-0 scaffolding is in place: this `CLAUDE.md`, `BOOTSTRAP.md`, the mdBook under `book/` (methodology overview, L4 calculus draft, meta-review procedure, one hand-drafted CG slice), the `problems/` channel, and the `reference/` clones. The agent-loop infrastructure (`questions.md`, `lessons.md`, `episodic.jsonl`, `config.toml`, `schemas/`, `prompts/`, `mcp/codemap/`, `orchestrator/`) does **not** yet exist — that is what Phases 0–5 of `BOOTSTRAP.md` build.
-
-`BOOTSTRAP.md` is the build specification — the source of truth for what to construct, in what order, and why. Read it before doing anything substantive here.
-
-When you implement a phase, follow the DONE criteria in `BOOTSTRAP.md` literally. Each phase has explicit completion checks; do not skip ahead and do not add scope not described in the document (no UIs, no databases, no embedding stores — those are Phase 9+ concerns).
+- **Current flow**: 6-phase agent cycle (plan → dispatch → critique → repair → integrate → meta). See *Cycle structure* below and `MIGRATION.md` §2.
+- **Artifact in progress**: layered specification under `book/src/L4/`–`book/src/L0/` + 4 lowering Parts. The Phase 1 slice corpus under `book/src/spec/slices/` is preserved as raw material for combinator extraction (not the deliverable).
+- **First pilot cycle landed**: `pilot-1` (commit `a058f07`) — `axpy` at L1 via the new flow. See `log/pilot-1.md` and `reports/2026-05-26T223039Z-harvester-axpy-L1/`.
+- **Decommissioned**: the Python orchestrator under `orchestrator/` (kept as historical reference). The 6 prompted roles (Planner/Explorer/Synthesizer/Critic + Meta-Critic + README Builder) are replaced by 13 Claude Code subagents under `.claude/agents/`.
 
 ## What this system is
 
-A multi-agent pipeline that dissects an external target simulator's source code into an **incremental impedance-matching stack** of algorithmic representations (see *Extraction goal* below), where every claim cites `file:line` in the target and every cross-layer rotation carries an explicit equivalence justification. The agents grow a typed knowledge graph stored as plain files committed to git per loop iteration — git is the audit trail.
+A multi-agent pipeline that lifts traditional C/Fortran tensor-field simulators — which evolve fields by array iteration with in-place mutation — into a **citation-grounded, incrementally-layered series of representations**, where each layer re-expresses the layer below in a representation that has rotated one specific impedance, and the rotation is explicitly stated and verified.
 
-Roles, each invoked as a **separate API call with an isolated context** and its own system prompt from `prompts/<role>.md`. Per-cycle roles run continuously during the normal loop; the meta-cycle role runs only when the meta-review is triggered (see *Meta-review* below).
+**No port is produced.** The output is a layered specification; a separate downstream effort uses it to incrementally build burn components.
 
-Per-cycle:
+The methodology was developed in the user's **bunsen** project (see `reference/bunsen/crates/bunsen/src/kits/sims/` for the working Rust+burn realization at L3). Palace is a substantial test case.
 
-- **Planner** — picks the next push (forward / back / sideways) per the process model.
-- **Explorer** (×N) — produces L0 + L1 for one slice: cites source ranges, records dataflow and any in-place mutation/aliasing observed.
-- **Synthesizer** — produces L1 → L2 → L3 → L4 depth-first for a slice; proposes per-edge rotations; flags push-back opportunities.
-- **Critic** — adversarial; verifies per-edge rotations against cited source and prior layers; flags labored rotations as push-back candidates.
+## Extraction goal — what the spec is for
 
-Meta-cycle:
+The artifact is an **incremental stack of representations** L4→L0:
 
-- **Meta-Critic** — distinct role; runs only when the meta-review trigger fires. Reviews patterns of friction across cycles with its own incremental project history (prior meta-review records). Empowered with **medium-cascade authority**; produces a refinement plan for human approval before enactment; the normal loop is paused throughout. See `book/src/meta-reviews/index.md` for the procedure.
+- **L0** — cited Palace/MFEM source ranges. Ground truth.
+- **L1** — *mutation rotation*. Source operations re-expressed as pure functions.
+- **L2** — *fusion rotation*. L1 unfolded back into composition of base algebraic primitives, HPC tricks erased.
+- **L3** — *iteration rotation*. Where possible, global tensor-field operations; otherwise record the obstruction.
+- **L4** — small, formally-defined graph-evaluation calculus. **Vocabulary, not architecture.** High-order combinators + state monads + immutable tensors.
 
-## Layout that will exist after Phase 0
+Between adjacent layers, **lowering layers** `L_{n+1}>L_n` describe the rewrite themes that take an L_{n+1} form into its L_n form. Lowerings are batched by themes (e.g. "in-place mutation under monad threading", "loop-recurrence → tensor-field op"), not point-wise edges.
+
+**Each layer is its own mdBook Part** with multiple chapters: one for the Part overview (`index.md`), one per operator (for L_n) or theme (for L_{n+1}>L_n). The Part shape is load-bearing — it prevents per-layer content from accumulating into one giant file and preserves cross-referencing.
+
+## Cycle structure: plan → dispatch → critique → repair → integrate → meta
+
+Each R&D cycle has 6 phases:
 
 ```
-BOOTSTRAP.md         # phased build spec for the agent system
-CLAUDE.md            # this file — operational guidance for agents
-Makefile.toml        # cargo-make tasks: `cargo make book` / `book-serve` / `book-clean`
-book/                # the spec, rendered as an mdBook
-  book.toml          # mdBook config (matches bunsen's pattern: katex + linkcheck2 + mermaid)
-  katex-macros.txt
-  src/
-    SUMMARY.md       # table of contents
-    introduction.md
-    methodology/     # methodology overview (currently a stub → CLAUDE.md)
-    spec/
-      index.md       # slice status table (THE place to read first)
-      slices/        # one file per slice; subdirectory for genuinely large slices
-    concepts/
-      index.md       # shared-primitive library; extracted on demand
-    design/
-      index.md
-      l4_calculus.md # L4 strawman — the formal graph-evaluation calculus
-    meta-reviews/
-      index.md       # records of friction-integration passes
-problems/            # out-of-band concern channel — see problems/README.md
-scaffolding/         # agent-side workshop (cross-cutting notes, decisions) — see scaffolding/README.md
-skills/              # agent-invocable procedures — see skills/README.md
-tools/               # evaluation tooling (Python venv-per-tool; scratch sandbox) — see tools/README.md
-reference/           # local clones of palace, bunsen, burn, tensorflow-java (gitignored)
-
-# Files Phase 0 of BOOTSTRAP.md creates (agent-loop infrastructure):
-questions.md         # open/closed question ledger — surfaces unknowns
-lessons.md           # cross-run lessons appended by the Critic
-episodic.jsonl       # append-only per-cycle log (becomes the research record)
-log/                 # human-readable per-cycle and per-meta entries (1 file each) + README.md index — replaced monolithic LOG.md 2026-05-26
-config.toml          # target paths, language, model ids, budgets
-schemas/             # exploration_finding.json, critic_verdict.json
-prompts/             # planner.md, explorer.md, synthesizer.md, critic.md
-mcp/codemap/         # Rust MCP server (Phase 1) — tree-sitter wrapper
-orchestrator/        # Python loop (Phase 5) — raw Anthropic SDK
+  cycle-planner → N specialized agents → N critics → N repairers → integrator → meta-phase
+    (serial)        (scatter; parallel)     (scatter)    (scatter)    (serial)    (serial)
 ```
 
-The mdBook is the public-facing rendering of the spec; the markdown under `book/src/` *is* the artifact. Build with `cargo make book` (one-time tooling install on first run); live preview with `cargo make book-serve`.
+**Phase 1 — plan**: `cycle-planner` reads roadmap, priorities, friction-ledger, open-questions, recent integrator batches. Emits a dispatch plan with `(agent, scope, deps)` tuples and an overlap analysis. Does not mutate the artifact.
 
-The target repo lives outside this workspace at the `[target].repo` path in `config.toml`. Treat it as read-only.
+**Phase 2 — dispatch**: 1–6 specialized agents per plan, parallel where non-overlapping. Each writes a single `REPORT.md` under `reports/<timestamp>-<agent>-<scope>/`. No artifact mutation in this phase.
 
-## Extraction goal — what the spec is *for*
+**Phase 3 — critique**: `critic` agent runs on each report (parallel). Runs the 8-check checklist (citation-validity, surface-or-evidence, rotation-quality, variant-axis-coverage, cross-reference-integrity, edge-label-fidelity, plan-kind-consistency, skill-uptake-survey). Writes META.md critique section.
 
-This work is part of a broader methodology being developed in the user's **bunsen** project: lifting traditional C/Fortran tensor-field simulators — which evolve fields by array iteration with in-place mutation — into a **citation-grounded, incrementally-layered series of representations**, where each layer re-expresses the layer below in a representation that has rotated one specific impedance, and the rotation is explicitly stated and verified.
+**Phase 4 — repair**: `repairer` agent runs on reports with warning/fail findings (parallel). Mechanical and surgical fixes only — not substantive authoring. Writes META.md repair section. Sets `overall_status`.
 
-Palace is a substantial test case for this methodology. **No port is produced as part of this work.** The output is a layered specification; a separate downstream effort will use it to incrementally build burn components.
+**Phase 5 — integrate**: `integrator` reads all reports + METAs. Applies `ready` reports, defers `needs-revision`, marks `reject`. Runs safety-net gates. Rebuilds book, repairs link-check / format breakage, commits + pushes. Emits batch report. Sole writer of `book/`, `scaffolding/roadmap.md`, `log/`, `scaffolding/cycle-record.jsonl`, `scaffolding/open-questions.md`.
 
-- **Source environment:** Palace, C++/HPC, makes aggressive use of in-place mutation of vectors and matrices, reused scratch/workspace buffers, and aliasing-aware BLAS-style kernels. These exist because the source environment makes them cheap; they are *implementation*, not semantics.
-- **Spec notation:** the spec is written in **language-agnostic, Haskell/Scheme-flavored abstract notation** — immutable tensors, collection structures over them, and monads over the above (Haskell sense). It does **not** commit to burn, to Rust, to eager-vs-traced execution, or to any specific concrete representation. The goal is **abstract ownership / update-operation extraction in language-agnostic form**, suitable as input to a future "what burn needs to realize this" requirements-spec — which is itself a separate artifact, not a layer in this stack. Targeting burn (or any architecture) prematurely would introduce constraints on the math we don't want.
-- **Out of scope for this effort:** `burn::module::Module` / `forward()` machinery (wrong shape for stateful iterative simulators); `burn-ir` (internal kernel-fusion IR, not a public API, the user is familiar with its limits); any concrete Rust API design. Those belong to the downstream burn-realization work, not here.
+**Phase 6 — meta**: `meta-phase` examines cycle evidence + running history. Records escalating trends in `scaffolding/friction-ledger.md`. Proposes plans, judges them, decides `go` / `no-go` / `ask` per plan. Enacts `go` items directly: writes to `.claude/agents/`, `skills/`, `scaffolding/priorities.md`. Surfaces `ask` items to human. Separate commit from integrator.
 
-### Output structure: an incremental impedance-matching stack
+## The 13 agents
 
-The output is not a single port. It is an **incremental stack of representations**, each of which:
+Definitions live under `.claude/agents/`. Dispatch via `Agent(subagent_type=<name>, ...)`. If custom agent definitions don't resolve in the current Claude Code session, use the embed-and-persist pattern from `skills/embed-and-persist-subagent-dispatch/`.
 
-- Is a complete description of the algorithm at its own level of abstraction.
-- Has an explicit *reference layer* immediately below it.
-- States the **semantic rotation** by which the reference layer's semantics are re-expressed in the new representation, and justifies that the rotation preserves what matters.
+**Pre-dispatch (1):**
+- `cycle-planner` (haiku) — serial dispatch planner.
 
-Design notion: **Incremental Impedance Matching.** No single jump from C++/HPC to a formally-specified graph-evaluation calculus could be both faithful and reviewable. The tower lets each layer match *one* impedance — mutation → purity, fusion → algebraic decomposition, iteration → global tensor op, operator algebra → formal graph-evaluation calculus — so each rotation can be implemented and validated as a stepping stone.
+**Specialized dispatch (8, all opus):**
+- `layer-intro-author` — writes L_n / L_{n+1}>L_n Part overviews + dep-maps.
+- `harvester` — formalizes one L_n operator per invocation.
+- `abstractor` — sketches one L_{n+1}>L_n theme + speculative L_{n+1} operators.
+- `lifter` — re-anchors a theme to firmed-up vocabulary.
+- `lowering-verifier` — audits one theme against evidence.
+- `combinator-miner` — finds one recurrent pattern, proposes a combinator.
+- `same-layer-cross-cutter` — one unification/redundancy/contradiction observation.
+- `cross-layer-cross-cutter` — one cross-layer coverage-gap/edge-mismatch observation.
 
-**Lower layers** (already identifiable from the C++ side):
+**Post-dispatch validation (2):**
+- `critic` — runs 8-check checklist per report; META.md critique section.
+- `repairer` — attempts mechanical fixes per finding; META.md repair section + REPORT in-place edits; sets `overall_status`.
 
-- **L0** — cited Palace/MFEM source ranges (`file:line`). Ground truth.
-- **L1** — *mutation rotation*. Source operations re-expressed as pure functions: explicit input set, output set; in-place mutation and aliasing patterns either erased (workspace/scratch buffers) or made explicit (semantically-meaningful aliasing). Structurally close to the source loop.
-- **L2** — *fusion rotation*. L1 unfolded back into composition of base algebraic primitives, with HPC/SIMD tricks (cache-blocked loops, kernel fusion across multiple algebraic ops, packed sparse formats, batched specialized BLAS) erased. The canonical algebraic decomposition. See `### Optimization tricks vs. base algebra` below.
-- **L3** — *iteration rotation*. Where it exists, L2 re-expressed as a global tensor-field / convolution-over-space operation — whole-tensor ops, no element loop. Where no such global form exists (Gauss-Seidel-flavored smoothers, certain triangular solves, sequentially-reordered preconditioners), record the **obstruction** that prevents the lift, and stop. Negative L3 results — algorithms that genuinely don't lift, with reasons — are first-class output.
+**Application (1):**
+- `integrator` — applies ready reports; safety-net gates; rebuild book; commit + push.
 
-**L4** — the top of the stack: a **small, formally-defined graph-evaluation calculus**, in the Haskell/Scheme tradition. Algorithms are described in this calculus's syntax, with semantics governed by formal evaluation rules — not informal pseudo-code.
+**Methodology (1):**
+- `meta-phase` — examines cycle evidence; records trends; proposes / judges / decides; enacts methodology adjustments.
 
-L4 is **vocabulary, not architecture.** It is not pseudo-Rust, not a burn API sketch, not a runtime design. It does not commit to eager-vs-traced, to specific containers, or to any particular monad implementation. **Code-like syntax is allowed and expected**, but the goal is not "we can run this." The goal is to capture, in language-agnostic form:
+## Layout
 
-1. **What operations happen** — the primitives / verbs, with their signatures and shape contracts.
-2. **Who owns the state** — with explicit, first-class distinction between:
-   - **Simulator state** (the iterate, residual, convergence flags — what evolves through the algorithm).
-   - **Operator internal parameters** (matrix entries, preconditioner factorizations, mesh+basis tables, time-step constants — what operators *hold* as closure-like data and apply to sim state, but which does not itself evolve during a solve).
-   - **Ephemeral intermediates** (per-step values that exist only inside a single update and don't survive across iterations).
-3. **How state evolution is coordinated** — sequencing, iteration, convergence tests, branching, effects (logging, monitoring) — expressed as monadic structure (Haskell sense), not informal control flow.
+```
+book/src/                  # the mdBook artifact
+  L4/                      # Part: graph-evaluation calculus
+    index.md               (overview + dep-map)
+    <operator>.md          (one chapter per operator)
+  L4-L3/                   # Part: L4>L3 lowering
+    index.md
+    <theme>.md
+  L3/, L3-L2/, ..., L0/    # one Part per layer + lowering layer
+  spec/                    # Phase 1 corpus (slice-vertical, frozen)
+  concepts/                # shared concept library (kept)
+  design/                  # L4 calculus strawman (seeds L4 layer)
+  meta-reviews/            # historical meta-review records (cycles 1–172)
+.claude/agents/            # 13 agent definitions
+reports/                   # per-invocation REPORT.md + META.md channel
+  <timestamp>-<agent>-<scope>/
+    REPORT.md
+    META.md                (post-critique + repair)
+    [supporting docs]
+scaffolding/               # cumulative cross-cycle state (the workshop)
+  roadmap.md               (relative-progress vs goals; integrator-maintained)
+  priorities.md            (next-up list; meta-phase + cycle-planner co-edit)
+  friction-ledger.md       (named friction patterns + recurrence; meta-phase-maintained)
+  skill-candidates.md      (skill proposals; any-agent appendable)
+  open-questions.md        (cross-cycle question ledger; any-agent appendable)
+  cycle-record.jsonl       (per-cycle structured record; integrator + meta-phase append)
+  problems-sensitivity.md  (problems/ filing-rate self-tuning; meta-phase-maintained)
+  concept-dependency-map.md
+  decisions/               (persistent-dual trade-off logs)
+  test-linkages/           (source→test maps)
+problems/                  # out-of-band concerns (any agent files; human reviews)
+skills/                    # agent-invocable procedures (verbs; meta-phase promotes)
+tools/                     # purpose-built evaluation tooling
+log/                       # per-cycle human-readable summaries + README index
+reference/                 # local clones of palace, bunsen, burn (gitignored)
+orchestrator/              # decommissioned Python orchestrator (historical reference)
+lessons.md                 # legacy cross-run lessons (historical; superseded by friction-ledger)
+questions.md               # legacy question ledger (historical; superseded by open-questions)
+MIGRATION.md               # full structural-redirect spec (Phase A artifact)
+BOOTSTRAP.md               # original phased build spec (superseded; historical)
+```
 
-L4 is built from:
+## Write-authority partition
 
-- A **grammar** for terms: variables, abstractions, applications, let-bindings, tensor literals, primitive ops, monadic bind/return for stateful iteration. Roughly an ANF / let-binding form in the lambda-calculus tradition (Pierce *TAPL* / Harper *PFPL*), with JAX's jaxpr as a working reference for what such a form looks like as a small calculus.
-- **Evaluation rules** (small-step reductions): β, let-substitution, δ-rules for primitive tensor ops, monad laws (left identity / right identity / associativity), sharing rules where applicable. The semantics describe state evolution, not CPU execution.
-- **Type and shape rules**: typed judgments `Γ ⊢ e : τ` with τ carrying symbolic tensor shapes (bunsen `DimExpr`-style algebra at the type level). Linear / affine annotations where single-use ownership matters — they are the formal mechanism for distinguishing operator-params-as-closure from sim-state-being-threaded.
-- **Algebraic equational laws**: commutativity, associativity, distributivity of ops where they hold; the simplification rules that make Palace's L3 forms formally equal to L4 monadic programs.
-- **Worked examples**: Palace algorithms (and bunsen's Conway/LBM as sanity checks) expressed in L4 syntax, with their L3↔L4 correspondence argued via the reduction rules.
+| Agent | Writes to |
+|---|---|
+| cycle-planner, 8 specialized | `reports/<id>/REPORT.md` + supporting docs in same dir only |
+| critic | `reports/<id>/META.md` critique section |
+| repairer | `reports/<id>/META.md` repair section + in-place edits to REPORT.md / supporting docs |
+| integrator | `book/`, `scaffolding/roadmap.md`, `scaffolding/cycle-record.jsonl`, `scaffolding/open-questions.md`, `log/` |
+| meta-phase | `.claude/agents/`, `skills/`, `scaffolding/priorities.md`, `scaffolding/friction-ledger.md`, `scaffolding/skill-candidates.md` (status updates), `scaffolding/problems-sensitivity.md`, channel-format specs |
 
-**Syntactic style.** The notation borrows **TypeScript-style record literal / destructuring / spread-update syntax** (`{ x, r, ...rest } = state`, `{ ...state, x: x_new, rr: rr_new }`) for state-update ergonomics — TS has notably better record syntax than Haskell or Scheme for this purpose. Monadic structure (`do`-blocks, `>>=`) is Haskell-flavored, for coordination of state evolution and effects. **Deliberately avoided:** Haskell's lens / optic machinery and any equivalent Scheme record-accessor library — they obscure the algorithm more than they help. Type annotations are Haskell-style (`f :: A -> B -> M C`). The notation does not need to compile; it needs to read clearly and admit formal-semantics treatment.
+**Any-agent-appendable** (append sections, never edit existing):
+- `scaffolding/skill-candidates.md`
+- `scaffolding/open-questions.md`
+- `scaffolding/decisions/`
+- `scaffolding/test-linkages/`
 
-The **L3→L4 rotation** is therefore a *formal correspondence argument*: given an L3 pure-tensor-algebraic decomposition, exhibit an L4 program and a chain of equational steps justifying their equivalence. The Critic verifies this chain. Where the chain breaks (the L3 form has no L4 correspondent under the calculus), record the obstruction as a push-back candidate against either L3 or the L4 calculus design itself.
+## Methodology invariants
 
-After L4 exists, **a separate downstream artifact** specs what burn would need to *realize* the L4 calculus — backend operations, evaluation strategy, shape solver, monad-realization choice, expression-graph or eager dispatch, etc. That artifact is **not** a layer in the stack; it consumes L4 as input, and its design is explicitly out of scope for the layered spec work.
+These are load-bearing — do not "improve" them away.
 
-**Equivalence is per-edge.** For every adjacent pair `(Li, Li+1)` and every algorithm, the spec carries an explicit rotation claim and its justification — algebraic argument, structural/symmetry argument, formal reduction chain (for L3→L4), or empirical match against a reference run. The Critic verifies these per-edge; it does not try to verify L4 against L0 directly, because the whole point of the tower is that no single rotation is that long.
+- **Citations are mandatory.** Every claim carries `(file, start_line, end_line)`. No citation, no claim. Citation format: plain text `relative/path/file.ext:start-end` (relative to `reference/`).
+- **Roles do not share context.** Each subagent dispatch gets its own isolated context. The critic in particular must not see the producer's chain-of-thought.
+- **Reports are append-only after integration.** After `integrated_at:` is set, REPORT.md content is not edited. (Repairer may edit pre-integration; bounded by repair authority.)
+- **Commit every cycle, pass or fail.** The integrator commits + pushes. Atomic operation: artifact + scaffolding + log + book output as one commit.
+- **Push after every commit.** `git commit ... && git push origin main` chained. No commits sitting locally between turns.
+- **Spec growth is monotonic and visible in `git log`.** Realized as REPORT.md proposed-changes blocks parsed by the integrator.
+- **If a step is ambiguous, stop and ask the human.** Don't improvise around the spec.
 
-**Where bunsen sits.** The `kits::sims` examples (Conway, LBM) implement L3 pure tensor-algebra concretely against burn — pure tensor-in / tensor-out functions wrapped in thin mutable state structs. The mutable wrappers *gesture toward* L4 but don't realize it: no formal calculus, no first-class distinction between sim state and operator params, no explicit effect tracking. The bunsen contracts macros and docstring shape annotations show how L3 is *written* in practice in real Rust+burn code. Bunsen is what L3-in-burn looks like today; the (separate, downstream) burn-realization artifact will eventually specify what additional burn machinery is needed to realize L4 against this foundation.
+## Process model: push-forward, push-back; the stack is a research artifact
 
-### Process: push-forward, push-back; the stack is a research artifact
+**The stack is not the deliverable. It is a research artifact whose construction yields the understanding that *is* the deliverable.** Layers exist to expose friction. The valuable signal lives in the friction.
 
-**The stack is not the deliverable.** It is a research artifact whose construction yields the understanding that *is* the deliverable. Layers exist to expose friction. The valuable signal lives in the friction:
+- **Push-forward, one slice / theme / operator at a time.** A layer's job ends as soon as the next layer can speak.
+- **Push-back when friction surfaces.** While working at layer N+1, if a different framing of layer N would make N+1 dramatically easier, restructure layer N.
+- **Move sideways** when progress on one slice is blocked. Use the sideways move to surface unification opportunities.
+- **Explore alternative formulations when they exist; coalesce by use.** Persistent duals are permitted when they capture genuinely distinct aspects; not permitted when they cause duplication explosion in adjacent layers.
+- **Accumulate a working surface with embedded problems.** Revise verdicts APPLY the diff (surface accumulates with friction embedded). Only `reject` blocks application.
 
-- **"How hard is it to build the next layer *for this part*?"** — measures whether the current layer's representation is adequate for the next rotation. High friction means the current layer is missing something.
-- **"What could have existed in the previous layer to make this simpler?"** — the push-back signal. When friction shows up at layer N+1, the answer becomes a structural change to layer N.
+## Optimization tricks vs. base algebra
 
-The process is **not** waterfall through the stack. Do not write all of L1, then all of L2, then all of L3. That discards the signal. Instead:
+A significant fraction of Palace's C++ exists because it was tuned for CPU + cache + SIMD. That cost model is not burn's, and most of the resulting code shape is counter to the goals of a pure GPU tensor implementation.
 
-1. **Push-forward, one slice at a time.** Take a slice of Palace (one algorithm, one routine, one piece of state). Build L1 for that slice *only to the point that L2 concepts can begin to be described*. Then build L2 only to the point that L3 can begin. Same for L4. **A layer's job ends as soon as the next layer can speak.** Completing a layer breadth-first across all algorithms before moving up is wrong; the cross-algorithm pressure that drives unification doesn't show up until you've reached for the next layer.
-2. **Push-back when friction surfaces.** While working at layer N+1, if a different framing of layer N would make N+1 dramatically easier, unify multiple algorithms at N+1, or eliminate an awkward corner — restructure layer N. The change ripples down to L0 (new questions / re-explorations) and back up to N+1 as a now-easier rotation.
-3. **Move sideways.** When one slice is pushed high enough that progress is blocked on infrastructure rather than its own substance, switch to a different slice. Use the sideways move to surface unification opportunities ("L2 for X and L2 for Y look similar — could they share a primitive?").
-4. **Explore alternative formulations when they exist; coalesce by use.** At any layer, when a piece of work admits multiple plausible representations (alternative L2 algebraic decompositions, alternative L4 record shapes, alternative concept formulations), write multiple in parallel rather than forcing premature commitment to one. Refine through cross-slice pressure, Critic review, and observed friction. **Persistent duals are permitted** when the alternatives capture genuinely distinct aspects (e.g., matrix-view vs. operator-view of the same operation). **Hard constraint**: duals must not cause duplication explosion in adjacent layers — if two L2 forms force two L3 paths *and* two L4 paths *and* two concept entries, they are competing designs (one needs to win), not duals (which coexist by capturing different aspects). The cost of a real dual is bounded by sharing the interface at the layer above. `scaffolding/decisions/<topic>.md` is the natural home for the trade-off comparison while the dual persists.
-5. **Accumulate a working surface with embedded problems.** (Added 2026-05-23 from user feedback after the first 8 GMRES cycles accumulated zero bytes of spec content.) The methodology's design intent is to *grow* the spec surface incrementally, not to gate it on per-pass perfection. The Critic's `revise` verdict means "the content is salvageable but has issues" — the orchestrator APPLIES the diff and the surface accumulates with friction *embedded* (as Working Notes, as push-back signals in `episodic.jsonl`, as residual axes per `variant-absorption.md`). The next cycle's Synthesizer reads the current slice + the recent episodic + lessons and refines. **Only `reject` blocks application** — reserved for content that is actively wrong, not merely incomplete. Refinement at each level should improve the conceptual tooling available for other refinement at that level: support-operator concepts (axpy, dot, matvec) build vocabulary for complex slice descriptions; methodology concepts (rotation, variant-absorption, constructed-operators) build vocabulary for cross-cutting friction integration. Back-pressure friction is the input to the cross-cutting framework that meta-reviews extract — friction is not waste, it is the loop's primary signal.
+- **Transparent performance tricks** (fusion, tiling, packing, batching, memory layout, recomputation-vs-lookup) — algebraically equivalent to their unfolded form. The L1 form is the unfolded form; the trick gets a one-line note.
+- **Load-bearing numerical tricks** (non-associative reduction orderings, fast-math, mixed-precision intermediates, deterministic-vs-atomic accumulation) — **part of the algorithm**. Preserve as explicit algebraic claims with the property they buy (determinism, condition-number, IEEE compliance) called out.
 
-Implications for the agent loop, encoded in `BOOTSTRAP.md`:
+When in doubt, the critic flags as `unclear` and the human triages. Mis-classifying a load-bearing trick as transparent silently changes the algorithm.
 
-- **The Planner picks the next push**, not the next open question from a ledger — forward at some slice, back from a friction point, or sideways for unification.
-- **"Done" is friction-resolved**, not citation-complete: the lower layers are unified enough that adding a new algorithm at L1 propagates upward easily, and L4 has at least one worked sample showing the rotation chain end-to-end. Count-based criteria (citations present, N slices to L4) are necessary scaffolding, not sufficient closure.
-- **The episodic log is a research record**, not just telemetry. Every push (forward, back, sideways) records the friction observed and the structural change made. The log is part of the artifact.
-- **The question ledger surfaces unknowns**, not to-dos. The to-do is whatever push the current friction suggests.
+## Tests as semantic supplement
 
-### Role contracts
+Palace's unittests under `reference/palace/test/unit/` are **semantic documentation**, not just regression scaffolding. A test that constructs input, calls a function, and asserts on the resulting state is direct evidence of mutation pattern, algebraic semantics, and whether a trick is load-bearing.
 
-Roles operate within the push-forward / push-back process above. Per slice the loop is depth-first through the stack; per layer the loop is friction-driven, not enumerative. L4 is designed as a system (separate work) rather than synthesized per-algorithm; L1–L3 are produced per-slice by the agent loop.
-
-- **Explorers** produce L0 + L1: cite the source range and record the explicit input set (tensors read), output set (tensors produced), and any in-place mutation/aliasing pattern observed. A claim like "`Foo::Apply(x, y)` computes `y = A·x`" is too loose — is `y` overwritten? accumulated into? aliased with `x`? Record what the source actually does.
-- **Synthesizer** produces just-enough L1 to enable L2 for the current slice, just-enough L2 to enable L3, and so on (depth-first per slice, not breadth-first per layer). It proposes the L1→L2 rotation (fusion-unfolded algebraic decomposition) and L2→L3 (field-transition) **when those become reachable for the slice in hand** — explicitly leaving "no global lift found, obstruction = X" as a valid L3 outcome. It also **flags push-back opportunities**: when the L1 form forces a labored L2 rotation, or L2 forces an awkward L3, propose a structural change to the lower layer rather than absorbing the awkwardness silently.
-- **Critic** checks each per-edge rotation the Synthesizer has proposed: does the source support L1; does L1 algebraically equal L2 after unfolding the noted optimization tricks; does L2 equal L3 as a field-transition. Insufficient justification is `missing_case` or `unclear`; an outright rotation mismatch is `control_flow_mismatch` or `contradicts_existing_spec`. **The Critic also surfaces friction-as-a-signal:** a rotation that's technically correct but obviously forced — special cases, exception branches, special-pleading conditions — is a push-back candidate; flag it as `unclear` with an explicit "would lower-layer change X eliminate this friction?" suggestion.
-
-The schemas and prompts encoding this discipline live in `BOOTSTRAP.md` Phases 3–4: `schemas/rotation_claim.json` with `justification_kind ∈ {algebraic, structural, reduction_chain, empirical_match, obstruction}`, the Explorer prompt's mutation-pattern enum, the Synthesizer's transparent-vs-load-bearing distinction, and the Critic's per-edge rotation checks.
-
-### Tests as semantic supplement
-
-Palace's existing unittests (`reference/palace/test/unit/test-<topic>.cpp`, also `reference/palace/test/examples/`) are **semantic documentation**, not just regression scaffolding. A test that constructs an input, calls a function, and asserts on the resulting state is direct evidence of mutation pattern, algebraic semantics, and whether a numerical trick is load-bearing (a test that fails under naïve reordering proves the trick is load-bearing). For ambiguous source — heavy templates, macro expansion, complex control flow — tests are often the most authoritative semantic statement available.
-
-The linkage from source to test is often **not directory-co-located**: Palace's tests live in a parallel topic-keyed tree, not alongside the source they exercise. Discovering and recording the linkages is itself work — `scaffolding/test-linkages/` is the accumulating source→test registry.
-
-Operational consequences for the roles:
-
-- **Explorers** look for tests when localizing a source region (search by symbol/function/type name; check `scaffolding/test-linkages/` for already-known mappings). Cite tests alongside source ranges — tests are L0-equivalent evidence. If no test exists, note "no test found" and proceed; tests are supplement, not prerequisite.
-- **Critic** consults tests for the cited region when verifying rotation claims. A test assertion contradicting an L1/L2 claim is `citation_does_not_support` — tests are evidence on equal footing with source.
-- **Synthesizer** prefers `justification_kind = empirical_match` (with a test citation) over pure algebraic argument when both are available — an executed test is harder evidence than an argument.
-
-Patterns to expect, and how they should appear in the spec:
-
-| Palace (C++/HPC, mutating)                | L1 form (mutation-lifted, pure-functional)           |
-|-------------------------------------------|------------------------------------------------------|
-| `x.Add(alpha, y)` → `x += α·y`            | `x_{k+1} = x_k + α·y`                                |
-| `A.Mult(x, y)` → writes into `y`          | `y = A·x`  (no mention of destination buffer)        |
-| CG/GMRES loop mutating iterate in place   | functional unfold: `state_{k+1} = step(state_k)`     |
-| Reused workspace `tmp` across iterations  | omitted; the COW backend handles allocation          |
-| MPI ghost-cell exchange / cross-rank op   | **out of scope** — see Scope below                   |
-
-### Optimization tricks vs. base algebra
-
-A significant fraction of Palace's C++ exists because it was tuned for the cost model of CPU + cache hierarchy + SIMD lanes. **That cost model is not burn's**, and most of the resulting code shape is counter to the goals of a pure GPU tensor implementation. Cache-blocked loops, SIMD intrinsics, manual unrolling, kernel fusion across multiple algebraic operations, packed sparse formats (CSR / ELLPACK / block-sparse), specialized small-element kernels, and batched BLAS calls are **optimization tricks**, not algebra. They obscure what the code is actually computing.
-
-The L2 form is the **canonical algebraic decomposition**: the operation written as composition of base tensor / operator / quadrature primitives, **with optimization tricks unfolded back into the base algebras** (this is the L1→L2 rotation). For example, a fused FE-operator loop that interleaves gradient evaluation at quadrature points, material contraction, quadrature weighting, and test-function assembly is L2-described as the composition `G^T · W · M · G` (read right-to-left, applied to a DoF vector), with at most a brief note that the source fuses these steps for cache locality. Cache blocking, SIMD packing, and memory-layout choices are not mentioned at all — they are below the level of abstraction the spec captures.
-
-The Critic must distinguish two categories of trick and treat them very differently:
-
-- **Transparent performance tricks** — fusion, tiling, packing, batching, memory layout, recomputation-vs.-lookup-table — are algebraically equivalent to their unfolded form. The L1 form is the unfolded form; the trick gets a one-line note in the spec, not a claim.
-- **Load-bearing numerical tricks** — non-associative reduction orderings, fast-math flags, mixed-precision intermediates, deterministic-vs.-atomic accumulation choices, sign/scaling conventions inside factorizations — are **part of the algorithm**, not just its execution. They must be preserved as explicit algebraic claims, with the property they buy (determinism, condition-number behavior, IEEE compliance) called out.
-
-When in doubt about which category a given trick belongs to, the Critic should flag it as `unclear` and let the human triage. Mis-classifying a load-bearing trick as transparent silently changes the algorithm; the converse (over-flagging transparent tricks) is merely annoying.
+- **Specialized agents** look for tests when localizing source. Cite tests alongside source ranges — tests are L0-equivalent.
+- **Critic** consults tests when verifying claims. A test assertion contradicting a claim is `citation-does-not-support`.
+- Test linkages tracked in `scaffolding/test-linkages/`.
 
 ## Scope
 
-**Target deployment is a single machine.** The speedup story is **CPU → GPU** via burn's device backends (CUDA / ROCm / WGPU / Metal — burn handles dispatch). MPI / multi-rank distribution is **out of scope**: it requires targeted R&D on the host environment that is not part of this effort.
-
-Concrete implications for Explorers:
-
-- Any code path conditioned on `MPI_*`, multi-rank communicators, ghost-cell exchange, `HYPRE_Par*`, or cross-rank reductions is **out of scope** — flag it once in an Explorer note (so the Synthesizer doesn't keep re-questioning the same files) and skip it. Do not raise it as an open question.
-- In MFEM, the `Par*` family of types (`ParGridFunction`, `ParBilinearForm`, `ParMesh`, `HypreParVector`, …) are the parallel analogues of `GridFunction`, `BilinearForm`, `Mesh`, `Vector`, etc. **Read parallel types as their single-rank equivalents semantically** — the spec records the local algorithm; parallel wrapping is implementation.
-- Distributed mesh partitioning, parallel I/O, and rank-aware assembly are out of scope. Single-rank assembly and the solver pipeline that consumes assembled operators are in scope.
-- The pure-functional / COW lifting (above) still fully applies — burn's GPU backends are why we need it.
-
-**Solvers in scope: all five.** Electrostatic, magnetostatic, eigenmode, driven (frequency-domain), transient (time-domain). They share substantial infrastructure (FE spaces, operator assembly, linear/eigenvalue solvers) — Phase 2's `questions.md` seed includes a top-level question per solver in addition to the generic shared-infrastructure questions, so the Planner can interleave the two rather than getting stuck in one solver's silo.
-
-**Mesh / FE-space construction is in scope** (resolved 2026-05-23). The spec dissects MFEM-equivalent FE assembly — quadrature, basis tables, geometric-factor computation, sparse-assembly patterns — alongside the five solver pipelines. Drawing the boundary at the assembled-operator interface would have been narrower but the user took the more ambitious option deliberately: full-pipeline spec.
-
-Practical consequence: Phase 2's `questions.md` seed includes mesh/FE-space top-level questions in addition to the per-solver questions. When choosing a Phase 6 smoke-test slice, prefer assembled-operator algorithms first (GMRES, per `BOOTSTRAP.md`) — mesh/FE assembly is a substantial separate surface that benefits from being tackled after the solver pipeline has been validated.
+- **Target deployment is a single machine.** CPU → GPU via burn's device backends. MPI / multi-rank distribution is **out of scope** — flag once and skip. In MFEM, `Par*` types (`ParGridFunction`, `ParBilinearForm`, `HypreParVector`, …) are read as their single-rank equivalents.
+- **Solvers in scope: all 5.** Electrostatic, magnetostatic, eigenmode, driven, transient.
+- **Mesh / FE-space construction in scope.** MFEM-equivalent FE assembly is dissected alongside the solver pipelines.
 
 ## Target system
 
-The target being dissected is **AWS Labs Palace** — <https://github.com/awslabs/palace>. "PArallel, LArge-scale Computational Electromagnetics": an open-source parallel finite element code for full-wave 3D EM simulation.
+**AWS Labs Palace** — <https://github.com/awslabs/palace>. C++ (~85% of tree), CMake ≥ 3.24, MFEM + libCEED + MPI + BLAS/LAPACK + optional CUDA/ROCm.
 
-- **Language:** C++ (~85% of the tree). Set `[target].language = "cpp"` in `config.toml`. Tree-sitter has a C++ grammar — no Phase 1 escalation expected on that front.
-- **Build:** CMake ≥ 3.24.
-- **Major deps:** MFEM (finite element discretization), libCEED (exascale discretization kernels), MPI, BLAS/LAPACK; optional CUDA / ROCm for GPU.
+- Many symbols resolve into upstream libraries (MFEM, libCEED). Specialized agents cite Palace source, not vendored upstream. If a question requires upstream behavior, log as open question.
+- Heavy C++ templates — read tightened regions; prefer narrow text-search before reading.
 
-Implications for the dissection agents:
-
-- Many symbols resolve into **upstream libraries** (MFEM, libCEED). Explorers should cite Palace source — not vendored or upstream code — and raise the upstream surface as `contract` claims rather than chasing definitions into MFEM. If a question genuinely requires upstream behavior, log it as an open question and surface it to the human.
-- Heavy use of **C++ templates and library-provided abstractions** means `get_symbol_def` / `get_call_sites` will sometimes return many sites; prefer `search_text` with tighter patterns when that happens, and narrow before calling `read_range`.
-- For MPI-related code paths, see Scope above — single-rank semantics are the spec; parallel wrapping is implementation.
-
-## Reference repos (local clones)
-
-`reference/` (gitignored) holds shallow clones of the three relevant upstream repos. Read them locally; don't re-fetch from GitHub.
+## Reference repos (local clones, gitignored under `reference/`)
 
 - `reference/palace/` — the C++ source being dissected.
-- `reference/bunsen/` — the user's burn-overlay library. **`reference/bunsen/crates/bunsen/src/kits/sims/` is the methodology reference for this project** (see below).
-- `reference/burn/` — the target tensor library. Before claiming an L2 form maps cleanly to "burn primitives," verify the relevant op actually exists in burn.
+- `reference/bunsen/` — the user's burn-overlay library. `reference/bunsen/crates/bunsen/src/kits/sims/` is the methodology reference (Conway, LBM).
+- `reference/burn/` — the target tensor library.
 
-## Bunsen methodology conventions
+## Bunsen methodology conventions (carried forward)
 
-The methodology being applied to Palace was developed in the bunsen project. Its `kits::sims` module is the canonical realization, in working Rust+burn code:
+Visible in `reference/bunsen/crates/bunsen/src/kits/sims/`:
 
-- `conway/{life2d,life3d}.rs` — Conway's Game of Life. The textbook iteration-to-tensor-field lift: per-cell scan with neighbor-counting becomes `unfold` + `sum_dims` + elementwise rule. The floor of the methodology's range — minimal but complete.
-- `lbm/d2q9/` — Lattice-Boltzmann fluid simulation (D2Q9), decomposed into separate modules for `streaming`, `collision`, `reflection`, `relaxation`, `space`, `thermal`, and the `simulation` orchestrator. Mid-range example with multi-operator composition, boundary handling, and conservation-checking tests.
-
-Conventions visible in those examples that should propagate into Palace's spec:
-
-- **Pure tensor-in / tensor-out functions are the algebra.** `pub fn outflow_clipping_stream<B>(dist: Tensor<B,4>) -> Tensor<B,4>` is the canonical L1 form. State-bearing structs (`ConwayLife2DState`) are *thin* wrappers whose `step()` is `self.state = pure_step(self.state.clone())`. The mutation lives in the wrapper; the algebra is pure.
-- **Decompose into named algebraic pieces.** LBM does *not* fuse streaming + collision + boundary handling into one `step()`. They are separate functions in separate files. Palace's spec should decompose each solver the same way — each piece independently citeable and independently testable.
-- **Symbolic shape contracts at boundaries.** bunsen's `contracts::unpack_shape_contract!` / `assert_shape_contract_periodically!` macros declare input/output shapes symbolically — e.g., `[H, W, VY=3, VX=3]` with named axes and pinned values where present. Every L1 operation in the spec should declare its shape contract in this form.
-- **Docstrings declare I/O sets explicitly.** `# Arguments` / `# Returns` blocks with shape annotations, e.g. `dist: [H, W, VY=3, VX=3]` → `[H-2, W-2, VY=3, VX=3]`. This is exactly the L1 record the methodology requires. The spec's prose should mirror this format.
-- **L1↔L2 equivalence is tested concretely.** Conway's `test_logic` runs `next_interior_2d` against a known state and asserts exact equality to a hand-computed result. LBM's `test_debug_flow_loss` checks energy conservation through streaming + collision. When the cost is reasonable, the spec's equivalence claims should be backed by tests of this kind, not by algebra alone.
-- **Performance notes are inline `// Timing:` comments, not abstractions.** Backend-dispatch tricks (`cat([cat([t,]),])` outperforms `cat([t,]).reshape(...)` by ~10% — actual comment in `streaming.rs`) are noted in-place. These are exactly the **transparent performance tricks** the methodology distinguishes from algebra: they affect *expression* of an algebraically-equivalent op, not the algebra itself, and stay below the spec's level of abstraction.
-- **Config/init pattern for hyperparameters.** `ConwayLife2DConfig { shape: [usize; 2] }` + `impl Config { fn init(self, device) -> ConwayLife2DState }`. Palace's solver hyperparameters (frequency, time step, tolerance, max iters, preconditioner choice, …) should be expressible as bunsen-style `Config` structs in any eventual port.
-
-Conway is the floor; LBM is roughly mid-range. **Palace's solvers will sit above LBM in complexity** — Krylov iterations, preconditioners, eigenvalue solvers on FE-assembled operators — but the *decomposition discipline* is the same.
-
-## Load-bearing invariants
-
-Violating any of these defeats the architecture — do not "improve" them away:
-
-- **Citations are mandatory.** Every claim in the spec must carry `(file, start_line, end_line)`. No citation, no claim. The Explorer prompt enforces this; the Critic verifies it.
-- **`read_range` is the only source-returning MCP tool.** All other tools (`list_files`, `get_file_subtree`, `get_symbol_def`, `get_call_sites`, `list_dependencies`, `search_text`) return structure or locations, never source text. This forces Explorers to localize before reading.
-- **Roles do not share context.** Each role gets its own API call, its own system prompt, no conversation history from other roles. The Critic in particular must not see the Explorer's chain-of-thought — reasoning is persuasive in the wrong direction.
-- **Synthesizer outputs diffs, not rewrites.** Spec growth must be monotonic and visible in `git log`.
-- **Commit every cycle, pass or fail.** Episodic log + git history together are the audit trail.
-- **Lessons append on every disagreement.** Cheap, disproportionately effective.
-- **If a step is ambiguous, stop and ask the human.** Do not improvise around the spec.
-
-## Models (per `config.toml`)
-
-- Planner: `claude-haiku-4-5-20251001` (cheap routing)
-- Explorer / Synthesizer / Critic: `claude-opus-4-7` (quality matters; Critic most of all)
+- **Pure tensor-in / tensor-out functions are the algebra.** State-bearing wrappers are *thin*.
+- **Decompose into named algebraic pieces** in separate files.
+- **Symbolic shape contracts at boundaries** — `[H, W, VY=3, VX=3]` with named axes.
+- **Docstrings declare I/O sets explicitly** — `# Arguments` / `# Returns` blocks.
+- **L1↔L2 equivalence tested concretely** when feasible.
+- **Performance notes are inline `// Timing:` comments**, not abstractions.
 
 ## Problems channel — out-of-band concerns
 
-`problems/` is the channel for agents to raise concerns that exceed their own role's authority. **Bar: "the right answer requires authority I don't have."** Files are named `${YYYY-MM-DDTHHMMSS}Z.md` (UTC, colons stripped). Full protocol — when to file, when not, file format, lifecycle — lives in `problems/README.md`. Read that file before filing or reviewing.
+`problems/` is the channel for any agent to raise concerns that exceed their own role's authority. **Relaxed bar (2026-05-26):**
 
-Three categories qualify:
-- **Out-of-role conflicts** (e.g. Critic notices a Synthesizer-prompt-level pattern).
-- **In-line framing concerns** (the methodology as described doesn't fit the slice in hand, in a way that exceeds the agent's responsibility).
-- **Tooling / infrastructure gaps** the agent can't work around in-role.
+- **(A) Out-of-role conflicts** — e.g., critic notices a producer-prompt-level pattern.
+- **(B) Observed-but-not-in-focus drive-by observations** — phrasing pattern: "In reading the context for this work [...]; the following contradiction, duplication, miss-framing, etc in reference work was noticed."
 
-Things that **do not** belong here: target-code unknowns (→ `questions.md`), agent mistakes recognized in retrospect (→ `lessons.md`), normal layer push-back (→ Synthesizer, expected process), per-claim rotation failures (→ Critic verdict). Conservative temperature — if it fits any of those channels, use them.
+Filing rate is self-tuned per `scaffolding/problems-sensitivity.md`; target ~1/15 cycles. Meta-phase recalibrates each cycle.
 
-Problems are reviewed out-of-cycle by the human, not by the agent loop. Resolved problems are annotated in place; never deleted (they're part of the research record).
+## Skills
 
-## Scaffolding — agent-side workshop
+Agent-invocable procedures under `skills/<name>/SKILL.md`. Any agent can propose via `scaffolding/skill-candidates.md`; meta-phase promotes with default-accept under low-bar policy. Promotion bar: pattern observed ≥2 cycles OR candidate sketch concrete enough to write as SKILL.md OR friction-ledger entry exists for the addressed pattern.
 
-`scaffolding/` is the agent-side workshop: cross-cutting notes, hypotheses, decision logs, and breadcrumbs that don't belong to any one slice and aren't otherwise channeled. The book is the deliverable; scaffolding is the workshop — not pruned for the deliverable's neatness. Full protocol in `scaffolding/README.md`.
+Current skills (post-pilot-1):
+- `classify-variant-axis`
+- `verify-citation-range`
+- `skill-selection`
+- `verify-refinement-surface`
+- `plan-sideways-concept-emission`
+- `embed-and-persist-subagent-dispatch` (pilot-1)
 
-Discipline (in brief): append-only structurally; small-scope speculative content is default-accepted; stale entries are marked rather than deleted; promotion to the book leaves a stub. Per-cycle agents read prior cycles' scaffolding as input; the no-shared-context invariant filters the in-flight cycle's scaffolding from the Critic the same way it filters live chains-of-thought.
+## Models
 
-What scaffolding is *not*: slice-local notes (those live in the slice's `## Working Notes`), source-code unknowns (`questions.md`), out-of-role concerns (`problems/`), Critic cross-cycle observations (`lessons.md`), per-cycle telemetry (`episodic.jsonl`).
+- `cycle-planner` — `claude-haiku-4-5-20251001` (cheap routing).
+- All other agents — `claude-opus-4-7`.
 
-## Skills — agent-invocable procedures
+## Escalation triggers
 
-`skills/` holds agent-invocable procedures (verbs, where `scaffolding/` is nouns). Each skill is a directory containing `SKILL.md` with Claude-Code-style frontmatter (`name`, `description`, `status`). Full protocol in `skills/README.md`.
+Surface to the human immediately rather than working around — these signal architectural problems, not content problems:
 
-Authority: skill creation, refinement, and retirement is Meta-Critic / meta-review work (Medium cascade). Per-cycle agents *invoke* skills; they do not create or modify them. Pre-orchestrator, this Claude Code session acts in the meta-cycle capacity.
+- Critic rejects three consecutive reports on the same scope (prompt bug, not content).
+- A specialized agent's input exceeds reasonable token budgets on one region (scope too coarse — cycle-planner needs to subdivide).
+- Open-questions ledger grows monotonically over 20 cycles with zero closures (generating questions faster than answering).
+- Two specialized agents produce contradictory claims about the same source range across consecutive cycles (source itself may be ambiguous).
+- Friction-ledger pattern reaches recurrence ≥5 with status not yet `addressed` (meta-phase isn't catching it).
+- Custom `.claude/agents/<name>.md` definitions don't resolve via `Agent(subagent_type=<name>, ...)` (architectural — affects every dispatch).
 
-Small-scope speculative skills are default-accepted; the expected pattern is *write small, use, observe friction, refine* rather than design-from-imagination.
+## Inputs the human supplies
 
-## Tools — evaluation tooling
+Before invoking the loop:
+- Anthropic API access (env or harness credentials).
+- `reference/` checkouts of palace + bunsen + burn (already in place).
 
-`tools/` holds purpose-built scripts and small projects for verifying, validating, or exploring aspects of the dissection beyond what the per-cycle agents do themselves. Distinct from skills (which *describe* procedures) — tools are *executed code*. Full protocol in `tools/README.md`.
-
-Layout: each named tool gets its own subdirectory `tools/<name>/`. Python tools own a local virtual environment (`tools/<name>/.venv/`, gitignored) — prevents cross-tool dep conflicts and keeps each tool reproducible. Non-Python tools follow their own ecosystem conventions (Cargo, shell scripts, etc.).
-
-`tools/scratch/` is a sandbox for grab-bag evaluation when symbolic execution or reasoning would help. Different discipline from named tools — scratch is mutable; promote crystallized work out.
-
-## Meta-review — out-of-cycle friction integration
-
-Full procedure: `book/src/meta-reviews/index.md`.
-
-**Trigger**: every 3 completed agent cycles (per `config.toml`'s `meta_review_every_n_cycles`), or human invocation. The normal loop **pauses** until the meta-review is fully enacted — analysis → plan → human approval → enactment — and only then resumes. The cadence is tunable; tighter (3) during shake-down so friction integrates fast, looser later as the loop matures.
-
-**Driver**: a distinct **Meta-Critic** role (not the per-cycle Critic) with its own system prompt, isolated context, and incremental project history built from prior meta-review records. The Meta-Critic carries **medium-cascade authority**:
-
-- **Low** (typos, single-file clarifications, prompt-wording polish): applied directly.
-- **Medium** (prompt revisions, methodology adjustments within the framework, slice-convention restructuring, new `concepts/` entries, **role-granularity shifts** — subdividing / merging / narrowing existing roles — and **MCP server service changes** — adding tools, changing signatures, deprecating tools): **bundled into a refinement plan, requires human approval before enactment.**
-- **High** (layer-count or layer-semantics changes, L4 calculus revisions, core process-model changes, **introducing a new agent role** — a 6th; subdividing an existing role into two is Medium, not High): **surfaced as escalation, not acted on** — design-level conversation with the human follows.
-
-Each pass produces two artifacts in `book/src/meta-reviews/`:
-
-- `<YYYY-MM-DD>.md` — the meta-review **record** (immutable once committed; the next Meta-Critic reads these as project history).
-- `<YYYY-MM-DD>-plan.md` — the **refinement plan** (proposed-and-finalized; the as-proposed and as-enacted are both readable historically).
-
-Recurring patterns across meta-review records are first-class signal — a problem resolved once that recurs is evidence the resolution didn't stick, and may escalate from Medium to High on the third hit.
-
-**Final step of every meta-cycle enactment**: regenerate `README.md` using the `prompts/readme_builder.md` prompt. The README is a relative-progress report — it must reflect what was just enacted (the meta-cycle that fired). The prompt is invoked with isolated context (like a role prompt); it reads the current project state from `log/README.md` (with spot-reads of individual `log/*.md` entries), `book/src/spec/index.md`, `book/src/concepts/index.md`, `episodic.jsonl`, the `book/src/meta-reviews/` records, and the `prompts/` + `skills/` directory listings, and emits a fresh `README.md`. The new README is committed alongside the meta-review enactment (or as an immediate follow-up commit with message `readme: regenerate post-meta-N`).
-
-## Pinned conventions (confirmed)
-
-- **Layer count: 4 above L0.** L1 mutation, L2 fusion-unfolded algebra, L3 field-transition, L4 formal graph-evaluation calculus. Not collapsed.
-- **Output format: mdBook from day one.** Plain Markdown with KaTeX math under `book/src/`. Layout mirrors bunsen's book.
-- **Slice granularity: one slice per algorithm.** Small / medium slices are a single Markdown file with consistent `## L0` / `## L1` / `## L2` / `## L3` / `## L4` section headings. **Genuinely large slices** (e.g., GMRES with Hessenberg, Givens rotations, restart logic; or block-multigrid) are organized as a **subdirectory `book/src/spec/slices/<slice>/` from the start**, with per-layer files or per-aspect files (best judgment by the Synthesizer). Splitting after-the-fact is more disruptive than planning multi-file from the start; reach for the subdirectory shape when the single-file form would exceed ~400 lines or the layer sections would each be book-chapter-sized.
-- **Citation format: plain text** `relative/path/file.ext:start-end` (relative to `reference/`), e.g., `palace/linalg/cg.cpp:42-67`. Editors with line-aware navigation resolve these against local clones. No markdown links — the grep/IDE workflow is the navigation.
-- **Meta-cycle: every 3 completed agent cycles or manual** (per `config.toml`; tunable). Procedure in `book/src/meta-reviews/index.md`.
-- **`concepts/` library** (under `book/src/concepts/`) is extracted on demand: when a slice reaches for a primitive or abstract concept that "feels canonical," add it. Cross-link from slices. This is both DRY and the unification artifact of the methodology.
-- **Every piece of produced spec content** (slice file, concept file, design artifact, meta-review record) may optionally include two agent-facing sections:
-  - **`## Context`** — at the top of the file, after the title: a short orientation paragraph for agents reading this section cold. What this is, why it exists, what you need to know to read the rest. Not the spec content itself.
-  - **`## Working Notes`** — at the bottom of the file: issues, todos, ongoing needs, breadcrumbs for the next agent or human to pick up where the prior author left off. Loose-form. The place to leave "I noticed X but didn't address it" without forcing it into the question ledger or `problems/`.
-
-## Escalation triggers (stop and ask)
-
-Surface these to the human immediately rather than working around them — they signal architectural problems, not content problems:
-
-- Tree-sitter has no grammar for the target language.
-- No clear entry point after exploring Q1.
-- Critic rejects three consecutive Synthesizer outputs on the same question (prompt bug, not content).
-- An Explorer's input exceeds `explorer_max_input_tokens` on one region (scope too coarse — Planner needs to subdivide).
-- Question ledger grows monotonically over 20 cycles with zero closures (generating questions faster than answering).
-- Two Explorers produce contradictory claims about the same source range across consecutive cycles (source itself may be ambiguous — needs human triage).
-
-## Inputs the human must supply before Phase 0
-
-`TARGET_REPO` (absolute path), `WORKSPACE` (empty dir), primary target language, Anthropic API access, and optionally target build/run instructions (enables Phase 7 execution grounding). If any are missing or ambiguous when you start a phase, **stop and ask** — do not guess.
+If anything is missing or ambiguous, stop and ask.
