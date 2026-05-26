@@ -295,6 +295,9 @@ graph BT
   cg_preconditioning_framework --> complex-from-real-lift
   cg_preconditioning_framework --> build-time-vs-run-time-stratification
   cg_preconditioning_framework --> sequential-obstruction
+  plane_rotation_stream --> sequential-obstruction
+  plane_rotation_stream --> givens
+  plane_rotation_stream --> tensor-field-lift
 ```
 
 Whole-tensor operations replacing per-element iteration; or `obstruction` results documenting genuine sequentiality.

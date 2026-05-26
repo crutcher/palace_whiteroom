@@ -79,3 +79,34 @@ out-of-scope sub-kind typically yields a follow-up rename suggestion
 (in `sparse_triangular_solve`'s case: rename to
 `sparse_direct_solver_wrapper`) rather than a layer-by-layer rotation
 chain.
+
+## Worked example: Givens-stream replay-prefix (plane_rotation_stream)
+
+The [plane_rotation_stream](../spec/slices/plane_rotation_stream.md)
+slice's L2→L3 cycle is a clean class-(a) obstruction. The L2 form is
+an explicit loop:
+
+```
+for k in 0..j-1:
+    (Hj[k], Hj[k+1]) = givens_apply(Hj[k], Hj[k+1], cs[k], sn[k])
+```
+
+Adjacent iterations share boundary slot `Hj[k+1]`: iteration `k`
+writes it, iteration `k+1` reads it. This is the canonical small-N
+read-after-write that prevents a single elementwise / gather-scatter
+global tensor-field expression on `Hj`.
+
+The algebraic shape: the stream represents a product of `j` Givens
+factors `G_{j-1} · … · G_0`. Materializing the product as a dense
+`j × j` unitary would be tensor-field-shaped (a matvec `Hj ← Q · Hj`)
+but destroys the `O(j)` storage / flop savings that motivate the
+factored representation. The obstruction is **representational**: the
+tensor-field form exists in principle, but only in a representation
+the algorithm was designed to avoid.
+
+This pattern recurs across incremental-factorization streams
+(Householder QR, modified Gram-Schmidt with reorthogonalization,
+incremental Cholesky updates). Each carries the same structural
+shape: a stream of small factors whose replay is sequential along
+the stream index because successive factors touch overlapping
+windows of the target.

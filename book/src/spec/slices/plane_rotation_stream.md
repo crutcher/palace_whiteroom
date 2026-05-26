@@ -289,3 +289,111 @@ sn[0..j-1])` primitive would compress the replay-prefix to one call,
 but Palace does not realize it — the L2 form must spell the loop.
 The loop's sequential dependency structure is the input to the L2→L3
 rotation.
+
+## L3 — tensor-field lift
+
+### State schema (unchanged from L2)
+
+```
+{
+  cs: T[]              // accumulated cosine scalars, length j+1
+  sn: ScalarType[]     // accumulated sine scalars, length j+1
+  Hj: ScalarType[]     // new Hessenberg column, length j+2
+  s:  ScalarType[]     // rotated RHS, length m+1
+}
+```
+
+The schema carries through from L2 — see [rotation](../../concepts/rotation.md)
+*Carry-through*. The L2→L3 rotation is **negative for the replay-prefix
+loop** and **trivial for the per-step extend/apply triple**. This slice is
+the canonical small-N obstruction case: the rotation stream is an
+essentially-sequential incremental QR, not a global tensor-field
+operation. See [sequential-obstruction](../../concepts/sequential-obstruction.md).
+
+### Obstruction: replay-prefix is sequential along the stream
+
+At L2 the replay-prefix on column `Hj` at step `j` is:
+
+```
+for k in 0..j-1:
+    (Hj[k], Hj[k+1]) = givens_apply(Hj[k], Hj[k+1], cs[k], sn[k])
+```
+
+Iteration `k` reads `(Hj[k], Hj[k+1])` and writes both slots. Iteration
+`k+1` reads `(Hj[k+1], Hj[k+2])`. The shared slot `Hj[k+1]` carries a
+**read-after-write** dependency across adjacent iterations: the value of
+`Hj[k+1]` consumed at step `k+1` is the value written by step `k`. The
+rotation chain cannot be re-expressed as a single elementwise or
+gather/scatter tensor-field operation on `Hj` because each successive
+two-element window overlaps its predecessor by one slot.
+
+The algebraic shape of the obstruction: the product
+`G_{j-1} · G_{j-2} · … · G_0` is an upper-Hessenberg-triangulating
+unitary, but the *factored* form is what gets stored and replayed.
+Materializing the product as a dense `j × j` unitary `Q_{j-1}` and
+applying it as `Hj ← Q_{j-1} · Hj` would be a tensor-field operation,
+but at `O(j²)` storage and `O(j² · m)` flops per step versus the
+factored stream's `O(j)` storage and `O(j)` flops per step — a
+quadratic-vs-linear blowup that defeats the whole point of
+incremental QR.
+
+### Obstruction: cross-target reuse is per-step, not per-stream
+
+The two `givens_apply` calls on `(Hj[j], Hj[j+1])` and `(s[j], s[j+1])`
+at L2 step 4 use the SAME `(cs[j], sn[j])` pair but on **disjoint
+targets**. This is not a tensor-field broadcast: each call is one 2×2
+rotation on one 2-tuple. A `vmap`-style lift over a batch dimension
+does not apply — there is no batch dimension; there are exactly two
+call sites with hard-coded distinct targets.
+
+### Local triviality at extend
+
+The per-step **extend** triple (one `givens_gen` + one `givens_apply`
+on `Hj` + one `givens_apply` on `s`) is a fixed three-primitive
+sequence with no loop. At L3 it lifts unchanged: there is no iteration
+structure to globalize, so the rotation is the identity. The negative
+result applies specifically to the replay-prefix loop.
+
+### Negative result (recorded)
+
+The replay-prefix `for k in 0..j-1: givens_apply(target[k], target[k+1], cs[k], sn[k])`
+has NO L3 tensor-field global form on `target = Hj`. The obstruction is
+the read-after-write dependency on shared boundary slot `target[k+1]`
+between adjacent iterations. This is a structural property of the
+Givens-stream incremental-QR pattern, not a Palace-specific
+implementation choice — any incremental-QR replay carries the same
+shape.
+
+The obstruction is class-(a) per [sequential-obstruction](../../concepts/sequential-obstruction.md):
+*intrinsic algorithm sequentiality*. Removing it requires changing the
+algorithm (e.g., switching to Householder-block QR with WY
+representation, which is a different slice and a different stream
+shape — recorded as a sibling slice candidate, not an L3 of this one).
+
+### What DOES lift
+
+Across independent target arrays the replay-prefix loops are
+independent: replaying the same stream on `Hj` and on `s` could be
+fused as a vector-of-targets broadcast, but Palace does not — the two
+applications happen at different stream stages (replay-prefix touches
+only `Hj`; cross-target reuse on `s` only ever happens at the SAME
+step `j` index, never as a replay). So even this potential lift is
+structurally absent from the algorithm and the L3 form remains the L2
+form with the loop spelled.
+
+### Variant axes
+
+- **Real vs. complex scalar field**: invariant. The obstruction shape
+  (read-after-write on the shared boundary slot) is independent of
+  scalar type.
+- **GMRES vs. FGMRES**: invariant — the rotation stream's L3 form is
+  the same obstruction at both call sites.
+
+### Push-back consideration
+
+The slice's L1/L2 already names the stream as append-only and
+spells the replay loop explicitly. No lower-layer restructuring would
+yield an L3 global form — the obstruction is algebraic, not
+representational. If a future cycle needs a tensor-field replay, it
+should be a new sibling slice for Householder-block QR, not a back-
+correction of this one.
