@@ -151,6 +151,27 @@ corresponds to **MFEM-internal / SuperLU_DIST-internal** territory, not
 Palace. The slice is preserved as a negative result so future planning
 does not re-explore the same ground.
 
+### Classification: scope-out variant resolution
+
+The negative result is itself a worked instance of the **scope-out**
+path in [variant-absorption](../../concepts/variant-absorption.md):
+faced with the orthogonal axis (which sparse-direct backend, plus
+factor-internal traffic patterns) and the absence of any Palace-side
+primitive that observes that axis, the correct rotation is *not* to
+manufacture an L1 form for content Palace doesn't carry. The
+[sequential-obstruction](../../concepts/sequential-obstruction.md)
+concept is the L2→L3 analogue ("genuinely sequential, no global
+form"); this slice exhibits the L0→L1 analogue ("genuinely external,
+no Palace-level form"). Both are first-class negative outputs.
+
+The load-bearing distinction from a partial-absorption failure: a
+silent scope-out would emit an L1 form that pretends the variant
+doesn't exist; this slice instead names the obstruction, cites the
+opaque-forwarding evidence at L0, and points at the wrapper-level
+rotation ([apply_linop](../../concepts/apply_linop.md) /
+[ksp_solve](../../concepts/ksp_solve.md)) that does land in a
+different slice.
+
 Follow-ups raised by this exploration:
 
 - A `sparse_direct_solver_wrapper` slice would more accurately name
