@@ -15,9 +15,9 @@ Standard formulation: Saad 2003 *Iterative Methods for Sparse Linear Systems* §
 
 Variants in the field: MGS (the form above), classical Gram-Schmidt (CGS, a single batched projection — less stable but a single MPI allreduce), and CGS with one reorthogonalisation pass (CGS2, two batched allreduces — recovers MGS-level stability with batched comms). Palace exposes all three under the runtime tag `gs_orthog ∈ {MGS, CGS, CGS2}`; the choice is preserved as a residual variant axis through L1.
 
-Palace deviates from the textbook in three ways: (1) the operator applied is the constructed operator `BA` (or `AB`, or `A`) rather than `A` directly, absorbing the preconditioner-side variant — see [apply_BA](./gmres/apply_BA.md); (2) FGMRES additionally retains the per-step preconditioned basis `Z[j]` as threaded state for the flexible solution reconstruction; (3) basis storage is allocated lazily in chunks rather than as a single `(max_dim+1)`-column block, which is invisible to the algorithmic contract.
+Palace deviates from the textbook in three ways: (1) the operator applied is the constructed operator `BA` (or `AB`, or `A`) rather than `A` directly, absorbing the preconditioner-side variant — see [apply_BA](./gmres.md#apply_BA); (2) FGMRES additionally retains the per-step preconditioned basis `Z[j]` as threaded state for the flexible solution reconstruction; (3) basis storage is allocated lazily in chunks rather than as a single `(max_dim+1)`-column block, which is invisible to the algorithmic contract.
 
-This slice scopes only the in-repo Arnoldi step. The SLEPc/ARPACK eigensolver paths configure their own Arnoldi implementations behind a [constructed-operator surface](../concepts/constructed-operators.md); they emit no Arnoldi-step primitives in Palace's own dataflow and are tracked under [eigensolver](./eigensolver.md), not here.
+This slice scopes only the in-repo Arnoldi step. The SLEPc/ARPACK eigensolver paths configure their own Arnoldi implementations behind a [constructed-operator surface](../../concepts/constructed-operators.md); they emit no Arnoldi-step primitives in Palace's own dataflow and are tracked separately (eigensolver slice not yet extracted), not here.
 
 ## Sources
 
@@ -40,12 +40,12 @@ The in-repo Arnoldi step is the four-line kernel inside the restart loop of `Gmr
     Hj[j+1] = linalg::Norml2(comm, w);                   // subdiagonal entry (post-orthog norm); MPI allreduce inside
     w *= 1.0 / Hj[j+1];                                  // normalise; w aliases V[j+1]
 
-The four lines correspond to four [rotations](../concepts/rotation.md):
+The four lines correspond to four [rotations](../../concepts/rotation.md):
 
-1. **operator apply** via the constructed operator `BA` (or `AB`, or `A`) — [apply_BA](./gmres/apply_BA.md);
+1. **operator apply** via the constructed operator `BA` (or `AB`, or `A`) — [apply_BA](./gmres.md#apply_BA);
 2. **orthogonalisation** against the prior basis — [orthog](./orthog.md), variant-dispatched on `gs_orthog`;
-3. **subdiagonal-norm** computation — [nrm2](../concepts/nrm2.md) with MPI allreduce;
-4. **in-place scaling** of the new basis column — [scal](../concepts/scal.md).
+3. **subdiagonal-norm** computation — [nrm2](../../concepts/nrm2.md) with MPI allreduce;
+4. **in-place scaling** of the new basis column — [scal](../../concepts/scal.md).
 
 The FGMRES variant ([palace/linalg/iterative.cpp:735-825](../../../reference/palace/linalg/iterative.cpp#L735-L825)) replaces the scratch `r` with the per-step preconditioned basis column `Z[j]`, which is itself promoted to threaded state and consumed during solution reconstruction; otherwise the Arnoldi-step contract is unchanged.
 
@@ -55,7 +55,7 @@ Three distinct in-place writes occur concurrently in the kernel: (1) `w` (aliase
 
 The step admits three orthogonal axes of variation at L0:
 
-- **Operator-apply variant** (`pc_side ∈ {LEFT, RIGHT, NONE}`): absorbed by the constructed operator `BA` per [constructed-operators](../concepts/constructed-operators.md). The kernel calls `ApplyBA(...)` uniformly; `pc_side` does not appear in the per-step procedure.
+- **Operator-apply variant** (`pc_side ∈ {LEFT, RIGHT, NONE}`): absorbed by the constructed operator `BA` per [constructed-operators](../../concepts/constructed-operators.md). The kernel calls `ApplyBA(...)` uniformly; `pc_side` does not appear in the per-step procedure.
 - **Orthogonalisation variant** (`gs_orthog ∈ {MGS, CGS, CGS2}`): preserved as a residual axis; the variant changes the MPI-collective shape (1·j allreduces for MGS; one batched allreduce for CGS; two batched allreduces for CGS2) but not the L1 functional contract.
 - **Krylov flavour** (GMRES vs FGMRES): adds `Z[j]` to threaded state. The Arnoldi step proper is identical; the difference shows up in the outer GMRES slice, not here.
 
@@ -79,7 +79,7 @@ Basis storage is allocated lazily (init_size=5 columns, add_size=10 columns per 
 ### Invariants
 
 - **Input precondition.** `V[0..j]` is orthonormal: `⟨V[i], V[k]⟩ = δ_{ik}` for `0 ≤ i,k ≤ j`.
-- **Arnoldi relation.** Letting `T` denote the constructed operator (`BA`, `AB`, or `A` per [apply_BA](./gmres/apply_BA.md)),
+- **Arnoldi relation.** Letting `T` denote the constructed operator (`BA`, `AB`, or `A` per [apply_BA](./gmres.md#apply_BA)),
 
       T · V[j]  =  Σ_{i=0}^{j+1} H[i,j] · V[i]
 
@@ -95,16 +95,16 @@ Basis storage is allocated lazily (init_size=5 columns, add_size=10 columns per 
       H[j+1,j] ← ‖w‖₂                                      -- subdiagonal norm
       V[j+1]   ← w / H[j+1,j]                              -- normalise
 
-The procedure mentions the variant tag `gs_orthog` exactly once, at the orthogonalisation call site (level (b) of [variant-absorption](../concepts/variant-absorption.md)). The operator-apply variant is fully absorbed by the constructed-operator surface and does not appear here. The post-Arnoldi Hessenberg-column triangularisation (replay-and-generate Givens rotations on `H[:,j]`) is **not** part of the Arnoldi step; it is the small-dense incremental-least-squares update consumed by [gmres](./gmres.md) at L2, tracked under [incremental-least-squares](../concepts/incremental-least-squares.md).
+The procedure mentions the variant tag `gs_orthog` exactly once, at the orthogonalisation call site (level (b) of [variant-absorption](../../concepts/variant-absorption.md)). The operator-apply variant is fully absorbed by the constructed-operator surface and does not appear here. The post-Arnoldi Hessenberg-column triangularisation (replay-and-generate Givens rotations on `H[:,j]`) is **not** part of the Arnoldi step; it is the small-dense incremental-least-squares update consumed by [gmres](./gmres.md) at L2, tracked under [incremental-least-squares](../../concepts/incremental-least-squares.md).
 
 ### Residual variant axis
 
-`gs_orthog` is preserved as a first-class residual axis (see [variant-absorption](../concepts/variant-absorption.md)). All three variants share the L1 contract above; they differ in MPI-collective shape and in stability under finite arithmetic. The variant is bound at solve setup and is not re-inspected per step.
+`gs_orthog` is preserved as a first-class residual axis (see [variant-absorption](../../concepts/variant-absorption.md)). All three variants share the L1 contract above; they differ in MPI-collective shape and in stability under finite arithmetic. The variant is bound at solve setup and is not re-inspected per step.
 
 ## Open questions
 
 - The post-Arnoldi small-dense Givens-QR triangularisation has been recorded across prior cycles as a distinct sequential obstruction. Currently this slice excludes it (it belongs to the GMRES outer loop's incremental-least-squares concept). Should it instead be folded in here as a logical third phase? Current call: keep separate — the Arnoldi step is the field-side / boundary kernel; the small-dense update is consumed elsewhere.
-- The eigensolver path (SLEPc Krylov-Schur, ARPACK) provides an external Arnoldi implementation reached via a constructed-operator binding at configure time. Scoped out of this slice; tracked under [eigensolver](./eigensolver.md).
+- The eigensolver path (SLEPc Krylov-Schur, ARPACK) provides an external Arnoldi implementation reached via a constructed-operator binding at configure time. Scoped out of this slice; tracked separately (eigensolver slice not yet extracted).
 - No unit test exercises `OrthogonalizeIteration` or the Arnoldi step in isolation; integration is via end-to-end examples only. Flagged as a tooling gap (low priority).
 
 ## L2 — primitive composition
@@ -123,23 +123,23 @@ The four building blocks correspond to four L0 lines and four distinct concept e
 
 ### apply_BA
 
-The operator apply `w ← T(V[j])` is the constructed-operator surface [apply_BA](./gmres/apply_BA.md). At L2 it reads as a single uniform call `apply_linop(T, V[j])` regardless of preconditioner side (`LEFT`, `RIGHT`, `NONE`) — the `pc_side` variant is internalised at solve setup per [constructed-operators](../concepts/constructed-operators.md) and does not appear in the per-step composition. The output `w` is a fresh DoF-space vector aliased to the buffer that will become `V[j+1]` after the remaining three primitives. See [apply_linop](../concepts/apply_linop.md).
+The operator apply `w ← T(V[j])` is the constructed-operator surface [apply_BA](./gmres.md#apply_BA). At L2 it reads as a single uniform call `apply_linop(T, V[j])` regardless of preconditioner side (`LEFT`, `RIGHT`, `NONE`) — the `pc_side` variant is internalised at solve setup per [constructed-operators](../../concepts/constructed-operators.md) and does not appear in the per-step composition. The output `w` is a fresh DoF-space vector aliased to the buffer that will become `V[j+1]` after the remaining three primitives. See [apply_linop](../../concepts/apply_linop.md).
 
 FGMRES additionally retains the per-step preconditioned column `Z[j]` from this apply as threaded state; the Arnoldi-step composition at L2 is unchanged, but the GMRES outer loop tees off `Z[j]` here. The teeing-off is a write to a separate buffer, not a transformation of `w`, so it does not alter the four-primitive shape.
 
 ### orthogonalize
 
-The projection `H[0..j] ← project(w, V[0..j]; gs_orthog)` with in-place subtraction `w ← w − Σ H[i,j]·V[i]` unfolds into the [orthog](./orthog.md) slice, which is itself a composition of [dot](../concepts/dot.md) and [axpy](../concepts/axpy.md) (plus a batched [gemv_basis](../concepts/gemv_basis.md) call for CGS/CGS2 to amortise the MPI allreduce). The residual variant axis `gs_orthog ∈ {MGS, CGS, CGS2}` is bound at solve setup and dispatched here exactly once; the L2 composition for the Arnoldi step itself is variant-independent — only the unfolding of `orthogonalize` into its inner primitive chain differs. See [orthog](./orthog.md) §L2 for the inner unfolding and [variant-absorption](../concepts/variant-absorption.md) level (b) for the dispatch-once discipline.
+The projection `H[0..j] ← project(w, V[0..j]; gs_orthog)` with in-place subtraction `w ← w − Σ H[i,j]·V[i]` unfolds into the [orthog](./orthog.md) slice, which is itself a composition of [dot](../../concepts/dot.md) and [axpy](../../concepts/axpy.md) (plus a batched [gemv_basis](../../concepts/gemv_basis.md) call for CGS/CGS2 to amortise the MPI allreduce). The residual variant axis `gs_orthog ∈ {MGS, CGS, CGS2}` is bound at solve setup and dispatched here exactly once; the L2 composition for the Arnoldi step itself is variant-independent — only the unfolding of `orthogonalize` into its inner primitive chain differs. See [orthog](./orthog.md) §L2 for the inner unfolding and [variant-absorption](../../concepts/variant-absorption.md) level (b) for the dispatch-once discipline.
 
 The procedure both reads `V[0..j]` and writes the j-th column of `H` (an accumulator-style write into the small-dense Hessenberg buffer) and mutates `w` in place. The Hessenberg write `H[0..j]` is a small-dense scalar accumulation; the global-vector mutation `w` is the load-bearing field-side work.
 
 ### subdiag_norm
 
-The subdiagonal entry `H[j+1,j] = ‖w‖₂` is the [nrm2](../concepts/nrm2.md) primitive over the post-orthogonalisation residual, with one MPI allreduce. It is a pure read on `w` — no mutation — producing a single scalar written into the Hessenberg column. Breakdown detection at L1 reads off this scalar (`H[j+1,j] = 0` ⇒ `T`-invariant subspace).
+The subdiagonal entry `H[j+1,j] = ‖w‖₂` is the [nrm2](../../concepts/nrm2.md) primitive over the post-orthogonalisation residual, with one MPI allreduce. It is a pure read on `w` — no mutation — producing a single scalar written into the Hessenberg column. Breakdown detection at L1 reads off this scalar (`H[j+1,j] = 0` ⇒ `T`-invariant subspace).
 
 ### normalize
 
-The final `w ← w / H[j+1,j]` is in-place [scal](../concepts/scal.md) with reciprocal scalar. Because `w` and `V[j+1]` alias the same buffer (the basis array entry was the destination of `apply_BA`), this primitive is also the act of installing the new basis column. No `copy` is needed.
+The final `w ← w / H[j+1,j]` is in-place [scal](../../concepts/scal.md) with reciprocal scalar. Because `w` and `V[j+1]` alias the same buffer (the basis array entry was the destination of `apply_BA`), this primitive is also the act of installing the new basis column. No `copy` is needed.
 
 ### Composition shape
 
@@ -152,14 +152,14 @@ The four primitives have no internal data dependency cycle:
 
 The sequential chain `apply_BA → orthogonalize → subdiag_norm → normalize` is forced by these dataflow edges: `orthogonalize` needs `w` after apply; `subdiag_norm` needs `w` after orthogonalisation; `normalize` needs the scalar from `subdiag_norm`. No reordering is possible without changing semantics. The chain shape is invariant across `gs_orthog` and `pc_side` — both variants are absorbed at the primitive boundary (`orthogonalize` and `apply_linop` respectively).
 
-The small-dense Hessenberg-column triangularisation (replay Givens 1..j, generate new rotation, apply to `H[:,j]` and the residual-norm vector) is **not** part of this composition — it is consumed by the GMRES outer loop's [incremental-least-squares](../concepts/incremental-least-squares.md) update, deliberately scoped out per the slice's L1 statement.
+The small-dense Hessenberg-column triangularisation (replay Givens 1..j, generate new rotation, apply to `H[:,j]` and the residual-norm vector) is **not** part of this composition — it is consumed by the GMRES outer loop's [incremental-least-squares](../../concepts/incremental-least-squares.md) update, deliberately scoped out per the slice's L1 statement.
 
 ### Mutation legibility
 
 Per mutation-pseudocode discipline, the in-place writes are visible in the primitive names:
 
 - `orthogonalize(..., w)` — `w` is the accumulator-mutation argument (signature of [orthog](./orthog.md) makes this explicit).
-- `scal(α, w)` — in-place by definition of [scal](../concepts/scal.md).
+- `scal(α, w)` — in-place by definition of [scal](../../concepts/scal.md).
 - `apply_linop(T, V[j])` — pure functional form returning a fresh `w` (the buffer pre-allocation is an L0 storage detail, invisible at L2).
 
 No silently-aliasing assignment appears; the four-line composition is unambiguous about which buffers are mutated and which are read.
@@ -235,9 +235,9 @@ This is the load-bearing distinction that motivates the variant axis in distribu
 
 ## L4 — calculus form
 
-The L3 form splits the step into a clean field-side composition plus an in-place small-dense Hessenberg-column write, with the orthogonalisation block carrying a [sequential-obstruction](../concepts/sequential-obstruction.md) under the MGS variant. The L4 lift expresses the step against the calculus of `book/src/design/l4_calculus.md`: explicit state stratification (sim / operator-internal / ephemeral), monadic coordination of the in-place writes, and a typed variant-axis surface that makes the residual `gs_orthog` choice a parameter of the operator-internal table rather than per-step runtime data.
+The L3 form splits the step into a clean field-side composition plus an in-place small-dense Hessenberg-column write, with the orthogonalisation block carrying a [sequential-obstruction](../../concepts/sequential-obstruction.md) under the MGS variant. The L4 lift expresses the step against the calculus of `book/src/design/l4_calculus.md`: explicit state stratification (sim / operator-internal / ephemeral), monadic coordination of the in-place writes, and a typed variant-axis surface that makes the residual `gs_orthog` choice a parameter of the operator-internal table rather than per-step runtime data.
 
-See [solve-monad](../concepts/solve-monad.md), [state-stratification](../concepts/state-stratification.md), and [derived-view-hoisting](../concepts/derived-view-hoisting.md) for the calculus-level patterns invoked below.
+See [solve-monad](../../concepts/solve-monad.md), [state-stratification](../../concepts/state-stratification.md), and [derived-view-hoisting](../../concepts/derived-view-hoisting.md) for the calculus-level patterns invoked below.
 
 ### State stratification
 
@@ -287,11 +287,11 @@ arnoldiStep op = do
   modify (\s -> s { j = s.j + 1 })
 ```
 
-The `SolveM ArnoldiSimState` monad is the [solve-monad](../concepts/solve-monad.md) specialised to this slice's sim state. `withScratch` brackets the ephemeral `w` so the in-place mutations are syntactically contained — the calculus expresses what the L2 mutation-pseudocode discipline expresses informally. `installBasisColumn` is the moment the ephemeral becomes sim state; it is the only write that escapes the `withScratch` bracket.
+The `SolveM ArnoldiSimState` monad is the [solve-monad](../../concepts/solve-monad.md) specialised to this slice's sim state. `withScratch` brackets the ephemeral `w` so the in-place mutations are syntactically contained — the calculus expresses what the L2 mutation-pseudocode discipline expresses informally. `installBasisColumn` is the moment the ephemeral becomes sim state; it is the only write that escapes the `withScratch` bracket.
 
 ### Derived views
 
-Two derived views are hoisted out of the sim state per [derived-view-hoisting](../concepts/derived-view-hoisting.md):
+Two derived views are hoisted out of the sim state per [derived-view-hoisting](../../concepts/derived-view-hoisting.md):
 
 - `basisPrefix s.V j` — the `(n_dof, j+1)` prior-basis view consumed by `orthogonalize`. Hoisted because the L3 CGS form treats it as a tensor-field operand (`V[0..j]ᵀ · w`); the calculus form makes the view a first-class operand rather than an index range.
 - `hessColumn s.H j` — the `(max_dim+1)`-vector view of the j-th Hessenberg column, written by `orthogonalize` (head) and `nrm2` (subdiagonal). Hoisting it surfaces the small-dense write target as a single named operand and lets the L4 form sequence the two writes monadically.
@@ -300,7 +300,7 @@ No other state is hoisted; `T`, `gs_orthog`, and `comm` stay in `op` (operator-i
 
 ### Variant axis at L4
 
-The `gs_orthog` axis is operator-internal: it parameterises the construction of `op.orthog` at solve setup but does not appear in `arnoldiStep`'s body. This is level-(b) [variant-absorption](../concepts/variant-absorption.md) realised in the type system: the step procedure has the same syntactic shape across MGS, CGS, and CGS2; only the operator-internal `orthog` field differs. The MGS sequential obstruction recorded at L3 is, at L4, a property of the `orthogonalize` primitive's implementation, not of the step's calculus form — the step is variant-independent at L4 even though its allreduce count is not.
+The `gs_orthog` axis is operator-internal: it parameterises the construction of `op.orthog` at solve setup but does not appear in `arnoldiStep`'s body. This is level-(b) [variant-absorption](../../concepts/variant-absorption.md) realised in the type system: the step procedure has the same syntactic shape across MGS, CGS, and CGS2; only the operator-internal `orthog` field differs. The MGS sequential obstruction recorded at L3 is, at L4, a property of the `orthogonalize` primitive's implementation, not of the step's calculus form — the step is variant-independent at L4 even though its allreduce count is not.
 
 ### Interaction with FGMRES
 
@@ -308,7 +308,7 @@ The FGMRES specialisation extends `ArnoldiSimState` with `Z : BasisChunk[]` and 
 
 ### Obstruction recording
 
-The L2→L3 negative result (MGS orthogonalisation does not lift) is preserved at L4 as a property of the `orthogonalize` primitive's implementation, not erased by the calculus form. The calculus expresses *what* the step does monadically; it does not pretend the MGS sequential dependency between successive `H[i,j]` reads of `w` has disappeared. The obstruction is internal to `orthogonalize`'s `SolveM` implementation under the MGS variant, and the [sequential-obstruction](../concepts/sequential-obstruction.md) concept entry remains the load-bearing record.
+The L2→L3 negative result (MGS orthogonalisation does not lift) is preserved at L4 as a property of the `orthogonalize` primitive's implementation, not erased by the calculus form. The calculus expresses *what* the step does monadically; it does not pretend the MGS sequential dependency between successive `H[i,j]` reads of `w` has disappeared. The obstruction is internal to `orthogonalize`'s `SolveM` implementation under the MGS variant, and the [sequential-obstruction](../../concepts/sequential-obstruction.md) concept entry remains the load-bearing record.
 
 ### Composition shape, restated
 

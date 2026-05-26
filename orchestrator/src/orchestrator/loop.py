@@ -536,14 +536,27 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
                 summary=summary,
                 link_title=link_title,
             )
-            # Track but classify as bookkeeping (path is index.md).
-            # _record_success uses _is_bookkeeping_path so this stays correct.
-        except FileNotFoundError as e:
-            push_back_signals.append(
-                f"slice_index_update: {e}. Add a row via file_edits/section_appends first, "
-                "or the integrator can be extended with an append-by-slug fallback."
-            )
-            _record_fail("slice_index_update", index_md_path)
+        except FileNotFoundError:
+            # Meta-20 item 1: no row exists; auto-append for first-touch slices.
+            try:
+                appended = state.append_slice_index_row(
+                    slice=slice_name,
+                    layer=layer,
+                    date=date,
+                    summary=summary,
+                    link_title=link_title,
+                )
+                if appended:
+                    push_back_signals.append(
+                        f"slice_index_update: appended new row for slice {slice_name!r} (first touch)"
+                    )
+                # _record_success uses _is_bookkeeping_path so index.md stays
+                # classified as bookkeeping; no need to call it.
+            except Exception as e:
+                push_back_signals.append(
+                    f"slice_index_update: append-by-slug fallback failed: {e}"
+                )
+                _record_fail("slice_index_update", index_md_path)
         except Exception as e:
             push_back_signals.append(f"slice_index_update failed: {e}")
             _record_fail("slice_index_update", index_md_path)
@@ -636,19 +649,43 @@ async def run_normal_cycle(
                         consec += 1
                     else:
                         break
-            if consec >= 3:
+            # Global retroactive counter (meta-20 item 2): counts ALL
+            # consecutive retroactive_claims regardless of slice, resets
+            # on any new_content/back_correction/sideways cycle with
+            # substantive_landed > 0. Threshold: 4.
+            consec_global = 0
+            for e in reversed(recent):
+                pk = e.get("plan_kind")
+                push_kind = e.get("push_kind")
+                if pk == "retroactive_claims":
+                    consec_global += 1
+                elif push_kind == "meta":
+                    # meta cycles don't break the count (they're not normal pushes)
+                    continue
+                elif e.get("substantive_landed", 0) > 0 and pk in (
+                    "new_content", "back_correction", None
+                ):
+                    break
+                else:
+                    # other kinds (tightening, escalate, etc.) don't break either
+                    pass
+            if consec >= 3 or consec_global >= 4:
                 # Meta-19: retry the Planner with explicit forward-frontier
                 # addendum naming the gate trigger and the eligible
                 # intermediate-tier candidates. The orchestrator can't
                 # synthesize a new push directive itself; the Planner is
                 # the only role that can. So we re-invoke it once with the
                 # extra context.
+                gate_reason = (
+                    f"per-slice ({consec} consecutive on {target_slice!r})"
+                    if consec >= 3
+                    else f"global ({consec_global} consecutive across slices)"
+                )
                 addendum = (
-                    f"\n\n## ORCHESTRATOR ADDENDUM (meta-19 hard-gate recovery)\n\n"
-                    f"The retroactive-budget hard gate has triggered: slice "
-                    f"{target_slice!r} has had {consec} consecutive retroactive "
-                    f"cycles. Your prior dispatch ({push['kind']} {target_slice}) "
-                    f"would be the {consec + 1}th — REJECTED.\n\n"
+                    f"\n\n## ORCHESTRATOR ADDENDUM (meta-19/20 hard-gate recovery)\n\n"
+                    f"The retroactive-budget hard gate has triggered ({gate_reason}). "
+                    f"Your prior dispatch ({push['kind']} {target_slice}) "
+                    f"would extend the streak — REJECTED.\n\n"
                     f"You MUST emit a NEW dispatch that is one of:\n\n"
                     f"(a) FORWARD on a DIFFERENT slice (not {target_slice!r}). "
                     f"Eligible forward-frontier candidates from "
@@ -1009,6 +1046,7 @@ async def run_normal_cycle(
         "substantive_landed": substantive_landed,
         "plan_kind": plan_kind_declared,
         "plan_kind_misclassification": plan_kind_misclassification,
+        "skill_uptake_emitted": isinstance(verdict.get("skill_uptake"), list),
         "friction_observed": friction_summary,
         "structural_change": structural_change,
         "push_back_signals": push_back_signals,

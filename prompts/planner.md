@@ -174,10 +174,19 @@ hold, retroactive_claims on the same slice is permitted:
   AND names which other slices were considered for the forward edge
   AND explains why none was eligible.
 
-**Orchestrator-side enforcement** (meta-18 item 1): the orchestrator
-records `consecutive_retroactive_on_slice` in episodic. If a Planner
-dispatch produces `consecutive_retroactive_on_slice ≥ 3`, the dispatch
-is auto-converted to `escalate` and the cycle does not run.
+**Orchestrator-side enforcement** (meta-18 item 1; global counter
+added meta-20): the orchestrator tracks TWO retroactive counters in
+episodic:
+
+- `consecutive_retroactive_on_slice` — per-slice consecutive retroactive
+  cycles. ≥3 triggers the retry-once mechanism (meta-19 item 1).
+- `consecutive_retroactive_global` — across-slice consecutive retroactive
+  cycles, regardless of slice. Resets only on a new_content /
+  back_correction / sideways cycle that lands substantive forward content.
+  ≥4 triggers the same retry-once mechanism — catches the
+  rotate-through-slices-via-retroactives pattern that the per-slice gate
+  misses (meta-20 cycles 92-97: 6 consecutive global retroactives across
+  gmres/orthog/cg, none auto-escalated).
 
 The meta-16 per-building-block granularity rule made backfill cycles
 productive AND low-friction — they out-compete forward dispatch on

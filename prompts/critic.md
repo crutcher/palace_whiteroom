@@ -104,8 +104,23 @@ verdict assembly and cross-cycle lesson extraction):
 
      **Apply the [skill-selection skill](../skills/skill-selection/SKILL.md)
      procedure pre-verdict**: survey active skills, check triggers, populate
-     the `skill_uptake` array on EVERY verdict (pass AND revise AND reject) —
-     not just verdict-revise paths. Meta-18 introduced the structured field
+     the `skill_uptake` array on EVERY verdict envelope (pass AND revise AND
+     reject) — not just verdict-revise paths.
+
+     **The field MUST be present**, even with all-`triggered: false`
+     entries when no triggers fire. The orchestrator tracks
+     `skill_uptake_emitted: bool` in episodic from meta-20 onward; if
+     False on a cycle that has visible skill-trigger conditions in the
+     plan content, a `skill_uptake_missing_in_verdict` push-back signal
+     fires. Minimal-form example for no-trigger cycles:
+
+     ```json
+     "skill_uptake": [
+       {"skill_name": "classify-variant-axis", "triggered": false, "decision": "explained_non_applicable", "note": "no multi-variant L0"},
+       {"skill_name": "verify-citation-range", "triggered": false, "decision": "explained_non_applicable", "note": "no L0 citation edits"},
+       {"skill_name": "skill-selection", "triggered": true, "artifact_present": true, "log_explanation_present": true, "decision": "artifact_landed", "note": "survey above"}
+     ]
+     ``` Meta-18 introduced the structured field
      but only fired on revise; meta-19 extends to all verdicts so the
      uptake signal is observable on the dominant pass-verdict path too.
 

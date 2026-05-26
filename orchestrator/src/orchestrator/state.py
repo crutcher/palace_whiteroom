@@ -511,6 +511,53 @@ class State:
         path.write_text(text)
         return True
 
+    def append_slice_index_row(
+        self,
+        slice: str,
+        layer: str,
+        date: str,
+        summary: str,
+        link_title: str | None = None,
+    ) -> bool:
+        """Append a NEW row to the slice index table for a first-touch slice.
+        Used when `update_slice_index_row` raises FileNotFoundError because
+        the slug-anchor isn't in the table yet. Added meta-20 item 1 after
+        cycles 98-102 emitted 5 consecutive bookkeeping_incomplete signals
+        on arnoldi_step because no row existed to rewrite.
+
+        Returns True if appended; False if a row already exists (idempotent
+        guard — caller should use update_slice_index_row in that case)."""
+        import re
+        path = self.repo_root / "book/src/spec/index.md"
+        text = path.read_text()
+        anchors = [f"./slices/{slice}.md", f"./slices/{slice}/index.md"]
+        for a in anchors:
+            if f"({a})" in text:
+                return False  # already exists
+        # Locate the status table: find the alignment row, then the last
+        # row of the table (a line that doesn't start with `| `), and
+        # insert before that boundary.
+        table_match = re.search(
+            r"(\|\s*Slice\s*\|.*?\n\|[\s-]+\|.*?\n)((?:\|.*?\n)+)",
+            text,
+            re.DOTALL,
+        )
+        if not table_match:
+            raise RuntimeError(
+                "book/src/spec/index.md does not contain a recognizable status "
+                "table; append_slice_index_row cannot place the row."
+            )
+        # Pick the first matching anchor path; default to single-file.
+        anchor = f"./slices/{slice}.md"
+        title = link_title or slice.replace("_", " ")
+        new_row = f"| [{title}]({anchor}) | {layer} | {date} | {summary} |\n"
+        rows_block_start = table_match.start(2)
+        rows_block_end = table_match.end(2)
+        # Append new row to the end of the existing rows block.
+        text = text[:rows_block_end] + new_row + text[rows_block_end:]
+        path.write_text(text)
+        return True
+
     def write_meta_review_pending(self, plan_md: str) -> Path:
         """Write the file-based meta-review handshake. Returns the path
         written. The marker at the bottom is the human-toggled approval."""

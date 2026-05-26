@@ -5,9 +5,9 @@ A self-tuning knob that adjusts how readily per-cycle agents file `problems/` en
 ## Current state
 
 ```yaml
-sensitivity: 3
+sensitivity: 4
 target_rate: 0.0667  # 1 / 15
-last_calibrated: 2026-05-26  # meta-N — set on each Meta-Critic calibration
+last_calibrated: 2026-05-26  # meta-20: rate 0/12 ≈ 0.0; below 0.5× target → +1
 ```
 
 ## Sensitivity scale
@@ -44,3 +44,4 @@ The orchestrator reads the current `sensitivity:` value at each cycle and inject
 | Date | Meta | Window cycles | Problems filed | Rate | Sensitivity (after) | Notes |
 |------|------|---------------|----------------|------|---------------------|-------|
 | 2026-05-26 | (initial) | — | — | — | 3 | Initial setting. |
+| 2026-05-26 | meta-20 | 92–103 (12) | 0 | 0.000 | 4 | Below 0.5× target → +1; encourage more surfacing. |
