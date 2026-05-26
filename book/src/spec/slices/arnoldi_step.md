@@ -105,6 +105,8 @@ Basis storage is allocated lazily (init_size=5 columns, add_size=10 columns per 
 
 The procedure mentions the variant tag `gs_orthog` exactly once, at the orthogonalisation call site (level (b) of [variant-absorption](../../concepts/variant-absorption.md)). The operator-apply variant is fully absorbed by the constructed-operator surface and does not appear here. The post-Arnoldi Hessenberg-column triangularisation (replay-and-generate Givens rotations on `H[:,j]`) is **not** part of the Arnoldi step; it is the small-dense incremental-least-squares update consumed by [gmres](./gmres.md) at L2, tracked under [incremental-least-squares](../../concepts/incremental-least-squares.md).
 
+The `gs_orthog` axis carries a [sequential-obstruction](../../concepts/sequential-obstruction.md) at L3 under the MGS variant only; CGS and CGS2 lift cleanly. The L1 contract is variant-uniform; the obstruction surfaces at L3. See L3 below.
+
 ### Residual variant axis
 
 `gs_orthog` is preserved as a first-class residual axis (see [variant-absorption](../../concepts/variant-absorption.md)). All three variants share the L1 contract above; they differ in MPI-collective shape and in stability under finite arithmetic. The variant is bound at solve setup and is not re-inspected per step.
