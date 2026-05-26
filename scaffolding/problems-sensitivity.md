@@ -5,9 +5,9 @@ A self-tuning knob that adjusts how readily per-cycle agents file `problems/` en
 ## Current state
 
 ```yaml
-sensitivity: 5
+sensitivity: 3
 target_rate: 0.0667  # 1 / 15
-last_calibrated: 2026-05-26  # meta-21: rate 0/12 ≈ 0.0; still below 0.5× target → +1 (now at cap)
+last_calibrated: 2026-05-26  # User reset 2026-05-26 after relaxing the filing bar (drive-by observations now qualify per problems/README.md section B); prior calibration ran against the old bar and saturated at cap=5 with 0/36. Sensitivity reset to default 3 to recalibrate against the new bar.
 ```
 
 ## Sensitivity scale
@@ -70,3 +70,4 @@ If 3 consecutive 12-cycle windows show 0 filings at cap, the Meta-Critic should 
 | 2026-05-26 | meta-21 | 104–115 (12) | 0 | 0.000 | 5 | Still below 0.5× target → +1 (now at cap). If next window is also 0, the bar may be structurally too high — surface for review. |
 | 2026-05-26 | meta-22 | 116–127 (12) | 0 | 0.000 | 5 | **At cap; 0/24 across two consecutive windows.** Calibration knob has saturated. Surfacing for human review per *Saturation* section below. |
 | 2026-05-26 | meta-23 | 128–139 (12) | 0 | 0.000 | 5 | **THIRD consecutive cap-zero window. 0/36 total.** Per Saturation decision protocol, this is the HIGH-escalation threshold — surface for human review of the problems/ definition itself. The worked examples in this file are the candidate filings; review which (if any) should have been filed under the current bar. |
+| 2026-05-26 | (user reset) | — | — | — | 3 | **User relaxed the filing bar**: `problems/` now permits "observed-but-not-in-focus" drive-by observations (problems noticed in reference work consulted for context, not in the cycle's focused work). Sensitivity reset from cap=5 to default 3 to recalibrate against the new bar. See `problems/README.md` *(B) Observed-but-not-in-focus*. |

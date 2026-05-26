@@ -50,6 +50,7 @@
   - [finest-level-unwrap](./concepts/finest-level-unwrap.md)
   - [counter-update](./concepts/counter-update.md)
   - [build-time-vs-run-time-stratification](./concepts/build-time-vs-run-time-stratification.md)
+  - [first-iteration-unrolling](./concepts/first-iteration-unrolling.md)
 
 # Design Artifacts
 - [Index](./design/index.md)

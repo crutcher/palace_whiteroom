@@ -8,7 +8,7 @@ This index is maintained by the Synthesizer after every push. It is the **first 
 
 | Slice | Highest layer | Last touched | Status notes |
 |-------|---------------|--------------|--------------|
-| [CG](./slices/cg.md) | L1 | 2026-05-26 | L0→L1 landed: coordinate-free statement of preconditioned CG with stratified state, variant-axis classification, breakdown handling deferred to L2. |
+| [CG](./slices/cg.md) | L4 (slice v0.5) | 2026-05-26 | Self-rotation: first-iteration unrolling hoists the iteration-zero `if` branch out of the steady-state step body and removes `beta_prev` from the state schema. Documented as the new layer-pattern concept first-iteration-unrolling for downstream Krylov slices. |
 | [GMRES](./slices/gmres.md) | L4 (v0.3) | 2026-05-26 | Self-rotation L4→L4: consolidated `should_stop_inner` and `classify_outcome` into a single classifier; inner_loop now returns `(Krylov, Outcome)` and restart_cycle reads the outcome without re-classification. |
 | [orthog](./slices/orthog.md) | L4 | 2026-05-26 | Full L0→L4 dissection landed. L4 uses Solve-monad with state stratification; variant bound as constructed-operator param; MGS sequential obstruction surfaced as typical Solve-monad shape. Refinement pass tightened L4 prose, cited solve-monad more precisely, and added an MGS-as-fold cross-reference. |
 | [divfree](./slices/divfree.md) | L4 | 2026-05-26 | L4 form lands: `SolveM` apply over stratified state (DivFreeParams / SimState / ephemeral intermediates); construction absorbs variant axes; complex specialization is polymorphism over V. |

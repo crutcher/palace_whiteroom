@@ -43,6 +43,8 @@ graph BT
   build-time-vs-run-time-stratification --> variant-absorption
   build-time-vs-run-time-stratification --> solve-monad
   build-time-vs-run-time-stratification --> sequential-obstruction
+  first-iteration-unrolling --> rotation
+  first-iteration-unrolling --> derived-view-hoisting
 ```
 
 - [`rotation`](./rotation.md) — root methodology concept. Defines what counts as a genuine rotation (state hiding / coarser substitution / threaded-state compression) vs. a renaming. Codified meta-review #1; expanded with carry-through clause meta-review #2.
@@ -353,6 +355,7 @@ graph BT
   arnoldi_step --> nrm2
   arnoldi_step --> scal
   divfree --> axpy
+  cg --> first-iteration-unrolling
 ```
 
 The L4 calculus has its own design artifact at [`book/src/design/l4_calculus.md`](../design/l4_calculus.md). L4 concepts (grammar productions, reduction rules, ownership categories) are not currently tracked here — the calculus is a single document with its own internal structure. If L4 grows to need cross-cycle concept tracking, add a section here at that time.

@@ -75,6 +75,7 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [dot](./dot.md) | primitive |
 | [elementwise-product](./elementwise-product.md) | primitive |
 | [finest-level-unwrap](./finest-level-unwrap.md) | primitive |
+| [first-iteration-unrolling](./first-iteration-unrolling.md) | layer-pattern |
 | [gemv_basis](./gemv_basis.md) | primitive |
 | [givens](./givens.md) | primitive |
 | [gmres](./gmres.md) | algorithm |
