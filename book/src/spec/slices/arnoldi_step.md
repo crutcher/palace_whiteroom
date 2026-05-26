@@ -230,7 +230,7 @@ arnoldi_step_L3_cgs(V, j, T) -> (V[j+1], H[:,j]):
   scal(1 / H[j+1,j], w)                             -- pointwise
 ```
 
-Under MGS the orthogonalisation block is irreducibly the per-`i` loop; the surrounding three primitives lift cleanly, but the step as a whole carries the MGS sequential obstruction at L3.
+Under MGS the orthogonalisation block is irreducibly the per-`i` loop; the surrounding three primitives lift cleanly, but the step as a whole carries the MGS sequential obstruction at L3. CGS2 is *not* a sequential obstruction in the same sense: the two passes are a fixed-arity sequence of two L3-clean batched projections, not a per-`j+1` unbounded loop. See [sequential-obstruction](../../concepts/sequential-obstruction.md) — the criterion is "unbounded sequential dependency through the field-side state", which MGS satisfies and CGS2 does not.
 
 The L2→L3 edge is therefore a **conditional lift**: clean under CGS / CGS2, obstructed under MGS. The variant axis `gs_orthog` is the structural switch that determines whether L3 reveals a global form or preserves the sequential one. This is recorded as a first-class negative result per the L2→L3 obstruction-as-output discipline.
 
@@ -313,6 +313,8 @@ No other state is hoisted; `T`, `gs_orthog`, and `comm` stay in `op` (operator-i
 
 The `gs_orthog` axis is operator-internal: it parameterises the construction of `op.orthog` at solve setup but does not appear in `arnoldiStep`'s body. This is level-(b) [variant-absorption](../../concepts/variant-absorption.md) realised in the type system: the step procedure has the same syntactic shape across MGS, CGS, and CGS2; only the operator-internal `orthog` field differs. The MGS sequential obstruction recorded at L3 is, at L4, a property of the `orthogonalize` primitive's implementation, not of the step's calculus form — the step is variant-independent at L4 even though its allreduce count is not.
 
+This is the load-bearing payoff of the variant-absorption choice: at L1 the step takes `gs_orthog` as a parameter (residual axis, dispatched once); at L4 the variant has been pushed into the type of `op.orthog` and the step's body is variant-free. The residual axis has been fully internalised into operator-internal state by L4 — the L1 "residual" qualifier only describes the *intermediate* layers' surface, not the calculus form. See [variant-absorption](../../concepts/variant-absorption.md) for the levels (a)/(b)/(c) discipline.
+
 ### Interaction with FGMRES
 
 The FGMRES specialisation extends `ArnoldiSimState` with `Z : BasisChunk[]` and promotes the apply's output buffer to sim state at the `installBasisColumn` step. The monadic form makes the extension localised: the four-line scratch block is unchanged; only the `withScratch` exit transfers an additional buffer. The L4 contract for the Arnoldi step itself is unchanged; the change is at the level of the sim-state type.
@@ -320,6 +322,8 @@ The FGMRES specialisation extends `ArnoldiSimState` with `Z : BasisChunk[]` and 
 ### Obstruction recording
 
 The L2→L3 negative result (MGS orthogonalisation does not lift) is preserved at L4 as a property of the `orthogonalize` primitive's implementation, not erased by the calculus form. The calculus expresses *what* the step does monadically; it does not pretend the MGS sequential dependency between successive `H[i,j]` reads of `w` has disappeared. The obstruction is internal to `orthogonalize`'s `SolveM` implementation under the MGS variant, and the [sequential-obstruction](../../concepts/sequential-obstruction.md) concept entry remains the load-bearing record.
+
+This is the canonical *type-level vs. implementation-level* split: the variant-absorbed L4 form has uniform shape across the three orthogonalisation variants (type-level uniformity); the underlying implementation of `op.orthog` under MGS still carries the unbounded sequential dependency (implementation-level obstruction). The L4 calculus does not erase the obstruction — it *relocates* it from the step's body to the operator-internal primitive, where it stays as a first-class negative result. The pattern generalises: variant absorption at L4 routinely surfaces residual obstructions into primitive-internal scope without dissolving them.
 
 ### Composition shape, restated
 
