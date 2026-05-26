@@ -11,7 +11,7 @@ right-hand side `s` so that the trailing entry `|s[j+1]|` is the next residual
 proxy.
 
 This slice scopes the minimal Givens-on-2-element-window interface used by the
-[GMRES](./gmres.md) and [FGMRES](./fgmres.md) inner loops. The compositional
+[GMRES](./gmres.md) and [FGMRES](./gmres.md#fgmres) inner loops. The compositional
 use (the per-step rotation block embedded inside the Arnoldi/least-squares
 recurrence) lives in those slices; this slice fixes the primitives and the
 stream-shape they compose into.

@@ -445,6 +445,35 @@ entry. Levels per `scaffolding/problems-sensitivity.md`:
 eager; 5 very eager. Target rate: 1/15 cycles. The Meta-Critic
 recalibrates each meta-cycle.
 
+**Self-rotation / refinement surface-or-evidence discipline** (added
+meta-21 after cycle 115 emitted a refinement cycle whose
+`log_synthesis` narrated an L1 prose edit but the diff contained only
+a lessons append + rotation_claim — a recurrence of the meta-15 #3
+plan_kind=tightening evasion under the new push_kind=refinement label).
+
+When `push_kind=refinement` OR `edge ∈ {L0→L0, L1→L1, L2→L2, L3→L3,
+L4→L4, Ln→Ln}` (self-edges added to the rotation_claim schema in
+meta-21 item 2), the plan MUST include ONE of:
+
+(a) The **actual surface edit** — `file_edits` or `section_appends`
+    carrying the new or tightened prose the rotation_claim references.
+(b) A `retroactive_claim_evidence` block in `log_synthesis` quoting
+    the existing on-disk prose the claim refers to (per the meta-11
+    retroactive-claims-evidence rule).
+
+A diff containing only `lessons` + `rotation_claims` +
+`dependency_map_edges` is structurally indistinguishable from a no-op;
+Critic check #14 (rotation_claims_require_surface) will revise. Cycle
+115 is the canonical counter-example.
+
+**Concept-append heading-level** (added meta-21 item 1 LOW after
+cycles 106/107 both rejected on H1-vs-H2): when emitting
+`concept_writes mode=append-section`, the content MUST begin with
+`## <Heading>` (H2), not `# <Heading>` (H1). The concept file already
+has its own H1 title; appended sections are subordinate. The
+integrator now auto-normalizes H1 → H2 in the auto-rewrite path
+(create→append-section), but emitting H2 directly is cleaner.
+
 **Refinement push handling** (added 2026-05-26 from user directive).
 When the Planner dispatches `push: refinement slice=<name> reason=...`,
 treat it as a re-examination of the named slice in light of touching

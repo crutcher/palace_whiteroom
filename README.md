@@ -5,8 +5,8 @@ A layered-spec multi-agent system that dissects [AWS Labs Palace](https://github
 ## Status
 
 - **Phase 6 DONE.** Phase 6+ continuation underway since meta-review #10.
-- **Most recent milestone (meta-20, cycles 92–103):** **arnoldi_step landed at L4** (cycles 98–102) — the **first intermediate-tier algorithm extracted**, validating the meta-18 intermediate-tier prioritization directive end-to-end. Plus orchestrator hardening: `append_slice_index_row` fallback for new-slice rows; global retroactive counter (catches rotate-through-slices); skill_uptake_emitted episodic diagnostic; problems-sensitivity recalibrated 3→4 (0 problems filed in window, below 0.5× target).
-- **Quantitative snapshot:** 103 normal cycles completed; 20 meta-reviews fired; 3 skills extracted; ~25 concepts on disk; **6 active slices**.
+- **Most recent milestone (meta-21, cycles 104–115):** **Refinement push kind fired for the first time** (cycles 113, 115) — the user 2026-05-26 directive is end-to-end. **2 more intermediate-tier slices extracted** via retroactive-gate-retry redirects (plane_rotation_stream L1, sparse_triangular_solve L1 negative result) — 3 of 7 intermediate-tier candidates now in motion. Schema formalized self-edges (L_n→L_n, Ln→Ln); skill_uptake aggregate stats surfaced in episodic; integrator auto-normalizes H1→H2 on concept create→append rewrites.
+- **Quantitative snapshot:** 115 normal cycles completed; 21 meta-reviews fired; 3 skills extracted; ~25 concepts on disk; **8 active slices**.
 
 ## Relative Progress
 
@@ -16,14 +16,14 @@ Reported against [`scaffolding/roadmap.md`](scaffolding/roadmap.md). The roadmap
 - **Krylov solvers** — 2/4 at L4 (CG, GMRES; pending MINRES, BiCGStab).
 - **Orthogonalisation** — 1/2 at L4 (MGS/CGS/CGS2; Householder QR pending as sibling slice).
 - **Smoothers and preconditioners** — 1/6 at L4 (Chebyshev; pending Jacobi, SGS, ILU, AMS, multigrid).
-- **Projections and auxiliary operators** — 0/2 at L4 (divfree at L3, L4 in flight; curl-curl pending).
-- **Intermediate-tier algorithms** — **1/7 extracted (arnoldi_step ✓)**. Next likely picks per impact ranking: plane-rotation stream, polynomial-recurrence step.
+- **Projections and auxiliary operators** — 0/2 at L4 (divfree at L2, L4 in flight; curl-curl pending).
+- **Intermediate-tier algorithms** — **3/7 in motion**: arnoldi_step ✓ (L4), plane_rotation_stream (L1), sparse_triangular_solve (L1, negative result). Next likely picks per impact: polynomial-recurrence-step, diagonal-preconditioner-apply, residual-update, restart-machinery.
 - **FE assembly** — 0/4 (mesh + FE-space, sparse-assembly patterns, operator composition, boundary conditions).
 - **Coordination and post-processing** — 0/4 (time-stepping, frequency sweep, eigenpair extraction, I/O).
-- **Methodology infrastructure** — 6 roles; **3 skills** (classify-variant-axis, verify-citation-range, skill-selection); ~25 concepts; 15 numbered Critic checks; integrator channel set complete.
+- **Methodology infrastructure** — 6 roles; **3 skills** (classify-variant-axis, verify-citation-range, skill-selection); ~25 concepts; 15 numbered Critic checks; self-edge rotation schema; integrator channel set complete.
 - **Phase progression** — 7/10+ phases done (Phases 0-6 complete; Phase 6+ in flight).
 
-The dominant remaining surface is per-solver pipeline buildup. arnoldi_step's landing demonstrates the loop can now positively select intermediates over roots and drive them to L4 in a single 12-cycle window.
+The dominant remaining surface is per-solver pipeline buildup. The intermediate-tier prioritization continues to compound: 3 candidates in motion within 2 windows, validating the meta-18 impact-ranking heuristic.
 
 ## The Layered Stack
 
@@ -37,50 +37,53 @@ The dominant remaining surface is per-solver pipeline buildup. arnoldi_step's la
 
 | Slice | Highest layer | Most recent activity |
 |-------|---------------|----------------------|
-| [CG](book/src/spec/slices/cg.md) | L4 | L3→L4 retroactive backfill (cycles 96-97) |
-| [GMRES](book/src/spec/slices/gmres.md) | L4 | L1→L2→L3 per-building-block backfill (cycles 92-95) |
-| [Orthogonalisation](book/src/spec/slices/orthog.md) | L4 | L1→L2 backfill (cycle 94) |
-| [Chebyshev smoother](book/src/spec/slices/chebyshev.md) | L4 | L3→L4 retroactive (prior window) |
-| [Divergence-free projection](book/src/spec/slices/divfree.md) | L3 | L4 in flight |
-| [**Arnoldi step**](book/src/spec/slices/arnoldi_step.md) | **L4** | **L0→L4 extraction in one window (cycles 98-102)** — first intermediate-tier slice |
+| [CG](book/src/spec/slices/cg.md) | L4 | L1→L2 (cycle 105); L2→L3 retries blocked on sequential-obstruction concept-append (cycles 106-107); L4 partial |
+| [GMRES](book/src/spec/slices/gmres.md) | L4 | L3→L4 (cycle 110); L4→L4 self-tightening (cycle 104) |
+| [Orthogonalisation](book/src/spec/slices/orthog.md) | L4 | Refinement (cycle 113 — first refinement push) |
+| [Chebyshev smoother](book/src/spec/slices/chebyshev.md) | L4 | (prior window) |
+| [Divergence-free projection](book/src/spec/slices/divfree.md) | L2 | L1→L2 retry redirect (cycle 111) |
+| [Arnoldi step](book/src/spec/slices/arnoldi_step.md) | L4 | Refinement attempted (cycle 115 — revise on surface-or-evidence gap) |
+| [**Plane rotation stream**](book/src/spec/slices/plane_rotation_stream.md) | **L1** | **L0→L1 extraction (cycle 108)** via retroactive-gate retry |
+| [**Sparse triangular solve**](book/src/spec/slices/sparse_triangular_solve.md) | **L1** | **L0→L1 negative result (cycle 112)** via retroactive-gate retry |
 
 ## Methodology Surface
 
-- **Agent roles** — 6 (planner, explorer, synthesizer, critic, meta-critic per-cycle/meta-cycle + README builder meta-cycle finaliser).
-- **Push kinds** — 4 (forward, back, sideways, **refinement**); plus orchestrator-driven escalate. Refinement is conservative; major discrepancies escalate to `problems/`.
-- **Critic checks** — 15 numbered (`prompts/critic.md`). Recent additions: #13 (original-emission claim discipline + per-building-block granularity), #14 (rotation_claims-require-surface), #15 (skill-invocation visibility with structured `skill_uptake` field; per-verdict-envelope MUST-emit per meta-20).
-- **Invocable skills** — 3 active under `skills/`:
-  - `classify-variant-axis` — variant-axis classification (constructed-operator / parametric / scope-out / residual-axis).
+- **Agent roles** — 6 (planner, explorer, synthesizer, critic, meta-critic + README builder).
+- **Push kinds** — 4 (forward, back, sideways, **refinement** — first fire cycle 113); plus orchestrator-driven escalate. Refinement is conservative; major discrepancies escalate to `problems/`.
+- **Critic checks** — 15 numbered. Recent additions: #13 (per-building-block granularity), #14 (rotation_claims-require-surface), #15 (skill-uptake structured field; aggregate stats added meta-21).
+- **Rotation-claim edge schema** — `L_n→L_{n+1}` plus self-edges `L_n→L_n` (added meta-21 for refinement / self-tightening cycles).
+- **Invocable skills** — 3 active:
+  - `classify-variant-axis` — variant-axis classification.
   - `verify-citation-range` — L0 citation cross-symbol-boundary check.
-  - `skill-selection` — meta-skill: pre-cycle survey of applicable skills for both Synthesizer and Critic.
-- **Concepts on disk** — ~25, auto-maintained in `book/src/concepts/index.md` and `book/src/SUMMARY.md` on every `concept_writes mode=create`.
-- **Self-tuning** — `problems/` filing rate auto-calibrates each meta-cycle to target 1/15 cycles; sensitivity (1-5 scale) lives at `scaffolding/problems-sensitivity.md` (now 4 — eager — after 12-cycle window saw 0 filings).
+  - `skill-selection` — meta-skill: pre-cycle skill survey for Synthesizer and Critic.
+- **Concepts on disk** — ~25, auto-maintained.
+- **Self-tuning** — `problems/` filing rate auto-calibrates each meta-cycle to target 1/15; sensitivity now **5 (cap)** — 0 filings across two full windows; if next window is also 0, surface for review.
 
 ## Recent Meta-Reviews
 
-- **Meta-20 (cycles 92–103):** **arnoldi_step at L4** (first intermediate-tier); `append_slice_index_row` integrator fallback; global retroactive counter; skill_uptake diagnostic instrumentation.
-- **Meta-19 (cycles 86–91):** Third skill extraction (`skill-selection` meta-skill); hard-gate escalate-storm recovery via call_planner_with_addendum; SIDEWAYS auto-rewrite (closes 5-recurrence Synthesizer defect at integrator level).
-- **Meta-18 (cycles 80–85):** Forward-frontier criterion; intermediate-tier prioritization (user directive); retroactive-budget hard gate (Planner + orchestrator auto-escalate).
-- **Meta-17 (cycles 74–79):** chebyshev at L4; SIDEWAYS recurrence #4 → integrator-side enforcement; Critic check #15 (skill-invocation visibility).
-- **Meta-16 (cycles 68–73):** Second skill extraction (`verify-citation-range`); per-building-block claim granularity rule.
+- **Meta-21 (cycles 104–115):** Refinement push fires; 2 more intermediate-tier slices; self-edge schema; skill_uptake aggregates; H1→H2 auto-normalize; refinement surface-or-evidence rule.
+- **Meta-20 (cycles 92–103):** arnoldi_step at L4 (first intermediate-tier); append_slice_index_row fallback; global retroactive counter; skill_uptake_emitted diagnostic.
+- **Meta-19 (cycles 86–91):** Third skill (`skill-selection`); hard-gate escalate-storm recovery; SIDEWAYS auto-rewrite.
+- **Meta-18 (cycles 80–85):** Forward-frontier criterion; intermediate-tier prioritization (user directive); retroactive-budget hard gate.
+- **Meta-17 (cycles 74–79):** chebyshev at L4; integrator-side SIDEWAYS enforcement; skill-invocation visibility (#15).
 
 ## Reproducibility
 
 - Build the book: `cargo make book` (one-time tooling install on first run).
-- Live preview: `cargo make book-serve` (browse `book/book/html/`).
-- Run the agent loop continuously: `orchestrator/.venv/bin/python -m orchestrator --continuous`. Requires `ANTHROPIC_API_KEY` in `.env` (see `.env.example`).
+- Live preview: `cargo make book-serve`.
+- Run the agent loop continuously: `orchestrator/.venv/bin/python -m orchestrator --continuous`. Requires `ANTHROPIC_API_KEY` in `.env`.
 - Read per-cycle history: [`log/README.md`](log/README.md) (newest-first index); individual entries at `log/cycle-NNN.md` and `log/meta-NN-cycles-A-B.md`.
-- Read structured per-cycle records: `episodic.jsonl` (one JSON line per cycle).
+- Read structured per-cycle records: `episodic.jsonl`.
 
 ## Pointers
 
-- [`scaffolding/roadmap.md`](scaffolding/roadmap.md) — abstract roadmap; the denominator for *Relative Progress*; includes intermediate-tier candidates with impact ranking.
-- [`scaffolding/problems-sensitivity.md`](scaffolding/problems-sensitivity.md) — self-tuning sensitivity for `problems/` filings (target 1/15 cycles).
-- [`book/src/concepts/dependency-map.md`](book/src/concepts/dependency-map.md) — concept dependency map; solid-outline = on disk, dashed-outline (`:::planned`) = future markers.
+- [`scaffolding/roadmap.md`](scaffolding/roadmap.md) — abstract roadmap; the *Relative Progress* denominator.
+- [`scaffolding/problems-sensitivity.md`](scaffolding/problems-sensitivity.md) — self-tuning sensitivity for `problems/` filings.
+- [`book/src/concepts/dependency-map.md`](book/src/concepts/dependency-map.md) — concept dependency map (solid = on disk, dashed `:::planned` = future).
 - [`CLAUDE.md`](CLAUDE.md) — agent operating instructions.
-- [`BOOTSTRAP.md`](BOOTSTRAP.md) — phased build spec for the agent system.
-- [`book/src/SUMMARY.md`](book/src/SUMMARY.md) — full TOC of the dissection artifact.
-- [`book/src/meta-reviews/`](book/src/meta-reviews/) — immutable meta-review records (20 to date).
+- [`BOOTSTRAP.md`](BOOTSTRAP.md) — phased build spec.
+- [`book/src/SUMMARY.md`](book/src/SUMMARY.md) — full TOC.
+- [`book/src/meta-reviews/`](book/src/meta-reviews/) — immutable meta-review records (21 to date).
 - [`prompts/`](prompts/) — six role/meta-cycle prompts.
-- [`skills/`](skills/) — invocable agent procedures (verbs).
+- [`skills/`](skills/) — invocable agent procedures.
 - [`scaffolding/`](scaffolding/) — agent-side workshop notes.

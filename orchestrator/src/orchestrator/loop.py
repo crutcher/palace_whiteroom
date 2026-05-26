@@ -221,10 +221,26 @@ def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[st
             continue
         concept_path = state.repo_root / "book/src/concepts" / f"{name}.md"
         if concept_path.exists():
-            # Rewrite to mode=append-section. Need a leading `## Heading`.
             content = cw.get("content", "")
             lines = content.splitlines()
-            has_heading = any(l.strip().startswith("## ") for l in lines)
+            # Meta-21 item 1: H1→H2 normalization. The create content typically
+            # starts with '# Title' (file title for a fresh file); after
+            # auto-rewrite to append-section, append_concept_section requires
+            # the section to start with '## Heading' (H2). Strip the leading
+            # H1 if present and promote the next heading if any. If no
+            # heading at all, prepend a fallback H2.
+            idx = 0
+            while idx < len(lines) and not lines[idx].strip():
+                idx += 1
+            if idx < len(lines) and lines[idx].lstrip().startswith("# ") and not lines[idx].lstrip().startswith("## "):
+                # H1 detected — promote to H2
+                lines[idx] = "## " + lines[idx].lstrip()[2:]
+                content = "\n".join(lines)
+                sideways_rewrite_log.append(
+                    f"concept_writes mode=create on existing {name}: "
+                    f"normalized H1 → H2 on first heading line during auto-rewrite"
+                )
+            has_heading = any(l.strip().startswith("## ") for l in content.splitlines())
             if not has_heading:
                 content = f"## Additional notes (auto-rewritten from mode=create)\n\n{content}"
             cw["mode"] = "append-section"
@@ -1047,6 +1063,25 @@ async def run_normal_cycle(
         "plan_kind": plan_kind_declared,
         "plan_kind_misclassification": plan_kind_misclassification,
         "skill_uptake_emitted": isinstance(verdict.get("skill_uptake"), list),
+        # Meta-21 item 3: aggregate counts surface skill uptake to episodic
+        # so the Meta-Critic can audit per-skill triggering / application
+        # rates without re-reading the verdict envelope.
+        "skill_uptake_triggered": sum(
+            1 for e in (verdict.get("skill_uptake") or []) if isinstance(e, dict) and e.get("triggered")
+        ),
+        "skill_uptake_applied": sum(
+            1 for e in (verdict.get("skill_uptake") or [])
+            if isinstance(e, dict) and e.get("artifact_present")
+        ),
+        "skill_uptake_missed": sum(
+            1 for e in (verdict.get("skill_uptake") or [])
+            if isinstance(e, dict) and e.get("decision") == "missed"
+        ),
+        "skill_uptake_summary": [
+            {"skill": e.get("skill_name"), "triggered": e.get("triggered"), "decision": e.get("decision")}
+            for e in (verdict.get("skill_uptake") or [])
+            if isinstance(e, dict)
+        ],
         "friction_observed": friction_summary,
         "structural_change": structural_change,
         "push_back_signals": push_back_signals,
