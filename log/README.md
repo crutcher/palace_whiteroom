@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-107 — forward cg [L2→L3] — revise](cycle-107.md)
 - [2026-05-26 cycle-106 — forward cg [L2→L3] — revise](cycle-106.md)
 - [2026-05-26 cycle-105 — forward cg [L1→L2] — pass](cycle-105.md)
 - [2026-05-26 cycle-104 — forward gmres [L4→L4] — revise](cycle-104.md)
