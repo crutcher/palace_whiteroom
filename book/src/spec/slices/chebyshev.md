@@ -328,17 +328,17 @@ The `S` type parameter makes the scalar-recurrence stratum visible at the type l
 The outer `pc_it` loop and the inner `k` loop are sequential by L3 obstruction; in L4 they become explicit `forM_` binds in the `Solve` monad. Each step is a pure tensor-field expression on the field algebra; the monad threads the ephemeral `r`, `d` buffers and the scalar-state `rho_prev`.
 
 ```haskell
-apply :: ChebOp E S -> Solve (ChebSim E) ()
-apply op = do
+apply :: ChebOp E S -> Bool -> Solve (ChebSim E) ()
+apply op initial_guess = do
   x <- readX
   forM_ [1 .. op.pc_it] $ \it -> do
     -- 1. residual
     r0 <- if it == 1 && not initial_guess
-            then do { writeY zero; pure (copy x) }
+            then do { writeY zero; pure x }   -- r0 = x; y := 0
             else do
               y  <- readY
               ay <- applyLinop op.A y
-              pure (x .-. ay)             -- r = x - A y
+              pure (x .-. ay)                 -- r = x - A y
 
     -- 2. initial direction d_0 = alpha_0 * dinv .* r
     let (c0, st0) = op.scalars 0 op.scalarInit
@@ -353,16 +353,18 @@ apply op = do
     modifyY (\y -> y .+. dN)
   where
     innerStep op (r, d, st) k = do
-      modifyY (\y -> y .+. d)            -- y += d
+      modifyY (\y -> y .+. d)                 -- y += d
       ad <- applyLinop op.A d
-      let r'       = r .-. ad            -- r -= A d
+      let r'       = r .-. ad                 -- r -= A d
       let (c, st') = op.scalars k st
       let t        = op.dinv .*. r'
       let d'       = c.sd .* d .+. c.sr .* t
       pure (r', d', st')
 ```
 
-The monadic signature is `Solve (ChebSim E) ()` — the sim-state capability record `ChebSim E = { x: Read<Field E>, y: ReadWrite<Field E> }` is the monad's environment, not an argument. `readX`, `readY`, `writeY`, `modifyY` are the capability-mediated accessors. `initial_guess` is captured as a per-call flag at the outer-monad boundary (not shown — it is part of the `apply` invocation contract from the outer V-cycle); it is **not** a field of `ChebOp` (operator-internal state is invariant across calls).
+At L4 the field expressions `(x .-. ay)`, `(c.sd .* d .+. c.sr .* t)`, etc. are pure values — the `r`, `d`, `t`, `ay`, `ad` bindings are immutable let-bindings to field-algebra results, not in-place buffers. The L2/runtime implementation is free to realize them via in-place `axpy`/`scal` on aliased storage; that is the standard transparent optimization handled at L2 and does not surface at L4.
+
+The monadic signature is `Bool -> Solve (ChebSim E) ()` — the sim-state capability record `ChebSim E = { x: Read<Field E>, y: ReadWrite<Field E> }` is the monad's environment, not an argument. `readX`, `readY`, `writeY`, `modifyY` are the capability-mediated accessors. The `initial_guess` flag is a **per-call argument** to `apply`, threaded by the outer V-cycle on each invocation; it is **not** a field of `ChebOp` (operator-internal state is invariant across calls).
 
 `modifyY` is the sim-state mutator the outer monad exposes; `applyLinop`, `(.*.)`  (elementwise product), `(.+.)`, `(.-.)`, `(.*)` are the field-algebra primitives carried over from L2/L3.
 
@@ -400,7 +402,7 @@ Here `scalars4` and `scalars1` are pure scalar-recurrence functions; they close 
 
 ### Pure-action discipline
 
-The `apply` action does **not** mutate `op` (the operator closure). All mutation lives in the sim-state slice — and even there, only `y` is mutated; `x` is read-only. The ephemeral fields `r`, `d`, `t`, `Ay`, `Ad` are L4-pure values (returned by field-algebra expressions, not mutated in-place); whether the L2/runtime implementation realizes them via in-place `axpy`/`scal` is the standard transparent optimization handled at L2.
+The `apply` action does **not** mutate `op` (the operator closure). All mutation lives in the sim-state slice — and even there, only `y` is mutated; `x` is read-only. The ephemeral fields `r`, `d`, `t`, `ay`, `ad` are L4-pure values (immutable let-bindings to field-algebra expressions, not mutated in-place); whether the L2/runtime implementation realizes them via in-place `axpy`/`scal` on aliased storage is the standard transparent optimization handled at L2.
 
 The `MultTranspose` alias under the symmetry assumption is L4-trivial: `applyTranspose op = apply op` for SPD `A`.
 
