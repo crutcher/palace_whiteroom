@@ -56,6 +56,7 @@
   - [plane-rotation-stream](./concepts/plane-rotation-stream.md)
   - [apply_BA](./concepts/apply_BA.md)
   - [capability-typing](./concepts/capability-typing.md)
+  - [scope-out-obstruction](./concepts/scope-out-obstruction.md)
 
 # Design Artifacts
 - [Index](./design/index.md)

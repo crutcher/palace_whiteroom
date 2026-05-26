@@ -48,6 +48,11 @@ graph BT
   apply_BA --> constructed-operators
   capability-typing --> state-stratification
   capability-typing --> variant-absorption
+  scope-out-obstruction --> variant-absorption
+  scope-out-obstruction --> sequential-obstruction
+  scope-out-obstruction --> rotation
+  scope-out-obstruction --> apply_linop
+  scope-out-obstruction --> ksp_solve
 ```
 
 - [`rotation`](./rotation.md) — root methodology concept. Defines what counts as a genuine rotation (state hiding / coarser substitution / threaded-state compression) vs. a renaming. Codified meta-review #1; expanded with carry-through clause meta-review #2.

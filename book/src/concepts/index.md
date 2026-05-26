@@ -91,6 +91,7 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [plane-rotation-stream](./plane-rotation-stream.md) | layer-pattern |
 | [rotation](./rotation.md) | methodology |
 | [scal](./scal.md) | primitive |
+| [scope-out-obstruction](./scope-out-obstruction.md) | methodology |
 | [sequential-obstruction](./sequential-obstruction.md) | layer-pattern |
 | [set_subvector_zero](./set_subvector_zero.md) | primitive |
 | [solve-monad](./solve-monad.md) | layer-pattern |

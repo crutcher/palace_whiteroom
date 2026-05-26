@@ -198,3 +198,35 @@ Follow-ups raised by this exploration:
   first-class? The scope question's framing came from there; tagging
   this slice as out-of-scope-for-Palace and pointing at that family
   would close the loop.
+
+## Methodological status
+
+This slice is the canonical worked instance of the **L0→L1 scope-out
+obstruction** — the L0→L1 analogue of
+[sequential-obstruction](../../concepts/sequential-obstruction.md)'s
+L2→L3 negative result. The pattern:
+
+1. A scope question is posed naming primitives/state that would exist
+   at a *lower system boundary* (here: factor storage, factor-internal
+   MPI traffic, residual-of-triangular-solve).
+2. The L0 dissection finds no in-codebase implementation of those
+   primitives — only thin opaque forwarders into a third-party
+   library that owns the named machinery internally.
+3. The L1 rotation that *would* apply at the wrapper boundary is
+   **not specific** to the scope question's framing (here: absorption
+   into [apply_linop](../../concepts/apply_linop.md) /
+   [ksp_solve](../../concepts/ksp_solve.md) treats the factor as a
+   black-box linear-operator inverse, indifferent to triangular
+   structure).
+4. The correct output is a **negative L1 result with named
+   wrapper-level carry-through**, not a manufactured L1 form for
+   content the codebase doesn't carry.
+
+The load-bearing distinction from a silent-partial-absorption
+failure (cf. [variant-absorption](../../concepts/variant-absorption.md)):
+this slice **discloses** the obstruction at L1, cites opaque-forwarding
+evidence at L0, and forward-points at the wrapper-level rotation that
+does land elsewhere. Future scope questions that share this shape
+— "dissect a primitive whose implementation lives below the
+codebase boundary" — should produce this same shape of slice rather
+than an empty L1 or a fabricated abstraction.
