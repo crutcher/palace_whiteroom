@@ -337,3 +337,30 @@ The v0.4 form is **observably identical** to v0.3. The change is documentary: v0
 ### Carry-through from v0.3
 
 Unchanged at L4 v0.4: `cg_step`, `cg_init`, `cg_solve`, `pcg_step`, the equivalence note (`pcg_step opA Identity ≡ cg_step opA ∘ forget_z`), the ownership analysis, and the L3↔L4 correspondence. Only this section is added.
+
+## L2→L3 — rotation claims (retroactive, cycle 116)
+
+This section backfills explicit `rotation_claim` records for the L2→L3 edge of CG, against the on-disk L3 prose that has been present since cycle 1 (slice v0.1) and carried through v0.2–v0.4. The L3 prose was emitted without per-edge claims at the time; this cycle ratifies it under the current claim-emission discipline.
+
+### Claim 1: outer-loop obstruction (negative L3)
+
+The outer CG iteration does not lift to a single global tensor-field operation. Iteration `k`'s state `(x_k, r_k, p_k, β_k)` is a nonlinear function of iteration `k-1`'s state — through the search-direction recurrence, the residual update, and the α/β scalars — and no global-tensor-field rewrite of the k-indexed sequence exists short of changing the algorithm (e.g., to GMRES, which explicitly materializes the Krylov subspace). The obstruction is algorithmic sequentiality, not a missing representation.
+
+This is a **negative L3 result** in the sense of [`sequential-obstruction`](../../concepts/sequential-obstruction.md): the L2→L3 rotation is recorded as `justification_kind: obstruction`, the obstruction class is `iteration-sequentiality`, and the outer loop survives into L4 as `iterate_while`. This is the expected outcome for Krylov methods at L3.
+
+### Claim 2: step body lifts as identity
+
+The per-step body — `apply A p'`, `apply B r'`, `axpy α p' s.x`, `axpy (-α) Ap s.r`, `axpby 1 s.z (β/β_prev) s.p`, `dot · ·`, and scalar arithmetic — composes primitives that are **already L3-native**. Each is a whole-tensor operation with no element loop exposed at L2:
+
+- [`apply_linop`](../../concepts/apply_linop.md) is global by construction (the linear-operator interface hides any element loop or kernel structure inside `Op`).
+- [`axpy`](../../concepts/axpy.md) and [`axpby`](../../concepts/axpy.md) denote whole-tensor `y ← α·x + y` / `y ← α·x + β·y` operations; the per-element index is implicit and globally quantified.
+- [`dot`](../../concepts/dot.md) is a global reduction with no exposed element loop.
+- Scalar arithmetic operates on rank-0 quantities and is trivially global.
+
+The L2→L3 rotation on the step body is therefore the **identity in form**: no unfolding, no global lift, no schema change. The substantive content is the *recognition* that L2's primitive vocabulary is already L3-native, which is itself the L2→L3 rotation's natural conclusion when L2 was emitted in primitive-composition form.
+
+Per [`rotation`](../../concepts/rotation.md) carry-through: all step-body primitives carry through unchanged from L2 to L3; the rotation work for the L2→L3 edge of CG is concentrated entirely in the obstruction claim above.
+
+### Why the split is structural, not accidental
+
+The inner-kernel-lifts / outer-iteration-does-not split is the canonical L3 outcome for iterative numerical methods. It is documented as [`sequential-obstruction`](../../concepts/sequential-obstruction.md) and is expected to recur across GMRES (with a different inner kernel but the same obstruction shape), LOBPCG, Chebyshev iteration, time-stepping, and operator-splitting schemes. CG is the first slice to make the split explicit; subsequent Krylov slices will cite the same pattern.
