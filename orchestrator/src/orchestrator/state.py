@@ -566,8 +566,15 @@ class State:
     )
 
     def commit(self, message: str) -> str | None:
-        """git add the cycle-owned paths; git commit if anything is staged.
-        Returns the new commit's sha, or None if there was nothing to commit.
+        """git add the cycle-owned paths; git commit if anything is staged;
+        git push to origin/main (best-effort). Returns the new commit's
+        sha, or None if there was nothing to commit.
+
+        Push behavior (added 2026-05-26 per user directive — 'when things
+        are committed, they should be pushed each time'): after a
+        successful commit, `git push origin main` runs immediately. Push
+        failures are logged but do NOT raise (the commit is durable
+        locally; manual `git push` can recover later).
         """
         for relpath in self.CYCLE_OWNED_PATHS:
             full = self.repo_root / relpath
@@ -592,6 +599,17 @@ class State:
             cwd=self.repo_root,
             text=True,
         ).strip()
+        push_result = subprocess.run(
+            ["git", "push", "origin", "main"],
+            cwd=self.repo_root,
+            capture_output=True,
+            text=True,
+        )
+        if push_result.returncode != 0:
+            print(
+                f"[state.commit] git push failed (rc={push_result.returncode}); "
+                f"commit {sha[:8]} is local-only. stderr: {push_result.stderr.strip()[:200]}"
+            )
         return sha
 
     def count_cycles_since_meta(self) -> int:
