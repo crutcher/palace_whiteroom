@@ -320,12 +320,25 @@ for k in 0..j-1:
 ```
 
 Iteration `k` reads `(Hj[k], Hj[k+1])` and writes both slots. Iteration
-`k+1` reads `(Hj[k+1], Hj[k+2])`. The shared slot `Hj[k+1]` carries a
-**read-after-write** dependency across adjacent iterations: the value of
-`Hj[k+1]` consumed at step `k+1` is the value written by step `k`. The
+`k+1` reads `(Hj[k+1], Hj[k+2])` and writes both. The shared slot
+`Hj[k+1]` carries a **read-after-write** dependency across adjacent
+iterations: the value of `Hj[k+1]` consumed at iteration `k+1` is the
+value **written** by iteration `k` (not the pre-loop value). The
 rotation chain cannot be re-expressed as a single elementwise or
 gather/scatter tensor-field operation on `Hj` because each successive
-two-element window overlaps its predecessor by one slot.
+two-element window overlaps its predecessor by one slot, and that
+overlap is load-bearing — replacing the written value with the
+pre-loop value would compute a different (incorrect) result.
+
+This is the canonical [sequential-obstruction](../../concepts/sequential-obstruction.md)
+class-(a) shape: the dependency graph of the loop iterations is a
+chain (each iteration depends on its immediate predecessor through
+the shared boundary slot), and a chain of length `j` admits no
+parallel re-expression as a tensor-field operation. The same shape
+appears in [trsv](../../concepts/trsv.md) (triangular solve, where
+each `x[i]` depends on `x[0..i-1]`) and in Gauss-Seidel sweeps; in all
+three the algebraic structure (Givens-product / triangular-inverse /
+relaxation sweep) forces the chain.
 
 The algebraic shape of the obstruction: the product
 `G_{j-1} · G_{j-2} · … · G_0` is an upper-Hessenberg-triangulating
@@ -369,6 +382,12 @@ The obstruction is class-(a) per [sequential-obstruction](../../concepts/sequent
 algorithm (e.g., switching to Householder-block QR with WY
 representation, which is a different slice and a different stream
 shape — recorded as a sibling slice candidate, not an L3 of this one).
+The boundary between *this slice* and *a hypothetical Householder-QR
+slice* is the choice of factored representation: Givens-stream stores
+`j` scalar pairs and replays a chain; Householder-WY stores a block
+reflector `(V, T)` and applies it via two `gemv`/`gemm` calls — the
+latter HAS an L3 global form, but at a different L0 (and different
+flop profile per step).
 
 ### What DOES lift
 

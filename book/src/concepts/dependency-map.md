@@ -307,6 +307,7 @@ graph BT
   plane_rotation_stream --> sequential-obstruction
   plane_rotation_stream --> givens
   plane_rotation_stream --> tensor-field-lift
+  plane_rotation_stream --> trsv
 ```
 
 Whole-tensor operations replacing per-element iteration; or `obstruction` results documenting genuine sequentiality.

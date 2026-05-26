@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-162 — refinement plane_rotation_stream [Ln→Ln] — pass](cycle-162.md)
 - [2026-05-26 cycle-161 — sideways cg,gmres — pass](cycle-161.md)
 - [2026-05-26 cycle-160 — forward divfree [L3→L4] — pass](cycle-160.md)
 - [2026-05-26 cycle-159 — forward sparse_triangular_solve [L0→L1] — pass](cycle-159.md)
