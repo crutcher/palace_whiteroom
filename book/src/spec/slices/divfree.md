@@ -313,6 +313,7 @@ The divfree slice is a *projector operator* whose construction allocates interna
 
 ```ts
 // Internal parameters: constructed once, reused per apply.
+// Operator identity only — no scratch buffers.
 type DivFreeParams = {
   M:       LinOp<VH1, VH1>;            // ε-weighted H1 mass (mg-hierarchy interior)
   WeakDiv: LinOp<VNedelec, VH1>;        // sign-absorbed weak divergence
@@ -324,13 +325,16 @@ type DivFreeParams = {
 // Sim state: the field being projected.
 type SimState<V> = { y: V };  // V ∈ {Vector(VNedelec), ComplexVector(VNedelec)}
 
-// Ephemeral intermediates: not part of state, materialized per-apply.
-//   rhs : VH1     — H1 residual
-//   psi : VH1     — projected H1 solution
+// Ephemeral intermediates: allocated and released inside SolveM per apply.
+//   rhs : VH1      — H1 residual
+//   psi : VH1      — projected H1 solution
 //   t   : VNedelec — gradient correction
+// These are SolveM-scoped values, not DivFreeParams fields. The C++ pooled-
+// scratch implementation (cycle 165 L1 schema) is a transparent allocation
+// optimization beneath SolveM and does not appear in the calculus.
 ```
 
-The `psi` and `rhs` scratch buffers visible in the L1 state schema are *internal-parameter storage*, not sim state: they are allocated at construction and reused across applies, but their per-call content is ephemeral and is overwritten on entry. The calculus distinction is that `M`, `WeakDiv`, `Grad`, `bdrEff`, and `ksp` participate in the operator's *identity*; the scratch slots participate only in its *implementation*.
+The `psi` and `rhs` scratch buffers visible in the L1 state schema are an *implementation-level allocation optimization*, not part of the L4 operator identity. At L4 they are ephemeral `SolveM`-scoped values produced by `applyLinOp` and `kspSolve` and consumed by the next step in the `do`-block; the calculus does not see the pool. The C++ realization pre-allocates and reuses them at construction time (cycle 165 derived-view hoisting), but this is hoisted scratch — transparent at L4. Only `M`, `WeakDiv`, `Grad`, `bdrEff`, and `ksp` participate in the operator's *identity* and appear in `DivFreeParams`.
 
 ### Construction
 
@@ -397,4 +401,14 @@ eigStep eig p s = do
 - **Sign convention.** `WeakDiv` carries the absorbed minus sign at L0, so the L4 update is `y + t`, not `y - t`. This is a property of the constructed `WeakDiv : LinOp<VNedelec, VH1>` and is not re-derived at L4.
 - **Step ordering.** The `do`-notation pins the sequence `WeakDiv → setSubvectorZero → kspSolve → Grad`. The monad's sequential composition makes reordering a type-system-visible change.
 - **Approximate solve.** `kspSolve` returns the converged `ψ` up to the construction-time tolerance; the defining condition `Gᵀ M (P y) = 0` holds modulo ksp tolerance on the non-essential dofs, identical to the L3 caveat.
-- **Scratch reuse is non-observable.** That `psi` and `rhs` are allocated buffers inside `DivFreeParams` rather than fresh per-call values is an implementation detail of `applyLinOp` and `kspSolve`; at L4 the function is pure over `SimState` and the buffers do not appear in the calculus.
+- **Scratch reuse is non-observable.** `psi`, `rhs`, and `t` are ephemeral `SolveM`-scoped intermediates at L4; the C++ pooled allocation lifting them to construction-time storage (L1 schema) is a transparent optimization and does not change the L4 type. The function is pure over `SimState` and the pool does not appear in the calculus.
+
+## L4 tightening notes
+
+Cycle 167 (L4→L4 tightening). Two narrow corrections to the L4 calculus form:
+
+1. **Scratch buffers reclassified as ephemeral, not internal-parameter.** The original L4 prose (cycle 156) placed `psi`/`rhs` adjacent to `M`/`WeakDiv`/`Grad`/`bdrEff`/`ksp` as construction-time storage. This conflated *operator identity* (what makes two `DivFreeSolver` instances behave differently) with *implementation-side allocation strategy* (whether scratch is pooled or fresh-allocated per call). The L4 calculus distinguishes these via the [state-stratification](../../concepts/state-stratification.md) tiers: `psi`/`rhs`/`t` are ephemeral intermediates, scoped by `SolveM`. The C++ pooled-scratch realization is a [derived-view-hoisting](../../concepts/derived-view-hoisting.md) optimization beneath the calculus — visible at L1 (the schema names `psi`, `rhs` as scratch_buffer state to match the on-disk class members) but transparent at L4.
+
+2. **Polymorphism note made explicit at the V parameter.** The `SimState<V>` parametricity already captured both `Vector` and `ComplexVector` cases; the prose now names that `applyLinOp`, `setSubvectorZero`, `kspSolve`, and the `+` on `V` are each instance-resolved at the call site. No new structural claim — just naming what the type parameter already absorbs.
+
+Neither tightening changes the algorithmic content or the rotation_claims previously emitted for L0→L1, L1→L2, L2→L3, L3→L4. The slice's defining condition `Gᵀ M (P y) = 0`, the four-step apply sequence, the sign convention, and the load-bearing claims are all preserved. The tightening is purely about *which stratum each value lives in* — a state-stratification correction within L4.
