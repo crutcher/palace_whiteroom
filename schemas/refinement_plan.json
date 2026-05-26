@@ -106,8 +106,8 @@
           }
         },
         "no_candidates_reason": {
-          "type": "string",
-          "description": "Required when propose+modify+split are all empty. Names why this window produced no skill actions (e.g., 'no procedural patterns surfaced; window dominated by tooling fixes')."
+          "type": ["string", "null"],
+          "description": "Required (non-null string) when propose+modify+split are all empty. May be null when at least one of those arrays is non-empty (the field's presence acknowledges the skill-pass consideration step ran, even when candidates were found)."
         }
       }
     }
