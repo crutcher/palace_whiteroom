@@ -21,24 +21,30 @@ This slice scopes only the in-repo Arnoldi step. The SLEPc/ARPACK eigensolver pa
 
 ## Sources
 
-- [palace/linalg/iterative.cpp:615-640](../../../reference/palace/linalg/iterative.cpp#L615-L640) — `GmresSolver::Mult` Arnoldi inner-body kernel (the four-line ApplyBA / OrthogonalizeIteration / Norml2 / scal sequence).
-- [palace/linalg/iterative.cpp:735-825](../../../reference/palace/linalg/iterative.cpp#L735-L825) — `FgmresSolver::Mult` Arnoldi inner body; identical contract, with `Z[j]` promoted to threaded state.
-- [palace/linalg/iterative.cpp:287-325](../../../reference/palace/linalg/iterative.cpp#L287-L325) — `ApplyBA` constructed-operator dispatch (left/right/no preconditioner).
-- [palace/linalg/orthog.hpp:38-89](../../../reference/palace/linalg/orthog.hpp#L38-L89) — `OrthogonalizeIteration` variant dispatch over MGS/CGS/CGS2.
+- [palace/linalg/iterative.cpp:614-642](../../../reference/palace/linalg/iterative.cpp#L614-L642) — `GmresSolver::Mult` Arnoldi inner-loop body; the four-line kernel proper is lines 621-628 (`ApplyBA` → `OrthogonalizeIteration` → `Norml2` → in-place `scal`).
+- [palace/linalg/iterative.cpp:734-740](../../../reference/palace/linalg/iterative.cpp#L734-L740), [794-822](../../../reference/palace/linalg/iterative.cpp#L794-L822) — `FgmresSolver::Mult` Arnoldi inner body; structurally identical to GMRES, with `ApplyBA(PreconditionerSide::RIGHT, …)` hard-wired and `Z[j]` promoted to threaded state.
+- [palace/linalg/iterative.cpp:288-305](../../../reference/palace/linalg/iterative.cpp#L288-L305) — `ApplyBA` constructed-operator dispatch (LEFT: `A->Mult` then `ApplyB`; RIGHT: `ApplyB` then `A->Mult`; NONE: `A->Mult` direct).
+- [palace/linalg/iterative.cpp:308-325](../../../reference/palace/linalg/iterative.cpp#L308-L325) — `OrthogonalizeIteration` wrapper: variant dispatch over MGS / CGS / CGS2 (CGS with `refine=true`).
+- [palace/linalg/orthog.hpp:38-89](../../../reference/palace/linalg/orthog.hpp#L38-L89) — `OrthogonalizeColumnMGS` and `OrthogonalizeColumnCGS` implementations: MGS does m sequential `dot+allreduce+axpy` triples; CGS does one batched allreduce of m dots followed by m axpys (+ optional refinement pass for CGS2).
+- [palace/linalg/iterative.cpp:519-541](../../../reference/palace/linalg/iterative.cpp#L519-L541) — `GmresSolver::Update`: lazy basis-and-Hessenberg resize by `add_size` columns when triggered from inner loop at `V[j+1].Size()==0`.
+- [palace/linalg/iterative.cpp:544-550](../../../reference/palace/linalg/iterative.cpp#L544-L550) — `FgmresSolver::Update`: same as GMRES `Update` plus parallel growth of the preconditioned basis array `Z`.
 - [palace/linalg/iterative.cpp:73-109](../../../reference/palace/linalg/iterative.cpp#L73-L109) — `GeneratePlaneRotation` (real specialisation).
 - [palace/linalg/iterative.cpp:111-224](../../../reference/palace/linalg/iterative.cpp#L111-L224) — `GeneratePlaneRotation` (complex specialisation).
 - [palace/linalg/iterative.cpp:227-241](../../../reference/palace/linalg/iterative.cpp#L227-L241) — `ApplyPlaneRotation`.
-- [palace/linalg/iterative.cpp:489-541](../../../reference/palace/linalg/iterative.cpp#L489-L541) — `OrthogonalizeIteration` wrapper and basis `Update`/lazy-resize.
+- [test/unit/test-orthog.cpp:80-170](../../../reference/palace/test/unit/test-orthog.cpp#L80-L170), [234-280](../../../reference/palace/test/unit/test-orthog.cpp#L234-L280) — parametric tests for `OrthogonalizeColumnMGS`/`CGS` across real / complex / B-weighted variants; verifies post-orthog `⟨w, V[i]⟩ ≈ 0`.
 
 ## L0 — palace source
 
 The in-repo Arnoldi step is the four-line kernel inside the restart loop of `GmresSolver::Mult` (and FGMRES's near-identical sibling). Letting `j` be the current inner index, `V` the basis array, `H` the (max_dim+1)×max_dim Hessenberg buffer, and `Hj := &H[j*(max_dim+1)]` the j-th Hessenberg column:
 
     // [palace/linalg/iterative.cpp:621-628]
-    ApplyBA(opA, opB, pc_side, V[j], w, r);              // w ← (BA or AB or A) · V[j]
-    OrthogonalizeIteration(gs_orthog, comm, V, w, Hj, j);// w ← w − Σ Hj[i]·V[i];  Hj[0..j] ← ⟨w_orig, V[i]⟩
-    Hj[j+1] = linalg::Norml2(comm, w);                   // subdiagonal entry (post-orthog norm); MPI allreduce inside
-    w *= 1.0 / Hj[j+1];                                  // normalise; w aliases V[j+1]
+    VecType &w = V[j + 1];                                // alias, NOT copy: w *is* the destination slot
+    if (w.Size() == 0) { Update(j); }                     // lazy resize by add_size columns; hidden at L1
+    ApplyBA(pc_side, A, B, V[j], w, r, …);                // w ← (BA or AB or A) · V[j]
+    Hj = H.data() + j * (max_dim + 1);                    // pointer to j-th Hessenberg column
+    OrthogonalizeIteration(gs_orthog, comm, V, w, Hj, j); // Hj[0..j] ← ⟨w_pre, V[i]⟩;  w ← w − Σ Hj[i]·V[i]
+    Hj[j+1] = linalg::Norml2(comm, w);                    // subdiagonal entry (post-orthog norm); MPI allreduce inside
+    w *= 1.0 / Hj[j+1];                                   // in-place scal; w==V[j+1] is now unit-norm
 
 The four lines correspond to four [rotations](../../concepts/rotation.md):
 
@@ -47,9 +53,11 @@ The four lines correspond to four [rotations](../../concepts/rotation.md):
 3. **subdiagonal-norm** computation — [nrm2](../../concepts/nrm2.md) with MPI allreduce;
 4. **in-place scaling** of the new basis column — [scal](../../concepts/scal.md).
 
-The FGMRES variant ([palace/linalg/iterative.cpp:735-825](../../../reference/palace/linalg/iterative.cpp#L735-L825)) replaces the scratch `r` with the per-step preconditioned basis column `Z[j]`, which is itself promoted to threaded state and consumed during solution reconstruction; otherwise the Arnoldi-step contract is unchanged.
+The FGMRES variant ([palace/linalg/iterative.cpp:794-822](../../../reference/palace/linalg/iterative.cpp#L794-L822)) replaces the scratch `r` with the per-step preconditioned basis column `Z[j]` and hard-wires `pc_side = PreconditionerSide::RIGHT` at the `ApplyBA` call site. `Z[j]` is itself promoted to threaded state and consumed during solution reconstruction; otherwise the Arnoldi-step contract is unchanged.
 
-Three distinct in-place writes occur concurrently in the kernel: (1) `w` (aliased to `V[j+1]`) is written by `ApplyBA`, mutated by `OrthogonalizeIteration` (project-and-subtract), and finally scaled in place; (2) `Hj` is an accumulator-style write into the j-th Hessenberg column; (3) `r` is a scratch buffer used only when a preconditioner is present.
+Three distinct in-place writes occur concurrently in the kernel: (1) `w` (a reference, not a copy, to the basis slot `V[j+1]` — see line 622 `VecType &w = V[j+1]`) is written by `ApplyBA`, mutated by `OrthogonalizeIteration` (project-and-subtract), and finally scaled in place — the final `scal` is therefore *also* the act of installing the new basis column, with no separate copy; (2) `Hj` is an accumulator-style write into the j-th Hessenberg column (indices `[0..j]` from `OrthogonalizeIteration`, index `j+1` from `Norml2`); (3) `r` is a scratch buffer used only when a preconditioner is present (the `pc_side == NONE` branch of `ApplyBA` at [iterative.cpp:303](../../../reference/palace/linalg/iterative.cpp#L303) calls `A->Mult(x,y)` directly and never touches `r`).
+
+Breakdown (`Hj[j+1] == 0`) is not explicitly guarded at line 627; it would manifest downstream as a division-by-zero in the rotation-generate step at [iterative.cpp:638-640](../../../reference/palace/linalg/iterative.cpp#L638-L640) and surface via `CheckDot` on line 643.
 
 ### Variant axes
 
@@ -105,7 +113,8 @@ The procedure mentions the variant tag `gs_orthog` exactly once, at the orthogon
 
 - The post-Arnoldi small-dense Givens-QR triangularisation has been recorded across prior cycles as a distinct sequential obstruction. Currently this slice excludes it (it belongs to the GMRES outer loop's incremental-least-squares concept). Should it instead be folded in here as a logical third phase? Current call: keep separate — the Arnoldi step is the field-side / boundary kernel; the small-dense update is consumed elsewhere.
 - The eigensolver path (SLEPc Krylov-Schur, ARPACK) provides an external Arnoldi implementation reached via a constructed-operator binding at configure time. Scoped out of this slice; tracked separately (eigensolver slice not yet extracted).
-- No unit test exercises `OrthogonalizeIteration` or the Arnoldi step in isolation; integration is via end-to-end examples only. Flagged as a tooling gap (low priority).
+- The orthogonalisation sub-primitive *is* directly tested: [test/unit/test-orthog.cpp:80-170](../../../reference/palace/test/unit/test-orthog.cpp#L80-L170) parametrises over `{MGS, CGS, CGS2}` (with real, complex, and B-weighted variants at lines 234-280), verifying the post-orthog orthogonality condition `⟨w, V[i]⟩ ≈ 0`. The four-line Arnoldi-step kernel as a unit, however, has no direct unit test — coverage is via end-to-end GMRES integration only. Flagged as a tooling gap (low priority).
+- The scratch buffer `r` in GMRES is unused when no preconditioner is present (the `pc_side == NONE` branch of `ApplyBA` calls `A->Mult(x, y)` directly). An L0-storage refinement, not visible at L1.
 
 ## L2 — primitive composition
 
