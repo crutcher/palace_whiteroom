@@ -44,7 +44,7 @@ where
 ### Apply (`P x → y`)
 
 Given a Nedelec field `y` (in-place form) or `(x, y)` (out-of-place form
-with `y ← x` then in-place apply on `y`):
+with `y ← copy(x)` then in-place apply on `y`):
 
 1. Form the H1 residual:        `rhs ← WeakDiv · y`.
 2. Impose essential BC on rhs:  zero entries of `rhs` on `bdr_tdof_list_M`.
@@ -53,6 +53,10 @@ with `y ← x` then in-place apply on `y`):
 
 On exit `y` satisfies the discrete divergence-free condition
 `Gᵀ M y = 0` (up to ksp tolerance) on the non-essential dofs.
+
+The two-argument form's `y ← copy(x)` is an explicit copy (no silent
+aliasing); the in-place apply then proceeds as above. Step 4 is the only
+mutation of `y`; steps 1–3 read `y` and write H1-side scratch.
 
 ### Equivalent abstract form (not materialized)
 
@@ -77,9 +81,9 @@ and the underlying CG path treats the two halves uniformly.
 
 - Single-argument `Mult(y)`: `in_place_overwrite` on `y`; `psi`, `rhs` are
   `scratch_buffer` members.
-- Two-argument `Mult(x, y)`: `alias_with_input` viewed as a pure function
-  `y = P x`; implemented as `y ← x; Mult(y)`. No aliasing between `x` and
-  `y` is assumed.
+- Two-argument `Mult(x, y)`: viewed as a pure function `y = P x`;
+  implemented as `y ← copy(x); Mult(y)`. The copy is explicit — no
+  aliasing between `x` and `y` is assumed.
 
 ## Variant axes (absorption status)
 
@@ -116,6 +120,10 @@ and the underlying CG path treats the two halves uniformly.
   the natural unit-test surface if one were added.
 - `WeakDiv` sign-convention claim (that `MixedVectorWeakDivergenceIntegrator`
   encodes the negative-divergence sign, making `+Grad·ψ` the correction)
+  remains an unverified L0 reading. The L1/L2/L3/L4 forms all consume the
+  sign as a property of the constructed `WeakDiv`; a flipped L0 sign would
+  invert the correction direction at every layer without changing the
+  prose. A direct integrator-level citation would close the loop.
 
 ## L2 — primitive composition
 

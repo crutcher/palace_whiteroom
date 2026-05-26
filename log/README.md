@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-145 — refinement divfree [Ln→Ln] — pass](cycle-145.md)
 - [2026-05-26 cycle-144 — forward plane_rotation_stream [L2→L3] — pass](cycle-144.md)
 - [2026-05-26 cycle-143 — refinement arnoldi_step [Ln→Ln] — pass](cycle-143.md)
 - [2026-05-26 cycle-142 — refinement cg [Ln→Ln] — pass](cycle-142.md)
