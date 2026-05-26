@@ -61,10 +61,20 @@ These are append-only: agents add sections, never edit existing sections.
 
 ## Invocation
 
-The main Claude Code session orchestrates the cycle. For each dispatch:
+The main Claude Code session orchestrates the cycle. Two dispatch patterns are currently supported:
+
+### Direct subagent dispatch (preferred, when supported)
 
 ```
 Agent(subagent_type="<name>", description="<scope>", prompt="<scope+inputs>")
 ```
 
-The main session does NOT itself write to the artifact — it dispatches, waits for reports, dispatches the verify phases, dispatches the integrator (which is what mutates the artifact), then dispatches meta-phase.
+Where `<name>` is one of the 13 agents below. The subagent gets isolated context, reads/writes files directly via its tools, and writes its REPORT.md to disk. The main session does NOT itself write to the artifact — it dispatches, waits for reports, dispatches the verify phases, dispatches the integrator (which mutates the artifact), then dispatches meta-phase.
+
+### Embed-and-persist dispatch (fallback)
+
+When `subagent_type=<custom-name>` doesn't resolve (e.g., custom agent definitions not yet picked up by Claude Code), use `subagent_type=general-purpose` and embed the agent's prompt + scope in the `Agent(prompt=...)` call. The subagent returns content as text; the main session persists it to disk via `Write`.
+
+See `../../skills/embed-and-persist-subagent-dispatch/SKILL.md` for the procedure. This fallback was introduced by pilot-1 meta-phase after the harness blocked subagent file writes.
+
+To verify direct dispatch is available, try `Agent(subagent_type="harvester", description="test", prompt="echo hi")` — if it errors with "unknown subagent type," the fallback is required for this session.

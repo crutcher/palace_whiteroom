@@ -162,3 +162,18 @@ addressed_by: null
 ```
 
 Cycle 168 (refinement gmres) emitted a revise verdict on restart-boundary edge cases (Hessenberg column extension at restart boundary). Specific to the GMRES restart subtlety — likely needs a dedicated edge-case-aware emission pattern. Watch under future GMRES touches.
+
+---
+
+```yaml
+---
+slug: subagent-file-write-blocked-general-purpose
+first_observed: pilot-1
+last_observed: pilot-1
+recurrence_count: 1
+status: addressed
+addressed_by: skills/embed-and-persist-subagent-dispatch/SKILL.md
+---
+```
+
+General-purpose subagents dispatched via the `Agent` tool from this session cannot write files in the parent's working tree — the harness intercepts and returns content as text. Observed pilot-1 when dispatching `harvester` on `axpy@L1`. Mitigation: `skills/embed-and-persist-subagent-dispatch` documents the pattern (main session persists what the subagent returns). Open `ask`: investigate whether custom `.claude/agents/<name>.md` definitions are active post-Claude-Code-restart — if so, direct subagent_type=<custom-name> dispatch would bypass this friction.

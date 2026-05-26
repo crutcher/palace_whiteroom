@@ -21,6 +21,7 @@ Short next-up list. Meta-phase and cycle-planner co-edit. Cycle-planner reads ea
 
 ## Watch list (deferred)
 
+- **post-restart-verify-claude-agents** — verify after Claude Code restart whether `.claude/agents/<name>.md` definitions are picked up so `Agent(subagent_type=<custom-name>)` works directly. If yes, demote `embed-and-persist-subagent-dispatch` skill; if no, keep as operational default. (`ask` item from meta-phase pilot-1.)
 - Phase 1 slice corpus move to `book/src/_phase1_corpus/` — 64 cross-references need rewriting; defer until pilot validates flow.
 - `lessons.md` retirement — keep as historical record post-Phase-E.
 

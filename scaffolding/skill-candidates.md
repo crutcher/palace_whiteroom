@@ -32,11 +32,27 @@ The cost of a too-eager promotion is an unused SKILL.md; the cost of under-promo
 
 ## Open candidates
 
-(none yet — bootstrapped at Phase B; first candidates expected from Phase F pilot)
+(none currently — first candidate from pilot-1 was promoted same-cycle; see Promoted section)
 
 ## Promoted
 
-(existing skills under `skills/` are the prior loop's promotions; they don't need backfilling here. Forward-promoted skills will be listed below as they happen.)
+```yaml
+---
+slug: embed-and-persist-subagent-dispatch
+proposer: meta-phase
+proposed_at: pilot-1 / 2026-05-26
+status: promoted
+promoted_to: skills/embed-and-persist-subagent-dispatch/SKILL.md
+---
+```
+
+**Motivating observation**: pilot-1 dispatched harvester via `Agent(subagent_type=general-purpose, ...)` and the harness blocked the subagent's file writes; subagent returned content as text. Main session persisted manually. Same friction will reoccur every dispatch until `.claude/agents/<name>.md` definitions are active.
+
+**Sketch of procedure**: embed agent prompt + scope in Agent call; receive content as text; persist in parent session via Write tool; record friction in cycle-record.
+
+**Promotion bar check**: candidate sketch is concrete enough to write as SKILL.md (✓); friction-ledger entry exists for `subagent-file-write-blocked-general-purpose` (✓); pattern will recur every dispatch until resolved (✓). Default-accept under low-bar promotion policy.
+
+(Existing skills under `skills/` are the prior loop's promotions; they don't need backfilling here.)
 
 ## Rejected
 
