@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-153 — forward chebyshev [L1→L2] — pass](cycle-153.md)
 - [2026-05-26 cycle-152 — sideways orthog,plane_rotation_stream — pass](cycle-152.md)
 - [2026-05-26 meta-review (cycles 140–151) — enacted — refinement dominance + skill_uptake window aggregation](meta-23-cycles-140-151.md)
 - [2026-05-26 cycle-151 — refinement sparse_triangular_solve [Ln→Ln] — pass](cycle-151.md)
