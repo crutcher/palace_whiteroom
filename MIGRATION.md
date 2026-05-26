@@ -314,6 +314,143 @@ The meta-phase commits its enacted changes in a separate commit from the integra
 
 The cycle granularity is tunable — the cycle-planner can dispatch 1 agent (an effectively serial cycle) or N agents (highly parallel) based on what the priority list and overlap analysis admit. Meta-phase runs every cycle; most cycles will produce minimal meta output (nothing escalating, nothing to enact) — that's the steady state.
 
+### Friction capture and trend tracking
+
+The old loop captured friction in many overlapping channels (`episodic.jsonl` `friction_observed`/`push_back_signals`, `lessons.md`, `problems/`, meta-review records, Working Notes, `bookkeeping_incomplete`, `plan_kind_misclassification`). Two design goals went **under-realized**:
+
+1. **Cross-cycle pattern integration**. Recurrence counts (`recurrence #N`) lived inside meta-review records — every meta-review had to re-derive them by re-reading prior records. No standing ledger.
+2. **Friction → action**. Friction was recorded but the path from "we observed X 6 times" to "we did Y about it" was meta-review-only, which fired every 12 cycles. Most observed friction never reached action.
+
+The new flow consolidates into **two running ledgers** under `scaffolding/`:
+
+- **`scaffolding/friction-ledger.md`** — running list of NAMED friction patterns. One section per pattern with: slug, first-observed cycle, last-observed cycle, recurrence count, status (`new` / `recurring` / `escalating` / `addressed` / `resolved`), short description, and pointers to evidence (report IDs, commit shas). **Meta-phase appends and updates** this every cycle. **Cycle-planner reads** it as a primary priority input — recurring-but-unaddressed patterns get scheduling priority.
+
+- **`scaffolding/cycle-record.jsonl`** (replaces `episodic.jsonl`) — per-cycle structured row appended by **integrator** (post-batch) and **meta-phase** (post-decisions). Fields: cycle-id, timestamp, dispatch counts by agent type, critic finding counts by check, repair outcome counts (repaired/unrepairable), integration counts (ready/deferred/rejected), meta-phase decision counts (go/no-go/ask), token usage. This is the structured record analog of the old `episodic.jsonl`; trend computation runs on it.
+
+Friction signal flow per cycle:
+
+```
+sub-agents      → REPORT.md "Open questions / caveats"
+critic          → META.md critique section
+repairer        → META.md repair section (unrepairable findings = friction)
+integrator      → batch REPORT.md (gate-hits, deferrals, rejections)
+                       ↓
+            meta-phase reads all of the above
+                       ↓
+       friction-ledger.md updated  +  cycle-record.jsonl appended
+```
+
+The **aggregation step** is what closes the loop. Without meta-phase synthesizing scattered signals into a single named-pattern ledger, friction signals decay into individual report bodies that nobody re-reads.
+
+#### Replacing the old loop's friction artifacts
+
+- **`lessons.md` (old)** — append-only Critic-authored narrative. Migrate content into `friction-ledger.md` as initial named patterns. Going forward, the friction-ledger replaces it (named patterns + recurrence counts are sharper than prose).
+- **`questions.md` (old)** — open/closed question ledger. Replace with **`scaffolding/open-questions.md`** — appendable by any agent surfacing a question, closed by integrator or meta-phase when resolved. Per-report REPORT.md "Open questions / caveats" sections **feed into** this ledger (the integrator promotes them on landing).
+- **`episodic.jsonl` (old)** — replaced by `cycle-record.jsonl` (same shape, new fields).
+- **`problems/` (kept)** — out-of-band concerns channel with self-tuning sensitivity. The sensitivity calibration becomes a meta-phase responsibility (it already was, just under the old name).
+
+### Skill development and formation
+
+The old loop **under-formed skills**: 5 skills across 170+ cycles and 25 meta-reviews. The mechanism limited skill formation by design:
+
+1. Per-cycle agents observed procedural patterns but could only describe them in `lessons.md` (prose) or `Working Notes` (per-slice).
+2. Only Meta-Critic could promote → SKILL.md, and only at meta-review cadence (12 cycles).
+3. The +60% skill-priority directive (meta-19) was a prompt-engineering patch trying to overcome the structural under-bias.
+
+The new flow addresses this in **three structural ways**:
+
+1. **Open skill-candidate channel.** `scaffolding/skill-candidates.md` is **appendable by any agent** that notices a procedural pattern worth crystallizing. Sub-agents, critic, repairer, integrator — all can propose. One section per candidate: slug, proposer (agent + cycle), motivating observation (one paragraph), sketch of procedure (one paragraph), status (`proposed` / `evaluating` / `promoted` / `deferred` / `rejected`). Meta-phase reads this each cycle as the **primary skill-promotion signal**.
+
+2. **Skill-invocation telemetry.** When an agent invokes a skill, the REPORT.md may carry a `skill_uptake` field (same idea as the old `skill_uptake_summary`): which skill, did it help (`applied` / `inapplicable` / `fell-short`), what was the gap. Meta-phase aggregates this in `cycle-record.jsonl`. Skills with high `fell-short` counts get refined; skills with high `inapplicable-but-invoked` counts get scope-tightened in their prompt.
+
+3. **Per-cycle meta-phase consideration.** No 12-cycle wait. Meta-phase considers `skill-candidates.md` every cycle and promotes when the bar is met. The bar should be intentionally **low**:
+   - Default-accept procedural patterns observed ≥2 cycles unless there's a specific reason against.
+   - The cost of a too-eager promotion is a few unused SKILL.md files; the cost of under-promotion is missed pattern capture across many cycles.
+   - This matches the user-confirmed default: "Small-scope speculative skills are default-accepted."
+
+Skill lifecycle:
+
+```
+proposed (any agent appends to skill-candidates.md)
+    ↓ (meta-phase: pattern observed ≥2× or candidate sketch is concrete)
+promoted (meta-phase writes skills/<slug>/SKILL.md; candidate status = "promoted")
+    ↓ (agents invoke; uptake telemetry accumulates in cycle-record.jsonl)
+refined (meta-phase edits SKILL.md when telemetry surfaces gaps)
+    ↓ OR
+retired (meta-phase moves to skills/_retired/<slug>/ with retirement reason)
+```
+
+**Retirement matters.** The old loop never retired anything; if a skill became irrelevant it just stayed. The new flow explicitly retires (with reason) so the active set stays focused.
+
+### Scaffolding layout
+
+Scaffolding is the agent-side workshop — cumulative state that lives between cycles. The new layout:
+
+```
+scaffolding/
+  README.md                 # index (one-liner per file/dir)
+  roadmap.md                # relative-progress vs roadmap (integrator-maintained)
+  priorities.md             # short next-up list (meta-phase + cycle-planner co-edit)
+  friction-ledger.md        # named friction patterns + recurrence (meta-phase-maintained; new)
+  skill-candidates.md       # appendable skill proposals (any-agent appendable; new)
+  open-questions.md         # open question ledger (replaces questions.md; any-appendable)
+  cycle-record.jsonl        # per-cycle structured record (replaces episodic.jsonl)
+  decisions/                # persistent-dual trade-offs (sub-agent appendable)
+    <topic>.md
+  test-linkages/            # source→test maps (sub-agent appendable)
+    README.md
+    <topic>.md
+  problems-sensitivity.md   # self-tuning sensitivity calibration (meta-phase-maintained)
+```
+
+Read/write matrix:
+
+| Agent | Reads | Writes |
+|---|---|---|
+| cycle-planner | roadmap, priorities, friction-ledger, open-questions, cycle-record (tail), integrator batch reports (last N cycles) | — |
+| 8 specialized | decisions/, test-linkages/ (per scope), open-questions (relevant) | (only their own report dir; may append to skill-candidates.md, open-questions.md, decisions/, test-linkages/) |
+| critic | (the report it's critiquing) | META.md critique section; **may append to** skill-candidates.md if pattern observed |
+| repairer | REPORT.md, META.md critique | META.md repair section + REPORT.md in-place fixes; **may append to** skill-candidates.md |
+| integrator | reports + METAs | book/, roadmap.md, cycle-record.jsonl (append), open-questions.md (close-on-landing), log/ |
+| meta-phase | scaffolding/ (all), reports/ (this cycle's + tail), prior meta-phase reports | priorities, friction-ledger, skill-candidates (refine status), cycle-record.jsonl (append decisions), problems-sensitivity, `.claude/agents/`, `skills/` |
+
+**The "any-agent-appendable" docs** (`skill-candidates.md`, `open-questions.md`, `decisions/`, `test-linkages/`) are exceptions to strict report-channel discipline. They're cumulative state, not per-cycle artifacts. Discipline: agents **append a section**, never edit existing sections. Promotion / refinement / retirement is meta-phase or integrator work.
+
+### Validation gates: current → new home
+
+The Python orchestrator's `_apply_integration_plan` carries ~12 validation gates accumulated over 25 meta-reviews. Each gate's authority partitions cleanly into critique vs repair vs integrator-safety-net:
+
+| Gate (current orchestrator) | New home | Notes |
+|---|---|---|
+| Citation-does-not-support | **critic** check | Pure detection; repair can't author missing citations |
+| Surface-or-evidence (refinement) | **critic** check | Unrepairable if both missing — substantive authoring required |
+| Retroactive-budget (per-slice ≥3, global ≥4) | **critic** check + **integrator** safety net | Critic finds threshold breach; integrator's cap remains as last-line |
+| SIDEWAYS auto-rewrite (≥3 `concept_writes` → `section_appends`) | **repairer** auto-fix | Mechanical rewrite — squarely in repair scope |
+| H1→H2 normalization | **repairer** auto-fix | Mechanical — repair |
+| Concept-existence-check (write on existing slug → rewrite to append) | **repairer** auto-fix | Mechanical — repair |
+| Edge-label fidelity | **critic** check + **repairer** auto-fix when prose is clear | Detect; mechanical-fix if edge is unambiguous from prose |
+| Plan-kind misclassification capture | **critic** check | Detection only; deciding correct kind is substantive |
+| Bookkeeping-vs-substantive failure classification | **repairer** routing logic | Drives `follow_up_agent` selection |
+| Append-by-slug fallback | **repairer** auto-fix | Mechanical |
+| Forward-edge claims-require-surface | **critic** check | Substantive; unrepairable |
+| Variant-axis classification coverage | **critic** check + **repairer** auto-fix if axes clear from prose | Detect; mechanical-add only if obvious |
+| Skill-uptake survey (`skill_uptake` field) | **critic** check (presence) + **cycle-record.jsonl** (telemetry) | Surfaces telemetry, not blocking |
+
+**Integrator runs every check one more time** as a safety net (in case critic missed or repairer over-fixed). Anything caught at the integrator level is a critic-coverage gap → meta-phase records in friction-ledger → critic prompt refined next cycle.
+
+### Orphaned-artifact prevention
+
+Audit rules so every artifact has a known consumer:
+
+- **REPORT.md "Open questions / caveats" sections** → integrator **promotes to** `scaffolding/open-questions.md` on landing. The cycle-planner consumes the ledger.
+- **Critic warnings** (non-failing) → if not repaired, the **integrator** records them in `cycle-record.jsonl` warning counts. Meta-phase scans for warning-pattern accumulations and lifts persistent warning patterns into friction-ledger entries.
+- **Meta-phase `no-go` decisions** → recorded in `scaffolding/friction-ledger.md` against the matching pattern (status: `addressed` with `no-go: <reason>`). Future meta-phases read the ledger before re-proposing.
+- **Integrator batch reports** → consumed by **meta-phase** (for the cycle's gate-hits and deferral reasons) AND by **next cycle's cycle-planner** (for what deferred + needs follow-up).
+- **Lowering-verifier's audit linkages** → land as metadata in the relevant `book/src/L_{n+1}-L_n/` lowering rule entries (per-rule `verified_against:` field). Cross-layer-cross-cutter reads them for coverage analysis.
+- **Reports themselves** (post-integration) → audit trail only; not re-read. Stays on disk indefinitely (research record). Same discipline as commit history.
+
+If any agent writes something that doesn't appear in this list, that's a new orphan — either route it (add to this section), or remove it.
+
 ### Report channel + single integrator
 
 **Subagents do not edit the artifact directly.** All specialized agents (the 8 in Phase C) write only to a non-overlapping report channel under `reports/`. Each invocation gets its own subdirectory (`reports/<timestamp>-<agent>-<scope>/`) containing a `REPORT.md` and any supporting documentation. Subagents have **no write access** to `book/`, `scaffolding/`, `skills/`, `prompts/`, or any other artifact area.
@@ -419,6 +556,9 @@ may route these to follow-up agent invocations.
   - **Pruning**: a roughed-in operator turned out not to be load-bearing; remove it.
 - **Meta-review** survives as out-of-cycle friction integration but trigger needs rethink (was 12-cycle, what's a cycle now?). Candidate: time-based or work-volume-based; or human-triggered with an automatic friction-buildup warning.
 - **Skills** — most carry over. Replace slice-specific language with layer-specific. `classify-variant-axis` becomes layer-agnostic (variant axes appear at every layer); `verify-refinement-surface` generalizes to "verify a lowering-rule has surface at both ends".
+- **Friction signals are now first-class scaffolding artifacts**, not buried in `lessons.md` prose. The friction-ledger / skill-candidates / open-questions / cycle-record / problems-sensitivity files are **running state** the meta-phase reads and edits each cycle. Section 2 *Scaffolding layout* defines the read/write matrix.
+- **Producers can propose skills** (skill-candidates.md is any-agent appendable). The old single-author-promotion bottleneck is gone.
+- **Validation gates** map cleanly to critic / repairer / integrator phases — see Section 2 *Validation gates*.
 
 ## 5. Migration plan
 
@@ -430,14 +570,25 @@ may route these to follow-up agent invocations.
 - Decide subagent shape: 1 generalist or specialized layer-author / lowering-author / combinator-extractor / critic-equivalent agents.
 - Surface open questions to resolve before any restructuring touches disk.
 
-### Phase B: artifact skeleton
+### Phase B: artifact skeleton + scaffolding bootstrap
 
+**Artifact skeleton:**
 - Build the new `book/src/L4/`, `book/src/L4-L3/`, … `book/src/L0/` directory layout with stub intro+dep-map per layer.
 - Move existing slice content to `book/src/_phase1_corpus/` (or similar) — preserved as raw material, not deleted.
 - Move existing concepts to a new layer-indexed structure OR keep flat (`book/src/concepts/`) and add layer-tags to each.
 - Promote `design/l4_calculus.md` content into `book/src/L4/` intro + initial operator list.
 - mdBook SUMMARY.md rewritten for the new TOC.
-- Single commit per phase milestone so the audit trail is clean.
+
+**Scaffolding bootstrap** (the running ledgers per Section 2 *Scaffolding layout*):
+- Create `scaffolding/friction-ledger.md` and **seed it** from `lessons.md` (extract named patterns from the 100+ accumulated lessons; each becomes a friction-ledger entry with status `recurring` or `addressed`). The old `lessons.md` stays in place as historical record but becomes read-only.
+- Create `scaffolding/skill-candidates.md` empty. Optionally seed a few candidates from observed-but-unrealized patterns in recent meta-reviews.
+- Create `scaffolding/open-questions.md` and migrate the currently-open entries from `questions.md`. Closed entries stay archived in `questions.md` for the record.
+- Rename `episodic.jsonl` → `scaffolding/cycle-record.jsonl` (move the file, no schema change initially; meta-phase prompts will reference the new path). Add a one-line README pointer at the old path.
+- `scaffolding/problems-sensitivity.md` carries over verbatim — its current calibration history is valuable.
+- `scaffolding/decisions/` and `scaffolding/test-linkages/` carry over.
+- Update `scaffolding/README.md` index to reflect the new layout.
+
+Single commit per phase milestone (artifact skeleton commit; scaffolding bootstrap commit) so the audit trail is clean.
 
 ### Phase C: subagent definitions
 
@@ -532,6 +683,17 @@ Note the repairer is the **only** agent (besides the specialized sub-agents them
 - Use the new subagent flow to: draft the L4 operators those themes use; write the L4>L3 lowering for one theme; verify against the existing CG and GMRES slice content; iterate.
 - The pilot's friction surfaces the next round of methodology adjustments.
 
+**Pilot exit checklist** (don't move to Phase G until satisfied):
+- All 6 phases of the cycle structure fired end-to-end at least 3 times.
+- `friction-ledger.md` accumulated ≥3 named patterns from observed pilot friction.
+- `skill-candidates.md` accumulated ≥1 candidate proposed by a non-meta-phase agent (validates the producer-channel works).
+- Meta-phase shipped ≥1 `go` decision (prompt edit, skill, or priority update) — validates the friction → action path.
+- At least 1 repairer auto-fix landed end-to-end (validates the critique/repair split is operational).
+- At least 1 `unrepairable` finding got routed to a follow-up cycle and resolved (validates the deferral path).
+- The integrator's safety-net gates caught at least one critic-coverage gap, and meta-phase added the missing check to the critic prompt (validates the gate→friction→prompt-refine loop).
+
+If any item doesn't fire during Phase F, that's a pipeline gap — diagnose before scaling to G.
+
 ### Phase G: corpus harvest
 
 - Once 1–2 themes are validated end-to-end, systematically harvest the existing slice corpus for combinators and lowering instances.
@@ -546,21 +708,28 @@ Note the repairer is the **only** agent (besides the specialized sub-agents them
 4. **Cycle semantics — partially resolved 2026-05-26.** A cycle = (one cycle-planner invocation) + (N sub-agent invocations producing reports per the plan) + (one integrator invocation). The cycle is the natural unit because the cycle-planner reasons about non-overlap across the N dispatches. Open sub-questions: (a) how is a cycle triggered (human-driven, time-based, work-volume-based)? (b) where does the priority list (`scaffolding/priorities.md`) get updated — manually, or by an end-of-cycle agent that scans the integrator's report for follow-up candidates? (c) episodic.jsonl per-cycle record: keep similar shape (one row per cycle with plan + dispatched + integrated counts), or evolve?
 5. **Meta-review trigger — resolved 2026-05-26.** Meta-phase runs **every cycle**, as the sixth phase after integration. Most cycles will produce a minimal meta-phase output (nothing escalating, nothing to enact) — that's the steady state. The 12-cycle batched meta-review pattern is gone; methodology friction integrates continuously. Open sub-question: do we need a "deep meta-review" trigger for occasional cross-cutting passes that span dozens of cycles? Lean no — every-cycle meta-phase with running-history awareness covers it.
 6. **Per-cycle commit discipline.** The orchestrator commits + pushes after every cycle. The new flow could commit after every subagent return, every meaningful operation, or only at session-end checkpoints. Tradeoff: granularity vs noise.
-7. **Critic checks → main-session validation.** Which of the 15 checks survive verbatim, which need reframing, which become irrelevant? Tabulate explicitly.
-8. **problems/ sensitivity self-tuning.** Was orchestrator-side calibration. In the new flow, does the main session calibrate? Or does a periodic "meta-review subagent" do it on demand?
+7. **Critic checks → critic/repairer mapping — partially resolved.** Section 2 *Validation gates* tabulates the 12 known orchestrator gates and their new homes. Open sub-question: are there gates implicit in the orchestrator code (not enumerated as 15-Critic-check items) that this table misses? Audit `orchestrator/orchestrator.py` `_apply_integration_plan` line-by-line during Phase D.
+8. **problems/ sensitivity self-tuning — resolved 2026-05-26.** Becomes meta-phase responsibility. `scaffolding/problems-sensitivity.md` (already exists) carries over; meta-phase recalibrates per cycle using `cycle-record.jsonl` problem-filing rates. Open sub-question: target rate of 1/15 was tuned under the slice-based agent count; under the new flow with N specialized agents per cycle, the denominator changes — recalibrate the target during pilot.
 9. **Integration-plan discipline — partially resolved.** Becomes the **REPORT.md proposed-changes section** format. Open sub-question: structured-YAML/JSON within the markdown (more parseable for the integrator) vs free-form structured-markdown (more flexible for agents to write, requires integrator-side parsing). Lean toward structured fenced blocks inside markdown so the integrator gets parseable data and the agent gets natural-prose surrounding context.
 10. **Skill format.** Stays SKILL.md? Claude-Code-native or our extended frontmatter? The two should be compatible already.
 11. **Repo restructuring atomicity.** Do we keep the old orchestrator working alongside the new flow during transition, or hard-cut? Hard-cut is cleaner; coexistence allows verification.
 12. **Tooling carry-over.** MCP codemap clearly stays. The Python orchestrator's `state.py` helpers (read_problems_sensitivity, list_refinement_candidates, etc.) — port to a `tools/` helper script the main session can call, or rewrite as needed?
+13. **Ledger formats.** `friction-ledger.md` and `skill-candidates.md` are new — should they be free-prose markdown (easier to read/edit), structured-markdown with YAML frontmatter per section (parseable but more rigid), or JSONL (purely structured)? Lean structured-markdown with frontmatter per section: agents can scan with grep, meta-phase can parse via straightforward regex, humans can read top-down.
+14. **`open-questions.md` vs REPORT-level open-questions.** Two layers: per-report caveats inside REPORT.md (rich context) and global ledger in scaffolding (cross-cycle visibility). The integrator promotes per-report items into the ledger on landing. Open sub-question: does **every** REPORT caveat get promoted, or only those the integrator flags as cross-cutting? Lean every — under-promoting hides signal; over-promoting just gives meta-phase more to scan.
+15. **`scaffolding/decisions/` and `test-linkages/` migration.** Existing under the old loop. Carry over verbatim or restructure for the layer-not-slice framing? Lean carry-over; the layer framing affects file *names* under these dirs more than the dirs themselves.
 
 ## 7. Risks and tensions
 
 - **Losing structured integration-plan discipline — partially mitigated.** The integrator agent carries the gates forward (same logic, different host); structured proposed-changes blocks in REPORT.md preserve parseability. Residual risk: the new integrator agent's prompt is substantial (carries all 10+ gates from the current orchestrator's `_apply_integration_plan` function) — verify it implements them correctly during Phase F pilot before harvesting at scale.
 - **Critic-check distillation.** The 15 checks are a corpus of hard-won validation logic. Reframing them as main-session rules risks losing nuance; keeping them verbatim risks carrying slice-specific framings into a layer-shaped world.
 - **Recovery from in-flight bad work.** The orchestrator commits per cycle and the integrator catches structural defects atomically. The new flow needs equivalent atomicity (probably: main-session checkpoint commits + manual rollback when subagent output looks broken).
-- **Loss of episodic data continuity.** episodic.jsonl is 174+ entries deep; it's a research record. The new flow might emit different-shaped records, breaking longitudinal analysis. Decide whether to retain the format, fork it, or close the old log and start fresh.
+- **Loss of episodic data continuity.** episodic.jsonl is 197+ entries deep; it's a research record. The new `cycle-record.jsonl` should mirror the old fields where compatible and add the new ones; longitudinal analysis can union both files as a single stream. Don't break the contract that "one cycle = one row."
 - **Cost / time profile changes.** Per-cycle was many small API calls; subagent invocations are bigger but rarer. Net cost may be similar or lower; latency probably higher per work unit.
 - **Methodology refresh burden.** CLAUDE.md is ~340 lines of accumulated direction; rewriting for the new flow is a substantial standalone effort. Could do it incrementally as the new flow proves itself, or up-front as part of Phase E.
+- **Friction-signal fragmentation risk.** Multi-channel friction capture worked in the old loop because meta-review integrated across channels every 12 cycles. The new flow's friction-ledger is meant to be the single source of truth — but it depends on meta-phase aggregating discipline. If meta-phase skimps on the synthesis step ("nothing escalating today"), signals fragment back into individual report bodies. **Mitigation**: meta-phase prompt enforces ledger updates each cycle, even when no `go` decisions ship. Cycle-record.jsonl counts unrepairable findings; meta-phase must explain why none of them got ledger entries when count > 0.
+- **Skill formation under-bias residual risk.** Even with the open candidates channel, agents may still under-propose if their prompts emphasize "complete the task" over "notice a pattern." Mitigation: per-agent prompt template includes a closing "Skill-candidate check" section asking the agent to consider whether anything they just did was procedural-and-recurring. Meta-phase tracks `skill-candidates.md` append rate per agent type; agents with persistently zero appends get prompt-tightening.
+- **Ledger maintenance overhead.** Three new running ledgers (friction, skill-candidates, open-questions) plus the cycle-record means meta-phase has substantial bookkeeping each cycle. Risk: bookkeeping crowds out judgment. Mitigation: keep ledger entries SHORT (one-paragraph max per pattern/candidate/question); meta-phase prompt budgets time on bookkeeping vs analysis.
+- **Repair authority creep.** "Mechanical and surgical fixes only" is a soft boundary. Over time the repairer may start absorbing more substantive content fixes ("the citation range is off by 30 lines; just fix it"). Mitigation: meta-phase periodically audits the repair section of recent METAs for scope creep; if found, tighten the repairer prompt with anti-patterns.
 
 ## 8. What this doc is for
 
