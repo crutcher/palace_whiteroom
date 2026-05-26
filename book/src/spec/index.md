@@ -9,7 +9,7 @@ This index is maintained by the Synthesizer after every push. It is the **first 
 | Slice | Highest layer | Last touched | Status notes |
 |-------|---------------|--------------|--------------|
 | [CG](./slices/cg.md) | L1 | 2026-05-26 | L0→L1 landed: coordinate-free statement of preconditioned CG with stratified state, variant-axis classification, breakdown handling deferred to L2. |
-| [GMRES](./slices/gmres.md) | L1 | 2026-05-26 | L0→L1 landed: coordinate-free statement of restarted preconditioned GMRES; preconditioning side absorbed via constructed operator B; orthogonalization variant absorbed at (a)+(b) with residual L2 axis disclosed. |
+| [GMRES](./slices/gmres.md) | L4 (v0.3) | 2026-05-26 | Self-rotation L4→L4: consolidated `should_stop_inner` and `classify_outcome` into a single classifier; inner_loop now returns `(Krylov, Outcome)` and restart_cycle reads the outcome without re-classification. |
 | [orthog](./slices/orthog.md) | L4 | 2026-05-26 | Full L0→L4 dissection landed. L4 uses Solve-monad with state stratification; variant bound as constructed-operator param; MGS sequential obstruction surfaced as typical Solve-monad shape. Refinement pass tightened L4 prose, cited solve-monad more precisely, and added an MGS-as-fold cross-reference. |
 | [divfree](./slices/divfree.md) | L4 | 2026-05-26 | L0–L4 complete; L2→L3 global tensor-field lift (rotation_claims backfilled this cycle); sequential machinery confined inside ksp_solve primitive. |
 | [chebyshev](./slices/chebyshev.md) | L1 | 2026-05-25 | L0 citations + L1 invariant/procedure for 4th-kind Chebyshev smoother (Phillips & Fischer 2022). Reduction-free two-term recurrence; degree/λ_max/D⁻¹ form all operator-internal or absorbed via apply_linop. No L1 residual axis. |

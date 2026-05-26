@@ -729,3 +729,89 @@ Citation: [palace/linalg/iterative.cpp:Orthogonalize](../../../../reference/pala
 - The orthogonalization variant has a residual L2 axis (primitive sequence differs); the L1 statement claims absorption at (a)+(b) only. Document the L2 divergence clearly when L2 lands.
 - Right-preconditioning's `x ← x + M^{-1}(V · y)` requires an extra preconditioner apply at reconstruction time; whether `B`'s `apply` semantics absorb this or it is a separate `finalize` operation is a design choice. Current form treats it as a post-step of reconstruction.
 - Whether `B` (constructed operator) is also the right abstraction for FGMRES — where the preconditioner changes per step — is a sideways question for the FGMRES slice.
+
+## L4 v0.3 — single-cycle inner-loop predicate consolidation
+
+The v0.2 form named `should_stop_inner` and `classify_outcome` as two separate predicates over `OpParams × Convergence × Krylov × int`. Read carefully, they share their entire decision basis — the three termination conditions `(conv.satisfied K.beta, K.j + 1 == op.max_dim, total_it == op.max_it)` — and differ only in how they encode the result: `should_stop_inner` collapses all three to `Bool`, `classify_outcome` distinguishes the convergence case from the budget-exhausted case from the restart case. This is a tightening of the v0.2 surface: the two helpers are two projections of one classifier, and naming them separately obscures that the inner-loop stop decision and the restart-cycle outcome decision are *the same decision*, made once per inner step.
+
+v0.3 consolidates by having `inner_loop` return `(Krylov, Outcome)` directly, where `Outcome` is computed by a single `classify_outcome` call at the inner-loop stop point. The outer `restart_cycle` reads the `Outcome` rather than re-classifying. This eliminates the redundant `s' <- get` + `classify_outcome` call in `restart_cycle` and removes the duplicate three-way condition from the surface.
+
+### Consolidated form
+
+```haskell
+-- One classifier, used at the inner-loop stop point.
+classify_outcome :: OpParams -> Convergence -> Krylov -> int -> Outcome
+classify_outcome op conv K total_it
+  | conv.satisfied K.beta       = Done True       -- LS residual proxy below ε
+  | total_it == op.max_it       = Done False      -- exhausted iteration budget
+  | K.j + 1 == op.max_dim       = Continue        -- hit max_dim per-cycle, restart
+  | otherwise                   = error "inner_loop stopped without a stop condition"
+
+-- inner_loop returns the final Krylov and the Outcome that caused the stop.
+inner_loop :: OpParams -> Convergence -> Krylov -> Solve (Krylov, Outcome)
+inner_loop op conv K = do
+  let (w, z)      = apply_BA op K.j K.V[K.j]
+      K1          = if op.flexible then K{ Z = K.Z `with` (K.j, z) } else K
+      (v_next, h) = orthogonalize op (K1.V[0..K1.j]) w
+      K2          = K1{ V = K1.V `with` (K1.j+1, v_next) }
+      K3          = ls_update_column K2 h
+  modify (\s -> s{ it = s.it + 1 })
+  s <- get
+  case classify_outcome op conv K3 s.it of
+    Continue | K3.j + 1 < op.max_dim ->            -- not yet at restart boundary
+      inner_loop op conv K3{ j = K3.j + 1 }
+    out -> pure (K3, out)
+
+-- restart_cycle reads the Outcome from inner_loop; no re-classification.
+restart_cycle :: OpParams -> Vec -> Solve Outcome
+restart_cycle op b = do
+  s <- get
+  let (r0, x') = initial_residual op b s.x
+      β        = nrm2 r0
+      conv     = build_convergence op b β s.initial_res
+  put s{ x = x', initial_res = conv.initial_residual }
+  if conv.satisfied β
+    then do modify (\s -> s{ converged = True, final_res = β }) ; pure (Done True)
+    else do
+      let K0 = fresh_krylov op β r0
+      (K, outcome) <- inner_loop op conv K0
+      let y = back_solve K
+      modify (\s -> s{ x = apply_correction op K y s.x, final_res = K.beta
+                     , converged = case outcome of { Done True -> True ; _ -> False } })
+      pure outcome
+```
+
+The `should_stop_inner` helper is deleted. The `Outcome` type carries both "the inner loop should stop" (any `Done _` or boundary-`Continue`) and "the restart cycle should/shouldn't continue" — these are the same decision viewed from two sides of the inner-loop return.
+
+### Why v0.2 was load-bearing-redundant
+
+In v0.2, both `should_stop_inner` and `classify_outcome` read the same three conditions in the same order. The only difference was:
+
+- `should_stop_inner`: `Bool` — "do I stop *now*?"
+- `classify_outcome`: `Outcome` — "if I stopped, what happens next?"
+
+But the inner loop already knew it had stopped (by virtue of returning), so the `classify_outcome` re-read in `restart_cycle` was reading the *same Krylov* and *same SimState.it* that triggered the `should_stop_inner` true-branch. The two helpers were a `Bool`-then-tag pattern that collapses cleanly to a single tag with a "don't stop yet" arm.
+
+The consolidation preserves variant absorption at L4 — the only `OpParams` reads in `classify_outcome` are `op.max_it` and `op.max_dim`, the same two fields v0.2 read across both helpers. Levels (a/b/c) per [variant-absorption](../../concepts/variant-absorption.md) are preserved: (a) the invariant is unchanged; (b) the main loop dispatches once on the budget axes (inside `classify_outcome`); (c) the primitive sequence in the inner-step body is unchanged.
+
+### v0.3 constructed-operator surface
+
+| helper                | reads                                                         | role                                                |
+|-----------------------|---------------------------------------------------------------|-----------------------------------------------------|
+| `initial_residual`    | `pc_side`, `initial_guess`                                   | residual at restart entry                            |
+| `apply_BA`            | `pc_side`, (`Mk` if flexible)                                | constructed Krylov operator                          |
+| `orthogonalize`       | `gs_orthog`                                                  | MGS/CGS/CGS2 dispatch                                |
+| `apply_correction`    | `pc_side`, `flexible`                                        | basis selection + terminal M-apply                   |
+| `build_convergence`   | `pc_side`, `initial_guess`, `rel_tol`, `abs_tol`             | ε computation + initial-residual scale               |
+| `classify_outcome`    | `max_it`, `max_dim`                                          | unified stop classifier (inner-loop AND restart)     |
+
+One fewer row than v0.2. The `should_stop_inner` / `classify_outcome` pair becomes a single classifier with three arms (`Done True`, `Done False`, `Continue`) that doubles as the inner-loop stop predicate (any non-default arm) and the restart-cycle outcome (the arm itself).
+
+### Citations
+
+- The v0.2 redundancy: this slice, §L4 v0.2 — the two helpers `should_stop_inner` and `classify_outcome` read the same three conditions in the same order, with results differing only in encoding (`Bool` vs three-arm `Outcome`).
+- The single-classifier pattern is a standard application of [variant-absorption](../../concepts/variant-absorption.md) level (b): when two dispatch surfaces share the same axis-reads, they are one surface.
+
+### Open questions (L4 v0.3-specific)
+
+- Whether the `Continue | K3.j + 1 < op.max_dim` guard in `inner_loop` should itself be folded into `classify_outcome` (returning a four-arm tag `{Done True, Done False, RestartContinue, InnerContinue}`) is a stylistic choice; the current form keeps the inner-loop / outer-loop boundary visible at the call-site. The four-arm form would push level (b) absorption one step further at the cost of a more granular tag set.
