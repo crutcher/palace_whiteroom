@@ -493,3 +493,139 @@ FGMRES is the same `gmres_solve` with `op.flexible = true`, `op.pc_side = RIGHT`
 
 - The `orthogonalize` return contract: the form above has it return `(v_next, h)` where `h` already includes the `h[j+1] = ‖w_proj‖₂` entry and `v_next` is the post-normalisation unit vector. This matches the L1 building-block contract. An alternative — returning the normaliser separately — is equivalent in content and not pursued here.
 - The `Mk : int → LinOp` field models FGMRES's per-step preconditioner abstractly; in the implementation `M` is mutated externally between calls to `apply_BA`. Whether the L4 calculus draft prefers explicit step indexing or a side-effecting `M` will need to align with the cross-slice [L4 calculus draft](../../design/l4_calculus.md) — currently the explicit-indexing form is more faithful to the mathematical FGMRES contract.
+
+## L4 v0.2 — convergence-criterion absorption tightening
+
+The L4 v0.1 form above introduced `build_convergence` as a third constructed-operator surface alongside `initial_residual`, `apply_BA`, `apply_correction`. This is a self-rotation (L4→L4): the form does not advance a layer, it tightens the v0.1 form by closing two gaps that the original prose left implicit.
+
+### Gap 1 — `derive_ir` is unspecified in v0.1
+
+The v0.1 `restart_cycle` body contains:
+
+```haskell
+put s{ x = x', initial_res = (if isUnset s.initial_res then derive_ir op b β else s.initial_res) }
+```
+
+but `derive_ir` is never defined. The intended value is precisely the `ε0` computed inside `build_convergence` — the initial-residual scale that drives the relative-tolerance test. v0.1 leaks this duplication: the same dispatch (`initial_guess`? · `pc_side == LEFT`?) is performed twice, once by `derive_ir` (to populate `SimState.initial_res`) and once by `build_convergence` (to compute `ε0`).
+
+The tightening: `build_convergence` returns both `ε` and `ε0`, and `derive_ir` is deleted. The `Convergence` value becomes the single dispatch surface for the residual policy.
+
+```haskell
+data Convergence = Convergence
+  { epsilon         :: real
+  , initial_residual :: real           -- ε0 ; written to SimState.initial_res on first cycle
+  , satisfied       :: real -> Bool
+  }
+
+build_convergence :: OpParams -> Vec -> real -> real -> Convergence
+build_convergence op b β prior_initial_res =
+  let ε0 = if isUnset prior_initial_res
+             then if op.initial_guess
+                     then (if op.pc_side == LEFT then nrm2 (op.M · b) else nrm2 b)
+                     else β
+             else prior_initial_res
+      ε  = max (op.rel_tol * ε0) op.abs_tol
+  in Convergence { epsilon = ε, initial_residual = ε0, satisfied = \β' -> β' < ε }
+```
+
+The `restart_cycle` body simplifies:
+
+```haskell
+restart_cycle op b = do
+  s <- get
+  let (r0, x') = initial_residual op b s.x
+      β        = nrm2 r0
+      conv     = build_convergence op b β s.initial_res
+  put s{ x = x', initial_res = conv.initial_residual }
+  -- ... rest unchanged
+```
+
+The `isUnset` check moves entirely into `build_convergence`; the outer code unconditionally writes `conv.initial_residual` because on subsequent cycles `build_convergence` returns the prior value unchanged. This is the v0.1 form's `derive_ir` gap closed.
+
+### Gap 2 — `restart_cycle` re-inspects `op.max_it`
+
+The v0.1 `restart_cycle` post-correction body contains:
+
+```haskell
+pure $ if conv.satisfied K.beta    then Done True
+       else if s'.it == op.max_it  then Done False
+       else                             Continue
+```
+
+The `s'.it == op.max_it` check is a second decision surface that reads `op.max_it` directly from `OpParams` — outside the constructed-operator helpers. By the variant-absorption discipline at L4 ([concept: variant-absorption](../../concepts/variant-absorption.md) levels (b) and (c)), the main `solve_loop` / `restart_cycle` / `inner_loop` should not branch on `OpParams` fields outside the named operator surfaces.
+
+The fix: extend the constructed-operator surface to include a *budget* helper that classifies the inner-loop outcome. The `inner_loop` returns the `Krylov` value; `classify_outcome` is the pure function that maps `(Krylov, SimState.it)` to an `Outcome`. It is the L4 home for the inner-loop's three-way termination decision.
+
+```haskell
+data Outcome = Continue | Done Bool
+
+classify_outcome :: OpParams -> Convergence -> Krylov -> int -> Outcome
+classify_outcome op conv K total_it
+  | conv.satisfied K.beta = Done True       -- LS residual proxy below ε
+  | total_it == op.max_it = Done False      -- exhausted iteration budget
+  | otherwise              = Continue        -- hit max_dim per-cycle, restart
+```
+
+The `restart_cycle` post-correction tail collapses to:
+
+```haskell
+  s' <- get
+  pure (classify_outcome op conv K s'.it)
+```
+
+This moves the only remaining `op.max_it` re-inspection into `classify_outcome`, where it is co-located with the convergence check and the `max_dim` check. `restart_cycle` now reads only `op.max_it`/`op.max_dim` via the helpers; it never inspects variant axes directly.
+
+Symmetrically, the `inner_loop` body's stop condition
+
+```haskell
+if conv.satisfied K3.beta || K3.j + 1 == op.max_dim || s.it == op.max_it
+```
+
+factors through a `should_stop_inner` predicate of the same shape:
+
+```haskell
+should_stop_inner :: OpParams -> Convergence -> Krylov -> int -> Bool
+should_stop_inner op conv K total_it =
+  conv.satisfied K.beta || K.j + 1 == op.max_dim || total_it == op.max_it
+```
+
+The `inner_loop` then reads:
+
+```haskell
+inner_loop op conv K = do
+  let (w, z)      = apply_BA op K.j K.V[K.j]
+      K1          = if op.flexible then K{ Z = K.Z `with` (K.j, z) } else K
+      (v_next, h) = orthogonalize op (K1.V[0..K1.j]) w
+      K2          = K1{ V = K1.V `with` (K1.j+1, v_next) }
+      K3          = ls_update_column K2 h
+  modify (\s -> s{ it = s.it + 1 })
+  s <- get
+  if should_stop_inner op conv K3 s.it
+    then pure K3
+    else inner_loop op conv K3{ j = K3.j + 1 }
+```
+
+The `op.flexible` read inside `inner_loop` remains — it gates the `Z` capture, which is the load-bearing FGMRES variant point. v0.1's design absorbed `flexible` into the `apply_BA` return (the `z` value); v0.2 retains the v0.1 capture-site convention rather than relocating it. The single `if op.flexible then ... else K` is the one acceptable variant-axis read in the main inner loop because the alternative (always allocating a `Z` slot and threading `⊥`) wastes memory in the non-flexible case.
+
+### v0.2 constructed-operator surface
+
+After the tightening, the variant-absorption invariant at L4 is realised by a closed set of operator helpers, each named once with its variant-axis dependency made explicit:
+
+| helper                | reads                                                         | role                                                |
+|-----------------------|---------------------------------------------------------------|-----------------------------------------------------|
+| `initial_residual`    | `pc_side`, `initial_guess`                                   | residual at restart entry                            |
+| `apply_BA`            | `pc_side`, (`Mk` if flexible)                                | constructed Krylov operator                          |
+| `orthogonalize`       | `gs_orthog`                                                  | MGS/CGS/CGS2 dispatch                                |
+| `apply_correction`    | `pc_side`, `flexible`                                        | basis selection + terminal M-apply                   |
+| `build_convergence`   | `pc_side`, `initial_guess`, `rel_tol`, `abs_tol`             | ε computation + initial-residual scale               |
+| `should_stop_inner`   | `max_dim`, `max_it`                                          | inner-loop termination predicate                     |
+| `classify_outcome`    | `max_it`                                                     | restart-cycle outcome classifier                     |
+
+`solve_loop`, `restart_cycle`, and `inner_loop` read `op.flexible` (one site, in `inner_loop`, for the Z-capture gate) and otherwise touch `OpParams` only by passing it to a helper. Levels (a) the unified invariant, (b) once-per-axis procedural dispatch, and (c) shape-stable primitive sequence are all preserved per [concept: variant-absorption](../../concepts/variant-absorption.md).
+
+### Citations
+
+- The `derive_ir` gap is the unspecified-function in v0.1's `restart_cycle` (this slice, §L4 above, the line `initial_res = (if isUnset s.initial_res then derive_ir op b β else s.initial_res)`).
+- The `op.max_it` re-inspection is the v0.1 `restart_cycle` line `else if s'.it == op.max_it then Done False`.
+- The constructed-operator pattern is documented at [concept: constructed-operators](../../concepts/constructed-operators.md).
+- The variant-absorption levels (a/b/c) are documented at [concept: variant-absorption](../../concepts/variant-absorption.md).

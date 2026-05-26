@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-104 — forward gmres [L4→L4] — revise](cycle-104.md)
 - [2026-05-26 meta-review (cycles 92–103) — enacted — arnoldi_step at L4 (FIRST INTERMEDIATE-TIER)](meta-19-cycles-92-103.md)
 - [2026-05-25 cycle-103 — forward arnoldi_step [L0→L0] — pass](cycle-103.md)
 - [2026-05-25 cycle-102 — forward arnoldi_step [L3→L4] — pass](cycle-102.md)
