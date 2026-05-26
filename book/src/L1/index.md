@@ -16,9 +16,9 @@ L1 vocabulary mirrors the source operations but with pure-functional binding. Sh
 
 ## Operator dep-map
 
-```
-(empty — Phase B skeleton.)
-```
+| Operator | Signature | Dependencies | Status |
+|---|---|---|---|
+| [`axpy`](./axpy.md) | `(α, x, y) → α·x + y` | (leaf) | `firm` |
 
 ## Working Notes
 
