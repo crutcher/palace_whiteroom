@@ -593,13 +593,28 @@ def call_meta_critic(
         f"```json\n{schema_text}\n```\n"
     )
 
-    response = client.messages.create(
+    # Meta-Critic max_tokens bumped from 8192 to 16384 (with streaming) at
+    # meta-25 retry — the skill_pass field added meta-19 expanded the plan
+    # envelope, and emissions started flaking on mid-stream JSON
+    # malformations (cycles 152-163 + 164-... both failed parse). Streaming
+    # avoids the SDK's 10-min wall-clock guard.
+    with client.messages.stream(
         model=cfg.models["meta_critic"],
-        max_tokens=8192,
+        max_tokens=16384,
         system=_system_block(system_prompt),
         messages=[{"role": "user", "content": user_message}],
-    )
+    ) as stream:
+        for _ in stream.text_stream:
+            pass
+        response = stream.get_final_message()
     usage.add(response.usage)
+    if response.stop_reason == "max_tokens":
+        raise ValueError(
+            "Meta-Critic response was truncated by max_tokens. The plan JSON is incomplete. "
+            "Bump max_tokens further or split the meta-review across multiple invocations. "
+            "Truncated head: "
+            + "".join(b.text for b in response.content if getattr(b, "type", "") == "text")[:400]
+        )
     final_text = "".join(
         b.text for b in response.content if getattr(b, "type", "") == "text"
     ).strip()
