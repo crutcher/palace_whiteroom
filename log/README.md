@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-169 — refinement orthog [Ln→Ln] — pass](cycle-169.md)
 - [2026-05-26 cycle-168 — refinement gmres [Ln→Ln] — revise](cycle-168.md)
 - [2026-05-26 cycle-167 — refinement chebyshev [Ln→Ln] — pass](cycle-167.md)
 - [2026-05-26 meta-review (cycles 152–166) — enacted — TWO new skill extractions](meta-24-cycles-152-166.md)

@@ -401,3 +401,64 @@ After the inner loop exits at step $k_{\text{final}}$ (either converged or hit $
 - **L2 entry: primitive composition.** The `plane_rotation_step` procedure composes `apply_linop`-style primitives over a column slice plus a 2-vector pair; it is naturally expressed as a sequence of `givens` applications + one `givens_generate`. The L2 form should pin the canonical primitives.
 - **L3 viability.** The application of stored rotations to a new column (step 1) is a sequential dependency chain — each rotation reads/writes adjacent entries top-to-bottom. This is a candidate L3 obstruction (the chain is genuinely sequential at length $k$). The generation step (step 2) is pointwise. The rotation application to $\bar{g}$ (step 4) is pointwise on a 2-vector pair. The composite step is therefore not globally tensor-liftable as one operation; the obstruction analysis belongs in the L2→L3 cycle.
 - **Cross-slice consolidation.** Some downstream Krylov variants (e.g., MINRES, LSQR) also produce a stream of plane rotations against a Hessenberg/Bidiagonal column. Once the L1 form is stable, a SIDEWAYS comparison can extract the rotation-stream pattern as a shared concept.
+
+## L1 — per-element procedure (plane-rotation stream)
+
+**Scope note.** This section dissects the **plane-rotation stream** used by GMRES/FGMRES to reduce the upper-Hessenberg matrix $\bar{H}_m$ to upper-triangular $R_m$ incrementally. It is structurally distinct from the **block Gram-Schmidt orthogonalization** dissected in the earlier sections of this slice (which produces the Hessenberg column in the first place). The two streams meet inside `GmresSolver::Mult`'s inner loop: Gram-Schmidt emits column $H[\cdot, k]$; the plane-rotation stream then reduces it. Treating both under one slice is a structural choice — both are "orthogonalization machinery in the Krylov inner loop" — but the L1 forms are independent. (Open question: split this slice into `orthog/gram_schmidt.md` and `orthog/plane_rotation.md` once both reach L4. Recorded in Open questions.)
+
+### State (plane-rotation stream)
+
+During one GMRES cycle of up to $m_{\max}$ steps, the plane-rotation stream maintains:
+
+- $c \in \mathbb{R}^{m_{\max}}$ — real cosines $c_k$, one per step (the rotation stream's own state).
+- $s \in \mathbb{C}^{m_{\max}}$ — complex sines $s_k$ (real in the real-scalar specialization; the rotation stream's own state).
+- $H \in \mathbb{C}^{(m_{\max}+1) \times m_{\max}}$ — upper-Hessenberg matrix, shared with the Arnoldi step; rotated in place column-by-column (post-rotation upper-triangular part is $R_m$).
+- $\bar{g} \in \mathbb{C}^{m_{\max}+1}$ — transformed RHS, shared with the back-solve consumer; initialized to $(\beta, 0, \ldots, 0)$ with $\beta = \|r_0\|$, rotated in place as steps complete.
+
+The pair $(c, s)$ persists across steps within one GMRES cycle; on restart it is reset.
+
+### Primitive: `plane_rotation_step(k, H[\cdot, k], c, s, \bar{g})`
+
+Given step index $k$, the freshly-produced Hessenberg column $H[0..k+1, k]$ (sub-diagonal $H[k+1, k]$ non-zero from Arnoldi), the accumulator arrays $(c, s)$ holding rotations $0..k-1$, and the running $\bar{g}$:
+
+1. **Apply prior rotations to the new column.** For $j = 0, 1, \ldots, k-1$:
+   $$(H[j, k], H[j+1, k]) \leftarrow \mathrm{ApplyPlaneRotation}(c_j, s_j, H[j, k], H[j+1, k])$$
+   This brings the leading $k$ entries of column $k$ into agreement with the upper-triangular structure accumulated in $H[0..k-1, 0..k-1]$. The loop is **strictly sequential in $j$**: the output of iteration $j$ writes $H[j+1, k]$, which is the input of iteration $j+1$.
+
+2. **Generate the new rotation.** $(c_k, s_k) \leftarrow \mathrm{GeneratePlaneRotation}(H[k, k], H[k+1, k])$ using the scaled-Givens formula. The returned pair satisfies $G(c_k, s_k) \cdot (H[k, k], H[k+1, k])^T = (r_{kk}, 0)^T$ with $r_{kk} \geq 0$.
+
+3. **Apply the new rotation to the column.** $(H[k, k], H[k+1, k]) \leftarrow \mathrm{ApplyPlaneRotation}(c_k, s_k, H[k, k], H[k+1, k])$. After this, $H[k+1, k] = 0$ up to scaled-Givens accuracy.
+
+4. **Propagate the rotation to $\bar{g}$.** $(\bar{g}[k], \bar{g}[k+1]) \leftarrow \mathrm{ApplyPlaneRotation}(c_k, s_k, \bar{g}[k], \bar{g}[k+1])$. Since $\bar{g}[k+1]$ was zero before, this sets $\bar{g}[k+1] = -\bar{s}_k \cdot \bar{g}[k]_{\text{old}}$ and updates $\bar{g}[k]$ in place.
+
+5. **Read the residual estimate.** $\|r_{k+1}\| = |\bar{g}[k+1]|$ is the current least-squares residual norm, consumed by the convergence test.
+
+### Invariant
+
+After `plane_rotation_step(k, ...)` returns: the matrix $G(c_k, s_k) \cdots G(c_0, s_0)$ applied to the original $\bar{H}_m[0..k+1, 0..k]$ equals $R[0..k+1, 0..k]$, where $R[k+1, 0..k] = 0$ (upper-triangular through column $k$), and the same product applied to the original $\bar{g}_0 = (\beta, 0, \ldots, 0)^T$ equals the current $\bar{g}[0..k+1]$. Equivalently: $\|R[0..k, 0..k] \cdot y - \bar{g}[0..k]\|^2 + |\bar{g}[k+1]|^2 = \|\bar{H}_m[0..k+1, 0..k] \cdot y - \beta e_1\|^2$ for any $y \in \mathbb{C}^{k+1}$, so minimizing the left side's first term yields the GMRES iterate and the second term gives the residual norm.
+
+### Primitive: `back_solve_R(R, \bar{g}, k_\text{final}) \to y$
+
+After the inner loop exits at step $k_{\text{final}}$, solve $R[0..k_\text{final}, 0..k_\text{final}] \cdot y = \bar{g}[0..k_\text{final}]$ by back-substitution. The result $y$ is the GMRES least-squares minimizer; the correction to $x$ is $V_{k_\text{final}} \cdot y$. This primitive is a [`trsv`](../../concepts/trsv.md) against the in-place-rotated $R$.
+
+### Variant axes (plane-rotation stream)
+
+Per `## Variant axes` above, the rotation stream has no runtime variant axis. All three axes (scalar type, generation formula, storage layout) are absorbed at L1: the L1 procedure does not branch on any of them. The scalar-type axis is parametric — real and complex specializations of `GeneratePlaneRotation` exist at L0 but share the L1 statement (the conjugation $\bar{s}$ in step 4 collapses to $s$ when the scalar is real).
+
+### Open questions
+
+- **Slice split.** Once both streams reach L4, split this slice into `orthog/gram_schmidt.md` (block-GS variants) and `orthog/plane_rotation.md` (the Givens stream + back-solve). The two streams share only the GMRES inner loop as a caller; they do not share primitives.
+- **L2 entry.** The L1 form composes [`givens`](../../concepts/givens.md) applications + one `givens_generate`; step 1's loop is naturally `givens` applied to a column slice. The L2 form should pin the canonical primitives (likely: `givens_generate`, `givens` applied to a 2-vector pair, plus a length-$k$ sequential loop of `givens` applications to the column).
+- **L3 viability.** Step 1's loop is genuinely sequential at length $k$ ([sequential-obstruction](../../concepts/sequential-obstruction.md) candidate); steps 2-4 are pointwise on a 2-vector pair. The L3 lift will likely be a partial obstruction analogous to MGS in the Gram-Schmidt stream.
+
+### Citations
+
+- [palace/linalg/gmres.cpp:GeneratePlaneRotation](../../../../reference/palace/linalg/gmres.cpp) — generation of $(c_k, s_k)$ via the scaled-Givens formula. Real and complex specializations.
+- [palace/linalg/gmres.cpp:ApplyPlaneRotation](../../../../reference/palace/linalg/gmres.cpp) — in-place application of a stored rotation to a 2-vector pair.
+- [palace/linalg/gmres.cpp:GmresSolver::Mult](../../../../reference/palace/linalg/gmres.cpp) inner loop — the integrating driver: apply prior rotations to the new column, generate, apply, propagate to $\bar{g}$.
+- [palace/linalg/gmres.cpp:GmresSolver::Mult](../../../../reference/palace/linalg/gmres.cpp) back-substitution — consumes $R_m$ and $\bar{g}_m$ to produce the least-squares minimizer $y_m$.
+- [palace/linalg/gmres.cpp:FgmresSolver::Mult](../../../../reference/palace/linalg/gmres.cpp) — same plane-rotation stream; the variation is in the Arnoldi step (storing $Z = M^{-1} V$ in addition to $V$).
+
+### Test linkage
+
+No direct unit tests for the plane-rotation stream in isolation; correctness is covered indirectly through GMRES/FGMRES convergence tests on the wider system. The scaled-Givens formula's robustness (no spurious over/underflow) is implicit in the standard GMRES tests passing on ill-conditioned matrices in the integration test suite. Recording the absence: a dedicated unit test for `GeneratePlaneRotation` / `ApplyPlaneRotation` would tighten verification but is not present in the current Palace test suite.

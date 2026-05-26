@@ -186,6 +186,7 @@ graph BT
   gmres --> nrm2
   gmres --> scal
   gmres --> apply_BA
+  plane-rotation-stream --> trsv
 ```
 
 ## L2 — algebraic decompositions
