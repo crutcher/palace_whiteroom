@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-131 — forward cg [L3→L4] — pass](cycle-131.md)
 - [2026-05-26 cycle-130 — forward polynomial_recurrence_step [L0→L1] — pass](cycle-130.md)
 - [2026-05-26 cycle-129 — forward cg [L2→L3] — pass](cycle-129.md)
 - [2026-05-26 cycle-128 — forward cg [L1→L2] — pass](cycle-128.md)
