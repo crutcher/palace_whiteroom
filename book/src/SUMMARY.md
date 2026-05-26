@@ -51,6 +51,9 @@
   - [counter-update](./concepts/counter-update.md)
   - [build-time-vs-run-time-stratification](./concepts/build-time-vs-run-time-stratification.md)
   - [first-iteration-unrolling](./concepts/first-iteration-unrolling.md)
+  - [givens_generate](./concepts/givens_generate.md)
+  - [givens_apply](./concepts/givens_apply.md)
+  - [plane-rotation-stream](./concepts/plane-rotation-stream.md)
 
 # Design Artifacts
 - [Index](./design/index.md)

@@ -78,12 +78,15 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [first-iteration-unrolling](./first-iteration-unrolling.md) | layer-pattern |
 | [gemv_basis](./gemv_basis.md) | primitive |
 | [givens](./givens.md) | primitive |
+| [givens_apply](./givens_apply.md) | primitive |
+| [givens_generate](./givens_generate.md) | primitive |
 | [gmres](./gmres.md) | algorithm |
 | [incremental-least-squares](./incremental-least-squares.md) | algorithm |
 | [ksp_solve](./ksp_solve.md) | layer-pattern |
 | [negative-result-slice](./negative-result-slice.md) | methodology |
 | [nrm2](./nrm2.md) | primitive |
 | [orthogonalization](./orthogonalization.md) | algorithm |
+| [plane-rotation-stream](./plane-rotation-stream.md) | layer-pattern |
 | [rotation](./rotation.md) | methodology |
 | [scal](./scal.md) | primitive |
 | [sequential-obstruction](./sequential-obstruction.md) | layer-pattern |

@@ -175,6 +175,9 @@ graph BT
   divfree --> constructed-operators
   divfree --> variant-absorption
   divfree --> state-stratification
+  plane-rotation-stream --> givens_generate
+  plane-rotation-stream --> givens_apply
+  orthog --> plane-rotation-stream
 ```
 
 ## L2 — algebraic decompositions
