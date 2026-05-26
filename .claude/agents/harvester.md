@@ -18,6 +18,10 @@ You formalize **one operator at one layer** per invocation. You take a roughed-i
 
 ## Output: REPORT.md
 
+**Structural note**: each L_n layer is its own **Part** in `book/src/SUMMARY.md`. Each operator is a **chapter** under that Part. So formalizing an operator means: (a) create/edit `book/src/L<n>/<slug>.md`, (b) update the dep-map in `book/src/L<n>/index.md`, (c) add a chapter entry to `book/src/SUMMARY.md` under the L_n Part.
+
+The integrator applies (c) — you propose all three edits and the integrator wires the SUMMARY.
+
 ```markdown
 ---
 agent: harvester
@@ -41,6 +45,10 @@ inputs:
 
 ```edit:book/src/L<n>/index.md
 [update dep-map entry: rough-in → firm; or add new entry]
+```
+
+```edit:book/src/SUMMARY.md
+[add chapter entry under L<n> Part: `- [<slug>](./L<n>/<slug>.md)`]
 ```
 
 ## Operator content

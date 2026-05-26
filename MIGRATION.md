@@ -29,20 +29,25 @@ Working plan for migrating from the current loop (Python orchestrator + slice-ve
 
 ### Artifact (new structure)
 
-- **Layered L4→L0**, not slice-vertical. Nine sections:
+- **Layered L4→L0**, not slice-vertical. **Each layer and each lowering layer is its own mdBook Part** with multiple chapters. Nine Parts total:
   ```
   book/src/L4/             - L4 layer: simulation framework + utility combinators
+    index.md               (Part overview chapter — orientation, semantics, dep-map)
+    <operator>.md          (one chapter per operator)
   book/src/L4-L3/          - L4>L3 lowering, batched by themes
-  book/src/L3/             - L3 layer: global tensor-field operations
-  book/src/L3-L2/          - L3>L2 lowering, batched by themes
-  book/src/L2/             - L2 layer: algebraic decompositions
-  book/src/L2-L1/          - L2>L1 lowering, batched by themes
-  book/src/L1/             - L1 layer: mutation-lifted forms
-  book/src/L1-L0/          - L1>L0 lowering, batched by themes
+    index.md               (Part overview)
+    <theme>.md             (one chapter per theme)
+  book/src/L3/             - L3 layer
+  book/src/L3-L2/          - L3>L2 lowering
+  book/src/L2/             - L2 layer
+  book/src/L2-L1/          - L2>L1 lowering
+  book/src/L1/             - L1 layer
+  book/src/L1-L0/          - L1>L0 lowering
   book/src/L0/             - L0: cited Palace source ranges (the lowered output)
   ```
-- Each **L_n** layer: introduction + semantics + dep-map of named operators + per-operator content.
-- Each **L_{n+1}>L_n** lowering layer: introduction + lowering themes (each theme is a named pattern: "fusion of axpy+dot chains", "loop-recurrence → tensor-field op", "in-place mutation under monad threading", etc.) + the rewrite/substitution rules per theme + applicability conditions.
+- **The Part/Chapter shape is load-bearing.** A single index.md per layer accumulates context unboundedly — the Part lets per-operator and per-theme chapters carry their own context, with cross-references between chapters. As a layer's `index.md` exceeds ~200 lines, the semantics overlay and dep-map split into dedicated chapters (`semantics.md`, `dep-map.md`) under the same Part.
+- Each **L_n** layer Part: `index.md` (overview) + one chapter per operator. The layer-intro-author writes the index; harvester writes operator chapters.
+- Each **L_{n+1}>L_n** lowering layer Part: `index.md` (overview) + one chapter per theme. The layer-intro-author writes the index; abstractor writes theme chapters; lifter refactors them; lowering-verifier audits them.
 - **Roughed-in entries** at higher layers permitted as draft options before downstream use; unified/rewritten/formalized/pruned as semantics firm up.
 - L4 is a **compiler-frontend target**: high-order combinators, state monads, immutable tensors. Lowering substitutes combinators in (and they disappear from the lowered code), inlines, optimizes.
 - **No 1:1 L0↔L4 correspondence** — the relationship is the lowering relation, not point-wise rotation. Citations remain evidence (cited ranges support a lowering claim), but a single L4 combinator may produce many L0 fragments and a single L0 fragment may be the lowered residue of multiple L4 combinator applications.

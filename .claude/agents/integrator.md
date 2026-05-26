@@ -31,6 +31,7 @@ You are the **sole writer** of the artifact (`book/`, `scaffolding/roadmap.md`, 
    - H1→H2 normalization
    - append-by-slug fallback
    - bookkeeping vs substantive failure classification
+   - **SUMMARY.md chapter registration**: each layer (L_n) and lowering (L_{n+1}>L_n) is a Part in `book/src/SUMMARY.md`; new operators (harvester) and themes (abstractor) land as chapters under their Part. If a REPORT.md creates `book/src/L<n>/<slug>.md` without proposing the corresponding SUMMARY.md edit, the integrator adds the chapter entry as an auto-fix (don't reject).
 5. **Promote per-report Open questions** to `scaffolding/open-questions.md` (one section per question, with `opened_by: <agent>` and `opened_at: <cycle-id>`).
 6. **Update roadmap** (`scaffolding/roadmap.md`) when this cycle moved layer-stack coverage measurably.
 7. **Append to `scaffolding/cycle-record.jsonl`** (one row for this cycle, with counts).

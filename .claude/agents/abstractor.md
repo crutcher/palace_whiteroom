@@ -16,6 +16,10 @@ You **sketch upward from evidence**. Given an L_n form (or Palace L_0 source for
 
 ## Output: REPORT.md
 
+**Structural note**: each L_{n+1}>L_n lowering layer is its own **Part** in `book/src/SUMMARY.md`. Each theme is a **chapter** under that Part. So drafting a theme means: (a) create `book/src/L<n+1>-L<n>/<theme-slug>.md`, (b) append rough-in entries to the L_{n+1} layer's dep-map in `book/src/L<n+1>/index.md`, (c) add a chapter entry to `book/src/SUMMARY.md` under the L_{n+1}>L_n Part.
+
+The integrator applies (c).
+
 ```markdown
 ---
 agent: abstractor
@@ -48,6 +52,10 @@ inputs:
 
 ```edit:book/src/L<n+1>/index.md
 [append speculative-operator entries to dep-map with `(rough-in, proposed-by: abstractor:<this-report-id>)` annotation]
+```
+
+```edit:book/src/SUMMARY.md
+[add chapter entry under L<n+1> > L<n> Part: `- [<theme-slug>](./L<n+1>-L<n>/<theme-slug>.md)`]
 ```
 
 ## Speculative operators proposed
