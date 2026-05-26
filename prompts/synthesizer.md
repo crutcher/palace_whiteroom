@@ -466,6 +466,27 @@ A diff containing only `lessons` + `rotation_claims` +
 Critic check #14 (rotation_claims_require_surface) will revise. Cycle
 115 is the canonical counter-example.
 
+**Concept slug naming convention** (added meta-23 LOW after cycles 123
+and 133 emitted the same concept under different slugs —
+`solver_as_operator` vs `solver-as-operator` — creating duplicate
+files and orphaned dep-map references).
+
+Concept slugs use **kebab-case** (hyphens) when the concept name has
+multiple words: `variant-absorption`, `constructed-operators`,
+`derived-view-hoisting`, `solver-as-operator`, `complex-from-real-lift`.
+
+The exceptions are **BLAS-style primitive names** with established
+underscore convention: `apply_linop`, `axpy`, `dot`, `nrm2`, `scal`,
+`givens`, `trsv`, `gemv_basis`, `ksp_solve`, `set_subvector_zero`.
+These preserve the canonical numerical-software naming.
+
+When emitting a new `concept_writes mode=create`, check
+`book/src/concepts/<slug>.md` exists with either convention before
+creating the alternate form. The orchestrator's existence-check at
+`create_concept_file` does an exact filename match, so
+`solver_as_operator` and `solver-as-operator` are distinct files —
+a duplicate-naming hazard the convention rule above prevents.
+
 **Concept-append heading-level** (added meta-21 item 1 LOW after
 cycles 106/107 both rejected on H1-vs-H2): when emitting
 `concept_writes mode=append-section`, the content MUST begin with

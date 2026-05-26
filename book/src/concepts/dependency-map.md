@@ -151,17 +151,17 @@ graph BT
   plane_rotation_stream --> givens
   cg --> state-stratification
   gmres --> state-stratification
-  cg_preconditioning_framework --> solver_as_operator
+  cg_preconditioning_framework --> solver-as-operator
   cg_preconditioning_framework --> two_operator_split
-  cg_preconditioning_framework --> complex_from_real_lift
+  cg_preconditioning_framework --> complex-from-real-lift
   cg_preconditioning_framework --> constructed-operators
   cg_preconditioning_framework --> variant-absorption
   cg_preconditioning_framework --> apply_linop
-  solver_as_operator --> apply_linop
+  solver-as-operator --> apply_linop
   two_operator_split --> constructed-operators
-  two_operator_split --> solver_as_operator
-  complex_from_real_lift --> solver_as_operator
-  complex_from_real_lift --> variant-absorption
+  two_operator_split --> solver-as-operator
+  complex-from-real-lift --> solver-as-operator
+  complex-from-real-lift --> variant-absorption
   polynomial_recurrence_step --> negative-result-slice
   polynomial_recurrence_step --> elementwise-product
   polynomial_recurrence_step --> givens

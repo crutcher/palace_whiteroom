@@ -193,7 +193,7 @@ apply_preconditioner(solver, r, z):
     // Called inside the Krylov iteration whenever it needs B*r. Funnelled through a single site.
     z ← apply_linop(solver.pc, r)
     // For complex OperType + non-multigrid pc, this expands to:
-    //   complex_from_real_lift(pc.inner_real_solver, r.Re → z.Re,
+    //   complex-from-real-lift(pc.inner_real_solver, r.Re → z.Re,
     //                                                r.Im → z.Im (with sign flip on Im))
     // For multigrid pc, this expands to the V-cycle body.
     // The caller sees only `z ← apply_linop(pc, r)`.

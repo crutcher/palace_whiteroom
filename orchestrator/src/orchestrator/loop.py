@@ -933,12 +933,19 @@ async def run_normal_cycle(
             bookkeeping_only_failure = result["bookkeeping_only_failure"]
             substantive_landed = result["substantive_landed"]
 
-    # Refinement / self-rotation surface-or-evidence enforcement (meta-22
-    # item 1; meta-21 item 4 producer-side rule failed twice — promote to
-    # integrator). When push_kind=refinement OR any rotation_claim emits
-    # a self-edge (L_n→L_n) AND no surface edit lands on the slice AND
-    # log_synthesis doesn't carry retroactive_claim_evidence, downgrade
-    # to revise with explicit push-back.
+    # Refinement / self-rotation / forward-edge surface-or-evidence
+    # enforcement (meta-22 item 1, extended meta-23 item 1).
+    #
+    # Two gates:
+    # (a) Refinement OR self-edge: as before — if push_kind=refinement
+    #     OR rotation_claim has self-edge (L_n→L_n / Ln→Ln) AND no
+    #     surface edit AND no retroactive_claim_evidence → fail.
+    # (b) Forward edge L_n→L_{n+1} (added meta-23): for each
+    #     rotation_claim with a cross-layer forward edge, verify either
+    #     the slice file has `## L<n+1>` section content landing in
+    #     this plan OR a prior on-disk `## L<n+1>` section exists OR
+    #     retroactive_claim_evidence is present. Closes the cycle-136
+    #     divfree L3→L4 forward-claims-without-surface recurrence.
     refinement_surface_check_failed = False
     if (push.get("kind") == "refinement") or any(
         (isinstance(c, dict) and c.get("edge", "").endswith(c.get("edge", "").split("→")[0] + "→" + c.get("edge", "").split("→")[0].split("→")[-1] if "→" in c.get("edge", "") else ""))
@@ -982,6 +989,57 @@ async def run_normal_cycle(
                     f"block (meta-22 item 1 integrator enforcement)."
                 )
 
+    # Meta-23 item 1: extend to forward L_n→L_{n+1} edges. For each
+    # forward-edge rotation_claim, if the L_{n+1} section doesn't land
+    # in this plan AND doesn't exist on disk AND no retroactive_claim_evidence
+    # covers the claim → fail.
+    forward_surface_check_failed = False
+    if push.get("kind") in ("forward", "back") and plan.get("rotation_claims"):
+        import re as _re2
+        target_slice_2 = push.get("slice", "")
+        slice_path = state.repo_root / "book/src/spec/slices" / f"{target_slice_2}.md"
+        existing_text = slice_path.read_text() if slice_path.exists() else ""
+        # Gather L_{n+1} sections being added by THIS plan
+        sections_added = set()
+        for sw in (plan.get("slice_writes") or []):
+            if isinstance(sw, dict) and target_slice_2 in sw.get("path", ""):
+                for line in (sw.get("content", "") or "").splitlines():
+                    m = _re2.match(r"^##\s+L([0-9])\b", line)
+                    if m:
+                        sections_added.add(f"L{m.group(1)}")
+        for sa in (plan.get("section_appends") or []):
+            if isinstance(sa, dict) and target_slice_2 in sa.get("path", ""):
+                m = _re2.match(r"^##\s+L([0-9])\b", sa.get("heading", "").lstrip())
+                if m:
+                    sections_added.add(f"L{m.group(1)}")
+        # Check existing sections on disk
+        sections_existing = set(_re2.findall(r"^##\s+(L[0-9])\b", existing_text, _re2.MULTILINE))
+        log_syn = plan.get("log_synthesis")
+        evidence_indices = set()
+        if isinstance(log_syn, dict):
+            for ev in (log_syn.get("retroactive_claim_evidence") or []):
+                if isinstance(ev, dict) and "claim_index" in ev:
+                    evidence_indices.add(ev["claim_index"])
+        for idx, claim in enumerate(plan.get("rotation_claims") or []):
+            if not isinstance(claim, dict):
+                continue
+            edge = claim.get("edge", "")
+            m = _re2.match(r"^L([0-9])→L([0-9])$", edge)
+            if not m or m.group(1) == m.group(2):
+                continue  # only forward cross-layer edges (skip self-edges, handled above)
+            target_layer = f"L{m.group(2)}"
+            if target_layer in sections_added or target_layer in sections_existing:
+                continue  # surface exists
+            if idx in evidence_indices:
+                continue  # retroactive evidence covers it
+            forward_surface_check_failed = True
+            push_back_signals.append(
+                f"forward_claims_require_surface_or_evidence: rotation_claims[{idx}] "
+                f"edge={edge!r} on slice {target_slice_2!r} has no {target_layer} section "
+                f"(added or existing) and no retroactive_claim_evidence[{idx}] (meta-23 item 1)."
+            )
+            break  # one signal is enough; don't spam
+
     # Verdict-downgrade rule (meta-5 + refined meta-9 item 2):
     # - pass + apply_failed + bookkeeping-only failure → hold pass, set
     #   bookkeeping_incomplete flag (content landed; the index/TOC write
@@ -993,8 +1051,8 @@ async def run_normal_cycle(
     verdict["verdict_original"] = verdict.get("verdict")
     verdict["downgrade_applied"] = False
     verdict["bookkeeping_incomplete"] = False
-    # Apply refinement-surface failure to apply_failed for downgrade purposes.
-    if refinement_surface_check_failed:
+    # Apply surface-check failures to apply_failed for downgrade purposes.
+    if refinement_surface_check_failed or forward_surface_check_failed:
         apply_failed = True
 
     if verdict["verdict"] == "pass" and apply_failed:

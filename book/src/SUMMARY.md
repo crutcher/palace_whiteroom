@@ -1,13 +1,9 @@
 # Summary
 
 [Introduction](./introduction.md)
-
 # Methodology
-
 - [Overview](./methodology/overview.md)
-
 # Specification
-
 - [Index — Slice Status](./spec/index.md)
   - [CG — Preconditioned Conjugate Gradient](./spec/slices/cg.md)
   - [GMRES](./spec/slices/gmres.md)
@@ -19,9 +15,7 @@
   - [Sparse triangular solve (negative result)](./spec/slices/sparse_triangular_solve.md)
   - [CG Preconditioning Framework](./spec/slices/cg_preconditioning_framework.md)
   - [Polynomial recurrence step](./spec/slices/polynomial_recurrence_step.md)
-
 # Concepts (shared library)
-
 - [Index](./concepts/index.md)
   - [Dependency map](./concepts/dependency-map.md)
   - [rotation — methodology concept](./concepts/rotation.md)
@@ -48,23 +42,17 @@
   - [chebyshev-iteration](./concepts/chebyshev-iteration.md)
   - [elementwise-product](./concepts/elementwise-product.md)
   - [derived-view-hoisting](./concepts/derived-view-hoisting.md)
-  - [solver_as_operator](./concepts/solver_as_operator.md)
-  - [two_operator_split](./concepts/two_operator_split.md)
-  - [complex_from_real_lift](./concepts/complex_from_real_lift.md)
-  - [negative-result-slice](./concepts/negative-result-slice.md)
   - [solver-as-operator](./concepts/solver-as-operator.md)
-  - [constructed-operator-factory](./concepts/constructed-operator-factory.md)
+  - [two_operator_split](./concepts/two_operator_split.md)
   - [complex-from-real-lift](./concepts/complex-from-real-lift.md)
+  - [negative-result-slice](./concepts/negative-result-slice.md)
+  - [constructed-operator-factory](./concepts/constructed-operator-factory.md)
   - [finest-level-unwrap](./concepts/finest-level-unwrap.md)
   - [counter-update](./concepts/counter-update.md)
-
 # Design Artifacts
-
 - [Index](./design/index.md)
 - [L4 — Graph-Evaluation Calculus (strawman)](./design/l4_calculus.md)
-
 # Meta-Reviews
-
 - [Index](./meta-reviews/index.md)
   - [2026-05-24 — first meta-review (cycles 1–3)](./meta-reviews/2026-05-24.md)
   - [2026-05-24 — second meta-review (cycles 4–6)](./meta-reviews/2026-05-24-cycles-4-6.md)

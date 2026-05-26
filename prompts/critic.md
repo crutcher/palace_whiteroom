@@ -144,8 +144,13 @@ verdict assembly and cross-cycle lesson extraction):
        describing the LinOp-instance variant. Examples that should NOT:
        pure citation-tightening cycles, slice creates that don't
        mention variant axes.
-     - `verify-citation-range`: the cycle emits or modifies any L0
-       citation `<path>:<lo>-<hi>`.
+     - `verify-citation-range`: fires when the cycle emits or
+       modifies ANY L0 citation `<path>:<lo>-<hi>` — including
+       NEW L0→L1 emissions (forward push on a fresh slice), L0
+       audit/tightening cycles, and any rotation_claim referencing
+       a new line range. Broadened meta-23 after under-firing on
+       forward L0→L1 cycles (only triggered on retroactive audits
+       under the prior narrower reading).
 
      **Decision rule**: when `triggered` AND NOT `artifact_present`
      AND NOT `log_explanation_present`, decision is `missed` and the

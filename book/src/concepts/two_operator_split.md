@@ -10,7 +10,7 @@ Palace's `BaseKspSolver::SetOperators(op, pc_op)` makes this split a type-level 
 
 ## Concrete uses in Palace
 
-- **Complex K with real preconditioner.** In `SpaceOperator`, `op` is the matrix-free complex `K = a₀M + a₁C + a₂Σ_PEC`; `pc_op` is the real assembled approximation `Br + Bi`. The preconditioner runs entirely in real arithmetic via [`complex_from_real_lift`](./complex_from_real_lift.md).
+- **Complex K with real preconditioner.** In `SpaceOperator`, `op` is the matrix-free complex `K = a₀M + a₁C + a₂Σ_PEC`; `pc_op` is the real assembled approximation `Br + Bi`. The preconditioner runs entirely in real arithmetic via [`complex-from-real-lift`](./complex-from-real-lift.md).
 - **Eigensolver shift.** `ModeEigensolver` ships an `op = K − σM` (shifted) for the Krylov iteration and `pc_op = K − σ_pc M` (different shift for the preconditioner build).
 
 ## Correctness contract
@@ -29,4 +29,4 @@ The iteration's stopping test depends only on `r = b − op · x`. Convergence *
 ## See also
 
 - [`constructed-operators`](./constructed-operators.md) — the methodology pattern for absorbing variants behind a uniform operator interface.
-- [`solver_as_operator`](./solver_as_operator.md) — the type-level statement that makes the split syntactically uniform (both `op` and `pc_op` have type `OperType`, both `pc` and `op` have `Mult`).
+- [`solver-as-operator`](./solver-as-operator.md) — the type-level statement that makes the split syntactically uniform (both `op` and `pc_op` have type `OperType`, both `pc` and `op` have `Mult`).

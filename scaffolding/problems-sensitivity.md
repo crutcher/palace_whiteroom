@@ -69,3 +69,4 @@ If 3 consecutive 12-cycle windows show 0 filings at cap, the Meta-Critic should 
 | 2026-05-26 | meta-20 | 92–103 (12) | 0 | 0.000 | 4 | Below 0.5× target → +1; encourage more surfacing. |
 | 2026-05-26 | meta-21 | 104–115 (12) | 0 | 0.000 | 5 | Still below 0.5× target → +1 (now at cap). If next window is also 0, the bar may be structurally too high — surface for review. |
 | 2026-05-26 | meta-22 | 116–127 (12) | 0 | 0.000 | 5 | **At cap; 0/24 across two consecutive windows.** Calibration knob has saturated. Surfacing for human review per *Saturation* section below. |
+| 2026-05-26 | meta-23 | 128–139 (12) | 0 | 0.000 | 5 | **THIRD consecutive cap-zero window. 0/36 total.** Per Saturation decision protocol, this is the HIGH-escalation threshold — surface for human review of the problems/ definition itself. The worked examples in this file are the candidate filings; review which (if any) should have been filed under the current bar. |

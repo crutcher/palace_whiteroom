@@ -11,7 +11,7 @@ The canonical Palace site is `MfemWrapperSolver<ComplexOperator>::Mult` (`palace
 ## L2 form
 
 ```
-complex_from_real_lift(M_real: Solver<Operator>, r: ComplexVector) → z: ComplexVector:
+complex-from-real-lift(M_real: Solver<Operator>, r: ComplexVector) → z: ComplexVector:
     z.Re ← apply_linop(M_real, r.Re)
     z.Im ← apply_linop(M_real, r.Im)
     z.Im ← scal(-1, z.Im)                  // conjugate-aware sign flip

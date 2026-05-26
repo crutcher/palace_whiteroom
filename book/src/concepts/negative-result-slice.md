@@ -13,7 +13,7 @@ Negative results are load-bearing for the dissection methodology:
 ## Distinction from sister patterns
 
 - [`sequential-obstruction`](./sequential-obstruction.md) — applies when the L2→L3 lift fails because the algorithm is genuinely sequential (Gauss-Seidel, triangular solve). The slice still has an L1/L2 form; only L3 is the obstruction. A negative-result slice is more radical: the *scope question itself* is answered with non-existence at the top level.
-- [`obstruction-claim`](./obstruction-claim.md) — a per-edge obstruction within an otherwise-rotated slice. The negative-result slice is a *whole-slice* version: every layer above L0 is structured around the non-existence.
+- [`obstruction-claim`](./sequential-obstruction.md) — a per-edge obstruction within an otherwise-rotated slice. The negative-result slice is a *whole-slice* version: every layer above L0 is structured around the non-existence.
 
 ## L1 form: distinction catalog
 

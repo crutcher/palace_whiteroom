@@ -133,6 +133,22 @@ inner_update := cg_step(state, A) | cgne_step(state, A) | minres_step(state, A)
 
 Where `cg_step` performs the three-line update above, `cgne_step` performs the normal-equation variant, and `minres_step` performs the symmetric-indefinite Lanczos-three-term recurrence. Now the L2 primitive `inner_update` admits genuine algorithmic substitution at a coarser grain — the L1 contract "advance the iterate, decrease the residual" is satisfied by multiple distinct algorithms.
 
+### Framework-tier slices and role-parametrized factories (added meta-23 after cycle 133 cg_preconditioning_framework L1→L2)
+
+The algorithmic-substitution test above is designed for axis-value variants — `MGS` vs `CGS` are two values of one `gs_orthog` parameter, and the test asks whether a third value (a different algorithm) could occupy the same primitive slot.
+
+**Framework-tier slices** (operator/preconditioner contracts consumed by algorithm slices) sometimes propose role-parametrized factory primitives like:
+
+```
+constructed_operator_factory(role: 'krylov' | 'preconditioner', op_a: LinOp, op_m: LinOp) → LinOp
+```
+
+This **fails the substitution test even though it looks parametric**: the two role values aren't two values of one algorithm — they're two distinct callable surfaces (a Krylov-step constructor vs. a preconditioner constructor) collapsed into one primitive whose body is `if role == 'krylov' ...`. A reader cannot replace `constructed_operator_factory` with a different algorithm: there is no algorithm at this primitive level. It's a renaming wrapper.
+
+**The fix**: split the factory by role into two named primitives (`make_krylov_constructed_operator`, `make_preconditioner_constructed_operator`), each of which admits genuine substitution at its own level. The L1 form references the appropriate primitive directly; the role-parameter is gone, replaced by a callable choice at construction time.
+
+The general rule: **when a "variant" is two materially-different callable surfaces (different signatures, different bodies, different effects), it's not a variant — it's two primitives**. The parametric collapse fails the substitution test because it hides what the reader needs to see.
+
 ### The carry-through escape hatch
 
 Renaming-shaped claims pass the gate when the cycle ALSO rotates other parts of the slice — state hiding on the outer loop, coarser substitution on a different primitive, threaded-state compression on the overall state bundle. Explicitly mark renaming claims as carry-through with criterion-(1)/(2)/(3) at the slice level; the gate fires only when NO claim in the cycle achieves an actual rotation.
