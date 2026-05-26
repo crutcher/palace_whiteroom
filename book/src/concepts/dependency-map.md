@@ -200,6 +200,8 @@ graph BT
   cg --> axpy
   cg --> axpby
   cg --> dot
+  divfree --> constructed-operators
+  divfree --> variant-absorption
 ```
 
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.
