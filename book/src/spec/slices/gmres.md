@@ -815,3 +815,90 @@ One fewer row than v0.2. The `should_stop_inner` / `classify_outcome` pair becom
 ### Open questions (L4 v0.3-specific)
 
 - Whether the `Continue | K3.j + 1 < op.max_dim` guard in `inner_loop` should itself be folded into `classify_outcome` (returning a four-arm tag `{Done True, Done False, RestartContinue, InnerContinue}`) is a stylistic choice; the current form keeps the inner-loop / outer-loop boundary visible at the call-site. The four-arm form would push level (b) absorption one step further at the cost of a more granular tag set.
+
+## L4 v0.4 — restart-pivot extraction (single residual-policy locus)
+
+The v0.3 form consolidated `should_stop_inner` and `classify_outcome` into one classifier; the constructed-operator surface narrowed from seven helpers to six. This v0.4 tightening (also L4→L4, no layer advancement) closes one residual asymmetry the v0.3 surface still carries: **the convergence test fires at two structurally-distinct sites** — once on the freshly-computed initial residual `β` inside `restart_cycle` (the pre-loop short-circuit), and once on the LS proxy `K.beta` inside `classify_outcome` (the inner-loop / restart classification). v0.3 splits the residual policy across these two sites: the pre-loop site reads `conv.satisfied β` and writes `(converged = True, final_res = β)`; the post-correction site reads the inner-loop's returned `Outcome` and writes `(converged = (outcome == Done True), final_res = K.beta)`. The classifier is unified but the *application* of the classifier is not — `restart_cycle` still contains two separate SimState-write paths gated on the same `Convergence` value.
+
+v0.4 extracts the SimState write into a single `commit_outcome` helper that takes the final residual proxy and the `Outcome`, leaving `restart_cycle` with one residual-policy decision-and-commit point per cycle iteration. The pre-loop short-circuit becomes `classify_outcome` called against a degenerate `Krylov` (where `K.beta = β` and `K.j = -1` so the `max_dim` arm cannot fire).
+
+### Degenerate-Krylov classifier call
+
+```haskell
+-- A pre-Krylov classifier call: K.beta = β (the entry residual), K.j = -1
+-- (so the K.j + 1 == max_dim arm cannot fire on a never-built basis).
+classify_entry :: OpParams -> Convergence -> real -> int -> Outcome
+classify_entry op conv β total_it
+  | conv.satisfied β       = Done True
+  | total_it == op.max_it  = Done False
+  | otherwise              = Continue
+```
+
+This is the same three-arm shape as `classify_outcome` with the `max_dim` arm structurally absent — and `classify_entry` is in fact `classify_outcome` evaluated at the pre-cycle position. We name it separately only because the input shape differs (a scalar β rather than a `Krylov`); the body is one arm shorter.
+
+### `commit_outcome` — the single SimState-write site
+
+```haskell
+commit_outcome :: real -> Outcome -> Solve ()
+commit_outcome final_β outcome = modify $ \s -> s
+  { final_res = final_β
+  , converged = case outcome of { Done True -> True ; _ -> False }
+  }
+```
+
+`commit_outcome` is the only place in the L4 form that writes `converged` and `final_res`. Both the pre-loop short-circuit and the post-correction commit route through it.
+
+### v0.4 `restart_cycle`
+
+```haskell
+restart_cycle :: OpParams -> Vec -> Solve Outcome
+restart_cycle op b = do
+  s <- get
+  let (r0, x') = initial_residual op b s.x
+      β        = nrm2 r0
+      conv     = build_convergence op b β s.initial_res
+  put s{ x = x', initial_res = conv.initial_residual }
+  s0 <- get
+  case classify_entry op conv β s0.it of
+    Done flag -> do commit_outcome β (Done flag) ; pure (Done flag)
+    Continue  -> do
+      let K0 = fresh_krylov op β r0
+      (K, outcome) <- inner_loop op conv K0
+      let y = back_solve K
+      modify (\s -> s{ x = apply_correction op K y s.x })
+      commit_outcome K.beta outcome
+      pure outcome
+```
+
+The two SimState-write paths fuse: the only writes to `converged` / `final_res` happen via `commit_outcome`. The iterate update `x = apply_correction ...` is a separate concern (iterate evolution, not residual policy) and stays in `restart_cycle`.
+
+### v0.4 constructed-operator surface
+
+| helper                | reads                                                         | role                                                |
+|-----------------------|---------------------------------------------------------------|-----------------------------------------------------|
+| `initial_residual`    | `pc_side`, `initial_guess`                                   | residual at restart entry                            |
+| `apply_BA`            | `pc_side`, (`Mk` if flexible)                                | constructed Krylov operator                          |
+| `orthogonalize`       | `gs_orthog`                                                  | MGS/CGS/CGS2 dispatch                                |
+| `apply_correction`    | `pc_side`, `flexible`                                        | basis selection + terminal M-apply                   |
+| `build_convergence`   | `pc_side`, `initial_guess`, `rel_tol`, `abs_tol`             | ε + initial-residual scale                           |
+| `classify_outcome`    | `max_it`, `max_dim`                                          | inner / post-correction stop classifier              |
+| `classify_entry`      | `max_it`                                                     | pre-Krylov entry classifier (degenerate variant)     |
+| `commit_outcome`      | —                                                            | single SimState write site for `converged`/`final_res` |
+
+The surface grew by two rows but each row reads strictly *fewer* `OpParams` fields than v0.3's `classify_outcome` did across its two use-sites. `commit_outcome` reads no `OpParams` at all — it is a pure SimState writer, the most absorbed possible form.
+
+### Why v0.3 was tight-but-not-tightest
+
+v0.3's `classify_outcome` *value* was used uniformly, but v0.3's `restart_cycle` body still contained two separate `modify` blocks writing the same two SimState fields with the same `Convergence`-derived semantics — one inside the pre-loop short-circuit `if conv.satisfied β then ...`, one in the post-correction tail. From the [variant-absorption](../../concepts/variant-absorption.md) perspective, the residual-policy axis was absorbed at the *decision* layer (one classifier) but not at the *commit* layer (two write sites). v0.4 closes the commit-layer gap.
+
+This is also a [derived-view-hoisting](../../concepts/derived-view-hoisting.md) move at the SimState level: `(converged, final_res)` is a derived view of `(outcome, final_β)`, and v0.3 computed that view twice in two locations. v0.4 hoists the view-computation into `commit_outcome`, called from two sites with the same arguments. The two call-sites remain (they observe distinct residuals — entry-β vs. K.beta) but the policy is centralized.
+
+### Citations
+
+- The v0.3 dual-write redundancy: this slice, §L4 v0.3 — the `if conv.satisfied β then ... pure (Done True)` block and the subsequent `modify (\s -> s{ ..., converged = case outcome of { Done True -> True ; _ -> False } })` both write `converged` and `final_res` from `Convergence`-derived semantics.
+- The degenerate-classifier pattern (one helper with an arm structurally absent at one call-site) is a standard application of [variant-absorption](../../concepts/variant-absorption.md) where the unifying invariant covers both call positions but the input shape differs.
+- The single-commit-site pattern is a [derived-view-hoisting](../../concepts/derived-view-hoisting.md) application at the monadic-write layer: the derived fields `(converged, final_res)` collapse to one write site.
+
+### Open questions (L4 v0.4-specific)
+
+- Whether `classify_entry` and `classify_outcome` should be unified into a single function taking a sum-typed argument (`PreKrylov real | PostKrylov Krylov`) is a stylistic question; the current split keeps the call-site shape obvious. The cost of the split is the duplicated `max_it`-arm; the cost of the union would be a more granular tag type. The split form is preferred for now because the `K.j = -1` sentinel in a unified form is uglier than the explicit two-function form.
