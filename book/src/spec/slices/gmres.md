@@ -902,3 +902,109 @@ This is also a [derived-view-hoisting](../../concepts/derived-view-hoisting.md) 
 ### Open questions (L4 v0.4-specific)
 
 - Whether `classify_entry` and `classify_outcome` should be unified into a single function taking a sum-typed argument (`PreKrylov real | PostKrylov Krylov`) is a stylistic question; the current split keeps the call-site shape obvious. The cost of the split is the duplicated `max_it`-arm; the cost of the union would be a more granular tag type. The split form is preferred for now because the `K.j = -1` sentinel in a unified form is uglier than the explicit two-function form.
+
+## L4 v0.5 — unified classifier with positional sum
+
+The v0.4 form extracted `commit_outcome` as the single SimState-write site for residual policy and introduced `classify_entry` as a degenerate variant of `classify_outcome` (the `max_dim` arm structurally absent). The v0.4 open question asked whether the two classifiers should be unified into one function taking a sum-typed argument (`PreKrylov real | PostKrylov Krylov`). v0.5 resolves that question affirmatively: the two classifiers share the same `(max_it, max_dim, conv)` decision basis and differ only in *which residual is read* and *whether `K.j + 1 == max_dim` is even askable*. A single classifier dispatching on the call-position tag closes the last residual asymmetry on the residual-policy axis.
+
+This is again an L4→L4 self-rotation (no layer advancement). The motivation is twofold: (i) the [variant-absorption](../../concepts/variant-absorption.md) level (b) discipline ("the procedure dispatches once per axis") is currently satisfied per-call-site but not globally — `restart_cycle` calls two structurally-distinct classifiers; (ii) the [derived-view-hoisting](../../concepts/derived-view-hoisting.md) move v0.4 made at the *commit* layer has a symmetric move available at the *classify* layer.
+
+### Unified classifier
+
+```haskell
+-- The position of the classifier call within a restart cycle.
+-- PreKrylov carries the entry residual β; the max_dim arm is unreachable
+-- because no basis exists. PostKrylov carries the post-inner-loop Krylov;
+-- all three arms are reachable.
+data Position = PreKrylov real | PostKrylov Krylov
+
+classify :: OpParams -> Convergence -> Position -> int -> Outcome
+classify op conv pos total_it = case pos of
+  PreKrylov β ->
+    if conv.satisfied β       then Done True
+    else if total_it == op.max_it then Done False
+    else                            Continue
+  PostKrylov K ->
+    if conv.satisfied K.beta  then Done True
+    else if total_it == op.max_it then Done False
+    else if K.j + 1 == op.max_dim then Continue   -- restart
+    else                                error "PostKrylov classify on a non-stopped Krylov"
+```
+
+The `error` arm guards the invariant that `classify` at the `PostKrylov` position is only called after `inner_loop` has returned — i.e., the inner-step stop condition fired. This makes the `PostKrylov` arm total over its legitimate inputs.
+
+The `inner_loop` body retains its in-line stop check (using `classify` at `PostKrylov`) and returns `(Krylov, Outcome)` as in v0.3 / v0.4:
+
+```haskell
+inner_loop :: OpParams -> Convergence -> Krylov -> Solve (Krylov, Outcome)
+inner_loop op conv K = do
+  let (w, z)      = apply_BA op K.j K.V[K.j]
+      K1          = if op.flexible then K{ Z = K.Z `with` (K.j, z) } else K
+      (v_next, h) = orthogonalize op (K1.V[0..K1.j]) w
+      K2          = K1{ V = K1.V `with` (K1.j+1, v_next) }
+      K3          = ls_update_column K2 h
+  modify (\s -> s{ it = s.it + 1 })
+  s <- get
+  case classify op conv (PostKrylov K3) s.it of
+    Continue | K3.j + 1 < op.max_dim ->
+      inner_loop op conv K3{ j = K3.j + 1 }
+    out -> pure (K3, out)
+```
+
+### v0.5 `restart_cycle`
+
+```haskell
+restart_cycle :: OpParams -> Vec -> Solve Outcome
+restart_cycle op b = do
+  s <- get
+  let (r0, x') = initial_residual op b s.x
+      β        = nrm2 r0
+      conv     = build_convergence op b β s.initial_res
+  put s{ x = x', initial_res = conv.initial_residual }
+  s0 <- get
+  case classify op conv (PreKrylov β) s0.it of
+    Done flag -> do commit_outcome β (Done flag) ; pure (Done flag)
+    Continue  -> do
+      let K0 = fresh_krylov op β r0
+      (K, outcome) <- inner_loop op conv K0
+      let y = back_solve K
+      modify (\s -> s{ x = apply_correction op K y s.x })
+      commit_outcome K.beta outcome
+      pure outcome
+```
+
+The `classify_entry` / `classify_outcome` pair is deleted; both call-sites route through `classify` with a `Position`-tagged argument.
+
+### v0.5 constructed-operator surface
+
+| helper                | reads                                                         | role                                                |
+|-----------------------|---------------------------------------------------------------|-----------------------------------------------------|
+| `initial_residual`    | `pc_side`, `initial_guess`                                   | residual at restart entry                            |
+| `apply_BA`            | `pc_side`, (`Mk` if flexible)                                | constructed Krylov operator                          |
+| `orthogonalize`       | `gs_orthog`                                                  | MGS/CGS/CGS2 dispatch                                |
+| `apply_correction`    | `pc_side`, `flexible`                                        | basis selection + terminal M-apply                   |
+| `build_convergence`   | `pc_side`, `initial_guess`, `rel_tol`, `abs_tol`             | ε + initial-residual scale                           |
+| `classify`            | `max_it`, `max_dim` (PostKrylov only)                        | unified stop classifier (entry AND post-correction)  |
+| `commit_outcome`      | —                                                            | single SimState write site for `converged`/`final_res` |
+
+One fewer row than v0.4. The decision-basis-read for the residual policy is concentrated in exactly two helpers — `build_convergence` for the ε / initial-residual computation, `classify` for the stop / restart / continue decision — and the write is concentrated in `commit_outcome`. The remaining `OpParams` reads in the main loop body are `op.flexible` (once, in `inner_loop`, gating the `Z` capture) and the helpers themselves.
+
+### Why the union form is the tightest viable
+
+v0.4's split (two classifiers) preserved the call-site shape obviously: each call site read the residual it had naturally available (β at entry, K.beta post-correction). The cost was a duplicated `max_it` arm and the unstated invariant that `classify_entry`'s `max_dim` arm could not be relevant. v0.5 makes the call-position tag explicit (`PreKrylov` / `PostKrylov`), and pays back two things:
+
+1. **Single dispatch surface.** The [variant-absorption](../../concepts/variant-absorption.md) level (b) requirement — "the procedure mentions the variant parameter at most once" — is now met for the *stop-decision axis* globally, not just per-call-site. There is one function name to read when asking "what makes the solve stop?".
+2. **Total over legitimate inputs.** The `PostKrylov`-with-no-stop-condition path is an explicit `error`, surfacing the invariant that `classify` at that position is only called after `inner_loop` returns. v0.4 left this invariant implicit (it was a property of `restart_cycle`'s control flow, not of any helper's signature).
+
+The stylistic cost is one new tag type (`Position`) and a four-arm case (counting the `error`). Compared to v0.4's two function names with duplicated arms, the tag-and-case form is the more compact and verifiable surface.
+
+### Citations
+
+- The v0.4 open question: this slice, §L4 v0.4 *Open questions* — "Whether `classify_entry` and `classify_outcome` should be unified into a single function taking a sum-typed argument (`PreKrylov real | PostKrylov Krylov`) is a stylistic question; ... the explicit two-function form ... is preferred for now because the `K.j = -1` sentinel in a unified form is uglier than the explicit two-function form."
+- The resolution: a `Position` sum type replaces the sentinel — there is no `K.j = -1` ugliness because `PreKrylov` does not carry a `Krylov` at all. This was the load-bearing aesthetic objection in v0.4 and v0.5 closes it cleanly.
+- The unified-classifier pattern is [variant-absorption](../../concepts/variant-absorption.md) level (b) applied globally across call sites, and [derived-view-hoisting](../../concepts/derived-view-hoisting.md) applied at the classify layer (symmetric with v0.4's commit-layer hoist).
+
+### Open questions (L4 v0.5-specific)
+
+- The `error "PostKrylov classify on a non-stopped Krylov"` arm encodes an invariant that could alternatively be expressed by refining the `PostKrylov` constructor to carry a witness of the stop condition (e.g., `PostKrylov Krylov StoppedAt` where `StoppedAt ∈ {Conv, MaxIt, MaxDim}`). The witness form would push the dispatch into the `inner_loop` body (where the stop condition is determined) and reduce `classify`'s `PostKrylov` arm to a pure pattern-match on the witness. This is a further [derived-view-hoisting](../../concepts/derived-view-hoisting.md) move — the witness is a derived view of the (Krylov, total_it, conv) state at the stop point — and could be pursued in a v0.6 tightening if a downstream slice motivates it. Not pursued here because the current form's `error` arm is informative enough.
+- Whether the `op.flexible` read inside `inner_loop` (the one remaining variant-axis read in the main loop body) admits a similar consolidation — e.g., by always allocating a `Z` slot in `Krylov` and threading `⊥` in the non-flexible case, then moving the `op.flexible` read into `apply_BA` itself — is a separate question on a different axis. The current form preserves the v0.1 convention of capture-at-call-site for performance reasons (no `Z` allocation when not needed); a memory-vs-uniformity tradeoff that belongs to a memory-layout slice.
