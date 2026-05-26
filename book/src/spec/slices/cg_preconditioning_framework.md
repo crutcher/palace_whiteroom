@@ -289,3 +289,123 @@ The L2 form named six primitives, three build-time and three run-time. The L3 fo
 1. **Stratifying build-time from run-time**: the L3 form makes explicit that only `apply_linop` and its expansions (including `complex-from-real-lift`) are tensor-field operations; `constructed-operator-factory`, `bind_preconditioner`, `finest-level-unwrap` are build-time scaffolding that doesn't participate in the lift.
 2. **Recording the no-obstruction result**: the framework slice has no `sequential-obstruction` claim because all its run-time primitives are global at L2. This is a first-class negative L3 result per the prompt's L2→L3 guidance: "Where no global form exists ... record an OBSTRUCTION claim. Negative L3 results are first-class output." Here the symmetric positive result — no obstruction — is also first-class.
 3. **Preserving variant absorption**: the four variant axes (krylov-method, pc-type, multigrid, scalar-field) remain absorbed at L3. The L3 form does not re-inspect them; whatever per-element iteration each variant unfolds to is delegated to the relevant slice's L3.
+
+## L4 — calculus form
+
+The L3 form left an important structural observation: the framework slice cleanly stratifies into **build-time composition** (`build_ksp_solver`, `set_operators`, `finest-level-unwrap`) and **run-time iteration** (`solve`, `apply_preconditioner`). This stratification is the load-bearing rotation at L4: it maps directly onto the [`solve-monad`](../../concepts/solve-monad.md)'s constructor-vs-body split, and onto the [`state-stratification`](../../concepts/state-stratification.md) discipline that separates operator internal params (built once) from sim state (advanced per iteration) from ephemeral intermediates (per-step scratch).
+
+### State stratification
+
+Following [`state-stratification`](../../concepts/state-stratification.md), the L4 form carries three disjoint state categories:
+
+```ts
+// Operator internal params — built once at construction, immutable through the solve.
+type KspParams<E> = {
+  ksp_method: "CG" | "GMRES" | "FGMRES",
+  pc_side: "LEFT" | "RIGHT",
+  gs_orthog: "MGS" | "CGS2",
+  restart_dim: number,
+  tol_rel: number,
+  tol_abs: number,
+  max_it: number,
+  initial_guess: boolean,
+};
+
+type PcParams<E> = {
+  pc_type: "AMS" | "BOOMER_AMG" | "SUPERLU" | "STRUMPACK" | "STRUMPACK_MP" | "MUMPS" | "JACOBI",
+  multigrid: boolean,             // fespaces.num_levels > 1
+  aux_smoothing: boolean,         // aux_fespaces present
+  scalar_field: "real" | "complex",
+};
+
+// The constructed operators themselves (typed handles, internal state opaque).
+type Ksp<E>    = IterativeSolver<E> & { params: KspParams<E> };
+type Pc<E>     = Solver<E>          & { params: PcParams<E> };
+
+// Sim state — the operators the solver is bound to.
+type OpBinding<E> = {
+  op:    Op<E>,        // what ksp iterates against
+  pc_op: Op<E>,        // what pc is built against (distinct by design)
+};
+
+// Bookkeeping — accumulated across calls.
+type Counters = {
+  mult:    number,     // number of Mult invocations
+  mult_it: number,     // total inner iterations
+};
+
+// The full solver bundle.
+type BaseKspSolver<E> = {
+  ksp:      Ksp<E>,
+  pc:       Pc<E>,
+  binding:  OpBinding<E> | null,   // null before set_operators
+  counters: Counters,
+};
+```
+
+Ephemeral intermediates (per-iteration residuals, search directions, Krylov bases, Givens accumulators) live inside `Ksp<E>`'s internal state and are not surfaced at this layer — they belong to the `cg`, `gmres`, `fgmres` slices' L4 forms.
+
+### Constructor phase (build-time)
+
+The build phase is **pure** in the [`solve-monad`](../../concepts/solve-monad.md) sense — no iteration state flows through it. It is a sequence of constructed-operator-factory calls and a one-shot bind:
+
+```haskell
+buildKspSolver :: LinearConfig -> FESpaceHierarchy -> Maybe AuxFESpaces -> BaseKspSolver E
+buildKspSolver cfg fes auxFes =
+  let ksp = constructedOperatorFactory KrylovRole cfg     -- absorbs ksp_method, pc_side, orthog, restart
+      pc  = constructedOperatorFactory PrecondRole cfg fes auxFes
+                                                          -- absorbs pc_type, multigrid, aux, scalar_field
+      _   = bindPreconditioner ksp pc                     -- one-shot side effect on ksp internals
+  in BaseKspSolver { ksp, pc, binding = Nothing, counters = Counters 0 0 }
+
+setOperators :: Op E -> Op E -> BaseKspSolver E -> BaseKspSolver E
+setOperators op pc_op s =
+  let pc_op' = if isMultigridOp pc_op && not (isMultigridSolver s.pc)
+                 then finestLevelUnwrap pc_op
+                 else pc_op
+      _      = s.ksp `setOpInternal` op
+      _      = s.pc  `setOpInternal` pc_op'
+  in s { binding = Just (OpBinding op pc_op) }
+```
+
+The constructor returns a fully-bound `BaseKspSolver<E>`. The two factory calls are independent; the [`variant-absorption`](../../concepts/variant-absorption.md) of all four variant axes (krylov-method, pc-type, multigrid, scalar-field) completes inside the factories and is not re-inspected downstream.
+
+### Body phase (run-time, monadic)
+
+The body phase runs inside the [`solve-monad`](../../concepts/solve-monad.md). Counter updates thread state monadically; the operator application is delegated to `ksp` whose own L4 form (in the per-method slices) carries the iteration's state:
+
+```haskell
+solve :: BaseKspSolver E -> Vec E -> Vec E -> Solve E (Vec E)
+solve s x_initial b = do
+  x_out <- applyLinop s.ksp b                  -- delegates to ksp's per-method body
+  n_it  <- getNumIterations s.ksp
+  modifyCounters $ \c -> c { mult    = c.mult    + 1
+                           , mult_it = c.mult_it + n_it }
+  return x_out
+
+applyPreconditioner :: BaseKspSolver E -> Vec E -> Solve E (Vec E)
+applyPreconditioner s r = applyLinop s.pc r
+  -- For E = Complex with non-multigrid pc, applyLinop on Pc<Complex> unfolds via
+  -- complex-from-real-lift:
+  --   applyLinop pc r = do
+  --     z_re <- applyLinop pc.inner r.re
+  --     z_im <- applyLinop pc.inner r.im
+  --     return (Complex z_re (scal (-1) z_im))
+```
+
+The `Solve E` monad threads the counter state; vector results are returned pure-functionally at this layer. The per-iteration state (residuals, Krylov bases) is hidden inside `applyLinop s.ksp b` — that call is the boundary at which the framework slice's L4 form hands off to the per-method slice's L4 form.
+
+### What L4 hides relative to L3
+
+The L3 form named the build-time vs run-time stratification as a structural observation. The L4 form rotates this by:
+
+1. **Type-level stratification.** The three state categories (`KspParams`/`PcParams` immutable, `OpBinding` set-once, `Counters` monadically threaded) are distinct types. A consumer cannot accidentally mutate operator params from inside the monadic body, nor can it skip the bind. The [`state-stratification`](../../concepts/state-stratification.md) discipline is enforced by the type system, not by convention.
+2. **Constructor/body monadic split.** `buildKspSolver` returns a pure value; `solve` runs in the `Solve E` monad. The build-time primitives (`constructedOperatorFactory`, `bindPreconditioner`, `finestLevelUnwrap`) cannot appear inside the monadic body — the type signatures forbid it. This makes the L3 observation ("build-time primitives are outside the tensor-field lift") a type-level invariant at L4.
+3. **Capability typing for the binding.** `binding: OpBinding<E> | null` captures the pre/post-`setOperators` distinction. A `solve` call on a `BaseKspSolver` with `binding = Nothing` is a type error at L4. This formalises the L0 assertion-guard (`MFEM_ASSERT(B, ...)`) as a structural precondition.
+4. **Variant absorption carries through.** The four variant axes do not appear in `BaseKspSolver<E>`'s body-phase type. They live inside `KspParams<E>` and `PcParams<E>` as immutable construction-time fields. The body phase has no branching on variant; the polymorphism is fully type-erased at L4.
+
+### Open questions
+
+- **`Solve E` monad shape.** The framework slice does not pin down the full `Solve E` monad — it threads counters and delegates inner state to `ksp`. Whether `Solve E` should be a single monad shared across all Palace iterative solvers, or a per-method family parameterised over the Krylov method, is a calculus-level question for [`solve-monad`](../../concepts/solve-monad.md).
+- **Capability typing of `pc_op` distinctness.** The `(op, pc_op)` split is currently a *convention* — nothing in the type prevents `pc_op = op`. Should L4 carry a capability marker distinguishing "true operator" from "pc-assembly operator", or is this load-free flexibility?
+- **Build-time vs run-time as a methodology concept.** The stratification observed here recurs in `gmres` (Hessenberg vs iterate), `geometric_multigrid` (level setup vs V-cycle), and almost every operator-algebra construction. A dedicated [`build-time-run-time-stratification`](../../concepts/build-time-run-time-stratification.md) concept may be worth extracting, distinct from `state-stratification` (which is run-time-only).

@@ -363,6 +363,14 @@ graph BT
   divfree --> axpy
   cg --> first-iteration-unrolling
   gmres --> derived-view-hoisting
+  cg_preconditioning_framework --> solve-monad
+  cg_preconditioning_framework --> state-stratification
+  cg_preconditioning_framework --> constructed-operators
+  cg_preconditioning_framework --> variant-absorption
+  cg_preconditioning_framework --> apply_linop
+  cg_preconditioning_framework --> solver-as-operator
+  cg_preconditioning_framework --> complex-from-real-lift
+  cg_preconditioning_framework --> finest-level-unwrap
 ```
 
 The L4 calculus has its own design artifact at [`book/src/design/l4_calculus.md`](../design/l4_calculus.md). L4 concepts (grammar productions, reduction rules, ownership categories) are not currently tracked here — the calculus is a single document with its own internal structure. If L4 grows to need cross-cycle concept tracking, add a section here at that time.
