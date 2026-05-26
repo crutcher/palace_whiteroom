@@ -165,6 +165,9 @@ graph BT
   polynomial_recurrence_step --> negative-result-slice
   polynomial_recurrence_step --> elementwise-product
   polynomial_recurrence_step --> givens
+  divfree --> set_subvector_zero
+  divfree --> constructed-operators
+  divfree --> variant-absorption
 ```
 
 ## L2 — algebraic decompositions
