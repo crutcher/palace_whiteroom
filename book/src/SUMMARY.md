@@ -16,6 +16,7 @@
   - [Chebyshev smoother](./spec/slices/chebyshev.md)
   - [Arnoldi step](./spec/slices/arnoldi_step.md)
   - [Plane rotation stream](./spec/slices/plane_rotation_stream.md)
+  - [Sparse triangular solve (negative result)](./spec/slices/sparse_triangular_solve.md)
 
 # Concepts (shared library)
 

@@ -46,3 +46,36 @@ MGS therefore has no global tensor-field form: any rewrite that touches all colu
 A *parallel-by-blocks* variant exists (block-MGS: CGS within block, MGS across blocks); this trades stability against parallelism but does not eliminate the within-vs.-across distinction. Block-MGS is itself a hybrid, not a global lift of plain MGS.
 
 See the [orthog slice](../spec/slices/orthog.md) L3 section for the detailed treatment in the GMRES-orthogonalization context.
+
+## Sub-kind: out-of-scope-obstruction
+
+A structurally distinct sub-kind of obstruction surfaced in the
+[sparse_triangular_solve slice](../spec/slices/sparse_triangular_solve.md):
+**the algorithm exists in the literature and is invoked by Palace, but
+lives entirely below the Palace boundary** (inside a third-party
+library reached through a thin wrapper). The L0→L1 rotation is
+obstructed not because the algorithm is sequential, but because Palace
+does not see its internals.
+
+Distinguishing the two:
+
+- **Sequential obstruction** (the original kind): the algorithm is
+  visible in Palace source but has a data dependency that resists
+  L2→L3 global-form lifting (Gauss-Seidel sweep, triangular solve in
+  a Palace-owned smoother). The slice rotates through L0, L1, L2 and
+  records the obstruction at the L2→L3 edge.
+- **Out-of-scope obstruction** (this sub-kind): the algorithm is named
+  by the scope question but Palace forwards into a third-party
+  implementation. The slice records L0 facts about the wrapper
+  surface, then declares L0→L1 obstructed because there is no
+  Palace-level abstract operation to lift to; the only available
+  rotation is the wrapper-absorption into
+  [apply_linop](./apply_linop.md) / [ksp_solve](./ksp_solve.md),
+  which is not specific to the named algorithm.
+
+The artifact in both cases is a slice that documents the boundary and
+points downstream work at a more accurately-named slice. The
+out-of-scope sub-kind typically yields a follow-up rename suggestion
+(in `sparse_triangular_solve`'s case: rename to
+`sparse_direct_solver_wrapper`) rather than a layer-by-layer rotation
+chain.
