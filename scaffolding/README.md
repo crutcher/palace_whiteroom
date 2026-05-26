@@ -15,17 +15,30 @@ Content that fits when:
 
 **Small-scope speculative content is default-accepted.** Friction with what's been written is identified from use, not from prior design.
 
+## Running ledgers (Phase B onward)
+
+The following files are **running ledgers** — appendable cumulative state read and written by agents each cycle. See `../MIGRATION.md` Section 2 *Scaffolding layout* for the full read/write matrix.
+
+- **`friction-ledger.md`** — named friction patterns + recurrence counts (meta-phase-maintained).
+- **`skill-candidates.md`** — appendable skill proposals (any agent can append).
+- **`open-questions.md`** — open questions about target source or methodology (any agent appends; integrator promotes per-report caveats; meta-phase reviews periodically).
+- **`cycle-record.jsonl`** — per-cycle structured record (integrator + meta-phase append; replaces `episodic.jsonl`).
+- **`problems-sensitivity.md`** — self-tuning sensitivity calibration for `problems/` (meta-phase-maintained).
+- **`roadmap.md`** — relative-progress vs roadmap goals (integrator-maintained).
+- **`priorities.md`** *(planned)* — short next-up list (meta-phase + cycle-planner co-edit).
+- **`concept-dependency-map.md`** — cross-concept dep graph (kept; consumed by layer-intro-author).
+- **`decisions/<topic>.md`** — persistent-dual trade-off logs (sub-agent appendable).
+- **`test-linkages/<topic>.md`** — source→test maps (sub-agent appendable).
+
 ## When *not* to write here
 
 These have their own channels and should not pollute `scaffolding/`:
 
-- **Slice-local working notes** → that slice's `## Working Notes` section in `book/src/spec/slices/<X>.md`.
-- **Unknowns about the target code** → `questions.md` (the question ledger).
+- **Slice-local working notes** → that slice's `## Working Notes` section in `book/src/spec/slices/<X>.md` (or `book/src/L_n/<operator>.md` under the new layout).
+- **Per-report artifacts** → `reports/<id>/REPORT.md` (under the new cycle structure).
 - **Out-of-role authority concerns** → `problems/`.
-- **Critic cross-cycle observations** → `lessons.md`.
-- **Per-cycle telemetry / push history** → `episodic.jsonl`.
 
-If a note belongs in two channels (e.g., a scaffolding observation that also generates a `questions.md` entry), file in both — scaffolding has no exclusivity claim.
+The old channels — `lessons.md` (historical record, kept), `questions.md` (archived seed questions, kept), `episodic.jsonl` (moved to `scaffolding/cycle-record.jsonl`) — are superseded by the running ledgers above.
 
 ## Discipline
 

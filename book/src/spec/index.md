@@ -1,8 +1,12 @@
-# Specification — Slice Status
+# Specification — Slice Status (Phase 1 corpus)
+
+**Status as of 2026-05-26**: this section is the **Phase 1 corpus** under the structural redirect in `MIGRATION.md`. The slice-vertical work produced under the original loop (cycles 1–172) is preserved here as **raw material for combinator extraction** by the new agent pipeline.
+
+The forward-going artifact is the **layered specification** (L4 → L0) under `book/src/L4/` through `book/src/L0/`. Combinators, lowering themes, and operator definitions are mined from this corpus by the `combinator-miner` / `abstractor` / `harvester` agents.
 
 The specification grows as a set of **slices** (one per algorithm / routine / coherent piece of Palace), each pushed depth-first through the four-layer stack L1 → L2 → L3 → L4 above the cited L0 source.
 
-This index is maintained by the Synthesizer after every push. It is the **first place to read** to see where the work is.
+This index was maintained by the Synthesizer after every push under the old loop. It is preserved as-is.
 
 ## Status table
 

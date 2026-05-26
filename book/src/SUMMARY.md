@@ -3,7 +3,17 @@
 [Introduction](./introduction.md)
 # Methodology
 - [Overview](./methodology/overview.md)
-# Specification
+# Layered specification (L4 → L0)
+- [L4 — graph-evaluation calculus](./L4/index.md)
+- [L4 > L3 — lowering layer](./L4-L3/index.md)
+- [L3 — global tensor-field operations](./L3/index.md)
+- [L3 > L2 — lowering layer](./L3-L2/index.md)
+- [L2 — algebraic decompositions](./L2/index.md)
+- [L2 > L1 — lowering layer](./L2-L1/index.md)
+- [L1 — mutation-lifted forms](./L1/index.md)
+- [L1 > L0 — lowering layer](./L1-L0/index.md)
+- [L0 — cited Palace source](./L0/index.md)
+# Phase 1 corpus (slice-vertical; raw material for combinator extraction)
 - [Index — Slice Status](./spec/index.md)
   - [CG — Preconditioned Conjugate Gradient](./spec/slices/cg.md)
   - [GMRES](./spec/slices/gmres.md)
