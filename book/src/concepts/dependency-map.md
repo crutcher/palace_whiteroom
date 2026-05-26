@@ -46,6 +46,8 @@ graph BT
   first-iteration-unrolling --> rotation
   first-iteration-unrolling --> derived-view-hoisting
   apply_BA --> constructed-operators
+  capability-typing --> state-stratification
+  capability-typing --> variant-absorption
 ```
 
 - [`rotation`](./rotation.md) — root methodology concept. Defines what counts as a genuine rotation (state hiding / coarser substitution / threaded-state compression) vs. a renaming. Codified meta-review #1; expanded with carry-through clause meta-review #2.
@@ -378,6 +380,7 @@ graph BT
   cg_preconditioning_framework --> solver-as-operator
   cg_preconditioning_framework --> complex-from-real-lift
   cg_preconditioning_framework --> finest-level-unwrap
+  cg_preconditioning_framework --> capability-typing
 ```
 
 The L4 calculus has its own design artifact at [`book/src/design/l4_calculus.md`](../design/l4_calculus.md). L4 concepts (grammar productions, reduction rules, ownership categories) are not currently tracked here — the calculus is a single document with its own internal structure. If L4 grows to need cross-cycle concept tracking, add a section here at that time.

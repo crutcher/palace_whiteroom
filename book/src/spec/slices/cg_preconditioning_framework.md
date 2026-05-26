@@ -407,5 +407,64 @@ The L3 form named the build-time vs run-time stratification as a structural obse
 ### Open questions
 
 - **`Solve E` monad shape.** The framework slice does not pin down the full `Solve E` monad — it threads counters and delegates inner state to `ksp`. Whether `Solve E` should be a single monad shared across all Palace iterative solvers, or a per-method family parameterised over the Krylov method, is a calculus-level question for [`solve-monad`](../../concepts/solve-monad.md).
-- **Capability typing of `pc_op` distinctness.** The `(op, pc_op)` split is currently a *convention* — nothing in the type prevents `pc_op = op`. Should L4 carry a capability marker distinguishing "true operator" from "pc-assembly operator", or is this load-free flexibility?
+- **Capability typing of `pc_op` distinctness.** ~~The `(op, pc_op)` split is currently a *convention* — nothing in the type prevents `pc_op = op`. Should L4 carry a capability marker distinguishing "true operator" from "pc-assembly operator", or is this load-free flexibility?~~ **Resolved in L4 v0.2 below**: brand-typed `TrueOp<E>` and `PcAssemblyOp<E>` markers added; the role distinction is now a type-level invariant.
 - **Build-time vs run-time as a methodology concept.** The stratification observed here recurs in `gmres` (Hessenberg vs iterate), `geometric_multigrid` (level setup vs V-cycle), and almost every operator-algebra construction. A dedicated [`build-time-run-time-stratification`](../../concepts/build-time-run-time-stratification.md) concept may be worth extracting, distinct from `state-stratification` (which is run-time-only).
+
+## L4 v0.2 — capability typing for the (op, pc_op) split
+
+The L4 v0.1 form (above) carried the `(op, pc_op)` distinction as a *naming* convention only: both fields of `OpBinding<E>` were typed `Op<E>`, and nothing in the type prevented `pc_op = op` or, worse, the two being silently swapped. This was flagged in the L4 v0.1 open questions as a capability-typing gap.
+
+The within-L4 rotation here tightens the binding type to disambiguate the two roles by capability marker, without changing the run-time semantics. The rotation is L4→L4 (a self-tightening — see [`rotation`](../../concepts/rotation.md) on within-layer refinement) because it does not change which primitives compose the body phase, only the type at which the binding state is held.
+
+### Capability markers
+
+```ts
+// Phantom-typed capability brands on the operator handle. Erased at run time;
+// the underlying value is just Op<E>.
+type TrueOp<E>      = Op<E> & { readonly __cap: "true" };
+type PcAssemblyOp<E> = Op<E> & { readonly __cap: "pc_assembly" };
+
+// Smart constructors brand a raw Op<E> with its intended role.
+declare function asTrueOp<E>(o: Op<E>):       TrueOp<E>;
+declare function asPcAssemblyOp<E>(o: Op<E>): PcAssemblyOp<E>;
+
+type OpBinding<E> = {
+  op:    TrueOp<E>,         // what ksp iterates against
+  pc_op: PcAssemblyOp<E>,   // what pc is built against
+};
+```
+
+The two branded types are nominally distinct. `setOperators` consumes them in role-positional form; passing a `PcAssemblyOp<E>` where a `TrueOp<E>` is expected (or vice-versa) is a type error at L4. The brand discipline is internal to the framework slice — model-layer callers brand the operators at construction time (one call each to `asTrueOp` and `asPcAssemblyOp`) and the brands flow through unchanged.
+
+### `setOperators` under capability typing
+
+```haskell
+setOperators :: TrueOp E -> PcAssemblyOp E -> BaseKspSolver E -> BaseKspSolver E
+setOperators op pc_op s =
+  let pc_op' = if isMultigridOp pc_op && not (isMultigridSolver s.pc)
+                 then finestLevelUnwrap pc_op            -- returns PcAssemblyOp E
+                 else pc_op
+      _      = s.ksp `setOpInternal` op                  -- accepts TrueOp E
+      _      = s.pc  `setOpInternal` pc_op'              -- accepts PcAssemblyOp E
+  in s { binding = Just (OpBinding op pc_op) }
+```
+
+`finestLevelUnwrap` is typed `PcAssemblyOp E -> PcAssemblyOp E` — the brand is preserved across the structural adapter because the unwrapped finest level inherits the pc-assembly role from its multigrid parent. This is the load-bearing observation: the L0 evidence at `palace/linalg/ksp.cpp:274-296` only ever applies the unwrap to `pc_op`, never to `op`, so the brand-preserving signature matches the source.
+
+### What this rotation hides
+
+The L4 v0.1 form left two equally-typed `Op<E>` fields and relied on field-name discipline (`op` vs `pc_op`) to keep the two operators distinct. The L4 v0.2 form rotates this by:
+
+1. **Lifting field-name discipline to type-level discipline.** A caller cannot accidentally pass the true operator where the pc-assembly operator is expected. The bug that the L0 assertion-guards cannot catch (because both are `Operator*` at the C++ layer) is type-rejected at L4.
+2. **Naming the brand-preservation invariant of `finestLevelUnwrap`.** The structural adapter is now typed as a `PcAssemblyOp`-endomorphism. Downstream slices that compose with the framework (e.g., a future `divfree` L4 form) can rely on this signature.
+3. **Making the (op, pc_op) distinctness a calculus-level fact rather than a slice-level convention.** The L4 v0.1 open question asked whether the split was "load-free flexibility"; v0.2 answers: it is load-bearing enough that brand-typing it catches a class of misuse the L0 type system cannot.
+
+The rotation does NOT add capability state to the run-time `BaseKspSolver<E>`: brands are phantom (zero-runtime). The body-phase signatures of `solve` and `applyPreconditioner` are unchanged; the brand discipline lives entirely in the constructor/setOperators surface.
+
+### What this rotation does NOT yet address
+
+- **Spectral-relationship invariants.** The L1 form noted that convergence depends on the spectral relationship between `op` and `pc · pc_op`. The capability typing here distinguishes the *roles* of `op` and `pc_op` but does not encode any spectral-equivalence invariant between them. That would require a refinement-type or proof-carrying layer beyond the current L4 calculus.
+- **`pc_op = op` as a valid configuration.** Some model-layer call sites legitimately pass the same operator for both roles (when the true operator is itself cheap enough to precondition against directly). The brand discipline does NOT forbid `asTrueOp(K)` and `asPcAssemblyOp(K)` being applied to the same underlying `K` — it only forbids passing one brand where the other is expected. This is the intended escape hatch.
+- **The `Solve E` monad shape.** Still deferred to [`solve-monad`](../../concepts/solve-monad.md). Capability typing on the binding is orthogonal to the monad-shape question.
+
+The v0.1 open question on capability typing is now resolved (positively: brands ARE worth carrying); the other two v0.1 open questions (`Solve E` monad shape, build-time-vs-run-time as a methodology concept) remain open.

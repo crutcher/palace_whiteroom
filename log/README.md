@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-165 — refinement cg_preconditioning_framework [Ln→Ln] — revise](cycle-165.md)
 - [2026-05-26 cycle-164 — refinement cg [Ln→Ln] — pass](cycle-164.md)
 - [2026-05-26 cycle-163 — refinement arnoldi_step [Ln→Ln] — pass](cycle-163.md)
 - [2026-05-26 cycle-162 — refinement plane_rotation_stream [Ln→Ln] — pass](cycle-162.md)
