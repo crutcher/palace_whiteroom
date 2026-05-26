@@ -297,22 +297,29 @@ Per [`state-stratification`](../../concepts/state-stratification.md), the L4 for
 
 - **Sim state** (caller-owned, threaded by the outer solve monad): `x` (rhs), `y` (accumulator / iterate).
 - **Operator internal params** (captured at `setup`, immutable across `apply` calls): `A`, `dinv`, `order`, `pc_it`, and the variant-specific scalars (`lam_max` for 4th-kind, `theta`/`delta` for 1st-kind). These live inside the constructed-operator closure ([`constructed-operators`](../../concepts/constructed-operators.md)).
-- **Ephemeral intermediates** (allocated per `apply_linop` call, discarded on return): `r`, `d`, `t`, `Ay`, `Ad`, and the carried scalar `rho_prev` for the 1st-kind variant.
+- **Ephemeral intermediates** (allocated per `apply_linop` call, discarded on return): `r`, `d`, `t`, `Ay`, `Ad` — pure field-algebra values, not threaded across calls.
+- **Scalar-recurrence state** (per-call ephemeral, but threaded across `k`-iterations within a single `apply` call): `rho_prev` for the 1st-kind variant. Lives inside the `ScalarState` type carried by the inner `foldM`. It is distinct from the operator-internal stratum (the closure does not retain `rho_prev` across `apply` calls — each call starts the recurrence from `rho_0`) and distinct from ordinary ephemerals (it is genuinely threaded, not a transient temporary). For 4th-kind, `ScalarState = ()`.
 
 ```ts
-// Operator internal params (immutable post-setup)
-type ChebOp<E> = {
-  A: LinOp<E>;                  // SPD operator, by reference
-  dinv: Field<E>;               // 1 / diag(A)
+// Operator internal params (immutable post-setup); S is the scalar-state type,
+// statically determined by variant (Unit for 4th-kind, { rho_prev: E } for 1st-kind).
+type ChebOp<E, S> = {
+  A: LinOp<E>;                                // SPD operator, by reference
+  dinv: Field<E>;                             // 1 / diag(A)
   order: int;
   pc_it: int;
-  scalars: (k: int, st: ScalarState) => { a0?: E; sd?: E; sr?: E; st: ScalarState };
-  // ScalarState is unit for 4th-kind, { rho_prev: E } for 1st-kind.
+  scalarInit: S;                              // initial ScalarState at k=0
+  scalars: (k: int, st: S) =>
+    { a0?: E; sd?: E; sr?: E; st: S };        // pure scalar-recurrence step
 };
 
-// Sim-state slice consumed/produced by apply_linop
-type ChebSim<E> = { x: Field<E>; y: Field<E> };
+// Sim-state capabilities consumed by apply_linop
+//   x: read-only field
+//   y: read-write field (the accumulator the outer solve monad threads)
+type ChebSim<E> = { x: Read<Field<E>>; y: ReadWrite<Field<E>> };
 ```
+
+The `S` type parameter makes the scalar-recurrence stratum visible at the type level: 4th-kind instantiates `ChebOp<E, Unit>` and 1st-kind instantiates `ChebOp<E, { rho_prev: E }>`, with no runtime discriminator at apply-time — the variant axis is absorbed into the closure type per [`constructed-operators`](../../concepts/constructed-operators.md). The `Read`/`ReadWrite` capability split on `ChebSim` records the L4 mutation discipline (only `y` is written; `x` is read-only) at the type-surface, matching the [`solve-monad`](../../concepts/solve-monad.md) convention.
 
 ### Apply as a monadic action
 
