@@ -57,7 +57,7 @@ The FGMRES variant ([palace/linalg/iterative.cpp:794-822](../../../reference/pal
 
 Three distinct in-place writes occur concurrently in the kernel: (1) `w` (a reference, not a copy, to the basis slot `V[j+1]` — see line 622 `VecType &w = V[j+1]`) is written by `ApplyBA`, mutated by `OrthogonalizeIteration` (project-and-subtract), and finally scaled in place — the final `scal` is therefore *also* the act of installing the new basis column, with no separate copy; (2) `Hj` is an accumulator-style write into the j-th Hessenberg column (indices `[0..j]` from `OrthogonalizeIteration`, index `j+1` from `Norml2`); (3) `r` is a scratch buffer used only when a preconditioner is present (the `pc_side == NONE` branch of `ApplyBA` at [iterative.cpp:303](../../../reference/palace/linalg/iterative.cpp#L303) calls `A->Mult(x,y)` directly and never touches `r`).
 
-Breakdown (`Hj[j+1] == 0`) is not explicitly guarded at line 627; it would manifest downstream as a division-by-zero in the rotation-generate step at [iterative.cpp:638-640](../../../reference/palace/linalg/iterative.cpp#L638-L640) and surface via `CheckDot` on line 643.
+Breakdown (`Hj[j+1] == 0`) is not guarded inside the kernel: line 628 performs the in-place `scal` on the post-orthog norm without checking the divisor. The source-level fact is that the four lines `apply → orthog → norm → scal` carry no early-exit. Downstream surfacing (the rotation-generate step at [iterative.cpp:638-640](../../../reference/palace/linalg/iterative.cpp#L638-L640) and the `CheckDot` on line 643) belongs to the [gmres](./gmres.md) outer loop's small-dense update, not to this slice.
 
 ### Variant axes
 
@@ -146,7 +146,7 @@ The procedure both reads `V[0..j]` and writes the j-th column of `H` (an accumul
 
 ### subdiag_norm
 
-The subdiagonal entry `H[j+1,j] = ‖w‖₂` is the [nrm2](../../concepts/nrm2.md) primitive over the post-orthogonalisation residual, with one MPI allreduce. It is a pure read on `w` — no mutation — producing a single scalar written into the Hessenberg column. Breakdown detection at L1 reads off this scalar (`H[j+1,j] = 0` ⇒ `T`-invariant subspace).
+The subdiagonal entry `H[j+1,j] = ‖w‖₂` is the [nrm2](../../concepts/nrm2.md) primitive over the post-orthogonalisation residual, with one MPI allreduce. It is a pure read on `w` — no mutation — producing a single scalar written into the Hessenberg column at the subdiagonal index `j+1`. The write index is disjoint from `orthogonalize`'s head-of-column write at `[0..j]`: the two H-column writes are independent small-dense accumulator-writes that happen to land in the same buffer. Breakdown detection at L1 reads off this scalar (`H[j+1,j] = 0` ⇒ `T`-invariant subspace).
 
 ### normalize
 
@@ -161,7 +161,7 @@ The four primitives have no internal data dependency cycle:
 - `subdiag_norm` reads `w`, writes `H[j+1,j]`.
 - `normalize` reads `H[j+1,j]`, mutates `w`.
 
-The sequential chain `apply_BA → orthogonalize → subdiag_norm → normalize` is forced by these dataflow edges: `orthogonalize` needs `w` after apply; `subdiag_norm` needs `w` after orthogonalisation; `normalize` needs the scalar from `subdiag_norm`. No reordering is possible without changing semantics. The chain shape is invariant across `gs_orthog` and `pc_side` — both variants are absorbed at the primitive boundary (`orthogonalize` and `apply_linop` respectively).
+The sequential chain `apply_BA → orthogonalize → subdiag_norm → normalize` is forced entirely by `w`-dataflow: `orthogonalize` needs `w` after apply; `subdiag_norm` needs `w` after orthogonalisation; `normalize` needs the scalar from `subdiag_norm`. The H-column writes do *not* contribute to this rigidity — `orthogonalize` writes `H[0..j]` and `subdiag_norm` writes `H[j+1,j]`, on disjoint index ranges. No reordering of the four primitives is possible without changing semantics, but the rigidity is `w`-mediated, not H-mediated. The chain shape is invariant across `gs_orthog` and `pc_side` — both variants are absorbed at the primitive boundary (`orthogonalize` and `apply_linop` respectively).
 
 The small-dense Hessenberg-column triangularisation (replay Givens 1..j, generate new rotation, apply to `H[:,j]` and the residual-norm vector) is **not** part of this composition — it is consumed by the GMRES outer loop's [incremental-least-squares](../../concepts/incremental-least-squares.md) update, deliberately scoped out per the slice's L1 statement.
 
