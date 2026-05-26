@@ -8,7 +8,7 @@ This index is maintained by the Synthesizer after every push. It is the **first 
 
 | Slice | Highest layer | Last touched | Status notes |
 |-------|---------------|--------------|--------------|
-| [CG](./slices/cg.md) | L1 | 2026-05-25 | Slice opened. L0 citations in iterative.{hpp,cpp}; L1 procedure with parametric absorption of use_initial_guess, use_true_residual, and the preconditioner. |
+| [CG](./slices/cg.md) | L4 v0.4 | 2026-05-26 | L2→L3 rotation claims emitted retroactively: negative result for outer loop (sequential obstruction), positive result for per-step body. Sequential-obstruction concept extracted as methodology pattern. |
 | [GMRES](./slices/gmres.md) | L4 v0.2 | 2026-05-26 | L4 self-rotation tightens convergence-criterion absorption: build_convergence now returns ε0 (closes the derive_ir gap), and classify_outcome / should_stop_inner factor the max_it / max_dim reads out of restart_cycle and inner_loop into constructed-operator helpers. Variant-absorption discipline now holds uniformly across all OpParams reads. |
 | [orthog](./slices/orthog.md) | L1 | 2026-05-25 | L0 citations + L1 invariant/procedure for block orthogonalization against a B-orthonormal basis. CGS/CGS2/MGS scheme remains residual axis at L1 (level-c absorption breaks); B-inner-product absorbed via constructed dot_B. |
 | [divfree](./slices/divfree.md) | L1 | 2026-05-25 | L0 citations + L1 invariant/procedure for divergence-free projection via nodal weighted-Laplacian solve and gradient subtraction. All runtime variant axes absorbed at L1 (inner-KSP via ksp_solve, M_ε / boundary conditions operator-internal). |
