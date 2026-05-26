@@ -65,7 +65,7 @@ Components that underlie all five solver pipelines.
 
 (Added 2026-05-26 meta-22 after cg_preconditioning_framework appeared as an organically-extracted framework slice — different from algorithm or primitive slices.)
 
-- [~] **CG Preconditioning Framework** — abstract preconditioner-as-LinOp interface used by CG and its variants. **L0→L1 landed cycle 123** (meta-22 window via retroactive-gate retry). Likely first of a family of "framework slices" capturing the operator/preconditioner contracts that algorithm slices consume.
+- [~] **CG Preconditioning Framework** — abstract preconditioner-as-LinOp interface used by CG and its variants. L0→L1 cycle 123; **L2→L3 cycle 141** (meta-24 — L1→L2 was attempted cycle 133 but tripped role-parametrized-factory renaming and was back-corrected). Likely first of a family of "framework slices" capturing the operator/preconditioner contracts that algorithm slices consume.
 
 ### Coordination and post-processing
 
@@ -83,7 +83,7 @@ A tier of algorithmic primitives that sit BETWEEN leaf primitives (axpy, dot, ap
 Candidates, roughly ordered by impact:
 
 - [x] **Arnoldi step** (one inner-loop iteration of Krylov-subspace construction). Reused by: GMRES, FGMRES, MINRES (variant), eigenmode-via-Arnoldi. Concept overlap: `apply_linop`, `orthogonalize`, `dot`, `axpy`, `nrm2`, `scal`. **Landed at L4 via cycles 98–102 (meta-20 window) — first intermediate-tier algorithm extracted.** See `book/src/spec/slices/arnoldi_step.md`.
-- [~] **Plane-rotation stream** (Givens-rotation accumulator + replay for least-squares update). Reused by: GMRES (Hessenberg LS update), eigenmode (QR algorithm), driven (complex Givens). Concept overlap: `givens` (generate + apply). **L0→L1 landed cycle 108** (meta-21 window); **L1→L2 landed cycle 124** (meta-22 window via retroactive-gate retry). L3+ pending.
+- [~] **Plane-rotation stream** (Givens-rotation accumulator + replay for least-squares update). Reused by: GMRES (Hessenberg LS update), eigenmode (QR algorithm), driven (complex Givens). Concept overlap: `givens` (generate + apply). L0→L1 cycle 108; L1→L2 cycle 124; **L2→L3 cycle 144** (meta-24). L4 pending.
 - [~] **Polynomial-recurrence step** (degree-k Chebyshev / Richardson / Jacobi recurrence body). Reused by: Chebyshev 1st/4th-kind, Jacobi smoother, Richardson iteration. Concept overlap: `axpy`, `elementwise_product`, `scal`. **L0→L1 landed cycle 130** (meta-23 window via retroactive-gate retry); refined cycle 132.
 - [~] **Sparse triangular solve** (TRSV variant). Reused by: ILU(0), ILU(k), AMS (smoother), Gauss-Seidel preconditioner, back-solve in direct solvers. Concept overlap: `trsv` (already a leaf concept; this is the *sweep* over a sparse triangular factor). **L0→L1 landed cycle 112** (meta-21 window) — emitted as a *negative result* per Palace not exposing sparse triangular sweep as a top-level primitive; lifting still unblocks future ILU/Gauss-Seidel/AMS work.
 - [ ] **Diagonal-preconditioner apply** (extract diagonal + reciprocal + elementwise multiply). Reused by: Jacobi, Chebyshev (already uses it), block-Jacobi, polynomial preconditioners. Concept overlap: `extract_diagonal`, `reciprocal`, `elementwise_product`. Lifting consolidates the pattern across smoothers.

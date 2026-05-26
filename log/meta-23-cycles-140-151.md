@@ -1,0 +1,7 @@
+## 2026-05-26 meta-review (cycles 140–151) — enacted — refinement dominance + skill_uptake window aggregation
+
+- Window: 12 cycles, **10 of which were refinement push_kind** — the integrator surface-or-evidence gate (meta-22/23) is now hardened, refinements PASS reliably. Driven by cycle 144's sequential-obstruction concept update triggering refinement candidates across multiple slices. Two intermediate-tier advances: plane_rotation_stream L2→L3 (cycle 144); cg_preconditioning_framework L2→L3 (cycle 141). polynomial_recurrence_step refined. First non-zero `skill_uptake_missed` signal (cycle 147 chebyshev refinement).
+- Cascade: 3 LOW; 2 MEDIUM plan items enacted; HIGH escalation (sensitivity saturation) **superseded** by user bar-relaxation commit `9f05b54` mid-meta.
+- Plan items enacted: (LOW) roadmap intermediate-tier advances annotated; sensitivity already addressed by user reset. (1) **Refinement surface-or-evidence worked counter-example** in `prompts/synthesizer.md` — cycle 147 chebyshev as do-not-do form, two correct alternatives (section_appends carrying prose OR retroactive_claim_evidence). (2) **skill_uptake window-level aggregation** — `_compute_skill_window_stats()` helper aggregates per-skill triggered/applied/missed counts over recent 12 cycles; episodic gains `skill_uptake_window_stats` field for Meta-Critic-visible missed-rate auditing.
+- Phase 6+: 10 active slices (4/7 intermediate-tier in motion + 1 framework-tier at L3); 27+ concepts.
+- Full record: `book/src/meta-reviews/2026-05-26-cycles-140-151.md`.

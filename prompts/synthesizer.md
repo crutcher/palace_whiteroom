@@ -455,10 +455,58 @@ Drive-by observations on the slice this cycle is FOCUSED on are normal
 in-cycle work, not problems/ filings.
 
 **Self-rotation / refinement surface-or-evidence discipline** (added
-meta-21 after cycle 115 emitted a refinement cycle whose
-`log_synthesis` narrated an L1 prose edit but the diff contained only
-a lessons append + rotation_claim — a recurrence of the meta-15 #3
-plan_kind=tightening evasion under the new push_kind=refinement label).
+meta-21; producer-side rule strengthened meta-24 after recurrence #5
+overall, #3 specifically on refinement push_kind — cycle 147
+chebyshev refinement narrated L4 prose changes in `log_synthesis`
+but emitted only lessons + rotation_claims).
+
+**Worked counter-example (cycle 147, DO NOT DO THIS):**
+
+```yaml
+push_kind: refinement
+slice: chebyshev
+plan:
+  rotation_claims: [{edge: "L4→L4", target: "ChebOp<E,Unit> vs <E,{rho_prev:E}>"}]
+  lessons: ["Capability typing tightens variant absorption"]
+  log_synthesis: "Refined L4 prose to clarify capability typing..."
+  # ← NO slice_writes / section_appends / file_edits!
+```
+
+The `log_synthesis` *narrates* an L4 prose change but the diff
+*contains* none. Critic check #14 catches this as
+`rotation_claims_require_surface`; verdict revise. Cycle 148
+corrected by re-emitting the same cycle with proper section_appends
+to L4 carrying the prose, then re-verdicting the same rotation_claims
+against now-on-disk prose.
+
+**Correct refinement form:**
+
+```yaml
+push_kind: refinement
+slice: chebyshev
+plan:
+  rotation_claims: [{edge: "L4→L4", target: "ChebOp<E,Unit> vs <E,{rho_prev:E}>"}]
+  section_appends: [{path: ..., heading: "## L4 — capability tightening", content: "..."}]
+  # ← Surface edit lands; rotation_claim is verifiable against it.
+  lessons: ["Capability typing tightens variant absorption"]
+```
+
+OR (if claiming against existing surface):
+
+```yaml
+push_kind: refinement
+slice: chebyshev
+plan_kind: retroactive_claims
+plan:
+  rotation_claims: [{edge: "L4→L4", target: "...", claim_index: 0}]
+  log_synthesis:
+    summary: "..."
+    retroactive_claim_evidence:
+      - claim_index: 0
+        on_disk_path: "book/src/spec/slices/chebyshev.md"
+        section: "## L4"
+        quoted_lines: "...the literal on-disk prose the claim refers to..."
+```
 
 When `push_kind=refinement` OR `edge ∈ {L0→L0, L1→L1, L2→L2, L3→L3,
 L4→L4, Ln→Ln}` (self-edges added to the rotation_claim schema in

@@ -135,6 +135,40 @@ def _is_bookkeeping_path(rel: str) -> bool:
     return any(rel == p or rel.startswith(p + "#") for p in _BOOKKEEPING_PATHS)
 
 
+def _compute_skill_window_stats(state: State, window: int = 12) -> dict:
+    """Aggregate skill_uptake metrics over the last `window` cycles in
+    episodic. Added meta-24 item 2 for Meta-Critic-visible missed-rate
+    auditing. Returns triggered_total / applied_total / missed_total +
+    per_skill breakdown of {triggered, applied, missed}."""
+    recent = state.read_episodic_window(window)
+    triggered_total = 0
+    applied_total = 0
+    missed_total = 0
+    per_skill: dict[str, dict[str, int]] = {}
+    for e in recent:
+        for entry in e.get("skill_uptake_summary") or []:
+            if not isinstance(entry, dict):
+                continue
+            skill = entry.get("skill") or "<unknown>"
+            slot = per_skill.setdefault(skill, {"triggered": 0, "applied": 0, "missed": 0})
+            if entry.get("triggered"):
+                triggered_total += 1
+                slot["triggered"] += 1
+            decision = entry.get("decision")
+            if decision == "artifact_landed":
+                applied_total += 1
+                slot["applied"] += 1
+            elif decision == "missed":
+                missed_total += 1
+                slot["missed"] += 1
+    return {
+        "triggered_total": triggered_total,
+        "applied_total": applied_total,
+        "missed_total": missed_total,
+        "per_skill": per_skill,
+    }
+
+
 def _apply_integration_plan(state: State, plan: dict, push_back_signals: list[str]) -> dict:
     """Apply an integration plan to the project surface. Mutates state via
     State's helpers. Appends any errors to push_back_signals.
@@ -1193,6 +1227,7 @@ async def run_normal_cycle(
             for e in (verdict.get("skill_uptake") or [])
             if isinstance(e, dict)
         ],
+        "skill_uptake_window_stats": _compute_skill_window_stats(state),
         "friction_observed": friction_summary,
         "structural_change": structural_change,
         "push_back_signals": push_back_signals,
