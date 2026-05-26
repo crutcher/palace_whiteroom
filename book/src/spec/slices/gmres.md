@@ -629,3 +629,103 @@ After the tightening, the variant-absorption invariant at L4 is realised by a cl
 - The `op.max_it` re-inspection is the v0.1 `restart_cycle` line `else if s'.it == op.max_it then Done False`.
 - The constructed-operator pattern is documented at [concept: constructed-operators](../../concepts/constructed-operators.md).
 - The variant-absorption levels (a/b/c) are documented at [concept: variant-absorption](../../concepts/variant-absorption.md).
+
+## Context
+
+# GMRES (Generalized Minimal Residual)
+
+
+
+Palace's preconditioned GMRES solver for general (non-symmetric, possibly indefinite or complex) linear systems `A x = b`. Implemented in `palace/linalg/iterative.{hpp,cpp}` as `GmresSolver<OperType>` (with `FgmresSolver<OperType>` as a related slice — flexible preconditioning — not covered here). Selected by `KspSolver` when the operator is not SPD or the preconditioner is non-stationary.
+
+## Background
+
+The canonical formulation is *restarted preconditioned GMRES(m)* (Saad 2003 §6.5, Algorithm 6.11; Saad & Schultz 1986). The method minimizes `‖b − A x‖` (or `‖M^{-1}(b − A x)‖` under left preconditioning) over the affine subspace `x_0 + K_m(B, r_0)` where `B = M^{-1}A` (left) or `A M^{-1}` (right) and `m` is the restart dimension. Each restart cycle builds an orthonormal basis of `K_m` via Arnoldi, factorizes the resulting `(m+1) × m` upper-Hessenberg matrix incrementally via Givens rotations into upper triangular `R`, and reads off the residual norm from the last component of the transformed RHS without forming the iterate.
+
+Variant axes the slice exposes (per [variant-absorption](../../concepts/variant-absorption.md)):
+- **Preconditioning side**: left (`B = M^{-1}A`, residual is `M^{-1}r`) vs right (`B = A M^{-1}`, residual is `r`, iterate update applies `M^{-1}` to the basis combination).
+- **Orthogonalization variant**: classical Gram-Schmidt (CGS), modified Gram-Schmidt (MGS), CGS with one reorthogonalization step (CGS2). Palace's `OrthogonalizationType` enum selects.
+- **Restart dimension `m`**: configurable; on restart, the residual is recomputed and the basis is rebuilt.
+- **Initial-guess handling**: `use_zero_initial_guess` short-circuits the initial matvec.
+
+Deviations from textbook GMRES:
+- Givens rotations are constructed with the [givens](../../concepts/givens.md) primitive (Palace defers to a scaled form that handles complex coefficients without underflow); see `GeneratePlaneRotation` and `ApplyPlaneRotation` in source.
+- Convergence testing uses the *implicit* residual norm `|γ_{k+1}|` from the transformed RHS rather than recomputing `‖b − A x_k‖` (textbook standard, called out here because it interacts with right-preconditioning's residual semantics).
+
+## L0 — cited source facts
+
+All citations against `reference/palace`.
+
+### L0.1 State carried across iterations of a restart cycle
+
+Within one restart cycle of dimension up to `m`, `GmresSolver::Mult` maintains: current iterate `x`; residual `r`; basis vectors `V = [v_0, v_1, …, v_k]` (each a Vector, stored as a `std::vector<Vector>` or fixed Krylov array); upper-Hessenberg matrix `H ∈ C^{(m+1)×m}` (column-by-column populated); Givens rotation coefficients `(c_j, s_j)` for `j = 0..k`; transformed RHS vector `γ ∈ C^{m+1}` with `γ_0 = ‖r_0‖`, all later entries zero initially. The residual norm at step `k` is `|γ_{k+1}|`.
+
+Citation: [palace/linalg/iterative.cpp:GmresSolver::Mult](../../../../reference/palace/linalg/iterative.cpp).
+
+### L0.2 Initialization (per restart cycle)
+
+Compute residual `r ← b − A x` (or `r ← b` if zero initial guess on first cycle). Apply preconditioner under left-precond: `r ← M^{-1} r`. Compute `β ← ‖r‖`; set `v_0 ← r / β`; set `γ_0 ← β`. The initial-cycle norm `β` on the first restart establishes the relative-tolerance baseline.
+
+Citation: [palace/linalg/iterative.cpp:GmresSolver::Mult — restart initialization](../../../../reference/palace/linalg/iterative.cpp).
+
+### L0.3 Per-Arnoldi-step body
+
+At step `k` (0-indexed) of a restart cycle:
+1. Apply `B = M^{-1}A` (left) or `A M^{-1}` (right) to `v_k` to obtain `w`.
+2. Orthogonalize `w` against `V[0..k]` using the selected variant (CGS / MGS / CGS2), producing the column `H[0..k, k]` and the orthogonalized `w`.
+3. Compute `H[k+1, k] ← ‖w‖`; if non-zero, set `v_{k+1} ← w / H[k+1, k]`.
+4. Apply existing Givens rotations `(c_j, s_j)` for `j = 0..k-1` to the new Hessenberg column `H[:, k]` in place.
+5. Generate a new Givens rotation `(c_k, s_k)` that zeros `H[k+1, k]` after applying it; apply it to `H[k:k+2, k]` and to `γ[k:k+2]`.
+6. The current implicit residual norm is `|γ_{k+1}|`; convergence test against tolerance.
+
+Citation: [palace/linalg/iterative.cpp:GmresSolver::Mult — Arnoldi loop body](../../../../reference/palace/linalg/iterative.cpp).
+
+### L0.4 Solution reconstruction (at convergence or restart boundary)
+
+When the loop exits at step `k_*`, solve the upper-triangular system `R y = γ[0..k_*]` via back-substitution, where `R` is the `(k_*+1) × (k_*+1)` upper block of the transformed `H`. Form the iterate update `x ← x + V[0..k_*] · y` (a `gemv` against the stored basis). Under right preconditioning, the update is `x ← x + M^{-1} (V[0..k_*] · y)`.
+
+Citation: [palace/linalg/iterative.cpp:GmresSolver::Mult — solution reconstruction](../../../../reference/palace/linalg/iterative.cpp).
+
+### L0.5 Restart
+
+If the loop reaches the restart dimension `m` without converging, the iterate is updated as in L0.4, the basis and Hessenberg are discarded, and a new cycle begins from L0.2 using the updated `x` as the new initial iterate. The relative-tolerance baseline is *not* re-established.
+
+Citation: [palace/linalg/iterative.cpp:GmresSolver::Mult — restart branch](../../../../reference/palace/linalg/iterative.cpp).
+
+### L0.6 Orthogonalization variant dispatch
+
+The `Orthogonalize` helper accepts the `OrthogonalizationType` enum and dispatches: MGS performs `k+1` sequential dot+axpy steps; CGS performs a batched dot block then a batched axpy block; CGS2 performs CGS twice (a one-step reorthogonalization). All variants produce the same column `H[0..k, k]` and orthogonalized `w` up to roundoff but differ in numerical stability and parallel-communication pattern.
+
+Citation: [palace/linalg/iterative.cpp:Orthogonalize](../../../../reference/palace/linalg/iterative.cpp).
+
+## L1 — coordinate-free statement
+
+**State** (per [state-stratification](../../concepts/state-stratification.md)):
+- Simulation state: `x` (iterate; externally visible).
+- Operator-internal: `A`, `M`, and a *bound operator* `B` constructed at solve start (see below) — `B` internalizes the preconditioning-side choice so the Krylov procedure does not re-inspect that variant. Per [constructed-operators](../../concepts/constructed-operators.md).
+- Ephemeral per restart cycle: a Krylov subspace `K_k = span(v_0, …, v_k)` represented by an orthonormal basis, an upper-Hessenberg coefficient `H` of `B`'s action on `K_k`, and the running [incremental-least-squares](../../concepts/incremental-least-squares.md) factorization of `H̄` (the `(k+1)×k` augmented matrix) into upper-triangular `R` with transformed RHS `γ`, sufficient to read off `‖γ_{k+1}‖` as the implicit residual norm.
+
+**Invariant.** Let `B` be the bound preconditioned operator and `r_0` the preconditioned initial residual. At step `k` of a restart cycle, the iterate `x` minimizes `‖r_0 − B (x − x_0)‖` over `x_0 + K_k(B, r_0)`. Equivalently, the implicit residual norm tracked at L1 equals the true norm of `B`-projected residual for the current step.
+
+**Procedure** (one restart cycle, coordinate-free):
+
+1. **Bind** the preconditioned operator `B` once at the start of the solve from `(A, M, precond_side)`, producing a uniform `apply` interface. The per-step procedure does not re-inspect `precond_side`.
+2. **Initialize** the cycle: form the preconditioned residual `r_0`, set `β = ‖r_0‖`, install `v_0 = r_0 / β` as the first basis vector and `γ_0 = β` as the initial transformed-RHS entry.
+3. **Iterate** `k = 0, 1, …` until convergence or `k = m`:
+   a. **Extend the Krylov basis**: apply `B` to `v_k` and orthogonalize against `K_{k-1}` (under the selected orthogonalization policy, bound at solve start), yielding the new basis vector `v_{k+1}` and the new Hessenberg column `H[:, k]`.
+   b. **Update the running QR**: extend the incremental-least-squares factorization by one column; this absorbs `H[:, k]` into `R` and updates `γ`. The implicit residual norm `|γ_{k+1}|` becomes available.
+   c. **Convergence test**: terminate if `|γ_{k+1}| ≤ tol`.
+4. **Reconstruct the iterate**: solve `R y = γ[0..k]` and form `x ← x + (post-precond combination of) V · y`. The post-preconditioning step is encoded by `B`'s output convention (right-preconditioning applies `M^{-1}` to `V · y`; left applies identity).
+5. **Restart** if not converged: discard `K, H, R, γ` and return to step 2 with the updated `x` as new initial iterate.
+
+**Variant axes** and their absorption levels:
+- `precond_side` (left/right): absorbed at level (a)+(b)+(c) via the [constructed operator](../../concepts/constructed-operators.md) `B`. Both prose, procedure, and primitive sequence are uniform.
+- `orthogonalization_type` (CGS/MGS/CGS2): absorbed at level (a)+(b) via a bound orthogonalization policy. The per-step primitive sequence at L2 *will* differ (CGS uses a batched dot+axpy block, MGS uses sequential dot+axpy) — residual axis disclosed at L2.
+- `restart_dim m`: parametric; mentioned once as the cycle bound.
+- `use_zero_initial_guess`: parametric; binds the initial-residual computation.
+
+## Open questions
+
+- The orthogonalization variant has a residual L2 axis (primitive sequence differs); the L1 statement claims absorption at (a)+(b) only. Document the L2 divergence clearly when L2 lands.
+- Right-preconditioning's `x ← x + M^{-1}(V · y)` requires an extra preconditioner apply at reconstruction time; whether `B`'s `apply` semantics absorb this or it is a separate `finalize` operation is a design choice. Current form treats it as a post-step of reconstruction.
+- Whether `B` (constructed operator) is also the right abstraction for FGMRES — where the preconditioner changes per step — is a sideways question for the FGMRES slice.

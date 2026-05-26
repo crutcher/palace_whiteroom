@@ -147,6 +147,8 @@ graph BT
   arnoldi_step --> constructed-operators
   arnoldi_step --> variant-absorption
   plane_rotation_stream --> givens
+  cg --> state-stratification
+  gmres --> state-stratification
 ```
 
 ## L2 — algebraic decompositions
