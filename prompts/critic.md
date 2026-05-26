@@ -130,11 +130,20 @@ verdict assembly and cross-cycle lesson extraction):
      active skill (not just triggered ones); `triggered: false` is a
      valid and informative state.
 
-     **Trigger conditions** (skill applicability — unchanged from
-     meta-17):
+     **Trigger conditions** (skill applicability — refined meta-22
+     after under-firing in cycles 120-124):
 
-     - `classify-variant-axis`: the L0 source for the slice has ≥2
-       variant axis values.
+     - `classify-variant-axis`: fires when the cycle's content (slice
+       prose + log_synthesis + concept work) discusses ANY variant
+       axis — preconditioner-side, orthogonalization scheme, polynomial
+       family, flexible-vs-fixed, real-vs-complex, single-vs-block,
+       framework-instance choice, etc. — regardless of whether the L0
+       source has been pre-fetched. Examples that should trigger:
+       (i) divfree cycle discussing pc_side axis; (ii) plane_rotation_stream
+       discussing real-vs-complex specialization; (iii) framework slice
+       describing the LinOp-instance variant. Examples that should NOT:
+       pure citation-tightening cycles, slice creates that don't
+       mention variant axes.
      - `verify-citation-range`: the cycle emits or modifies any L0
        citation `<path>:<lo>-<hi>`.
 

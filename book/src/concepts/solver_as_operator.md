@@ -31,4 +31,4 @@ The consequence is that Krylov iteration code (`IterativeSolver`) holds a `Solve
 ## Used by
 
 - [`cg_preconditioning_framework`](../spec/slices/cg_preconditioning_framework.md): the framework's central type abstraction.
-- [`cg`](../spec/slices/cg.md), [`gmres`](../spec/slices/gmres.md), [`fgmres`](../spec/slices/fgmres.md): each iteration consumes the preconditioner via `Solver<OperType>::Mult`.
+- [`cg`](../spec/slices/cg.md), [`gmres`](../spec/slices/gmres.md), [`fgmres`](../spec/slices/gmres.md#fgmres): each iteration consumes the preconditioner via `Solver<OperType>::Mult`.

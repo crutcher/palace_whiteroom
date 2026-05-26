@@ -39,6 +39,28 @@ The calibration is a LOW direct action in the meta-review plan: it edits this fi
 
 The orchestrator reads the current `sensitivity:` value at each cycle and injects it into the per-cycle agent prompts (Critic, Synthesizer, Explorer) via a short context line: `problems_sensitivity: <N>`. Each agent's prompt describes the meaning of each level and acts accordingly when considering whether to file a problem.
 
+## Saturation (added meta-22 after 0/24 over two consecutive windows at cap=5)
+
+When sensitivity has been at cap (5) AND filing rate has been 0 for ≥2 consecutive 12-cycle windows, the calibration knob has saturated. Two interpretations:
+
+1. **Genuine** — the loop is producing no filing-worthy friction. Target rate (1/15) needs revising downward.
+2. **Mis-calibrated bar** — agents have an internalized definition of "filing-worthy" that excludes things the project considers filing-worthy.
+
+To distinguish, the meta-review surfaces the saturation as a LOW direct action and the human reviews the worked examples below. If a fraction of these examples should have been problems/ filings, the bar is mis-calibrated; if none should have been, the target rate needs revising.
+
+### Worked examples of borderline-friction (could have been problems/ filings)
+
+These are concrete cases from recent meta-reviews where an agent caught friction in-role but the situation arguably exceeded that role's authority — candidates for problems/ filings rather than in-role workarounds:
+
+- **Meta-21 cycle 115**: Critic explicitly told the Synthesizer "consider filing a problems/ entry" about the rotation_claim schema gap for self-edges. The Critic surfaced the schema-gap concern *in its verdict* rather than filing. A higher-sensitivity Critic should have filed.
+- **Meta-20 cycles 98-102**: 5 consecutive bookkeeping_incomplete signals on arnoldi_step due to `slice_index_updates` lacking append-by-slug. The orchestrator carried this for 5 cycles before meta-review surfaced it. An Explorer/Synthesizer noticing the recurring `bookkeeping_incomplete` could have filed.
+- **Meta-19 cycles 86-89**: 4-cycle escalate-storm from the retroactive hard gate. The Planner kept proposing cg cycles knowing they would escalate. A higher-sensitivity Planner — or Critic observing the pattern — could have filed.
+- **User directives 2026-05-25 and 2026-05-26**: skill-priority +60%, intermediate-tier prioritization, dep-map future markers, refinement push kind, log/ restructure, problems-sensitivity, push-after-commit. All of these landed as human-direct prompts. A higher-sensitivity meta-cycle could have surfaced some of these as problems/ filings rather than waiting for the human to notice.
+
+### Decision protocol
+
+If 3 consecutive 12-cycle windows show 0 filings at cap, the Meta-Critic should escalate to HIGH (it's a methodology gap) and the human revisits the problems/ definition.
+
 ## Calibration history
 
 | Date | Meta | Window cycles | Problems filed | Rate | Sensitivity (after) | Notes |
@@ -46,3 +68,4 @@ The orchestrator reads the current `sensitivity:` value at each cycle and inject
 | 2026-05-26 | (initial) | — | — | — | 3 | Initial setting. |
 | 2026-05-26 | meta-20 | 92–103 (12) | 0 | 0.000 | 4 | Below 0.5× target → +1; encourage more surfacing. |
 | 2026-05-26 | meta-21 | 104–115 (12) | 0 | 0.000 | 5 | Still below 0.5× target → +1 (now at cap). If next window is also 0, the bar may be structurally too high — surface for review. |
+| 2026-05-26 | meta-22 | 116–127 (12) | 0 | 0.000 | 5 | **At cap; 0/24 across two consecutive windows.** Calibration knob has saturated. Surfacing for human review per *Saturation* section below. |

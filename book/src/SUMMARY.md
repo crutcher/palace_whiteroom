@@ -80,3 +80,4 @@
   - [2026-05-26 — nineteenth meta-review (cycles 86–91) — third skill (skill-selection)](./meta-reviews/2026-05-26-cycles-86-91.md)
   - [2026-05-26 — twentieth meta-review (cycles 92–103) — arnoldi_step at L4 (first intermediate-tier)](./meta-reviews/2026-05-26-cycles-92-103.md)
   - [2026-05-26 — twenty-first meta-review (cycles 104–115) — refinement fires, 2 more intermediate-tier slices](./meta-reviews/2026-05-26-cycles-104-115.md)
+  - [2026-05-26 — twenty-second meta-review (cycles 116–127) — framework slice extracted, sensitivity at cap](./meta-reviews/2026-05-26-cycles-116-127.md)

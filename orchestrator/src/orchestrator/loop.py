@@ -933,6 +933,55 @@ async def run_normal_cycle(
             bookkeeping_only_failure = result["bookkeeping_only_failure"]
             substantive_landed = result["substantive_landed"]
 
+    # Refinement / self-rotation surface-or-evidence enforcement (meta-22
+    # item 1; meta-21 item 4 producer-side rule failed twice — promote to
+    # integrator). When push_kind=refinement OR any rotation_claim emits
+    # a self-edge (L_n→L_n) AND no surface edit lands on the slice AND
+    # log_synthesis doesn't carry retroactive_claim_evidence, downgrade
+    # to revise with explicit push-back.
+    refinement_surface_check_failed = False
+    if (push.get("kind") == "refinement") or any(
+        (isinstance(c, dict) and c.get("edge", "").endswith(c.get("edge", "").split("→")[0] + "→" + c.get("edge", "").split("→")[0].split("→")[-1] if "→" in c.get("edge", "") else ""))
+        for c in (plan.get("rotation_claims") or [])
+    ):
+        # Simpler self-edge detection: edge matches L<N>→L<N> or Ln→Ln
+        import re as _re
+        has_self_edge_claim = any(
+            isinstance(c, dict) and _re.match(r"^L([0-9]+|n)→L\1$", c.get("edge", ""))
+            for c in (plan.get("rotation_claims") or [])
+        )
+        is_refinement = push.get("kind") == "refinement" or has_self_edge_claim
+        if is_refinement:
+            target_slice = push.get("slice", "")
+            # Has surface edit on the slice?
+            has_surface = False
+            for sw in (plan.get("slice_writes") or []):
+                if isinstance(sw, dict) and target_slice in sw.get("path", ""):
+                    has_surface = True
+                    break
+            for sa in (plan.get("section_appends") or []):
+                if isinstance(sa, dict) and target_slice in sa.get("path", ""):
+                    has_surface = True
+                    break
+            for fe in (plan.get("file_edits") or []):
+                if isinstance(fe, dict) and target_slice in fe.get("path", ""):
+                    has_surface = True
+                    break
+            # Has retroactive_claim_evidence in log_synthesis?
+            log_syn = plan.get("log_synthesis")
+            has_evidence = False
+            if isinstance(log_syn, dict):
+                rce = log_syn.get("retroactive_claim_evidence") or []
+                has_evidence = bool(rce)
+            if not has_surface and not has_evidence:
+                refinement_surface_check_failed = True
+                push_back_signals.append(
+                    f"refinement_surface_or_evidence_missing: push_kind={push.get('kind')!r} "
+                    f"on slice {target_slice!r} emitted self-edge / refinement rotation_claims "
+                    f"with neither a surface edit on the slice nor a retroactive_claim_evidence "
+                    f"block (meta-22 item 1 integrator enforcement)."
+                )
+
     # Verdict-downgrade rule (meta-5 + refined meta-9 item 2):
     # - pass + apply_failed + bookkeeping-only failure → hold pass, set
     #   bookkeeping_incomplete flag (content landed; the index/TOC write
@@ -944,6 +993,10 @@ async def run_normal_cycle(
     verdict["verdict_original"] = verdict.get("verdict")
     verdict["downgrade_applied"] = False
     verdict["bookkeeping_incomplete"] = False
+    # Apply refinement-surface failure to apply_failed for downgrade purposes.
+    if refinement_surface_check_failed:
+        apply_failed = True
+
     if verdict["verdict"] == "pass" and apply_failed:
         if bookkeeping_only_failure:
             verdict["bookkeeping_incomplete"] = True
