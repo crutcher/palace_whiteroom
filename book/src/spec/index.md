@@ -13,6 +13,7 @@ This index is maintained by the Synthesizer after every push. It is the **first 
 | [orthog](./slices/orthog.md) | L1 | 2026-05-25 | L0 citations + L1 invariant/procedure for block orthogonalization against a B-orthonormal basis. CGS/CGS2/MGS scheme remains residual axis at L1 (level-c absorption breaks); B-inner-product absorbed via constructed dot_B. |
 | [divfree](./slices/divfree.md) | L1 | 2026-05-25 | L0 citations + L1 invariant/procedure for divergence-free projection via nodal weighted-Laplacian solve and gradient subtraction. All runtime variant axes absorbed at L1 (inner-KSP via ksp_solve, M_ε / boundary conditions operator-internal). |
 | [chebyshev](./slices/chebyshev.md) | L1 | 2026-05-25 | L0 citations + L1 invariant/procedure for 4th-kind Chebyshev smoother (Phillips & Fischer 2022). Reduction-free two-term recurrence; degree/λ_max/D⁻¹ form all operator-internal or absorbed via apply_linop. No L1 residual axis. |
+| [plane rotation stream](./slices/plane_rotation_stream.md) | L1 | 2026-05-26 | Plane-rotation stream as the minimal Givens-on-2-element-window interface used by GMRES/FGMRES; two primitives (generate, apply) and two stream ops (replay-prefix, extend). Real/complex absorbed by static dispatch. |
 
 ## Slice conventions
 

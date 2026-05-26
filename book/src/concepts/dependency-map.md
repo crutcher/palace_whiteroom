@@ -146,6 +146,7 @@ graph BT
   arnoldi_step --> scal
   arnoldi_step --> constructed-operators
   arnoldi_step --> variant-absorption
+  plane_rotation_stream --> givens
 ```
 
 ## L2 — algebraic decompositions

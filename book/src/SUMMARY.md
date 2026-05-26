@@ -15,6 +15,7 @@
   - [Divergence-free projection](./spec/slices/divfree.md)
   - [Chebyshev smoother](./spec/slices/chebyshev.md)
   - [Arnoldi step](./spec/slices/arnoldi_step.md)
+  - [Plane rotation stream](./spec/slices/plane_rotation_stream.md)
 
 # Concepts (shared library)
 
