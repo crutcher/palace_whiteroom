@@ -49,6 +49,8 @@
   - [constructed-operator-factory](./concepts/constructed-operator-factory.md)
   - [finest-level-unwrap](./concepts/finest-level-unwrap.md)
   - [counter-update](./concepts/counter-update.md)
+  - [build-time-vs-run-time-stratification](./concepts/build-time-vs-run-time-stratification.md)
+
 # Design Artifacts
 - [Index](./design/index.md)
 - [L4 — Graph-Evaluation Calculus (strawman)](./design/l4_calculus.md)

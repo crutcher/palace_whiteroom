@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-141 — forward cg_preconditioning_framework [L2→L3] — pass](cycle-141.md)
 - [2026-05-26 cycle-140 — refinement polynomial_recurrence_step [Ln→Ln] — pass](cycle-140.md)
 - [2026-05-26 meta-review (cycles 128–139) — enacted — forward-edge gate + sensitivity HIGH-escalation surface](meta-22-cycles-128-139.md)
 - [2026-05-26 cycle-139 — forward cg [L1→L2] — pass](cycle-139.md)

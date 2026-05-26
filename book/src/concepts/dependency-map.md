@@ -39,6 +39,10 @@ graph BT
   derived-view-hoisting --> solve-monad
   negative-result-slice --> sequential-obstruction
   negative-result-slice --> variant-absorption
+  build-time-vs-run-time-stratification --> constructed-operators
+  build-time-vs-run-time-stratification --> variant-absorption
+  build-time-vs-run-time-stratification --> solve-monad
+  build-time-vs-run-time-stratification --> sequential-obstruction
 ```
 
 - [`rotation`](./rotation.md) — root methodology concept. Defines what counts as a genuine rotation (state hiding / coarser substitution / threaded-state compression) vs. a renaming. Codified meta-review #1; expanded with carry-through clause meta-review #2.
@@ -284,6 +288,11 @@ graph BT
   arnoldi_step --> tensor-field-lift
   arnoldi_step --> sequential-obstruction
   cg --> iterate_while
+  cg_preconditioning_framework --> apply_linop
+  cg_preconditioning_framework --> solver-as-operator
+  cg_preconditioning_framework --> complex-from-real-lift
+  cg_preconditioning_framework --> build-time-vs-run-time-stratification
+  cg_preconditioning_framework --> sequential-obstruction
 ```
 
 Whole-tensor operations replacing per-element iteration; or `obstruction` results documenting genuine sequentiality.

@@ -217,3 +217,75 @@ The L1 procedure named `configure_krylov` and `configure_preconditioner` as opaq
 2. **Naming the bind primitive**: `ksp.SetPreconditioner(pc)` is rotated to `ksp.bind_preconditioner(pc)`, exposing it as a one-shot side-effecting primitive distinct from per-iteration `apply_linop` calls.
 3. **Naming the unwrap primitive**: the L1 `if pc_op is multigrid_op and pc is not GMG` branch is rotated to a named [`finest-level-unwrap`](../../concepts/finest-level-unwrap.md) primitive, making the structural adapter a citable name for downstream slices.
 4. **Exposing the apply-funnel**: the L1 form spoke only of `solve`; the L2 form discloses that the per-iteration preconditioner application (called from inside the Krylov-method L2 forms) is uniformly `apply_linop(solver.pc, r)`. The LEFT/RIGHT side axis is consumed *at the call site inside the iteration*, not at the bind.
+
+## L3 — tensor-field / global form
+
+The L2 primitives compose into a global form that operates on whole-vector tensor fields. The L3 layer asks: when the per-element iteration is lifted to a global tensor-field operation, what survives, and what (if anything) remains genuinely sequential?
+
+This slice's L3 is unusual: the framework dissected here is **structural plumbing** (factory composition, operator binding, counter accumulation, structural-adapter unwrap), not numerical iteration. The per-element / per-iteration numerical work lives in the `cg`, `gmres`, `fgmres` slices, whose own L3 forms handle their respective tensor-field lifts. The composition surface itself is point-free in the tensor-field sense — it never iterates over vector components.
+
+### Primitive-by-primitive lift
+
+| L2 primitive                          | L3 status                                                 |
+|----------------------------------------|-----------------------------------------------------------|
+| `apply_linop(op, x)`                   | Already global. `op` acts on whole vectors; no per-element iteration to lift. See [`apply_linop`](../../concepts/apply_linop.md). |
+| `apply_linop(pc, r)`                   | Already global, by [`solver-as-operator`](../../concepts/solver-as-operator.md). The preconditioner is an operator; its `Mult` is a whole-vector map. |
+| `complex-from-real-lift`               | Global. The lift acts on the `{Re, Im}` whole-vector pair as a single complex-vector tensor-field operation. The sign flip on `Im` is a global `scal(-1, y.Im)`. |
+| `constructed-operator-factory`         | **Build-time, not run-time.** The factory runs once per solve session at construction. No tensor-field lift applies — it is not an inner-loop primitive. |
+| `bind_preconditioner`                  | **Build-time, not run-time.** One-shot side-effecting pointer install. No tensor-field lift applies. |
+| `finest-level-unwrap`                  | **Build-time, not run-time.** Structural-adapter executed once at `set_operators`. No tensor-field lift applies. |
+| `counter-update`                       | Scalar accumulation; trivially global (no per-element structure). |
+
+The takeaway: **every L2 primitive in this slice is either already global, or is build-time and outside the scope of the tensor-field lift.** There is no per-element iteration in the framework slice to lift.
+
+### Global form of `solve`
+
+```
+solve_global : (Solver, Vec, Vec) → (Vec, Counters)
+solve_global(solver, x_initial, b) =
+    let x_out = apply_linop(solver.ksp, b)          -- whole-vector iteration delegated to ksp
+        n_it  = solver.ksp.GetNumIterations()
+    in (x_out, solver.counters ⋄ {mult: +1, mult_it: +n_it})
+```
+
+The whole-vector character is inherited from `apply_linop(solver.ksp, b)`: the krylov-method's own L3 form (in `cg`, `gmres`, `fgmres`) defines what tensor-field operations run inside that call. The framework slice does not see them — variant absorption holds at L3 as it did at L2.
+
+### Global form of `apply_preconditioner`
+
+```
+apply_preconditioner_global : (Solver, Vec) → Vec
+apply_preconditioner_global(solver, r) = apply_linop(solver.pc, r)
+```
+
+For `OperType = ComplexOperator` with a non-multigrid `pc`, this expands to:
+
+```
+apply_linop(MfemWrapperSolver(real_solver), r) =
+    let z_re = apply_linop(real_solver, r.Re)
+        z_im = apply_linop(real_solver, r.Im)
+    in {Re: z_re, Im: scal(-1, z_im)}
+```
+
+Both `apply_linop(real_solver, ·)` calls are whole-vector applications of the real preconditioner; `scal(-1, z_im)` is a whole-vector negation. The complex-from-real lift is a pointwise composition of three global operations on the `{Re, Im}` pair. See [`complex-from-real-lift`](../../concepts/complex-from-real-lift.md).
+
+For `OperType = ComplexOperator` with a multigrid `pc`, the expansion is the V-cycle body, which is the `geometric_multigrid` slice's responsibility (out of scope here).
+
+### Sequential obstruction — none in this slice
+
+The framework slice carries **no sequential obstruction** in the [`sequential-obstruction`](../../concepts/sequential-obstruction.md) sense — every L2 primitive is either build-time (outside the lift) or already global at L2. The sequential obstructions that DO arise in preconditioned Krylov solves (Gauss-Seidel smoothers, triangular solves in ILU, sequentially-reordered preconditioners) live inside the concrete preconditioner types and surface in their respective slices (`jacobi-smoother`, `geometric_multigrid`, `ams`, `amg`), not in the composition surface.
+
+This is itself a structural observation worth recording: **the composition framework is L3-trivial precisely because it dispatches through `apply_linop` uniformly.** The variant-absorption that hides AMS/AMG/sparse-direct/Jacobi behind `Solver<OperType>` at L1 simultaneously hides whatever sequential obstructions those preconditioners carry — they are L3-opaque to this slice.
+
+### Build-time vs. run-time separation
+
+The L3 rotation makes a distinction the L2 form left implicit: **`build_ksp_solver` and `set_operators` are build-time composition, not tensor-field operations.** They construct and bind the operator graph; they do not iterate. Only `solve` and `apply_preconditioner` are run-time, and both are already global at L2.
+
+This separation matters for downstream L4 work: the build-time primitives belong in the **constructor / setup phase** of the L4 [`solve-monad`](../../concepts/solve-monad.md) statement, while the run-time primitives belong in the **monadic body**. The L4 form will carry this stratification explicitly.
+
+### What L3 hides relative to L2
+
+The L2 form named six primitives, three build-time and three run-time. The L3 form rotates this by:
+
+1. **Stratifying build-time from run-time**: the L3 form makes explicit that only `apply_linop` and its expansions (including `complex-from-real-lift`) are tensor-field operations; `constructed-operator-factory`, `bind_preconditioner`, `finest-level-unwrap` are build-time scaffolding that doesn't participate in the lift.
+2. **Recording the no-obstruction result**: the framework slice has no `sequential-obstruction` claim because all its run-time primitives are global at L2. This is a first-class negative L3 result per the prompt's L2→L3 guidance: "Where no global form exists ... record an OBSTRUCTION claim. Negative L3 results are first-class output." Here the symmetric positive result — no obstruction — is also first-class.
+3. **Preserving variant absorption**: the four variant axes (krylov-method, pc-type, multigrid, scalar-field) remain absorbed at L3. The L3 form does not re-inspect them; whatever per-element iteration each variant unfolds to is delegated to the relevant slice's L3.
