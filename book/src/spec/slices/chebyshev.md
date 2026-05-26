@@ -309,15 +309,17 @@ type ChebOp<E, S> = {
   order: int;
   pc_it: int;
   scalarInit: S;                              // initial ScalarState at k=0
-  scalars: (k: int, st: S) =>
-    { a0?: E; sd?: E; sr?: E; st: S };        // pure scalar-recurrence step
+  scalars: (k: int, st: S) =>                 // pure scalar-recurrence step;
+    { a0?: E; sd?: E; sr?: E; st: S };        // returns step output + next state
 };
 
 // Sim-state capabilities consumed by apply_linop
-//   x: read-only field
+//   x: read-only field (rhs)
 //   y: read-write field (the accumulator the outer solve monad threads)
 type ChebSim<E> = { x: Read<Field<E>>; y: ReadWrite<Field<E>> };
 ```
+
+The scalar-state stratum is encoded in the `S` parameter: `Kind4 :: ChebOp<E, Unit>`, `Kind1 :: ChebOp<E, { rho_prev: E }>`. The two variants have **distinct closure types**, not a single union — there is no runtime variant tag at apply-time, only a closure dispatch through `scalars`. This is the L4 surface of constructed-operator [variant absorption](../../concepts/variant-absorption.md) at level (c).
 
 The `S` type parameter makes the scalar-recurrence stratum visible at the type level: 4th-kind instantiates `ChebOp<E, Unit>` and 1st-kind instantiates `ChebOp<E, { rho_prev: E }>`, with no runtime discriminator at apply-time — the variant axis is absorbed into the closure type per [`constructed-operators`](../../concepts/constructed-operators.md). The `Read`/`ReadWrite` capability split on `ChebSim` records the L4 mutation discipline (only `y` is written; `x` is read-only) at the type-surface, matching the [`solve-monad`](../../concepts/solve-monad.md) convention.
 
@@ -326,22 +328,26 @@ The `S` type parameter makes the scalar-recurrence stratum visible at the type l
 The outer `pc_it` loop and the inner `k` loop are sequential by L3 obstruction; in L4 they become explicit `forM_` binds in the `Solve` monad. Each step is a pure tensor-field expression on the field algebra; the monad threads the ephemeral `r`, `d` buffers and the scalar-state `rho_prev`.
 
 ```haskell
-apply :: ChebOp E -> Field E -> Bool -> Solve (Field E) (Field E) ()
-apply op x initial_guess = do
+apply :: ChebOp E S -> Solve (ChebSim E) ()
+apply op = do
+  x <- readX
   forM_ [1 .. op.pc_it] $ \it -> do
     -- 1. residual
-    r <- if it == 1 && not initial_guess
-            then do { setZero y; pure (copy x) }
+    r0 <- if it == 1 && not initial_guess
+            then do { writeY zero; pure (copy x) }
             else do
+              y  <- readY
               ay <- applyLinop op.A y
               pure (x .-. ay)             -- r = x - A y
 
     -- 2. initial direction d_0 = alpha_0 * dinv .* r
-    let (c0, st0) = op.scalars 0 unitState
-    let d0 = c0.a0 .* (op.dinv .*. r)
+    let (c0, st0) = op.scalars 0 op.scalarInit
+    let d0 = c0.a0 .* (op.dinv .*. r0)
 
     -- 3. inner k-recurrence (sequential obstruction in k)
-    (rN, dN, stN) <- foldM (innerStep op) (r, d0, st0) [1 .. op.order - 1]
+    --    fold threads (r, d, scalar_state); modifyY accumulates y += d each step
+    (_rN, dN, _stN) <-
+      foldM (innerStep op) (r0, d0, st0) [1 .. op.order - 1]
 
     -- 4. final accumulation
     modifyY (\y -> y .+. dN)
@@ -349,12 +355,14 @@ apply op x initial_guess = do
     innerStep op (r, d, st) k = do
       modifyY (\y -> y .+. d)            -- y += d
       ad <- applyLinop op.A d
-      let r'        = r .-. ad           -- r -= A d
-      let (c, st')  = op.scalars k st
-      let t         = op.dinv .*. r'
-      let d'        = c.sd .* d .+. c.sr .* t
+      let r'       = r .-. ad            -- r -= A d
+      let (c, st') = op.scalars k st
+      let t        = op.dinv .*. r'
+      let d'       = c.sd .* d .+. c.sr .* t
       pure (r', d', st')
 ```
+
+The monadic signature is `Solve (ChebSim E) ()` — the sim-state capability record `ChebSim E = { x: Read<Field E>, y: ReadWrite<Field E> }` is the monad's environment, not an argument. `readX`, `readY`, `writeY`, `modifyY` are the capability-mediated accessors. `initial_guess` is captured as a per-call flag at the outer-monad boundary (not shown — it is part of the `apply` invocation contract from the outer V-cycle); it is **not** a field of `ChebOp` (operator-internal state is invariant across calls).
 
 `modifyY` is the sim-state mutator the outer monad exposes; `applyLinop`, `(.*.)`  (elementwise product), `(.+.)`, `(.-.)`, `(.*)` are the field-algebra primitives carried over from L2/L3.
 
@@ -400,7 +408,11 @@ The `MultTranspose` alias under the symmetry assumption is L4-trivial: `applyTra
 
 - The body's tensor-field expressions ([`tensor-field-lift`](../../concepts/tensor-field-lift.md)) carry through verbatim as field-algebra expressions.
 - Both sequential obstructions are made explicit as monadic binds; nothing pretends to be parallel.
-- Variant absorption stays at level (c): one closure shape, one `apply` body, scalar-generator selected at setup.
+- Variant absorption stays at level (c): one `apply` body, scalar-generator selected at setup. (Strictly two closure *types* — one per variant — but a single procedural shape.)
+
+### Capability-typed sim state
+
+The `ChebSim<E> = { x: Read<Field<E>>; y: ReadWrite<Field<E>> }` shape encodes the L4 mutation discipline at the type surface: `apply` may **read** `x` (but not write it) and **read/write** `y`. This is the [`solve-monad`](../../concepts/solve-monad.md) capability-typing convention adapted for a smoother: the outer multigrid V-cycle constructs the `ChebSim` capability record by handing the per-level `(rhs, correction)` field pair to the smoother and trusting that the `Read`/`ReadWrite` split prevents the smoother from clobbering rhs. The L2/runtime is free to alias buffers if it can prove the `Read` discipline holds (typically: `rhs` is the level's accumulated residual and is distinct storage from `correction`). At L4 the read-only / read-write split is enforced by the capability types, not by runtime convention.
 
 ### Concept references added at L4
 
