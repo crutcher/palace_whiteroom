@@ -168,6 +168,7 @@ graph BT
   divfree --> set_subvector_zero
   divfree --> constructed-operators
   divfree --> variant-absorption
+  divfree --> state-stratification
 ```
 
 ## L2 — algebraic decompositions
