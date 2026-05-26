@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-172 — refinement polynomial_recurrence_step [Ln→Ln] — pass](cycle-172.md)
 - [2026-05-26 cycle-171 — refinement sparse_triangular_solve [Ln→Ln] — pass](cycle-171.md)
 - [2026-05-26 cycle-170 — refinement divfree [Ln→Ln] — pass](cycle-170.md)
 - [2026-05-26 cycle-169 — refinement orthog [Ln→Ln] — pass](cycle-169.md)
