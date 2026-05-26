@@ -193,6 +193,10 @@ graph BT
   arnoldi_step --> constructed-operators
   arnoldi_step --> variant-absorption
   arnoldi_step --> orthogonalization
+  cg --> apply_linop
+  cg --> axpy
+  cg --> axpby
+  cg --> dot
 ```
 
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.
