@@ -258,6 +258,7 @@ graph BT
   arnoldi_step --> gemv_basis
   arnoldi_step --> tensor-field-lift
   arnoldi_step --> sequential-obstruction
+  cg --> iterate_while
 ```
 
 Whole-tensor operations replacing per-element iteration; or `obstruction` results documenting genuine sequentiality.
