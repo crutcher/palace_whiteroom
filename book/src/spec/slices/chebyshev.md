@@ -416,6 +416,25 @@ The `MultTranspose` alias under the symmetry assumption is L4-trivial: `applyTra
 
 The `ChebSim<E> = { x: Read<Field<E>>; y: ReadWrite<Field<E>> }` shape encodes the L4 mutation discipline at the type surface: `apply` may **read** `x` (but not write it) and **read/write** `y`. This is the [`solve-monad`](../../concepts/solve-monad.md) capability-typing convention adapted for a smoother: the outer multigrid V-cycle constructs the `ChebSim` capability record by handing the per-level `(rhs, correction)` field pair to the smoother and trusting that the `Read`/`ReadWrite` split prevents the smoother from clobbering rhs. The L2/runtime is free to alias buffers if it can prove the `Read` discipline holds (typically: `rhs` is the level's accumulated residual and is distinct storage from `correction`). At L4 the read-only / read-write split is enforced by the capability types, not by runtime convention.
 
+### Initial-guess shape: branch vs. derived view
+
+The `apply` body opens with a conditional on `initial_guess`:
+
+```haskell
+r0 <- if it == 1 && not initial_guess
+        then do { writeY zero; pure x }
+        else do
+          y  <- readY
+          ay <- applyLinop op.A y
+          pure (x .-. ay)
+```
+
+This branch is a **degenerate-case absorption**, not a residual variant axis. The `initial_guess = false` path is the algebraic specialization of the `true` path under `y_in = 0` (which makes `A y_in = 0` and `r = x - A y_in = x`); writing `y := 0` is the precondition that *establishes* `y_in = 0` so subsequent sweeps (`it >= 2`) follow the uniform `r = x - A y` path. The branch fires at most once per `apply` call (only when `it == 1 && not initial_guess`), and only on the residual-computation step — the rest of the per-sweep procedure is uniform.
+
+This is the [`derived-view-hoisting`](../../concepts/derived-view-hoisting.md) pattern applied at the *control-flow* boundary rather than the state-shape boundary: a single Boolean parameter `initial_guess: Bool` at the `apply` signature replaces what would otherwise be a constructed-operator variant axis (`ChebOpWithGuess` vs. `ChebOpNoGuess`) carrying a `hasInitialGuess: Bool` field. The branch is fully absorbed at level (a) — the invariant `r = x - A y_post_zeroing` unifies both cases — and at level (b)/(c) the residual axis is the single Boolean argument, with the procedural divergence confined to the one residual step.
+
+The alternative — promoting `initial_guess` to a constructed-operator variant — would inflate the closure-type lattice to four (`Kind4 × {guess, no-guess}` and `Kind1 × {guess, no-guess}`) for no structural benefit: the polynomial-recurrence machinery is genuinely insensitive to `initial_guess`, which only affects the first residual computation. Keeping `initial_guess` as a `Bool` argument preserves the [`variant-absorption`](../../concepts/variant-absorption.md) discipline by *not* over-absorbing — a per-call flag and a constructed-operator variant are different categorical objects, and the former is correct here.
+
 ### Concept references added at L4
 
 - [`solve-monad`](../../concepts/solve-monad.md) — the outer monad threading sim state through `forM_` and `foldM`.
