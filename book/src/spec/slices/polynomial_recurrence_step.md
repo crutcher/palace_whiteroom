@@ -159,9 +159,40 @@ site_eigenvalue_tracking:
   # below the Palace boundary. Not in this spec's scope.
 ```
 
+## L1 ↔ L1 self-tightening — chebyshev-internal partial unification
+
+(Added cycle Ln→Ln refinement, 2026-05-26.) The catalog above lumps the two Chebyshev variants and GMRES together under a single negative result. That framing is correct at the cross-family level — Chebyshev and GMRES do not unify — but it understates a **partial positive result within the Chebyshev family**: the two Chebyshev variants share more than `ApplyOrder0` / `ApplyOrderK`. They share the **entire vector-update half** of each per-step kernel AND the **outer driver shape** (preconditioning-pass × polynomial-degree double loop with residual recompute). Only the **scalar-coefficient generator** diverges between them.
+
+This is the level at which a future refactor could land cleanly:
+
+- A `ChebyshevSmootherBase<ScalarGenerator>` template (or runtime-polymorphic base) hosting the shared `Mult2` driver body.
+- Two concrete `ScalarGenerator` types — one closed-form-in-k (4th-kind), one three-term-recurrence-over-rhop (1st-kind) — supplying the `(α₀, sd_k, sr_k)` triple per step.
+- `ApplyOrder0` / `ApplyOrderK` continue to factor the vector update (already shared).
+
+The refactor is **internally consistent with the variant-absorption methodology** — it absorbs the scalar-generator axis as a parametric variant on a single Chebyshev L1 statement. It would NOT extend to GMRES (Givens stream is a different state shape — see the cross-family table above).
+
+### Why this matters for the slice's framing
+
+The original L1 framing said "three independent scalar-update-sequence sites are named ... explicitly NOT unified." That sentence is true at the **cross-family** level (Chebyshev ↔ GMRES ↔ eigentracking) but elides a **within-family** unification opportunity (Chebyshev-4th ↔ Chebyshev-1st). The honest framing is:
+
+- **Cross-family**: three independent sites, genuinely not unifiable (different scalar-state shapes, different vector-update kernels). Negative result stands. The five-axis table above is the evidence.
+- **Within-Chebyshev**: two sites that agree on **four of five axes** (vector-update shape, persisted-state shape modulo the specific scalar names, termination shape, outer-driver shape), differing only on **scalar-recurrence kind**. A `ChebyshevSmootherBase<ScalarGenerator>` would absorb that single residual axis. Open Question 2 (refactor potential within Chebyshev) is the **same observation** — this self-tightening promotes it from a deferred question to a structurally-documented partial-positive-result alongside the cross-family negative result.
+
+The slice remains a negative-result catalog at the cross-family scope. The within-Chebyshev partial-positive is now visible as a distinct claim with its own falsification surface (see below). This is the [`negative-result-slice`](../../concepts/negative-result-slice.md) methodology working as designed: the catalog frames where unification fails AND where the next refactor would succeed.
+
+### Falsification criterion (within-Chebyshev partial positive)
+
+The within-Chebyshev partial-unification claim is **falsified** (and would need to be downgraded to "no within-family unification either") if any of:
+
+- The vector-update shape diverges between 4th-kind and 1st-kind — e.g., one of them stops using `ApplyOrder0` / `ApplyOrderK` and inlines the elementwise-product accumulator differently.
+- The outer-driver double-loop shape diverges — e.g., one variant grows a nested polynomial-degree-of-degree loop, or changes the residual-recompute branch structure.
+- The termination shape diverges — e.g., 1st-kind grows a dynamic per-step convergence test that 4th-kind lacks.
+
+As of cycle time, none of these hold. The two `Mult2` bodies remain ~95% textually identical, modulo the inline scalar-generator lines and the `ApplyOrder0` argument expression.
+
 ## Open questions
 
-1. **Spec-side unification.** Should the spec introduce a methodology-level concept `polynomial_recurrence_step` that the Chebyshev slice cites, parameterized by `(α₀, sd_k, sr_k)` generators, even though no Palace kernel realizes it? Recording the absorption potential is legitimate per the variant-absorption methodology, but the resulting concept would have NO source citation — only the 2026-05-25 lesson as justification. **Resolution proposed in this cycle: NO** — emit this slice as a negative-result catalog instead, with `polynomial_recurrence_step` as a methodology-tracking term but not a source-anchored primitive. (See lesson appended this cycle.)
+1. **Spec-side unification.** Should the spec introduce a methodology-level concept `polynomial_recurrence_step` that the Chebyshev slice cites, parameterized by `(α₀, sd_k, sr_k)` generators, even though no Palace kernel realizes it? Recording the absorption potential is legitimate per the variant-absorption methodology, but the resulting concept would have NO source citation — only the 2026-05-25 lesson as justification. **Resolution proposed in this cycle: NO at cross-family scope** (Chebyshev ↔ GMRES does not unify); **DEFER at within-Chebyshev scope** (the partial-positive is documented in the self-tightening section above; whether to extract it as a concept page is itself open until a second within-family case appears).
 2. **Refactor potential within Chebyshev.** The two Chebyshev `Mult2` bodies are 95% textually identical. A single parameterized `Mult2(scalar_generator)` would absorb both. Out of scope for this slice; flagged for the Chebyshev slice if/when it is opened in earnest.
 3. **`ApplyOrderK<Transpose=true>` liveness.** The `Transpose` template flag (default `false`) on `ApplyOrderK` is used only in the complex specialization to switch the conjugation pattern. No call site in `chebyshev.cpp` passes `Transpose=true`. Dead-code candidate or future-use stub; out of scope.
 
