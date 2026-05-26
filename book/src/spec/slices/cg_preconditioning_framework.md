@@ -468,3 +468,66 @@ The rotation does NOT add capability state to the run-time `BaseKspSolver<E>`: b
 - **The `Solve E` monad shape.** Still deferred to [`solve-monad`](../../concepts/solve-monad.md). Capability typing on the binding is orthogonal to the monad-shape question.
 
 The v0.1 open question on capability typing is now resolved (positively: brands ARE worth carrying); the other two v0.1 open questions (`Solve E` monad shape, build-time-vs-run-time as a methodology concept) remain open.
+
+## L4 v0.3 — derived-view hoisting for the (op, pc_op) bundle
+
+The L4 v0.1 and v0.2 forms left a structural ambiguity in `OpBinding<E>` that surfaces once the brand discipline of v0.2 is in place: the `pc_op` field as stored on `OpBinding<E>` is the *raw* operator handed to `setOperators`, but the operator actually bound into `pc` via `setOpInternal` is sometimes the `finestLevelUnwrap(pc_op)` result rather than `pc_op` itself. The two values can diverge by one structural level (a `BaseMultigridOperator` wrapper) whenever the model layer provides a multigrid `pc_op` to a non-multigrid `pc`. A consumer that reads `s.binding.pc_op` and a consumer that reads the operator bound inside `s.pc` will see *different* operators in that branch — a hazard that v0.2's brand typing does not catch (both values carry the `PcAssemblyOp<E>` brand).
+
+The L4→L4 rotation here applies the [`derived-view-hoisting`](../../concepts/derived-view-hoisting.md) discipline: the binding state is restructured so that the stored fields are the *primitive* inputs and the *unwrap-adapted* operators are exposed as derived views computed from them. The rotation is within-layer (L4→L4) because the body-phase primitives and the run-time semantics are unchanged; only the schema of the binding state changes.
+
+### Restructured `OpBinding<E>`
+
+```ts
+// Primitive (stored) fields: the operators as the model layer handed them in.
+// These are the only fields modified by `setOperators`; everything else is derived.
+type OpBinding<E> = {
+  op:    TrueOp<E>,            // primitive: as passed by the caller
+  pc_op: PcAssemblyOp<E>,      // primitive: as passed by the caller (may be a multigrid wrapper)
+};
+
+// Derived view: the operator actually bound into `pc` after the structural adapter.
+// Computed from `pc_op` plus the type of `pc`; never stored.
+declare function pcBoundOp<E>(
+  binding: OpBinding<E>,
+  pc:      Pc<E>,
+): PcAssemblyOp<E>;
+// pcBoundOp(b, pc) =
+//   if isMultigridOp(b.pc_op) && !isMultigridSolver(pc) then finestLevelUnwrap(b.pc_op)
+//   else b.pc_op
+```
+
+The derived view is a *function* of the stored binding plus the solver's `pc` field; it is recomputed on demand and never cached. The L0 evidence at `palace/linalg/ksp.cpp:274-296` shows the unwrap happening exactly once per `SetOperators` call, but at L4 the rotation treats this as a derived-view recomputation rather than a one-shot side effect — the value bound into `pc` is whatever `pcBoundOp` would currently return for the binding-and-pc pair, regardless of how it got there.
+
+### `setOperators` after the hoist
+
+```haskell
+setOperators :: TrueOp E -> PcAssemblyOp E -> BaseKspSolver E -> BaseKspSolver E
+setOperators op pc_op s =
+  let binding'   = OpBinding op pc_op                       -- primitives stored verbatim
+      pc_bound   = pcBoundOp binding' s.pc                  -- derived view
+      _          = s.ksp `setOpInternal` op
+      _          = s.pc  `setOpInternal` pc_bound
+  in s { binding = Just binding' }
+```
+
+The structural adapter no longer appears as a branch in `setOperators`'s body; it lives entirely inside the `pcBoundOp` derived view's definition. `setOperators` becomes a record-construction plus two `setOpInternal` calls whose arguments are obtained by primitive read (`op`) and derived-view evaluation (`pc_bound`).
+
+### What this rotation hides
+
+The L4 v0.2 form carried the structural adapter as a branch inside `setOperators`, threading the unwrapped operator through a `pc_op'` intermediate and then storing the *original* `pc_op` in the binding. This produced a subtle invariant the type system did not enforce: the value in `s.binding.pc_op` is the model-layer input, but the value bound into `s.pc` may be one structural level deeper. The v0.3 rotation hides this by:
+
+1. **Eliminating the stored-vs-bound divergence.** There is no longer a `pc_op'` intermediate to disagree with the stored `pc_op`. The binding holds exactly the primitive inputs; everything else is recoverable by derived-view evaluation. See [`derived-view-hoisting`](../../concepts/derived-view-hoisting.md) — derived state is recomputed, not cached.
+2. **Naming `pcBoundOp` as a first-class derived view.** Downstream consumers (debug introspection, model-layer reconciliation checks, future capability-typed solver compositions) can call `pcBoundOp(binding, pc)` to recover the unwrapped operator without re-implementing the unwrap branch. The structural adapter has exactly one definition site.
+3. **Making the v0.2 `finestLevelUnwrap` brand-preservation invariant a derived-view property.** Because `pcBoundOp` is the only path from `(binding, pc)` to the operator bound into `pc`, the `PcAssemblyOp<E>`-endomorphism brand property of `finestLevelUnwrap` is locally checkable inside the derived view's definition — no caller needs to reason about brand preservation across `setOperators`'s body.
+
+### What this rotation does NOT change
+
+- **Run-time semantics.** `setOpInternal` is called with exactly the same operator value as in v0.2; only the route by which that value is computed has been hoisted into a derived view. The C++ source at `palace/linalg/ksp.cpp:274-296` is unchanged in scope.
+- **Brand discipline.** The v0.2 `TrueOp<E>` / `PcAssemblyOp<E>` brands are preserved; the rotation is orthogonal to capability typing.
+- **The `(op, pc_op)` distinctness escape hatch.** `pc_op = op` (with the same underlying operator double-branded) still works; `pcBoundOp` returns the unbranded `op` in that case (no multigrid wrapper to unwrap).
+
+### Connection to the v0.1 open question on build-time-vs-run-time
+
+The derived-view hoist sharpens the v0.1 open question on extracting a [`build-time-run-time-stratification`](../../concepts/build-time-run-time-stratification.md) concept: `pcBoundOp` is a *build-time* derived view (it changes only when `setOperators` is called or the `pc` type changes, neither of which happens in the monadic body), distinct from per-iteration ephemeral derived views (like the GMRES Krylov-basis-from-Hessenberg case in the `gmres` slice's L4). A future methodology concept could classify derived views by recomputation frequency: build-time (this slice), per-solve (model-layer reconciliation), per-iteration (Krylov internals). For now this is a noted parallel, not an extracted concept.
+
+The v0.1 open question on capability typing was resolved by v0.2; the v0.1 open questions on `Solve E` monad shape and build-time-vs-run-time-as-methodology remain open. v0.3 adds no new open questions.
