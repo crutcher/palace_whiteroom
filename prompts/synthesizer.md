@@ -359,6 +359,19 @@ triggers revise with "claim granularity". The Critic gives a ±1
 tolerance because the building-block count is judgmental at the
 boundary.
 
+**Cross-cycle anchor staleness on accumulating documents** (added meta-25
+after cycle 166 file_edit on lessons.md failed because the old_string
+came from prior cycle memory, not current disk state). When `file_edits`
+target accumulating documents touched by every cycle (`lessons.md`,
+`book/src/concepts/dependency-map.md`, `book/src/spec/index.md`, the
+`log/` directory), the `old_string` MUST be drawn from the current
+on-disk content of the file — re-read at plan-emission time, not from
+memory of prior cycles. Single-line `lessons.md` edits are the canonical
+brittleness case. **Prefer append-only operations** (`section_appends`
+with a heading anchor, or the dedicated channels like `lessons` array
+in the integration plan that the integrator handles idempotently) over
+`file_edits` when the goal is to add new content.
+
 **Same-cycle create-then-edit** (added meta-12 LOW item after cycle 48
 file_edit on same-plan-created cg.md failed because anchor was built
 from memory of emission rather than disk content). When a plan creates
@@ -459,6 +472,42 @@ meta-21; producer-side rule strengthened meta-24 after recurrence #5
 overall, #3 specifically on refinement push_kind — cycle 147
 chebyshev refinement narrated L4 prose changes in `log_synthesis`
 but emitted only lessons + rotation_claims).
+
+**Framework-slice anti-pattern** (added meta-25 after cg_preconditioning_framework
+L4→L4 refinements tripped this same shape across cycles 156, 165, 166):
+
+```yaml
+plan:
+  rotation_claims: [{edge: "L4→L4", target: "v0.X capability-typing introduction"}]
+  concept_writes: [{name: "capability-typing", mode: "create", content: "..."}]
+  dependency_map_edges: [...]
+  lessons: [...]
+  # ← NO slice_writes / section_appends / file_edits to the slice file!
+```
+
+The supporting `concept_writes` is NOT the surface for the rotation_claim.
+The claim points at the slice's L4 prose; the prose doesn't exist on disk
+and isn't being added in this plan. A supporting concept page is **necessary
+but not sufficient** — the slice itself must carry the prose the claim
+references.
+
+**Correct form**:
+
+```yaml
+plan:
+  rotation_claims: [{edge: "L4→L4", target: "v0.X capability-typing"}]
+  section_appends:
+    - path: "book/src/spec/slices/cg_preconditioning_framework.md"
+      heading: "## L4 v0.2 — capability-typing brands"
+      content: "OpBinding<E> brand type, setOperators(...) signature, ..."
+  concept_writes: [{name: "capability-typing", mode: "create", content: "..."}]
+```
+
+**Self-check before emit**: If your rotation_claims reference vN.Y where N.Y >
+current on-disk version, your plan MUST include a section_appends or file_edits
+to the slice file carrying the vN.Y prose. Apply
+[`verify-refinement-surface`](../skills/verify-refinement-surface/SKILL.md) for
+the full procedure.
 
 **Worked counter-example (cycle 147, DO NOT DO THIS):**
 
@@ -648,16 +697,21 @@ specifically:
   (it becomes a follow-up). DO NOT guess `old_string` content.
 
 **SIDEWAYS output discipline** (added meta-9 item 3; LOW-item gate added
-meta-11). A SIDEWAYS push compares two slices that already exist on
-disk. **Before emitting the integration plan, verify**: every
-`slice_writes` and `concept_writes` entry for an already-existing
+meta-11; bulk-emission discipline added meta-25). A SIDEWAYS push
+compares two slices that already exist on disk. **Apply
+[`plan-sideways-concept-emission`](../skills/plan-sideways-concept-emission/SKILL.md)
+before emitting**, especially when the plan references ≥3 concepts.
+The skill catches the bulk-concept mode=create-on-existing pattern —
+cycle 161 emitted 10 concept creates on 10 already-existing concepts
+(20 auto-rewrite push-back signals from one plan).
+
+Every `slice_writes` and `concept_writes` entry for an already-existing
 target uses `mode=append-section` (concepts) or routes to
 `section_appends` / `file_edits` (slices) — NEVER `mode=create`. The
 SIDEWAYS precondition guarantees both compared slices exist, and
 shared concepts being consolidated typically exist too. Channel-
 selection rule violations on SIDEWAYS pushes have recurred across
-cycles 22, 25, 40 — this gate exists because rule alone wasn't
-enough. Typical SIDEWAYS shape:
+cycles 22, 25, 40, 79, 90, 161 — six instances. Typical SIDEWAYS shape:
 
 - **`section_appends` on BOTH compared slices** with heading
   `## Cross-slice: comparison with <other>` — surface shared
