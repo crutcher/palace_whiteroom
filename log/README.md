@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-134 — back cg_preconditioning_framework — pass](cycle-134.md)
 - [2026-05-26 cycle-133 — forward cg_preconditioning_framework [L1→L2] — revise](cycle-133.md)
 - [2026-05-26 cycle-132 — refinement polynomial_recurrence_step [Ln→Ln] — pass](cycle-132.md)
 - [2026-05-26 cycle-131 — forward cg [L3→L4] — pass](cycle-131.md)
