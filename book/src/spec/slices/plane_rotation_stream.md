@@ -169,3 +169,123 @@ type-parametrized but the procedure shape is invariant.
   absorbed at L1 as numerically-safe Givens generation; whether L2 should
   unfold the branching as separate primitives or keep the single
   `generate` primitive is deferred to the L2 cycle.
+
+## L2 — primitive composition
+
+### State schema (unchanged from L1)
+
+```
+{
+  cs: T[]              // accumulated cosine scalars, length j+1
+  sn: ScalarType[]     // accumulated sine scalars, length j+1
+  Hj: ScalarType[]     // new Hessenberg column, length j+2
+  s:  ScalarType[]     // rotated RHS, length m+1
+}
+```
+
+The schema carries through unchanged from L1 — see [rotation](../../concepts/rotation.md)
+*Carry-through*. The L1→L2 rotation is a primitive-substitution edge:
+L1's two abstract operations (`generate`, `apply`) bind to named L2
+primitives drawn from the [givens](../../concepts/givens.md) family;
+the stream's append-only structure becomes explicit as indexed buffer
+access.
+
+### Primitives
+
+- **`givens_gen(dx, dy) → (c, s)`** — see
+  [givens](../../concepts/givens.md) primitive `gen`. LAPACK
+  `xLARTG`-equivalent: numerically-safe construction of a 2×2 unitary
+  zeroing the second input. Pure function on two scalars; the
+  overflow-scaling and zero-handling branches are absorbed inside the
+  primitive (they are L2-internal, not L1-visible).
+
+- **`givens_apply(x, y, c, s) → (x', y')`** — see
+  [givens](../../concepts/givens.md) primitive `apply`. Pure 2×2
+  unitary application. Real form: `x' = c·x + s·y; y' = -s·x + c·y`.
+  Complex form: `x' = c·x + s·y; y' = -conj(s)·x + c·y`. The L1 `apply
+  on window` reduces at L2 to `givens_apply` on the two scalars
+  read from / written to indexed buffer slots.
+
+### Procedure (per Arnoldi step `j`)
+
+```
+step_plane_rotation_stream(state, j):
+    # 1. Replay accumulated stream on the new column tail.
+    for k in 0..j-1:
+        (Hj[k], Hj[k+1]) = givens_apply(Hj[k], Hj[k+1], cs[k], sn[k])
+
+    # 2. Extend the stream: generate from the bottom 2-tuple.
+    (cs[j], sn[j]) = givens_gen(Hj[j], Hj[j+1])
+
+    # 3. Apply the fresh rotation to triangularize the column.
+    (Hj[j], Hj[j+1]) = givens_apply(Hj[j], Hj[j+1], cs[j], sn[j])
+
+    # 4. Apply the SAME fresh rotation to the rotated-RHS pair.
+    (s[j], s[j+1]) = givens_apply(s[j], s[j+1], cs[j], sn[j])
+
+    # Residual proxy: |s[j+1]|.
+```
+
+The procedure shape is the L1 shape with each abstract operation
+bound to its named L2 primitive. The buffer indexing made implicit
+by L1's `window` notation becomes explicit at L2 — `(Hj[k], Hj[k+1])`
+is the 2-tuple read/written by the rotation. The mutation pattern
+is legible at L2: `givens_apply` is a pure function returning a
+2-tuple, and assignment back into the indexed slots is the in-place
+update (per the meta-review #8 mutation-pseudocode discipline,
+explicit tuple destructuring makes the read-write dependency
+break visible without a scratch variable — the right-hand side
+reads both inputs before either assignment commits).
+
+### Stream operations as primitive sequences
+
+L1 named two stream operations: **replay-prefix** and **extend**.
+At L2 these unfold to fixed primitive sequences:
+
+- **replay-prefix** on target window `(target, k_lo, k_hi)`:
+  `for k in k_lo..k_hi: (target[k], target[k+1]) = givens_apply(target[k], target[k+1], cs[k], sn[k])`.
+  At step `j` for column `Hj`: `k_lo = 0, k_hi = j-1`.
+
+- **extend** at index `j` on producing window `(Hj, j)`:
+  `(cs[j], sn[j]) = givens_gen(Hj[j], Hj[j+1])` followed by
+  `(Hj[j], Hj[j+1]) = givens_apply(Hj[j], Hj[j+1], cs[j], sn[j])`.
+
+The replay-prefix loop is genuinely sequential along `k` only when
+the target is `Hj` (each `apply` depends on the previous's output
+at position `k+1` becoming position `k`'s input on the next
+iteration via the shared slot — but in fact, after the kth apply,
+slots `k` and `k+1` are final-written; the (k+1)th apply reads
+slots `k+1` and `k+2`, so adjacent applies share slot `k+1`). The
+sequential read-after-write on the shared boundary slot is the
+L3-level obstruction signal — recorded for the L2→L3 edge.
+
+### Cross-target rotation reuse
+
+The L1 cross-target reuse property — one `(cs[j], sn[j])` applied to
+two distinct targets `Hj` and `s` — is preserved at L2 as two
+identical `givens_apply` calls reading the same `(cs[j], sn[j])`
+slots. Both `Hj` (column triangularization) and `s` (residual-proxy
+propagation) are independent targets at L2; the rotation scalars
+are shared read-only state across the two `apply` sites.
+
+### Variant axes
+
+- **Real vs. complex scalar field**: `givens_gen` and `givens_apply`
+  are template-instantiated on `ScalarType`; the L2 primitive sequence
+  is invariant (see [variant-absorption](../../concepts/variant-absorption.md)
+  level (c) — primitive-sequence invariance). Real and complex
+  share the same 5-line L2 procedure with the same named primitive
+  calls.
+- **GMRES vs. FGMRES**: invariant — the rotation stream's L2 form
+  is the same primitive sequence at both call sites. Confirmed by
+  L0's byte-identical-call-site finding.
+
+### Negative result (carried from L0, sharpened at L2)
+
+No fused stream-apply primitive (LAPACK `xLASR`-equivalent) exists
+at L2. The replay-prefix is unfolded as an explicit `for` loop over
+individual `givens_apply` calls. A hypothetical `lasr(Hj, cs[0..j-1],
+sn[0..j-1])` primitive would compress the replay-prefix to one call,
+but Palace does not realize it — the L2 form must spell the loop.
+The loop's sequential dependency structure is the input to the L2→L3
+rotation.

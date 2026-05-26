@@ -32,3 +32,27 @@ In GMRES (`gmres.md`), the inner step's `ls_update_column` is a sequence of `giv
 
 - `GeneratePlaneRotation` — `palace/linalg/iterative.cpp:73–108`.
 - `ApplyPlaneRotation` — `palace/linalg/iterative.cpp:227–241`.
+
+## L2 usage shape
+
+In primitive composition (L2), the two `givens` primitives compose
+as an **incremental QR stream** — see
+[plane_rotation_stream slice](../spec/slices/plane_rotation_stream.md)
+for the canonical use site. The stream pattern is:
+
+- `gen` produces one new rotation scalar pair `(c[j], s[j])` per
+  outer step.
+- `apply` is called once per (step, target) pair: at step `j` it is
+  invoked `j+2` times — `j` times to replay prior rotations on the
+  new column tail, once to triangularize the new column, once to
+  propagate the rotation to the rotated RHS.
+
+The `(c, s)` scalar buffers are append-only and indexed by step.
+The two L2 primitives compose at the call site as the explicit
+loop `for k in 0..j-1: (col[k], col[k+1]) = apply(col[k], col[k+1], c[k], s[k])`;
+no fused stream primitive is invoked.
+
+Cross-target reuse is the structural reason `(c, s)` is stored
+rather than recomputed: each pair is applied to at least two
+independent targets (the producing column and the rotated RHS in
+GMRES) without re-deriving the scalars.

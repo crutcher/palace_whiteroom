@@ -213,6 +213,7 @@ graph BT
   cg --> dot
   divfree --> constructed-operators
   divfree --> variant-absorption
+  plane_rotation_stream --> givens
 ```
 
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.
