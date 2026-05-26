@@ -111,3 +111,109 @@ This slice exposes four orthogonal variant axes; each is absorbed by a construct
 - **`BaseProductOperator` scratch reuse at L2.** The scratch `z` is `mutable` and aliased across calls; whether the L2 expansion of `apply_linop` on a product operator should disclose this explicitly or treat it as transparent is an L2-layer decision.
 - **Multigrid-pc_op-without-GMG-pc.** Is there a model-layer invariant that should forbid this combination, making the `SetOperators` unwrap defensive rather than structural? Or is it an intended compatibility path?
 - **No unit tests.** Coverage is integration-only via `palace/test/examples/`. Acceptable to note as an L0 evidence gap.
+
+## L2 — primitive composition
+
+The L1 procedure unfolds into a composition of named primitives drawn from `concepts/`. The L2 form makes the per-call primitive chain explicit; the variant-axis absorptions identified at L1 (krylov-method, preconditioner-type, multigrid-composition, scalar-field) remain hidden behind the constructed operators and the [`solver-as-operator`](../../concepts/solver-as-operator.md) bundle.
+
+### Primitives in use
+
+- [`apply_linop`](../../concepts/apply_linop.md) — the uniform operator-application primitive `y ← op.Mult(x)`. Used both for the Krylov-method operator `op` and for the preconditioner-as-operator `pc`.
+- [`solver-as-operator`](../../concepts/solver-as-operator.md) — the type-level rotation that lets `pc.Mult(r, z)` be called through the same `apply_linop` shape as `op.Mult(x, y)`. The preconditioner is structurally just another operator at L2.
+- [`constructed-operator-factory`](../../concepts/constructed-operator-factory.md) — the build-time primitive that consumes a config record and FE-space context and yields a typed operator (here, `ksp` and `pc`). The variant axis is consumed at the factory call; the output is uniform.
+- [`complex-from-real-lift`](../../concepts/complex-from-real-lift.md) — the L2 unfolding of `MfemWrapperSolver::Mult` for `OperType = ComplexOperator`: two real solves on `{Re, Im}` with a conjugate-aware sign flip.
+- [`finest-level-unwrap`](../../concepts/finest-level-unwrap.md) — the structural-adapter primitive used in `set_operators` to reconcile a multigrid `pc_op` with a non-multigrid `pc`.
+- [`counter-update`](../../concepts/counter-update.md) — the bookkeeping primitive that accumulates `mult` and `mult_it` counters after a delegated solve.
+
+### Building blocks
+
+#### `build_ksp_solver` — factory composition
+
+```
+build_ksp_solver(linear_config, fespaces, aux_fespaces?):
+    ksp ← constructed_operator_factory(
+              role: "krylov",
+              config: linear_config,
+              variants: {method: linear_config.krylov_solver,
+                         side:   linear_config.pc_side,
+                         orthog: linear_config.gs_orthog,
+                         restart: linear_config.max_size})
+        // returns IterativeSolver<OperType>
+
+    pc  ← constructed_operator_factory(
+              role: "preconditioner",
+              config: linear_config,
+              variants: {type: linear_config.type,
+                         multigrid: fespaces.num_levels > 1,
+                         aux: aux_fespaces,
+                         scalar_field: OperType})
+        // returns Solver<OperType>; internally:
+        //   pc_inner ← <AMS | BoomerAMG | sparse-direct | JacobiSmoother>
+        //   if JACOBI:        pc ← pc_inner                                   (no wrapper)
+        //   elif single-level: pc ← MfemWrapperSolver(pc_inner)               (complex-from-real lift)
+        //   else:              pc ← GeometricMultigridSolver(coarse: MfemWrapperSolver(pc_inner),
+        //                                                    P: fespaces.prolongations,
+        //                                                    G: aux_fespaces.discrete_gradients?)
+
+    ksp.bind_preconditioner(pc)         // one-shot, non-owning pointer install
+    return BaseKspSolver{ksp, pc, counters: {mult: 0, mult_it: 0}}
+```
+
+The two factory calls are independent. Both produce `Solver<OperType>` or `IterativeSolver<OperType>`; the consumer sees uniform types and dispatches through `apply_linop`. The four variant axes (krylov-method, pc-type, multigrid, scalar-field) are consumed inside the factories and not re-inspected downstream.
+
+#### `set_operators` — operator binding with structural adapter
+
+```
+set_operators(solver, op, pc_op):
+    solver.ksp.SetOperator(op)
+    pc_op_for_pc ← if is_multigrid(pc_op) and not is_multigrid_solver(solver.pc)
+                     then finest_level_unwrap(pc_op)
+                     else pc_op
+    solver.pc.SetOperator(pc_op_for_pc)
+```
+
+The `finest_level_unwrap` is the only L2 primitive in this slice that exists purely to bridge an asymmetry between the two factory outputs (multigrid `pc_op` provided by the model layer vs. single-level `pc` selected by the config). It is named here so downstream slices can refer to it by name rather than re-deriving the asymmetry.
+
+#### `solve` — delegated iteration with counter update
+
+```
+solve(solver, x_initial, b):
+    x_out ← apply_linop(solver.ksp, b)            // ksp.Mult(x_initial, b) under solver-as-operator
+    counter_update(solver.counters.mult,    +1)
+    counter_update(solver.counters.mult_it, +solver.ksp.GetNumIterations())
+    return x_out
+```
+
+The per-method iteration body (CG / GMRES / FGMRES) is hidden inside `apply_linop(solver.ksp, b)` — the krylov-method variant axis has been fully absorbed by `build_ksp_solver`'s factory call. The L2 form of the per-method iteration lives in the `cg`, `gmres`, and `fgmres` slices respectively.
+
+#### `apply_preconditioner` (internal, called by the per-method iterations)
+
+```
+apply_preconditioner(solver, r, z):
+    // Called inside the Krylov iteration whenever it needs B*r. Funnelled through a single site.
+    z ← apply_linop(solver.pc, r)
+    // For complex OperType + non-multigrid pc, this expands to:
+    //   complex_from_real_lift(pc.inner_real_solver, r.Re → z.Re,
+    //                                                r.Im → z.Im (with sign flip on Im))
+    // For multigrid pc, this expands to the V-cycle body.
+    // The caller sees only `z ← apply_linop(pc, r)`.
+```
+
+This is the L2 primitive site at which the LEFT vs RIGHT preconditioner-side axis is consumed (per the L0 evidence in `iterative.cpp` `InitialResidual`). The Krylov-method slices' L2 forms reference `apply_preconditioner(solver, r, z)` by name without re-inspecting the variant.
+
+### Mutation pattern
+
+The L2 primitives in this slice are pure-functional at the L2 surface:
+
+- `apply_linop(op, x)` is treated as `y ← op.Mult(x)` returning a fresh result; the L0 evidence shows internal scratch (`BaseProductOperator::Mult`'s `mutable z`) which is an L2-transparent implementation detail of the operator, not of the caller.
+- `counter_update` is in-place by signature; the `+= 1` and `+= n` mutation pattern is implicit in the primitive's name.
+- `bind_preconditioner` installs a non-owning pointer; the `pc` lifetime is owned by `BaseKspSolver`, not by `ksp`. The L2 form treats this as a one-shot side-effecting bind that establishes a shared-reference invariant for the lifetime of the solver.
+
+### What L2 hides relative to L1
+
+The L1 procedure named `configure_krylov` and `configure_preconditioner` as opaque factory calls. The L2 form rotates this by:
+
+1. **Naming the factory primitive**: both calls are instances of [`constructed-operator-factory`](../../concepts/constructed-operator-factory.md), which is shared with the per-method-slice L2 forms. The L1 form had one factory call per role; the L2 form has one factory primitive with role + variants parameters.
+2. **Naming the bind primitive**: `ksp.SetPreconditioner(pc)` is rotated to `ksp.bind_preconditioner(pc)`, exposing it as a one-shot side-effecting primitive distinct from per-iteration `apply_linop` calls.
+3. **Naming the unwrap primitive**: the L1 `if pc_op is multigrid_op and pc is not GMG` branch is rotated to a named [`finest-level-unwrap`](../../concepts/finest-level-unwrap.md) primitive, making the structural adapter a citable name for downstream slices.
+4. **Exposing the apply-funnel**: the L1 form spoke only of `solve`; the L2 form discloses that the per-iteration preconditioner application (called from inside the Krylov-method L2 forms) is uniformly `apply_linop(solver.pc, r)`. The LEFT/RIGHT side axis is consumed *at the call site inside the iteration*, not at the bind.

@@ -219,6 +219,22 @@ graph BT
   divfree --> constructed-operators
   divfree --> variant-absorption
   plane_rotation_stream --> givens
+  solver-as-operator --> apply_linop
+  solver-as-operator --> rotation
+  constructed-operator-factory --> constructed-operators
+  constructed-operator-factory --> variant-absorption
+  constructed-operator-factory --> solver-as-operator
+  complex-from-real-lift --> apply_linop
+  complex-from-real-lift --> scal
+  complex-from-real-lift --> constructed-operators
+  finest-level-unwrap --> constructed-operator-factory
+  counter-update --> state-stratification
+  cg_preconditioning_framework --> apply_linop
+  cg_preconditioning_framework --> solver-as-operator
+  cg_preconditioning_framework --> constructed-operator-factory
+  cg_preconditioning_framework --> complex-from-real-lift
+  cg_preconditioning_framework --> finest-level-unwrap
+  cg_preconditioning_framework --> counter-update
 ```
 
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.

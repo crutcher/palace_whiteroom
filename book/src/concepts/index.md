@@ -64,12 +64,16 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [apply_linop](./apply_linop.md) | primitive |
 | [axpy](./axpy.md) | primitive |
 | [chebyshev-iteration](./chebyshev-iteration.md) | algorithm |
+| [complex-from-real-lift](./complex-from-real-lift.md) | primitive |
 | [complex_from_real_lift](./complex_from_real_lift.md) | primitive |
+| [constructed-operator-factory](./constructed-operator-factory.md) | layer-pattern |
 | [constructed-operators](./constructed-operators.md) | methodology |
 | [convergence-test](./convergence-test.md) | auxiliary |
+| [counter-update](./counter-update.md) | primitive |
 | [derived-view-hoisting](./derived-view-hoisting.md) | layer-pattern |
 | [dot](./dot.md) | primitive |
 | [elementwise-product](./elementwise-product.md) | primitive |
+| [finest-level-unwrap](./finest-level-unwrap.md) | primitive |
 | [gemv_basis](./gemv_basis.md) | primitive |
 | [givens](./givens.md) | primitive |
 | [gmres](./gmres.md) | algorithm |
@@ -83,6 +87,7 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [sequential-obstruction](./sequential-obstruction.md) | layer-pattern |
 | [set_subvector_zero](./set_subvector_zero.md) | primitive |
 | [solve-monad](./solve-monad.md) | layer-pattern |
+| [solver-as-operator](./solver-as-operator.md) | layer-pattern |
 | [solver_as_operator](./solver_as_operator.md) | primitive |
 | [state-stratification](./state-stratification.md) | layer-pattern |
 | [tensor-field-lift](./tensor-field-lift.md) | layer-pattern |

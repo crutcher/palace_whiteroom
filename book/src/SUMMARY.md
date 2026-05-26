@@ -52,6 +52,11 @@
   - [two_operator_split](./concepts/two_operator_split.md)
   - [complex_from_real_lift](./concepts/complex_from_real_lift.md)
   - [negative-result-slice](./concepts/negative-result-slice.md)
+  - [solver-as-operator](./concepts/solver-as-operator.md)
+  - [constructed-operator-factory](./concepts/constructed-operator-factory.md)
+  - [complex-from-real-lift](./concepts/complex-from-real-lift.md)
+  - [finest-level-unwrap](./concepts/finest-level-unwrap.md)
+  - [counter-update](./concepts/counter-update.md)
 
 # Design Artifacts
 
