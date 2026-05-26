@@ -44,3 +44,16 @@ If a later cycle finds that the source HAS unified the sites (e.g., a refactor l
 ## Examples in this spec
 
 - [`polynomial_recurrence_step`](../spec/slices/polynomial_recurrence_step.md) — three independent scalar-update sequences (Chebyshev-4th-kind, Chebyshev-1st-kind, GMRES Givens stream) plus one out-of-scope branch (eigenvalue tracking via SLEPc/ARPACK). No Palace-level unification.
+
+## Falsification criterion (required structural element)
+
+A negative-result slice asserts the **absence** of a unification, kernel, or shared abstraction. Absence claims are only auditable if they specify what evidence would overturn them. Therefore every negative-result slice MUST include a `### Falsification criterion` subsection within its L1 (or wherever the negative claim is stated) enumerating:
+
+1. **Specific source-side events** that would falsify the absence claim. Each should name (a) a symbol, file, or namespace location and (b) the property that would have to hold there.
+2. **Evidence bar**: what concrete citation (file:line range, symbol name, call graph) a future cycle would have to produce to convert the negative result to a positive unification.
+
+Absence-of-X is not falsified by spec-side desire for symmetry, by methodology arguments that X *could* exist, or by textbook treatments that *suggest* X. Only by an actual source-side citation matching the falsification criterion.
+
+This is symmetric to how a [`sequential-obstruction`](./sequential-obstruction.md) names what would have to hold for the obstruction to lift (a global form for the genuinely-sequential algorithm), and to how an OBSTRUCTION claim in a `rotation_claim` names the specific reason the rotation does not proceed. A negative-result slice without a falsification criterion is structurally indistinguishable from a slice that just hasn't found the unification yet.
+
+The falsification criterion also serves as **forward-anchor** for future cycles: a Planner doing a refinement push on a negative-result slice consults the criterion to decide whether new source evidence has accumulated. The polynomial_recurrence_step slice (2026-05-26) is the canonical worked example.

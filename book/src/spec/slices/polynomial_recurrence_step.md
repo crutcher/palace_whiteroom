@@ -63,6 +63,33 @@ Whatever scalar-update sequence runs inside SLEPc (Krylov-Schur / Lanczos / LOBP
 
 **There is no `polynomial_recurrence_step` kernel in Palace.** The L1 form for this slice is a **distinction catalog**: three independent scalar-update-sequence sites are named, with their state schemas, and explicitly NOT unified.
 
+### Falsification criterion
+
+This slice is a negative result. The L1 catalog is **falsified** (and should be rewritten as a positive unification) if any of the following become true in the Palace source:
+
+1. A function or class named `PolynomialRecurrenceStep`, `PolynomialSmoother`, or any common base class hosting the Chebyshev outer-driver double-loop appears anywhere in `palace/linalg/`.
+2. A scalar-coefficient generator factored OUT of `ChebyshevSmoother::Mult2` and `ChebyshevSmoother1stKind::Mult2` (e.g., a functor or callable producing `(sd_k, sr_k)` from per-variant state) becomes visible at file or namespace scope in `chebyshev.cpp` or a sibling header.
+3. `ApplyOrder0` / `ApplyOrderK` are promoted out of the anonymous namespace and reused outside `chebyshev.cpp` — particularly if reused from `iterative.cpp` (GMRES) or any eigensolver site.
+4. A GMRES variant or rewrite re-expresses the Givens-stream inner loop in terms of a polynomial-recurrence parameterization, or shares scalar-state machinery with Chebyshev.
+
+If none of (1)-(4) hold on re-examination, the catalog stands. Any cycle proposing to convert this slice from negative-result to positive-unification MUST cite one of (1)-(4) with a specific line range; absence-of-shared-kernel is not falsified by spec-side desire for symmetry.
+
+### Distinguishing features (why the three sites do not unify)
+
+The four sites differ on FIVE orthogonal axes; sharing any single axis would not be sufficient to unify them. The textbook meta-shape collapses these axes; the source does not.
+
+| Axis | Chebyshev-4th | Chebyshev-1st | GMRES-Givens | Eigentracking |
+|---|---|---|---|---|
+| Scalar-state cardinality (per step) | 1 (loop index k) | 2 (k, rhop) | O(j) (cs/sn/s arrays of growing length) | unknown (below boundary) |
+| Scalar recurrence kind | closed-form in k | three-term over rhop | unitary 2×2 stream | unknown |
+| Persisted derived state | lambda_max | (theta, delta) | none (rebuilt per restart) | unknown |
+| Vector-update shape | fused elementwise-product accumulator | fused elementwise-product accumulator | Hessenberg-column rotation + RHS-vector rotation | unknown |
+| Termination shape | fixed degree (order-1) | fixed degree (order-1) | dynamic on \|s[j+1]\| (convergence test) | unknown |
+
+The Chebyshev variants agree on the vector-update shape (column 4) — this is what `ApplyOrder0` / `ApplyOrderK` factor — but disagree on the scalar-recurrence kind (column 2) and persisted state (column 3). That is precisely why the source factors the vector half but not the scalar half: the shared substrate ends at the vector update.
+
+GMRES disagrees on every axis. Eigentracking is unknown by construction (Palace-boundary obstruction).
+
 ### Catalog
 
 | Site | Class / function | Scalar state | Per-step scalar update | Vector update |
