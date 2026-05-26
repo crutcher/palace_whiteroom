@@ -142,3 +142,64 @@ A common variant family has the shape *N members share threaded-state structure 
 **What's NOT this pattern**: differing *collective shape* / *cost annotation* across variants (e.g., CGS2 has 2× the dots-and-reductions of CGS) does NOT trigger structurally-distinct-variant treatment. That is cost annotation, captured per the `## L2` numerical-claim register. Per cycle 23 lesson: "cost annotation is not absorption failure."
 
 Cross-reference: [`constructed-operators`](./constructed-operators.md) *Limits of constructed-operator absorption*.
+
+## Concept: variant absorption
+
+The discipline of handling orthogonal variation axes at L1 such that
+the form is genuinely uniform across variant values, not just
+cosmetically unified.
+
+A slice often exposes multiple variant axes at L0 — enum-valued flags,
+template parameters, runtime configuration, optional features. The
+question at L1 is: at what level is each axis absorbed?
+
+## Three levels of absorption
+
+An L1 form absorbs a variant axis at three nested levels:
+
+- **(a) Invariant-level**: the mathematical statement unifies. A single
+  formula or recurrence covers all variant values, perhaps with the
+  variant appearing as a parameter (e.g., `M⁻¹` with `M = I` as a
+  legitimate special case).
+- **(b) Procedural**: the L1 procedure mentions the variant parameter
+  at most once (the binding or dispatch site) and never re-inspects
+  it. Downstream sites use the bound result, not the variant.
+- **(c) Primitive-sequence**: the L_{n+1} primitive chain is the same
+  shape across variant values. The number, order, and identity of
+  primitive calls do not depend on the variant.
+
+All three together constitute full absorption. Partial absorption is
+acceptable only when explicitly disclosed: list the residual axes in
+the L1 form so downstream readers know where divergence happens.
+
+## Resolution paths
+
+Four ways to handle a variant axis at L1:
+
+1. **Parametric**: the variant is a parameter of the main L1
+   statement; downstream sites do not re-inspect it. Achieves all
+   three levels when the variant is a clean scalar/option flowing
+   through the recurrence.
+2. **Constructed-operator**: construct an operator at solve start that
+   internalizes the variant; the per-step procedure calls
+   `op.apply(...)` uniformly. See
+   [constructed-operators](./constructed-operators.md). Achieves (b)
+   and (c) when (a) is awkward.
+3. **Scope-out**: the variant is explicitly out of scope for this
+   slice and named in "Open questions" or a separate slice.
+4. **Residual-axis**: partial absorption with explicit disclosure of
+   the residual divergence (the primitive sequence diverges at named
+   sites). Honest about not fully unifying.
+
+## Anti-pattern
+
+Silent partial absorption — the L1 form looks uniform but the L2
+unfolding reveals branching the L1 prose did not disclose. Critic
+check #9 flags this.
+
+## Slices that use this methodology
+
+- [cg](../spec/slices/cg.md) — three axes all absorbed parametrically.
+- [gmres](../spec/slices/gmres.md) — six axes; side absorbed via
+  constructed-operator, others parametric or via primitive-contract
+  (orthogonalization variant).

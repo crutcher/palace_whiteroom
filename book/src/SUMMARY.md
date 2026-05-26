@@ -54,6 +54,7 @@
   - [givens_generate](./concepts/givens_generate.md)
   - [givens_apply](./concepts/givens_apply.md)
   - [plane-rotation-stream](./concepts/plane-rotation-stream.md)
+  - [apply_BA](./concepts/apply_BA.md)
 
 # Design Artifacts
 - [Index](./design/index.md)

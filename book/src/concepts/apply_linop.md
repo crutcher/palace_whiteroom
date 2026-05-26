@@ -75,3 +75,44 @@ product `Gᵀ M G`), L3 may either keep the composition explicit
 (`apply_linop(Gᵀ, apply_linop(M, apply_linop(G, x)))`) or fuse it into
 a single operator-valued node, depending on whether the slice cares
 about the intermediate fields.
+
+## Concept: `apply_linop`
+
+Apply a linear operator to a vector: `y ← A x` (or `y ← A x + β y` in
+the accumulating form). The fundamental Krylov primitive.
+
+## Background
+
+The matrix-free matrix-vector product — the abstraction over BLAS-2
+`gemv` and beyond. In Palace, linear operators are not necessarily
+stored as matrices; an `Operator` exposes a `Mult(x, y)` virtual call
+that may perform a sparse SpMV, an FE element-wise assemble-on-the-fly,
+or a composition of nested operators. The `apply_linop` role is the
+client-side view: a black-box `y ← A x` whose internals are the
+operator implementor's concern.
+
+## Signature (canonical)
+
+```
+apply_linop(A, x) → y       // pure functional form, y fresh
+apply_linop(A, x, y)        // mutating: y ← A x (overwrites y)
+```
+
+Palace's C++ form is `A.Mult(x, y)` (mutating, overwrites `y`).
+
+## Variant axes
+
+- **Scalar field**: real (`Operator`) vs. complex (`ComplexOperator`);
+  the operator type carries the scalar field, so the primitive contract
+  is parametric.
+- **Composition**: `M⁻¹ ∘ A` (preconditioned operator) is itself an
+  `apply_linop` whose internals call two underlying applies — visible
+  at L2 when needed, transparent at L1.
+
+## Slices that use this primitive
+
+- [cg](../spec/slices/cg.md) — single application per inner iteration
+  (`A p`).
+- [gmres](../spec/slices/gmres.md) — single application per Arnoldi
+  step (`A v_j` or `M⁻¹ A v_j` via the constructed-operator
+  `apply_BA`).

@@ -61,6 +61,7 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 
 | Concept | Kind |
 |---------|------|
+| [apply_BA](./apply_BA.md) | primitive |
 | [apply_linop](./apply_linop.md) | primitive |
 | [axpy](./axpy.md) | primitive |
 | [build-time-vs-run-time-stratification](./build-time-vs-run-time-stratification.md) | layer-pattern |

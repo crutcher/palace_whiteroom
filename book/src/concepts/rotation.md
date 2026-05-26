@@ -154,3 +154,71 @@ The general rule: **when a "variant" is two materially-different callable surfac
 Renaming-shaped claims pass the gate when the cycle ALSO rotates other parts of the slice — state hiding on the outer loop, coarser substitution on a different primitive, threaded-state compression on the overall state bundle. Explicitly mark renaming claims as carry-through with criterion-(1)/(2)/(3) at the slice level; the gate fires only when NO claim in the cycle achieves an actual rotation.
 
 The Synthesizer applies this test pre-emit (per `prompts/synthesizer.md` Rotation self-check); the Critic verifies via check #8.
+
+## Concept: rotation
+
+A *rotation* is the mapping from L_n to L_{n+1} for one slice's content
+— the central methodology unit of the whiteroom protocol. Each rotation
+is recorded as a `rotation_claim` (schemas/rotation_claim.json) carrying
+from-form, to-form, justification kind, and substantive justification.
+
+## Rotation-quality criteria
+
+A rotation is *real* (as opposed to renaming) when it satisfies at least
+one of:
+
+- **(a) State hiding**: the L_n form mentions state that the L_{n+1}
+  form does not. The hidden state is named in the rotation_claim's
+  justification.
+- **(b) Coarser substitution**: the L_n form describes a specific
+  algorithm; the L_{n+1} form describes an interface that admits the
+  L_n algorithm as one of multiple implementations. A reader could
+  substitute a different algorithm at L_{n+1} and still satisfy the
+  L_n contract.
+- **(c) Threaded-state compression**: state that L_n carries explicitly
+  through every step is bundled or abstracted at L_{n+1}, reducing the
+  number of named variables the procedure manipulates.
+
+## Renaming vs. coarser substitution
+
+A classic anti-pattern: L_n says `x ← x + α·p`; L_{n+1} says
+`axpy(α, p, x)`. The L_{n+1} primitive name is just a rename of the
+L_n operation — there is only one operation; no algorithmic
+substitution is possible. This is renaming, not rotation. The
+pre-emit gate (see synthesizer.md *Rotation self-check*): "Could a
+reader replace the L_{n+1} primitive with a DIFFERENT algorithm and
+still satisfy the L_n contract?" If no, the rotation is renaming.
+
+Renaming is acceptable as carry-through within a cycle that ALSO
+performs genuine rotations elsewhere; see *Carry-through* below.
+
+## Carry-through
+
+Not every concept must rotate at every layer. A slice may carry
+certain primitives unchanged from L_n to L_{n+1} when they are
+already idiomatic at L_{n+1} — the rule is "something has to move",
+not "everything has to move". Carry-through is honest when the
+rotation_claim's justification explicitly identifies which concepts
+carry through and why they are already at the right level.
+
+## Justification kinds
+
+Per `schemas/rotation_claim.json`:
+
+- `algebraic`: an algebraic identity makes the rotation manifest
+  (associativity, distributivity, linearity).
+- `structural`: a structural property of the primitives makes the
+  rotation work (commutativity of operator application with
+  scalar-vector ops; locality of element-wise ops).
+- `reduction_chain`: a sequence of small algebraic / structural steps,
+  each named.
+- `empirical_match`: an executed test confirms the to_form matches
+  the from_form numerically. Preferred when available.
+- `obstruction`: the rotation does NOT go through; the claim records
+  the reason as a first-class result (e.g., L2→L3 negative results
+  for genuinely sequential algorithms).
+
+## Slices that use this methodology
+
+All slices; rotation is the universal vocabulary for layer-to-layer
+mapping.

@@ -45,6 +45,7 @@ graph BT
   build-time-vs-run-time-stratification --> sequential-obstruction
   first-iteration-unrolling --> rotation
   first-iteration-unrolling --> derived-view-hoisting
+  apply_BA --> constructed-operators
 ```
 
 - [`rotation`](./rotation.md) — root methodology concept. Defines what counts as a genuine rotation (state hiding / coarser substitution / threaded-state compression) vs. a renaming. Codified meta-review #1; expanded with carry-through clause meta-review #2.
@@ -178,6 +179,11 @@ graph BT
   plane-rotation-stream --> givens_generate
   plane-rotation-stream --> givens_apply
   orthog --> plane-rotation-stream
+  cg --> nrm2
+  cg --> scal
+  gmres --> nrm2
+  gmres --> scal
+  gmres --> apply_BA
 ```
 
 ## L2 — algebraic decompositions

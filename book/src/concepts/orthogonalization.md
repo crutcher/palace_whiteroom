@@ -22,3 +22,41 @@ The primitive *set* — `dot`, `axpy`, `nrm2`, `scal` — is the same across all
 
 - Palace `OrthogonalizeColumnMGS / CGS / CGS2` family, `palace/linalg/orthog.{hpp,cpp}` (separate slice).
 - Dispatch site: `OrthogonalizeIteration(gs_orthog, V, w, Hj, j)`, `palace/linalg/iterative.cpp:307–326`.
+
+## Concept: `orthogonalization` (Gram-Schmidt variants)
+
+Given an orthonormal basis `V_j = [v_0 … v_{j-1}]` and a new vector
+`w`, produce coefficients `h_{0..j-1}` and the orthogonal residual
+`w' = w − Σ h_i v_i` such that `⟨w', v_i⟩ = 0` for all `i < j`.
+
+## Background
+
+The Gram-Schmidt orthogonalization step inside Arnoldi-style Krylov
+basis construction. Two dominant variants (Saad 2003 §6.3.2):
+
+- **MGS (modified Gram-Schmidt)**: sequential subtraction — for each
+  `i = 0..j-1`: `h_i ← ⟨v_i, w⟩; w ← w − h_i v_i`. Better numerical
+  stability than CGS but sequential (`j` synchronization points).
+- **CGS (classical Gram-Schmidt)**: parallel — compute all `h_i ← ⟨v_i,
+  w⟩` in one pass, then `w ← w − Σ h_i v_i`. Faster (one global reduce,
+  one batched update) but loses orthogonality in finite precision.
+- **CGS2 (CGS with reorthogonalization)**: CGS applied twice; the
+  second pass recovers orthogonality. Palace uses CGS2 by default for
+  parallel scalability while preserving the stability of MGS.
+
+The variant is exposed as a runtime enum (`OrthogType`) on the GMRES
+solver.
+
+## Signature (canonical)
+
+```
+orthogonalize(variant, V_basis, w) → (h_coeffs, w')
+  // w may be mutated; h_coeffs is a length-j vector
+```
+
+## Slices that use this primitive
+
+- [gmres](../spec/slices/gmres.md) — orthogonalizing the new Arnoldi
+  vector against the existing basis. The variant axis is absorbed at
+  this primitive's contract: per-step procedure dispatches once on the
+  variant and never re-inspects.

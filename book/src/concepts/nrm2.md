@@ -15,3 +15,26 @@ Used for basis-vector normalisation (`V[j+1] ← w / ‖w‖₂`), for the initi
 ## Palace mapping
 
 - `linalg::Norml2` in `palace/linalg/vector.{hpp,cpp}`.
+
+## Concept: `nrm2`
+
+Euclidean norm of a vector: `‖x‖₂ = √⟨x, x⟩`.
+
+## Background
+
+BLAS-1 `dnrm2` / `dznrm2`. In Palace, `Vector::Norml2` returns a real
+scalar (the complex case computes `√Σ |x_k|²`). Used pervasively for
+convergence tests against absolute/relative tolerances on `‖b‖`.
+
+## Signature (canonical)
+
+```
+nrm2(x) → ℝ
+```
+
+## Slices that use this primitive
+
+- [cg](../spec/slices/cg.md) — residual norm `‖r‖` per iteration.
+- [gmres](../spec/slices/gmres.md) — initial residual norm `β`, Arnoldi
+  sub-diagonal `H[j+1, j] = ‖w‖`, and the incremental `|s[j+1]|`
+  residual norm.
