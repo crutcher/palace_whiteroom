@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T17:35:23Z
 scope: L0 bootstrap bundle 4 (3 chapters)
 status: integrated
 integrated_at: 2026-05-27T18:35:15Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e4929aa
 integration_notes: cycle-008 pass 3 (wave-1). 3 new L0 chapters (eigensolver-wrapper, par-types-single-rank-reading, linalg-operator-file); L0 count 11->14. Closed cycle-007 OQ eigensolver-wrapper-l0-bundle-4-candidate; opened 3 follow-up OQs (eigsolve-l1-operator-rough-in-candidate, matrix-weighted-norm-and-bilinear-form-l1-rough-ins, l0-bundle-5-candidates).
 ---
 

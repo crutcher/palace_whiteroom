@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T173217Z
 scope: L4>L3 theme re-anchor — krylov-step-typed-wrapper-dissolution (close §3.8 trajectory-collapse gap)
 status: integrated
 integrated_at: 2026-05-27T18:35:15Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e4929aa
 integration_notes: cycle-008 pass 2 (wave-1; PRIORITY). Promoted L4>L3 typed-wrapper-dissolution rough-in -> firm with §3.8-preamble + two-form sketch + Condition 5 + 10-citation verified_against block. Closed cycle-006 OQ iterate-while-l3-rendering-trajectory-accumulation-gap (first 2-cycle-carried OQ closed via lifter-driven artifact landing). Downstream L3>L2 krylov-step-body-identity auto-eligible for cycle-009 mechanical promotion via status-inheritance.
 inputs:
   - book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md (cycle-006 wave-2 rough-in)

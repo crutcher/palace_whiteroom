@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T18:15:48Z
 scope: L4 intro refresh post 3-firm-cohort + Vocabulary-cohort subsection
 status: integrated
 integrated_at: 2026-05-27T18:35:15Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e4929aa
 integration_notes: cycle-008 pass 7 (wave-2; FINAL). Semantics-overlay placeholder replaced with grounded 4-motif overlay + new Vocabulary cohort subsection (template adapted — middle slot uses L4>L3 cross-layer themes) + dep-map widened 4->5 columns with Lowers to column split. Closed cycle-006 OQ l4-layer-intro-refresh-unblocked-by-first-firm-row (2-cycle-carried).
 closes: l4-layer-intro-refresh-unblocked-by-first-firm-row
 ---

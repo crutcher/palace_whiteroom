@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T181512Z
 scope: L1 intro refresh after ksp-solve-mutation-rotation L1>L0 theme landing (cycle-008)
 status: integrated
 integrated_at: 2026-05-27T18:35:15Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e4929aa
 integration_notes: cycle-008 pass 6 (wave-2). Polish refresh; motif 4 closing sentence pair appended + dep-map ksp_solve row Status-cell parenthetical (first cross-link in Status column) + Working Notes bullet. Closed cycle-007 OQ l1-intro-refresh-after-constructed-operator-gate.
 ---
 

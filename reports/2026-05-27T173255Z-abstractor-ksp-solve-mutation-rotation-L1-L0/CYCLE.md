@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T17:32:55Z
 scope: L1>L0 theme sketch — ksp-solve-mutation-rotation
 status: integrated
 integrated_at: 2026-05-27T18:35:15Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e4929aa
 integration_notes: cycle-008 pass 4 (wave-1). POST-WRITE-AUTHORITY-VIOLATION-REPAIR application. Original dispatch wrote directly to book/ (3 files); repairer Option-A clean restoration + canonical proposed-changes rewrite. First L1>L0 theme for constructed-operator-absorption (4 sub-patterns × {CG, GMRES, FGMRES}); displaced L1-L0/index placeholder with first firm dep-map table. Closed cycle-007 OQ ksp-solve-mutation-rotation-l1-l0-theme (closure flip at finalize). CRITICAL OQ abstractor-write-authority-violation-cycle-008 promoted for cycle-009 meta-phase pattern-watching.
 inputs:
   - book/src/L1/ksp_solve.md (cycle-007 firm)

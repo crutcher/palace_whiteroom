@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T17:33:00Z
 scope: L0 cross-cut — stale "Forward-declared" italic notes in 5 reference chapters (post-cycle-007 thinning sweep housekeeping)
 status: integrated
 integrated_at: 2026-05-27T18:35:15Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e4929aa
 integration_notes: cycle-008 pass 1 (wave-1). Housekeeping cleanup; 5 L0 files edited (stale forward-decl notes removed + 1 backlink added). Zero gate hits. No new OQs.
 ---
 

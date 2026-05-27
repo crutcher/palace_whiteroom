@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T180000Z
 scope: L4>L3 theme sketch — gmres-inner-loop-iterate-while-migration (rough-in)
 status: integrated
 integrated_at: 2026-05-27T18:35:15Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e4929aa
 integration_notes: cycle-008 pass 5 (wave-1). New L4>L3 rough-in theme (~213 lines); LHS migrated L4 form with witness-into-carry hoist via speculative check_stop_into_carry helper, RHS L3 form, 4-axis variant pass-through (pc_side, gs_orthog, flexible, max_dim). Status answered-by-rough-in-theme on cycle-007 OQ gmres-inner-loop-iterate-while-migration; firming requires upstream gmres.md §L4 self-rotation (cycle-009+ candidate).
 inputs:
   - book/src/L4/iterate-while.md (cycle-007 firm)
