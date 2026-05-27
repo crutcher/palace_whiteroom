@@ -55,10 +55,11 @@ inputs:
  - **Holds on operators?**: per L_{n+1} operator signature, does the law actually hold?]
 
 ## Proposed changes
-[Per-theme `verified_against:` metadata addition:
+[Per-theme `verified_against:` metadata addition. The block MUST be emitted as a fenced ` ```yaml ... ``` ` code block inside the theme file (see Discipline):
 
 ```edit:book/src/L<n+1>-L<n>/<theme-slug>.md
-[append or update metadata]
+[append at end of file]
+~~~yaml
 verified_against:
   - citation: <file:lines>
     verdict: supports
@@ -67,7 +68,10 @@ verified_against:
     verdict: partially-supports
     audited_at: <timestamp>
     note: <one-line>
+~~~
 ```
+
+(The `~~~` triple-tilde in this template represents the triple-backtick fence delimiter in the actual file. Use triple-backticks in the actual emitted edit; we show tildes here so the agent-prompt's own code-fence-aware parsers don't get confused.)
 
 If the audit found contradictions, propose specific edits to fix the theme.]
 
@@ -84,6 +88,7 @@ If the audit found contradictions, propose specific edits to fix the theme.]
 - You don't change the theme's content unless the audit found a contradiction. Even then, propose edits — don't decide unilaterally.
 - If evidence is wrong (citation range out of bounds, file moved, etc.), record as `out-of-range` — don't try to find the right range yourself.
 - The `verified_against:` metadata you add is **consumed by cross-layer-cross-cutter** for coverage analysis. Be precise.
+- **Channel-format requirement (cycle-003 meta-phase):** the `verified_against:` block **MUST be emitted as a fenced YAML code block** (` ```yaml ... ``` `) inside the lowering theme file. Do not emit raw YAML interleaved with prose — downstream parsers (`cross-layer-cross-cutter`) need a structural delimiter to reliably extract the block. The `Proposed changes` template above already shows the fenced form; honor it verbatim. Rationale: friction-ledger entry `lowering-verifier-yaml-in-prose-channel-format` (cycle-003, recurrence-1).
 
 ## What you DO NOT do
 

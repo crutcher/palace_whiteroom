@@ -221,11 +221,83 @@ The cycle-planner subagent (haiku tier, dispatched twice in cycle-002) read `sca
 ---
 slug: haiku-cycle-planner-over-scopes-harvester
 first_observed: cycle-002
-last_observed: cycle-002
-recurrence_count: 1
-status: new
-addressed_by: null
+last_observed: cycle-003
+recurrence_count: 2
+status: recurring
+addressed_by: 8fc3a07 (user-directive parallel-when-in-doubt + conflict-as-signal philosophy)
 ---
 ```
 
-The haiku cycle-planner proposed "harvester for `dot`, `nrm2`, `scal` in one dispatch" — violating the harvester role spec's explicit "one operator per invocation" constraint. Parent corrected at dispatch time (split to one harvester for `dot` only; `nrm2` / `scal` deferred to cycle-003). Pattern: haiku planner under-reads role-discipline constraints in agent definitions; tends to batch-schedule when the role spec forbids it. **Mitigation candidate (not yet enacted):** explicit single-operator-per-invocation reminder in `.claude/agents/cycle-planner.md` constraint list, or one-line scope rules in `scaffolding/priorities.md` items. **Watch:** if recurrence-2 in cycle-003 or cycle-004, enact a mitigation. Co-occurs with `haiku-subagent-anchors-to-ledger-lore` — both signals point to haiku cycle-planner needing tighter constraints or model swap.
+The haiku cycle-planner proposed "harvester for `dot`, `nrm2`, `scal` in one dispatch" — violating the harvester role spec's explicit "one operator per invocation" constraint. Parent corrected at dispatch time (split to one harvester for `dot` only; `nrm2` / `scal` deferred to cycle-003). Pattern: haiku planner under-reads role-discipline constraints in agent definitions; tends to batch-schedule when the role spec forbids it.
+
+**Cycle-003 recurrence (different sub-symptom):** the haiku cycle-planner classified the cycle-003 nrm2 + axpby `book/src/L1/index.md` dep-map edits as **sequential** in its overlap analysis — but at integration time the two edits were row-level non-overlapping (nrm2 appended after `dot` row; axpby row-replaced the rough-in row). The "sequential" call was over-cautious; both edits applied cleanly in one wave at integration. The two sub-symptoms (over-scopes harvester / over-claims overlap) share a root: the haiku planner doesn't model the fine-grained edit-anchor structure that the integrator's surgical-edit machinery handles cleanly. Captured in `scaffolding/integrator-signals.md` cycle-003 §Wave-conflict observations.
+
+**Addressed by user directive 2026-05-27 (commit 8fc3a07):** new policy is "parallel-when-in-doubt" (mark PARALLEL by default; minor wave-conflict at integration is *useful tooling signal*, not friction to avoid). The cycle-planner's role spec was updated in 8fc3a07 with this Discipline. Future recurrences should diminish; if they don't (cycle-004+), escalate (proposal: swap cycle-planner to opus or add hard parallel-default override).
+
+---
+
+```yaml
+---
+slug: user-directive-enacted-out-of-band
+first_observed: cycle-003
+last_observed: cycle-003
+recurrence_count: 1
+status: addressed-by-user
+addressed_by: 8fc3a07 (user direct commit; outside meta-phase cadence)
+---
+```
+
+Mid-cycle-003, the user interjected with three methodology directives (raise Shared Infrastructure priority in roadmap; wave-count target up to 15 with conflict-tolerance philosophy "parallel-when-in-doubt"; integrator-to-planner signals channel via `scaffolding/integrator-signals.md`). The parent main session enacted these directly via commit 8fc3a07, outside the normal meta-phase cadence (Phase 6 of each cycle). **This is not friction** — the user has authority to override the normal flow at any time, and the changes were sound. The pattern is worth tracking because:
+
+1. It signals that the meta-phase cadence is **proposed** but not **gated** — the user can short-circuit at any time when a methodology change is obvious-enough not to wait for the meta-phase deliberation.
+2. Future cycles' meta-phase reports should not re-litigate user-directive changes; they are accepted-as-given.
+3. If the user-directive frequency rises (≥1 per cycle for 3+ cycles), revisit: the meta-phase cadence may be too slow, or the meta-phase is too cautious. Currently, recurrence-1 — defer assessment.
+
+No mitigation needed.
+
+---
+
+```yaml
+---
+slug: lowering-verifier-yaml-in-prose-channel-format
+first_observed: cycle-003
+last_observed: cycle-003
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-003 meta-phase (.claude/agents/lowering-verifier.md fence-required + downstream-consumer note)
+---
+```
+
+The cycle-003 lowering-verifier appended a `verified_against:` YAML block inside `book/src/L1-L0/axpby-mutation-rotation.md:173-198` **without code-fence delimiters**. The YAML is interleaved with prose at the bottom of the chapter, structurally indistinguishable from regular text by an mdBook renderer or naive grep parsing. Downstream `cross-layer-cross-cutter` is expected to consume this YAML metadata (per the lowering-verifier role-spec's "consumed by cross-layer-cross-cutter for coverage analysis" note). No channel-format spec existed in `scaffolding/` or `.claude/agents/` for this convention.
+
+**Surfaced by**: cycle-003 integrator-signals.md §Integration-tooling friction. Routes to meta-phase.
+
+**Mitigation (cycle-003 meta-phase, this entry):** updated `.claude/agents/lowering-verifier.md` Discipline section to require the `verified_against:` block be emitted as a fenced YAML code block (` ```yaml ... ``` `) and reaffirms the downstream-consumer contract. The role spec's `Proposed changes` example already showed the fenced form; the discipline addition makes it explicit and tightens the contract.
+
+**Pre-existing landing not retroactively fixed:** the cycle-003 `axpby-mutation-rotation.md` YAML block was committed without the fence (`9aa1c59`). A future cycle that touches this file (next lowering-verifier audit, or any append-to-block edit) should fence-wrap the existing block. No urgent action — first downstream consumer (cross-layer-cross-cutter) can handle the unfenced form by leading-keyword scan; the discipline applies forward.
+
+**Watch:** if any future lowering-verifier emission lands an unfenced `verified_against:` block, escalate to recurrence-2 and consider a structural fix (sidecar `.yaml` file or pre-integration repairer auto-fence).
+
+---
+
+```yaml
+---
+slug: integrator-signals-channel-working-as-designed
+first_observed: cycle-003
+last_observed: cycle-003
+recurrence_count: 1
+status: addressed-by-design
+addressed_by: 8fc3a07 (user directive) + cycle-003 integrator FIRST append
+---
+```
+
+The integrator-to-planner signals channel (`scaffolding/integrator-signals.md`, user directive 8fc3a07) was exercised for the first time in cycle-003. The integrator populated all 6 subsections cleanly (Unblocked, New dependencies, Resolution implications, Suggested next dispatches, Wave-conflict observations, Integration-tooling friction). The channel performed as designed:
+
+- 5 Unblocked items emitted (forward-frontier work for cycle-004).
+- 3 New dependencies recorded (nrm2→dot, axpby⊃axpy, verified-against-stamp on axpby-mutation-rotation).
+- 5 Resolution implications (1 answered, 4 needs-more / partially-answered) — direct routing to open-questions ledger.
+- 5 Suggested next dispatches with rationales — direct input to cycle-004 planner.
+- 2 Wave-conflict observations — direct input to cycle-004 planner's overlap analysis (signals over-caution).
+- 1 Integration-tooling friction (`lowering-verifier-yaml-in-prose-channel-format`) → routed cleanly to this meta-phase (see entry above).
+
+**Positive signal recorded for symmetric ledger tracking** — the friction-ledger should track addressed-by-design wins as well as frictions, to give meta-phase visibility into what's working. **No mitigation needed; channel is healthy.** Next-cycle check: confirm the cycle-004 planner reads the top entry and incorporates the suggested dispatches + wave-conflict signals.
