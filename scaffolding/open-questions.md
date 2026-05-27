@@ -824,6 +824,39 @@ status: open
 
 A runtime γ value that happens to equal zero at runtime lowers to the γ≠0 path at L0 (because the L0 branch is `gamma == 0.0` on the value, not on the type/literal). This means an L2/L3 optimisation that proves γ=0 at a higher layer would need to materialise the literal `0.0` at the L1>L0 boundary to trigger the fast-path — it cannot rely on the L0 runtime branch alone. This is consistent with the precedent `axpby-mutation-rotation` α==1 sub-pattern (also syntactic recognition); flagged here for cross-reference. Not an issue for the present theme — a downstream-lowering observation.
 
+```yaml
+---
+slug: l0-reference-note-citations-grep-vs-read-discipline
+opened_at: cycle-006
+opened_by: layer-intro-author
+status: open
+---
+```
+
+The cycle-006 bundle-2 L0 reference notes (`apply-linop-overload-set.md`, `kspsolver-base-class.md`) cite a number of source ranges that were grep-verified at start-lines (function signatures exist) rather than read in full. Specifically `palace/linalg/rap.cpp:236-275` (ParOperator::MultTranspose) and `palace/linalg/operator.cpp:478-507` (BaseDiagonalOperator template specialisations, real + complex). For L0 reference-note discipline (2-4 paragraphs of interpretation + representative citations, no line-by-line transcription) this is sufficient — the cited ranges support only function-presence claims and one-line interpretive descriptions (e.g., "the transpose form swaps prolongation/restriction roles"). However, if a future cross-layer-cross-cutter or lowering-verifier audits these citations to extract algebraic detail or sub-pattern body-shapes, they would need to re-read the bodies in full. Routes to whichever future audit consumes these ranges. Source: `reports/2026-05-27T081050Z-layer-intro-author-L0-bootstrap-bundle-2/CYCLE.md` §Open questions item 2.
+
+```yaml
+---
+slug: mfemwrappersolver-l0-coverage-candidate
+opened_at: cycle-006
+opened_by: layer-intro-author
+status: open
+---
+```
+
+`kspsolver-base-class.md` mentions `MfemWrapperSolver` (at `palace/linalg/solver.hpp:70-134`) in its "Notes for higher layers" section as "another `Solver<OperType>` subclass" but does not characterise it in depth. The full preconditioner-side construction surface is currently spread across `palace/linalg/{amg,ams,jacobi,mumps,strumpack,superlu,gmg}.{hpp,cpp}` and routed through `MfemWrapperSolver`. A future bundle-3 (or beyond) candidate L0 reference-note chapter would naturally anchor itself on `MfemWrapperSolver` and cover the preconditioner-class hierarchy in parallel to the way `apply-linop-overload-set.md` covers the `Operator` hierarchy. Routes to cycle-007+ planner as a future L0 bundle candidate. Source: `reports/2026-05-27T081050Z-layer-intro-author-L0-bootstrap-bundle-2/CYCLE.md` §Open questions item 3.
+
+```yaml
+---
+slug: l1-ksp-solve-firm-up-anchor-ready
+opened_at: cycle-006
+opened_by: layer-intro-author
+status: open
+---
+```
+
+`kspsolver-base-class.md` references an unbuilt L1 `ksp_solve` operator in its prose and Referenced-from sections (qualified explicitly as "not yet authored — anticipated cycle-007+"). The L0 reference-note chapter is the natural L0 anchor for that future L1 entry; `concepts/ksp_solve.md` already exists as the methodology concept page. Combined, the cycle-007 (or later) planner has two reading-trail entry points (concept + L0 reference) ready to anchor a harvester dispatch that promotes `ksp_solve` from concept to firm L1 operator. Routes to cycle-007+ planner as a harvester-target priority candidate. Source: `reports/2026-05-27T081050Z-layer-intro-author-L0-bootstrap-bundle-2/CYCLE.md` §Open questions item 4.
+
 ## Investigating
 
 (empty)
@@ -974,7 +1007,9 @@ If `krylov-step` lands at both L2 and L4 per the dual-placement recommendation, 
 slug: krylov-step-l3-identity-in-form-audit
 opened_at: cycle-005
 opened_by: cross-layer-cross-cutter
-status: open
+status: answered
+answered_at: cycle-006
+answered_in: reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/ (audit-section confirms-with-refinement); see closure-note slug `krylov-step-l3-identity-in-form-audit-closure-cycle-006`
 ---
 ```
 
@@ -1012,6 +1047,142 @@ status: open
 ```
 
 The open question `scalar-promotion-typing-rule` (cycle-pre-005) calls for "lifting this into an L1 type-system rule rather than per-operator prose". The cycle-005 concept page `book/src/concepts/scalar-promotion.md` is the *informal* statement (English + Palace evidence). Formal calculus-level adoption — the L4 typing judgement of the form `Γ ⊢ α : real, Γ ⊢ x : Tensor[complex] ⇒ Γ ⊢ axpy(α, x, y) : Tensor[complex]` with `real ⊑ complex` as a sub-typing relation on scalars — is L4-calculus-design work, not L1-concept-page work. Closure of `scalar-promotion-typing-rule` requires both this concept page (now landing) AND the L4-calculus extension (future cycle, coordinate with L4 harvester / layer-intro-author dispatches). Source: `reports/2026-05-27T025354Z-layer-intro-author-scalar-promotion-concept/CYCLE.md` §Open-questions item 4.
+
+```yaml
+---
+slug: l4-row-vs-concept-dependency-convention
+opened_at: cycle-006
+opened_by: harvester
+status: open
+---
+```
+
+The cycle-006 L4 `krylov-step` row depends on five concept-page entries (`state-stratification`, `solve-monad`, `first-iteration-unrolling`, `derived-view-hoisting`, `convergence-test`) that have not been promoted to firm L4 rows. The L4 layer-intro-author and L4 dep-map currently expect L4 rows to depend on other L4 rows or on L1/L2 rows, not on concept pages — but the convention has never been formally adopted. The cycle-006 entry uses concept-page links and surfaces the question. If integration reveals that L4 rows must depend only on L4 rows (not concepts), a follow-up cycle-007 dispatch (likely `layer-intro-author` on the L4 vocab stack: promote `state-stratification`, `iterate_while`, `solve-monad`, `first-iteration-unrolling` to firm L4 entries with signatures and laws of their own) is needed before the `krylov-step` row can settle. Either resolution (concept-deps OK, or promote-the-vocab) is honoured by the cycle-006 entry's content with no rewrite needed (only the link targets change). Carry-forward of and broader-scope-than `state-stratification-as-l4-concept-or-l4-row` (cycle-005). Source: `reports/2026-05-27T080944Z-harvester-krylov-step-L4/CYCLE.md` §Open-questions item 1.
+
+```yaml
+---
+slug: iterate-while-l4-anchor-missing
+opened_at: cycle-006
+opened_by: harvester
+status: open
+---
+```
+
+The cycle-006 L4 `krylov-step` row uses `iterate_while` (and `iterate_while_with_prev` for the first-iteration-unrolled Form B) as load-bearing vocabulary throughout the operator body and §Semantics, but no concept page or L4 row carries either name. The closest existing anchor is `book/src/concepts/solve-monad.md` §"Worked example — GMRES" which writes `inner_loop` as the fold body without naming the fold combinator. **Routes to cycle-007 planner**: either `iterate_while` should land as a concept page (sibling to `solve-monad`) or as an L4 row (the latter is more aggressive — would make `iterate_while` an L4 combinator with its own variant axes around predicate-shape, trajectory-recording, and the Form-A-vs-Form-B `_with_prev` variant). The cycle-006 wave-2 abstractor independently surfaced the same gap and proposed `iterate_while` / `iterate_while_with_prev` as rough-in L4 operators with intended signatures, doubly-flagging this at integration time. Source: `reports/2026-05-27T080944Z-harvester-krylov-step-L4/CYCLE.md` §Open-questions item 2.
+
+```yaml
+---
+slug: krylov-step-l3-row-contingency
+opened_at: cycle-006
+opened_by: harvester
+status: answered
+answered_at: cycle-006
+answered_in: reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/ (audit's confirms-with-refinement verdict means the L3-row contingency does not fire; L4 entry's defensive L4>L3>L2 wording stands as-is); see closure-note slug `krylov-step-l3-identity-in-form-audit-closure-cycle-006`
+---
+```
+
+The cycle-006 L4 `krylov-step` row's "Lowers to" section adopts the combinator-miner cycle-002 assertion that the L3>L2 step-body lowering is identity-in-form, skipping an intermediate L3 `krylov-step` row. If the cycle-006 wave-2 abstractor (`reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/CYCLE.md`) audits this assertion and finds non-identity rotation at L3 — for instance, the `Krylov` ephemeral bundle dissolves on the way to L3 in a way that affects the body, not just the surrounding loop — a cycle-007 dispatch will promote an L3 `krylov-step` row and the L4 entry's "Lowers to" section will need a one-line update (split the L4>L2 chain into L4>L3 + L3>L2 with the L3 row interposed). The L4 entry's "Lowers to" wording is **defensive**: it names the chain as L4>L3>L2 even though only the L4 and L2 rows are firm post-cycle-006, anticipating the abstractor's audit. Carry-forward of `krylov-step-l3-identity-in-form-audit` (cycle-005). Source: `reports/2026-05-27T080944Z-harvester-krylov-step-L4/CYCLE.md` §Open-questions item 3.
+
+```yaml
+---
+slug: l4-layer-intro-refresh-unblocked-by-first-firm-row
+opened_at: cycle-006
+opened_by: harvester
+status: open
+---
+```
+
+`book/src/L4/index.md` is updated by cycle-006 to carry the first firm operator row (`krylov-step`), but the surrounding intro prose still reflects the empty Phase-B-skeleton state. The "Semantics (overlay)" section says "To be drafted as L4 operators are formalized" — now that one operator is formalized, a `layer-intro-author` follow-up dispatch (cycle-007 candidate) could begin to draft that overlay using the cycle-006 entry's typing discipline (three-stratum state, `Solve` monad effect localisation, `OpParams` `readonly`) as the first concrete anchor. **Routes to cycle-007 planner**: L4 layer-intro refresh is unblocked by the cycle-006 entry. Source: `reports/2026-05-27T080944Z-harvester-krylov-step-L4/CYCLE.md` §Open-questions item 5.
+
+```yaml
+---
+slug: concepts-index-kind-classification-full-audit
+opened_at: cycle-006
+opened_by: same-layer-cross-cutter
+status: open
+---
+```
+
+The cycle-006 `same-layer-cross-cutter` dispatch fixed two duplicate rows in `book/src/concepts/index.md` (one pure copy-paste at `complex-from-real-lift`, one divergent-kind misclassification at `solver-as-operator` where `layer-pattern` survived and `primitive` was deleted). The dispatch scope was bounded to those two duplicates per the cycle-006 planner's caveat 5. A full pass through the remaining 40 rows cross-referencing each row's `Kind` taxonomy assignment against the concept page's self-description (typically the opening sentence) would catch any other misclassified rows analogous to the `solver-as-operator` divergence. **Routes to cycle-007+ planner**: bounded-scope dispatch candidate (42 rows, each a short page). Suggested dispatch target: `same-layer-cross-cutter` or `layer-intro-author`. Not blocking any forward-frontier work. Source: `reports/2026-05-27T080948Z-same-layer-cross-cutter-concepts-index-duplicates/CYCLE.md` §Open-questions item 3.
+
+```yaml
+---
+slug: same-layer-cross-cutter-cycle-md-write-failure
+opened_at: cycle-006
+opened_by: same-layer-cross-cutter
+status: open
+---
+```
+
+The cycle-006 `same-layer-cross-cutter` subagent did not write `CYCLE.md` to its report directory; the parent orchestrator wrote it post-hoc from the subagent's inline final-message text. The subagent cited a system-prompt restriction on writing files matching `report|summary|findings|analysis` patterns. The harvester and layer-intro-author dispatches in the same wave-1 wrote their `CYCLE.md` files successfully, so the restriction is either subagent-class-specific or the same-layer-cross-cutter misread its system prompt. The role spec at `.claude/agents/same-layer-cross-cutter.md:17` also references "Output: REPORT.md" — stale naming relative to the cycle-004 REPORT.md → CYCLE.md rename in CLAUDE.md. **Meta-phase target candidate** with three suggested actions: (a) update role spec to say "CYCLE.md" not "REPORT.md", (b) audit whether `claude-code` subagent file-write filters differ across the 8 specialized agents, (c) consider adding explicit "write to disk yourself" instruction in the role-spec template to prevent recurrence. No content-integrity loss in this instance (verbatim inline output preserved by parent), but unaddressed recurrence risks future content loss if a parent orchestrator is less attentive. Source: `reports/2026-05-27T080948Z-same-layer-cross-cutter-concepts-index-duplicates/CYCLE.md` §Open-questions item 5.
+
+```yaml
+---
+slug: concepts-index-auxiliary-kind-usage-review
+opened_at: cycle-006
+opened_by: same-layer-cross-cutter
+status: open
+---
+```
+
+Low-priority adjacent observation from the cycle-006 `concepts-index-duplicates` dispatch (filed as item 2 of that report's Open Questions): the `auxiliary` Kind taxonomy bullet at `book/src/concepts/index.md:60` ("supporting concepts that don't fit the other categories") is used by exactly one row out of 42 (`convergence-test`, currently the only `auxiliary`-kinded concept). This is within taxonomy scope and not actionable now, but worth recording as an "is `auxiliary` still earning its place?" review item for a future concept-sweep cycle. If a future audit finds zero or one auxiliary entries persistently, candidate resolutions are: (a) reclassify `convergence-test` under a more specific kind and retire the `auxiliary` taxonomy bullet, (b) keep `auxiliary` as a documented escape hatch even when underused. Source: `reports/2026-05-27T080948Z-same-layer-cross-cutter-concepts-index-duplicates/CYCLE.md` §Open-questions item 2.
+
+```yaml
+---
+slug: concepts-axpby-axpbypcz-pages-absent
+opened_at: cycle-006
+opened_by: layer-intro-author
+status: open
+---
+```
+
+Forward-thinning opportunity flagged by the cycle-006 `L1-scalar-promotion-thinning` dispatch (item 4 of that report's Open Questions). The L1 retroactive-thinning pass left `axpby.md` and `axpbypcz.md` somewhat verbose because no cross-cutting `concepts/axpby.md` and `concepts/axpbypcz.md` pages exist to host their BLAS-background / call-site-usage prose (whereas `concepts/axpy.md` and `concepts/scal.md` do exist and host the corresponding prose for those operators). The cycle-005 thinning pass for `axpy.md` and `scal.md` was effective in part because the concept pages already existed; the cycle-006 thinning pass for `axpby.md` and `axpbypcz.md` had only the `concepts/scalar-promotion.md` page to draw from (a typing-rule concept, not a per-operator concept), so the savings yield was bounded. **Candidate resolution**: a future `layer-intro-author` dispatch authors `concepts/axpby.md` and `concepts/axpbypcz.md` (mirroring the structure of `concepts/axpy.md` and `concepts/scal.md`); a subsequent retroactive-thinning pass on `book/src/L1/axpby.md` and `book/src/L1/axpbypcz.md` can then collapse Context-§ and Evidence-§ prose that is duplicated against those concept pages. Estimated additional savings: ~150-250 words across the two entries (rough order-of-magnitude, mirroring the cycle-006 per-entry yield). Not blocking; cycle-007+ candidate. Source: `reports/2026-05-27T081029Z-layer-intro-author-L1-scalar-promotion-thinning/CYCLE.md` §Open-questions/caveats item 4.
+
+```yaml
+---
+slug: open-questions-ledger-backreference-audit
+opened_at: cycle-006
+opened_by: layer-intro-author
+status: open
+---
+```
+
+Housekeeping question surfaced by the cycle-006 `L1-scalar-promotion-thinning` dispatch (critic Finding 5; repairer flagged as unrepairable / deferred). When per-entry pointers to an open question are removed during a retroactive-thinning pass (here: 4 L1 entries previously each contained a pointer to `scalar-promotion-typing-rule`, now removed in favour of the canonical pointer on `concepts/scalar-promotion.md`), it is unclear whether the ledger entry for the open question at `scaffolding/open-questions.md` carries any per-site "referenced-from" backreferences that go stale. Direct inspection of the `scalar-promotion-typing-rule` ledger entry at line 53 shows no such backreference field today — the ledger uses a free-text format without structured per-site backreferences — but the ledger schema may grow such a field, or a future cross-cutter may want to query "where in the artifact is this OQ referenced?" and rely on backreferences. **Candidate resolution**: a future meta-phase or layer-intro-author pass either (a) confirms the ledger format does not require per-site backreferences (close as not-needed), or (b) adds a schema field for backreferences and writes a `tools/` script to maintain it (close as resolved-by-tooling). Non-urgent — the current ledger format is correct and complete without backreferences, this is forward-looking hygiene. Source: `reports/2026-05-27T081029Z-layer-intro-author-L1-scalar-promotion-thinning/META.md` §Critique-Finding-5 and §Repair-unrepairable.
+
+```yaml
+---
+slug: krylov-step-l3-identity-in-form-audit-closure-cycle-006
+opened_at: cycle-006
+opened_by: abstractor
+status: closure-note
+relates_to: krylov-step-l3-identity-in-form-audit (cycle-005), krylov-step-l3-row-contingency (cycle-006)
+---
+```
+
+The cycle-006 wave-2 abstractor dispatch (`reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/CYCLE.md` §"Audit of cycle-002 identity-in-form claim") audits the cycle-005 open question `krylov-step-l3-identity-in-form-audit` and proposes resolution as **confirmed-with-refinement**. The cycle-002 framing ("L2>L3 step-body lift is identity-in-form") is **confirmed as stated** on the L3>L2 edge for the kernel body. The cycle-006 audit refines to: "**L4>L3>L2 step-body chain is identity-in-form on the kernel body's primitive sequence**; the L4>L3 hop is non-identity *at the wrapper level* (records dissolve, monad dissolves, readonly typing demotes, Form A/B presentation collapses), but the body's dataflow chain survives both hops textually unchanged." Evidence re-read for this audit: `book/src/spec/slices/cg.md:341-362` (Claim 2 verbatim "identity in form"), `book/src/spec/slices/arnoldi_step.md:178-213` (uncontested primitives plus localised MGS-orthog obstruction, which is below the step body). **Consequence**: no L3 `krylov-step` row is proposed; the L4 entry transitively lowers to L2 via the cycle-006 L4>L3 wrapper-dissolution theme (`book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md`) plus a one-line L3>L2 body-identity theme to be authored in cycle-007 (see sibling open question `krylov-step-body-identity-theme-pending-cycle-007`). The cycle-006 wave-1 harvester-promoted `krylov-step-l3-row-contingency` is also resolved by the same audit: the contingency triggered by "non-identity rotation at L3 body" did not fire; the defensive L4 entry's "Lowers to" wording (L4>L3>L2 with no interposed L3 row) stands as-is. **Disposition for meta-phase**: mark `krylov-step-l3-identity-in-form-audit` and `krylov-step-l3-row-contingency` as resolved by this closure-note; the cycle-006 audit is the resolution evidence. Source: `reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/CYCLE.md` §"Audit of cycle-002 identity-in-form claim" and §"Open questions / caveats" item 1.
+
+```yaml
+---
+slug: krylov-step-body-identity-theme-pending-cycle-007
+opened_at: cycle-006
+opened_by: abstractor
+status: open
+---
+```
+
+The cycle-006 wave-2 abstractor dispatch authored the L4>L3 `krylov-step-typed-wrapper-dissolution` theme and confirmed (with refinement) the cycle-002 identity-in-form claim for the L3>L2 body rewrite. Per the audit's verdict, the L4>L2 chain factors into the cycle-006 L4>L3 hop (wrapper dissolution) plus an L3>L2 hop that is identity-in-form on the body. The L3>L2 hop has NOT been authored as a theme entry under `book/src/L3-L2/`. **Candidate cycle-007 dispatch**: a short `abstractor` invocation authoring `book/src/L3-L2/krylov-step-body-identity.md` (one-line theme: the L3 body produced by `krylov-step-typed-wrapper-dissolution` lowers to L2 by identity-in-form; LHS = L3 form per the cycle-006 theme's RHS, RHS = L2 form per `book/src/L2/krylov-step.md` §Semantics, justification = `empirical-match` per the cycle-002 claim). Low-cost dispatch (single short theme); should be slotted alongside the cycle-007 harvester on the L4 loop-combinator family (see `iterate-while-l4-anchor-missing` cycle-006 OQ) for symmetric completion of the krylov-step lowering chain. The cycle-006 dispatch explicitly scoped this out as "one theme per invocation" — the sibling theme is the natural cycle-007 follow-up. Source: `reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/CYCLE.md` §"Open questions / caveats" item 5.
+
+```yaml
+---
+slug: iterate-while-l3-rendering-trajectory-accumulation-gap
+opened_at: cycle-006
+opened_by: abstractor
+status: open
+relates_to: iterate-while-l4-anchor-missing (cycle-006)
+---
+```
+
+The cycle-006 wave-2 abstractor dispatch's §"What the L3 form for `iterate_while` looks like" subsection (within `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md`) renders the L3 lowering of `iterate_while` as a tail-recursive value-threading loop returning a single `readout` when `continue = false`. But the L4 `iterate_while` signature given earlier in the same theme is `Step -> carry -> Solve Trajectory` with `Trajectory = [readout]` — the L4 form accumulates readouts across iterations subject to demand-pruning. The L3 tail-recursive form as written drops the trajectory accumulator, which is an actual semantic change in the rotation rather than a wrapper dissolution. **Two candidate resolutions** (deferred to cycle-007): (a) re-render the L3 form with explicit `trajectory` accumulator pass-through (`[readout]` rather than a single `readout`); (b) author an explicit demand-pruning step that justifies the collapse to a single readout when no downstream consumer reads the trajectory. Both are substantive rotation decisions exceeding repair authority. **Routes to cycle-007**: (i) `lowering-verifier` dispatch follow-up — already named in the theme's §Status — should reconcile the L3 rendering with the L4 trajectory shape; or (ii) cycle-007 `harvester` on the L4 loop-combinator family (per the cycle-006 OQ `iterate-while-l4-anchor-missing`) resolves as part of formalising `iterate_while`'s firm signature. The primary content of the cycle-006 dispatch — the four-part wrapper-dissolution theme for `krylov-step` itself — is unaffected by this gap; the sub-issue is on the speculative L4 loop combinator's L3 shape, not on the `krylov-step` body's rotation. Source: `reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/CYCLE.md` §"Open questions / caveats" item 8 (added by repairer per critic Finding 3).
 
 ## Dropped
 

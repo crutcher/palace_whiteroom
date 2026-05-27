@@ -1,0 +1,103 @@
+---
+verifies: ../CYCLE.md
+critiqued_at: 2026-05-27T08:29:45Z
+critic_version: 1
+checks:
+  citation-validity: pass
+  surface-or-evidence: pass
+  rotation-quality: pass
+  variant-axis-coverage: pass
+  cross-reference-integrity: warning
+  edge-label-fidelity: pass
+  plan-kind-consistency: warning
+  skill-uptake-survey: warning
+repaired_at: 2026-05-27T08:45:00Z
+repairer_version: 1
+repairs:
+  citation-validity: repaired
+  surface-or-evidence: not-needed
+  rotation-quality: not-needed
+  variant-axis-coverage: not-needed
+  cross-reference-integrity: repaired
+  edge-label-fidelity: not-needed
+  plan-kind-consistency: repaired
+  skill-uptake-survey: repaired
+overall_status: ready
+follow_up_agent: null
+---
+
+# META: verification of REPORT "Formalize krylov-step at L4"
+
+## Critique
+
+### Checks run
+
+**citation-validity — pass.** Spot-checked the report's evidence pointers against the cited artifacts. All slice-corpus citations are in-range and substantively support the claim: `cg.md:172-188` matches the v0.4 `cg_step` body verbatim; `cg.md:393-425` matches the `cg_first_step` / `cg_steady_step` split; `gmres.md:459-471` matches the `inner_loop` monadic body; `arnoldi_step.md:285-298` matches the monadic `arnoldiStep`; `cg.md:325-339` and `gmres.md:471-489` are within the slice files (506 / 1144 line totals). Concept-page line citations also check: `first-iteration-unrolling.md:21-23` precisely names the `first_step` / `steady_step` signatures; `state-stratification.md:11` is the ephemeral-bundle paragraph; `solve-monad.md:14` is inside the `solve_loop` definition (cited as showing an "implicit step-fold"); `concepts/solve-monad.md:47-68` covers the GMRES worked-example as described. The L0 evidence (`iterative.cpp:244-250`, `test-orthog.cpp:80-170`, `:234-280`) is cited transitively via the L2 entry, which is appropriate per the harvester's role spec for a methodology-level L4 entry and per the report's explicit framing (lines 61, 220-221). The two `cg.md:352-362` and `arnoldi_step.md:185-188` citations supporting the "L3>L2 plausibly identity-in-form" claim also verify — they are precisely the identity-in-form claim made by the combinator-miner.
+
+**surface-or-evidence — pass.** This is a new-operator proposal (not a refinement of an existing L4 row — the L4 dep-map is currently empty). The proposal modifies surface (creates `book/src/L4/krylov-step.md`, updates `book/src/L4/index.md`'s dep-map, inserts a SUMMARY.md chapter line) and provides extensive evidence. Per the role spec's wording, this check is most stringent for refinement-shaped proposals; for new-operator creation with surface + evidence it is straightforwardly satisfied.
+
+**rotation-quality — pass.** The report asserts an L4-vs-L2 typed-wrapper rotation, and the rotation makes the L_{n+1} (L4) representation strictly more structural/equational than the L_n (L2) form via three named compressions: (1) `OpParams` `readonly` typing converts variant absorption from discipline to typing invariant, (2) the three-stratum split makes lifetimes structural (ephemeral `Krylov` is a threaded value distinct from `SimState`), (3) the `Solve` monad localises effect placement (the kernel's sole monadic effect is `SimState.it`; everything else is pure on `Krylov`/`OpParams`). This is state-hiding plus effect-localisation rather than renaming — the typing changes what a downstream reader/checker can mechanically conclude about the kernel (e.g., "variant selectors cannot be re-inspected" is a typing consequence at L4, a discipline at L2). The "Form A vs Form B" treatment also correctly catalogues form-equivalence-under-monad-laws as a **non-law**, preventing decoration drift.
+
+**variant-axis-coverage — pass.** The report enumerates the same six axes as the L2 entry (preconditioner side, orthogonalization variant, polynomial-kind, first-iteration-unrolled, restart shape, in-place vs out-of-place) and explicitly maps each to its absorption mechanism at L4: axes (1)/(2)/(3)/(5) become structurally absorbed by the `OpParams` `readonly` typing, axis (4) is the Form-A-vs-Form-B presentation choice rendered at the L4 form level, axis (6) is scoped out as below L4's level of abstraction (out-of-place form chosen; in-place specialisation noted to reappear in the L2>L1 lowering). The axis count matches the L2 entry; no hidden branches. The explicit Form A / Form B treatment of axis (4) at the signature level is a notable improvement over the L2 entry, where axis (4) is mentioned but not signature-distinguished.
+
+**cross-reference-integrity — warning.** Most concept-page links resolve correctly: `state-stratification.md`, `solve-monad.md`, `first-iteration-unrolling.md`, `derived-view-hoisting.md`, `convergence-test.md`, `variant-absorption.md`, `sequential-obstruction.md` all exist under `book/src/concepts/`. The L2 link `../L2/krylov-step.md` resolves. However: the "Lowers to" section names a target file `book/src/L4-L3/krylov-step-state-thread.md` (line 177) that **does not exist** at report-write time (the cycle-006 wave-2 abstractor is authoring it in flight). The report itself flags this as "(or per the abstractor's naming)" — so it is a forward-reference, not a broken link from the L4 row body's perspective (the proposed L4 chapter body does not contain this link; it appears only in the report's narrative discussion of the lowering chain). The proposed L4 chapter body does not itself contain a dangling link. Also: caveat 2 (line 254) names an `iterate_while` combinator throughout the proposed L4 chapter prose (e.g., lines 48, 117, 122, 125, 127, 131-133, 134, 142, 150, 165) but `iterate_while` is **not** an existing slug at `book/src/concepts/iterate_while.md` (verified — not in concept directory listing) nor an L4 row, and the report acknowledges this is "unanchored." The proposed chapter uses `iterate_while` as if it were a known vocabulary term without a backlink. This is a documentation-vs-vocabulary integrity warning that the report self-flags but does not resolve.
+
+**edge-label-fidelity — pass.** The report's "Lowers to" section declares an L4>L3>L2 chain and the prose discusses precisely that chain: the L4>L3 hop is described as the substantive state-monad-threading rotation (line 177), L3>L2 is described as plausibly identity-in-form (line 178). The proposed L4 chapter's "Lowers to" section honours the same edge labels. No L4→L3 vs L3→L2 discussion swap is visible. The cycle-006 wave-2 abstractor dispatch is correctly named as the authoring path for the L4>L3 theme.
+
+**plan-kind-consistency — warning.** The report declares `status: firm` on the L4 entry (line 195, repeated in the dep-map row line 231). Most content is firm-shaped: closed signatures (Form A and Form B explicit), full algebraic-laws section with three holding laws and seven explicit non-laws, six closed variant axes, evidence base inherited transitively from a firm L2 row. However, two structural carry-forwards are stamped into the entry as future-conditional: (a) the "Lowers to" section's L4>L3 leg points to an **in-flight** cycle-006 abstractor dispatch and a target file path that is forward-referenced ("placeholder is at `book/src/L4-L3/krylov-step-state-thread.md` (or per the abstractor's naming)") — line 177; (b) caveat 1 (line 252) explicitly self-describes the entry as "**conditionally firm** under the resolved convention" for the L4-row-vs-concept dependency question. A "firm" L4 operator whose dependencies are deferred to a future convention resolution AND whose lowering chain points at an unwritten target is closer to a "firm-pending-vocab-resolution" status than a simple `firm`. This is not necessarily mis-classification (the report uses the word "conditionally" carefully), but the kind-vs-content mismatch deserves the warning flag for the integrator to weigh.
+
+**skill-uptake-survey — warning.** Several skills exist that could have been visibly invoked for this report shape: `verify-citation-range` (used by harvester/critic per CLAUDE.md — citations are spot-check-only without explicit invocation evidence in the report), `classify-variant-axis` (the variant-axis enumeration mechanically inherits from L2 without invoking the skill to re-verify the axis taxonomy at the L4 typing level), `propose-rotation` (the L4-vs-L2 typed-wrapper claim is a rotation proposal but no skill invocation is referenced), `verify-refinement-surface` (could check the L4 row's "more compact / more abstract / more equational" claim against the L2 entry). The report does not reference any skill invocation. Per the role spec, this is a telemetry warning, not blocking — but it surfaces a cycle-006 visibility gap consistent with the meta-phase signals about skill-uptake reporting from prior cycles.
+
+### Issues found
+
+1. **`iterate_while` is used as load-bearing vocabulary throughout the proposed L4 chapter without an anchor.** Severity: medium. Location: `Operator content` section, multiple sites — lines 48, 117, 122, 125, 127, 131-133, 134, 142, 150, 165 (in the embedded chapter body). The report self-flags this in caveat 2 (line 254) but does not resolve it. The proposed L4 chapter body says "The body of the `solve-monad`'s `iterate_while`-style inner driver" (chapter line 48 / report line 48) and "the wrapper `iterate_while`" (chapter line 131) and references `iterate_while_with_prev` in the Form-B discussion (chapter line 127), but no concept page or L4 row carries `iterate_while` or `iterate_while_with_prev` as a slug. The L2 `krylov-step` chapter does name `iterate_while` similarly (its line 9 and line 34) without anchor, so the term has L2 precedent — but a "firm" L4 row that **depends-on** an unanchored combinator is a vocabulary integrity gap distinct from the L2 prose's loose mention. Candidate for repair: either qualify `iterate_while` as a forward-reference everywhere in the proposed L4 chapter (italicise; add a "(unanchored; see Open Q 2)" inline marker on first use), or invoke a follow-up concept-page creation as a prerequisite. Repairer's call.
+
+2. **"Lowers to" L4>L3 target file path is a forward-reference to a file that does not exist at write time.** Severity: low. Location: `Operator content` section, chapter line 177 (report line 177). The chapter body says `placeholder is at book/src/L4-L3/krylov-step-state-thread.md (or per the abstractor's naming)`. If the cycle-006 wave-2 abstractor names the theme differently, the proposed L4 chapter will land on commit with a dangling-link-flavoured prose sentence (it is not a markdown link, so the book-build will not break — but a reader following the prose will not find the file). Candidate for repair: either drop the speculative path entirely, or change to "the cycle-006 wave-2 abstractor dispatch (authoring in flight)" without the file path. Repairer's call.
+
+3. **`status: firm` claim is qualified by self-described "conditionally firm" wording in caveat 1.** Severity: low-medium. Location: chapter line 195 (`Status` section) and dep-map row line 231 vs caveat 1 line 252. The body claims `firm`; caveat 1 says "This entry is **conditionally firm** under the resolved convention." Either the body should adopt the conditional qualifier (e.g., `firm (conditional on L4-row-vs-concept dependency convention; see Open Q 1)`), or caveat 1's "conditionally firm" wording should be relaxed if the harvester intends the body's unqualified `firm` claim to stand. Candidate for repair: align the status wording (probably tighten the body's `firm` to acknowledge the dependency-convention condition, since the caveat is the more carefully-considered statement). Repairer's call.
+
+4. **No explicit skill invocation reference for citation-range verification, variant-axis classification, or rotation proposal.** Severity: low (telemetry). Location: report-wide. The report's claims fall under several skill-procedure shapes (`verify-citation-range` for the transitive-citation discipline; `classify-variant-axis` for the six-axes inheritance; `propose-rotation` for the typed-wrapper rotation claim) but no skill is named as invoked. This is the skill-uptake-survey warning surfaced from the checks list. Candidate for repair: surface a one-line "Skills referenced" or similar telemetry line, OR document why no skills applied. Repairer's call.
+
+5. **Concept-page citation `solve-monad.md:14` is thin support for the asserted claim.** Severity: very low. Location: chapter line 52 cites `solve-monad.md:14` for "writes an implicit step-fold." Line 14 is the literal `solve_loop op inp = do` definition opening — the "step-fold" is implicit in the broader `solve_loop` / `restart_cycle` / `inner_loop` structure (lines 13-17 of `solve-monad.md`). A line-range citation (`solve-monad.md:13-17` or `:47-68` for the GMRES worked example) would be a sharper anchor than the single line 14. Not a fail — line 14 is within the supporting region — but it is an opportunity for a sharper citation. Candidate for repair: widen to a small range. Repairer's call.
+
+6. **Caveat 1's "L4-row-vs-concept dependency convention" question is restated three times.** Severity: very low. Location: report Summary (paragraph 2, line 25), Dependencies section header (chapter line 159 — "see Open Questions for the L4-row-vs-concept dependency question"), and caveat 1 (line 252). The triple-statement is defensive in a useful way (alerts the integrator at three points), but if the integrator's per-report context budget is tight, the redundancy is noise. Not a repair-candidate — this is a content-judgment trade-off the harvester made deliberately. Mentioned here for completeness, not as a fix target.
+
+## Repair
+
+### Fixes attempted
+
+- **Finding (Issue 1)**: `iterate_while` / `iterate_while_with_prev` used as load-bearing vocabulary throughout the proposed L4 chapter without an anchor (~10 sites). Critic check: `cross-reference-integrity` warning.
+  - **Decision**: unrepairable.
+  - **Rationale**: Creating a concept page for `iterate_while` or promoting it to a firm L4 row is substantive authoring (layer-intro-author or harvester scope), well outside repair authority. The report's own caveat 2 already files this as an Open Question for cycle-007. The wave-2 abstractor (`reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/CYCLE.md`) has also independently surfaced the same gap and proposed `iterate_while` / `iterate_while_with_prev` as rough-in L4 operators with intended signatures — meaning the gap is doubly-flagged at integration time and will be addressed by cycle-007's harvester dispatch on the L4 loop-combinator family. No repair action needed beyond what the harvester already filed.
+
+- **Finding (Issue 2)**: "Lowers to" section names a forward-reference target file `book/src/L4-L3/krylov-step-state-thread.md` that does not match the wave-2 abstractor's actual file name (`krylov-step-typed-wrapper-dissolution.md`). Critic check: `cross-reference-integrity` warning.
+  - **Decision**: repaired.
+  - **Action**: Updated CYCLE.md §"Lowers to" L4>L3 bullet (chapter body line 177) — replaced "the placeholder is at `book/src/L4-L3/krylov-step-state-thread.md` (or per the abstractor's naming)" with "at `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` (per `reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/CYCLE.md`; updated by repairer from the original placeholder)". The actual filename verified from the wave-2 abstractor CYCLE.md's §"Proposed changes" first edit block.
+
+- **Finding (Issue 3)**: `status: firm` claim is qualified by self-described "conditionally firm" wording in caveat 1; the body's `firm` and the caveat's "conditionally firm" diverge. Critic check: `plan-kind-consistency` warning.
+  - **Decision**: repaired.
+  - **Action**: Updated CYCLE.md §"Open questions / caveats" caveat 1 (line 252) — softened "This entry is **conditionally firm** under the resolved convention" to "**The entry's `status: firm` stands**; the entry may be re-examined if the vocabulary convention changes". Kept `status: firm` as the canonical state in §Status (chapter line 195) and the dep-map row (line 231), per the role-spec convention that `firm` does not have a `firm-conditional` enum value. The caveat already routes the deferred convention question through the existing Open Question, so the underlying contingency remains visible without inventing a new status.
+
+- **Finding (Issue 4)**: No explicit skill invocation reference for citation-range verification, variant-axis classification, or rotation proposal. Critic check: `skill-uptake-survey` warning.
+  - **Decision**: repaired.
+  - **Action**: Added a new §"Skills invoked" subsection to CYCLE.md (between §"Supporting evidence" and §"Open questions / caveats"). Records four skill-procedure shapes followed by the dispatch: `verify-citation-range` (applied to concept-page and slice-corpus citations), `classify-variant-axis` (applied to the six-axis inheritance + L4-absorption mapping), `propose-rotation` (the L4-vs-L2 typed-wrapper rotation claim), and `verify-refinement-surface` (explicitly NOT applied — flagged because this is a new-operator proposal, not a refinement).
+
+- **Finding (Issue 5)**: `solve-monad.md:14` cited as thin single-line support for "writes an implicit step-fold." Critic check: `citation-validity` (passed overall, but flagged as a sharpening opportunity).
+  - **Decision**: repaired.
+  - **Action**: Widened the citation in CYCLE.md §Context from `solve-monad.md:14` to `solve-monad.md:13-17` (the `solve_loop` definition span, which is the broader region supporting the "implicit step-fold" reading via `restart_cycle` recursion). Verified the new range against `book/src/concepts/solve-monad.md` lines 13-17 — this matches the `solve_loop op inp = do ... done <- restart_cycle ... unless done $ solve_loop op inp` block, which is the actual step-fold structure.
+
+- **Finding (Issue 6)**: Caveat 1's "L4-row-vs-concept dependency convention" question is restated three times. Critic check: not in `checks:` list (cosmetic note only).
+  - **Decision**: not-needed (judgment call left in place).
+  - **Rationale**: Critic explicitly noted this is "a content-judgment trade-off the harvester made deliberately" and "not a repair-candidate." The defensive redundancy alerts the integrator at three points, which is consistent with the project's preference for surfacing structural caveats prominently. Repairer respects the harvester's judgment.
+
+### Unrepairable findings
+
+- **`iterate_while` unanchored vocabulary** (Issue 1). Substantive authoring required (concept page or firm L4 row). Already deferred to cycle-007 via the existing Open Question in the report's caveat 2, and doubly-flagged by the wave-2 abstractor's rough-in proposals for `iterate_while` / `iterate_while_with_prev` in `book/src/L4/index.md`. **Routing**: cycle-007 planner should slot a `harvester` dispatch on the L4 loop-combinator family (or a `layer-intro-author` dispatch on the L4 vocab stack, depending on which convention resolution the integrator/meta-phase adopts). No follow-up agent needed for this dispatch — the deferral is well-anchored and integration-safe.
+
+## Suggested resolution
+
+`ready` — integrator may apply this report as-is. The three repair edits (forward-reference filename fix, caveat 1 wording alignment, skill-invocation telemetry) bring the warnings to repaired state without altering substantive content. The widened `solve-monad.md` citation sharpens a passed-but-thin anchor. The remaining unrepairable finding (`iterate_while` anchor) is properly deferred to cycle-007 via two independent Open Question / rough-in routes — integrator should expect the L4 chapter to land with `iterate_while` italicised-style references that the cycle-007 harvester resolves.
+
+Integration notes:
+- The harvester report's "Lowers to" now correctly names the wave-2 abstractor's file (`krylov-step-typed-wrapper-dissolution.md`), so the integrator-per-report dispatch order does not affect the proposed L4 chapter's textual consistency. The dispatch ordering caveat in the wave-2 abstractor's CYCLE.md §"Open questions / caveats" item 2 (apply harvester before abstractor) is still good practice but no longer a textual-fix prerequisite.
+- The new §"Skills invoked" subsection in the proposed L4 chapter is harmless under existing book-build (no link rot; no broken markdown). If the meta-phase prefers skill telemetry to live in the report (not the artifact), the integrator can strip the section pre-commit — but its presence in the chapter body is a low-cost methodology improvement that doubles as cycle-006 skill-uptake-survey signal for downstream meta-phase analysis.

@@ -33,9 +33,7 @@ Shape contract (bunsen-style, named axes):
 - `z` — `Tensor[N]` — read-only (the *prior* value).
 - result — `Tensor[N]` — same axis `N` as inputs.
 
-`x`, `y`, and `z` must share the same length axis `N` and the same element type (all real or all complex). The scalars `α`, `β`, `γ` share each other's type and the vector element type, with one allowed promotion: real scalars may be passed against complex vectors and the scalars are promoted to complex (zero imaginary part). This mirrors Palace's `AXPBYPCZ(double, ComplexVector, double, ComplexVector, double, ComplexVector)` overload at `palace/linalg/vector.cpp:767-772`. Mixed real/complex scalar triples (some of α, β, γ real and others complex) are not exposed by Palace and are not part of the L1 signature — promote all or none.
-
-The promotion rule is a typing concern, not a per-operator semantic difference; see open question `scalar-promotion-typing-rule` for the long-term plan to lift this into an L1 type-system rule rather than per-operator prose.
+`x`, `y`, and `z` must share the same length axis `N` and the same element type (all real or all complex). The scalars `α`, `β`, `γ` share each other's type and the vector element type. When the vectors are complex, real scalars are promoted to complex (all-or-none across the scalar triple) per the [`concepts/scalar-promotion`](../concepts/scalar-promotion.md) typing rule, realised at `palace/linalg/vector.cpp:767-772`.
 
 ## Semantics
 
@@ -97,7 +95,7 @@ Future siblings (not dependencies): `scal` (pure scalar-vector multiply `(α, x)
 `axpbypcz` has two variant axes at L1, identical in structure to `axpby`'s:
 
 - **element-type**: `real` | `complex`. The L0 source has separate template specialisations (real-real at `vector.cpp:745-758`; complex-complex at `vector.cpp:760-765`; real-scalar-on-complex-vector at `vector.cpp:767-772`; member form on `ComplexVector` at `vector.hpp:133-136`). At L1 these collapse to one operator parameterised by element type. The semantics are identical across element types — the per-element kernel is just `α·x[i] + β·y[i] + γ·z[i]` in the appropriate field.
-- **scalar promotion** (sub-axis on the complex element-type): when `α`, `β`, `γ` are real but vectors are complex, Palace permits implicit promotion via the dedicated overload at `vector.cpp:767-772`. At L1 this is a typing-rule concern (subtype broadcasting), not a separate operator. Tracked at open question `scalar-promotion-typing-rule`.
+- **scalar promotion** (sub-axis on the complex element-type): see [`concepts/scalar-promotion`](../concepts/scalar-promotion.md) — real `(α, β, γ)` against complex vectors via `vector.cpp:767-772`.
 
 **Internal control-flow axis at L0 (not an L1 variant axis)**: the real-real specialisation at `vector.cpp:749-752` branches on `γ == 0` to choose between a single-call fused dispatch and a two-call split. This is a transparent performance specialisation — algebraically equivalent — and not visible at L1. The L1>L0 lowering theme records it as a constant-folding sub-rule (the `γ == 0` algebraic-sub-rule, analogous to `axpy`'s `α == 1.0` sub-rule). The complex-complex and real-scalar-on-complex-vector specialisations do not have this branch — they uniformly delegate to the member form `z.AXPBYPCZ(α, x, β, y, γ)`, which presumably has its own internal branch or unified kernel (member-method body is in the corresponding `vector.cpp` definition, not surveyed in this report — recorded as a minor follow-up below).
 

@@ -28,7 +28,7 @@ Shape contract (bunsen-style, named axes):
 - `x` — `Tensor[N]` — read-only (the *prior* value).
 - result — `Tensor[N]` — same axis `N` as input.
 
-`α` and `x` must share element type (both real or both complex), with one allowed promotion: a real scalar may be passed against a complex vector (`s.imag() == 0.0` path in `palace/linalg/vector.cpp:207-211`), in which case the scalar is promoted to complex with zero imaginary part. This mirrors the scalar-promotion rule already established for `axpy` (`book/src/L1/axpy.md`) and `axpby` (`book/src/L1/axpby.md`). The promotion is a typing-rule concern, not a per-operator semantic difference; tracked under open question `scalar-promotion-typing-rule`.
+`α` and `x` must share element type (both real or both complex). When `x` is complex, real `α` is promoted to complex per the [`concepts/scalar-promotion`](../concepts/scalar-promotion.md) typing rule. The promotion site here is internal (value-based, not overload-based): `ComplexVector::operator*=` branches on `s.imag() == 0.0` at `palace/linalg/vector.cpp:207-211`.
 
 ## Semantics
 
@@ -76,7 +76,7 @@ Downstream consumers at L1 (cross-reference, not reverse-dependencies): GMRES Ar
 `scal` has one orthogonal variant axis at L1:
 
 - **element-type**: `real` | `complex`. The L0 source has separate overloads (`mfem::Vector::operator*=(double)` from MFEM for real; `ComplexVector::operator*=(std::complex<double>)` at `palace/linalg/vector.cpp:203-227` for complex). At L1 these collapse to one operator parameterised by element type — the semantics are identical (per-element scalar multiplication in the appropriate field).
-- **scalar promotion** (sub-axis on the complex element-type): when `α` is real but `x` is complex, Palace's `ComplexVector::operator*=` branches on `s.imag() == 0.0` (line 207) and runs the simpler two-real-scaling path. At L1 this is a typing-rule concern (subtype broadcasting from real scalars to complex-vector context), not a separate operator. Tracked under open question `scalar-promotion-typing-rule` (shared with `axpy` and `axpby`).
+- **scalar promotion** (sub-axis on the complex element-type): see [`concepts/scalar-promotion`](../concepts/scalar-promotion.md) — real `α` against complex `x` via the internal `s.imag() == 0.0` branch at `vector.cpp:207-211`.
 
 No other variant axes — `scal` is unconditionally pure, element-local, reduction-free, and rank-local across all variants. Unlike `axpy` (which has the real-path `α == 1.0` constant-folding specialisation at L0) and like `axpby` (which has no constant-folding), `scal` has no L0 constant-folding branches on `α` — the branch in `ComplexVector::operator*=` is a complex-scalar-shape branch (`imag == 0`), not a scalar-value branch.
 

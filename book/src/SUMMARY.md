@@ -5,9 +5,11 @@
 - [Overview](./methodology/overview.md)
 # L4 — Graph-Evaluation Calculus
 - [Overview](./L4/index.md)
+- [krylov-step](./L4/krylov-step.md)
 
 # L4 > L3 — Lowering
 - [Overview](./L4-L3/index.md)
+- [krylov-step-typed-wrapper-dissolution](./L4-L3/krylov-step-typed-wrapper-dissolution.md)
 
 # L3 — Global Tensor-Field Operations
 - [Overview](./L3/index.md)
@@ -48,6 +50,8 @@
 - [Convention — transparent vs load-bearing tricks](./L0/transparent-vs-load-bearing-tricks.md)
 - [File — palace/linalg/vector.{hpp,cpp}](./L0/linalg-vector-file.md)
 - [File — palace/linalg/ksp.cpp](./L0/ksp-factory-file.md)
+- [Overload set — Mult / MultTranspose / AddMult](./L0/apply-linop-overload-set.md)
+- [Class — BaseKspSolver](./L0/kspsolver-base-class.md)
 # Phase 1 corpus (slice-vertical; raw material for combinator extraction)
 - [Index — Slice Status](./spec/index.md)
   - [CG — Preconditioned Conjugate Gradient](./spec/slices/cg.md)

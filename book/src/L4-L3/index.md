@@ -10,9 +10,9 @@ This is **not** point-wise rotation. It is a structured rewrite system with appl
 
 ## Theme list
 
-```
-(empty — Phase B skeleton. Themes land here as abstractor/lifter promote candidates.)
-```
+| Theme | LHS (L4) | RHS (L3) | Justification kind | Status |
+|---|---|---|---|---|
+| [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) | L4 [`krylov-step`](../L4/krylov-step.md) — typed-wrapper form with three-stratum state-stratification records, `Solve = StateT SimState Identity` monad, `OpParams` `readonly` typing, and Form-A/Form-B presentation distinction. | L3 value-threading form `(op, K, s) -> (K', s', outputs)`: `StateT` dissolves to explicit `s`-arg / `s'`-return; typed records become positional tuples; `readonly` demotes to documented invariant; Form-A/B collapses to carry-threading. Kernel body's primitive sequence is textually unchanged. | `structural` + secondary `reduction-chain` (the `modify` to record-update unfolding) | `rough-in` (cycle-006 abstractor; lowering-verifier follow-up candidate cycle-007) |
 
 Each theme:
 - **Slug** (e.g., `monad-bind-fusion`, `state-thread-elimination`, `combinator-inline`)

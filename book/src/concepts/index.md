@@ -68,7 +68,6 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [capability-typing](./capability-typing.md) | methodology |
 | [chebyshev-iteration](./chebyshev-iteration.md) | algorithm |
 | [complex-from-real-lift](./complex-from-real-lift.md) | primitive |
-| [complex-from-real-lift](./complex-from-real-lift.md) | primitive |
 | [constructed-operator-factory](./constructed-operator-factory.md) | layer-pattern |
 | [constructed-operators](./constructed-operators.md) | methodology |
 | [convergence-test](./convergence-test.md) | auxiliary |
@@ -97,7 +96,6 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [set_subvector_zero](./set_subvector_zero.md) | primitive |
 | [solve-monad](./solve-monad.md) | layer-pattern |
 | [solver-as-operator](./solver-as-operator.md) | layer-pattern |
-| [solver-as-operator](./solver-as-operator.md) | primitive |
 | [state-stratification](./state-stratification.md) | layer-pattern |
 | [tensor-field-lift](./tensor-field-lift.md) | layer-pattern |
 | [trsv](./trsv.md) | primitive |

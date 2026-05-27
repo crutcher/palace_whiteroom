@@ -25,9 +25,11 @@ The semantics overlay describes:
 
 ## Operator dep-map
 
-```
-(empty — Phase B skeleton. Operators land here as harvester promotes candidates.)
-```
+| Operator | Signature | Dependencies | Status |
+|---|---|---|---|
+| [`krylov-step`](./krylov-step.md) | Form A: `OpParams -> Krylov -> (SimState -> Solve { sim, krylov, outputs })`. Form B (first-iteration-unrolled): `first_step :: OpParams -> Krylov -> (SimState -> Solve { sim, krylov, carry, outputs })` and `steady_step :: OpParams -> Krylov -> (PrevCarry -> SimState -> Solve { sim, krylov, carry, outputs })`. | Lowers to L2 [`krylov-step`](../L2/krylov-step.md) via L4>L3>L2 (L4>L3 = state-monad-threading rotation, cycle-006 abstractor; L3>L2 plausibly identity-in-form). Concepts: `state-stratification`, `solve-monad`, `first-iteration-unrolling`, `derived-view-hoisting`, `convergence-test`, `variant-absorption`. | `firm` (harvested cycle-006; promoted from cross-layer-cross-cutter recommendation 2026-05-27T025354Z) |
+| `iterate_while` (rough-in; no anchor yet) | `Step -> carry -> Solve Trajectory` where `Step = carry -> Solve { carry', readout, continue }`. Tail-recursive value-threading loop combinator that folds `Step` over an initial `carry`, threading through `SimState` (via the `Solve` monad) and accumulating readouts subject to demand-pruning. | Concepts: `solve-monad`, `derived-view-hoisting`, `convergence-test`. Consumer of L4 `krylov-step` (via the body). | `rough-in` (proposed-by: abstractor:2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering; flagged also by harvester:2026-05-27T080944Z-harvester-krylov-step-L4 caveat 2; anchor file pending cycle-007 harvester promotion per OQ `iterate-while-l4-anchor-missing`) |
+| `iterate_while_with_prev` (rough-in; no anchor yet) | `(PrevCarry -> Step) -> PrevCarry -> Step -> carry -> Solve Trajectory`. Variant of `iterate_while` that supplies a `PrevCarry` closure parameter to the `Step`, with a bootstrapping step producing the initial `PrevCarry`. Used by Form B of [`krylov-step`](./krylov-step.md) per `first-iteration-unrolling`. Degenerates to `iterate_while` when `PrevCarry = ()`. | Concepts: `first-iteration-unrolling`, `solve-monad`. Consumer of L4 `krylov-step` Form B. | `rough-in` (proposed-by: abstractor:2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering; flagged also by harvester:2026-05-27T080944Z-harvester-krylov-step-L4 caveat 2; anchor file pending cycle-007 harvester promotion per OQ `iterate-while-l4-anchor-missing`) |
 
 Format expected for each entry:
 - **Operator slug** (e.g., `solve`, `arnoldi_step`, `apply_preconditioner`)

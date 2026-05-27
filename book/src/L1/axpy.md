@@ -22,7 +22,7 @@ Shape contract (bunsen-style, named axes):
 - `y` — `Tensor[N]` — read-only (the *prior* value).
 - result — `Tensor[N]` — same axis `N` as inputs.
 
-`x` and `y` must share the same length axis `N` and the same element type (both real or both complex; the scalar `α` may be promoted from real to complex against a complex vector pair, mirroring Palace's `AXPY(double, ComplexVector, ComplexVector)` overload at `palace/linalg/vector.cpp:715-718`).
+`x` and `y` must share the same length axis `N` and the same element type (both real or both complex). When the vectors are complex, real `α` is promoted to complex per the [`concepts/scalar-promotion`](../concepts/scalar-promotion.md) typing rule, realised at `palace/linalg/vector.cpp:715-718`.
 
 ## Semantics
 
@@ -57,7 +57,7 @@ None at L1. `axpy` is a leaf primitive — the canonical floor of the linear-alg
 `axpy` has one orthogonal variant axis at L1:
 
 - **element-type**: `real` | `complex`. The L0 source has separate overloads (`AXPY(double, Vector, Vector)` at `palace/linalg/vector.cpp:702-712`; `AXPY(std::complex<double>, ComplexVector, ComplexVector)` at `palace/linalg/vector.cpp:715-723`; member-method form on `ComplexVector` at `vector.hpp:115-118`). At L1 these collapse to one operator parameterised by element type.
-- **scalar promotion** (sub-axis): when α is real but vectors are complex, Palace permits implicit promotion. At L1 this is a typing-rule concern (subtype broadcasting), not a separate operator.
+- **scalar promotion** (sub-axis): see [`concepts/scalar-promotion`](../concepts/scalar-promotion.md) — real `α` against complex vectors via `vector.cpp:715-718`.
 
 No other variant axes — `axpy` is unconditionally pure, element-local, and reduction-free across all variants.
 
