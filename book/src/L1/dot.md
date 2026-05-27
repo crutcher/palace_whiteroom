@@ -4,13 +4,7 @@ Mutation-free vector inner-product reduction: `α = ⟨x, y⟩`. The canonical B
 
 ## Context
 
-The L0 source-side forms are:
-
-- `mfem::Vector::operator*(const Vector &)` — real inner product, returns `double`. Used at `palace/linalg/vector.cpp:265` inside `ComplexVector::Dot` building blocks. Visible on real vectors as the test-vector.cpp idiom `double dot = vec1 * vec2;` (`test/unit/test-vector.cpp:206-207`).
-- `ComplexVector::Dot(const ComplexVector &y) const` — returns `std::complex<double>` per the header comment `Vector dot product (yᴴ x) or indefinite dot product (yᵀ x) for complex vectors.` at `palace/linalg/vector.hpp:110-113`. The implementation (`palace/linalg/vector.cpp:263-267`) computes `(this)·conj(y)` blocks, which algebraically equals `yᴴ · x` — i.e., conjugate-linear in `y` (the *argument*) and linear in `*this` (the *receiver*).
-- `ComplexVector::TransposeDot(const ComplexVector &y) const` — returns `std::complex<double>` for the unconjugated bilinear form `xᵀ y` (`palace/linalg/vector.cpp:269-274`).
-- `linalg::LocalDot(...)` — local-rank inner product, real (`palace/linalg/vector.cpp:665-672`, dispatched to Hypre's `hypre_SeqVectorInnerProd`) or complex (`palace/linalg/vector.cpp:674-685`).
-- `linalg::Dot(MPI_Comm, x, y)` — global inner product = `LocalDot` followed by `MPI_Allreduce` (`palace/linalg/vector.hpp:247-253`).
+`dot` lifts Palace's reduction surface (`mfem::Vector::operator*` for real; `ComplexVector::Dot` / `TransposeDot` for complex; the `linalg::LocalDot` / `linalg::Dot` free-function templates over both) to a single pure-functional sesquilinear-reduction operator (with the unconjugated bilinear variant `tdot`). The L0 file layout — the reduction family in `vector.{hpp,cpp}`, including the receiver-vs-argument asymmetry on `ComplexVector::Dot` that determines which side is conjugated — is detailed in [`L0/linalg-vector-file`](../L0/linalg-vector-file.md) "The reduction family". The `linalg::Dot` template-dispatch scaffold (composing `LocalDot` with `Mpi::GlobalSum`) is named in [`L0/linalg-free-functions`](../L0/linalg-free-functions.md) "Composed scaffold". The real / complex element-type split and the `LocalDot` vs `Dot` (single-rank vs MPI-collective) axis are named in [`L0/mfem-vector-types`](../L0/mfem-vector-types.md). The self-aliasing fast path (`&y == this`) and reduction-tree non-associativity classification (transparent vs load-bearing) live in [`L0/transparent-vs-load-bearing-tricks`](../L0/transparent-vs-load-bearing-tricks.md).
 
 At L0, the in-place destination for `dot` is the return register / a stack scalar. There is no destination buffer to write through. The distinction the mutation rotation is doing here is therefore not about buffer ownership but about **reduction order and collective topology**: the L0 form bakes in a specific tree (the Hypre reduction kernel + MPI_Allreduce); the L1 form treats the reduction as a single semantic step.
 

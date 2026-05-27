@@ -11,20 +11,22 @@ L1 is the closest pure-functional layer to the source. Structure follows the sou
 - **Operator-application mutation → pure operator-as-function.** `A.Mult(x, y)` (writes into `y`) → `y = A·x` (no destination buffer mention). Pattern recurs in `apply_BA`, residuals, and B-weighted norms.
 - **Pinned reduction tree → reduction as a single semantic step.** L0 `dot` and `nrm2` are layered as `Hypre per-rank kernel + MPI_Allreduce`; L1 names the reduction as one step and records floating-point reduction-tree non-associativity as a **load-bearing** algebraic claim (per `CLAUDE.md` "Optimization tricks vs. base algebra"), not as separate operators.
 - **Iterative loop mutating iterate in place → functional unfold** `state_{k+1} = step(state_k)`. Workspace `tmp` is omitted (the COW backend handles allocation).
+- **Construction-bound solver state → opaque type at the L1 surface.** `BaseKspSolver<OperType>::Mult(b, x)` (writes into `x`, dispatches through owned `IterativeSolver` + `Solver` `unique_ptr`s, mutates statistics counters, logs convergence warnings) becomes `(x, status) = ksp_solve(K, b)` where `K : Solver[A]` is opaque about its internal Krylov method, per-method workspace, and preconditioner representation. Per-method enum dispatch (CG / GMRES / FGMRES) is variant-absorbed; cumulative counters lift to driver-side accumulation over per-call `SolveResult.iterations`.
 
 ## Semantics (overlay)
 
-L1 vocabulary mirrors the source operations but with pure-functional binding. Three semantic motifs recur across the firm operators:
+L1 vocabulary mirrors the source operations but with pure-functional binding. Four semantic motifs recur across the firm operators:
 
 1. **Element-wise pure update** (`axpy`, `axpby`) — element-local, reduction-free, every output element depends on exactly one input element from each tensor argument. Algebraic laws are linear-combination facts; constant-folding branches at L0 (e.g., `axpy`'s `α == 1.0` fast path) are transparent performance tricks that disappear at L1.
 2. **Mutation-free reduction** (`dot`, `nrm2`) — reduction over the length axis to a scalar. Reduction-tree non-associativity is load-bearing and recorded as an explicit non-law; the MPI collective is folded into the L1>L0 lowering, not the L1 signature.
 3. **Subsumption-as-identity rather than dependency** — when one operator is a specialisation of another (`axpy(α, x, y) = axpby(α, x, 1, y)`), both stay in the L1 dep-map as siblings; the relationship is captured by an algebraic law in the subsuming operator, not by a dep-map edge.
+4. **Constructed-operator absorption** (`ksp_solve`) — the L1 form takes a structured opaque `Solver[A]` argument whose per-method body (CG / GMRES / FGMRES), preconditioner, tolerances, and iteration cap are bound at construction; the L1 signature is variant-free. Result is structured (`SolveResult` carries `x` + four solve-statistics fields) rather than the L0 in-place destination + side-effect logger + mutating counters. The L2 `krylov-step` operator is where the per-method body unfolds.
 
 Shape contracts are declared at boundaries (per the bunsen `contracts::unpack_shape_contract!` style). Single-rank is in scope per `CLAUDE.md`; MPI collectives appear only in lowering themes.
 
 ## Vocabulary cohort
 
-**Firm (7)** — element-wise updates, BLAS-1 reductions, and the opaque-operator gate:
+**Firm (8)** — element-wise updates, BLAS-1 reductions, the opaque-operator gate, and the constructed-operator solve gate:
 
 - [`axpy`](./axpy.md) — vector-scalar fused update; canonical BLAS-1 leaf.
 - [`dot`](./dot.md) — Hermitian inner-product reduction (real / complex; `tdot` for unconjugated bilinear).
@@ -33,6 +35,7 @@ Shape contracts are declared at boundaries (per the bunsen `contracts::unpack_sh
 - [`scal`](./scal.md) — pure vector-scalar multiply; the fourth BLAS-1 floor primitive (sibling-subsumed by `axpby` β=0).
 - [`apply_linop`](./apply_linop.md) — pure linear-operator application `y = A·x`; opaque-operator gate to the L2 `krylov-step` vocabulary.
 - [`axpbypcz`](./axpbypcz.md) — fused three-scalar three-vector update; subsumes `axpby` (γ=0) and `axpy` (β=1, γ=0).
+- [`ksp_solve`](./ksp_solve.md) — pure preconditioned Krylov solve `(x, status) = ksp_solve(K, b)`; constructed-operator gate. The first L1 operator whose primary argument is itself a structured value (`Solver[A]`) rather than a raw tensor or scalar.
 
 **Rough-in (obstruction)** — speculative L1 operators emitted by `L1>L0` obstruction themes (no Palace L0 anchor; harvester promotion gated on appearance of an anchor):
 
@@ -54,6 +57,7 @@ Shape contracts are declared at boundaries (per the bunsen `contracts::unpack_sh
 | [`scal`](./scal.md) | `(α, x) → α·x` | (leaf; subsumed by `axpby` via β=0) | `firm` |
 | [`apply_linop`](./apply_linop.md) | `(A: LinearOperator[M, N], x: Tensor[N]) → Tensor[M]` | (leaf; opaque operator) | `firm` |
 | [`axpbypcz`](./axpbypcz.md) | `(α, x, β, y, γ, z) → α·x + β·y + γ·z` | (leaf; subsumes `axpby` and `axpy`) | `firm` |
+| [`ksp_solve`](./ksp_solve.md) | `(K: Solver[A: LinearOperator[N, N]], b: Tensor[N]) → SolveResult[N]` | `apply_linop` (direct); `dot`, `nrm2`, `axpy` (transitive via per-method body) | `firm` |
 | [`lanczos_step`](../L1-L0/minres-iteration.md) | `(A, B?, V_prev, V_curr) → (V_next, alpha, beta)` | `apply_linop`, `dot`, `axpy`, `nrm2` | `rough-in (obstruction, proposed-by: abstractor:2026-05-27T004641Z-abstractor-MINRES-L1-L0)` |
 | [`three_term_recurrence_update`](../L1-L0/minres-iteration.md) | `(alpha_curr, beta_prev, beta_curr) → BandColumn3` | (leaf) | `rough-in (obstruction, proposed-by: abstractor:2026-05-27T004641Z-abstractor-MINRES-L1-L0)` |
 | [`givens_apply_with_residual_min`](../L1-L0/minres-iteration.md) | `(qr_state, BandColumn3) → (qr_state', s_residual)` | `givens` | `rough-in (obstruction, proposed-by: abstractor:2026-05-27T004641Z-abstractor-MINRES-L1-L0)` |
@@ -68,3 +72,4 @@ Shape contracts are declared at boundaries (per the bunsen `contracts::unpack_sh
 - MPI single-rank scope (per `CLAUDE.md` "Scope") applies uniformly across L1 reductions: the L1 signature never includes a communicator; the L1>L0 lowering reintroduces `MPI_Allreduce` and records bit-deterministic-reduction-order trade-offs.
 - Constant-folding fast paths at L0 (e.g., `axpy`'s `α == 1.0` branch, `dot`'s self-dot `&x == &y` branch) are classified as transparent performance tricks and erased at L1 — but only after the critic confirms they are algebraically equivalent to the unfolded form. Load-bearing numerical tricks (the pinned reduction tree) are preserved as explicit non-laws.
 - The MINRES / BiCGStab rough-in operators above are emitted by **obstruction** L1>L0 themes — Palace has no L0 realisation (the `KrylovSolver::MINRES` and `KrylovSolver::BICGSTAB` enum cases route to `MFEM_ABORT` at `palace/linalg/ksp.cpp:53-57`). Harvester should not attempt promotion until either (a) Palace gains the implementation or (b) the L0 scope is widened to include vendored MFEM (see open question `bicgstab-mfem-reanchor-policy`).
+- `ksp_solve` is the **first firm L1 operator whose primary argument is a structured opaque value** (`Solver[A]`) rather than a raw tensor or scalar. The construction of `Solver[A]` is the [`constructed-operator-factory`](../concepts/constructed-operator-factory.md) concept; the per-method axis collapse is [`variant-absorption`](../concepts/variant-absorption.md); the L0 anchor is [`L0/kspsolver-base-class`](../L0/kspsolver-base-class.md). The variant-axis collapse covers the **implemented** three (`CG`, `GMRES`, `FGMRES`) only; the three aborting enum cases (`MINRES`, `BICGSTAB`, `DEFAULT`) are out-of-scope per CLAUDE.md "Unimplemented Palace stub policy" and remain documented as L1>L0 obstruction themes.

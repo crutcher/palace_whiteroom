@@ -4,7 +4,9 @@ Mutation-lifted vector-scalar fused update: `y_new = α·x + y_old`. The canonic
 
 ## Context
 
-The L0 source-side form is the in-place call `y.Add(α, x)` (a member function on `mfem::Vector`) or `y.AXPY(α, x)` (a member function on Palace's `ComplexVector`, with `Add` as an alias). At L0 both forms mutate `y` in place. The L1 form drops the destination-buffer mention: the operator consumes `α`, `x`, and the pre-update value of `y`, and produces a fresh post-update value. Workspace, aliasing, and in-place overwrite are L0 concerns; they reappear (if at all) in the L1>L0 lowering theme, not in the L1 signature.
+`axpy` lifts the BLAS-1 in-place fused update `y ← α·x + y` from two L0 idioms (receiver-mutating `y.Add(α, x)` / `y.AXPY(α, x)` and free-function-form `linalg::AXPY(α, x, y)`) to a single pure-functional operator. The L0 surface is detailed in [`L0/linalg-vector-file`](../L0/linalg-vector-file.md) (the `AXPY` family in `palace/linalg/vector.{hpp,cpp}`); the receiver-vs-output-arg idiom split is named in [`L0/output-arg-vs-receiver`](../L0/output-arg-vs-receiver.md); the real-vs-complex element-type axis is named in [`L0/mfem-vector-types`](../L0/mfem-vector-types.md); the real-real `α == 1.0` constant-folding branch is classified as transparent in [`L0/transparent-vs-load-bearing-tricks`](../L0/transparent-vs-load-bearing-tricks.md).
+
+The L1 form drops the destination-buffer mention: the operator consumes `α`, `x`, and the pre-update value of `y`, and produces a fresh post-update value. Workspace, aliasing, and in-place overwrite are L0 concerns; they reappear (if at all) in the L1>L0 lowering theme, not in the L1 signature.
 
 A cross-cutting prose treatment lives at [`concepts/axpy`](../concepts/axpy.md) — covering BLAS background, fusions (`α = 1`, `α = -1`), and roll-up usage across slices. The L1 entry here is the firm operator definition; the concept page is the narrative.
 

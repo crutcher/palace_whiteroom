@@ -16,16 +16,19 @@ The reference notes are not source paraphrases. They name conventions (output-ar
 - [`mfem-vector-types`](./mfem-vector-types.md) — `Vector` / `ComplexVector` duality (element-type axis); single-rank reading of `Par*` types per `CLAUDE.md` "Scope".
 - [`linalg-free-functions`](./linalg-free-functions.md) — `linalg::AXPY` / `linalg::Dot` / `linalg::Norml2` as template-dispatch wrappers over the method-form surface; the wrapping pattern Palace uses across `vector.hpp`.
 - [`transparent-vs-load-bearing-tricks`](./transparent-vs-load-bearing-tricks.md) — Operational L0 classification (lifted from `CLAUDE.md`): `α == 1.0` branch in `AXPY` is transparent; reduction-tree non-associativity is load-bearing. Worked examples from the BLAS-1 family.
+- [`mutable-workspace-pattern`](./mutable-workspace-pattern.md) — `mutable Vector z` workspace members on operator subclasses and iterative-solver subclasses; lazy-allocate-on-first-use, reuse-across-calls discipline. The L0 substrate for L1>L0 mutation-rotation themes' "workspace mention and erase" rewrite.
 
 **File overviews** — anchor files L1 references repeatedly:
 
 - [`linalg-vector-file`](./linalg-vector-file.md) — `palace/linalg/vector.{hpp,cpp}` at a glance. The home of `ComplexVector`, the `AXPY/AXPBY/AXPBYPCZ` family, `Dot`/`TransposeDot`/`LocalDot`, `Norml2`, `Normalize`.
 - [`ksp-factory-file`](./ksp-factory-file.md) — `palace/linalg/ksp.cpp` Krylov-solver factory. Enum-routed dispatch: CG / GMRES / FGMRES implemented; MINRES / BICGSTAB / DEFAULT abort. Anchor for the "advertised-but-unimplemented" pattern that drives the MINRES / BiCGStab obstruction themes.
+- [`linalg-iterative-file`](./linalg-iterative-file.md) — `palace/linalg/iterative.{hpp,cpp}` at a glance. The home of `IterativeSolver<OperType>` base class plus the three concrete subclasses `CgSolver`, `GmresSolver`, `FgmresSolver`. The L0 anchor for the cycle-007+ `L1/ksp_solve` operator and for the per-step body that the L2 `krylov-step` entry instantiates.
 
 **Overload sets and class interfaces** — multi-overload / multi-subclass surfaces referenced by L1 / L2 / L4 entries:
 
 - [`apply-linop-overload-set`](./apply-linop-overload-set.md) — the `Mult` / `MultTranspose` / `MultHermitianTranspose` / `AddMult` family on the `Operator` / `ComplexOperator` hierarchy, plus the concrete-subclass family (`SumOperator`, `BaseProductOperator`, `BaseDiagonalOperator`, `BaseMultigridOperator`, `ComplexWrapperOperator`, `ParOperator`). The L0 anchor for `L1/apply_linop`'s 12-method-overload collapse and for the `apply-linop-mutation-rotation` lowering theme.
 - [`kspsolver-base-class`](./kspsolver-base-class.md) — `BaseKspSolver<OperType>` in `palace/linalg/ksp.{hpp,cpp}`. The composition class pairing an `IterativeSolver` with a `Solver` (preconditioner) and exposing the public `Mult(b, x)` "solve `Ax = b`" entry point. Anchors the L4 `solve-monad` concept to concrete C++ and is the call-site target for solver use across Palace's model pipelines.
+- [`mfem-wrapper-solver`](./mfem-wrapper-solver.md) — `MfemWrapperSolver<OperType>` in `palace/linalg/solver.{hpp,cpp}`. The adapter that lifts MFEM's real-only `mfem::Solver` hierarchy into Palace's templated `Solver<OperType>` hierarchy. Every preconditioner Palace uses — `BoomerAMG`, `AMS`, `MUMPS`, `SuperLU`, `Strumpack` — comes through this wrapper before composition into a `BaseKspSolver`. The L0 substrate for the L4 `complex-from-real-lift` concept on the preconditioner side.
 
 ## Source organization
 

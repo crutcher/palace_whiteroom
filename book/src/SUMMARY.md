@@ -6,6 +6,8 @@
 # L4 — Graph-Evaluation Calculus
 - [Overview](./L4/index.md)
 - [krylov-step](./L4/krylov-step.md)
+- [iterate-while](./L4/iterate-while.md)
+- [iterate-while-with-prev](./L4/iterate-while-with-prev.md)
 
 # L4 > L3 — Lowering
 - [Overview](./L4-L3/index.md)
@@ -16,6 +18,7 @@
 
 # L3 > L2 — Lowering
 - [Overview](./L3-L2/index.md)
+- [krylov-step-body-identity](./L3-L2/krylov-step-body-identity.md)
 
 # L2 — Algebraic Decompositions
 - [Overview](./L2/index.md)
@@ -33,6 +36,7 @@
 - [scal](./L1/scal.md)
 - [apply_linop](./L1/apply_linop.md)
 - [axpbypcz](./L1/axpbypcz.md)
+- [ksp_solve](./L1/ksp_solve.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -48,10 +52,13 @@
 - [Convention — MFEM vector types](./L0/mfem-vector-types.md)
 - [Convention — linalg:: free-function wrappers](./L0/linalg-free-functions.md)
 - [Convention — transparent vs load-bearing tricks](./L0/transparent-vs-load-bearing-tricks.md)
+- [Convention — mutable workspace pattern](./L0/mutable-workspace-pattern.md)
 - [File — palace/linalg/vector.{hpp,cpp}](./L0/linalg-vector-file.md)
 - [File — palace/linalg/ksp.cpp](./L0/ksp-factory-file.md)
+- [File — palace/linalg/iterative.{hpp,cpp}](./L0/linalg-iterative-file.md)
 - [Overload set — Mult / MultTranspose / AddMult](./L0/apply-linop-overload-set.md)
 - [Class — BaseKspSolver](./L0/kspsolver-base-class.md)
+- [Class — MfemWrapperSolver](./L0/mfem-wrapper-solver.md)
 # Phase 1 corpus (slice-vertical; raw material for combinator extraction)
 - [Index — Slice Status](./spec/index.md)
   - [CG — Preconditioned Conjugate Gradient](./spec/slices/cg.md)

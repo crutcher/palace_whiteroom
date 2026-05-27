@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-27 cycle-007 — 6 reports (5 wave-1 + 1 wave-2 audit) — third cycle under split integrator — first primary cycle of meta-batch-1 (3:1 cadence) — iterate-while L4 family firm + L3>L2 first firm-rough-in theme + L1 ksp_solve firm + L0 bundle 3 + L1 retroactive context-thinning sweep](cycle-007.md)
 - [2026-05-27 cycle-006 — 5 reports (4 wave-1 + 1 wave-2) — second cycle under split integrator — krylov-step L4 firm + L4>L3 typed-wrapper-dissolution theme + L0 reference-notes bundle 2 + L1 scalar-promotion retroactive-thinning + concepts/index dedup](cycle-006.md)
 - [2026-05-27 cycle-005 — 6 wave-1 reports — FIRST CYCLE UNDER SPLIT INTEGRATOR — krylov-step L2 firm + L0 reference-notes bundle 1 + apply-linop/axpbypcz mutation-rotation themes + scalar-promotion concept](cycle-005.md)
 - [2026-05-27 cycle-004 — 7 wave-1 reports — concepts/dot rewrite + L1 intro refresh + scal/apply_linop/axpbypcz firm + MINRES/BiCGStab obstruction themes](cycle-004.md)

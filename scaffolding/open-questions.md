@@ -857,6 +857,50 @@ status: open
 
 `kspsolver-base-class.md` references an unbuilt L1 `ksp_solve` operator in its prose and Referenced-from sections (qualified explicitly as "not yet authored — anticipated cycle-007+"). The L0 reference-note chapter is the natural L0 anchor for that future L1 entry; `concepts/ksp_solve.md` already exists as the methodology concept page. Combined, the cycle-007 (or later) planner has two reading-trail entry points (concept + L0 reference) ready to anchor a harvester dispatch that promotes `ksp_solve` from concept to firm L1 operator. Routes to cycle-007+ planner as a harvester-target priority candidate. Source: `reports/2026-05-27T081050Z-layer-intro-author-L0-bootstrap-bundle-2/CYCLE.md` §Open questions item 4.
 
+```yaml
+---
+slug: mfem-wrapper-solver-l4-complex-from-real-lift-backref
+opened_at: cycle-007
+opened_by: layer-intro-author
+status: open
+---
+```
+
+`mfem-wrapper-solver.md` (cycle-007 bundle-3) references `complex-from-real-lift` as the L4 concept on the preconditioner side, but the L4 lift theme has not been authored. The reference is forward-looking. When the L4 form of `complex-from-real-lift` is firmed (or the existing `book/src/concepts/complex-from-real-lift.md` is promoted to L4), the back-reference should be added to the chapter's "Referenced from" section. Routes to whichever cycle promotes `complex-from-real-lift` to firm L4. Not blocking the bundle; the chapter's forward-pointer wording is defensive. Source: `reports/2026-05-27T160728Z-layer-intro-author-L0-bootstrap-bundle-3/CYCLE.md` §Open questions item 1.
+
+```yaml
+---
+slug: iterative-file-helper-citation-granularity
+opened_at: cycle-007
+opened_by: layer-intro-author
+status: open
+---
+```
+
+`linalg-iterative-file.md` (cycle-007 bundle-3) cites `iterative.cpp:34-241` as "Sundry small-dense linear-algebra utilities" without enumerating each helper at the per-template-overload level. The chapter's "Free-function helpers" section names the five primary anonymous-namespace helpers (`CheckDot`, `ApplyB`, `InitialResidual`, `ApplyBA`, `OrthogonalizeIteration`) explicitly with line ranges, and identifies the small-dense kernel helpers (`SafeMin` / `SafeMax`, `GeneratePlaneRotation` real + complex, `ApplyPlaneRotation` real + complex). The cycle-007 `l1-ksp-solve` harvester may want a more granular per-overload helper enumeration (separating real and complex specialisations) if the small-dense kernel becomes load-bearing for the L1 form; routes to cycle-007+ harvester or a future thinning sweep. Source: `reports/2026-05-27T160728Z-layer-intro-author-L0-bootstrap-bundle-3/CYCLE.md` §Open questions item 2.
+
+```yaml
+---
+slug: eigensolver-wrapper-l0-bundle-4-candidate
+opened_at: cycle-007
+opened_by: layer-intro-author
+status: open
+---
+```
+
+`mutable-workspace-pattern.md`'s Category 3 (solver workspaces) lists the eigensolver-wrapper instances (`arpack.hpp:88, 215`; `slepc.hpp:83, 302`; `nleps.hpp:72, 265`) as grep-verified-only. The eigensolver wrappers themselves have not been read at L0; their workspace usage is documented purely on the basis of grep-located `mutable ComplexVector` members. A future L0 bundle (bundle 4 or beyond) could author a dedicated eigensolver-wrapper reference note that reads these wrappers in full; the workspace pattern reference is sufficient for the cross-cutting concern (the workspace-mention-and-erase rewrite is the same regardless of wrapper specifics) but not for a full eigensolver-side L0 audit. Routes to future L0 bundle. Source: `reports/2026-05-27T160728Z-layer-intro-author-L0-bootstrap-bundle-3/CYCLE.md` §Open questions item 3.
+
+```yaml
+---
+slug: mutable-workspace-category-4-split-decision
+opened_at: cycle-007
+opened_by: layer-intro-author
+status: open
+---
+```
+
+`mutable-workspace-pattern.md`'s Category 4 (`MfemWrapperSolver::A` retained-assembled-matrix) is a slight stretch of the "mutable workspace" name — the `A` member is `std::unique_ptr<mfem::HypreParMatrix>`, not `mutable`, and the lifecycle is tied to `SetOperator` invocations rather than per-`Mult` lazy-resize. The pattern is *related* (lazy allocation, reuse across calls, instance-scoped lifetime) but mechanically different. The chapter calls this out explicitly in its Category 4 prose. If a future cross-cutter (or a critic on this report) thinks Category 4 should be in a sibling chapter rather than this one, the split is clean: extract Category 4 into a new `retained-assembled-matrix-pattern.md` chapter and have `mutable-workspace-pattern.md` link to it. Bundle-3 keeps them together for the workspace-discipline-as-cohort framing; a future cycle could split. Routes to cross-cutter or layer-intro-author follow-up. Source: `reports/2026-05-27T160728Z-layer-intro-author-L0-bootstrap-bundle-3/CYCLE.md` §Open questions item 4.
+
 ## Investigating
 
 (empty)
@@ -1064,11 +1108,15 @@ The cycle-006 L4 `krylov-step` row depends on five concept-page entries (`state-
 slug: iterate-while-l4-anchor-missing
 opened_at: cycle-006
 opened_by: harvester
-status: open
+status: answered
+answered_at: cycle-007
+answered_in: reports/2026-05-27T160550Z-harvester-iterate-while-family-L4/ (closes the OQ in favour of the "L4 row" resolution: both `iterate_while` and `iterate_while_with_prev` land as firm L4 rows with their own variant-axis profile and demand-pruning law)
 ---
 ```
 
 The cycle-006 L4 `krylov-step` row uses `iterate_while` (and `iterate_while_with_prev` for the first-iteration-unrolled Form B) as load-bearing vocabulary throughout the operator body and §Semantics, but no concept page or L4 row carries either name. The closest existing anchor is `book/src/concepts/solve-monad.md` §"Worked example — GMRES" which writes `inner_loop` as the fold body without naming the fold combinator. **Routes to cycle-007 planner**: either `iterate_while` should land as a concept page (sibling to `solve-monad`) or as an L4 row (the latter is more aggressive — would make `iterate_while` an L4 combinator with its own variant axes around predicate-shape, trajectory-recording, and the Form-A-vs-Form-B `_with_prev` variant). The cycle-006 wave-2 abstractor independently surfaced the same gap and proposed `iterate_while` / `iterate_while_with_prev` as rough-in L4 operators with intended signatures, doubly-flagging this at integration time. Source: `reports/2026-05-27T080944Z-harvester-krylov-step-L4/CYCLE.md` §Open-questions item 2.
+
+**Cycle-007 resolution**: the cycle-007 harvester (`reports/2026-05-27T160550Z-harvester-iterate-while-family-L4/`) firmed both `iterate_while` and `iterate_while_with_prev` as L4 rows (`book/src/L4/iterate-while.md`, `book/src/L4/iterate-while-with-prev.md`), adopting the "L4 row" resolution. Both chapters carry full Signature / Semantics (small-step rules) / Algebraic laws / Variant axes / Status sections; the dep-map at `book/src/L4/index.md` lists three firm rows total (post-this-dispatch). The follow-up trajectory-accumulator-vs-readout-collapse gap is tracked separately by OQ `iterate-while-l3-rendering-trajectory-accumulation-gap`.
 
 ```yaml
 ---
@@ -1166,11 +1214,15 @@ The cycle-006 wave-2 abstractor dispatch (`reports/2026-05-27T081913Z-abstractor
 slug: krylov-step-body-identity-theme-pending-cycle-007
 opened_at: cycle-006
 opened_by: abstractor
-status: open
+status: closed
+answered_at: cycle-007
+answered_in: reports/2026-05-27T160445Z-abstractor-krylov-step-body-identity-L3-L2/CYCLE.md (theme authored as `book/src/L3-L2/krylov-step-body-identity.md`; ratifies cycle-006 audit)
 ---
 ```
 
 The cycle-006 wave-2 abstractor dispatch authored the L4>L3 `krylov-step-typed-wrapper-dissolution` theme and confirmed (with refinement) the cycle-002 identity-in-form claim for the L3>L2 body rewrite. Per the audit's verdict, the L4>L2 chain factors into the cycle-006 L4>L3 hop (wrapper dissolution) plus an L3>L2 hop that is identity-in-form on the body. The L3>L2 hop has NOT been authored as a theme entry under `book/src/L3-L2/`. **Candidate cycle-007 dispatch**: a short `abstractor` invocation authoring `book/src/L3-L2/krylov-step-body-identity.md` (one-line theme: the L3 body produced by `krylov-step-typed-wrapper-dissolution` lowers to L2 by identity-in-form; LHS = L3 form per the cycle-006 theme's RHS, RHS = L2 form per `book/src/L2/krylov-step.md` §Semantics, justification = `empirical-match` per the cycle-002 claim). Low-cost dispatch (single short theme); should be slotted alongside the cycle-007 harvester on the L4 loop-combinator family (see `iterate-while-l4-anchor-missing` cycle-006 OQ) for symmetric completion of the krylov-step lowering chain. The cycle-006 dispatch explicitly scoped this out as "one theme per invocation" — the sibling theme is the natural cycle-007 follow-up. Source: `reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/CYCLE.md` §"Open questions / caveats" item 5.
+
+**Cycle-007 closure**: the cycle-007 wave-1 abstractor dispatch (`reports/2026-05-27T160445Z-abstractor-krylov-step-body-identity-L3-L2/`) authored the theme as `book/src/L3-L2/krylov-step-body-identity.md`, displacing the L3-L2 index's `(empty — Phase B skeleton.)` placeholder with the first firm-rough-in theme row. Justification: `empirical-match` (cycle-002 combinator-miner claim; cycle-006 audit confirmed-with-refinement) with secondary `structural`. Status declared `firm-rough-in` with `rough-in` inherited from the upstream L4>L3 theme; promotion to plain `firm` follows automatically when the upstream theme is itself promoted. Body-level mapping is line-for-line identity over six body bindings; the two surface adjustments at the wrapper ((K, s) → unified `IterState`; outer-loop tail-recursion → outer-driver-by-role) are state-hiding / abstraction-by-role rotations explicitly delimited from the body. The L3>L2 hop of the `krylov-step` lowering chain is now structurally housed under `book/src/L3-L2/` for symmetric coverage.
 
 ```yaml
 ---
@@ -1183,6 +1235,85 @@ relates_to: iterate-while-l4-anchor-missing (cycle-006)
 ```
 
 The cycle-006 wave-2 abstractor dispatch's §"What the L3 form for `iterate_while` looks like" subsection (within `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md`) renders the L3 lowering of `iterate_while` as a tail-recursive value-threading loop returning a single `readout` when `continue = false`. But the L4 `iterate_while` signature given earlier in the same theme is `Step -> carry -> Solve Trajectory` with `Trajectory = [readout]` — the L4 form accumulates readouts across iterations subject to demand-pruning. The L3 tail-recursive form as written drops the trajectory accumulator, which is an actual semantic change in the rotation rather than a wrapper dissolution. **Two candidate resolutions** (deferred to cycle-007): (a) re-render the L3 form with explicit `trajectory` accumulator pass-through (`[readout]` rather than a single `readout`); (b) author an explicit demand-pruning step that justifies the collapse to a single readout when no downstream consumer reads the trajectory. Both are substantive rotation decisions exceeding repair authority. **Routes to cycle-007**: (i) `lowering-verifier` dispatch follow-up — already named in the theme's §Status — should reconcile the L3 rendering with the L4 trajectory shape; or (ii) cycle-007 `harvester` on the L4 loop-combinator family (per the cycle-006 OQ `iterate-while-l4-anchor-missing`) resolves as part of formalising `iterate_while`'s firm signature. The primary content of the cycle-006 dispatch — the four-part wrapper-dissolution theme for `krylov-step` itself — is unaffected by this gap; the sub-issue is on the speculative L4 loop combinator's L3 shape, not on the `krylov-step` body's rotation. Source: `reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/CYCLE.md` §"Open questions / caveats" item 8 (added by repairer per critic Finding 3).
+
+**Cycle-007 update**: the cycle-007 harvester on the L4 loop-combinator family (`reports/2026-05-27T160550Z-harvester-iterate-while-family-L4/`) firmed the L4 signature with an explicit trajectory accumulator `[{ ...e }]` and the demand-pruning law (Law 1 of `book/src/L4/iterate-while.md`). The harvester did NOT reconcile the L3 form (which still drops the trajectory per `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` §"What the L3 form for iterate_while looks like" lines 156-167). The gap remains for cycle-008+ lowering-verifier: dispatch on `iterate-while-l4-l3` to author a standalone `book/src/L4-L3/iterate-while-dissolution.md` theme reconciling the L3 rendering with the firm L4 trajectory shape. The cycle-007 harvester explicitly scoped this out per the "one operator per invocation" discipline. Both candidate resolutions enumerated above — (a) trajectory accumulator pass-through; (b) explicit demand-pruning step — remain live options; the cycle-007 harvester did not pick between them.
+
+**Cycle-007 wave-2 verdict (audit verdict-(c); status remains `open` pending cycle-008+ lifter)**: the cycle-007 wave-2 lowering-verifier dispatch (`reports/2026-05-27T170121Z-lowering-verifier-iterate-while-L3-trajectory-reconciliation/`) audited the gap against the just-firmed L4 chapters and the Palace KSP consumer surface. **Verdict: (c) — L3 single-readout is correct; L4>L3 lowering needs explicit §3.8 collapse-rule citation.** The audit's key L0/L1 findings: (i) Palace's `IterativeSolver` result-extraction surface materializes exactly four scalars (`converged`, `initial_res`, `final_res`, `final_it`) at `reference/palace/palace/linalg/iterative.hpp:52-55` with four getters at `:97-108`; (ii) the sole caller of that surface is `BaseKspSolver::Mult` at `reference/palace/palace/linalg/ksp.cpp:296-310`, consuming exactly those four scalars (branch on `GetConverged`, ratio in warning via `GetFinalRes()/GetInitialRes()`, sum into counter via `GetNumIterations`); (iii) the PCG outer loop (`iterative.cpp:420-485`) and GMRES inner loop (`:614-705`) retain no per-iteration residual history — per-iteration `res`/`beta` is either printed inline under `print_opts.iterations` or overwritten; (iv) no Palace unit test asserts on per-iteration residual values (`test/unit/` directory has no `test-ksp*`/`test-cg*`/`test-gmres*`). The four scalars are all `final_state`-equivalent (carry fields at termination or pre-loop initialization), so Law 1 of `book/src/L4/iterate-while.md` fires and the trajectory collapses to `[]` — the L3 single-readout form is the §3.8-pruned form of the L4 generality, not a different combinator. Both originally-enumerated candidate resolutions are subsumed: (a) [promote L3 to trajectory] was the wrong direction (would have promoted L3 to a trajectory it does not need); (b) [explicit demand-pruning step] was a less-precise framing of verdict-(c). A new applicability **Condition 5** for the cycle-006 theme surfaces from this audit: *"The downstream consumer observes only `final_state`-equivalent quantities of the `iterate_while` invocation; per Law 1 (§3.8 demand-pruning), the trajectory then prunes to `[]` and the L3 form is the single-readout shape."* The full audit including `verified_against:` evidence-block proposal lives in `reports/2026-05-27T170121Z-lowering-verifier-iterate-while-L3-trajectory-reconciliation/CYCLE.md`. **Status remains `open`**: the audit produces evidence + verdict but the substantive patch (cite Law 1 + `concepts/derived-view-hoisting.md` §"Worked example: CG residual norm" at `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` §"What the L3 form for iterate_while looks like"; add Condition 5 to §"Applicability conditions") is out-of-lowering-verifier-authority and routes to a cycle-008+ `lifter` dispatch. Closure becomes appropriate once that lifter patch lands. Orthogonal new OQ `iterate-while-log-effect-vs-trajectory-channel` (cycle-007, opened by lowering-verifier) tracks the unrelated logging-effect channel question.
+
+```yaml
+---
+slug: ksp-solve-concept-page-signature-update
+opened_at: cycle-007
+opened_by: harvester
+status: open
+---
+```
+
+The early-cycle methodology concept page `concepts/ksp_solve.md` documents `ksp_solve(ksp: KSP, b: Vector) → Vector` (a single solution-vector return). The cycle-007 firm L1 chapter `L1/ksp_solve.md` documents `ksp_solve(K, b) → SolveResult[N]` (a structured return carrying solution + four solve-statistics fields). Should the concept page be updated to match the L1 chapter's `SolveResult` signature, or is it intentional that the concept-page surface is the simpler narrative form?
+
+Precedent from `concepts/nrm2.md` vs `L1/nrm2.md` (cycle-002+ thinning sweep) suggests the concept page should be updated to defer to the L1 chapter on factual claims while preserving the narrative framing. A future dispatch (likely under priority #11 retroactive-context-thinning or a follow-up concept-page sync) could update the concept-page signature line + add a "Solution-vs-result-record" note pointing at the L1 chapter's `SolveResult` definition. Not blocking. Source: `book/src/concepts/ksp_solve.md` vs `book/src/L1/ksp_solve.md` signature.
+
+```yaml
+---
+slug: ksp-solve-mutation-rotation-l1-l0-theme
+opened_at: cycle-007
+opened_by: harvester
+status: open
+---
+```
+
+The firm L1 `ksp_solve` operator (cycle-007) now exists. The L1>L0 lowering theme that maps `ksp_solve(K, b) → SolveResult` to `BaseKspSolver::Mult(b, x)` + initial-guess threading + workspace allocation + statistics-counter mutation + convergence-warning `Mpi::Warning` logging is a natural next dispatch. Existing L1>L0 themes (`axpby-mutation-rotation`, `axpbypcz-mutation-rotation`, `apply-linop-mutation-rotation`) provide the precedent shape. Should this theme be queued for an `abstractor` or `lifter` dispatch in cycle-008 or later?
+
+cycle-007 priority slate may or may not have this slot; cycle-008 cycle-planner can promote based on whether other L1>L0 work is already in progress. Not blocking. Source: `book/src/L1/ksp_solve.md` firm; no corresponding L1>L0 lowering theme yet.
+
+```yaml
+---
+slug: l1-intro-refresh-after-constructed-operator-gate
+opened_at: cycle-007
+opened_by: harvester
+status: open
+---
+```
+
+The L1 layer-intro `Context` and `Semantics (overlay)` sections previously framed L1 as a BLAS-1-plus-opaque-operator surface. With cycle-007's `ksp_solve` adding the constructed-operator gate (the first L1 operator whose primary argument is a structured opaque value), the layer's semantic motif count grows from 3 to 4. The dep-map and motif list have been updated; should `layer-intro-author` revisit the broader framing in a follow-up dispatch (e.g. add a paragraph in `Context` calling out the constructed-operator absorption as the layer's transition point to upper-layer vocabulary)?
+
+This is a polish-level concern; the current intro is correct and not misleading. cycle-008 or later can queue this if other layer-intro work is happening; otherwise the four-motif structure is self-explanatory. Source: `book/src/L1/index.md` updated to add "Constructed-operator absorption" as the fourth semantic motif.
+
+```yaml
+---
+slug: gmres-inner-loop-iterate-while-migration
+opened_at: cycle-007
+opened_by: harvester
+status: open
+relates_to: iterate-while-l4-anchor-missing (cycle-006, answered cycle-007)
+---
+```
+
+The cycle-007 harvester on the iterate-while family settled the L4 anchor for `iterate_while` (Form A) and `iterate_while_with_prev` (Form B). The cycle-005 GMRES slice's L4 section (`book/src/spec/slices/gmres.md:459-470`) renders `inner_loop` as an inline tail-recursive `Solve`-monad function (`inner_loop op conv K = do ... if conv.satisfied K3.beta || K3.j + 1 == op.max_dim || s.it == op.max_it then pure K3 else inner_loop op conv K3{ j = K3.j + 1 }`) rather than as a call to `iterate_while`. With the L4 row now firm, the GMRES rendering can be migrated to use `iterate_while` directly, surfacing the predicate (`\K -> not (conv.satisfied K.beta) && K.j + 1 < op.max_dim && s.it < op.max_it`) and the step body (`\K -> do { ... ; pure { state: K3{ j = K3.j + 1 }, ... } }`) as separate functions. **Benefits**: matches the CG v0.4 rendering pattern (`cg.md:215-219`); makes the trajectory shape explicit (GMRES extras are `{ residual_norm: Scalar, breakdown_token: BreakdownTag }`); enables Form-B adoption if the cycle-007/008 first-iteration-unrolling analysis on GMRES finds it warranted. **Cost**: a self-rotation v1.0→v1.1 on `gmres.md` §L4; needs a lifter or abstractor dispatch. **Routes to cycle-008+ lifter** on `gmres §L4`. Source: `reports/2026-05-27T160550Z-harvester-iterate-while-family-L4/CYCLE.md` §"Open questions / caveats" item 2.
+
+```yaml
+---
+slug: iterate-while-pure-promotion-decision
+opened_at: cycle-007
+opened_by: harvester
+status: open
+relates_to: iterate-while-l4-anchor-missing (cycle-006, answered cycle-007)
+---
+```
+
+The cycle-007 harvester on the iterate-while family settled `iterate_while` and `iterate_while_with_prev` as two firm L4 rows. The strawman §3.7 also names `iterate_while_pure :: α -> (α -> Bool) -> (α -> α) -> α` as a sugar for the no-extras case; this is used by the LBM example (`l4_calculus.md:374-386`). The cycle-007 harvester adopted the sugar inside `book/src/L4/iterate-while.md` §Semantics as a definitional shortcut (`iterate_while_pure a p f ≡ (iterate_while a p (\x -> { state: f(x) })).final_state`) rather than as a separate L4 row. **Two candidate resolutions** (deferred): (a) keep the sugar inside `iterate-while` as a definitional reduction; future slices invoking the no-extras pattern reference the sugar inline. (b) promote `iterate_while_pure` to a third firm L4 row with its own chapter; the chapter would be ~1/3 the size of `iterate-while` since most laws and discipline are identical. **Cost-benefit**: (a) keeps the L4 vocabulary small but spreads the sugar usage across slice-level pseudo-code; (b) gives slice authors a one-line `iterate_while_pure` to reference but adds a row whose primary content is "see `iterate-while` Laws 1-4". **Routes to cycle-008+ harvester or planner**: defer decision until a second non-Krylov slice (e.g., LBM at a future Palace transient solver write-up, or a per-element time-step iteration) actually needs the sugar enough to outweigh the "see also iterate-while" cross-reference cost. Source: `reports/2026-05-27T160550Z-harvester-iterate-while-family-L4/CYCLE.md` §"Open questions / caveats" item 3.
+
+```yaml
+---
+slug: iterate-while-log-effect-vs-trajectory-channel
+opened_at: cycle-007
+opened_by: lowering-verifier
+status: open
+relates_to: iterate-while-l3-rendering-trajectory-accumulation-gap (cycle-006, open — cycle-007 verdict-(c) recorded, closure deferred to cycle-008+ lifter patch)
+---
+```
+
+The cycle-007 firm L4 `iterate-while.md` / `iterate-while-with-prev.md` model iteration as `Solve = StateT SimState Identity` — a state-monad over `SimState` with no logging effect. Palace's L0 surface (e.g., `reference/palace/palace/linalg/iterative.cpp:422-426` for PCG, `:617-621` for GMRES) emits per-iteration residuals via `Mpi::Print` conditional on `print_opts.iterations`. The audit verdict-(c) resolution of `iterate-while-l3-rendering-trajectory-accumulation-gap` (`reports/2026-05-27T170121Z-lowering-verifier-iterate-while-L3-trajectory-reconciliation/CYCLE.md`) closed the return-value trajectory question (single-readout L3 form is correct under §3.8 pruning), but the *logging-channel* observation is independently present in Palace and not currently captured by the L4 calculus. Should `Solve` be extended to a richer effect representation (e.g., `Solve = RWST OpParams (DList LogEntry) SimState Identity`) so the print-when-`print_opts.iterations` behavior becomes a free-monad-style `tell` rather than an out-of-band side-effect? Orthogonal to the trajectory-collapse question — affects effect-modeling discipline, not the trajectory shape. Routes to a cycle-008+ `lowering-verifier` or `abstractor` dispatch (or, more likely, surfaces during meta-phase methodology review of the L4 monad surface). Not blocking. Source: `reports/2026-05-27T170121Z-lowering-verifier-iterate-while-L3-trajectory-reconciliation/CYCLE.md` §"Open questions / caveats" item 1.
 
 ## Dropped
 
