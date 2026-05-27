@@ -65,6 +65,29 @@ status: pending
 - When you encounter operators that don't fit cleanly under any layer-level semantic theme, **flag them** in Open questions; don't force-fit.
 - **For concepts/ pages**: align verbatim with the authoritative L_n operator entry. The concept page is a brief cross-cutting introduction with one-line semantics, citations forwarded to the L_n entry, and a list of layers/operators that reference the concept. Do **not** restate the operator's algebraic laws (those live in the L_n entry). When the concept page contradicts the L_n entry, the L_n entry wins — rewrite the concept page to match.
 
+## Vocabulary-cohort subsection (added cycle-004)
+
+When a layer's `index.md` accumulates ≥3 firm operators **plus** any rough-in / obstruction-themed entries, include a **Vocabulary cohort** subsection in the intro that splits the dep-map by firmness state. Pattern (originated cycle-004 in `book/src/L1/index.md`):
+
+```markdown
+## Vocabulary cohort
+
+**Firm at L<n>** (algebraic-laws + variant-axis-coverage complete):
+
+- `<slug-1>` — <one-line semantic>
+- `<slug-2>` — <one-line semantic>
+- `<slug-3>` — <one-line semantic>
+
+**Queued at L<n>** (rough-in / obstruction / awaiting promotion):
+
+- `<slug-4>` (rough-in) — <one-line on what's pending>
+- `<slug-5>` (obstruction) — <one-line on the obstruction>
+```
+
+Promote this subsection format **into L2, L3, and L4 intros** when each reaches ≥3 firm operators. The subsection is structural / orientation, not semantic; it does not duplicate the dep-map table (which carries the actual dep edges) — it answers the orientation question "what vocabulary is settled vs in motion at this layer?" without forcing a reader to scan the dep-map.
+
+Skip the subsection when the layer has only firm entries (no queue) or only rough-ins (no firm cohort) — the split is only useful when both states coexist.
+
 ## What you DO NOT do
 
 - Author per-operator content (harvester does this).

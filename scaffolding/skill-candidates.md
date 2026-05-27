@@ -37,7 +37,9 @@ The cost of a too-eager promotion is an unused SKILL.md; the cost of under-promo
 slug: cycle-planner-discipline-read-role-spec-first
 proposer: meta-phase
 proposed_at: cycle-002 / 2026-05-26
-status: proposed
+status: deferred
+deferred_at: cycle-004 / 2026-05-27
+deferred_reason: cycle-003 + cycle-004 cycle-planner runs both honoured one-operator-per-invocation; the user-directive 8fc3a07 (parallel-when-in-doubt) + cycle-planner.md Discipline updates absorbed the constraint check at the role-spec level. Skill is unnecessary unless recurrence climbs.
 ---
 ```
 
@@ -45,7 +47,25 @@ status: proposed
 
 **Sketch of procedure**: Before emitting any `(agent, scope, deps)` tuple, the cycle-planner reads the target agent's `.claude/agents/<name>.md` and checks for "one X per invocation" / "single-scope" / "atomic dispatch" constraints. Rejects multi-target scopes for atomic agents. Emits one tuple per atomic dispatch.
 
-**Promotion bar check**: recurrence-1 currently (cycle-002 only). Not yet at the ≥2-cycle threshold. Defer to cycle-003 evaluation; if haiku planner repeats, promote then. Alternative path: if meta-phase decides to swap cycle-planner to opus, this skill may become unnecessary.
+**Cycle-004 deferral rationale**: cycle-003 + cycle-004 cycle-planner emissions both produced atomic per-operator dispatches without over-scoping (cycle-004 plan: 7 dispatches, one operator each). The user-directive philosophy (parallel-when-in-doubt) appears to have absorbed the previous over-caution. If `haiku-cycle-planner-over-scopes-harvester` recurs in cycle-005+, revisit promotion.
+
+## Open candidates (cycle-004 additions)
+
+```yaml
+---
+slug: vocabulary-cohort-subsection-template
+proposer: layer-intro-author (cycle-004)
+proposed_at: cycle-004 / 2026-05-27
+status: promoted-as-role-spec-template
+promoted_to: .claude/agents/layer-intro-author.md §Vocabulary-cohort subsection
+---
+```
+
+**Motivating observation**: cycle-004 L1 layer-intro refresh introduced a "Vocabulary cohort" subsection that split the dep-map into Firm-at-L_n / Queued-at-L_n cohorts. The pattern is transferable to L2, L3, L4 layer intros when each reaches ≥3 firm operators with rough-ins coexisting. Flagged by layer-intro-author as transferable.
+
+**Sketch of procedure**: documented as a template in `.claude/agents/layer-intro-author.md` rather than as a standalone skill, because the procedure is intrinsic to the role rather than cross-role-invocable. Reuse mechanism: future layer-intro-author invocations read the role spec, see the template, apply when the threshold (≥3 firm + ≥1 queued) is met.
+
+**Promotion bar check**: pattern observation = 1 instance (cycle-004); friction-ledger entry = none (this is positive-pattern, not friction); sketch concrete enough = ✓. Default-accept under low-bar policy; promoted as **role-spec template** rather than as standalone skill because the procedure is intrinsic to the layer-intro-author role and does not need cross-role invocation. Watch for L2/L3/L4 application as those layers reach the threshold.
 
 
 
