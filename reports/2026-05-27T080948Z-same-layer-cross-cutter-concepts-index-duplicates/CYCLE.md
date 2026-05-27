@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T08:09:48Z
 scope: concepts/index.md cross-cut — duplicate-rows-housekeeping
 status: integrated
 integrated_at: 2026-05-27T09:08:49Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 704717b
 note: CYCLE.md written to disk by parent orchestrator from subagent's inline output; subagent reported a system-prompt restriction on writing report/summary/findings/analysis .md files. Content preserved verbatim from subagent. Filed as Open Question (see §Open questions / caveats item 5 below).
 integration_notes: |
   Cycle-006 wave-1 cross-cutter dedup (3 of 5 applied this cycle). Per-report integrator

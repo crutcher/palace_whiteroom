@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T08:09:44Z
 scope: L4 operator: krylov-step
 status: integrated
 integrated_at: 2026-05-27T09:08:49Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 704717b
 integration_notes: |
   Cycle-006 wave-1 harvester report (1 of 5 applied this cycle). Per-report integrator applied
   the 3 proposed-changes blocks; integrator-finalize timestamp overwrites the per-report's

@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T081029Z
 scope: L1 scalar-promotion retroactive thinning (4 entries; backlinks to concepts/scalar-promotion.md)
 status: integrated
 integrated_at: 2026-05-27T09:08:49Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 704717b
 integration_notes: |
   Cycle-006 wave-1 L1 retroactive-thinning (4 of 5 applied this cycle). Per-report integrator
   applied 8 verbatim Edit operations across 4 L1 entries (axpy, axpby, axpbypcz, scal),

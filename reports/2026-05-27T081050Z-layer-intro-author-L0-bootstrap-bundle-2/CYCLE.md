@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T08:10:50Z
 scope: L0 reference-notes bootstrap, bundle 2
 status: integrated
 integrated_at: 2026-05-27T09:08:49Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 704717b
 integration_notes: |
   Cycle-006 wave-1 L0 bootstrap bundle 2 (2 of 5 applied this cycle). Per-report integrator
   applied 4 proposed-changes blocks: 2 new L0 chapter files, L0/index.md grouping addition,

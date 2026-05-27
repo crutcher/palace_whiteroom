@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T08:19:13Z
 scope: L4>L3 theme sketch — krylov-step typed-wrapper dissolution
 status: integrated
 integrated_at: 2026-05-27T09:08:49Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 704717b
 integration_notes: |
   Cycle-006 wave-2 abstractor L4>L3 theme (5 of 5 applied this cycle). Per-report integrator
   applied 3 explicit proposed-changes plus 1 discretionary L4-L3/index.md placeholder
