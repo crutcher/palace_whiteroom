@@ -33,8 +33,6 @@ Output-argument mutation is the dominant idiom when the operation is a *transfor
 
 ## Referenced from
 
-*Forward-declared; L1 pages will be thinned to reference this chapter in the cycle-006 retroactive-thinning sweep (priority #11).*
-
 - [`L1/axpy`](../L1/axpy.md) — receiver `y.Add(α, x)` vs output-arg `linalg::AXPY(α, x, y)`.
 - [`L1/axpby`](../L1/axpby.md) — receiver `y.AXPBY(α, x, β)` vs output-arg `linalg::AXPBY(α, x, β, y)`.
 - [`L1/axpbypcz`](../L1/axpbypcz.md) — receiver `z.AXPBYPCZ(α, x, β, y, γ)` vs output-arg `linalg::AXPBYPCZ(α, x, β, y, γ, z)`.

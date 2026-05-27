@@ -1,0 +1,105 @@
+---
+verifies: ../CYCLE.md
+critiqued_at: 2026-05-27T18:15:00Z
+critic_version: 1
+checks:
+  citation-validity: pass
+  surface-or-evidence: pass
+  rotation-quality: pass
+  variant-axis-coverage: pass
+  cross-reference-integrity: pass
+  edge-label-fidelity: pass
+  plan-kind-consistency: pass
+  skill-uptake-survey: warning
+repaired_at: 2026-05-27T18:40:00Z
+repairer_version: 1
+repairs:
+  citation-validity: repaired
+  surface-or-evidence: not-needed
+  rotation-quality: not-needed
+  variant-axis-coverage: not-needed
+  cross-reference-integrity: not-needed
+  edge-label-fidelity: not-needed
+  plan-kind-consistency: not-needed
+  skill-uptake-survey: unrepairable
+overall_status: ready
+follow_up_agent: null
+---
+
+# META: verification of L0 bootstrap bundle 4 (3 chapters)
+
+## Critique
+
+### Checks run
+
+**citation-validity** — Spot-checked the load-bearing citations across all three chapters against `reference/palace/`. The pre-flagged `eps.hpp:22-141` "22 virtuals" claim is **verified**: 22 virtual declarations (counting the destructor at line 53; 21 if excluding it) covering the five concerns the chapter lists. `eps.hpp:25-29` (`ScaleType`), `eps.hpp:31-42` (`WhichType` nine-way), `eps.hpp:44-49` (`ErrorType`), `eps.hpp:57-74` (three `SetOperators`), `eps.hpp:92-99` (`SetLinearSolver`/`SetDivFreeProjector`/`SetBMat`), `eps.hpp:102-103` (scaling accessors), `eps.hpp:116, 119` (`SetWhichEigenpairs`/`SetShiftInvert`), `eps.hpp:125-140` (Solve + getters), `eps.hpp:76-86` (nonlinear-only setters) — all match the file verbatim. ARPACK citations also verified: `arpack.cpp:263-358` `SolveInternal` RCI loop (with `naupd` at 318, `ApplyOp` at 325, `ApplyOpB` at 329, and the `TARGET_REAL`/`TARGET_IMAGINARY` `MFEM_ABORT` at 300-304 — all spot-on). `modeeigensolver.cpp:1029-1047` dispatch site verified (ARPACK construction at 1033, SLEPc at 1044, `SetType` at 1045, `SetProblemType` at 1046). For `operator.hpp`, all 25+ specific line ranges spot-checked against the actual 407-line file resolve correctly (the `using Operator = mfem::Operator;` at line 21, `ComplexOperator` 24-68, `ComplexWrapperOperator` 73-113, `SumOperator` 116-136 with workspace at 120, `ProductOperatorHelper` 140-176, `BaseProductOperator` 178-226 with method bodies at 202-225, type aliases at 228-229, diagonal classes 232-291, multigrid 298-364, `linalg::` namespace 369-403). For `test-rap.cpp`, citations at lines 24, 31, 50-89, 80-88, 91+ verified — the cited `sum->Mult(v0, x1); DA->AddMult; ...` block at lines 80-87 matches the chapter's quoted algebraic-equivalence assertion verbatim. For `par-types-single-rank-reading`, `fespace.hpp:19-25` (wrapper with `fespace` member at line 25), `fespace.hpp:78-82` (Get accessors), `fespace.hpp:90-91` (GetParMesh) verified; `communication.hpp:265-270` (GlobalSum), `251-263` (GlobalMin/Max), `272-318` (loc/Or/And), `320-344` (Broadcast/Allgather), `347-389` (Print family), `392` (World), `244-249` (GlobalOp template) all verified. The cycle-007 bundle-3 scrambled-range pattern has **not** recurred. Pass.
+
+**surface-or-evidence** — All three chapters are pure L0 source-range reference + test linkages with no L1 rotation work proposed; this is the L0-reference shape (not refinement-shaped). The chapters elaborate existing-but-undocumented L0 surface — `EigenvalueSolver` hierarchy, the `Par*` convention rule, `linalg/operator.{hpp,cpp}` file overview — without proposing surface modifications to existing L1 / L2 chapters. The `Par*` rule itself is restated from `CLAUDE.md` "Scope" with citation; this is documentation-of-convention, not a novel claim. Pass.
+
+**rotation-quality** — Not applicable to L0 reference chapters: L0 is the cited-source ground-truth layer, not a rotation. The chapters note **forward** rotation candidates ("L1 would name a single `eigsolve` operator and absorb the orchestration axis as transparent dispatch", "L1 names global reductions directly") but do not assert rotation algebra in this dispatch. Marked pass as not applicable.
+
+**variant-axis-coverage** — The `eigensolver-wrapper` chapter explicitly covers all three orchestration axes (RCI / shell-matrix / direct-Newton) and all three problem-type axes (linear / quadratic / nonlinear), plus the `ScaleType` axis (NONE / NORM_2), the `WhichType` nine-way axis, and the `ErrorType` three-way axis. Each axis combination is enumerated to its specific concrete subclass (`ArpackEPSSolver`/`ArpackPEPSolver` cover linear/quadratic for ARPACK; SLEPc covers EPS/PEP/NEP; `QuasiNewtonSolver` covers nonlinear direct-Newton). `par-types-single-rank-reading` explicitly enumerates all `Par*` types it touches (`ParMesh`, `ParFiniteElementSpace`, `ParGridFunction`, `ParBilinearForm`, `HypreParVector`, `HypreParMatrix`) and the collective wrappers (`GlobalSum`/`Min`/`Max`/`MinLoc`/`MaxLoc`/`Or`/`And`/`Broadcast`/`Allgather`/`Allgatherv`). `linalg-operator-file` enumerates the 8 class definitions (alias + 7 concrete-or-template classes), the CRTP helper pattern for real-vs-complex Hermitian-transpose specialisation, and the four free functions (`Norml2`/`Normalize`/`Dot`/`SpectralNorm`) with both element-type axis branches. No hidden axes detected. Pass.
+
+**cross-reference-integrity** — All `[link]`s resolve. The three new chapters' Dependencies sections point to existing-firm L0 chapters: `eigensolver-wrapper` → `kspsolver-base-class`, `apply-linop-overload-set`, `mutable-workspace-pattern` (all 3 exist in `book/src/L0/`); `par-types-single-rank-reading` → `mfem-vector-types`, `apply-linop-overload-set`, `transparent-vs-load-bearing-tricks` (all 3 exist); `linalg-operator-file` → `apply-linop-overload-set`, `mfem-vector-types`, `mutable-workspace-pattern`, `par-types-single-rank-reading` (3 existing + 1 sibling-new — acceptable since the sibling is part of the same dispatch). Sibling-new cross-references are bidirectional (`eigensolver-wrapper` ↔ `kspsolver-base-class`, `linalg-operator-file` ↔ `apply-linop-overload-set`, `par-types-single-rank-reading` ↔ `mfem-vector-types`). Strawman reference (`book/src/design/l4_calculus.md`) cited in `eigensolver-wrapper`'s "Notes for higher layers" exists. SUMMARY.md `[old]` block matches the current file state exactly (12 L0 entries in current SUMMARY = 11 chapters + 1 Overview, matching the chapter count); index.md `[old]` block matches the current index. Pass.
+
+**edge-label-fidelity** — Not applicable: L0 reference chapters do not carry layer-edge labels. The chapters do note **forward edges** ("future `L1/eigsolve`", "future `L1/dot_bilinear` / `L1/nrm2_weighted` / `L1/power_iterate`", "L2/product-of-operators rough-in") but as targets, not as load-bearing labels on this dispatch. Marked pass as not applicable.
+
+**plan-kind-consistency** — Three chapters within 2-3 cycle-budget (chapter count goes 11 → 14). All three follow the established L0 reference-chapter shape: title, opening 1-2 paragraphs, structured body sections, Test coverage, Notes for higher layers, Dependencies, Referenced from, Evidence (representative). The "Referenced from" sections use the clean structure described in the cycle-008 dispatch #4 housekeeping precedent (concrete bullets for explicit L0-internal cross-references; forward-target bullets for not-yet-existing higher-layer entries written plain — no stale-forward-decl italic note). The `eigensolver-wrapper-l0-bundle-4-candidate` close-OQ pre-condition matches what the chapter delivers (real surface, not stub). Plan kind is consistent. Pass.
+
+**skill-uptake-survey** — No skill invocations are surfaced in the report frontmatter or body. Several available skills are plausibly relevant to this dispatch: `verify-citation-range` would explicitly cover the many spot-checks needed for 70+ Palace-source citations (especially given the cycle-007 bundle-3 scrambled-range FAIL precedent); `classify-variant-axis` would naturally cover the explicit axes-enumeration work in `eigensolver-wrapper` (orchestration vs problem-type) and `linalg-operator-file` (real vs complex element-type via `OperType` template); `plan-sideways-concept-emission` is plausibly relevant to the matrix-weighted-norm-and-bilinear-form OQ proposal. The report's quality (citations spot-check clean, axes well-enumerated) suggests the procedures *were* effectively followed even without explicit skill invocation, but the survey itself is a telemetry gap. Per skill-uptake-survey policy this is a non-blocking warning. Warning.
+
+### Issues found
+
+1. **eps.hpp "22 virtual methods" count ambiguity** — `eigensolver-wrapper.md` §"The abstract surface" (line 9): "EigenvalueSolver declares 22 virtual methods covering five concerns". Counting all `virtual` declarations in lines 22-141 yields 22 if the destructor at line 53 is included, 21 if excluded. The five-concern categorisation that follows (Operator setup / Solver coupling / Spectral transformation and target / Solve and result extraction / Scaling) covers 18-19 of the 21 non-destructor virtuals — `SetNumModes`, `SetTol`, `SetMaxIter`, `SetInitialSpace` (lines 106, 109, 112, 122) don't obviously fit any of the five concerns as worded. Minor: the count is technically correct under one interpretation, but the "five concerns" framing leaves several virtuals uncategorised. Severity: low. Location: `reports/2026-05-27T173523Z-layer-intro-author-L0-bootstrap-bundle-4/eigensolver-wrapper.md` line 9 (count statement) and the five subsequent bullets (lines 11-15).
+
+2. **"8 class definitions" count vs 7-item enumeration** — `linalg-operator-file.md` §"File structure" opening paragraph (line 5): "The file pair contains **eight class definitions** (one base + seven concrete-or-template classes)". The subsequent bullets enumerate `Operator` alias, `ComplexOperator`, `ComplexWrapperOperator`, `SumOperator`, `BaseProductOperator` (+ `ProductOperatorHelper`), `BaseDiagonalOperator` (+ `DiagonalOperatorHelper`), `BaseMultigridOperator` — that's 7 items as named in the listing, even though counting the CRTP helpers separately gets to 8. A reader trying to reconcile "8" against the bullet list will be one short. Severity: low. Location: `reports/2026-05-27T173523Z-layer-intro-author-L0-bootstrap-bundle-4/linalg-operator-file.md` line 5.
+
+3. **`communication.hpp` Mpi class range upper bound slightly over** — `par-types-single-rank-reading.md` line 49 cites `palace/utils/communication.hpp:181-427` for the `palace::Mpi` class scope. Class `Mpi` actually starts at line 181 and ends at line 425 (`};` closing brace); lines 426-429 are the closing of the `palace` namespace and the `#endif`. Off by 2 on the back end. Cosmetic. Severity: very low. Location: `reports/2026-05-27T173523Z-layer-intro-author-L0-bootstrap-bundle-4/par-types-single-rank-reading.md` line 49.
+
+4. **`test-rap.cpp:33-37` cited for refinement loop; actual loop is 34-37** — `par-types-single-rank-reading.md` line 74 cites `palace/test/unit/test-rap.cpp:33-37` for "the test refines until `mfem_mesh.GetNE() >= Mpi::Size(comm)` to avoid empty partitions". The actual `while` loop is at lines 34-37 (line 33 is the preceding `mfem::Mesh mfem_mesh(SingleTetMesh());` construction). Inclusive citation includes the prior `Mesh` construction line; arguably acceptable as "the construction-then-conditional-refinement block" but the prose specifically describes the refinement, which is lines 34-37 only. Severity: very low. Location: `reports/2026-05-27T173523Z-layer-intro-author-L0-bootstrap-bundle-4/par-types-single-rank-reading.md` line 74.
+
+5. **`slepc.cpp:418-…` and `slepc.cpp:671-685` use truncated ellipsis instead of definite end-line** — `eigensolver-wrapper.md` line 54: "a `Customize()` step at `palace/linalg/slepc.cpp:418-…` and at `palace/linalg/slepc.cpp:671-685`". The first citation uses an open-ended `418-…` rather than the citation-format-required `start-end`. The Palace-source citation format per CLAUDE.md is `relative/path/file.ext:start-end`; ellipsis open-ranges are not in spec. Same pattern recurs in two more places: `eigensolver-wrapper.md` line 70+ "exercised only via end-to-end regressions"; `par-types-single-rank-reading.md` line 76 cites `test-rap.cpp:91-…` for the ComplexParOperator SECTION; `linalg-operator-file.md` line 62/128 cites `test-rap.cpp:91-…`. The ComplexParOperator SECTION's actual end line should be queryable. Severity: low. Locations: `eigensolver-wrapper.md` line 54; `par-types-single-rank-reading.md` line 76, 125; `linalg-operator-file.md` line 62, 128.
+
+6. **Skill-uptake telemetry gap** — Per skill-uptake-survey check above: no explicit skill invocations are noted in the report despite three reasonably applicable skills (`verify-citation-range`, `classify-variant-axis`, `plan-sideways-concept-emission`). This is a non-blocking warning; the dispatch's substantive content suggests the work was done effectively, but the telemetry channel was not used. Severity: very low (warning only). Location: `reports/2026-05-27T173523Z-layer-intro-author-L0-bootstrap-bundle-4/CYCLE.md` frontmatter and body.
+
+7. **Test-coverage gap for `eigensolver-wrapper` is acknowledged but L1-harvester risk is understated** — Per the user's explicit instruction in dispatch (and per `CLAUDE.md` "Tests as semantic supplement"), the `eigensolver-wrapper` chapter does flag this gap ("no dedicated `test-eigensolver.cpp`"; algebra leans on direct reading + literature). The chapter is L0 reference (no L1 algebra-equivalence claims yet) so this is not a failure for this dispatch. However: the chapter's "Notes for higher layers" forward-claim about an `L1/eigsolve` harvester is downstream-flagged via the proposed OQ `eigsolve-l1-operator-rough-in-candidate` but the OQ text does not explicitly call out the test-coverage gap as a constraint on the harvester. The harvester will need to lean more heavily on literature anchors than `L1/ksp_solve` did (which had `test-orthog.cpp`). Severity: low; observation only. Location: `eigensolver-wrapper.md` "Test coverage" section + proposed OQ `eigsolve-l1-operator-rough-in-candidate` (CYCLE.md lines 188-213).
+
+## Repair
+
+### Fixes attempted
+
+- **Finding 1 (eps.hpp "five concerns" framing leaves several virtuals uncategorised)** — Decision: **repaired**. Action: weakened the claim to "five **primary** concerns" and named the four uncategorized auxiliary setters (`SetNumModes`, `SetTol`, `SetMaxIter`, `SetInitialSpace` at `palace/linalg/eps.hpp:106, 109, 112, 122`) in a parenthetical, in `eigensolver-wrapper.md` §"The abstract surface" (line 9). Preserves the five-concern framing while acknowledging the auxiliary surface.
+
+- **Finding 2 ("8 class definitions" vs 7-item enumeration in `linalg-operator-file.md`)** — Decision: **repaired**. Action: adjusted the count statement to "**seven class definitions** (one type alias + one abstract base + five concrete-or-template classes, with two additional CRTP helper templates that are counted with their owning class)" in `linalg-operator-file.md` §"File structure" (line 5). Now matches the bullet enumeration (alias / `ComplexOperator` / `ComplexWrapperOperator` / `SumOperator` / Product / Diagonal / Multigrid = 7 items with two CRTP helpers folded into their owning Product / Diagonal items).
+
+- **Finding 3 (`communication.hpp:181-427` upper bound 2 lines past class)** — Decision: **repaired**. Action: tightened to `:181-425` (class `Mpi` closes at `};` on line 425; lines 426-429 are the closing `namespace palace` brace and `#endif`). Two locations updated: `par-types-single-rank-reading.md` line 49 (prose body) and line 112 (evidence section). Verified against `palace/utils/communication.hpp:413-429` read.
+
+- **Finding 4 (`test-rap.cpp:33-37` cited for refinement loop; actual loop is 34-37)** — Decision: **repaired**. Action: tightened to `:34-37` in `par-types-single-rank-reading.md` line 74. Verified against `palace/test/unit/test-rap.cpp:30-41` read (line 33 is `mfem::Mesh mfem_mesh(SingleTetMesh());` construction; the `while` is exactly lines 34-37).
+
+- **Finding 5 (ellipsis-form citations `:start-…`)** — Decision: **repaired**. Action: read the actual source ranges and replaced each `:start-…` with its actual end-line. Repairs applied at five flagged locations plus two same-pattern locations the critic did not enumerate (mechanical recurrence of the same defect):
+  - `eigensolver-wrapper.md` line 54: `slepc.cpp:418-…` → `slepc.cpp:418-468` (`SlepcEigenvalueSolver::Customize()` closes at line 468; verified against `palace/linalg/slepc.cpp:418-468` read).
+  - `par-types-single-rank-reading.md` line 30: `interpolator.cpp:81-…` → `interpolator.cpp:81-111` (`ProbeField` first overload closes at line 111; verified against `palace/fem/interpolator.cpp:81-111` read).
+  - `par-types-single-rank-reading.md` line 76: `test-rap.cpp:91-…` → `test-rap.cpp:91-133` (`SECTION("ComplexParOperator")` body closes at line 133; verified against `palace/test/unit/test-rap.cpp:85-136` read).
+  - `par-types-single-rank-reading.md` line 125 (evidence section): same `:91-…` → `:91-133`.
+  - `linalg-operator-file.md` line 62: same `:91-…` → `:91-133`.
+  - `linalg-operator-file.md` line 128 (evidence section): same `:91-…` → `:91-133`.
+  - Same-pattern bonus repairs (not in critic enumeration but identical defect, in scope as mechanical recurrence): `linalg-operator-file.md` line 42 `rap.hpp:24-…` → `rap.hpp:24-121` (`class ParOperator` closes at line 121); same line `rap.hpp:123-…` → `rap.hpp:124-222` (`class ComplexParOperator` is lines 124-222, not 123-222 — line 123 is the `// Complex-valued RAP operator.` comment, so tightened to start at the class line). Verified against `palace/linalg/rap.hpp:120-130` read and the `grep -n "^class\|^};"` scan (24 / 121 / 124 / 222).
+  - Note on the critic's "line 70+ exercised only via end-to-end regressions" item: that prose is not a citation (no `file.ext:line` form) — it is plain English describing the test gap. No ellipsis-in-citation to fix at that location.
+
+- **Finding 6 (skill-uptake telemetry gap, warning only)** — Decision: **unrepairable**. Rationale: the author dispatch did not log skill invocations in the CYCLE.md frontmatter or body; the absence is methodology-level (the producer agent's telemetry hygiene), not a content defect. The work itself appears to follow the skill procedures (citations spot-check clean, axes well-enumerated per critic). Repair would require either (a) the producer to re-dispatch with explicit skill annotation — outside repair authority — or (b) the integrator/meta-phase to address the recurring telemetry-gap pattern across producers. Recorded as a non-blocking warning per the critic's grading.
+
+- **Finding 7 (OQ for `L1/eigsolve` harvester does not flag test-coverage gap as constraint)** — Decision: **repaired**. Action: added a one-paragraph "Test-coverage constraint on the harvester" note to the `eigsolve-l1-operator-rough-in-candidate` proposed OQ body in CYCLE.md §Proposed changes →Closes / opens open-questions. The note names the absence of `test-eigensolver.cpp`, the literature anchors the harvester will rely on (Higham 2008, Lehoucq-Sorensen, Hernandez-Roman-Vidal), and the contrast with `L1/ksp_solve` (which had `test-orthog.cpp`). The harvester now inherits the constraint explicitly from the OQ text.
+
+### Unrepairable findings
+
+- **Finding 6 (skill-uptake telemetry gap)** — non-blocking warning. The repairer cannot annotate the producer's skill invocations after the fact (that would be content-authoring on the producer's behalf). No follow-up agent needed for *this* report; the meta-phase channel covers cross-cycle pattern telemetry. If the gap recurs across producers it surfaces at the next meta-phase aggregate-view.
+
+## Suggested resolution
+
+`overall_status: ready`. All seven flagged findings are addressed: six (1, 2, 3, 4, 5, 7) repaired mechanically; one (6) is a non-blocking warning that does not block integration. The two same-pattern bonus repairs in `linalg-operator-file.md` line 42 (`rap.hpp` ellipsis citations) are included as mechanical extensions of finding 5's pattern.
+
+Notes for the integrator:
+- The three new chapter files (`eigensolver-wrapper.md`, `par-types-single-rank-reading.md`, `linalg-operator-file.md`) in this report directory are the **post-repair** versions to copy into `book/src/L0/`. The repairs are surgical edits in place; the proposed-changes blocks in CYCLE.md still reference these supporting docs by relative filename, so the copy semantics are unchanged.
+- The CYCLE.md proposed-changes blocks `[old]` / `[new]` sections for the L0 index update and the SUMMARY.md update are unmodified by repair (no defects flagged there).
+- The CYCLE.md `eigsolve-l1-operator-rough-in-candidate` OQ body has been augmented with one paragraph; the integrator-per-report's open-questions append should pick up the augmented body verbatim.
+- The skill-uptake telemetry gap (finding 6) is a methodology-level observation; meta-phase will see it via the META.md `checks.skill-uptake-survey: warning` field rolled into the aggregate-batch view.

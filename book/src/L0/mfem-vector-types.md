@@ -39,8 +39,6 @@ The element-type duality and the `Par*` axis are **orthogonal**: there is a `Par
 
 ## Referenced from
 
-*Forward-declared; L1 pages will be thinned to reference this chapter in the cycle-006 retroactive-thinning sweep (priority #11).*
-
 - [`L1/axpy`](../L1/axpy.md), [`L1/axpby`](../L1/axpby.md), [`L1/axpbypcz`](../L1/axpbypcz.md), [`L1/scal`](../L1/scal.md) — element-type axis collapse.
 - [`L1/dot`](../L1/dot.md), [`L1/nrm2`](../L1/nrm2.md) — element-type axis + `LocalDot` vs `Dot` (MPI collective) split.
 - [`L1/apply_linop`](../L1/apply_linop.md) — `Operator` vs `ComplexOperator` hierarchy split; `ParOperator` wrapping.

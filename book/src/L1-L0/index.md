@@ -13,9 +13,14 @@ Many themes here capture **how Palace expresses common patterns**:
 
 ## Theme list
 
-```
-(empty — Phase B skeleton.)
-```
+| theme | L1 anchor | L0 anchor | status |
+|---|---|---|---|
+| [axpby-mutation-rotation](./axpby-mutation-rotation.md) | `L1/axpy` (+ `axpby` rough-in) | `palace/linalg/vector.{hpp,cpp}` | rough-in |
+| [axpbypcz-mutation-rotation](./axpbypcz-mutation-rotation.md) | `L1/axpbypcz` (firm) | `palace/linalg/vector.{hpp,cpp}` | rough-in |
+| [apply-linop-mutation-rotation](./apply-linop-mutation-rotation.md) | `L1/apply_linop` (firm) | `palace/linalg/operator.{hpp,cpp}`, `rap.cpp` | rough-in |
+| [ksp-solve-mutation-rotation](./ksp-solve-mutation-rotation.md) | `L1/ksp_solve` (firm) | `palace/linalg/ksp.cpp`, `palace/linalg/iterative.{hpp,cpp}` | rough-in *(firmed cycle-008)* |
+| [minres-iteration](./minres-iteration.md) | (speculative — `lanczos_step`, …) | (no Palace anchor — `MFEM_ABORT` at `ksp.cpp:53-57`) | obstruction |
+| [bicgstab-iteration](./bicgstab-iteration.md) | (speculative — `bicgstab_step`, …) | (no Palace anchor — `MFEM_ABORT` at `ksp.cpp:53-57`) | obstruction |
 
 ## Working Notes
 

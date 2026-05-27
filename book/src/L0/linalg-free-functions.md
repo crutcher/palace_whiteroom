@@ -44,8 +44,6 @@ Notable absence: **there is no `linalg::Scal` or `linalg::Scale` symbol.** Scali
 
 ## Referenced from
 
-*Forward-declared; L1 pages will be thinned to reference this chapter in the cycle-006 retroactive-thinning sweep (priority #11).*
-
 - [`L1/axpy`](../L1/axpy.md), [`L1/axpby`](../L1/axpby.md), [`L1/axpbypcz`](../L1/axpbypcz.md) — `linalg::AXPY` / `linalg::AXPBY` / `linalg::AXPBYPCZ` free-function-template wrappers over method-form.
 - [`L1/dot`](../L1/dot.md) — `linalg::Dot` composing `LocalDot` + `Mpi::GlobalSum`; method-form `ComplexVector::Dot`.
 - [`L1/nrm2`](../L1/nrm2.md) — `linalg::Norml2` as one-line composition `sqrt(abs(Dot(x, x)))`.

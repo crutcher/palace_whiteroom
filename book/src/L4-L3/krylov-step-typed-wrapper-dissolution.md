@@ -110,7 +110,9 @@ The rewrite is valid when all four of the following hold (which they do for the 
 
 4. **The `Krylov` ephemeral bundle has plain-value lifecycle (born at restart, discarded at restart-or-return) and is not aliased by any other state.** The L4 typing makes this structural (`Krylov` is not a field of `SimState`; lifetime is restart-scoped); at L3 it becomes a discipline. The rewrite assumes no caller threads `Krylov` across restart boundaries (which would mis-type its lifetime). Per `solve-monad.md:53`, this discipline is honoured by `restart_cycle` building a fresh `Krylov` per cycle.
 
-If a future Krylov-shaped slice violates any of these (e.g., a method whose `OpParams` needs per-step mutation, or whose step body needs effects beyond `SimState`), the L4>L3 lowering would need to be refined; the speculative-operator slot would be enlarged.
+5. **The downstream consumer of the surrounding `iterate_while` invocation observes only `final_state`-equivalent quantities (no per-iteration trajectory readout).** This is the precondition for the §3.8 demand-pruning collapse from the unpruned L3 form (`[readout]` accumulator) to the pruned L3 form (single readout / accumulator dropped) shown in §"What the L3 form for `iterate_while` looks like" above. Per Law 1 of [`iterate-while`](../L4/iterate-while.md) and the worked example in `book/src/concepts/derived-view-hoisting.md`, when the consumer's destructuring reads only `final_state` (or the L3-positional equivalent — the final-iteration carry value), the per-step `extras` computation in the step body is eliminated by the §3.8 rewrite, the L4 `[readout]` trajectory collapses to `[]`, and the L3 form is the pruned shape. **Palace satisfies this condition by construction**: the `IterativeSolver` result-extraction surface materializes exactly four scalars (`converged`, `initial_res`, `final_res`, `final_it` at `reference/palace/palace/linalg/iterative.hpp:52-55`), each of which is either a carry field at the final iteration or a pre-loop initialization; the sole caller `BaseKspSolver::Mult` at `reference/palace/palace/linalg/ksp.cpp:296-310` consumes only those four scalars (branch on `GetConverged`, ratio in warning via `GetFinalRes()/GetInitialRes()`, sum into counter via `GetNumIterations`). No per-iteration consumption exists in `palace/`. **When violated** — e.g., a hypothetical future Palace surface `GetResidualHistory(): std::vector<double>` reading the per-step `residual_norm` extras — Condition 5 fails, §3.8 does not fire for that consumer, and the L3 form must be re-rendered with the accumulator restored (the unpruned form). The L4 form is invariant under this consumer change; only the L4>L3 lowering's rendered L3 shape selects between the two forms.
+
+If a future Krylov-shaped slice violates any of these (e.g., a method whose `OpParams` needs per-step mutation, or whose step body needs effects beyond `SimState`, or whose consumer reads the trajectory), the L4>L3 lowering would need to be refined; the speculative-operator slot would be enlarged.
 
 ## Justification kind
 
@@ -155,16 +157,47 @@ Both rough-ins live in [the L4 dep-map](../L4/index.md) annotated as `(rough-in,
 
 ### What the L3 form for `iterate_while` looks like
 
-For completeness — this is *not* a separate theme, but the natural fall-out of the `krylov-step` body's L4>L3 lowering. The L4 `iterate_while step carry₀` form lowers to a tail-recursive L3 loop:
+For completeness — this is *not* a separate theme, but the natural fall-out of the `krylov-step` body's L4>L3 lowering. The L4 `iterate_while step carry₀` form (per the firm L4 row [`iterate-while`](../L4/iterate-while.md)) carries a `trajectory: [{ ...e }]` accumulator subject to §3.8 demand-driven pruning (Law 1 of `book/src/L4/iterate-while.md`, instantiated for the residual-norm case in `book/src/concepts/derived-view-hoisting.md` §"Worked example: CG residual norm"). The L3 shape therefore depends on the downstream consumer's observation pattern, with two forms arising from the same L4 invocation under different consumer demands.
+
+**Unpruned form** — the direct value-threaded dissolution of the L4 form when a downstream consumer reads `.trajectory` (no §3.8 collapse fires; the accumulator is materialized at L3):
 
 ```text
-iterate_while_L3 step (carry, sim) =
-  let (carry', sim', readout, continue) = step (carry, sim)
-  in if continue then iterate_while_L3 step (carry', sim')
-                 else (carry', sim', readout)
+iterate_while_L3 step carry₀ sim₀ =
+  let go (carry, sim, traj) =
+        if not (p carry)
+          then (carry, sim, reverse traj)         -- final_state, sim', trajectory
+          else let (carry', sim', readout) = step (carry, sim)
+               in go (carry', sim', readout : traj)
+  in go (carry₀, sim₀, [])
 ```
 
-The tail-recursive shape is value-threaded; the monad has dissolved. The `sequential-obstruction` of the outer loop survives at L3 (per `cg.md:341-349`) — the L3 form names the loop tail-recursively but does not claim it lifts to a global tensor-field op. This is the expected outcome for Krylov methods at L3 per `sequential-obstruction.md`.
+**Pruned form** — the §3.8-collapsed shape that arises when the consumer observes only `final_state`-equivalent quantities (Palace's KSP case, per the four-scalar consumer surface at `reference/palace/palace/linalg/iterative.hpp:52-55` consumed solely at `reference/palace/palace/linalg/ksp.cpp:296-310`). Law 1 rewrites the body to omit the extras computation; the L3 form drops the accumulator entirely and the `step` is rendered in its `state`-only subgraph:
+
+```text
+iterate_while_L3_pruned step carry₀ sim₀ =
+  let go (carry, sim) =
+        if not (p carry)
+          then (carry, sim)                       -- final_state, sim'
+          else let (carry', sim') = step_state (carry, sim)
+               in go (carry', sim')
+  in go (carry₀, sim₀)
+```
+
+where `step_state = λ(carry, sim) -> let (carry', sim', _readout) = step (carry, sim) in (carry', sim')` is the §3.8-pruned subgraph of `step` that computes only the next carry (the extras computation is eliminated as dead code at the call site, not merely unused at runtime). The L3-side `step_state` has shape `(carry, sim) -> (carry', sim')` — the positional-tuple image of the L4-side `f_state : α -> α` of Law 1 (`book/src/L4/iterate-while.md:123-133`), with the `sim` thread surfacing as a positional argument at L3 because the `Solve` monad has dissolved (per §"Concept-page references" entry for `solve-monad.md`); the L4 `α` collapses to the L3 carry alone, with `sim` carried alongside positionally rather than monadically.
+
+The L4>L3 collapse from the unpruned to the pruned form is governed by the rule:
+
+$$
+\frac{
+  \text{only } \textsf{final\_state} \text{ of the L3 result is observed downstream}
+}{
+  \textsf{iterate\_while\_L3}\ p\ \textsf{step}\ \textsf{carry}_0\ \textsf{sim}_0 \;\equiv\; \textsf{iterate\_while\_L3\_pruned}\ p\ \textsf{step}_{\textsf{state}}\ \textsf{carry}_0\ \textsf{sim}_0
+}
+$$
+
+which is exactly the L3-side image of Law 1 of [`iterate-while`](../L4/iterate-while.md) — the L4 demand-pruning law transports through the L4>L3 wrapper dissolution because the dissolution is value-thread-isomorphic on the body (the §"Audit of cycle-002 identity-in-form claim" below establishes this). The applicability of the pruned form is selected by the new Condition 5 in §"Applicability conditions" below; for Palace's actual KSP consumer surface, Condition 5 holds and the pruned form is the rendered L3 shape.
+
+Both forms are tail-recursive value-threaded loops; the `Solve` monad has dissolved (the `sim` argument is positional, not monadic), and the `sequential-obstruction` of the outer loop survives at L3 (per `cg.md:341-349`) — the L3 form names the loop tail-recursively but does not claim it lifts to a global tensor-field op. This is the expected outcome for Krylov methods at L3 per `sequential-obstruction.md`. The unpruned form additionally allocates the trajectory list (an `O(N)` accumulator); the pruned form does not.
 
 ## Audit of cycle-002 identity-in-form claim
 
@@ -209,8 +242,52 @@ Concept-page references (for the dissolved L4 vocabulary):
 - `book/src/concepts/solve-monad.md:1-69` — the `Solve = StateT SimState Identity` monad this lowering dissolves.
 - `book/src/concepts/first-iteration-unrolling.md:21-37` — the Form-A/Form-B distinction this lowering collapses.
 - `book/src/concepts/sequential-obstruction.md` — the obstruction classification the L3 outer loop carries (referenced for completeness, not introduced).
-- `book/src/concepts/derived-view-hoisting.md` — the demand-pruning algebra preserved across the rotation.
+- `book/src/concepts/derived-view-hoisting.md` — the demand-pruning algebra preserved across the rotation; the §"Worked example: CG residual norm" (lines 14-19) is the canonical §3.8 instantiation for `residual_norm` extras, cited by Condition 5 and the §"What the L3 form for `iterate_while` looks like" §3.8 preamble.
+
+<!-- The narrative §"Verified-against" list above carries the cycle-006 evidence registry (prose-shaped: file + section descriptor); the trailing `verified_against:` YAML block below carries the cycle-007 wave-2 audit's structured evidence trail (per-citation verdict + audited_at + note), per the trailing-YAML precedent at `book/src/L1-L0/axpby-mutation-rotation.md:173-189`. Both lists are intentionally retained: the prose form is the human-readable evidence registry; the YAML form is the machine-checkable audit-trail. -->
+
+verified_against:
+  - citation: book/src/L4/iterate-while.md:28-43
+    verdict: supports
+    audited_at: 2026-05-27T170121Z
+    note: cycle-007 firm L4 signature explicitly carries trajectory:[{...e}]; cycle-006 L3 rendering correctly omits it per §3.8 collapse but elides the rule-citation. This dispatch adds the citation.
+  - citation: book/src/L4/iterate-while.md:123-133
+    verdict: supports
+    audited_at: 2026-05-27T170121Z
+    note: Law 1 (trajectory pruning) is the rule that justifies the cycle-006 L3 single-readout rendering for Palace; now cited explicitly in §"What the L3 form for iterate_while looks like" and Condition 5.
+  - citation: book/src/L4/iterate-while-with-prev.md:137-147
+    verdict: supports
+    audited_at: 2026-05-27T170121Z
+    note: Law 2 of the with-prev chapter lifts the pruning rule to both step bodies; same disposition for the Form B L3 rendering covered by this theme.
+  - citation: reference/palace/palace/linalg/iterative.cpp:420-485
+    verdict: supports
+    audited_at: 2026-05-27T170121Z
+    note: PCG outer loop retains no per-iteration residual history; final_res, final_it captured as scalars at lines 484-485. Confirms Condition 5 holds for CG.
+  - citation: reference/palace/palace/linalg/iterative.cpp:614-705
+    verdict: supports
+    audited_at: 2026-05-27T170121Z
+    note: GMRES inner Arnoldi loop same disposition as PCG; per-iteration beta either printed or overwritten; final_res, final_it captured at 703-704. Confirms Condition 5 holds for GMRES.
+  - citation: reference/palace/palace/linalg/iterative.cpp:734-870
+    verdict: supports
+    audited_at: 2026-05-27T170121Z
+    note: FGMRES structurally identical to GMRES (one more workspace Z[] for flexible-preconditioner Krylov basis); same per-iteration beta discipline. Confirms Condition 5 holds for FGMRES.
+  - citation: reference/palace/palace/linalg/iterative.hpp:52-55
+    verdict: supports
+    audited_at: 2026-05-27T170121Z
+    note: KSP result-extraction surface is exactly four mutable scalars (converged, initial_res, final_res, final_it); no list-shaped or trajectory-shaped field. Canonical structural evidence that Condition 5 holds in Palace.
+  - citation: reference/palace/palace/linalg/iterative.hpp:97-108
+    verdict: supports
+    audited_at: 2026-05-27T170121Z
+    note: Four public Get* accessors parallel to the four scalars (GetConverged, GetInitialRes, GetFinalRes, GetNumIterations); no GetResidualHistory() or analogue.
+  - citation: reference/palace/palace/linalg/ksp.cpp:296-310
+    verdict: supports
+    audited_at: 2026-05-27T170121Z
+    note: Sole caller of KSP result-extraction surface; consumes converged (branch), final_res/initial_res (warning ratio), final_it (counter sum); no per-iteration consumption anywhere in palace/. Operational evidence that Condition 5 holds.
+  - citation: book/src/concepts/derived-view-hoisting.md:14-19
+    verdict: supports
+    audited_at: 2026-05-27T170121Z
+    note: §"Worked example: CG residual norm" is the canonical instantiation of the §3.8 pruning for iterate_while's residual_norm extras; cross-referenced from §"What the L3 form for iterate_while looks like" §3.8 preamble and from Condition 5.
 
 ## Status
 
-`rough-in` — the theme's rewrite shape is sketched against the cycle-006 wave-1 firm L4 entry; the L3 form is the value-threaded dissolution of the L4 wrapper; the audit of the cycle-002 identity-in-form claim is included; the speculative `iterate_while` / `iterate_while_with_prev` L4 operators are flagged for harvester promotion. The theme is **non-blocking on L4 vocab promotion**: even with `iterate_while` unanchored, the L4>L3 rewrite on the `krylov-step` body itself is fully specified; the unanchored combinator is the *consumer*, not the rewrite target. **Lowering-verifier follow-up** (cycle-007 candidate) should confirm that the value-threaded L3 form produced by applying this theme to `L4/krylov-step` is textually equivalent to `L2/krylov-step` §Semantics body modulo the L3-level outer-loop tail-recursion wrapping. If the verifier finds a mismatch (e.g., a primitive call shape that does not survive the rewrite), the theme is refined.
+`firm` — the theme's rewrite shape is fully anchored against the cycle-006 wave-1 firm L4 entry [`krylov-step`](../L4/krylov-step.md), the cycle-007 wave-1 firm L4 row [`iterate-while`](../L4/iterate-while.md) (with its Law 1 §3.8 demand-pruning rule), the cycle-007 wave-1 firm L4 row [`iterate-while-with-prev`](../L4/iterate-while-with-prev.md), and the cycle-007 wave-2 lowering-verifier audit (`reports/2026-05-27T170121Z-lowering-verifier-iterate-while-L3-trajectory-reconciliation/CYCLE.md`, verdict (c) — L3 single-readout is correct under §3.8 pruning for Palace's KSP consumer surface). The L3 form is rendered in two shapes (pruned + unpruned) governed by Condition 5; the §"What the L3 form for `iterate_while` looks like" subsection cites the §3.8 collapse rule explicitly; the trailing `verified_against:` block carries the cycle-007 wave-2 audit's 10-citation evidence base. The two speculative L4 operators (`iterate_while`, `iterate_while_with_prev`) are now firm; the audit of the cycle-002 identity-in-form claim is preserved. The cycle-006 / cycle-007 OQ `iterate-while-l3-rendering-trajectory-accumulation-gap` is closed by this dispatch.

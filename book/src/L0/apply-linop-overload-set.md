@@ -52,9 +52,8 @@ L1 `apply_linop` collapses this entire overload set to one operator: `y = apply_
 
 ## Referenced from
 
-*The L1 / L1>L0 entries below already cite this overload set inline. The retroactive-thinning sweep (priority #11) will replace those inline citations with backlinks here.*
-
 - [`L1/apply_linop`](../L1/apply_linop.md) — collapses the entire overload set to one operator parameterised by element type.
+- [`L1/ksp_solve`](../L1/ksp_solve.md) — the iterative solvers dispatch into the `Mult` family per step (cited in the `ksp_solve` Context and Evidence sections).
 - [`L1-L0/apply-linop-mutation-rotation`](../L1-L0/apply-linop-mutation-rotation.md) — the L1>L0 lowering theme that reintroduces the destination-buffer mention and selects between the `Mult` and `AddMult` forms per sub-pattern.
 - [`concepts/constructed-operators`](../concepts/constructed-operators.md) — narrative for the `BaseProductOperator` / `SumOperator` family.
 - [`concepts/complex-from-real-lift`](../concepts/complex-from-real-lift.md) — narrative for the `ComplexWrapperOperator` real-imag block formulation.

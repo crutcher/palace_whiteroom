@@ -12,6 +12,7 @@
 # L4 > L3 — Lowering
 - [Overview](./L4-L3/index.md)
 - [krylov-step-typed-wrapper-dissolution](./L4-L3/krylov-step-typed-wrapper-dissolution.md)
+- [gmres-inner-loop-iterate-while-migration](./L4-L3/gmres-inner-loop-iterate-while-migration.md)
 
 # L3 — Global Tensor-Field Operations
 - [Overview](./L3/index.md)
@@ -43,6 +44,7 @@
 - [axpby-mutation-rotation](./L1-L0/axpby-mutation-rotation.md)
 - [axpbypcz-mutation-rotation](./L1-L0/axpbypcz-mutation-rotation.md)
 - [apply-linop-mutation-rotation](./L1-L0/apply-linop-mutation-rotation.md)
+- [ksp-solve-mutation-rotation](./L1-L0/ksp-solve-mutation-rotation.md)
 - [bicgstab-iteration](./L1-L0/bicgstab-iteration.md)
 - [minres-iteration](./L1-L0/minres-iteration.md)
 
@@ -50,15 +52,18 @@
 - [Overview](./L0/index.md)
 - [Convention — output-arg vs receiver](./L0/output-arg-vs-receiver.md)
 - [Convention — MFEM vector types](./L0/mfem-vector-types.md)
+- [Convention — Par* types and single-rank reading](./L0/par-types-single-rank-reading.md)
 - [Convention — linalg:: free-function wrappers](./L0/linalg-free-functions.md)
 - [Convention — transparent vs load-bearing tricks](./L0/transparent-vs-load-bearing-tricks.md)
 - [Convention — mutable workspace pattern](./L0/mutable-workspace-pattern.md)
 - [File — palace/linalg/vector.{hpp,cpp}](./L0/linalg-vector-file.md)
+- [File — palace/linalg/operator.{hpp,cpp}](./L0/linalg-operator-file.md)
 - [File — palace/linalg/ksp.cpp](./L0/ksp-factory-file.md)
 - [File — palace/linalg/iterative.{hpp,cpp}](./L0/linalg-iterative-file.md)
 - [Overload set — Mult / MultTranspose / AddMult](./L0/apply-linop-overload-set.md)
 - [Class — BaseKspSolver](./L0/kspsolver-base-class.md)
 - [Class — MfemWrapperSolver](./L0/mfem-wrapper-solver.md)
+- [Class — EigenvalueSolver and wrappers](./L0/eigensolver-wrapper.md)
 # Phase 1 corpus (slice-vertical; raw material for combinator extraction)
 - [Index — Slice Status](./spec/index.md)
   - [CG — Preconditioned Conjugate Gradient](./spec/slices/cg.md)

@@ -31,8 +31,6 @@ When in doubt, the critic flags as `unclear` and the human triages. Mis-classify
 
 ## Referenced from
 
-*Forward-declared; L1 pages will be thinned to reference this chapter in the cycle-006 retroactive-thinning sweep (priority #11).*
-
 - [`L1/axpy`](../L1/axpy.md) — `α == 1.0` fast path (transparent).
 - [`L1/scal`](../L1/scal.md) — `s.imag() == 0.0` shape branch (transparent).
 - [`L1/dot`](../L1/dot.md) — self-aliasing fast path (transparent); reduction-tree non-associativity (load-bearing).
