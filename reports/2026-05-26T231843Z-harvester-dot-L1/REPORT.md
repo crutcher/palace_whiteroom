@@ -4,7 +4,7 @@ invoked_at: 2026-05-26T23:18:43Z
 scope: L1 operator: dot
 status: integrated
 integrated_at: 2026-05-26T23:51:01Z
-integration_commit: TBD-cycle-002
+integration_commit: c3312a6
 integration_notes: |
   Applied as-is per repaired META.md (overall_status: ready). All three proposed-changes blocks landed:
   (1) created book/src/L1/dot.md (~80 lines, firm L1 operator entry);

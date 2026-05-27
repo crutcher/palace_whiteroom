@@ -4,7 +4,7 @@ invoked_at: 2026-05-26T23:18:43Z
 scope: Pattern proposal — krylov-step (state-update kernel + readout, threaded by an outer iterate_while)
 status: integrated
 integrated_at: 2026-05-26T23:51:01Z
-integration_commit: TBD-cycle-002
+integration_commit: c3312a6
 integration_notes: |
   Applied as-is per repaired META.md (overall_status: ready). Single proposed-change block landed:
   modified book/src/L2/index.md to replace empty dep-map placeholder with markdown table (single row for `krylov-step`, 4-column L1-precedent format post-repair), Working Notes section carries provenance / consumed-by / pattern-instance / dependency-annotation overflow.

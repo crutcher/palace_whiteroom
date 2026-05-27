@@ -4,7 +4,7 @@ invoked_at: 2026-05-26T23:18:43Z
 scope: L1>L0 theme sketch — axpby-mutation-rotation
 status: integrated
 integrated_at: 2026-05-26T23:51:01Z
-integration_commit: TBD-cycle-002
+integration_commit: c3312a6
 integration_notes: |
   Applied as-is per repaired META.md (overall_status: ready). All three proposed-changes blocks landed:
   (1) created book/src/L1-L0/axpby-mutation-rotation.md (first L1>L0 theme, rough-in);

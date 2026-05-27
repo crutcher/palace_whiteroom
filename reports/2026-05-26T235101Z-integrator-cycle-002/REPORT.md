@@ -8,7 +8,7 @@ inputs:
   - reports/2026-05-26T231843Z-abstractor-axpby-mutation-L1-L0/
   - reports/2026-05-26T231843Z-combinator-miner-krylov-iteration-step/
 integrated_at: 2026-05-26T23:51:01Z
-integration_commit: TBD
+integration_commit: c3312a6
 ---
 
 # REPORT: Integrator batch — cycle-002
