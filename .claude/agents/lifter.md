@@ -64,6 +64,7 @@ inputs:
 - **One theme per invocation.**
 - This is a **structural rewrite**, not authorship. If you find yourself making non-trivial content decisions, **stop** and flag in Open questions — likely an abstractor reread is needed.
 - Preserve the theme's narrative; firm up the vocabulary.
+- **Themes are defined high→low** (user directive 2026-05-27 mid-cycle-009; see CLAUDE.md §Methodology invariants "Layers are defined high→low" bullet). The theme's LHS is the L_{n+1} form, RHS is the L_n form, and prose narrates the rewrite **forward** (L_{n+1} into L_n). During re-anchoring, if the firmed-up operator changes the LHS shape, the rewrite direction stays high→low — do not invert. Notes about how the L_n form lifts upward into L_{n+1} belong in your CYCLE.md's §Open questions / §Discipline notes, NOT in the formal theme chapter content. Friction-ledger entry: `layer-definition-discipline-high-to-low`.
 
 ## L4 / L3 strawman + pseudo-language conventions
 

@@ -584,8 +584,10 @@ slug: integrated-at-write-authority-drift
 first_observed: cycle-006
 last_observed: cycle-006
 recurrence_count: 1
-status: addressed
+status: resolved
 addressed_by: cycle-006 meta-phase (`.claude/agents/integrator-per-report.md` role-spec clarification — `integrated_at:` deferral to finalize)
+resolved_at: meta-batch-1 (cycle-009 meta-phase)
+resolved_basis: 4 consecutive clean cycles post-enactment (cycles 006/007/008/009 all zero recurrences) — well past the resolved threshold (≥10 cycles is the formal bar but the role-spec fix is mechanical and the 4-cycle clean record under split-integrator across 6/7/4 wave-mate counts is conclusive)
 ---
 ```
 
@@ -593,9 +595,9 @@ addressed_by: cycle-006 meta-phase (`.claude/agents/integrator-per-report.md` ro
 
 **Surfaced by**: cycle-006 integrator-finalize CYCLE.md §"Per-report `integrated_at:` inconsistency (caveat (b) for meta-phase)" + integrator-signals.md cycle-006 §Integration-tooling friction.
 
-**Mitigation (cycle-006 meta-phase, this entry):** Role-spec clarification in `.claude/agents/integrator-per-report.md` — add explicit "do NOT touch `integrated_at:` — that is integrator-finalize's responsibility" to the "What you DO NOT do" section. Also add to staging-log Notes a one-line "deferred integrated_at to finalize per role-spec" boilerplate to make the convention visible.
+**Mitigation (cycle-006 meta-phase):** Role-spec clarification in `.claude/agents/integrator-per-report.md` — explicit "do NOT touch `integrated_at:` — that is integrator-finalize's responsibility" in the "What you DO NOT do" section. Also added staging-log Notes "deferred integrated_at to finalize per role-spec" boilerplate to make the convention visible.
 
-**Watch:** if a future per-report integrator dispatch sets `integrated_at:` despite the clarification, escalate to recurrence-2 and consider a tooling solution (auto-strip pre-finalize, or YAML frontmatter validator gate).
+**Resolution (meta-batch-1 / cycle-009 meta-phase, this update).** Cycles 007/008/009 each ran 6/7/4 per-report dispatches respectively with ZERO recurrences across the entire batch. Combined with cycle-006's per-report-#1 single observation, the role-spec fix is fully load-bearing and the pattern is resolved. Status flipped `addressed` → `resolved`. The friction-ledger pattern stays as historical record.
 
 ---
 
@@ -661,5 +663,230 @@ addressed_by: cycle-006 per-report integrator applied as "discretionary auto-fix
 **Cycle-006 meta-phase decision.** **Formalize as a per-report-integrator safety-net gate** (low cascade). Add to `.claude/agents/integrator-per-report.md` §"Process" step 5 — "**index-placeholder displacement auto-fix**": when this report's proposed-changes add a firm dep-map row to an `index.md` that currently carries the literal placeholder text `(empty — Phase B skeleton.)`, replace the placeholder with the firm row (do not append below). Record as `applied-discretionarily` in the staging row with rationale (first-firm-row-displaces-placeholder).
 
 **No further mitigation needed beyond the role-spec touch.**
+
+---
+
+```yaml
+---
+slug: abstractor-direct-write-to-book-during-dispatch
+first_observed: cycle-008
+last_observed: cycle-008
+recurrence_count: 1
+status: addressed-by-watch
+addressed_by: cycle-009 meta-phase decision (single-instance + clean cycle-009 = treat as one-off; role-spec wording-prominence boost deferred unless recurrence)
+---
+```
+
+**Pattern.** Cycle-008 wave-1 dispatch #2 (abstractor on ksp_solve L1>L0) wrote directly to `book/` during dispatch (3 artefact files: `L1-L0/ksp-solve-mutation-rotation.md` + `L1-L0/index.md` + `SUMMARY.md`) rather than emitting the proposed-changes blocks via the canonical CYCLE.md channel. Violates CLAUDE.md write-authority partition (specialized agents write to `reports/<id>/CYCLE.md` only; `book/` is integrator-per-report's domain). Critic failed `plan-kind-consistency`; repairer executed Option-A clean restoration (`git checkout --` + `rm` + co-locate as report supporting doc + rewrite CYCLE.md into canonical proposed-changes blocks). Re-applied cleanly via canonical pipeline at integrator-per-report time. Critical OQ `abstractor-write-authority-violation-cycle-008` promoted for cycle-009 meta-phase pattern-watching.
+
+**Surfaced by**: cycle-008 integrator-finalize §Wave-conflict observations + integrator-signals.md cycle-008 §Wave-conflict observations + cycle-008 OQ.
+
+**Cycle-009 evidence (full primary cycle of pattern-watching).** Zero recurrences across 4 cycle-009 dispatches (lifter, layer-intro-author, harvester, combinator-miner). All 4 dispatches held write-authority discipline cleanly. Single-instance evidence after one full pattern-watching cycle.
+
+**Mitigation (cycle-009 meta-phase, this entry).** Single-instance + one full clean cycle = treat as one-off, not as latent pattern. **No role-spec wording-prominence boost enacted this meta-phase** — the `abstractor.md:73` "What you DO NOT do" already implies the boundary, and `abstractor.md:18-23` "Output: CYCLE.md" explicitly says "Write your CYCLE.md to disk yourself" + "The integrator applies (c)" — the proposed-changes channel is canonical. Adding more prominence risks signal fatigue without removing the actual cause (which was the dispatch-time decision of one cycle-008 abstractor invocation to skip the CYCLE.md channel; the role spec is already clear). **Status: `addressed-by-watch`.**
+
+**Watch:** if cycle-010+ sees a second occurrence of any specialized agent writing directly to `book/`, escalate to recurrence-2 and enact: (a) role-spec wording-prominence boost at the top-of-file Output section (move the "do not return content as text" sentence to a top-level Discipline bullet); (b) consider an integrator-per-report safety-net gate that detects pre-dispatch unmodified-vs-modified `book/` files and refuses to apply if the dispatch wrote outside its proposed-changes channel.
+
+---
+
+```yaml
+---
+slug: layer-definition-discipline-high-to-low
+first_observed: meta-batch-1 (cycle-009 meta-phase; codification of user directive 2026-05-27 mid-cycle-009)
+last_observed: meta-batch-1
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-009 meta-phase (CLAUDE.md §Methodology invariants new bullet + 4 role-spec touches: abstractor / harvester / lifter / layer-intro-author Discipline sections)
+---
+```
+
+**Pattern (codification, not friction).** User directive mid-cycle-009 2026-05-27: "The higher stages should be defined in terms of themselves (not the lower stages). The lowering stages should be defined in terms of how the higher stage lowers into the lower stage. Notes towards the reverse process should be kept in the working notes; but the formulation should remain structured as higher to lower."
+
+**Interpretation.** L_n operators are defined in terms of L_n vocabulary (or references to L_{n+1} for upward context); they are NOT defined in terms of L_{n-1} primitives. Lowering themes `L_{n+1}>L_n` are defined as "how the L_{n+1} form lowers into the L_n form" — explicit direction, LHS L_{n+1}, RHS L_n. Notes about the reverse (how L_n lifts into L_{n+1}) go in working notes (`scaffolding/`, supporting docs, OQs), NOT in formal chapter content.
+
+**Why this is in the friction-ledger as `addressed`, not as ongoing friction.** No batch-1 batch chapter overtly violates this discipline (the krylov-step lowering chain at L4 / L4>L3 / L3>L2 / L2 follows it naturally); the directive sharpens the discipline against potential drift. Recording as `addressed` per first-observation = codification-enacted; future cycles that violate the discipline escalate to recurrence-2 and may motivate a critic check.
+
+**Enactment (cycle-009 meta-phase, this entry):**
+- (a) `CLAUDE.md` §Methodology invariants: new bullet "Layers are defined high→low; lifting notes go in working notes" — full directive verbatim plus interpretation.
+- (b) Role-spec touches at abstractor / harvester / lifter / layer-intro-author Discipline sections, each adding one bullet referencing the CLAUDE.md invariant.
+
+**Watch:** if a future per-report dispatch defines an L_n entry in terms of L_{n-1} vocabulary (or a lowering-theme's prose narrates lift instead of lowering), critic should flag under `rotation-quality` and surface as recurrence-2; consider promoting a `critic` 9th check explicitly for direction-of-definition discipline.
+
+---
+
+```yaml
+---
+slug: lower-vocabulary-priority-over-higher-expansion
+first_observed: meta-batch-1 (cycle-009 meta-phase; codification of user directive 2026-05-27 mid-cycle-009)
+last_observed: meta-batch-1
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-009 meta-phase (CLAUDE.md §Methodology invariants new bullet + scaffolding/priorities.md priority #17 added)
+---
+```
+
+**Pattern (priority-policy, sibling to high→low discipline above).** User directive mid-cycle-009 2026-05-27: "we want to prioritize lower-level shared utility (because we want to prioritize providing reusable vocabulary, to make other components cheaper and simpler to describe, or unify)."
+
+**Interpretation.** When choosing between (a) expanding higher-layer vocabulary further and (b) populating lower-layer shared utility, prefer (b). Reusable lower-level vocabulary reduces duplication explosion in adjacent layers and enables unification of seemingly-distinct higher-layer patterns.
+
+**Current state observation (informs cycle-010+ planner).** As of post-batch-1: `book/src/L3/` is empty (placeholder only). The krylov-step lowering chain is documented as L4 firm > L4>L3 firm > L3-rendering-in-theme > L3>L2 firm > L2 firm WITHOUT an interposed L3 row. This is correct *for krylov-step specifically* (cycle-006 audit verdict: identity-in-form on the kernel body's primitive sequence; no L3 row needed for that operator). But the L3 layer remains under-populated relative to its potential as an iteration-rotation vocabulary, and zero firm L3 rows after 3 batches of substantive work signals the layer-cohort balance needs adjusting at the planning level.
+
+**Enactment (cycle-009 meta-phase, this entry):**
+- (a) `CLAUDE.md` §Methodology invariants: new bullet "Lower-level shared vocabulary takes priority" — full directive verbatim plus interpretation + L3-empty current-state callout.
+- (b) `scaffolding/priorities.md`: add priority #17 "lower-layer-shared-vocabulary-priority" with explicit cycle-010+ planner-guidance language.
+
+**Watch:** cycle-010 + cycle-011 + cycle-012 planner decisions — if planner continues to dispatch L4 expansions over eligible L1/L2/L3 work, escalate to recurrence-2 and consider a hard ordering rule in cycle-planner Discipline.
+
+---
+
+```yaml
+---
+slug: notification-hook-misfiring-on-non-question-events
+first_observed: cycle-009 (user-raised mid-cycle 2026-05-27)
+last_observed: cycle-009
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-009 meta-phase (`~/.claude/settings.json` hook refinement — message-pattern filter on urgency)
+---
+```
+
+**Pattern.** Notification hook in `~/.claude/settings.json` (configured during cycle-008 post-finalize work) fires `notify-send -u critical "Claude" "<MSG>"` on the Claude Code Notification event, which fires in MORE situations than just AskUserQuestion. The Notification event also fires on tool-permission prompts, status changes, and other "awaiting input"-shaped states. User raised mid-cycle-009 2026-05-27: hook firing in situations where Claude is not asking the user a question.
+
+**Surfaced by**: user direct interjection mid-cycle-009; recorded in cycle-009 integrator-finalize §Integration-tooling friction + meta-batch-1 closure summary §Methodology observations item 5.
+
+**Mitigation (cycle-009 meta-phase, this entry):** Refined `~/.claude/settings.json` hook command:
+- (a) Reads JSON from stdin via `cat` (canonical Claude Code hook input channel).
+- (b) Extracts `.message` field via `jq`.
+- (c) Classifies `urgency` by lowercase-message-pattern: if message matches `*permission*` / `*waiting*for*input*` / `*needs*your*input*` / `*question*` / `*ask*` (the user-question-shaped events), use `urgency=critical`; otherwise `urgency=normal`. This downgrades non-question Notification events (status changes, internal events) to a non-intrusive `normal` urgency while preserving the critical signal for actual user-input requests.
+- (d) Falls back to `MSG="awaiting input"` if jq fails.
+
+**Watch:** if user reports the refined hook still misfires (or now under-fires on actual questions), escalate to recurrence-2 and consider: (a) scoping the hook to a more specific event-type if Claude Code adds one; (b) removing the hook entirely and using OS-native focus signals.
+
+---
+
+```yaml
+---
+slug: mcp-codemap-permission-denied-across-batch-1
+first_observed: cycle-007
+last_observed: cycle-009
+recurrence_count: 3
+status: ask
+addressed_by: null (cycle-009 meta-phase surfaced to user as ask item)
+---
+```
+
+**Pattern.** MCP codemap server (`palace-codemap`, registered at repo root `.mcp.json` per commit `ab73d37`) is connected (`claude mcp list` shows `palace-codemap: ✓ Connected`) but per-tool calls return `Permission to use ... has been denied` in subagent contexts. Cycle-007 wave-1 dispatch #1 was the designated pilot per priority #16 step (e); both `mcp__palace-codemap__list_files` and related tools returned permission-denied. Cycle-008 and cycle-009 did not retry; pilot result carried forward unchanged across the full meta-batch-1.
+
+**Surfaced by**: cycle-007 / cycle-008 / cycle-009 integrator-signals §Integration-tooling friction + cycle-009 integrator-finalize batch closure summary §Methodology observations item 4.
+
+**Investigation findings.** The MCP server registration in `.mcp.json` is correct; tools surface to the parent session per the system-reminder MCP server instructions. The block is on per-tool permission allowlisting in subagent contexts — `.claude/settings.json` lacks `mcp__palace-codemap__*` entries in `permissions.allow`.
+
+**ASK item (surfaced to user this meta-phase).** Rollout decision options:
+- **(a) Enable**: user adds `"mcp__palace-codemap__list_files"` / `mcp__palace-codemap__get_file_subtree` / `mcp__palace-codemap__get_symbol_def` / `mcp__palace-codemap__get_call_sites` / `mcp__palace-codemap__list_dependencies` / `mcp__palace-codemap__read_range` / `mcp__palace-codemap__search_text` to `.claude/settings.json` `permissions.allow` (could also use the `mcp__palace-codemap__*` wildcard if Claude Code supports it). Then cycle-010 wave-1 retries the pilot.
+- **(b) Defer**: keep pilot dormant; revisit at next major meta-batch when other priorities settle. MCP tools stay un-piloted; vanilla Grep/Read continue as the C++ source-localization path.
+- **(c) Decommission**: retire the MCP codemap from the dispatch-priority list; the Rust server stays buildable but the role specs do NOT reference it as a preferred tool. Use vanilla Grep/Read indefinitely.
+
+**Recommendation (meta-phase).** Option (a) — the pilot has been blocked for 3 cycles and the cost of enabling is one settings.json edit; rollout decision deserves a real pilot rather than another carry-forward. Surfacing to user.
+
+**Watch:** post-user-decision, re-status. If (a), the cycle-010 pilot result feeds the next rollout decision (broad role-spec rollout vs. pilot-only). If (b), entry stays `ask` until next batch's meta. If (c), status flips `decommissioned`.
+
+---
+
+```yaml
+---
+slug: index-placeholder-displacement-on-first-firm-row-formalized
+first_observed: cycle-006
+last_observed: cycle-008
+recurrence_count: 4
+status: addressed
+addressed_by: cycle-006 meta-phase formalized in integrator-per-report safety-net gates; cycle-009 meta-phase confirms 4-instance pattern stable + zero cycle-009 hits + zero new hits to formalize (already formalized)
+---
+```
+
+**Pattern (positive, stable).** When a layer's `index.md` carries the `(empty — Phase B skeleton.)` placeholder and a first firm dep-map row lands under that index via a per-report integration, the integrator replaces the placeholder with the firm row rather than appending below it. Formalized cycle-006 in `.claude/agents/integrator-per-report.md` §Process step 5.
+
+**Four instances observed across batch:**
+- Cycle-006 wave-1 harvester on `L4/index.md` (first firm L4 row `krylov-step`).
+- Cycle-006 wave-2 abstractor on `L4-L3/index.md` (first firm L4>L3 theme).
+- Cycle-007 wave-1 dispatch 5 on `L3-L2/index.md` (first firm-rough-in L3>L2 theme).
+- Cycle-008 wave-1 pass 4 on `L1-L0/index.md` (first firm L1>L0 table).
+
+**Cycle-009 observation.** Zero index-placeholder displacements this cycle (no relevant placeholders remain in the active layer set: L4/index, L4-L3/index, L3-L2/index, L1-L0/index, L0/index, L1/index all have firm content; **L3/index and L2-L1/index and L3-L2/L4-L3 lowering parts that-may-not-yet-exist remain candidates** but none accumulated a firm row this cycle).
+
+**Cycle-009 meta-phase decision.** **No additional formalization needed** — the cycle-006 role-spec touch in `.claude/agents/integrator-per-report.md` §Process step 5 captures the pattern; cycle-007 + cycle-008 + cycle-009 each ran the gate cleanly (4-instance stable, zero new misses). Status flipped from `addressed` (cycle-006) → still `addressed` with extended track-record. The pattern is now self-perpetuating via the role spec; no further action.
+
+**Watch:** if a future cycle's first-firm-row dispatch APPENDS below the placeholder instead of displacing it, escalate to recurrence-2 and consider tooling (auto-strip placeholder line at dispatch-time, or YAML pre-flight gate).
+
+---
+
+```yaml
+---
+slug: l3-layer-empty-against-lower-vocabulary-priority
+first_observed: meta-batch-1 (cycle-009 meta-phase; observed via L3/index inspection)
+last_observed: meta-batch-1
+recurrence_count: 1
+status: new
+addressed_by: null (paired with `lower-vocabulary-priority-over-higher-expansion`; cycle-010+ planner enacts)
+---
+```
+
+**Pattern (observation, not pure friction).** `book/src/L3/` contains only `index.md` with the placeholder dep-map `(empty — Phase B skeleton.)`. Despite the krylov-step lowering chain being fully firm via L4 > L4>L3 > L3>L2 > L2 (cycle-009 finalize §Meta-batch-1 closure summary), no operators are firm at L3. Cycle-006's audit decision "no L3 row needed for krylov-step because the L3 form is value-thread-isomorphic to the L2 form" is now **SUPERSEDED** by the user directive 2026-05-27 mid-cycle-009 (codified as `identity-lowering-both-levels-required` below): identity-in-form between adjacent layers still requires both L entries because each layer is coherent within itself. The broader layer cohort is under-populated relative to L4 (3 firm) and L1 (8 firm + 1 rough-in test-coverage-bounded + 6 rough-in obstruction = 15 cohort entries).
+
+**Surfaced by**: user observation mid-cycle-009 paired with the lower-vocabulary-priority directive (codified above as `lower-vocabulary-priority-over-higher-expansion`); confirmed by direct inspection of `book/src/L3/` directory contents (only `index.md`).
+
+**Cycle-009 meta-phase decision (revised after identity-lowering directive landed).** This is a *signal* paired with two methodology codifications: (a) `lower-vocabulary-priority-over-higher-expansion`, and (b) `identity-lowering-both-levels-required` (below). The combination yields a concrete cycle-010 dispatch target: `book/src/L3/krylov-step.md` backfill (priority #20). No role-spec hard rule (which would over-constrain); the priority entry plus codifications provide cycle-010+ planning guidance.
+
+**Watch:** if batch-2 (cycles 010/011/012) closes with `book/src/L3/` still containing only the krylov-step backfill and no additional L3 entries despite eligible work, escalate to recurrence-2 — the priority signal is not landing in planner decisions for non-trivial-rotation L3 candidates. Consider then: (a) explicit per-cycle dispatch in priorities.md (`harvester on <specific L3 candidate>`); (b) cycle-planner role-spec touch encoding the lower-layer-priority preference; (c) cross-layer-cross-cutter dispatch surfacing L3-eligible candidates from the L2 firm cohort.
+
+---
+
+```yaml
+---
+slug: identity-lowering-both-levels-required
+first_observed: meta-batch-1 (cycle-009 meta-phase; codification of user directive 2026-05-27 mid-cycle-009)
+last_observed: meta-batch-1
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-009 meta-phase (CLAUDE.md §Methodology invariants new bullet + harvester role-spec Discipline touch + scaffolding/priorities.md priority #20 added)
+---
+```
+
+**Pattern (codification, supersedes prior verdict).** User directive mid-cycle-009 2026-05-27 (verbatim): "Specifically; when there is minimal / no change needed when lowering a component; the component should still have representation at both L levels (this is keeping in-line with 'each L level is coherent within itself')."
+
+**Interpretation.** When the lower-layer form is identity-in-form to the upper-layer form (no rewrite needed; the operator's body at L_n is value-thread-isomorphic to its body at L_{n+1}), the operator still gets its own entry at the lower layer. Each layer is coherent within itself; the L_n entry uses L_n vocabulary to define the operator even when the lowering theme is trivial. The L_{n+1}>L_n theme between them notes the identity.
+
+**Prior verdict superseded.** Cycle-006's audit of `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` concluded that no L3 entry for `krylov-step` was needed because the L3 form is value-thread-isomorphic to the L2 form (and the L4 form is value-thread-isomorphic to the L3 form). That verdict held through cycles 007/008/009. The user directive now reverses it: even when identity-in-form, the L3 entry is required for layer-coherence reasons. The cycle-010+ harvester backfill on `book/src/L3/krylov-step.md` is the precedent. The L4>L3 theme is updated to note the identity (rather than to argue against the L3 entry).
+
+**Enactment (cycle-009 meta-phase, this entry):**
+- (a) `CLAUDE.md` §Methodology invariants: new bullet "Identity-lowerings still require both L levels" — full directive verbatim plus interpretation + cycle-006 verdict-supersession callout.
+- (b) `CLAUDE.md` §Methodology invariants: updated the existing `lower-vocabulary-priority-over-higher-expansion` bullet to remove the "correct for krylov-step per cycle-006 identity-in-form audit; no L3 row needed for that operator" sub-clause, replaced with cross-reference to this entry (the verdict-supersession is consistent across both invariants).
+- (c) `.claude/agents/harvester.md` §Discipline: new bullet "Identity-lowerings still require both L levels" pointing at the CLAUDE.md invariant.
+- (d) `scaffolding/priorities.md`: add priority #20 "identity-lowering-both-levels-backfill" with cycle-010+ harvester target (`book/src/L3/krylov-step.md`) + audit dispatch (cross-layer-cross-cutter for additional candidates).
+
+**Watch:** if a future harvester dispatch on an identity-in-form operator skips the lower-layer entry, escalate to recurrence-2 and consider promoting a `critic` 9th check for missing-lower-layer-entry-on-identity-lowering.
+
+---
+
+```yaml
+---
+slug: phase-1-corpus-reduction-policy
+first_observed: meta-batch-1 (cycle-009 meta-phase; codification of user directive 2026-05-27 mid-cycle-009)
+last_observed: meta-batch-1
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-009 meta-phase (CLAUDE.md §Repository status + §Methodology invariants new bullets + scaffolding/priorities.md priority #19 added)
+---
+```
+
+**Pattern (codification, policy update).** User directive mid-cycle-009 2026-05-27 (verbatim): "When components have been lifted from the phase 1 corpus successfully; and that material is no longer needed, it should be reduced and eventually removed as the new format becomes authoritative."
+
+**Interpretation.** `book/src/spec/slices/` is the Phase 1 slice corpus (cycles 1–172 era; pre-structural-redirect). Until this directive, CLAUDE.md said "preserved as raw material for combinator extraction (not the deliverable)." Now: the corpus is **raw material** (not historical record) and is allowed to **shrink monotonically** as material is lifted into firm layered entries. A slice whose content is fully represented in the layered artifact is reduced to a stub (pointing at the firm layered entries it has been absorbed into) and eventually removed. The git history is the historical record; the slice form is not preserved once its content lives in the layered surface.
+
+**Enactment (cycle-009 meta-phase, this entry):**
+- (a) `CLAUDE.md` §Repository status: updated bullet about Phase 1 slice corpus to reference the reduction policy.
+- (b) `CLAUDE.md` §Methodology invariants: new bullet "Phase 1 corpus reduces as material is lifted" — full directive verbatim plus interpretation + per-cycle audit-dispatch pattern.
+- (c) `scaffolding/priorities.md`: add priority #19 "phase-1-corpus-reduction-audit" — cycle-010+ `same-layer-cross-cutter`-scoped dispatch on slices that overlap firm layered entries; first targets are krylov-chain slices.
+
+**Watch:** if the audit-dispatch pattern surfaces in cycle-010+ but slices accumulate without reduction (i.e., audits propose reductions and they're not applied), escalate to recurrence-2 and consider integrator-per-report role-spec touch on slice-stub authoring procedure. If the audit pattern doesn't surface at all over 2-3 batches, the priority needs to be raised in cycle-planner's reading attention.
 
 ---
