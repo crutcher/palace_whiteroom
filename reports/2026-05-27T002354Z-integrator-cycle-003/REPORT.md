@@ -9,7 +9,7 @@ inputs:
   - reports/2026-05-27T001116Z-lowering-verifier-axpby-mutation-rotation/
   - reports/2026-05-27T001116Z-same-layer-cross-cutter-dot-concept-contradictions/
 integrated_at: 2026-05-27T00:23:54Z
-integration_commit: TBD-AT-COMMIT-TIME
+integration_commit: 9aa1c59
 ---
 
 # REPORT: Integrator batch — cycle-003

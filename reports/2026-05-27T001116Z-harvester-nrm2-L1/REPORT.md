@@ -32,7 +32,7 @@ skill_uptake:
     decision: explained_non_applicable
     rationale: Three proposed-changes blocks (new L1/nrm2.md, L1/index.md dep-map row append, SUMMARY.md targeted single-line append) — surface well-formedness verified by inspection; skill invocation deferred to critic-phase.
 integrated_at: 2026-05-27T00:23:54Z
-integration_commit: TBD-AT-COMMIT-TIME
+integration_commit: 9aa1c59
 integration_notes: Applied as repaired (append-after dot row on L1/index.md; SUMMARY.md insertion auto-merged with sister axpby SUMMARY edit; both new chapter entries land after the dot line in dep-map row order).
 ---
 

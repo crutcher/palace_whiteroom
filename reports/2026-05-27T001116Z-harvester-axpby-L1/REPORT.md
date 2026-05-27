@@ -31,7 +31,7 @@ skill_uptake:
     decision: explained_non_applicable
     rationale: Three proposed-changes blocks (new L1/axpby.md, L1/index.md rough-in→firm row replacement, SUMMARY.md targeted insertion) — surface well-formedness verified by inspection against the cycle-002 dot harvester precedent.
 integrated_at: 2026-05-27T00:23:54Z
-integration_commit: TBD-AT-COMMIT-TIME
+integration_commit: 9aa1c59
 integration_notes: Applied as proposed (L1/index.md rough-in row replaced in-place with firm row; SUMMARY.md insertion auto-merged with sister nrm2 SUMMARY edit; decision file scaffolding/decisions/axpby-as-primitive.md git-added; open question axpby-axpy-scal-decomposition-decision marked answered).
 ---
 

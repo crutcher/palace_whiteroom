@@ -23,7 +23,7 @@ skill_uptake:
     decision: explained_non_applicable
     rationale: Report carries no proposed-changes block (cross-cutter role is observation-only); refinement-surface verification does not apply.
 integrated_at: 2026-05-27T00:23:54Z
-integration_commit: TBD-AT-COMMIT-TIME
+integration_commit: 9aa1c59
 integration_notes: Observation-only report; no proposed-changes block to apply. Three contradictions surfaced are recorded for cycle-004 layer-intro-author dispatch (rewrite concepts/dot.md). Four open questions promoted to ledger (concepts-page-authorship-role-scope, concepts-pre-layered-era-sweep, dot-blas-heritage-framing-salvage, dot-backpointer-staleness-after-rewrite). Role-scope question for layer-intro-author vs concept-page-author surfaced to meta-phase.
 ---
 

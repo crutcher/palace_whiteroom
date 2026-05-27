@@ -27,7 +27,7 @@ skill_uptake:
     decision: explained_non_applicable
     rationale: Did corpus-wide grep for `\.Add(`, `linalg::AXPY`, `\.Subtract(`, vector-typed `+=`/`-=` to enumerate uncited sub-pattern A/B/C call sites; this skill does not yet exist as a SKILL.md entry but the activity pattern is recurrent across lowering-verifier and same-layer-cross-cutter dispatches. Filed as candidate via this telemetry mark.
 integrated_at: 2026-05-27T00:23:54Z
-integration_commit: TBD-AT-COMMIT-TIME
+integration_commit: 9aa1c59
 integration_notes: Applied as proposed (verified_against YAML metadata block + coverage note paragraph appended to book/src/L1-L0/axpby-mutation-rotation.md §Verified-against). Theme content unchanged; metadata is additive. Channel-format question for YAML-in-prose embedding routed to meta-phase via open question lowering-verifier-yaml-in-prose-channel-format.
 ---
 
