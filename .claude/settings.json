@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__palace-codemap__list_files",
+      "mcp__palace-codemap__get_file_subtree",
+      "mcp__palace-codemap__get_symbol_def",
+      "mcp__palace-codemap__get_call_sites",
+      "mcp__palace-codemap__list_dependencies",
+      "mcp__palace-codemap__search_text",
+      "mcp__palace-codemap__read_range"
+    ]
+  }
+}
