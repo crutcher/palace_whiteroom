@@ -19,13 +19,20 @@ Short next-up list. Meta-phase and cycle-planner co-edit. Cycle-planner reads ea
 7. **shared-infra-Jacobi-smoother** (user directive 2026-05-27) — slice Jacobi / damped Jacobi smoother. Roadmap §Smoothers and preconditioners. Same pre-grep + #4-policy treatment as #6.
 8. **concepts-sweep-cycle-005** — `same-layer-cross-cutter` replay over remaining `book/src/concepts/` pages (`axpy`, `nrm2`, `orthogonalization`, etc.) using the cycle-004 `concepts/dot.md` rewrite as pattern template. Bundles cycle-003 open question `concepts-pre-layered-era-sweep` + cycle-004 `concepts-sweep-cycle-005-candidate`.
 9. **scalar-promotion-typing-rule-lift** — concept-page extraction: the rule is now visible across 5 operators (`axpy`, `dot`, `axpby`, `axpbypcz`, `scal`). Well past the threshold for promotion above per-operator prose. Routes to `layer-intro-author` for `book/src/concepts/scalar-promotion.md` authorship + per-operator citation back-references.
+10. **bootstrap-L0-reference-layer** (user directive 2026-05-27) — populate `book/src/L0/` as a reference-notes layer holding cross-cutting Palace-source interpretation that L1 entries currently duplicate inline. Currently L0 is a 30-line stub. Starter chapter set (~13 chapters, flat structure mirroring other layers):
+    - **Conventions:** `output-arg-vs-receiver.md`, `mfem-vector-types.md`, `linalg-free-functions.md`, `mpi-globalsum-and-collectives.md`, `par-types-single-rank-reading.md`, `mutable-workspace-pattern.md`, `transparent-vs-load-bearing-tricks.md`.
+    - **File overviews:** `linalg-vector-file.md`, `linalg-operator-file.md`, `linalg-iterative-file.md`, `ksp-factory-file.md`.
+    - **Tests:** `tests-as-semantic-supplement.md`.
+    - **No line-by-line source duplication** (prior slice-era pitfall). Each chapter is ~paragraph-scale interpretation with pointer citations.
+    - Routes to `layer-intro-author` (role spec broadened cycle-003 to cover non-layer-intro pages). Cycle-005 planner may bundle several chapters per dispatch or split — planner's call. Existing L1 entries are NOT rewritten retroactively in this priority (see #11 below).
 
 ## Near (queued)
 
-10. **bootstrap-L4-state-stratification** — write the L4 layer intro / dep-map that exposes the sim-state vs operator-params vs ephemeral distinction.
-11. **nrm2_B-weighted-energy-norm-L1** — depends on `apply_linop` (now firm) and `dot` (firm cycle-002). Citation: open question `nrm2-B-weighted-energy-norm-harvest`.
-12. **shared-infra-MINRES** + **shared-infra-BiCGStab** — **closed by #4 resolution (2026-05-27).** Obstruction themes stay as documentation (`book/src/L1-L0/minres-iteration.md`, `book/src/L1-L0/bicgstab-iteration.md`). NOT direct implementation targets per the unimplemented-Palace-components policy. Their literature-anchored L1 forms remain available as guidance inputs for cycle-005+ `krylov-step` harvester promotion (item #1).
-13. **enum-only-krylov-discovery-grep** — discovery pass: grep `palace/utils/labels.hpp` for additional enum values that route to `MFEM_ABORT` in `palace/linalg/ksp.cpp` (and analogous solver-selection points). Catches additional candidates for the `advertised-but-unimplemented-krylov-solvers` friction pattern before they surface ad-hoc. Cycle-005 or cycle-006.
+11. **retroactive-L1-context-thinning** — after #10 lands enough L0 reference notes, sweep existing L1 operator entries (`axpy`, `dot`, `nrm2`, `axpby`, `scal`, `apply_linop`, `axpbypcz`) to replace inline L0-interpretation prose in their "Context" sections with cross-references to L0 chapters. Cleanup pass; should noticeably shrink L1 entries. Dispatch when ≥6 of the #10 starter chapters land. Routes to `layer-intro-author` per-operator or as a single sweep.
+12. **bootstrap-L4-state-stratification** — write the L4 layer intro / dep-map that exposes the sim-state vs operator-params vs ephemeral distinction.
+13. **nrm2_B-weighted-energy-norm-L1** — depends on `apply_linop` (now firm) and `dot` (firm cycle-002). Citation: open question `nrm2-B-weighted-energy-norm-harvest`.
+14. **shared-infra-MINRES** + **shared-infra-BiCGStab** — **closed by #4 resolution (2026-05-27).** Obstruction themes stay as documentation (`book/src/L1-L0/minres-iteration.md`, `book/src/L1-L0/bicgstab-iteration.md`). NOT direct implementation targets per the unimplemented-Palace-components policy. Their literature-anchored L1 forms remain available as guidance inputs for cycle-005+ `krylov-step` harvester promotion (item #1).
+15. **enum-only-krylov-discovery-grep** — discovery pass: grep `palace/utils/labels.hpp` for additional enum values that route to `MFEM_ABORT` in `palace/linalg/ksp.cpp` (and analogous solver-selection points). Catches additional candidates for the `advertised-but-unimplemented-krylov-solvers` friction pattern before they surface ad-hoc. Cycle-005 or cycle-006.
 
 ## Methodology guidance (user directive 2026-05-27; cycle-003 + cycle-004 update)
 
