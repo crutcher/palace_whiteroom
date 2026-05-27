@@ -33,16 +33,25 @@ Between adjacent layers, **lowering layers** `L_{n+1}>L_n` describe the rewrite 
 
 **Each layer is its own mdBook Part** with multiple chapters: one for the Part overview (`index.md`), one per operator (for L_n) or theme (for L_{n+1}>L_n). The Part shape is load-bearing — it prevents per-layer content from accumulating into one giant file and preserves cross-referencing.
 
-## Cycle structure: plan → dispatch → critique → repair → integrate → meta
+## Cycle structure: primary cycle (5 phases) + meta-phase every 3rd
 
-Each R&D cycle has 6 phases:
+There are **two cadences**:
+
+- **Primary cycle (5 phases)**: plan → dispatch → critique → repair → integrate. Fires every cycle. The forward-frontier loop.
+- **Meta-phase**: fires **every 3rd primary cycle** (user directive 2026-05-27, post-cycle-006 meta). Examines evidence aggregated across the **last 3 primary cycles** and adjusts methodology.
 
 ```
-  cycle-planner → N specialized agents → N critics → N repairers →
-    integrator-per-report ×N → integrator-finalize → meta-phase
-    (serial)        (scatter; parallel)     (scatter)    (scatter)
-                                                              (serial; one-at-a-time)  (serial)   (serial)
+  Primary cycle (×3 between meta-phases):
+    cycle-planner → N specialized agents → N critics → N repairers →
+      integrator-per-report ×N → integrator-finalize
+      (serial)        (scatter; parallel)     (scatter)    (scatter)
+                                                                (serial; one-at-a-time)  (serial)
+
+  Every 3rd primary cycle, after integrator-finalize:
+    meta-phase (serial; aggregates evidence across the 3-cycle batch)
 ```
+
+**Cycle counter** keeps incrementing across batches: cycles 007, 008, 009 form one meta-batch; meta-phase fires after 009; then 010, 011, 012 form the next batch; meta-phase after 012; and so on. The cycle counter does NOT reset at meta-batch boundaries.
 
 **Phase 1 — plan**: `cycle-planner` reads roadmap, priorities, friction-ledger, open-questions, recent integrator batches, integrator-signals tail. Emits a dispatch plan with `(agent, scope, deps)` tuples and an overlap analysis. Does not mutate the artifact.
 
@@ -58,7 +67,7 @@ Each R&D cycle has 6 phases:
 
 Sole writers of `book/`, `scaffolding/roadmap.md`, `log/`, `scaffolding/cycle-record.jsonl`, `scaffolding/open-questions.md`, `scaffolding/integrator-signals.md` — partitioned per role spec (per-report writes artifact + open-questions + staging; finalize writes roadmap, cycle-record, log, integrator-signals, plus commit).
 
-**Phase 6 — meta**: `meta-phase` examines cycle evidence + running history. Records escalating trends in `scaffolding/friction-ledger.md`. Proposes plans, judges them, decides `go` / `no-go` / `ask` per plan. Enacts `go` items directly: writes to `.claude/agents/`, `skills/`, `scaffolding/priorities.md`. Surfaces `ask` items to human. Separate commit from integrator-finalize.
+**Meta-phase (fires after every 3rd primary cycle)**: `meta-phase` examines evidence **aggregated across the last 3 primary cycles** + running history. Records escalating trends in `scaffolding/friction-ledger.md`. Proposes plans, judges them, decides `go` / `no-go` / `ask` per plan. Enacts `go` items directly: writes to `.claude/agents/`, `skills/`, `scaffolding/priorities.md`. Surfaces `ask` items to human. Separate commit from integrator-finalize. The aggregated-batch view is intentional — single-cycle noise washes out; persistent 2-of-3-cycle patterns surface as real friction.
 
 ## The 14 agents
 
@@ -163,7 +172,8 @@ These are load-bearing — do not "improve" them away.
 - **If a step is ambiguous, stop and ask the human.** Don't improvise around the spec.
 - **L4 strawman (`book/src/design/l4_calculus.md`) is in-management for L4 and L3 work** (user directive 2026-05-27, mid-cycle-006). The strawman is the authoritative reference for L4 calculus conventions: BNF grammar for types/terms/shapes, reduction-rule format ($$ ... $$ math display), `iterate_while` / pruning / monad semantics. L4 and L3 entries (`book/src/L4/<op>.md`, `book/src/L3/<op>.md`, `book/src/L4-L3/<theme>.md`, `book/src/L3-L2/<theme>.md`) cite and continue the strawman; they do not displace it. Cycle-006's first firm L4 entry (`book/src/L4/krylov-step.md`) and first firm L4>L3 theme (`book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md`) are the precedent examples — read them when authoring new L4/L3 content.
 - **L4 and L3 pseudo-language is Haskell + TypeScript notation in fenced code blocks** (user directive 2026-05-27, same as above). Signatures use Haskell `::` arrow form (`f :: A -> B -> C`); records use TypeScript brace form (`{ field: type }`); body shapes use Haskell-style do-notation (`do { let x = e; modify f; pure r }`) and lambda (`\s -> ...`). Fenced as ` ```text ... ``` ` (the strawman uses `text` as a generic non-highlighted fence). Reduction rules and small-step semantics use LaTeX math display (`$$ ... $$`). Do not transcribe L4/L3 forms into prose; do not invent new notation conventions. The strawman's notation is the canonical one because the calculus is language-agnostic-but-code-like and the mix has settled across v0.1–v0.3 iterations.
-- **Compactify primary context after every meta-phase** (user directive 2026-05-27, mid-cycle-006). Use `/compact` at the end of meta-phase (Phase 6) to reduce primary-conversation context before the next cycle. Cycles are long-running and accumulate substantial agent dispatch transcripts; compactification keeps the next cycle's planner reads efficient. Do not compactify mid-cycle (would lose in-flight per-report dispatch / staging context that integrator-finalize needs).
+- **Compactify primary context after every meta-phase** (user directive 2026-05-27, mid-cycle-006). Use `/compact` at the end of meta-phase to reduce primary-conversation context before the next primary cycle. Cycles are long-running and accumulate substantial agent dispatch transcripts; compactification keeps the next cycle's planner reads efficient. Do not compactify mid-cycle (would lose in-flight per-report dispatch / staging context that integrator-finalize needs). With the 3:1 cadence below, compactification now fires roughly every 3 primary cycles; the user explicitly preferred this over per-primary-cycle compaction (confirmed post-cycle-006 meta).
+- **Meta-phase runs every 3rd primary cycle** (user directive 2026-05-27, post-cycle-006 meta). Primary cycles (plan → dispatch → critique → repair → integrate) fire continuously; meta-phase fires only after every 3rd primary cycle's integrator-finalize, aggregating evidence across the full 3-cycle batch. Rationale: single-cycle noise (a one-off critic warning, an isolated unrepairable finding) washes out in a 3-cycle window, so persistent patterns surface more cleanly and methodology adjustments are less reactive. The cycle counter does not reset at batch boundaries — cycles 007/008/009 form batch-1 with meta after 009; 010/011/012 form batch-2 with meta after 012; etc. The meta-phase report filename uses the cycle-id of the third (final) primary cycle in the batch (`reports/<timestamp>-meta-phase-cycle-<N>/CYCLE.md` where N = third cycle).
 
 ## Process model: push-forward, push-back; the stack is a research artifact
 

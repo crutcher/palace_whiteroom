@@ -1,7 +1,8 @@
 # Cycle-007 resume notes
 
 **Written by**: cycle-006 meta-phase (2026-05-27T09:30Z).
-**Consumed at**: end of cycle-007 integrator-finalize (delete this file per its own step-4 instruction below; mirrors cycle-005 → cycle-006 + cycle-006 → cycle-007 patterns).
+**Updated**: 2026-05-27T post-cycle-006-meta — appended §"Meta-phase cadence change (3:1)" capturing user directive.
+**Consumed at**: end of **cycle-009** integrator-finalize (revised from cycle-007 per new 3:1 meta cadence — see §"Meta-phase cadence change (3:1)" below; the file now spans the full first meta-batch, not just cycle-007).
 
 ## Why this file exists
 
@@ -57,10 +58,29 @@ The cycle-006 integrator-finalize promoted these to next-cycle work (excerpted f
 
 Cycle-007 cycle-planner reads `scaffolding/integrator-signals.md` cycle-006 top section as primary input.
 
+## Meta-phase cadence change (3:1)
+
+**User directive 2026-05-27** (post-cycle-006 meta, after `/compact`): meta-phase now fires **every 3rd primary cycle**, not every cycle. Primary cycles (plan → dispatch → critique → repair → integrate) continue at the same rhythm; only meta-phase is decimated.
+
+For this resume-notes file specifically:
+- Cycle-007, cycle-008, cycle-009 form **batch-1** of the new cadence.
+- **No meta-phase fires after cycle-007 or cycle-008.** Their integrator-finalize commits are immediately followed by cycle-008 / cycle-009 cycle-planner dispatches.
+- Meta-phase fires once after cycle-009's integrator-finalize, examining evidence aggregated across all three primary cycles. Report filename: `reports/<timestamp>-meta-phase-cycle-009/CYCLE.md` (uses third-cycle id, per updated meta-phase role spec).
+- `/compact` fires after the cycle-009 meta-phase commit (preserves prior compactification cadence: once per meta-phase invocation, not once per primary cycle — user confirmed this is the intended frequency post-directive).
+
+Codification commits:
+- CLAUDE.md "Cycle structure" section restructured (primary-cycle vs meta-batch distinction + diagram).
+- CLAUDE.md new methodology invariant: **Meta-phase runs every 3rd primary cycle**.
+- `.claude/agents/meta-phase.md` updated: frontmatter description, inputs aggregate-across-batch, cycle-record append schema with `batch_cycle_ids`, report-filename rule.
+- `.claude/agents/cycle-planner.md` updated: cadence-aware note (friction-ledger may be ~3 cycles stale; surface methodology observations to next meta-phase via Open-questions).
+- This file: §"Meta-phase cadence change (3:1)" added; deletion deferred from cycle-007 to cycle-009.
+
+What this file's "delete after consume" instruction now means: keep through cycles 007 + 008 + 009; delete only after cycle-009's meta-phase completes and the cycle-009 → cycle-010 resume-notes file (if any) is written.
+
 ## Resuming the session
 
-1. `git pull` — fast-forward to latest main (catches the cycle-006 meta-phase commit if not already locally pulled).
-2. `/compact` — reduce primary-conversation context.
-3. **Restart Claude Code session.**
-4. Delete this file (`rm scaffolding/cycle-007-resume-notes.md`) once cycle-007 integrator-finalize commits — it has served its purpose. Mirrors the cycle-005 → cycle-006 + cycle-006 → cycle-007 pattern.
-5. Begin cycle-007 with cycle-planner dispatch.
+1. `git pull` — fast-forward to latest main (catches the cycle-006 meta-phase commit + the 3:1-cadence codification commit).
+2. `/compact` — already done post-cycle-006-meta; do not re-run between cycle-007 and cycle-008 (per the 3:1 cadence — compact fires once per meta-batch, after cycle-009).
+3. **Restart Claude Code session** (cycle-006 meta edited 10 role specs; cached agent registry needs refresh).
+4. Begin **cycle-007** with cycle-planner dispatch. Then cycle-008. Then cycle-009. Then meta-phase. Then `/compact`. Then begin cycle-010.
+5. Delete this file (`rm scaffolding/cycle-007-resume-notes.md`) once **cycle-009 integrator-finalize** commits (revised from cycle-007 per 3:1 cadence).
