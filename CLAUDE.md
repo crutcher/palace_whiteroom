@@ -185,6 +185,12 @@ Palace's unittests under `reference/palace/test/unit/` are **semantic documentat
 - **Target deployment is a single machine.** CPU → GPU via burn's device backends. MPI / multi-rank distribution is **out of scope** — flag once and skip. In MFEM, `Par*` types (`ParGridFunction`, `ParBilinearForm`, `HypreParVector`, …) are read as their single-rank equivalents.
 - **Solvers in scope: all 5.** Electrostatic, magnetostatic, eigenmode, driven, transient.
 - **Mesh / FE-space construction in scope.** MFEM-equivalent FE assembly is dissected alongside the solver pipelines.
+- **Unimplemented Palace components are NOT direct implementation targets** (user directive 2026-05-27). When Palace ships a stub (enum-only / JSON-only / aborting-branch configuration, e.g., MINRES + BiCGStab at `palace/linalg/ksp.cpp:53-56`):
+  - **Document the stub** as an L1>L0 obstruction theme with negative-anchor citations. This is documentation, not a lowering rule.
+  - **Do not target the unimplemented functionality for filling in.** The goal is to match Palace's current feature set on top of the target L4 semantics — not to extend Palace.
+  - **The literature-anchored L1 form may inform higher abstractions.** Collection and lifting of higher forms (L2 combinators, L4 primitives) may permit extensions into feature sets Palace hasn't implemented yet — this is permitted.
+  - **Promote a speculative L1 operator to firm only when small AND when it simplifies the semantics of higher forms.** If `lanczos_step` makes `krylov-step` at L2 cleaner by factoring the symmetric-tridiagonal case from the asymmetric-Hessenberg case, that's a good promotion. If a promotion adds vocabulary without simplifying anything upstream, defer.
+  - **Practical consequence**: cycle-004's `minres-iteration` and `bicgstab-iteration` themes stay as obstruction documentation. The 6 speculative rough-in operators are not promoted unless a cycle-005+ harvester-on-`krylov-step` finds that promoting one of them simplifies L2 semantics.
 
 ## Target system
 

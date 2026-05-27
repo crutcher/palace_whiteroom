@@ -365,10 +365,13 @@ slug: advertised-but-unimplemented-krylov-solvers
 first_observed: cycle-004
 last_observed: cycle-004
 recurrence_count: 2
-status: new
-addressed_by: null
+status: addressed-by-policy
+addressed_by: CLAUDE.md §Scope unimplemented-Palace-components rule (user directive 2026-05-27) + project-memory feedback_unimplemented_palace_components
 ---
 ```
+
+**Resolution (user directive 2026-05-27, cycle-004 → cycle-005 boundary):** Unimplemented Palace components are NOT direct implementation targets. Stub is documented (obstruction theme = correct deliverable). Literature-anchored L1 form may inform higher abstractions (L2 combinators) when it simplifies their semantics; speculative operator promotion to firm is permitted only when small AND simplifies higher forms. Themes `minres-iteration` and `bicgstab-iteration` stay as obstruction documentation. The 6 speculative rough-in operators (lanczos_step, three_term_recurrence_update, givens_apply_with_residual_min, bicgstab_step, omega_update, stabilisation_update) are not auto-promoted; harvester-on-`krylov-step` may consume their L1 forms as guidance and selectively promote if doing so simplifies the L2 combinator. See CLAUDE.md §Scope and project-memory `feedback_unimplemented_palace_components` for the full policy.
+
 
 **Pattern.** Palace's solver-selection layer (`palace/utils/labels.hpp` + `palace/linalg/ksp.cpp` constructor) ships enum values + JSON parser entries for Krylov solvers that have no Palace implementation — they route to a single shared `MFEM_ABORT` branch (`palace/linalg/ksp.cpp:53-56`). Two instances surfaced in cycle-004 abstractor work, each producing an L1>L0 lowering theme with **`justification kind: obstruction`** (a new theme category introduced this cycle):
 

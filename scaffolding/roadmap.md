@@ -18,6 +18,8 @@ Status legend:
 
 Components that underlie all five solver pipelines. **Raised above per-solver pipelines** per user directive: shared infrastructure is the leverage point — every per-solver pipeline depends on it. Krylov + smoothers + projections + FE assembly all gate per-solver coverage. The remaining unstarted shared-infrastructure items (MINRES, BiCGStab, Householder QR, Jacobi, SGS, ILU, AMS, multigrid V-cycle, curl-curl projector, FE assembly, boundary conditions) should be prioritised in cycle-planner dispatch selection over individual per-solver work.
 
+**Per the unimplemented-Palace-components policy (user directive 2026-05-27, see CLAUDE.md §Scope):** Shared Infra items that are enum-only stubs in Palace (MINRES + BiCGStab confirmed cycle-004; possibly others — see priority #13 discovery item) are NOT direct implementation targets. They land as L1>L0 obstruction themes; their literature-anchored L1 forms may inform higher-form abstraction (L2 combinators like `krylov-step`); speculative operators are promoted only when small AND simplifying higher-form semantics. Status notation: items marked `[stub]` are enum-only-with-MFEM_ABORT (documented obstruction); items marked `[?stub]` haven't been grepped yet; items with normal `[ ]` are believed implemented in Palace.
+
 ## Per-solver pipelines (5 solvers)
 
 A solver pipeline is *covered* when its driver algorithm has at least one slice at L4 AND all its support primitives are at least at L2. None of the five pipelines is fully covered yet — the Krylov-only footprint is shared across all five and is largely done, but per-pipeline FE assembly + boundary conditions + post-processing are not yet touched.
@@ -36,20 +38,20 @@ Detail rows for the prioritised section above.
 
 - [x] **CG** — preconditioned conjugate gradient (cg slice at L4; v0.2 + preconditioned variant).
 - [x] **GMRES / FGMRES** — restarted with `pc_side × gs_orthog × flexible` variants at L4 (gmres slice).
-- [ ] **MINRES** — symmetric-indefinite three-term recurrence.
-- [ ] **BiCGStab** — non-symmetric short-recurrence.
+- [stub] **MINRES** — symmetric-indefinite three-term recurrence. Palace ships enum (`KspType::MINRES`) + JSON parser entry but routes to `MFEM_ABORT` at `palace/linalg/ksp.cpp:53-56`. L1>L0 obstruction theme landed cycle-004 (`book/src/L1-L0/minres-iteration.md`). NOT a direct implementation target per the unimplemented-stub policy; L1 form available as guidance for `krylov-step` at L2.
+- [stub] **BiCGStab** — non-symmetric short-recurrence. Same enum-only-with-MFEM_ABORT pattern as MINRES. L1>L0 obstruction theme landed cycle-004 (`book/src/L1-L0/bicgstab-iteration.md`). NOT a direct implementation target.
 
 ### Orthogonalisation
 
 - [x] **MGS / CGS / CGS2** — at L4 (orthog slice; residual-axis disclosure for L2 primitive-sequence divergence).
-- [ ] **Householder QR** — sibling slice; structurally-distinct variant per `book/src/concepts/variant-absorption.md`.
+- [?stub] **Householder QR** — sibling slice; structurally-distinct variant per `book/src/concepts/variant-absorption.md`. Stub-status unverified — pre-grep `palace/utils/labels.hpp` + orthog selection points before harvester dispatch (per priority #13 enum-discovery sweep).
 
 ### Smoothers and preconditioners
 
 - [x] **Chebyshev (1st-kind and 4th-kind)** — at L4 (chebyshev slice; constructed-operator variant absorption).
-- [ ] **Jacobi / damped Jacobi** — point-wise.
-- [ ] **Symmetric Gauss-Seidel** — element-wise; genuinely sequential at L3 (predicted obstruction).
-- [ ] **ILU(0) / ILU(k)** — incomplete LU factorisations.
+- [?stub] **Jacobi / damped Jacobi** — point-wise. Stub-status unverified — pre-grep before dispatch.
+- [?stub] **Symmetric Gauss-Seidel** — element-wise; genuinely sequential at L3 (predicted obstruction). Stub-status unverified.
+- [?stub] **ILU(0) / ILU(k)** — incomplete LU factorisations. Stub-status unverified.
 - [ ] **AMS** (auxiliary-space Maxwell, Hiptmair-Xu) — Palace's multigrid-equivalent for curl-curl.
 - [ ] **Geometric multigrid V-cycle** — driver + level-recurrence + restriction/prolongation.
 
