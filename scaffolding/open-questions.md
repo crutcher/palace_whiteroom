@@ -1344,11 +1344,15 @@ The cycle-007 firm L4 `iterate-while.md` / `iterate-while-with-prev.md` model it
 slug: eigsolve-l1-operator-rough-in-candidate
 opened_at: cycle-008
 opened_by: layer-intro-author
-status: open
+status: partially-answered
+partial_answer_at: cycle-009
+partial_answer_in: reports/2026-05-27T191929Z-harvester-eigsolve-L1/
 ---
 ```
 
 The new `eigensolver-wrapper` chapter notes that the three concrete branches (ARPACK RCI / SLEPc shell-matrix / Palace's direct-Newton `QuasiNewtonSolver`) realize three distinct orchestration patterns but expose a uniform problem-type axis (linear / quadratic / nonlinear). A future L1 `eigsolve` operator would absorb the orchestration axis as transparent dispatch and expose only the problem-type axis + `ScaleType` + `WhichType` + `SetShiftInvert` mode. The operator is sized similarly to `ksp_solve` (stateful inner loop, configured inner linear solver via `SetLinearSolver`) and is a natural cycle-009+ harvester target. The L4 calculus's `iterate_while` primitive (per `book/src/design/l4_calculus.md`) is the natural composition target for the RCI / shell-matrix branches; the direct-Newton branch composes against the calculus's regular `bind` + inner `solve` primitive. **Test-coverage constraint on the harvester**: there is no dedicated `test-eigensolver.cpp` under `palace/test/unit/` (see `eigensolver-wrapper` chapter §"Test coverage"). The future `L1/eigsolve` harvester will need to lean more heavily on direct source reading + literature anchors (Higham 2008, Lehoucq-Sorensen, Hernandez-Roman-Vidal) than `L1/ksp_solve` did (which had `test-orthog.cpp` as a direct algebra anchor), and the resulting algebraic equivalence claims will accordingly carry weaker test-linkage evidence. Routes to harvester (`L1/eigsolve`) once `L1/ksp_solve` settles. Source: `reports/2026-05-27T173523Z-layer-intro-author-L0-bootstrap-bundle-4/CYCLE.md` §Open questions item 1.
+
+**Partially answered cycle-009**: Harvester dispatched at `reports/2026-05-27T191929Z-harvester-eigsolve-L1/`; landed `book/src/L1/eigsolve.md` as `rough-in (test-coverage-bounded, cycle-009)`. Pre-check confirmed no dedicated `test-eigensolver.cpp` exists; rough-in status motivated by narrow indirect coverage (`test-boundarymodeoperator.cpp` only — three `ModeEigenSolver` cases, linear path with `LARGEST_REAL` only). Full closure (promotion to `firm`) is gated on either (a) addition of dedicated test coverage or (b) a future harvester invocation that adds literature-anchored evidence at `ksp_solve`-equivalent confidence. The rough-in operator chapter introduces four follow-up OQs tracking specific rough-in axes: `eigsolve-linear-solve-failed-status-anchor`, `eigsolve-scaling-coordinate-convention`, `eigsolve-initial-space-axis-placement`, `eigsolve-iteration-count-result-field` (see below). Status held `partially-answered` rather than `answered` to keep the firm-promotion follow-up tracked.
 
 ```yaml
 ---
@@ -1366,9 +1370,14 @@ The new `linalg-operator-file` chapter notes that the `palace::linalg::` free fu
 slug: l0-bundle-5-candidates
 opened_at: cycle-008
 opened_by: layer-intro-author
-status: open
+status: answered
+answered_at: cycle-009
+answered_in: reports/2026-05-27T192051Z-layer-intro-author-L0-bootstrap-bundle-5/
 ---
 ```
+
+**Answered cycle-009**: Bundle 5 dispatched and landed 2 of 3 candidates (`mpi-globalsum-and-collectives` + `preconditioner-classes-overview`). `linalg-solver-file` and `tests-as-semantic-supplement` deferred to bundle 6; see `l0-bundle-6-candidates` and `tests-as-semantic-supplement-l0-vs-concepts-decision` below for follow-up tracking. L0 chapter count after bundle 5 is 16.
+
 
 L0 chapter count after bundle 4 is 14. Remaining candidates from cycle-007 priority #10 not yet authored: (1) `linalg-solver-file` — `palace/linalg/solver.{hpp,cpp}` file overview (companion to `mfem-wrapper-solver`, covering the `Solver<OperType>` base class and the auxiliary preconditioner classes that aren't already named); currently the only file-level coverage of `solver.{hpp,cpp}` is the `mfem-wrapper-solver` chapter's per-class view; the file-level overview would mirror `linalg-operator-file` / `linalg-iterative-file` / `linalg-vector-file`. (2) `tests-as-semantic-supplement` — convention page documenting how `palace/test/unit/` is treated as L0-equivalent semantic evidence per `CLAUDE.md` "Tests as semantic supplement"; cross-cutting; would replace per-chapter restatement of the convention. (3) `preconditioner-classes-overview` — survey of the preconditioner classes not yet covered (`HypreAmsSolver`, `BoomerAMG`, `StrumpackSolver`, `JacobiSmoother`, `ChebyshevSmoother`, `DistRelaxation`, `BlockPreconditioner`, `GeometricMultigrid`); sized to a file-overview chapter; some of these have their own files. Bundle 5 (cycle-009 dispatch) should pick 2-3 of these per the 1-3 chapters/cycle cadence. Recommend `linalg-solver-file` as the highest-priority candidate (closes the file-overview gap on the four `linalg/` anchor files referenced by L1). Routes to future L0 bundle 5 dispatch. Source: `reports/2026-05-27T173523Z-layer-intro-author-L0-bootstrap-bundle-4/CYCLE.md` §Open questions item 3.
 
@@ -1421,6 +1430,153 @@ repairer prompt.
    step would conflict or duplicate).
 
 **Status**: open. Action belongs to cycle-009 meta-phase.
+
+```yaml
+---
+slug: tests-as-semantic-supplement-l0-vs-concepts-decision
+opened_at: cycle-009
+opened_by: layer-intro-author
+status: open
+---
+```
+
+The cycle-008 bundle-5 candidate `tests-as-semantic-supplement` (see `l0-bundle-5-candidates` above) was deferred from cycle-009 bundle-5 pending a placement decision. The CLAUDE.md "Tests as semantic supplement" invariant is a **methodology convention** (`palace/test/unit/` is L0-equivalent semantic evidence) rather than a Palace-source convention; arguably it fits `book/src/concepts/` better than `book/src/L0/` (where existing convention chapters anchor Palace / MFEM idioms, not project methodology).
+
+**Question**: Does `tests-as-semantic-supplement` belong in:
+
+1. `book/src/L0/` as a convention chapter (alongside `output-arg-vs-receiver`, `mfem-vector-types`, `par-types-single-rank-reading`, `linalg-free-functions`, `transparent-vs-load-bearing-tricks`, `mutable-workspace-pattern`)?
+2. `book/src/concepts/` as a methodology concept (alongside other cross-cutting methodology concepts)?
+3. Only in `CLAUDE.md` / `scaffolding/test-linkages/` as already-established meta-instruction, not in the book at all?
+
+The choice affects whether cycle-009+ L0 bundle 6 picks it up as an L0 chapter or whether it routes to a concepts/-bundle dispatch instead. Recommendation per source report: decide before any bundle-6 dispatch picks it up. Routes to cycle-010+ planner triage or to cycle-009 meta-phase. Source: `reports/2026-05-27T192051Z-layer-intro-author-L0-bootstrap-bundle-5/CYCLE.md` §Open questions / caveats §"`tests-as-semantic-supplement` deferred".
+
+```yaml
+---
+slug: l0-bundle-6-candidates
+opened_at: cycle-009
+opened_by: layer-intro-author
+status: open
+---
+```
+
+After bundle 5 lands (cycle-009: `mpi-globalsum-and-collectives` + `preconditioner-classes-overview`), the L0 chapter count is **16**. Remaining bundle-6 candidates per the source report's bundle-6 ordering:
+
+1. **`linalg-solver-file`** (highest priority per the original `l0-bundle-5-candidates` recommendation) — file-level overview of `palace/linalg/solver.{hpp,cpp}`, the home of `Solver<OperType>` base class and `MfemWrapperSolver` (already per-class-covered in `mfem-wrapper-solver`). Closes the file-overview gap on the four `linalg/` anchor files referenced by L1 (alongside `linalg-operator-file`, `linalg-iterative-file`, `linalg-vector-file`).
+2. **`tests-as-semantic-supplement`** — pending the open question above (`tests-as-semantic-supplement-l0-vs-concepts-decision`) on whether to file as L0 convention or `concepts/` methodology concept.
+3. **`mutable-workspace-pattern` Category-5 expansion** — if cycle-008+ work surfaces new workspace-pattern variants not covered by Categories 1-4 in the existing `mutable-workspace-pattern` chapter.
+
+Bundle 6 would form with the same 2-chapters-per-cycle cadence. Routes to cycle-010+ planner. Source: `reports/2026-05-27T192051Z-layer-intro-author-L0-bootstrap-bundle-5/CYCLE.md` §Open questions / caveats §"Bundle 6 candidate ordering".
+
+```yaml
+---
+slug: eigsolve-linear-solve-failed-status-anchor
+opened_at: cycle-009
+opened_by: harvester
+status: open
+---
+```
+
+The cycle-009 `L1/eigsolve` rough-in chapter (`book/src/L1/eigsolve.md`) introduces a sum-typed `EigStatus = Converged | PartialConverged | MaxIterReached | LinearSolveFailed`. The first three cases correspond directly to L0 termination evidence at `palace/drivers/eigensolver.cpp:367-374` (the count-return + Mpi::Print pattern). The fourth case — `LinearSolveFailed` — is **constructively introduced by the L1 form and has no direct L0 anchor**: at L0, an inner-solver non-convergence is silent at the eigensolver level (the inner `ksp_solve` emits `Mpi::Warning` per `palace/linalg/ksp.cpp:301-307` but the eigensolver continues with the poorly-converged inverse). The Algebraic-laws §3 in the chapter flags this and §"Laws that explicitly do not hold" notes that treating the four-way `EigStatus` as exhaustive over L0 termination cases is "not a sound L0-grounded claim" until the L1>L0 lowering plumbs the case explicitly. Critic should consider whether to (a) drop the case (collapsing to `MaxIterReached`), (b) accept the constructive introduction with an explicit "constructed by the L1 form" annotation, or (c) require the L1>L0 lowering theme to plumb the case via a refactor of the inner-solver coupling. Harvester recommendation: keep the case but mark it `unconfirmed` until the L1>L0 lowering theme (a future `eigsolve-mutation-rotation` cycle) is harvested. Routes to critic / lifter / lowering-verifier review on the eigsolve rough-in entry, or to the future `eigsolve-mutation-rotation` L1>L0 dispatch (cycle-010+). Source: `reports/2026-05-27T191929Z-harvester-eigsolve-L1/CYCLE.md` §Open questions / caveats item 1.
+
+```yaml
+---
+slug: eigsolve-scaling-coordinate-convention
+opened_at: cycle-009
+opened_by: harvester
+status: open
+---
+```
+
+The cycle-009 `L1/eigsolve` rough-in chapter's Algebraic-law §5 flags two coherent conventions for handling `ScaleType::NORM_2`'s Higham-2008 scaling of `EigResult.eigenvalues`: (a) return scaled eigenvalues (matches L0 `EPSGetEigenvalue` raw return), expose `scaling_gamma` / `scaling_delta` for downstream un-scaling; or (b) un-scale at the L1 boundary, return original-coordinate eigenvalues, drop the `gamma` / `delta` fields. The L0 `GetEigenvalue` virtual already un-scales for SLEPc (`palace/linalg/slepc.cpp:715` returns `l * gamma`); the L0 convention is therefore inconsistent across orchestrations (ARPACK / SLEPc / `QuasiNewtonSolver`). The rough-in chapter adopts convention (a) but flags this for harvester / lifter review. The decision affects the coordinate system of every `EigResult.eigenvalues` consumed by L2 / L4 operators downstream, and aligns with the broader methodology question of where L1 should preserve L0's raw representation vs lift to an "intended caller" view. Routes to harvester / lifter review during firm-promotion. Source: `reports/2026-05-27T191929Z-harvester-eigsolve-L1/CYCLE.md` §Open questions / caveats item 2.
+
+```yaml
+---
+slug: eigsolve-initial-space-axis-placement
+opened_at: cycle-009
+opened_by: harvester
+status: open
+---
+```
+
+The cycle-009 `L1/eigsolve` rough-in chapter places the `initial_space` field in `EigControl` (per-call), but the L0 `SetInitialSpace` virtual (`palace/linalg/eps.hpp:122`) is a method on the eigensolver value (so construction-bound). The call pattern at `palace/models/modeeigensolver.cpp:472-475` shows the driver setting `initial_space` per `Solve()` invocation (`if (initial_space) eigen->SetInitialSpace(*initial_space);`); the rough-in chapter argues this supports per-call placement. The alternative interpretation is that `initial_space` is a construction parameter the driver re-binds at solve time — both are coherent under the L0 surface. The choice affects whether `EigSolver[problem]` (the opaque construction-bound type) carries `initial_space` or not, and the L2 `eigenmode-pipeline` composition shape downstream. Routes to lifter / lowering-verifier review during firm-promotion. Source: `reports/2026-05-27T191929Z-harvester-eigsolve-L1/CYCLE.md` §Open questions / caveats item 3.
+
+```yaml
+---
+slug: eigsolve-iteration-count-result-field
+opened_at: cycle-009
+opened_by: harvester
+status: open
+---
+```
+
+The cycle-009 `L1/eigsolve` rough-in chapter's `EigResult` does not currently carry an `iterations` field (unlike `ksp_solve`'s `SolveResult.iterations`). The L0 `EigenvalueSolver` interface does not expose a per-call iteration count — only the converged eigenpair count (via the `Solve() → int` return). Adding `iterations` to the L1 form would be constructive (similar to `EigStatus::LinearSolveFailed`); the question is whether downstream consumers (e.g., the L2 `eigenmode-pipeline` operator, the L4 monadic composition) need it. The chapter leaves it out for now; harvester promotion to firm should re-evaluate based on downstream demand. Routes to harvester re-evaluation during firm-promotion (cycle-010+); may also surface during L2 `eigenmode-pipeline` harvest as a feedback signal. Source: `reports/2026-05-27T191929Z-harvester-eigsolve-L1/CYCLE.md` §Open questions / caveats item 4.
+
+```yaml
+---
+slug: nleps-spec-gap-as-check-stop-into-carry-reuse-blocker
+opened_at: cycle-009
+opened_by: combinator-miner
+status: open
+---
+```
+
+The cycle-008 abstractor's promotion criterion for the speculative L4 helper `check_stop_into_carry` (sketched in `book/src/L4-L3/gmres-inner-loop-iterate-while-migration.md` §Speculative L4 operators) is **"defer until a second slice needs it"** (sourced from `reports/2026-05-27T180000Z-abstractor-gmres-inner-loop-iterate-while-migration/CYCLE.md:71`; also tracked at `iterate-while-l4-l3-gmres-inner-loop-migration` lineage above). The cycle-009 combinator-miner survey (`reports/2026-05-27T192047Z-combinator-miner-check-stop-into-carry-reuse/CYCLE.md`) verified that the **NLEPS Quasi-Newton inner loop** at `reference/palace/palace/linalg/nleps.cpp:589-647` has the same 3-condition stop shape (different `StopReason` set `{Converged, Diverged, MaxIt}` but identical hoist-into-carry structure), and is therefore **the natural second consumer** — but NLEPS has no `book/src/spec/slices/nleps.md` chapter; only L1>L0 mutation-rotation citations at `book/src/L1-L0/axpbypcz-mutation-rotation.md:127-132,294-297`, `book/src/L1-L0/apply-linop-mutation-rotation.md:337`, and `book/src/L1-L0/axpby-mutation-rotation.md:213` reference it. NLEPS is a **non-linear eigenvalue problem driver** (sibling-tier to GMRES, not a sub-component); promoting it to L1+ is a multi-cycle effort (`nleps.cpp` is 952 lines including deflation, Armijo backtracking, line search, and line-search Jacobian construction). This OQ records the dependency: `check_stop_into_carry` helper promotion is blocked on NLEPS being spec'd at L1+ as a separate slice; if NLEPS lands and its inner-loop migration adopts the same hoist pattern, promote the helper at that point. Routes to whichever cycle picks up NLEPS as a harvester target (likely cycle-010+ if eigenmode work prioritizes), with `check_stop_into_carry` promotion as a downstream consequence. Source: `reports/2026-05-27T192047Z-combinator-miner-check-stop-into-carry-reuse/CYCLE.md` §Open questions / caveats item 1.
+
+```yaml
+---
+slug: check-stop-into-carry-parameterization-over-stop-condition
+opened_at: cycle-009
+opened_by: combinator-miner
+status: open
+---
+```
+
+If `check_stop_into_carry` is eventually promoted (per the NLEPS-spec-gap OQ above), an open design question is whether the helper signature should be the cycle-008-sketched monomorphic shape (`OpParams -> Convergence -> Krylov -> int -> Krylov`, with GMRES-specific `StopReason` baked in) or a parameterised shape (`[StopCondition reason carry] -> OpParams -> Convergence -> Krylov -> int -> Krylov where StopCondition reason carry = (Predicate, Constructor)`) that absorbs the GMRES `{Conv, MaxDim, MaxIt}` and NLEPS `{Converged, Diverged, MaxIt}` reason sets uniformly. The combinator-miner survey's recommendation is that **the parameterised form is over-engineered for a single current call site** — the monomorphic form is appropriate for the rough-in stage, and the parameterised form should be considered *after* the second consumer (NLEPS) lands and shows whether the reason-sum factoring is worth the additional vocabulary. The factoring trade-off mirrors the broader L4 question of when a sum-type parameter should be hoisted into a list-of-condition-handlers vs kept as a closed enumeration. Routes to combinator-miner or lifter dispatch at the time of `check_stop_into_carry` promotion (gated on the NLEPS spec gap above). Source: `reports/2026-05-27T192047Z-combinator-miner-check-stop-into-carry-reuse/CYCLE.md` §Open questions / caveats item 2.
+
+```yaml
+---
+slug: variant-absorption-vs-instance-counting-policy
+opened_at: cycle-009
+opened_by: combinator-miner
+status: open
+---
+```
+
+The cycle-008 promotion criterion **"a second slice needs it"** is ambiguous when one L1+ slice absorbs two Palace-source call sites via a variant axis. The cycle-009 `check_stop_into_carry` survey encountered this directly: GMRES and FGMRES are two distinct Palace-source call sites (`reference/palace/palace/linalg/iterative.cpp:615-650` and `:794-828`, textually-identical 3-condition breaks at lines 645 and 824) but are absorbed into the single `book/src/spec/slices/gmres.md` slice via the `op.flexible` variant axis (`gmres.md:3,91,122`). Three coherent readings of "second slice needs it" are: **(a)** distinct L1+ slices (strictest reading — 1 instance for `check_stop_into_carry`); **(b)** distinct Palace-source call sites (2 instances — FGMRES would count as second, immediate promotion); **(c)** distinct algorithmic variants observed in the corpus (2-3 instances depending on whether CG's degenerate 2-condition form is counted). The cycle-009 survey adopted reading (a) to avoid premature promotion, on the basis that reading (b) would suggest the cycle-008 theme should split into two themes (which seems wrong since the theme correctly covers GMRES and FGMRES uniformly via the same `op.flexible` axis). This is a **cross-cutter / meta-phase question**, not a combinator-miner question — the policy should be codified once and applied uniformly to every speculative-combinator promotion criterion that uses "second slice" language. Routes to meta-phase (cycle-009 batch-1 aggregation or later) for explicit codification in the friction-ledger or a methodology-conventions skill. Source: `reports/2026-05-27T192047Z-combinator-miner-check-stop-into-carry-reuse/CYCLE.md` §Open questions / caveats item 3.
+
+```yaml
+---
+slug: iterate-while-witness-alternative-combinator-design
+opened_at: cycle-009
+opened_by: combinator-miner
+status: open
+---
+```
+
+The cycle-008 `gmres-inner-loop-iterate-while-migration` theme briefly named option (b) `iterate_while_with_stop_witness` as an alternative-combinator approach to the witness-into-carry hoist (avoiding `check_stop_into_carry` entirely). If `iterate-while` itself were extended to support a witness-carrying variant — `iterate_while_witness :: α -> (α -> Maybe StopReason) -> (α -> Solve { state: α, ...e }) -> Solve { final_state, trajectory, stop: Maybe StopReason }` — the helper would become unnecessary: the predicate would return `Maybe StopReason` directly, the witness would live in the combinator's return rather than the carry, and the hoist would dissolve into the combinator's signature. This is a **separate combinator-miner pattern** (a new L4 row, not a helper inside an existing theme), not the same one the cycle-009 dispatch is about. The choice between `check_stop_into_carry` (helper) and `iterate_while_witness` (extended combinator) is the abstraction-level question the cycle-008 theme's option (b) flagged. Note that the L4 calculus already has multiple iterate-while variants (`iterate_while`, `iterate_while_with_prev`, `iterate_while_pure`), so adding a fourth is not architecturally novel — it would just slot into the existing dep-map. Routes to lifter / combinator-miner dispatch that addresses the witness-vs-carry design choice, likely concurrent with the NLEPS promotion (since the same architectural question affects how NLEPS's stop test would lower). Source: `reports/2026-05-27T192047Z-combinator-miner-check-stop-into-carry-reuse/CYCLE.md` §Open questions / caveats item 4.
+
+```yaml
+---
+slug: standalone-iterate-while-l4-l3-theme-pending
+opened_at: cycle-009
+opened_by: combinator-miner
+status: open
+relates_to: iterate-while-l3-rendering-trajectory-accumulation-gap (cycle-006, closed cycle-008 via lifter on krylov-step-typed-wrapper-dissolution)
+---
+```
+
+No standalone `book/src/L4-L3/iterate-while-dissolution.md` theme exists yet — the cycle-007 OQ `iterate-while-l3-rendering-trajectory-accumulation-gap` was closed in cycle-008 by an inline patch to the `krylov-step-typed-wrapper-dissolution` theme (Condition 5 + Law 1 citation + `verified_against:` block), rather than by authoring a dedicated standalone L4>L3 theme for `iterate-while`. As a consequence, the `iterate-while`-specific L3 rendering (`Solve`-dissolved + trajectory-pruned single-readout form) currently lives inside the krylov-step typed-wrapper-dissolution theme and is repeated by reference in the cycle-008 `gmres-inner-loop-iterate-while-migration` theme. The cycle-009 combinator-miner survey of `check_stop_into_carry` pinned the helper's L3 form to the cycle-008 GMRES-specific theme's §"L3 form" section as a consequence. **Not a blocker** for the cycle-009 defer verdict on `check_stop_into_carry`, but flagging for completeness: if a future cycle promotes `iterate_while_witness` (per the OQ above) or otherwise authors more `iterate-while`-using L4>L3 themes, the standalone dissolution theme may become worth authoring as an extraction-of-shared-language to avoid per-theme repetition of the trajectory-pruning rule. Routes to abstractor or lifter dispatch when the second `iterate-while`-using theme lands. Source: `reports/2026-05-27T192047Z-combinator-miner-check-stop-into-carry-reuse/CYCLE.md` §Open questions / caveats item 5.
+
+```yaml
+---
+slug: combinator-miner-authority-defer-verdict-status-edit-scope
+opened_at: cycle-009
+opened_by: combinator-miner
+status: open
+---
+```
+
+The cycle-009 combinator-miner dispatch on `check_stop_into_carry` produced a `defer` verdict (no new L4 dep-map row, no firm-promotion). The original CYCLE.md draft included a candidate append-only edit to the cycle-008 theme file's §Status block to record the survey outcome inside the theme — but on reflection (and confirmed by the cycle-009 critic + repairer), this edit is **technically outside the combinator-miner's stated authority** (the role spec scopes the agent to "just the dep-map entry"). The repaired CYCLE.md §Proposed changes section now carries zero proposed-changes blocks (consistent with the `defer` verdict) and names two natural channels for any future incorporation of the survey outcome into the theme file: (a) an OQ entry referencing the cycle-009 combinator-miner report (this OQ), or (b) a lifter or abstractor dispatch on the cycle-008 theme that re-authors §Status to incorporate the criterion-and-survey-result inline. This OQ flags a broader **authority-scope question for the combinator-miner role**: when a `defer` verdict is produced, should the agent be permitted to author a §Status-block update on the relevant upstream theme as part of the verdict, or should every such update be routed via OQ to a follow-up dispatch (the current strict reading)? The strict reading preserves clean role boundaries but creates a paperwork tax (every defer becomes an OQ); the relaxed reading is more efficient but blurs role authority. Routes to meta-phase (cycle-009 batch-1 aggregation) for explicit codification — likely a small role-spec edit one way or the other. Source: `reports/2026-05-27T192047Z-combinator-miner-check-stop-into-carry-reuse/CYCLE.md` §Open questions / caveats item 6.
 
 ## Dropped
 

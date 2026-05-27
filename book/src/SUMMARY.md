@@ -38,6 +38,7 @@
 - [apply_linop](./L1/apply_linop.md)
 - [axpbypcz](./L1/axpbypcz.md)
 - [ksp_solve](./L1/ksp_solve.md)
+- [eigsolve](./L1/eigsolve.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -60,10 +61,12 @@
 - [File — palace/linalg/operator.{hpp,cpp}](./L0/linalg-operator-file.md)
 - [File — palace/linalg/ksp.cpp](./L0/ksp-factory-file.md)
 - [File — palace/linalg/iterative.{hpp,cpp}](./L0/linalg-iterative-file.md)
+- [File — palace/utils/communication.hpp (MPI collectives)](./L0/mpi-globalsum-and-collectives.md)
 - [Overload set — Mult / MultTranspose / AddMult](./L0/apply-linop-overload-set.md)
 - [Class — BaseKspSolver](./L0/kspsolver-base-class.md)
 - [Class — MfemWrapperSolver](./L0/mfem-wrapper-solver.md)
 - [Class — EigenvalueSolver and wrappers](./L0/eigensolver-wrapper.md)
+- [Class — preconditioner classes overview](./L0/preconditioner-classes-overview.md)
 # Phase 1 corpus (slice-vertical; raw material for combinator extraction)
 - [Index — Slice Status](./spec/index.md)
   - [CG — Preconditioned Conjugate Gradient](./spec/slices/cg.md)

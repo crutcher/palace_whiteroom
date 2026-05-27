@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-27 cycle-009 — 4 reports — fifth cycle under split integrator — CLOSES META-BATCH-1 (3:1 cadence) — krylov-step lowering chain fully firm (L3>L2 status-inheritance promotion) + L0 bundle 5 (16 chapters total) + eigsolve L1 rough-in (second constructed-operator gate) + check_stop_into_carry combinator defer-verdict + zero gate hits + cycle-007-resume-notes deleted](cycle-009.md)
 - [2026-05-27 cycle-008 — 7 reports (5 wave-1 + 2 wave-2) — fourth cycle under split integrator — second primary cycle of meta-batch-1 (3:1 cadence) — L4>L3 typed-wrapper-dissolution promoted firm + L1>L0 ksp-solve-mutation-rotation firm + L0 bundle 4 + L1+L4 intro refreshes + GMRES iterate_while migration rough-in + 5 OQs closed + write-authority violation surfaced for cycle-009 meta](cycle-008.md)
 - [2026-05-27 cycle-007 — 6 reports (5 wave-1 + 1 wave-2 audit) — third cycle under split integrator — first primary cycle of meta-batch-1 (3:1 cadence) — iterate-while L4 family firm + L3>L2 first firm-rough-in theme + L1 ksp_solve firm + L0 bundle 3 + L1 retroactive context-thinning sweep](cycle-007.md)
 - [2026-05-27 cycle-006 — 5 reports (4 wave-1 + 1 wave-2) — second cycle under split integrator — krylov-step L4 firm + L4>L3 typed-wrapper-dissolution theme + L0 reference-notes bundle 2 + L1 scalar-promotion retroactive-thinning + concepts/index dedup](cycle-006.md)
