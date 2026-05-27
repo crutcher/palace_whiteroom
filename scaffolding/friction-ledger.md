@@ -413,3 +413,109 @@ addressed_by: 8fc3a07 (user-directive parallel-when-in-doubt + conflict-toleranc
 **Cycle-005 implication.** Cycle-planner can mark **same-file row-level edits as PARALLEL by default at wave-size up to ~8**, even when 5+ wave-mates touch the same file. Threshold is not number-of-writers but per-anchor distinctness; the new high-water-mark is 5 concurrent writers on one file. Re-test at 8+.
 
 **No mitigation needed; the philosophy is working as designed at scale.**
+
+---
+
+```yaml
+---
+slug: new-agent-defs-need-session-restart
+first_observed: cycle-005
+last_observed: cycle-005
+recurrence_count: 1
+status: addressed-by-restart-watch-for-recurrence
+addressed_by: cycle-005 user restart (integrator-per-report + integrator-finalize defs picked up post-restart)
+---
+```
+
+**Pattern.** When new agent definitions are added under `.claude/agents/<name>.md` mid-session (e.g., the cycle-004 → cycle-005 boundary commit `ccc5082` that introduced `integrator-per-report.md` and `integrator-finalize.md`), the session that wrote the commit does NOT see them in the cached agent registry. First dispatch attempt against the new agent name returns "Agent type not found". Resolution: restart the Claude Code session; post-restart the agent defs resolve.
+
+**Surfaced by**: integrator-finalize cycle-005 §First-cycle-under-split-integrator observations; integrator-signals cycle-005 §Integration-tooling friction.
+
+**Counterfactual test (per addressed-by-design audit discipline).** If this quirk were removed tomorrow, would orchestration coupling collapse? — **No coupling collapses**, but the cycle-002 cycle-002 → cycle-003 + cycle-005 pattern of "user adds new agent defs as one commit, then restarts mid-cycle to enact" loses one process step. Worth a Claude Code feature/bug request: invalidate the cached agent list on `.claude/agents/` write, or expose a "rescan" command.
+
+**Per user-memory `feedback_escalate_process_issues`**: this is a harness quirk that the workaround (restart) is tolerable for; the friction surfaces ≤1× per agent-def-addition event (~once per several cycles); current status `addressed-by-restart-watch-for-recurrence`. **Not** filed as `addressed-by-design` (per the cycle-004 audit discipline that distinguishes "we have a workaround; mitigation done" from "the channel IS the design"). If recurrence climbs to ≥3, file a Claude Code upstream issue.
+
+**Watch:** recurrence on next agent-def add event. If frequency rises above ~1 per 5 cycles, escalate to upstream.
+
+---
+
+```yaml
+---
+slug: split-integrator-validated-at-six-reports
+first_observed: cycle-005
+last_observed: cycle-005
+recurrence_count: 1
+status: addressed-by-design
+addressed_by: ccc5082 (split integrator role-spec) + cycle-005 first-cycle validation
+---
+```
+
+**Positive pattern.** First cycle running the split integrator (`integrator-per-report` + `integrator-finalize`, introduced cycle-004 → cycle-005 boundary in commit `ccc5082` per user directive 2026-05-27 — token-budget concern at higher wave-mate counts; wave-mate target 15→8). Six per-report dispatches each had bounded scope (one report's proposed-changes + the artifact files that report touched + a STAGING.md append); zero per-dispatch context-bound friction observed.
+
+**Validation signals.**
+- **Staging-log format usability: PASS.** Each per-report dispatch appended a structurally-uniform row; aggregating gate-totals, files-touched, and OQ-counts for finalize was mechanical (read STAGING.md, sum columns, list files). No format changes proposed by finalize.
+- **Surgical SUMMARY.md inserts worked across 5 in-cycle writers.** The first per-report dispatch's Notes documented the "preserve append-points for subsequent in-cycle integrators" discipline; subsequent dispatches followed it consistently. **The discipline self-perpetuates via the Notes channel of the staging log.** See sibling friction-ledger entry `summary-md-serial-write-discipline` (this cycle) for the discipline itself.
+- **Per-dispatch token budgets comfortable.** No context overflow on any per-report invocation despite 7-axis krylov-step + 5-sub-pattern apply-linop + 4-sub-pattern axpbypcz + 6-chapter L0 bundle + observation-only cross-cutter + concept-page work.
+
+**Counterfactual test.** If the split were collapsed back to a single `integrator` dispatch at 6 wave-mates, would friction surface? — likely yes at the cycle-004's 7-wave-mate scale, given the per-cycle complexity now includes per-cycle (a) safety-net gate aggregation, (b) artifact writes, (c) STAGING aggregation, (d) build + repair, (e) cycle-end housekeeping (cycle-record, log, signals, roadmap, frontmatter touches), and (f) single commit + push. Pre-split cycle-004 was already large; cycle-005 with 6 dispatches (more substantive surface per dispatch) would have exceeded token budget under single-pass.
+
+**Status `addressed-by-design`** is correct here per the cycle-004 audit discipline: the split IS the design; there is no workaround in the loop; removing the split would not collapse a workaround, it would simply remove the token-bounding mechanism the design provides.
+
+**No mitigation needed; design is working at the wave-size it was scoped for.**
+
+---
+
+```yaml
+---
+slug: summary-md-serial-write-discipline
+first_observed: cycle-003
+last_observed: cycle-005
+recurrence_count: 3
+status: addressed-by-design
+addressed_by: cycle-005 STAGING.md Notes-channel propagation + per-report-integrator role spec "re-read disk at every Edit" discipline
+---
+```
+
+**Positive pattern.** The SUMMARY.md surgical-insert convergence point continues to scale.
+
+- **Cycle-003 (2 writers):** nrm2 + axpby harvesters both appended chapter rows. Cleanly serialized; planner over-cautious "sequential" call dropped at integration.
+- **Cycle-004 (5 writers):** 5 of 7 dispatches edited SUMMARY.md. Zero conflict under single-pass integrator; alphabetical anchor pre-resolution at planner-side absorbed MINRES + BiCGStab into adjacent lines.
+- **Cycle-005 (5 writers under split integrator):** 5 of 6 dispatches edited SUMMARY.md. Per-report serial dispatch + the "surgical insert preserving append-points" discipline (introduced explicitly by dispatch #1's STAGING Notes, then echoed by subsequent dispatches) yielded zero collisions. Each per-report integrator re-read SUMMARY.md fresh and inserted at literal-string anchors.
+
+**Discipline (now established across 3 cycles).** SUMMARY.md edits under multi-writer waves work cleanly when:
+1. Each writer's anchor is at a distinct row (or H1 heading; or sibling-chapter anchor under a Part).
+2. Each per-report integrator re-reads SUMMARY.md fresh at apply time — never trusts an earlier view.
+3. The first per-report integrator in a cycle documents the "preserve append-points" discipline in their STAGING.md Notes, and subsequent integrators read prior Notes entries.
+4. The integrator-per-report role spec already includes "Re-read disk at every Edit" as a Discipline bullet (`.claude/agents/integrator-per-report.md`).
+
+**Counterfactual test.** If the discipline were dropped, would orchestration collapse? — friction would rise at integration: SUMMARY.md collisions on adjacent-row inserts. The discipline is **load-bearing for multi-writer scaling**. But it's encoded in the role spec, not as a workaround — so status `addressed-by-design` (the channel IS the design).
+
+**Connection to skill-candidates.** This discipline could be promoted as a stand-alone skill (`skill:summary-md-surgical-insert`) — see skill-candidates.md cycle-005 append. Default-accept under low-bar policy given 3-cycle observation. Promoting this meta-phase.
+
+**No mitigation needed; the discipline is encoded + reinforced via STAGING Notes.**
+
+---
+
+```yaml
+---
+slug: two-phase-sha-placeholder-pattern
+first_observed: cycle-004
+last_observed: cycle-005
+recurrence_count: 2
+status: addressed-by-design
+addressed_by: cycle-005 meta-phase (canonical pattern documented in integrator-finalize role spec) + integrator-finalize.md §Process step 13
+---
+```
+
+**Pattern (now canonical).** The integrator-finalize commits the cycle artifact with `integration_commit: PLACEHOLDER_SHA` in each consumed report's frontmatter (because the SHA can only be known post-commit), then immediately follows with a small patch commit replacing the placeholder with the actual SHA. Recurrence:
+
+- **Cycle-004**: finalize commit `8ac1f37`; patch commit `af3c582`.
+- **Cycle-005**: finalize commit `a16c32c`; patch commit `af037ab`.
+
+**Why it's design, not friction.** Git's commit-SHA-is-content-addressable invariant means you can't pre-compute the SHA before committing without freezing the tree; doing so via tree-state pre-compute would require git plumbing (`git hash-object`, `git mktree`, `git commit-tree`) that's complex and brittle. The two-phase pattern is the simplest correct approach.
+
+**Cycle-005 meta-phase action.** Document as canonical in `.claude/agents/integrator-finalize.md` §Process step 13 (already lists "Patch sha-placeholder" as an option; this meta-phase tightens the language to declare it canonical rather than optional). Future integrator-finalize invocations follow the same pattern unambiguously.
+
+**No mitigation beyond role-spec clarification.** Watch: if a future Claude Code feature offers pre-commit SHA via tree-state, revisit (low priority).
+
+---

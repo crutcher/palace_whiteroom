@@ -39,7 +39,9 @@ Your context budget is bounded by the staging log + the artifact state. You do N
 10. **Write the batch CYCLE.md** at `reports/<timestamp>-integrator-finalize-cycle-<n>/CYCLE.md`. Includes: summary, reports-consumed table (status + follow_up_agent per row from staging), artifact-changes aggregate (from staging Files-touched columns), safety-net gate results (aggregated), wave-conflict observations (from per-report row notes), build-status, open-questions promoted (aggregated), next-cycle priorities.
 11. **Mark consumed reports' frontmatter** with `integrated_at: <timestamp>` + `integration_commit: <sha-placeholder>` + `integration_notes:`. Use `Edit` against each report's CYCLE.md.
 12. **Commit + push** as one unit: `git add -A && git commit -m "<message>" && git push origin main`. The commit must include the staging log, all per-report integrator changes, your housekeeping writes, and the consumed reports' frontmatter touches. Single commit per cycle. Push immediately.
-13. **Patch sha-placeholder** if needed: if step 11 used a placeholder for `integration_commit`, do a small follow-up commit replacing the placeholder with the actual SHA from step 12. (Or pre-compute SHA via tree-state — your call.)
+13. **Two-phase SHA patch (canonical pattern).** Step 11 records `integration_commit: PLACEHOLDER_SHA` (or equivalent) because the actual SHA only exists post-commit. After step 12 succeeds, do a small follow-up commit replacing every placeholder with the actual SHA from step 12, then `git push origin main` again. This two-phase pattern is canonical (cycle-004 + cycle-005 precedent — friction-ledger `two-phase-sha-placeholder-pattern`). Do NOT attempt pre-commit SHA via tree-state plumbing — the placeholder pattern is simpler and correct.
+
+   Patch-commit message convention: `patch commit-sha references for cycle-NNN <finalize-kind> commit (<finalize-sha>)` — e.g., `patch commit-sha references for cycle-004 filter-repair commit (8ac1f37)` (cycle-004) or `patch commit-sha references for cycle-005 finalize commit (a16c32c)` (cycle-005).
 
 ## Output
 

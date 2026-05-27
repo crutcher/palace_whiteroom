@@ -41,7 +41,7 @@ You do NOT read other reports in this cycle. You see only this report + the stag
    - append on missing slug → auto-fallback to slug-create + append.
    - variant-axis missing on multi-variant operator → block.
    - bookkeeping incomplete → downgrade (don't block).
-   - SUMMARY.md chapter registration auto-fix → if report creates `book/src/L<n>/<slug>.md` without proposing the SUMMARY.md edit, add the chapter entry.
+   - SUMMARY.md chapter registration auto-fix → if report creates `book/src/L<n>/<slug>.md` without proposing the SUMMARY.md edit, add the chapter entry. **Also covers `book/src/concepts/<slug>.md`** (cycle-005 precedent): nearly all concept pages are SUMMARY-registered (~35 entries between lines 64-104 of SUMMARY.md); when a report creates a new `concepts/<slug>.md` without proposing the SUMMARY edit, register it under the Concepts section to preserve discoverability via the sidebar. Record as `applied-discretionarily` in the staging row, with rationale (existing-pattern-preservation).
 
    Gates marked "global" (e.g., aggregate retroactive-budget across multiple reports) — you only see THIS report; defer to integrator-finalize, who sees the full staging log.
 6. **Promote Open questions** from the report's `## Open questions / caveats` section into `scaffolding/open-questions.md` (append-only; one section per question with `opened_at: cycle-<n>` and `opened_by: <agent-type>`).

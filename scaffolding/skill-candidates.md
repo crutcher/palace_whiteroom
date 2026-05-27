@@ -69,6 +69,24 @@ promoted_to: .claude/agents/layer-intro-author.md §Vocabulary-cohort subsection
 
 
 
+## Open candidates (cycle-005 additions)
+
+```yaml
+---
+slug: summary-md-surgical-insert
+proposer: meta-phase (cycle-005)
+proposed_at: cycle-005 / 2026-05-27
+status: promoted
+promoted_to: skills/summary-md-surgical-insert/SKILL.md
+---
+```
+
+**Motivating observation**: across cycles 003–005, multi-writer waves on `book/src/SUMMARY.md` (2 → 5 → 5 concurrent writers) have scaled without conflict given a specific discipline: each per-report integrator re-reads SUMMARY.md fresh at apply time, uses literal-string anchors for the insert location (sibling-chapter row under a Part, or H1 heading), and the first per-report integrator in a cycle documents the "preserve append-points for subsequent in-cycle integrators" rule in their STAGING Notes — which subsequent integrators echo. Friction-ledger entry `summary-md-serial-write-discipline` (recurrence-3).
+
+**Sketch of procedure**: a per-report-integrator-facing skill that codifies the four-step discipline: (1) re-read SUMMARY.md just-in-time, (2) locate sibling-chapter anchor under the relevant Part, (3) Edit using literal-string anchor (not byte offset), (4) record the insert in STAGING Notes including the "preserve append-points" hint when other in-cycle integrators may follow.
+
+**Promotion bar check**: pattern observation = 3 cycles (recurrence-3 in friction-ledger); friction-ledger entry exists (`summary-md-serial-write-discipline`); sketch concrete enough = ✓. Default-accept under low-bar policy. **Promoted this meta-phase.**
+
 ## Promoted
 
 ```yaml
