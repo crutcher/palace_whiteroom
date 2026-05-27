@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-27 cycle-005 — 6 wave-1 reports — FIRST CYCLE UNDER SPLIT INTEGRATOR — krylov-step L2 firm + L0 reference-notes bundle 1 + apply-linop/axpbypcz mutation-rotation themes + scalar-promotion concept](cycle-005.md)
 - [2026-05-27 cycle-004 — 7 wave-1 reports — concepts/dot rewrite + L1 intro refresh + scal/apply_linop/axpbypcz firm + MINRES/BiCGStab obstruction themes](cycle-004.md)
 - [2026-05-27 cycle-003 — nrm2 + axpby firm @ L1 + axpby-mutation-rotation audit + dot-concept-contradictions surfaced](cycle-003.md)
 - [2026-05-26 cycle-002 — dot @ L1 + axpby-mutation-rotation @ L1>L0 + krylov-step rough-in @ L2](cycle-002.md)
@@ -202,7 +203,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 - [2026-05-24 cycle-7 — forward gmres [L1→L2] — revise](cycle-007.md)
 - [2026-05-24 meta-review (cycles 4–6) — enacted (with carry-through revision)](meta-02-cycles-4-6.md)
 - [2026-05-24 cycle-6 — back gmres — revise](cycle-006.md)
-- [2026-05-24 cycle-5 — back gmres — revise](cycle-005.md)
+- [2026-05-24 cycle-5 (legacy slice-vertical) — back gmres — revise](cycle-005-legacy.md)
 - [2026-05-24 cycle-4 — forward gmres [L1→L2] — revise](cycle-004.md)
 - [2026-05-24 meta-review (cycles 1–3) — enacted](meta-01-cycles-1-3.md)
 - [2026-05-24 cycle-3 (legacy slice-vertical) — forward gmres [L1→L2] — revise](cycle-003-legacy.md)

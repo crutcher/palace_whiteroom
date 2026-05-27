@@ -17,6 +17,7 @@
 
 # L2 — Algebraic Decompositions
 - [Overview](./L2/index.md)
+- [krylov-step](./L2/krylov-step.md)
 
 # L2 > L1 — Lowering
 - [Overview](./L2-L1/index.md)
@@ -34,11 +35,19 @@
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
 - [axpby-mutation-rotation](./L1-L0/axpby-mutation-rotation.md)
+- [axpbypcz-mutation-rotation](./L1-L0/axpbypcz-mutation-rotation.md)
+- [apply-linop-mutation-rotation](./L1-L0/apply-linop-mutation-rotation.md)
 - [bicgstab-iteration](./L1-L0/bicgstab-iteration.md)
 - [minres-iteration](./L1-L0/minres-iteration.md)
 
-# L0 — Cited Palace Source
+# L0 — Cited Palace Source + Reference Notes
 - [Overview](./L0/index.md)
+- [Convention — output-arg vs receiver](./L0/output-arg-vs-receiver.md)
+- [Convention — MFEM vector types](./L0/mfem-vector-types.md)
+- [Convention — linalg:: free-function wrappers](./L0/linalg-free-functions.md)
+- [Convention — transparent vs load-bearing tricks](./L0/transparent-vs-load-bearing-tricks.md)
+- [File — palace/linalg/vector.{hpp,cpp}](./L0/linalg-vector-file.md)
+- [File — palace/linalg/ksp.cpp](./L0/ksp-factory-file.md)
 # Phase 1 corpus (slice-vertical; raw material for combinator extraction)
 - [Index — Slice Status](./spec/index.md)
   - [CG — Preconditioned Conjugate Gradient](./spec/slices/cg.md)
@@ -93,6 +102,7 @@
   - [apply_BA](./concepts/apply_BA.md)
   - [capability-typing](./concepts/capability-typing.md)
   - [scope-out-obstruction](./concepts/scope-out-obstruction.md)
+  - [scalar-promotion](./concepts/scalar-promotion.md)
 
 # Design Artifacts
 - [Index](./design/index.md)

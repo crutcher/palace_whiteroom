@@ -14,29 +14,25 @@ L2 is the layer where:
 
 ## Semantics (overlay)
 
-L2 vocabulary: tensors, linear operators, quadrature rules, basis transformations, primitive operations (axpy, dot, matvec, gemv, trsv, scal, nrm2, …). State threading via explicit value semantics.
+L2 vocabulary: tensors, linear operators, quadrature rules, basis transformations, primitive operations (axpy, dot, matvec, gemv, trsv, scal, nrm2, …). State threading via explicit value semantics. Compositions of L1 primitives into method-step shapes are first-class at L2.
 
 ## Operator dep-map
 
 | Operator | Signature | Dependencies | Status |
 |---|---|---|---|
-| `krylov-step` | `(op_params, iter_state) → {state: iter_state, outputs: step_outputs}` | `apply_linop`, `axpy`/`axpby`, `dot`, `nrm2`, `orthogonalization`, `apply_BA`, `derived-view-hoisting`, `first-iteration-unrolling`, `variant-absorption` | `rough-in` (proposed-by: combinator-miner:2026-05-26T231843Z) |
+| [`krylov-step`](./krylov-step.md) | `(op: OpParams, s: IterState) → { state: IterState', outputs: StepOutputs }` | L1: `apply_linop`, `axpy`, `axpby`, `axpbypcz`, `dot`, `nrm2`, `scal`. L2-composition: `apply_BA`, `orthogonalization`. Concepts: `derived-view-hoisting`, `variant-absorption`, `first-iteration-unrolling`, `sequential-obstruction`, `solve-monad`, `state-stratification`, `solver-as-operator`. | `firm` (harvested cycle-005; promoted from rough-in proposed-by combinator-miner:2026-05-26T231843Z) |
 
 ## Working Notes
 
 - This is the layer most populated by `combinator-miner` output — patterns recurring across the slice corpus are L2 candidates.
-- `krylov-step` is a rough-in awaiting harvester formalization. Pattern is well-attested across five slices; harvester should pin the signature, variant-axis dispatch sites, and the algebraic-laws section (essentially: no internal algebraic laws — kernel of a fold; only law is L4 §3.8 demand-pruning over `output_extras`).
-- **`krylov-step` provenance and consumers** (per combinator-miner:2026-05-26T231843Z):
-  - **Consumed-by**: L4 `iterate_while` + `solve-monad` (outer driver; `cg.md §L4`, `gmres.md §L4`, `chebyshev.md §L4`, `arnoldi_step.md §L4`).
+- `krylov-step` was promoted from rough-in to firm in cycle-005 (harvester invocation 2026-05-27T025354Z). The firm chapter is at [`krylov-step.md`](./krylov-step.md); the rough-in's six variant axes and pattern-instance list survived intact (no axes added, none merged or split). One non-trivial algebraic law was authored (the demand-pruning law over `outputs` extras, inherited from `derived-view-hoisting`); the kernel's non-laws (commutativity, associativity, fold-merge, step-composition, linearity, bit-determinism-across-variants) are catalogued explicitly to prevent decoration drift.
+- **Pattern provenance and consumers** (carried from the rough-in; combinator-miner:2026-05-26T231843Z):
+  - **Consumed-by**: L4 `iterate_while` + `solve-monad` outer driver (cg.md §L4, gmres.md §L4, chebyshev.md §L4, arnoldi_step.md §L4).
   - **Pattern instances** (five, well clear of ≥3 soft bar):
     - `spec/slices/cg.md:103-115`, `:172-188`, `:393-425`
     - `spec/slices/gmres.md:459-471`
     - `spec/slices/chebyshev.md:354-362`
     - `spec/slices/arnoldi_step.md:99-105`, `:285-298`
     - `spec/slices/polynomial_recurrence_step.md:119-160` (catalog of three instances)
-  - **Dependency annotations** (carried from the original tree-style rough-in):
-    - `orthogonalization` — variant axis.
-    - `apply_BA` — preconditioner-side variant axis.
-    - `derived-view-hoisting` — `output_extras` slot.
-    - `first-iteration-unrolling` — orthogonal variant axis.
-    - `variant-absorption` — absorption discipline applied to the step.
+- **Cycle-004 obstruction-theme guidance**: the MINRES and BiCGStab L1>L0 themes (`book/src/L1-L0/minres-iteration.md`, `book/src/L1-L0/bicgstab-iteration.md`) sketch five speculative L1 operators (`lanczos_step`, `three_term_recurrence_update`, `givens_apply_with_residual_min`, `bicgstab_step`, `omega_update`, `stabilisation_update`). The cycle-005 harvester decision is to **not** promote any to firm L1: each is a *step-body specialisation* of `krylov-step` rather than an orthogonal axis that would simplify `krylov-step`'s L2 semantics. The decision is recorded at `scaffolding/decisions/2026-05-27-krylov-step-speculative-l1-promotion.md` (proposed for integrator wiring).
+- The cycle-005 firm-up did **not** introduce a new L2 entry for `orthogonalize` as a first-class L2 composition, even though `krylov-step` depends on it as a level-(b)-absorbed surface — that remains a candidate for a future harvester invocation. Same for `incremental-least-squares` (GMRES outer driver's small-dense kernel; currently lives as a concept page only).

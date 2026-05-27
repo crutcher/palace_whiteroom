@@ -624,6 +624,206 @@ status: open
 
 Pattern observed in cycle-004: the abstractor subagent (BiCGStab) returned report content as text rather than calling Edit, claiming "harness rule precedence" despite the parent-pre-creates-skeleton workflow being the documented operational pattern. Same pattern as cycle-002 cycle-planner haiku-skip-write behavior, now appearing in an opus tier. Routes to meta-phase for friction-ledger and methodology adjustment.
 
+```yaml
+---
+slug: krylov-step-speculative-l1-promotion-decision
+opened_at: cycle-005
+opened_by: harvester
+status: answered
+answered_at: cycle-005
+answered_in: scaffolding/decisions/2026-05-27-krylov-step-speculative-l1-promotion.md
+---
+```
+
+The five speculative L1 operators from cycle-004 obstruction themes (`lanczos_step`, `three_term_recurrence_update`, `givens_apply_with_residual_min`, `bicgstab_step`, `omega_update`, `stabilisation_update`) — should any be promoted to firm L1 in service of the cycle-005 `krylov-step` L2 harvest? Decision is documented: NO promotion; each is a step-body specialisation of `krylov-step`, not an orthogonal axis that would simplify its semantics. Re-evaluation triggers are catalogued in the decision artifact.
+
+```yaml
+---
+slug: orthogonalize-as-future-L2-firstclass-entry
+opened_at: cycle-005
+opened_by: harvester
+status: open
+---
+```
+
+`krylov-step` references `orthogonalize` (via `op.orthog` closure) as a level-(b)-absorbed L2 composition surface, but no firm L2 chapter exists for it. The `orthogonalize` slice (`book/src/spec/slices/orthog.md`) and concept page (`book/src/concepts/orthogonalization.md`) exist; lifting the L2-composition story into a firm L2 entry is a future harvester candidate. Out of scope for cycle-005.
+
+```yaml
+---
+slug: incremental-least-squares-as-future-L2-firstclass-entry
+opened_at: cycle-005
+opened_by: harvester
+status: open
+---
+```
+
+GMRES's outer driver consumes the running-QR / Givens-stream composition as a small-dense kernel; it currently lives as a concept page (`book/src/concepts/incremental-least-squares.md`) only. A firm L2 entry for `incremental-least-squares` is a future harvester candidate (sibling to the `orthogonalize` candidate). Out of scope for cycle-005.
+
+```yaml
+---
+slug: L2-layer-intro-refresh-for-named-compositions
+opened_at: cycle-005
+opened_by: harvester
+status: open
+---
+```
+
+The L2 layer-intro (`book/src/L2/index.md`) gained its first firm operator chapter (`krylov-step`) in cycle-005, but the Context and Semantics-overlay sections were originally authored for a layer with only primitive operators, not named compositions. A future `layer-intro-author` invocation should refresh the L2 intro to articulate the role of named compositions and to surface the demand-pruning law as a layer-wide algebraic feature.
+
+```yaml
+---
+slug: L2-named-compositions-have-no-single-L0-citation
+opened_at: cycle-005
+opened_by: harvester
+status: open
+---
+```
+
+`krylov-step` is a methodology-level concept — no single Palace-source citation, only five Palace-spec-corpus citations (Phase-1 slices). Per the combinator-miner cycle-002 open question, this is a feature, not a bug, of the L2 layer: L2 names compositions that emerged from cross-slice pattern-matching, not from source-line identification. Flagged because future critics may surface this as a citation-validity concern; the explicit no-L0-source status is the L2-named-composition norm.
+
+```yaml
+---
+slug: krylov-step-naming-stretches-to-chebyshev
+opened_at: cycle-005
+opened_by: harvester
+status: open
+---
+```
+
+The cycle-002 rough-in flagged "krylov-step" as stretching to cover Chebyshev (which is not strictly Krylov-subspace per Saad 2003). The firm chapter preserves the name on grounds of consistency with the cycle-002 rough-in and the fact that variant-axis absorption makes the naming a *role* description rather than a *family* description. Alternative names (`iterative-step-kernel`, `fold-step`, `solver-step`) were considered and rejected as less precise. Re-naming is left for a future cross-cutter invocation if friction surfaces.
+
+```yaml
+---
+slug: gmres-givens-stream-as-step-kernel-borderline
+opened_at: cycle-005
+opened_by: harvester
+status: open
+---
+```
+
+The cycle-002 rough-in flagged `polynomial_recurrence_step.md:147-155` (the GMRES-Givens-stream site) as a borderline `krylov-step` instance. Strict reading excludes (primitive sequence is `givens_apply`/`givens_generate`, not `apply_linop`+`axpy`+`dot`); broad reading includes (the fold-kernel-plus-outer-driver shape matches). The firm `krylov-step` chapter records the Givens-stream case under the polynomial-recurrence-step citation but does *not* claim it as a `krylov-step` instance — it is a sibling pattern at the small-dense / `incremental-least-squares` scope. May be revisited if `incremental-least-squares` is firmed at L2.
+
+```yaml
+---
+slug: apply-linop-workspace-tensor-reading-at-L0
+opened_at: cycle-005
+opened_by: abstractor
+status: open
+---
+```
+
+Concrete operator subclasses often own a `mutable` workspace member `z` (e.g. `SumOperator::z`, `palace/linalg/operator.hpp:120`; `BaseProductOperator::z`, `palace/linalg/operator.hpp:192`). The L1 form has no notion of workspace; the L1>L0 lowering treats it as a private detail of the operator subclass. However, the workspace IS observable at L1 in one specific case: operator-composition (`A · B`) materialises the intermediate vector `B·x` and applies `A` to it. That intermediate is L1-visible (as the second argument to the outer `apply_linop` call) but its concrete storage (the `mutable z` member of `BaseProductOperator`) is L0-only. A future `lowering-verifier` audit should confirm the workspace-mention-and-erase pattern matches the L1 operator-composition law (law 4 of `apply_linop`).
+
+```yaml
+---
+slug: apply-linop-sum-operator-mult-via-addmult-reuse
+opened_at: cycle-005
+opened_by: abstractor
+status: open
+---
+```
+
+`SumOperator::Mult` (lines 439-440) uses `Mult-via-AddMult` reuse for the multi-operator path: `y = 0.0; AddMult(x, y)`. At L1 the L0 expansion is `axpby(1, apply_linop(A, x), 0, 0)`, which reduces directly to `apply_linop(A, x)` by `axpby` law 3 (β=0 zeroes the y_old contribution; α=1 passes the input through). The L1 view is identical to sub-pattern A — worth recording as a note in the `apply-linop-mutation-rotation` theme but not a separate sub-pattern. The L0 reuse pattern is a transparent performance trick (avoids duplicating the accumulation loop).
+
+```yaml
+---
+slug: apply-linop-preconditioner-application-coverage
+opened_at: cycle-005
+opened_by: abstractor
+status: open
+---
+```
+
+Palace's preconditioners (`amg`, `ams`, `jacobi`, `chebyshev`, `distrelaxation`, `blockprecond`, `gmg`, `hcurl`) are all concrete `Solver` / `mfem::Solver` subclasses that implement `Mult(x, y)` semantically as `y = M⁻¹ · x` (the action of the preconditioner). At L0 they form a parallel class hierarchy (`palace/linalg/solver.hpp`); at L1 their `apply_linop` view collapses with the operator-action view (a preconditioner IS a linear operator, just with a special construction). The `apply-linop-mutation-rotation` theme does not cite the preconditioner hierarchy explicitly — those are covered as further realisations of sub-pattern A. A follow-up theme `solver-as-operator-application` may be warranted if the `Solver`-vs-`Operator` distinction proves load-bearing at L0; the `concepts/solver-as-operator.md` page is the existing narrative for this distinction.
+
+```yaml
+---
+slug: apply-linop-complex-wrapper-operator-lifting
+opened_at: cycle-005
+opened_by: abstractor
+status: open
+---
+```
+
+`ComplexWrapperOperator` (`operator.hpp:73-113`) — a `ComplexOperator` whose internal representation wraps two real `Operator`s and dispatches the four-block real-imaginary multiplication. At L1 this is `complex-from-real-lift` (existing concept); the operator-side view is just `apply_linop` on a complex operator. Not a separate sub-pattern; recognition collapses with sub-pattern A on the `ComplexOperator` hierarchy. Worth a `lowering-verifier` cross-check to confirm the four-block structure is correctly captured by the existing `complex-from-real-lift` concept narrative.
+
+```yaml
+---
+slug: apply-linop-complex-operator-default-impls-of-hermitian-transpose
+opened_at: cycle-005
+opened_by: abstractor
+status: open
+---
+```
+
+The base-class `MultHermitianTranspose` and `MultTranspose` on `ComplexOperator` are virtual (not pure-virtual), so default implementations exist somewhere in `palace/linalg/operator.cpp`. The specific file:lines and the actual default behaviour (call-through-with-conjugation vs. abort vs. something else) were **not read this cycle**; the abstractor declines to speculate on the body. Routed to a `lowering-verifier` audit to locate and characterise the defaults. Not load-bearing for `apply-linop-mutation-rotation` sub-pattern recognition.
+
+```yaml
+---
+slug: mfem-add-alias-safety
+opened_at: cycle-005
+opened_by: abstractor
+status: open
+---
+```
+
+`axpbypcz-mutation-rotation` Applicability condition #1 states that the L0 `add(α, x, β, y, z)` kernel is alias-safe when `z` matches one of the inputs (e.g., `timeoperator.cpp:139` writes `rhs1` while reading `rhs1`). This claim is unverified against the MFEM source — the L0 corpus shows the call site relies on the behaviour but no MFEM-side proof has been captured. A future `lowering-verifier` or `cross-layer-cross-cutter` invocation should audit MFEM `Vector::Add` semantics under aliasing and either confirm the claim or escalate as a load-bearing semantic dependency on upstream behaviour. (CLAUDE.md note: "Many symbols resolve into upstream libraries (MFEM, libCEED). Specialized agents cite Palace source, not vendored upstream. If a question requires upstream behaviour, log as open question." — this is exactly that case.)
+
+```yaml
+---
+slug: mixed-justification-sub-rule-methodology
+opened_at: cycle-005
+opened_by: abstractor
+status: open
+---
+```
+
+The γ==0 sub-rule in `axpbypcz-mutation-rotation` is labelled "algebraic *and* structural" because the structural-rebind is preserved while the algebraic-collapse (γ=0 → 3→2 vectors) is what triggers the L0 kernel-shape change. The precedent theme `axpby-mutation-rotation` has pure-structural sub-pattern A and pure-algebraic sub-patterns B and C; this mixed framing has no precedent. A `cross-layer-cross-cutter` review should confirm whether the methodology already has a name for this combination — possibly `structural-with-algebraic-trigger` or `algebraic-folding-with-rebind` — and either ratify the framing or propose a primitive concept to capture it (latter would land in `book/src/concepts/`). This is the first mixed-justification sub-rule in the project.
+
+```yaml
+---
+slug: axpbypcz-gamma-asymmetric-branching-rationale
+opened_at: cycle-005
+opened_by: abstractor
+status: open
+---
+```
+
+Palace's L0 code branches on `gamma == 0.0` but not on `alpha == 0.0` or `beta == 0.0`, despite the three positions being algebraically symmetric (laws #3, #4, #5 of `axpbypcz.md`). The implementation choice is presumably driven by the empirical observation that γ=0 is the common case (γ is the *prior* z's coefficient, and most call sites are "compute z from x and y, discarding prior z" — i.e., γ=0 — visible in the call-site corpus: 7 of 11 sub-pattern-C and sub-pattern-A surveyed sites pass `0.0` for γ). But this is an inferred rationale; the Palace source carries no comment. A `combinator-miner` or `same-layer-cross-cutter` invocation could confirm whether the asymmetry is by-design (γ=0 is a documented common case) or incidental (an artefact of the implementation history).
+
+```yaml
+---
+slug: axpbypcz-sub-pattern-B-defined-not-used-corpus-audit
+opened_at: cycle-005
+opened_by: abstractor
+status: open
+---
+```
+
+Sub-pattern B of `axpbypcz-mutation-rotation` (complex-scalar-on-complex-vector free-function specialisation, `vector.cpp:760-765`) is compiled but not called from the surveyed call-site corpus. Same pattern as the `axpby-mutation-rotation` coverage note (the defined-not-used trampoline form). Treat as a recognition rule for potential call sites; a `lowering-verifier` exhaustive audit should confirm whether sub-pattern B has any caller across the full Palace tree.
+
+```yaml
+---
+slug: scalar-promotion-mutation-rotation-cross-family-theme
+opened_at: cycle-005
+opened_by: abstractor
+status: open
+---
+```
+
+The complex member-form `ComplexVector::AXPBYPCZ` body has inner branches on `ai == 0 && bi == 0` (real-α, real-β fast-path) and on `gi == 0` (real-γ fast-path inside the γ≠0 outer branch). These are transparent performance specialisations covered by the L1 `axpbypcz` "scalar promotion" variant sub-axis; they are not separate L1>L0 sub-patterns at the theme level. If a future cycle decides to surface scalar-promotion recognition as a first-class L1>L0 concern (e.g., a separate theme for the implicit-scalar-promotion pattern across the entire BLAS-1 family — `axpy`, `axpby`, `axpbypcz`, `scal`), the inner branches in `vector.cpp:388-455` should be a cited evidence point.
+
+```yaml
+---
+slug: axpbypcz-gamma-recognition-is-syntactic-not-semantic
+opened_at: cycle-005
+opened_by: abstractor
+status: open
+---
+```
+
+A runtime γ value that happens to equal zero at runtime lowers to the γ≠0 path at L0 (because the L0 branch is `gamma == 0.0` on the value, not on the type/literal). This means an L2/L3 optimisation that proves γ=0 at a higher layer would need to materialise the literal `0.0` at the L1>L0 boundary to trigger the fast-path — it cannot rely on the L0 runtime branch alone. This is consistent with the precedent `axpby-mutation-rotation` α==1 sub-pattern (also syntactic recognition); flagged here for cross-reference. Not an issue for the present theme — a downstream-lowering observation.
+
 ## Investigating
 
 (empty)
@@ -746,6 +946,72 @@ answered_in: book/src/concepts/dot.md
 ```
 
 Cycle-004 rewrite preserved the BLAS-1 heritage framing (background section ties to `ddot`/`zdotc`/`zdotu`) while correcting the factual specifics. The salvageable framing is intact.
+
+```yaml
+---
+slug: krylov-step-dual-placement-l2-l4-routing
+opened_at: cycle-005
+opened_by: cross-layer-cross-cutter
+status: open
+---
+```
+
+Cross-layer-cross-cutter (cycle-005) recommends `krylov-step` belongs at **both L2 and L4** with a lowering edge, not L2-only as currently rough-in'd. L2 names the primitive-composition shape; L4 names the typed wrapper (`state-stratification` / `solve-monad` / `first-iteration-unrolling` idiom) that consumes the kernel role already referenced in concept prose. Follow-up routing (cycle-006 candidate dispatches): **primary** = `harvester` on `krylov-step @ L4` (typed signature in state-stratification idiom, dependencies on L4 concepts, "Lowers to" stub → L2); **secondary** = `abstractor` on L4>L3 lowering theme (typed-wrapper-with-state-monad → value-threaded form — the substantive rotation, with L3>L2 plausibly identity-in-form per combinator-miner); **tertiary** (deferrable, may fold into primary) = `layer-intro-author` on L4 dep-map. Source: `reports/2026-05-27T025354Z-cross-layer-cross-cutter-krylov-step-placement/CYCLE.md` §Recommendation.
+
+```yaml
+---
+slug: krylov-step-naming-reuse-vs-disambiguation
+opened_at: cycle-005
+opened_by: cross-layer-cross-cutter
+status: open
+---
+```
+
+If `krylov-step` lands at both L2 and L4 per the dual-placement recommendation, the slug reuse may invite confusion. Cross-cutter's tentative preference is **same-slug-different-layer** (so the lowering edge names itself as `L4>L3 krylov-step` theme; cross-layer reuse is the norm elsewhere in the spec). Alternative: `krylov-step-kernel` (L2) + `krylov-step` (L4), or vice versa. Defer to the L4 harvester — rename only if friction emerges in authoring. Source: `reports/2026-05-27T025354Z-cross-layer-cross-cutter-krylov-step-placement/CYCLE.md` §Open-questions item 1.
+
+```yaml
+---
+slug: krylov-step-l3-identity-in-form-audit
+opened_at: cycle-005
+opened_by: cross-layer-cross-cutter
+status: open
+---
+```
+
+The combinator-miner (cycle-002) asserted that the L2→L3 rotation on the `krylov-step` body is identity-in-form, citing `cg.md:352-362` and `arnoldi_step.md:185-188`. This assertion has not been independently audited. If true, the L4>L2 lowering can be a single theme without an explicit L3 entry. If false (e.g., the `Krylov` ephemeral bundle dissolves on the way to L3), an L3 `krylov-step` row would also be warranted. Defer to the L4>L3 abstractor dispatch (cycle-006 secondary follow-up); if non-identity rotations on the body are found, promote to an L3 entry. Source: `reports/2026-05-27T025354Z-cross-layer-cross-cutter-krylov-step-placement/CYCLE.md` §Open-questions item 2.
+
+```yaml
+---
+slug: state-stratification-as-l4-concept-or-l4-row
+opened_at: cycle-005
+opened_by: cross-layer-cross-cutter
+status: open
+---
+```
+
+`state-stratification` currently lives only as a concept under `book/src/concepts/state-stratification.md`. If `krylov-step @ L4` becomes the first L4 dep-map entry, the L4 layer-intro-author may also need to promote `state-stratification`, `iterate_while`, and `solve-monad` as L4 rows simultaneously so that `krylov-step @ L4` has firm L4 vocabulary to depend on. Question: should these be batched into the same L4 harvester dispatch (cycle-006 primary), or pre-staged via a `layer-intro-author` dispatch on L4 first? Coordination concern flagged to the L4 harvester / cycle-planner. Source: `reports/2026-05-27T025354Z-cross-layer-cross-cutter-krylov-step-placement/CYCLE.md` §Open-questions item 3.
+
+```yaml
+---
+slug: scalar-promotion-retroactive-l1-thinning
+opened_at: cycle-005
+opened_by: layer-intro-author
+status: open
+---
+```
+
+The `scalar-promotion` concept page (landed cycle-005) is purely additive: the four L1 entries (`axpy.md`, `axpby.md`, `axpbypcz.md`, `scal.md`) still carry per-operator scalar-promotion prose. Cycle-006+ retroactive-thinning priority #11 should slot a dispatch to: (a) replace the per-operator promotion-rule paragraphs in those four L1 entries with one-line backlinks `see [scalar-promotion](../concepts/scalar-promotion.md)`; (b) leave the citation evidence in place (each operator's Evidence § keeps its own promoted-overload citation); (c) update the four operators' Variant-axes § "scalar promotion (sub-axis)" bullets to short backlinks rather than full restatements. Note: corrected scope is **four** operators (not five as originally specified in the cycle-005 dispatch brief) — `dot` does not scalar-promote (it returns a scalar; no input α to promote). Estimated context savings ~600 words across the four entries. Source: `reports/2026-05-27T025354Z-layer-intro-author-scalar-promotion-concept/CYCLE.md` §Open-questions item 2.
+
+```yaml
+---
+slug: scalar-promotion-l4-calculus-formalisation
+opened_at: cycle-005
+opened_by: layer-intro-author
+status: open
+---
+```
+
+The open question `scalar-promotion-typing-rule` (cycle-pre-005) calls for "lifting this into an L1 type-system rule rather than per-operator prose". The cycle-005 concept page `book/src/concepts/scalar-promotion.md` is the *informal* statement (English + Palace evidence). Formal calculus-level adoption — the L4 typing judgement of the form `Γ ⊢ α : real, Γ ⊢ x : Tensor[complex] ⇒ Γ ⊢ axpy(α, x, y) : Tensor[complex]` with `real ⊑ complex` as a sub-typing relation on scalars — is L4-calculus-design work, not L1-concept-page work. Closure of `scalar-promotion-typing-rule` requires both this concept page (now landing) AND the L4-calculus extension (future cycle, coordinate with L4 harvester / layer-intro-author dispatches). Source: `reports/2026-05-27T025354Z-layer-intro-author-scalar-promotion-concept/CYCLE.md` §Open-questions item 4.
 
 ## Dropped
 

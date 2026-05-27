@@ -36,7 +36,7 @@ State carried: `s = (x, r, p, v, ρ_prev, α_prev, ω_prev)`. `r̂₀` is set on
 
 - `palace/utils/labels.hpp:111` — `BICGSTAB` enum value declaration.
 - `palace/utils/configfile.cpp:132` — JSON parser entry mapping string `"BiCGSTAB"` to the enum.
-- `palace/linalg/ksp.cpp:53-56` — Krylov-solver factory groups `BICGSTAB` with `MINRES` and `DEFAULT` into `MFEM_ABORT("Unexpected solver type for Krylov solver configuration!")`. The config knob exists; every invocation aborts.
+- `palace/linalg/ksp.cpp:53-57` — Krylov-solver factory groups `BICGSTAB` with `MINRES` and `DEFAULT` into `MFEM_ABORT("Unexpected solver type for Krylov solver configuration!")`. The config knob exists; every invocation aborts.
 
 No `BiCGStabSolver` class exists in `palace/linalg/iterative.hpp`.
 
@@ -65,7 +65,7 @@ All `rough-in (obstruction)` — harvester should not promote until either Palac
 
 ```yaml
 verified_against:
-  - citation: reference/palace/palace/linalg/ksp.cpp:53-56
+  - citation: reference/palace/palace/linalg/ksp.cpp:53-57
     verdict: negative-anchor
     note: BiCGStab + MINRES grouped abort branch
   - citation: reference/palace/palace/utils/labels.hpp:111

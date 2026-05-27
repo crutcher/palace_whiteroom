@@ -37,6 +37,63 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-005 — 2026-05-27T070424Z
+
+### Unblocked
+
+- **`krylov-step` L4 dual-placement (3 cycle-006 dispatches)** unblocked — cycle-005 landed `krylov-step` firm at L2 (`book/src/L2/krylov-step.md`); the cross-cutter recommendation routes the L4 row + L4>L3 lowering theme to cycle-006. Three named follow-ups: (a) primary `harvester` on `krylov-step @ L4`; (b) secondary `abstractor` on L4>L3 lowering theme; (c) tertiary deferrable `layer-intro-author` on L4 dep-map. Citation: open question `krylov-step-dual-placement-l2-l4-routing` (cycle-005).
+- **`L0 bootstrap bundle 2` (priority #10 continuation)** unblocked — cycle-005 landed bundle 1 (6 chapters + L0/index.md re-framing). Bundle 2 candidates per priority #10 backlog: `apply_linop` overload-set page, `kspsolver-base-class` page, additional file-overview chapters. Routes to `layer-intro-author` next cycle.
+- **`scalar-promotion` retroactive L1 thinning** unblocked — the concept page now exists at `book/src/concepts/scalar-promotion.md`; cycle-006+ retroactive backlinking from the 4 L1 entries (axpy, axpby, axpbypcz, scal) can replace ~600 words of per-operator prose with one-line concept backlinks. Citation: open question `scalar-promotion-retroactive-l1-thinning` (cycle-005).
+- **`apply-linop` cross-family mutation-rotation theme** unblocked — cycle-005 abstractor on `axpbypcz-mutation-rotation` surfaced the open question `scalar-promotion-mutation-rotation-cross-family-theme` (shared structural pattern across axpy/axpby/axpbypcz/scal mutation-rotation themes). Routes to abstractor in cycle-006+.
+- **`axpbypcz` sub-pattern B full-corpus audit** unblocked — open question `axpbypcz-sub-pattern-B-defined-not-used-corpus-audit` names a discrete cycle-006+ harvester or lowering-verifier dispatch.
+
+### New dependencies
+
+- **`krylov-step` (L2 firm) depends on 7 L1 firm operators**: `apply_linop`, `axpy`, `axpby`, `axpbypcz`, `scal`, `dot`, `nrm2`. All firm post-cycle-004; the L2 firm-up was the natural next step. Planner: future L2 operators sharing this vocabulary subset are now unblocked.
+- **`scalar-promotion` concept centralises the typing rule across 4 L1 operators**: the per-operator clauses in `axpy.md`, `axpby.md`, `axpbypcz.md`, `scal.md` are now superseded by one canonical concept page. Retroactive-thinning is a follow-up, not load-bearing.
+- **`apply-linop-mutation-rotation` (L1>L0)** is the second mutation-rotation theme after `axpby-mutation-rotation`; companion `axpbypcz-mutation-rotation` is the third. Three mutation-rotation themes form a cohort — recognizable cross-family pattern.
+- **First `algebraic`+`structural` mixed-justification sub-rule landed** (`axpbypcz-mutation-rotation` γ==0). Tooling implications routed to cross-layer-cross-cutter via `mixed-justification-sub-rule-methodology` OQ.
+- **L0 reference-notes overlay precedent** — L0 is now a 2-cohort layer (citations + reference notes); the 6 L0 chapter pages co-exist with the L0=citations baseline. The 4 conventions pages (output-arg-vs-receiver, transparent-vs-load-bearing-tricks, etc.) are referenced FROM L1>L0 themes; the 2 file-overview pages (linalg-vector-file, ksp-factory-file) supply file-scoped context for citation-validity audits.
+
+### Resolution implications
+
+- **`krylov-step-speculative-l1-promotion-decision`** — **answered**. Decision: NOT to promote any of the 6 cycle-004 speculative L1 operators. Decision artifact at `scaffolding/decisions/2026-05-27-krylov-step-speculative-l1-promotion.md`. Reaffirms the unimplemented-Palace-components policy: the L2 `krylov-step` cleanly absorbs the algorithmic variation without speculation-promotion needed.
+- **`scalar-promotion-typing-rule`** — **answered** (cycle-002 → cycle-005). The concept page at `book/src/concepts/scalar-promotion.md` lifts the per-operator clauses; retroactive thinning is the follow-up.
+- **`L1-index-refresh` triggering for L2**: now that L2 has its first firm operator (`krylov-step`), L2 index-refresh threshold (≥3 firm L2 operators) is NOT yet met — refresh blocked on more L2 work. Cycle-005 dispatch #1 promoted `L2-layer-intro-refresh-for-named-compositions` as a tracking OQ for when threshold hits.
+- **`apply-linop-lowering-theme-scope`** (cycle-004) — **answered** by cycle-005 abstractor on `apply-linop-mutation-rotation` (5 sub-patterns A-E land as predicted).
+- **`axpbypcz-mutation-rotation-abstractor-target`** (cycle-004) — **answered** by cycle-005 abstractor.
+- **`mfem-as-l0-substrate`** (cycle-004 meta-phase ask) — **answered upstream** by user directive 2026-05-27 (commit `fb8239a`). Cycle-005's krylov-step decision artifact records the policy application in practice.
+- **`cycle-005-L0-bootstrap` priority #10** — **partially-answered** (bundle 1 of N landed). Continues cycle-006+.
+
+### Suggested next dispatches
+
+- (`harvester`, `krylov-step @ L4`) — primary cycle-006 dispatch per cross-cutter recommendation. Requires `iterate_while`, `state-stratification`, `solve-monad` L4 vocabulary; may co-bundle with L4 dep-map updates.
+- (`abstractor`, `L4>L3 lowering theme for krylov-step (krylov-step-as-iterate-while)`) — secondary; can be parallel with the L4 harvester if planner prefers wave.
+- (`layer-intro-author`, `L4 dep-map refresh`) — tertiary deferrable; only if cycle-006 actually populates L4 with multiple operators.
+- (`layer-intro-author`, `L0 bootstrap bundle 2`) — priority #10 continuation; candidates include `apply_linop` overload-set page, `kspsolver-base-class` page, additional file-overview chapters per bundle planning.
+- (`cross-layer-cross-cutter`, `mixed-justification-sub-rule methodology audit`) — first instance of `algebraic`+`structural` sub-rule (axpbypcz γ==0); needs cross-cutter or meta-phase review to decide if it's a new pattern or specific to this theme.
+- (`layer-intro-author`, `scalar-promotion retroactive L1 thinning`) — 4 L1 operators backlink to concept page; estimated ~600 words savings.
+- (`harvester` or `cross-layer-cross-cutter`, `apply_linop cross-family mutation-rotation theme`) — `scalar-promotion-mutation-rotation-cross-family-theme` OQ; mid-priority.
+- (`harvester` or `lowering-verifier`, `axpbypcz sub-pattern B corpus audit`) — `axpbypcz-sub-pattern-B-defined-not-used-corpus-audit` OQ; bounded scope.
+- (`same-layer-cross-cutter` or `problems/`, `concepts/index.md duplicate-rows housekeeping`) — `complex-from-real-lift` rows 70-71 and `solver-as-operator` rows 98-99 (pre-existing; surfaced by dispatch #6). Drive-by fix; low-cost.
+
+### Wave-conflict observations
+
+- **SUMMARY.md was the load-bearing convergence point** — 5 of 6 dispatches edited it (L2 + 2× L1>L0 + L0 bundle (6 rows + heading rename) + concepts/scalar-promotion). Per-report serial dispatch order + the "surgical insert preserving append-points" discipline (introduced by dispatch #1's notes and propagated through subsequent dispatch notes) meant **zero collisions**. Each per-report integrator re-read SUMMARY.md fresh and inserted at literal-string anchors. **Validates the per-report serial-dispatch design at 5 SUMMARY-writers** (cycle-004 was 5 writers under single-pass integrator; cycle-005 confirms split-integrator handles it identically).
+- **L1>L0 alphabetical ordering self-resolved** — `apply-linop-mutation-rotation` and `axpbypcz-mutation-rotation` independently picked positions relative to existing `axpby-mutation-rotation`; interleaved correctly via per-report serial dispatch (axpbypcz first → apply-linop second, by dispatch order).
+- **No deferrals, no rejections, no rework loops.** All 6 reports `ready` post-repair and applied as-is.
+- **Cross-reference fix `bicgstab-iteration.md :53-56 → :53-57` folded into L0-bootstrap dispatch** rather than handled as a separate finalize-repair — per dispatch instructions, the fix was directly relevant to L0 bootstrap consistency (the new `ksp-factory-file.md` cites the same range; consistent reference range across `minres-iteration`, `bicgstab-iteration`, `ksp-factory-file`). This pattern (route a small cross-reference fix into the most-related dispatch rather than the finalize) is a useful template: keeps finalize purely housekeeping, keeps the fix's rationale co-located with the relevant content surface.
+
+### Integration-tooling friction
+
+- **`new-agent-defs-need-session-restart`** — first-cycle-under-split-integrator friction. The `integrator-per-report` and `integrator-finalize` agent defs were added in commit `ccc5082`; the session that wrote that commit did NOT see them in the cached agent registry, and the first per-report dispatch attempted before restart returned "Agent type not found". Restart required. **Status `addressed-by-restart`** — but if there's a way to invalidate the cached agent list mid-session (or auto-invalidate on `.claude/agents/` write), that would close it cleanly. Routes to meta-phase as a friction-ledger candidate.
+- **Split integrator design VALIDATED on first cycle.** Six per-report dispatches each had bounded scope (one report's proposed-changes + the artifact files that report touched + the staging-log append). The split (vs. cycle-001..004's single-pass integrator that handled all reports + commit in one dispatch) means each per-report dispatch's context budget is bounded by ONE report's scope, not the cycle's total. **No per-report context-bound friction observed.** STAGING.md format usability also PASS — aggregating gate-totals, files-touched, and OQ counts for this finalize was mechanical (read STAGING.md, sum columns). No format changes proposed.
+- **SUMMARY-chapter-registration-auto-fix applied discretionarily ONCE** — concepts/scalar-promotion is outside the literal gate scope (gate targets `book/src/L<n>/<slug>.md`), but the existing SUMMARY.md pattern registers nearly all concept pages (~35 entries between lines 64-104). Per-report integrator #6 chose to register for discoverability. **Methodology question for meta-phase**: extend the gate spec to include `book/src/concepts/<slug>.md` (most concepts register), or formalise "discretionary auto-fix" as a per-report-integrator authority? Currently undocumented practice; cycle-005 establishes precedent.
+- **Pre-existing `concepts/index.md` duplicate rows** (`complex-from-real-lift` lines 70-71, `solver-as-operator` lines 98-99) NOT addressed by any cycle-005 dispatch — out of scope for each per-report dispatch's edit set. Flagged by dispatch #6 critic + repairer for cycle-006 housekeeping. **Routing this to cycle-planner**: cycle-006 drive-by fix or `problems/` filing.
+- **No new gates needed.** Cycle-004's gate set held cleanly for 6 wave-mates under split-integrator. Zero retroactive-budget hits (global aggregate confirmed 0 by this finalize). Zero variant-axis-missing (6 axes / 4 sub-patterns / 3 axes correctly absorbed across the 3 multi-variant reports). Zero edge-label drift. Zero forward-edge claims without surface.
+
+---
+
 ## cycle-004 — 2026-05-27T005952Z
 
 ### Unblocked

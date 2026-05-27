@@ -130,7 +130,7 @@ The agent loop itself. This is meta-development scope, not the spec deliverable.
 
 ### Concept library
 
-- [x] 24 concepts on disk, categorised in `book/src/concepts/index.md` (3 methodology, 4 algorithm, 10 primitive, 6 layer-pattern, 1 auxiliary), auto-maintained on every concept create.
+- [x] 25 concepts on disk (cycle-005 added `scalar-promotion`), categorised in `book/src/concepts/index.md` (4 methodology incl. scalar-promotion, 4 algorithm, 10 primitive, 6 layer-pattern, 1 auxiliary), auto-maintained on every concept create. **Known housekeeping**: pre-existing duplicate rows for `complex-from-real-lift` (lines 70-71) and `solver-as-operator` (lines 98-99) need cycle-006 drive-by fix.
 - [ ] Coverage gaps: complex-arithmetic primitives, FFT-based solves, time-stepping primitives, FE-assembly primitives.
 
 ### Integrator and orchestrator features
@@ -175,18 +175,20 @@ For the README's *Relative Progress* section:
 
 The denominators are rough by design. The roadmap is reviewed and adjusted during each meta-cycle; if a category's denominator grows (new components surface as in-scope), the README's coverage report reflects it.
 
-## Layered-spec progress (added cycle-002; updated cycle-004)
+## Layered-spec progress (added cycle-002; updated cycle-005)
 
-The 6-phase agent loop now builds the L4→L0 layered stack. Per-layer dep-map populations as of cycle-004:
+The 6-phase agent loop now builds the L4→L0 layered stack. Per-layer dep-map populations as of cycle-005:
 
-- **L1** — **7 firm operators** (`axpy` pilot-1, `dot` cycle-002, `nrm2` cycle-003, `axpby` cycle-003, `scal` cycle-004, `apply_linop` cycle-004, `axpbypcz` cycle-004) + **6 rough-in obstruction operators** (`lanczos_step`, `three_term_recurrence_update`, `givens_apply_with_residual_min` from `minres-iteration` theme; `bicgstab_step`, `omega_update`, `stabilisation_update` from `bicgstab-iteration` theme). The `axpby-axpy-scal-decomposition-decision` open question is answered (fused primitive). Cycle-004 closed `axpby-axpbypcz-next-harvest`, `axpbypcz-l1-harvest`, `scal-primitive-l1-harvest`, `l1-index-refresh*` (2), `concepts-dot-*` (3), `dot-backpointer-staleness-after-rewrite`, `dot-blas-heritage-framing-salvage`.
-- **L1>L0** lowering — **3 themes**: `axpby-mutation-rotation` (cycle-002, audited cycle-003); `minres-iteration` (cycle-004, **obstruction** — no Palace L0); `bicgstab-iteration` (cycle-004, **obstruction** — no Palace L0). New theme classification `obstruction` introduced cycle-004; first co-occurrence of obstruction-themes raises the `advertised-but-unimplemented-krylov-solvers` friction candidate and the `mfem-as-l0-substrate-policy` ask item.
+- **L0** — **reference-note overlay bundle 1 landed cycle-005** (priority #10): 6 new reference chapters split into Conventions (`output-arg-vs-receiver`, `transparent-vs-load-bearing-tricks`, `mfem-vector-types`, `linalg-free-functions`) and File overviews (`linalg-vector-file`, `ksp-factory-file`). L0/index.md re-framed as "citations + reference notes". Bundle 2+ continues cycle-006+.
+- **L1** — **7 firm operators** (`axpy` pilot-1, `dot` cycle-002, `nrm2` cycle-003, `axpby` cycle-003, `scal` cycle-004, `apply_linop` cycle-004, `axpbypcz` cycle-004) + **6 rough-in obstruction operators** (`lanczos_step`, `three_term_recurrence_update`, `givens_apply_with_residual_min` from `minres-iteration` theme; `bicgstab_step`, `omega_update`, `stabilisation_update` from `bicgstab-iteration` theme — **decision NOT to promote any landed cycle-005** per `scaffolding/decisions/2026-05-27-krylov-step-speculative-l1-promotion.md`). The `axpby-axpy-scal-decomposition-decision` open question is answered (fused primitive). Cycle-004 closed `axpby-axpbypcz-next-harvest`, `axpbypcz-l1-harvest`, `scal-primitive-l1-harvest`, `l1-index-refresh*` (2), `concepts-dot-*` (3), `dot-backpointer-staleness-after-rewrite`, `dot-blas-heritage-framing-salvage`. Cycle-005 closed `krylov-step-speculative-l1-promotion-decision` and `scalar-promotion-typing-rule` (the latter via the concept page; per-operator-clause thinning is the follow-up).
+- **L1>L0** lowering — **5 themes**: `axpby-mutation-rotation` (cycle-002, audited cycle-003); `minres-iteration` (cycle-004, **obstruction** — no Palace L0); `bicgstab-iteration` (cycle-004, **obstruction** — no Palace L0; cross-ref to `ksp.cpp:53-57` reconciled cycle-005); `apply-linop-mutation-rotation` (cycle-005, 5 sub-patterns A-E); `axpbypcz-mutation-rotation` (cycle-005, 4 sub-patterns + **first mixed-justification sub-rule in project** for γ==0). Mutation-rotation cohort now 3 themes (axpby + apply-linop + axpbypcz); obstruction cohort 2 themes (minres + bicgstab).
 - **L1 layer intro** — refreshed cycle-004 (new Context bullets grounded in firm operators, expanded Semantics, new Vocabulary-cohort subsection).
 - **`concepts/dot.md`** — rewritten cycle-004 (three cycle-003 contradictions fixed: return type, hallucinated `Dotc`, bogus citation).
-- **L2** — 1 rough-in (`krylov-step` — proposed by combinator-miner; harvester promotion now unblocked at L2 firm with `apply_linop` landed).
-- **L2>L1**, **L3**, **L3>L2**, **L4**, **L4>L3**, **L0** — Part skeletons only.
+- **`concepts/scalar-promotion.md`** — landed cycle-005; methodology concept covering scalar-promotion across 4 L1 operators (axpy/axpby/axpbypcz/scal). Answers cycle-002 `scalar-promotion-typing-rule` (5 operators were past threshold).
+- **L2** — **1 firm operator** (`krylov-step`, **promoted from rough-in cycle-005**; 6 variant axes all absorbed at construction time; algebraic-laws include Krylov-subspace invariant). Cross-cutter recommendation routes L4 dual-placement to cycle-006 (named follow-up dispatches via `krylov-step-dual-placement-l2-l4-routing` OQ).
+- **L2>L1**, **L3**, **L3>L2**, **L4**, **L4>L3** — Part skeletons only.
 
-Forward indicator: L1 vocabulary buildup matured: 7 firm operators including the opaque-operator gate `apply_linop`. Pending L1 harvests: `nrm2_B` (energy norm), possibly fused `normalize`. L2 `krylov-step` harvester promotion unblocked. Two `L1>L0` obstruction themes surfaced the `advertised-but-unimplemented-krylov-solvers` pattern + `mfem-as-l0-substrate-policy` decision routed to meta-phase. Shared-infrastructure priorities #8/#9/#10 may need re-scoping (MINRES/BiCGStab confirmed not Palace-implemented).
+Forward indicator: L1 vocabulary remains at 7 firm operators (the 6 cycle-004 speculative rough-ins held as rough-in per the unimplemented-Palace-components policy). L2 has its first firm operator. L0 bootstrap bundle 1 of multi-cycle buildout landed. L4 dual-placement for `krylov-step` is the most concrete cycle-006 forward-frontier work. Pending L1 harvests: `nrm2_B` (energy norm), possibly fused `normalize`. Scalar-promotion retroactive L1 thinning is a cycle-006+ cleanup follow-up.
 
 ## Working Notes
 
