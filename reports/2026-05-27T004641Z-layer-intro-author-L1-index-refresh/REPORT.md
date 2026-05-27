@@ -2,7 +2,10 @@
 agent: layer-intro-author
 invoked_at: 2026-05-27T00:46:41Z
 scope: refresh book/src/L1/index.md intro + dep-map prose
-status: pending
+status: integrated
+integrated_at: 2026-05-27T01:00:00Z
+integration_commit: b8332b98300205740c4be4a9b1a2b30a2743dee3
+integration_notes: Applied. L1/index.md full refresh; dep-map preserved verbatim per role discipline, then extended cleanly with 9 new rows from cycle-004 harvesters and abstractors. Closes l1-index-refresh and l1-index-refresh-trigger-met.
 inputs:
   - .claude/agents/layer-intro-author.md
   - book/src/L1/index.md

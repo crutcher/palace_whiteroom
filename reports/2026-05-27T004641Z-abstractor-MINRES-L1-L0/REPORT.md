@@ -2,7 +2,10 @@
 agent: abstractor
 invoked_at: 2026-05-27T00:46:41Z
 scope: L1>L0 theme sketch — MINRES algorithm structure (greenfield; obstruction-flavoured)
-status: pending
+status: integrated
+integrated_at: 2026-05-27T01:00:00Z
+integration_commit: b8332b98300205740c4be4a9b1a2b30a2743dee3
+integration_notes: Applied. First obstruction theme (new category). 3 rough-in operators added to L1/index.md. follow_up_agent meta-phase routed via mfem-as-l0-substrate-policy.
 inputs:
   - reference/palace/palace/linalg/ksp.cpp:53-57 (MINRES enum case routed to MFEM_ABORT)
   - reference/palace/palace/utils/labels.hpp:104-112 (KrylovSolver enum lists MINRES)

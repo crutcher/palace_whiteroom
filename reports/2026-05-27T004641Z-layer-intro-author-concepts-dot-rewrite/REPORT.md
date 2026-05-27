@@ -2,7 +2,10 @@
 agent: layer-intro-author
 invoked_at: 2026-05-27T00:46:41Z
 scope: rewrite book/src/concepts/dot.md to align with L1/dot.md
-status: pending
+status: integrated
+integrated_at: 2026-05-27T01:00:00Z
+integration_commit: b8332b98300205740c4be4a9b1a2b30a2743dee3
+integration_notes: Applied. concepts/dot.md whole-file rewrite + L1/dot.md:17 softening edit. Closes 4 open questions.
 inputs:
   - .claude/agents/layer-intro-author.md (broadened scope, cycle-003)
   - book/src/concepts/dot.md (current; to be rewritten)

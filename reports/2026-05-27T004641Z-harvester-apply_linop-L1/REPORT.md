@@ -2,7 +2,10 @@
 agent: harvester
 invoked_at: 2026-05-27T00:46:41Z
 scope: L1 operator: apply_linop
-status: pending
+status: integrated
+integrated_at: 2026-05-27T01:00:00Z
+integration_commit: b8332b98300205740c4be4a9b1a2b30a2743dee3
+integration_notes: Applied. New firm L1 operator. The opaque-operator gate to L2 krylov-step. Unblocks krylov-step harvester promotion next cycle.
 inputs:
   - book/src/concepts/apply_linop.md (prior concept-page prose)
   - book/src/L1/{axpy,dot,nrm2,axpby}.md (format references)

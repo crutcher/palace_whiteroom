@@ -2,7 +2,10 @@
 agent: abstractor
 invoked_at: 2026-05-27T00:46:41Z
 scope: L1>L0 theme sketch — BiCGStab algorithm structure (obstruction)
-status: pending
+status: integrated
+integrated_at: 2026-05-27T01:00:00Z
+integration_commit: b8332b98300205740c4be4a9b1a2b30a2743dee3
+integration_notes: Applied. Second obstruction theme this cycle. 3 rough-in operators added to L1/index.md. follow_up_agent meta-phase routed via bicgstab-mfem-reanchor-policy + advertised-but-unimplemented-krylov-solvers friction candidate.
 inputs:
   - reference/palace/palace/linalg/ksp.cpp:53-56 (negative anchor — abort branch for BiCGStab + MINRES)
   - reference/palace/palace/utils/labels.hpp:111 (BICGSTAB enum)

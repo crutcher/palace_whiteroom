@@ -2,7 +2,10 @@
 agent: harvester
 invoked_at: 2026-05-27T00:46:41Z
 scope: L1 operator: scal
-status: pending
+status: integrated
+integrated_at: 2026-05-27T01:00:00Z
+integration_commit: b8332b98300205740c4be4a9b1a2b30a2743dee3
+integration_notes: Applied. New firm L1 operator. Closes scal-primitive-l1-harvest.
 inputs:
   - book/src/L1/axpy.md (pilot-1 firm entry; format reference)
   - book/src/L1/dot.md (cycle-002 firm entry; format reference)

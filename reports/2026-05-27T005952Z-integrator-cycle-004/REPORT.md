@@ -12,7 +12,7 @@ inputs:
   - reports/2026-05-27T004641Z-abstractor-MINRES-L1-L0/
   - reports/2026-05-27T004641Z-abstractor-BiCGStab-L1-L0/
 integrated_at: 2026-05-27T01:00:00Z
-integration_commit: TBD
+integration_commit: b8332b98300205740c4be4a9b1a2b30a2743dee3
 ---
 
 # REPORT: Integrator batch — cycle-004
