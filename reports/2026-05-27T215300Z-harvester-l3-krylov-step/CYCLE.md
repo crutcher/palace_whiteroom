@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T21:53:17Z
 scope: L3 operator: krylov-step
 status: integrated
 integrated_at: 2026-05-27T230802Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 30119eb
 integration_notes: Applied cleanly via integrator-per-report pass 1 of cycle-010 (wave-1 first dispatch). **First firm L3 operator in the artifact** — L3 layer transitions from placeholder-only to 1-firm-operator status. Identity-lowering backfill enacting CLAUDE.md §Methodology invariants new bullet "Identity-lowerings still require both L levels" (codified cycle-009 meta-phase). Cycle-006 verdict "no L3 row needed for krylov-step" formally SUPERSEDED via cycle-010 enactment. Krylov-step chain now occupies all 7 layer/lowering positions explicitly (L4 firm > L4>L3 firm > L3 firm > L3>L2 firm > L2 firm > L1 ksp_solve firm > L1>L0 ksp-solve-mutation-rotation firm). 5 proposed-changes applied cleanly on first attempt. Index-placeholder displacement auto-fix fired (5th total: L3/index.md). L3 entry introduces 6-field YAML frontmatter — first L_n entry to carry frontmatter; future-normalization candidate forwarded to cycle-012 meta-phase batch.
 inputs:
   - book/src/L2/krylov-step.md (firm; cycle-005)

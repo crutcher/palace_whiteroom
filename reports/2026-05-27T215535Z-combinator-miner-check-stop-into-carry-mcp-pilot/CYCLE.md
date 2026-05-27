@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T21:55:35Z
 scope: Pattern reuse audit — `check_stop_into_carry` 3-condition convergence helper across Palace Krylov-family solvers (MCP codemap pilot retry)
 status: integrated
 integrated_at: 2026-05-27T230802Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 30119eb
 integration_notes: Applied via integrator-per-report pass 6 of cycle-010 (wave-2 #6). **MCP CODEMAP PILOT SUCCESS** — 14 tool calls (list_files × 2, search_text × 7, get_file_subtree × 1, read_range × 4), 0 permission-denied. First post-cycle-009-meta-phase pilot under commit `ceb87da` enablement. Validates option (a) enablement decision; friction-ledger entry `mcp-codemap-permission-denied-across-batch-1` is now resolution-candidate (meta-phase cycle-012 enacts the ledger entry update). **Inspection-only dispatch** — no `book/` mutation. Verdict: defer-with-routing on FGMRES sister-algorithm match (lower-edge reading). Cycle-009 OQ `nleps-spec-gap-as-check-stop-into-carry-reuse-blocker` held `open` with `last_revisited: cycle-010`; new OQ `fgmres-inner-loop-iterate-while-migration-lifter-candidate` promoted with explicit lifter-before-harvester sequencing directive for cycle-011 planner. Friction signals forwarded: `dispatch-brief-drift` recurrence-1 (eps.cpp/feast.cpp non-existent; MCP corrected); `localize-then-read` skill candidate (observation only; not promoted from integrator authority).
 ---
 

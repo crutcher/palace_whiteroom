@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T215427Z
 scope: L1 operator: bilinear-form (rough-in)
 status: integrated
 integrated_at: 2026-05-27T230802Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 30119eb
 integration_notes: Applied via integrator-per-report pass 4 of cycle-010 (wave-2 sibling to pass 3 matrix-weighted-norm). **First cycle-010 citation-validity FAIL repaired cleanly** — the original draft mis-read L0 conjugation convention; repairer applied 9 coordinated in-place edits correcting the analysis; false OQ `bilinear-form-conjugation-convention-anchor` closed `resolved-by-correction` in-CYCLE (NOT propagated to ledger). 3 new OQs promoted (`bilinear-form-real-vector-coverage-gap`, `bilinear-form-slug-name-coordination`, `bilinear-form-variant-axis-test-coverage`). Closes priority #17 second target. L1 cohort post-cycle-010: 8 firm + 3 rough-in (now including bilinear-form). **Landed with 8-field frontmatter** per the cycle-010 wave-1 L3 precedent — diverges from sibling matrix-weighted-norm (no frontmatter) and existing L1 cohort convention; future-normalization candidate forwarded to cycle-012 meta-phase batch.
 inputs:
   - scaffolding/open-questions.md §matrix-weighted-norm-and-bilinear-form-l1-rough-ins (cycle-008, layer-intro-author)

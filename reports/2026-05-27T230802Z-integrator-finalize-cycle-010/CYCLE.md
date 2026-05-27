@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T230802Z
 scope: cycle-010 finalize (first primary cycle of meta-batch-2; sixth cycle under split integrator)
 status: integrated
 integrated_at: 2026-05-27T230802Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 30119eb
 batch_cycle_id: cycle-010
 meta_batch: batch-2
 meta_batch_position: 1
@@ -179,4 +179,4 @@ Cycle-010 closes as the **first primary cycle of meta-batch-2** under the 3:1 me
 
 ## Two-phase SHA patch (canonical pattern per role spec process step 13)
 
-Per cycle-004 / cycle-005 / cycle-006 / cycle-007 / cycle-008 / cycle-009 precedent. The 8 consumed reports + this finalize report's `integration_commit: PLACEHOLDER_SHA` will be patched in a follow-up commit immediately after this finalize commit lands. Patch-commit message: `patch commit-sha references for cycle-010 finalize commit (<finalize-sha>)`.
+Per cycle-004 / cycle-005 / cycle-006 / cycle-007 / cycle-008 / cycle-009 precedent. The 8 consumed reports + this finalize report's `integration_commit: 30119eb` will be patched in a follow-up commit immediately after this finalize commit lands. Patch-commit message: `patch commit-sha references for cycle-010 finalize commit (<finalize-sha>)`.

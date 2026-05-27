@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T215334Z
 scope: L1 operator: matrix-weighted-norm (rough-in)
 status: integrated
 integrated_at: 2026-05-27T230802Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 30119eb
 integration_notes: Applied cleanly via integrator-per-report pass 3 of cycle-010 (wave-2 first dispatch). **L1 cohort grows** — second test-coverage-bounded L1 rough-in (after eigsolve cycle-009). L1 cohort post-cycle-010: 8 firm + 3 rough-in + 6 obstruction. Closes priority #17 first target (lower-layer-shared-vocabulary). Partially-answers cycle-008 parent OQ `matrix-weighted-norm-and-bilinear-form-l1-rough-ins` (both halves landed cycle-010; SpectralNorm + L1>L0 themes residuals tracked). 5 new OQs promoted (`matrix-weighted-norm-naming-sweep`, `matrix-weighted-norm-mixed-element-type-variant`, `matrix-weighted-norm-mutation-rotation-l1-l0-theme`, `normalize-and-normalize-b-weighted-l1-candidates`, `test-coverage-bounded-rough-in-nomenclature`). Followed existing L1 cohort no-frontmatter convention (sibling pass 4 bilinear-form landed with frontmatter — divergence noted for cycle-012 meta-phase batch).
 inputs:
   - scaffolding/priorities.md #17 (lower-layer-shared-vocabulary-priority)

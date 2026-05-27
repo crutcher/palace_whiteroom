@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T22:05:58Z
 scope: L1 eigsolve LinearSolveFailed status — constructive-introduction annotation (resolves cycle-009 OQ eigsolve-linear-solve-failed-status-anchor)
 status: integrated
 integrated_at: 2026-05-27T230802Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 30119eb
 integration_notes: Applied cleanly via integrator-per-report pass 7 of cycle-010 (wave-2 #7). 5 edits to `book/src/L1/eigsolve.md` + 2 to `scaffolding/open-questions.md` (yaml status flip + prose append). Resolves cycle-009 OQ `eigsolve-linear-solve-failed-status-anchor` via option (b) — keep + annotate `LinearSolveFailed` as L1-constructive with 10 negative-anchor citations (`palace/linalg/ksp.cpp:297-310` `BaseKspSolver::Mult` void return + 4 ARPACK + 1 NLEPS + 5 SLEPc shell-matrix `opInv->Mult` call sites). OQ status flipped `open` → `partially-answered` (`partial_answer_at: cycle-010`); materialising `eigsolve-mutation-rotation` L1>L0 theme deferred to cycle-011+ abstractor. **First systematic use of negative-anchor citations at per-status-variant granularity** — distinguishable from existing per-operator obstruction-theme pattern; forwarded to cycle-012 meta-phase as friction signal at recurrence-1. **OQ-to-resolution latency**: cycle-009 OQ resolved within 1 cycle via the cycle-009 harvester-recommended option (b); strengthens the ≤2-cycle latency pattern. 3 sibling cycle-009 eigsolve OQs remain open (explicit out-of-scope per "one theme per invocation"); cycle-011 candidate cluster.
 inputs:
   - book/src/L1/eigsolve.md

@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T21:53:15Z
 scope: identity-in-form audit across L4/L3/L2/L1 cohorts (priority #20 second target)
 status: integrated
 integrated_at: 2026-05-27T230802Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 30119eb
 integration_notes: Applied via integrator-per-report pass 2 of cycle-010 (wave-1 sibling to pass 1 harvester). **Inspection-only dispatch** — no `book/` mutation. 4 routing OQs promoted to `scaffolding/open-questions.md` per write-authority partition (priorities.md is meta-phase + cycle-planner co-edit, not integrator-per-report): `l3-backfill-apply-linop-and-blas1-cohort` (HIGH CONFIDENCE), `ksp-solve-l2-promotion-non-identity-substantive-gap` (MEDIUM CONFIDENCE), `l3-l1-directory-naming-structure-policy`, `l3-vocabulary-inventory-gap`. META Issue 1 flagged `book/src/L4/index.md:40` SUPERSEDED text drift not introduced by this audit; left for finalize/future lifter dispatch. Together with pass 1, enacts priority #20 (identity-lowering-both-levels backfill) from two angles.
 ---
 

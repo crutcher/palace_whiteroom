@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T22:00:00Z
 scope: Phase 1 corpus reduction audit — first-instance batch (krylov-step chain overlap)
 status: integrated
 integrated_at: 2026-05-27T230802Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 30119eb
 integration_notes: Applied cleanly via integrator-per-report pass 8 of cycle-010 (wave-2 #8; **eighth and final per-report integrator of cycle-010**). **First phase-1 corpus reduction in the artifact** — first concrete realization of CLAUDE.md §Methodology invariants new bullet "Phase 1 corpus reduces as material is lifted" (codified cycle-009 meta-phase; priority #19). 3 slices reduced: gmres.md (1144 → 671 lines, -42%); cg.md (506 → 165 lines, -67%); arnoldi_step.md (330 → 302 lines, -8%); **net 842 lines removed** from audited slice subset. Unique material retained verbatim (gmres L4 v0.2-v0.6 self-rotation history; cg L4 v0.5 first-iteration-unrolling derivation + ratification; arnoldi_step L1/L2/L3/L4 sections unique relative to firm krylov-step chain). 4 routing OQs promoted (`l4-v01-v06-self-rotation-history-lift-target-decision`, `cg-initial-residual-quirk-palace-bug-flag-lift-path`, `l1-orthogonalize-promotion-from-arnoldi-step-and-orthog`, `phase-1-corpus-reduction-remaining-7-slices`). Audit template established and machine-replayable for cycle-011+ batches; remaining 7 slices routed with priority order + batch-size suggestion 2-4 slices per dispatch. Friction signals forwarded: `phase-1-corpus-audit-line-range-arithmetic-brittleness` recurrence-1 (cycle-012 meta-phase watch-item); `phase-1-slice-reduction-audit` skill candidate already filed at `scaffolding/skill-candidates.md:114-115`.
 inputs:
   - book/src/spec/slices/ (10 slices total; this dispatch audits 3)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T220123Z
 scope: L1 operator: nrm2_B-weighted-energy-norm (rough-in)
 status: integrated
 integrated_at: 2026-05-27T230802Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 30119eb
 integration_notes: Applied via integrator-per-report pass 5 of cycle-010 (wave-2 #5). **Duplicate-resolution merge-and-rename verdict** — verified duplicate of wave-1 sibling pass 3 (matrix-weighted-norm) via 6 identity claims (same L0 anchor / closed-form / SPD precondition / dependencies / variant axis / callsite cohort). **No `book/` mutation**. Cycle-003 OQ `nrm2-B-weighted-energy-norm-harvest` partially-answered (`open` → `partially-answered`; `last_revisited: cycle-010`); priority #13 close routed via new OQ `priority-13-now-landed-as-matrix-weighted-norm` (status `routing`) per write-authority partition. **Friction-pattern signal at recurrence-1**: planner-side deduplication-by-L0-anchor; forwarded to cycle-012 meta-phase batch.
 verdict: duplicate-of-sibling-wave-1-merge-and-rename
 inputs:
