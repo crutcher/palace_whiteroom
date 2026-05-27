@@ -27,10 +27,15 @@
 - [dot](./L1/dot.md)
 - [nrm2](./L1/nrm2.md)
 - [axpby](./L1/axpby.md)
+- [scal](./L1/scal.md)
+- [apply_linop](./L1/apply_linop.md)
+- [axpbypcz](./L1/axpbypcz.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
 - [axpby-mutation-rotation](./L1-L0/axpby-mutation-rotation.md)
+- [bicgstab-iteration](./L1-L0/bicgstab-iteration.md)
+- [minres-iteration](./L1-L0/minres-iteration.md)
 
 # L0 — Cited Palace Source
 - [Overview](./L0/index.md)

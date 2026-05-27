@@ -173,16 +173,18 @@ For the README's *Relative Progress* section:
 
 The denominators are rough by design. The roadmap is reviewed and adjusted during each meta-cycle; if a category's denominator grows (new components surface as in-scope), the README's coverage report reflects it.
 
-## Layered-spec progress (added cycle-002; updated cycle-003)
+## Layered-spec progress (added cycle-002; updated cycle-004)
 
-The 6-phase agent loop now builds the L4→L0 layered stack. Per-layer dep-map populations as of cycle-003:
+The 6-phase agent loop now builds the L4→L0 layered stack. Per-layer dep-map populations as of cycle-004:
 
-- **L1** — **4 firm operators** (`axpy` pilot-1, `dot` cycle-002, `nrm2` cycle-003, `axpby` cycle-003). The `axpby-axpy-scal-decomposition-decision` open question is answered (fused primitive; see `scaffolding/decisions/axpby-as-primitive.md`).
-- **L1>L0** lowering — 1 theme (`axpby-mutation-rotation` — **audited cycle-003** by lowering-verifier; verdict `partially-supported` on coverage with ~25 uncited axpy-shaped corpus sites and three defined-not-used L0 forms noted). Theme content as written is correct; cited set is illustrative not exhaustive.
-- **L2** — 1 rough-in (`krylov-step` — proposed by combinator-miner; harvester promotion pending).
+- **L1** — **7 firm operators** (`axpy` pilot-1, `dot` cycle-002, `nrm2` cycle-003, `axpby` cycle-003, `scal` cycle-004, `apply_linop` cycle-004, `axpbypcz` cycle-004) + **6 rough-in obstruction operators** (`lanczos_step`, `three_term_recurrence_update`, `givens_apply_with_residual_min` from `minres-iteration` theme; `bicgstab_step`, `omega_update`, `stabilisation_update` from `bicgstab-iteration` theme). The `axpby-axpy-scal-decomposition-decision` open question is answered (fused primitive). Cycle-004 closed `axpby-axpbypcz-next-harvest`, `axpbypcz-l1-harvest`, `scal-primitive-l1-harvest`, `l1-index-refresh*` (2), `concepts-dot-*` (3), `dot-backpointer-staleness-after-rewrite`, `dot-blas-heritage-framing-salvage`.
+- **L1>L0** lowering — **3 themes**: `axpby-mutation-rotation` (cycle-002, audited cycle-003); `minres-iteration` (cycle-004, **obstruction** — no Palace L0); `bicgstab-iteration` (cycle-004, **obstruction** — no Palace L0). New theme classification `obstruction` introduced cycle-004; first co-occurrence of obstruction-themes raises the `advertised-but-unimplemented-krylov-solvers` friction candidate and the `mfem-as-l0-substrate-policy` ask item.
+- **L1 layer intro** — refreshed cycle-004 (new Context bullets grounded in firm operators, expanded Semantics, new Vocabulary-cohort subsection).
+- **`concepts/dot.md`** — rewritten cycle-004 (three cycle-003 contradictions fixed: return type, hallucinated `Dotc`, bogus citation).
+- **L2** — 1 rough-in (`krylov-step` — proposed by combinator-miner; harvester promotion now unblocked at L2 firm with `apply_linop` landed).
 - **L2>L1**, **L3**, **L3>L2**, **L4**, **L4>L3**, **L0** — Part skeletons only.
 
-Forward indicator: L1 vocabulary buildup remains active (`scal`, `apply_linop`, `axpbypcz`, `nrm2_B` queued). L1 layer-intro refresh trigger met (≥3 firm operators). Concept-page contradictions (`concepts/dot.md`, `concepts/nrm2.md`) surfaced cycle-002–003 and queued for cycle-004 `layer-intro-author` rewrite. Shared-infrastructure priorities (MINRES, BiCGStab, Householder QR, Jacobi) raised by user directive 2026-05-27 and now compete with per-solver coverage work.
+Forward indicator: L1 vocabulary buildup matured: 7 firm operators including the opaque-operator gate `apply_linop`. Pending L1 harvests: `nrm2_B` (energy norm), possibly fused `normalize`. L2 `krylov-step` harvester promotion unblocked. Two `L1>L0` obstruction themes surfaced the `advertised-but-unimplemented-krylov-solvers` pattern + `mfem-as-l0-substrate-policy` decision routed to meta-phase. Shared-infrastructure priorities #8/#9/#10 may need re-scoping (MINRES/BiCGStab confirmed not Palace-implemented).
 
 ## Working Notes
 

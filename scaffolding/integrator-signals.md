@@ -37,6 +37,59 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-004 — 2026-05-27T005952Z
+
+### Unblocked
+
+- **`krylov-step` L2 harvester promotion** now fully unblocked — `apply_linop` landed firm at L1 in this cycle. Priority #5 in the planner's bootstrap-L1-vocabulary becomes the natural next forward-frontier work. Citation: `book/src/L1/apply_linop.md`; combinator-miner rough-in at `book/src/L2/index.md`.
+- **`apply-linop-mutation-rotation` L1>L0 theme** unblocked — the harvester's own Open question #2 flagged this as substantially larger than `axpby-mutation-rotation` (representation-axis caveats, transpose-mode specialisations, accumulating-form fusion, parallel-wrapper). Routes to abstractor. Citation: open question `apply-linop-lowering-theme-scope` (cycle-004).
+- **`axpbypcz-mutation-rotation` L1>L0 theme** unblocked — companion to existing `axpby-mutation-rotation`; first L1>L0 theme to mix structural-rebind with algebraic-constant-folding (the `γ == 0` sub-rule). Routes to abstractor. Citation: open question `axpbypcz-mutation-rotation-abstractor-target` (cycle-004).
+- **Concepts sweep over `book/src/concepts/`** unblocked — cycle-004 dot rewrite establishes the pattern template; cycle-005 same-layer-cross-cutter can replay against `concepts/axpy.md`, `concepts/nrm2.md`, `concepts/orthogonalization.md`, etc. Citation: open question `concepts-sweep-cycle-005-candidate` (cycle-004), bundles cycle-003 `concepts-pre-layered-era-sweep`.
+- **`nrm2_B` energy-norm L1 harvest** unblocked — depends on `apply_linop` (now firm) and `dot` (firm cycle-002). Citation: open question `nrm2-B-weighted-energy-norm-harvest` (cycle-003).
+
+### New dependencies
+
+- **`apply_linop` is the L2 `krylov-step` gate** — the L2 row's dep list (`apply_linop`, `axpy`, `dot`, `nrm2`) is now fully populated at L1 firm tier. Planner: cycle-005 L2 harvester dispatch is no longer blocked by an L1 vocabulary gap.
+- **`axpbypcz` subsumes both `axpby` and `axpy`** as L1 siblings — three-way subsumption chain `axpy ≺ axpby ≺ axpbypcz` recorded as algebraic laws (not dep-map edges). Planner: future L2 fusion patterns over coefficient-update lines should consult the `axpbypcz` Law 12 chained-collapse pattern.
+- **Two obstruction L1>L0 themes coexist** — `minres-iteration` and `bicgstab-iteration` are the first themes with `justification kind: obstruction`. New theme category introduced this cycle; tooling implications routed to meta-phase (friction-ledger candidate `advertised-but-unimplemented-krylov-solvers`).
+- **`scal` subsumption of `axpby` (β=0)** — formalised as algebraic law; both stay in L1 dep-map as siblings.
+
+### Resolution implications
+
+- **`axpby-axpbypcz-next-harvest`** — **answered**. Both halves now firm at L1 (cycle-003 axpby, cycle-004 axpbypcz).
+- **`axpbypcz-l1-harvest`** — **answered** by cycle-004 harvester. Mirror of axpby decision; 12 laws; 1 internal-L0 control-flow axis explicitly non-L1.
+- **`scal-primitive-l1-harvest`** — **answered** by cycle-004 harvester. Module-axiom laws + scalar-promotion sub-axis.
+- **`l1-index-refresh`** + **`l1-index-refresh-trigger-met`** — both **answered** by cycle-004 layer-intro-author refresh. New "Vocabulary cohort" subsection pattern proposed for meta-phase promotion across L_n intros.
+- **`concepts-dot-return-type-correction`** + **`concepts-dot-dotc-and-inverted-conjugation`** + **`dot-backpointer-staleness-after-rewrite`** + **`dot-blas-heritage-framing-salvage`** — all **answered** by cycle-004 concepts/dot rewrite + L1/dot back-pointer softening.
+- **`scalar-promotion-typing-rule`** — **needs-more**. Now visible across `axpy`, `dot`, `axpby`, `axpbypcz`, `scal` (5 operators stating the same per-operator clause). Well past any reasonable threshold for promotion above per-operator prose. Cycle-planner should escalate as a high-priority dispatch (`layer-intro-author` or new role) for cycle-005 or cycle-006.
+- **`concepts-page-authorship-role-scope`** — **needs-more**. Cycle-004 confirmed `layer-intro-author` can handle concept-page rewrites in practice; meta-phase to decide whether to (a) explicitly broaden the role spec or (b) add a new `concept-page-author` role. Cycle-004 follows the cycle-003 precedent.
+
+### Suggested next dispatches
+
+- (`harvester`, `krylov-step @ L2 firm`) — now unblocked; cycle-002 combinator-miner rough-in awaits promotion. L1 vocabulary fully gates this (all four deps `apply_linop`, `axpy`, `dot`, `nrm2` are firm).
+- (`abstractor`, `apply-linop-mutation-rotation @ L1>L0`) — harvester flagged the lowering theme will be substantially larger than `axpby-mutation-rotation` (representation-axis + transpose-mode + accumulate-mode + parallel-wrapper). Closes open question `apply-linop-lowering-theme-scope`.
+- (`abstractor`, `axpbypcz-mutation-rotation @ L1>L0`) — companion to existing `axpby-mutation-rotation`; introduces the `γ == 0` algebraic-sub-rule as first instance of algebraic-constant-folding inside L1>L0. Closes `axpbypcz-mutation-rotation-abstractor-target`.
+- (`cross-layer-cross-cutter`, `krylov-step layer placement`) — cycle-002 open question; can co-bundle with the L2 firm-up to ensure the L2/L4 dual placement decision is made coherently.
+- (`meta-phase`, `mfem-as-l0-substrate-policy ask item`) — surfaces to human: should MFEM be admitted as L0 substrate for the MINRES/BiCGStab obstruction themes (and the future `Householder QR` work)? Routes to meta-phase under `ask` decision-kind.
+- (`harvester`, `Householder QR @ L1`) — Shared Infrastructure roadmap item; structurally-distinct variant of MGS/CGS/CGS2. Cycle-005 may attempt as harvester with abstractor-obstruction fallback (cycle-004 MINRES precedent says: grep first).
+- (`harvester`, `Jacobi smoother @ L1`) — Shared Infrastructure roadmap item; depends on a "diagonal-preconditioner apply" intermediate.
+- (`same-layer-cross-cutter`, `book/src/concepts/ sweep`) — cycle-004 dot rewrite is the pattern template; cycle-005 sweep over remaining concepts pages can surface analogous defects.
+
+### Wave-conflict observations
+
+- **Wave-1 of cycle-004 was 7 parallel dispatches** with substantial overlap on L1/index.md (9 row appends from 5 wave-mates) and SUMMARY.md (5 chapter-line appends from 5 wave-mates). **Zero structural conflicts** at integration. **POSITIVE signal that the parallel-when-in-doubt philosophy is working at scale.** The same pattern as cycle-003 (2 wave-mates appending to same files) generalises cleanly to 5 wave-mates. Each row was distinct; the planner's per-row anchor merge plan was unnecessary at integration time — direct dep-map row appends in dep-map row order plus alphabetical SUMMARY ordering Just Worked. Planner cycle-005 can mark **same-file row-level edits as PARALLEL by default** even at higher wave-size.
+- **SUMMARY.md L1>L0 Part — alphabetical anchor merge**. Both MINRES and BiCGStab independently proposed `append-after axpby-mutation-rotation`. Planner pre-resolved alphabetically (`bicgstab-iteration` then `minres-iteration`); integrator applied both as adjacent lines. Zero friction at integration.
+- **L1/dot.md two-writer pseudo-conflict**. Only `concepts-dot-rewrite` writes to `book/src/L1/dot.md` (a 1-line softening edit at line 17). No other report writes it. Listed in planner conflict analysis but resolved at design time, not integration.
+- **L1/index.md two layouts in flight**. The `L1-index-refresh` report rewrote the intro structure (new Context bullets, Semantics, new Vocabulary-cohort subsection) while three harvesters proposed new dep-map rows. Integrator merged: refreshed-intro-prose + dep-map verbatim from refresh + 9 new rows appended (3 firm + 6 rough-in obstruction). Clean composition; the dep-map-preserved-verbatim discipline in the refresh report was load-bearing for this.
+
+### Integration-tooling friction
+
+- **No new gates needed**. Cycle-003's gate set held cleanly for 7 wave-mates: zero retroactive-budget hits, zero edge-label drift, zero forward-edge claims without surface, zero variant-axis-missing on multi-variant operators (apply_linop's 3+1 collapsed axis was correctly classified by the report; axpbypcz's 2+1 internal-L0 axis was correctly classified). H1→H2 normalisation not needed (no reports introduced H1 headings on existing pages). Append-by-slug fallback not needed (no slug typos).
+- **Obstruction-theme category needs a tooling decision** at meta-phase: the new `justification kind: obstruction` is unprecedented in `book/src/L1-L0/`. Whether future cross-layer-cross-cutter consumers should treat obstruction themes differently (e.g., skip evidence-walking, surface as "anticipated work") is an open methodology question. Routes to `scaffolding/friction-ledger.md` via meta-phase.
+- **Subagent-skipped-Edit pattern recurred** (cycle-002 cycle-planner haiku skipped Edit; cycle-004 abstractor (BiCGStab) skipped Edit despite explicit parent-pre-creates-skeleton workflow). Pattern crossed from haiku to opus tier. Routes to meta-phase as a methodology / prompt-engineering item; tracked under open question `subagent-skips-edit-on-explicit-instruction`.
+
+---
+
 ## cycle-003 — 2026-05-27T002354Z
 
 ### Unblocked

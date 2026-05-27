@@ -14,7 +14,7 @@ The L0 source-side forms are:
 
 At L0, the in-place destination for `dot` is the return register / a stack scalar. There is no destination buffer to write through. The distinction the mutation rotation is doing here is therefore not about buffer ownership but about **reduction order and collective topology**: the L0 form bakes in a specific tree (the Hypre reduction kernel + MPI_Allreduce); the L1 form treats the reduction as a single semantic step.
 
-A cross-cutting prose treatment lives at [`concepts/dot`](../concepts/dot.md). The L1 entry here is the firm operator definition; the concept page is the narrative. Note: the concept page predates this entry and contains an inaccuracy (it claims `ComplexVector::Dot` returns a real scalar — it returns `std::complex<double>`); the L1 entry is authoritative.
+A cross-cutting prose treatment lives at [`concepts/dot`](../concepts/dot.md). The L1 entry here is the firm operator definition; the concept page is the narrative pointer plus BLAS-1 heritage framing. The L1 entry is authoritative on every factual claim about the Palace surface.
 
 ## Signature
 

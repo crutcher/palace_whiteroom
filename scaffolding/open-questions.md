@@ -349,13 +349,403 @@ status: open
 
 `L1/dot.md:17` currently contains a warning that the concept page is wrong. If `concepts/dot.md` is corrected in cycle-004 but the back-pointer warning isn't deleted, future readers will be confused. The cycle-004 REPORT should explicitly propose the `L1/dot.md:17` edit as part of the diff for the integrator to apply, or the integrator should remove it as part of the cycle-004 integration.
 
+```yaml
+---
+slug: concepts-page-word-count-discipline
+opened_at: cycle-004
+opened_by: layer-intro-author
+status: open
+---
+```
+
+Cycle-004 concept-page rewrite of `concepts/dot.md` came in at ~310 words of prose vs the 200-word target in layer-intro-author's discipline (the target is set for layer intros). Concept pages carry their own structure inline (no dep-map to anchor them) and may legitimately need more. Meta-phase to decide whether the 200-word target applies uniformly or whether concept pages get a separate (higher) target.
+
+```yaml
+---
+slug: concepts-sweep-cycle-005-candidate
+opened_at: cycle-004
+opened_by: layer-intro-author
+status: open
+---
+```
+
+The cycle-003 cross-cutter flagged that other concept pages (`concepts/axpy.md`, `concepts/nrm2.md`, `concepts/orthogonalization.md`, …) may share the same pre-layered-era contamination pattern as `concepts/dot.md` (hallucinated symbols, stale citations, wrong return-type framings). After cycle-004 lands the `concepts/dot.md` rewrite as the pattern template, cycle-005 should schedule a sweep dispatch (`same-layer-cross-cutter` over `book/src/concepts/`) to surface analogous defects.
+
+```yaml
+---
+slug: slice-pages-l2-l3-accuracy-audit
+opened_at: cycle-004
+opened_by: layer-intro-author
+status: open
+---
+```
+
+The rewritten `concepts/dot.md` preserves links to `../spec/slices/cg.md` and `../spec/slices/gmres.md`. These are pre-layered-era slice documents. Whether the linked slice files themselves accurately describe `dot` usage at L2/L3 was not verified in cycle-004. Routes to a future `same-layer-cross-cutter` on those slice pages.
+
+```yaml
+---
+slug: layer-intro-refresh-thresholds-l2-l3-l4
+opened_at: cycle-004
+opened_by: layer-intro-author
+status: open
+---
+```
+
+Pilot-1 set ">=3 firm operators" as the L1 layer-intro refresh threshold. Cycle-004 met it (now 7 firm L1 operators). Question: should the same threshold apply uniformly to L2/L3/L4? Layer-intro-author's recommendation: same threshold for L2 (>=3 firm); for L3/L4 leave the bar at "first firm operator lands" because those layers are not yet populated and the intro establishes structure for subsequent work. Meta-phase to confirm.
+
+```yaml
+---
+slug: vocabulary-cohort-subsection-as-layer-intro-pattern
+opened_at: cycle-004
+opened_by: layer-intro-author
+status: open
+---
+```
+
+Cycle-004's L1 intro refresh introduced a "Vocabulary cohort" subsection (Firm / Rough-in / Queued split) that made coverage trajectory visible without restating operator content. Candidate for promotion to a standard sub-section across L_n intros once each layer has firm operators. Routes to meta-phase as a skill or template proposal.
+
+```yaml
+---
+slug: subsumption-chain-cross-cutting-concept
+opened_at: cycle-004
+opened_by: layer-intro-author
+status: open
+---
+```
+
+The working note about subsumption-as-identity (`axpy ≺ axpby ≺ axpbypcz`) is currently L1-specific prose. As more layers accumulate subsumption chains (e.g., L2 `krylov-step` variants, L4 monadic-effect chains), this might warrant promotion to a `concepts/subsumption-chain.md` cross-cutting page. Out of scope for cycle-004; flagged for cross-cutter or meta-phase to triage.
+
+```yaml
+---
+slug: scal-bit-determinism-fusion
+opened_at: cycle-004
+opened_by: harvester
+status: open
+---
+```
+
+`scal` law 4 (`scal(α, scal(β, x)) = scal(α·β, x)`) is algebraically exact but may differ at the bit level in IEEE-754 (two-pass form rounds twice; fused form rounds once). Recorded as a non-load-bearing transparent trick for Palace's current algorithms; future solvers (e.g. deterministic-reduction CG variants) may upgrade this to load-bearing.
+
+```yaml
+---
+slug: normalize-as-fused-l1-primitive
+opened_at: cycle-004
+opened_by: harvester
+status: open
+---
+```
+
+`linalg::Normalize` (`vector.hpp:262-270`) fuses `nrm2` and `scal` and returns the norm alongside the rescaled vector. At L1 currently factors as `(α, x_new) = (1/nrm2(x), scal(1/nrm2(x), x))` — two L1 operators with a shared scalar. Whether to harvest a fused `normalize :: Tensor[N] → (Scalar, Tensor[N])` L1 primitive is open; not necessary for `scal`-as-leaf but would simplify Krylov-solver lowering themes.
+
+```yaml
+---
+slug: apply-linop-lowering-theme-scope
+opened_at: cycle-004
+opened_by: harvester
+status: open
+---
+```
+
+The cycle-005 abstractor sketch of `apply-linop-mutation-rotation` will be substantially larger than `axpby-mutation-rotation` because: (i) representation-axis variants (sparse vs matrix-free reduction-order caveats), (ii) transpose-mode representation-aware specialisations, (iii) accumulating-form fusion, (iv) parallel-wrapper prolongation/restriction (out of scope per CLAUDE.md but worth a one-line note). Routes to abstractor.
+
+```yaml
+---
+slug: addmult-decomposition-bit-equivalence
+opened_at: cycle-004
+opened_by: harvester
+status: open
+---
+```
+
+`apply_linop` claims `AddMult(A, x, a, y) = axpby(a, apply_linop(A, x), 1, y)`. Mathematically true; bit-equivalent at L0 only for assembled matrix `Mult` followed by `Add`. Matrix-free operators that fuse element-contribution accumulation directly into `y` may produce different floating-point sum order. The L1>L0 lowering theme for `apply_linop` should record this load-bearing caveat in detail.
+
+```yaml
+---
+slug: addmult-as-more-primitive-form-in-some-subclasses
+opened_at: cycle-004
+opened_by: harvester
+status: open
+---
+```
+
+In `SumOperator::Mult` (`operator.cpp:439-440`), `Mult` is implemented in terms of `AddMult` rather than the other way around. The L1 entry treats `apply_linop` as primitive and `AddMult` as a composition; this inverts the L0 dispatch for some subclasses. The L1>L0 lowering theme should record both directions.
+
+```yaml
+---
+slug: assemblediagonal-is-not-apply-linop-variant
+opened_at: cycle-004
+opened_by: harvester
+status: open
+---
+```
+
+`Operator::AssembleDiagonal` (`operator.hpp:51`) extracts the diagonal of `A` as a vector. Not an `apply_linop` variant — it's a separate operator-shaped construct belonging in a future L1 entry (diagonal extraction or "operator-to-data" primitive). Recorded so it isn't accidentally folded into `apply_linop`'s variant axes.
+
+```yaml
+---
+slug: floquet-correction-operator-construction-variants
+opened_at: cycle-004
+opened_by: harvester
+status: open
+---
+```
+
+`palace/linalg/floquetcorrection.{hpp,cpp}` introduces complex-shifted operators for Floquet-periodic eigenmode problems; not surveyed for the `apply_linop` entry. If they expose additional operator-construction variants (beyond sum / product / diagonal / multigrid), the L1>L0 lowering theme would need to absorb them.
+
+```yaml
+---
+slug: axpbypcz-mutation-rotation-abstractor-target
+opened_at: cycle-004
+opened_by: harvester
+status: open
+---
+```
+
+Companion L1>L0 theme `axpbypcz-mutation-rotation` (analogous to existing `axpby-mutation-rotation`) is the next abstractor target — must address: (a) the `γ == 0` algebraic-sub-rule (first place in the L1>L0 lowering corpus where a Palace specialisation requires algebraic constant-folding to recognise); (b) the two distinct L0 evaluation orders in the real-real specialisation (one-call vs two-call); (c) the in-place destination rebinding (same as `axpby`). The L1 algebra is firm independent of this — the lowering can proceed in a future cycle.
+
+```yaml
+---
+slug: axpbypcz-member-method-body-survey
+opened_at: cycle-004
+opened_by: harvester
+status: open
+---
+```
+
+The complex-complex and real-scalar-on-complex-vector specialisations at `vector.cpp:760-772` both delegate to `z.AXPBYPCZ(α, x, β, y, γ)` (the member form), but the member-method body itself was not read in the cycle-004 invocation. Whether the member form has its own `γ == 0` constant-folding branch or uses a unified kernel is unresolved. Minor follow-up — the L1 algebra is unchanged either way (both branches compute the same value).
+
+```yaml
+---
+slug: fused-update-chained-collapse-combinator-mining
+opened_at: cycle-004
+opened_by: harvester
+status: open
+---
+```
+
+The `axpbypcz` Law 12 chained-collapse pattern (`(α₁ + γ₁·α₂, β₁ + γ₁·β₂, γ₁·γ₂)`) generalises the axpby chained-collapse. The pattern (`outer_scalar + outer_self_scalar · inner_scalar` for non-self slots; `outer_self_scalar · inner_self_scalar` for the self-slot) is a candidate combinator-mining target for a "fused-update chained-collapse" L1 → L2 pattern.
+
+```yaml
+---
+slug: minres-mfem-as-l0-substrate-policy
+opened_at: cycle-004
+opened_by: abstractor
+status: open
+---
+```
+
+CLAUDE.md's "Scope" section says mesh / FE-space construction (MFEM-equivalent FE assembly) is in scope. It is ambiguous whether this extends to MFEM's Krylov solvers (`mfem::MINRESSolver`, `mfem::BiCGSTAB`, …) as L0 substrate. If yes, the cycle-004 obstruction themes for MINRES/BiCGStab are recoverable — the L1>L0 rewrite would target MFEM source rather than Palace source. If no, the obstruction stands. Routes to meta-phase. **Bundled with `bicgstab-mfem-reanchor-policy`** (same question, two themes).
+
+```yaml
+---
+slug: bicgstab-mfem-reanchor-policy
+opened_at: cycle-004
+opened_by: abstractor
+status: open
+---
+```
+
+MFEM ships `mfem::BiCGSTAB`; Palace links MFEM unconditionally but never names it in this context. Methodology question (CLAUDE.md says cite Palace, not vendored upstream): should the obstruction be re-anchored against MFEM headers? Co-pending with `minres-mfem-as-l0-substrate-policy` — same underlying question.
+
+```yaml
+---
+slug: bicgstab-enum-intent
+opened_at: cycle-004
+opened_by: abstractor
+status: open
+---
+```
+
+Why does Palace ship a `BiCGSTAB` enum value with only an aborting branch? Stub for planned implementation, or deliberate guard against silent fallback? Worth a one-line answer in `scaffolding/decisions/` or a Palace-upstream issue.
+
+```yaml
+---
+slug: advertised-but-unimplemented-krylov-solvers-friction
+opened_at: cycle-004
+opened_by: abstractor
+status: open
+---
+```
+
+Friction-ledger candidate: cycle-004 MINRES + BiCGStab both produce obstruction-themes for advertised-but-unimplemented Krylov solvers. Pattern: `advertised-but-unimplemented-krylov-solvers`. Watch for a third instance (`KrylovSolver::DEFAULT` is the third grouped abort case; the `palace/utils/labels.hpp` enum may have more entries that abort). Routes to meta-phase.
+
+```yaml
+---
+slug: cycle-planner-grep-before-harvester
+opened_at: cycle-004
+opened_by: abstractor
+status: open
+---
+```
+
+Cycle-003 integrator-signals listed MINRES as a candidate for **harvester** dispatch; cycle-004 planner dispatched **abstractor** instead. The harvester role would have required a Palace L0 site to extract from; on inspection no such site exists. Useful heuristic for cycle-planner: **before queuing a harvester pass for an algorithm, grep for its presence**; queue abstractor with obstruction-anticipation when grep returns ≤ 3 hits all in enum/labels/config.
+
+```yaml
+---
+slug: shared-infra-priorities-rescope-after-obstruction
+opened_at: cycle-004
+opened_by: abstractor
+status: open
+---
+```
+
+The cycle-003 priorities list put MINRES at #10 of shared-infra items, BiCGStab nearby. The implicit assumption was that Palace implements them; with that assumption disconfirmed, those items need re-scoping. Candidates: (a) drop them from shared-infra entirely — they're not Palace infrastructure; (b) reinterpret as "the Krylov layer Palace *would* need" — a forward-looking gap, useful when downstream burn-port work needs symmetric-indefinite / non-symmetric solves. Routes to meta-phase.
+
+```yaml
+---
+slug: lanczos-as-arnoldi-variant-axis
+opened_at: cycle-004
+opened_by: abstractor
+status: open
+---
+```
+
+Proposed `lanczos_step` is a clean variant-axis of the planned `arnoldi_step` (symmetry collapses `j`-term recurrence to 2-term). If `arnoldi_step` is harvested first against an affirmative L0 site (GMRES Arnoldi inner body, `iterative.cpp:614-642`), `lanczos_step` may collapse from a separate rough-in into a `variant_of(arnoldi_step, symmetry=true)` row. Worth a same-layer-cross-cutter pass once both are on the dep-map.
+
+```yaml
+---
+slug: minres-bicgstab-signature-sketches-not-contracts
+opened_at: cycle-004
+opened_by: abstractor
+status: open
+---
+```
+
+The three speculative MINRES operator signatures and three BiCGStab signatures are written tensor-typed and stateless; in practice MINRES requires the running QR state to thread through `givens_apply_with_residual_min`, and BiCGStab threads a 7-tuple state. Harvester should expect to rework the signature shape when an anchor materialises; the cycle-004 signatures are scaffolding, not contracts.
+
+```yaml
+---
+slug: subagent-skips-edit-on-explicit-instruction
+opened_at: cycle-004
+opened_by: integrator
+status: open
+---
+```
+
+Pattern observed in cycle-004: the abstractor subagent (BiCGStab) returned report content as text rather than calling Edit, claiming "harness rule precedence" despite the parent-pre-creates-skeleton workflow being the documented operational pattern. Same pattern as cycle-002 cycle-planner haiku-skip-write behavior, now appearing in an opus tier. Routes to meta-phase for friction-ledger and methodology adjustment.
+
 ## Investigating
 
 (empty)
 
 ## Answered
 
-(empty — will accumulate)
+```yaml
+---
+slug: axpby-axpbypcz-next-harvest
+opened_at: pilot-1
+opened_by: harvester
+status: answered
+answered_at: cycle-004
+answered_in: book/src/L1/axpbypcz.md
+---
+```
+
+Cycle-003 closed the `axpby` half (firm at L1). Cycle-004 harvester closes the `axpbypcz` half: firm L1 operator landed with 12 algebraic laws, subsumption chain `axpy ≺ axpby ≺ axpbypcz` recorded as algebraic-law statement. The fused-primitive decision mirrors `scaffolding/decisions/axpby-as-primitive.md` § "Knock-on effects" (no new decision file authored — the existing forward-statement covers the choice).
+
+```yaml
+---
+slug: axpbypcz-l1-harvest
+opened_at: cycle-003
+opened_by: harvester
+status: answered
+answered_at: cycle-004
+answered_in: book/src/L1/axpbypcz.md
+---
+```
+
+Cycle-004 harvester landed `axpbypcz` firm at L1. Mirrors `axpby` decision; 12 algebraic laws including the novel Law 12 chained-collapse on shared `(x, y)`; two variant axes (element-type, scalar-promotion) plus one internal L0 control-flow axis (γ==0 fast-path) explicitly classified as not-an-L1-variant.
+
+```yaml
+---
+slug: scal-primitive-l1-harvest
+opened_at: cycle-003
+opened_by: harvester
+status: answered
+answered_at: cycle-004
+answered_in: book/src/L1/scal.md
+---
+```
+
+Cycle-004 harvester landed `scal` firm at L1. Nine algebraic laws (module-over-scalar-field axioms plus field-commutativity); single variant axis (element-type, with scalar-promotion sub-axis). Sibling subsumption with `axpby` (β=0). The "no `linalg::Scal`/`Scale` free function" claim verified by grep.
+
+```yaml
+---
+slug: l1-index-refresh
+opened_at: pilot-1
+opened_by: integrator
+status: answered
+answered_at: cycle-004
+answered_in: book/src/L1/index.md
+---
+```
+
+Cycle-004 layer-intro-author refresh landed: new Context bullets grounded in the 4 cycle-002/003 firm operators; expanded Semantics overlay with three motifs; new "Vocabulary cohort" subsection (Firm / Rough-in / Queued split); Working Notes operationalised. Dep-map preserved verbatim then extended per cycle-004 harvester landings (now 7 firm + 6 rough-in obstruction rows).
+
+```yaml
+---
+slug: l1-index-refresh-trigger-met
+opened_at: cycle-003
+opened_by: harvester
+status: answered
+answered_at: cycle-004
+answered_in: book/src/L1/index.md
+---
+```
+
+Trigger met (4 firm at cycle-003, then 7 firm at cycle-004); refresh landed cycle-004.
+
+```yaml
+---
+slug: concepts-dot-return-type-correction
+opened_at: cycle-002
+opened_by: harvester
+status: answered
+answered_at: cycle-004
+answered_in: book/src/concepts/dot.md
+---
+```
+
+Cycle-004 layer-intro-author rewrote `concepts/dot.md`. The return type is now correctly stated in the element-type rule table: real → real, complex (Hermitian or unconjugated) → complex. The "real-projected" rationalisation is removed.
+
+```yaml
+---
+slug: concepts-dot-dotc-and-inverted-conjugation
+opened_at: cycle-002
+opened_by: harvester
+status: answered
+answered_at: cycle-004
+answered_in: book/src/concepts/dot.md
+---
+```
+
+Cycle-004 layer-intro-author rewrote `concepts/dot.md`. All references to the non-existent `linalg::Dotc` are removed. The Hermitian/unconjugated polarity is correctly assigned: `ComplexVector::Dot` is Hermitian (`yᴴ x`), `ComplexVector::TransposeDot` is the unconjugated bilinear form (`yᵀ x`), method-form only.
+
+```yaml
+---
+slug: dot-backpointer-staleness-after-rewrite
+opened_at: cycle-003
+opened_by: same-layer-cross-cutter
+status: answered
+answered_at: cycle-004
+answered_in: book/src/L1/dot.md
+---
+```
+
+Cycle-004 layer-intro-author proposed and integrator applied the softening edit on `L1/dot.md:17`. The "concept page predates this entry and contains an inaccuracy" warning is replaced with a clean back-pointer to the corrected concept page; L1 entry remains authoritative.
+
+```yaml
+---
+slug: dot-blas-heritage-framing-salvage
+opened_at: cycle-003
+opened_by: same-layer-cross-cutter
+status: answered
+answered_at: cycle-004
+answered_in: book/src/concepts/dot.md
+---
+```
+
+Cycle-004 rewrite preserved the BLAS-1 heritage framing (background section ties to `ddot`/`zdotc`/`zdotu`) while correcting the factual specifics. The salvageable framing is intact.
 
 ## Dropped
 
