@@ -1,5 +1,5 @@
 ---
-verifies: ../REPORT.md
+verifies: ../CYCLE.md
 critiqued_at: 2026-05-27T01:05:00Z
 critic_version: 1
 checks:
@@ -37,7 +37,7 @@ checks:
 
 ### Issues found
 
-- **Law 5 is purely a forward-pointer to Law 1**, not an independent law statement — counted in the "twelve laws" but contains no new content beyond restating γ=0 subsumption. Severity: low (numbering inflation, not error). Location: REPORT.md § Algebraic laws, Law 5.
+- **Law 5 is purely a forward-pointer to Law 1**, not an independent law statement — counted in the "twelve laws" but contains no new content beyond restating γ=0 subsumption. Severity: low (numbering inflation, not error). Location: CYCLE.md § Algebraic laws, Law 5.
 
 - **Law 2 derivation chain is slightly indirect**: subsumption of axpy is stated as "composition of law 1 (γ=0 → axpby) and the axpby Law #1 (β=1 → axpy)". The composition is correct mathematically but introduces a cross-document dependency for verification; a direct statement `axpbypcz(α, x, 1, y, 0, z) = α·x + y = axpy(α, x, y)` would be self-contained. Severity: low.
 

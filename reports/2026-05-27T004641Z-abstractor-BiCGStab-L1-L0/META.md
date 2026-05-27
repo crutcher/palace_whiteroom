@@ -1,5 +1,5 @@
 ---
-verifies: ../REPORT.md
+verifies: ../CYCLE.md
 critiqued_at: 2026-05-27T00:55:00Z
 critic_version: 1
 checks:
@@ -44,7 +44,7 @@ follow_up_agent: meta-phase
 ### Issues found
 
 1. **bicgstab-iteration.md §Speculative L1 operators** (severity: low) — links to per-operator pages that don't yet exist; will break mdBook link-check at integration. Integrator may need to inline-style the names or stage stub pages.
-2. **REPORT.md frontmatter** (severity: low) — `skill-uptake-survey` telemetry only; no skill invocations recorded for citation verification.
+2. **CYCLE.md frontmatter** (severity: low) — `skill-uptake-survey` telemetry only; no skill invocations recorded for citation verification.
 
 ## Repair
 
@@ -52,11 +52,11 @@ follow_up_agent: meta-phase
 
 - **Finding**: rough-in dep-map links to nonexistent chapter files will 404 in mdBook link-check.
   - **Decision**: repaired
-  - **Action**: In REPORT.md "Proposed changes" block targeting `book/src/L1/index.md`, converted the three rough-in operator names from `[\`name\`](./name.md)` link form to plain `` `name` `` (no link target), per the cycle-002/003 rough-in convention. Applies to `bicgstab_step`, `omega_update`, `stabilisation_update`.
+  - **Action**: In CYCLE.md "Proposed changes" block targeting `book/src/L1/index.md`, converted the three rough-in operator names from `[\`name\`](./name.md)` link form to plain `` `name` `` (no link target), per the cycle-002/003 rough-in convention. Applies to `bicgstab_step`, `omega_update`, `stabilisation_update`.
 
 - **Finding**: `skill_uptake:` frontmatter block missing.
   - **Decision**: repaired
-  - **Action**: Added `skill_uptake:` block to REPORT.md frontmatter listing the five abstractor-relevant skills (`verify-citation-range`, `classify-variant-axis`, `verify-refinement-surface`, `plan-sideways-concept-emission`, `skill-selection`) with status (`not-invoked` / `not-applicable`) and brief rationale for each.
+  - **Action**: Added `skill_uptake:` block to CYCLE.md frontmatter listing the five abstractor-relevant skills (`verify-citation-range`, `classify-variant-axis`, `verify-refinement-surface`, `plan-sideways-concept-emission`, `skill-selection`) with status (`not-invoked` / `not-applicable`) and brief rationale for each.
 
 ### Unrepairable findings
 

@@ -8,7 +8,7 @@ inputs:
   - book/src/L1/axpy.md (format reference from pilot-1)
   - book/src/L1/dot.md (format reference from cycle-002; firm L1 dot operator that nrm2 depends on)
   - book/src/L1/index.md (dep-map to update)
-  - reports/2026-05-26T231843Z-harvester-dot-L1/REPORT.md (sister report; skill_uptake block format precedent)
+  - reports/2026-05-26T231843Z-harvester-dot-L1/CYCLE.md (sister report; skill_uptake block format precedent)
   - reference/palace/palace/linalg/vector.hpp (linalg::Norml2 declaration at 255-260, linalg::Normalize at 263-270)
   - reference/palace/palace/linalg/operator.hpp (B-weighted Norml2 declaration at 374)
   - reference/palace/palace/linalg/operator.cpp (B-weighted Norml2 definitions at 600-619)
@@ -159,7 +159,7 @@ No other variant axes at L1:
 ````
 
 ````append-after:book/src/L1/index.md
-[Targeted dep-map row append, NOT a full-file replacement. Cycle-003 dispatch 2 — the sister `axpby` harvester (`reports/2026-05-27T001116Z-harvester-axpby-L1/REPORT.md`) — also edits this file via a row-replacement (rough-in → firm) on the existing `axpby` row; the integrator must apply both edits.
+[Targeted dep-map row append, NOT a full-file replacement. Cycle-003 dispatch 2 — the sister `axpby` harvester (`reports/2026-05-27T001116Z-harvester-axpby-L1/CYCLE.md`) — also edits this file via a row-replacement (rough-in → firm) on the existing `axpby` row; the integrator must apply both edits.
 
 Anchor line (must exist in `book/src/L1/index.md` under the "## Operator dep-map" table; this is the cycle-002 firm `dot` row):
 
@@ -199,7 +199,7 @@ See the `book/src/L1/nrm2.md` content in the proposed-changes block above. Key d
 - Use-site citations confirm `nrm2` is the primary residual-norm and basis-normalisation primitive across all of Palace's iterative solver corpus: CG / GMRES (`iterative.cpp`, 8 sites), ARPACK eigensolver (`arpack.cpp`, 5 non-comment sites), SLEPc eigensolver (`slepc.cpp`, 7 non-comment sites), NLEPS (`nleps.cpp`, 5 sites), and the error indicator (`errorindicator.hpp`, 1 wrapper site).
 - Cross-reference to the existing concept page `book/src/concepts/nrm2.md` — the L1 entry supersedes its (incorrect) stability claim; see Open question 1.
 - Cross-reference to cycle-002 firm `dot` entry `book/src/L1/dot.md` — provides the algebraic facts (laws 4 and 9 — Hermitian self-dot is non-negative real) on which `nrm2`'s real-valued result and positive-definiteness depend.
-- Sister cycle-002 harvester report `reports/2026-05-26T231843Z-harvester-dot-L1/REPORT.md` — format precedent for the `skill_uptake:` frontmatter block and the SUMMARY.md `append-after:` convention.
+- Sister cycle-002 harvester report `reports/2026-05-26T231843Z-harvester-dot-L1/CYCLE.md` — format precedent for the `skill_uptake:` frontmatter block and the SUMMARY.md `append-after:` convention.
 
 ## Open questions / caveats
 
@@ -213,4 +213,4 @@ See the `book/src/L1/nrm2.md` content in the proposed-changes block above. Key d
 
 5. **No layer-intro refresh needed yet**. The L1 Part overview is small and just needs a new row in the dep-map (proposed in the edit block above). The dep-map now has 4 entries (3 firm: `axpy`, `dot`, `nrm2`; 1 rough-in: `axpby`); if it grows past ~6 rows or if firm operators start to cluster into families (BLAS-1 vs higher-level Krylov fragments), a layer-intro-author refresh becomes worthwhile.
 
-6. **No HARNESS-FRICTION recurrence**. Per dispatcher instructions, this report was Edit-ed into a pre-created skeleton REPORT.md by the harvester subagent — the `subagent-file-write-blocked-general-purpose` friction is `resolved-with-narrowing` (blocks `Write` on `*REPORT.md`-named files but `Edit` works against pre-created skeletons). The pattern worked cleanly here; no new friction observed.
+6. **No HARNESS-FRICTION recurrence**. Per dispatcher instructions, this report was Edit-ed into a pre-created skeleton CYCLE.md by the harvester subagent — the `subagent-file-write-blocked-general-purpose` friction is `resolved-with-narrowing` (blocks `Write` on `*CYCLE.md`-named files but `Edit` works against pre-created skeletons). The pattern worked cleanly here; no new friction observed.

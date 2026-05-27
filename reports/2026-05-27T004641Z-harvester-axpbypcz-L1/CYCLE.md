@@ -8,7 +8,7 @@ integration_commit: b8332b98300205740c4be4a9b1a2b30a2743dee3
 integration_notes: Applied. New firm L1 operator with 12 algebraic laws including novel chained-collapse Law 12. Closes axpby-axpbypcz-next-harvest (both halves) and axpbypcz-l1-harvest.
 inputs:
   - book/src/L1/axpby.md (precedent — fused-primitive structure)
-  - reports/2026-05-27T001116Z-harvester-axpby-L1/REPORT.md (cycle-003 axpby harvester report)
+  - reports/2026-05-27T001116Z-harvester-axpby-L1/CYCLE.md (cycle-003 axpby harvester report)
   - scaffolding/decisions/axpby-as-primitive.md (fused-primitive decision; mirrored here)
   - reference/palace/palace/linalg/vector.cpp:745-772 (AXPBYPCZ definitions, all three specialisations)
   - reference/palace/palace/linalg/vector.hpp:133-136 (ComplexVector::AXPBYPCZ member decl)
@@ -193,7 +193,7 @@ No other variant axes — `axpbypcz` is unconditionally pure, element-local, and
   - `palace/linalg/vector.cpp:745-758` — `AXPBYPCZ(double, ...)` specialisation with `γ == 0` branch; fast-path `add(α, x, β, y, z)`, slow-path `AXPBY(α, x, γ, z); z.Add(β, y)`.
   - `palace/linalg/vector.cpp:760-765` — `AXPBYPCZ(std::complex<double>, ...)` complex-complex specialisation; delegates to member.
   - `palace/linalg/vector.cpp:767-772` — `AXPBYPCZ(double, ComplexVector, ...)` real-scalar-on-complex-vector specialisation; delegates to member.
-- **Precedent (cycle-003):** `reports/2026-05-27T001116Z-harvester-axpby-L1/REPORT.md` — same fused-primitive structure, nine algebraic laws, two variant axes. This `axpbypcz` report extends the pattern to three scalar-vector pairs, adds two subsumption laws (axpby and axpy) at the top, and generalises the chained-collapse law from 2-pair to 3-pair form.
+- **Precedent (cycle-003):** `reports/2026-05-27T001116Z-harvester-axpby-L1/CYCLE.md` — same fused-primitive structure, nine algebraic laws, two variant axes. This `axpbypcz` report extends the pattern to three scalar-vector pairs, adds two subsumption laws (axpby and axpy) at the top, and generalises the chained-collapse law from 2-pair to 3-pair form.
 - **Decision record (mirrored):** `scaffolding/decisions/axpby-as-primitive.md` § "Knock-on effects" explicitly invites this harvester to mirror the fused-primitive choice. No new decision file authored for `axpbypcz` — the existing record covers both via the explicit forward-statement.
 - **Cycle-003 lowering-verifier anchor:** The lowering-verifier audit (cycle-003) confirmed the evidence anchor at `vector.cpp:756` (the `z.Add(beta, y)` line in the `γ ≠ 0` slow-path). This is the load-bearing detail that distinguishes the L0 `γ == 0` fast-path from the slow-path — recorded here as the "internal control-flow axis at L0" note in the Variant axes section.
 

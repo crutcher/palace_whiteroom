@@ -104,11 +104,11 @@ A new variant of the pilot-1 `subagent-file-write-blocked-general-purpose` frict
 
 **Empirical findings (across 3 dispatches + 3 critics + 3 repairers + 1 cycle-planner):**
 
-- **`Write` blocked** on filenames matching `report|summary|findings|analysis` keywords. All three specialized-agent subagents (harvester, abstractor, combinator-miner) hit the block when attempting to write their `REPORT.md`. The block manifests as: `Subagents should return findings as text, not write report files. Include this content in your final response instead.`
+- **`Write` blocked** on filenames matching `report|summary|findings|analysis` keywords. All three specialized-agent subagents (harvester, abstractor, combinator-miner) hit the block when attempting to write their `CYCLE.md`. The block manifests as: `Subagents should return findings as text, not write report files. Include this content in your final response instead.`
 - **`Write` works** on files that don't match the keywords. The integrator (this commit) successfully `Write`s `book/src/L1/dot.md` and `book/src/L1-L0/axpby-mutation-rotation.md`.
-- **`Edit` is not blocked.** All three repairers used `Edit` to amend REPORT.md frontmatter and proposed-changes blocks. Verified by repair-section evidence in all three META.md files.
+- **`Edit` is not blocked.** All three repairers used `Edit` to amend CYCLE.md frontmatter and proposed-changes blocks. Verified by repair-section evidence in all three META.md files.
 - **`Write` to `META.md` works.** All three critics + repairers `Write` to META.md without issue (META does not match the keywords).
-- **The haiku cycle-planner skipped `Write` despite its agent definition's override clause.** It returned the plan inline as text and the parent persisted it. Whether this is a content-pattern-filter hit, a haiku-specific risk-aversion, or something else, is open. (Likely the same filter — the plan was titled "Plan" but produced under `reports/...-cycle-planner-.../REPORT.md`.)
+- **The haiku cycle-planner skipped `Write` despite its agent definition's override clause.** It returned the plan inline as text and the parent persisted it. Whether this is a content-pattern-filter hit, a haiku-specific risk-aversion, or something else, is open. (Likely the same filter — the plan was titled "Plan" but produced under `reports/...-cycle-planner-.../CYCLE.md`.)
 
 **Recommended meta-phase actions:**
 
@@ -117,7 +117,7 @@ A new variant of the pilot-1 `subagent-file-write-blocked-general-purpose` frict
 3. **Decide** whether the friction is acceptable (parent embed-and-persist is well-understood) or whether to push back on the filter (it actively impedes the canonical write-authority partition in CLAUDE.md).
 4. **Investigate** haiku cycle-planner skip — is the override clause respected at haiku, or is the filter triggered before the override?
 
-## Notes on this batch REPORT.md
+## Notes on this batch CYCLE.md
 
-Populated via `Edit` from a parent-pre-created skeleton, because `Write` to `*REPORT.md` is blocked by the content-pattern filter described above. The skeleton was created by the parent session at `/home/crutcher/git/palace_whiteroom/reports/2026-05-26T235101Z-integrator-cycle-002/REPORT.md` before integrator dispatch; integrator filled in the body via this `Edit`.
+Populated via `Edit` from a parent-pre-created skeleton, because `Write` to `*CYCLE.md` is blocked by the content-pattern filter described above. The skeleton was created by the parent session at `/home/crutcher/git/palace_whiteroom/reports/2026-05-26T235101Z-integrator-cycle-002/CYCLE.md` before integrator dispatch; integrator filled in the body via this `Edit`.
 

@@ -37,6 +37,6 @@
   - `reports/2026-05-27T004641Z-harvester-axpbypcz-L1/` (status: ready; follow_up_agent: null)
   - `reports/2026-05-27T004641Z-abstractor-MINRES-L1-L0/` (status: ready; follow_up_agent: meta-phase)
   - `reports/2026-05-27T004641Z-abstractor-BiCGStab-L1-L0/` (status: ready; follow_up_agent: meta-phase)
-  - `reports/2026-05-27T005952Z-integrator-cycle-004/REPORT.md` — batch report (this integration).
+  - `reports/2026-05-27T005952Z-integrator-cycle-004/CYCLE.md` — batch report (this integration).
 
 - **Integrator-signals append**: cycle-004 section prepended above cycle-003 in `scaffolding/integrator-signals.md` (newest-first per file format).

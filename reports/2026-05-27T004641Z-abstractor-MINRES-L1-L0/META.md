@@ -1,5 +1,5 @@
 ---
-verifies: ../REPORT.md
+verifies: ../CYCLE.md
 critiqued_at: 2026-05-27T01:15:00Z
 critic_version: 1
 checks:
@@ -43,8 +43,8 @@ follow_up_agent: meta-phase
 
 ### Issues found
 
-1. **(low / skill-uptake telemetry)** Frontmatter `inputs:` lists `palace/utils/labels.hpp:104-112` but the body §Verified-against also cites `labels.hpp:108` in narrative. Both ranges resolve and are consistent (108 is inside 104-112); minor stylistic redundancy, not a defect. Location: REPORT.md frontmatter line 8 vs §Verified-against line 158.
-2. **(low / cross-cycle telemetry)** Skill-uptake survey: no explicit `verify-citation-range` invocation logged for the three negative-anchor citations, and no `classify-variant-axis` invocation for the Lanczos-vs-Arnoldi axis call-out in §Justification kind. Non-blocking; surface for meta-phase to consider whether obstruction themes warrant a dedicated "absence-citation" skill. Location: REPORT.md §Verified-against, §Justification kind.
+1. **(low / skill-uptake telemetry)** Frontmatter `inputs:` lists `palace/utils/labels.hpp:104-112` but the body §Verified-against also cites `labels.hpp:108` in narrative. Both ranges resolve and are consistent (108 is inside 104-112); minor stylistic redundancy, not a defect. Location: CYCLE.md frontmatter line 8 vs §Verified-against line 158.
+2. **(low / cross-cycle telemetry)** Skill-uptake survey: no explicit `verify-citation-range` invocation logged for the three negative-anchor citations, and no `classify-variant-axis` invocation for the Lanczos-vs-Arnoldi axis call-out in §Justification kind. Non-blocking; surface for meta-phase to consider whether obstruction themes warrant a dedicated "absence-citation" skill. Location: CYCLE.md §Verified-against, §Justification kind.
 3. **(informational)** Open question §3 (Is MFEM in L0 scope?) is correctly framed as a routing item for the integrator/open-questions ledger and is not a critique issue. No action needed at critic layer.
 
 ## Repair
@@ -53,11 +53,11 @@ follow_up_agent: meta-phase
 
 - **Finding**: `skill_uptake:` frontmatter block missing (skill-uptake-survey warning).
   - **Decision**: repaired
-  - **Action**: Added `skill_uptake:` block to REPORT.md frontmatter (between `inputs:` and closing `---`) covering three skills with `triggered`/`decision`/`rationale` per the abstractor format established in `reports/2026-05-26T231843Z-abstractor-axpby-mutation-L1-L0/REPORT.md`:
+  - **Action**: Added `skill_uptake:` block to CYCLE.md frontmatter (between `inputs:` and closing `---`) covering three skills with `triggered`/`decision`/`rationale` per the abstractor format established in `reports/2026-05-26T231843Z-abstractor-axpby-mutation-L1-L0/CYCLE.md`:
     - `verify-citation-range` — `explained_non_applicable` (citations verified inline; critic spot-verified all three; absence-citation skill candidate surfaced).
     - `classify-variant-axis` — `artifact_landed` (Lanczos-vs-Arnoldi variant absorption + preconditioner/restart/breakdown axes classified in body).
     - `propose-rotation` — `artifact_landed` (theme follows template with `obstruction` adaptation, empty RHS).
-  - Rationale grounded in artifact content already present in REPORT.md body (§Justification kind, §Applicability conditions §§1-4, §Verified-against); no substantive new authoring.
+  - Rationale grounded in artifact content already present in CYCLE.md body (§Justification kind, §Applicability conditions §§1-4, §Verified-against); no substantive new authoring.
 
 ### Unrepairable findings
 

@@ -45,7 +45,7 @@ First pilot cycle of the new 6-phase agent flow. One report consumed (`harvester
 
 ## Open questions promoted to scaffolding/open-questions.md
 
-From `harvester-axpy-L1` REPORT.md `Open questions / caveats`:
+From `harvester-axpy-L1` CYCLE.md `Open questions / caveats`:
 
 1. **axpy-l1-l0-three-subpatterns** — the L1>L0 lowering theme for `axpy` will need three sub-patterns (`.Add(α,x)`, `+=` for α=1, `Subtract` for α=-1). Routes to abstractor when the theme is dispatched.
 2. **axpby-axpbypcz-next-harvest** — `AXPBY` and `AXPBYPCZ` are obvious next harvester targets. Includes a fusion-vs-decomposition trade-off worth recording in `scaffolding/decisions/`.

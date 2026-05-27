@@ -44,7 +44,7 @@ Each R&D cycle has 6 phases:
 
 **Phase 1 — plan**: `cycle-planner` reads roadmap, priorities, friction-ledger, open-questions, recent integrator batches. Emits a dispatch plan with `(agent, scope, deps)` tuples and an overlap analysis. Does not mutate the artifact.
 
-**Phase 2 — dispatch**: 1–6 specialized agents per plan, parallel where non-overlapping. Each writes a single `REPORT.md` under `reports/<timestamp>-<agent>-<scope>/`. No artifact mutation in this phase.
+**Phase 2 — dispatch**: 1–6 specialized agents per plan, parallel where non-overlapping. Each writes a single `CYCLE.md` under `reports/<timestamp>-<agent>-<scope>/`. No artifact mutation in this phase.
 
 **Phase 3 — critique**: `critic` agent runs on each report (parallel). Runs the 8-check checklist (citation-validity, surface-or-evidence, rotation-quality, variant-axis-coverage, cross-reference-integrity, edge-label-fidelity, plan-kind-consistency, skill-uptake-survey). Writes META.md critique section.
 
@@ -97,9 +97,9 @@ book/src/                  # the mdBook artifact
   design/                  # L4 calculus strawman (seeds L4 layer)
   meta-reviews/            # historical meta-review records (cycles 1–172)
 .claude/agents/            # 13 agent definitions
-reports/                   # per-invocation REPORT.md + META.md channel
+reports/                   # per-invocation CYCLE.md + META.md channel
   <timestamp>-<agent>-<scope>/
-    REPORT.md
+    CYCLE.md
     META.md                (post-critique + repair)
     [supporting docs]
 scaffolding/               # cumulative cross-cycle state (the workshop)
@@ -129,9 +129,9 @@ BOOTSTRAP.md               # original phased build spec (superseded; historical)
 
 | Agent | Writes to |
 |---|---|
-| cycle-planner, 8 specialized | `reports/<id>/REPORT.md` + supporting docs in same dir only |
+| cycle-planner, 8 specialized | `reports/<id>/CYCLE.md` + supporting docs in same dir only |
 | critic | `reports/<id>/META.md` critique section |
-| repairer | `reports/<id>/META.md` repair section + in-place edits to REPORT.md / supporting docs |
+| repairer | `reports/<id>/META.md` repair section + in-place edits to CYCLE.md / supporting docs |
 | integrator | `book/`, `scaffolding/roadmap.md`, `scaffolding/cycle-record.jsonl`, `scaffolding/open-questions.md`, `log/` |
 | meta-phase | `.claude/agents/`, `skills/`, `scaffolding/priorities.md`, `scaffolding/friction-ledger.md`, `scaffolding/skill-candidates.md` (status updates), `scaffolding/problems-sensitivity.md`, channel-format specs |
 
@@ -147,10 +147,10 @@ These are load-bearing — do not "improve" them away.
 
 - **Citations are mandatory.** Every claim carries `(file, start_line, end_line)`. No citation, no claim. Citation format: plain text `relative/path/file.ext:start-end` (relative to `reference/`).
 - **Roles do not share context.** Each subagent dispatch gets its own isolated context. The critic in particular must not see the producer's chain-of-thought.
-- **Reports are append-only after integration.** After `integrated_at:` is set, REPORT.md content is not edited. (Repairer may edit pre-integration; bounded by repair authority.)
+- **Reports are append-only after integration.** After `integrated_at:` is set, CYCLE.md content is not edited. (Repairer may edit pre-integration; bounded by repair authority.)
 - **Commit every cycle, pass or fail.** The integrator commits + pushes. Atomic operation: artifact + scaffolding + log + book output as one commit.
 - **Push after every commit.** `git commit ... && git push origin main` chained. No commits sitting locally between turns.
-- **Spec growth is monotonic and visible in `git log`.** Realized as REPORT.md proposed-changes blocks parsed by the integrator.
+- **Spec growth is monotonic and visible in `git log`.** Realized as CYCLE.md proposed-changes blocks parsed by the integrator.
 - **If a step is ambiguous, stop and ask the human.** Don't improvise around the spec.
 
 ## Process model: push-forward, push-back; the stack is a research artifact

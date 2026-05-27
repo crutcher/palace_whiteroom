@@ -10,5 +10,5 @@
 - **Open questions promoted to ledger**: 4 (axpy-l1-l0-three-subpatterns, axpby-axpbypcz-next-harvest, scalar-promotion-typing-rule, l1-index-refresh).
 - **Build**: `cargo make book` — clean (88s; pre-existing katex-link warnings unchanged).
 - **Reports**:
-  - `reports/2026-05-26T223039Z-harvester-axpy-L1/` — REPORT.md, META.md (critique + repair sections).
-  - `reports/2026-05-26T225000Z-integrator-pilot-1/REPORT.md` — batch report.
+  - `reports/2026-05-26T223039Z-harvester-axpy-L1/` — CYCLE.md, META.md (critique + repair sections).
+  - `reports/2026-05-26T225000Z-integrator-pilot-1/CYCLE.md` — batch report.

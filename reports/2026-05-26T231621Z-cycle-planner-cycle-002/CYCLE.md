@@ -47,6 +47,6 @@ No subsequent waves — single-wave cycle.
 
 ## Parent-session annotation (persisted via embed-and-persist skill)
 
-This REPORT.md was persisted by the parent session because the cycle-planner subagent (haiku, two consecutive dispatches) skipped its Write call and returned content as text, even when told the documented `subagent-file-write-blocked-general-purpose` friction had been verified resolved. The content above is the haiku planner's substantive output verbatim.
+This CYCLE.md was persisted by the parent session because the cycle-planner subagent (haiku, two consecutive dispatches) skipped its Write call and returned content as text, even when told the documented `subagent-file-write-blocked-general-purpose` friction had been verified resolved. The content above is the haiku planner's substantive output verbatim.
 
 Independent verification by the parent session (probe via `harvester` opus subagent): custom `.claude/agents/<name>.md` definitions resolve via `Agent(subagent_type=<name>)` AND opus subagents' `Write` calls persist to disk. The friction is resolved for opus-tier agents; haiku-tier cycle-planner still anchors to the friction-ledger lore and skips Write. New friction pattern (`haiku-subagent-anchors-to-ledger-lore`) to be filed by meta-phase at end of cycle-002.

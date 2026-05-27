@@ -4,9 +4,9 @@ invoked_at: 2026-05-26T22:53:00Z
 scope: pilot-1 meta-phase
 status: pending
 inputs:
-  - reports/2026-05-26T223039Z-harvester-axpy-L1/REPORT.md
+  - reports/2026-05-26T223039Z-harvester-axpy-L1/CYCLE.md
   - reports/2026-05-26T223039Z-harvester-axpy-L1/META.md
-  - reports/2026-05-26T225000Z-integrator-pilot-1/REPORT.md
+  - reports/2026-05-26T225000Z-integrator-pilot-1/CYCLE.md
   - scaffolding/cycle-record.jsonl (tail)
   - scaffolding/friction-ledger.md
   - scaffolding/skill-candidates.md
@@ -37,7 +37,7 @@ inputs:
 
 **Patterns to watch** (next 2-3 cycles):
 
-- Whether the embed-and-persist pattern produces consistent REPORT.md quality across different agent types.
+- Whether the embed-and-persist pattern produces consistent CYCLE.md quality across different agent types.
 - Whether the critic's 8-check catches issues the old 15-check missed, or vice versa.
 - Whether the repair-authority bar holds — none of pilot-1's repairs strained it.
 

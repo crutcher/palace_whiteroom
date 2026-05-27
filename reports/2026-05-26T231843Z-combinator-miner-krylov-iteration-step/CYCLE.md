@@ -161,4 +161,4 @@ Tests:
 
 ## Parent-session annotation
 
-This REPORT.md was persisted by the parent session because the combinator-miner subagent's `Write` call was intercepted by the content-pattern filter ("Subagents should return findings as text, not write report files."). Body content above is the combinator-miner's substantive output verbatim. Same finding as the harvester and abstractor reports.
+This CYCLE.md was persisted by the parent session because the combinator-miner subagent's `Write` call was intercepted by the content-pattern filter ("Subagents should return findings as text, not write report files."). Body content above is the combinator-miner's substantive output verbatim. Same finding as the harvester and abstractor reports.

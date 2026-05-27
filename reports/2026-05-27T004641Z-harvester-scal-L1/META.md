@@ -1,5 +1,5 @@
 ---
-verifies: ../REPORT.md
+verifies: ../CYCLE.md
 critiqued_at: 2026-05-27T00:55:00Z
 critic_version: 1
 checks:
@@ -70,7 +70,7 @@ The "non-law" idempotence-condition statement (`α² = α` ⇒ `α ∈ {0,1}`) i
 
 - **Finding**: skill-uptake-survey warning — `skill_uptake:` frontmatter block missing.
   - **Decision**: repaired
-  - **Action**: Added `skill_uptake:` block to REPORT.md frontmatter (after `inputs:`, before closing `---`) mirroring the axpby/dot/nrm2 format. Three entries: `verify-citation-range` (triggered: true, explained_non_applicable — citations verified inline during authoring), `classify-variant-axis` (triggered: true, artifact_landed — two axes landed: element-type real|complex, scalar-promotion sub-axis), `verify-refinement-surface` (triggered: true, explained_non_applicable — three proposed-changes blocks verified by inspection against cycle-003 precedents).
+  - **Action**: Added `skill_uptake:` block to CYCLE.md frontmatter (after `inputs:`, before closing `---`) mirroring the axpby/dot/nrm2 format. Three entries: `verify-citation-range` (triggered: true, explained_non_applicable — citations verified inline during authoring), `classify-variant-axis` (triggered: true, artifact_landed — two axes landed: element-type real|complex, scalar-promotion sub-axis), `verify-refinement-surface` (triggered: true, explained_non_applicable — three proposed-changes blocks verified by inspection against cycle-003 precedents).
   - Rationale: format precedent is fixed across axpy/dot/nrm2/axpby; classifications are mechanically derivable from the report's own Variant axes section and proposed-changes blocks. No content authoring required.
 
 ### Unrepairable findings

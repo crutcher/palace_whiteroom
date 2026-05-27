@@ -1,5 +1,5 @@
 ---
-verifies: ../REPORT.md
+verifies: ../CYCLE.md
 critiqued_at: 2026-05-27T00:35:00Z
 critic_version: 1
 checks:
@@ -56,11 +56,11 @@ follow_up_agent: layer-intro-author
 
 ### Issues found
 
-1. **Recommendation routing is concrete but contains a role-scope ambiguity that the report flags itself.** REPORT.md:38, 44 routes the cycle-004 follow-up to `layer-intro-author` while the report's own §"Open questions" item 1 (lines 71) acknowledges that `.claude/agents/layer-intro-author.md` (verified: lines 9–10 of that file) scopes the role to "L_n / L_{n+1}>L_n layer introduction, semantics overlay, and dep-map" — `concepts/` pages are not in that scope. The report handles this correctly by surfacing the ambiguity for meta-phase rather than asserting authority, but the routing recommendation itself is therefore provisional, not concrete. Severity: low — the report's framing ("closest existing fit", "meta-phase should consider") is appropriate; this is a noted limitation rather than a defect. Location: REPORT.md:38, 44, 71.
+1. **Recommendation routing is concrete but contains a role-scope ambiguity that the report flags itself.** CYCLE.md:38, 44 routes the cycle-004 follow-up to `layer-intro-author` while the report's own §"Open questions" item 1 (lines 71) acknowledges that `.claude/agents/layer-intro-author.md` (verified: lines 9–10 of that file) scopes the role to "L_n / L_{n+1}>L_n layer introduction, semantics overlay, and dep-map" — `concepts/` pages are not in that scope. The report handles this correctly by surfacing the ambiguity for meta-phase rather than asserting authority, but the routing recommendation itself is therefore provisional, not concrete. Severity: low — the report's framing ("closest existing fit", "meta-phase should consider") is appropriate; this is a noted limitation rather than a defect. Location: CYCLE.md:38, 44, 71.
 
-2. **Skill non-invocation telemetry.** REPORT.md §"Specific finding" row 3 and §"Supporting evidence" line 66 perform citation-range verification (asserting `vector.cpp:142-178` is `Get`/`operator=`/`SetBlocks`, not dot). This is the canonical `verify-citation-range` use case, but the skill is not named or invoked in the report. Not blocking; surfaces only as skill-uptake telemetry. Severity: telemetry-only. Location: REPORT.md:32 (table row 3), 66.
+2. **Skill non-invocation telemetry.** CYCLE.md §"Specific finding" row 3 and §"Supporting evidence" line 66 perform citation-range verification (asserting `vector.cpp:142-178` is `Get`/`operator=`/`SetBlocks`, not dot). This is the canonical `verify-citation-range` use case, but the skill is not named or invoked in the report. Not blocking; surfaces only as skill-uptake telemetry. Severity: telemetry-only. Location: CYCLE.md:32 (table row 3), 66.
 
-3. **Out-of-scope sweep proposal is correctly bounded but worth flagging.** REPORT.md:49 and §"Open questions" item 2 (line 72) propose a sweep of `book/src/concepts/` for analogous wrong-signature / hallucinated-symbol risks in pre-layered-era concept pages. The report correctly scopes this out per the one-observation-per-invocation discipline. No defect — surfaced here so the integrator and meta-phase see the recommendation as a candidate cycle-005 dispatch item.
+3. **Out-of-scope sweep proposal is correctly bounded but worth flagging.** CYCLE.md:49 and §"Open questions" item 2 (line 72) propose a sweep of `book/src/concepts/` for analogous wrong-signature / hallucinated-symbol risks in pre-layered-era concept pages. The report correctly scopes this out per the one-observation-per-invocation discipline. No defect — surfaced here so the integrator and meta-phase see the recommendation as a candidate cycle-005 dispatch item.
 
 ## Repair
 
@@ -68,12 +68,12 @@ follow_up_agent: layer-intro-author
 
 - **Finding**: skill-uptake-survey warning — report performs `verify-citation-range`-shaped work (asserting `vector.cpp:142-178` is not dot content) without naming the skill.
   - **Decision**: repaired
-  - **Action**: Added `skill_uptake:` frontmatter block to REPORT.md mirroring the cycle-002 dot harvester format. Three entries: `verify-citation-range` (`triggered: true, decision: artifact_landed` — used inline to refute the bogus cite); `classify-variant-axis` (`triggered: true, decision: explained_non_applicable` — observation-shape report, not operator-promotion); `verify-refinement-surface` (`triggered: true, decision: explained_non_applicable` — no proposed-changes block in cross-cutter observation-only role).
+  - **Action**: Added `skill_uptake:` frontmatter block to CYCLE.md mirroring the cycle-002 dot harvester format. Three entries: `verify-citation-range` (`triggered: true, decision: artifact_landed` — used inline to refute the bogus cite); `classify-variant-axis` (`triggered: true, decision: explained_non_applicable` — observation-shape report, not operator-promotion); `verify-refinement-surface` (`triggered: true, decision: explained_non_applicable` — no proposed-changes block in cross-cutter observation-only role).
   - **Rationale**: Pure telemetry surface; skill names obvious from the report's own evidence shape (citation-range verification is explicit in §"Specific finding" row 3 and §"Supporting evidence" line 66). Mechanical fix within repair authority.
 
 ### Unrepairable findings
 
-None. The two non-blocking critic notes (recommendation-routing ambiguity at REPORT.md:38/44/71; out-of-scope sweep proposal at REPORT.md:49) are correctly bounded by the report itself — the routing rationale already explicitly flags itself as provisional and surfaces the scope question for meta-phase, and the sweep is correctly deferred to a candidate cycle-005 dispatch. Neither constitutes a defect the repairer must address.
+None. The two non-blocking critic notes (recommendation-routing ambiguity at CYCLE.md:38/44/71; out-of-scope sweep proposal at CYCLE.md:49) are correctly bounded by the report itself — the routing rationale already explicitly flags itself as provisional and surfaces the scope question for meta-phase, and the sweep is correctly deferred to a candidate cycle-005 dispatch. Neither constitutes a defect the repairer must address.
 
 ## Suggested resolution
 

@@ -35,7 +35,7 @@ The following files are **running ledgers** — appendable cumulative state read
 These have their own channels and should not pollute `scaffolding/`:
 
 - **Slice-local working notes** → that slice's `## Working Notes` section in `book/src/spec/slices/<X>.md` (or `book/src/L_n/<operator>.md` under the new layout).
-- **Per-report artifacts** → `reports/<id>/REPORT.md` (under the new cycle structure).
+- **Per-report artifacts** → `reports/<id>/CYCLE.md` (under the new cycle structure).
 - **Out-of-role authority concerns** → `problems/`.
 
 The old channels — `lessons.md` (historical record, kept), `questions.md` (archived seed questions, kept), `episodic.jsonl` (moved to `scaffolding/cycle-record.jsonl`) — are superseded by the running ledgers above.

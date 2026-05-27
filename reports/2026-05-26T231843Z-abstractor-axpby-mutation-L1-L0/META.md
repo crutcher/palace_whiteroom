@@ -1,5 +1,5 @@
 ---
-verifies: ../REPORT.md
+verifies: ../CYCLE.md
 critiqued_at: 2026-05-26T23:40:00Z
 critic_version: 1
 checks:
@@ -74,17 +74,17 @@ The report would benefit from naming the skills it followed. Telemetry only; not
 
 ### Issues found
 
-1. **Dep-map row points to a non-existent chapter** (REPORT.md §Proposed changes, second block, `book/src/L1/index.md` edit). The new row `[\`axpby\`](./axpby.md)` references `book/src/L1/axpby.md`, which is not created by this report. If the integrator applies the row, the mdBook link-check gate will fail. Severity: high (blocks integration). Repair options: (a) drop the dep-map row in this report — the theme chapter alone is the cycle-002 deliverable; defer the L1 row to a follow-up harvester cycle that creates `axpby.md`; (b) make the row bare text without a link (`\`axpby\``) until the chapter exists; (c) include a stub `axpby.md` chapter marked `rough-in` (scope drift; recommend against).
+1. **Dep-map row points to a non-existent chapter** (CYCLE.md §Proposed changes, second block, `book/src/L1/index.md` edit). The new row `[\`axpby\`](./axpby.md)` references `book/src/L1/axpby.md`, which is not created by this report. If the integrator applies the row, the mdBook link-check gate will fail. Severity: high (blocks integration). Repair options: (a) drop the dep-map row in this report — the theme chapter alone is the cycle-002 deliverable; defer the L1 row to a follow-up harvester cycle that creates `axpby.md`; (b) make the row bare text without a link (`\`axpby\``) until the chapter exists; (c) include a stub `axpby.md` chapter marked `rough-in` (scope drift; recommend against).
 
-2. **Filename / slug discrepancy with cycle-002 plan** (REPORT.md caveat #6). Plan says `theme-mutation-rotation.md`; report uses `axpby-mutation-rotation.md`. Report recommends slug-based name with clear forward-compatibility argument (`axpbypcz-mutation-rotation`, `mult-output-arg-rotation` ahead). Severity: low (clearly surfaced, integrator can choose). Repair options: (a) integrator accepts slug-based name (matches the SUMMARY entry as written); (b) integrator renames file + SUMMARY to plan's name. No code change to REPORT.md needed.
+2. **Filename / slug discrepancy with cycle-002 plan** (CYCLE.md caveat #6). Plan says `theme-mutation-rotation.md`; report uses `axpby-mutation-rotation.md`. Report recommends slug-based name with clear forward-compatibility argument (`axpbypcz-mutation-rotation`, `mult-output-arg-rotation` ahead). Severity: low (clearly surfaced, integrator can choose). Repair options: (a) integrator accepts slug-based name (matches the SUMMARY entry as written); (b) integrator renames file + SUMMARY to plan's name. No code change to CYCLE.md needed.
 
-3. **`vector.hpp` line-range labelling is off by one** (REPORT.md §Sub-pattern A citations, "vector.hpp:115-117 — ComplexVector::AXPY / Add decls"). Line 115 is the comment, lines 116 (AXPY) and 117 (Add) are the decls. The range should be 116-117 if naming "AXPY / Add decls" strictly. Severity: low (cosmetic; range is in-bounds, no claim contradicted). Repair option: rewrite as `vector.hpp:115-118` (covering the leading comment through Subtract) or as `vector.hpp:116-117` (strict decls).
+3. **`vector.hpp` line-range labelling is off by one** (CYCLE.md §Sub-pattern A citations, "vector.hpp:115-117 — ComplexVector::AXPY / Add decls"). Line 115 is the comment, lines 116 (AXPY) and 117 (Add) are the decls. The range should be 116-117 if naming "AXPY / Add decls" strictly. Severity: low (cosmetic; range is in-bounds, no claim contradicted). Repair option: rewrite as `vector.hpp:115-118` (covering the leading comment through Subtract) or as `vector.hpp:116-117` (strict decls).
 
 4. **`vector.hpp:118` is cited at single-line granularity in Sub-pattern C** ("`Subtract(α, x) { AXPY(-α, x); }`"). The cited line 118 is exactly that. Confirmed in-range. No issue; noted because the report mixes single-line and multi-line ranges without a stated convention. Severity: information.
 
 5. **Skill invocations not named** (telemetry). The report does not reference `verify-citation-range`, `classify-variant-axis`, or `propose-rotation` skills despite their availability and apparent relevance. Severity: information.
 
-6. **Parent-session annotation at end of REPORT.md** documents a meta-finding (custom-agent dispatch resolves but subagent `*REPORT.md` writes are blocked). This is appropriate transparency, surfaces a real friction pattern, and points to meta-phase action. Not an issue; noted because it duplicates the harvester report's same finding — meta-phase should consolidate.
+6. **Parent-session annotation at end of CYCLE.md** documents a meta-finding (custom-agent dispatch resolves but subagent `*CYCLE.md` writes are blocked). This is appropriate transparency, surfaces a real friction pattern, and points to meta-phase action. Not an issue; noted because it duplicates the harvester report's same finding — meta-phase should consolidate.
 
 ## Repair
 
@@ -92,7 +92,7 @@ The report would benefit from naming the skills it followed. Telemetry only; not
 
 - **Finding 1**: Dep-map row links to `./axpby.md` chapter that doesn't exist (`book/src/L1/index.md` edit block). After integrator applies, mdBook link-check would fail.
   - **Decision**: repaired
-  - **Action**: Edit on REPORT.md §Proposed changes, `edit:book/src/L1/index.md` block. Changed `[\`axpby\`](./axpby.md)` to plain `` `axpby` `` (no link). Per the dep-map convention, rough-in entries don't link until they're firm. Harvester will re-link when `book/src/L1/axpby.md` is created in a future cycle.
+  - **Action**: Edit on CYCLE.md §Proposed changes, `edit:book/src/L1/index.md` block. Changed `[\`axpby\`](./axpby.md)` to plain `` `axpby` `` (no link). Per the dep-map convention, rough-in entries don't link until they're firm. Harvester will re-link when `book/src/L1/axpby.md` is created in a future cycle.
   - **Rationale**: Mechanical fix; preserves the rough-in dep-map entry (which carries semantic value: signals upcoming axpby work and subsumption relation to integrator + future agents) while removing the broken link that would fail the link-check gate.
 
 - **Finding 2**: Filename slug discrepancy (cycle-002 plan named `theme-mutation-rotation.md`; report uses `axpby-mutation-rotation.md`).
@@ -101,12 +101,12 @@ The report would benefit from naming the skills it followed. Telemetry only; not
 
 - **Finding 3**: `vector.hpp:115-117` range off-by-one (line 115 is the leading comment; strict AXPY/Add decls are 116-117).
   - **Decision**: repaired
-  - **Action**: Edit on REPORT.md §Sub-pattern A citations. Changed `vector.hpp:115-117` → `vector.hpp:116-117`. Verified against source: line 115 is `// In-place addition (*this) += alpha * x.`, line 116 is `void AXPY(...)`, line 117 is `void Add(...)`. The 116-117 range exactly matches the labelling "ComplexVector::AXPY / Add decls".
+  - **Action**: Edit on CYCLE.md §Sub-pattern A citations. Changed `vector.hpp:115-117` → `vector.hpp:116-117`. Verified against source: line 115 is `// In-place addition (*this) += alpha * x.`, line 116 is `void AXPY(...)`, line 117 is `void Add(...)`. The 116-117 range exactly matches the labelling "ComplexVector::AXPY / Add decls".
   - **Rationale**: Cosmetic off-by-one; mechanical fix verified against source.
 
 - **Finding 4**: Skill telemetry absent — `verify-citation-range`, `classify-variant-axis`, `propose-rotation` not named.
   - **Decision**: repaired
-  - **Action**: Edit on REPORT.md frontmatter. Added `skill_uptake:` block mirroring the pilot-1 axpy format (`reports/2026-05-26T223039Z-harvester-axpy-L1/REPORT.md`). Entries: `verify-citation-range` (explained_non_applicable; deferred until critic-phase mechanism stabilizes; repairer post-hoc tightened one range), `classify-variant-axis` (artifact_landed; scalar-value constant-folding axis classified into three sub-patterns), `propose-rotation` (artifact_landed; theme follows the template).
+  - **Action**: Edit on CYCLE.md frontmatter. Added `skill_uptake:` block mirroring the pilot-1 axpy format (`reports/2026-05-26T223039Z-harvester-axpy-L1/CYCLE.md`). Entries: `verify-citation-range` (explained_non_applicable; deferred until critic-phase mechanism stabilizes; repairer post-hoc tightened one range), `classify-variant-axis` (artifact_landed; scalar-value constant-folding axis classified into three sub-patterns), `propose-rotation` (artifact_landed; theme follows the template).
   - **Rationale**: Mechanical telemetry restoration; the decisions and rationales are derivable from the report content itself, not authored.
 
 ### Unrepairable findings
@@ -121,4 +121,4 @@ Follow-up: name `lowering-verifier` for a subsequent cycle to audit the three su
 
 Integrator notes:
 - The filename discrepancy (Finding 2) is the integrator's choice. Report recommends `axpby-mutation-rotation.md`; cycle-plan named `theme-mutation-rotation.md`. The SUMMARY edit block uses the slug-based name; integrator should keep them aligned.
-- The parent-session annotation at the end of REPORT.md (about subagent `*REPORT.md` write blocks) duplicates the harvester report's same finding. Meta-phase should consolidate, not the integrator.
+- The parent-session annotation at the end of CYCLE.md (about subagent `*CYCLE.md` write blocks) duplicates the harvester report's same finding. Meta-phase should consolidate, not the integrator.

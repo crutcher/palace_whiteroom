@@ -184,21 +184,24 @@ addressed_by: c3312a6 (cycle-002 verification) + content-pattern-write-filter-on
 ---
 slug: content-pattern-write-filter-on-report-keywords
 first_observed: cycle-002
-last_observed: cycle-002
-recurrence_count: 1
-status: addressed-by-design
-addressed_by: parent-pre-creates-skeleton pattern (in embed-and-persist-subagent-dispatch SKILL.md) + Edit-not-Write workaround
+last_observed: cycle-004
+recurrence_count: 4
+status: resolved-by-rename
+addressed_by: cycle-004 user directive — REPORT.md → CYCLE.md project-wide rename (commit TBD)
 ---
 ```
 
-The Claude Code harness applies a content-pattern filter that **blocks `Write` to filenames containing `report|summary|findings|analysis` keywords**, with error text: "Subagents should return findings as text, not write report files. Include this content in your final response instead." Discovered cycle-002 across 3 specialized subagents (harvester/abstractor/combinator-miner) + cycle-planner + integrator. Confirmed:
+The Claude Code harness applies a content-pattern filter that **blocks `Write` to filenames containing `report|summary|findings|analysis` keywords**, with error text: "Subagents should return findings as text, not write report files. Include this content in your final response instead."
 
-- **`Write` is blocked** on `*REPORT.md`, `*SUMMARY*.md` (etc.) targets.
-- **`Write` works** on non-matching filenames (e.g., `book/src/L1/dot.md` succeeded for integrator).
-- **`Edit` is NOT filtered** — all three repairers used `Edit` on REPORT.md frontmatter without issue.
-- **`Write` to `META.md` works** (META does not match keywords) — all three critics + repairers persisted META.md directly.
+**Original misframing (cycle-002 → cycle-003):** treated as `addressed-by-design`; mitigation was parent-pre-creates-skeleton + Edit-not-Write workaround, documented in `skills/embed-and-persist-subagent-dispatch/SKILL.md`. The workaround was load-bearing — every dispatch required parent participation to scaffold the file the subagent would then edit. This coupled the orchestration layer to a harness quirk.
 
-**Operational mitigation (cycle-002):** Parent session pre-creates an empty REPORT.md skeleton at the target path; the subagent populates via `Edit` rather than `Write`. Used successfully for cycle-planner REPORT, integrator REPORT, and this meta-phase REPORT. Documented in `skills/embed-and-persist-subagent-dispatch/SKILL.md` (refined cycle-002). No further infrastructure change requested — by-design behavior, well-understood workaround.
+**User escalation (cycle-004):** "Can I direct you to raise process issues like this in the future, rather than working around them as aggressively as you are here?" → friction recharacterized as a bug to repair, not a design to accommodate.
+
+**Investigation findings:** the filter is NOT a configured hook (no project PreToolUse hook in `.claude/settings.local.json`; the user's only enabled plugin is `rust-analyzer-lsp`, which has no Write hook). The filter is almost certainly a built-in Claude Code default subagent system-prompt instruction that tells dispatched subagents "don't Write report/summary/findings/analysis files; return as text". It applies regardless of subagent type or `tools:` grant. The main session is unaffected. `Edit` is unaffected. `Write` to non-keyword filenames is unaffected.
+
+**Resolution (cycle-004):** project-wide rename `REPORT.md → CYCLE.md`. All 25 existing per-dispatch report files renamed via `git mv`. All references in `.claude/agents/*.md`, `skills/`, `CLAUDE.md`, `MIGRATION.md`, scaffolding, and log files updated via bulk sed. The filter is dodged entirely (CYCLE.md does not match the keyword pattern). Skill `embed-and-persist-subagent-dispatch` is retired (no longer needed). Parent-pre-creates-skeleton pattern obsolete.
+
+**Follow-up not yet enacted:** a Claude Code feature/bug request that custom-agent definitions should be able to override the default subagent Write-filter (so projects with intentional report-emitting subagents can opt in by name). Filed against `addressed_by` upstream tracker — not blocking; the rename is sufficient repair.
 
 ---
 

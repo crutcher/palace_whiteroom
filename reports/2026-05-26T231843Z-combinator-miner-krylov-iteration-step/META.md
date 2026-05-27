@@ -1,5 +1,5 @@
 ---
-verifies: ../REPORT.md
+verifies: ../CYCLE.md
 critiqued_at: 2026-05-26T23:35:00Z
 critic_version: 1
 checks:
@@ -63,13 +63,13 @@ follow_up_agent: harvester
 
 ### Issues found
 
-1. **plan-kind-consistency / format precedent** (REPORT.md `## Proposed changes` block, lines 84–102). Dep-map entry uses tree-style indented list rather than the markdown table form established in `book/src/L1/index.md`. As the first entry in `book/src/L2/index.md`'s dep-map, this sets the L2 format precedent. The tree form carries strictly more information (`proposed-by:` / `consumed-by:` / `pattern instances:`) so a downgrade to the L1 table form would lose data. Severity: minor; integrator-level decision. Repairable as either (a) adopt L1's table form and move provenance/instance metadata to working-notes prose, or (b) accept the tree form as the L2 precedent and revisit at meta-phase.
+1. **plan-kind-consistency / format precedent** (CYCLE.md `## Proposed changes` block, lines 84–102). Dep-map entry uses tree-style indented list rather than the markdown table form established in `book/src/L1/index.md`. As the first entry in `book/src/L2/index.md`'s dep-map, this sets the L2 format precedent. The tree form carries strictly more information (`proposed-by:` / `consumed-by:` / `pattern instances:`) so a downgrade to the L1 table form would lose data. Severity: minor; integrator-level decision. Repairable as either (a) adopt L1's table form and move provenance/instance metadata to working-notes prose, or (b) accept the tree form as the L2 precedent and revisit at meta-phase.
 
 2. **skill-uptake-survey** (whole report). No mention of `classify-variant-axis` or `verify-citation-range` skill invocations despite the report doing both activities. Severity: telemetry-only. Not repairable post-hoc.
 
-3. **Open question 3 borderline case** (REPORT.md §Open questions, item 3, lines 138–139). GMRES-Givens-stream is counted as Instance 5's third sub-instance but its primitive sequence (`givens_apply` / `givens_generate`) does not match the kernel's claimed sequence (`apply_linop` + `axpy` + `dot`). The report itself flags this and defers to harvester, which is acceptable, but a stricter pattern-instance count would be 4 (still clearing the ≥3 soft bar). Severity: minor; the report's own deferral handles it. No repair needed.
+3. **Open question 3 borderline case** (CYCLE.md §Open questions, item 3, lines 138–139). GMRES-Givens-stream is counted as Instance 5's third sub-instance but its primitive sequence (`givens_apply` / `givens_generate`) does not match the kernel's claimed sequence (`apply_linop` + `axpy` + `dot`). The report itself flags this and defers to harvester, which is acceptable, but a stricter pattern-instance count would be 4 (still clearing the ≥3 soft bar). Severity: minor; the report's own deferral handles it. No repair needed.
 
-4. **Naming caveat** (REPORT.md §Open questions, item 5). "krylov-step" stretches to cover Chebyshev (not strictly a Krylov-subspace method). Report flags and defers to harvester. Severity: minor; acceptable for rough-in stage.
+4. **Naming caveat** (CYCLE.md §Open questions, item 5). "krylov-step" stretches to cover Chebyshev (not strictly a Krylov-subspace method). Report flags and defers to harvester. Severity: minor; acceptable for rough-in stage.
 
 ## Repair
 
@@ -77,12 +77,12 @@ follow_up_agent: harvester
 
 - **Finding**: plan-kind-consistency — dep-map entry in proposed `book/src/L2/index.md` edit uses tree-style indented list rather than markdown-table form precedented by `book/src/L1/index.md` (`| Operator | Signature | Dependencies | Status |`). This is the FIRST L2 dep-map entry and will set the layer's format precedent.
   - **Decision**: repaired.
-  - **Action**: Rewrote the `## Operator dep-map` block in `REPORT.md` lines 84–102 (inside the `````edit:book/src/L2/index.md` proposed-changes block) to the L1 table form. The single row carries `Operator = krylov-step`, `Signature = (op_params, iter_state) → {state, outputs}`, `Dependencies = ` compact comma-list of the nine concepts from the original tree, `Status = rough-in (proposed-by: combinator-miner:2026-05-26T231843Z)`. The extra metadata that didn't fit the four-column shape (consumed-by, pattern-instance citation list, per-dependency annotations like "variant axis" / "preconditioner-side" / "output_extras slot") was moved into the `## Working Notes` subsection immediately below as a bulleted "`krylov-step` provenance and consumers" entry — no information lost.
+  - **Action**: Rewrote the `## Operator dep-map` block in `CYCLE.md` lines 84–102 (inside the `````edit:book/src/L2/index.md` proposed-changes block) to the L1 table form. The single row carries `Operator = krylov-step`, `Signature = (op_params, iter_state) → {state, outputs}`, `Dependencies = ` compact comma-list of the nine concepts from the original tree, `Status = rough-in (proposed-by: combinator-miner:2026-05-26T231843Z)`. The extra metadata that didn't fit the four-column shape (consumed-by, pattern-instance citation list, per-dependency annotations like "variant axis" / "preconditioner-side" / "output_extras slot") was moved into the `## Working Notes` subsection immediately below as a bulleted "`krylov-step` provenance and consumers" entry — no information lost.
   - **Rationale**: Format-normalization to an established layer precedent is mechanical; the L1 table form is canonical and the missing rough-in annotation slot is accommodated by the Status column plus Working Notes overflow. The richer tree-form metadata is preserved verbatim.
 
-- **Finding**: skill-uptake-survey — no `skill_uptake:` block in REPORT.md frontmatter despite the report exercising both `classify-variant-axis` (six axes enumerated) and `verify-citation-range` (five citation ranges checked).
+- **Finding**: skill-uptake-survey — no `skill_uptake:` block in CYCLE.md frontmatter despite the report exercising both `classify-variant-axis` (six axes enumerated) and `verify-citation-range` (five citation ranges checked).
   - **Decision**: repaired.
-  - **Action**: Added a `skill_uptake:` block to REPORT.md frontmatter mirroring the shape from `reports/2026-05-26T223039Z-harvester-axpy-L1/REPORT.md`. Two entries: `classify-variant-axis` → `artifact_landed` (six axes explicitly enumerated in the "Variant axes" subsection); `verify-citation-range` → `explained_non_applicable` (citations were inline-verified during authoring, skill invocation deferred per pilot-1 convention).
+  - **Action**: Added a `skill_uptake:` block to CYCLE.md frontmatter mirroring the shape from `reports/2026-05-26T223039Z-harvester-axpy-L1/CYCLE.md`. Two entries: `classify-variant-axis` → `artifact_landed` (six axes explicitly enumerated in the "Variant axes" subsection); `verify-citation-range` → `explained_non_applicable` (citations were inline-verified during authoring, skill invocation deferred per pilot-1 convention).
   - **Rationale**: Frontmatter telemetry is mechanical; the artifact-landed / explained-non-applicable distinction is determined by inspecting the body (which already enumerates the axes), not by re-doing the work.
 
 ### Unrepairable findings
@@ -93,6 +93,6 @@ The critic's items 3 (GMRES-Givens-stream borderline case) and 4 (krylov-step na
 
 ## Suggested resolution
 
-`overall_status: ready` — integrator may apply the report as-is. The `## Operator dep-map` section in `REPORT.md`'s proposed `book/src/L2/index.md` edit now uses the L1-precedent table form; the supplementary metadata sits in Working Notes; the frontmatter declares skill uptake.
+`overall_status: ready` — integrator may apply the report as-is. The `## Operator dep-map` section in `CYCLE.md`'s proposed `book/src/L2/index.md` edit now uses the L1-precedent table form; the supplementary metadata sits in Working Notes; the frontmatter declares skill uptake.
 
 `follow_up_agent: harvester` — next-cycle formalization of `krylov-step` should pin: (i) the canonical signature (this report's sketch is the rough-in), (ii) variant-axis dispatch sites (six axes already enumerated), (iii) algebraic laws section (the report's read: no internal algebraic laws; only law is the L4 §3.8 demand-pruning over `output_extras`), (iv) resolution of the naming caveat (Krylov-vs-iterative-step), (v) the GMRES-Givens-stream borderline-case decision (Open Q3). Harvester should also explicitly note the no-Palace-source-citation status (this is a methodology-level concept derived from five `book/src/spec/slices/` citations, not from `reference/palace/`).

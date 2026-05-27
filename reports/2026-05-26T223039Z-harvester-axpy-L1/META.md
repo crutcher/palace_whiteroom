@@ -1,5 +1,5 @@
 ---
-verifies: ../REPORT.md
+verifies: ../CYCLE.md
 critiqued_at: 2026-05-26T22:36:00Z
 critic_version: 1
 checks:
@@ -52,9 +52,9 @@ follow_up_agent: null
 
 ### Issues found
 
-1. **variant-axis-coverage warning** (REPORT.md, Signature + Open questions) — real-vs-complex variant axis discussed in prose only; not formally enumerated per `classify-variant-axis` skill format.
+1. **variant-axis-coverage warning** (CYCLE.md, Signature + Open questions) — real-vs-complex variant axis discussed in prose only; not formally enumerated per `classify-variant-axis` skill format.
 
-2. **skill-uptake-survey warning** (REPORT.md frontmatter) — `skill_uptake` field missing. Two skills would have applied (`verify-citation-range`, `classify-variant-axis`). Recommendation: add the field with `triggered: true / decision: explained_non_applicable` for skills considered-but-not-invoked.
+2. **skill-uptake-survey warning** (CYCLE.md frontmatter) — `skill_uptake` field missing. Two skills would have applied (`verify-citation-range`, `classify-variant-axis`). Recommendation: add the field with `triggered: true / decision: explained_non_applicable` for skills considered-but-not-invoked.
 
 ## Repair
 
@@ -63,13 +63,13 @@ follow_up_agent: null
 - **variant-axis-coverage** (`warning` → `repaired`)
   - **Finding**: real-vs-complex variant axis discussed in prose only; not formally enumerated.
   - **Decision**: repaired.
-  - **Action**: added a `## Variant axes` section to the proposed `book/src/L1/axpy.md` content (inside the `edit:book/src/L1/axpy.md` block of REPORT.md), enumerating `element-type` as the axis and `scalar promotion` as a sub-axis. Mirror entry added to the REPORT's `## Operator content` narrative section.
+  - **Action**: added a `## Variant axes` section to the proposed `book/src/L1/axpy.md` content (inside the `edit:book/src/L1/axpy.md` block of CYCLE.md), enumerating `element-type` as the axis and `scalar promotion` as a sub-axis. Mirror entry added to the REPORT's `## Operator content` narrative section.
   - **Rationale**: axes are clearly enumerable from the prose; mechanical promotion to structured form is in scope.
 
 - **skill-uptake-survey** (`warning` → `repaired`)
-  - **Finding**: `skill_uptake` field missing from REPORT.md frontmatter.
+  - **Finding**: `skill_uptake` field missing from CYCLE.md frontmatter.
   - **Decision**: repaired.
-  - **Action**: added `skill_uptake:` block to REPORT.md frontmatter naming `verify-citation-range` (decision `explained_non_applicable` — citations verified inline) and `classify-variant-axis` (decision `artifact_landed` — variant-axes section authored as part of this report's repair).
+  - **Action**: added `skill_uptake:` block to CYCLE.md frontmatter naming `verify-citation-range` (decision `explained_non_applicable` — citations verified inline) and `classify-variant-axis` (decision `artifact_landed` — variant-axes section authored as part of this report's repair).
   - **Rationale**: skill-uptake telemetry shape is well-defined; populating the field is mechanical.
 
 ### Unrepairable findings

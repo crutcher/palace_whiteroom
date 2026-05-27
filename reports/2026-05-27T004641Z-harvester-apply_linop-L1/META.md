@@ -1,5 +1,5 @@
 ---
-verifies: ../REPORT.md
+verifies: ../CYCLE.md
 critiqued_at: 2026-05-27T01:05:00Z
 critic_version: 1
 checks:
@@ -30,8 +30,8 @@ checks:
 
 ### Issues found
 
-1. **Line-number drift in Context paragraph** (REPORT.md §Context, bullet for `BaseMultigridOperator`): cited as `operator.hpp:347` for the Mult dispatch, but the class spans 298-367 (Evidence section is correct). Minor — likely the Mult line within the class, not the class header. *Severity: low.*
-2. **`AddMult` decomposition bit-equivalence caveat** (REPORT.md §Semantics + Open question #3): the report acknowledges `AddMult = axpby(a, apply_linop(A, x), 1, y)` is bit-equivalent only for assembled operators, not matrix-free. Flagged in own Open questions but the Semantics prose states the equivalence without inline guard — repairer may want to add a single-clause hedge. *Severity: low.*
-3. **L1>L0 lowering theme size flag** (REPORT.md Open question #2): the report flags that the `apply-linop-mutation-rotation` lowering theme will be substantially larger than `axpby-mutation-rotation`, but does NOT route this as an entry in `scaffolding/open-questions.md`. Per the format used by sibling reports (e.g. `axpy-lowering-deliverables`, `nrm2-lowering-theme-deliverables`), this finding deserves an open-questions slug. *Severity: medium — surfacing pattern is established and skipped here.*
-4. **Concept-page drift not problem-channel-routed** (REPORT.md Open question #1): noted that `concepts/apply_linop.md` has structural drift (duplicate heading, "L3 tensor-field form" mis-located). Per the "in-reading drive-by observation" pattern relaxed 2026-05-26, this is a candidate for `problems/` filing, not just an in-report caveat. *Severity: low — discretionary.*
-5. **Missing rectangular witness for square-case caveat** (REPORT.md §Signature): the prose says "For square operators (the common case in iterative solvers: `A` is square in CG and GMRES, both squares of dimension `M = N`)". Phrasing "both squares of dimension M = N" reads oddly — appears to mean both CG and GMRES, but parses ambiguously. *Severity: low — copy-edit.*
+1. **Line-number drift in Context paragraph** (CYCLE.md §Context, bullet for `BaseMultigridOperator`): cited as `operator.hpp:347` for the Mult dispatch, but the class spans 298-367 (Evidence section is correct). Minor — likely the Mult line within the class, not the class header. *Severity: low.*
+2. **`AddMult` decomposition bit-equivalence caveat** (CYCLE.md §Semantics + Open question #3): the report acknowledges `AddMult = axpby(a, apply_linop(A, x), 1, y)` is bit-equivalent only for assembled operators, not matrix-free. Flagged in own Open questions but the Semantics prose states the equivalence without inline guard — repairer may want to add a single-clause hedge. *Severity: low.*
+3. **L1>L0 lowering theme size flag** (CYCLE.md Open question #2): the report flags that the `apply-linop-mutation-rotation` lowering theme will be substantially larger than `axpby-mutation-rotation`, but does NOT route this as an entry in `scaffolding/open-questions.md`. Per the format used by sibling reports (e.g. `axpy-lowering-deliverables`, `nrm2-lowering-theme-deliverables`), this finding deserves an open-questions slug. *Severity: medium — surfacing pattern is established and skipped here.*
+4. **Concept-page drift not problem-channel-routed** (CYCLE.md Open question #1): noted that `concepts/apply_linop.md` has structural drift (duplicate heading, "L3 tensor-field form" mis-located). Per the "in-reading drive-by observation" pattern relaxed 2026-05-26, this is a candidate for `problems/` filing, not just an in-report caveat. *Severity: low — discretionary.*
+5. **Missing rectangular witness for square-case caveat** (CYCLE.md §Signature): the prose says "For square operators (the common case in iterative solvers: `A` is square in CG and GMRES, both squares of dimension `M = N`)". Phrasing "both squares of dimension M = N" reads oddly — appears to mean both CG and GMRES, but parses ambiguously. *Severity: low — copy-edit.*

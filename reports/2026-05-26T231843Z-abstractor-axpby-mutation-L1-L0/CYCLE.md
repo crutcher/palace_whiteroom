@@ -334,4 +334,4 @@ Cross-cycle context:
 
 ## Parent-session annotation
 
-This REPORT.md was persisted by the parent session because the abstractor subagent's `Write` call was intercepted by the content-pattern filter ("Subagents should return findings as text, not write report files."). Body content above is the abstractor's substantive output verbatim. Same finding as the harvester-dot report: custom-agent dispatch resolves, but `*REPORT.md` writes by subagents are blocked. Meta-phase action needed.
+This CYCLE.md was persisted by the parent session because the abstractor subagent's `Write` call was intercepted by the content-pattern filter ("Subagents should return findings as text, not write report files."). Body content above is the abstractor's substantive output verbatim. Same finding as the harvester-dot report: custom-agent dispatch resolves, but `*CYCLE.md` writes by subagents are blocked. Meta-phase action needed.

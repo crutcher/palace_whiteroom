@@ -20,7 +20,7 @@ Each section: **slug**, **question text** (1–3 sentences), **context** (where 
 
 **Discipline:**
 - Any agent appends; never edits existing sections (except status).
-- Integrator promotes per-report REPORT.md "Open questions / caveats" sections into this ledger on landing.
+- Integrator promotes per-report CYCLE.md "Open questions / caveats" sections into this ledger on landing.
 - Meta-phase reviews open questions periodically and may drop stale ones (status `dropped` with reason) or promote into friction-ledger / skill-candidates.
 - Cycle-planner reads as a priority input — long-open questions get attention.
 

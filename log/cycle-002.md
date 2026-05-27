@@ -15,9 +15,9 @@
 - **All three `overall_status: ready`** — applied as-is.
 - **Safety-net gates**: 0 hits. SUMMARY.md fragment risk was caught by repairer pre-integration; concept-page contradictions accumulate as embedded friction per CLAUDE.md "Accumulate surface with embedded friction".
 - **Open questions promoted to ledger**: 10 — `concepts-dot-return-type-correction`, `concepts-dot-dotc-and-inverted-conjugation`, `l1-l0-dot-lowering-asymmetry`, `dot-reduction-tree-determinism-survey`, `axpby-axpy-scal-decomposition-decision`, `axpby-lowering-verifier-audit`, `krylov-step-layer-placement`, `krylov-step-naming-and-borderline-cases`, `krylov-step-harvester-deliverables`, `l2-dep-map-format-vs-l1`.
-- **Build**: `cargo make book` — see batch REPORT.md for outcome.
+- **Build**: `cargo make book` — see batch CYCLE.md for outcome.
 - **Reports**:
-  - `reports/2026-05-26T231843Z-harvester-dot-L1/` — REPORT.md, META.md (critique + repair).
-  - `reports/2026-05-26T231843Z-abstractor-axpby-mutation-L1-L0/` — REPORT.md, META.md.
-  - `reports/2026-05-26T231843Z-combinator-miner-krylov-iteration-step/` — REPORT.md, META.md.
-  - `reports/2026-05-26T235101Z-integrator-cycle-002/REPORT.md` — batch report.
+  - `reports/2026-05-26T231843Z-harvester-dot-L1/` — CYCLE.md, META.md (critique + repair).
+  - `reports/2026-05-26T231843Z-abstractor-axpby-mutation-L1-L0/` — CYCLE.md, META.md.
+  - `reports/2026-05-26T231843Z-combinator-miner-krylov-iteration-step/` — CYCLE.md, META.md.
+  - `reports/2026-05-26T235101Z-integrator-cycle-002/CYCLE.md` — batch report.

@@ -1,5 +1,5 @@
 ---
-verifies: ../REPORT.md
+verifies: ../CYCLE.md
 critiqued_at: 2026-05-27T00:55:00Z
 critic_version: 1
 checks:
@@ -68,7 +68,7 @@ follow_up_agent: null
 
 - **Finding**: citation-validity issue (4) — `Mpi::GlobalSum` vs `MPI_Allreduce` polarity. Prose said the `linalg::Dot` template "dispatches `LocalDot` plus `MPI_Allreduce`", but the cited range `vector.hpp:247-253` shows `Mpi::GlobalSum(1, &dot, comm)` as the surface symbol.
   - **Decision**: repaired
-  - **Action**: Edited REPORT.md proposed-changes block, `[new]:` body of `book/src/concepts/dot.md`, "Return type — the L1 element-type rule" section: changed "dispatches `LocalDot` plus `MPI_Allreduce`" to "dispatches `LocalDot` plus `Mpi::GlobalSum` (a Palace wrapper over `MPI_Allreduce`)". Surface name now matches the cited range; algebraic equivalence note preserved. (Direct re-read of `vector.hpp:247-253` confirmed `Mpi::GlobalSum(1, &dot, comm)` is the literal call.)
+  - **Action**: Edited CYCLE.md proposed-changes block, `[new]:` body of `book/src/concepts/dot.md`, "Return type — the L1 element-type rule" section: changed "dispatches `LocalDot` plus `MPI_Allreduce`" to "dispatches `LocalDot` plus `Mpi::GlobalSum` (a Palace wrapper over `MPI_Allreduce`)". Surface name now matches the cited range; algebraic equivalence note preserved. (Direct re-read of `vector.hpp:247-253` confirmed `Mpi::GlobalSum(1, &dot, comm)` is the literal call.)
 
 ### Unrepairable findings
 

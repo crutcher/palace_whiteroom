@@ -127,9 +127,9 @@ First cycle entry appended to `scaffolding/integrator-signals.md` per user direc
 
 ## Reports consumed (frontmatter stamped post-commit)
 
-- `reports/2026-05-27T001116Z-harvester-nrm2-L1/REPORT.md` — `integrated_at: 2026-05-27T00:23:54Z`
-- `reports/2026-05-27T001116Z-harvester-axpby-L1/REPORT.md` — `integrated_at: 2026-05-27T00:23:54Z`
-- `reports/2026-05-27T001116Z-lowering-verifier-axpby-mutation-rotation/REPORT.md` — `integrated_at: 2026-05-27T00:23:54Z`
-- `reports/2026-05-27T001116Z-same-layer-cross-cutter-dot-concept-contradictions/REPORT.md` — `integrated_at: 2026-05-27T00:23:54Z`
+- `reports/2026-05-27T001116Z-harvester-nrm2-L1/CYCLE.md` — `integrated_at: 2026-05-27T00:23:54Z`
+- `reports/2026-05-27T001116Z-harvester-axpby-L1/CYCLE.md` — `integrated_at: 2026-05-27T00:23:54Z`
+- `reports/2026-05-27T001116Z-lowering-verifier-axpby-mutation-rotation/CYCLE.md` — `integrated_at: 2026-05-27T00:23:54Z`
+- `reports/2026-05-27T001116Z-same-layer-cross-cutter-dot-concept-contradictions/CYCLE.md` — `integrated_at: 2026-05-27T00:23:54Z`
 
 `integration_commit:` field stamped post-commit (sha appended after `git commit` completes).

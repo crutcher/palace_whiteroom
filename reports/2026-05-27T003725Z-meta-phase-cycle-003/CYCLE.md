@@ -68,7 +68,7 @@ status: complete
 - `.claude/agents/lowering-verifier.md` — require fenced YAML for `verified_against:` block + downstream-consumer note
 - `scaffolding/priorities.md` — refresh: landings promoted, follow-ups added, stretch target noted, watch-list relaxed
 - `scaffolding/cycle-record.jsonl` — meta-phase row for cycle-003 appended
-- `reports/2026-05-27T003725Z-meta-phase-cycle-003/REPORT.md` — this report
+- `reports/2026-05-27T003725Z-meta-phase-cycle-003/CYCLE.md` — this report
 
 ## Open ask items
 

@@ -10,7 +10,7 @@ inputs:
   - .claude/agents/layer-intro-author.md (broadened scope, cycle-003)
   - book/src/concepts/dot.md (current; to be rewritten)
   - book/src/L1/dot.md (authoritative L1 operator entry)
-  - reports/2026-05-27T001116Z-same-layer-cross-cutter-dot-concept-contradictions/REPORT.md (cross-cutter trigger)
+  - reports/2026-05-27T001116Z-same-layer-cross-cutter-dot-concept-contradictions/CYCLE.md (cross-cutter trigger)
   - reference/palace/palace/linalg/vector.hpp:100-260 (re-verified Dot/TransposeDot/LocalDot/Dot declarations)
   - reference/palace/palace/linalg/vector.cpp:130-280 (re-verified body of vector.cpp:142-178 is NOT dot — it's Get/operator=/SetBlocks)
   - reference/palace/palace/linalg/vector.cpp:263-274 (re-verified ComplexVector::Dot and TransposeDot bodies)

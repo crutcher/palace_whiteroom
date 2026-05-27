@@ -75,7 +75,7 @@ An R&D cycle has six phases. Serial-scatter-scatter-scatter-serial-serial:
   ┌──────────────┐   ┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐   ┌────────────┐   ┌────────────┐
   │ cycle-planner│ ► │ N sub-agents        │ ► │ N critics           │ ► │ N repairers         │ ► │ integrator │ ► │ meta-phase │
   │   (serial)   │   │ (scatter; writes    │   │ (scatter; runs      │   │ (scatter; reads     │   │  (serial)  │   │  (serial)  │
-  │              │   │  REPORT.md)         │   │  checkers; finds    │   │  META; attempts     │   │ apply +    │   │ examine,   │
+  │              │   │  CYCLE.md)         │   │  checkers; finds    │   │  META; attempts     │   │ apply +    │   │ examine,   │
   │              │   │                     │   │  problems; writes   │   │  in-place fixes;    │   │ rebuild +  │   │ record,    │
   │              │   │                     │   │  META.md critique   │   │  updates REPORT     │   │ book-fix + │   │ propose,   │
   │              │   │                     │   │  section)           │   │  + META repair      │   │ commit +   │   │ judge,     │
@@ -93,7 +93,7 @@ A single **cycle-planner** invocation runs first. Inputs:
 - **Recent task-firing rates** — counts of recent reports by agent type (read `reports/` index). Used to balance the dispatch and prevent any one agent from dominating.
 - **Priority list** — a curated short list of next-up items. Lives at `scaffolding/priorities.md` (new — accumulates from open-questions in prior reports, user direction, and meta-review findings).
 
-Output: a **dispatch plan** (itself written as a report under `reports/<timestamp>-cycle-planner-<id>/REPORT.md`). The plan contains:
+Output: a **dispatch plan** (itself written as a report under `reports/<timestamp>-cycle-planner-<id>/CYCLE.md`). The plan contains:
 
 - A list of `(agent, scope, deps)` tuples — N R&D passes for this cycle.
 - An **overlap analysis** establishing that the dispatched chunks are non-overlapping (directly OR through immediate dependencies). Two reports overlap if they propose changes to the same file region, OR if one's proposed-change depends on a not-yet-formalized operator the other proposes.
@@ -106,16 +106,16 @@ Per the plan, the main session invokes the chosen sub-agents:
 - Parallel where the plan permits (`Agent` tool calls in a single message).
 - Sequential where the plan requires it (one agent's report feeds another's input).
 
-Each sub-agent writes its REPORT.md (and any supporting docs) to its own `reports/<timestamp>-<agent>-<scope>/` subdirectory. **No artifact mutation.** Reports accumulate.
+Each sub-agent writes its CYCLE.md (and any supporting docs) to its own `reports/<timestamp>-<agent>-<scope>/` subdirectory. **No artifact mutation.** Reports accumulate.
 
 #### Critique: scatter/gather problem-finding, one critic per report
 
-For each report written during dispatch, a **critic agent** runs in parallel. The critic reads the REPORT.md (and any supporting docs in the same directory) and runs a checklist of cross-check / critique tasks — the things we want enforced as true. Output: a co-located **`META.md`** in the same report directory containing the **critique section** with per-check pass/warning/fail and a list of concrete problems.
+For each report written during dispatch, a **critic agent** runs in parallel. The critic reads the CYCLE.md (and any supporting docs in the same directory) and runs a checklist of cross-check / critique tasks — the things we want enforced as true. Output: a co-located **`META.md`** in the same report directory containing the **critique section** with per-check pass/warning/fail and a list of concrete problems.
 
 ```
 reports/
   2026-05-26T143012Z-abstractor-L1-L0-fusion/
-    REPORT.md                       (the sub-agent's proposed changes)
+    CYCLE.md                       (the sub-agent's proposed changes)
     META.md                         (the critic + repair results)
     evidence-cg-cycle-128.md
     proposed-lowering-draft.md
@@ -138,7 +138,7 @@ Scatter pattern: one critic invocation per report, run in parallel across all re
 
 #### Repair: scatter/gather fix-attempts, one repairer per report
 
-For each report with a non-empty critique (any check at `warning` or `fail`), a **repairer agent** runs in parallel. The repairer reads REPORT.md + the critique section of META.md, and for each found problem decides whether it is repairable in-place.
+For each report with a non-empty critique (any check at `warning` or `fail`), a **repairer agent** runs in parallel. The repairer reads CYCLE.md + the critique section of META.md, and for each found problem decides whether it is repairable in-place.
 
 **Repair authority is bounded.** The repairer is for mechanical, surgical, and small-scope fixes — not substantive content authorship. Examples of what's in scope:
 
@@ -161,7 +161,7 @@ Examples of what's **out of scope** for the repairer (left as `unrepairable` for
 
 For each problem, the repairer either:
 
-1. **Repaired** — applies the fix in-place to REPORT.md (or its supporting docs in the same directory), and records the repair attempt + new status in META.md's `repair` section.
+1. **Repaired** — applies the fix in-place to CYCLE.md (or its supporting docs in the same directory), and records the repair attempt + new status in META.md's `repair` section.
 2. **Unrepairable** — leaves the problem as found, records the reason in META.md's `repair` section, and (when applicable) names a `follow_up_agent` to dispatch in a future cycle.
 
 After the repair pass, the repairer sets `overall_status`:
@@ -174,7 +174,7 @@ After the repair pass, the repairer sets `overall_status`:
 
 ```markdown
 ---
-verifies: ../REPORT.md                     # always present; relative path
+verifies: ../CYCLE.md                     # always present; relative path
 critiqued_at: 2026-05-26T14:32:08Z
 critic_version: 1                          # which version of the checklist
 repaired_at: 2026-05-26T14:35:12Z          # null if no repair pass ran
@@ -260,7 +260,7 @@ A single **integrator** invocation runs after verification. It:
 - **Repairs build failures** (most commonly: broken cross-references from new content) — small surgical fixes; broader issues are surfaced as meta-phase input.
 - **Commits and pushes** the applied changes + book rebuild output as a single atomic operation. One commit per cycle is the norm; multiple smaller commits when the cycle's work is bundle-distinct.
 - Marks each consumed report with `integrated_at: …` / `integration_commit: …` frontmatter.
-- Emits its own batch report under `reports/<timestamp>-integrator-cycle-<n>/REPORT.md` describing what landed, what deferred, what rejected, what build-repair was needed.
+- Emits its own batch report under `reports/<timestamp>-integrator-cycle-<n>/CYCLE.md` describing what landed, what deferred, what rejected, what build-repair was needed.
 
 #### Meta-phase: serial methodology examination
 
@@ -276,7 +276,7 @@ Process — strict ordering, decisions only after analysis:
 
 ##### Decision semantics
 
-- **go** — enact the change directly. Meta-phase has authority over the methodology surface: edits agent prompts (`.claude/agents/<name>.md`), edits skills (`skills/*/SKILL.md`), edits channel-shape conventions (REPORT.md format spec, META.md checklist), updates the priority list (`scaffolding/priorities.md`). The change ships in the meta-phase's own commit at end of phase.
+- **go** — enact the change directly. Meta-phase has authority over the methodology surface: edits agent prompts (`.claude/agents/<name>.md`), edits skills (`skills/*/SKILL.md`), edits channel-shape conventions (CYCLE.md format spec, META.md checklist), updates the priority list (`scaffolding/priorities.md`). The change ships in the meta-phase's own commit at end of phase.
 - **no-go** — explicit decision NOT to enact, with recorded reason. Distinct from ignoring the signal: a `no-go` says "we considered this and decided against." Future cycles see the `no-go` in the meta-phase report history.
 - **ask** — escalate to human. For (a) tooling adjustments that require code changes (orchestrator helpers if any survive, MCP server, build infrastructure); (b) high-cascade methodology changes that exceed meta-phase authority (introducing new agent roles, restructuring the layer stack, changing the cycle structure itself); (c) anything where the evidence is real but the right action is genuinely uncertain.
 
@@ -287,7 +287,7 @@ Meta-phase writes to:
 - `.claude/agents/<name>.md` (agent definitions = task prompts).
 - `skills/<name>/SKILL.md` (skill content).
 - `scaffolding/priorities.md` (priority list updates).
-- The REPORT.md and META.md format specs (channel-shape changes; these live as embedded specs in this MIGRATION.md or graduate to a `docs/report-format.md`).
+- The CYCLE.md and META.md format specs (channel-shape changes; these live as embedded specs in this MIGRATION.md or graduate to a `docs/report-format.md`).
 
 Meta-phase does NOT write to:
 
@@ -296,7 +296,7 @@ Meta-phase does NOT write to:
 
 ##### Output
 
-A meta-phase report under `reports/<timestamp>-meta-phase-cycle-<n>/REPORT.md`:
+A meta-phase report under `reports/<timestamp>-meta-phase-cycle-<n>/CYCLE.md`:
 
 - Evidence examined (sources, count of signals per type).
 - Escalating trends recorded (named patterns, recurrence counts, comparison against prior meta-phase observations).
@@ -335,10 +335,10 @@ The new flow consolidates into **two running ledgers** under `scaffolding/`:
 Friction signal flow per cycle:
 
 ```
-sub-agents      → REPORT.md "Open questions / caveats"
+sub-agents      → CYCLE.md "Open questions / caveats"
 critic          → META.md critique section
 repairer        → META.md repair section (unrepairable findings = friction)
-integrator      → batch REPORT.md (gate-hits, deferrals, rejections)
+integrator      → batch CYCLE.md (gate-hits, deferrals, rejections)
                        ↓
             meta-phase reads all of the above
                        ↓
@@ -350,7 +350,7 @@ The **aggregation step** is what closes the loop. Without meta-phase synthesizin
 #### Replacing the old loop's friction artifacts
 
 - **`lessons.md` (old)** — append-only Critic-authored narrative. Migrate content into `friction-ledger.md` as initial named patterns. Going forward, the friction-ledger replaces it (named patterns + recurrence counts are sharper than prose).
-- **`questions.md` (old)** — open/closed question ledger. Replace with **`scaffolding/open-questions.md`** — appendable by any agent surfacing a question, closed by integrator or meta-phase when resolved. Per-report REPORT.md "Open questions / caveats" sections **feed into** this ledger (the integrator promotes them on landing).
+- **`questions.md` (old)** — open/closed question ledger. Replace with **`scaffolding/open-questions.md`** — appendable by any agent surfacing a question, closed by integrator or meta-phase when resolved. Per-report CYCLE.md "Open questions / caveats" sections **feed into** this ledger (the integrator promotes them on landing).
 - **`episodic.jsonl` (old)** — replaced by `cycle-record.jsonl` (same shape, new fields).
 - **`problems/` (kept)** — out-of-band concerns channel with self-tuning sensitivity. The sensitivity calibration becomes a meta-phase responsibility (it already was, just under the old name).
 
@@ -366,7 +366,7 @@ The new flow addresses this in **three structural ways**:
 
 1. **Open skill-candidate channel.** `scaffolding/skill-candidates.md` is **appendable by any agent** that notices a procedural pattern worth crystallizing. Sub-agents, critic, repairer, integrator — all can propose. One section per candidate: slug, proposer (agent + cycle), motivating observation (one paragraph), sketch of procedure (one paragraph), status (`proposed` / `evaluating` / `promoted` / `deferred` / `rejected`). Meta-phase reads this each cycle as the **primary skill-promotion signal**.
 
-2. **Skill-invocation telemetry.** When an agent invokes a skill, the REPORT.md may carry a `skill_uptake` field (same idea as the old `skill_uptake_summary`): which skill, did it help (`applied` / `inapplicable` / `fell-short`), what was the gap. Meta-phase aggregates this in `cycle-record.jsonl`. Skills with high `fell-short` counts get refined; skills with high `inapplicable-but-invoked` counts get scope-tightened in their prompt.
+2. **Skill-invocation telemetry.** When an agent invokes a skill, the CYCLE.md may carry a `skill_uptake` field (same idea as the old `skill_uptake_summary`): which skill, did it help (`applied` / `inapplicable` / `fell-short`), what was the gap. Meta-phase aggregates this in `cycle-record.jsonl`. Skills with high `fell-short` counts get refined; skills with high `inapplicable-but-invoked` counts get scope-tightened in their prompt.
 
 3. **Per-cycle meta-phase consideration.** No 12-cycle wait. Meta-phase considers `skill-candidates.md` every cycle and promotes when the bar is met. The bar should be intentionally **low**:
    - Default-accept procedural patterns observed ≥2 cycles unless there's a specific reason against.
@@ -415,7 +415,7 @@ Read/write matrix:
 | cycle-planner | roadmap, priorities, friction-ledger, open-questions, cycle-record (tail), integrator batch reports (last N cycles) | — |
 | 8 specialized | decisions/, test-linkages/ (per scope), open-questions (relevant) | (only their own report dir; may append to skill-candidates.md, open-questions.md, decisions/, test-linkages/) |
 | critic | (the report it's critiquing) | META.md critique section; **may append to** skill-candidates.md if pattern observed |
-| repairer | REPORT.md, META.md critique | META.md repair section + REPORT.md in-place fixes; **may append to** skill-candidates.md |
+| repairer | CYCLE.md, META.md critique | META.md repair section + CYCLE.md in-place fixes; **may append to** skill-candidates.md |
 | integrator | reports + METAs | book/, roadmap.md, cycle-record.jsonl (append), open-questions.md (close-on-landing), log/ |
 | meta-phase | scaffolding/ (all), reports/ (this cycle's + tail), prior meta-phase reports | priorities, friction-ledger, skill-candidates (refine status), cycle-record.jsonl (append decisions), problems-sensitivity, `.claude/agents/`, `skills/` |
 
@@ -447,7 +447,7 @@ The Python orchestrator's `_apply_integration_plan` carries ~12 validation gates
 
 Audit rules so every artifact has a known consumer:
 
-- **REPORT.md "Open questions / caveats" sections** → integrator **promotes to** `scaffolding/open-questions.md` on landing. The cycle-planner consumes the ledger.
+- **CYCLE.md "Open questions / caveats" sections** → integrator **promotes to** `scaffolding/open-questions.md` on landing. The cycle-planner consumes the ledger.
 - **Critic warnings** (non-failing) → if not repaired, the **integrator** records them in `cycle-record.jsonl` warning counts. Meta-phase scans for warning-pattern accumulations and lifts persistent warning patterns into friction-ledger entries.
 - **Meta-phase `no-go` decisions** → recorded in `scaffolding/friction-ledger.md` against the matching pattern (status: `addressed` with `no-go: <reason>`). Future meta-phases read the ledger before re-proposing.
 - **Integrator batch reports** → consumed by **meta-phase** (for the cycle's gate-hits and deferral reasons) AND by **next cycle's cycle-planner** (for what deferred + needs follow-up).
@@ -458,7 +458,7 @@ If any agent writes something that doesn't appear in this list, that's a new orp
 
 ### Report channel + single integrator
 
-**Subagents do not edit the artifact directly.** All specialized agents (the 8 in Phase C) write only to a non-overlapping report channel under `reports/`. Each invocation gets its own subdirectory (`reports/<timestamp>-<agent>-<scope>/`) containing a `REPORT.md` and any supporting documentation. Subagents have **no write access** to `book/`, `scaffolding/`, `skills/`, `prompts/`, or any other artifact area.
+**Subagents do not edit the artifact directly.** All specialized agents (the 8 in Phase C) write only to a non-overlapping report channel under `reports/`. Each invocation gets its own subdirectory (`reports/<timestamp>-<agent>-<scope>/`) containing a `CYCLE.md` and any supporting documentation. Subagents have **no write access** to `book/`, `scaffolding/`, `skills/`, `prompts/`, or any other artifact area.
 
 **A single unified integrator agent** is the sole writer of the artifact. The integrator's job:
 
@@ -478,22 +478,22 @@ This separation eliminates the multi-writer coordination problem entirely. Speci
 reports/
   README.md                                          (index, newest-first)
   2026-05-26T143012Z-abstractor-L1-L0-fusion/
-    REPORT.md                                        (frontmatter + proposed changes)
+    CYCLE.md                                        (frontmatter + proposed changes)
     evidence-cg-cycle-128.md                         (optional supporting docs)
     proposed-lowering-draft.md
   2026-05-26T143515Z-combinator-miner-krylov-step/
-    REPORT.md
+    CYCLE.md
     pattern-evidence.md
   2026-05-26T144203Z-harvester-arnoldi-step/
-    REPORT.md
+    CYCLE.md
     operator-spec.md
   2026-05-26T150811Z-integrator-batch-1/
-    REPORT.md                                        (integrator's own report: which reports consumed, what landed, what deferred)
+    CYCLE.md                                        (integrator's own report: which reports consumed, what landed, what deferred)
 ```
 
 After integration, the consumed reports gain frontmatter updates in-place; they're not moved. The integrator emits its own report describing the batch.
 
-#### REPORT.md format
+#### CYCLE.md format
 
 ```markdown
 ---
@@ -531,7 +531,7 @@ may route these to follow-up agent invocations.
 
 #### Integrator authority and discipline
 
-- **The integrator does NOT author original content.** It applies changes proposed by specialized agents. If the integrator notices that a proposed change is incomplete or contradicted by another report, it surfaces the issue in its own REPORT.md and either defers (status: deferred) or rejects (status: rejected) the relevant subagent reports.
+- **The integrator does NOT author original content.** It applies changes proposed by specialized agents. If the integrator notices that a proposed change is incomplete or contradicted by another report, it surfaces the issue in its own CYCLE.md and either defers (status: deferred) or rejects (status: rejected) the relevant subagent reports.
 - **The integrator runs validation gates** before committing. The current orchestrator's gates (refinement surface-or-evidence, retroactive-budget, SIDEWAYS auto-rewrite, concept-existence-check, edge-label fidelity, etc.) become integrator validation rules. If a proposed change trips a gate, the integrator either applies an auto-fix (e.g., H1→H2 normalization, concept-existence-rewrite) or rejects the report with a clear reason.
 - **The integrator commits + pushes** each batch. One commit per integrator invocation typically; the commit message names the reports consumed.
 
@@ -629,7 +629,7 @@ Validation:
 
 #### Reconciling overlaps
 
-All 8 specialized agents write **only** to their own report subdirectory under `reports/`. The artifact (book/, scaffolding/, skills/, prompts/) is touched only by the **integrator** (see *Report channel + single integrator* in Section 2). The **critic** writes META.md (critique section only); the **repairer** writes META.md repair section AND may apply in-place fixes to REPORT.md / supporting docs in the same directory.
+All 8 specialized agents write **only** to their own report subdirectory under `reports/`. The artifact (book/, scaffolding/, skills/, prompts/) is touched only by the **integrator** (see *Report channel + single integrator* in Section 2). The **critic** writes META.md (critique section only); the **repairer** writes META.md repair section AND may apply in-place fixes to CYCLE.md / supporting docs in the same directory.
 
 The discipline is *one report per invocation per agent*, with the main session sequencing dispatches and the integrator serializing applications:
 
@@ -647,11 +647,11 @@ Combinator-miner's report is a *proposal*; harvester reads it and emits a *forma
 
 #### The 9th–13th agents: cycle-planner, critic, repairer, integrator, meta-phase
 
-- **`cycle-planner.md`** — runs first in every cycle. Reads R&D goals (roadmap, layer-stack gaps), recent task-firing rates (counts of recent reports by agent type), and the priority list (`scaffolding/priorities.md`). Emits a dispatch plan as a report: `(agent, scope, deps)` tuples + overlap analysis + sequencing schedule. Does NOT mutate the artifact. Output report under `reports/<timestamp>-cycle-planner-<id>/REPORT.md`.
-- **`critic.md`** — runs once per report written during dispatch (scatter/gather). Reads the REPORT.md and any co-located supporting docs; runs the critique checklist (citation validity, surface-or-evidence, rotation quality, variant-axis coverage, cross-reference integrity, edge-label fidelity, plan-kind consistency, skill-uptake survey). Writes the **critique section** of a co-located META.md with per-check status and concrete problems found. **Does NOT mutate the artifact, does NOT mutate REPORT.md, does NOT attempt fixes, does NOT set `overall_status`** — META.md critique section is its only write.
-- **`repairer.md`** — runs once per report whose META.md critique contains any warning or fail (scatter/gather). Reads REPORT.md + META.md critique section. For each finding, decides repairable vs unrepairable per the bounded-authority rules in Section 2 *Repair*. Applies in-place fixes to REPORT.md (or its supporting docs in the same directory) for repairable findings. Writes the **repair section** of META.md recording per-finding outcomes. Sets `overall_status` (ready / needs-revision / reject) + `follow_up_agent` routing. **Does NOT mutate the artifact** (book/, etc.).
+- **`cycle-planner.md`** — runs first in every cycle. Reads R&D goals (roadmap, layer-stack gaps), recent task-firing rates (counts of recent reports by agent type), and the priority list (`scaffolding/priorities.md`). Emits a dispatch plan as a report: `(agent, scope, deps)` tuples + overlap analysis + sequencing schedule. Does NOT mutate the artifact. Output report under `reports/<timestamp>-cycle-planner-<id>/CYCLE.md`.
+- **`critic.md`** — runs once per report written during dispatch (scatter/gather). Reads the CYCLE.md and any co-located supporting docs; runs the critique checklist (citation validity, surface-or-evidence, rotation quality, variant-axis coverage, cross-reference integrity, edge-label fidelity, plan-kind consistency, skill-uptake survey). Writes the **critique section** of a co-located META.md with per-check status and concrete problems found. **Does NOT mutate the artifact, does NOT mutate CYCLE.md, does NOT attempt fixes, does NOT set `overall_status`** — META.md critique section is its only write.
+- **`repairer.md`** — runs once per report whose META.md critique contains any warning or fail (scatter/gather). Reads CYCLE.md + META.md critique section. For each finding, decides repairable vs unrepairable per the bounded-authority rules in Section 2 *Repair*. Applies in-place fixes to CYCLE.md (or its supporting docs in the same directory) for repairable findings. Writes the **repair section** of META.md recording per-finding outcomes. Sets `overall_status` (ready / needs-revision / reject) + `follow_up_agent` routing. **Does NOT mutate the artifact** (book/, etc.).
 - **`integrator.md`** — runs after repair. Sole writer of `book/` and `scaffolding/roadmap.md`. Reads pending reports + their META.md `overall_status`; applies `ready` ones, defers `needs-revision` ones, marks `reject` ones. Runs the orchestrator's old gates as a final safety net. Rebuilds book, repairs link-check / format breakage, commits + pushes. Marks consumed reports with `integrated_at` / `integration_commit` frontmatter. Emits its own batch report.
-- **`meta-phase.md`** — runs after integration. Sole writer of `.claude/agents/`, `skills/`, `scaffolding/priorities.md`, and channel-format specs. Examines cycle evidence (planner conflicts, sub-agent open-questions, critic warnings/failures, unrepairable-finding patterns, integrator deferrals/rejections), records escalating trends against prior meta-phase history, proposes methodology adjustments, judges them, and decides go / no-go / ask per plan. `go` items are enacted directly in a separate methodology commit; `ask` items surface to the human. Output report under `reports/<timestamp>-meta-phase-cycle-<n>/REPORT.md`.
+- **`meta-phase.md`** — runs after integration. Sole writer of `.claude/agents/`, `skills/`, `scaffolding/priorities.md`, and channel-format specs. Examines cycle evidence (planner conflicts, sub-agent open-questions, critic warnings/failures, unrepairable-finding patterns, integrator deferrals/rejections), records escalating trends against prior meta-phase history, proposes methodology adjustments, judges them, and decides go / no-go / ask per plan. `go` items are enacted directly in a separate methodology commit; `ask` items surface to the human. Output report under `reports/<timestamp>-meta-phase-cycle-<n>/CYCLE.md`.
 
 Total agent count: **13** (cycle-planner + 8 specialized + critic + repairer + integrator + meta-phase).
 
@@ -659,21 +659,21 @@ Write-authority partition:
 
 | Agent | Writes to |
 |---|---|
-| 8 specialized | `reports/<id>/REPORT.md` + supporting docs in same dir |
+| 8 specialized | `reports/<id>/CYCLE.md` + supporting docs in same dir |
 | critic | `reports/<id>/META.md` (critique section only) |
-| repairer | `reports/<id>/META.md` (repair section + `overall_status`), in-place edits to `reports/<id>/REPORT.md` and supporting docs |
+| repairer | `reports/<id>/META.md` (repair section + `overall_status`), in-place edits to `reports/<id>/CYCLE.md` and supporting docs |
 | integrator | `book/`, `scaffolding/roadmap.md`, log/, episodic.jsonl |
 | meta-phase | `.claude/agents/`, `skills/`, `scaffolding/priorities.md`, channel-format specs |
-| cycle-planner | `reports/<id>/REPORT.md` (its own plan report) |
+| cycle-planner | `reports/<id>/CYCLE.md` (its own plan report) |
 
-Note the repairer is the **only** agent (besides the specialized sub-agents themselves) with write authority to REPORT.md / supporting docs in the report channel. This is bounded by the repair authority rules in Section 2 *Repair* — mechanical and surgical fixes only.
+Note the repairer is the **only** agent (besides the specialized sub-agents themselves) with write authority to CYCLE.md / supporting docs in the report channel. This is bounded by the repair authority rules in Section 2 *Repair* — mechanical and surgical fixes only.
 
 ### Phase D: orchestrator decommission
 
 - Stop running `orchestrator/`. The Python code stays in repo as historical reference (gitignored from build) — useful for understanding what discipline the loop encoded.
 - Main Claude session takes over **dispatch coordination**: invokes subagents via `Agent` tool, decides routing between specialized agents based on incoming reports, decides when to invoke the integrator. Does NOT itself write to the artifact.
 - The Python orchestrator's `_apply_integration_plan` function is the closest analog to the new **integrator agent**. The integrator carries over the validation logic (surface-or-evidence, retroactive-budget, SIDEWAYS auto-rewrite, concept-existence, edge-label fidelity, H1→H2 normalization, append-by-slug fallback) — same gates, different host. The integrator's prompt encodes them.
-- The integration-plan JSON schema becomes a REPORT.md proposed-changes convention. Integrator parses proposed-changes sections; subagents emit them per the format spec.
+- The integration-plan JSON schema becomes a CYCLE.md proposed-changes convention. Integrator parses proposed-changes sections; subagents emit them per the format spec.
 
 ### Phase E: methodology document refresh
 
@@ -709,23 +709,23 @@ If any item doesn't fire during Phase F, that's a pipeline gap — diagnose befo
 
 1. **File layout names.** `book/src/L4/` vs `book/src/layers/L4/` vs `book/src/L4-framework/`? Same question for lowering: `L4-L3/` vs `L4_to_L3/` vs `lowering/L4-L3/`.
 2. **Slice corpus disposition.** Move to `book/src/_phase1_corpus/`? Keep at `book/src/spec/slices/` with a deprecation note? Move out of `book/src/` entirely to `corpus/`?
-3. **Subagent shape — resolved 2026-05-26 user direction.** **13 agents total**: cycle-planner (serial pre-dispatch) + 8 specialized (parallel dispatch, write only to `reports/<id>/REPORT.md`) + critic (scatter/gather post-dispatch, writes META.md critique section) + repairer (scatter/gather post-critique, writes META.md repair section + in-place fixes to REPORT.md) + integrator (serial post-repair, writes book/ + roadmap) + meta-phase (serial post-integration, writes `.claude/agents/`, skills/, priorities, channel specs). Cycle structure is plan → dispatch → critique → repair → integrate → meta (Section 2 *Cycle structure*). The 8 specialized agents: layer-intro-author, harvester, abstractor, lifter, lowering-verifier (a domain-specific check during dispatch, distinct from the per-report critic), combinator-miner, same-layer-cross-cutter, cross-layer-cross-cutter. Open sub-questions: (a) bootstrap order — 13 at once or in phases? (b) cycle trigger — human-invoked vs periodic? (c) critic checklist as single agent vs multiple narrow critic-agents (verify-citations, verify-surface, verify-variant-axis, …) running in parallel per report? Lean single-agent-with-checklist for first pass; split if any single check needs its own context. (d) lowering-verifier (during dispatch — domain-specific evidence audit) vs critic (post-dispatch — checklist-based critique) — distinct or merge? Lean distinct: lowering-verifier authors content (audits + records evidence linkages); critic only finds problems. (e) repair-authority boundaries — when does a fix-attempt become "substantive authoring"? Worked examples in Section 2 *Repair* define the bar but edge cases will emerge during pilot. (f) meta-phase write-authority for `prompts/` — under the new flow, agent definitions live in `.claude/agents/` (not `prompts/`); the old `prompts/` becomes documentation only.
+3. **Subagent shape — resolved 2026-05-26 user direction.** **13 agents total**: cycle-planner (serial pre-dispatch) + 8 specialized (parallel dispatch, write only to `reports/<id>/CYCLE.md`) + critic (scatter/gather post-dispatch, writes META.md critique section) + repairer (scatter/gather post-critique, writes META.md repair section + in-place fixes to CYCLE.md) + integrator (serial post-repair, writes book/ + roadmap) + meta-phase (serial post-integration, writes `.claude/agents/`, skills/, priorities, channel specs). Cycle structure is plan → dispatch → critique → repair → integrate → meta (Section 2 *Cycle structure*). The 8 specialized agents: layer-intro-author, harvester, abstractor, lifter, lowering-verifier (a domain-specific check during dispatch, distinct from the per-report critic), combinator-miner, same-layer-cross-cutter, cross-layer-cross-cutter. Open sub-questions: (a) bootstrap order — 13 at once or in phases? (b) cycle trigger — human-invoked vs periodic? (c) critic checklist as single agent vs multiple narrow critic-agents (verify-citations, verify-surface, verify-variant-axis, …) running in parallel per report? Lean single-agent-with-checklist for first pass; split if any single check needs its own context. (d) lowering-verifier (during dispatch — domain-specific evidence audit) vs critic (post-dispatch — checklist-based critique) — distinct or merge? Lean distinct: lowering-verifier authors content (audits + records evidence linkages); critic only finds problems. (e) repair-authority boundaries — when does a fix-attempt become "substantive authoring"? Worked examples in Section 2 *Repair* define the bar but edge cases will emerge during pilot. (f) meta-phase write-authority for `prompts/` — under the new flow, agent definitions live in `.claude/agents/` (not `prompts/`); the old `prompts/` becomes documentation only.
 4. **Cycle semantics — partially resolved 2026-05-26.** A cycle = (one cycle-planner invocation) + (N sub-agent invocations producing reports per the plan) + (one integrator invocation). The cycle is the natural unit because the cycle-planner reasons about non-overlap across the N dispatches. Open sub-questions: (a) how is a cycle triggered (human-driven, time-based, work-volume-based)? (b) where does the priority list (`scaffolding/priorities.md`) get updated — manually, or by an end-of-cycle agent that scans the integrator's report for follow-up candidates? (c) episodic.jsonl per-cycle record: keep similar shape (one row per cycle with plan + dispatched + integrated counts), or evolve?
 5. **Meta-review trigger — resolved 2026-05-26.** Meta-phase runs **every cycle**, as the sixth phase after integration. Most cycles will produce a minimal meta-phase output (nothing escalating, nothing to enact) — that's the steady state. The 12-cycle batched meta-review pattern is gone; methodology friction integrates continuously. Open sub-question: do we need a "deep meta-review" trigger for occasional cross-cutting passes that span dozens of cycles? Lean no — every-cycle meta-phase with running-history awareness covers it.
 6. **Per-cycle commit discipline.** The orchestrator commits + pushes after every cycle. The new flow could commit after every subagent return, every meaningful operation, or only at session-end checkpoints. Tradeoff: granularity vs noise.
 7. **Critic checks → critic/repairer mapping — partially resolved.** Section 2 *Validation gates* tabulates the 12 known orchestrator gates and their new homes. Open sub-question: are there gates implicit in the orchestrator code (not enumerated as 15-Critic-check items) that this table misses? Audit `orchestrator/orchestrator.py` `_apply_integration_plan` line-by-line during Phase D.
 8. **problems/ sensitivity self-tuning — resolved 2026-05-26.** Becomes meta-phase responsibility. `scaffolding/problems-sensitivity.md` (already exists) carries over; meta-phase recalibrates per cycle using `cycle-record.jsonl` problem-filing rates. Open sub-question: target rate of 1/15 was tuned under the slice-based agent count; under the new flow with N specialized agents per cycle, the denominator changes — recalibrate the target during pilot.
-9. **Integration-plan discipline — partially resolved.** Becomes the **REPORT.md proposed-changes section** format. Open sub-question: structured-YAML/JSON within the markdown (more parseable for the integrator) vs free-form structured-markdown (more flexible for agents to write, requires integrator-side parsing). Lean toward structured fenced blocks inside markdown so the integrator gets parseable data and the agent gets natural-prose surrounding context.
+9. **Integration-plan discipline — partially resolved.** Becomes the **CYCLE.md proposed-changes section** format. Open sub-question: structured-YAML/JSON within the markdown (more parseable for the integrator) vs free-form structured-markdown (more flexible for agents to write, requires integrator-side parsing). Lean toward structured fenced blocks inside markdown so the integrator gets parseable data and the agent gets natural-prose surrounding context.
 10. **Skill format.** Stays SKILL.md? Claude-Code-native or our extended frontmatter? The two should be compatible already.
 11. **Repo restructuring atomicity.** Do we keep the old orchestrator working alongside the new flow during transition, or hard-cut? Hard-cut is cleaner; coexistence allows verification.
 12. **Tooling carry-over.** MCP codemap clearly stays. The Python orchestrator's `state.py` helpers (read_problems_sensitivity, list_refinement_candidates, etc.) — port to a `tools/` helper script the main session can call, or rewrite as needed?
 13. **Ledger formats.** `friction-ledger.md` and `skill-candidates.md` are new — should they be free-prose markdown (easier to read/edit), structured-markdown with YAML frontmatter per section (parseable but more rigid), or JSONL (purely structured)? Lean structured-markdown with frontmatter per section: agents can scan with grep, meta-phase can parse via straightforward regex, humans can read top-down.
-14. **`open-questions.md` vs REPORT-level open-questions.** Two layers: per-report caveats inside REPORT.md (rich context) and global ledger in scaffolding (cross-cycle visibility). The integrator promotes per-report items into the ledger on landing. Open sub-question: does **every** REPORT caveat get promoted, or only those the integrator flags as cross-cutting? Lean every — under-promoting hides signal; over-promoting just gives meta-phase more to scan.
+14. **`open-questions.md` vs REPORT-level open-questions.** Two layers: per-report caveats inside CYCLE.md (rich context) and global ledger in scaffolding (cross-cycle visibility). The integrator promotes per-report items into the ledger on landing. Open sub-question: does **every** REPORT caveat get promoted, or only those the integrator flags as cross-cutting? Lean every — under-promoting hides signal; over-promoting just gives meta-phase more to scan.
 15. **`scaffolding/decisions/` and `test-linkages/` migration.** Existing under the old loop. Carry over verbatim or restructure for the layer-not-slice framing? Lean carry-over; the layer framing affects file *names* under these dirs more than the dirs themselves.
 
 ## 7. Risks and tensions
 
-- **Losing structured integration-plan discipline — partially mitigated.** The integrator agent carries the gates forward (same logic, different host); structured proposed-changes blocks in REPORT.md preserve parseability. Residual risk: the new integrator agent's prompt is substantial (carries all 10+ gates from the current orchestrator's `_apply_integration_plan` function) — verify it implements them correctly during Phase F pilot before harvesting at scale.
+- **Losing structured integration-plan discipline — partially mitigated.** The integrator agent carries the gates forward (same logic, different host); structured proposed-changes blocks in CYCLE.md preserve parseability. Residual risk: the new integrator agent's prompt is substantial (carries all 10+ gates from the current orchestrator's `_apply_integration_plan` function) — verify it implements them correctly during Phase F pilot before harvesting at scale.
 - **Critic-check distillation.** The 15 checks are a corpus of hard-won validation logic. Reframing them as main-session rules risks losing nuance; keeping them verbatim risks carrying slice-specific framings into a layer-shaped world.
 - **Recovery from in-flight bad work.** The orchestrator commits per cycle and the integrator catches structural defects atomically. The new flow needs equivalent atomicity (probably: main-session checkpoint commits + manual rollback when subagent output looks broken).
 - **Loss of episodic data continuity.** episodic.jsonl is 197+ entries deep; it's a research record. The new `cycle-record.jsonl` should mirror the old fields where compatible and add the new ones; longitudinal analysis can union both files as a single stream. Don't break the contract that "one cycle = one row."

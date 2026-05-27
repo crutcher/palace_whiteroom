@@ -1,5 +1,5 @@
 ---
-verifies: ../REPORT.md
+verifies: ../CYCLE.md
 critiqued_at: 2026-05-27T00:35:00Z
 critic_version: 1
 checks:
@@ -131,7 +131,7 @@ Telemetry-only; not blocking.
 
 - **Finding 1 — Variant-axis coverage gap (`vector.cpp:720-724` complex-α-on-ComplexVector specialisation elided).**
   - **Decision**: repaired.
-  - **Action**: Verified via `grep -rn "linalg::AXPY" palace/` that all 5 free-function callers pass `double` α (literal `-1.0` in `drivensolver.cpp:367,394` and `nleps.cpp:536`; `.real()`/`.imag()` in `romoperator.cpp:193-194`). No caller passes `std::complex<double>` α. Confirmed defined-not-used, exactly like `Subtract` and `operator-=`. Applied surgical edits to REPORT.md:
+  - **Action**: Verified via `grep -rn "linalg::AXPY" palace/` that all 5 free-function callers pass `double` α (literal `-1.0` in `drivensolver.cpp:367,394` and `nleps.cpp:536`; `.real()`/`.imag()` in `romoperator.cpp:193-194`). No caller passes `std::complex<double>` α. Confirmed defined-not-used, exactly like `Subtract` and `operator-=`. Applied surgical edits to CYCLE.md:
     - Split per-citation row 5 into row 5a (`vector.cpp:714-718`, real-α, used) and row 5b (`vector.cpp:720-724`, complex-α, defined-not-used).
     - Updated the post-table summary sentence from "All 8 citations" to acknowledge the split.
     - Added a new paragraph in §Coverage audit listing the `vector.cpp:720-724` defined-not-used finding alongside `Subtract` and `operator-=`.
@@ -141,7 +141,7 @@ Telemetry-only; not blocking.
 
 - **Finding 2 — Skill-uptake telemetry absent.**
   - **Decision**: repaired.
-  - **Action**: Added a `skill_uptake:` block to REPORT.md frontmatter, mirroring the cycle-002 dot harvester / pilot-1 axpy format (entries with `skill:`, `triggered:`, `decision:`, `rationale:`). Three entries:
+  - **Action**: Added a `skill_uptake:` block to CYCLE.md frontmatter, mirroring the cycle-002 dot harvester / pilot-1 axpy format (entries with `skill:`, `triggered:`, `decision:`, `rationale:`). Three entries:
     - `verify-citation-range` — `decision: explained_non_applicable`. Citations verified inline by reading source ranges and recording per-citation verdicts; the per-citation table is the equivalent telemetry artifact.
     - `classify-variant-axis` — `decision: artifact_landed`. Three orthogonal variant axes enumerated; coverage verdicts recorded per sub-pattern; defined-not-used legs called out individually.
     - `cross-cutter-corpus-grep` — `decision: explained_non_applicable`. Corpus-wide grep for `\.Add(`, `linalg::AXPY`, `\.Subtract(`, vector-typed `+=`/`-=`. Skill doesn't yet exist as `SKILL.md`; the activity pattern is recurrent across `lowering-verifier` and `same-layer-cross-cutter` dispatches — filed as candidate via this telemetry mark, per repairer authority to invent the skill name when needed.

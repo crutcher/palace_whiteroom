@@ -8,8 +8,8 @@ inputs:
   - book/src/L1/axpy.md (firm L1 operator, pilot-1 — format reference + subsumption target)
   - book/src/L1/dot.md (firm L1 operator, cycle-002 — format reference)
   - book/src/L1-L0/axpby-mutation-rotation.md (cycle-002 abstractor's L1>L0 theme that motivated this rough-in)
-  - reports/2026-05-26T231843Z-abstractor-axpby-mutation-L1-L0/REPORT.md (rough-in source)
-  - reports/2026-05-26T231843Z-harvester-dot-L1/REPORT.md (format reference)
+  - reports/2026-05-26T231843Z-abstractor-axpby-mutation-L1-L0/CYCLE.md (rough-in source)
+  - reports/2026-05-26T231843Z-harvester-dot-L1/CYCLE.md (format reference)
   - scaffolding/open-questions.md (axpby-axpy-scal-decomposition-decision, axpby-axpbypcz-next-harvest, scalar-promotion-typing-rule)
   - scaffolding/decisions/axpby-as-primitive.md (NEW — captures the fused-primitive decision)
   - reference/palace/palace/linalg/vector.hpp:115-128 (ComplexVector AXPY/Add/Subtract/+=/-= decls)
@@ -183,8 +183,8 @@ See the `book/src/L1/axpby.md` content in the proposed-changes block above.
 
 - L0 source-side citations: every claim in the operator entry is cited to a `(file:start-end)` range in `reference/palace/`. The eight evidence citations span the three L0 entry points (member `ComplexVector::AXPBY`; free-function template `linalg::AXPBY` with three specialisations; the MFEM `add(α, x, β, y, y)` delegation for the real-real path).
 - Cross-cycle context:
-  - The cycle-002 abstractor REPORT (`reports/2026-05-26T231843Z-abstractor-axpby-mutation-L1-L0/REPORT.md`) sketched the L1>L0 theme assuming the fused L1 form and explicitly deferred the primitive-vs-decomposed choice to harvester via open question `axpby-axpby-scal-decomposition-decision`. This report resolves that question.
-  - The cycle-002 dot harvester REPORT (`reports/2026-05-26T231843Z-harvester-dot-L1/REPORT.md`) is the format reference for this report's structure (frontmatter inputs/skill_uptake, proposed-changes block style, four-backtick fences, append-after SUMMARY pattern).
+  - The cycle-002 abstractor REPORT (`reports/2026-05-26T231843Z-abstractor-axpby-mutation-L1-L0/CYCLE.md`) sketched the L1>L0 theme assuming the fused L1 form and explicitly deferred the primitive-vs-decomposed choice to harvester via open question `axpby-axpby-scal-decomposition-decision`. This report resolves that question.
+  - The cycle-002 dot harvester REPORT (`reports/2026-05-26T231843Z-harvester-dot-L1/CYCLE.md`) is the format reference for this report's structure (frontmatter inputs/skill_uptake, proposed-changes block style, four-backtick fences, append-after SUMMARY pattern).
   - The pilot-1 axpy harvester REPORT (`reports/2026-05-26T223039Z-harvester-axpy-L1/`) established the L1 entry format that `axpy.md` and now `axpby.md` follow; the subsumption law (Law 1) explicitly preserves the `axpy` entry's place in the L1 dep-map.
 - Decision record (new this cycle): `scaffolding/decisions/axpby-as-primitive.md` captures the fused-primitive choice with rationale (algebraic, engineering, and trade-offs accepted).
 - Open-question status: `axpby-axpby-scal-decomposition-decision` should be marked `answered` by the integrator (answered_in: this commit; answered_at: cycle-003). The `axpby-axpbypcz-next-harvest` question remains open — the `axpby` half is now done; the `axpbypcz` half is the next harvester target.

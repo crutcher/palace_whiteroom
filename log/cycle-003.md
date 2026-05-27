@@ -20,10 +20,10 @@
 - **Signals channel**: FIRST append to `scaffolding/integrator-signals.md` per user directive 2026-05-27. Six subsections populated (Unblocked / New dependencies / Resolution implications / Suggested next dispatches / Wave-conflict observations / Integration-tooling friction); 5 concrete suggested-next-dispatches tuples for cycle-planner.
 - **Roadmap update**: §"Layered-spec progress" bumped from cycle-002 numbers (2 firm L1, 1 rough-in, 1 L1>L0 rough-in) to cycle-003 numbers (4 firm L1, axpby-mutation-rotation audited).
 - **Legacy filename collision**: `log/cycle-003.md` (2026-05-24 slice-vertical-era) renamed to `log/cycle-003-legacy.md`. Same convention as cycle-002 of the new flow.
-- **Build**: `cargo make book` — see batch REPORT.md for outcome.
+- **Build**: `cargo make book` — see batch CYCLE.md for outcome.
 - **Reports**:
-  - `reports/2026-05-27T001116Z-harvester-nrm2-L1/` — REPORT.md, META.md (critique + repair).
-  - `reports/2026-05-27T001116Z-harvester-axpby-L1/` — REPORT.md, META.md.
-  - `reports/2026-05-27T001116Z-lowering-verifier-axpby-mutation-rotation/` — REPORT.md, META.md.
-  - `reports/2026-05-27T001116Z-same-layer-cross-cutter-dot-concept-contradictions/` — REPORT.md, META.md.
-  - `reports/2026-05-27T002354Z-integrator-cycle-003/REPORT.md` — batch report.
+  - `reports/2026-05-27T001116Z-harvester-nrm2-L1/` — CYCLE.md, META.md (critique + repair).
+  - `reports/2026-05-27T001116Z-harvester-axpby-L1/` — CYCLE.md, META.md.
+  - `reports/2026-05-27T001116Z-lowering-verifier-axpby-mutation-rotation/` — CYCLE.md, META.md.
+  - `reports/2026-05-27T001116Z-same-layer-cross-cutter-dot-concept-contradictions/` — CYCLE.md, META.md.
+  - `reports/2026-05-27T002354Z-integrator-cycle-003/CYCLE.md` — batch report.

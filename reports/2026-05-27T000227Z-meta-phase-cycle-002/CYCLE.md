@@ -9,14 +9,14 @@ status: ready
 
 ## Evidence examined
 
-- **Cycle plan**: `reports/2026-05-26T231621Z-cycle-planner-cycle-002/REPORT.md` — three parallel dispatches (harvester / abstractor / combinator-miner), one wave; parent-session annotation notes haiku planner skipped Write twice (parent persisted).
+- **Cycle plan**: `reports/2026-05-26T231621Z-cycle-planner-cycle-002/CYCLE.md` — three parallel dispatches (harvester / abstractor / combinator-miner), one wave; parent-session annotation notes haiku planner skipped Write twice (parent persisted).
 - **Wave-1 reports (3, all `overall_status: ready` post-repair)**:
   - `reports/2026-05-26T231843Z-harvester-dot-L1/`
   - `reports/2026-05-26T231843Z-abstractor-axpby-mutation-L1-L0/`
   - `reports/2026-05-26T231843Z-combinator-miner-krylov-iteration-step/`
 - **Critic findings (aggregate, cycle-002)**: 20 pass / 7 warning / 0 fail. Warning checks concentrated in `skill-uptake-survey`, `cross-reference-integrity`, `plan-kind-consistency`. No `citation-validity` or `rotation-quality` warnings.
-- **Repair outcomes**: 6 repaired (direct in-place Edit on REPORT.md), 2 unrepairable (concept-page contradictions for `dot` — embedded as open questions), 16 not-needed.
-- **Integrator batch**: `reports/2026-05-26T235101Z-integrator-cycle-002/REPORT.md`, commit `c3312a6`. Reports applied 3, deferred 0, rejected 0. Gate hits total 0. Book rebuilds clean. 10 open questions promoted.
+- **Repair outcomes**: 6 repaired (direct in-place Edit on CYCLE.md), 2 unrepairable (concept-page contradictions for `dot` — embedded as open questions), 16 not-needed.
+- **Integrator batch**: `reports/2026-05-26T235101Z-integrator-cycle-002/CYCLE.md`, commit `c3312a6`. Reports applied 3, deferred 0, rejected 0. Gate hits total 0. Book rebuilds clean. 10 open questions promoted.
 - **Running history**: `scaffolding/friction-ledger.md` (10 prior entries including the pilot-1 `subagent-file-write-blocked-general-purpose`); `scaffolding/skill-candidates.md` (1 promoted, 0 open); `scaffolding/cycle-record.jsonl` tail (pilot-1 + pilot-1-meta + cycle-002 integration row); prior meta-phase report `reports/2026-05-26T225300Z-meta-phase-pilot-1/`.
 - **Substantive landings cycle-002**: `dot` firm L1 + `axpby` rough-in L1 + `axpby-mutation-rotation` rough-in L1>L0 + `krylov-step` rough-in L2.
 
@@ -48,7 +48,7 @@ Other observed signals tallied but not yet pattern-worthy (one-off; no ledger en
 | F | Append `cycle-planner-discipline-read-role-spec-first` candidate to skill-candidates | Skill candidate append | `scaffolding/skill-candidates.md` | mitigation for `haiku-cycle-planner-over-scopes-harvester`; recurrence-1, not yet ≥2 threshold | Low | **keep** (proposed, not promoted) |
 | G | Update priorities.md: promote `post-restart-verify-claude-agents` to "Recently landed"; update L1-vocabulary progress; add cycle-002-derived items; add cycle-003 watch | Priority update | `scaffolding/priorities.md` | cycle-002 closure + cycle-002 open questions surfaced | Low | **keep** |
 | H | Promote a new skill `parent-pre-creates-skeleton-for-report-md` OR fold into existing skill | Skill promotion | `skills/...` | option suggested in prompt | Low | **drop — fold into existing** (the existing skill IS the parent-pre-creates-skeleton pattern; promoting a sibling skill would be duplication. Refinement (Plan E) captures it. Avoids skill bloat.) |
-| I | Document the parent-pre-creates-skeleton pattern in `.claude/agents/integrator.md` and other agent definitions | Channel-format change (Medium cascade) | `.claude/agents/*.md` | new operational pattern would benefit cross-agent visibility | Medium | **drop this cycle — defer**. Reasoning: the skill SKILL.md already documents it; agent definitions don't yet need cross-referencing because dispatch parent (this session) handles skeleton creation; if a future cycle has a subagent attempt Write to REPORT.md without parent help, then enact. Watch cycle-003. |
+| I | Document the parent-pre-creates-skeleton pattern in `.claude/agents/integrator.md` and other agent definitions | Channel-format change (Medium cascade) | `.claude/agents/*.md` | new operational pattern would benefit cross-agent visibility | Medium | **drop this cycle — defer**. Reasoning: the skill SKILL.md already documents it; agent definitions don't yet need cross-referencing because dispatch parent (this session) handles skeleton creation; if a future cycle has a subagent attempt Write to CYCLE.md without parent help, then enact. Watch cycle-003. |
 | J | Switch cycle-planner from haiku to opus | Prompt edit (Medium cascade) | `.claude/agents/cycle-planner.md` | `haiku-*` friction patterns C+D | Medium | **drop this cycle — defer to recurrence-2.** Pattern C+D are recurrence-1; haiku is configured for cost. If cycle-003 repeats the pattern, escalate as `ask` to the human (model-swap is a deliberate trade-off). Recorded in watch-list. |
 
 ## Decisions
@@ -59,7 +59,7 @@ Other observed signals tallied but not yet pattern-worthy (one-off; no ledger en
 - **Plan B**: Added new ledger entry `content-pattern-write-filter-on-report-keywords` (status `addressed-by-design`). File: `scaffolding/friction-ledger.md`.
 - **Plan C**: Added new ledger entry `haiku-subagent-anchors-to-ledger-lore` (status `new`). File: `scaffolding/friction-ledger.md`.
 - **Plan D**: Added new ledger entry `haiku-cycle-planner-over-scopes-harvester` (status `new`). File: `scaffolding/friction-ledger.md`.
-- **Plan E**: Refined `embed-and-persist-subagent-dispatch` SKILL.md: frontmatter `refined_at: cycle-002`; description rewritten to "parent pre-creates REPORT.md skeleton; subagent populates via Edit"; "What the harness does" section recharacterized (per-filename-keyword filter); the procedure rewritten as three steps (pre-create skeleton / dispatch with Edit-not-Write / receive+verify); two worked examples (pilot-1 + cycle-002); special-case note for haiku cycle-planner. File: `skills/embed-and-persist-subagent-dispatch/SKILL.md`.
+- **Plan E**: Refined `embed-and-persist-subagent-dispatch` SKILL.md: frontmatter `refined_at: cycle-002`; description rewritten to "parent pre-creates CYCLE.md skeleton; subagent populates via Edit"; "What the harness does" section recharacterized (per-filename-keyword filter); the procedure rewritten as three steps (pre-create skeleton / dispatch with Edit-not-Write / receive+verify); two worked examples (pilot-1 + cycle-002); special-case note for haiku cycle-planner. File: `skills/embed-and-persist-subagent-dispatch/SKILL.md`.
 - **Plan F**: Appended `cycle-planner-discipline-read-role-spec-first` candidate (status `proposed`) to skill-candidates. File: `scaffolding/skill-candidates.md`.
 - **Plan G**: Updated `scaffolding/priorities.md`: bootstrap-L1-vocabulary marked progress (axpy + dot ✓, axpby rough-in ✓); added cycle-002-derived items (harvester-promote-axpby; lowering-verifier-axpby-theme; same-layer-cross-cutter-reconcile-dot-concept; harvester-promote-krylov-step); added cycle-003 watch-list item (`cycle-003-planner-cascade-pattern`); moved `post-restart-verify-claude-agents` watch item to "Recently landed" with cycle-002 + commit `c3312a6` reference + skill-refinement note.
 
@@ -86,7 +86,7 @@ Files written/edited this invocation:
 - `scaffolding/skill-candidates.md` — appended `cycle-planner-discipline-read-role-spec-first` candidate (proposed status).
 - `scaffolding/priorities.md` — updated Now/Near/Watch/Recently-landed sections per Plan G.
 - `scaffolding/cycle-record.jsonl` — appended cycle-002-meta row (see below).
-- `reports/2026-05-27T000227Z-meta-phase-cycle-002/REPORT.md` — this file (populated via Edit on parent-pre-created skeleton).
+- `reports/2026-05-27T000227Z-meta-phase-cycle-002/CYCLE.md` — this file (populated via Edit on parent-pre-created skeleton).
 
 ## Open ask items
 
