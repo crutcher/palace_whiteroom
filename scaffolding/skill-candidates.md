@@ -107,6 +107,23 @@ promoted_to: skills/embed-and-persist-subagent-dispatch/SKILL.md
 
 (Existing skills under `skills/` are the prior loop's promotions; they don't need backfilling here.)
 
+## Open candidates (cycle-010 additions)
+
+```yaml
+---
+slug: phase-1-slice-reduction-audit
+proposer: critic (cycle-010, audit of 2026-05-27T220000Z-same-layer-cross-cutter-phase-1-corpus-reduction-audit)
+proposed_at: cycle-010 / 2026-05-27
+status: proposed
+---
+```
+
+**Motivating observation**: cycle-010's first-instance Phase 1 corpus reduction audit (priority #19) established a four-part template (Supersession map / Residual gaps / Recommended action / Proposed changes per slice). Critic review surfaced three recurring friction points likely to repeat at cycle-011+ replay: (a) slice line-range citations drift by 1-2 lines from actual `## H2` boundaries unless anchored by an upfront `grep -n "^## "` enumeration; (b) Recommended-action narrative and proposed_change line ranges are produced separately and can disagree (the first instance's cg.md had a section the narrative said to stub but the line range retained); (c) the slice's section table-of-contents is implicit in long supersession-map prose, making cross-section audit harder. Each will recur on the remaining 7 slices unless the template is crystallized.
+
+**Sketch of procedure**: a `same-layer-cross-cutter`-facing skill that prescribes: (1) enumerate slice section anchors first via `grep -n "^## " <slice>` and emit them as a fixed table at the top of the dispatch report; (2) for each section, populate four columns — section name, actual line range, supersession status (full / partial / none), firm-entry pointer(s); (3) Residual gaps section enumerates only the partial / none rows; (4) proposed_change line ranges are derived mechanically from the section-anchor table, not from prose; (5) a final reconciliation step verifies narrative-and-range agreement before report emission.
+
+**Promotion bar check**: pattern observed = 1 instance (cycle-010 first instance); friction-ledger entry = candidate-creation pending (the template-drift pattern hasn't fired twice yet); sketch concrete enough = ✓ (four-step procedure could be written as SKILL.md). Falls below the "≥2 cycles" promotion bar but well above the "candidate sketch concrete enough" bar. Recommend default-accept under low-bar policy because the remaining 7 slices are queued and template drift will compound across them.
+
 ## Rejected
 
 (none yet)

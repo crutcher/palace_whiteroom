@@ -16,6 +16,7 @@
 
 # L3 — Global Tensor-Field Operations
 - [Overview](./L3/index.md)
+- [krylov-step](./L3/krylov-step.md)
 
 # L3 > L2 — Lowering
 - [Overview](./L3-L2/index.md)
@@ -39,6 +40,8 @@
 - [axpbypcz](./L1/axpbypcz.md)
 - [ksp_solve](./L1/ksp_solve.md)
 - [eigsolve](./L1/eigsolve.md)
+- [matrix-weighted-norm](./L1/matrix-weighted-norm.md)
+- [bilinear-form](./L1/bilinear-form.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)

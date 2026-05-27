@@ -1,5 +1,9 @@
 # arnoldi_step
 
+> **Reduction status (cycle-010+):** the L0 source-line citations below are superseded by `book/src/L1-L0/ksp-solve-mutation-rotation.md` §"Sub-pattern C — inner GMRES body" (workspace at hpp:190-194; inner Arnoldi loop at cpp:615-650). Retained material: §L1 invariants, §L2 four-primitive decomposition (more granular than firm L2/krylov-step), §L3 variant-dependent obstruction taxonomy (MGS sequential / CGS-CGS2 lift), §L4 Arnoldi-specific calculus form (cited from `book/src/L4/krylov-step.md` as one of the four canonical L4 worked-example sections).
+>
+> **Pending lift to firm entries**: a firm `L1/orthogonalize` (or `L1/orthogonalize-column`) operator covering the slice's residual-axis-disclosed `gs_orthog ∈ {MGS, CGS, CGS2}` variant; a `concepts/sequential-obstruction` worked-example covering the MGS-only L3 obstruction; a `scaffolding/test-linkages/orthog.md` entry for the `test/unit/test-orthog.cpp:80-170, :234-280` parametric tests.
+
 ## Context
 
 The single-step Arnoldi inner body is the innermost kernel of GMRES (and, externally, of SLEPc's Krylov-Schur eigensolver path). One step accepts the prior orthonormal Krylov basis `V[0..j]` and produces (a) a new orthonormal basis column `V[j+1]` and (b) the j-th column of the upper-Hessenberg matrix `H̄`. It is the dataflow boundary between **field-side** primitives (operator apply, dot, axpy, norm — MPI-collective) and **small-dense-side** primitives (Hessenberg-column update, Givens rotations — pointwise scalar). The slice isolates this boundary so that the [gmres](./gmres.md) slice can state its outer loop at L1 in terms of `arnoldi_step` alone, without re-deriving the orthogonalisation choice each cycle.
@@ -35,39 +39,7 @@ This slice scopes only the in-repo Arnoldi step. The SLEPc/ARPACK eigensolver pa
 
 ## L0 — palace source
 
-The in-repo Arnoldi step is the four-line kernel inside the restart loop of `GmresSolver::Mult` (and FGMRES's near-identical sibling). Letting `j` be the current inner index, `V` the basis array, `H` the (max_dim+1)×max_dim Hessenberg buffer, and `Hj := &H[j*(max_dim+1)]` the j-th Hessenberg column:
-
-    // [palace/linalg/iterative.cpp:621-628]
-    VecType &w = V[j + 1];                                // alias, NOT copy: w *is* the destination slot
-    if (w.Size() == 0) { Update(j); }                     // lazy resize by add_size columns; hidden at L1
-    ApplyBA(pc_side, A, B, V[j], w, r, …);                // w ← (BA or AB or A) · V[j]
-    Hj = H.data() + j * (max_dim + 1);                    // pointer to j-th Hessenberg column
-    OrthogonalizeIteration(gs_orthog, comm, V, w, Hj, j); // Hj[0..j] ← ⟨w_pre, V[i]⟩;  w ← w − Σ Hj[i]·V[i]
-    Hj[j+1] = linalg::Norml2(comm, w);                    // subdiagonal entry (post-orthog norm); MPI allreduce inside
-    w *= 1.0 / Hj[j+1];                                   // in-place scal; w==V[j+1] is now unit-norm
-
-The four lines correspond to four [rotations](../../concepts/rotation.md):
-
-1. **operator apply** via the constructed operator `BA` (or `AB`, or `A`) — [apply_BA](./gmres.md#apply_BA);
-2. **orthogonalisation** against the prior basis — [orthog](./orthog.md), variant-dispatched on `gs_orthog`;
-3. **subdiagonal-norm** computation — [nrm2](../../concepts/nrm2.md) with MPI allreduce;
-4. **in-place scaling** of the new basis column — [scal](../../concepts/scal.md).
-
-The FGMRES variant ([palace/linalg/iterative.cpp:794-822](../../../reference/palace/linalg/iterative.cpp#L794-L822)) replaces the scratch `r` with the per-step preconditioned basis column `Z[j]` and hard-wires `pc_side = PreconditionerSide::RIGHT` at the `ApplyBA` call site. `Z[j]` is itself promoted to threaded state and consumed during solution reconstruction; otherwise the Arnoldi-step contract is unchanged.
-
-Three distinct in-place writes occur concurrently in the kernel: (1) `w` (a reference, not a copy, to the basis slot `V[j+1]` — see line 622 `VecType &w = V[j+1]`) is written by `ApplyBA`, mutated by `OrthogonalizeIteration` (project-and-subtract), and finally scaled in place — the final `scal` is therefore *also* the act of installing the new basis column, with no separate copy; (2) `Hj` is an accumulator-style write into the j-th Hessenberg column (indices `[0..j]` from `OrthogonalizeIteration`, index `j+1` from `Norml2`); (3) `r` is a scratch buffer used only when a preconditioner is present (the `pc_side == NONE` branch of `ApplyBA` at [iterative.cpp:303](../../../reference/palace/linalg/iterative.cpp#L303) calls `A->Mult(x,y)` directly and never touches `r`).
-
-Breakdown (`Hj[j+1] == 0`) is not guarded inside the kernel: line 628 performs the in-place `scal` on the post-orthog norm without checking the divisor. The source-level fact is that the four lines `apply → orthog → norm → scal` carry no early-exit. Downstream surfacing (the rotation-generate step at [iterative.cpp:638-640](../../../reference/palace/linalg/iterative.cpp#L638-L640) and the `CheckDot` on line 643) belongs to the [gmres](./gmres.md) outer loop's small-dense update, not to this slice.
-
-### Variant axes
-
-The step admits three orthogonal axes of variation at L0:
-
-- **Operator-apply variant** (`pc_side ∈ {LEFT, RIGHT, NONE}`): absorbed by the constructed operator `BA` per [constructed-operators](../../concepts/constructed-operators.md). The kernel calls `ApplyBA(...)` uniformly; `pc_side` does not appear in the per-step procedure.
-- **Orthogonalisation variant** (`gs_orthog ∈ {MGS, CGS, CGS2}`): preserved as a residual axis; the variant changes the MPI-collective shape (1·j allreduces for MGS; one batched allreduce for CGS; two batched allreduces for CGS2) but not the L1 functional contract.
-- **Krylov flavour** (GMRES vs FGMRES): adds `Z[j]` to threaded state. The Arnoldi step proper is identical; the difference shows up in the outer GMRES slice, not here.
-
-Basis storage is allocated lazily (init_size=5 columns, add_size=10 columns per resize, triggered when `V[j+1].Size()==0`); the slice hides this entirely.
+The L0 four-line kernel decomposition (`ApplyBA → OrthogonalizeIteration → Norml2 → in-place scal` at `palace/linalg/iterative.cpp:621-628`) is now firm at `book/src/L1-L0/ksp-solve-mutation-rotation.md` §"Sub-pattern C — inner GMRES body". The lazy-allocation pattern (`Update(j)` at lines 519-541, triggered when `V[j+1].Size() == 0`) and the FGMRES `Z[j]` teeing-off pattern (lines 707-731 + 794-822) are documented there. See also `book/src/L0/linalg-iterative-file.md` for the per-method bodies' L0 anchor chapter.
 
 ## L1 — invariants and procedure
 

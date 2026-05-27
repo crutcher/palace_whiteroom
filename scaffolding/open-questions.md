@@ -200,11 +200,14 @@ status: open
 slug: nrm2-B-weighted-energy-norm-harvest
 opened_at: cycle-003
 opened_by: harvester
-status: open
+status: partially-answered
+last_revisited: cycle-010
 ---
 ```
 
 The L0 surface uses overloading: `linalg::Norml2(comm, x)` (this cycle's firm `nrm2`) and `linalg::Norml2(comm, x, B, Bx)` (operator-weighted norm `‖x‖_B = √(xᴴ B x)` at `operator.cpp:600-619`). At L1 these are distinct operators. The B-weighted form requires an `apply`-style operator-application primitive (not yet in the L1 dep-map), an SPD precondition on `B`, and a workspace `Bx`. Queue a `nrm2_B` or `energy_norm` harvester invocation once `apply` (matrix-vector multiplication) is firm at L1.
+
+**Partially answered cycle-010**: The cycle-010 wave-1 harvester landed `book/src/L1/matrix-weighted-norm.md` (`reports/2026-05-27T215334Z-harvester-matrix-weighted-norm-l1/`) as a `rough-in (test-coverage-bounded)` L1 operator covering the SPD operator-weighted Euclidean norm `‖x‖_B = √(xᴴ B x)` at L0 anchor `palace/linalg/operator.cpp:599-619`. The cycle-010 wave-2 #5 harvester sibling dispatch (`reports/2026-05-27T220123Z-harvester-nrm2-B-weighted-energy-norm-l1/`) verified this as a **duplicate target** (case (c) merge-and-rename verdict): the slugs `nrm2_B-weighted-energy-norm`, `nrm2_B`, `nrm2_weighted`, `energy-norm` all name the same operator landed under the canonical slug `matrix-weighted-norm`. Same L0 anchor, same closed-form, same SPD applicability, same dependencies (`dot` + `apply_linop`), same element-type variant axis, same M-orthonormalisation callsite cohort. The energy-norm content of this OQ is therefore landed; the OQ is held `partially-answered` (rather than `answered`) only to track the firm-promotion gate (test coverage) carried forward on the sibling `matrix-weighted-norm-and-bilinear-form-l1-rough-ins` parent ledger. Naming-axis residue (the L1 index `Queued` line and the L0 chapter `linalg-operator-file.md` prose still referencing `nrm2_B` / `nrm2_weighted`) is tracked under the wave-1 sibling's new OQ `matrix-weighted-norm-naming-sweep`.
 
 ```yaml
 ---
@@ -1359,11 +1362,16 @@ The new `eigensolver-wrapper` chapter notes that the three concrete branches (AR
 slug: matrix-weighted-norm-and-bilinear-form-l1-rough-ins
 opened_at: cycle-008
 opened_by: layer-intro-author
-status: open
+status: partially-answered
+last_revisited: cycle-010
 ---
 ```
 
 The new `linalg-operator-file` chapter notes that the `palace::linalg::` free functions `Norml2(comm, x, B, Bx)` and `Dot(comm, x, A, y)` are matrix-weighted variants of L1's existing `nrm2` and `dot` operators (weighted by an SPD `B` or bilinear-form `A`, respectively). They have not been harvested at L1. Candidate rough-in names: `L1/nrm2_weighted` and `L1/dot_bilinear`. The workspace-internal-allocation pattern in `Dot` (`palace/linalg/operator.cpp:621-639`) is Category 4 of `mutable-workspace-pattern` (synthetic workspace). `SpectralNorm` (`palace/linalg/operator.hpp:398-401`) is power iteration with configurable tolerance — also unharvested. Candidate rough-in name: `L1/power_iterate`. Sized smaller than `eigsolve` (single largest eigenvalue, no eigenvector recovery, no spectral transformation). Routes to cycle-009+ harvester / abstractor. Source: `reports/2026-05-27T173523Z-layer-intro-author-L0-bootstrap-bundle-4/CYCLE.md` §Open questions item 2.
+
+**Partially answered cycle-010**: Harvester dispatched at `reports/2026-05-27T215334Z-harvester-matrix-weighted-norm-l1/`; landed `book/src/L1/matrix-weighted-norm.md` as `rough-in (test-coverage-bounded, cycle-010)` per priority #17 (lower-layer-shared-vocabulary-priority). The harvest covers the `Norml2(comm, x, B, Bx)` (matrix-weighted-norm) half of this OQ. **Residuals remaining open**: (a) the `Dot(comm, x, A, y)` bilinear-form sibling harvest (queued as `bilinear-form-l1-harvest`); (b) the `SpectralNorm` (power-iteration) sibling harvest; (c) the L1>L0 lowering theme `matrix-weighted-norm-mutation-rotation` (queued separately below). Status held `partially-answered` rather than `answered` to keep these residuals tracked.
+
+**Further partially answered cycle-010**: Sibling harvester dispatched at `reports/2026-05-27T215427Z-harvester-bilinear-form-l1/`; landed `book/src/L1/bilinear-form.md` as `rough-in (lower-layer-shared-vocabulary, cycle-010)` per priority #17 (sibling dispatch to matrix-weighted-norm). The harvest covers the `Dot(comm, x, A, y)` (bilinear-form) half of this OQ — residual (a) above. The L1 form `bilinear_form(x, M, y) = xᴴ M y` is the matrix-weighted generalisation of `dot` for arbitrary linear `M` (no SPD requirement). Promotion-to-firm gate is narrow variant-axis coverage (two M-symmetry witnesses but no Cauchy–Schwarz tight case; real-vector case not surfaced by Palace). **Residuals remaining open after both wave-1 sibling landings**: (b) the `SpectralNorm` (power-iteration) sibling harvest; (c) the L1>L0 lowering theme `matrix-weighted-norm-mutation-rotation` (tracked separately as `matrix-weighted-norm-mutation-rotation-l1-l0-theme` below) and the analogous future `bilinear-form-mutation-rotation` L1>L0 theme. Status held `partially-answered` rather than `answered` to keep these residuals tracked.
 
 ```yaml
 ---
@@ -1472,11 +1480,15 @@ Bundle 6 would form with the same 2-chapters-per-cycle cadence. Routes to cycle-
 slug: eigsolve-linear-solve-failed-status-anchor
 opened_at: cycle-009
 opened_by: harvester
-status: open
+status: partially-answered
+partial_answer_at: cycle-010
+partial_answer_in: reports/2026-05-27T220558Z-lifter-eigsolve-linear-solve-failed-anchor/
 ---
 ```
 
 The cycle-009 `L1/eigsolve` rough-in chapter (`book/src/L1/eigsolve.md`) introduces a sum-typed `EigStatus = Converged | PartialConverged | MaxIterReached | LinearSolveFailed`. The first three cases correspond directly to L0 termination evidence at `palace/drivers/eigensolver.cpp:367-374` (the count-return + Mpi::Print pattern). The fourth case — `LinearSolveFailed` — is **constructively introduced by the L1 form and has no direct L0 anchor**: at L0, an inner-solver non-convergence is silent at the eigensolver level (the inner `ksp_solve` emits `Mpi::Warning` per `palace/linalg/ksp.cpp:301-307` but the eigensolver continues with the poorly-converged inverse). The Algebraic-laws §3 in the chapter flags this and §"Laws that explicitly do not hold" notes that treating the four-way `EigStatus` as exhaustive over L0 termination cases is "not a sound L0-grounded claim" until the L1>L0 lowering plumbs the case explicitly. Critic should consider whether to (a) drop the case (collapsing to `MaxIterReached`), (b) accept the constructive introduction with an explicit "constructed by the L1 form" annotation, or (c) require the L1>L0 lowering theme to plumb the case via a refactor of the inner-solver coupling. Harvester recommendation: keep the case but mark it `unconfirmed` until the L1>L0 lowering theme (a future `eigsolve-mutation-rotation` cycle) is harvested. Routes to critic / lifter / lowering-verifier review on the eigsolve rough-in entry, or to the future `eigsolve-mutation-rotation` L1>L0 dispatch (cycle-010+). Source: `reports/2026-05-27T191929Z-harvester-eigsolve-L1/CYCLE.md` §Open questions / caveats item 1.
+
+**Resolved cycle-010 (lifter)**: Dispatched at `reports/2026-05-27T220558Z-lifter-eigsolve-linear-solve-failed-anchor/`. Adopted option (b) — keep the `LinearSolveFailed` variant in `EigStatus` and annotate it as **constructed by the L1 form** with explicit negative-anchor citations. The lifter dispatch verified that all ten eigensolver-side `opInv->Mult` call sites (4 ARPACK + 1 NLEPS + 5 SLEPc shell-matrix: `arpack.cpp:574, 580, 761, 778`; `nleps.cpp:514`; SLEPc shell callbacks at `slepc.cpp:1858, 1965, 1978, 2076, 2159`) invoke `BaseKspSolver<ComplexOperator>::Mult` (`palace/linalg/ksp.cpp:297-310`), which returns `void` and emits only `Mpi::Warning`, and that none of the call sites query `ksp->GetConverged()` after the call — confirming the inner-solver failure is silent at the eigensolver outer loop. The L1 form's `LinearSolveFailed` variant is therefore L1-constructive (introduced to make the inner-linear-solve coupling visible at the L1 surface for downstream L4 monadic-coordination consumers); materialisation defers to the future `eigsolve-mutation-rotation` L1>L0 theme (cycle-010+ abstractor candidate). The cycle-010 lifter applied four edits to `book/src/L1/eigsolve.md` (§Signature callout, §Algebraic-laws §3 row, §"Laws that explicitly do not hold" sum-type-completeness bullet, §Status block) and one evidence-section append. Status: resolved.
 
 ```yaml
 ---
@@ -1517,10 +1529,13 @@ slug: nleps-spec-gap-as-check-stop-into-carry-reuse-blocker
 opened_at: cycle-009
 opened_by: combinator-miner
 status: open
+last_revisited: cycle-010
 ---
 ```
 
 The cycle-008 abstractor's promotion criterion for the speculative L4 helper `check_stop_into_carry` (sketched in `book/src/L4-L3/gmres-inner-loop-iterate-while-migration.md` §Speculative L4 operators) is **"defer until a second slice needs it"** (sourced from `reports/2026-05-27T180000Z-abstractor-gmres-inner-loop-iterate-while-migration/CYCLE.md:71`; also tracked at `iterate-while-l4-l3-gmres-inner-loop-migration` lineage above). The cycle-009 combinator-miner survey (`reports/2026-05-27T192047Z-combinator-miner-check-stop-into-carry-reuse/CYCLE.md`) verified that the **NLEPS Quasi-Newton inner loop** at `reference/palace/palace/linalg/nleps.cpp:589-647` has the same 3-condition stop shape (different `StopReason` set `{Converged, Diverged, MaxIt}` but identical hoist-into-carry structure), and is therefore **the natural second consumer** — but NLEPS has no `book/src/spec/slices/nleps.md` chapter; only L1>L0 mutation-rotation citations at `book/src/L1-L0/axpbypcz-mutation-rotation.md:127-132,294-297`, `book/src/L1-L0/apply-linop-mutation-rotation.md:337`, and `book/src/L1-L0/axpby-mutation-rotation.md:213` reference it. NLEPS is a **non-linear eigenvalue problem driver** (sibling-tier to GMRES, not a sub-component); promoting it to L1+ is a multi-cycle effort (`nleps.cpp` is 952 lines including deflation, Armijo backtracking, line search, and line-search Jacobian construction). This OQ records the dependency: `check_stop_into_carry` helper promotion is blocked on NLEPS being spec'd at L1+ as a separate slice; if NLEPS lands and its inner-loop migration adopts the same hoist pattern, promote the helper at that point. Routes to whichever cycle picks up NLEPS as a harvester target (likely cycle-010+ if eigenmode work prioritizes), with `check_stop_into_carry` promotion as a downstream consequence. Source: `reports/2026-05-27T192047Z-combinator-miner-check-stop-into-carry-reuse/CYCLE.md` §Open questions / caveats item 1.
+
+**Cycle-010 revisit** (`reports/2026-05-27T215535Z-combinator-miner-check-stop-into-carry-mcp-pilot/CYCLE.md`): The MCP-codemap-pilot retry of the `check_stop_into_carry` reuse audit produced a **defer-with-routing** verdict — **GMRES + FGMRES sister-algorithm match found** as a structurally-identical 3-condition twin (`palace/linalg/iterative.cpp:644-649` ↔ `:823-828`, textually identical disjunct). The cycle-010 audit characterizes this as **"the lower edge"** of the second-reuse criterion: both call sites are inside `GmresSolverBase`-shaped iteration in the same translation unit on a single solver-family pair (FGMRES is "GMRES with right-preconditioning allowed to vary per iteration"), so the structural population that would stress the helper's signature in a *new* dimension is unchanged. The cycle-009 verdict (NLEPS is the natural second consumer; the FGMRES twin is variant-absorbed and doesn't count as second-slice under reading (a)) is **refined but not overturned**: the FGMRES twin is acknowledged as a sister-algorithm match (lower-edge reading (b)), but the strong-reuse evidence (a non-`GmresSolverBase` Krylov consumer) the cycle-009 OQ was waiting for is still absent. The cycle-010 audit's recommendation is to **route a lifter dispatch on FGMRES inner-loop migration** in cycle-011 (tracked separately under `fgmres-inner-loop-iterate-while-migration-lifter-candidate`) — this is the pre-formalization step that would verify whether GMRES and FGMRES lower to the same `check_stop_into_carry` callsite shape (if yes, that is the second-reuse formalization; if no, the helper's signature needs revision before promotion). Status held `open` because the cycle-009 NLEPS-dependency framing is still the right blocker for *firm* L4 promotion; the FGMRES route is a pre-promotion validation step, not the second-consumer the OQ describes. Cross-reference: cycle-010 audit also confirmed (independently) the related cycle-009 OQ `variant-absorption-vs-instance-counting-policy` (line 1546) — adopting reading (a) for cycle-009 + reading (b)-lower-edge for cycle-010 is internally consistent and now has two cycles of corroborating evidence for the meta-phase batch-2 codification.
 
 ```yaml
 ---
@@ -1577,6 +1592,228 @@ status: open
 ```
 
 The cycle-009 combinator-miner dispatch on `check_stop_into_carry` produced a `defer` verdict (no new L4 dep-map row, no firm-promotion). The original CYCLE.md draft included a candidate append-only edit to the cycle-008 theme file's §Status block to record the survey outcome inside the theme — but on reflection (and confirmed by the cycle-009 critic + repairer), this edit is **technically outside the combinator-miner's stated authority** (the role spec scopes the agent to "just the dep-map entry"). The repaired CYCLE.md §Proposed changes section now carries zero proposed-changes blocks (consistent with the `defer` verdict) and names two natural channels for any future incorporation of the survey outcome into the theme file: (a) an OQ entry referencing the cycle-009 combinator-miner report (this OQ), or (b) a lifter or abstractor dispatch on the cycle-008 theme that re-authors §Status to incorporate the criterion-and-survey-result inline. This OQ flags a broader **authority-scope question for the combinator-miner role**: when a `defer` verdict is produced, should the agent be permitted to author a §Status-block update on the relevant upstream theme as part of the verdict, or should every such update be routed via OQ to a follow-up dispatch (the current strict reading)? The strict reading preserves clean role boundaries but creates a paperwork tax (every defer becomes an OQ); the relaxed reading is more efficient but blurs role authority. Routes to meta-phase (cycle-009 batch-1 aggregation) for explicit codification — likely a small role-spec edit one way or the other. Source: `reports/2026-05-27T192047Z-combinator-miner-check-stop-into-carry-reuse/CYCLE.md` §Open questions / caveats item 6.
+
+```yaml
+---
+slug: l3-backfill-apply-linop-and-blas1-cohort
+opened_at: cycle-010
+opened_by: cross-layer-cross-cutter
+status: open
+relates_to: priority-20-identity-lowering-both-levels-backfill (priorities.md), l3-vocabulary-inventory-gap (this ledger)
+---
+```
+
+The cycle-010 identity-in-form audit (`reports/2026-05-27T215315Z-cross-layer-cross-cutter-identity-in-form-audit/CYCLE.md`) surfaced **two HIGH CONFIDENCE L3 backfill candidates** beyond the wave-1 `L3/krylov-step.md` dispatch: **(1) `book/src/L3/apply_linop.md`** as a standalone harvester dispatch, and **(2) the 6-entry BLAS-1 cohort** (`L3/axpy.md`, `L3/dot.md`, `L3/nrm2.md`, `L3/axpby.md`, `L3/axpbypcz.md`, `L3/scal.md`) as a bundled multi-dispatch sequence. Structural rationale: both the L4-L3 typed-wrapper-dissolution theme (`book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:64-68`) and the L3-L2 body-identity theme (`book/src/L3-L2/krylov-step-body-identity.md:30, 97`) reference these primitives as L3-native by signature shape (whole-tensor / reduction, no element loop exposed). The L3 index (`book/src/L3/index.md:11-14`) already advertises `matvec, axpy, dot, nrm2` as L3 vocabulary but currently no L3 entries exist for them. The rotation L3→L1 is identity-in-form on the primitive's signature; only the stratum-typing-vs-positional surface differs. Suggested bundling: (a) axpy + axpby + axpbypcz (linear-update family), (b) dot + nrm2 (reduction family; nrm2 depends on dot), (c) scal (standalone leaf). Each dispatch follows the wave-1 `L3/krylov-step.md` precedent. **Routes to cycle-011+ planner** for harvester dispatch scheduling (priority #20 second target enactment); audit explicitly recommends `dispatch-harvester-cycle-010-or-011`. Source: `reports/2026-05-27T215315Z-cross-layer-cross-cutter-identity-in-form-audit/CYCLE.md` §"Per-candidate verdict" items (1)-(2) + §Recommendation `proposed_changes` blocks 1-2.
+
+```yaml
+---
+slug: ksp-solve-l2-promotion-non-identity-substantive-gap
+opened_at: cycle-010
+opened_by: cross-layer-cross-cutter
+status: open
+relates_to: priority-20-identity-lowering-both-levels-backfill (out-of-scope-for-priority-20)
+---
+```
+
+The cycle-010 identity-in-form audit surfaced **one MEDIUM CONFIDENCE candidate** that is real coverage gap but **out-of-priority-20-scope**: `book/src/L2/ksp_solve.md` would carry the outer-driver framing (`solve_loop` + `restart_cycle` folding `krylov-step` via an iteration combinator, threading SolveResult statistics) around the L2 `krylov-step` entry. The rotation L2→L1 is **NOT identity-in-form** — at L2 the per-method body is unfolded into an explicit krylov-step fold; at L1 the body is opaque inside `Solver[A]`. Per `book/src/L1/ksp_solve.md:81`: "the L2 `krylov-step` operator is the layer at which they become direct dependencies". This means a missing L2 row would carry substantive content (the outer-loop framing), so this is a real coverage gap, but it would be a **fresh harvester dispatch with new algebraic content, not a mechanical backfill**. Priority #20 explicitly targets identity-in-form backfills; this candidate is out of scope. **Routes to cycle-010+ planner for separate priority consideration** ("ksp_solve L2/L4 promotion" as a distinct priority from the priority #20 identity-in-form sweep). The L3 and L4 candidates for `ksp_solve` similarly defer (L4 would be the typed-wrapper Solve-monad driver; L3 form is value-threaded version of L4 driver; both depend on the L2 form being authored first). Source: `reports/2026-05-27T215315Z-cross-layer-cross-cutter-identity-in-form-audit/CYCLE.md` §"Per-candidate verdict" item (3) + §Recommendation `NOT-priority-20-but-real-coverage-gap` block.
+
+```yaml
+---
+slug: l3-l1-directory-naming-structure-policy
+opened_at: cycle-010
+opened_by: cross-layer-cross-cutter
+status: open
+relates_to: l3-backfill-apply-linop-and-blas1-cohort (this ledger), identity-lowerings-still-require-both-l-levels (CLAUDE.md §Methodology invariants)
+---
+```
+
+The cycle-010 identity-in-form audit flagged a **policy question for the cycle-010+ layer-intro-author / cycle-planner**: should each L3 backfill entry (per the `l3-backfill-apply-linop-and-blas1-cohort` OQ) come with a sibling **thin identity-in-form L3-L1 theme** (analogous to `L3-L2/krylov-step-body-identity.md`) documenting the no-op rotation, OR should the identity rotation be **captured in-line at the L3 entry itself**? **`book/src/L3-L1/` does not currently exist** (confirmed by critic via directory listing); existing lowering-layer directories are `L1-L0/`, `L2-L1/`, `L3-L2/`, `L4-L3/`. Either approach is consistent with the methodology invariant "Identity-lowerings still require both L levels" — the question is one of artifact navigation and structural consistency. The wave-1 sibling dispatch on `L3/krylov-step.md` did NOT create an `L3-L1/` directory (the L3 krylov-step entry's lowering is `L3-L2` to the L2 entry, not `L3-L1` directly — krylov-step is a composition that lives at L2/L3/L4, not L1). The L3 backfill candidates for primitives (apply_linop, BLAS-1 cohort) are a different case: their lowering chain skips L2 (they are primitives, not compositions) and lands directly at L1, making the L3>L1 hop the relevant one. **Routes to cycle-011+ planner** to decide a default before dispatching the L3 backfill harvesters. A small `layer-intro-author` role-spec edit may codify the policy. Source: `reports/2026-05-27T215315Z-cross-layer-cross-cutter-identity-in-form-audit/CYCLE.md` §"Open questions / caveats" item 1.
+
+```yaml
+---
+slug: l3-vocabulary-inventory-gap
+opened_at: cycle-010
+opened_by: cross-layer-cross-cutter
+status: open
+relates_to: l3-backfill-apply-linop-and-blas1-cohort (this ledger), lower-level-shared-vocabulary-takes-priority (CLAUDE.md §Methodology invariants), priority-17-lower-layer-shared-vocabulary-priority (priorities.md)
+---
+```
+
+**Latent pattern observation** flagged by the cycle-010 identity-in-form audit: the L3 index (`book/src/L3/index.md:11-14`) advertises whole-tensor primitives (`matvec, axpy, dot, nrm2` as field operations) as L3 vocabulary, but the L3 directory currently contains only `index.md` + (post-wave-1) `krylov-step.md`. Under the methodology invariant **"Identity-lowerings still require both L levels"** (CLAUDE.md, mid-cycle-009), every primitive the L3 index advertises as an L3 field operation should have a corresponding L3 entry, even if the rotation L3→L1 is identity-in-form. The audit's two HIGH CONFIDENCE backfill candidates (apply_linop + 6-entry BLAS-1 cohort, per the `l3-backfill-apply-linop-and-blas1-cohort` OQ) are instances of this broader pattern, but the pattern may extend further as L2/L3/L4 vocabulary grows (e.g., `gemv`, `trsv` if they become firm L1 primitives; the L2 index at `book/src/L2/index.md:17` advertises "axpy, dot, matvec, gemv, trsv, scal, nrm2" — at least gemv/trsv are not yet firm at L1). **Routes to cycle-011+ planner as evidence supporting the broader L3 cohort growth that priority #17 already targets**; the two HIGH CONFIDENCE candidates are the next concrete realization of that policy, but additional cross-layer-cross-cutter audits in subsequent cycles should track the broader gap as more L1 primitives firm up. Source: `reports/2026-05-27T215315Z-cross-layer-cross-cutter-identity-in-form-audit/CYCLE.md` §"Latent observation: L3 vocabulary inventory gap" + §Recommendation `latent-pattern-observation` block.
+
+```yaml
+---
+slug: matrix-weighted-norm-naming-sweep
+opened_at: cycle-010
+opened_by: harvester
+status: open
+relates_to: matrix-weighted-norm-and-bilinear-form-l1-rough-ins (this ledger)
+---
+```
+
+The cycle-010 `matrix-weighted-norm` harvest resolved the canonical L1 slug as `matrix-weighted-norm` per planner directive, but candidate-name residue persists across artifacts. The L0 chapter `book/src/L0/linalg-operator-file.md` (cycle-008) uses `nrm2_weighted` at lines 30-33, 73, 88 as the candidate L1 name; the cycle-008 OQ slug uses `matrix-weighted-norm`; the L1 `index.md` previously used `nrm2_B` in the Queued section (now superseded as of this cycle-010 integration). The L0 chapter is informational on L1 naming (not authoritative), so the misnomer is not blocking, but a future cross-layer cross-cutter sweep should swap the `nrm2_weighted` references in `book/src/L0/linalg-operator-file.md:30-33, 73, 88` for `matrix-weighted-norm` to align. Routes to a future cross-layer-cross-cutter dispatch. Source: `reports/2026-05-27T215334Z-harvester-matrix-weighted-norm-l1/CYCLE.md` §Open questions item 1.
+
+```yaml
+---
+slug: matrix-weighted-norm-mixed-element-type-variant
+opened_at: cycle-010
+opened_by: harvester
+status: open
+relates_to: matrix-weighted-norm-and-bilinear-form-l1-rough-ins (this ledger), apply_linop firm L1 entry (variant-axis precedent)
+---
+```
+
+The L0 complex specialization of `linalg::Norml2(comm, x, B, Bx)` decomposes `B.Mult(x.Real(), Bx.Real()); B.Mult(x.Imag(), Bx.Imag())` because `B : Operator` is real-valued even when `x` is complex (`palace/linalg/operator.cpp:613-614`). At L1 the cycle-010 rough-in absorbs this into `apply_linop`'s element-type variant axis (per cycle-008's `apply_linop` precedent: the L1 form collapses across operator element-type). But the question remains: should L1 admit the **real-`B`-applied-to-complex-`x`** specialization as a distinct element-type sub-variant — or absorb it uniformly? The SPD precondition interacts with `B`'s element-type non-trivially. This is a firm-promotion gate question: clarifying the variant-axis profile is part of (c) algebraic-law completeness verification. Routes to either a follow-up `matrix-weighted-norm` harvester invocation or a `same-layer-cross-cutter` sweep audit on element-type-variant policy. Source: `reports/2026-05-27T215334Z-harvester-matrix-weighted-norm-l1/CYCLE.md` §Open questions item 2.
+
+```yaml
+---
+slug: matrix-weighted-norm-mutation-rotation-l1-l0-theme
+opened_at: cycle-010
+opened_by: harvester
+status: open
+relates_to: matrix-weighted-norm-and-bilinear-form-l1-rough-ins (this ledger), apply-linop-mutation-rotation firm L1>L0 theme (precedent), ksp-solve-mutation-rotation firm L1>L0 theme (precedent)
+---
+```
+
+The L1>L0 lowering theme `matrix-weighted-norm-mutation-rotation` is not yet authored. The unfolded composition `√(dot(apply_linop(B, x), x))` (per the L0 source factoring `B.Mult(x, Bx); dot = Dot(comm, Bx, x); return std::sqrt(dot)` at `palace/linalg/operator.cpp:601-606`) belongs in this L1>L0 theme — **not** in the L1 entry (per the post-cycle-009 invariant "Layers are defined high→low; lifting notes go in working notes"). The theme would also formalise the `Bx`-as-caller-supplied-workspace pattern (a sub-case of `mutable-workspace-pattern` Category 2, but with caller-not-class ownership; this is a sub-axis sliding across the bilinear-form sibling boundary). Routes to a future `abstractor` invocation. Sister-theme precedents: `apply-linop-mutation-rotation` (cycle-007), `axpby-mutation-rotation` (cycle-005), `ksp-solve-mutation-rotation` (cycle-008). Source: `reports/2026-05-27T215334Z-harvester-matrix-weighted-norm-l1/CYCLE.md` §Open questions item 3.
+
+```yaml
+---
+slug: normalize-and-normalize-b-weighted-l1-candidates
+opened_at: cycle-010
+opened_by: harvester
+status: open
+relates_to: matrix-weighted-norm-and-bilinear-form-l1-rough-ins (this ledger)
+---
+```
+
+The L0 source includes both `linalg::Normalize(comm, x)` (unweighted) and `linalg::Normalize(comm, x, B, Bx)` (B-weighted) at `palace/linalg/operator.hpp:376-384`. Both call their respective `Norml2` overload, then scale `x *= 1.0 / norm`. At L1 these compose as `(nrm2 ∘ scal)` and `(matrix-weighted-norm ∘ scal)` respectively, but neither has a firm L1 entry yet. They are L1 composite-utility candidates: small operators that bundle a norm computation with an in-place rescale at L0 but become a non-mutating "normalised-vector" function at L1. Sized small; route to a future harvester (or cross-layer-cross-cutter for the composite-utility cohort question). Worth considering whether the L1 layer should host the composite directly or whether it should be left as an explicit composition at the L2 level. Source: `reports/2026-05-27T215334Z-harvester-matrix-weighted-norm-l1/CYCLE.md` §Open questions item 5.
+
+```yaml
+---
+slug: test-coverage-bounded-rough-in-nomenclature
+opened_at: cycle-010
+opened_by: harvester
+status: open
+relates_to: eigsolve cycle-009 rough-in (precedent), matrix-weighted-norm cycle-010 rough-in
+---
+```
+
+The cycle-010 `matrix-weighted-norm` harvest lands as `rough-in (test-coverage-bounded)` — the second L1 rough-in of this kind after `eigsolve` (cycle-009). The pattern is identical in spirit: well-anchored signature and algebraic laws, dense callsite evidence, no dedicated direct test. The promotion-to-firm gates are also analogous: (a) direct test coverage, (b) indirect coverage via callsite test outputs, or (c) algebraic-law completeness verification. **Question for cycle-012 meta-phase**: should "test-coverage-bounded rough-in" be canonicalised as a named status tier (with formal gate criteria) in the methodology, or is the current per-entry recording of gates (in each operator's "Status" section) sufficient? The pattern may recur across cycle-011+ harvests of further L1/L2/L3 vocabulary (e.g., apply_linop L3 backfill, BLAS-1 cohort L3 backfill — both flagged as priority #20 follow-ups). Routes to meta-phase consideration. Source: `reports/2026-05-27T215334Z-harvester-matrix-weighted-norm-l1/CYCLE.md` §Open questions item 6.
+
+```yaml
+---
+slug: bilinear-form-real-vector-coverage-gap
+opened_at: cycle-010
+opened_by: harvester
+status: open
+relates_to: matrix-weighted-norm-and-bilinear-form-l1-rough-ins (parent ledger), bilinear-form L1 rough-in (cycle-010)
+---
+```
+
+Palace's `linalg::Dot(comm, x, A, y)` matrix-weighted overload set is **complex-vector only** — both overloads take `ComplexVector` arguments; there is no `Dot(comm, Vector, Operator, Vector)` overload for real vectors. The L1 `bilinear-form` entry's variant-axis table records this as "the real-`x` / real-`M` / real-`y` case is not surfaced by Palace". **Question**: should the L1 `bilinear-form` operator (a) restrict to complex-only at L1 (matching the Palace surface), (b) cover both real and complex at L1 with the real-only case marked "L1-only; no L0 anchor", or (c) treat the real case as an implicit composition `dot(x, apply_linop(M, y))` recovered from existing L1 operators? Harvester's **recommendation pending firm-promotion**: option (c) — the real case falls out of existing L1 vocabulary without needing a separate operator. The L1 `bilinear-form` covers the matrix-weighted reduction where Palace surfaces it as a distinct L0 free-function (complex case); the real case is recovered by composition. This keeps the L1 cohort minimal and matches the L1 invariant "subsumption-as-identity rather than dependency". Routes to future cross-layer-cross-cutter or layer-intro-author confirmation. Source: `reports/2026-05-27T215427Z-harvester-bilinear-form-l1/CYCLE.md` §Open questions item 2.
+
+```yaml
+---
+slug: bilinear-form-slug-name-coordination
+opened_at: cycle-010
+opened_by: harvester
+status: open
+relates_to: matrix-weighted-norm-and-bilinear-form-l1-rough-ins (parent ledger), matrix-weighted-norm-naming-sweep (sibling L0-naming question), bilinear-form L1 rough-in (cycle-010)
+---
+```
+
+The cycle-008 OQ that motivates the bilinear-form harvest names `L1/dot_bilinear` as the candidate slug. The L0 file-overview chapter (`book/src/L0/linalg-operator-file.md`, lines 73 and 88) also names `L1/dot_bilinear` as the expected lift target. The cycle-010 dispatch directive used the slug `bilinear-form` (matching the mathematical form name rather than the BLAS-1 family naming). This rough-in landed as `bilinear-form` per the dispatch directive. **Question**: keep `bilinear-form` (mathematical-form naming, matches the sibling-operator `matrix-weighted-norm` dispatched in cycle-010 wave-1), or rename to `dot_bilinear` (BLAS-family naming, matches the cycle-008 OQ and L0 chapter expectations)? Harvester's **recommendation pending firm-promotion**: keep `bilinear-form`. Reasons: (a) `dot_bilinear` is misleading because `dot` already returns a sesquilinear (Hermitian) form on complex input — `bilinear` modifying `dot` would suggest the unconjugated bilinear-form variant `tdot`, not the matrix-weighted generalisation; (b) the sibling-operator naming (`matrix-weighted-norm` for `nrm2_B`, `bilinear-form` for this operator) gives the L1 cohort a coherent mathematical-form vocabulary; (c) the specialisation law `bilinear_form(x, I, y) = dot(x, y)` is more readable than `dot_bilinear(x, I, y) = dot(x, y)`. **Follow-up**: the L0 chapter (`book/src/L0/linalg-operator-file.md`) should be updated to point at the chosen L1 slug after the cycle-010 wave-1 batch settles — this is a one-line annotation, layer-intro-author scope (companion to the sibling `matrix-weighted-norm-naming-sweep` OQ). Routes to future layer-intro-author dispatch or in-batch follow-up. Source: `reports/2026-05-27T215427Z-harvester-bilinear-form-l1/CYCLE.md` §Open questions item 3.
+
+```yaml
+---
+slug: bilinear-form-variant-axis-test-coverage
+opened_at: cycle-010
+opened_by: harvester
+status: open
+relates_to: matrix-weighted-norm-and-bilinear-form-l1-rough-ins (parent ledger), test-coverage-bounded-rough-in-nomenclature (methodology pattern), bilinear-form L1 rough-in (cycle-010)
+---
+```
+
+Promotion of `bilinear-form` from `rough-in` to `firm` is gated on **variant-axis test coverage**. Currently-anchored variant-axis cells: precision-mode (`double` only, inherited); output-arg-pattern (`return` only, the only L0 form); M-symmetry-property (`hermitian` `Bttr` at `boundarymodeoperator.cpp:85`; `non-symmetric` `Atn` at line 90); parallel-wrapper (both, inherited from `apply_linop`); element-type complex-`x`/complex-`y` only (both overloads use `ComplexVector`); `M` element-type both real (`Operator` at `operator.hpp:388-389`) and complex (`ComplexOperator` at lines 393-394). **Unexercised**: real-`x` / real-`y` cases (per the prior OQ); Cauchy–Schwarz-tight case at `y = x` with non-SPD `M` (only the SPD case has surfaced via Poynting boundary mass `Bttr`); algebraic law 8 (positive semi-definiteness) direct numerical witness. **Resolution path**: either expanded direct test coverage of `linalg::Dot(comm, x, A, y)` under `palace/test/unit/`, or literature-anchored evidence at firm-equivalent confidence (e.g. Higham 2008 §10 inner-product accuracy bounds for the matrix-weighted form). Note: this is the **third test-coverage-bounded L1 rough-in** (after `eigsolve` cycle-009 and `matrix-weighted-norm` cycle-010); the pattern is now well-established and surfaces the methodology question tracked under `test-coverage-bounded-rough-in-nomenclature`. Routes to future harvester revisit or cycle-012 meta-phase methodology consideration. Source: `reports/2026-05-27T215427Z-harvester-bilinear-form-l1/CYCLE.md` §Open questions item 4.
+
+```yaml
+---
+slug: priority-13-now-landed-as-matrix-weighted-norm
+opened_at: cycle-010
+opened_by: integrator-per-report
+status: routing
+relates_to: nrm2-B-weighted-energy-norm-harvest (cycle-003 source OQ, now partially-answered), matrix-weighted-norm-and-bilinear-form-l1-rough-ins (cycle-008 parent ledger, partially-answered), scaffolding/priorities.md #13 (close target)
+---
+```
+
+**Routing OQ for cycle-011 cycle-planner.** Priority #13 in `scaffolding/priorities.md` (currently reads: "`nrm2_B-weighted-energy-norm-L1` — depends on `apply_linop` (now firm) and `dot` (firm cycle-002). Citation: open question `nrm2-B-weighted-energy-norm-harvest`") is **now landed**: the cycle-010 wave-1 harvester dispatch (`reports/2026-05-27T215334Z-harvester-matrix-weighted-norm-l1/`) landed the operator under the canonical slug `matrix-weighted-norm` at `book/src/L1/matrix-weighted-norm.md` (`rough-in (test-coverage-bounded)`). The cycle-010 wave-2 #5 dispatch (`reports/2026-05-27T220123Z-harvester-nrm2-B-weighted-energy-norm-l1/`) verified the duplication (case (c) merge-and-rename verdict; all 8 critic checks pass).
+
+**Action for cycle-011 planner**: when reading priorities.md alongside this OQ ledger, close priority #13 by either (a) moving it to a "Recently landed" section with cross-reference `landed-as-matrix-weighted-norm (cycle-010 wave-1: 2026-05-27T215334Z-harvester-matrix-weighted-norm-l1)`, or (b) removing the entry entirely and recording the close in cycle-011's plan note. Authority: `scaffolding/priorities.md` is meta-phase + cycle-planner co-edit (per CLAUDE.md §Write-authority partition); integrator-per-report cannot directly edit it, hence this routing OQ.
+
+The cycle-010 cycle-planner already coordinated wave-2 dispatches against priority #13 via the duplicate-detection routing (planner case (a)/(c) recommendation; verified by wave-2 #5 verdict). The remaining firm-promotion gate for `matrix-weighted-norm` (test coverage) is tracked on the parent ledger `matrix-weighted-norm-and-bilinear-form-l1-rough-ins` (status `partially-answered`) and does not block the priority-#13 close.
+
+Source: integrator-per-report cycle-010 wave-2 #5 staging row + dispatch instructions.
+
+```yaml
+---
+slug: fgmres-inner-loop-iterate-while-migration-lifter-candidate
+opened_at: cycle-010
+opened_by: combinator-miner
+status: open
+relates_to: gmres-inner-loop-iterate-while-migration (cycle-007, answered-by-rough-in-theme cycle-008), nleps-spec-gap-as-check-stop-into-carry-reuse-blocker (cycle-009, last-revisited cycle-010), variant-absorption-vs-instance-counting-policy (cycle-009, meta-phase scope), check-stop-into-carry-parameterization-over-stop-condition (cycle-009, helper-signature design)
+---
+```
+
+**Routing OQ for cycle-011 cycle-planner.** The cycle-010 MCP-pilot combinator-miner audit (`reports/2026-05-27T215535Z-combinator-miner-check-stop-into-carry-mcp-pilot/CYCLE.md`) recommends a **lifter dispatch** on the cycle-008 `book/src/L4-L3/gmres-inner-loop-iterate-while-migration.md` theme as the cycle-011+ next step, specifically to **re-anchor the theme against an upstream firm `book/src/spec/slices/gmres.md §L4 v0.7` form** (currently still v0.6 inline; located at lines 1012 and 1106 of that slice), then **apply the same migration theme as a separate `fgmres-inner-loop-iterate-while-migration` theme** (or unify both under a parameterized theme). The two FGMRES inner-loop sites at `palace/linalg/iterative.cpp:823-828` (3-condition break inside `FgmresSolver<OperType>::Mult`) are textually identical to the GMRES sites at `:644-649`; the lifter dispatch's verification target is whether **both lowerings produce a structurally identical `check_stop_into_carry` callsite shape** — if they do, that is the second-reuse formalization the cycle-008 promotion criterion was waiting on; if they diverge (e.g., FGMRES's `pc_side` differences leak into the predicate), the helper's signature needs revision before promotion. **Sequencing**: the lifter should be scheduled **before** any harvester on `book/src/L4/check-stop-into-carry.md` (the cycle-010 audit explicitly directs the cycle-planner to NOT schedule a harvester on the helper until either (a) the FGMRES theme is firmed with the helper at the same callsite shape as GMRES, or (b) a genuinely different consumer — e.g. a future literature-anchored MINRES inner loop, or NLEPS once spec'd — is identified). **Cycle-011 dispatch hint**: lifter-on-gmres.md-§L4-v0.6-to-v0.7 is the upstream prerequisite; the FGMRES theme authoring is the downstream act. May be a single lifter dispatch with two themes touched, or two sequential dispatches. Source: cycle-010 combinator-miner audit §Routing recommendation + §Cycle-010-or-011 lifter dispatch scope.
+
+```yaml
+---
+slug: l4-v01-v06-self-rotation-history-lift-target-decision
+opened_at: cycle-010
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: phase-1-corpus-reduction-audit (priority-19)
+---
+```
+
+Should the L4 v0.1→v0.6 self-rotation derivation in `book/src/spec/slices/gmres.md` lines 24-657 (post-reduction; the v0.2 through v0.6 sections retained as unique methodology evidence) be lifted to `concepts/derived-view-hoisting.md` as a multi-step worked example, or retained as slice-level methodology evidence? Three candidate lift targets surfaced during the cycle-010 first-instance phase-1-corpus-reduction-audit (`reports/2026-05-27T220000Z-same-layer-cross-cutter-phase-1-corpus-reduction-audit/CYCLE.md`): (a) `concepts/derived-view-hoisting.md` — likely the cleanest target since v0.4's commit-layer hoist and v0.6's witness-layer hoist are both canonical derived-view-hoisting moves; (b) a candidate `concepts/witness-typed-dispatch.md` (per gmres.md v0.6 §"Open questions") — promotion criterion is "second instance lands"; no second instance has landed yet, so defer concept extraction; (c) the slice itself, retained as canonical worked-example evidence — current state post-reduction. Promotion of (a) or (b) would unblock further reduction of gmres.md down to the stub header alone. Source: cycle-010 phase-1-corpus-reduction-audit, residual gap #1 of slice-1 gmres.md.
+
+```yaml
+---
+slug: cg-initial-residual-quirk-palace-bug-flag-lift-path
+opened_at: cycle-010
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: phase-1-corpus-reduction-audit (priority-19)
+---
+```
+
+The Palace `!B && initial_guess` branch (`palace/linalg/iterative.cpp:399-412`) computes `initial_res = (b·b)^{1/4}` rather than `‖b‖₂` due to a `Norml2`-vs-`Dot` asymmetry between the unpreconditioned and preconditioned branches. This is a likely Palace bug. Where in the firm artifact should this finding live, and should it be confirmed with upstream before being annotated as a firm finding? Three candidate lift paths: (a) annotate `L1/ksp_solve.md` Semantics with the bug-flag; (b) add a `verified_against` row to `L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern B noting the quirk; (c) keep as an OQ pending upstream confirmation. Finding extracted from `book/src/spec/slices/cg.md:95` and Working Notes line 286 in the pre-reduction version (preserved in the cycle-010-reduced stub header's "Open questions still pending lift" subsection). The finding is unique to the cg.md slice; the firm L1>L0 theme recognises CheckDot but does not record this bug-flag. Source: cycle-010 phase-1-corpus-reduction-audit, residual gap #1 of slice-2 cg.md.
+
+```yaml
+---
+slug: l1-orthogonalize-promotion-from-arnoldi-step-and-orthog
+opened_at: cycle-010
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: phase-1-corpus-reduction-audit (priority-19)
+---
+```
+
+Should a firm `L1/orthogonalize` (or `L1/orthogonalize-column`) operator be promoted from the speculative slice corpus? Promotion would unblock simpler reduction of `book/src/spec/slices/arnoldi_step.md` and `book/src/spec/slices/orthog.md`. Promotion criterion under the unimplemented-Palace-stub policy is "small AND simplifies higher forms" — both are plausibly met: `orthogonalize` is small (one variant-dispatched primitive with three implementations: MGS sequential / CGS batched / CGS2 batched-with-refine), and lifting it would let `L4/krylov-step.md` Form A reference `op.orthog` as a firm L1 operator type rather than as a slice-level concept. The variant-axis profile (`gs_orthog ∈ {MGS, CGS, CGS2}`) and the MPI-collective shape table (MGS = j+2 allreduces; CGS = 2; CGS2 = 3) are unique evidence justifying promotion. Source: cycle-010 phase-1-corpus-reduction-audit, residual gap #1 of slice-3 arnoldi_step.md + slice-recommendation §"Open questions" item 4.
+
+```yaml
+---
+slug: phase-1-corpus-reduction-remaining-7-slices
+opened_at: cycle-010
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: phase-1-corpus-reduction-audit (priority-19)
+---
+```
+
+The cycle-010 first-instance phase-1-corpus-reduction-audit (`reports/2026-05-27T220000Z-same-layer-cross-cutter-phase-1-corpus-reduction-audit/CYCLE.md`) covered 3 of 10 slices (gmres.md, cg.md, arnoldi_step.md). The remaining 7 slices for cycle-011+ batch audits, in suggested priority order (by expected supersession overlap with firm entries): (1) `orthog.md` — overlaps `L1/orthogonalize` (pending promotion); ties into arnoldi_step audit closure; (2) `chebyshev.md` — likely overlaps `L2/krylov-step` polynomial-recurrence variant; (3) `polynomial_recurrence_step.md` — overlaps `L2/krylov-step` polynomial-recurrence variant; (4) `divfree.md` — overlaps `L1/ksp_solve` use pattern (cited as the canonical use site in `L1/ksp_solve` §Evidence); (5) `cg_preconditioning_framework.md` — likely overlaps `L1/ksp_solve` + `L4/krylov-step` Form A; (6) `plane_rotation_stream.md` — likely overlaps `L2/krylov-step` Givens-rotation pattern (could promote `givens_generate` / `givens_apply` as firm L1); (7) `sparse_triangular_solve.md` — likely a low-overlap slice (no firm krylov-chain analog); defer or audit separately. Suggested batch size: 2-4 slices per audit dispatch to keep the dispatch within context budget. The audit template established in cycle-010 (Supersession map / Residual gaps / Recommended action / Proposed changes per slice) is machine-replayable for cycle-011+ replay. Source: cycle-010 phase-1-corpus-reduction-audit §"Open questions" item 5.
 
 ## Dropped
 
