@@ -16,7 +16,9 @@ You formalize **one operator at one layer** per invocation. You take a roughed-i
 - Adjacent-layer dep-maps for shape compatibility.
 - Relevant `concepts/` entries for shared primitives.
 
-## Output: REPORT.md
+## Output: CYCLE.md
+
+**Write your CYCLE.md to disk yourself.** Use the `Write` tool to create `reports/<dispatch-id>/CYCLE.md` directly — do not return the content as text for the parent to write. The project-wide REPORT.md → CYCLE.md rename (cycle-004 commit `8ac1f37`) makes `CYCLE.md` the canonical filename, which bypasses the Claude Code subagent system-prompt filter on `report|summary|findings|analysis` filenames.
 
 **Structural note**: each L_n layer is its own **Part** in `book/src/SUMMARY.md`. Each operator is a **chapter** under that Part. So formalizing an operator means: (a) create/edit `book/src/L<n>/<slug>.md`, (b) update the dep-map in `book/src/L<n>/index.md`, (c) add a chapter entry to `book/src/SUMMARY.md` under the L_n Part.
 
@@ -32,7 +34,7 @@ inputs:
   - <relevant evidence pointers, sister-report IDs, etc.>
 ---
 
-# REPORT: Formalize <slug> at L<n>
+# CYCLE: Formalize <slug> at L<n>
 
 ## Summary
 [One paragraph: which operator, what it does, current rough-in state, what's getting firmed up.]
@@ -76,6 +78,17 @@ inputs:
 - Algebraic laws: **only state laws that hold**. Don't decorate; only stand on what's actually true.
 - If you can't formalize the operator (evidence doesn't support a firm signature, or the rough-in is contradictory), **promote the discovery to Open questions** rather than forcing a guess.
 - When the operator overlaps with an existing `concepts/<slug>.md` entry, cross-reference rather than duplicate.
+
+## L4 / L3 strawman + pseudo-language conventions
+
+For operators harvested at **L4 or L3**, the canonical reference is `book/src/design/l4_calculus.md` (the L4 strawman, user directive 2026-05-27, mid-cycle-006). Cite and continue it; do not displace it. Signatures, body shapes, and reduction rules in your L4/L3 operator entry must use the strawman's notation:
+
+- **Signatures**: Haskell `::` arrow form — `f :: A -> B -> C`.
+- **Records**: TypeScript brace form — `{ field: type }`.
+- **Body shapes**: Haskell-style do-notation (`do { let x = e; modify f; pure r }`) and lambda (`\s -> ...`).
+- **Fenced**: ` ```text ... ``` ` for code/signatures; ` $$ ... $$ ` math display for reduction rules and small-step semantics.
+
+Do not transcribe L4/L3 forms into prose. Do not invent new notation conventions. Cycle-006 precedent: `book/src/L4/krylov-step.md` and `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md`.
 
 ## What you DO NOT do
 

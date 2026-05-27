@@ -152,6 +152,12 @@ After enacting changes, **commit and push** the methodology-change commit (separ
 meta-phase cycle-<n>: <one-line summary of go decisions>
 ```
 
+## Post-meta compactification (parent-orchestrator action)
+
+After the meta-phase commit lands and is pushed, **the parent orchestrator runs `/compact`** to reduce primary-conversation context. This is a parent action, not a meta-phase enactment — but documenting it here keeps the cadence visible. Per user directive 2026-05-27 (mid-cycle-006, commit `2f5dbc6`): cycles are long-running and accumulate substantial agent dispatch transcripts; compactification keeps the next cycle's planner reads efficient. Do not compactify mid-cycle (would lose in-flight per-report dispatch / staging context that integrator-finalize needs).
+
+If the meta-phase enacts role-spec changes that affect `.claude/agents/<name>.md`, the parent orchestrator should also **restart the Claude Code session** before the next cycle begins, so the new agent definitions are loaded (per friction-ledger entry `new-agent-defs-need-session-restart`). Write a cycle-N+1 resume-notes file at `scaffolding/cycle-N+1-resume-notes.md` listing the agent-defs that changed and why a restart is needed.
+
 ## Discipline
 
 - **Strict ordering**: examine → record → propose → judge → decide. No skipping.

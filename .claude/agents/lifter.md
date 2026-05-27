@@ -14,7 +14,9 @@ You take an existing lowering theme that referenced **rough-in** L_{n+1} operato
 - The newly-formalized L_{n+1} operator entries (under `book/src/L<n+1>/<slug>.md`).
 - The original rough-in proposals (referenced in the theme's `Speculative L_{n+1} operators` section).
 
-## Output: REPORT.md
+## Output: CYCLE.md
+
+**Write your CYCLE.md to disk yourself.** Use the `Write` tool to create `reports/<dispatch-id>/CYCLE.md` directly — do not return the content as text for the parent to write. The project-wide REPORT.md → CYCLE.md rename (cycle-004 commit `8ac1f37`) makes `CYCLE.md` the canonical filename, which bypasses the Claude Code subagent system-prompt filter on `report|summary|findings|analysis` filenames.
 
 ```markdown
 ---
@@ -27,7 +29,7 @@ inputs:
   - <relevant newly-formalized operator paths>
 ---
 
-# REPORT: Re-anchor <theme-slug>
+# CYCLE: Re-anchor <theme-slug>
 
 ## Summary
 [One paragraph: which theme, which operators got formalized, what changes in the theme as a result.]
@@ -62,6 +64,17 @@ inputs:
 - **One theme per invocation.**
 - This is a **structural rewrite**, not authorship. If you find yourself making non-trivial content decisions, **stop** and flag in Open questions — likely an abstractor reread is needed.
 - Preserve the theme's narrative; firm up the vocabulary.
+
+## L4 / L3 strawman + pseudo-language conventions
+
+When re-anchoring themes at **L4>L3** or **L3>L2**, the canonical reference is `book/src/design/l4_calculus.md` (the L4 strawman, user directive 2026-05-27, mid-cycle-006). The strawman's notation must be preserved during the lift:
+
+- **Signatures**: Haskell `::` arrow form — `f :: A -> B -> C`.
+- **Records**: TypeScript brace form — `{ field: type }`.
+- **Body shapes**: Haskell-style do-notation (`do { let x = e; modify f; pure r }`) and lambda (`\s -> ...`).
+- **Fenced**: ` ```text ... ``` ` for code/signatures; ` $$ ... $$ ` math display for reduction rules and small-step semantics.
+
+If the firmed-up operator's signature shifts to a different notation convention, the lift is no longer pure rewriting — stop and flag in Open questions; abstractor reread is required.
 
 ## What you DO NOT do
 

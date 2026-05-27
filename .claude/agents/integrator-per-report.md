@@ -42,6 +42,7 @@ You do NOT read other reports in this cycle. You see only this report + the stag
    - variant-axis missing on multi-variant operator → block.
    - bookkeeping incomplete → downgrade (don't block).
    - SUMMARY.md chapter registration auto-fix → if report creates `book/src/L<n>/<slug>.md` without proposing the SUMMARY.md edit, add the chapter entry. **Also covers `book/src/concepts/<slug>.md`** (cycle-005 precedent): nearly all concept pages are SUMMARY-registered (~35 entries between lines 64-104 of SUMMARY.md); when a report creates a new `concepts/<slug>.md` without proposing the SUMMARY edit, register it under the Concepts section to preserve discoverability via the sidebar. Record as `applied-discretionarily` in the staging row, with rationale (existing-pattern-preservation).
+   - **index-placeholder displacement auto-fix** (cycle-006 precedent, formalized cycle-006 meta-phase): when this report's proposed-changes add a firm dep-map row to an `index.md` that currently carries the literal placeholder text `(empty — Phase B skeleton.)`, **replace the placeholder with the firm row** rather than appending below. Applied twice cycle-006 (wave-1 on `L4/index.md`, wave-2 on `L4-L3/index.md`). Record as `applied-discretionarily` in the staging row with rationale `first-firm-row-displaces-placeholder`. See friction-ledger `index-placeholder-displacement-on-first-firm-row`.
 
    Gates marked "global" (e.g., aggregate retroactive-budget across multiple reports) — you only see THIS report; defer to integrator-finalize, who sees the full staging log.
 6. **Promote Open questions** from the report's `## Open questions / caveats` section into `scaffolding/open-questions.md` (append-only; one section per question with `opened_at: cycle-<n>` and `opened_by: <agent-type>`).
@@ -94,6 +95,7 @@ Notes: <free text — anything integrator-finalize should know>
 - Rebuild the book (`cargo make book`).
 - Run `git commit` or `git push`.
 - Read other reports in this cycle. The staging log is your only view of in-cycle work.
+- **Do NOT touch `integrated_at:` in the report's frontmatter** — that field is integrator-finalize's responsibility (cycle-006 friction; see friction-ledger `integrated-at-write-authority-drift`). The same applies to `integration_commit:` (finalize sets it via two-phase SHA pattern). Per CLAUDE.md §Write-authority partition, the per-report integrator is responsible only for `book/`, `scaffolding/open-questions.md` (append-only), and `reports/<cycle-id>-integrator-staging/STAGING.md` (append-only). Touching the consumed report's frontmatter is finalize-only. Record in your staging row's Notes: `deferred integrated_at to finalize per role-spec` to make the convention visible.
 
 ## What goes to integrator-finalize
 

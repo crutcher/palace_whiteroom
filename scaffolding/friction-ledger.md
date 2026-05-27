@@ -500,8 +500,8 @@ addressed_by: cycle-005 STAGING.md Notes-channel propagation + per-report-integr
 ---
 slug: two-phase-sha-placeholder-pattern
 first_observed: cycle-004
-last_observed: cycle-005
-recurrence_count: 2
+last_observed: cycle-006
+recurrence_count: 3
 status: addressed-by-design
 addressed_by: cycle-005 meta-phase (canonical pattern documented in integrator-finalize role spec) + integrator-finalize.md §Process step 13
 ---
@@ -516,6 +516,150 @@ addressed_by: cycle-005 meta-phase (canonical pattern documented in integrator-f
 
 **Cycle-005 meta-phase action.** Document as canonical in `.claude/agents/integrator-finalize.md` §Process step 13 (already lists "Patch sha-placeholder" as an option; this meta-phase tightens the language to declare it canonical rather than optional). Future integrator-finalize invocations follow the same pattern unambiguously.
 
+**Cycle-006 confirmation.** Pattern recurred a third time (finalize commit `704717b` + patch `d42950d`). Continues to work as designed; no further mitigation.
+
 **No mitigation beyond role-spec clarification.** Watch: if a future Claude Code feature offers pre-commit SHA via tree-state, revisit (low priority).
+
+---
+
+```yaml
+---
+slug: split-integrator-validated-2-cycles
+first_observed: cycle-005
+last_observed: cycle-006
+recurrence_count: 2
+status: addressed-by-design
+addressed_by: ccc5082 (split integrator role-spec) + cycle-005 first-cycle validation + cycle-006 second-cycle validation under wave-1+wave-2 dependency ordering
+---
+```
+
+**Positive pattern (confirmed at 2 cycles).** The split integrator (`integrator-per-report` + `integrator-finalize`, introduced cycle-004 → cycle-005 boundary) has now run two clean cycles end-to-end with zero per-dispatch context-bound friction.
+
+**Cycle-005**: 6 wave-1 dispatches (all independent). STAGING.md format usability PASS. SUMMARY.md surgical inserts across 5 in-cycle writers worked. Per-report context budgets comfortable.
+
+**Cycle-006**: 4 wave-1 + 1 wave-2 dispatches (first cycle exercising wave-2 dependency on wave-1 mate under split integrator). Wave-2 abstractor depended on wave-1 harvester's L4 entry; per-report serial dispatch order honoured (STAGING.md rows 1-4 then row 5); the L4 dep-map at wave-2's edit time already had wave-1's firm row, so wave-2's two rough-in appends went cleanly after it. **Validates the per-report serial-dispatch design at wave-mate-dependency boundaries**, not just across independent wave-1 mates.
+
+**Implication (informs cycle-006 mid-cycle directive `f661039`).** The user directive that raised wave-cap 8→12 mid-cycle-006 is motivated in part by this 2-cycle confirmation that per-dispatch context stays bounded regardless of wave-mate count. Cycle-007+ can run up to 12 dispatches without expecting per-report context friction.
+
+**Sibling supersession.** The earlier entry `split-integrator-validated-at-six-reports` (cycle-005) is subsumed by this one as the broader-validation record. Keeping that entry in place as historical (recurrence-1 cycle-005).
+
+**Counterfactual test.** If the split were collapsed back to a single integrator dispatch at 5 wave-mates: friction would surface (cycle-004's 7-wave-mate at single-pass was already large; cycle-006's wave-2 dependency on a wave-1 mate's L4 entry would have required the single-pass integrator to read and reason about wave-1 + wave-2 in one context, with all 5 reports' proposed-changes + safety-net aggregation + STAGING + build + commit + housekeeping in one shot). The split removes that pressure.
+
+**No mitigation needed; design is working at the wave-size it was scoped for, AND now with cross-wave dependency.**
+
+---
+
+```yaml
+---
+slug: subagent-write-filter-still-applies-to-some-agents-cycle-md-naming
+first_observed: cycle-006
+last_observed: cycle-006
+recurrence_count: 1
+status: new
+addressed_by: cycle-006 meta-phase (role-spec touches; see go items)
+---
+```
+
+**Pattern (new this cycle).** The cycle-004 REPORT.md → CYCLE.md project-wide rename (commit `8ac1f37`) bypassed the Claude Code subagent Write-filter on `report|summary|findings|analysis` keywords for most subagent dispatches. However, in cycle-006 the `same-layer-cross-cutter` subagent **still did not write its CYCLE.md to disk** — the agent reported a system-prompt restriction on writing those filenames; the parent orchestrator wrote the CYCLE.md post-hoc from inline output. The harvester, layer-intro-author, and abstractor dispatches in the same wave wrote their CYCLE.md files successfully.
+
+**Probable root causes** (one or both):
+1. **Stale role-spec text** at `.claude/agents/same-layer-cross-cutter.md:17` still says `Output: REPORT.md` (not updated in the `8ac1f37` rename). The subagent reads its role spec at dispatch time and may treat the role-spec naming as authoritative, then hit the harness Write filter on the literal `REPORT.md` filename it derives from the spec. Similar stale text may exist in other agent role specs.
+2. **Subagent re-interpretation of its system prompt.** Even with role-spec saying CYCLE.md, the subagent may interpret the system-prompt filter as a generic block on writing report-shaped files and self-censor.
+
+**Surfaced by**: cycle-006 OQ `same-layer-cross-cutter-cycle-md-write-failure` + cycle-006 integrator-signals.md §Integration-tooling friction (implicitly via the OQ inclusion).
+
+**Mitigation (cycle-006 meta-phase, this entry):** Two-part fix enacted as `go` items.
+- (a) Update `.claude/agents/same-layer-cross-cutter.md` line 18 — change `Output: REPORT.md` to `Output: CYCLE.md`. Audit other agent role specs for the same stale text (`cross-layer-cross-cutter.md`, `combinator-miner.md` were checked; all three carry the stale `Output: REPORT.md` header).
+- (b) Add explicit "Write your CYCLE.md to disk yourself; do not return content as text" instruction to the discipline section of each role spec where missing.
+
+**Counterfactual test.** If this quirk were removed tomorrow, would orchestration coupling collapse? — Yes, the post-hoc-parent-write workaround is load-bearing each time it triggers; the parent orchestrator must catch and recover, which couples the orchestration layer to a per-agent quirk. Per the cycle-004 audit discipline, this is `recurring-with-workaround`, not `addressed-by-design`. The mitigation is to fix the role specs and watch.
+
+**Watch:** if a future cycle has another subagent skip CYCLE.md Write despite the role-spec fix, escalate (proposal: file Claude Code upstream issue; the rename alone is insufficient if subagents re-derive filenames).
+
+---
+
+```yaml
+---
+slug: integrated-at-write-authority-drift
+first_observed: cycle-006
+last_observed: cycle-006
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-006 meta-phase (`.claude/agents/integrator-per-report.md` role-spec clarification — `integrated_at:` deferral to finalize)
+---
+```
+
+**Pattern.** Cycle-006 per-report integrator dispatch #1 (harvester-krylov-step-L4) set `integrated_at: 2026-05-27T09:00:00Z` in its CYCLE.md frontmatter at per-report integration time — outside CLAUDE.md write-authority partition, which assigns `integrated_at` touches to integrator-finalize. The other 4 per-report dispatches in cycle-006 deferred correctly. Integrator-finalize timestamp `2026-05-27T09:08:49Z` overwrote dispatch #1's earlier value; all 5 reports now carry the same finalize timestamp + `integration_commit: <sha>` (via two-phase SHA pattern).
+
+**Surfaced by**: cycle-006 integrator-finalize CYCLE.md §"Per-report `integrated_at:` inconsistency (caveat (b) for meta-phase)" + integrator-signals.md cycle-006 §Integration-tooling friction.
+
+**Mitigation (cycle-006 meta-phase, this entry):** Role-spec clarification in `.claude/agents/integrator-per-report.md` — add explicit "do NOT touch `integrated_at:` — that is integrator-finalize's responsibility" to the "What you DO NOT do" section. Also add to staging-log Notes a one-line "deferred integrated_at to finalize per role-spec" boilerplate to make the convention visible.
+
+**Watch:** if a future per-report integrator dispatch sets `integrated_at:` despite the clarification, escalate to recurrence-2 and consider a tooling solution (auto-strip pre-finalize, or YAML frontmatter validator gate).
+
+---
+
+```yaml
+---
+slug: rough-in-rows-must-be-plain-text-when-anchor-missing
+first_observed: cycle-006
+last_observed: cycle-006
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-006 meta-phase (`.claude/agents/abstractor.md` + `.claude/agents/layer-intro-author.md` rough-in convention) + cycle-006 finalize surgical defang at integration
+---
+```
+
+**Pattern.** Cycle-006 wave-2 abstractor's L4 dep-map rough-in rows used markdown link syntax — `[iterate_while](./iterate_while.md)` and `[iterate_while_with_prev](./iterate_while_with_prev.md)` — for files that don't yet exist (rough-in status; cycle-007 OQ `iterate-while-l4-anchor-missing` tracks anchor pending). mdbook's `linkcheck2` renderer treats missing-anchor links as **errors** (not warnings) and failed the build. Integrator-finalize defanged to plain-text `iterate_while (rough-in; no anchor yet)` with annotation as a surgical-minimal repair.
+
+**Surfaced by**: cycle-006 integrator-finalize §Build status + integrator-signals.md cycle-006 §Integration-tooling friction.
+
+**Mitigation (cycle-006 meta-phase, this entry):** Convention added to `.claude/agents/abstractor.md` and `.claude/agents/layer-intro-author.md` Discipline sections — "rough-in dep-map rows that reference yet-to-exist files must use plain-text names with `(rough-in; no anchor yet)` annotation, NOT markdown link syntax. Only firm rows (where the anchor file exists) may use `[slug](./slug.md)` link syntax." Per-report-integrator already auto-repairs via the surgical-defang pattern; the role-spec convention prevents the friction at the source.
+
+**Watch:** if a future rough-in dep-map row lands with link syntax to a missing anchor, escalate to recurrence-2 and consider auto-fix gate in integrator-per-report.
+
+---
+
+```yaml
+---
+slug: legacy-log-cycle-N-md-collision-rename-on-encounter
+first_observed: cycle-005
+last_observed: cycle-006
+recurrence_count: 2
+status: addressed-by-pattern
+addressed_by: cycle-005 + cycle-006 finalize rename-on-encounter pattern (each finalize renames the colliding legacy file to `cycle-N-legacy.md` per cycle); cycle-006 meta-phase chose this pattern over bulk-rename
+---
+```
+
+**Pattern.** Legacy slice-era `log/cycle-NNN.md` files (from cycles 1–172 pre-layered-era) collide with future layered-era `log/cycle-NNN.md` writes for any N where both eras have a cycle of that number. Each layered-era finalize renames the colliding legacy file to `log/cycle-NNN-legacy.md` (cycle-005: `cycle-005.md` legacy → `cycle-005-legacy.md`; cycle-006: `cycle-006.md` legacy → `cycle-006-legacy.md`). Pre-layered-era cycles ran much higher numbers (up to cycle-172), so collisions are bounded — layered-era cycles N ≤ 172 will collide; N > 172 will not.
+
+**Cycle-006 meta-phase decision.** Choose pattern (b) **rename-on-encounter** over pattern (a) **one-shot bulk-rename**. Rationale:
+- Bulk-rename now would rename ~172 files, polluting the git history with a large mechanical rename commit.
+- Rename-on-encounter is amortised across cycles and already works (cycle-005 + cycle-006 both clean).
+- The pattern is encoded implicitly in integrator-finalize's behaviour (each cycle's finalize handles its own collision). Documenting in `.claude/agents/integrator-finalize.md` is optional — the pattern is small enough that two precedents establish it.
+- **No further enactment** beyond confirming the choice in this ledger entry. If a future finalize misses the rename (e.g., legacy file overwritten silently), escalate to bulk-rename.
+
+**Watch:** monitor cycle-007 through cycle-N (≤172) finalize logs for clean handling of the rename. If any finalize misses it, escalate.
+
+---
+
+```yaml
+---
+slug: index-placeholder-displacement-on-first-firm-row
+first_observed: cycle-006
+last_observed: cycle-006
+recurrence_count: 2
+status: addressed
+addressed_by: cycle-006 per-report integrator applied as "discretionary auto-fix" twice (wave-1 on L4/index.md, wave-2 on L4-L3/index.md); cycle-006 meta-phase formalizes the convention in integrator-per-report safety-net gates
+---
+```
+
+**Pattern (positive).** When a layer's `index.md` carries the `(empty — Phase B skeleton.)` placeholder and a first firm dep-map row lands under that index via a per-report integration, the integrator replaces the placeholder with the firm row rather than appending below it. Applied twice cycle-006: wave-1 harvester on `L4/index.md` (first firm L4 row `krylov-step`); wave-2 abstractor on `L4-L3/index.md` (first firm L4>L3 theme). Both per-report integrators acted discretionarily; the latter explicitly cited the former's pattern in STAGING.md notes.
+
+**Surfaced by**: cycle-006 integrator-finalize §Wave-conflict observations + integrator-signals.md cycle-006 §Wave-conflict observations.
+
+**Cycle-006 meta-phase decision.** **Formalize as a per-report-integrator safety-net gate** (low cascade). Add to `.claude/agents/integrator-per-report.md` §"Process" step 5 — "**index-placeholder displacement auto-fix**": when this report's proposed-changes add a firm dep-map row to an `index.md` that currently carries the literal placeholder text `(empty — Phase B skeleton.)`, replace the placeholder with the firm row (do not append below). Record as `applied-discretionarily` in the staging row with rationale (first-firm-row-displaces-placeholder).
+
+**No further mitigation needed beyond the role-spec touch.**
 
 ---

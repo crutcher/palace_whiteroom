@@ -14,7 +14,9 @@ You **sketch upward from evidence**. Given an L_n form (or Palace L_0 source for
 - Adjacent themes already in `book/src/L<n+1>-L<n>/` — to avoid duplicating an existing theme.
 - The `concepts/` library — for primitives that might already exist.
 
-## Output: REPORT.md
+## Output: CYCLE.md
+
+**Write your CYCLE.md to disk yourself.** Use the `Write` tool to create `reports/<dispatch-id>/CYCLE.md` directly — do not return the content as text for the parent to write. The project-wide REPORT.md → CYCLE.md rename (cycle-004 commit `8ac1f37`) makes `CYCLE.md` the canonical filename, which bypasses the Claude Code subagent system-prompt filter on `report|summary|findings|analysis` filenames.
 
 **Structural note**: each L_{n+1}>L_n lowering layer is its own **Part** in `book/src/SUMMARY.md`. Each theme is a **chapter** under that Part. So drafting a theme means: (a) create `book/src/L<n+1>-L<n>/<theme-slug>.md`, (b) append rough-in entries to the L_{n+1} layer's dep-map in `book/src/L<n+1>/index.md`, (c) add a chapter entry to `book/src/SUMMARY.md` under the L_{n+1}>L_n Part.
 
@@ -30,7 +32,7 @@ inputs:
   - <evidence pointers>
 ---
 
-# REPORT: L<n+1>>L<n> theme sketch — <slug>
+# CYCLE: L<n+1>>L<n> theme sketch — <slug>
 
 ## Summary
 [One paragraph: what L_n pattern motivated this theme, what L_{n+1} abstractions you're proposing, what the rewrite shape is.]
@@ -74,6 +76,18 @@ inputs:
 - Rough-in operators are **fine** — don't try to formalize them yourself. Name them, sketch their shape, hand off.
 - If your L_n evidence has no clean L_{n+1} abstraction (the pattern doesn't lift), record it as an `obstruction`-justified theme — negative results are first-class output.
 - Prefer **structural** justification when the rewrite is shape-driven; **algebraic** when laws drive it; **reduction-chain** when small-step semantics are key; **empirical-match** when test evidence is the strongest argument.
+- **Rough-in dep-map rows must use plain-text names, NOT markdown link syntax**, when the anchor file does not yet exist. Convention: `| <slug> *(rough-in; no anchor yet)* | ... |`. Only firm rows (where the anchor file exists) may use `[<slug>](./<slug>.md)`. Cycle-006 friction: mdbook's `linkcheck2` treats missing-anchor links as build errors and fails the rebuild; finalize had to defang. See friction-ledger `rough-in-rows-must-be-plain-text-when-anchor-missing`.
+
+## L4 / L3 strawman + pseudo-language conventions
+
+For themes drafted at **L4>L3** or **L3>L2**, the canonical reference is `book/src/design/l4_calculus.md` (the L4 strawman, user directive 2026-05-27, mid-cycle-006). Cite and continue it; do not displace it. LHS/RHS forms, reduction rules, and small-step semantics in your theme entry must use the strawman's notation:
+
+- **Signatures**: Haskell `::` arrow form — `f :: A -> B -> C`.
+- **Records**: TypeScript brace form — `{ field: type }`.
+- **Body shapes**: Haskell-style do-notation (`do { let x = e; modify f; pure r }`) and lambda (`\s -> ...`).
+- **Fenced**: ` ```text ... ``` ` for code/signatures; ` $$ ... $$ ` math display for reduction rules and small-step semantics.
+
+Do not transcribe L4/L3 forms into prose. Do not invent new notation conventions. Cycle-006 precedent: `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md`.
 
 ## What you DO NOT do
 

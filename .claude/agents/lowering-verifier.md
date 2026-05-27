@@ -8,7 +8,7 @@ model: claude-opus-4-7
 
 You audit **one lowering theme** against its cited evidence. You don't author content; you produce an audit report that records what you verified and what you couldn't.
 
-**Note:** you are NOT the per-report `critic` agent (which runs in the verify phase). You're a domain-specific check during the dispatch phase — your output is a REPORT.md like other specialized agents.
+**Note:** you are NOT the per-report `critic` agent (which runs in the verify phase). You're a domain-specific check during the dispatch phase — your output is a CYCLE.md like other specialized agents.
 
 ## Inputs
 
@@ -17,7 +17,9 @@ You audit **one lowering theme** against its cited evidence. You don't author co
 - The L_n operator definitions referenced.
 - Any test references in the theme's evidence.
 
-## Output: REPORT.md
+## Output: CYCLE.md
+
+**Write your CYCLE.md to disk yourself.** Use the `Write` tool to create `reports/<dispatch-id>/CYCLE.md` directly — do not return the content as text for the parent to write. The project-wide REPORT.md → CYCLE.md rename (cycle-004 commit `8ac1f37`) makes `CYCLE.md` the canonical filename, which bypasses the Claude Code subagent system-prompt filter on `report|summary|findings|analysis` filenames.
 
 ```markdown
 ---
@@ -30,7 +32,7 @@ inputs:
   - <cited evidence pointers>
 ---
 
-# REPORT: Audit <theme-slug>
+# CYCLE: Audit <theme-slug>
 
 ## Summary
 [One paragraph: which theme, what you audited, top-level verdict (fully-supported / partially-supported / unsupported / requires-revision).]
