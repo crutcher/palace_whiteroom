@@ -187,7 +187,7 @@ first_observed: cycle-002
 last_observed: cycle-004
 recurrence_count: 4
 status: resolved-by-rename
-addressed_by: cycle-004 user directive — REPORT.md → CYCLE.md project-wide rename (commit TBD)
+addressed_by: cycle-004 user directive — REPORT.md → CYCLE.md project-wide rename (commit 8ac1f37)
 ---
 ```
 

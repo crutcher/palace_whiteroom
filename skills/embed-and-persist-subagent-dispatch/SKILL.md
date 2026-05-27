@@ -5,11 +5,11 @@ status: retired
 promoted_at: pilot-1 / 2026-05-26
 refined_at: cycle-002 / 2026-05-26
 retired_at: cycle-004 / 2026-05-27
-retired_reason: REPORT.md → CYCLE.md project-wide rename made the workaround obsolete. See friction-ledger entry `content-pattern-write-filter-on-report-keywords` (status `resolved-by-rename`).
+retired_reason: REPORT.md → CYCLE.md project-wide rename (commit 8ac1f37) made the workaround obsolete. Verified by post-rename probe dispatch: subagent Write to CYCLE.md succeeds directly. See friction-ledger entry `content-pattern-write-filter-on-report-keywords` (status `resolved-by-rename`).
 promoted_by: meta-phase
 ---
 
-> **RETIRED cycle-004.** Project renamed `REPORT.md` → `CYCLE.md` (commit TBD), bypassing the filter. Subagents can now `Write` their per-dispatch `CYCLE.md` files directly. This skill's parent-pre-creates-skeleton pattern is obsolete.
+> **RETIRED cycle-004.** Project renamed `REPORT.md` → `CYCLE.md` (commit 8ac1f37), bypassing the filter. Subagents can now `Write` their per-dispatch `CYCLE.md` files directly (verified by post-rename probe). This skill's parent-pre-creates-skeleton pattern is obsolete.
 >
 > Kept below for historical context.
 
