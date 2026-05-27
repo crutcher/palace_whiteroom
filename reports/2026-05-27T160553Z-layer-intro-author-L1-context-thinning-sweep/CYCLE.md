@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T160553Z
 scope: L1 retroactive context-thinning sweep across 7 firm L1 operator chapters
 status: integrated
 integrated_at: 2026-05-27T17:17:02Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 693f058
 integration_notes: |
   Applied cycle-007 wave-1 per-report dispatch 3 of 6 at 18:00:00Z; finalized in batch cycle-007 at 17:17:02Z.
   Files edited (7 L1 chapters thinned): book/src/L1/{axpy,dot,nrm2,axpby,scal,apply_linop,axpbypcz}.md (Context-section thinning; multi-bullet L0-surface enumerations replaced with cross-references to L0 chapters; ~55% net Context shrink per repairer recount; nrm2.md B-weighted aside stale `apply` → `apply_linop` micro-fix folded in).

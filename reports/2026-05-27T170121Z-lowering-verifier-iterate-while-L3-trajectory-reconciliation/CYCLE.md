@@ -15,7 +15,7 @@ inputs:
   - book/src/concepts/derived-view-hoisting.md (the §3.8 demand-pruning algebra)
 status: integrated
 integrated_at: 2026-05-27T17:17:02Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 693f058
 integration_notes: |
   Applied cycle-007 wave-2 per-report dispatch 6 of 6 at 19:30:00Z; finalized in batch cycle-007 at 17:17:02Z.
   Audit-only dispatch — no book/ artefact edits. Files edited: scaffolding/open-questions.md (body augmentation on iterate-while-l3-rendering-trajectory-accumulation-gap recording cycle-007 wave-2 verdict (c); status intentionally kept open per user directive — closure becomes appropriate only after cycle-008+ lifter patch lands the §3.8 collapse-rule citation; 1 new OQ appended at end of cycle-007 block).

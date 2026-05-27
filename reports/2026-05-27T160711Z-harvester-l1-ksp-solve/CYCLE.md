@@ -19,7 +19,7 @@ inputs:
   - closes OQ: l1-ksp-solve-firm-up-anchor-ready (cycle-006)
 status: integrated
 integrated_at: 2026-05-27T17:17:02Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 693f058
 integration_notes: |
   Applied cycle-007 wave-1 per-report dispatch 2 of 6 at 17:30:00Z; finalized in batch cycle-007 at 17:17:02Z.
   Files created: book/src/L1/ksp_solve.md (first L1 op with structured opaque primary argument).

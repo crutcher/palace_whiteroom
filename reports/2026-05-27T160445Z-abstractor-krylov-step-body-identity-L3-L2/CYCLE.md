@@ -17,7 +17,7 @@ inputs:
   - book/src/design/l4_calculus.md (strawman; consulted for notation conventions)
 status: integrated
 integrated_at: 2026-05-27T17:17:02Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 693f058
 integration_notes: |
   Applied cycle-007 wave-1 per-report dispatch 5 of 6 at 19:00:00Z; finalized in batch cycle-007 at 17:17:02Z.
   Files created: book/src/L3-L2/krylov-step-body-identity.md (first L3>L2 firm-rough-in theme; status inherits upstream L4>L3 rough-in; auto-promotes to firm when upstream firms).
