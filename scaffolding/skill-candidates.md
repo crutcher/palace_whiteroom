@@ -32,7 +32,22 @@ The cost of a too-eager promotion is an unused SKILL.md; the cost of under-promo
 
 ## Open candidates
 
-(none currently — first candidate from pilot-1 was promoted same-cycle; see Promoted section)
+```yaml
+---
+slug: cycle-planner-discipline-read-role-spec-first
+proposer: meta-phase
+proposed_at: cycle-002 / 2026-05-26
+status: proposed
+---
+```
+
+**Motivating observation**: cycle-002 haiku cycle-planner proposed a multi-operator harvester dispatch (`dot`, `nrm2`, `scal` in one invocation), violating harvester's "one operator per invocation" role spec. Parent corrected at dispatch time. Friction-ledger entry `haiku-cycle-planner-over-scopes-harvester` (recurrence-1).
+
+**Sketch of procedure**: Before emitting any `(agent, scope, deps)` tuple, the cycle-planner reads the target agent's `.claude/agents/<name>.md` and checks for "one X per invocation" / "single-scope" / "atomic dispatch" constraints. Rejects multi-target scopes for atomic agents. Emits one tuple per atomic dispatch.
+
+**Promotion bar check**: recurrence-1 currently (cycle-002 only). Not yet at the ≥2-cycle threshold. Defer to cycle-003 evaluation; if haiku planner repeats, promote then. Alternative path: if meta-phase decides to swap cycle-planner to opus, this skill may become unnecessary.
+
+
 
 ## Promoted
 

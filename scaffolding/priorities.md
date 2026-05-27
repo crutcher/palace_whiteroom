@@ -10,21 +10,26 @@ Short next-up list. Meta-phase and cycle-planner co-edit. Cycle-planner reads ea
 
 ## Now (active)
 
-1. **bootstrap-L1-vocabulary** (in progress: `axpy` landed pilot-1) — harvest the core L1 operators (~~axpy~~, dot, nrm2, scal, apply_linop) into `book/src/L1/`. They exist as concepts; promote to firm L1 entries.
-2. **bootstrap-L1-L0-theme-axpby** — abstractor sketches the in-place `x.Add(α, y)` → `x_{k+1} = x_k + α·y` rewrite as the first L1>L0 lowering theme.
-3. **mine-krylov-iteration-step** — combinator-miner scans Phase 1 corpus (cg, gmres, chebyshev) for the recurring Krylov-step shape; propose an L2 combinator.
+1. **bootstrap-L1-vocabulary** (in progress: `axpy` ✓ pilot-1, `dot` ✓ cycle-002, `axpby` rough-in ✓ cycle-002) — harvest remaining core L1 operators (`nrm2`, `scal`, `apply_linop`) into `book/src/L1/`. **Discipline:** one operator per harvester invocation (see `haiku-cycle-planner-over-scopes-harvester` friction).
+2. **harvester-promote-axpby** — promote the cycle-002 rough-in `axpby` to firm L1 entry; record the fusion-vs-decomposition decision (`axpby` as primitive vs `axpy ∘ scal`) per open question `axpby-axpy-scal-decomposition-decision` in `scaffolding/decisions/`.
+3. **lowering-verifier-axpby-theme** — audit the cycle-002 `axpby-mutation-rotation` theme against the full L0 corpus; resolve the three sub-patterns A/B/C per open question `axpby-lowering-verifier-audit`.
+4. **same-layer-cross-cutter-reconcile-dot-concept** — `concepts/dot.md` has two contradictions with `book/src/L1/dot.md` (return-type claim; non-existent `linalg::Dotc`; inverted conjugation). Resolve per open questions `concepts-dot-return-type-correction` + `concepts-dot-dotc-and-inverted-conjugation`.
+5. **harvester-promote-krylov-step** — formalize the cycle-002 L2 rough-in `krylov-step`; six deliverables per open question `krylov-step-harvester-deliverables`. Depends on L1 vocabulary firming (item #1).
 
 ## Near (queued)
 
-4. **bootstrap-L4-state-stratification** — write the L4 layer intro / dep-map that exposes the sim-state vs operator-params vs ephemeral distinction.
-5. **lowering-verifier-axpy-theme** — once #2 lands, audit it against Palace evidence.
+6. **bootstrap-L4-state-stratification** — write the L4 layer intro / dep-map that exposes the sim-state vs operator-params vs ephemeral distinction.
+7. **cross-layer-cross-cutter-krylov-step-layer-placement** — decide L2 vs L4 vs both for `krylov-step` per open question `krylov-step-layer-placement`.
 
 ## Watch list (deferred)
 
-- **post-restart-verify-claude-agents** — verify after Claude Code restart whether `.claude/agents/<name>.md` definitions are picked up so `Agent(subagent_type=<custom-name>)` works directly. If yes, demote `embed-and-persist-subagent-dispatch` skill; if no, keep as operational default. (`ask` item from meta-phase pilot-1.)
+- **cycle-003-planner-cascade-pattern** — if haiku cycle-planner skips Write again (`haiku-subagent-anchors-to-ledger-lore`) OR over-scopes the harvester again (`haiku-cycle-planner-over-scopes-harvester`) on cycle-003, escalate: propose either swapping cycle-planner to opus or adding hard override clauses in `.claude/agents/cycle-planner.md`.
+- **l2-dep-map-format-vs-l1** — open question `l2-dep-map-format-vs-l1`: decide whether the L2 Working-Notes overflow is reusable across L2/L3/L4 dep-maps or a fifth column is cleaner. Routes back to meta-phase / channel-format change.
 - Phase 1 slice corpus move to `book/src/_phase1_corpus/` — 64 cross-references need rewriting; defer until pilot validates flow.
 - `lessons.md` retirement — keep as historical record post-Phase-E.
 
 ## Recently landed
 
-(none yet — first entries will accumulate as integrator clears priority items)
+- **post-restart-verify-claude-agents** (cycle-002, commit c3312a6) — verified: all 13 custom `.claude/agents/<name>.md` definitions resolve via `Agent(subagent_type=<name>)`. The previous `embed-and-persist` skill is refined (not retired) — needed only for parent-pre-creates-skeleton on REPORT.md targets due to a content-pattern Write filter on `report|summary|findings|analysis` filenames. See friction-ledger entries `subagent-file-write-blocked-general-purpose` (status `resolved-with-narrowing`) and `content-pattern-write-filter-on-report-keywords` (status `addressed-by-design`).
+- **bootstrap-L1-L0-theme-axpby** (cycle-002, commit c3312a6) — abstractor rough-in `axpby-mutation-rotation` theme landed at `book/src/L1-L0/axpby-mutation-rotation.md` with three sub-patterns A/B/C. Awaits lowering-verifier audit (now priority #3).
+- **mine-krylov-iteration-step** (cycle-002, commit c3312a6) — combinator-miner rough-in `krylov-step` landed at `book/src/L2/index.md`. Awaits harvester promotion (now priority #5).
