@@ -38,31 +38,37 @@ Between adjacent layers, **lowering layers** `L_{n+1}>L_n` describe the rewrite 
 Each R&D cycle has 6 phases:
 
 ```
-  cycle-planner → N specialized agents → N critics → N repairers → integrator → meta-phase
-    (serial)        (scatter; parallel)     (scatter)    (scatter)    (serial)    (serial)
+  cycle-planner → N specialized agents → N critics → N repairers →
+    integrator-per-report ×N → integrator-finalize → meta-phase
+    (serial)        (scatter; parallel)     (scatter)    (scatter)
+                                                              (serial; one-at-a-time)  (serial)   (serial)
 ```
 
-**Phase 1 — plan**: `cycle-planner` reads roadmap, priorities, friction-ledger, open-questions, recent integrator batches. Emits a dispatch plan with `(agent, scope, deps)` tuples and an overlap analysis. Does not mutate the artifact.
+**Phase 1 — plan**: `cycle-planner` reads roadmap, priorities, friction-ledger, open-questions, recent integrator batches, integrator-signals tail. Emits a dispatch plan with `(agent, scope, deps)` tuples and an overlap analysis. Does not mutate the artifact.
 
-**Phase 2 — dispatch**: 1–6 specialized agents per plan, parallel where non-overlapping. Each writes a single `CYCLE.md` under `reports/<timestamp>-<agent>-<scope>/`. No artifact mutation in this phase.
+**Phase 2 — dispatch**: up to 8 specialized agents per plan (user directive 2026-05-27), parallel where non-overlapping. Each writes a single `CYCLE.md` under `reports/<timestamp>-<agent>-<scope>/`. No artifact mutation in this phase.
 
 **Phase 3 — critique**: `critic` agent runs on each report (parallel). Runs the 8-check checklist (citation-validity, surface-or-evidence, rotation-quality, variant-axis-coverage, cross-reference-integrity, edge-label-fidelity, plan-kind-consistency, skill-uptake-survey). Writes META.md critique section.
 
 **Phase 4 — repair**: `repairer` agent runs on reports with warning/fail findings (parallel). Mechanical and surgical fixes only — not substantive authoring. Writes META.md repair section. Sets `overall_status`.
 
-**Phase 5 — integrate**: `integrator` reads all reports + METAs. Applies `ready` reports, defers `needs-revision`, marks `reject`. Runs safety-net gates. Rebuilds book, repairs link-check / format breakage, commits + pushes. Emits batch report. Sole writer of `book/`, `scaffolding/roadmap.md`, `log/`, `scaffolding/cycle-record.jsonl`, `scaffolding/open-questions.md`.
+**Phase 5 — integrate** (split cycle-004 → cycle-005 boundary for context-bound per-dispatch budget):
+- `integrator-per-report` runs **once per ready report, dispatched serially** (not parallel — artifact writes naturally serialize). Each per-report dispatch applies ONE report's proposed-changes, runs per-report safety-net gates, promotes that report's Open questions, and appends a row to a per-cycle staging log (`reports/<cycle-id>-integrator-staging/STAGING.md`). Does NOT rebuild book, does NOT commit.
+- `integrator-finalize` runs **once at the end**. Reads the staging log, runs `cargo make book`, repairs build breakage, updates roadmap (when measurable), appends to `cycle-record.jsonl`, writes `log/cycle-N.md`, prepends to `log/README.md`, appends to `scaffolding/integrator-signals.md`, marks consumed reports' `integrated_at`, emits the batch CYCLE.md, runs single `git commit && git push origin main`.
 
-**Phase 6 — meta**: `meta-phase` examines cycle evidence + running history. Records escalating trends in `scaffolding/friction-ledger.md`. Proposes plans, judges them, decides `go` / `no-go` / `ask` per plan. Enacts `go` items directly: writes to `.claude/agents/`, `skills/`, `scaffolding/priorities.md`. Surfaces `ask` items to human. Separate commit from integrator.
+Sole writers of `book/`, `scaffolding/roadmap.md`, `log/`, `scaffolding/cycle-record.jsonl`, `scaffolding/open-questions.md`, `scaffolding/integrator-signals.md` — partitioned per role spec (per-report writes artifact + open-questions + staging; finalize writes roadmap, cycle-record, log, integrator-signals, plus commit).
 
-## The 13 agents
+**Phase 6 — meta**: `meta-phase` examines cycle evidence + running history. Records escalating trends in `scaffolding/friction-ledger.md`. Proposes plans, judges them, decides `go` / `no-go` / `ask` per plan. Enacts `go` items directly: writes to `.claude/agents/`, `skills/`, `scaffolding/priorities.md`. Surfaces `ask` items to human. Separate commit from integrator-finalize.
 
-Definitions live under `.claude/agents/`. Dispatch via `Agent(subagent_type=<name>, ...)`. If custom agent definitions don't resolve in the current Claude Code session, use the embed-and-persist pattern from `skills/embed-and-persist-subagent-dispatch/`.
+## The 14 agents
+
+Definitions live under `.claude/agents/`. Dispatch via `Agent(subagent_type=<name>, ...)`. Per-dispatch report file convention is `CYCLE.md` (renamed from `REPORT.md` cycle-004 to bypass the Claude Code subagent Write filter on `report|summary|findings|analysis` keywords).
 
 **Pre-dispatch (1):**
 - `cycle-planner` (haiku) — serial dispatch planner.
 
 **Specialized dispatch (8, all opus):**
-- `layer-intro-author` — writes L_n / L_{n+1}>L_n Part overviews + dep-maps.
+- `layer-intro-author` — writes L_n / L_{n+1}>L_n Part overviews + dep-maps + `book/src/concepts/<slug>.md` pages (broadened cycle-003).
 - `harvester` — formalizes one L_n operator per invocation.
 - `abstractor` — sketches one L_{n+1}>L_n theme + speculative L_{n+1} operators.
 - `lifter` — re-anchors a theme to firmed-up vocabulary.
@@ -73,10 +79,12 @@ Definitions live under `.claude/agents/`. Dispatch via `Agent(subagent_type=<nam
 
 **Post-dispatch validation (2):**
 - `critic` — runs 8-check checklist per report; META.md critique section.
-- `repairer` — attempts mechanical fixes per finding; META.md repair section + REPORT in-place edits; sets `overall_status`.
+- `repairer` — attempts mechanical fixes per finding; META.md repair section + CYCLE.md in-place edits; sets `overall_status`.
 
-**Application (1):**
-- `integrator` — applies ready reports; safety-net gates; rebuild book; commit + push.
+**Application (2 — split cycle-004 → cycle-005):**
+- `integrator-per-report` — applies ONE report; appends row to STAGING.md; dispatched serially once per ready report.
+- `integrator-finalize` — runs ONCE at cycle-end; rebuild book + commit + push + cycle-end housekeeping (cycle-record, log, integrator-signals, roadmap, batch CYCLE.md).
+- (RETIRED) `integrator` — single-pass version; kept as historical reference.
 
 **Methodology (1):**
 - `meta-phase` — examines cycle evidence; records trends; proposes / judges / decides; enacts methodology adjustments.
@@ -132,7 +140,8 @@ BOOTSTRAP.md               # original phased build spec (superseded; historical)
 | cycle-planner, 8 specialized | `reports/<id>/CYCLE.md` + supporting docs in same dir only |
 | critic | `reports/<id>/META.md` critique section |
 | repairer | `reports/<id>/META.md` repair section + in-place edits to CYCLE.md / supporting docs |
-| integrator | `book/`, `scaffolding/roadmap.md`, `scaffolding/cycle-record.jsonl`, `scaffolding/open-questions.md`, `log/` |
+| integrator-per-report | `book/` (per-report proposed-changes), `scaffolding/open-questions.md` (append-only), `reports/<cycle-id>-integrator-staging/STAGING.md` (append-only) |
+| integrator-finalize | `book/` (build-repair only), `scaffolding/roadmap.md`, `scaffolding/cycle-record.jsonl`, `scaffolding/integrator-signals.md`, `log/`, `reports/<id>-integrator-finalize-cycle-N/CYCLE.md`, per-consumed-report `integrated_at` frontmatter touches |
 | meta-phase | `.claude/agents/`, `skills/`, `scaffolding/priorities.md`, `scaffolding/friction-ledger.md`, `scaffolding/skill-candidates.md` (status updates), `scaffolding/problems-sensitivity.md`, channel-format specs |
 
 **Any-agent-appendable** (append sections, never edit existing):

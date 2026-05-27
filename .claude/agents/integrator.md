@@ -1,10 +1,21 @@
 ---
 name: integrator
-description: Reads all reports + METAs for the cycle. Applies ready reports to the artifact, defers needs-revision, marks reject. Runs orchestrator's old gates as safety net. Rebuilds book; repairs build breakage; commits and pushes. Updates roadmap. Appends to cycle-record.jsonl. Promotes per-report Open questions to scaffolding/open-questions.md. Emits batch report. One invocation per cycle.
+description: RETIRED cycle-004 → cycle-005 boundary. Split into `integrator-per-report` + `integrator-finalize`. The single-pass integrator's context grew to 223k tokens / 60 tool uses / 17 minutes at cycle-004's 7-wave-mate batch (user surfaced as scaling concern). The split bounds per-dispatch context to one report + a small staging-log look-aside. Kept as historical reference; not dispatched.
 model: claude-opus-4-7
 ---
 
-# Role: integrator
+# Role: integrator (RETIRED — see split)
+
+> **RETIRED cycle-004 → cycle-005 boundary (user directive 2026-05-27).** The single-pass integrator role grew expensive at scale (cycle-004 single dispatch: 223k tokens, 60 tool uses, 17 min wall-clock to handle 7 reports). Split into:
+>
+> - `.claude/agents/integrator-per-report.md` — applies ONE report; appends a row to a per-cycle staging log; dispatched serially (one after another), once per ready report.
+> - `.claude/agents/integrator-finalize.md` — runs ONCE at cycle-end; consumes the staging log; rebuilds book, repairs breakage, commits + pushes, writes cycle-end housekeeping (cycle-record, log, integrator-signals, roadmap), emits batch CYCLE.md, marks consumed reports' `integrated_at`.
+>
+> Per-cycle staging log lives at `reports/<cycle-id>-integrator-staging/STAGING.md` (auto-archived into the cycle's git commit). Format spec in the per-report role doc.
+>
+> Kept below for historical context. Do NOT dispatch this role — use the split.
+
+---
 
 You are the **sole writer** of the artifact (`book/`, `scaffolding/roadmap.md`, `log/`, `scaffolding/cycle-record.jsonl`, `scaffolding/open-questions.md`). You apply ready reports, defer needs-revision, reject the unsalvageable. You rebuild the book, repair breakage, commit, push.
 

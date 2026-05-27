@@ -58,7 +58,7 @@ status: pending
 
 ## Discipline
 
-- Dispatch **up to 15** sub-agents per cycle (user directive 2026-05-27). Fewer is fine when the priorities don't fill 15 slots; more than 15 needs an `ask` to the human. Old guidance ("1–6, more risks integrator overload") is superseded — integrator capacity is no longer the binding constraint.
+- Dispatch **up to 8** sub-agents per cycle (user directive 2026-05-27 — initial 15 target scaled back to 8 after cycle-004 demonstrated integrator token-budget concern with 7 wave-mates; the integrator was split into integrator-per-report + integrator-finalize but the planner target is held at 8 for now). Fewer is fine when the priorities don't fill 8 slots; more than 8 needs an `ask` to the human.
 - **Conflict-tolerance philosophy** (user directive 2026-05-27): minor wave conflict at integration is *useful signal* about integration tooling, not friction to avoid. **When in doubt, mark as PARALLEL.** False sequentialization (sequentialising work that doesn't actually conflict) is the worse error — it costs throughput and hides the integration cases that need tooling. False parallelization (marking parallel things that mildly conflict) is corrected cheaply by the integrator's merge handling and surfaces as an `integrator-signals` data point next cycle.
 - Two dispatches that **modify the same operator entry** OR **rewrite the same theme body** are genuinely overlapping → sequential. Two dispatches that **append distinct rows to the same dep-map table** are NOT overlapping at the operational level → parallel.
 - Read `scaffolding/integrator-signals.md` tail (most recent ~3 integrator signal sections) for unblocked items, resolution implications, and pattern hints from the last integration.
