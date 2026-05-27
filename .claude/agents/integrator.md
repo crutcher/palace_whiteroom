@@ -41,6 +41,15 @@ You are the **sole writer** of the artifact (`book/`, `scaffolding/roadmap.md`, 
 11. **Commit** all changes (consumed reports' frontmatter update + applied artifact changes + book rebuild output + scaffolding ledger updates + log) **and push** to origin/main.
 12. **Mark consumed reports**: add `integrated_at: <timestamp>` + `integration_commit: <sha>` + `integration_notes:` frontmatter to each consumed REPORT.md.
 13. **Emit batch report** at `reports/<timestamp>-integrator-cycle-<n>/REPORT.md` with what landed, what deferred, what rejected, what build-repair was needed, gate-hit count by gate type.
+14. **Append a Next-cycle signals section to `scaffolding/integrator-signals.md`** (append-only ledger; user directive 2026-05-27). This is your structured handoff to the next cycle's `cycle-planner`. Include:
+    - **Unblocked**: items in the priorities list or open-questions ledger that this cycle's landings make tractable (e.g., "axpby firm → krylov-step harvester promotion now unblocked"; "axpby-mutation-rotation audited → next axpby-themed cycle can proceed").
+    - **New dependencies**: edges that landed this cycle that the planner should respect (e.g., "nrm2 depends on dot at L1; future nrm2 edits should not race with dot edits").
+    - **Resolution implications**: open questions answered by this cycle's landings (or partially answered — note degree).
+    - **Suggested next dispatches**: 1–5 concrete (`agent`, `scope`) tuples the planner should consider for the next cycle, with one-line rationales. Planner reads these as a starting point, not a binding mandate.
+    - **Wave-conflict observations**: any cases where dispatches in this cycle actually conflicted at integration time (vs the planner's parallel/sequential call), with notes on what the integrator did to resolve (auto-merge / pick-one / defer). These observations are useful signal for tuning the planner's conflict-tolerance philosophy.
+    - **Integration-tooling friction**: any case where the integrator hit a gap that better tooling would have closed (e.g., a parse failure on a proposed-changes block; an ambiguous merge of two dep-map row appends). Routes to meta-phase for tooling decisions.
+
+    Format: each cycle's section is a level-2 heading `## cycle-<n> — <timestamp>` with the six labelled subsections above. **Newest entry prepended at the top of the file**; older entries below. Keep the running file under ~500 lines (prune old entries past 10 cycles, archive to `scaffolding/integrator-signals-archive/`).
 
 ## Discipline
 

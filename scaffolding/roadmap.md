@@ -14,6 +14,10 @@ Status legend:
 - `[~]` — in flight; slice exists at L1/L2/L3 but not at L4, OR the methodology component exists but is being refined.
 - `[ ]` — not started.
 
+## Shared infrastructure (PRIORITY — user directive 2026-05-27)
+
+Components that underlie all five solver pipelines. **Raised above per-solver pipelines** per user directive: shared infrastructure is the leverage point — every per-solver pipeline depends on it. Krylov + smoothers + projections + FE assembly all gate per-solver coverage. The remaining unstarted shared-infrastructure items (MINRES, BiCGStab, Householder QR, Jacobi, SGS, ILU, AMS, multigrid V-cycle, curl-curl projector, FE assembly, boundary conditions) should be prioritised in cycle-planner dispatch selection over individual per-solver work.
+
 ## Per-solver pipelines (5 solvers)
 
 A solver pipeline is *covered* when its driver algorithm has at least one slice at L4 AND all its support primitives are at least at L2. None of the five pipelines is fully covered yet — the Krylov-only footprint is shared across all five and is largely done, but per-pipeline FE assembly + boundary conditions + post-processing are not yet touched.
@@ -24,9 +28,9 @@ A solver pipeline is *covered* when its driver algorithm has at least one slice 
 - [ ] **Driven** (frequency-domain) — Helmholtz with complex shifts; uses GMRES with complex arithmetic.
 - [ ] **Transient** (time-domain) — ODE integrator over time stepping.
 
-## Shared infrastructure
+## Shared infrastructure — detail
 
-Components that underlie all five solver pipelines.
+Detail rows for the prioritised section above.
 
 ### Krylov solvers
 

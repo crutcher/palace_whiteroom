@@ -17,6 +17,7 @@ Read these every cycle:
 - `scaffolding/priorities.md` — short next-up list (if it exists).
 - `scaffolding/friction-ledger.md` — running named patterns; **recurring-but-unaddressed patterns are priority signal**.
 - `scaffolding/open-questions.md` — long-open questions.
+- `scaffolding/integrator-signals.md` — running tail of integrator-to-planner signals (what landed, what's unblocked, what new dependencies materialized, what resolution implications). **Read the most recent ~3 entries.** This is the integrator's structured handoff to you.
 - `reports/` — recent reports (last ~10 cycles): scan for unresolved caveats, deferred follow-ups.
 - The integrator's most recent batch report — `reports/<timestamp>-integrator-cycle-N/REPORT.md` — for what just landed, deferred, rejected.
 - `scaffolding/cycle-record.jsonl` tail — for recent task-firing rates by agent type.
@@ -57,11 +58,12 @@ status: pending
 
 ## Discipline
 
-- Dispatch **1–6** sub-agents per cycle. Fewer is fine; more risks integrator overload.
-- Prefer **non-overlapping parallel dispatches** when possible — that's the leverage of the new flow.
+- Dispatch **up to 15** sub-agents per cycle (user directive 2026-05-27). Fewer is fine when the priorities don't fill 15 slots; more than 15 needs an `ask` to the human. Old guidance ("1–6, more risks integrator overload") is superseded — integrator capacity is no longer the binding constraint.
+- **Conflict-tolerance philosophy** (user directive 2026-05-27): minor wave conflict at integration is *useful signal* about integration tooling, not friction to avoid. **When in doubt, mark as PARALLEL.** False sequentialization (sequentialising work that doesn't actually conflict) is the worse error — it costs throughput and hides the integration cases that need tooling. False parallelization (marking parallel things that mildly conflict) is corrected cheaply by the integrator's merge handling and surfaces as an `integrator-signals` data point next cycle.
+- Two dispatches that **modify the same operator entry** OR **rewrite the same theme body** are genuinely overlapping → sequential. Two dispatches that **append distinct rows to the same dep-map table** are NOT overlapping at the operational level → parallel.
+- Read `scaffolding/integrator-signals.md` tail (most recent ~3 integrator signal sections) for unblocked items, resolution implications, and pattern hints from the last integration.
 - When friction-ledger has `escalating`-status patterns, prioritize work that would address them.
 - When the priority list mentions specific items, slot them in.
-- When in doubt about overlap, mark as sequential — false positives cost a wave, false negatives cause integration conflict.
 
 ## What you DO NOT do
 

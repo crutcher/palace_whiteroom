@@ -20,6 +20,15 @@ Short next-up list. Meta-phase and cycle-planner co-edit. Cycle-planner reads ea
 
 6. **bootstrap-L4-state-stratification** — write the L4 layer intro / dep-map that exposes the sim-state vs operator-params vs ephemeral distinction.
 7. **cross-layer-cross-cutter-krylov-step-layer-placement** — decide L2 vs L4 vs both for `krylov-step` per open question `krylov-step-layer-placement`.
+8. **shared-infra-MINRES** (user directive 2026-05-27: Shared Infrastructure raised) — slice MINRES (symmetric-indefinite three-term recurrence) from Palace. Roadmap §Shared infrastructure / Krylov solvers.
+9. **shared-infra-BiCGStab** (same directive) — slice BiCGStab (non-symmetric short-recurrence) from Palace. Same roadmap section.
+10. **shared-infra-Jacobi-smoother** (same directive) — slice Jacobi / damped Jacobi smoother. Roadmap §Smoothers and preconditioners.
+11. **shared-infra-householder-QR** (same directive) — slice Householder QR (orthogonalisation sibling). Roadmap §Orthogonalisation.
+
+## Methodology guidance (user directive 2026-05-27)
+
+- **Dispatch target: up to 15 sub-agents per cycle** (was 1–6). Conflict-tolerance philosophy: minor wave conflict at integration is *useful tooling signal*, not friction to avoid. Cycle-planner: when in doubt, mark as PARALLEL. See `.claude/agents/cycle-planner.md` Discipline section.
+- **Integrator-to-planner signals channel**: integrator now appends to `scaffolding/integrator-signals.md` after each cycle (newest at top). Cycle-planner reads the top ~3 entries each cycle. See `.claude/agents/integrator.md` step 14.
 
 ## Watch list (deferred)
 
