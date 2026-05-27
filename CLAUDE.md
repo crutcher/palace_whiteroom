@@ -46,7 +46,7 @@ Each R&D cycle has 6 phases:
 
 **Phase 1 — plan**: `cycle-planner` reads roadmap, priorities, friction-ledger, open-questions, recent integrator batches, integrator-signals tail. Emits a dispatch plan with `(agent, scope, deps)` tuples and an overlap analysis. Does not mutate the artifact.
 
-**Phase 2 — dispatch**: up to 8 specialized agents per plan (user directive 2026-05-27), parallel where non-overlapping. Each writes a single `CYCLE.md` under `reports/<timestamp>-<agent>-<scope>/`. No artifact mutation in this phase.
+**Phase 2 — dispatch**: up to 12 specialized agents per plan (user directive 2026-05-27 — raised from 8 mid-cycle-006 after first split-integrator cycle (005) ran 6 wave-mates with no token-budget pressure), parallel where non-overlapping. Each writes a single `CYCLE.md` under `reports/<timestamp>-<agent>-<scope>/`. No artifact mutation in this phase.
 
 **Phase 3 — critique**: `critic` agent runs on each report (parallel). Runs the 8-check checklist (citation-validity, surface-or-evidence, rotation-quality, variant-axis-coverage, cross-reference-integrity, edge-label-fidelity, plan-kind-consistency, skill-uptake-survey). Writes META.md critique section.
 
