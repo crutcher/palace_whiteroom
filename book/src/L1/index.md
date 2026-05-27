@@ -19,6 +19,8 @@ L1 vocabulary mirrors the source operations but with pure-functional binding. Sh
 | Operator | Signature | Dependencies | Status |
 |---|---|---|---|
 | [`axpy`](./axpy.md) | `(α, x, y) → α·x + y` | (leaf) | `firm` |
+| [`dot`](./dot.md) | `(x, y) → ⟨x, y⟩` (hermitian for complex) | (leaf) | `firm` |
+| `axpby` | `(α, x, β, y) → α·x + β·y` | (leaf; subsumes `axpy`) | `rough-in, proposed-by: abstractor:2026-05-26T231843Z-abstractor-axpby-mutation-L1-L0` |
 
 ## Working Notes
 

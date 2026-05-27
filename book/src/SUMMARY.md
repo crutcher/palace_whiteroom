@@ -24,9 +24,11 @@
 # L1 — Mutation-Lifted Forms
 - [Overview](./L1/index.md)
 - [axpy](./L1/axpy.md)
+- [dot](./L1/dot.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
+- [axpby-mutation-rotation](./L1-L0/axpby-mutation-rotation.md)
 
 # L0 — Cited Palace Source
 - [Overview](./L0/index.md)

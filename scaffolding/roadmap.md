@@ -169,6 +169,17 @@ For the README's *Relative Progress* section:
 
 The denominators are rough by design. The roadmap is reviewed and adjusted during each meta-cycle; if a category's denominator grows (new components surface as in-scope), the README's coverage report reflects it.
 
+## Layered-spec progress (added cycle-002)
+
+The 6-phase agent loop now builds the L4→L0 layered stack. Per-layer dep-map populations as of cycle-002:
+
+- **L1** — 2 firm operators (`axpy`, `dot`), 1 rough-in (`axpby` — proposed by abstractor, harvester promotion pending).
+- **L1>L0** lowering — 1 theme (`axpby-mutation-rotation` — rough-in; lowering-verifier audit pending).
+- **L2** — 1 rough-in (`krylov-step` — proposed by combinator-miner; harvester promotion pending).
+- **L2>L1**, **L3**, **L3>L2**, **L4**, **L4>L3**, **L0** — Part skeletons only.
+
+Forward indicator: L1 vocabulary buildup is the dominant near-term work (per `scaffolding/priorities.md` priority #1). Lowering and L2 are seeding in parallel from speculative emissions.
+
 ## Working Notes
 
 - Cycles 1–79 covered Krylov + orthogonalisation + smoothers (Chebyshev only so far) + one projection (divfree). FE assembly and time-stepping are the next major surfaces. Mesh construction and boundary conditions are also untouched.

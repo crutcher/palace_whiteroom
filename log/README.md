@@ -8,6 +8,7 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 
 ## Index (newest first)
 
+- [2026-05-26 cycle-002 — dot @ L1 + axpby-mutation-rotation @ L1>L0 + krylov-step rough-in @ L2](cycle-002.md)
 - [2026-05-26 pilot-1 — first cycle of new 6-phase flow — axpy at L1](pilot-1.md)
 - [2026-05-26 cycle-172 — refinement polynomial_recurrence_step [Ln→Ln] — pass](cycle-172.md)
 - [2026-05-26 cycle-171 — refinement sparse_triangular_solve [Ln→Ln] — pass](cycle-171.md)
@@ -203,5 +204,5 @@ Full meta-review records (longer) live under `book/src/meta-reviews/`.
 - [2026-05-24 cycle-4 — forward gmres [L1→L2] — revise](cycle-004.md)
 - [2026-05-24 meta-review (cycles 1–3) — enacted](meta-01-cycles-1-3.md)
 - [2026-05-24 cycle-3 — forward gmres [L1→L2] — revise](cycle-003.md)
-- [2026-05-24 cycle-2 — forward gmres [L0→L1] — pass](cycle-002.md)
+- [2026-05-24 cycle-2 (legacy slice-vertical) — forward gmres [L0→L1] — pass](cycle-002-legacy.md)
 - [2026-05-24 cycle-1 — forward cg_solver_integration [L0→L1] — revise](cycle-001.md)
