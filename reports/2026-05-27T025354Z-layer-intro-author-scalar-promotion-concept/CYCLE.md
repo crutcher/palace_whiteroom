@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T025354Z
 scope: concepts/scalar-promotion (new concept page)
 status: integrated
 integrated_at: 2026-05-27T07:04:24Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a16c32c76f7ed73c2ab1d381d440db2cd6b2e7f9
 integration_notes: Applied. New methodology concept page covering scalar-promotion across 4 L1 operators (axpy/axpby/axpbypcz/scal). Answers cycle-002 scalar-promotion-typing-rule (5 operators were past threshold). Retroactive L1 thinning is cycle-006+ follow-up.
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T02:53:54Z
 scope: L2↔L4 cross-cut — krylov-step-layer-placement
 status: integrated
 integrated_at: 2026-05-27T07:04:24Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a16c32c76f7ed73c2ab1d381d440db2cd6b2e7f9
 integration_notes: Applied (observation-only; OQ-only). Recommends DUAL placement for krylov-step (L2 + L4 with L4>L3>L2 lowering edge). 4 OQs promoted naming 3 cycle-006 follow-up dispatches.
 skill_uptake:
   verify-citation-range: informal — spot-checked the four concept line-ranges (solve-monad.md:14, state-stratification.md:11, first-iteration-unrolling.md:21-37, L2/index.md:21-23, L4/index.md:26-37) by direct file inspection but did not invoke the skill by name.

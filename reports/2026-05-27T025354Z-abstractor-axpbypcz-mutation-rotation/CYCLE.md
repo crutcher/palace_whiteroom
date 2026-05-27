@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T025354Z
 scope: L1>L0 theme sketch — axpbypcz-mutation-rotation
 status: integrated
 integrated_at: 2026-05-27T07:04:24Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a16c32c76f7ed73c2ab1d381d440db2cd6b2e7f9
 integration_notes: Applied. Third mutation-rotation theme. 4 sub-patterns + first mixed-justification sub-rule in project (γ==0 labelled algebraic+structural). Closes axpbypcz-mutation-rotation-abstractor-target (cycle-004).
 skill_uptake:
   consulted: []

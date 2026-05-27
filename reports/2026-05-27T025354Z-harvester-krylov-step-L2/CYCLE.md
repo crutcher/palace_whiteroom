@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T02:53:54Z
 scope: L2 operator: krylov-step
 status: integrated
 integrated_at: 2026-05-27T07:04:24Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a16c32c76f7ed73c2ab1d381d440db2cd6b2e7f9
 integration_notes: Applied. First firm L2 operator. Six variant axes absorbed at construction time. Decision NOT to promote any cycle-004 speculative L1 operators recorded in scaffolding/decisions/2026-05-27-krylov-step-speculative-l1-promotion.md. Cross-cutter routes L4 dual-placement to cycle-006.
 inputs:
   - reports/2026-05-26T231843Z-combinator-miner-krylov-iteration-step/CYCLE.md (rough-in source; cycle-002)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T025354Z
 scope: L0 reference-notes bootstrap (bundle 1)
 status: integrated
 integrated_at: 2026-05-27T07:04:24Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a16c32c76f7ed73c2ab1d381d440db2cd6b2e7f9
 integration_notes: Applied. Bundle 1 of multi-cycle L0 buildout per priority #10. 6 chapters + L0/index.md re-framed as citations + reference notes. Folded the bicgstab :53-56 to :53-57 cross-reference fix from the resume-notes flag.
 ---
 

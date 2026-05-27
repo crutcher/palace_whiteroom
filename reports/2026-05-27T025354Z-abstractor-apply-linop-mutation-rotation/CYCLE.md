@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T025354Z
 scope: L1>L0 theme sketch — apply-linop-mutation-rotation
 status: integrated
 integrated_at: 2026-05-27T07:04:24Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a16c32c76f7ed73c2ab1d381d440db2cd6b2e7f9
 integration_notes: Applied. Second mutation-rotation theme after axpby-mutation-rotation. 5 sub-patterns A-E. Closes apply-linop-lowering-theme-scope (cycle-004).
 inputs:
   - book/src/L1/apply_linop.md (firm L1 form, cycle-004)
