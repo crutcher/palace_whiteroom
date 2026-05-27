@@ -170,6 +170,57 @@ L1 anchor:
 - `book/src/L1/axpy.md` — the firm L1 operator that sub-patterns A/B/C all
   lower from.
 
+verified_against:
+  - citation: palace/linalg/vector.hpp:115-118
+    verdict: supports
+    audited_at: 2026-05-27T00:11:16Z
+    note: ComplexVector member decls AXPY/Add/Subtract; Subtract inline body literally AXPY(-alpha, x).
+  - citation: palace/linalg/vector.hpp:119-128
+    verdict: supports
+    audited_at: 2026-05-27T00:11:16Z
+    note: operator+= calls AXPY(1.0, x); operator-= calls AXPY(-1.0, x). Both defined-not-used in palace/**.
+  - citation: palace/linalg/vector.cpp:276-311
+    verdict: supports
+    audited_at: 2026-05-27T00:11:16Z
+    note: ComplexVector::AXPY definition; forall_switch kernel with ai==0 branch; no alpha==1 branch on complex path (matches theme claim).
+  - citation: palace/linalg/vector.cpp:701-712
+    verdict: supports
+    audited_at: 2026-05-27T00:11:16Z
+    note: Free-function template real-Vector specialisation with verbatim if(alpha==1.0){y+=x;}else{y.Add(alpha,x);} branch.
+  - citation: palace/linalg/vector.cpp:714-718
+    verdict: supports
+    audited_at: 2026-05-27T00:11:16Z
+    note: Free-function real-alpha-on-ComplexVector specialisation dispatches to ComplexVector::AXPY member; no branch. Used by romoperator.cpp:193-194.
+  - citation: palace/linalg/vector.cpp:720-724
+    verdict: supports (defined-not-used)
+    audited_at: 2026-05-27T00:11:16Z
+    note: Free-function complex-alpha-on-ComplexVector specialisation dispatches to ComplexVector::AXPY member; no branch. Defined-not-used — corpus grep of linalg::AXPY returns 5 sites, all pass double alpha. No caller passes std::complex<double>.
+  - citation: palace/linalg/operator.cpp:458-466
+    verdict: supports
+    audited_at: 2026-05-27T00:11:16Z
+    note: SumOperator::AddMult uses y.Add(a*c, z) inside ops-loop; transpose sibling at 468-475 is same pattern, uncited.
+  - citation: palace/linalg/rap.cpp:73
+    verdict: supports
+    audited_at: 2026-05-27T00:11:16Z
+    note: b.Add(-1.0, ty); literal -1.0 confirmed sub-pattern-C.
+  - citation: palace/linalg/rap.cpp:317
+    verdict: supports
+    audited_at: 2026-05-27T00:11:16Z
+    note: y.Add(a, ty); runtime alpha=a; transpose sibling y.Add(a, tx) at rap.cpp:360, uncited.
+
+Coverage note (lowering-verifier audit, 2026-05-27): the corpus contains
+~25 additional axpy-shaped sites beyond those cited (under
+palace/linalg/{orthog,iterative,chebyshev,floquetcorrection,nleps},
+palace/models/{romoperator,waveportoperator,materialoperator}, palace/fem,
+palace/drivers/drivensolver). Theme content as written is correct; the
+cited set is illustrative not exhaustive. The ComplexVector::Subtract(α, x),
+ComplexVector::operator-=, and the free-function
+`linalg::AXPY(std::complex<double>, ComplexVector, ComplexVector)`
+specialisation (vector.cpp:720-724) are all defined-not-used in palace/**
+(definitions exist; no caller sites). Treat these three L0 forms as
+recognition rules for *potential* call sites rather than observed ones.
+Exhaustive corpus indexing deferred to a future cycle.
+
 ## Status
 
 `rough-in` — sub-pattern recognition rules sketched; full sub-rule

@@ -25,6 +25,8 @@
 - [Overview](./L1/index.md)
 - [axpy](./L1/axpy.md)
 - [dot](./L1/dot.md)
+- [nrm2](./L1/nrm2.md)
+- [axpby](./L1/axpby.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)

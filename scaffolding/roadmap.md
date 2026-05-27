@@ -173,16 +173,16 @@ For the README's *Relative Progress* section:
 
 The denominators are rough by design. The roadmap is reviewed and adjusted during each meta-cycle; if a category's denominator grows (new components surface as in-scope), the README's coverage report reflects it.
 
-## Layered-spec progress (added cycle-002)
+## Layered-spec progress (added cycle-002; updated cycle-003)
 
-The 6-phase agent loop now builds the L4→L0 layered stack. Per-layer dep-map populations as of cycle-002:
+The 6-phase agent loop now builds the L4→L0 layered stack. Per-layer dep-map populations as of cycle-003:
 
-- **L1** — 2 firm operators (`axpy`, `dot`), 1 rough-in (`axpby` — proposed by abstractor, harvester promotion pending).
-- **L1>L0** lowering — 1 theme (`axpby-mutation-rotation` — rough-in; lowering-verifier audit pending).
+- **L1** — **4 firm operators** (`axpy` pilot-1, `dot` cycle-002, `nrm2` cycle-003, `axpby` cycle-003). The `axpby-axpy-scal-decomposition-decision` open question is answered (fused primitive; see `scaffolding/decisions/axpby-as-primitive.md`).
+- **L1>L0** lowering — 1 theme (`axpby-mutation-rotation` — **audited cycle-003** by lowering-verifier; verdict `partially-supported` on coverage with ~25 uncited axpy-shaped corpus sites and three defined-not-used L0 forms noted). Theme content as written is correct; cited set is illustrative not exhaustive.
 - **L2** — 1 rough-in (`krylov-step` — proposed by combinator-miner; harvester promotion pending).
 - **L2>L1**, **L3**, **L3>L2**, **L4**, **L4>L3**, **L0** — Part skeletons only.
 
-Forward indicator: L1 vocabulary buildup is the dominant near-term work (per `scaffolding/priorities.md` priority #1). Lowering and L2 are seeding in parallel from speculative emissions.
+Forward indicator: L1 vocabulary buildup remains active (`scal`, `apply_linop`, `axpbypcz`, `nrm2_B` queued). L1 layer-intro refresh trigger met (≥3 firm operators). Concept-page contradictions (`concepts/dot.md`, `concepts/nrm2.md`) surfaced cycle-002–003 and queued for cycle-004 `layer-intro-author` rewrite. Shared-infrastructure priorities (MINRES, BiCGStab, Householder QR, Jacobi) raised by user directive 2026-05-27 and now compete with per-solver coverage work.
 
 ## Working Notes
 

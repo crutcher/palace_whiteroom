@@ -1,6 +1,29 @@
-## 2026-05-24 cycle-3 — forward gmres [L1→L2] — revise
+## 2026-05-27 cycle-003 — third cycle of new 6-phase flow — nrm2 + axpby firm @ L1 + axpby-mutation-rotation audit + dot-concept-contradictions surfaced
 
-- Synthesis: 0 rotation_claim(s); no diff applied
-- Verdict: revise.
-- Friction: The L2 'Per-iteration composition' block is essentially the L1 inner loop rewritten with primitive names — the rotation L1→L2 collapses to a renaming rather than a genuine algebraic compression. Symptom: the outer composition still has to thread V, H, g, cs, sn through `arnoldi_with_givens` as an opaque bundle, and the per-iteration block exposes index arithmetic (H[0..j+1, j], V[:,0..j]) at L2..
-- Structural change: none.
+- **Phases fired**: plan (cycle-planner haiku) → dispatch (4× parallel: harvester-nrm2 / harvester-axpby / lowering-verifier / same-layer-cross-cutter) → critique (4× critic) → repair (4× repairer) → integrate (this commit) → meta (next).
+- **Substantive landed**:
+  - `book/src/L1/nrm2.md` — firm L1 operator entry. 10 algebraic laws + 4 explicitly-not-holding; one variant axis (element-type) with strong collapse (always-real result regardless of input element-type); single L1 dependency on cycle-002 `dot`; B-weighted overload explicitly scoped out as a separate forthcoming operator.
+  - `book/src/L1/axpby.md` — firm L1 operator entry. 9 algebraic laws + 4 explicitly-not-holding; two variant axes (element-type, scalar-promotion); fused-primitive decision rationale linked. Promotes the cycle-002 rough-in. Subsumes `axpy` (β=1) as a sibling leaf, not a dependency.
+  - `book/src/L1/index.md` dep-map — 4 firm rows now (`axpy`, `dot`, `nrm2`, `axpby`); rough-in column emptied.
+  - `book/src/L1-L0/axpby-mutation-rotation.md` — appended `verified_against:` YAML metadata block (9 per-citation audit rows, all `supports` or `supports (defined-not-used)`) and a coverage note (~25 uncited corpus sites; three defined-not-used L0 forms enumerated). Audit verdict `partially-supported` (content correct; coverage illustrative not exhaustive). Theme status text unchanged.
+  - `scaffolding/decisions/axpby-as-primitive.md` — NEW decision record. Captures the fused-primitive vs decomposed (`axpy ∘ scal`) decision with algebraic / engineering / trade-off rationale. Closes open question `axpby-axpy-scal-decomposition-decision`.
+  - `book/src/SUMMARY.md` — added `nrm2` and `axpby` chapter entries under L1 Part (both appended after the existing `dot` line, in dep-map row order).
+- **Observation-only landings (no proposed-changes)**:
+  - `reports/2026-05-27T001116Z-same-layer-cross-cutter-dot-concept-contradictions/` surfaced three contradictions in `book/src/concepts/dot.md` (wrong return-type claim; non-existent `linalg::Dotc` symbol; bogus source citation `vector.cpp:142-178`). No surface mutation by the cross-cutter (per role discipline). Routed cycle-004 dispatch to `layer-intro-author` for the rewrite; role-scope question surfaced for meta-phase.
+- **User-directive cycle**: this is the FIRST cycle under the user-directive philosophy (commit 8fc3a07): wave-count up to 15, "minor wave conflict is useful signal" tolerance, integrator-to-planner signals channel. Two wave-conflict observations surfaced cleanly (both auto-resolved at integration); see `scaffolding/integrator-signals.md` cycle-003 entry.
+- **Critic findings (across 4 reports)**: 28 pass, 4 warning, 0 fail. Warnings: cross-reference-integrity (×1, on nrm2 — full-file replacement on L1/index.md collided with sister axpby edit), variant-axis-coverage (×1, on lowering-verifier — defined-not-used leg elided), skill-uptake-survey (×2, on lowering-verifier and same-layer-cross-cutter — telemetry absent).
+- **Repair outcomes**: 4 repaired (nrm2 cross-reference: full-file replacement → `append-after`; lowering-verifier coverage: per-citation row split + defined-not-used leg enumerated; 2× skill_uptake frontmatter added post-hoc). 0 unrepairable. 28 not-needed.
+- **All four `overall_status: ready`** — applied as proposed (post-repair).
+- **Safety-net gates**: 0 hits. The original nrm2 full-file-replacement risk was caught by repairer pre-integration; no integrator-level gate fires.
+- **Wave-conflict observations** (NEW per role spec): (1) nrm2 and axpby both touched `book/src/L1/index.md` — nrm2 originally proposed full-file replacement (would have overwritten axpby's row-replacement); repairer fixed to `append-after dot row`. At integration the two edits were non-overlapping at the row level; planner's original "sequential" call was over-cautious. (2) nrm2 and axpby both wanted to append to `SUMMARY.md` after the `dot` line; auto-resolved cleanly by chaining both new lines (nrm2 then axpby, matching dep-map row order). Useful signal for tuning the planner's wave-conflict tolerance.
+- **Open questions promoted to ledger**: 14 new — 5 from nrm2 harvester, 3 from axpby harvester, 3 from lowering-verifier, 3 from same-layer-cross-cutter. 1 question answered: `axpby-axpy-scal-decomposition-decision` (fused primitive, decision recorded in `scaffolding/decisions/axpby-as-primitive.md`). Cycle-004 `layer-intro-author` dispatches queued via these questions.
+- **Signals channel**: FIRST append to `scaffolding/integrator-signals.md` per user directive 2026-05-27. Six subsections populated (Unblocked / New dependencies / Resolution implications / Suggested next dispatches / Wave-conflict observations / Integration-tooling friction); 5 concrete suggested-next-dispatches tuples for cycle-planner.
+- **Roadmap update**: §"Layered-spec progress" bumped from cycle-002 numbers (2 firm L1, 1 rough-in, 1 L1>L0 rough-in) to cycle-003 numbers (4 firm L1, axpby-mutation-rotation audited).
+- **Legacy filename collision**: `log/cycle-003.md` (2026-05-24 slice-vertical-era) renamed to `log/cycle-003-legacy.md`. Same convention as cycle-002 of the new flow.
+- **Build**: `cargo make book` — see batch REPORT.md for outcome.
+- **Reports**:
+  - `reports/2026-05-27T001116Z-harvester-nrm2-L1/` — REPORT.md, META.md (critique + repair).
+  - `reports/2026-05-27T001116Z-harvester-axpby-L1/` — REPORT.md, META.md.
+  - `reports/2026-05-27T001116Z-lowering-verifier-axpby-mutation-rotation/` — REPORT.md, META.md.
+  - `reports/2026-05-27T001116Z-same-layer-cross-cutter-dot-concept-contradictions/` — REPORT.md, META.md.
+  - `reports/2026-05-27T002354Z-integrator-cycle-003/REPORT.md` — batch report.
