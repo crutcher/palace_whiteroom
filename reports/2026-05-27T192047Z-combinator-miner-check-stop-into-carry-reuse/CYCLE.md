@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T19:20:47Z
 scope: check_stop_into_carry helper-promotion decision (cycle-008 deferred criterion)
 status: integrated
 integrated_at: 2026-05-27T200036Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8259f20
 integration_notes: Applied cleanly via integrator-per-report pass 4 of cycle-009. Inspection-only dispatch (verdict defer; zero book/ edits). First cross-cycle abstractor-criterion -> combinator-miner-verdict round-trip in artifact (cycle-008 set "defer until a second slice needs it" criterion; cycle-009 ran the survey). 6 new OQs promoted as the entire dispatch output. Methodology signal for cycle-009 meta-phase batch-1 aggregation.
 ---
 

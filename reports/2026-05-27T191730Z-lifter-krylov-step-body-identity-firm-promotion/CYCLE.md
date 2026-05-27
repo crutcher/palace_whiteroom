@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T191730Z
 scope: L3>L2 theme re-anchor — krylov-step-body-identity (firm-rough-in → firm via status-inheritance)
 status: integrated
 integrated_at: 2026-05-27T200036Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8259f20
 integration_notes: Applied cleanly via integrator-per-report pass 1 of cycle-009. First across-cycle status-inheritance promotion in the artifact. Closes cycle-008 integrator-signals "CYCLE-009 mechanical follow-up" priority item. Krylov-step lowering chain now fully firm (L4 > L4>L3 > L3 > L3>L2 > L2).
 inputs:
   - book/src/L3-L2/krylov-step-body-identity.md

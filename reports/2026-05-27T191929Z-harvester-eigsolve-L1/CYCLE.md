@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T191929Z
 scope: L1 operator: eigsolve
 status: integrated
 integrated_at: 2026-05-27T200036Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8259f20
 integration_notes: Applied cleanly via integrator-per-report pass 3 of cycle-009. L1 rough-in (test-coverage-bounded) landed; second constructed-operator gate at L1 composing against ksp_solve (first multi-level constructed-operator composition in firm+rough-in L1 vocabulary). New "Rough-in (test-coverage-bounded)" L1 cohort subsection added (cohort-purity preserving — Firm count unchanged at 8). Partially closes cycle-008 OQ eigsolve-l1-operator-rough-in-candidate (status open -> partially-answered); 4 firm-promotion follow-up OQs opened.
 inputs:
   - book/src/L0/eigensolver-wrapper.md (cycle-008 bundle-4 L0 anchor)

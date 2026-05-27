@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T19:20:51Z
 scope: L0 bootstrap bundle 5 (priority #10 continuation)
 status: integrated
 integrated_at: 2026-05-27T200036Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8259f20
 integration_notes: Applied cleanly via integrator-per-report pass 2 of cycle-009. 2 of 3 candidates landed; tests-as-semantic-supplement deferred via new OQ. L0 chapter count 14 → 16. Closes cycle-008 OQ l0-bundle-5-candidates. 2 follow-up OQs opened (tests-as-semantic-supplement-l0-vs-concepts-decision, l0-bundle-6-candidates).
 ---
 
