@@ -34,15 +34,15 @@ Before cycle-007 begins:
 
 Per user directive `f661039`, MCP codemap reintegration is **NEXT-UP post-meta-phase**. The sequence (from priorities.md #16):
 
-(a) Verify binary still launches under current rmcp 1.7 / tree-sitter 0.25 deps, rebuild if needed.
-(b) Run `cargo test` on smoke suite against `reference/palace/`.
-(c) Confirm `.claude/mcp.json` registration loads at next session start (post-restart deferred-tool list should show `mcp__palace-codemap__*` tools).
+(a) **[DONE 2026-05-27 pre-cycle-007]** Verify binary still launches under current rmcp 1.7 / tree-sitter 0.25 deps. `cargo build --release` reports "Finished" immediately (already up-to-date); `palace-codemap --help` returns clean.
+(b) **[DONE 2026-05-27 pre-cycle-007]** `cargo test --release` passes 10/10 smoke tests in `mcp/codemap/tests/smoke.rs` (read-range, list-files, search-text, get-file-subtree, list-dependencies, get-symbol-def, get-call-sites).
+(c) **[REPAIRED + DEFERRED-TO-NEXT-SESSION 2026-05-27 pre-cycle-007]** Found `.claude/mcp.json` is **not a Claude Code 2.1.152 standard MCP location** (`claude mcp list` showed only the 3 cloud servers; `~/.claude.json` projects[palace_whiteroom].mcpServers was `{}`; enabledMcpjsonServers was `[]`). **Repair**: `git mv .claude/mcp.json .mcp.json` to the standard project-root location (commit `ab73d37`). Next session restart triggers Claude Code's auto-discovery + enable prompt for the project-scoped server. Post-restart confirmation: deferred-tools list at session start should include `mcp__palace-codemap__*` entries.
 (d) Update `harvester` / `lowering-verifier` / `cross-layer-cross-cutter` / `same-layer-cross-cutter` / `combinator-miner` role specs to reference these tools as preferred for C++ source-localization (deferred to pilot results per cycle-006 meta-phase decision; do not preemptively edit).
 (e) Pilot on one cycle-007 harvester dispatch.
 (f) Instrument tool-call count and time vs vanilla baseline.
 (g) Surface pilot results to user before broad role-spec rollout.
 
-**Order**: do (a), (b), (c) BEFORE cycle-007 cycle-planner dispatches. Do (e), (f), (g) as part of cycle-007's first harvester dispatch. Do (d) as a cycle-007 meta-phase or cycle-008 meta-phase enactment, depending on pilot results.
+**Order**: (a), (b), (c) done pre-restart; restart pending. Do (e), (f), (g) as part of cycle-007's first harvester dispatch (after restart confirms codemap loaded). Do (d) as a cycle-009 meta-phase enactment based on pilot results (cadence-aware per the 3:1 directive — no meta-phase fires between cycle-007 and cycle-008).
 
 ## Cycle-006 unresolved follow-up dispatches (input to cycle-007 cycle-planner)
 
@@ -79,8 +79,12 @@ What this file's "delete after consume" instruction now means: keep through cycl
 
 ## Resuming the session
 
-1. `git pull` — fast-forward to latest main (catches the cycle-006 meta-phase commit + the 3:1-cadence codification commit).
+1. `git pull` — fast-forward to latest main (catches the cycle-006 meta-phase commit, the 3:1-cadence codification commit, and the MCP `.claude/mcp.json` → `.mcp.json` relocation commit `ab73d37`).
 2. `/compact` — already done post-cycle-006-meta; do not re-run between cycle-007 and cycle-008 (per the 3:1 cadence — compact fires once per meta-batch, after cycle-009).
-3. **Restart Claude Code session** (cycle-006 meta edited 10 role specs; cached agent registry needs refresh).
-4. Begin **cycle-007** with cycle-planner dispatch. Then cycle-008. Then cycle-009. Then meta-phase. Then `/compact`. Then begin cycle-010.
-5. Delete this file (`rm scaffolding/cycle-007-resume-notes.md`) once **cycle-009 integrator-finalize** commits (revised from cycle-007 per 3:1 cadence).
+3. **Restart Claude Code session** (cycle-006 meta edited 10 role specs; cached agent registry needs refresh; AND `.mcp.json` relocation needs auto-discovery + enable prompt).
+4. **Post-restart sanity checks**:
+   - Deferred-tools list at session start should include `mcp__palace-codemap__*` entries (confirms step (c) of priority #16). If Claude Code prompts to enable the new `.mcp.json` server, accept.
+   - `claude mcp list` (Bash) should list `palace-codemap` alongside the 3 cloud servers.
+5. Begin **cycle-007** with cycle-planner dispatch. Then cycle-008. Then cycle-009. Then meta-phase. Then `/compact`. Then begin cycle-010.
+6. Cycle-007's first harvester dispatch hosts the codemap pilot (steps (e)–(f) of priority #16). Surface results to user before role-spec rollout (step (g)).
+7. Delete this file (`rm scaffolding/cycle-007-resume-notes.md`) once **cycle-009 integrator-finalize** commits (revised from cycle-007 per 3:1 cadence).
