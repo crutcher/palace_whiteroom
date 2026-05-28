@@ -1,169 +1,61 @@
-## 2026-05-24 cycle-13 — forward gmres [L0→L1] — pass
+## 2026-05-28 cycle-013 — FIRST primary cycle of meta-batch-3 (3:1 cadence; cycles 013/014/015, meta-phase fires after 015) — 11 reports (largest wave to date) — FIRST live partly-constructive→firm promotion (eigsolve-mutation-rotation Sub-pattern B) + first partly-constructive ENTRY (divfree-projector) + L3 chebyshev partial-obstruction + L4 chebyshev rough-in + 2 new firm L1>L0 themes (orthogonalize + chebyshev-smoother mutation-rotation) + first L2-L1 chapter (chebyshev-iteration-fusion) + new partly-constructive eigsolve-convergence-reason-mapping sub-theme + L0 bundle-6 #3 (linalg-orthog-file; 18 chapters) + phase-1 corpus annotated-reduction 10/10 COMPLETE (removals stay 8/10, 2 retained)
 
-- Synthesis: 4 rotation_claim(s); diff applied
-- Verdict: pass.
-- Friction: diff-apply failed: git apply failed:
-STDERR:
-error: corrupt patch at line 159
+- **Phases fired**: plan (cycle-planner haiku) → dispatch (11 parallel specialized across 2 waves; cap 12 honored) → critique (11× critic) → repair (multiple repairers triggered, incl. L4-chebyshev firm→rough-in downgrade + several citation-line-drift fixes) → **integrate (11× integrator-per-report serial → 1× integrator-finalize; ninth cycle under split integrator)**.
 
-DIFF:
---- /dev/null
-+++ b/book/src/spec/slices/gmres.md
-@@ -0,0 +1,212 @@
-+# Slice: gmres
-+
-+Scope: GMRES and FGMRES iterative linear solvers (palace/linalg/iterative.{hpp,cpp}).
-+Covers the restarted Arnoldi process with Givens-rotation-maintained least-squares
-+residual, the three Gram-Schmidt orthogonalization variants (MGS, CGS, CGS2), and
-+the GMRES/FGMRES split (fixed vs. variable preconditioner).
-+
-+## L0 citations
-+
-+- `palace/linalg/iterative.hpp:152-216` — `GmresSolver<OperType>` declaration
-+- `palace/linalg/iterative.hpp:219-275` — `FgmresSolver<OperType>` declaration
-+- `palace/linalg/iterative.cpp:227-241` — `GeneratePlaneRotation` (real / complex)
-+- `palace/linalg/iterative.cpp:243-250` — `ApplyPlaneRotation`
-+- `palace/linalg/iterative.cpp:252-283` — `InitialResidual`
-+- `palace/linalg/iterative.cpp:285-303` — `ApplyBA`
-+- `palace/linalg/iterative.cpp:305-325` — `OrthogonalizeIteration` (dispatch over MGS/CGS/CGS2)
-+- `palace/linalg/iterative.cpp:489-518` — `GmresSolver::Initialize`
-+- `palace/linalg/iterative.cpp:519-542` — `GmresSolver::Update`
-+- `palace/linalg/iterative.cpp:544-706` — `GmresSolver::Mult`
-+- `palace/linalg/iterative.cpp:708-731` — `FgmresSolver::Update`
-+- `palace/linalg/iterative.cpp:733-870` — `FgmresSolver::Mult`
-+- `palace/linalg/iterative.cpp:73-108` — `CheckDot` / norm reductions reused throughout
-+- `palace/linalg/orthog.hpp:41-89` — Gram-Schmidt kernel called by `OrthogonalizeIteration`
-+- `test/unit/test-orthog.cpp:75-103` — orthogonality invariant tested across MGS/CGS/CGS2
-+
-+## L1 form
-+
-+### State schema
-+
-+The solver's persistent configuration is
-+
-+    GmresState = {
-+      max_dim   : Nat,                          -- restart length
-+      gs_orthog : {MGS, CGS, CGS2},
-+      pc_side   : {LEFT, RIGHT},                -- FGMRES fixes this to RIGHT
-+      basis     : KrylovBasis                   -- (see concepts/krylov-basis.md)
-+    }
-+
-+The `basis` bundle is the Synthesizer-introduced abstraction that packs the
-+Arnoldi basis V, the upper-Hessenberg matrix H (column-major, leading dim
-+max_dim+1), and the Givens-rotation least-squares state (s, cs, sn). FGMRES
-+extends the bundle with a second basis Z storing preconditioned vectors:
-+
-+    FgmresState = GmresState with {
-+      pc_side  := RIGHT,                        -- structurally fixed
-+      basis_pc : KrylovBasis                    -- Z[k] = B_k · V[k]
-+    }
-+
-+All entries of `basis` and `basis_pc` are ephemeral workspace: they are
-+resized lazily by Initialize/Update and not part of the mathematical
-+invariant.
-+
-+### Mathematical invariant
-+
-+After m Arnoldi steps from initial residual r₀ = M(b − A·x₀) (where M is the
-+identity, left-preconditioner B, or right-preconditioner action encoded via
-+the constructed preconditioned-operator — see L1 procedure below), the basis
-+satisfies
-+
-+    Â · V_m  =  V_{m+1} · H̄_m,                  V_{m+1}^* · V_{m+1} = I,
-+
-+where Â is the preconditioned operator (the role played by `apply_op` below;
-+the specific composition is a constructed-operator detail — see
-+concepts/constructed-operators.md) and H̄_m is (m+1)×m upper-Hessenberg. The
-+approximate solution at step m minimises the preconditioned residual norm
-+over the affine Krylov subspace x₀ + V_m · ℝ^m; the minimisation reduces to
-+a small (m+1)×m least-squares problem on H̄_m whose running solution is
-+maintained incrementally in (s, cs, sn).
-+
-+### L1 procedure (uniform across GMRES and FGMRES)
-+
-+The variant axis (fixed vs. flexible preconditioner) is absorbed via
-+constructed operators at solve start (concepts/constructed-operators.md):
-+the caller binds `apply_op` and a `record_pc(j, v)` hook from the
-+preconditioner-side configuration; the per-step procedure is then identical.
-+
-+    solve(A, B, b, x₀, cfg) :=
-+      let (apply_op, residual_in, record_pc, reconstruct) =
-+            build_preconditioned_ops(A, B, cfg.pc_side, cfg.variant)
-+      in  outer_loop (x₀, it=0, restart=0)
-+
-+    outer_loop (x, it, restart) :=
-+      let r        = residual_in(b, x, restart, cfg.initial_guess)
-+      let beta     = norm(r)
-+      let eps      = convergence_threshold(beta, b, B, cfg, restart, it)
-+      if  beta < eps  then  return (x, converged=true, it)
-+      let basis    = basis_with_first(r / beta, beta)
-+      let (basis', j, converged) = inner_loop(basis, apply_op, record_pc, it, eps, cfg)
-+      let x'       = reconstruct(x, basis', j)
-+      if converged ∨ it+j+1 ≥ cfg.max_it  then  return (x', converged, it+j+1)
-+      else  outer_loop (x', it+j+1, restart+1)
-+
-+    inner_loop (basis, apply_op, record_pc, it, eps, cfg) :=
-+      iterate j = 0,1,2,... until termination:
-+        let w           = apply_op(basis.V[j])         -- record_pc(j, ·) fires inside
-+        let (basis_w, hcol) =
-+              orthogonalize(cfg.gs_orthog, basis.V[0..j], w)
-+        let h_norm      = norm(basis_w)
-+        let v_next      = basis_w / h_norm
-+        let basis'      = basis.append_column(v_next, hcol, h_norm)
-+        let basis''     = basis'.update_least_squares(j)   -- incremental update
-+        let beta_j      = basis''.residual_estimate(j)
-+        let converged   = beta_j < eps
-+        terminate when converged ∨ j+1 = cfg.max_dim ∨ it+j+1 = cfg.max_it
-+
-+### Variant absorption
-+
-+Per concepts/variant-absorption.md, the axes are:
-+
-+- **pc_side ∈ {LEFT, RIGHT, none}** × **flexible? ∈ {no (GMRES), yes (FGMRES)}**.
-+  Absorbed via *constructed operators* (concepts/constructed-operators.md):
-+  `build_preconditioned_ops` returns the tuple
-+  (apply_op, residual_in, record_pc, reconstruct) wired for the active
-+  combination.
-+    - GMRES/none      : apply_op = A;        record_pc = noop; reconstruct = x + Σ s_k V_k
-+    - GMRES/LEFT      : apply_op = B∘A;      record_pc = noop; reconstruct = x + Σ s_k V_k
-+    - GMRES/RIGHT     : apply_op = A∘B;      record_pc = noop; reconstruct = x + B·(Σ s_k V_k)
-+    - FGMRES (RIGHT,flex): apply_op = A∘B_j; record_pc = store B_j·V[j] in Z[j];
-+                           reconstruct = x + Σ s_k Z_k
-+  All four routes satisfy criteria (a), (b), (c) of variant-absorption.md:
-+  the L1 invariant is uniform, the procedure mentions pc_side only inside
-+  `build_preconditioned_ops` (single dispatch site), and the per-step
-+  primitive sequence is identical.
-+- **gs_orthog ∈ {MGS, CGS, CGS2}**. Absorbed *parametrically* — passed to
-+  `orthogonalize`, which returns the same shape (hcol of length j+1, w
-+  with the projection removed). The choice affects only the inner
-+  primitive sequence of `orthogonalize` (a single MPI-reduce vs. two
-+  reduces), not the GMRES procedure.
-+- **restart vs. full**. Absorbed via the outer/inner split. A non-restarted
-+  run is the special case max_dim ≥ max_it; the outer loop terminates after
-+  one pass either way.
-+- **initial_guess ∈ {true, false}**. Absorbed inside `residual_in`, which
-+  takes `cfg.initial_guess` and the restart index and returns r;
-+  downstream code does not re-inspect the flag.
-+
-+### Termination and outputs
-+
-+Outputs are (x_out, converged, iteration_count, final_residual_estimate).
-+The least-squares state inside `basis` provides the cheap residual estimate
-+|s_{j+1}| without an explicit matvec.
-+
-+### Open questions
-+
-+- No direct unit test for GmresSolver / FgmresSolver under test/unit/;
-+  only configuration-level coverage via test-romoperator.cpp. (low)
-+- max_dim defaults to max_it; potentially O(max_it²) memory for the V
-+  basis when only max_it is set. Latent footgun or intentional? (low)
-+- FgmresSolver inherits pc_side from GmresSolver and then asserts RIGHT;
-+  the field is structurally dead. The L1 state schema above already
-+  removes it from FgmresState. (medium — schema-level question, not
-+  blocking the L1 form)
-+- Forward to L2: the *incremental least-squares update* role named in
-+  `inner_loop.update_least_squares(j)` is implemented at L2 via a Givens
-+  QR maintained against the new Hessenberg column. That mechanism is
-+  hidden from L1.
-.
-- Structural change: applied diff (158 lines); 4 rotation_claim(s).
+- **Meta-batch context**: cycle-013 is the **FIRST primary cycle of meta-batch-3** under the 3:1 meta cadence (user directive 2026-05-27 post-cycle-006 meta). Cycles 013/014/015 form batch-3; the meta-phase fires after **cycle-015** finalize, aggregating evidence across the full 3-cycle batch. The cycle counter does NOT reset at batch boundaries (batch-1 = 007/008/009 closed at the cycle-009 meta; batch-2 = 010/011/012 closed at the cycle-012 meta `ba3cd0b`; batch-3 = 013/014/015 opens here).
+
+- **Substantive landed (11 reports, all applied)**:
+  - **Report 1 (abstractor — eigsolve forwarder-fix + gated promotion; FIRST live partly-constructive→firm promotion)**: `book/src/L1-L0/eigsolve-mutation-rotation.md` — Sub-pattern B **PROMOTED `partly-constructive` → `firm`** (theme now `firm (structural)`). This is the **FIRST live `partly-constructive` → `firm` promotion in the artifact**, enacting the cycle-012-codified status mechanism's exit route. 5 proposed-changes blocks: GetConverged-forwarder snippet correction (`ksp.hpp:41`/`:64` per the repaired values), Sub-pattern A `SetWhichEigenpairs`/`SolveInternal` switch attribution, citation-list split, ncv-clamp citation refinement, and the 5a–5d promotion. Report META was `needs-revision` (a methodology-judgment question — should the option-b `## Status` gate route be ratified?); per accumulate-surface-with-embedded-friction this is NOT reject → applied as a deliberate FLAGGED decision + the ratification OQ `partly-constructive-to-firm-promotion-route-ratification` routed to cycle-015 meta-phase.
+  - **Report 2 (harvester — new L1 operator; first partly-constructive ENTRY)**: `book/src/L1/divfree-projector.md` — **NEW L1 operator adjudicated `partly-constructive`** (NOT the harvester's argued `firm`). The structure is fully read (firm half), but the idempotence law `P∘P=P` + the divergence-free output characterization both depend on the unverified `WeakDiv ≈ GᵀM` sign reading inside the MFEM-vendored `MixedVectorWeakDivergenceIntegrator` (`divfree.cpp:113`, below the L0 scope boundary; no positive Palace site confirms it). Constructive sub-part = idempotence law; negative anchor = no positive Palace site exhibits the WeakDiv sign; promotion condition = OQ `divfree-weakdiv-sign-convention-l0-verify` via a lowering-verifier audit. **First partly-constructive ENTRY** (complementing the eigsolve EXIT same cycle); `ksp_solve`+`apply_linop`+`axpy` deps.
+  - **Report 3 (harvester — L3 + L4 chebyshev rows)**: `book/src/L3/chebyshev.md` (`partial-obstruction` — body lifts to a global tensor-field expression, but the inner `k`-recurrence of degree `order` and the outer `pc_it` Richardson sweep are witnessed sequential obstructions with a cited non-removability reason, Phillips & Fischer 2022 §2; inner-product-free, the structural distinction from `krylov-step`; non-adjacent L3↔L1 identity annotated in-line, NO `L3-L1/` or `L3-L2/` directory per the cycle-012 convention) + `book/src/L4/chebyshev.md` (`rough-in` — repairer downgrade: firm at the body re-type of the cycle-012 firm L1/L2 entries, but rough-in at the wrapper because the `forM_`/`foldM` iteration combinators are un-anchored at L4 and compete with the firm `iterate-while` family; firming gated on OQ `chebyshev-l4-wrapper-iteration-vocabulary-reconcile`, routed to combinator-miner). Both new chapters SUMMARY-registered. Unblocks full `chebyshev.md` reduction.
+  - **Report 4 (layer-intro-author — plane-rotation concept-page canonical-pointer repoint)**: 3 surgical repoints — `concepts/plane-rotation-stream.md`, `concepts/givens_generate.md`, `concepts/givens_apply.md` "Used in" lines repointed from the now-reduced `orthog` plane-rotation sub-slice to the surviving canonical `plane_rotation_stream`. Closes OQ `plane-rotation-concept-page-canonical-pointer-repoint`. The 4th candidate (`dependency-map.md:188` mermaid concept-DAG arrow) was correctly NOT repointed (a graph-modeling decision, not a file pointer) → routed to OQ `dependency-map-orthog-plane-rotation-stale-edge-prune`.
+  - **Report 5 (same-layer-cross-cutter — phase-1 corpus reduction batch-4; annotated-reduction 10/10 COMPLETE)**: the final 2 unreduced Phase-1 slices, **annotated-reduced NOT removed** (both retain load-bearing material) — `cg_preconditioning_framework.md` = `partially-absorbed` (stub-and-pointer header; §L0/§L1 absorbed by firm `L1/ksp_solve` + L0 anchors + 9 concept pages; §L4/§L4-v0.2/§L4-v0.3 RETAINED verbatim as sole-source load-bearing material) + `sparse_triangular_solve.md` = `not-yet-eligible` / permanent negative-result retain (canonical instance of `scope-out-obstruction` + the out-of-scope sub-kind of `sequential-obstruction`). **METRIC (load-bearing): annotated-reduction reaches 10/10 COMPLETE this cycle, but REMOVALS stay 8/10** — 8 removed-equivalent (fully absorbed → stub, prior batches 1–3) + 2 annotated-and-retained (this batch: 1 reducible-but-not-removable pending the firm-L4 lift OQ `l4-preconditioning-framework-promotion`, 1 permanent negative-result artifact). Do NOT read "corpus shrinks to 8 files" or "10/10 removed".
+  - **Report 6 (abstractor — orthogonalize-mutation-rotation L1>L0 theme)**: `book/src/L1-L0/orthogonalize-mutation-rotation.md` — **NEW firm/structural theme**; the 3 L0 variant loop-structures (MGS single interleaved / CGS split two-phase / CGS2 doubled two-phase) against the firm `L1/orthogonalize` operator, with codemap-corrected `orthog.hpp` citations (`:85`, `:78`, `:75-88`, `:57-74`). SUMMARY-registered. This is the link target the position-11 concept-audit report (report 11) needed.
+  - **Report 7 (abstractor — chebyshev lowering themes)**: `book/src/L1-L0/chebyshev-smoother-mutation-rotation.md` (**NEW firm/structural** L1>L0 theme; 4 sub-patterns A/B/C/D + an algebraic transpose-alias sub-rule) + `book/src/L2-L1/chebyshev-iteration-fusion.md` (**NEW firm/algebraic** L2>L1 recurrence↔polynomial fusion theme — **the FIRST real chapter under the previously-skeleton `book/src/L2-L1/` Part**; the index `## Theme list` fenced placeholder was displaced by the firm theme table; both new chapters SUMMARY-registered).
+  - **Report 8 (lifter — krylov-step theme-body no-L3-row drift cleanup)**: `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` — struck the 2 surviving stale cycle-006 "no L3 row promoted / needed" residuals (Context § line 20; OQ-disposition § line 220) and re-anchored them to the firm `L3/krylov-step.md` (cycle-010 backfill) + the L4>L3>L2>L1 no-skipped-rows chain, per the **Identity-lowerings still require both L levels** invariant. The dangling `cg.md:341-362` pointer was re-anchored to the firm `L3-L2/krylov-step-body-identity.md`. **Did NOT double-close OQ `krylov-step-l3-identity-in-form-audit`** (already `answered_in: cycle-006`).
+  - **Report 9 (layer-intro-author — L0 bundle-6 discovery + authored chapter)**: a discovery/ranking dispatch that ALSO authored a full firm-shaped L0 bundle chapter `book/src/L0/linalg-orthog-file.md` (`palace/linalg/orthog.hpp`, header-only 93 lines). **Discovery→authoring scope stretch, safety-gated by the integrator** (MGS citation codemap-verified `orthog.hpp:41-53`; no file collision; SUMMARY `palace/` prefix applied cleanly). Bundle-6 candidate #3 landed (L0 now 18 chapters); `linalg-rap-file` is the next-ranked candidate #2 per OQ `l0-bundle-6-candidates`.
+  - **Report 10 (lifter — SLEPc convergence-reason-mapping sub-theme)**: `book/src/L1-L0/eigsolve-convergence-reason-mapping.md` — **NEW `partly-constructive` sibling sub-theme** under the eigsolve L1>L0 family (the full `EPSConvergedReason → EigStatus` map), discharging the parent Sub-pattern B forward-pointer. Settled diverged-row count = 8 (3 EPS diverged + 1 `*_CONVERGED_ITERATING` sentinel + 4 NEP-family diverged; PEP shares EPS's 3 non-additively; the 2 converged rows are count-anchored not partly-constructive). Real negative anchor: Palace only PRINTS the reason (`slepc.cpp:{699,1182,1529}`), whole-tree ZERO `EPS_DIVERGED_*`/`EPS_CONVERGED_*` references and no `EPSGetConvergedReason` callsite. SUMMARY-registered (re-anchored past the in-cycle orthogonalize row that intervened where the repairer expected bicgstab-iteration).
+  - **Report 11 (same-layer-cross-cutter — concepts/orthogonalization drift; position 11 of 11)**: full-file rewrite of `book/src/concepts/orthogonalization.md`, realigned to the firm `L1/orthogonalize` "does not normalize output" contract — the three mutually-inconsistent coefficient lengths (`j+2`/`j+1`/`j`) collapse to the one correct length-`m`; the duplicate concept block (with its L0-leak `h_coeffs` length-`j` signature) is removed; the stale "separate slice" pre-layered framing is replaced with an authoritative-definition blockquote pointing at `L1/orthogonalize` + the forward lowering. The 3 links to `../L1-L0/orthogonalize-mutation-rotation.md` resolve because report 6 created that file earlier this cycle (serial-apply ordering honoured). Closes OQ `concepts-orthogonalization-coefficient-normalisation-drift`.
+
+- **Reports applied** (11 of 11):
+  - `reports/2026-05-28T143232Z-abstractor-eigsolve-getconverged-forwarder-fix-and-gated-promotion/` (status: integrated; follow_up_agent: **cycle-015 meta-phase** for `partly-constructive-to-firm-promotion-route-ratification`; low-priority embedded-audit YAML resolution-marker)
+  - `reports/2026-05-28T143548Z-harvester-l1-divfree-projector-promotion/` (status: integrated; follow_up_agent: lowering-verifier for `divfree-weakdiv-sign-convention-l0-verify` + `divfree-projector-l1-l0-lowering-verifier-followup`; **cycle-015 meta-phase** for `divfree-projector-status-adjudication`)
+  - `reports/2026-05-28T143923Z-harvester-l3-l4-chebyshev-rows-eligible/` (status: integrated; follow_up_agent: **combinator-miner** for `chebyshev-l4-wrapper-iteration-vocabulary-reconcile` (L4 rough-in→firm condition); lowering-verifier for `chebyshev-l4-l3-dedicated-theme-file`; same-layer-cross-cutter for `chebyshev-phase1-slice-reduction`; **cycle-015 meta-phase** for `partial-obstruction-status-codification`; layer-intro-author for `chebyshev-l3-l4-layer-intro-refresh`)
+  - `reports/2026-05-28T0910Z-layer-intro-author-plane-rotation-concept-page-canonical-pointer-repoint/` (status: integrated; follow_up_agent: dependency-map-maintenance for `dependency-map-orthog-plane-rotation-stale-edge-prune`; verify-citation-range for `plane-rotation-givens-l0-citation-range-reconcile`)
+  - `reports/2026-05-28T0915Z-same-layer-cross-cutter-phase-1-corpus-reduction-batch-4-remaining-slices/` (status: integrated; follow_up_agent: harvester for `l4-preconditioning-framework-promotion` (the removable-not-just-stub condition); layer-intro-author / same-layer-cross-cutter for `negative-result-slice-examples-reciprocal-membership`)
+  - `reports/2026-05-28T0915Z-abstractor-orthogonalize-mutation-rotation-l1-l0-theme/` (status: integrated; follow_up_agent: lowering-verifier for `orthogonalize-mutation-rotation-lowering-verifier-audit`; lifter for `orthogonalize-mutation-rotation-l2-krylov-step-lift-notes`)
+  - `reports/2026-05-28T144719Z-abstractor-chebyshev-l1-l0-and-l2-l1-lowering-themes/` (status: integrated; follow_up_agent: lowering-verifier for `chebyshev-lowering-themes-lowering-verifier-followup` + `chebyshev-dead-code-complex-transpose-kernels`)
+  - `reports/2026-05-28T1447Z-lifter-krylov-step-theme-body-no-l3-row-drift-cycle-013/` (status: integrated; follow_up_agent: dedicated citation-re-anchor dispatch for `krylov-step-typed-wrapper-dissolution-cg-md-citation-sweep`; INFORMATIONAL `krylov-step-l3-identity-in-form-audit-already-answered-note` — NOT a fresh closure)
+  - `reports/2026-05-28T144815Z-layer-intro-author-L0-bundle-6-candidates-discovery-and-ranking/` (status: integrated; follow_up_agent: bundle-author dispatch for `l0-bundle-6-candidates` #2 `linalg-rap-file`; **cycle-015 meta-phase** for the discovery→authoring plan-kind boundary observation)
+  - `reports/2026-05-28T144809Z-lifter-slepc-convergence-reason-lift-sub-theme/` (status: integrated; follow_up_agent: lowering-verifier for `eigsolve-convergence-reason-mapping-promotion` (single global gate) + `eigsolve-convergence-reason-mapping-slepc-enum-upstream-confirm`)
+  - `reports/2026-05-28T1447Z-same-layer-cross-cutter-concepts-orthogonalization-coefficient-normalisation-drift/` (status: integrated; follow_up_agent: future phase-1-slice-reduction-audit for `concepts-orthogonalization-spec-slices-link-survival`; same-layer-cross-cutter for `concepts-sequential-obstruction-variant-absorption-drift-spot-check`)
+  - `reports/2026-05-28T200000Z-integrator-finalize-cycle-013/CYCLE.md` — batch report (this finalize).
+
+- **partly-constructive status heavily exercised this cycle**: eigsolve EXIT (the first live promotion to firm) + divfree ENTRY (the first adjudicated-into entry) + eigsolve-convergence-reason-mapping (new partly-constructive sub-theme) + chebyshev L4 rough-in. The cycle-012-codified mechanism is in active use; the promotion-route ratification OQ `partly-constructive-to-firm-promotion-route-ratification` + the divfree status-adjudication OQ are both routed to the cycle-015 meta-phase.
+
+- **L1>L0 cohort 7 → 9 themes**: +`orthogonalize-mutation-rotation` (firm) +`eigsolve-convergence-reason-mapping` (partly-constructive); +`chebyshev-smoother-mutation-rotation` (firm); and `eigsolve-mutation-rotation` promoted partly-constructive→firm. Now 4 firm + 1 partly-constructive (+the eigsolve theme is firm with no remaining open promotion condition) + 3 rough-in + 2 obstruction.
+
+- **L2-L1 Part 0 → 1 firm chapter**: `chebyshev-iteration-fusion` is the first real chapter under the previously-skeleton L2-L1 Part. The Part header + Overview/index.md row already existed at the SUMMARY level; the wiring fix was displacing the index `## Theme list` placeholder + registering the first chapter row.
+
+- **L3 8 firm + 1 partial-obstruction; L4 3 firm + 1 rough-in; L0 17 → 18 chapters** (linalg-orthog-file).
+
+- **Wave-conflict observations** (captured in `scaffolding/integrator-signals.md`):
+  - **11-report dispatch (largest wave to date)**. All 11 applied as-is at integration; zero rework loops.
+  - **`book/src/SUMMARY.md` touched repeatedly** (L3+L4 chebyshev, orthogonalize-mutation-rotation, chebyshev-smoother-mutation-rotation + chebyshev-iteration-fusion, linalg-orthog-file, eigsolve-convergence-reason-mapping; + finalize's divfree-projector repair). One stale-anchor re-anchor at report 10's SUMMARY edit (the repairer's `bicgstab-iteration` anchor was stale post-orthogonalize landing → re-anchored to current adjacency). Each per-report re-read disk before edit per discipline.
+  - **`book/src/L1-L0/index.md` touched 4 times** (eigsolve-convergence-reason-mapping, orthogonalize, chebyshev-smoother, eigsolve promotion) at distinct rows; clean re-read-disk adaptation, no merge conflict.
+  - **`scaffolding/open-questions.md` touched 11 times** at distinct ranges; append-before-Dropped convention held; zero collisions.
+  - **No deferrals, no rejections, no rework loops.** Clean-run streak continues (cycles 005–013 — nine consecutive clean cycles under the split integrator).
+
+- **Safety-net gates**: **retroactive-budget global = 0** (well below the ≥4 block threshold). **1 build-breakage repair** (see Build below). 2 plan-kind-stretch gate hits (report 9 discovery→authoring; report 11 cross-cutter→concept-rewrite) — both safety-gated and applied on their merits, NOT blocked. Commit atomicity: single commit. Consumed-report frontmatter integrity: 11 `integrated_at` touches.
+
+- **Open questions**: ~26 promoted across the 11 reports (incl. the 2 cycle-015-meta-phase-routed partly-constructive ratification/adjudication OQs + the combinator-miner-routed L4-chebyshev firming condition). Did NOT double-close `krylov-step-l3-identity-in-form-audit` (answered_in cycle-006).
+
+- **Recurring signals for the cycle-015 meta-phase** (recorded, not analyzed): (1) partly-constructive status heavily exercised in a single cycle (4 instances across EXIT/ENTRY/new/rough-in); (2) recurring citation line-drift (off-by-1-3 lines) in ~6 reports + the critic's skill-uptake-survey repeatedly noting `verify-citation-range` not self-invoked by producers; (3) discovery→authoring plan-kind scope stretch on the L0-bundle dispatch.
+
+- **Build**: `cargo make book` — **exit 0 after 1 surgical repair**. The first build run errored: `L1/divfree-projector.md` was Written by the per-report integrator but never registered in SUMMARY.md (the staging row asserted "L1 operator chapters are not individually SUMMARY-registered" — that is INCORRECT; every L1 operator chapter from `axpy` through `chebyshev-smoother` is individually registered, and mdBook flags any `book/src/` markdown absent from SUMMARY as a hard error). Repaired surgically by registering `- [divfree-projector](./L1/divfree-projector.md)` after `chebyshev-smoother`; rebuild clean (exit 0). The 40 pre-existing katex/markdown display-link "Potential incomplete link" warnings (math-display false positives) carry unchanged; non-blocking.
+
+- **Legacy log/cycle-013.md renamed**: pre-layered-era `log/cycle-013.md` (2026-05-24 `forward gmres [L0→L1] — pass`) renamed to `log/cycle-013-legacy.md` per the cycle-005..012 precedent.
+
+- **Two-phase SHA patch** (canonical pattern per role spec process step 13): all 11 reports' + this batch CYCLE.md's `integration_commit: PLACEHOLDER_SHA` are patched in a follow-up commit immediately after the finalize commit lands. Message: `patch commit-sha references for cycle-013 finalize commit (<finalize-sha>)`. Same two-phase pattern cycles 004..012 used.
+
+- **Meta-phase does NOT fire this cycle** — cycle-013 OPENS meta-batch-3; the meta-phase fires after cycle-015 finalize (3:1 cadence). Compactify-after-meta-phase does NOT apply this cycle.

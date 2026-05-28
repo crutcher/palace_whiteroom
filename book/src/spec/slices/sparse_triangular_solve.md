@@ -1,5 +1,13 @@
 # sparse_triangular_solve
 
+> **Reduction status (cycle-013+):** this slice is a **negative-result slice** (in the spirit of `concepts/negative-result-slice.md`; that concept page does not yet list this slice in its §"Examples in this spec") and is **retained in full** — it is the artifact, not redundant raw material to be lifted. It is the **canonical instance** of:
+> - `book/src/concepts/scope-out-obstruction.md` §"Canonical instance" (`:68`) — the L0→L1 scope-out obstruction (Palace forwards sparse-direct solves into MFEM/SuperLU_DIST/STRUMPACK/MUMPS opaquely; no Palace-level triangular-solve form to lift).
+> - `book/src/concepts/sequential-obstruction.md` §"Sub-kind: out-of-scope-obstruction" (`:53`) — the out-of-scope sub-kind distinguished from genuine L2→L3 sequential obstruction.
+>
+> The §L0 opaque-forwarding evidence (`superlu.{hpp,cpp}`, `strumpack.hpp`, `mumps.hpp`, `communication.hpp`/`geodata.cpp`, `blockprecond.hpp`) is the citation grounding for those concept pages. There is — by construction — NO firm L0–L4 entry this slice's material lifts *into*; a negative result has no positive form to absorb. Per the `polynomial_recurrence_step.md` precedent ("the slice IS the artifact"), the corpus-reduction policy treats this slice as **annotated-and-retained**, not pending-lift.
+>
+> **Live OQs (unchanged):** rename to `sparse_direct_solver_wrapper` + re-push to L1 against the wrapper-level contract (§Open questions); whether an MFEM/SuperLU-level slice family owns the factor-Allgatherv / residual-of-triangular-solve framing.
+
 ## Context
 
 This slice was scoped to dissect a sparse triangular solve in Palace —

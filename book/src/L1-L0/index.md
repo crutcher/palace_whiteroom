@@ -20,6 +20,9 @@ Many themes here capture **how Palace expresses common patterns**:
 | [apply-linop-mutation-rotation](./apply-linop-mutation-rotation.md) | `L1/apply_linop` (firm) | `palace/linalg/operator.{hpp,cpp}`, `rap.cpp` | rough-in |
 | [ksp-solve-mutation-rotation](./ksp-solve-mutation-rotation.md) | `L1/ksp_solve` (firm) | `palace/linalg/ksp.cpp`, `palace/linalg/iterative.{hpp,cpp}` | rough-in *(firmed cycle-008)* |
 | [eigsolve-mutation-rotation](./eigsolve-mutation-rotation.md) | `L1/eigsolve` (rough-in) | `palace/linalg/{arpack,slepc,nleps}.cpp`, `palace/linalg/eps.hpp` | firm *(structural; partly-constructive on LinearSolveFailed)* |
+| [eigsolve-convergence-reason-mapping](./eigsolve-convergence-reason-mapping.md) | `L1/eigsolve` (`EigStatus` sum-type) | `palace/linalg/slepc.cpp:{699,1182,1529}` (reason print-only) | partly-constructive *(SLEPc reason->EigStatus map; sub-theme of eigsolve-mutation-rotation)* |
+| [chebyshev-smoother-mutation-rotation](./chebyshev-smoother-mutation-rotation.md) | `L1/chebyshev-smoother` (firm) | `palace/linalg/chebyshev.{hpp,cpp}` | firm *(structural; algebraic transpose-alias sub-rule)* |
+| [orthogonalize-mutation-rotation](./orthogonalize-mutation-rotation.md) | `L1/orthogonalize` (firm) | `palace/linalg/orthog.hpp`, `palace/linalg/iterative.cpp` | firm *(structural; 3 variant loop-structures)* |
 | [minres-iteration](./minres-iteration.md) | (speculative — `lanczos_step`, …) | (no Palace anchor — `MFEM_ABORT` at `ksp.cpp:53-57`) | obstruction |
 | [bicgstab-iteration](./bicgstab-iteration.md) | (speculative — `bicgstab_step`, …) | (no Palace anchor — `MFEM_ABORT` at `ksp.cpp:53-57`) | obstruction |
 

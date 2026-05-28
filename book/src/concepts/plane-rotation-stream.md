@@ -34,5 +34,5 @@ This invariance is what makes the stream a candidate shared concept across GMRES
 
 ## Used in
 
-- [`orthog` slice](../spec/slices/orthog.md) — primary dissection of the stream as it appears in GMRES/FGMRES.
+- [`plane_rotation_stream` slice](../spec/slices/plane_rotation_stream.md) — primary (canonical) dissection of the stream as it appears in GMRES/FGMRES.
 - [`gmres` slice](../spec/slices/gmres.md) — consumer (per-step driver and back-solve).

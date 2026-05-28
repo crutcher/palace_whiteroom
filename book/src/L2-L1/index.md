@@ -8,9 +8,9 @@ L1 forms are pure-functional but **structurally close to the source loop** — e
 
 ## Theme list
 
-```
-(empty — Phase B skeleton.)
-```
+| theme | L2 anchor | L1 anchor | status |
+|---|---|---|---|
+| [chebyshev-iteration-fusion](./chebyshev-iteration-fusion.md) | `L2/chebyshev-iteration` (firm) | `L1/chebyshev-smoother` (firm) | firm *(algebraic; recurrence↔polynomial fusion)* |
 
 ## Working Notes
 

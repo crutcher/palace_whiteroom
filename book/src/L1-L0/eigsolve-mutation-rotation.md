@@ -139,12 +139,17 @@ Five L0 surface concerns absorb at L1, each rewriting distinctly:
   `::arpack::which::largest_real`, SLEPc's `EPS_LARGEST_REAL`, etc.).
   At L1 the spectrum target is a construction-bound parameter on `E`;
   the L1>L0 rewrite is the `SetWhichEigenpairs` setter call with the
-  per-backend mapping (`palace/linalg/arpack.cpp:236-308` for the
-  ARPACK mapping including the `MFEM_ABORT` for `TARGET_REAL` /
-  `TARGET_IMAGINARY`; `palace/linalg/slepc.cpp:565-600` for the SLEPc
-  EPS mapping). **Recognition note**: the `(ARPACK, TARGET_REAL)` and
+  per-backend mapping. For ARPACK, `SetWhichEigenpairs`
+  (`palace/linalg/arpack.cpp:236-239`) is a **trivial field-set**
+  (`which_type = type;`); the actual per-`WhichType` token mapping —
+  the `switch (which_type)` including the `MFEM_ABORT` for `TARGET_REAL`
+  / `TARGET_IMAGINARY` — lives in `SolveInternal` at
+  `palace/linalg/arpack.cpp:279-305`. For SLEPc the per-`WhichType`
+  switch is in `SetWhichEigenpairs` itself
+  (`palace/linalg/slepc.cpp:565-600`), an asymmetry vs ARPACK.
+  **Recognition note**: the `(ARPACK, TARGET_REAL)` and
   `(ARPACK, TARGET_IMAGINARY)` pairs are *unimplemented stubs* per the
-  ARPACK `MFEM_ABORT` at `palace/linalg/arpack.cpp:300-304`; per
+  ARPACK `MFEM_ABORT` at `palace/linalg/arpack.cpp:301-304`; per
   CLAUDE.md "Unimplemented Palace stub policy" the L1 form treats
   these as constructor-time validity constraints — a `K`-construction
   attempting `ARPACK × TARGET_REAL` is ill-formed; the L1>L0 rewrite
@@ -180,9 +185,12 @@ Citations:
   `MFEM_ABORT` defaults.
 - `palace/linalg/eps.hpp:116-119` — `SetWhichEigenpairs` /
   `SetShiftInvert` setters.
-- `palace/linalg/arpack.cpp:236-308` — `ArpackEigenvalueSolver::SetWhichEigenpairs`
-  body (per-`WhichType` switch with `MFEM_ABORT` for unimplemented
-  TARGET_REAL / TARGET_IMAGINARY).
+- `palace/linalg/arpack.cpp:236-239` — `ArpackEigenvalueSolver::SetWhichEigenpairs`
+  body (trivial field-set `which_type = type;`).
+- `palace/linalg/arpack.cpp:279-305` — `ArpackEigenvalueSolver::SolveInternal`
+  per-`WhichType` `switch` (the actual ARPACK-token mapping, with
+  `MFEM_ABORT` for unimplemented TARGET_REAL / TARGET_IMAGINARY at
+  `301-304`).
 - `palace/linalg/arpack.cpp:241-247` —
   `ArpackEigenvalueSolver::SetShiftInvert` body (binds `sigma`, sets
   `sinvert = true`; rejects `precond = true`).
@@ -260,15 +268,41 @@ constructively introduced by the L1 form per cycle-010 lifter (see
 [`L1/eigsolve`](../L1/eigsolve.md) §Signature callout).
 
 The materialisation that the L1>L0 lowering would specify (when Palace
-ships the refactor) consists of three changes per callsite:
+ships the refactor) consists of two upstream changes: a one-line
+accessor on `BaseKspSolver` plus a status-capture at each callsite.
+
+**Accessor prerequisite (the snippet's load-bearing correction).**
+`GetConverged()` is **not** callable on `opInv`'s type. `opInv` is a
+`BaseKspSolver<ComplexOperator>` whose public surface
+(`palace/linalg/ksp.hpp:50-71`) exposes only `NumTotalMult`,
+`NumTotalMultIterations`, the `GetRelTol` / `GetAbsTol` / `SetRelTol` /
+`SetAbsTol` tolerance forwarders, `SetOperators`, and `Mult`. The
+convergence flag lives on `IterativeSolver::GetConverged`
+(`palace/linalg/iterative.hpp:98`), reachable only through the
+**protected** `ksp` member (`palace/linalg/ksp.hpp:41`). So the
+materialisation first needs **either** a one-line public forwarder on
+`BaseKspSolver`, mirroring the existing `GetRelTol` accessor
+(`palace/linalg/ksp.hpp:64` — `double GetRelTol() const { return
+ksp->GetRelTol(); }`), **or** a `Mult` status-return:
+
+```text
+// Prerequisite (option 1): a one-line public forwarder on BaseKspSolver,
+//   added next to the existing GetRelTol forwarder (ksp.hpp:64):
+bool GetConverged() const { return ksp->GetConverged(); }
+
+// Prerequisite (option 2, alternative): give Mult a status return
+//   (changes the void signature at ksp.cpp:297 — larger surface change).
+bool Mult(const VecType &b, VecType &x) const;   // returns ksp->GetConverged()
+```
 
 ```text
 // Before (current Palace; status silently dropped):
 opInv->Mult(b, x);              // void return; warning logged only
 
-// After (L1-constructive materialisation; not yet in Palace source):
+// After (L1-constructive materialisation; not yet in Palace source).
+//   Assumes the option-1 forwarder above is present:
 opInv->Mult(b, x);
-if (!opInv->GetConverged()) {
+if (!opInv->GetConverged()) {   // <- the new public forwarder
   inner_failed = true;          // capture per-step inner failure
   break;                        // bubble out of the eigensolver outer loop
 }
@@ -279,16 +313,21 @@ if (!opInv->GetConverged()) {
 //   else                     return MaxIterReached;
 ```
 
-The proposed materialisation is **partly-constructive** in the
-CLAUDE.md "Unimplemented Palace stub policy" sense: the L1 form names a
-status case the L0 surface does not produce, but the materialisation
-shape is well-defined (the `GetConverged()` accessor exists on
-`IterativeSolver` and is already used inside `BaseKspSolver::Mult` to
-guard the warning emission — so the upstream behaviour change is
-mechanical and small). The L1>L0 theme records this as a **rewriting
-requires upstream behaviour change** caveat (per cycle-010 lifter Open
-Questions §3); the rewrite shape is recorded forward-looking, with the
-current L0 surface noted as silent-on-this-case.
+The materialisation is a **forward-looking reconstruction**: the L1 form
+names a status case the current L0 surface does not produce. The shape
+is nonetheless well-defined and the upstream behaviour change is
+mechanical and small — `IterativeSolver::GetConverged`
+(`palace/linalg/iterative.hpp:98`) already exists and is already used
+inside `BaseKspSolver::Mult` to guard the warning emission
+(`palace/linalg/ksp.cpp:301-307`); the only missing piece on the public
+surface is the one-line forwarder (or the `Mult` status-return). The
+L1>L0 theme records this as a **rewriting requires upstream behaviour
+change** note (per cycle-010 lifter Open Questions §3); the rewrite
+shape is recorded forward-looking, with the current L0 surface noted as
+silent-on-this-case. This reconstruction is grounded in the
+negative anchor `palace/linalg/ksp.cpp:297-310` (the `void` return) —
+the negative anchor is evidence FOR the faithful reconstruction, not a
+positive claim that Palace produces the status today.
 
 For the SLEPc shell-matrix path, the materialisation has an additional
 elaboration: SLEPc internally exposes `EPSConvergedReason` via
@@ -297,8 +336,12 @@ elaboration: SLEPc internally exposes `EPSConvergedReason` via
 the reason code and map the `EPS_DIVERGED_BREAKDOWN` /
 `EPS_DIVERGED_SYMMETRY_LOST` family to `LinearSolveFailed` (rather than
 collapsing all SLEPc-side diverged reasons into `MaxIterReached`).
-This is documented but not specified in this theme — a future
-`slepc-convergence-reason-lift` sub-theme would carry the full mapping.
+The full `EPSConvergedReason` -> `EigStatus` mapping — across all three
+SLEPc solver families (EPS / PEP / NEP), with the converged/diverged
+partition and per-row reconstruction notes — is carried in the sibling
+sub-theme
+[`eigsolve-convergence-reason-mapping`](./eigsolve-convergence-reason-mapping.md)
+(cycle-013; `partly-constructive`, gated downstream of this Sub-pattern B).
 
 Justification kind: **structural** with embedded reduction-chain
 sub-rewrites. The ten callsites are structural (each binds to the firm
@@ -547,9 +590,12 @@ For all four sub-patterns the rewrite preserves semantics when:
    matches `E.shift` per construction.
 
 4. **`E.K_max ≤ N`.** The requested mode count cannot exceed the
-   operator dimension; `palace/linalg/arpack.cpp:521-525` clamps
+   operator dimension; `palace/linalg/arpack.cpp:518-521` clamps
    `ncv` (ARPACK's basis-size parameter) against the global dimension
-   `N`. At L1 this is a precondition on `E`'s opaque type.
+   `N` (fetched via `N = linalg::GlobalSize(...)` at
+   `palace/linalg/arpack.cpp:517`; the `arpack_it` default is set
+   immediately after at `522-525`). At L1 this is a precondition on
+   `E`'s opaque type.
 
 5. **Single-rank scope.** Per CLAUDE.md "Scope", the L1 form is
    single-rank; the MPI surface (`ParMesh` distributions,
@@ -591,11 +637,15 @@ For all four sub-patterns the rewrite preserves semantics when:
   workspace, and spectral-transformation lifecycle are
   absorption-into-`E` rewrites with no L1-visible semantic content.
 
-The theme as a whole is `structural` with one **partly-constructive**
-sub-rewrite (Sub-pattern B's `LinearSolveFailed` materialisation
-requires upstream behaviour change). A `lowering-verifier` audit in a
-later cycle should confirm sub-pattern recognition is exhaustive over
-the eigensolver L0 corpus, specifically that:
+The theme as a whole is `structural`. Sub-pattern B's
+`LinearSolveFailed` materialisation is a **forward-looking
+reconstruction** (the L0 surface does not currently produce the
+variant; the rewrite shape is recorded forward-looking, grounded in
+the negative anchor `palace/linalg/ksp.cpp:297-310`); this is a
+permanent property of the rewrite, not an open status gate. The
+cycle-012 `lowering-verifier` audit (embedded below) confirmed
+sub-pattern recognition is exhaustive over the eigensolver L0 corpus,
+specifically that:
 
 - (i) the four-stage setup absorption (Sub-pattern A) is consistent with
   the per-backend `SetType` / `SetProblemType` / `SetExtraSystemMatrix` /
@@ -882,24 +932,47 @@ audit_note: >
 
 ## Status
 
-`firm (structural; partly-constructive on Sub-pattern B LinearSolveFailed materialisation)` —
+`firm (structural)` —
 the four sub-pattern recognition rules are sketched at the section
 level; the per-backend ARPACK / SLEPc / `QuasiNewtonSolver` bodies are
 cited at the section level; the ten `opInv->Mult` callsites are
 exhaustively cited per cycle-010 lifter; the per-pair extraction
 rewrite and the status sum-type derivation are structurally complete.
-The `LinearSolveFailed` materialisation is documented as
-partly-constructive (the L0 source does not currently produce the
-variant; the rewrite shape is recorded forward-looking).
+The `LinearSolveFailed` materialisation is a **forward-looking
+reconstruction** — the L0 source does not currently produce the variant
+(negative anchor `palace/linalg/ksp.cpp:297-310`: `void`-returning
+`Mult`); the rewrite shape is recorded forward-looking, requiring the
+one-line `BaseKspSolver::GetConverged` forwarder (or a `Mult`
+status-return) per Sub-pattern B. This is a permanent honest property
+of the rewrite, not a status gate.
 
-Promotion to fully firm (i.e., dropping the `partly-constructive` caveat
-on Sub-pattern B) is gated on either (a) an upstream Palace refactor
-that captures `ksp->GetConverged()` at the ten callsites and
-propagates the failure to the eigensolver outer-loop status, or (b) a
-`lowering-verifier` audit that confirms the partly-constructive shape
-is acceptable as a methodology-level pattern (per cycle-010 lifter Open
-Questions §3, which forwards the pattern to cycle-012 meta-phase for
-codification).
+**Promotion record (cycle-013).** This theme was promoted from
+`firm (structural; partly-constructive on Sub-pattern B
+LinearSolveFailed materialisation)` to `firm (structural)` via the
+Status-gate option (b): the cycle-012 `lowering-verifier` audit
+(embedded above, `audit_verdict: confirms-with-refinement`) confirmed
+the structural decomposition (ten `opInv->Mult` callsites exhaustive;
+negative anchor confirms `void` return) and the cycle-012 meta-phase
+codified `partly-constructive` as a first-class methodology pattern
+(per cycle-010 lifter Open Questions §3). The cycle-013 abstractor
+dispatch
+(`reports/2026-05-28T143232Z-abstractor-eigsolve-getconverged-forwarder-fix-and-gated-promotion/`)
+then applied the three audit-identified firming edits — the
+`GetConverged` forwarder snippet correction (Edit 2; the gate's named
+blocker), the ARPACK `SetWhichEigenpairs` switch attribution
+refinement, and the ARPACK ncv-clamp citation refinement. The transient
+`partly-constructive` status gate is therefore closed. The honest
+forward-looking-reconstruction content note (Sub-pattern B's
+`LinearSolveFailed` is built from negative anchors because Palace's
+`void`-returning `Mult` does not positively produce it) is a permanent
+property and remains in the prose; it is not a status gate. Per the
+CLAUDE.md "Theme/operator status `partly-constructive` is first-class"
+invariant, the negative anchors are evidence FOR the faithful
+reconstruction and do not license asserting a positive claim — a future
+upstream Palace refactor that ships the forwarder + status-capture would
+turn the forward-looking reconstruction into a positively-anchored
+rewrite, but that is an enhancement, not a precondition for the firm
+status.
 
 The three sibling cycle-009 eigsolve OQs
 (`eigsolve-scaling-coordinate-convention`,

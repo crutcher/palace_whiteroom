@@ -1,5 +1,20 @@
 # cg_preconditioning_framework
 
+> **Reduction status (cycle-013+):** this slice is the cycle-001-era precursor to the firm `L1/ksp_solve` operator + the KSP-composition concept-page family. Its §L0/§L1 framework material (operator interface, solver-as-operator, two-operator `(op, pc_op)` split, complex-from-real lift, factory composition, the `SetOperators` finest-level unwrap) is **fully absorbed** by:
+> - `book/src/L1/ksp_solve.md` (firm) — the BLAS-1→constructed-operator gate; SolveResult; krylov-method variant collapse. Its §Evidence re-cites the same `ksp.cpp` / `ksp.hpp` / `iterative.hpp` ranges independently.
+> - `book/src/L0/kspsolver-base-class.md`, `book/src/L0/ksp-factory-file.md`, `book/src/L0/mfem-wrapper-solver.md`, `book/src/L0/linalg-operator-file.md`, `book/src/L0/linalg-solver-file.md`, `book/src/L0/preconditioner-classes-overview.md` — the firm L0 anchors for the C++ surface this slice's §L0 enumerates.
+> - `book/src/concepts/two_operator_split.md` (the `(op, pc_op)` convention), `concepts/constructed-operator-factory.md`, `concepts/complex-from-real-lift.md`, `concepts/finest-level-unwrap.md`, `concepts/counter-update.md`, `concepts/solver-as-operator.md`, `concepts/build-time-vs-run-time-stratification.md`, `concepts/state-stratification.md`, `concepts/solve-monad.md` — each of which names THIS slice as its introducing slice / worked example.
+>
+> **RETAINED as load-bearing unique material** (NOT yet lifted to a firm entry; the slice is the only detailed source):
+> - **§L4 — calculus form** (lines 293–412): the full `KspParams`/`PcParams`/`OpBinding`/constructor-vs-body Haskell+TS form. No firm `L4/preconditioning-framework` entry transcribes it yet.
+> - **§L4 v0.2 — capability typing** (lines 413–471): the canonical first use site of the `TrueOp`/`PcAssemblyOp` brands, cited by `concepts/capability-typing.md:55`. The `finestLevelUnwrap` brand-preservation invariant and the `pc_op = op` escape-hatch analysis live ONLY here.
+> - **§L4 v0.3 — derived-view hoisting** (lines 472–533): the `pcBoundOp` stored-vs-bound-divergence derived view, cited by `concepts/derived-view-hoisting.md` (whose worked examples are CG/Chebyshev, NOT this case).
+>
+> **Pending lift / verify (blocks full removal):**
+> - `L4/preconditioning-framework` (or `L4/ksp-solve`) — a harvester promotion candidate that would transcribe §L4/§L4-v0.2/§L4-v0.3 into a firm L4 entry and let the ~10 concept-page citations re-point. OQ `l4-preconditioning-framework-promotion`.
+>
+> _(Line numbers above are pre-insert / section-relative; the §L4 v0.2/v0.3 anchors are stable by heading name.)_
+
 ## Context
 
 Palace's Krylov solvers (CG, GMRES, FGMRES) are composed through a small, layered set of C++ types: an abstract `Operator` / `ComplexOperator` interface; a `Solver<OperType>` shape that declares an approximate inverse is itself an operator; a single `MfemWrapperSolver` adapter that lifts any real `mfem::Solver` to a complex-aware preconditioner; and a `BaseKspSolver` wrapper that binds an `IterativeSolver` to a preconditioner and exposes the two-operator `SetOperators(op, pc_op)` convention. This slice dissects the framework in which CG (and its sibling Krylov methods) consume preconditioning, isolating it from the per-method iteration rules dissected in the `cg`, `gmres`, and `fgmres` slices. The slice exists so subsequent algorithmic slices can refer to the composition shape (constructed-operator factories; `(op, pc_op)` split; complex-from-real lift) by name instead of re-deriving it.

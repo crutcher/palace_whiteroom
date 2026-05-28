@@ -1,62 +1,97 @@
 # concept: orthogonalization
 
-The Arnoldi orthogonalisation step in Krylov-subspace methods: given an orthonormal basis `V[0..j]` and a new vector `w`, produce `(w', h)` where `w'` is the component of `w` orthogonal to `span(V[0..j])`, and `h = (h_0, …, h_{j+1})` are the projection coefficients (entries of the Hessenberg matrix's new column, with `h_{j+1} = ‖w'‖`).
+The Arnoldi orthogonalisation step in Krylov-subspace (and ROM basis-extension) methods:
+given an orthonormal basis `V[0..m-1]` and a new candidate vector `w`, produce the residual
+`w'` (the component of `w` orthogonal to `span(V)`) together with the projection
+coefficients `H[0..m-1]` (the leading entries of the Arnoldi/Hessenberg column).
+
+> **Authoritative definition:** the firm operator
+> [`L1/orthogonalize`](../L1/orthogonalize.md) is the load-bearing contract; this page is the
+> narrative cross-cut. The forward lowering is
+> [`L1-L0/orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md).
+> Where this page and the L1 entry disagree, the L1 entry wins.
+
+## Contract (coefficients and normalisation)
+
+The operator returns the pair `(w', H)`:
+
+- `w'` — the orthogonal residual, **not normalised**. Palace's header is explicit:
+  "Assumes that the input vectors are normalized, but does not normalize the output vectors!"
+  (`palace/linalg/orthog.hpp:18-23`). Normalisation is the *caller's* job — `arnoldi_step`
+  follows `orthogonalize` with `nrm2(w')` and `scal(1/‖w'‖, w')`.
+- `H` — the **length-`m`** projection coefficients, `H[j] = ⟨w_eff(j), V[j]⟩`, with
+  `w' = w − Σ_j H[j]·V[j]`. These are the leading `m` entries of the Hessenberg column.
+
+The Hessenberg sub-diagonal `H[m] = ‖w'‖` is **not** produced by this operator — it is the
+caller's `nrm2(w')` step. Do not fold it into `H`; that conflates the operator's coefficient
+output with the caller's normalisation (the historical drift this page used to carry).
+
+`w_eff(j)` is the candidate as seen by column `j`: for CGS/CGS2 it is the original `w` for
+every `j`; for MGS it is the progressively-updated `w` after subtracting columns `0..j-1`.
+The inner product follows the [`dot`](../L1/dot.md) conjugate-linear-first-argument
+convention.
 
 ## Variants
 
-Three implementations occupy the same L1 primitive role but differ at L2 / L3 in `dot`/`axpy` batching and stability:
+Three implementations occupy the same L1 primitive role; they agree in exact arithmetic and
+differ only in finite-precision stability and in collective shape (the load-bearing axis).
+At L0 they are three distinct loop-structures — see
+[`L1-L0/orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md) for
+the per-variant loop forms and citations.
 
-- **MGS (Modified Gram–Schmidt)**: sequential per-`k` project-and-subtract. For `k = 0..j`: `h[k] = dot(V[k], w); axpy(-h[k], V[k], w)`. Numerically more stable than CGS; requires `j+1` synchronisation points per Arnoldi step.
-- **CGS (Classical Gram–Schmidt)**: batched. All `j+1` `dot`s first (one MPI reduction), then all `j+1` `axpy`s. One synchronisation point per Arnoldi step; loses orthogonality faster than MGS, especially for ill-conditioned bases.
-- **CGS2 (CGS with re-orthogonalisation)**: CGS applied twice — one batched orthogonalisation, then a second batched correction. Two synchronisation points per step; recovers MGS-level orthogonality up to roundoff ("twice is enough" — Kahan/Parlett).
+- **MGS (Modified Gram–Schmidt)**: single interleaved loop — for `k = 0..m-1`:
+  `H[k] = dot(w, V[k]); w ← w − H[k]·V[k]`. More stable than CGS; `m` synchronisations of
+  size 1 per step. Carries a [sequential-obstruction](./sequential-obstruction.md) at L3.
+- **CGS (Classical Gram–Schmidt)**: split two-phase loop — all `m` `dot`s against the
+  *original* `w` (one reduction of size `m`), then all `m` updates. One synchronisation per
+  step; loses orthogonality faster than MGS for ill-conditioned bases.
+- **CGS2 (CGS with re-orthogonalisation)**: CGS applied twice; the second batched pass
+  corrects the first (coefficients accumulate, `H ← H + dH`). Two synchronisations of size
+  `m`; recovers MGS-level orthogonality up to roundoff ("twice is enough" — Kahan/Parlett).
+  This is Palace's default for parallel scalability with near-MGS stability.
 
-## L1 contract
+The variant tag is a runtime enum (`Orthogonalization ∈ {MGS, CGS, CGS2}`) bound at solver
+setup and **inspected exactly once** at dispatch (`OrthogonalizeIteration`,
+`palace/linalg/iterative.cpp:308-325`); downstream code never re-inspects it. Per
+[`variant-absorption`](./variant-absorption.md) the three absorb at all three levels under
+residual-axis disclosure (the residual being the per-variant collective shape:
+m×1 / 1×m / 2×m reductions). Householder is out of scope (no Palace L0 path).
 
-At L1, orthogonalisation is a single primitive `orthogonalize(gs_orthog, V[0..j], w) → (w', h)` that dispatches on `gs_orthog ∈ {MGS, CGS, CGS2}` exactly once. Downstream code does not re-inspect the variant.
+A second variant axis is the **inner-product hook** (`dot_op`): the canonical inner product
+vs a `B`-weighted dot used by the SLEPc/ROM paths (`palace/models/romoperator.cpp:51-66`).
+This is a substitution of the [`dot`](../L1/dot.md) dependency; the operator's shape and laws
+are unchanged (the orthogonality contract becomes `⟨w', V[i]⟩_B = 0`).
 
-## L2 / L3 distinction
+## L1 / L2 / L3 placement
 
-The primitive *set* — `dot`, `axpy`, `nrm2`, `scal` — is the same across all three variants. The variant axis affects only the *sequence and batching* of these calls. A dedicated `orthog` slice would carry the L2→L3 unfolding where the global-tensor / batched-collective form makes the MPI synchronisation structure explicit.
+- **L1**: the single pure primitive `orthogonalize(w, V, variant) → (w', H)` (firm —
+  [`L1/orthogonalize`](../L1/orthogonalize.md)). No destination buffers, no `comm`, no
+  in-place mutation; the variant is a parameter.
+- **L1>L0**: the mutation rotation
+  [`orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md) — in-place
+  `w` overwrite + raw-pointer `H` write + the three per-variant L0 loop-structures.
+- **L2 / L3**: the primitive *set* — [`dot`](../L1/dot.md), [`axpy`](../L1/axpy.md), plus the
+  caller's `nrm2`/`scal` — is shared across variants; the variant axis affects only the
+  *sequence and batching*. The MGS branch carries a sequential-obstruction that surfaces at
+  L3 (CGS/CGS2 lift to a clean batched/global form; MGS does not). See
+  [`spec/slices/orthog`](../spec/slices/orthog.md) for the retained L2/L3/L4 unfolding.
 
 ## Citations
 
-- Palace `OrthogonalizeColumnMGS / CGS / CGS2` family, `palace/linalg/orthog.{hpp,cpp}` (separate slice).
-- Dispatch site: `OrthogonalizeIteration(gs_orthog, V, w, Hj, j)`, `palace/linalg/iterative.cpp:307–326`.
+- `palace/linalg/orthog.hpp:18-90` — the `OrthogonalizeColumnMGS / CGS` family (CGS2 is
+  `OrthogonalizeColumnCGS(refine=true)`); header scope contract at `:18-23`.
+- `palace/linalg/iterative.cpp:308-325` — `OrthogonalizeIteration` runtime variant dispatch.
+- `palace/linalg/iterative.cpp:629-632, 808-811` — GMRES / FGMRES Arnoldi call sites, each
+  followed by the caller's `nrm2` sub-diagonal + `scal` normalisation.
+- `palace/models/romoperator.cpp:51-66` — ROM basis-extension reuse (the second consumer;
+  the B-weighted `dot_op` hook).
+- `test/unit/test-orthog.cpp:99-160` — empty-basis identity + the `⟨w', V[i]⟩ ≈ 0`
+  substitutability witness across MGS/CGS/CGS2.
 
-## Concept: `orthogonalization` (Gram-Schmidt variants)
+## Consumers
 
-Given an orthonormal basis `V_j = [v_0 … v_{j-1}]` and a new vector
-`w`, produce coefficients `h_{0..j-1}` and the orthogonal residual
-`w' = w − Σ h_i v_i` such that `⟨w', v_i⟩ = 0` for all `i < j`.
-
-## Background
-
-The Gram-Schmidt orthogonalization step inside Arnoldi-style Krylov
-basis construction. Two dominant variants (Saad 2003 §6.3.2):
-
-- **MGS (modified Gram-Schmidt)**: sequential subtraction — for each
-  `i = 0..j-1`: `h_i ← ⟨v_i, w⟩; w ← w − h_i v_i`. Better numerical
-  stability than CGS but sequential (`j` synchronization points).
-- **CGS (classical Gram-Schmidt)**: parallel — compute all `h_i ← ⟨v_i,
-  w⟩` in one pass, then `w ← w − Σ h_i v_i`. Faster (one global reduce,
-  one batched update) but loses orthogonality in finite precision.
-- **CGS2 (CGS with reorthogonalization)**: CGS applied twice; the
-  second pass recovers orthogonality. Palace uses CGS2 by default for
-  parallel scalability while preserving the stability of MGS.
-
-The variant is exposed as a runtime enum (`OrthogType`) on the GMRES
-solver.
-
-## Signature (canonical)
-
-```
-orthogonalize(variant, V_basis, w) → (h_coeffs, w')
-  // w may be mutated; h_coeffs is a length-j vector
-```
-
-## Slices that use this primitive
-
-- [gmres](../spec/slices/gmres.md) — orthogonalizing the new Arnoldi
-  vector against the existing basis. The variant axis is absorbed at
-  this primitive's contract: per-step procedure dispatches once on the
-  variant and never re-inspects.
+- [gmres](../spec/slices/gmres.md) — orthogonalising the new Arnoldi vector against the
+  existing basis; the variant axis is absorbed at this primitive's contract.
+- The ROM basis-extension path (`romoperator.cpp`).
+- The L2 [`krylov-step`](../L2/krylov-step.md) composition references `orthogonalization` as
+  an all-three-level-absorbed (residual-axis-disclosed) component.
