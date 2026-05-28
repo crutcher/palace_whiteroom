@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T202219Z
 scope: chebyshev-anchor-element-kernel-and-mult2-carry-forward-sweep — re-anchor inherited citation drift in the firm L1/L2 chebyshev operator entries
 status: integrated
 integrated_at: 2026-05-29T0030Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1af0c3d
 integration_notes: "Applied cycle-015 (per-report position 3). Citation-only sweep — 7 verified anchor corrections across L2/chebyshev-iteration.md (5 sites) + L1/chebyshev-smoother.md (2 sites); inherited element-kernel + Mult2 drift fixed against L0 palace/linalg/chebyshev.cpp. No status/law/signature change (both entries stay firm). OQ chebyshev-anchor-element-kernel-and-mult2-carry-forward-sweep resolved. One non-blocking OLD-string transcription slip re-read+applied against true disk text; all 7 sites landed. Book build clean."
 inputs:
   - book/src/L2/chebyshev-iteration.md

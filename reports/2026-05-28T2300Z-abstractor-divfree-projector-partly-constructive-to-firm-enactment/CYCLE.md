@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T2300Z
 scope: L1 partly-constructive→firm enactment — divfree-projector (close the partly-constructive ENTRY→EXIT lifecycle)
 status: integrated
 integrated_at: 2026-05-29T0030Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1af0c3d
 integration_notes: "Applied cycle-015 (per-report position 1). divfree-projector partly-constructive→firm ENACTED — first full partly-constructive ENTRY→EXIT lifecycle (entered cycle-013, UNBLOCKED cycle-014, exits firm cycle-015). WeakDiv approx -GᵀM sign positively anchored (fem/integrator.hpp:217 + fem/integ/mixedvecgrad.cpp:202). L1 firm 10->11. OQs divfree-projector-partly-constructive-to-firm-enactment + divfree-weakdiv-sign-convention-l0-verify closed. All 8 proposed-change blocks applied clean; book build clean."
 inputs:
   - book/src/L1/divfree-projector.md (current partly-constructive entry + cycle-014 UNBLOCKED §Status note)

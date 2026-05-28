@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T20:27:56Z
 scope: L-corpus cross-cut — chebyshev-slice-l4-full-removal (Phase-1 slice reduction audit, batch 9/10)
 status: integrated
 integrated_at: 2026-05-29T0030Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1af0c3d
 integration_notes: "Applied cycle-015 (per-report position 6, final). book/src/spec/slices/chebyshev.md REMOVED via git rm; 18 inbound citations re-pointed onto firm L1/L4 chebyshev entries; SUMMARY.md + spec/index.md de-registrations applied. Corpus removals 8/10->9/10. OQ chebyshev-slice-l4-full-removal resolved (status flipped by per-report integrator). Build linkcheck (cargo make book exit 0) confirms ZERO stranded markdown links to removed slice — remaining mentions are intentional provenance/historical prose (L3/index.md, frozen meta-reviews). Critique caught 4 non-link prose refs missed by the producer grep; repairer fixed pre-apply."
 ---
 

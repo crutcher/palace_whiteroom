@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T20:22:25Z
 scope: L0 reference-note bundle chapter — palace/fem/bilinearform.{hpp,cpp} (bundle-6 candidate #4)
 status: integrated
 integrated_at: 2026-05-29T0030Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1af0c3d
 integration_notes: "Applied cycle-015 (per-report position 5). New L0 chapter fem-bilinearform-file.md (BilinearForm + DiscreteLinearOperator; 9 cited anchor surfaces; PA/FA dual). Registered in L0/index.md File-overviews cohort + SUMMARY.md L0 Part. L0 19->20 chapters. Deliberate plain-text (non-link) reference to not-yet-authored libceed/operator chapter — intentional, no dead link. New OQ bundle-6-l0-libceed-operator-file-next-candidate (#5). Book build clean."
 ---
 

@@ -7,7 +7,7 @@ meta_batch: batch-3
 meta_batch_position: 3
 reports_consumed: 6
 status: integrated
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1af0c3d
 ---
 
 # CYCLE: integrator-finalize cycle-015 (closes meta-batch-3)
@@ -80,7 +80,7 @@ firm), L4>L3 (1 firm + 2 rough-in) unchanged.
 | retroactive-budget global (cross-report ≥4 → block) | **0** — all 6 rows reported per-slice 0; well below threshold; no block |
 | build-breakage repair | **0 repairs** — `cargo make book` exit 0 on first run |
 | commit atomicity | single commit (the `git rm` slice deletion included) |
-| consumed-report frontmatter integrity | 6 `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes` touches |
+| consumed-report frontmatter integrity | 6 `integrated_at` + `integration_commit: 1af0c3d` + `integration_notes` touches |
 
 Per-report gates (all 0/n-a per row): citation-format, concept_writes-on-existing-slug,
 forward-edge-without-surface, edge-label-prose-mismatch, H1-page-heading-reuse,
@@ -128,7 +128,7 @@ against true text; zero content impact, all 7 sites landed.
 
 ## Two-phase SHA patch (canonical pattern, role-spec process step 13)
 
-`integration_commit: PLACEHOLDER_SHA` is recorded in this batch CYCLE.md + all 6 consumed reports'
+`integration_commit: 1af0c3d` is recorded in this batch CYCLE.md + all 6 consumed reports'
 frontmatter because the actual SHA only exists post-commit. After the finalize commit lands, a small
 follow-up commit replaces every placeholder with the actual SHA, then `git push origin main` again.
 Patch-commit message: `patch commit-sha references for cycle-015 finalize commit (<finalize-sha>)`.

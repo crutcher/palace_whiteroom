@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T20:21:38Z
 scope: L4>L3 theme re-anchor — chebyshev (L4 entry firm-via-iterate-while re-anchor)
 status: integrated
 integrated_at: 2026-05-29T0030Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1af0c3d
 integration_notes: "Applied cycle-015 (per-report position 2). L4/chebyshev rough-in->firm ENACTED — apply body re-anchored forM_/foldM -> nested iterate_while_pure folds with step-count predicates, reusing the canonical iterate-while family. L4 firm 3->4, rough-in cohort -> 0. OQs chebyshev-l4-firm-via-iterate-while-reanchor + chebyshev-l4-inner-loop-presentation-carry-st-vs-with-prev closed. All 19 proposed-change blocks applied clean; book build clean. (Three residual forM_/foldM prose mentions outside re-anchor blocks routed to cycle-016 OQ l4-chebyshev-residual-formm-foldm-prose-cleanup.)"
 inputs:
   - book/src/L4/chebyshev.md (rough-in; the re-anchor target)

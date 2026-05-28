@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T202234Z
 scope: L3 operator-entry re-anchor — l3-krylov-step-cg-md-citation-sweep
 status: integrated
 integrated_at: 2026-05-29T0030Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1af0c3d
 integration_notes: "Applied cycle-015 (per-report position 4). Pure citation re-anchor — 5 dangling cg.md reduced-slice pointers in L3/krylov-step.md re-anchored to terminal firm homes (sequential-obstruction concept page + arnoldi_step.md:194-213; L3-L2/krylov-step-body-identity.md:125; L2/krylov-step.md:138/:146 — repairer corrected 2 producer pointers that had relocated dangles one hop). Entry stays firm. OQ l3-krylov-step-cg-md-citation-sweep answered. Sibling L4/L2 sweeps filed as cycle-016 OQs. Book build clean."
 inputs:
   - book/src/L3/krylov-step.md
