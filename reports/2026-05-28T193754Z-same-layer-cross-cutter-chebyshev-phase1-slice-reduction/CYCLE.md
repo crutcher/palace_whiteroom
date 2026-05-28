@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T193754Z
 scope: L-phase1-corpus cross-cut — chebyshev-phase1-slice-reduction
 status: integrated
 integrated_at: 2026-05-29T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 73ecd3e
 integration_notes: "cycle-014 position 8/8 (final per-report). PARTIAL reduction of spec/slices/chebyshev.md (439→195 lines; §L1/§L2/§L3/Consumers/OQs/Concept-refs stubbed; §L4 calculus-form RETAINED verbatim; single H1 + single H2 ## L4 at line 43; start-boundary-trap gate cleared). NOT a corpus REMOVAL — slice persists as §L4-only; REMOVALS stay 8/10. Full removal GATED on cycle-015 (re-point krylov-step §L4 citations onto L4/chebyshev anchors + L4/chebyshev firming) via OQ chebyshev-slice-l4-full-removal; §L4 line ranges intentionally STALE-until-re-point. Build clean (slice renders; krylov-step §L4 inbound citations not consumed until gated removal batch)."
 inputs:
   - book/src/spec/slices/chebyshev.md (audited slice; 439 lines)

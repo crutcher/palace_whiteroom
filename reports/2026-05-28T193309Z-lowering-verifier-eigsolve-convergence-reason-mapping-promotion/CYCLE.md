@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T193309Z
 scope: L1>L0 theme audit — eigsolve-convergence-reason-mapping (partly-constructive promotion gate)
 status: integrated
 integrated_at: 2026-05-29T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 73ecd3e
 integration_notes: "cycle-014 position 5/8. Verdict NEGATIVE-ANCHOR-CONFIRMED → STAYS-PARTLY-CONSTRUCTIVE (NOT a promotion). Critic independently re-confirmed zero materialization (EPS_DIVERGED/EPS_CONVERGED/GetConvergedReason all empty; only print-only *ConvergedReasonView at slepc.cpp:699/1182/1529). Applied verified_against YAML + §Justification-kind two-evidence-bases distinction (source-confirmed negative anchor vs literature-anchored 8-row enum) + §Status audit-outcome note to L1-L0/eigsolve-convergence-reason-mapping.md; caveat correctly STAYS. Validates the partly-constructive ENTRY mechanism, complementing cycle-013 eigsolve EXIT. Applied per parent's explicit dispatch override of report META GATED flag. OQ partly-constructive-entry-mechanism-validated-eigsolve-convergence-reason-mapping (cycle-015 meta-phase). Build clean."
 inputs:
   - book/src/L1-L0/eigsolve-convergence-reason-mapping.md

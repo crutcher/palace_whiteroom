@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T19:32:56Z
 scope: L1 entry audit — divfree-projector WeakDiv sign-convention promotion gate (divfree-weakdiv-sign-convention-l0-verify)
 status: integrated
 integrated_at: 2026-05-29T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 73ecd3e
 integration_notes: "cycle-014 position 1/8. Verdict UNBLOCK-PROMOTION: WeakDiv ≈ −GᵀM positively anchored in Palace-owned source (fem/integrator.hpp:217 + fem/integ/mixedvecgrad.cpp:202, repairer-corrected from :203), refuting cycle-013 out-of-scope-MFEM premise. Applied §Status UNBLOCKED note to L1/divfree-projector.md; caveat NOT dropped. partly-constructive→firm promotion (5 firming edits) GATED to cycle-015 abstractor via OQ divfree-projector-partly-constructive-to-firm-enactment. Build clean."
 inputs:
   - book/src/L1/divfree-projector.md

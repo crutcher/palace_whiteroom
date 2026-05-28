@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T19:33:06Z
 scope: L1>L0 theme audit — orthogonalize-mutation-rotation
 status: integrated
 integrated_at: 2026-05-29T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 73ecd3e
 integration_notes: "cycle-014 position 2/8. Verdict CONFIRMS-WITH-REFINEMENT; theme UPHELD firm. Applied R1 anchor tighten (iterative.cpp:321-323→:322, CGS2 dispatch, critic-confirmed via get_call_sites) + verified_against YAML block (10 supports) to L1-L0/orthogonalize-mutation-rotation.md §Status. R2 cosmetic brace-extend NOT applied. Answers cycle-013 audit-request OQ; residual ROM-greedy-consumer condition-1 caveat surfaced as OQ orthogonalize-mutation-rotation-audit-confirmed-rom-consumer-residual. Build clean."
 inputs:
   - book/src/L1-L0/orthogonalize-mutation-rotation.md

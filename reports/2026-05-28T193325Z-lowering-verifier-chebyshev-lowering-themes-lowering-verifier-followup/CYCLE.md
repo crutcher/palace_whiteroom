@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T19:33:25Z
 scope: chebyshev-lowering-themes-lowering-verifier-followup — audit two firm cycle-013 chebyshev lowering themes (L1>L0 smoother-mutation-rotation + L2>L1 iteration-fusion) against palace/linalg/chebyshev.{hpp,cpp}
 status: integrated
 integrated_at: 2026-05-29T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 73ecd3e
 integration_notes: "cycle-014 position 3/8. Verdicts L1>L0 CONFIRMS-WITH-REFINEMENT + L2>L1 CONFIRMS; both themes UPHELD firm. Applied repairer-corrected anchor refinements (verifier's own :191→:190 signature + hpp:43→:44 member drift corrected) in BOTH prose + Verified-against of L1-L0/chebyshev-smoother-mutation-rotation.md (R1/R1b/R2/R3) + L2-L1/chebyshev-iteration-fusion.md (R4), plus verified_against YAML on both. Firm L1/L2 anchor entries NOT touched — element-kernel :69-78/:114-123 + :191→:190 six-site reconcile routed to cycle-015 OQ chebyshev-anchor-element-kernel-and-mult2-carry-forward-sweep. Build clean."
 inputs:
   - book/src/L1-L0/chebyshev-smoother-mutation-rotation.md

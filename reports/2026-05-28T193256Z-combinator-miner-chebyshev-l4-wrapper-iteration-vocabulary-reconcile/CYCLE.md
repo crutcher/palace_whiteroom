@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T193256Z
 scope: Pattern proposal — chebyshev-l4-wrapper-iteration-vocabulary-reconcile
 status: integrated
 integrated_at: 2026-05-29T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 73ecd3e
 integration_notes: "cycle-014 position 4/8. REUSE/negative-result verdict — do NOT firm a new combinator; route (i) REUSE the iterate-while family (forM_/foldM → iterate_while_pure + step-count predicate). Applied only the dispatch-requested §Status resolution-path NOTE on L4/chebyshev.md (status NOT flipped, STAYS rough-in). The rough-in→firm flip + L4/index.md dep-map rewrite STAGED for cycle-015 (OQ chebyshev-l4-firm-via-iterate-while-reanchor → L4 firm 3→4; + chebyshev-l4-inner-loop-presentation-carry-st-vs-with-prev). The edit:book/src/L4/index.md block was follow-up-only, NOT applied. Build clean."
 ---
 

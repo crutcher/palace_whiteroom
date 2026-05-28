@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T193413Z
 scope: L4>L3 theme re-anchor — krylov-step-typed-wrapper-dissolution-cg-md-citation-sweep
 status: integrated
 integrated_at: 2026-05-29T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 73ecd3e
 integration_notes: "cycle-014 position 7/8. 8/8 dangling cg.md pointers re-anchored in L4-L3/krylov-step-typed-wrapper-dissolution.md (theme lines 98/109/126/200/204/210/231/233; theme stays firm, no claim/structure change). Body-identity (Claim 2; 109/126/204/210/231) → L3-L2/krylov-step-body-identity.md:125; outer-loop sequential-obstruction (Claim 1; 98/200/233) → L3/krylov-step.md §Algebraic-laws + concepts/sequential-obstruction.md. Historical cg.md ranges retained as parenthetical provenance; arnoldi_step.md co-anchors (live slice) untouched. Theme-side OQ krylov-step-typed-wrapper-dissolution-cg-md-citation-sweep marked ANSWERED (finalize). Sibling residual on DISTINCT L3/krylov-step.md operator entry routed to cycle-015 OQ l3-krylov-step-cg-md-citation-sweep. Build clean."
 inputs:
   - book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md

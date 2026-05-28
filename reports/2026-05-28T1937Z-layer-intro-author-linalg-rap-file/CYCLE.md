@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T19:37:30Z
 scope: L0 reference-note bundle — palace/linalg/rap.{hpp,cpp} (RAP parallel-operator file); bundle-6 candidate #2
 status: integrated
 integrated_at: 2026-05-29T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 73ecd3e
 integration_notes: "cycle-014 position 6/8. NEW focused L0 file-overview chapter L0/linalg-rap-file.md written (RAP = R·A·P Galerkin triple-product; ParOperator + ComplexParOperator real/imag-split into two owned ParOperators — member anchor rap.hpp:142 repairer-corrected from :140 in all 4 spots — + BuildParSumOperator; matrix-free vs assembled performance dual; 7 cited anchors). 6 sibling cross-links + apply-linop-overload-set backlink ALL RESOLVE at build. SUMMARY + L0/index registered. Dispatch-prompt 'Restrictive Additive Schwarz' gloss corrected. Bundle-6 #2; L0 18→19 chapters. Next-ranked #4 fem/bilinearform (OQ bundle-6-l0-file-overview-next-ranking). Build clean."
 ---
 

@@ -7,7 +7,7 @@ meta_batch_position: 2
 scope: cycle-end housekeeping — book rebuild + roadmap/cycle-record/log/integrator-signals + 8 consumed-report frontmatter touches + atomic commit/push
 status: integrated
 integrated_at: 2026-05-29T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 73ecd3e
 inputs:
   - reports/cycle-014-integrator-staging/STAGING.md (8 rows, all applied)
   - book/ (build outputs)
@@ -97,4 +97,4 @@ The cycle's headline outcomes: **divfree-projector UNBLOCKED** (WeakDiv ≈ −G
 
 ## Two-phase SHA patch (canonical, role-spec step 13)
 
-This batch CYCLE.md + all 8 consumed reports' `integration_commit:` are recorded as `PLACEHOLDER_SHA`. Immediately after the finalize commit lands, a follow-up commit replaces every placeholder with the actual finalize SHA. Patch-commit message: `patch commit-sha references for cycle-014 finalize commit (<finalize-sha>)`. Same two-phase pattern cycles 004..013 used.
+This batch CYCLE.md + all 8 consumed reports' `integration_commit:` are recorded as `73ecd3e`. Immediately after the finalize commit lands, a follow-up commit replaces every placeholder with the actual finalize SHA. Patch-commit message: `patch commit-sha references for cycle-014 finalize commit (<finalize-sha>)`. Same two-phase pattern cycles 004..013 used.
