@@ -234,9 +234,13 @@ chebyshev op x y initial_guess =
 ```
 
 The two `if k >= op.order` / `if it > op.pc_it` tail recursions are the L3
-rendering of the L4 `foldM`/`forM_` over static index ranges — the iteration
-view that L3 makes load-bearing. The body inside `kloop` is the tensor-field
-update above; every binding is a whole-tensor field operation.
+rendering of the L4 [`chebyshev`](../L4/chebyshev.md)'s two nested
+[`iterate_while_pure`](../L4/iterate-while.md) folds over **step-count
+predicates** (`c.k <= op.order - 1` inner, `s.it <= op.pc_it` outer) — the
+`iterate_while_pure_L3` tail-recursion lowering image of those bounded folds (per
+L4 `chebyshev` §"L4 > L3"), the iteration view that L3 makes load-bearing. The
+body inside `kloop` is the tensor-field update above; every binding is a
+whole-tensor field operation.
 
 The body is **stateless across calls** — `op` is closure-captured but never
 mutated; `x` is read but never returned; `y` flows in, `y'` flows out as a fresh

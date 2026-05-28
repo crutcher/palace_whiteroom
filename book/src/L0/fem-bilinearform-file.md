@@ -60,10 +60,9 @@ operator built two ways, an algebraically-equivalent performance choice
   forwards to this with the form's own trial/test spaces.
 - **`FullAssemble`** (`bilinearform.cpp:109-113`) is a thin forwarder: it delegates to
   `ceed::CeedOperatorFullAssemble(op, skip_zeros, set)` (the actual matrix-materialization lives in
-  `palace/fem/libceed/operator.cpp`, the not-yet-authored bundle-6 #5 candidate — see Open questions
-  for the bundle ranking; plain-text reference, no link target until that chapter lands),
-  returning a `hypre::HypreCSRMatrix`. The header overloads (`bilinearform.hpp:72-84`) chain
-  partial-then-full and supply the `set` default.
+  [`fem-libceed-operator-file`](./fem-libceed-operator-file.md), the libCEED composite-operator
+  backend), returning a `hypre::HypreCSRMatrix`. The header overloads (`bilinearform.hpp:72-84`)
+  chain partial-then-full and supply the `set` default.
 
 ## `Assemble` — the PA/FA policy dispatch
 
@@ -155,7 +154,7 @@ queued as FE-space material reaches the frontier) will reference this chapter.*
 - `palace/fem/bilinearform.cpp:1-284` — the source file (284 lines).
 - `palace/fem/bilinearform.cpp:15-25` — `AssembleQuadratureData` (delegates to each integrator).
 - `palace/fem/bilinearform.cpp:27-107` — `BilinearForm::PartialAssemble`: mesh check (31-32), empty `ceed::SymmetricOperator`/`Operator` (37-46), OMP-parallel per-geometry loop (51-101) with domain (61-79) + boundary (80-99) integrator sub-operator assembly, `Finalize` (104).
-- `palace/fem/bilinearform.cpp:109-113` — `BilinearForm::FullAssemble`: forwards to `ceed::CeedOperatorFullAssemble(op, skip_zeros, set)`.
+- `palace/fem/bilinearform.cpp:109-113` — `BilinearForm::FullAssemble`: forwards to `ceed::CeedOperatorFullAssemble(op, skip_zeros, set)` (body in [`fem-libceed-operator-file`](./fem-libceed-operator-file.md)).
 - `palace/fem/bilinearform.cpp:115-139` — anonymous-namespace `UseFullAssembly` (order-vs-threshold PA/FA policy; the source comment at 121-123 names MFEM's `RT_FECollection` as the historical `order + 1` quirk the `+ 1` normalization at 126-131 corrects).
 - `palace/fem/bilinearform.cpp:141-151` — `BilinearForm::Assemble(bool)`: the public PA/FA dispatch entry point.
 - `palace/fem/bilinearform.cpp:153-201` — `BilinearForm::Assemble(FiniteElementSpaceHierarchy, ...)`: multigrid-hierarchy assembly with `CeedOperatorCoarsen` reuse (170-180) + per-level policy (186-198).

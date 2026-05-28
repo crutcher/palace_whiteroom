@@ -365,8 +365,8 @@ L4 concept references:
   split: `ChebSim` (sim; threaded by `Solve`), `ChebOp` (operator-internal;
   `readonly`), and the ephemeral fold-bundle `(r, d, st)` (born per `apply` call,
   discarded on return). The slice's four-way refinement (adding the
-  scalar-recurrence stratum `S` threaded by `foldM`) is the worked example this
-  entry instantiates.
+  scalar-recurrence stratum `S` threaded through the inner `iterate_while_pure`
+  carry) is the worked example this entry instantiates.
 - [`solve-monad`](../concepts/solve-monad.md) — the `Solve (ChebSim E)` monad
   threading sim-state (the `y` accumulator) orthogonally to the two
   `iterate_while_pure` value-carries; the capability-typed `Read`/`ReadWrite`
@@ -379,7 +379,8 @@ L4 concept references:
 - [`derived-view-hoisting`](../concepts/derived-view-hoisting.md) — the
   control-flow-boundary instance for the `initial_guess` branch.
 - [`sequential-obstruction`](../concepts/sequential-obstruction.md) — the
-  classification surfacing as `forM_` (outer) and `foldM` (inner) binds.
+  classification surfacing as the two nested `iterate_while_pure` folds (outer
+  `pc_it` sweep, inner `k`-recurrence) with step-count predicates.
 - [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md) — the
   initial-direction / final-accumulate loop-boundary unrolling.
 - [`elementwise-product`](../concepts/elementwise-product.md) — the `D⁻¹` action
@@ -544,7 +545,7 @@ entries.
   absorption are anchored there.
 - `book/src/L3/chebyshev.md` (this cycle) — the value-threaded L3 form this L4
   entry lifts from; the partial-obstruction verdict (body lifts, loops do not)
-  this entry's `forM_`/`foldM` binds inherit.
+  this entry's two `iterate_while_pure` folds inherit.
 - `book/src/L4/krylov-step.md` (cycle-006 firm) — the typed-wrapper precedent
   (state-stratification records, `Solve` monad, `readonly` `OpParams`,
   effect-localisation discipline) this entry follows, and the contrast operator:

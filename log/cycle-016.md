@@ -1,105 +1,48 @@
-## 2026-05-24 cycle-16 — forward orthog [L0→L1] — revise
+## 2026-05-28 cycle-016 — FIRST primary cycle of meta-batch-4 (3:1 cadence; cycles 016/017/018, meta-phase fires after 018) — 7 reports — twelfth cycle under split integrator — consolidation/frontier cycle: ONE new firm L1>L0 theme (divfree-projector-mutation-rotation; L1>L0 themes 10→11) + ONE new L0 chapter (fem-libceed-operator-file, bundle-6 #5; L0 20→21) + eigsolve-convergence-reason-mapping 3rd re-verification (STAYS partly-constructive) + 2 krylov-step cg.md citation sweeps (L4 7 re-anchors + L2 12 re-anchors + 1 CheckDot drift correction) + 2 chebyshev prose vocabulary refreshes (L4 3-site + L3 named-sentence) — ZERO build-repairs — twelfth consecutive clean cycle under split integrator — opens meta-batch-4
 
-- Synthesis: orthog L0→L1 refinement: corrected miscited 'SLEPc wrapper' to the ROM/PROM `romoperator.cpp:49-68` dispatch, disclosed the two-wrapper structure (GMRES uses m=j+1, ROM uses m=j) as caller-index convention not primitive divergence, added per-variant m==0 micro-difference as L2-level residual, refined citation ranges per Explorer verification.
-- Verdict: revise.
-- Friction: slice_write diff failed for book/src/spec/slices/orthog.md: git apply failed:
-STDERR:
-error: corrupt patch at line 78
+- **Phases fired**: plan (cycle-planner haiku) → dispatch (7 parallel specialized: 2 abstractor + 4 lifter + 1 layer-intro-author) → critique (7× critic) → repair (multiple repairers triggered — divfree Sub-pattern-C sub-line re-pins, fem-libceed Evidence-row reflow, L2 cg.md CheckDot-drift 13th edit, plus cosmetic self-count fixes) → **integrate (7× integrator-per-report serial → 1× integrator-finalize; twelfth cycle under split integrator)**.
 
-DIFF:
---- a/book/src/spec/slices/orthog.md
-+++ b/book/src/spec/slices/orthog.md
-@@ -49,12 +49,17 @@
- - **Inner-product weighting (`InnerProductW` template hook).** Absorbed as the `dot_op`
-   argument. Default is the unweighted local dot; callers (e.g. weighted GMRES) pass a
-   custom local inner product. The contract — `dot_op` is *local*, routine owns reduction —
-   is uniform across variants.
- 
- **Residual axes (disclosed, not absorbed at L1).**
- 
- - MPI collective shape differs by variant (MGS: m reductions of size 1; CGS: 1 reduction
-   of size m; CGS2: 2 reductions of size m). This is a performance axis surfaced at L2,
-   not an L1 semantic difference. MPI structure is out of scope for this project per
-   CLAUDE.md; recorded here as a cost annotation only.
-+- Empty-basis (m==0) handling differs textually per variant (CGS has explicit early
-+  return; MGS relies on the loop body never executing). Both satisfy the L1 contract
-+  (w unchanged, H empty); the difference is a micro-implementation detail at L2, not
-+  an L1 distinction.
- - Normalization of `w'` is **not** part of this primitive; callers normalize. Header TODO
-   notes this asymmetry; we preserve current convention.
- 
- **State / mutation pattern.** `H` is written (CGS2 accumulates across two passes; MGS/CGS
- write once). `w` is updated in place (MGS: m sequential rank-1 updates; CGS: one batched
- update from saved `H`; CGS2: two batched updates). `V_basis` is read-only throughout.
- 
--**Caller interface.** GMRES/FGMRES use a single dispatch helper
--`OrthogonalizeIteration(type, comm, V, w, Hj, j)` that forwards to this primitive with
--`m = j+1`. The Arnoldi step calls it uniformly regardless of variant; the variant lives
--as a runtime field on the solver.
-+**Caller interface.** Two independent dispatch wrappers forward to this primitive:
-+
-+- **GMRES/FGMRES path.** `OrthogonalizeIteration(type, comm, V, w, Hj, j)` in
-+  `iterative.cpp` calls the primitive with `m = j+1` (orthogonalize new vector against
-+  the leading `j+1` basis columns including the just-added one's predecessors). Uses
-+  the default identity dot.
-+- **ROM/PROM path.** `OrthogonalizeColumn(type, comm, V, w, Rj, j, dot_op)` in
-+  `romoperator.cpp` calls the primitive with `m = j` and a caller-supplied weighted
-+  `dot_op`. The `m = j` vs `m = j+1` difference is a caller-side index convention
-+  (how many columns the caller has populated when invoking), not a primitive-level
-+  difference; the primitive takes `m` directly.
-+
-+Both wrappers inspect `type` exactly once at the dispatch switch; the rest of the
-+caller logic is uniform. The two wrappers are a structural duplication candidate
-+(out of scope here).
- 
- ### Citations
- 
- - `palace/linalg/orthog.hpp:18-23` — header contract (input V normalized, output w not
-   normalized, `dot_op` is local + routine owns reduction).
--- `palace/linalg/orthog.hpp:25-36` — MGS variant.
--- `palace/linalg/orthog.hpp:38-53` — CGS / CGS2 variant (toggled by `refine` flag).
--- `palace/linalg/orthog.hpp:55-89` — block / SLEPc-facing wrappers (same shape).
-+- `palace/linalg/orthog.hpp:26-37` — `IdentityInnerProduct` default `dot_op` (LocalDot;
-+  confirms local-then-reduce contract).
-+- `palace/linalg/orthog.hpp:39-53` — `OrthogonalizeColumnMGS` (per-j single-element
-+  reduce + rank-1 update).
-+- `palace/linalg/orthog.hpp:55-87` — `OrthogonalizeColumnCGS` (single size-m reduce;
-+  `refine=true` performs the second pass and accumulates `H += dH`).
- - `palace/utils/labels.hpp:163-170` — `enum Orthogonalization { MGS, CGS, CGS2 }`.
- - `palace/linalg/iterative.cpp:307-326` — `OrthogonalizeIteration` dispatch helper.
--- `test/unit/test-orthog.cpp:70-97`, `:123-160` — parametric tests over all three variants
--  + custom inner product, asserting the substitutable contract.
-+- `palace/models/romoperator.cpp:49-68` — `OrthogonalizeColumn` (ROM/PROM dispatch
-+  wrapper; forwards a caller-supplied weighted `dot_op`; `m = j`).
-+- `palace/models/romoperator.cpp:224`, `:643` — PROM basis-extension call sites.
-+- `test/unit/test-orthog.cpp:71-97` — variant-parametric test harness.
-+- `test/unit/test-orthog.cpp:99-121` — m==0 early-exit (all variants leave w unchanged).
-+- `test/unit/test-orthog.cpp:123-162` — real basis, ⟨w',V_i⟩ < 1e-12 across variants.
-+- `test/unit/test-orthog.cpp:164-232` — multi-column orthogonality + preservation.
-+- `test/unit/test-orthog.cpp:234-274` — complex case.
-+- `test/unit/test-orthog.cpp:276-330` — custom `RealWeightedInnerProduct` exercises
-+  the non-identity `dot_op` hook.
- 
- ### Test linkage
- 
- `test/unit/test-orthog.cpp` ↔ `palace/linalg/orthog.hpp` (new linkage; record in
- `scaffolding/test-linkages` when promoted). Tests confirm:
-@@ -100,11 +119,14 @@
- CGS-instability stress cases (near-rank-deficient bases that distinguish CGS from CGS2
- numerically) are **not** covered by the unit tests; the variants are tested as
- substitutable, not as numerically distinguishable.
- 
- ### Open questions
- 
- - Lift normalization into the primitive's contract, or preserve the caller-normalizes
-   convention? Header has a TODO; deferred.
- - Surface MPI collective shape as a formal cost annotation at L2 when that slice lands.
-+- De-duplicate the two dispatch wrappers (`iterative.cpp::OrthogonalizeIteration` and
-+  `romoperator.cpp::OrthogonalizeColumn`)? They differ only in (a) `dot_op` forwarding
-+  and (b) caller index convention. Out of scope here; flagged for a future cycle.
- 
- ## L1 → L2
- 
- (Deferred to next cycle on this slice.)
-; verdict auto-downgraded pass→revise: one or more writes did not land.
-- Structural change: none.
+- **Meta-batch context**: cycle-016 is the **FIRST primary cycle of meta-batch-4** under the 3:1 meta cadence (user directive 2026-05-27 post-cycle-006 meta). Cycles 016/017/018 form batch-4; **the batch-4 meta-phase fires after the cycle-018 finalize commit**, aggregating evidence across the full 3-cycle batch. The cycle counter does NOT reset at batch boundaries (batch-1 = 007/008/009; batch-2 = 010/011/012; batch-3 = 013/014/015 closed at the cycle-015 meta-phase; batch-4 = 016/017/018 opens here). The meta-phase does NOT fire this cycle.
+
+- **Cycle character**: a **consolidation/frontier cycle** — one new firm L1>L0 theme + one new L0 chapter, with the rest being citation-anchor hygiene + prose vocabulary refresh + a partly-constructive re-verification. Two established one-file-per-dispatch chains advanced: the cg.md-sweep chain (cycle-014 L4>L3-theme → cycle-015 L3-entry → cycle-016 L4-entry + L2-entry) and the chebyshev `forM_`/`foldM`→`iterate_while_pure` vocabulary-lag cohort (cycle-015 L4 body → cycle-016 L4 prose + L3 named-sentence). **One firm-count-equivalent increase** (L1>L0 themes 10→11) + **one L0 chapter** (20→21).
+
+- **Substantive landed (7 reports, all applied; zero deferrals/rejections)**:
+  - **Position 1 (abstractor — divfree-projector-mutation-rotation L1>L0 theme)**: `book/src/L1-L0/divfree-projector-mutation-rotation.md` — **NEW firm L1>L0 mutation-rotation theme** for the cycle-015-firmed `divfree-projector` L1 operator. 4 sub-patterns: A (in-place `Mult` apply + scratch threading), B (copy-then-apply out-of-place `Mult(x,y)` wrapper), C (constructor closure-field materialisation), D (`VecType` real/complex element-type variant). The single load-bearing algebraic sub-note (`WeakDiv = -Gᵀ` sign) is positively anchored (`integrator.hpp:217` + `mixedvecgrad.cpp:202`, contrast sibling `:142`) per the cycle-014 lowering-verifier UNBLOCK — **NO partly-constructive caveat** (distinct from `eigsolve-mutation-rotation`'s negative-anchor `LinearSolveFailed` reconstruction). **First L1>L0 mutation-rotation whose closure carries another constructed-operator gate** (`P.ksp : Solver[P.M]`) as a sub-field. `index.md` + `SUMMARY.md` registered. Applied the **repaired** CYCLE.md content (3 Sub-pattern-C sub-line `@:NN` re-pins + 1 §Sub-pattern-D anchor re-point). 3 OQs opened. **L1>L0 themes 10 → 11.**
+  - **Position 2 (lifter — l4-krylov-step-cg-md-citation-sweep)**: `book/src/L4/krylov-step.md` — **7 dangling `cg.md:NNN-MMM` reduced-slice pointers re-anchored** across 6 edit blocks to terminal firm homes (`L3-L2/krylov-step-body-identity.md` §Verified-against + live `arnoldi_step.md:185-188`; `concepts/derived-view-hoisting.md` §"Worked example: CG residual norm"; `L2/krylov-step.md:138`; retained-live `cg.md:27-141` stub material). Entry stays **firm** (pure re-anchor). OQ `l4-krylov-step-cg-md-citation-sweep` answered; sibling `l3-l2-body-identity-cg-md-citation-sweep` opened NEW (the L3>L2 theme carries its OWN dangling `cg.md:341-362` provenance pointer one hop down — the two-hop-to-dangle structural fact recorded, assessed sound).
+  - **Position 3 (lifter — l2-krylov-step-cg-md-citation-sweep)**: `book/src/L2/krylov-step.md` — **12 dangling `cg.md` pointers re-anchored** across 12 edit blocks + a repairer-added 13th edit closing a sibling `iterative.cpp:244-250` CheckDot mislabel (the `:244-250` was the `ApplyB` helper; corrected to `:21-32` — both critic and repairer L0-re-verified via codemap). Entry stays **firm**. OQ `l2-krylov-step-cg-md-citation-sweep` answered (not RESOLVED-IN-FULL: 2 live-slice citations `cg.md:27-141`/`:86-106` at §Evidence 138/146 intentionally retained — canonical methodology evidence for `concepts/first-iteration-unrolling.md` while the slice is live; routed to the eventual `phase-1-slice-reduction-audit` on `cg.md`). This is the third file in the cycle-014→015→016 cg.md-sweep chain.
+  - **Position 4 (layer-intro-author — L0 bundle-6 #5 fem-libceed-operator-file)**: `book/src/L0/fem-libceed-operator-file.md` — **NEW firm L0 file chapter** for `palace/fem/libceed/operator.{hpp,cpp}` (the libCEED composite-operator wrapper + matrix-materialization backend): `ceed::Operator` composite-wrapper class + `SymmetricOperator` subclass (transpose ≡ forward), matrix-free apply surface (`Mult`/`AddMult`/`MultTranspose`/`AddMultTranspose`/`AssembleDiagonal`), `CeedOperatorFullAssemble` COO→CSR materialization `@455-523` (load-bearing set-vs-accumulate axis), `CeedOperatorCoarsen` multigrid coarse-operator construction `@525-585`, `test/unit/test-libceed.cpp:284-345` PA/FA-equivalence witness. `SUMMARY.md` registered under the L0 Part after `fem-bilinearform-file`. The two deliberate plain-text forward references in `fem-bilinearform-file.md` (prose `@61-66` + Evidence row `@158`) **retired to live links** now the anchor exists (1 retroactive slice). Applied the **repaired** CYCLE.md content (Evidence-row `[old]` reflow). OQ `bundle-6-l0-libceed-operator-file-next-candidate` resolved. **L0 20 → 21 chapters.**
+  - **Position 5 (abstractor — eigsolve-convergence-reason-mapping re-verification)**: `book/src/L1-L0/eigsolve-convergence-reason-mapping.md` — **THIRD independent confirmation** of the partly-constructive negative anchor (cycle-013 authoring + cycle-014 lowering-verifier audit at commit `73ecd3e` + cycle-016 abstractor re-verification). All 3 positive citations re-read via codemap `read_range`; all 5 whole-tree negative-anchor searches re-run via `search_text` — zero materialization (`EPS_DIVERGED`/`EPS_CONVERGED`/`GetConvergedReason` all empty; only print-only `*ConvergedReasonView` at `slepc.cpp:{699,1182,1529}`; `GetConverged` count-readers only, count-reader-list disambiguated 276 EPS / 310 SVD). **Status correctly STAYS `partly-constructive`** — the ENTRY case (transient gate correctly open). Append-only `### Re-verification (cycle-016 abstractor)` subsection + `verified_against` YAML block; NO status/SUMMARY/index change. OQ `partly-constructive-entry-mechanism-validated-eigsolve-convergence-reason-mapping` answered.
+  - **Position 6 (lifter — l4-chebyshev-residual-formm-foldm-prose-cleanup)**: `book/src/L4/chebyshev.md` — **surgical 3-site descriptive-prose vocabulary refresh** of the stale `forM_`/`foldM` mentions onto the canonical `iterate_while_pure` (§Dependencies `state-stratification` + `sequential-obstruction` bullets, §Evidence L3 bullet). The 4 INTENTIONAL historical-narrative occurrences (§Status reconcile + §Evidence Provenance) left VERBATIM per the OQ's explicit "those stay" instruction. Entry stays **firm** (descriptive prose, no body/status/law change). OQ `l4-chebyshev-residual-formm-foldm-prose-cleanup` resolved.
+  - **Position 7 (lifter — l3-chebyshev-downward-prose-iterate-while-refresh; FINAL per-report)**: `book/src/L3/chebyshev.md` — **surgical 1-sentence downward-prose vocabulary refresh** of the §"Value-threaded form (L3 rendering)" closing sentence (`foldM`/`forM_` → `iterate_while_pure`/`iterate_while_pure_L3` with step-count predicates, predicates complementing the L3 tail-recursion guards). Two cross-link targets verified (`../L4/chebyshev.md` firm cycle-015, `../L4/iterate-while.md` firm cycle-007 — a genuinely new inbound link). Entry stays **partial-obstruction**. **Scope decision**: the OQ resolved for the named-sentence scope only; a NEW companion OQ `l3-chebyshev-sibling-formm-foldm-prose-sweep` opened for the 5 remaining sibling sites (preserving the cycle-015 named-sentence slug intent). The L3-side companion to position 6's L4-side sweep — both propagating the cycle-015 L4 chebyshev `rough-in`→`firm` body re-anchor.
+
+- **Reports applied** (7 of 7):
+  - `reports/2026-05-28T1500Z-abstractor-divfree-projector-L1-L0/` (status: integrated; follow_up_agent: **cycle-016+ harvester/repairer** on `divfree-l1-entry-apply-close-and-reltol-line-drift`; **cross-layer-cross-cutter** on `divfree-closure-nesting-constructed-gate-carrying-constructed-gate`; **abstractor/problems** on `divfree-mult-doc-irrotational-vs-divfree-stale`)
+  - `reports/2026-05-28T214500Z-lifter-l4-krylov-step-cg-sweep/` (status: integrated; follow_up_agent: **lifter** on `l3-l2-body-identity-cg-md-citation-sweep`)
+  - `reports/2026-05-28T213650Z-lifter-l2-krylov-step-cg-sweep/` (status: integrated; follow_up_agent: future slice-removal `phase-1-slice-reduction-audit` on `cg.md` for the 2 retained live-slice citations)
+  - `reports/2026-05-28T213513Z-layer-intro-author-l0-libceed-operator/` (status: integrated; follow_up_agent: later FE-frontier-driven **layer-intro-author** on `fespace.{hpp,cpp}` alternative bundle-6 candidate)
+  - `reports/2026-05-28T213533Z-abstractor-eigsolve-convergence-reason-mapping/` (status: integrated; follow_up_agent: batch-4 meta-phase partly-constructive-mechanism telemetry — no content follow-up)
+  - `reports/2026-05-28T214020Z-lifter-l4-chebyshev-prose-cleanup/` (status: integrated; follow_up_agent: **lifter** on `l3-chebyshev-sibling-formm-foldm-prose-sweep`)
+  - `reports/2026-05-28T214012Z-lifter-l3-chebyshev-prose-refresh/` (status: integrated; follow_up_agent: **lifter** on `l3-chebyshev-sibling-formm-foldm-prose-sweep`)
+  - `reports/2026-05-28T221238Z-integrator-finalize-cycle-016/CYCLE.md` — batch report (this finalize).
+
+- **Layer firm-count changes**: **L1 11 firm + 0 partly-constructive + 3 rough-in + 6 rough-in (obstruction)** (unchanged); L2 2 firm (unchanged; L2/krylov-step cg.md sweep); L3 8 firm + 1 partial-obstruction (unchanged; L3/chebyshev named-sentence refresh); L4 4 firm + 0 rough-in (unchanged; L4/krylov-step cg.md sweep + L4/chebyshev prose refresh); **L1>L0 11 theme files** (5 firm + 1 partly-constructive + 3 rough-in + 2 obstruction; +divfree-projector-mutation-rotation firm); L2>L1 1 firm; L3>L2 1 firm; L4>L3 1 firm + 2 rough-in. **L0 20 → 21 chapters** (fem-libceed-operator-file). **Corpus removals 9/10** (unchanged).
+
+- **Wave-conflict observations** (captured in `scaffolding/integrator-signals.md`):
+  - **7-report single-wave dispatch**; all 7 applied as-is at integration; zero rework loops.
+  - **`book/src/SUMMARY.md` touched by position 1 (L1-L0 divfree row append, line 73) AND position 4 (L0 fem-libceed-operator-file row append, line 90)** at distinct Parts/ranges; position 4 re-read SUMMARY from disk before applying — the `fem-bilinearform-file` L0-Part anchor matched byte-for-byte; no conflict.
+  - **The two chebyshev reports (6 = L4, 7 = L3) touched SIBLING files, not the same file** — `L4/chebyshev.md` vs `L3/chebyshev.md`; zero same-file write conflicts. Every one of the 7 reports touched a distinct primary `book/` file.
+  - **No deferrals, no rejections, no rework loops.** Clean-run streak continues — **twelfth consecutive clean cycle** under the split integrator (cycles 005–016).
+
+- **Safety-net gates**: **retroactive-budget global = 1** (well below the ≥4 block threshold; the 2 `fem-bilinearform-file` forward-reference→live-link retirements at position 4 = 1 firm-file retroactive slice; all other 6 rows reported per-slice 0). **0 build-breakage repairs** (build clean on first run). Commit atomicity: single commit. Consumed-report frontmatter integrity: 7 `integrated_at` touches.
+
+- **Open questions**: **6 promoted** (`divfree-l1-entry-apply-close-and-reltol-line-drift`, `divfree-closure-nesting-constructed-gate-carrying-constructed-gate`, `divfree-mult-doc-irrotational-vs-divfree-stale` [re-surfaced], `l3-l2-body-identity-cg-md-citation-sweep`, `l3-chebyshev-sibling-formm-foldm-prose-sweep`). **3 resolved** (`bundle-6-l0-libceed-operator-file-next-candidate`, `l4-chebyshev-residual-formm-foldm-prose-cleanup`, `l3-chebyshev-downward-prose-iterate-while-refresh`). **3 answered** (`l4-krylov-step-cg-md-citation-sweep`, `l2-krylov-step-cg-md-citation-sweep`, `partly-constructive-entry-mechanism-validated-eigsolve-convergence-reason-mapping`). Formal YAML `status:` flips applied by integrator-finalize per the append-only-ledger discipline (per-report integrators appended RESOLUTION-notes).
+
+- **Skill-uptake telemetry (recorded for batch-4 meta-phase)**: SEVEN-report-consistent — every report substantively exercised the `verify-citation-range` per-range read-back (producer self-verify blocks; codemap `read_range`/`search_text`/`get_symbol_def`/`get_file_subtree`) but NONE emitted a `skill-selection`-sense SKILL invocation marker. The gap is slug-naming convention, not procedure-skipping. Continues the batch-3 `producer-citation-drift-verify-not-self-invoked` + `skill-uptake-survey-non-invocation-cycle-wide` telemetry; the batch-3 meta-phase ASK item (mechanical codemap-backed citation-range checker tool under `tools/`) remains pending human decision.
+
+- **Build**: `cargo make book` — **exit 0, NO repair needed** (`Build Done in 89.56 seconds`). The new L0 `fem-libceed-operator-file` chapter + SUMMARY registration + the 2 retired-to-live-links in `fem-bilinearform-file.md` resolve; the new L1>L0 `divfree-projector-mutation-rotation` theme + its `index.md`/`SUMMARY.md` registration resolve; the eigsolve re-verification `verified_against` YAML, the citation re-anchors, and the chebyshev prose refreshes all render. The **5** pre-existing katex "Potential incomplete link" warnings (ALL in `design/l4_calculus.md` math-display brackets, lines 104/108/122/142×2 — `[v/x]`, `{l₁:v₁,…}`, `[p/params, v/x]`, `[{…e}]`, `[]`; NOT touched this cycle) carry unchanged; non-blocking. Zero genuine File-not-found broken-link errors.
+
+- **Legacy log/cycle-016.md renamed**: pre-layered-era `log/cycle-016.md` (2026-05-24 `forward orthog [L0→L1] — revise`) renamed to `log/cycle-016-legacy.md` per the cycle-005..015 precedent; the README legacy index entry re-pointed.
+
+- **Two-phase SHA patch** (canonical pattern per role spec process step 13): all 7 reports' + this batch CYCLE.md's `integration_commit: PLACEHOLDER_SHA` are patched in a follow-up commit immediately after the finalize commit lands. Message: `patch commit-sha references for cycle-016 finalize commit (<finalize-sha>)`. Same two-phase pattern cycles 004..015 used.
+
+- **Meta-phase does NOT fire this cycle** — cycle-016 is the FIRST primary cycle of meta-batch-4; the batch-4 meta-phase fires after the cycle-018 finalize commit (3:1 cadence), aggregating cycles 016/017/018. Compactify-after-meta-phase applies after the cycle-018 meta-phase, not here.

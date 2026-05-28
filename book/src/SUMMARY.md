@@ -70,6 +70,7 @@
 - [bicgstab-iteration](./L1-L0/bicgstab-iteration.md)
 - [minres-iteration](./L1-L0/minres-iteration.md)
 - [chebyshev-smoother-mutation-rotation](./L1-L0/chebyshev-smoother-mutation-rotation.md)
+- [divfree-projector-mutation-rotation](./L1-L0/divfree-projector-mutation-rotation.md)
 
 # L0 — Cited Palace Source + Reference Notes
 - [Overview](./L0/index.md)
@@ -87,6 +88,7 @@
 - [File — palace/linalg/solver.{hpp,cpp}](./L0/linalg-solver-file.md)
 - [File — palace/linalg/rap.{hpp,cpp}](./L0/linalg-rap-file.md)
 - [File — palace/fem/bilinearform.{hpp,cpp}](./L0/fem-bilinearform-file.md)
+- [File — palace/fem/libceed/operator.{hpp,cpp}](./L0/fem-libceed-operator-file.md)
 - [File — palace/utils/communication.hpp (MPI collectives)](./L0/mpi-globalsum-and-collectives.md)
 - [Overload set — Mult / MultTranspose / AddMult](./L0/apply-linop-overload-set.md)
 - [Class — BaseKspSolver](./L0/kspsolver-base-class.md)

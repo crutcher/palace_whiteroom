@@ -309,6 +309,44 @@ verified_against:
     note: 8-row diverged count is exhaustive over the documented enum; exhaustiveness checked against SLEPc docs (literature anchor), NOT a vendored positive header site (caveat).
 ```
 
+### Re-verification (cycle-016 abstractor)
+
+Independent third confirmation of the negative anchor (the partly-constructive
+mechanism's ENTRY case is strengthened by recurring confirmation that no
+positive site has appeared). All three positive citations re-read exactly
+this cycle via `mcp__palace-codemap__read_range`; all five whole-tree
+negative-anchor searches re-run via `search_text`. Result: **status
+correctly STAYS partly-constructive** — zero materialization, no positive
+Palace source site reads the SLEPc reason code, the 8-row map remains a
+faithful forward-looking reconstruction. Promotion remains gated on the
+same upstream behaviour change as parent Sub-pattern B (a
+`EPSGetConvergedReason` read feeding the outer-loop status); the gate is
+unsatisfied, so the partly-constructive status is unchanged.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/slepc.cpp:687-709
+    verdict: supports
+    audited_at: 2026-05-28T213533Z
+    note: EPSGetConverged@695 (count), EPSConvergedReasonView@699 (print-only, inside if(print>0), PETSC_VIEWER_STDOUT_), return (int)num_conv@708 — re-read exact this cycle.
+  - citation: palace/linalg/slepc.cpp:1170-1191
+    verdict: supports
+    audited_at: 2026-05-28T213533Z
+    note: PEPGetConverged@1178, PEPConvergedReasonView@1182 (print-only), return (int)num_conv@1191 — isomorphic to EPS; re-read exact.
+  - citation: palace/linalg/slepc.cpp:1515-1545
+    verdict: supports
+    audited_at: 2026-05-28T213533Z
+    note: NEPGetConverged@1525, NEPConvergedReasonView@1529 (print-only), then eigenpair-ordering (no early return) — re-read exact; no NEP return-line over-claim.
+  - citation: "whole-tree negative anchor (EPS_DIVERGED / EPS_CONVERGED / GetConvergedReason / DIVERGED)"
+    verdict: supports
+    audited_at: 2026-05-28T213533Z
+    note: All four searches return zero hits this cycle (third independent confirmation). ConvergedReason returns only the 3 print-only Views {699,1182,1529}; GetConverged returns count-readers only — {695,1178,1525} in the three Solve() bodies, {276,310} in spectral-estimation helpers (276 EPS, 310 SVD) — plus ksp.cpp:301+iterative.hpp:98. Negative anchor RE-CONFIRMED — status STAYS partly-constructive.
+  - citation: "SLEPc EPS/PEP/NEP ConvergedReason enums (documented; headers not vendored)"
+    verdict: partially-supports
+    audited_at: 2026-05-28T213533Z
+    note: 8-row diverged count exhaustive over documented SLEPc enum; literature anchor (headers not vendored under reference/), unchanged from cycle-014 — does not weaken the source-confirmed Palace-side negative anchor.
+```
+
 ## Status
 
 `partly-constructive (structural decomposition firm; per-row status
