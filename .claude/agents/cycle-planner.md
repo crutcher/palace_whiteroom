@@ -66,6 +66,7 @@ status: pending
 - Read `scaffolding/integrator-signals.md` tail (most recent ~3 integrator signal sections) for unblocked items, resolution implications, and pattern hints from the last integration.
 - When friction-ledger has `escalating`-status patterns, prioritize work that would address them.
 - When the priority list mentions specific items, slot them in.
+- **Verify Palace source file paths and symbol locations via the MCP codemap before citing them in a dispatch scope.** Use `mcp__palace-codemap__list_files`, `mcp__palace-codemap__search_text`, `mcp__palace-codemap__get_symbol_def`. Do NOT cite a path from memory or inference — you have repeatedly drifted on `linalg/*` file paths (cycle-010 cited non-existent `eps.cpp`/`feast.cpp`; cycle-011 mis-framed `Solver<OperType>` as direct-solver-only; cycle-012 cited `palace/eigensolver/slepc.cpp` when the correct path is `palace/linalg/slepc.cpp`; the orchestrator corrected each in the briefs). If a codemap query is ambiguous, cite the scope by symbol/concept and note "path to be confirmed at dispatch" rather than guessing a path. The codemap tools are reliably available as of cycle-010 (pilot succeeded; routine use cycles 011/012). Friction-ledger `cycle-planner-dispatch-prompt-framing-drift`.
 
 ## What you DO NOT do
 

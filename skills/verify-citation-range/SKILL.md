@@ -33,6 +33,22 @@ This skill names the verification procedure and the drift convention.
 - **Intra-function ±1-3 line drift** (citation extends 1-3 lines past closing brace into whitespace/blank lines) is audit-tolerable — the reader still lands in the right neighborhood and the prose claim is unaffected.
 - **Cross-function-boundary drift** (citation extends into a different named symbol's body) is NOT audit-tolerable — the reader following the citation gets wrong code; the prose claim cannot be verified against the wrong region.
 
+## Audit-report / inherited-citation sub-case (added cycle-012 meta-phase)
+
+A report whose **deliverable itself is a no-drift / citations-verified claim** — lowering-verifier audits, `citation-validity` critic checks, slice-reduction audits — carries an unusually high duty to land its own anchors precisely. Its entire output is a verification assertion; an inherited drift in such a report defeats the audit's purpose.
+
+The sharp failure mode: the report **copies a citation from the artifact it is auditing** and re-asserts it as verified WITHOUT independently confirming the line range against source. The inherited error propagates with an audit's stamp of approval on it.
+
+Additional procedure for audit-shaped reports:
+
+1. **Enumerate every `(file:line)` the report ASSERTS as verified** — especially ones copied from the artifact under audit.
+2. **For each, `read_range` the cited line ±a few lines** (do NOT transcribe the range from the audited artifact — read source).
+3. **Confirm the asserted code/construct is ON the cited line** (not merely "in the neighborhood"). An audit asserting "no drift" must land the construct on the exact line, not the enclosing range.
+4. **When the citation was copied from the audited artifact, flag any drift as BOTH** a report-anchor fix AND an integrator carry-forward correction (the artifact also needs correcting — see friction-ledger `lifter-scope-content-correction-boundary`: bounded evidenced citation corrections are in-scope for the auditor).
+5. **Internal-consistency check.** If the report cites the same construct at two different ranges (a precise line in one section, an enclosing range in another), RECONCILE them before asserting "no drift." An internally-inconsistent audit report is self-refuting.
+
+**Worked example (cycle-012 SLEPc-NEP audit).** The lowering-verifier inherited an `arpack.cpp:387` miscitation verbatim from `book/src/L1/eigsolve.md:116,222` and asserted "no drift" over its own anchors while propagating the error. The un-scale `eig[i] = eig[i] * gamma;` is actually at `arpack.cpp:383` (line 387 is a sort-branch condition). The report was internally inconsistent: §Supporting-evidence cited the correct enclosing range `383-392` while body + `verified_against:` pinned `:387`. Resolution: independently `read_range`-confirm `383` carries the un-scale, fix the report anchor AND carry forward the artifact correction (`arpack.cpp:387` → `:383` at `eigsolve.md:116` + `:222`).
+
 ## Worked examples
 
 **Cycle 69 (GMRES L0.13)**: cited `FgmresSolver::Mult` as `palace/linalg/iterative.cpp:733-875`. Actual `FgmresSolver::Mult` body ends at line 871; lines 872-875 are part of explicit-template-instantiation declarations at file scope. RE-ANCHOR to `733-871`.

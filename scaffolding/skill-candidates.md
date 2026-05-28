@@ -114,7 +114,9 @@ promoted_to: skills/embed-and-persist-subagent-dispatch/SKILL.md
 slug: phase-1-slice-reduction-audit
 proposer: critic (cycle-010, audit of 2026-05-27T220000Z-same-layer-cross-cutter-phase-1-corpus-reduction-audit)
 proposed_at: cycle-010 / 2026-05-27
-status: proposed
+status: promoted
+promoted_to: skills/phase-1-slice-reduction-audit/SKILL.md
+promoted_at: cycle-012 meta-phase / 2026-05-28
 ---
 ```
 
@@ -139,7 +141,10 @@ status: proposed
 slug: revert-dispatch-phase-book-mutation
 proposer: repairer (cycle-012, repair of 2026-05-28T034221Z-layer-intro-author-concept-corrections)
 proposed_at: cycle-012 / 2026-05-28
-status: proposed
+status: promoted
+promoted_to: skills/revert-dispatch-phase-book-mutation/SKILL.md
+promoted_at: cycle-012 meta-phase / 2026-05-28
+promotion_note: promoted as the safety-net companion to the PRIMARY mitigation, which is the layer-intro-author prompt-level guard (`.claude/agents/layer-intro-author.md` §Discipline). See friction-ledger `specialized-agent-direct-write-to-book-during-dispatch`.
 ---
 ```
 
@@ -154,7 +159,10 @@ status: proposed
 slug: audit-report-inherited-miscitation-lint
 proposer: repairer (cycle-012, repair of 2026-05-28T034311Z-lowering-verifier-slepc-nep-coordinate-convention)
 proposed_at: cycle-012 / 2026-05-28
-status: proposed
+status: promoted-as-skill-extension
+promoted_to: skills/verify-citation-range/SKILL.md §"Audit-report / inherited-citation sub-case"
+promoted_at: cycle-012 meta-phase / 2026-05-28
+promotion_note: enacted per the candidate's own recommendation (a) — extended the existing firm `verify-citation-range` skill with an audit-report / inherited-citation section rather than creating a wholly new skill. The gap was uptake + the audit-specific duty, not a missing procedure. A lint note also added to `.claude/agents/lowering-verifier.md` §Discipline (independent read_range confirmation of every asserted-verified anchor).
 ---
 ```
 

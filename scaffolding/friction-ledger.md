@@ -768,10 +768,12 @@ addressed_by: cycle-009 meta-phase (`~/.claude/settings.json` hook refinement �
 ---
 slug: mcp-codemap-permission-denied-across-batch-1
 first_observed: cycle-007
-last_observed: cycle-009
+last_observed: cycle-012
 recurrence_count: 3
-status: ask
-addressed_by: null (cycle-009 meta-phase surfaced to user as ask item)
+status: resolved
+addressed_by: ceb87da (cycle-010 pilot retry — `mcp__palace-codemap__*` allowlisted in .claude/settings.json) + batch-2 routine use with zero permission-denied
+resolved_at: meta-batch-2 (cycle-012 meta-phase)
+resolved_basis: user enacted option (a) — added MCP codemap tool allowlist entries to .claude/settings.json (commit ceb87da, "enable MCP palace-codemap tools in project allowlist (cycle-010 pilot retry)"); cycle-010 pilot SUCCEEDED; cycles 011/012 used the MCP tools routinely for C++ source localization with ZERO permission-denied across the batch. The 3-cycle block (batch-1) is fully cleared.
 ---
 ```
 
@@ -781,14 +783,16 @@ addressed_by: null (cycle-009 meta-phase surfaced to user as ask item)
 
 **Investigation findings.** The MCP server registration in `.mcp.json` is correct; tools surface to the parent session per the system-reminder MCP server instructions. The block is on per-tool permission allowlisting in subagent contexts — `.claude/settings.json` lacks `mcp__palace-codemap__*` entries in `permissions.allow`.
 
-**ASK item (surfaced to user this meta-phase).** Rollout decision options:
-- **(a) Enable**: user adds `"mcp__palace-codemap__list_files"` / `mcp__palace-codemap__get_file_subtree` / `mcp__palace-codemap__get_symbol_def` / `mcp__palace-codemap__get_call_sites` / `mcp__palace-codemap__list_dependencies` / `mcp__palace-codemap__read_range` / `mcp__palace-codemap__search_text` to `.claude/settings.json` `permissions.allow` (could also use the `mcp__palace-codemap__*` wildcard if Claude Code supports it). Then cycle-010 wave-1 retries the pilot.
-- **(b) Defer**: keep pilot dormant; revisit at next major meta-batch when other priorities settle. MCP tools stay un-piloted; vanilla Grep/Read continue as the C++ source-localization path.
-- **(c) Decommission**: retire the MCP codemap from the dispatch-priority list; the Rust server stays buildable but the role specs do NOT reference it as a preferred tool. Use vanilla Grep/Read indefinitely.
+**ASK item (surfaced to user cycle-009 meta-phase; RESOLVED cycle-012 meta-phase).** Rollout decision options were:
+- **(a) Enable**: user adds the `mcp__palace-codemap__*` tool entries to `.claude/settings.json` `permissions.allow`. Then cycle-010 wave-1 retries the pilot.
+- **(b) Defer**: keep pilot dormant; revisit at next major meta-batch.
+- **(c) Decommission**: retire from the dispatch-priority list; use vanilla Grep/Read indefinitely.
 
-**Recommendation (meta-phase).** Option (a) — the pilot has been blocked for 3 cycles and the cost of enabling is one settings.json edit; rollout decision deserves a real pilot rather than another carry-forward. Surfacing to user.
+**User decision (between cycle-009 meta and cycle-010): option (a).** The MCP tool allowlist entries were added to `.claude/settings.json` (commit `ceb87da` "enable MCP palace-codemap tools in project allowlist (cycle-010 pilot retry)").
 
-**Watch:** post-user-decision, re-status. If (a), the cycle-010 pilot result feeds the next rollout decision (broad role-spec rollout vs. pilot-only). If (b), entry stays `ask` until next batch's meta. If (c), status flips `decommissioned`.
+**Resolution (cycle-012 meta-phase, this update).** The cycle-010 pilot SUCCEEDED. Cycles 011/012 used the MCP codemap tools (`list_files` / `get_symbol_def` / `search_text` / `read_range` / `get_call_sites` / `list_dependencies` / `get_file_subtree`) routinely for C++ source localization with ZERO permission-denied across the batch. The 3-cycle block is fully cleared; status flipped `ask` → `resolved`. See the companion codification decision below (`mcp-first-localization-codified`): the cycle-012 meta-phase codifies MCP-first localization in CLAUDE.md §Target system (NOT as a hard per-role rule — see no-go reasoning in the meta-phase report) so the tooling's availability is documented for cycle-013+ agents.
+
+**Watch:** if a future cycle hits a permission-denied on these tools (e.g., a new MCP tool surfaces that isn't in the allowlist), re-open at recurrence-4 and re-allowlist.
 
 ---
 
@@ -888,5 +892,235 @@ addressed_by: cycle-009 meta-phase (CLAUDE.md §Repository status + §Methodolog
 - (c) `scaffolding/priorities.md`: add priority #19 "phase-1-corpus-reduction-audit" — cycle-010+ `same-layer-cross-cutter`-scoped dispatch on slices that overlap firm layered entries; first targets are krylov-chain slices.
 
 **Watch:** if the audit-dispatch pattern surfaces in cycle-010+ but slices accumulate without reduction (i.e., audits propose reductions and they're not applied), escalate to recurrence-2 and consider integrator-per-report role-spec touch on slice-stub authoring procedure. If the audit pattern doesn't surface at all over 2-3 batches, the priority needs to be raised in cycle-planner's reading attention.
+
+---
+
+```yaml
+---
+slug: specialized-agent-direct-write-to-book-during-dispatch
+first_observed: cycle-008
+last_observed: cycle-012
+recurrence_count: 2
+status: addressed
+addressed_by: cycle-012 meta-phase (`.claude/agents/layer-intro-author.md` top-level Discipline-bullet prompt-guard + skill `revert-dispatch-phase-book-mutation` promoted as repairer safety-net)
+---
+```
+
+**Pattern (generalized; supersedes the agent-specific cycle-008 entry `abstractor-direct-write-to-book-during-dispatch`).** A specialized dispatch agent writes directly to `book/` during the **dispatch phase** (Phase 2) rather than emitting proposed-changes blocks via its CYCLE.md channel for integrator-per-report to apply in Phase 5. This violates the CLAUDE.md write-authority partition (specialized agents write to `reports/<id>/CYCLE.md` only) and the no-artifact-mutation-in-dispatch invariant.
+
+**Two instances across two batches (different agents):**
+- **Cycle-008 (abstractor).** Wave-1 dispatch #2 (abstractor on ksp_solve L1>L0) wrote 3 artifact files directly. Critic failed `plan-kind-consistency`; repairer executed Option-A clean restoration. Recorded as `abstractor-direct-write-to-book-during-dispatch` (recurrence-1 at the time; cycle-009 meta treated it as a one-off and did NOT enact a prompt-guard, reasoning the role spec was already clear and added prominence risked signal fatigue).
+- **Cycle-012 (layer-intro-author).** Report #6 (concept-corrections) wrote 4 `book/src/concepts/` edits directly during dispatch. Critic caught (HIGH, issue 1); repairer reverted all 4 to HEAD (Option A); integrator-per-report re-applied cleanly from proposed-changes blocks (all 4 `[old]` anchors matched committed HEAD verbatim). First observed instance for layer-intro-author.
+
+**Re-characterization (cycle-012 meta-phase).** The cycle-009 "treat as one-off; no prompt-guard" decision held for the abstractor specifically, but the pattern has now recurred for a DIFFERENT specialized agent (layer-intro-author). This is **recurrence-2 of the generalized pattern** — the leak is not agent-specific; it is a class of dispatch-time behavior where an agent that is naturally "applying corrections" (lifter-flavored or concept-correcting work) treats the corrections as edits-to-make rather than changes-to-propose. The two affected agents (abstractor, layer-intro-author) are both ones whose work sometimes resembles direct editing. Per the cycle-008 entry's own watch clause ("if cycle-010+ sees a second occurrence of any specialized agent writing directly to `book/`, escalate to recurrence-2 and enact (a) role-spec wording-prominence boost ... (b) consider an integrator-per-report safety-net gate"), the meta-phase now enacts.
+
+**Mitigation (cycle-012 meta-phase, this entry):**
+- (a) **`.claude/agents/layer-intro-author.md`** — added a top-level Discipline bullet (prominent, not buried in "What you DO NOT do"): "**Do NOT write to `book/` (or any artifact file) yourself. Emit proposed-changes blocks in your CYCLE.md; integrator-per-report applies them in Phase 5.** This applies especially to concept-page corrections, which feel like edits to make but are changes to propose." layer-intro-author is the agent that leaked this cycle and the one most prone to the concept-correction-feels-like-an-edit failure mode.
+- (b) **Skill `revert-dispatch-phase-book-mutation` promoted** (`skills/revert-dispatch-phase-book-mutation/SKILL.md`) — the deterministic seven-step repairer git procedure for cleanly reverting a dispatch-phase artifact leak (the cycle-012 repairer executed this shape; promoting it makes the recovery machine-replayable as a safety net for residual leaks). The prompt-guard (a) is the primary mitigation (prevent the leak); the skill (b) is the safety net (repair residual leaks).
+- (c) **Did NOT add a per-report-integrator safety-net gate** (the cycle-008 watch clause's option (b)) — see no-go reasoning in the cycle-012 meta-phase report; the repairer already catches this reliably pre-apply, and a pre-dispatch clean-tree gate is a tooling change (ask-class) not a role-spec edit. Deferred.
+
+**Watch:** if a THIRD specialized agent leaks (recurrence-3), escalate: enact the prompt-guard across ALL specialized agent specs (harvester / abstractor / lifter / lowering-verifier / combinator-miner / same-layer-cross-cutter / cross-layer-cross-cutter), and re-weigh the integrator-per-report pre-dispatch clean-tree gate (ask the user, as it is a tooling change).
+
+---
+
+```yaml
+---
+slug: skill-uptake-survey-non-invocation-cycle-wide
+first_observed: cycle-010
+last_observed: cycle-012
+recurrence_count: 3
+status: recurring
+addressed_by: null (cycle-012 meta-phase judged: telemetry-noise, not actionable friction; recalibration deferred — see report no-go)
+---
+```
+
+**Pattern.** Specialized dispatch agents perform skill-shaped work (citation-range verification à la `verify-citation-range`; variant-axis classification à la `classify-variant-axis`; refinement-surface checks à la `verify-refinement-surface`) **without explicitly invoking the named skill**. The critic's 8th check (`skill-uptake-survey`) flags the non-invocation each cycle. Cycle-012 was CYCLE-WIDE: all 8 reports lacked explicit skill invocation despite applicability; the slepc-nep critic noted the `:387` citation drift "would likely have been caught by `verify-citation-range`."
+
+**Three-cycle pattern:** cycle-010 (wave-2 passes 6/7), cycle-011 (wave-2 passes 7/8), cycle-012 (all 8 reports). Recurrence-3.
+
+**Cycle-012 meta-phase judgment: telemetry-noise, recalibration DEFERRED (no-go).** The check is firing on a behavior that is mostly fine: agents are *doing the work the skills describe* (the citation-range checks happen, the variant-axis classification happens) — they just aren't writing `## Skills invoked: verify-citation-range` in their CYCLE.md. The skills are procedural knowledge embedded in the agent role specs and the agents' own competence; explicit invocation is a telemetry artifact, not a quality signal, for opus-tier agents who already internalize the procedure. The ONE place where it mattered (the cycle-012 `:387` drift) is better addressed by the `audit-report-inherited-miscitation-lint` candidate (a verify-citation-range refinement for the audit-report sub-case) than by forcing skill-invocation telemetry. **The cost of recalibrating the check now is premature** — see report no-go. The actionable sub-signal (audit reports must independently confirm every asserted-verified anchor) is enacted separately via a `verify-citation-range` SKILL.md extension + lowering-verifier/critic spec lint note. Status `recurring`, not escalated, because the pattern is benign telemetry.
+
+**Watch:** if a future cycle shows a *quality defect* that an explicitly-invoked skill would have caught (not just a telemetry gap), escalate to recurrence-4 and recalibrate the `skill-uptake-survey` check — e.g., narrow it to flag only when an applicable skill's *outcome* is absent (a missed citation drift, an un-classified variant axis), not when the invocation *string* is absent. The distinction is "did the work happen" vs "was the skill named."
+
+---
+
+```yaml
+---
+slug: partly-constructive-lowering-theme-status
+first_observed: cycle-010
+last_observed: cycle-012
+recurrence_count: 3
+status: addressed
+addressed_by: cycle-012 meta-phase (CLAUDE.md §Methodology invariants new bullet formalizing `partly-constructive` as a first-class theme-status + `.claude/agents/abstractor.md` + `.claude/agents/lowering-verifier.md` Discipline touches)
+---
+```
+
+**Pattern (codification).** Lowering themes (and constructed L1 operators) repeatedly land in a status between `firm` and `rough-in`: **firm-structural** (the rewrite decomposition is recognized and exhaustively cited) **but partly-constructive** (some materialization — a status value, a result field, an error condition — is reconstructed from negative anchors / literature rather than read directly from a positive Palace source site, pending an upstream Palace refactor OR a lowering-verifier per-line audit). The same gate-mechanism keeps recurring.
+
+**Three instances:**
+- **Cycle-010 (lifter).** The L1-constructive `LinearSolveFailed` option (b) on eigsolve — structural recognition with deferred materialization.
+- **Cycle-011 (abstractor).** The `eigsolve-mutation-rotation` L1>L0 theme — "first firm-structural-but-partly-constructive theme in artifact"; Sub-pattern B's `LinearSolveFailed` materialization is partly-constructive; the rest is firm-structural.
+- **Cycle-012 (lowering-verifier).** The eigsolve theme audit returned confirms-with-refinement and UNBLOCKS but does NOT enact the Sub-pattern B partly-constructive → fully-firm promotion (gated to cycle-013 abstractor pending Edits 2+3). The `## Status` partly-constructive caveat was left in place.
+
+**Cycle-012 meta-phase decision: codify `partly-constructive` as a first-class theme-status.** It has been an ad-hoc phrase in three reports across the batch; making it a named status alongside `firm` / `rough-in` / `obstruction` gives authors and the critic a shared vocabulary and a clear promotion gate. A `partly-constructive` theme is firm in its structural decomposition but carries a named, citation-backed caveat on the constructive sub-parts, with an explicit promotion condition (what would make it fully firm: an upstream source site, a per-line audit, or a literature anchor upgrade).
+
+**Enactment (cycle-012 meta-phase, this entry):**
+- (a) **CLAUDE.md §Methodology invariants** — new bullet "Theme/operator status `partly-constructive` is first-class" defining the status, its caveat-with-citation requirement, and its promotion gate; cites the eigsolve-mutation-rotation precedent.
+- (b) **`.claude/agents/abstractor.md` §Discipline** — bullet: when a theme is structurally firm but a sub-part is reconstructed (negative-anchor / literature), mark `## Status: partly-constructive` with a named caveat + explicit promotion condition; do not mark it `firm` and do not downgrade the whole theme to `rough-in`.
+- (c) **`.claude/agents/lowering-verifier.md` §Discipline** — bullet: a `partly-constructive` theme audit may UNBLOCK the promotion (confirm the structural decomposition + identify the exact edits needed to make the constructive sub-part firm) without ENACTING it; record the gate explicitly and route the enacting edits to a follow-up dispatch.
+
+**Watch:** if `partly-constructive` themes accumulate without ever being promoted to firm (i.e., the gate never closes over 3+ batches), escalate to recurrence-4 — the status may be functioning as a permanent escape hatch rather than a transient gate. The cycle-013 eigsolve promotion (gated this cycle) is the first test of whether the gate closes.
+
+---
+
+```yaml
+---
+slug: negative-anchor-citation-pattern
+first_observed: cycle-010
+last_observed: cycle-012
+recurrence_count: 3
+status: addressed
+addressed_by: cycle-012 meta-phase (CLAUDE.md §Methodology invariants new bullet distinguishing per-status-variant negative anchors from obstruction-theme negative anchors)
+---
+```
+
+**Pattern (codification).** Constructive cases at L1 (a status value, a result field, an error condition that the literature/algorithm implies but the Palace source does NOT positively exhibit at a single site) are cited with **negative anchors** — citations to where Palace does NOT do something, or where the absence is structurally significant. This is distinct from the existing per-operator `obstruction`-theme negative-anchor pattern (where the whole theme documents an unimplemented stub).
+
+**Three instances:** cycle-010 lifter `LinearSolveFailed` callout (where the failure status is materialized from negative anchors), cycle-011 lifter `EigResult.iterations` field (L1-constructive with a negative-anchor citation set parallel to the cycle-010 LinearSolveFailed callout), cycle-012 audit's negative anchors for the eigsolve constructive cases.
+
+**Cycle-012 meta-phase decision: codify the distinction.** The negative-anchor pattern at per-status-variant granularity (citing the absence of a positive site to justify a constructed status/field) is a legitimate and recurring citation form, but it must be distinguished from obstruction-theme negative anchors (which document an unimplemented feature). The distinction matters for the critic's `citation-validity` check (a per-status negative anchor is valid evidence for a `partly-constructive` constructive sub-part; it is NOT a license to assert a positive claim without a positive site) and for downstream consumers (a per-status negative anchor signals "this is constructed, watch for an upstream positive site" — paired with the `partly-constructive` status above).
+
+**Enactment (cycle-012 meta-phase, this entry):**
+- (a) **CLAUDE.md §Methodology invariants** — bullet folded into the `partly-constructive` invariant (they co-occur): a `partly-constructive` constructive sub-part is justified by negative anchors (citations to the absence / non-exhibition of the positive site), and these are distinct from obstruction-theme negative anchors. The negative anchor is evidence FOR the constructed form being a faithful reconstruction, not evidence of a positive Palace site.
+
+**Watch:** if a negative-anchor citation is used to assert a FIRM positive claim (not a `partly-constructive` one), the critic should flag under `citation-validity` / `surface-or-evidence` as a misuse — negative anchors support constructed/partly-constructive forms, not firm positive ones.
+
+---
+
+```yaml
+---
+slug: lifter-scope-content-correction-boundary
+first_observed: cycle-010
+last_observed: cycle-012
+recurrence_count: 3
+status: addressed
+addressed_by: cycle-012 meta-phase (`.claude/agents/lifter.md` + `.claude/agents/lowering-verifier.md` Discipline touches — L0-evidence-driven prose correction is in-scope when the correction is evidenced and bounded)
+---
+```
+
+**Pattern (scope clarification).** Lifters and lowering-verifiers (auditors) doing L0-evidence-driven prose corrections that border on abstractor authoring authority. The recurring tension: an audit/re-anchor dispatch reads L0 source, finds the artifact's prose is wrong (a convention stated backwards, a citation drifted, a claim contradicting source), and CORRECTS it in place — which is arguably content-authoring (abstractor's domain) rather than re-anchoring/auditing (lifter/lowering-verifier's domain).
+
+**Three instances:** cycle-010 lifter L0-evidence-driven prose tightening; cycle-011 lifter Edit 3 §5 rewrite of eigsolve from incorrect convention-(a) to correct convention-(b) (a substantive content correction defensible by 5 backend-specific un-scaling citations); cycle-012 audits (the SLEPc-NEP §5 refinement + the `:387`→`:383` carry-forward citation fixes).
+
+**Cycle-012 meta-phase decision: codify content-correction as IN-SCOPE for lifter/lowering-verifier when bounded and evidenced.** The corrections in all three instances were sound (each was L0-evidence-driven and demonstrably fixed a wrong claim). Forcing a re-route to abstractor for every prose correction would add a full dispatch round-trip for what is a surgical, evidenced fix. The clarification: a lifter or lowering-verifier MAY correct artifact prose in place when (i) the correction is directly supported by an L0 citation the dispatch read, (ii) the correction is bounded (fixing a wrong claim / drifted citation / backward convention, not re-architecting the entry), and (iii) the dispatch records the correction explicitly as a prose-correction (not a silent edit). Re-architecting (changing the entry's decomposition, adding new sub-patterns, changing the operator's signature) remains abstractor/harvester authority and must re-route.
+
+**Enactment (cycle-012 meta-phase, this entry):**
+- (a) **`.claude/agents/lifter.md` §Discipline** — bullet: L0-evidence-driven prose correction is in-scope when bounded + evidenced + recorded; re-architecting re-routes to abstractor/harvester (flag in Open questions).
+- (b) **`.claude/agents/lowering-verifier.md` §Discipline** — same bullet for audit dispatches: a citation drift / wrong convention found during audit may be corrected in place with the supporting L0 citation, recorded as a carry-forward correction; structural re-decomposition re-routes.
+
+**Watch:** if a lifter/lowering-verifier prose correction is later found to have changed an entry's *meaning* beyond fixing a wrong claim (i.e., crossed into re-architecting), escalate to recurrence-4 and tighten the boundary (require a co-located abstractor reread for any §-level rewrite).
+
+---
+
+```yaml
+---
+slug: cycle-planner-dispatch-prompt-framing-drift
+first_observed: cycle-010
+last_observed: cycle-012
+recurrence_count: 3
+status: addressed
+addressed_by: cycle-012 meta-phase (`.claude/agents/cycle-planner.md` Discipline touch — verify file paths via MCP codemap before citing them in dispatch scopes)
+---
+```
+
+**Pattern.** The cycle-planner's source-file framing summaries in dispatch scopes diverge from source truth — it cites file paths / class-roles that do not exist or are wrong, and the orchestrator corrects them in the briefs before dispatch.
+
+**Three instances:**
+- **Cycle-010.** Planner cited `eps.cpp` / `feast.cpp` (non-existent paths).
+- **Cycle-011.** Planner framed `Solver<OperType>` as a direct-solver-only base (it is the type-axis root of ALL Palace solvers).
+- **Cycle-012.** Planner cited `palace/eigensolver/slepc.cpp` (wrong; the correct path is `palace/linalg/slepc.cpp`); orchestrator corrected in the briefs.
+
+**Cycle-012 meta-phase decision: enact a cycle-planner discipline touch.** The friction is now recurrence-3 and the enabling fix is available: the cycle-planner has MCP codemap access as of cycle-010 (the pilot succeeded; see `mcp-codemap-permission-denied-across-batch-1` resolved above). The planner can and should verify a file path / symbol location via `mcp__palace-codemap__list_files` / `search_text` / `get_symbol_def` before citing it in a dispatch scope. This is low-cost (the tools are fast localization queries) and removes a recurring orchestrator-correction step.
+
+**Enactment (cycle-012 meta-phase, this entry):**
+- (a) **`.claude/agents/cycle-planner.md` §Discipline** — bullet: "Before citing a Palace source file path or symbol location in a dispatch scope, verify it via the MCP codemap tools (`mcp__palace-codemap__list_files`, `search_text`, `get_symbol_def`). Do NOT cite a path from memory or inference — the planner has repeatedly drifted on `linalg/*` file paths (cycles 010/011/012). If the codemap query is ambiguous, cite the scope by symbol/concept and note 'path to be confirmed at dispatch' rather than guessing a path." NOTE: the cycle-planner is haiku-tier; the MCP-verification step is a small, mechanical addition that fits the tier.
+
+**Watch:** if the planner continues to drift on paths post-enactment (recurrence-4), escalate: consider (a) the orchestrator running a path-lint over the plan before dispatch, or (b) swapping the cycle-planner to opus (the haiku tier may under-use the MCP tools). The path-drift has been cheaply corrected each time so far; the discipline touch should suffice.
+
+---
+
+```yaml
+---
+slug: per-report-integrator-cycle-mislabeling
+first_observed: cycle-012
+last_observed: cycle-012
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-012 meta-phase (`.claude/agents/integrator-per-report.md` Process + Discipline touches — derive cycle-id from the staging-dir path the parent supplies; never infer it)
+---
+```
+
+**Pattern (new this batch).** A per-report integrator mis-filed its staging row to a wrong-cycle staging directory. Cycle-012 report #3 (eigsolve lowering-verifier) wrote its STAGING row to `reports/cycle-013-integrator-staging/STAGING.md` (mislabeled the cycle as 013); the orchestrator corrected — removed the misplaced directory, relocated the row to `cycle-012` STAGING, fixed backward `cycle-013` references in `book/src/L1-L0/eigsolve-mutation-rotation.md` + the OQ `opened_at`. Forward-references to the genuinely-next-cycle GATED cycle-013 abstractor follow-up were intentionally retained.
+
+**Surfaced by**: cycle-012 integrator-finalize §Wave-conflict observations + integrator-signals.md cycle-012 §Integration-tooling friction signal 8.
+
+**Probable root cause.** The per-report integrator inferred the cycle number (likely from the report's content, which discussed cycle-013 forward-references) rather than taking it from the staging-dir path the parent supplies in its dispatch. The role spec already says "the parent's dispatch tells you the path" (integrator-per-report.md Inputs line 16), but does not say "use ONLY that path; never infer the cycle-id from report content."
+
+**Mitigation (cycle-012 meta-phase, this entry):**
+- (a) **`.claude/agents/integrator-per-report.md` §Process step 7 + §Discipline** — explicit: "The staging-dir path (and thus the cycle-id) is given to you by the parent's dispatch prompt. Write your staging row ONLY to that path. Do NOT infer the cycle-id from the report's content (reports often discuss forward-references to future cycles — those are content, not your filing target). If the parent did not supply a staging-dir path, stop and return rather than guessing." This is a low-cascade clarification of an existing input contract.
+- (b) Companion orchestration note (not a role-spec enactment, recorded for the resume-notes): the parent's integrator-per-report dispatch prompt should always state the cycle number AND the exact staging-dir path explicitly.
+
+**Watch:** if a per-report integrator mis-files again despite the role-spec clarification (recurrence-2), escalate: the parent should pre-create the staging-dir before dispatching the first per-report integrator and pass the absolute path, so the integrator never constructs the path itself.
+
+---
+
+```yaml
+---
+slug: l3-l1-inline-identity-rotation-convention
+first_observed: cycle-010
+last_observed: cycle-012
+recurrence_count: 9
+status: addressed
+addressed_by: cycle-012 meta-phase DECISION — codify the in-line identity-rotation convention (option a); NO `book/src/L3-L1/` directory. CLAUDE.md §Methodology invariants new bullet + `.claude/agents/harvester.md` Discipline touch.
+---
+```
+
+**Pattern (decision item — RESOLVED this meta-phase).** The methodology invariant `Identity-lowerings still require both L levels` (cycle-009 meta-phase) means an operator whose lowering between two adjacent layers is identity-in-form still gets entries at both layers. The QUESTION this raised: when the identity rotation spans NON-adjacent layers (e.g., an L3 operator whose form is value-thread-isomorphic all the way down to its L1 form, because the intervening L2 absorption is also identity-like), does that identity get a dedicated `book/src/L3-L1/` lowering-theme directory + thin theme file, or is it annotated **in-line** within the L3 entry's prose / dep-map and the L3>L2 theme?
+
+**Empirical convergence (~9+ in-line annotations, exceeds the revisit threshold of 6).** Across cycles 010/011/012 the BLAS-1 L3 cohort (`apply_linop`, `axpy`, `axpby`, `axpbypcz`, `dot`, `nrm2`, `scal` — 7 operators) plus `krylov-step` all annotate their identity-rotation relationships **in-line** within the L3 entry (the "Downward to L2" prose, the dep-map, and the L3>L2 theme that ratifies the body-identity) rather than via a `book/src/L3-L1/` directory. Direct inspection (cycle-012 meta-phase): `book/src/L3/krylov-step.md:28-31` carries the upward (to L4) and downward (to L2) identity annotations in-line, citing the existing `L4-L3/` and `L3-L2/` themes; no `book/src/L3-L1/` directory exists (only `L2-L1/` and `L3-L2/`). The convention has converged organically and works.
+
+**Cycle-012 meta-phase DECISION: codify the in-line convention (option a). Do NOT introduce a `book/src/L3-L1/` directory (option b).** Rationale:
+1. **The directory structure is per-adjacent-layer-edge by design** (CLAUDE.md §Layout: `L4-L3/`, `L3-L2/`, `L2-L1/`, `L1-L0/`). A `L3-L1/` directory would be the first NON-adjacent lowering directory, breaking the adjacent-edge invariant and inviting `L4-L2/`, `L4-L1/`, etc. proliferation.
+2. **Identity-in-form across non-adjacent layers is fully captured by the chain of adjacent themes** (L3>L2 identity + L2>L1 identity ⟹ L3>L1 identity transitively). A dedicated `L3-L1/` theme would duplicate what the adjacent-edge chain already says.
+3. **The in-line annotation is the natural home**: per the `Identity-lowerings still require both L levels` invariant, each L_n entry is coherent within itself and notes its identity relationships in-line (the L3 entry says "my body is value-thread-isomorphic to my L2 form, which is in turn isomorphic to L1"). The reader at L3 gets the identity story without a directory hop.
+4. **Empirical convergence** — 9+ instances already do it in-line, cleanly, with no friction. Migrating them into a new directory (option b) would be a non-trivial mechanical migration polluting git history, for zero coherence gain.
+
+**Enactment (cycle-012 meta-phase, this entry):**
+- (a) **CLAUDE.md §Methodology invariants** — new bullet "Identity rotations across non-adjacent layers are annotated in-line, not via a dedicated lowering directory" — codifies that lowering directories are per-adjacent-edge only; non-adjacent identity is the transitive consequence of the adjacent-edge themes and is annotated in-line in the L_n entry + dep-map.
+- (b) **`.claude/agents/harvester.md` §Discipline** — bullet extending the existing "Identity-lowerings still require both L levels" bullet: when an operator's identity-in-form spans non-adjacent layers, annotate the relationship in-line in the L_n entry (the "Downward" prose + dep-map) and rely on the chain of adjacent-edge L_{n+1}>L_n themes; do NOT create a non-adjacent lowering directory (no `L3-L1/`, `L4-L2/`, etc.).
+
+**Watch:** if a future operator surfaces a NON-identity rotation across non-adjacent layers (i.e., the chain of adjacent themes does NOT compose to the obvious identity, and there is genuine cross-layer rewrite content that the adjacent themes don't capture), re-open — that would be the case where a non-adjacent lowering document might be warranted. No such case has surfaced; all 9+ instances are identity-in-form.
+
+---
+
+```yaml
+---
+slug: mcp-first-localization-codified
+first_observed: cycle-010
+last_observed: cycle-012
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-012 meta-phase (CLAUDE.md §Target system MCP-first localization note; NOT a hard per-role rule — see report no-go on per-role-spec mandate)
+---
+```
+
+**Pattern (codification, positive).** The MCP codemap pilot succeeded cycle-010 and cycles 011/012 used the tools routinely for C++ source localization (`list_files` / `get_symbol_def` / `search_text` / `read_range` / `get_call_sites` / `list_dependencies` / `get_file_subtree`) with zero permission-denied (see `mcp-codemap-permission-denied-across-batch-1` resolved). The MCP server's own instructions (surfaced via system-reminder) already advise "localize before reading; read_range is the only source-returning tool — use it deliberately."
+
+**Cycle-012 meta-phase decision: codify MCP-first localization in CLAUDE.md §Target system (soft guidance), NOT as a hard per-role-spec mandate.** Rationale: the tooling is now reliably available and is the right localization path for the heavy-C++-template Palace tree (the CLAUDE.md §Target system already says "prefer narrow text-search before reading"; MCP codemap is the better realization of that guidance). But mandating it per-role across 8 specialized agent specs would be (i) redundant (the MCP server instructions already advise the pattern to every agent that has the tools), and (ii) over-constraining (an agent should be free to use vanilla Grep/Read when that is faster for a given query). A single CLAUDE.md §Target system note documents the availability + preference; agents apply judgment.
+
+**Enactment (cycle-012 meta-phase, this entry):**
+- (a) **CLAUDE.md §Target system** — note added: the `palace-codemap` MCP server is available and is the preferred localization path for Palace C++ source (localize via `list_files` / `search_text` / `get_symbol_def` / `get_call_sites` / `list_dependencies` / `get_file_subtree`; use `read_range` deliberately for the actual source). Pilot succeeded cycle-010; routine use cycles 011/012. Vanilla Grep/Read remain available; agent judgment on which to use.
+
+**Watch:** if MCP-first localization does not take hold in cycle-013+ (agents keep defaulting to vanilla Grep over the codemap on Palace C++ queries despite the codemap being faster), reconsider a per-role-spec touch or a stronger CLAUDE.md mandate. The soft note is the minimal codification consistent with "don't over-ask / don't over-constrain."
 
 ---

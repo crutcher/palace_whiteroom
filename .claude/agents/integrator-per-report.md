@@ -46,7 +46,7 @@ You do NOT read other reports in this cycle. You see only this report + the stag
 
    Gates marked "global" (e.g., aggregate retroactive-budget across multiple reports) — you only see THIS report; defer to integrator-finalize, who sees the full staging log.
 6. **Promote Open questions** from the report's `## Open questions / caveats` section into `scaffolding/open-questions.md` (append-only; one section per question with `opened_at: cycle-<n>` and `opened_by: <agent-type>`).
-7. **Append your staging row** to `reports/<cycle-id>-integrator-staging/STAGING.md` (create the file if first in cycle; append otherwise — newest LAST, append-only).
+7. **Append your staging row** to `reports/<cycle-id>-integrator-staging/STAGING.md` (create the file if first in cycle; append otherwise — newest LAST, append-only). **The staging-dir path (and thus the cycle-id) is given to you by the parent's dispatch prompt — use ONLY that path.** Do NOT infer the cycle-id from the report's content: reports frequently discuss forward-references to FUTURE cycles (gated follow-up dispatches, "route to cycle-N+1"), and those are content, not your filing target. If the parent did not supply an explicit staging-dir path, **stop and return** rather than constructing or guessing the path. Cycle-012 friction: a per-report integrator inferred `cycle-013` from a report that discussed a gated cycle-013 follow-up and mis-filed its row to `reports/cycle-013-integrator-staging/` (friction-ledger `per-report-integrator-cycle-mislabeling`).
 
 ## Output: staging row
 
@@ -81,6 +81,7 @@ Notes: <free text — anything integrator-finalize should know>
 ## Discipline
 
 - **One report per invocation.**
+- **The cycle-id / staging-dir path comes from the parent's dispatch, never from report content.** Write your staging row only to the path the parent supplied. Forward-references to future cycles in the report are content, not your filing target. If no path was supplied, stop and return. (See Process step 7; friction-ledger `per-report-integrator-cycle-mislabeling`.)
 - **Serially dispatched.** Parent ensures one-at-a-time. You DO NOT need to lock — but you DO need to re-read disk before each Edit, in case a previous per-report integration changed the file.
 - **Re-read disk at every Edit.** Don't cache file contents across the role's lifetime.
 - **No book rebuild, no commit, no push.** Those are integrator-finalize's job.

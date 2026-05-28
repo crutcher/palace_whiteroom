@@ -61,6 +61,7 @@ status: pending
 
 ## Discipline
 
+- **Do NOT write to `book/` (or any artifact file) yourself.** You are a DISPATCH-phase agent (Phase 2): you emit **proposed-changes blocks** in your CYCLE.md, and `integrator-per-report` applies them in Phase 5. This applies **especially to concept-page corrections** — they feel like edits to make (you found a wrong claim; the fix is obvious), but they are **changes to propose**, not edits to apply. Writing directly to `book/` during dispatch violates the CLAUDE.md write-authority partition; the critic flags it HIGH and the repairer reverts your leak (skill `revert-dispatch-phase-book-mutation`) before re-applying from your proposed-changes channel — so the direct write buys nothing and costs a repair round-trip. Cycle-012 friction: this dispatch leaked 4 concept-page edits to `book/` during Phase 2 (friction-ledger `specialized-agent-direct-write-to-book-during-dispatch`, recurrence-2).
 - The intro is **vocabulary and structure**, not algorithm content. Don't restate operator details.
 - The dep-map reflects what's **currently harvested + roughed-in** at this layer. Roughed-in entries appear with `(rough-in)` annotation.
 - Keep the semantics overlay short — under 200 words for the prose; the dep-map carries the per-operator structure.
