@@ -176,7 +176,10 @@ promotion_note: enacted per the candidate's own recommendation (a) — extended 
 slug: partly-constructive-promotion-checklist
 proposer: critic
 proposed_at: cycle-013
-status: proposed
+status: promoted
+promoted_to: skills/partly-constructive-promotion-checklist/SKILL.md
+promoted_at: cycle-015 meta-phase / 2026-05-29
+promotion_note: promoted on the batch-3 3× lifecycle precedent (eigsolve EXIT cycle-013 + divfree/chebyshev-L4 ENACT cycle-015 + the cycle-014 STAYS case). The "audit cycle-N / enact cycle-N+1" two-dispatch protocol closed cleanly 3×, making the 4-point checklist concretely writable. Enacting-producer pointer added to .claude/agents/abstractor.md §Discipline (the cycle-015 promotion-checklist bullet). See friction-ledger `partly-constructive-lowering-theme-status` (validated-by-use).
 ---
 
 # partly-constructive-promotion-checklist

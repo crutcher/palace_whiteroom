@@ -33,6 +33,22 @@ This skill names the verification procedure and the drift convention.
 - **Intra-function ±1-3 line drift** (citation extends 1-3 lines past closing brace into whitespace/blank lines) is audit-tolerable — the reader still lands in the right neighborhood and the prose claim is unaffected.
 - **Cross-function-boundary drift** (citation extends into a different named symbol's body) is NOT audit-tolerable — the reader following the citation gets wrong code; the prose claim cannot be verified against the wrong region.
 
+## Producer self-verification before emitting citations (added cycle-015 meta-phase)
+
+The previous sections frame this skill as something the Explorer/Critic applies to *already-emitted* citations. Batch-3 (cycles 013/014/015) surfaced the recurring failure that this is **too late**: producer dispatch agents (harvester, abstractor, lifter, layer-intro-author — and even the citation-auditing lowering-verifier) emit `path:lo-hi` citations that drift off the true source line by 1–N lines, and only the downstream repairer/critic catches them, at a per-cycle repair-round cost. The producers cite from memory or from an earlier read whose line numbers have drifted. The fix is to **run this verification at emit time, on every citation, before the citation leaves the producer's CYCLE.md.**
+
+This is the **strongest recurring friction of batch-3** (friction-ledger `producer-citation-drift-verify-not-self-invoked`): ~6 reports drifted in cycle-013, 5-of-8 in cycle-014 (including the auditing role), and the bilinearform `RT_FECollection`/`L2_FECollection` + 2 relocated-dangle re-anchors in cycle-015.
+
+**Producer-emit-time procedure (run for EVERY citation before emitting):**
+
+1. **Do NOT cite from memory or from an earlier read.** Line numbers drift between an early localization read and the final citation; the codemap is the ground truth, not your working memory.
+2. **`read_range` (or codemap `get_symbol_def` / `search_text`) the exact cited lines** `lo`–`hi` plus a few lines of context.
+3. **Confirm the named construct sits ON the asserted line.** The function/struct/member/statement the prose attributes to `lo` (or to a specific line within `lo`–`hi`) must be on that exact line — not merely "in the neighborhood." `get_symbol_def` returns the symbol's definition line directly; prefer it for single-symbol attributions.
+4. **For a re-anchored / relocated pointer (lifter sweeps), confirm the NEW target is the TERMINAL firm home** — not another relocated-dangle that will itself need re-pointing. (Cycle-015 the L3 cg.md sweep pointed 2 re-anchors at relocated-dangle targets; the repairer corrected them to terminal L2 homes.)
+5. **For citation-dense bundle chapters (L0 file-overviews), verify each of the N ranges** — the L0-bundle shape recurred ≥3× across batch-3 and is the highest-volume citation surface; do not batch-trust.
+
+Producer role specs (harvester / abstractor / lifter / layer-intro-author §Discipline) carry a bullet pointing at this section (cycle-015 meta-phase). The role-spec bullet is necessary but — as the cycle-014 auditor-drift showed (the lowering-verifier had a citation bullet since cycle-012 and still drifted) — **not sufficient on its own**; a mechanical codemap-backed pre-integration citation-range checker tool is the durable fix and is filed as an ASK (cycle-015 meta-phase, friction-ledger `producer-citation-drift-verify-not-self-invoked`). Until that tool exists, the emit-time self-check is the front-line mitigation.
+
 ## Audit-report / inherited-citation sub-case (added cycle-012 meta-phase)
 
 A report whose **deliverable itself is a no-drift / citations-verified claim** — lowering-verifier audits, `citation-validity` critic checks, slice-reduction audits — carries an unusually high duty to land its own anchors precisely. Its entire output is a verification assertion; an inherited drift in such a report defeats the audit's purpose.

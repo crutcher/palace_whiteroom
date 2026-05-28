@@ -33,12 +33,32 @@ The skill exists because the audit kept producing line-map defects: the cited li
 
 6. **Intra-corpus redundancy.** If two slices (or a slice and a sub-slice) describe the SAME algorithm (cycle-012 found `plane_rotation_stream` + the orthog plane-rotation sub-slice are identical), call it out: propose elimination of the duplicate, hoisting any unique invariant into the surviving canonical slice FIRST (sequence the hoist before the elimination so no content is lost).
 
+## Removal sub-case: non-link prose-reference grep (added cycle-015 meta-phase)
+
+A slice **REDUCTION** (compact to a stub) leaves the file in place, so inbound references — markdown links AND prose mentions — still resolve to a (thinner) file; the mdBook build linkcheck (`cargo make book` exit 0) is a sufficient backstop. A slice **REMOVAL** (`git rm`) deletes the file, so EVERY inbound reference must be re-pointed or struck — and **the build linkcheck only catches the markdown-link subset.** A bare-path or inline-code prose mention (e.g. `` `spec/slices/<slice>.md` `` in prose, or a plain-text path in a narrative sentence) is NOT a markdown link, so the build passes while the reference is stranded pointing at a deleted file.
+
+Cycle-015's chebyshev slice removal FAILED `cross-reference-integrity` critique because exactly this happened: the "complete whole-tree grep" matched markdown links but missed **4 non-link prose references**. The build was clean; the critic's independent grep caught them.
+
+**Before proposing any `git rm` of a slice, run a non-link reference grep (NOT just a markdown-link check):**
+
+1. **Grep the whole book tree + scaffolding for the slice STEM in ALL reference shapes**, not just the `[text](path)` link form:
+   ```
+   grep -rn "<slice-stem>" book/src/ scaffolding/
+   ```
+   where `<slice-stem>` is the bare filename (e.g. `chebyshev` for `spec/slices/chebyshev.md`) or the path fragment (`spec/slices/chebyshev`). Use the stem, not the full markdown-link regex — the stem catches links, inline-code, and bare-path prose mentions in one pass.
+2. **Triage each hit** into: (a) markdown link `](...<slice>)` — re-point or strike; (b) inline-code `` `...<slice>...` `` — re-point or strike; (c) bare-path prose mention — rewrite the prose to point at the firm layered entry that absorbed the content, or strike if obsolete; (d) false positive (the stem also names a firm entry, e.g. `L1/chebyshev-smoother.md` — leave alone).
+3. **Enumerate every (a)/(b)/(c) hit in the removal proposal** with its re-point/strike action, so the integrator-per-report applies them in the same proposed-changes batch as the `git rm`.
+4. **State explicitly that the build linkcheck is the markdown-link backstop ONLY** and is insufficient on its own for a removal — the non-link grep is what closes the gap between "no broken markdown link" and "no stranded prose reference."
+
+This sub-case applies to REMOVALS only. Reductions skip it (the file survives). Friction-ledger `slice-removal-non-link-prose-reference-grep-gap`.
+
 ## Failure modes
 
 - **END-verified, START-not-verified (the recurrence-3 defect).** `grep` run against a tail window catches the section's end but not its head; the reduction edit then orphans the head content beneath a stub. Recovery: ALWAYS grep the whole file for `^#` and `^##`; never window the enumeration.
 - **Line-number START anchor on a multi-section sub-slice.** Line numbers drift as upstream sections are edited; a `full reduction` edit anchored on a line number can land mid-section. Recovery: use a unique-text START anchor (H1 / first `## Context` line), `grep -c`-confirmed unique.
 - **Narrative/range disagreement.** The prose says "stub section X" but the proposed_change range retains part of X (cycle-010 cg.md). Recovery: the step-5 reconciliation; derive ranges from the anchor table, then check the narrative against them.
 - **Reducing a load-bearing `none` section.** A negative-result / load-bearing-distinction section is the artifact, not redundant material; reducing it loses signal. Recovery: classify it `none` in step 2 and retain it verbatim (cycle-011 `polynomial_recurrence_step.md` precedent: "the slice IS the artifact").
+- **REMOVAL strands a non-link prose reference (cycle-015 defect).** A `git rm` of a slice leaves bare-path / inline-code prose mentions pointing at the deleted file; the build linkcheck passes (it only checks markdown links) but the references are stranded. Recovery: run the non-link reference grep (`grep -rn "<slice-stem>" book/src/ scaffolding/`) BEFORE proposing the removal, triage link vs inline-code vs prose, re-point/strike each in the same proposed-changes batch. The build linkcheck is the markdown-link backstop only.
 
 ## Discipline
 
@@ -48,6 +68,7 @@ The skill exists because the audit kept producing line-map defects: the cited li
 - **Reconcile before emission** — narrative and proposed_change ranges must agree.
 - **Sequence hoist-before-eliminate** for intra-corpus redundancy so no unique content is lost.
 - **Reduction is monotonic** — the corpus shrinks as the layered surface becomes authoritative; the git history is the historical record (do not preserve slice form "just in case").
+- **REMOVALS require the non-link reference grep** (cycle-015) — before any `git rm`, grep the whole tree for the slice STEM in all reference shapes (link + inline-code + bare-path prose), not just markdown links; the build linkcheck catches only the link subset. Reductions skip this (the file survives).
 
 ## Worked examples
 

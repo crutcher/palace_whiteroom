@@ -927,12 +927,14 @@ addressed_by: cycle-012 meta-phase (`.claude/agents/layer-intro-author.md` top-l
 ---
 slug: skill-uptake-survey-non-invocation-cycle-wide
 first_observed: cycle-010
-last_observed: cycle-012
-recurrence_count: 3
-status: recurring
-addressed_by: null (cycle-012 meta-phase judged: telemetry-noise, not actionable friction; recalibration deferred — see report no-go)
+last_observed: cycle-015
+recurrence_count: 4
+status: escalating
+addressed_by: cycle-012 meta-phase (no-go: telemetry-noise) — SUPERSEDED cycle-015 meta-phase by the quality-defect trigger; the citation-drift sub-pattern is now tracked + addressed under the dedicated entry `producer-citation-drift-verify-not-self-invoked`
 ---
 ```
+
+**Cycle-015 meta-phase update (recurrence-4; watch-clause FIRED).** The cycle-012 watch clause said: "if a future cycle shows a *quality defect* that an explicitly-invoked skill would have caught (not just a telemetry gap), escalate to recurrence-4." Batch-3 (013/014/015) produced exactly that, every cycle: actual repairer-corrected citation drifts in ~6 reports (013), 5-of-8 reports incl. the citation-AUDITING lowering-verifier itself (014), and the bilinearform `RT_FECollection`/`L2_FECollection` attribution + 2 relocated-dangle re-anchors (015). These are quality defects, not telemetry gaps — a self-applied `verify-citation-range` pass would have caught each. The cycle-012 "telemetry-noise, no-go" judgment is **SUPERSEDED**. Status flipped `recurring` → `escalating`. The actionable sub-signal (the citation-drift specifically — the `skill-uptake-survey` check ALSO fires on `classify-variant-axis` / `verify-refinement-surface` non-invocation, which remain benign telemetry) is split out into the dedicated entry **`producer-citation-drift-verify-not-self-invoked`** below, which carries the cycle-015 enactment (producer role-spec self-verification bullets + an `ask` for a mechanical checker tool). This entry stays as the broad telemetry pattern; the citation-specific quality defect is the addressed sub-pattern.
 
 **Pattern.** Specialized dispatch agents perform skill-shaped work (citation-range verification à la `verify-citation-range`; variant-axis classification à la `classify-variant-axis`; refinement-surface checks à la `verify-refinement-surface`) **without explicitly invoking the named skill**. The critic's 8th check (`skill-uptake-survey`) flags the non-invocation each cycle. Cycle-012 was CYCLE-WIDE: all 8 reports lacked explicit skill invocation despite applicability; the slepc-nep critic noted the `:387` citation drift "would likely have been caught by `verify-citation-range`."
 
@@ -970,6 +972,8 @@ addressed_by: cycle-012 meta-phase (CLAUDE.md §Methodology invariants new bulle
 - (c) **`.claude/agents/lowering-verifier.md` §Discipline** — bullet: a `partly-constructive` theme audit may UNBLOCK the promotion (confirm the structural decomposition + identify the exact edits needed to make the constructive sub-part firm) without ENACTING it; record the gate explicitly and route the enacting edits to a follow-up dispatch.
 
 **Watch:** if `partly-constructive` themes accumulate without ever being promoted to firm (i.e., the gate never closes over 3+ batches), escalate to recurrence-4 — the status may be functioning as a permanent escape hatch rather than a transient gate. The cycle-013 eigsolve promotion (gated this cycle) is the first test of whether the gate closes.
+
+**Cycle-015 meta-phase update — gate-close mechanism VALIDATED by use across batch-3 (the watch clause's concern is REFUTED, not triggered).** The full partly-constructive lifecycle ran cleanly 3× across batch-3: cycle-013 EXIT (eigsolve Sub-pattern B `LinearSolveFailed` promoted partly-constructive→firm — the first live promotion) + ENTRY (divfree-projector adjudicated INTO partly-constructive); cycle-014 UNBLOCK (divfree lowering-verifier positively-anchored the WeakDiv sign) + STAYS (eigsolve-convergence-reason-mapping correctly stayed partly-constructive — no positive site exists, the mechanism working as designed for the legitimately-unfirmable case); cycle-015 ENACT (BOTH gated promotions enacted — divfree→firm L1 10→11, chebyshev-L4 rough-in→firm). The "audit cycle-N / enact cycle-N+1" two-dispatch gated-promotion protocol recurred 3× with zero rework. The gate CLOSES (it is a transient gate, not a permanent escape hatch) AND correctly STAYS-OPEN for the one case (convergence-reason-mapping) that has no positive Palace site. The cycle-012 codification is now validated-by-use; no recurrence-4 escalation needed (the watch was for the opposite failure mode). The companion skill `partly-constructive-promotion-checklist` (proposed cycle-013 by the critic) is PROMOTED this meta-phase — the 3× lifecycle is the concrete precedent that makes the 4-point promotion checklist writable. Status stays `addressed` (the codification holds; use confirms it); recurrence_count stays 3 (the validating instances are within batch-3, already counted as the mechanism's exercise, not new friction).
 
 ---
 
@@ -1122,5 +1126,59 @@ addressed_by: cycle-012 meta-phase (CLAUDE.md §Target system MCP-first localiza
 - (a) **CLAUDE.md §Target system** — note added: the `palace-codemap` MCP server is available and is the preferred localization path for Palace C++ source (localize via `list_files` / `search_text` / `get_symbol_def` / `get_call_sites` / `list_dependencies` / `get_file_subtree`; use `read_range` deliberately for the actual source). Pilot succeeded cycle-010; routine use cycles 011/012. Vanilla Grep/Read remain available; agent judgment on which to use.
 
 **Watch:** if MCP-first localization does not take hold in cycle-013+ (agents keep defaulting to vanilla Grep over the codemap on Palace C++ queries despite the codemap being faster), reconsider a per-role-spec touch or a stronger CLAUDE.md mandate. The soft note is the minimal codification consistent with "don't over-ask / don't over-constrain."
+
+---
+
+```yaml
+---
+slug: producer-citation-drift-verify-not-self-invoked
+first_observed: cycle-013
+last_observed: cycle-015
+recurrence_count: 3
+status: addressed
+addressed_by: cycle-015 meta-phase (4 producer role-spec self-verification Discipline bullets: harvester / abstractor / lifter / layer-intro-author + skill `verify-citation-range` §"Producer self-verification before emitting citations" section) — PLUS an open ASK for a mechanical codemap-backed citation-range checker tool under `tools/`
+---
+```
+
+**Pattern (the STRONGEST recurring friction of batch-3; the actionable citation-specific split-out of `skill-uptake-survey-non-invocation-cycle-wide`).** Producer dispatch agents (harvester, abstractor, lifter, layer-intro-author, and even the citation-AUDITING lowering-verifier) emit L0 citations that drift off the true source line by 1–N lines, and the repairer corrects them pre-apply. The drift is caught downstream (repairer + critic + codemap ground-truth), so it never reaches the artifact — but it recurs every batch cycle, costs a repair round each time, and the critic's `skill-uptake-survey` repeatedly flags that `verify-citation-range` was NOT self-invoked by the producer before emitting. The producers cite from memory / initial-read rather than re-confirming against `read_range` / the codemap `get_symbol_def` before emitting.
+
+**Three-cycle batch-3 evidence (each cycle, escalating breadth):**
+- **Cycle-013:** ~6 reports carried repairer-corrected citation-line-offset drift (eigsolve, divfree, chebyshev, orthogonalize, L0-bundle, krylov-step — mostly codemap-ground-truth values 1 line off the producer's). The divfree harvester drifted on 30+ citations (off-by-1/2/3).
+- **Cycle-014:** 5-of-8 reports carried off-by-1-to-N drift — and notably the citation-AUDITING role itself drifted (the chebyshev lowering-verifier: `:191`=opening-brace vs signature `:190`; `hpp:43`=comment vs member `:44`), despite the cycle-012 lowering-verifier role-spec touch. A role-spec Discipline bullet on the AUDITING role alone did NOT prevent its own drift.
+- **Cycle-015 (enactment cycle):** even with dedicated citation-sweep dispatches running clean, the bilinearform `RT_FECollection` attribution drifted (repairer-corrected from `L2_FECollection`) + the L3 cg.md sweep producer pointed 2 re-anchors at relocated-dangle targets (repairer corrected to terminal L2 homes).
+
+**Surfaced by:** cycle-013/014/015 integrator-signals §Integration-tooling friction (flagged prominently for batch-3 meta-phase each cycle) + the per-report critic `skill-uptake-survey` warnings (22/22 batch-3 META files reference it; the divfree + several others explicitly note the drift "would have been caught by a self-applied `verify-citation-range` pass").
+
+**Why this SUPERSEDES the cycle-012 "telemetry-noise, no-go" judgment.** Cycle-012 judged `verify-citation-range` non-invocation as benign telemetry because "the work happens anyway." Batch-3 refutes that for the citation-specific case: the work was NOT happening (the citations drifted), and the defects were real quality defects (caught only by the repairer/critic, not by the producer). This is the exact quality-defect trigger the cycle-012 watch clause named for recurrence-4 escalation of `skill-uptake-survey-non-invocation-cycle-wide`. The `classify-variant-axis` / `verify-refinement-surface` parts of that broad pattern remain benign telemetry; the citation part is split here as the addressed quality defect.
+
+**Mitigation (cycle-015 meta-phase, this entry):**
+- (a) **Producer role-spec self-verification bullets** added to the four producer specs that emit L0 citations and lacked one — `.claude/agents/harvester.md`, `.claude/agents/abstractor.md`, `.claude/agents/lifter.md`, `.claude/agents/layer-intro-author.md` §Discipline. Each bullet: before emitting any `path:lo-hi` citation, `read_range` (or codemap `get_symbol_def` / `search_text`) the exact cited lines and confirm the named construct sits on the asserted line — do NOT cite from memory or an earlier read; invoke skill `verify-citation-range`. (The lowering-verifier already got the cycle-012 audit-shaped bullet; that one role-spec touch did NOT stop its cycle-014 drift, which is precisely why the mechanical-tool ASK below is filed — a role-spec bullet is necessary but the cycle-014 auditor-drift shows it is not sufficient.)
+- (b) **Skill `verify-citation-range`** extended with a top-level **"Producer self-verification before emitting citations"** section (the skill previously covered Explorer/Critic verification + the cycle-012 audit-report sub-case, but did not foreground the producer-emit-time self-check that is the recurring gap).
+- (c) **ASK (surfaced to user, NOT enacted — tooling/code change, ask-class per write-authority):** a mechanical codemap-backed citation-range checker tool under `tools/` that validates every `path:lo-hi` in a CYCLE.md's proposed-changes against `reference/` source (e.g. via the codemap `get_symbol_def`/`read_range`) as a pre-integration lint. The cycle-014 auditor-drift demonstrates role-spec bullets alone are insufficient; a mechanical check is the durable fix. This requires writing code (not a role-spec edit), so it is ask-class.
+
+**Watch:** if citation drift persists across batch-4 (016/017/018) despite the four producer role-spec bullets (recurrence-4 of THIS entry), the role-spec approach has reached its ceiling — escalate the mechanical-checker tool from ASK to a built `go` (or the user enacts the code). The cycle-014 auditor-drift already foreshadows this ceiling; batch-4 is the test of whether the producer-side bullets move the needle.
+
+---
+
+```yaml
+---
+slug: slice-removal-non-link-prose-reference-grep-gap
+first_observed: cycle-015
+last_observed: cycle-015
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-015 meta-phase (skill `phase-1-slice-reduction-audit` §"Removal sub-case: non-link prose-reference grep" section — slice REMOVALS require a bare-path/inline-code reference grep, not just a markdown-link check)
+---
+```
+
+**Pattern (new this cycle).** Cycle-015's chebyshev Phase-1 slice REMOVAL (`git rm book/src/spec/slices/chebyshev.md`, removals 8/10→9/10) FAILED critique on `cross-reference-integrity`: the same-layer-cross-cutter's "complete whole-tree grep" missed **4 non-link prose references** to the removed slice — bare-path / inline-code mentions (e.g. `` `spec/slices/chebyshev.md` `` in prose, or a plain-text path), NOT markdown `[text](path)` links. The mdBook build linkcheck (`cargo make book` exit 0) is the markdown-link backstop, but it canNOT catch a prose mention or inline-code path — those are not links, so the build passes while the references are stranded (pointing at a deleted file). The critic's independent grep caught all 4; the repairer fixed them pre-apply.
+
+**The gap is specific to REMOVALS, not REDUCTIONS.** A slice REDUCTION (compact to a stub) leaves the file in place, so inbound references — link or prose — still resolve to a (now thinner) file; the build linkcheck suffices. A slice REMOVAL deletes the file, so EVERY inbound reference must be re-pointed or struck, and the build linkcheck only catches the markdown-link subset. There is a gap between "no broken markdown link" (what the build checks) and "no stranded prose reference" (what a removal actually requires). The cycle-015 same-layer-cross-cutter ran the removal under the `phase-1-slice-reduction-audit` skill, which had no removal-specific non-link grep step.
+
+**Surfaced by:** cycle-015 integrator-signals §Integration-tooling friction ("Slice-removal grep-completeness (NEW, batch-3 process signal)") + the cycle-015 same-layer-cross-cutter `cross-reference-integrity` critique FAIL.
+
+**Mitigation (cycle-015 meta-phase, this entry):** Extended skill `skills/phase-1-slice-reduction-audit/SKILL.md` with a **"Removal sub-case: non-link prose-reference grep"** section + a Discipline bullet + a Failure-mode entry. The removal procedure now requires, before proposing a `git rm`: grep the WHOLE book tree (and scaffolding) for the slice's path in ALL reference shapes — markdown links `](.*<slice>)`, inline-code `` `<path>` ``, and bare-path prose mentions `<slice-stem>` — not just markdown links; enumerate every hit; re-point or strike each; and note that the build linkcheck is the markdown-link backstop only, insufficient on its own for removals. Recommended grep: `grep -rn "<slice-stem>" book/src/ scaffolding/` (the stem, not just the full `[..](..)` link form), then triage link vs prose vs inline-code per hit.
+
+**Watch:** if a future slice removal again strands a non-link prose reference despite the skill extension (recurrence-2), consider a mechanical removal-time grep tool (sibling to the citation-range checker ASK above — both are "mechanical reference-completeness check" tooling) and re-weigh whether the same-layer-cross-cutter removal dispatch should hand the grep enumeration to the integrator-per-report as a pre-`git-rm` gate.
 
 ---
