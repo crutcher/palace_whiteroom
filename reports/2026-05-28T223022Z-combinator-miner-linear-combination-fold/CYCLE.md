@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T223022Z
 scope: Pattern proposal — BLAS-1 variadic linear-combination fold (linear_combination at L2)
 status: integrated
 integrated_at: 2026-05-28T230323Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 80db8d6
 integration_notes: |
   Applied cycle-017 (per-report position 1). Landed the NEW L2 rough-in dep-map
   row for linear_combination at book/src/L2/index.md — the constructive prong (b)

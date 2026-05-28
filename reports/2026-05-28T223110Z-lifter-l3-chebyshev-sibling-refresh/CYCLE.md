@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T22:31:10Z
 scope: L3 prose sweep — chebyshev sibling forM_/foldM → iterate_while_pure refresh
 status: integrated
 integrated_at: 2026-05-28T230323Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 80db8d6
 integration_notes: |
   Applied cycle-017 (per-report position 4). 5-site sibling forM_/foldM ->
   iterate_while_pure/iterate_while_pure_L3 vocabulary refresh + 1 in-scope

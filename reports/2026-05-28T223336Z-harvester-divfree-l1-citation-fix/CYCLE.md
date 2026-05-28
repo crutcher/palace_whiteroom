@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T223336Z
 scope: L1 operator: divfree-projector (surgical citation correction; not re-formalization)
 status: integrated
 integrated_at: 2026-05-28T230323Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 80db8d6
 integration_notes: |
   Applied cycle-017 (per-report position 2). 11 surgical citation-line
   corrections to the FIRM L1 entry book/src/L1/divfree-projector.md; operator

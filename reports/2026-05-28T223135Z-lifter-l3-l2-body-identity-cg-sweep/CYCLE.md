@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T223135Z
 scope: L3>L2 theme re-anchor — krylov-step-body-identity (own dangling cg.md provenance pointer sweep)
 status: integrated
 integrated_at: 2026-05-28T230323Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 80db8d6
 integration_notes: |
   Applied cycle-017 (per-report position 3). 3 dangling cg.md provenance pointers
   in the FIRM L3>L2 theme book/src/L3-L2/krylov-step-body-identity.md re-anchored

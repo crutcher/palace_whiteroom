@@ -6,7 +6,7 @@ cycle_id: cycle-017
 meta_batch: batch-4 (cycles 016/017/018; meta-phase fires after 018)
 meta_batch_position: 2
 status: integrated
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 80db8d6
 ---
 
 # CYCLE: integrator-finalize — cycle-017 (batch report-of-records)
@@ -45,7 +45,7 @@ All 5 status `applied` in the staging log; zero `deferred`, zero `rejected`, zer
 - **retroactive-budget global = 2** — well below the ≥4 block threshold. Per-slice max = 1 (report-2 divfree-projector 1 + report-3 krylov-step-body-identity 1; reports 1/4/5 contribute 0 — report 1 is a dep-map row append, report 4 is a present-tense vocabulary refresh [not evidence-correction], report 5 is read-only). **No block.**
 - **build-breakage repair = 1** — the `linear_combination` rough-in dep-map row used a LIVE markdown link `[`linear_combination`](./linear_combination.md)` to a not-yet-authored chapter; `mdbook-linkcheck2` failed the first build (exit 101, `Error: One or more incorrect links`, `File not found: ./linear_combination.md`). integrator-finalize de-linked the cell to a plain-text forward-reference (surgical format fix — build-repair authority, not content authoring), matching the cycle-015 `fem-bilinearform-file` no-dead-link convention. Rebuild clean (exit 0).
 - **commit atomicity** — single commit (staging log + per-report book/ changes + OQ appends + YAML flips + build-repair + all housekeeping writes + 5 consumed-report frontmatter touches).
-- **consumed-report frontmatter integrity** — 5 `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes:` touches.
+- **consumed-report frontmatter integrity** — 5 `integrated_at` + `integration_commit: 80db8d6` + `integration_notes:` touches.
 
 Per-report gates (retroactive per-slice, concept_writes, edge-label, H1, append-on-missing-slug, variant-axis-missing, bookkeeping, SUMMARY-chapter-registration) all reported 0/clean per the staging rows.
 
@@ -85,4 +85,4 @@ Per-report gates (retroactive per-slice, concept_writes, edge-label, H1, append-
 
 ## Two-phase SHA patch
 
-Per role-spec process step 13 (canonical pattern, cycles 004..016 precedent): this batch CYCLE.md + all 5 consumed reports' frontmatter record `integration_commit: PLACEHOLDER_SHA`. Immediately after the finalize commit lands, a follow-up commit patches every placeholder to the actual finalize SHA, then pushes. Patch message: `patch commit-sha references for cycle-017 finalize commit (<finalize-sha>)`.
+Per role-spec process step 13 (canonical pattern, cycles 004..016 precedent): this batch CYCLE.md + all 5 consumed reports' frontmatter record `integration_commit: 80db8d6`. Immediately after the finalize commit lands, a follow-up commit patches every placeholder to the actual finalize SHA, then pushes. Patch message: `patch commit-sha references for cycle-017 finalize commit (<finalize-sha>)`.
