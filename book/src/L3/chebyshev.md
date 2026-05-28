@@ -42,9 +42,11 @@ own L3 operator in L3 vocabulary, not as a specialisation of `krylov-step`. The
 two share the L3 whole-tensor field-operation vocabulary (`apply_linop`,
 `axpby`, `axpbypcz`, `scal`, [`elementwise-product`](../concepts/elementwise-product.md))
 but differ in their iteration structure: `krylov-step`'s outer loop is a
-predicate-driven `iterate_while` fold; `chebyshev`'s loops are bounded
-`forM_`/`foldM` ranges (rendered at L3 as tail recursions over static index
-ranges).
+convergence-predicate-driven `iterate_while` fold; `chebyshev`'s loops are two
+nested **step-count-predicate** `iterate_while_pure` folds (outer `pc_it`
+Richardson sweep `s.it <= op.pc_it`, inner `k`-recurrence `c.k <= op.order - 1`),
+rendered at L3 as the `iterate_while_pure_L3` tail recursions over those static
+ranges.
 
 The relationship to the adjacent layers:
 
@@ -52,8 +54,9 @@ The relationship to the adjacent layers:
   `Solve`-monad wrapper. The wrapper-dissolution (the `Solve (ChebSim E)`
   monad → explicit `(x, y)`-state threading; the `ChebOp` closure → positional
   operator-parameters value; the `Read`/`ReadWrite` capability typing on
-  `ChebSim` → a documented mutation discipline; the `forM_`/`foldM` binds →
-  tail recursions over static ranges) is **substantive at the wrapper**; the
+  `ChebSim` → a documented mutation discipline; the two nested
+  `iterate_while_pure` folds → `iterate_while_pure_L3` tail recursions over their
+  step-count predicates) is **substantive at the wrapper**; the
   kernel body's primitive sequence is **value-thread-isomorphic** between the
   L4 form and this L3 form. The L4 `do`-block dissolves to a `let`-chain; the
   L4 `modifyY (\y -> y .+. dN)` dissolves to the explicit `let y' = y + dN`
@@ -93,7 +96,9 @@ action as well, at the body level. That non-adjacent relationship is the
 `l3-l1-inline-identity-rotation-convention`, lowering directories are
 per-adjacent-edge only). Note the caveat below: the L1↔L2 identity is on the
 **body**; it does not erase the L3 loop-structure obstruction, which is a
-property of the surrounding `forM_`/`foldM` ranges, not of the body.
+property of the surrounding two nested `iterate_while_pure` folds (the
+`iterate_while_pure_L3` tail recursions over the `pc_it`/`k` step-count
+predicates), not of the body.
 
 A cross-cutting prose treatment lives at
 [`concepts/chebyshev-iteration`](../concepts/chebyshev-iteration.md) (minimax
@@ -475,13 +480,15 @@ cycle-012 meta-phase non-adjacent-identity convention; precedent
 - **L4**: typed `Solve`-monad wrapper. The `ChebOp<E, S>` closure carries the
   variant-typed scalar generator; `apply :: ChebOp E S -> Bool -> Solve (ChebSim
   E) ()` threads `(x, y)` through the `Solve (ChebSim E)` monad with `Read`/
-  `ReadWrite` capability typing; the two sequential obstructions surface as
-  `forM_` (outer) and `foldM` (inner) binds.
+  `ReadWrite` capability typing; the two sequential obstructions surface as two
+  nested `iterate_while_pure` folds with step-count predicates (`iterate_while_pure`
+  outer `pc_it` sweep, `iterate_while_pure` inner `k`-recurrence).
 - **L3**: value-threaded positional form. The `Solve` monad has dissolved (`(x,
   y)` threaded explicitly; `modifyY` → explicit `let y' = ...`); the capability
   typing has demoted to a documented invariant; the closure-typed variant
-  absorption has collapsed to one positional `op`; the `forM_`/`foldM` binds are
-  tail recursions over static ranges. The kernel body's primitive sequence is
+  absorption has collapsed to one positional `op`; the two nested
+  `iterate_while_pure` folds are the `iterate_while_pure_L3` tail recursions over
+  their step-count predicates. The kernel body's primitive sequence is
   value-thread-isomorphic to L4; only the wrapper differs.
 
 ## Evidence

@@ -11,9 +11,9 @@ subspace.
 ## Context
 
 `divfree_project` lifts the `DivFreeSolver<VecType>::Mult(VecType &y)` member
-method (`palace/linalg/divfree.cpp:155-186`) — which **mutates `y` in place**,
+method (`palace/linalg/divfree.cpp:155-187`) — which **mutates `y` in place**,
 threads two construction-bound H1-sized scratch buffers (`psi`, `rhs`,
-`palace/linalg/divfree.hpp:55`), and reads the construction-bound operators —
+`palace/linalg/divfree.hpp:54`), and reads the construction-bound operators —
 to a single pure-functional projection over an opaque constructed-operator
 value. The two-argument convenience form `Mult(const VecType &x, VecType &y)`
 is `y = x; Mult(y)` (`palace/linalg/divfree.hpp:68-72`) — an explicit copy then
@@ -40,7 +40,7 @@ The class is templated on `VecType ∈ {Vector, ComplexVector}`
 (`palace/linalg/divfree.cpp:189-190`); the complex specialization applies the
 same real-valued operators to the real and imaginary components independently
 (`palace/linalg/divfree.cpp:159-184`). This is a parametric variant absorbed by
-polymorphism over the field element type (see Variant axes).
+polymorphism over the field element type (see Signature, the `y` element type).
 
 ## Signature
 
@@ -102,7 +102,7 @@ primitive); `K⁻¹` denotes the approximate `ksp` solve of `P.M · ψ = rhs`, *
 exact inversion.
 
 MPI is single-rank in scope (per `CLAUDE.md` "Scope"): the construction reads a
-`MPI_Comm` (`palace/linalg/divfree.cpp:62`) and the empty-boundary pin uses
+`MPI_Comm` (`palace/linalg/divfree.cpp:63`) and the empty-boundary pin uses
 `Mpi::GlobalSum / GlobalMin / Rank / Size` to select a single root rank
 (`palace/linalg/divfree.cpp:63-79`) — flagged once here and read as the
 single-rank equivalent (the pin reduces to "pin true dof 0 when the boundary
@@ -119,7 +119,7 @@ divergence-free remainder satisfying `Gᵀ M y_divfree = 0`. The operator return
 whose columns span the nullspace of the curl-curl operator and `M` is the
 ε-weighted H1 mass operator.
 
-The four-step apply (`palace/linalg/divfree.cpp:155-186`):
+The four-step apply (`palace/linalg/divfree.cpp:155-187`):
 
 1. **Weak divergence** `rhs ← WeakDiv · y` — compute the H1-side residual
    measuring the divergence of `y` (`palace/linalg/divfree.cpp:159-168`).
@@ -176,7 +176,7 @@ is no cross-coupling between the real and imaginary parts through the projection
   `MixedVectorGradientIntegrator`, `palace/fem/integ/mixedvecgrad.cpp:142`) —
   so the derivation is unconditional in exact arithmetic. Holds modulo `ksp`
   tolerance: `Gᵀ M (P·y) = 0` only up to the convergence tolerance on the
-  non-essential dofs (`palace/linalg/divfree.cpp:140,142`, rel-tol set at :140,
+  non-essential dofs (`palace/linalg/divfree.cpp:141-142`, rel-tol set at :141,
   abs-tol = machine epsilon at :142).
 - **Range.** `Range(P) = {x ∈ Field[N_nd] : Gᵀ M x = 0}` — the discrete
   divergence-free subspace (`palace/linalg/divfree.hpp:28-31`).
@@ -234,7 +234,7 @@ Shared concepts (cross-referenced, not duplicated):
 `firm`.
 
 The **structural decomposition is firm**: every step of the apply is read from a
-positive source site (`palace/linalg/divfree.cpp:155-186`), the construction is
+positive source site (`palace/linalg/divfree.cpp:155-187`), the construction is
 fully read (`palace/linalg/divfree.cpp:43-152`), and the linearity, range,
 M-orthogonality, real-linearity, idempotence, and step-ordering laws follow from
 the defining condition stated in the source (`palace/linalg/divfree.hpp:28-31`)
@@ -282,8 +282,8 @@ sign-contingent sub-law is now positively anchored. Supporting test evidence: th
   divergence-free space satisfying Gᵀ M x = 0, where G represents the discrete
   gradient matrix with columns spanning the nullspace of the curl-curl
   operator." (defining condition, range, kernel)
-- `palace/linalg/divfree.hpp:34` — `class DivFreeSolver` (the projector class).
-- `palace/linalg/divfree.hpp:40-55` — member fields: `M`, `WeakDiv`, `Grad`,
+- `palace/linalg/divfree.hpp:33` — `class DivFreeSolver` (the projector class).
+- `palace/linalg/divfree.hpp:40-54` — member fields: `M`, `WeakDiv`, `Grad`,
   `bdr_tdof_list_M`, `aux_tdof_lists`, `ksp`, `psi`/`rhs` scratch.
 - `palace/linalg/divfree.hpp:63-72` — `Mult(y)` (in-place) and `Mult(x, y)`
   (out-of-place `y = x; Mult(y)`) declarations.
@@ -298,7 +298,7 @@ sign-contingent sub-law is now positively anchored. Supporting test evidence: th
   real and SPD.` (justifies M-inner-product / M-orthogonality).
 - `palace/linalg/divfree.cpp:121-149` — `ksp` setup: BoomerAMG (depth 1) or GMG
   wrapping BoomerAMG (depth > 1), CG, rel-tol, abs-tol = epsilon, max-it.
-- `palace/linalg/divfree.cpp:155-186` — `Mult(y)` apply: the four steps.
+- `palace/linalg/divfree.cpp:155-187` — `Mult(y)` apply: the four steps.
 - `palace/linalg/divfree.cpp:189-190` — `template class DivFreeSolver<Vector>;`
   / `<ComplexVector>;` (the VecType variant axis).
 - `palace/drivers/eigensolver.cpp:260-262` — `divfree->Mult(v0)` initial-vector
@@ -315,7 +315,7 @@ sign-contingent sub-law is now positively anchored. Supporting test evidence: th
   Q, transpose, -1.0)` (the `-1.0` materializing the weak-divergence sign).
 - `palace/fem/integ/mixedvecgrad.cpp:142` — sibling `MixedVectorGradientIntegrator`
   with NO `-1.0` (the side-by-side sign contrast).
-- `palace/linalg/divfree.hpp:51` — `// Linear solver for the projected linear
+- `palace/linalg/divfree.hpp:50` — `// Linear solver for the projected linear
   system (Gᵀ M G) y = x.` (the conceptual normal-equations form; the apply solves
   against `M`).
 - `test/unit/test-libceed.cpp:905-916` — Palace's `MixedVectorWeakDivergenceIntegrator`
