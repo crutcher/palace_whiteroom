@@ -7,7 +7,7 @@ meta_batch_position: 1
 scope: cycle-013 batch finalize — rebuild + build-repair + roadmap + cycle-record + log + integrator-signals + 11 consumed-report frontmatter touches + atomic commit/push
 reports_consumed: 11
 status: integrated
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 ---
 
 # CYCLE: integrator-finalize cycle-013 (batch report)
@@ -43,7 +43,7 @@ Headline landings:
 | 10 | lifter-slepc-convergence-reason-lift-sub-theme | integrated | lowering-verifier (eigsolve-convergence-reason-mapping-promotion) |
 | 11 | same-layer-cross-cutter-concepts-orthogonalization-coefficient-normalisation-drift | integrated | future phase-1-slice-reduction-audit; same-layer-cross-cutter |
 
-All 11 `integrated_at: 2026-05-28T200000Z` + `integration_commit: PLACEHOLDER_SHA` (patched to the real SHA in the two-phase follow-up commit).
+All 11 `integrated_at: 2026-05-28T200000Z` + `integration_commit: a4d7495` (patched to the real SHA in the two-phase follow-up commit).
 
 ## Artifact-changes aggregate (from staging Files-touched)
 
@@ -119,4 +119,4 @@ Per-report gate hits (from staging): 1 stale-anchor re-anchor (report 10 SUMMARY
 
 ## Two-phase SHA patch
 
-Per role spec process step 13 (canonical pattern; cycle-004/005+ precedent): this batch CYCLE.md + all 11 consumed reports record `integration_commit: PLACEHOLDER_SHA` because the real SHA only exists post-commit. Immediately after the finalize commit lands + pushes, a follow-up commit replaces every `PLACEHOLDER_SHA` with the actual SHA, then pushes again. Patch-commit message: `patch commit-sha references for cycle-013 finalize commit (<finalize-sha>)`.
+Per role spec process step 13 (canonical pattern; cycle-004/005+ precedent): this batch CYCLE.md + all 11 consumed reports record `integration_commit: a4d7495` because the real SHA only exists post-commit. Immediately after the finalize commit lands + pushes, a follow-up commit replaces every `a4d7495` with the actual SHA, then pushes again. Patch-commit message: `patch commit-sha references for cycle-013 finalize commit (<finalize-sha>)`.

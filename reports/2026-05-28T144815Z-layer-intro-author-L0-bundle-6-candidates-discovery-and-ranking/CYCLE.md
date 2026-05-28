@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T144815Z
 scope: L0-bundle-6-candidates-discovery-and-ranking
 status: integrated
 integrated_at: 2026-05-28T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 integration_notes: "cycle-013 finalize. Discovery→authoring scope stretch SAFETY-GATED + applied: the dispatch authored a full firm L0 chapter linalg-orthog-file (bundle-6 #3; L0 now 18 chapters), verified at integration (codemap MGS range orthog.hpp:41-53 + file-non-existence collision check + SUMMARY palace/ prefix anchor). SUMMARY-registered. #2 linalg-rap-file next-ranked. Plan-kind boundary observation routed to cycle-015 meta-phase. The report OQ's '18 chapters' figure re-derived correct by finalize."
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T1447Z
 scope: L4>L3 theme re-anchor — krylov-step-theme-body-no-l3-row-drift-cycle-013
 status: integrated
 integrated_at: 2026-05-28T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 integration_notes: "cycle-013 finalize. 2 stale cycle-006 'no L3 row' residuals (line 20 + 220) struck + re-anchored to firm L3/krylov-step.md; dangling cg.md:341-362 pointer re-anchored to firm L3-L2/krylov-step-body-identity.md. Theme-wide cg.md sweep routed to OQ krylov-step-typed-wrapper-dissolution-cg-md-citation-sweep. Did NOT double-close krylov-step-l3-identity-in-form-audit (answered_in cycle-006). Clean run."
 inputs:
   - book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md

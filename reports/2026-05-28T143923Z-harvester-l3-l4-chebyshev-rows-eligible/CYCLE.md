@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T143923Z
 scope: L3 + L4 operator: chebyshev (identity backfill + monadic wrapper)
 status: integrated
 integrated_at: 2026-05-28T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 integration_notes: "cycle-013 finalize. L3 chebyshev landed partial-obstruction (as authored); L4 chebyshev landed rough-in (repairer firm→rough-in downgrade — forM_/foldM un-anchored vs the firm iterate-while family). Both SUMMARY-registered. L4 firming condition = OQ chebyshev-l4-wrapper-iteration-vocabulary-reconcile, routed to combinator-miner. Non-adjacent L3↔L1 identity annotated in-line, no L3-L1/L3-L2 directory per cycle-012 convention."
 inputs:
   - book/src/L1/chebyshev-smoother.md (cycle-012 firm; the L1 closed-form smoother action)

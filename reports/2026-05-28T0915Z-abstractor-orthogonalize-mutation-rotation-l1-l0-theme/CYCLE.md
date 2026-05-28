@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T14:40:01Z
 scope: L1>L0 theme sketch — orthogonalize-mutation-rotation
 status: integrated
 integrated_at: 2026-05-28T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 integration_notes: "cycle-013 finalize. New firm/structural L1>L0 theme landed (3 L0 variant loop-structures MGS/CGS/CGS2; repaired codemap-corrected orthog.hpp citations); SUMMARY-registered. Link target for the position-11 concepts/orthogonalization rewrite + the L0 linalg-orthog-file chapter (both resolved). Clean run."
 inputs:
   - book/src/L1/orthogonalize.md (firm L1 operator, cycle-012)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T14:39:42Z
 scope: plane-rotation-concept-page-canonical-pointer-repoint
 status: integrated
 integrated_at: 2026-05-28T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 integration_notes: "cycle-013 finalize. 3 surgical concept-page canonical-pointer repoints applied (plane-rotation-stream / givens_generate / givens_apply → plane_rotation_stream). 4th candidate (dependency-map.md:188 mermaid arrow) NOT repointed — routed to OQ dependency-map-orthog-plane-rotation-stale-edge-prune. Clean run."
 ---
 

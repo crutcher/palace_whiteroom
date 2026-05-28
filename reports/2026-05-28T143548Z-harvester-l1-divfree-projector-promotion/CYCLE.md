@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T143548Z
 scope: L1 operator: divfree-projector
 status: integrated
 integrated_at: 2026-05-28T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 integration_notes: "cycle-013 finalize. Status ADJUDICATED partly-constructive by the per-report integrator (NOT the harvester-argued firm) — structure firm, idempotence law contingent on the unverified WeakDiv≈GᵀM sign reading (MFEM-vendored, below L0 scope); promotion gated on OQ divfree-weakdiv-sign-convention-l0-verify. First partly-constructive ENTRY (complements eigsolve EXIT same cycle). Build-repair at finalize: divfree-projector.md was registered in SUMMARY.md (the staging row's summary-md-registration n/a note was incorrect for the L1 Part)."
 inputs:
   - palace/linalg/divfree.hpp:28-71 (class DivFreeSolver, defining condition, Mult declarations)

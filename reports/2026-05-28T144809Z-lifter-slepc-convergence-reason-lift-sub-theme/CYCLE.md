@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T144809Z
 scope: L1>L0 eigsolve family — slepc-convergence-reason-lift-sub-theme (full EPSConvergedReason → EigStatus mapping)
 status: integrated
 integrated_at: 2026-05-28T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 integration_notes: "cycle-013 finalize. New partly-constructive sibling sub-theme eigsolve-convergence-reason-mapping landed (8 diverged-row EigStatus map via real negative anchor — Palace only PRINTS the reason); discharges parent Sub-pattern B forward-pointer. SUMMARY Change-4 re-anchored past the in-cycle orthogonalize row (stale repairer anchor). Promotion = single global gate OQ eigsolve-convergence-reason-mapping-promotion. Clean run."
 inputs:
   - book/src/L1-L0/eigsolve-mutation-rotation.md (firm; Sub-pattern B forwards the full reason map to "a future slepc-convergence-reason-lift sub-theme" at line 301)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T14:47:19Z
 scope: L1>L0 + L2>L1 theme sketches — chebyshev-smoother-mutation-rotation + chebyshev-iteration-fusion
 status: integrated
 integrated_at: 2026-05-28T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 integration_notes: "cycle-013 finalize. 2 firm themes landed: chebyshev-smoother-mutation-rotation (L1>L0; 4 sub-patterns + transpose-alias sub-rule) + chebyshev-iteration-fusion (L2>L1; FIRST real chapter under the previously-skeleton L2-L1 Part — index ## Theme list placeholder displaced). Both SUMMARY-registered. Clean run (as-repaired element-kernel citations)."
 inputs:
   - book/src/L1/chebyshev-smoother.md (firm L1 operator)

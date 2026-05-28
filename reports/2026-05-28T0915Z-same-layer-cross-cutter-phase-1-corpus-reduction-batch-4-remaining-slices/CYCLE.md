@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T14:40:34Z
 scope: phase-1-corpus-reduction-batch-4-remaining-slices — final 2 unreduced Phase-1 slices
 status: integrated
 integrated_at: 2026-05-28T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 integration_notes: "cycle-013 finalize. Final 2 slices annotated-reduced NOT removed: cg_preconditioning_framework = partially-absorbed (§L4/v0.2/v0.3 retained sole-source pending OQ l4-preconditioning-framework-promotion); sparse_triangular_solve = not-yet-eligible/permanent negative-result retain. METRIC: annotated-reduction 10/10 COMPLETE; removals stay 8/10 (8 removed-equivalent + 2 annotated-retained). Clean run."
 ---
 

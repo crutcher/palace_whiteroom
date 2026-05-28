@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T143232Z
 scope: L1>L0 eigsolve-mutation-rotation — GetConverged forwarder fix + 2 citation-drift refinements + gated partly-constructive→firm promotion of Sub-pattern B
 status: integrated
 integrated_at: 2026-05-28T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 integration_notes: "cycle-013 finalize. Applied as-repaired (staging row 1). FIRST live partly-constructive→firm promotion — Sub-pattern B PROMOTED, theme now firm (structural). Option-b ## Status gate route was a deliberate FLAGGED decision; ratification OQ partly-constructive-to-firm-promotion-route-ratification routed to cycle-015 meta-phase. needs-revision META was a methodology-judgment item, NOT reject."
 inputs:
   - book/src/L1-L0/eigsolve-mutation-rotation.md (firm; partly-constructive on Sub-pattern B)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T14:47Z
 scope: L1 cross-cut — concepts/orthogonalization vs firm L1/orthogonalize coefficient/normalisation drift
 status: integrated
 integrated_at: 2026-05-28T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a4d7495
 integration_notes: "cycle-013 finalize. Position 11 of 11. Full-file rewrite of concepts/orthogonalization.md aligned to the firm L1/orthogonalize 'does not normalize output' contract (3 inconsistent coefficient-lengths collapsed to length-m; duplicate block removed; stale 'separate slice' framing replaced). The 3 links to L1-L0/orthogonalize-mutation-rotation.md resolve (report 6 landed it earlier this cycle). cross-cutter→concept-rewrite plan-kind stretch applied-direct (safety-gated). Closes OQ concepts-orthogonalization-coefficient-normalisation-drift."
 ---
 
