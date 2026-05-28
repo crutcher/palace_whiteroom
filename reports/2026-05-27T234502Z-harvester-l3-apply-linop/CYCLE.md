@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T23:45:02Z
 scope: L3 operator: apply_linop (identity-lowering-both-levels-backfill; priority #20)
 status: integrated
 integrated_at: 2026-05-28T013333Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bb16b7
 integration_notes: cycle-011 wave-1 pass 1; second firm L3 operator; first primitive-flavored L3 backfill; identity-in-form on L1 primitive signature; 4 proposed-changes applied cleanly; 0 safety-net gate hits; 1 new OQ promoted (l3-index-matvec-naming-vs-apply_linop-slug); 1 status update on cycle-010 l3-l1-directory-naming-structure-policy
 inputs:
   - book/src/L1/apply_linop.md (firm; cycle-004; the downstream entry whose body is value-thread-isomorphic at L3)

@@ -7,7 +7,7 @@ meta_batch_position: 2
 meta_batch_size: 3
 timestamp: 2026-05-28T013333Z
 status: applied
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bb16b7
 ---
 
 # Cycle-011 integrator-finalize batch report
@@ -182,8 +182,8 @@ Second primary cycle of meta-batch-2 (3:1 cadence). Cycles 010/011/012 form batc
 
 ## Two-phase SHA patch
 
-Per role-spec process step 13: this finalize commit records `integration_commit: PLACEHOLDER_SHA` placeholders in:
+Per role-spec process step 13: this finalize commit records `integration_commit: 8bb16b7` placeholders in:
 - This batch CYCLE.md (above frontmatter).
 - All 9 consumed reports' CYCLE.md frontmatter (per-report-integrator dispatches deferred to finalize per CLAUDE.md §Write-authority partition).
 
-After this finalize commit lands, a follow-up commit patches PLACEHOLDER_SHA → actual SHA across all 10 affected files. Message: `patch commit-sha references for cycle-011 finalize commit (<finalize-sha>)`. Same two-phase pattern cycles 004..010 used (canonical per `friction-ledger-two-phase-sha-placeholder-pattern`).
+After this finalize commit lands, a follow-up commit patches 8bb16b7 → actual SHA across all 10 affected files. Message: `patch commit-sha references for cycle-011 finalize commit (<finalize-sha>)`. Same two-phase pattern cycles 004..010 used (canonical per `friction-ledger-two-phase-sha-placeholder-pattern`).

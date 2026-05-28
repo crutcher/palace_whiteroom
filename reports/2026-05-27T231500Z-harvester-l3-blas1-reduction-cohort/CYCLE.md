@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T23:15:00Z
 scope: L3 operators: dot + nrm2 (BLAS-1 reduction cohort backfill)
 status: integrated
 integrated_at: 2026-05-28T013333Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bb16b7
 integration_notes: cycle-011 wave-1 pass 3; second cohort-bundle harvester landing; 2 firm L3 entries (dot + nrm2 with nrm2(x) = √dot(x,x) same-layer L3 dependency); 4 proposed-changes applied cleanly; 0 safety-net gate hits; 1 new OQ promoted (concepts-nrm2-stability-claim-correction); proposed sibling OQ l3-l1-identity-in-form-annotation-policy-formalization merged into existing cycle-010 OQ l3-l1-directory-naming-structure-policy per integrator policy-merge discretion; cumulative in-line identity-rotation count reaches 6 (revisit threshold)
 inputs:
   - book/src/L1/dot.md (firm L1; cycle-002)

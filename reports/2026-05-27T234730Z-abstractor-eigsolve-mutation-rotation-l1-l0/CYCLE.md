@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T23:47:30Z
 scope: L1>L0 theme sketch — eigsolve-mutation-rotation
 status: integrated
 integrated_at: 2026-05-28T013333Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bb16b7
 integration_notes: cycle-011 wave-2 pass 6; second L1>L0 mutation-rotation theme for structured opaque primary argument after cycle-008 ksp-solve-mutation-rotation; first firm-structural-but-partly-constructive theme in artifact (Sub-pattern B LinearSolveFailed materialisation partly-constructive); 4-sub-pattern decomposition; exhaustively cites 10 opInv->Mult callsites; L1>L0 layer 4-firm → 5-firm + 2 obstruction; 3 proposed-changes applied cleanly; 0 safety-net gate hits; 3 new OQs promoted (slepc-convergence-reason-lift-sub-theme + eigsolve-driver-side-double-solve-composition + eigsolve-mutation-rotation-lowering-verifier-followup); partly-constructive pattern at recurrence-2 since cycle-010 lifter — codification candidate for cycle-012 meta-phase
 inputs:
   - book/src/L1/eigsolve.md (cycle-009 rough-in; cycle-010 LinearSolveFailed L1-constructive annotation)

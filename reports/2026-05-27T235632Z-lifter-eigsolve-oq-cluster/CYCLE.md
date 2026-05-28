@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T23:56:32Z
 scope: L1 eigsolve variant-axis & result-record inventory — resolve 3 cycle-009 OQs as one cluster (scaling-coordinate-convention, initial-space-axis-placement, iteration-count-result-field)
 status: integrated
 integrated_at: 2026-05-28T013333Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bb16b7
 integration_notes: cycle-011 wave-2 pass 7; resolves 3 of 4 cycle-009 eigsolve OQs in one report (the 4th was resolved cycle-010 via partial-answer); cycle-009 4-OQ eigsolve cluster fully closed; 7 in-place edits to L1/eigsolve.md + 6 in-place edits to open-questions.md + 1 auto-promoted new OQ; 1 safety-net gate hit (retroactive-budget per-slice recurrence-2 on eigsolve; below ≥3 block threshold); 1 new OQ promoted (eigsolve-slepc-nep-coordinate-convention-audit — opened by repairer); negative-anchor citation pattern at recurrence-2 since cycle-010 lifter — codification candidate for cycle-012 meta-phase; lifter-scope content-correction boundary at recurrence-2 — clarification candidate
 inputs:
   - book/src/L1/eigsolve.md (cycle-009 rough-in; cycle-010 LinearSolveFailed L1-constructive annotation)

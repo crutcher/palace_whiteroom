@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T234651Z
 scope: Phase 1 corpus reduction audit — batch 2 (orthog / chebyshev / polynomial_recurrence_step)
 status: integrated
 integrated_at: 2026-05-28T013333Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bb16b7
 integration_notes: cycle-011 wave-2 pass 9 (final per-report integrator dispatch of cycle-011); second-instance execution of priority #19 (phase-1-corpus-reduction-audit); 3 slices reduced (orthog + chebyshev + polynomial_recurrence_step); cumulative slice-corpus coverage 6 of 10; first negative-result slice audited (polynomial_recurrence_step.md verdict "blocked / minimal reduction; the slice IS the artifact"); 9 in-place edits applied cleanly; 0 safety-net gate hits; 5 new OQs promoted + 1 amendment to existing cycle-010 OQ l1-orthogonalize-promotion-from-arnoldi-step-and-orthog; phase-1-slice-reduction-audit skill candidate reinforced (template detailed and machine-replayable across cycle-010 batch-1 + cycle-011 batch-2); phase-1-corpus-audit-line-range-arithmetic-brittleness friction at recurrence-2 (mitigation applied successfully both cycles)
 inputs:
   - book/src/spec/slices/orthog.md (464 lines)

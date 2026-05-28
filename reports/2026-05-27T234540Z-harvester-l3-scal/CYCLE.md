@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T23:45:40Z
 scope: L3 operator: scal
 status: integrated
 integrated_at: 2026-05-28T013333Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bb16b7
 integration_notes: cycle-011 wave-1 pass 4; closes BLAS-1 cohort; 8th firm L3 operator landing; L3 firm-operator count reaches 8 — fully closes BLAS-1 cohort portion of OQ l3-backfill-apply-linop-and-blas1-cohort (HIGH CONFIDENCE recommendations from cycle-010 cross-layer-cross-cutter audit); priority #20 second target fully met; 4 proposed-changes applied cleanly; 0 safety-net gate hits; 2 new OQs promoted (scal-mutation-rotation-l1-l0-theme + l3-index-semantics-overlay-blas1-cohort-prose-refresh); cumulative in-line identity-rotation count reaches 7 (exceeds revisit threshold of 6)
 inputs:
   - book/src/L1/scal.md (firm; cycle-004)

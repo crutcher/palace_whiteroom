@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T23:46:48Z
 scope: L4>L3 theme authoring — `fgmres-inner-loop-iterate-while-migration` (sister theme to cycle-008 GMRES form; closes cycle-010 OQ `fgmres-inner-loop-iterate-while-migration-lifter-candidate`)
 status: integrated
 integrated_at: 2026-05-28T013333Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bb16b7
 integration_notes: cycle-011 wave-2 pass 5; first L4>L3 rough-in sister-theme in the artifact; sibling to cycle-008 GMRES theme; L4>L3 layer transitions from 2-theme to 3-theme status; closes cycle-010 OQ fgmres-inner-loop-iterate-while-migration-lifter-candidate (status open → answered-by-rough-in-theme); 4 proposed-changes applied cleanly; 0 safety-net gate hits; firm-promotion of check_stop_into_carry remains deferred per nleps-spec-gap-as-check-stop-into-carry-reuse-blocker; pattern at recurrence-2 of cycle-008 sibling shape
 inputs:
   - book/src/L4-L3/gmres-inner-loop-iterate-while-migration.md

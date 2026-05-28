@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T23:56:50Z
 scope: L0 reference-notes — file overview for palace/linalg/solver.{hpp,cpp}
 status: integrated
 integrated_at: 2026-05-28T013333Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bb16b7
 integration_notes: cycle-011 wave-2 pass 8; first L0 chapter landing of cycle-011; L0 chapter count 16 → 17; bundle-6 candidate #1 landed (closes cycle-009 OQ l0-bundle-6-candidates partially; #2 + #3 still open); chapter corrects dispatch-prompt framing (Solver<OperType> is type-axis root of ALL Palace solvers, not direct-solver-only base); 5 mechanical citation line-range fixes applied by repairer across ~25 off-by-one drifts; 4 proposed-changes applied cleanly; 0 safety-net gate hits; dispatch-prompt framing drift at recurrence-2 since cycle-010 (eps.cpp/feast.cpp drift) — friction-ledger candidate for cycle-012 meta-phase
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-05-27T234525Z
 scope: L3 operators (bundle): axpy, axpby, axpbypcz — the BLAS-1 linear-update cohort
 status: integrated
 integrated_at: 2026-05-28T013333Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bb16b7
 integration_notes: cycle-011 wave-1 pass 2; first cohort-bundle harvester landing of cycle-011; 3 firm L3 entries via subsumption chain axpy ≺ axpby ≺ axpbypcz; 5 proposed-changes applied cleanly; 0 safety-net gate hits; 1 status update on cycle-010 l3-l1-directory-naming-structure-policy (in-line identity-rotation count → 4)
 inputs:
   - book/src/L3/krylov-step.md (cycle-010 wave-1 firm precedent — identity-lowering layer-coherence backfill template)
