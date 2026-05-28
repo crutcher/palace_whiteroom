@@ -1463,7 +1463,8 @@ The choice affects whether cycle-009+ L0 bundle 6 picks it up as an L0 chapter o
 slug: l0-bundle-6-candidates
 opened_at: cycle-009
 opened_by: layer-intro-author
-status: open
+status: partially-answered
+partial_answer_at: cycle-011
 ---
 ```
 
@@ -1474,6 +1475,8 @@ After bundle 5 lands (cycle-009: `mpi-globalsum-and-collectives` + `precondition
 3. **`mutable-workspace-pattern` Category-5 expansion** — if cycle-008+ work surfaces new workspace-pattern variants not covered by Categories 1-4 in the existing `mutable-workspace-pattern` chapter.
 
 Bundle 6 would form with the same 2-chapters-per-cycle cadence. Routes to cycle-010+ planner. Source: `reports/2026-05-27T192051Z-layer-intro-author-L0-bootstrap-bundle-5/CYCLE.md` §Open questions / caveats §"Bundle 6 candidate ordering".
+
+**Partial answer cycle-011 (layer-intro-author)**: Bundle-6 candidate #1 `linalg-solver-file` landed in cycle-011 wave-2 via `reports/2026-05-27T235650Z-layer-intro-author-l0-linalg-solver-file/`, bringing the L0 chapter count to **17**. The chapter adopts a corrected framing of `Solver<OperType>` as the type-axis root of ALL Palace solvers (preconditioners + iterative + MFEM-wrapped) rather than the dispatch-prompt's narrower "abstract base class for direct solvers" reading; the corrected framing is preserved in §Summary + §"What's not here" + the eight-subclass-family enumeration. The dispatch-prompt framing inaccuracy is **recurrence-2** since cycle-010 (eps.cpp/feast.cpp drift) — surfaced as a finalize STAGING signal for cycle-012 meta-phase methodology codification. Remaining bundle-6 items 2 + 3 still open: item 2 (`tests-as-semantic-supplement`) gated on `tests-as-semantic-supplement-l0-vs-concepts-decision` above; item 3 (`mutable-workspace-pattern` Category-5 expansion) gated on observed workspace-pattern variants. Status held `partially-answered` rather than `resolved` until items 2/3 dispatch or are explicitly dropped. Routes to cycle-012+ planner triage.
 
 ```yaml
 ---
@@ -1495,33 +1498,45 @@ The cycle-009 `L1/eigsolve` rough-in chapter (`book/src/L1/eigsolve.md`) introdu
 slug: eigsolve-scaling-coordinate-convention
 opened_at: cycle-009
 opened_by: harvester
-status: open
+status: resolved
+resolved_at: cycle-011
+resolved_in: reports/2026-05-27T235632Z-lifter-eigsolve-oq-cluster/
 ---
 ```
 
 The cycle-009 `L1/eigsolve` rough-in chapter's Algebraic-law §5 flags two coherent conventions for handling `ScaleType::NORM_2`'s Higham-2008 scaling of `EigResult.eigenvalues`: (a) return scaled eigenvalues (matches L0 `EPSGetEigenvalue` raw return), expose `scaling_gamma` / `scaling_delta` for downstream un-scaling; or (b) un-scale at the L1 boundary, return original-coordinate eigenvalues, drop the `gamma` / `delta` fields. The L0 `GetEigenvalue` virtual already un-scales for SLEPc (`palace/linalg/slepc.cpp:715` returns `l * gamma`); the L0 convention is therefore inconsistent across orchestrations (ARPACK / SLEPc / `QuasiNewtonSolver`). The rough-in chapter adopts convention (a) but flags this for harvester / lifter review. The decision affects the coordinate system of every `EigResult.eigenvalues` consumed by L2 / L4 operators downstream, and aligns with the broader methodology question of where L1 should preserve L0's raw representation vs lift to an "intended caller" view. Routes to harvester / lifter review during firm-promotion. Source: `reports/2026-05-27T191929Z-harvester-eigsolve-L1/CYCLE.md` §Open questions / caveats item 2.
+
+**Resolved cycle-011 (lifter)**: Dispatched at `reports/2026-05-27T235632Z-lifter-eigsolve-oq-cluster/` (unified resolution of the 3-OQ cluster). Adopted convention (b) — the L1 form returns eigenvalues in the original-problem coordinate system, matching the L0 surface's un-scale-at-accessor convention across the EPS / PEP / NLEPS backends. Direct evidence: ARPACK at `palace/linalg/arpack.cpp:387` (`eig[i] = eig[i] * gamma` inside `SolveInternal` post-`neupd`); SLEPc-EPS at `palace/linalg/slepc.cpp:711-716` (`GetEigenvalue` returns `l * gamma`); SLEPc-PEP at `palace/linalg/slepc.cpp:1194-1203` (same `l * gamma`); NLEPS at `palace/linalg/nleps.cpp:88-93` (returns stored already-un-scaled eigenvalues from linear-eigensolver priming). SLEPc-NEP at `palace/linalg/slepc.cpp:1554-1560` returns `l` directly without applying `* gamma` — the SLEPc-NEP backend manages its own coordinate handling separately from the EPS / PEP un-scale-at-accessor pattern. (Note: `SlepcNEPSolver::SetOperators` at `palace/linalg/slepc.cpp:1645-1651` and `:1711-1719` DOES compute a non-trivial `gamma = std::sqrt(normK / normM)` when `type != ScaleType::NONE`, so the simpler "no Higham scaling for NEP" reading would be wrong; the precise un-scaling convention for the SLEPc-NEP backend is flagged for follow-up audit, but this detail does not affect the broader resolution — the un-scale-at-accessor pattern holds uniformly across EPS / PEP / NLEPS, which is what the L1 form mirrors.) The cycle-009 rough-in chapter's Algebraic-law §5 stated the opposite (incorrectly: "L1 returns scaled"); the cycle-011 lifter rewrites §5 to match L0. The `scaling_gamma` / `scaling_delta` fields remain in `EigResult` as informational (record the operator-norm-derived factors used internally; downstream consumers can inspect operator conditioning or recover residual-in-scaled-coords for diagnostics, but the eigenvalues field is itself in original-problem coordinates). Status: resolved (SLEPc-NEP coordinate-convention detail flagged for follow-up audit as a separate OQ).
 
 ```yaml
 ---
 slug: eigsolve-initial-space-axis-placement
 opened_at: cycle-009
 opened_by: harvester
-status: open
+status: resolved
+resolved_at: cycle-011
+resolved_in: reports/2026-05-27T235632Z-lifter-eigsolve-oq-cluster/
 ---
 ```
 
 The cycle-009 `L1/eigsolve` rough-in chapter places the `initial_space` field in `EigControl` (per-call), but the L0 `SetInitialSpace` virtual (`palace/linalg/eps.hpp:122`) is a method on the eigensolver value (so construction-bound). The call pattern at `palace/models/modeeigensolver.cpp:472-475` shows the driver setting `initial_space` per `Solve()` invocation (`if (initial_space) eigen->SetInitialSpace(*initial_space);`); the rough-in chapter argues this supports per-call placement. The alternative interpretation is that `initial_space` is a construction parameter the driver re-binds at solve time — both are coherent under the L0 surface. The choice affects whether `EigSolver[problem]` (the opaque construction-bound type) carries `initial_space` or not, and the L2 `eigenmode-pipeline` composition shape downstream. Routes to lifter / lowering-verifier review during firm-promotion. Source: `reports/2026-05-27T191929Z-harvester-eigsolve-L1/CYCLE.md` §Open questions / caveats item 3.
+
+**Resolved cycle-011 (lifter)**: Dispatched at `reports/2026-05-27T235632Z-lifter-eigsolve-oq-cluster/` (unified resolution of the 3-OQ cluster). Keep `initial_space` in `EigControl` (per-call control); the current rough-in placement is correct. Direct evidence: `SetInitialSpace(const ComplexVector &v)` is a *method* on `EigenvalueSolver` (`palace/linalg/eps.hpp:122`) separate from `SetOperators` / construction, and is invoked between `SetOperators` and `Solve()` at both observed call sites — `palace/drivers/eigensolver.cpp:264` (conditional on user-supplied vs random initial vector) and `palace/models/modeeigensolver.cpp:474` (conditional on the `initial_space` argument to `ModeEigenSolver::Solve()`, which is a re-callable per-call function). The ordering invariant is `SetOperators` first (allocates the per-backend workspace; ARPACK `MFEM_VERIFY(n > 0, ...)` at `palace/linalg/arpack.cpp:253` rejects pre-`SetOperators` invocation; SLEPc analogue at `palace/linalg/slepc.cpp:659-661`), then optional `SetInitialSpace`, then `Solve()`. The construction-side prerequisite is documented at L1 as a precondition on `E`'s opaque type (operators are construction-bound; `initial_space` in `control` is well-defined only against an `E` whose operators are bound) rather than as an axis decision. Status: resolved.
 
 ```yaml
 ---
 slug: eigsolve-iteration-count-result-field
 opened_at: cycle-009
 opened_by: harvester
-status: open
+status: resolved
+resolved_at: cycle-011
+resolved_in: reports/2026-05-27T235632Z-lifter-eigsolve-oq-cluster/
 ---
 ```
 
 The cycle-009 `L1/eigsolve` rough-in chapter's `EigResult` does not currently carry an `iterations` field (unlike `ksp_solve`'s `SolveResult.iterations`). The L0 `EigenvalueSolver` interface does not expose a per-call iteration count — only the converged eigenpair count (via the `Solve() → int` return). Adding `iterations` to the L1 form would be constructive (similar to `EigStatus::LinearSolveFailed`); the question is whether downstream consumers (e.g., the L2 `eigenmode-pipeline` operator, the L4 monadic composition) need it. The chapter leaves it out for now; harvester promotion to firm should re-evaluate based on downstream demand. Routes to harvester re-evaluation during firm-promotion (cycle-010+); may also surface during L2 `eigenmode-pipeline` harvest as a feedback signal. Source: `reports/2026-05-27T191929Z-harvester-eigsolve-L1/CYCLE.md` §Open questions / caveats item 4.
+
+**Resolved cycle-011 (lifter)**: Dispatched at `reports/2026-05-27T235632Z-lifter-eigsolve-oq-cluster/` (unified resolution of the 3-OQ cluster). Adopted the cycle-010 `LinearSolveFailed` precedent (option (b)) — add the `iterations : Int` field to `EigResult` with an L1-constructive annotation. Direct evidence: the `EigenvalueSolver` virtual surface (`palace/linalg/eps.hpp:124-140`) does not expose an iteration-count accessor; ARPACK has `iparam[2]` consumed at `palace/linalg/arpack.cpp:342, 350` (printed only, never stored where a caller can retrieve); SLEPc has `EPSGetIterationNumber` / `PEPGetIterationNumber` / `NEPGetIterationNumber` available in the PETSc API but Palace never calls them (zero occurrences across the `palace/` source tree per `mcp__palace-codemap__search_text`); NLEPS's `QuasiNewtonSolver::Solve` has internal Newton-iteration counters at `palace/linalg/nleps.cpp:351-805`, also not exposed. The field is added as L1-constructive (parallel to `EigStatus::LinearSolveFailed` cycle-010) — it pre-positions the iteration-count for downstream L4 monadic-coordination consumers; materialisation defers to the cycle-011 wave-1 `eigsolve-mutation-rotation` L1>L0 theme (Sub-pattern C of `reports/2026-05-27T234730Z-abstractor-eigsolve-mutation-rotation-l1-l0/CYCLE.md`), which would either add a `GetIterations()` virtual + per-backend accessor implementations, or plumb the count through the existing print-side flow. The Algebraic-laws §"Strict positive-iteration termination" non-law bullet is tightened to acknowledge the field is now part of the record but may yield a sentinel value under current L0 instantiations. Status: resolved.
 
 ```yaml
 ---
@@ -1623,11 +1638,20 @@ slug: l3-l1-directory-naming-structure-policy
 opened_at: cycle-010
 opened_by: cross-layer-cross-cutter
 status: open
+last_revisited: cycle-011
 relates_to: l3-backfill-apply-linop-and-blas1-cohort (this ledger), identity-lowerings-still-require-both-l-levels (CLAUDE.md §Methodology invariants)
 ---
 ```
 
 The cycle-010 identity-in-form audit flagged a **policy question for the cycle-010+ layer-intro-author / cycle-planner**: should each L3 backfill entry (per the `l3-backfill-apply-linop-and-blas1-cohort` OQ) come with a sibling **thin identity-in-form L3-L1 theme** (analogous to `L3-L2/krylov-step-body-identity.md`) documenting the no-op rotation, OR should the identity rotation be **captured in-line at the L3 entry itself**? **`book/src/L3-L1/` does not currently exist** (confirmed by critic via directory listing); existing lowering-layer directories are `L1-L0/`, `L2-L1/`, `L3-L2/`, `L4-L3/`. Either approach is consistent with the methodology invariant "Identity-lowerings still require both L levels" — the question is one of artifact navigation and structural consistency. The wave-1 sibling dispatch on `L3/krylov-step.md` did NOT create an `L3-L1/` directory (the L3 krylov-step entry's lowering is `L3-L2` to the L2 entry, not `L3-L1` directly — krylov-step is a composition that lives at L2/L3/L4, not L1). The L3 backfill candidates for primitives (apply_linop, BLAS-1 cohort) are a different case: their lowering chain skips L2 (they are primitives, not compositions) and lands directly at L1, making the L3>L1 hop the relevant one. **Routes to cycle-011+ planner** to decide a default before dispatching the L3 backfill harvesters. A small `layer-intro-author` role-spec edit may codify the policy. Source: `reports/2026-05-27T215315Z-cross-layer-cross-cutter-identity-in-form-audit/CYCLE.md` §"Open questions / caveats" item 1.
+
+**Cycle-011 partial-precedent update**: the cycle-011 wave-1 harvester dispatch on `book/src/L3/apply_linop.md` (the first primitive-flavored L3 backfill — krylov-step is a composition, not a primitive) **chose the in-line option** — the §"Lowers to" section captures the identity rotation textually; no `L3-L1/apply-linop-identity` theme directory was created. Rationale recorded in the dispatch CYCLE.md §"Open questions / caveats" item 1: (a) creating an `L3-L1/` directory for a single identity rotation would be over-structuring; (b) the in-line treatment makes the layer-coherence argument visible to a reader at the L3 entry without requiring navigation; (c) the wave-1 sibling for `krylov-step` lowers via L3-L2, not L3-L1, so there is no exact precedent yet. **Status remains `open`** because the BLAS-1 bundle (the other HIGH CONFIDENCE backfill candidate per the sibling OQ `l3-backfill-apply-linop-and-blas1-cohort`) may also lower identity-in-form to L1; if 6 in-line identity-rotation sections accumulate across the cohort, the in-line option may become redundant and a thin `L3-L1/` directory may become preferable. Routing note for cycle-012+ planner: revisit this policy after the BLAS-1 cohort lands. Source: cycle-011 harvester dispatch `reports/2026-05-27T234502Z-harvester-l3-apply-linop/CYCLE.md` §"Open questions / caveats" item 1.
+
+**Cycle-011 BLAS-1 cohort partial-precedent update**: the cycle-011 wave-1 cohort-bundle dispatch on `book/src/L3/axpy.md` + `book/src/L3/axpby.md` + `book/src/L3/axpbypcz.md` (the BLAS-1 linear-update cohort — three of the six BLAS-1 candidates) **also chose the in-line option** — each entry's §"Lowers to" section captures the identity rotation textually; no `L3-L1/<op>-identity` theme directory was created. Rationale (consistent with the apply_linop dispatch): mirror the cycle-010 `book/src/L3/krylov-step.md` precedent which handled its lowering in-line, avoid over-structuring for identity rotations, keep the layer-coherence argument visible at the L3 entry. **Cumulative in-line identity-rotation count now stands at 4** (apply_linop, axpy, axpby, axpbypcz) — the OQ's revisit-trigger threshold ("if 6 in-line identity-rotation sections accumulate, a thin `L3-L1/` directory may become preferable") is now 2/3 of the way reached after this cohort. Sibling wave-1 dispatches (#3 `dot` + `nrm2`, #4 `scal`) land the remaining three cohort candidates this cycle; if all three siblings also choose the in-line option, the cumulative count will reach 7 and the revisit will trigger. **Routing note for cycle-012+ planner**: after wave-1 closure, audit the cumulative in-line treatment and decide whether to create a thin `book/src/L3-L1/` directory retroactively, OR codify the in-line convention as the long-term default. Source: cycle-011 harvester dispatch `reports/2026-05-27T234525Z-harvester-l3-blas1-linear-update-cohort/CYCLE.md` §"Open questions / caveats" item 1.
+
+**Cycle-011 BLAS-1 reduction-cohort partial-precedent update**: the cycle-011 wave-1 cohort-bundle dispatch on `book/src/L3/dot.md` + `book/src/L3/nrm2.md` (the BLAS-1 reduction cohort — two of the six BLAS-1 candidates) **also chose the in-line option** — each entry's §"Lowers to" section captures the identity rotation textually; no `L3-L1/<op>-identity` theme directory was created. Rationale identical to the linear-update cohort precedent (mirror cycle-010 `krylov-step` precedent; avoid over-structuring; preserve layer-coherence visibility). **Cumulative in-line identity-rotation count now stands at 6** (apply_linop, axpy, axpby, axpbypcz, dot, nrm2) — the OQ's revisit-trigger threshold ("if 6 in-line identity-rotation sections accumulate, a thin `L3-L1/` directory may become preferable") **is now reached**. One remaining wave-1 sibling dispatch (#4 `scal`) is pending; if `scal` also chooses the in-line option, the cumulative count will reach 7 and the revisit becomes mandatory. The report also surfaces a related sub-question (originally proposed as a new OQ slug `l3-l1-identity-in-form-annotation-policy-formalization`): formalize the in-line vs. dedicated-`L3-L1/`-theme policy as a long-term convention rather than per-cohort precedent. Merged here per the integrator-per-report's policy-merge discretion: the two questions are not separable (the directory-naming-structure question IS the annotation-policy question viewed from the structural side). **Routing note for cycle-012+ planner (urgency upgrade)**: with the cumulative in-line count at the revisit threshold, the cycle-012 meta-phase should treat this OQ as a candidate for closure — either by codifying the in-line convention via a layer-intro-author role-spec edit, or by retroactively introducing a thin `book/src/L3-L1/` directory and back-filling identity-rotation themes. Source: cycle-011 harvester dispatch `reports/2026-05-27T231500Z-harvester-l3-blas1-reduction-cohort/CYCLE.md` §"Open questions / caveats" items 1 + 4.
+
+**Cycle-011 BLAS-1 cohort CLOSURE update (`scal` landing)**: the final cycle-011 wave-1 cohort-bundle dispatch on `book/src/L3/scal.md` (closing the 7-entry BLAS-1 backfill cluster: apply_linop + axpy + axpby + axpbypcz + dot + nrm2 + scal) **also chose the in-line option** — the §"Lowers to" section captures the identity rotation textually; no `L3-L1/scal-identity` theme directory was created. Rationale identical to the prior cohort precedents (mirror cycle-010 `krylov-step` precedent; avoid over-structuring; preserve layer-coherence visibility). **Cumulative in-line identity-rotation count now stands at 7** (apply_linop, axpy, axpby, axpbypcz, dot, nrm2, scal) — **exceeds the OQ's revisit-trigger threshold of 6**. The BLAS-1 cohort closure marks the natural decision point: every primitive-flavored L3 backfill from the cycle-010 audit's HIGH CONFIDENCE recommendations has now chosen the in-line option, establishing a 7-entry uniform precedent. **Routing note for cycle-012 meta-phase (urgency upgrade further)**: this OQ is now a **strong candidate for closure** — codify the in-line convention as the long-term L3>L1 identity-rotation policy via a `layer-intro-author` role-spec edit, OR retroactively introduce a thin `book/src/L3-L1/` directory and back-fill identity-rotation themes (which would mean back-rendering 7 in-line annotations into thin theme files, a non-trivial migration). The simpler path (codify the in-line convention) is the recommended default per the cohort's empirical convergence. Source: cycle-011 harvester dispatch `reports/2026-05-27T234540Z-harvester-l3-scal/CYCLE.md` §"Open questions / caveats" item 1.
 
 ```yaml
 ---
@@ -1760,12 +1784,16 @@ Source: integrator-per-report cycle-010 wave-2 #5 staging row + dispatch instruc
 slug: fgmres-inner-loop-iterate-while-migration-lifter-candidate
 opened_at: cycle-010
 opened_by: combinator-miner
-status: open
+status: answered-by-rough-in-theme
+answered_at: cycle-011
+answered_by: lifter (reports/2026-05-27T234648Z-lifter-fgmres-inner-loop-iterate-while-migration/)
 relates_to: gmres-inner-loop-iterate-while-migration (cycle-007, answered-by-rough-in-theme cycle-008), nleps-spec-gap-as-check-stop-into-carry-reuse-blocker (cycle-009, last-revisited cycle-010), variant-absorption-vs-instance-counting-policy (cycle-009, meta-phase scope), check-stop-into-carry-parameterization-over-stop-condition (cycle-009, helper-signature design)
 ---
 ```
 
 **Routing OQ for cycle-011 cycle-planner.** The cycle-010 MCP-pilot combinator-miner audit (`reports/2026-05-27T215535Z-combinator-miner-check-stop-into-carry-mcp-pilot/CYCLE.md`) recommends a **lifter dispatch** on the cycle-008 `book/src/L4-L3/gmres-inner-loop-iterate-while-migration.md` theme as the cycle-011+ next step, specifically to **re-anchor the theme against an upstream firm `book/src/spec/slices/gmres.md §L4 v0.7` form** (currently still v0.6 inline; located at lines 1012 and 1106 of that slice), then **apply the same migration theme as a separate `fgmres-inner-loop-iterate-while-migration` theme** (or unify both under a parameterized theme). The two FGMRES inner-loop sites at `palace/linalg/iterative.cpp:823-828` (3-condition break inside `FgmresSolver<OperType>::Mult`) are textually identical to the GMRES sites at `:644-649`; the lifter dispatch's verification target is whether **both lowerings produce a structurally identical `check_stop_into_carry` callsite shape** — if they do, that is the second-reuse formalization the cycle-008 promotion criterion was waiting on; if they diverge (e.g., FGMRES's `pc_side` differences leak into the predicate), the helper's signature needs revision before promotion. **Sequencing**: the lifter should be scheduled **before** any harvester on `book/src/L4/check-stop-into-carry.md` (the cycle-010 audit explicitly directs the cycle-planner to NOT schedule a harvester on the helper until either (a) the FGMRES theme is firmed with the helper at the same callsite shape as GMRES, or (b) a genuinely different consumer — e.g. a future literature-anchored MINRES inner loop, or NLEPS once spec'd — is identified). **Cycle-011 dispatch hint**: lifter-on-gmres.md-§L4-v0.6-to-v0.7 is the upstream prerequisite; the FGMRES theme authoring is the downstream act. May be a single lifter dispatch with two themes touched, or two sequential dispatches. Source: cycle-010 combinator-miner audit §Routing recommendation + §Cycle-010-or-011 lifter dispatch scope.
+
+**Cycle-011 closure (lifter dispatch enacted)** (`reports/2026-05-27T234648Z-lifter-fgmres-inner-loop-iterate-while-migration/`): the cycle-011 wave-2 lifter dispatch authored `book/src/L4-L3/fgmres-inner-loop-iterate-while-migration.md` as a `rough-in` sister-theme to the cycle-008 GMRES rough-in. Status changed to `answered-by-rough-in-theme` (analogous to the cycle-008 disposition of the GMRES theme): theme is authored against the same speculative `gmres.md §L4 v0.7` upstream; both this theme and its sibling firm when the upstream migration lands and aligns. The cycle-010 audit's "lower-edge second-reuse" reading is preserved in the new theme's §Status — sister-algorithm twinning is recorded as corroborating evidence but does NOT unblock firm L4 promotion of `check_stop_into_carry`. The firm-promotion blocker remains tracked under `nleps-spec-gap-as-check-stop-into-carry-reuse-blocker` (non-`GmresSolverBase` Krylov consumer required). The upstream lifter on `gmres.md §L4 v0.6→v0.7` is NOT yet enacted; it is the natural follow-up. The "may be a single lifter dispatch with two themes touched" alternative from the dispatch hint was NOT taken — cycle-011 wave-2 enacted only the FGMRES sister-theme authoring; the cycle-008 GMRES theme was re-anchor-checked (no firm-status changes since cycle-008 ⇒ no re-anchor needed; see report §Discipline notes "Re-anchoring scope check"). Routes forward: (a) future lifter dispatch on `gmres.md §L4 v0.6→v0.7` self-rotation (still pending; this would firm both sister themes); (b) cycle-012 meta-phase consideration of `variant-absorption-vs-instance-counting-policy` codification (this dispatch is the second data point per CYCLE.md §Open questions / caveats item 5).
 
 ```yaml
 ---
@@ -1803,6 +1831,8 @@ relates_to: phase-1-corpus-reduction-audit (priority-19)
 
 Should a firm `L1/orthogonalize` (or `L1/orthogonalize-column`) operator be promoted from the speculative slice corpus? Promotion would unblock simpler reduction of `book/src/spec/slices/arnoldi_step.md` and `book/src/spec/slices/orthog.md`. Promotion criterion under the unimplemented-Palace-stub policy is "small AND simplifies higher forms" — both are plausibly met: `orthogonalize` is small (one variant-dispatched primitive with three implementations: MGS sequential / CGS batched / CGS2 batched-with-refine), and lifting it would let `L4/krylov-step.md` Form A reference `op.orthog` as a firm L1 operator type rather than as a slice-level concept. The variant-axis profile (`gs_orthog ∈ {MGS, CGS, CGS2}`) and the MPI-collective shape table (MGS = j+2 allreduces; CGS = 2; CGS2 = 3) are unique evidence justifying promotion. Source: cycle-010 phase-1-corpus-reduction-audit, residual gap #1 of slice-3 arnoldi_step.md + slice-recommendation §"Open questions" item 4.
 
+**Amendment (cycle-011, same-layer-cross-cutter)**: this OQ is now blocking **2 slices** (arnoldi_step.md from cycle-010 batch-1; orthog.md from cycle-011 batch-2) and is referenced by **5 firm entries** (`concepts/orthogonalization.md`, `L2/krylov-step.md`, `L3/krylov-step.md`, `L4/krylov-step.md`, `L1-L0/ksp-solve-mutation-rotation.md`). The orthog.md cycle-011 batch-2 partial-reduction is gated on this promotion — the unique L1 invariants (read-only `V_basis` / mutated `w` / written `H` / routine-owns-reduction `dot_op`) and MPI-collective shape disclosure (MGS: m reductions of size 1; CGS: 1 of size m; CGS2: 2 of size m) are retained in the orthog.md L2/L3/L4 sections pending firm L1. Priority weight raised: high-confidence harvester candidate for batch-2-or-3. Source: cycle-011 phase-1-corpus-reduction-batch-2 §"Open questions" item 2.
+
 ```yaml
 ---
 slug: phase-1-corpus-reduction-remaining-7-slices
@@ -1814,6 +1844,162 @@ relates_to: phase-1-corpus-reduction-audit (priority-19)
 ```
 
 The cycle-010 first-instance phase-1-corpus-reduction-audit (`reports/2026-05-27T220000Z-same-layer-cross-cutter-phase-1-corpus-reduction-audit/CYCLE.md`) covered 3 of 10 slices (gmres.md, cg.md, arnoldi_step.md). The remaining 7 slices for cycle-011+ batch audits, in suggested priority order (by expected supersession overlap with firm entries): (1) `orthog.md` — overlaps `L1/orthogonalize` (pending promotion); ties into arnoldi_step audit closure; (2) `chebyshev.md` — likely overlaps `L2/krylov-step` polynomial-recurrence variant; (3) `polynomial_recurrence_step.md` — overlaps `L2/krylov-step` polynomial-recurrence variant; (4) `divfree.md` — overlaps `L1/ksp_solve` use pattern (cited as the canonical use site in `L1/ksp_solve` §Evidence); (5) `cg_preconditioning_framework.md` — likely overlaps `L1/ksp_solve` + `L4/krylov-step` Form A; (6) `plane_rotation_stream.md` — likely overlaps `L2/krylov-step` Givens-rotation pattern (could promote `givens_generate` / `givens_apply` as firm L1); (7) `sparse_triangular_solve.md` — likely a low-overlap slice (no firm krylov-chain analog); defer or audit separately. Suggested batch size: 2-4 slices per audit dispatch to keep the dispatch within context budget. The audit template established in cycle-010 (Supersession map / Residual gaps / Recommended action / Proposed changes per slice) is machine-replayable for cycle-011+ replay. Source: cycle-010 phase-1-corpus-reduction-audit §"Open questions" item 5.
+
+```yaml
+---
+slug: l3-index-matvec-naming-vs-apply_linop-slug
+opened_at: cycle-011
+opened_by: harvester
+status: open
+relates_to: l3-vocabulary-inventory-gap (this ledger), l3-backfill-apply-linop-and-blas1-cohort (this ledger)
+---
+```
+
+The L3 index (`book/src/L3/index.md:13`) advertises whole-tensor primitives using the casual name "matvec" alongside "axpy, dot, nrm2 as field operations". The cycle-011 wave-1 firm L3 entry for the matvec primitive uses the formal slug **`apply_linop`** (inherited from the L1 entry's slug per the layer-coherence invariant + identity-in-form rotation). The two names refer to the same primitive — `apply_linop` is the matvec generalisation that subsumes square and rectangular operators, real and complex element types, all operator representations. The current divergence is benign: the new L3 entry's first paragraph makes the equivalence explicit, and a reader navigating from the L3 index's "matvec" prose to the `apply_linop` dep-map row will recognise the linkage. **Routing note for cycle-012+ planner**: if uniformity is desired, a future `lifter` dispatch could touch up the L3 index's prose to use the formal slug (`matvec → apply_linop`), or alternatively the L3 entry could expose an "also known as: matvec" annotation. Low-priority cleanup; not blocking any current work. Similar naming gaps may surface as the BLAS-1 cohort lands (the L3 index's "axpy, dot, nrm2" prose vs the formal slugs `axpy.md`, `dot.md`, `nrm2.md` — these align exactly, but the broader "matvec → apply_linop" pattern is the one that needs the alias annotation). Source: cycle-011 harvester dispatch `reports/2026-05-27T234502Z-harvester-l3-apply-linop/CYCLE.md` §"Open questions / caveats" item 4.
+
+```yaml
+---
+slug: concepts-nrm2-stability-claim-correction
+opened_at: cycle-011
+opened_by: harvester
+status: open
+relates_to: l3-backfill-apply-linop-and-blas1-cohort (this ledger), l3-vocabulary-inventory-gap (this ledger)
+---
+```
+
+The concept page `book/src/concepts/nrm2.md` line 9 carries an incorrect stability claim: "Stability: production implementations use scaled summation (BLAS `nrm2` algorithm) to avoid overflow/underflow when computing `√Σ|x_i|²`." This contradicts the firm L1 entry's finding at `book/src/L1/nrm2.md:11`: "Note: the concept page claims Palace uses 'scaled summation (BLAS `nrm2` algorithm) to avoid overflow/underflow'. This is **not** what `linalg::Norml2` actually does — it computes the naive `√⟨x, x⟩` via `Dot`." The L1 entry is authoritative; the concept page should be corrected. The cycle-011 wave-1 L3 backfill of `nrm2` (`book/src/L3/nrm2.md`) carries the same correction-pending note in §Context (referencing the L1 entry's note), which keeps the L3 entry internally consistent but leaves the concept page's text uncorrected. **Out of scope for harvester** — the concept page is owned by layer-intro-author / cross-cutter, not harvester. **Routing note for cycle-012+ planner**: dispatch a layer-intro-author or same-layer-cross-cutter touch-up on `book/src/concepts/nrm2.md:8-9` to correct the stability claim. The correction can be either (a) remove the incorrect claim and replace with the L1-authoritative description ("Palace's `linalg::Norml2` computes the naive `√⟨x, x⟩` via `Dot`; the BLAS scaled-summation algorithm is not used"), or (b) reframe the claim as a generic BLAS heritage note while explicitly noting Palace's deviation. Low-priority cleanup; not blocking any current work. Source: cycle-011 harvester dispatch `reports/2026-05-27T231500Z-harvester-l3-blas1-reduction-cohort/CYCLE.md` §"Open questions / caveats" item 2.
+
+```yaml
+---
+slug: scal-mutation-rotation-l1-l0-theme
+opened_at: cycle-011
+opened_by: harvester
+status: open
+relates_to: l3-backfill-apply-linop-and-blas1-cohort (this ledger)
+---
+```
+
+No firm `book/src/L1-L0/scal-mutation-rotation.md` theme exists. The L1 entry `book/src/L1/scal.md` sketches the L1>L0 lowering content in §"L1 vs L0 distinction" and §Evidence (the in-place mutation via `mfem::Vector::operator*=` / `ComplexVector::operator*=`, the real-imag-shape branch erasure at `ComplexVector::operator*=` lines 207-211, the `Normalize` fused construct combining `nrm2 + scal` at `palace/linalg/vector.hpp:262-270`), but no dedicated mutation-rotation theme has been authored. The cycle-011 wave-1 L3 backfill of `scal` (`book/src/L3/scal.md`) inherits this gap — the L3 → L1 → L0 chain reaches firm coverage only down to L1; the L1 → L0 hop is currently informal. **This is not a new gap introduced by the L3 backfill** — the same gap exists at L1; it predates cycle-011. **Routing note for cycle-012+ planner**: dispatch an `abstractor` or `lifter` on this theme — analogous to the firm `axpby-mutation-rotation` and `axpbypcz-mutation-rotation` themes that have already landed at L1>L0 (`book/src/L1-L0/axpby-mutation-rotation.md`, `book/src/L1-L0/axpbypcz-mutation-rotation.md`). The theme should cover the destination-buffer mutation pattern, the real-imag branch erasure (transparent specialisation), and the `Normalize` fused-construct decomposition. Low-priority; the cohort closure makes the gap newly visible. Source: cycle-011 harvester dispatch `reports/2026-05-27T234540Z-harvester-l3-scal/CYCLE.md` §"Open questions / caveats" item 4.
+
+```yaml
+---
+slug: l3-index-semantics-overlay-blas1-cohort-prose-refresh
+opened_at: cycle-011
+opened_by: harvester
+status: open
+relates_to: l3-vocabulary-inventory-gap (this ledger), l3-index-matvec-naming-vs-apply_linop-slug (this ledger)
+---
+```
+
+The L3 index's `## Semantics (overlay)` prose (`book/src/L3/index.md:11-15`) currently lists only "matvec, axpy, dot, nrm2 as field operations" as the L3 vocabulary; the closed BLAS-1 cohort (apply_linop + axpy + axpby + axpbypcz + dot + nrm2 + scal) is now fully reflected in the dep-map table below but the §"Semantics (overlay)" prose has not been updated. `scal`, `axpby`, `axpbypcz`, and `apply_linop` are implied by the cohort closure but not literally named in the inventory line. **Out of scope for harvester** — the index `Semantics (overlay)` prose is owned by `layer-intro-author`, not harvester. **Routing note for cycle-012+ planner**: dispatch a `layer-intro-author` refresh on `book/src/L3/index.md` to bring the §"Semantics (overlay)" prose into alignment with the closed BLAS-1 cohort's full inventory (or alternatively reframe the prose as describing the *kind* of primitives — "BLAS-1 whole-tensor primitives, linear operator application, reductions" — rather than enumerating specific names). Related to the broader `l3-vocabulary-inventory-gap` OQ but more concrete: the gap is now closed in the dep-map but not in the inventory prose. Low-priority cleanup. Source: cycle-011 harvester dispatch `reports/2026-05-27T234540Z-harvester-l3-scal/CYCLE.md` §"Open questions / caveats" item 5.
+
+```yaml
+---
+slug: slepc-convergence-reason-lift-sub-theme
+opened_at: cycle-011
+opened_by: abstractor
+status: open
+relates_to: eigsolve-mutation-rotation (book/src/L1-L0/), eigsolve-iteration-count-result-field (this ledger, cycle-009)
+---
+```
+
+SLEPc internally exposes a richer convergence-reason enum (`EPSConvergedReason`) than what `BaseKspSolver::Mult` surfaces; the SLEPc code in Palace prints it via `EPSConvergedReasonView` at `palace/linalg/slepc.cpp:699` but never queries it programmatically. The cycle-011 wave-2 firm theme `book/src/L1-L0/eigsolve-mutation-rotation.md` Sub-pattern C records the per-status mapping at narrative-level but does not enumerate the full reason → `EigStatus` mapping. A future `slepc-convergence-reason-lift` sub-theme (cycle-012+ candidate) would carry the full table, including the `EPS_DIVERGED_BREAKDOWN` / `EPS_DIVERGED_SYMMETRY_LOST` → `LinearSolveFailed` mapping that the partly-constructive materialisation in Sub-pattern B references. **Routing note for cycle-012+ planner**: dispatch an `abstractor` or `lifter` for the sub-theme; the firm parent theme records the gap as an explicit sub-theme candidate, so the dispatch can scope cleanly. Out of scope for the cycle-011 wave-2 firm theme. Source: cycle-011 abstractor dispatch `reports/2026-05-27T234730Z-abstractor-eigsolve-mutation-rotation-l1-l0/CYCLE.md` §"Open questions / caveats" item 3.
+
+```yaml
+---
+slug: eigsolve-driver-side-double-solve-composition
+opened_at: cycle-011
+opened_by: abstractor
+status: open
+relates_to: eigsolve-mutation-rotation (book/src/L1-L0/), L1/eigsolve, L2/index.md
+---
+```
+
+`palace/drivers/eigensolver.cpp:377-407` shows a higher-level composition where the linear eigensolve's result (a `unique_ptr<EigenvalueSolver> eigen` plus its `num_conv`) is consumed as initial guesses by a subsequent `QuasiNewtonSolver` refinement (`qn = make_unique<QuasiNewtonSolver>(... std::move(eigen), num_conv, ...)`). The composition then re-invokes `Solve()` on the refined eigen-solver. The L1 `eigsolve` form does not capture this composition — it is a higher-level monadic-bind pattern over two `eigsolve` invocations with the first's result threaded as initial-condition for the second. This composition is more naturally an L2 / L4 monadic-composition pattern, **out of scope** for the L1>L0 mutation-rotation theme `book/src/L1-L0/eigsolve-mutation-rotation.md`. **Routing note for cycle-012+ planner**: dispatch a `same-layer-cross-cutter` at L2 or an `abstractor` at L4 to formalise this composition pattern as an L2/L4 candidate (the pattern is `eigsolve >>= refine_eigsolve` or similar bind-shape). The cycle-011 wave-2 firm theme explicitly excluded this from its scope per the one-theme-per-invocation discipline. Source: cycle-011 abstractor dispatch `reports/2026-05-27T234730Z-abstractor-eigsolve-mutation-rotation-l1-l0/CYCLE.md` §"Open questions / caveats" item 4.
+
+```yaml
+---
+slug: eigsolve-mutation-rotation-lowering-verifier-followup
+opened_at: cycle-011
+opened_by: abstractor
+status: open
+relates_to: eigsolve-mutation-rotation (book/src/L1-L0/)
+---
+```
+
+The cycle-011 wave-2 firm theme `book/src/L1-L0/eigsolve-mutation-rotation.md` is recognised at the **structural level**: the four sub-pattern recognition rules are sketched at section level; the per-backend ARPACK / SLEPc / `QuasiNewtonSolver` bodies are cited at section level; the ten `opInv->Mult` callsites are exhaustively cited per cycle-010 lifter; the per-pair extraction rewrite and the status sum-type derivation are structurally complete. **Full per-step sub-rewrite verification** — i.e., walking each line of each backend's body and confirming the per-step kernel decomposes into the cited sister-theme primitives — is deferred to a `lowering-verifier` cycle. This is the same approach as `ksp-solve-mutation-rotation`'s cycle-008 firm-promotion: the theme stands on structural-level coverage; per-line verification is a follow-up audit. **Routing note for cycle-012+ planner**: dispatch a `lowering-verifier` on `book/src/L1-L0/eigsolve-mutation-rotation.md` to walk each backend body and confirm: (i) the four-stage setup absorption (Sub-pattern A) is consistent with per-backend `SetType` / `SetProblemType` / `SetExtraSystemMatrix` / `SetPreconditionerUpdate` sub-axis bindings; (ii) the ten `opInv->Mult` callsites are exhaustive across the Palace corpus (re-verify by `search_text`); (iii) the per-pair extraction rewrite is consistent across the three backend orchestrations (each backend's `GetEigenvalue` / `GetEigenvector` / `GetError` returns values in the same coordinate convention modulo the Higham scaling factor). Source: cycle-011 abstractor dispatch `reports/2026-05-27T234730Z-abstractor-eigsolve-mutation-rotation-l1-l0/CYCLE.md` §"Open questions / caveats" item 5.
+
+```yaml
+---
+slug: eigsolve-slepc-nep-coordinate-convention-audit
+opened_at: cycle-011
+opened_by: repairer
+status: open
+relates_to: eigsolve-scaling-coordinate-convention (resolved cycle-011), eigsolve-mutation-rotation (book/src/L1-L0/)
+---
+```
+
+The cycle-011 lifter dispatch on the `eigsolve` OQ cluster (`reports/2026-05-27T235632Z-lifter-eigsolve-oq-cluster/`) resolved `eigsolve-scaling-coordinate-convention` by adopting convention (b) — L1 returns un-scaled eigenvalues, matching the L0 un-scale-at-accessor convention uniformly across the EPS / PEP / NLEPS backends. The cycle-011 critic + repairer identified an isolated SLEPc-NEP edge case that does NOT affect the broader resolution but warrants follow-up audit: `SlepcNEPSolverBase::GetEigenvalue(i)` at `palace/linalg/slepc.cpp:1554-1560` returns `l` directly without applying `* gamma`, BUT `SlepcNEPSolver::SetOperators` at `palace/linalg/slepc.cpp:1645-1651` (linear-K-M overload) AND `:1711-1719` (K-C-M overload) both compute `gamma = std::sqrt(normK / normM)` when `type != ScaleType::NONE` — the same Higham-norm scaling pattern as EPS / PEP. So the L0 behaviour is: NEP computes a non-trivial gamma at `SetOperators`, but its `GetEigenvalue` accessor does NOT apply `* gamma` — this is a genuine asymmetry in the L0 surface, NOT explained by the simpler "NEP gamma = 1" reading (which would be wrong). Open question: does the SLEPc NEP API itself un-scale before returning eigenpairs to the Palace wrapper (so the Palace `GetEigenvalue` returning `l` directly is correct), or is there a missing `* gamma` un-scale that would manifest as scaled eigenvalues being passed to callers? Recommended target: cycle-012+ `lifter` / `lowering-verifier` / harvester-NEP dispatch on `palace/linalg/slepc.cpp:1554-1719` (the `SlepcNEPSolverBase` constructor + `SetOperators` overloads + `GetEigenvalue` body). Provenance: cycle-011 repairer at `reports/2026-05-27T235632Z-lifter-eigsolve-oq-cluster/META.md` §Repair Finding 1 (NEP-gamma overclaim repaired by softening prose; the genuine asymmetry surfaced as this follow-up OQ).
+
+```yaml
+---
+slug: orthog-plane-rotation-stream-sub-slice-batch-3-joint-audit
+opened_at: cycle-011
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: phase-1-corpus-reduction-audit (priority-19), phase-1-corpus-reduction-remaining-7-slices (this ledger), l1-orthogonalize-promotion-from-arnoldi-step-and-orthog (this ledger)
+---
+```
+
+The plane-rotation-stream sub-slice in `book/src/spec/slices/orthog.md` lines 313-464 overlaps `book/src/spec/slices/plane_rotation_stream.md` (deferred to batch-3 of the phase-1-corpus-reduction-audit per the cycle-010 priority order). Both slices have unique material: `orthog.md` lines 313-464 contain a per-step driver decomposition (steps (i)-(iv): replay, generate, apply, propagate-to-RHS) + two near-duplicate L1 entries (lines 364-398 and lines 405-464) that should be merged. The eventual structural split into `orthog/gram_schmidt.md` + `orthog/plane_rotation.md` is flagged in the slice corpus' Open questions at `orthog.md:407` and `:449-450` but pending. Batch-3 of the audit should perform the joint reduction — audit `plane_rotation_stream.md` together with `orthog.md` lines 313-464 to decide where the canonical home for plane-rotation-stream L0/L1/L2/L3/L4 content lives. Doing the reduction unilaterally on either slice risks creating a stale stub in one slice that points at content that has been moved to the other. Source: cycle-011 phase-1-corpus-reduction-batch-2 §"Open questions" item 1.
+
+```yaml
+---
+slug: l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion
+opened_at: cycle-011
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: phase-1-corpus-reduction-audit (priority-19), phase-1-corpus-reduction-remaining-7-slices (this ledger)
+---
+```
+
+A firm `L1/chebyshev-smoother` operator entry (and possibly `L2/chebyshev-iteration`) is pending lift. The slice corpus' `book/src/spec/slices/chebyshev.md` §L1 and §L2 are currently the only firm Chebyshev definition in the artifact; they are cited as canonical evidence by `L2/krylov-step.md:140, :142` and `L4/krylov-step.md` §Variant axes list-item 3 (polynomial-kind at line 141, absorbed at level (c) into `op.scalars`). Promotion criterion under the unimplemented-Palace-stub policy is "small AND simplifies higher forms" — both plausibly met: the operator is a Richardson sweep over polynomial recurrence (small), and lifting would let `L2/krylov-step` variant axis (3) point at a concrete L2 row (simplifies higher forms). The `chebyshev.md` partial-reduction is gated on this promotion — the slice's L1/L2/L3/L4 content is retained pending firm L1/L2 entries. Source: cycle-011 phase-1-corpus-reduction-batch-2 §slice-2 residual gaps #1-2.
+
+```yaml
+---
+slug: concepts-state-stratification-four-stratum-extension
+opened_at: cycle-011
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: phase-1-corpus-reduction-audit (priority-19), l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion (this ledger)
+---
+```
+
+The `book/src/spec/slices/chebyshev.md` §L4 (lines 290-442) establishes a fourth state stratum (scalar-recurrence — per-call ephemeral but threaded across `k`-iterations) beyond the three documented in `book/src/concepts/state-stratification.md` (sim / operator-internal / ephemeral). Specifically the `ChebOp<E, S>` parameterized closure type with `Kind4 :: ChebOp<E, Unit>` and `Kind1 :: ChebOp<E, { rho_prev: E }>` encodes the scalar-recurrence stratum as a type parameter — unique methodology evidence for the "constructed-operator absorbs variant at level (c)" pattern. Should this be lifted as a firm extension to the state-stratification concept (four-stratum split), OR as a sub-kind of operator-internal stratum (the slice's framing: the scalar-recurrence stratum is per-call ephemeral but threaded across iterations, distinguishing it from both pure ephemeral and pure operator-internal strata)? Routing: cycle-012+ layer-intro-author / same-layer-cross-cutter dispatch on `concepts/state-stratification.md` to extend with the four-stratum worked example. Source: cycle-011 phase-1-corpus-reduction-batch-2 §slice-2 residual gap #3.
+
+```yaml
+---
+slug: concepts-derived-view-hoisting-control-flow-boundary-extension
+opened_at: cycle-011
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: phase-1-corpus-reduction-audit (priority-19), l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion (this ledger)
+---
+```
+
+The `book/src/spec/slices/chebyshev.md` §L4 "Initial-guess shape: branch vs. derived view" section (lines 419-436) is unique methodology evidence for `derived-view-hoisting` applied at the **control-flow boundary** (as distinct from the state-shape boundary that's the typical case for derived-view-hoisting). The slice argues why `initial_guess: Bool` is a per-call argument rather than a constructed-operator variant axis — the branch lives at the control-flow boundary, not the state-shape boundary. The existing `book/src/concepts/derived-view-hoisting.md` worked examples are all state-shape-boundary applications. Lifting target: extend the concept page with the control-flow-boundary worked example, clarifying that derived-view-hoisting can be applied at either boundary. Routing: cycle-012+ layer-intro-author / same-layer-cross-cutter dispatch on `concepts/derived-view-hoisting.md`. Source: cycle-011 phase-1-corpus-reduction-batch-2 §slice-2 residual gap #4.
+
+```yaml
+---
+slug: concepts-negative-result-slice-partial-positive-sub-pattern-extension
+opened_at: cycle-011
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: phase-1-corpus-reduction-audit (priority-19), phase-1-corpus-reduction-remaining-7-slices (this ledger)
+---
+```
+
+The `book/src/spec/slices/polynomial_recurrence_step.md` §L1↔L1 self-tightening section (lines 162-191) is unique methodology evidence for the "**partial-positive-within-a-negative-result-slice**" pattern — a slice that is cross-family negative (no shared kernel between Chebyshev / GMRES / eigenvalue-tracking) AND within-family partially positive (4-of-5-axes-shared between 4th-kind and 1st-kind Chebyshev; refactor potential as `ChebyshevSmootherBase<ScalarGenerator>`). The dedicated falsification criterion subsection (lines 183-191) is also structurally required per `concepts/negative-result-slice.md` §"Falsification criterion (required structural element)". Lifting target: extend `book/src/concepts/negative-result-slice.md` with a "Partial-positive sub-pattern" subsection citing this slice's self-tightening section as the canonical worked example. Until lifted, the polynomial_recurrence_step.md self-tightening section is retained in full (the cycle-011 batch-2 reduction does NOT touch this section). Routing: cycle-012+ layer-intro-author / same-layer-cross-cutter dispatch on `concepts/negative-result-slice.md`. Source: cycle-011 phase-1-corpus-reduction-batch-2 §slice-3 residual gap #4.
 
 ## Dropped
 

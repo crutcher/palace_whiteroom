@@ -1,5 +1,18 @@
 # Slice: chebyshev
 
+> **Reduction status (cycle-011+):** this slice is the cycle-001-era precursor to a firm `L1/chebyshev-smoother` + `L2/chebyshev-iteration` row that has not yet been promoted. The slice's L1/L2/L3/L4 content is currently cited as canonical evidence by:
+> - `book/src/L2/krylov-step.md:140` (`chebyshev.md:354-362` cited as one of five canonical L4 slice instances).
+> - `book/src/L2/krylov-step.md:142` (the polynomial-recurrence pattern instance).
+> - `book/src/L3-L2/krylov-step-body-identity.md:127` (the L3>L2 identity-in-form claim's Chebyshev evidence).
+> - `book/src/L4/krylov-step.md` §Variant axes list-item 3 (polynomial-kind at line 141, absorbed at level (c) into `op.scalars`).
+> - `book/src/concepts/chebyshev-iteration.md` (high-level prose overview; not an operator entry).
+>
+> **Pending lift to firm entries**:
+> - `L1/chebyshev-smoother` — promotes the L1 Apply procedure to a firm L1 operator (criterion: small AND simplifies higher forms; both plausibly met).
+> - `L2/chebyshev-iteration` — promotes the L2 primitive composition to a firm L2 operator (would let `L2/krylov-step` variant axis (3) point at a concrete L2 entry).
+> - Extend `concepts/state-stratification.md` with the four-stratum worked example from §L4 (sim / operator-internal / ephemeral / scalar-recurrence).
+> - Extend `concepts/derived-view-hoisting.md` with the control-flow-boundary worked example from §L4 "Initial-guess shape: branch vs. derived view".
+
 Chebyshev polynomial smoother applying `p_k(D^{-1} A)` to damp
 high-frequency error on an SPD operator with extracted diagonal
 preconditioner `D = diag(A)`. Used as the per-level smoother in
@@ -88,12 +101,7 @@ transpose path.
 
 ## Consumers
 
-- `gmg.cpp` (geometric multigrid): per-level relaxation.
-- `distrelaxation.cpp` (distributive relaxation): smoother.
-
-The smoother is a leaf in the preconditioner stack: it consumes `A`
-(plus its diagonal) and produces a `Solver<OperType>` exposing
-`apply_linop`.
+Multigrid V-cycle smoother (`gmg.cpp`) and distributive relaxation (`distrelaxation.cpp`); pending audit when the multigrid + cg-preconditioning slices are reduced in later batches.
 
 ## Open questions
 
@@ -101,26 +109,15 @@ The smoother is a leaf in the preconditioner stack: it consumes `A`
   multigrid integration only.
 - `spectrum_estimate` has a build-flag-dependent backend (power
   iteration vs. SLEPc); L2 unfold will need to acknowledge both.
-- MPI involvement is confined to `spectrum_estimate` (parallel norms
-  inside power iteration); the polynomial recurrence itself is
-  local.
 - The complex `Transpose=true` template specializations of the
   inner kernels exist but are unreachable: `MultTranspose` forwards
   to `Mult` under the symmetry assumption, so the transpose-conjugate
   paths are dead code under current wiring. Flagged for future
   cleanup or for use by an asymmetric variant.
 
-## Concept references
+## Concept references (reduced)
 
-- `concepts/apply_linop.md` — the apply interface.
-- `concepts/axpy.md`, `concepts/elementwise-product.md` —
-  primitives used by the inner recurrence.
-- `concepts/extract-diagonal.md`, `concepts/reciprocal.md` — setup
-  primitives.
-- `concepts/spectrum-estimate.md` — dominant-eigenvalue estimate.
-- `concepts/constructed-operators.md` — variant absorption route.
-- `concepts/variant-absorption.md` — invariant/procedural/primitive
-  axes.
+Navigable via `book/src/concepts/index.md`. The slice's L1/L2/L3/L4 sections cite individual concept pages (`apply_linop`, `axpy`, `elementwise-product`, `extract-diagonal`, `reciprocal`, `spectrum-estimate`, `constructed-operators`, `variant-absorption`) inline at the relevant primitive references.
 
 ## L2 — primitive composition
 

@@ -1,5 +1,9 @@
 # Polynomial recurrence step
 
+> **Reduction status (cycle-011+):** this slice is a **negative-result slice** per `book/src/concepts/negative-result-slice.md`. It is cited as the canonical worked example at `concepts/negative-result-slice.md:46`. The slice's distinction catalog (§L1) and the within-Chebyshev partial-positive (§L1↔L1 self-tightening) are load-bearing methodology artifacts and are structurally retained in full.
+>
+> **Pending lift**: extend `concepts/negative-result-slice.md` with a "Partial-positive sub-pattern" subsection citing §L1↔L1 self-tightening as the canonical worked example. Until lifted, this slice is retained verbatim.
+
 ## Context
 
 This slice was opened by a scope question asking whether Palace has a named, shared `polynomial_recurrence_step` kernel across (i) Chebyshev smoothers, (ii) GMRES restart cycles, and (iii) LOBPCG / eigenvalue tracking. The empirical answer is **no**. This slice exists as a **negative-result catalog**: a structured record of three independent per-step scalar-update sequences and one out-of-scope (Palace-boundary obstruction) site, with explicit non-unification noted.
@@ -23,6 +27,8 @@ Two anonymous-namespace inlines in `chebyshev.cpp` factor the vector-update half
 
 Both helpers are `static` in an anonymous namespace, not exported. They are the named per-step **vector-update** kernel of the polynomial recurrence; they do NOT encapsulate scalar-coefficient generation.
 
+> Forward-pointer: the file-local `ApplyOrder0` / `ApplyOrderK` helpers are also enumerated as the canonical Chebyshev L2 primitive composition at `book/src/spec/slices/chebyshev.md` §L2 §"Apply primitives" (in the per-call apply procedure). The anonymous-namespace / translation-unit-private framing here is unique to this slice (and is load-bearing evidence for the non-promotion to a shared kernel).
+
 ### Chebyshev scalar-coefficient sequences (inlined per variant; not unified)
 
 The per-step scalar pair `(sd_k, sr_k)` is generated INLINE inside each `Mult2` body:
@@ -31,6 +37,8 @@ The per-step scalar pair `(sd_k, sr_k)` is generated INLINE inside each `Mult2` 
 - **1st-kind** (`ChebyshevSmoother1stKind::Mult2`, [palace/linalg/chebyshev.cpp:261-293](../../../../reference/palace/linalg/chebyshev.cpp#L261-L293)): genuine three-term-style recurrence over a running scalar `rhop`: `rho = 1/(2·theta/delta - rhop); sd = rho·rhop; sr = 2·rho/delta; rhop := rho`. State: `(theta, delta)` persisted on smoother, `rhop` threaded across loop iterations.
 
 No shared scalar generator is factored out. The setup paths persist different derived state: 4th-kind stores `lambda_max`, 1st-kind stores `(theta, delta)`.
+
+> Forward-pointer: the per-variant scalar-coefficient sequences are also enumerated as the canonical Chebyshev `scalars(op, k)` generator at `book/src/spec/slices/chebyshev.md` §L2 §"Apply primitives" (which factors both the 4th-kind closed-form and the 1st-kind `rho_k` three-term recurrence). The "no shared scalar generator is factored out" framing here is unique to this slice.
 
 ### Chebyshev outer driver (duplicated per variant; no shared base)
 

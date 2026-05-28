@@ -124,6 +124,8 @@ status: proposed
 
 **Promotion bar check**: pattern observed = 1 instance (cycle-010 first instance); friction-ledger entry = candidate-creation pending (the template-drift pattern hasn't fired twice yet); sketch concrete enough = ✓ (four-step procedure could be written as SKILL.md). Falls below the "≥2 cycles" promotion bar but well above the "candidate sketch concrete enough" bar. Recommend default-accept under low-bar policy because the remaining 7 slices are queued and template drift will compound across them.
 
+**Cycle-011 uptake-note (appended by repairer of `2026-05-27T234651Z-same-layer-cross-cutter-phase-1-corpus-reduction-batch-2`):** cycle-011's batch-2 audit dispatch is the **second instance** of the cycle-010 template execution. The dispatch directly followed the four-part template, applied the cycle-010 friction-signal mitigation (`grep -n "^## "` H2 enumeration before line-range arithmetic), and still produced ~10 minor citation off-by-ones (4 of which were citation/line-range drift — the same shape this skill candidate is designed to prevent). This confirms recurrence-2 of the template-drift pattern, clearing the "≥2 cycles" promotion bar. In addition, the cycle-011 critic surfaced the proposed_changes-block bracketed-prose syntax as a separate template-friction signal (issue 10 in `META.md` critique) — a likely **cycle-012 meta-phase template-improvement candidate** that may extend this skill's scope (mechanical-not-interpretive proposed_changes blocks). Meta-phase batch-2 (after cycle-012 integrator-finalize) should promote this candidate to firm `skills/phase-1-slice-reduction-audit/SKILL.md` and consider whether to fold the proposed_changes-block format-friction into the same skill or a sibling.
+
 ## Rejected
 
 (none yet)

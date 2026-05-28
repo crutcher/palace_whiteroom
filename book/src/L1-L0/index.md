@@ -19,6 +19,7 @@ Many themes here capture **how Palace expresses common patterns**:
 | [axpbypcz-mutation-rotation](./axpbypcz-mutation-rotation.md) | `L1/axpbypcz` (firm) | `palace/linalg/vector.{hpp,cpp}` | rough-in |
 | [apply-linop-mutation-rotation](./apply-linop-mutation-rotation.md) | `L1/apply_linop` (firm) | `palace/linalg/operator.{hpp,cpp}`, `rap.cpp` | rough-in |
 | [ksp-solve-mutation-rotation](./ksp-solve-mutation-rotation.md) | `L1/ksp_solve` (firm) | `palace/linalg/ksp.cpp`, `palace/linalg/iterative.{hpp,cpp}` | rough-in *(firmed cycle-008)* |
+| [eigsolve-mutation-rotation](./eigsolve-mutation-rotation.md) | `L1/eigsolve` (rough-in) | `palace/linalg/{arpack,slepc,nleps}.cpp`, `palace/linalg/eps.hpp` | firm *(structural; partly-constructive on LinearSolveFailed)* |
 | [minres-iteration](./minres-iteration.md) | (speculative — `lanczos_step`, …) | (no Palace anchor — `MFEM_ABORT` at `ksp.cpp:53-57`) | obstruction |
 | [bicgstab-iteration](./bicgstab-iteration.md) | (speculative — `bicgstab_step`, …) | (no Palace anchor — `MFEM_ABORT` at `ksp.cpp:53-57`) | obstruction |
 

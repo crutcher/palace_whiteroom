@@ -13,10 +13,18 @@
 - [Overview](./L4-L3/index.md)
 - [krylov-step-typed-wrapper-dissolution](./L4-L3/krylov-step-typed-wrapper-dissolution.md)
 - [gmres-inner-loop-iterate-while-migration](./L4-L3/gmres-inner-loop-iterate-while-migration.md)
+- [fgmres-inner-loop-iterate-while-migration](./L4-L3/fgmres-inner-loop-iterate-while-migration.md)
 
 # L3 — Global Tensor-Field Operations
 - [Overview](./L3/index.md)
 - [krylov-step](./L3/krylov-step.md)
+- [apply_linop](./L3/apply_linop.md)
+- [axpy](./L3/axpy.md)
+- [axpby](./L3/axpby.md)
+- [axpbypcz](./L3/axpbypcz.md)
+- [dot](./L3/dot.md)
+- [nrm2](./L3/nrm2.md)
+- [scal](./L3/scal.md)
 
 # L3 > L2 — Lowering
 - [Overview](./L3-L2/index.md)
@@ -49,6 +57,7 @@
 - [axpbypcz-mutation-rotation](./L1-L0/axpbypcz-mutation-rotation.md)
 - [apply-linop-mutation-rotation](./L1-L0/apply-linop-mutation-rotation.md)
 - [ksp-solve-mutation-rotation](./L1-L0/ksp-solve-mutation-rotation.md)
+- [eigsolve-mutation-rotation](./L1-L0/eigsolve-mutation-rotation.md)
 - [bicgstab-iteration](./L1-L0/bicgstab-iteration.md)
 - [minres-iteration](./L1-L0/minres-iteration.md)
 
@@ -64,6 +73,7 @@
 - [File — palace/linalg/operator.{hpp,cpp}](./L0/linalg-operator-file.md)
 - [File — palace/linalg/ksp.cpp](./L0/ksp-factory-file.md)
 - [File — palace/linalg/iterative.{hpp,cpp}](./L0/linalg-iterative-file.md)
+- [File — palace/linalg/solver.{hpp,cpp}](./L0/linalg-solver-file.md)
 - [File — palace/utils/communication.hpp (MPI collectives)](./L0/mpi-globalsum-and-collectives.md)
 - [Overload set — Mult / MultTranspose / AddMult](./L0/apply-linop-overload-set.md)
 - [Class — BaseKspSolver](./L0/kspsolver-base-class.md)
