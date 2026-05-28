@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T034130Z
 scope: L1 operator: orthogonalize
 status: integrated
 integrated_at: 2026-05-28T072500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5964cb4
 integration_notes: "Applied cycle-012 (report 1 of 8). Firm L1 operator book/src/L1/orthogonalize.md created + L1/index.md (Firm 8->9 + bullet + dep-map row) + SUMMARY.md entry. Closes HIGH-priority cycle-010 OQ l1-orthogonalize-promotion-from-arnoldi-step-and-orthog. 2 new OQs. 0 gate hits. Build exit 0, page rendered. See reports/2026-05-28T072500Z-integrator-finalize-cycle-012/CYCLE.md."
 inputs:
   - book/src/spec/slices/orthog.md (cycle-011 partially-reduced; retained L2/L3/L4 GS content)

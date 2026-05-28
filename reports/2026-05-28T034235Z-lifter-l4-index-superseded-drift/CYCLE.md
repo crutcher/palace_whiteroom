@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T034235Z
 scope: L4>L3 theme re-anchor (cross-reference cleanup) — L4/index.md SUPERSEDED-text drift on krylov-step-typed-wrapper-dissolution
 status: integrated
 integrated_at: 2026-05-28T072500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5964cb4
 integration_notes: "Applied cycle-012 (report 7 of 8). book/src/L4/index.md:40 re-anchored -- struck stale cycle-006 'no L3 row needed' clause + added forward-pointer to firm L3/krylov-step.md + explicit SUPERSEDED marking (cites 'Identity-lowerings still require both L levels' invariant). Resolves the integrator-signals carry-forward flag chain (cycle-010 wave-1 pass-2 META Issue 1, re-flagged cycle-011) -- marked resolved in integrator-signals §cycle-012 (finalize-only authority). Theme-body line-20/220 residual routed to OQ krylov-step-theme-body-no-l3-row-drift-cycle-013. 0 gate hits. Build exit 0."
 inputs:
   - book/src/L4/index.md

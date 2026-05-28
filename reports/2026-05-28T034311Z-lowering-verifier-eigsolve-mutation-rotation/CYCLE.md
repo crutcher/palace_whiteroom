@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T03:43:11Z
 scope: L1>L0 theme audit — eigsolve-mutation-rotation
 status: integrated
 integrated_at: 2026-05-28T072500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5964cb4
 integration_notes: "Applied cycle-012 (report 3 of 8). Lowering-verifier audit of eigsolve-mutation-rotation; verdict confirms-with-refinement. Only Edit 1 (verified_against YAML) applied; Edits 2-3 NOT applied (routed to GATED cycle-013 abstractor via OQ eigsolve-getconverged-forwarder-fix-and-gated-promotion). Sub-pattern B partly-constructive -> firm promotion UNBLOCKED but NOT enacted; ## Status caveat retained. ORCHESTRATOR CORRECTION: this row was originally mis-filed to a cycle-013-staging dir; relocated to cycle-012; backward cycle-013 refs corrected; forward-refs to the gated cycle-013 abstractor intentionally retained. 0 gate hits."
 inputs:
   - book/src/L1-L0/eigsolve-mutation-rotation.md

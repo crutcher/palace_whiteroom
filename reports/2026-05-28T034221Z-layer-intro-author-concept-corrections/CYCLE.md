@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T03:42:21Z
 scope: concept-page corrections + extensions (bundled, 4 tasks)
 status: integrated
 integrated_at: 2026-05-28T072500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5964cb4
 integration_notes: "Applied cycle-012 (report 6 of 8). 4 concept-page edits: nrm2.md (CORRECTION -- false scaled-summation stability claim replaced with L1-authoritative naive sqrt(<x,x>)-via-Dot finding) + state-stratification/derived-view-hoisting/negative-result-slice (3 extensions). Closes 4 cycle-011 OQs (+1 cycle-003 duplicate nrm2 slug). WRITE-AUTHORITY PHASE-BOUNDARY VIOLATION (recurrence-1): dispatch wrote to book/ during dispatch phase; critic caught (HIGH), repairer reverted to HEAD (Option A), integrator applied normally from proposed-changes. Meta-phase batch-2 prompt-guard candidate. 0 gate hits at apply. Build exit 0."
 ---
 

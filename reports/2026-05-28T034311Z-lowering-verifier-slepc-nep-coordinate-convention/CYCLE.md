@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T034311Z
 scope: SLEPc-NEP coordinate-convention audit — eigsolve §5 scaling-coordinate convention (cycle-011 OQ eigsolve-slepc-nep-coordinate-convention-audit)
 status: integrated
 integrated_at: 2026-05-28T072500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5964cb4
 integration_notes: "Applied cycle-012 (report 4 of 8). SLEPc-NEP coordinate-convention audit; verdict resolved-with-refinement (two-mechanism finding; gamma/delta dead store). book/src/L1/eigsolve.md §5 prose refined + ## Verified-against section appended + carry-forward citation fix arpack.cpp:387->:383 at :116 + :222. Closes cycle-011 OQ eigsolve-slepc-nep-coordinate-convention-audit; with this the cycle-009 eigsolve OQ cluster is fully closed across cycles 010/011/012. 1 new low-priority OQ. 2 citation-carry-forward gate hits (both verified). Build exit 0."
 inputs:
   - book/src/L1/eigsolve.md (Algebraic-laws §5, Variant-axes "scaling", Status block)

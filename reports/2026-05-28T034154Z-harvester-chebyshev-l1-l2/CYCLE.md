@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T034154Z
 scope: L1 operator: chebyshev-smoother; L2 operator: chebyshev-iteration
 status: integrated
 integrated_at: 2026-05-28T072500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5964cb4
 integration_notes: "Applied cycle-012 (report 2 of 8). Firm L1 chebyshev-smoother + firm L2 chebyshev-iteration created (RATIFIED KEEP-FIRM by integrator) + L1/index.md (Firm 9->10) + L2/index.md dep-map row + 2 SUMMARY entries. Closes cycle-011 OQ l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion. 4 new OQs. L2 firm cohort 1->2 (first L2 growth since cycle-005; priority #17). 0 gate hits. Build exit 0, pages rendered."
 inputs:
   - book/src/spec/slices/chebyshev.md (cycle-011 partially-reduced slice; L1/L2/L3/L4 content)

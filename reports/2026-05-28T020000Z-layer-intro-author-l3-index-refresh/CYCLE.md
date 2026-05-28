@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T020000Z
 scope: L3 index ## Semantics (overlay) prose refresh — BLAS-1 cohort + matvec/apply_linop naming reconcile
 status: integrated
 integrated_at: 2026-05-28T072500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5964cb4
 integration_notes: "Applied cycle-012 (report 5 of 8). book/src/L3/index.md ## Semantics (overlay) prose refreshed -- names all 8 firm L3 operators grouped by kind; matvec (apply_linop) parenthetical reconcile. Closes 2 cycle-011 OQs (l3-index-semantics-overlay-blas1-cohort-prose-refresh + l3-index-matvec-naming-vs-apply_linop-slug). Clean run (all 8 critic checks pass, no repair). 0 gate hits. Build exit 0. LOW-severity scal.md:137 stale-prose + 7 back-reference re-point surfaced for cycle-013 (not OQ'd)."
 ---
 

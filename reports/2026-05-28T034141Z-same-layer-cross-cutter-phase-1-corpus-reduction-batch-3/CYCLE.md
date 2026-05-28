@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T034141Z
 scope: Phase 1 corpus reduction audit — batch 3 (plane_rotation_stream [joint with orthog plane-rotation sub-slice] / divfree)
 status: integrated
 integrated_at: 2026-05-28T072500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5964cb4
 integration_notes: "Applied cycle-012 (report 8 of 8; closes meta-batch-2). Phase-1 corpus reduction batch-3: orthog.md plane-rotation sub-slice FULLY reduced (376->234; both near-duplicate L1 entries eliminated -- first intra-corpus-redundancy verdict) + plane_rotation_stream.md partial + invariant-hoist-first (418->367) + divfree.md partial (414->413). Cumulative 8/10 slices. Closes cycle-011 OQ orthog-plane-rotation-stream-sub-slice-batch-3-joint-audit; 5 new OQs (incl. HEADLINE l1-divfree-projector-promotion + plane-rotation-concept-page-canonical-pointer-repoint). HIGH-severity line-map defect (END-not-START boundary) repaired pre-apply; STRONG phase-1-slice-reduction-audit skill-promotion candidate at recurrence-3 for meta-phase. 0 gate hits at apply. Build exit 0 (slices not in book nav)."
 inputs:
   - book/src/spec/slices/plane_rotation_stream.md (418 lines)
