@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T214020Z
 scope: L4>L3 theme re-anchor — chebyshev L4 entry residual forM_/foldM prose cleanup (surgical 3-site vocabulary refresh)
 status: integrated
 integrated_at: 2026-05-28T221238Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b54ea1c
 integration_notes: "Applied cycle-016 (per-report position 6). Surgical 3-site descriptive-prose vocabulary refresh in firm L4/chebyshev.md (forM_/foldM → iterate_while_pure); 4 intentional historical-narrative occurrences left verbatim. Status stays firm (no semantics/structure/status change). OQ l4-chebyshev-residual-formm-foldm-prose-cleanup resolved (ledger:2834). Retroactive-budget 0. Book build clean (exit 0)."
 inputs:
   - book/src/L4/chebyshev.md

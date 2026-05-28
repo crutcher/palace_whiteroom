@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T214012Z
 scope: L3 chebyshev §"Value-threaded form (L3 rendering)" downward prose — vocabulary refresh forM_/foldM → iterate_while_pure (sibling to cycle-015 L4 chebyshev firm enactment)
 status: integrated
 integrated_at: 2026-05-28T221238Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b54ea1c
 integration_notes: "Applied cycle-016 (per-report position 7, LAST). Surgical 1-sentence downward-prose vocabulary refresh in L3/chebyshev.md §Value-threaded form (forM_/foldM → iterate_while_pure/iterate_while_pure_L3 with step-count predicates); 2 cross-links verified resolve. Status stays partial-obstruction. OQ l3-chebyshev-downward-prose-iterate-while-refresh resolved for named-sentence scope (ledger:2767); NEW companion OQ l3-chebyshev-sibling-formm-foldm-prose-sweep opened for the 5 remaining sibling sites. Retroactive-budget 0. Book build clean (exit 0)."
 inputs:
   - book/src/L3/chebyshev.md

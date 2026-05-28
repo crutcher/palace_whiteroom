@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T213513Z
 scope: L0 bundle-6 chapter #5 — book/src/L0/fem-libceed-operator-file.md (palace/fem/libceed/operator.cpp)
 status: integrated
 integrated_at: 2026-05-28T221238Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b54ea1c
 integration_notes: "Applied cycle-016 (per-report position 4). NEW firm L0 file chapter fem-libceed-operator-file (bundle-6 #5; libCEED composite-operator wrapper + CeedOperatorFullAssemble COO→CSR @455-523 + CeedOperatorCoarsen @525-585). SUMMARY.md registered under L0 Part (L0 20→21). 2 fem-bilinearform-file.md forward references retired to live links (1 retroactive slice). OQ bundle-6-l0-libceed-operator-file-next-candidate resolved (ledger:2808). Retroactive-budget 1 (global 1, well below ≥4). Applied the repaired CYCLE.md content. Book build clean (exit 0)."
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T213533Z
 scope: L1>L0 theme sketch — eigsolve-convergence-reason-mapping (partly-constructive re-verification + cycle-016 audit-record append)
 status: integrated
 integrated_at: 2026-05-28T221238Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b54ea1c
 integration_notes: "Applied cycle-016 (per-report position 5). Append-only Re-verification (cycle-016 abstractor) subsection + verified_against YAML in eigsolve-convergence-reason-mapping.md; THIRD independent negative-anchor confirmation. Status correctly STAYS partly-constructive (zero materialization re-confirmed; no positive source site reads the reason code). OQ partly-constructive-entry-mechanism-validated-eigsolve-convergence-reason-mapping answered (ledger:2689). Retroactive-budget 0. Book build clean (exit 0)."
 inputs:
   - book/src/L1-L0/eigsolve-convergence-reason-mapping.md (cycle-013 authored; cycle-014 audited+integrated, commit 73ecd3e)

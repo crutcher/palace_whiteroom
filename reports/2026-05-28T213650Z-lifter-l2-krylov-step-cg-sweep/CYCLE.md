@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T213650Z
 scope: L2>L1 (citation sweep) theme re-anchor — book/src/L2/krylov-step.md cg.md dangling-pointer sweep
 status: integrated
 integrated_at: 2026-05-28T221238Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b54ea1c
 integration_notes: "Applied cycle-016 (per-report position 3). Pure citation re-anchor of 12 dangling cg.md range pointers + 1 repair-added sibling iterative.cpp:244-250→:21-32 CheckDot drift correction in firm L2/krylov-step.md across 13 edit blocks; status stays firm. OQ l2-krylov-step-cg-md-citation-sweep answered (ledger:2793; 2 live-slice citations cg.md:27-141/:86-106 retained pending future slice removal). Retroactive-budget 0. Book build clean (exit 0)."
 inputs:
   - book/src/L2/krylov-step.md

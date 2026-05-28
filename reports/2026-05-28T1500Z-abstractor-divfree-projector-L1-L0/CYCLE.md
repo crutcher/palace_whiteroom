@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T21:35:31Z
 scope: L1>L0 theme sketch — divfree-projector-mutation-rotation
 status: integrated
 integrated_at: 2026-05-28T221238Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b54ea1c
 integration_notes: "Applied cycle-016 (per-report position 1). NEW firm L1>L0 mutation-rotation theme divfree-projector-mutation-rotation (4 sub-patterns A/B/C/D; load-bearing WeakDiv=-GᵀM sign positively anchored integrator.hpp:217 + mixedvecgrad.cpp:202). index.md + SUMMARY.md registered. 3 OQs opened (divfree-l1-entry-apply-close-and-reltol-line-drift, divfree-mult-doc-irrotational-vs-divfree-stale re-surfaced, divfree-closure-nesting-constructed-gate-carrying-constructed-gate). Retroactive-budget 0. Applied the repaired CYCLE.md content. Book build clean (exit 0)."
 inputs:
   - book/src/L1/divfree-projector.md (firm L1 anchor; promoted cycle-015)

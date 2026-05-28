@@ -6,7 +6,7 @@ cycle_id: cycle-016
 meta_batch: batch-4 (FIRST primary cycle; cycles 016/017/018; meta-phase fires after 018)
 status: integrated
 integrated_at: 2026-05-28T221238Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b54ea1c
 reports_consumed: 7
 reports_applied: 7
 reports_deferred: 0
@@ -56,7 +56,7 @@ All 7 reports applied with zero deferrals/rejections/rework. **Zero build-repair
 | **retroactive-budget global** | **1** (well below ≥4 block threshold; report 4's 2 `fem-bilinearform-file` forward-reference→live-link retirements = 1 firm-file slice; all other 6 rows per-slice 0). PASS. |
 | **build-breakage repair** | **0** (build clean on first run; exit 0, Build Done in 89.56s). |
 | **commit atomicity** | single commit (artifact + scaffolding + log + book output + staging log + consumed-report frontmatter). |
-| **consumed-report frontmatter integrity** | 7 `integrated_at` touches; all 7 reports' `status: pending` → `status: integrated` with `integration_commit: PLACEHOLDER_SHA` + `integration_notes:`. |
+| **consumed-report frontmatter integrity** | 7 `integrated_at` touches; all 7 reports' `status: pending` → `status: integrated` with `integration_commit: b54ea1c` + `integration_notes:`. |
 
 Per-report gates (citation-format, forward-edge-without-surface, edge-label-prose-mismatch, H1-page-heading-reuse, append-on-missing-slug, variant-axis-missing, concept_writes-on-existing-slug, index-placeholder-displacement, SUMMARY-registration, partly-constructive-status-discipline, content-correction-boundary) were all checked and passed by the per-report integrators (all rows report 0 gate hits; see STAGING). Aggregate gate-hits-total = 0.
 
@@ -110,4 +110,4 @@ The batch-4 meta-phase aggregates cycles 016/017/018; it fires after the cycle-0
 
 ## Two-phase SHA patch
 
-Per role-spec process step 13 (canonical pattern, cycles 004..015 precedent): `integration_commit: PLACEHOLDER_SHA` is recorded in this batch CYCLE.md + all 7 consumed reports' frontmatter + the eigsolve OQ `answered_in` placeholder is already the finalize-dir name. After the finalize commit lands, a follow-up commit replaces every `PLACEHOLDER_SHA` with the actual finalize SHA, then `git push origin main` again. Patch-commit message: `patch commit-sha references for cycle-016 finalize commit (<finalize-sha>)`.
+Per role-spec process step 13 (canonical pattern, cycles 004..015 precedent): `integration_commit: b54ea1c` is recorded in this batch CYCLE.md + all 7 consumed reports' frontmatter + the eigsolve OQ `answered_in` placeholder is already the finalize-dir name. After the finalize commit lands, a follow-up commit replaces every `b54ea1c` with the actual finalize SHA, then `git push origin main` again. Patch-commit message: `patch commit-sha references for cycle-016 finalize commit (<finalize-sha>)`.

@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T213558Z
 scope: L4 operator-entry re-anchor — l4-krylov-step-cg-md-citation-sweep
 status: integrated
 integrated_at: 2026-05-28T221238Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b54ea1c
 integration_notes: "Applied cycle-016 (per-report position 2). Pure citation re-anchor of 7 dangling cg.md range pointers in firm L4/krylov-step.md across 6 edit blocks; status stays firm (no signature/semantics/law/variant-axis change). OQ l4-krylov-step-cg-md-citation-sweep answered (ledger:2780); NEW OQ l3-l2-body-identity-cg-md-citation-sweep opened. Retroactive-budget 0. Book build clean (exit 0)."
 inputs:
   - book/src/L4/krylov-step.md
