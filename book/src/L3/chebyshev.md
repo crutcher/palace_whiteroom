@@ -517,8 +517,11 @@ cycle-012 meta-phase non-adjacent-identity convention; precedent
   identity-lowering backfill (§Upward/§Downward in-line annotation) and the
   contrast operator (Krylov, predicate-driven loop, inner-product-bearing) vs
   this fixed-degree, inner-product-free, static-range smoother.
-- `book/src/spec/slices/chebyshev.md:229-285` — the cycle-001-era §L3
-  "tensor-field form (partial obstruction)" this entry promotes (the tensor-field
-  body, the `k` and `pc_it` sequential obstructions, the what-lifts-vs-what-does-not
-  table).
+- Provenance: the cycle-001-era §L3 "tensor-field form (partial obstruction)"
+  this entry promotes (the tensor-field body, the `k` and `pc_it` sequential
+  obstructions, the what-lifts-vs-what-does-not table) lived at the now-removed
+  `book/src/spec/slices/chebyshev.md` §L3 (439-line form, `:229-285`); the slice
+  was reduced and removed cycle-015 once its material became authoritative here
+  (git history is the record per CLAUDE.md §Methodology invariants "Phase 1
+  corpus reduces as material is lifted").
 - `book/src/concepts/chebyshev-iteration.md` — narrative.

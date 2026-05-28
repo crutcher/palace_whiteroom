@@ -185,7 +185,7 @@ Phase-1 slice instances where `apply_linop` appears as the per-step matvec (tran
 
 - `book/src/spec/slices/cg.md:58, :75` — CG L4 v0.5 step bodies (`cg_first_step` and `cg_steady_step`); each has `let Ap = apply opA p'` as the per-step matvec call. (Note: cg.md is the post-cycle-010-reduction stub form (165 lines); the L1/L2/L3/L4 v0.1-v0.4 content was lifted to firm entries per CLAUDE.md §Methodology invariants "Phase 1 corpus reduces as material is lifted"; the v0.5 first-iteration-unrolling rotation is the unique material retained.)
 - `book/src/spec/slices/gmres.md:459-471` — GMRES L4 `inner_loop` body; `apply_linop` at the Arnoldi-step matvec.
-- `book/src/spec/slices/chebyshev.md:354-362` — Chebyshev L4 `innerStep`; `apply_linop` in the polynomial-recurrence body.
+- `book/src/L4/chebyshev.md` §Semantics `innerStep` — `apply_linop` (`applyLinop op.A d`) in the polynomial-recurrence body (firm cycle-015, absorbing the former `chebyshev.md:354-362` slice §L4).
 - `book/src/spec/slices/arnoldi_step.md:99-109, :146, :158, :197` — Arnoldi step procedure (line 99 `apply_BA : w ← apply_linop(T, V[j])`; line 146 `apply_linop(T, V[j]) — pure functional form`; line 158 cross-cutting prose; line 197 L3-form rendering `w ← apply_linop(T, V[j]) -- field-side, global`); `apply_linop` at the Krylov-basis extension matvec.
 
 ## L3 vs L4 distinction

@@ -27,13 +27,14 @@ where `(α₀, sd_k, sr_k)` come from the variant scalar generator and `dinv ⊙
 is the elementwise diagonal action. This is the canonical **polynomial-recurrence**
 shape — the same kernel-plus-driver shape the L2 [`krylov-step`](./krylov-step.md)
 catalogs as one of its five pattern instances (`krylov-step.md:7`, citing
-`chebyshev.md:354-362`). `chebyshev-iteration` is the concrete L2 entry that the
+`book/src/L4/chebyshev.md` §Semantics `innerStep`; firm cycle-015, absorbing the
+former `chebyshev.md:354-362` slice §L4). `chebyshev-iteration` is the concrete L2 entry that the
 `krylov-step` variant-axis (3) (polynomial-kind, `op.scalars`) points at.
 
 The HPC element-fused kernels in the L0 source — `ApplyOrder0` (one elementwise
 pass computing `d = sr · dinv · r`) and `ApplyOrderK` (one elementwise pass
-computing `d = sd · d + sr · dinv · r`, `palace/linalg/chebyshev.cpp:69-78,
-:114-123`) — are **transparent fusions** at L2: they compute the same value as
+computing `d = sd · d + sr · dinv · r`, `palace/linalg/chebyshev.cpp:68-78,
+:112-123`) — are **transparent fusions** at L2: they compute the same value as
 the unfused `scal` + elementwise-product + `axpby` chain modulo standard
 floating-point rules for the same operand order. L2 unfolds them into the base
 composition and records the fusion as a one-line note.
@@ -140,7 +141,7 @@ The laws below hold; absences are deliberate.
 
 3. **Fusion transparency of the elementwise kernels.** `ApplyOrderK(sd, sr,
    dinv, r, d)` (one elementwise pass `d ← sd·d + sr·dinv·r`,
-   `palace/linalg/chebyshev.cpp:114-123`) equals the base composition `axpby(sd,
+   `palace/linalg/chebyshev.cpp:112-123`) equals the base composition `axpby(sd,
    d, sr, elementwise_product(dinv, r))` for the same operand order. The fusion
    is a transparent performance trick (one kernel pass vs. three); L2 unfolds it.
    Same for `ApplyOrder0` (`d ← sr·dinv·r`) = `scal(sr,
@@ -213,7 +214,7 @@ sharing one primitive sequence (law 2).
 ## Status
 
 `firm` — the primitive composition is a direct transcription of both `Mult2`
-bodies (`palace/linalg/chebyshev.cpp:191-220, :261-293`), with the
+bodies (`palace/linalg/chebyshev.cpp:190-220, :261-293`), with the
 element-fused `ApplyOrder0` / `ApplyOrderK` kernels unfolded into base algebra
 and the fusion classified as transparent. The scalar recurrences are exact
 closed forms from the source (4th-kind `:215-217`; 1st-kind `:286-288`). Every
@@ -242,9 +243,9 @@ same justification as the L1 entry.
 
 ## Evidence
 
-- `palace/linalg/chebyshev.cpp:69-78` — `ApplyOrder0` (real): one elementwise
+- `palace/linalg/chebyshev.cpp:68-78` — `ApplyOrder0` (real): one elementwise
   pass `D[i] = sr · DI[i] · R[i]` (= `scal(sr, elementwise_product(dinv, r))`).
-- `palace/linalg/chebyshev.cpp:114-123` — `ApplyOrderK` (real): one elementwise
+- `palace/linalg/chebyshev.cpp:112-123` — `ApplyOrderK` (real): one elementwise
   pass `D[i] = sd · D[i] + sr · DI[i] · R[i]` (= `axpby(sd, d, sr,
   elementwise_product(dinv, r))`). Law 3 fusion witness.
 - `palace/linalg/chebyshev.cpp:49-66` — `ApplyOp` accumulating overload
@@ -261,7 +262,11 @@ same justification as the L1 entry.
   source `delta/theta`.)
 - `palace/linalg/chebyshev.cpp:215-217` — 4th-kind `sd` / `sr` closed forms.
 - `palace/linalg/chebyshev.cpp:286-288` — 1st-kind `rho` / `sd` / `sr` recurrence.
-- `book/src/L2/krylov-step.md:7` — catalogs `chebyshev.md:354-362` as one of the
-  five polynomial-recurrence pattern instances `krylov-step` factors.
-- `book/src/spec/slices/chebyshev.md:122-228` — the cycle-001-era L2 slice
-  content this entry promotes.
+- `book/src/L2/krylov-step.md:7` — catalogs `book/src/L4/chebyshev.md`
+  §Semantics `innerStep` as one of the five polynomial-recurrence pattern
+  instances `krylov-step` factors.
+- Provenance: the cycle-001-era §L2 slice content this entry promotes lived at
+  the now-removed `book/src/spec/slices/chebyshev.md` §L2 (439-line form,
+  `:122-228`); the slice was reduced and removed cycle-015 once its material
+  became authoritative here (git history is the record per CLAUDE.md §Methodology
+  invariants "Phase 1 corpus reduces as material is lifted").

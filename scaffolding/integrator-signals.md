@@ -37,6 +37,60 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-015 — 2026-05-29T0035Z
+
+**Meta-batch context**: **THIRD/FINAL primary cycle of meta-batch-3** under the 3:1 meta cadence (cycles 013/014/015 form batch-3; **the batch-3 meta-phase fires after THIS cycle-015 finalize commit**, aggregating cycles 013/014/015, as a SEPARATE step with a SEPARATE commit). Cycle counter does not reset at batch boundaries (batch-2 = 010/011/012 closed at meta `ba3cd0b`). Cycle-015 was the **ENACTMENT cycle** — the inverse of cycle-014's audit/prep character: both gated promotions cycle-014 staged were ENACTED (divfree-projector partly-constructive→firm, L4/chebyshev rough-in→firm), plus 2 citation-anchor sweeps, 1 new L0 chapter, and the full removal of the chebyshev Phase-1 slice. 6-report single wave; all applied; zero deferrals/rejections/rework; zero build-repairs.
+
+<!-- meta-phase: this is the batch-3-CLOSING integrator-signals section. Read it with the cycle-013 + cycle-014 sections below for the full 3-cycle aggregate. The THREE flagged batch-3 signals — (1) partly-constructive FULL LIFECYCLE demonstrated, (2) citation-line-drift STRONGEST recurring friction across all 3 batch cycles with verify-citation-range not self-invoked, (3) slice-removal grep-completeness (non-link prose refs need a dedicated grep) — are the primary inputs for the batch-3 meta-phase aggregation. -->
+
+### Unblocked
+
+- **`abstractor` on the `divfree-projector` L1>L0 mutation-rotation theme** unblocked — now that `book/src/L1/divfree-projector.md` is **firm** (promoted this cycle), the L1>L0 lowering theme `divfree-projector-mutation-rotation` can be authored on a firm foundation (the WeakDiv-sign contradiction the future theme was to resolve is now resolved at the L1-entry level). Citation: cycle-015 STAGING row 1 + roadmap divfree line.
+- **`lifter` on `l4-chebyshev-residual-formm-foldm-prose-cleanup`** unblocked-small — 3 stale `forM_`/`foldM` prose mentions remain in `book/src/L4/chebyshev.md` (~L368/L382/L547) outside the cycle-015 re-anchor blocks; surgical 3-site prose refresh naming `iterate_while_pure`/`iterate_while_pure_L3`. Citation: OQ `l4-chebyshev-residual-formm-foldm-prose-cleanup` (cycle-015 finalize) + STAGING row 2.
+- **`lifter`/`cross-layer-cross-cutter` on `l3-chebyshev-downward-prose-iterate-while-refresh`** unblocked-small — `book/src/L3/chebyshev.md:236-238` names the now-superseded L4 `foldM`/`forM_` combinators; surgical one-line prose refresh, no L3 semantics change. Citation: OQ `l3-chebyshev-downward-prose-iterate-while-refresh` (cycle-015 lifter) + STAGING row 2.
+- **`lifter` on `l4-krylov-step-cg-md-citation-sweep` + `l2-krylov-step-cg-md-citation-sweep`** unblocked — the cycle-015 L3 sweep found the SAME dangling `cg.md` pointers persist in the DISTINCT `L4/krylov-step.md` (8 pointers) and `L2/krylov-step.md` (12 pointers) operator entries; sibling sweeps applying the cycle-013/014/015 lifted-evidence convention verbatim. The L3 sweep does NOT depend on either (Re-anchor 4 deliberately terminates at L2:138, not the transitive-dangling L4). Citation: OQs `l4-`/`l2-krylov-step-cg-md-citation-sweep` (cycle-015 lifter) + STAGING row 4.
+- **`layer-intro-author` bundle-6 candidate #5 on `bundle-6-l0-libceed-operator-file-next-candidate`** unblocked — bundle-6 #4 (`fem-bilinearform-file`) landed this cycle; the next ranked candidate is `fem/libceed/operator.cpp` (verified callee defs `CeedOperatorFullAssemble`@:455 + `CeedOperatorCoarsen`@:525; `fespace` alternative). This would also retire the deliberate plain-text non-link reference in `fem-bilinearform-file.md` (convert it to a live link once the chapter exists). Citation: OQ `bundle-6-l0-libceed-operator-file-next-candidate` (cycle-015 layer-intro-author) + STAGING row 5.
+- **(carry-forward, large) `lifter`/`abstractor` on `gmres.md §L4 v0.6→v0.7 self-rotation`** — would firm both the cycle-008 GMRES theme + the cycle-011 FGMRES sister theme. Not selected cycle-015.
+- **(carry-forward, large) `harvester` on NLEPS at L1+** — cycle-009 OQ; carry-forward.
+
+### New dependencies
+
+- `book/src/L1/divfree-projector.md` (now firm) → positive L0 anchors `palace/fem/integrator.hpp:217` + `palace/fem/integ/mixedvecgrad.cpp:202` (the `WeakDiv ≈ −GᵀM` sign grounding the idempotence law). Citation: STAGING row 1.
+- `book/src/L4/chebyshev.md` (now firm) → the `iterate-while` family (`book/src/L4/iterate-while.md`, `iterate_while_pure`) as a NEW L4-row dependency — the `apply` body now reuses the canonical loop combinator rather than un-anchored `forM_`/`foldM`. Citation: STAGING row 2.
+- `book/src/L0/fem-bilinearform-file.md` → 5 internal L0 cross-links (`linalg-rap-file`, `par-types-single-rank-reading`, `transparent-vs-load-bearing-tricks`, `preconditioner-classes-overview`, `apply-linop-overload-set`) + 1 deliberate plain-text (non-link) forward reference to the not-yet-authored `libceed/operator` chapter — all verified to resolve / carry no link target at build. Citation: STAGING row 5 + finalize build-check.
+- `book/src/L3/krylov-step.md` §Evidence/§laws now depend on `L2/krylov-step.md:138/:146` + `L3-L2/krylov-step-body-identity.md:125` + `concepts/sequential-obstruction.md` as the terminal firm homes for the formerly-dangling `cg.md` pointers. Citation: STAGING row 4.
+
+### Resolution implications
+
+- `divfree-projector-partly-constructive-to-firm-enactment` — **resolved** — abstractor applied 5 firming edits + flipped §Status firm; L1 firm 10→11. Closes the first full partly-constructive ENTRY→EXIT lifecycle.
+- `divfree-weakdiv-sign-convention-l0-verify` — **resolved** (both ledger instances, cycle-012 + cycle-013 opens) — WeakDiv sign positively anchored in Palace-owned source; the idempotence sub-law is evidence-grounded.
+- `chebyshev-l4-firm-via-iterate-while-reanchor` — **resolved** — `iterate_while_pure` re-anchor enacted; L4 firm 3→4, rough-in cohort→0.
+- `chebyshev-l4-inner-loop-presentation-carry-st-vs-with-prev` — **resolved-and-closed** — plain carry-`st` form chosen (4th-kind `st=()` degenerate no-prev case).
+- `chebyshev-slice-l4-full-removal` — **resolved** — slice removed via `git rm`; 18 inbound re-points; corpus removals 8/10→9/10 (status flipped by the per-report integrator, finalize did NOT double-close).
+- `l3-krylov-step-cg-md-citation-sweep` — **answered** — 5 re-anchors in `L3/krylov-step.md` to terminal firm homes; the residual L4/L2 sibling sweeps filed as cycle-016 follow-ups.
+
+### Suggested next dispatches
+
+- (`abstractor`, `divfree-projector L1>L0 mutation-rotation theme`) — the firm L1 entry now supports a clean lowering theme; closes the long-standing divfree L1>L0 gap.
+- (`lifter`, `l4-chebyshev-residual-formm-foldm-prose-cleanup`) — surgical 3-site prose refresh; closes the last `forM_`/`foldM` residual in the now-firm L4 entry.
+- (`lifter`/`cross-layer-cross-cutter`, `l3-chebyshev-downward-prose-iterate-while-refresh`) — surgical L3 downward-prose refresh; sibling to the above.
+- (`lifter`, `l4-krylov-step-cg-md-citation-sweep`) + (`lifter`, `l2-krylov-step-cg-md-citation-sweep`) — close the cg.md sweep family across the remaining krylov-step operator entries.
+- (`layer-intro-author`, `bundle-6 #5 fem/libceed/operator.cpp`) — next L0 bundle chapter; also retires the plain-text non-link reference in `fem-bilinearform-file.md`.
+
+### Wave-conflict observations
+
+- **6-report single-wave dispatch**; all 6 applied as-is at integration; zero rework loops.
+- **`book/src/L4/chebyshev.md` touched by BOTH position 2 (firm flip) and position 6 (§Evidence self-citation fold-in)** — serial ordering was load-bearing: position 6 confirmed position 2's Change 11 had already converted the §Status self-cites before folding the residual §Evidence self-cite to git-history form. No conflict; honored by the per-report serial discipline.
+- **`book/src/SUMMARY.md` touched by position 5 (L0 chapter registration, append) AND position 6 (slice TOC de-registration, remove)** at distinct ranges; no conflict. Likewise `book/src/L2/chebyshev-iteration.md` touched by position 3 (citation sweep) AND position 6 (R-14 + the discretionary `:30` transitive-narrative fix) at distinct ranges.
+- **No deferrals, no rejections, no rework loops.** Eleventh consecutive clean cycle under the split integrator (cycles 005–015).
+
+### Integration-tooling friction
+
+- **Slice-removal grep-completeness (NEW, batch-3 process signal)**: cycle-015's chebyshev slice removal had a **cross-reference-integrity FAIL at critique** — the same-layer-cross-cutter's "complete whole-tree grep" missed **4 non-link prose references** to the removed slice (build linkcheck would NOT catch them — they are prose mentions, not markdown links). The critic's independent grep caught them; the repairer fixed them pre-apply. **Removals need a non-link-reference grep, not just a markdown-link check.** The build linkcheck (`cargo make book` exit 0) is the markdown-link backstop, but it is insufficient on its own for slice removals — there is a gap between "no broken markdown link" and "no stranded prose reference". Candidate for a removal-time grep tool or a `phase-1-slice-reduction-audit` skill extension. Flag for batch-3 meta-phase.
+- **Citation line-drift (recurred, batch-3 strongest signal)**: even in this enactment cycle, the bilinearform `RT_FECollection` attribution drifted (repairer-corrected from `L2_FECollection`) and the L3 cg.md sweep producer pointed 2 re-anchors at relocated-dangle targets (repairer corrected to terminal L2 homes). The dedicated citation sweeps (positions 3+4) were themselves clean this time, but `verify-citation-range` was again NOT self-invoked by any producer (skill-uptake-survey telemetry, recurring across all 3 batch cycles). **Strongest recurring friction of batch-3** — candidate friction-ledger entry + possible mechanical citation-range checker or mandatory skill self-invocation. Flag prominently for batch-3 meta-phase.
+
+---
+
 ## cycle-014 — 2026-05-29T003000Z
 
 **Meta-batch context**: **SECOND primary cycle of meta-batch-3** under the 3:1 meta cadence (cycles 013/014/015 form batch-3; the meta-phase fires after **cycle-015** finalize, NOT this cycle). Cycle counter does not reset at batch boundaries (batch-2 = 010/011/012 closed at the cycle-012 meta-phase commit `ba3cd0b`). Cycle-014 was an **audit/verification + gated-promotion-prep cycle — NO firm-count increases**: 4 lowering-verifiers + 1 combinator-miner (audit/reconcile) + 1 new L0 chapter + 1 cg.md citation sweep + 1 phase-1 slice partial reduction. It SET UP **two gated promotions for cycle-015** (divfree-projector partly-constructive→firm, L4/chebyshev rough-in→firm).

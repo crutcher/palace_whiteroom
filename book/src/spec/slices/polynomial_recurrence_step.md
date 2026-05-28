@@ -27,7 +27,7 @@ Two anonymous-namespace inlines in `chebyshev.cpp` factor the vector-update half
 
 Both helpers are `static` in an anonymous namespace, not exported. They are the named per-step **vector-update** kernel of the polynomial recurrence; they do NOT encapsulate scalar-coefficient generation.
 
-> Forward-pointer: the file-local `ApplyOrder0` / `ApplyOrderK` helpers are also enumerated as the canonical Chebyshev L2 primitive composition at `book/src/spec/slices/chebyshev.md` §L2 §"Apply primitives" (in the per-call apply procedure). The anonymous-namespace / translation-unit-private framing here is unique to this slice (and is load-bearing evidence for the non-promotion to a shared kernel).
+> Forward-pointer: the file-local `ApplyOrder0` / `ApplyOrderK` helpers are also enumerated as the canonical Chebyshev L2 primitive composition at `book/src/L2/chebyshev-iteration.md` (firm; the per-call apply procedure / `sweep`). The anonymous-namespace / translation-unit-private framing here is unique to this slice (and is load-bearing evidence for the non-promotion to a shared kernel).
 
 ### Chebyshev scalar-coefficient sequences (inlined per variant; not unified)
 
@@ -38,7 +38,7 @@ The per-step scalar pair `(sd_k, sr_k)` is generated INLINE inside each `Mult2` 
 
 No shared scalar generator is factored out. The setup paths persist different derived state: 4th-kind stores `lambda_max`, 1st-kind stores `(theta, delta)`.
 
-> Forward-pointer: the per-variant scalar-coefficient sequences are also enumerated as the canonical Chebyshev `scalars(op, k)` generator at `book/src/spec/slices/chebyshev.md` §L2 §"Apply primitives" (which factors both the 4th-kind closed-form and the 1st-kind `rho_k` three-term recurrence). The "no shared scalar generator is factored out" framing here is unique to this slice.
+> Forward-pointer: the per-variant scalar-coefficient sequences are also enumerated as the canonical Chebyshev `scalars(op, k)` generator at `book/src/L2/chebyshev-iteration.md` (firm; which factors both the 4th-kind closed-form and the 1st-kind `rho_k` three-term recurrence). The "no shared scalar generator is factored out" framing here is unique to this slice.
 
 ### Chebyshev outer driver (duplicated per variant; no shared base)
 

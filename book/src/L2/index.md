@@ -28,11 +28,11 @@ L2 vocabulary: tensors, linear operators, quadrature rules, basis transformation
 - This is the layer most populated by `combinator-miner` output — patterns recurring across the slice corpus are L2 candidates.
 - `krylov-step` was promoted from rough-in to firm in cycle-005 (harvester invocation 2026-05-27T025354Z). The firm chapter is at [`krylov-step.md`](./krylov-step.md); the rough-in's six variant axes and pattern-instance list survived intact (no axes added, none merged or split). One non-trivial algebraic law was authored (the demand-pruning law over `outputs` extras, inherited from `derived-view-hoisting`); the kernel's non-laws (commutativity, associativity, fold-merge, step-composition, linearity, bit-determinism-across-variants) are catalogued explicitly to prevent decoration drift.
 - **Pattern provenance and consumers** (carried from the rough-in; combinator-miner:2026-05-26T231843Z):
-  - **Consumed-by**: L4 `iterate_while` + `solve-monad` outer driver (cg.md §L4, gmres.md §L4, chebyshev.md §L4, arnoldi_step.md §L4).
+  - **Consumed-by**: L4 `iterate_while` + `solve-monad` outer driver (cg.md §L4, gmres.md §L4, `book/src/L4/chebyshev.md` §Semantics (firm cycle-015; absorbed the former chebyshev §L4), arnoldi_step.md §L4).
   - **Pattern instances** (five, well clear of ≥3 soft bar):
     - `spec/slices/cg.md:103-115`, `:172-188`, `:393-425`
     - `spec/slices/gmres.md:459-471`
-    - `spec/slices/chebyshev.md:354-362`
+    - `book/src/L4/chebyshev.md` §Semantics `innerStep` (firm cycle-015; absorbed the former `spec/slices/chebyshev.md:354-362`)
     - `spec/slices/arnoldi_step.md:99-105`, `:285-298`
     - `spec/slices/polynomial_recurrence_step.md:119-160` (catalog of three instances)
 - **Cycle-004 obstruction-theme guidance**: the MINRES and BiCGStab L1>L0 themes (`book/src/L1-L0/minres-iteration.md`, `book/src/L1-L0/bicgstab-iteration.md`) sketch five speculative L1 operators (`lanczos_step`, `three_term_recurrence_update`, `givens_apply_with_residual_min`, `bicgstab_step`, `omega_update`, `stabilisation_update`). The cycle-005 harvester decision is to **not** promote any to firm L1: each is a *step-body specialisation* of `krylov-step` rather than an orthogonal axis that would simplify `krylov-step`'s L2 semantics. The decision is recorded at `scaffolding/decisions/2026-05-27-krylov-step-speculative-l1-promotion.md` (proposed for integrator wiring).

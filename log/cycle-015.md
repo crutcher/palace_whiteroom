@@ -1,100 +1,51 @@
-## 2026-05-24 cycle-15 — back gmres — pass
+## 2026-05-29 cycle-015 — THIRD/FINAL primary cycle of meta-batch-3 (3:1 cadence; cycles 013/014/015, meta-phase fires after 015) — 6 reports — eleventh cycle under split integrator — ENACTMENT cycle: the two gated promotions staged cycle-014 ENACTED — divfree-projector partly-constructive→FIRM (WeakDiv ≈ −GᵀM positively anchored in Palace-owned fem/integrator.hpp:217 + fem/integ/mixedvecgrad.cpp:202; FIRST FULL partly-constructive ENTRY→EXIT lifecycle; L1 firm 10→11) + L4/chebyshev rough-in→FIRM (forM_/foldM re-anchored to nested iterate_while_pure folds; L4 firm 3→4, rough-in cohort→0) + chebyshev L1/L2 anchor sweep (7 sites) + L3/krylov-step cg.md sweep (5 re-anchors) + new L0 fem-bilinearform-file (bundle-6 #4; L0 19→20) + chebyshev slice REMOVED (18 inbound re-points; corpus removals 8/10→9/10) — ZERO build-repairs — closes meta-batch-3, triggers the batch-3 meta-phase
 
-- Synthesis: 2 rotation_claim(s); diff applied
-- Verdict: pass.
-- Friction: diff-apply failed: git apply failed:
-STDERR:
-error: corrupt patch at line 90
+- **Phases fired**: plan (cycle-planner haiku) → dispatch (6 parallel specialized) → critique (6× critic) → repair (multiple repairers triggered, incl. the slice-removal non-link-grep fix + the L3 cg.md terminal-home corrections documented below) → **integrate (6× integrator-per-report serial → 1× integrator-finalize; eleventh cycle under split integrator)**.
 
-DIFF:
---- /dev/null
-+++ b/book/src/spec/slices/gmres.md
-@@ -0,0 +1,93 @@
-+# Slice: gmres
-+
-+Generalized Minimal Residual method for solving Ax = b where A is a general
-+(possibly non-symmetric, possibly indefinite) linear operator. Krylov subspace
-+projection method that minimizes the residual 2-norm over an affine Krylov
-+subspace.
-+
-+## L0 — mutation reference
-+
-+Canonical reference: Saad, *Iterative Methods for Sparse Linear Systems*, 2nd
-+ed., Algorithm 6.9 (GMRES) and 6.11 (Restarted GMRES). Palace's hypre/PETSc
-+wrappers expose this as a black-box; the L0 mutation reference is the textbook
-+pseudocode (mutable arrays for the Krylov basis V, the upper-Hessenberg H̄, the
-+residual-rotated RHS vector g, and the Givens parameters (c_i, s_i)).
-+
-+The pseudocode threads loop counters, mutable Hessenberg entries, mutable
-+Givens-rotated RHS, mutable basis-column writes, and a happy-breakdown early
-+exit. This is the L0 form; the slice does not duplicate the textbook listing.
-+
-+## L1 — invariant form
-+
-+**Inputs.** Operator `A : V → V` (linear), right-hand side `b ∈ V`, initial
-+guess `x_0 ∈ V`, preconditioner `M` (possibly identity), restart length `m ∈
-+ℕ_{≥1}`, tolerance `τ > 0`, max outer restarts `k_max`.
-+
-+**Side convention.** A preconditioner side (left / right / split / none) is
-+fixed at solver construction. The L1 statement is written for an effective
-+operator `Â` and effective RHS `b̂` constructed once from `(A, M, side)`;
-+downstream L1 does not re-inspect `side`. See
-+`book/src/concepts/constructed-operators.md`.
-+
-+**Statement (one restart cycle).** Given current iterate `x`, with `r =
-+b̂ − Â x` and `β = ‖r‖_2`:
-+
-+1. Build an orthonormal basis `V_m = [v_1, …, v_m]` of the Krylov subspace
-+   `𝒦_m(Â, r) = span{r, Â r, Â² r, …, Â^{m−1} r}`, with `v_1 = r / β`, such
-+   that there exists an upper-Hessenberg matrix `H̄_m ∈ ℝ^{(m+1)×m}` with
-+   `Â V_m = V_{m+1} H̄_m`.
-+2. Select `y_m ∈ ℝ^m` minimizing `‖β e_1 − H̄_m y‖_2`.
-+3. Update `x ← x + V_m y_m`.
-+4. The new residual norm equals the least-squares residual
-+   `‖β e_1 − H̄_m y_m‖_2`; this is monitored against `τ` and may trigger
-+   early termination of the inner cycle before reaching dimension `m`
-+   (happy breakdown when an Arnoldi sub-diagonal vanishes; convergence when
-+   the running residual estimate falls below `τ‖b̂‖_2`).
-+
-+The outer loop restarts steps 1–4 with the updated `x` until convergence or
-+`k_max` cycles. Flexible variants (where the right-preconditioner is allowed
-+to change between Arnoldi steps) replace step 1's invariant with the
-+flexible-Arnoldi invariant `Â Z_m = V_{m+1} H̄_m` where `Z_m`'s columns are
-+the per-step preconditioned basis; this is out of scope for this slice (see
-+Open Questions).
-+
-+**Invariants.**
-+- (Orthonormality) `V_m^T V_m = I_m`.
-+- (Arnoldi relation) `Â V_m = V_{m+1} H̄_m`.
-+- (Optimality) `x_m − x_0 ∈ 𝒦_m(Â, r_0)` minimizes `‖b̂ − Â x‖_2` over
-+  that affine subspace.
-+- (Monotonicity within a cycle) `‖r_{j+1}‖_2 ≤ ‖r_j‖_2`.
-+
-+**Outputs.** Final iterate `x`, achieved residual norm, iteration count,
-+convergence flag.
-+
-+## State partition (for L4 staging)
-+
-+- **Sim state.** `x` (the iterate).
-+- **Operator-internal / per-solve.** The Krylov basis `V_{·}`, the
-+  Hessenberg `H̄_{·}`, the least-squares state used to extract `y` and the
-+  running residual estimate, the Givens / orthogonalization scratch — all
-+  live for one restart cycle and are reset across restarts. The L1
-+  statement treats these as existentially quantified ("there exists
-+  `H̄_m`…"); they are realized as mutable per-solve workspace at L2.
-+- **Ephemeral.** The matvec output buffer `Â v_j`, dot-product reductions
-+  inside Arnoldi.
-+
-+## Open questions / out of scope
-+
-+- Flexible GMRES (FGMRES): variable right-preconditioner per Arnoldi step.
-+  Separate slice — different Arnoldi invariant.
-+- Choice of orthogonalization scheme (CGS / CGS2 / MGS / Householder) is
-+  an L2 implementation axis, not an L1 axis; the L1 invariant
-+  `V_m^T V_m = I_m` is identical across schemes (modulo floating-point
-+  loss-of-orthogonality, which is a numerical-quality claim about the L2
-+  realization, not about L1).
-+- Block GMRES (multiple RHS): separate slice.
-+- Adaptive restart-length policies: separate slice.
-.
-- Structural change: applied diff (89 lines); 2 rotation_claim(s).
+- **Meta-batch context**: cycle-015 is the **THIRD/FINAL primary cycle of meta-batch-3** under the 3:1 meta cadence (user directive 2026-05-27 post-cycle-006 meta). Cycles 013/014/015 form batch-3; **the batch-3 meta-phase fires after THIS cycle-015 finalize commit**, aggregating evidence across the full 3-cycle batch. The cycle counter does NOT reset at batch boundaries (batch-1 = 007/008/009; batch-2 = 010/011/012 closed at meta `ba3cd0b`; batch-3 = 013/014/015 closes here). The meta-phase runs as a **SEPARATE step with a SEPARATE commit** — integrator-finalize does NOT run it; it just sets up clean signals.
+
+- **Cycle character**: an **ENACTMENT cycle** — the inverse of cycle-014's audit/prep character. Both gated promotions that cycle-014 staged were enacted (divfree-projector partly-constructive→firm, L4/chebyshev rough-in→firm), plus 2 citation-anchor sweeps, 1 new L0 chapter, and the full removal of the chebyshev Phase-1 slice. **Two firm-count increases** (L1 +1, L4 +1) and **one corpus removal** (8/10 → 9/10).
+
+- **Substantive landed (6 reports, all applied; zero deferrals/rejections)**:
+  - **Position 1 (abstractor — divfree-projector partly-constructive→firm enactment)**: `book/src/L1/divfree-projector.md` — **GATED PROMOTION ENACTED**. All 8 proposed-change blocks landed: the positive sign anchors (`palace/fem/integrator.hpp:217` documenting `a(u,v) = -(Q u, grad v)` + the explicit `-1.0` coefficient at `palace/fem/integ/mixedvecgrad.cpp:202`, contrast sibling `:142`) added to the §Signature `P.WeakDiv` bullet; the Idempotence law rewritten unconditional-in-exact-arithmetic (dropping the `partly-constructive` law tag + the "Caveat" paragraph; the `:141`→`:140,142` abs-tol off-by-one corrected); §Status flipped `partly-constructive` → **`firm`** (constructive-sub-part / negative-anchor / promotion-condition block + UNBLOCKED blockquote dropped); §Evidence appended 6 sign/test anchors; L1 index dep-map cell flipped + Vocabulary cohort firm count **10 → 11**. **FIRST FULL `partly-constructive` ENTRY→EXIT LIFECYCLE** (entered cycle-013 via integrator-adjudication-down-from-argued-firm, UNBLOCKED cycle-014 by the lowering-verifier audit, exits firm cycle-015) — clean evidence for the batch-3 meta-phase that `partly-constructive` is a transient gate. OQs `divfree-projector-partly-constructive-to-firm-enactment` + `divfree-weakdiv-sign-convention-l0-verify` closed.
+  - **Position 2 (lifter — L4/chebyshev firm-via-iterate-while re-anchor)**: `book/src/L4/chebyshev.md` — **GATED PROMOTION ENACTED**. The 19 proposed-change blocks re-anchored the `apply` body's two un-anchored sequential obstructions (outer `pc_it` Richardson sweep `forM_`, inner `k`-recurrence `foldM`) onto **nested `iterate_while_pure` folds with step-count predicates** (`s.it <= op.pc_it` outer, `c.k <= op.order - 1` inner; counter folded into the carry), reusing the canonical firm `iterate-while` family per the cycle-014 combinator-miner REUSE verdict. The inner-loop presentation resolved to the **plain carry-`st` form** (4th-kind `st = ()` makes it the degenerate no-prev case, unifying both polynomial kinds without a bootstrap step). §Status flipped `rough-in` → **`firm`**; `L4/index.md` dep-map row rewritten + cohort move **Firm 3 → 4, Rough-in 1 → 0**. OQs `chebyshev-l4-firm-via-iterate-while-reanchor` + `chebyshev-l4-inner-loop-presentation-carry-st-vs-with-prev` closed. **Downstream enabler for position 6** (the slice §L4 removal re-points onto this now-firm entry's section anchors).
+  - **Position 3 (lifter — chebyshev anchor element-kernel + Mult2 carry-forward sweep)**: `book/src/L2/chebyshev-iteration.md` (5 sites) + `book/src/L1/chebyshev-smoother.md` (2 sites) — **CITATION-ONLY sweep, 7 verified corrections** against L0 `palace/linalg/chebyshev.cpp` (element-fused kernel `ApplyOrder0 :69-78`→`:68-78`, `ApplyOrderK :114-123`→`:112-123`; 4th-kind `Mult2 :191-220`→`:190-220`). Both entries stay **firm** (no status/law/signature change). The OQ's literal "4+2 sites" prediction reconciled to the verified 7-site set (the L1 entry carries no element-kernel anchors; 1st-kind `:261-293` genuinely undrifted, left as-is). One **non-blocking** OLD-string-match: block-1's OLD string mis-transcribed an ApplyOrderK descriptive clause; the citation-range payload was unambiguous, re-read disk + applied against true text; all 7 sites landed. OQ `chebyshev-anchor-element-kernel-and-mult2-carry-forward-sweep` resolved.
+  - **Position 4 (lifter — L3/krylov-step cg.md citation sweep)**: `book/src/L3/krylov-step.md` — **5 dangling `cg.md` reduced-slice pointers re-anchored** to terminal firm homes (lines 108/129 → `concepts/sequential-obstruction.md` + live `arnoldi_step.md:194-213`, CG range retained as parenthetical provenance; line 188 → `L3-L2/krylov-step-body-identity.md:125`; line 196 → `L2/krylov-step.md:138`; line 204 → `L2/krylov-step.md:146`). Entry stays **firm** (pure re-anchor). The **repairer corrected 2 producer pointers** that had relocated dangles one hop (Re-anchor 4 pointed at transitive-dangling L4:170-171, corrected to terminal L2:138; Re-anchor 5 cited a non-existent L4 `cg_solve`-driver, removed → L2:146). Sibling sweep of cycle-014's L4>L3-theme re-anchor; OQ `l3-krylov-step-cg-md-citation-sweep` answered. The residual L4/L2 sibling sweeps filed as NEW cycle-016 OQs (`l4-`/`l2-krylov-step-cg-md-citation-sweep`).
+  - **Position 5 (layer-intro-author — L0 bundle-6 #4 fem-bilinearform-file)**: `book/src/L0/fem-bilinearform-file.md` — **NEW focused L0 file-overview chapter** for `palace/fem/bilinearform.{hpp,cpp}` (the libCEED-backed FE-assembly entry-point file; classes `BilinearForm` + `DiscreteLinearOperator`; 9 cited anchor surfaces; PA = libCEED `ceed::Operator` vs FA = assembled `HypreParMatrix` dual; multigrid-hierarchy `Assemble` + `DiscreteLinearOperator` interpolation/dof-multiplicity path). Index + SUMMARY registered (L0 **19 → 20 chapters**). The `order + 1` historical-quirk attribution reads `RT_FECollection` (repairer-corrected from `L2_FECollection`). The `FullAssemble` paragraph carries a **deliberate plain-text reference** to the not-yet-authored `palace/fem/libceed/operator.cpp` chapter — **NO link target** (so no dead link reaches the build), intentional. NEW OQ `bundle-6-l0-libceed-operator-file-next-candidate` (bundle-6 #5 ranking).
+  - **Position 6 (same-layer-cross-cutter — chebyshev slice §L4 full removal; FINAL per-report)**: `book/src/spec/slices/chebyshev.md` — **FULLY REMOVED via `git rm`**. The cycle-014 two-part gate closed: (a) all inbound §L4 + provenance citations re-pointed onto the firm chebyshev cohort, and (b) `L4/chebyshev.md` firmed (position 2). **18 citation re-points applied** across 13 files (Class-A §L4 line-range citations → stable `L4/chebyshev.md` section anchors §Semantics/§Signature/§"Initial-guess shape"; Class-B already-dangling provenance citations → git-history form; Class-C prose/structural pointers → firm sibling / removed). `SUMMARY.md` TOC line + `spec/index.md` status-table row de-registered. **Corpus removals 8/10 → 9/10.** Order discipline: all 18 re-points applied FIRST, then a whole-tree final grep, THEN the removal. OQ `chebyshev-slice-l4-full-removal` resolved (status flipped by the per-report integrator).
+
+- **Reports applied** (6 of 6):
+  - `reports/2026-05-28T2300Z-abstractor-divfree-projector-partly-constructive-to-firm-enactment/` (status: integrated; follow_up_agent: **cycle-016** for the deferred non-load-bearing anchor-hygiene off-by-ones `divfree.hpp:68-72`→`:67-71`, `:28-31`→`:27-30`; + the new `divfree-mult-doc-irrotational-vs-divfree-stale` OQ)
+  - `reports/2026-05-28T202138Z-lifter-chebyshev-l4-firm-via-iterate-while-reanchor/` (status: integrated; follow_up_agent: **cycle-016 lifter** for `l4-chebyshev-residual-formm-foldm-prose-cleanup` + `l3-chebyshev-downward-prose-iterate-while-refresh`)
+  - `reports/2026-05-28T202219Z-lifter-chebyshev-anchor-element-kernel-and-mult2-carry-forward-sweep/` (status: integrated; follow_up_agent: future lifter for the unaudited sibling Evidence cites, OQ-scoped out)
+  - `reports/2026-05-28T202234Z-lifter-l3-krylov-step-cg-md-citation-sweep/` (status: integrated; follow_up_agent: **cycle-016 lifter** for `l4-krylov-step-cg-md-citation-sweep` + `l2-krylov-step-cg-md-citation-sweep`)
+  - `reports/2026-05-28T202225Z-layer-intro-author-fem-bilinearform-file/` (status: integrated; follow_up_agent: **cycle-016 layer-intro-author** for bundle-6 #5 `bundle-6-l0-libceed-operator-file-next-candidate`)
+  - `reports/2026-05-28T202756Z-same-layer-cross-cutter-chebyshev-slice-l4-full-removal/` (status: integrated; follow_up_agent: cross-layer-cross-cutter or lifter for the L3 downward-prose refresh)
+  - `reports/2026-05-29T0035Z-integrator-finalize-cycle-015/CYCLE.md` — batch report (this finalize).
+
+- **partly-constructive mechanism — FULL LIFECYCLE DEMONSTRATED across the batch**: cycle-013 EXIT (eigsolve-mutation-rotation Sub-pattern B, promoted) + ENTRY (divfree-projector, adjudicated down from argued-firm) → cycle-014 UNBLOCK (divfree, lowering-verifier) + STAYS (eigsolve-convergence-reason-mapping, no positive site) → cycle-015 ENACT both gated promotions (divfree→firm, chebyshev-L4→firm). The "audit cycle-N / enact cycle-N+1" gated-promotion pattern recurred **3×** across batch-3 and worked cleanly. The mechanism the cycle-012 meta-phase codified is validated by use.
+
+- **Layer firm-count changes**: **L1 11 firm + 0 partly-constructive + 3 rough-in + 6 rough-in (obstruction)** (divfree-projector promoted); L2 2 firm; L3 8 firm + 1 partial-obstruction; **L4 4 firm + 0 rough-in** (chebyshev promoted, rough-in cohort emptied); L1>L0 10 theme files (4 firm + 1 partly-constructive + 3 rough-in + 2 obstruction); L2>L1 1 firm; L3>L2 1 firm; L4>L3 1 firm + 2 rough-in. **L0 19 → 20 chapters** (fem-bilinearform-file). **Corpus removals 8/10 → 9/10** (chebyshev slice removed).
+
+- **Wave-conflict observations** (captured in `scaffolding/integrator-signals.md`):
+  - **6-report single-wave dispatch**; all 6 applied as-is at integration; zero rework loops.
+  - **`book/src/L4/chebyshev.md` touched by BOTH position 2 (firm flip) and position 6 (§Evidence self-citation fold-in)** — the ordering (position 2 before position 6) was load-bearing: position 6 confirmed the §Status self-cites were already converted by position 2's Change 11 before folding the residual §Evidence self-cite to git-history form. No conflict; the dependency was honored by serial ordering.
+  - **`book/src/SUMMARY.md` touched by position 5 (L0 chapter registration, append) AND position 6 (slice TOC de-registration, remove)** at distinct ranges; no conflict.
+  - **No deferrals, no rejections, no rework loops.** Clean-run streak continues — **eleventh consecutive clean cycle** under the split integrator (cycles 005–015).
+
+- **Safety-net gates**: **retroactive-budget global = 0** (well below the ≥4 block threshold; all 6 rows reported per-slice 0). **0 build-breakage repairs** (build clean on first run). Commit atomicity: single commit (the `git rm` slice deletion included). Consumed-report frontmatter integrity: 6 `integrated_at` touches.
+
+- **Open questions**: **6 promoted** across the 6 reports (`divfree-mult-doc-irrotational-vs-divfree-stale`, `l3-chebyshev-downward-prose-iterate-while-refresh`, `l4-krylov-step-cg-md-citation-sweep`, `l2-krylov-step-cg-md-citation-sweep`, `bundle-6-l0-libceed-operator-file-next-candidate`, + the finalize-filed `l4-chebyshev-residual-formm-foldm-prose-cleanup`). **5 resolved** (`divfree-projector-partly-constructive-to-firm-enactment`, `divfree-weakdiv-sign-convention-l0-verify`, `chebyshev-l4-firm-via-iterate-while-reanchor`, `chebyshev-l4-inner-loop-presentation-carry-st-vs-with-prev`, `chebyshev-slice-l4-full-removal`). **1 answered** (`l3-krylov-step-cg-md-citation-sweep`). Did NOT double-close `chebyshev-slice-l4-full-removal` (already flipped to `resolved` by the per-report integrator).
+
+- **Recurring signals for the batch-3 meta-phase** (recorded, not analyzed — the meta-phase aggregates cycles 013/014/015):
+  1. **partly-constructive mechanism — FULL LIFECYCLE DEMONSTRATED** (013 EXIT+ENTRY → 014 UNBLOCK+STAYS → 015 ENACT both); gated-promotion pattern recurred 3× cleanly. Mechanism validated by use.
+  2. **Citation line-drift — STRONGEST recurring friction of the batch, recurred across ALL 3 batch cycles** (013 ~6 reports; 014 even the citation-AUDITING lowering-verifier drifted; 015 bilinearform `RT_FECollection` attribution, though the dedicated sweeps were clean this time). `verify-citation-range` repeatedly NOT self-invoked by producers (skill-uptake-survey telemetry). Candidate friction-ledger entry + possible process/tooling fix (mechanical citation-range checker or mandatory skill self-invocation).
+  3. **Slice-removal grep-completeness**: cycle-015's chebyshev slice removal had a cross-reference-integrity FAIL at critique — the same-layer-cross-cutter's "complete whole-tree grep" missed 4 non-link prose references (build linkcheck would NOT catch them); the critic's independent grep caught them, repairer fixed pre-apply. Removals need a non-link-reference grep, not just a markdown-link check.
+
+- **Build**: `cargo make book` — **exit 0, NO repair needed** (`Build Done in 89.05 seconds`). The chebyshev slice removal stranded **ZERO markdown links** (the linkcheck backstop confirms; remaining `slices/chebyshev.md` mentions are intentional provenance: `L3/index.md` prose "removed cycle-015" + frozen `meta-reviews/2026-05-24-cycles-10-12.md:24`). The new L0 `fem-bilinearform-file` chapter + its 5 internal markdown links resolve; its plain-text `libceed/operator.cpp` reference carries no link target as intended; both gated-promotion §Status flips render. The 4 pre-existing katex "Potential incomplete link" warnings (all in `design/l4_calculus.md`, math-display bracket false positives, NOT touched this cycle) carry unchanged; non-blocking.
+
+- **Legacy log/cycle-015.md renamed**: pre-layered-era `log/cycle-015.md` (2026-05-24 `back gmres — pass`) renamed to `log/cycle-015-legacy.md` per the cycle-005..014 precedent.
+
+- **Two-phase SHA patch** (canonical pattern per role spec process step 13): all 6 reports' + this batch CYCLE.md's `integration_commit: PLACEHOLDER_SHA` are patched in a follow-up commit immediately after the finalize commit lands. Message: `patch commit-sha references for cycle-015 finalize commit (<finalize-sha>)`. Same two-phase pattern cycles 004..014 used.
+
+- **Meta-phase fires NEXT** — cycle-015 is the THIRD/FINAL primary cycle of meta-batch-3; the batch-3 meta-phase fires after this cycle-015 finalize commit (3:1 cadence), aggregating cycles 013/014/015, as a SEPARATE step with a SEPARATE commit. Compactify-after-meta-phase applies after the meta-phase, not here.

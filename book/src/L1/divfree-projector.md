@@ -63,7 +63,15 @@ Shape contract (bunsen-style; named axes):
     construction (`palace/linalg/divfree.cpp:119` `// real and SPD`). Read-only.
   - `P.WeakDiv : LinearOperator[N_nd, N_h1]` — the ε-weighted weak-divergence
     operator (Nedelec → H1), from a `MixedVectorWeakDivergenceIntegrator`,
-    partially assembled (`palace/linalg/divfree.cpp:111-116`). Read-only.
+    partially assembled (`palace/linalg/divfree.cpp:111-116`). The negating sign
+    of the weak-divergence form is set in Palace source: the integrator's
+    bilinear form is `a(u, v) = -(ε u, ∇v)` for `u ∈ H(curl)`, `v ∈ H1`
+    (`palace/fem/integrator.hpp:217`), materialized as an explicit `-1.0`
+    coefficient in the assemble body
+    (`palace/fem/integ/mixedvecgrad.cpp:202`) — contrast the non-negated
+    `MixedVectorGradientIntegrator` (`palace/fem/integ/mixedvecgrad.cpp:142`,
+    no `-1.0`). Thus `WeakDiv = -Gᵀ` (ε-weighted), a positive Palace source
+    site. Read-only.
   - `P.Grad : LinearOperator[N_h1, N_nd]` — the discrete gradient
     (H1 → Nedelec discrete interpolator,
     `palace/linalg/divfree.cpp:117`). Read-only. Its columns span the
@@ -129,8 +137,17 @@ The four-step apply (`palace/linalg/divfree.cpp:155-186`):
 The mathematical projector is `P = I − Grad (Gᵀ M G)⁻¹ Gᵀ M` (the M-orthogonal
 projection onto the divergence-free subspace). The materialized form computes
 the *complementary* gradient component and the **sign convention** of `WeakDiv`
-makes the correction *additive* (`y + Grad·ψ`, not `y − Grad·ψ`): see Algebraic
-laws and Open questions.
+makes the correction *additive* (`y + Grad·ψ`, not `y − Grad·ψ`): the apply
+overwrites `y` with `y + Grad·ψ` where `Grad·ψ` is the gradient correction added
+with `+1.0` (`palace/linalg/divfree.cpp:185`), but because `WeakDiv` carries the
+negating `-1.0` sign (`palace/fem/integ/mixedvecgrad.cpp:202`), the net effect
+*removes* the gradient part — yielding the divergence-free remainder matching the
+class doc `Gᵀ M y' = 0` (`palace/linalg/divfree.hpp:28-31`). The `Mult` doc
+comment `palace/linalg/divfree.hpp:64-66` describing the output as "the
+irrotational portion ... satisfying ∇ × y = 0" is **stale/misleading relative to
+the implemented behavior** (a Palace-internal documentation inconsistency, OQ
+`divfree-mult-doc-irrotational-vs-divfree-stale`); the implemented and L1
+semantics are the divergence-free target of the class doc. See Algebraic laws.
 
 The complex specialization is the same projection applied component-wise to
 `Re(y)` and `Im(y)` with the same real-valued operators
@@ -145,24 +162,22 @@ is no cross-coupling between the real and imaginary parts through the projection
   (`WeakDiv`, `Z`, `Grad` are linear operators; `K⁻¹` is a linear solve), and
   vector addition is linear (`palace/linalg/divfree.cpp:159-184`). Holds exactly
   in exact arithmetic; modulo `ksp` tolerance under the approximate solve.
-- **Idempotence (projector law) — `partly-constructive` sub-law; see Status.**
+- **Idempotence (projector law).**
   `P∘P = P` in exact arithmetic: applying the
   projector to an already-divergence-free field returns it unchanged. By the
   defining condition `Gᵀ M (P·y) = 0`
   (`palace/linalg/divfree.hpp:28-31`), `P·y` lies in the divergence-free
   subspace, so `WeakDiv·(P·y) = 0` (step 1 yields zero residual), hence the
-  correction `Grad·ψ = 0` and `P·(P·y) = P·y`. Holds modulo `ksp` tolerance:
-  `Gᵀ M (P·y) = 0` only up to the convergence tolerance on the non-essential
-  dofs (`palace/linalg/divfree.cpp:140-142`, rel-tol set, abs-tol = machine
-  epsilon at :141). **Caveat (added on repair):** the step
-  "`P·y` divergence-free ⟹ `WeakDiv·(P·y) = 0`" silently identifies `WeakDiv`
-  with the `Gᵀ M` of the defining condition (up to sign), so this derivation is
-  itself **contingent on** the WeakDiv sign-convention OQ
-  (`divfree-weakdiv-sign-convention-l0-verify`); it is exact only once that OQ
-  confirms `WeakDiv ≈ Gᵀ M`. This contingency is the named sub-part that drives
-  the entry's `partly-constructive` status (see Status); the **promotion
-  condition** is a `verify-citation-range` / `lowering-verifier` pass on the
-  `MixedVectorWeakDivergenceIntegrator` sign convention.
+  correction `Grad·ψ = 0` and `P·(P·y) = P·y`. The identification of `WeakDiv`
+  with the (negated) `Gᵀ M` of the defining condition is anchored in Palace
+  source — the weak-div bilinear form is `a(u,v) = -(ε u, ∇v)`
+  (`palace/fem/integrator.hpp:217`) with the `-1.0` set at
+  `palace/fem/integ/mixedvecgrad.cpp:202` (contrast the non-negated
+  `MixedVectorGradientIntegrator`, `palace/fem/integ/mixedvecgrad.cpp:142`) —
+  so the derivation is unconditional in exact arithmetic. Holds modulo `ksp`
+  tolerance: `Gᵀ M (P·y) = 0` only up to the convergence tolerance on the
+  non-essential dofs (`palace/linalg/divfree.cpp:140,142`, rel-tol set at :140,
+  abs-tol = machine epsilon at :142).
 - **Range.** `Range(P) = {x ∈ Field[N_nd] : Gᵀ M x = 0}` — the discrete
   divergence-free subspace (`palace/linalg/divfree.hpp:28-31`).
 - **M-orthogonality (kernel = gradient range).** `Ker(P) = Range(Grad)`: the
@@ -178,10 +193,15 @@ is no cross-coupling between the real and imaginary parts through the projection
 - **Non-law (load-bearing): sign convention.** The correction is *additive*
   (`y + Grad·ψ`) because `WeakDiv` (built from
   `MixedVectorWeakDivergenceIntegrator`, `palace/linalg/divfree.cpp:113`)
-  internally absorbs the minus sign of the weak divergence form. A flipped L0
-  sign would invert the correction direction. This is a property of the
-  constructed `WeakDiv` operator, honored verbatim at L1, **not independently
-  re-derived** — see Open questions for the unverified-integrator-sign caveat.
+  internally absorbs the minus sign of the weak divergence form: its bilinear
+  form is `a(u,v) = -(ε u, ∇v)` (`palace/fem/integrator.hpp:217`), the `-1.0`
+  materialized at `palace/fem/integ/mixedvecgrad.cpp:202` (versus the
+  non-negated `MixedVectorGradientIntegrator`,
+  `palace/fem/integ/mixedvecgrad.cpp:142`). A flipped L0 sign would invert the
+  correction direction. This is a property of the constructed `WeakDiv`
+  operator, honored verbatim at L1 and **positively re-derived from Palace
+  source** (cycle-014 lowering-verifier audit; the `WeakDiv = -Gᵀ` reading is
+  anchored, not inferred).
 - **Non-law (load-bearing): step ordering.** The essential-BC zeroing
   (`Z_{bdr_eff}`) must compose *after* `WeakDiv·y` and *before* the `ksp` solve
   (`palace/linalg/divfree.cpp:159-175`). Reordering changes the result. The
@@ -211,77 +231,50 @@ Shared concepts (cross-referenced, not duplicated):
 
 ## Status
 
-`partly-constructive`.
+`firm`.
 
 The **structural decomposition is firm**: every step of the apply is read from a
 positive source site (`palace/linalg/divfree.cpp:155-186`), the construction is
 fully read (`palace/linalg/divfree.cpp:43-152`), and the linearity, range,
-M-orthogonality, real-linearity, and step-ordering laws follow from the defining
-condition stated in the source (`palace/linalg/divfree.hpp:28-31`) and the
-SPD/real properties asserted in the source (`palace/linalg/divfree.cpp:119`).
+M-orthogonality, real-linearity, idempotence, and step-ordering laws follow from
+the defining condition stated in the source (`palace/linalg/divfree.hpp:28-31`)
+and the SPD/real properties asserted in the source
+(`palace/linalg/divfree.cpp:119`).
 
-The entry is **`partly-constructive`** (adjudicated by the cycle-013 integrator,
-not the harvester's argued `firm`) on **one named sub-part**: the **idempotence
-law `P∘P = P`** and the **divergence-free output characterization** are both
-contingent on the `WeakDiv ≈ Gᵀ M` sign reading. That reading is NOT confirmed
-from a positive Palace source site — it rests on the internal sign convention of
-the MFEM-vendored `MixedVectorWeakDivergenceIntegrator`
-(`palace/linalg/divfree.cpp:113`), which is below the L0 scope boundary, and is
-further entangled with the three-way `irrotational`/`subtract`-vs-additive-`+1.0`
-comment contradiction (see Open questions). Per the cycle-012-codified
-`partly-constructive` invariant, a load-bearing sub-law that depends on an
-unresolved reading rather than a positive source confirmation is `partly-constructive`,
-not plain `firm`.
-
-- **Constructive sub-part:** the idempotence law `P∘P = P` (and the
-  divergence-free output characterization it shares the sign reading with).
-- **Negative anchor:** no positive Palace source site exhibits the `WeakDiv`
-  sign; the additive `+1.0` correction (`palace/linalg/divfree.cpp:180-181,185`)
-  is reconcilable with the `// … subtract` intent comment
-  (`palace/linalg/divfree.cpp:177`) and the class-doc divergence-free output
-  (`palace/linalg/divfree.hpp:28-31`) **only if** `WeakDiv` carries the negating
-  sign — a reading of the integrator's internals, not a read of a positive
-  Palace site.
-- **Promotion condition:** a `verify-citation-range` / `lowering-verifier` pass
-  on the `MixedVectorWeakDivergenceIntegrator` sign convention (carried OQ
-  `divfree-weakdiv-sign-convention-l0-verify`), folded into the future L1>L0
-  `divfree-projector-mutation-rotation` theme's lowering-verifier audit. Once
-  the sign is positively anchored, the idempotence sub-law and the
-  divergence-free characterization become unconditional and the entry promotes
-  to `firm`.
-
-> **UNBLOCKED by the cycle-014 lowering-verifier audit**
-> (`reports/2026-05-28T2115Z-lowering-verifier-divfree-weakdiv-sign-convention-l0-verify/`,
-> verdict **UNBLOCK-PROMOTION**). The audit refuted the "out-of-scope MFEM-vendored
-> integrator" premise above: `MixedVectorWeakDivergenceIntegrator` is **Palace-owned,
-> libCEED-backed** (`palace/fem/integrator.hpp:218-226`), its bilinear form is
-> documented **in Palace source** as `a(u, v) = -(Q u, grad v)`
-> (`palace/fem/integrator.hpp:217`), and the negating sign is materialized as an
-> explicit `-1.0` coefficient `PopulateCoefficientContext(space_dim, Q, transpose, -1.0)`
-> (`palace/fem/integ/mixedvecgrad.cpp:202`) — side-by-side contrasted with the
-> non-negated `MixedVectorGradientIntegrator` (`palace/fem/integ/mixedvecgrad.cpp:142`,
-> no `-1.0`), and cross-validated against MFEM (`test/unit/test-libceed.cpp:905-916`).
-> The `WeakDiv ≈ -Gᵀ M` reading is therefore **positively anchored in scope**, and the
-> idempotence sub-law's contingency is **resolved at the evidence level**. The status
-> remains `partly-constructive` here only because the promotion is **gated to a
-> cycle-015 enactment dispatch** that applies the 5 firming edits (add the sign
-> anchors to §Signature/§Evidence; rewrite the idempotence Caveat to "confirmed";
-> flip `## Status` → `firm`; add the irrotational/divfree doc-tension Semantics note;
-> tighten three off-by-one anchors) and **then** drops this caveat. See OQ
-> `divfree-projector-partly-constructive-to-firm-enactment`. The per-report integrator
-> does NOT drop the caveat (that is the cycle-015 enactment).
+The entry was `partly-constructive` (cycle-013) on one named sub-part — the
+**idempotence law `P∘P = P`** and the **divergence-free output characterization**,
+both contingent on the `WeakDiv ≈ -Gᵀ M` sign reading. The **cycle-014
+lowering-verifier audit**
+(`reports/2026-05-28T2115Z-lowering-verifier-divfree-weakdiv-sign-convention-l0-verify/`,
+verdict **UNBLOCK-PROMOTION**) **resolved that contingency at the evidence level**:
+the sign is positively anchored in Palace-owned source. The cycle-013 framing
+("rests on the MFEM-vendored `MixedVectorWeakDivergenceIntegrator`, below the L0
+scope boundary") was a mislocalization — `MixedVectorWeakDivergenceIntegrator` is
+**Palace-owned, libCEED-backed** (`palace/fem/integrator.hpp:218-226`), its
+bilinear form is documented **in Palace source** as `a(u, v) = -(Q u, grad v)`
+(`palace/fem/integrator.hpp:217`), and the negating sign is materialized as an
+explicit `-1.0` coefficient
+`PopulateCoefficientContext(space_dim, Q, transpose, -1.0)`
+(`palace/fem/integ/mixedvecgrad.cpp:202`) — side-by-side contrasted with the
+non-negated `MixedVectorGradientIntegrator`
+(`palace/fem/integ/mixedvecgrad.cpp:142`, no `-1.0`), and cross-validated against
+MFEM (`test/unit/test-libceed.cpp:905-916`). The `WeakDiv = -Gᵀ M` reading is
+therefore unconditional, the idempotence sub-law and divergence-free
+characterization are now firm, and the entry **promotes to `firm`** (cycle-015
+enactment; OQ `divfree-projector-partly-constructive-to-firm-enactment` closed,
+OQ `divfree-weakdiv-sign-convention-l0-verify` resolved).
 
 No dedicated unit test exists (`test/unit/test-divfree.cpp` is absent; confirmed
 by codemap call-site survey — only `divfree.cpp`-internal `Mult` calls and the
 `eigensolver.cpp` / `arpack.cpp` / `slepc.cpp` driver call sites appear). The
-test absence alone would not have blocked `firm` (cf. the
+test absence does not block `firm` (cf. the
 [`chebyshev-smoother`](./chebyshev-smoother.md) precedent, where every law is a
-verified-exact syntactic identity); the sign-reading contingency on a
-load-bearing sub-law is what drives the `partly-constructive` status here. The
-`eigsolve` rough-in precedent does not bind either: `eigsolve`'s rough-in was
-driven by literature-inferred convergence semantics; `divfree_project`'s
-semantics are a fully-read linear projection with a source-stated defining
-condition and a single named sign-contingent sub-law.
+verified-exact syntactic identity): the projector's semantics are a fully-read
+linear projection with a source-stated defining condition, and the previously
+sign-contingent sub-law is now positively anchored. Supporting test evidence: the
+`MixedVectorWeakDivergenceIntegrator` is cross-validated against
+`mfem::MixedVectorWeakDivergenceIntegrator` at `test/unit/test-libceed.cpp:905-916`
+(L0-equivalent integrator-level coverage that exercises the sign behavior).
 
 ## Evidence
 
@@ -313,6 +306,21 @@ condition and a single named sign-contingent sub-law.
 - `palace/linalg/arpack.cpp:586,752,766,783,791` and
   `palace/linalg/slepc.cpp:1870,1961,1970,1982,1991,2088,2163` —
   `opProj->Mult(...)` per-iteration projection inside the eigenvalue kernels.
+- `palace/fem/integrator.hpp:217` — `// Integrator for a(u, v) = -(Q u, grad v)
+  for u in H(curl) and v in H1.` (the weak-div bilinear form; the negating sign
+  in Palace source).
+- `palace/fem/integrator.hpp:218-226` — `class MixedVectorWeakDivergenceIntegrator`
+  (Palace-owned, libCEED-backed — NOT MFEM-vendored).
+- `palace/fem/integ/mixedvecgrad.cpp:202` — `PopulateCoefficientContext(space_dim,
+  Q, transpose, -1.0)` (the `-1.0` materializing the weak-divergence sign).
+- `palace/fem/integ/mixedvecgrad.cpp:142` — sibling `MixedVectorGradientIntegrator`
+  with NO `-1.0` (the side-by-side sign contrast).
+- `palace/linalg/divfree.hpp:51` — `// Linear solver for the projected linear
+  system (Gᵀ M G) y = x.` (the conceptual normal-equations form; the apply solves
+  against `M`).
+- `test/unit/test-libceed.cpp:905-916` — Palace's `MixedVectorWeakDivergenceIntegrator`
+  cross-validated against `mfem::MixedVectorWeakDivergenceIntegrator` (L0-equivalent
+  test evidence that the sign behavior is exercised).
 
 Slice-corpus precedent (cycle-001-era, cycle-012-reduced; this firm entry
 supersedes its L1 content): `book/src/spec/slices/divfree.md:24-100` (L1 form),
