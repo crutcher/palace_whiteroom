@@ -250,6 +250,27 @@ not plain `firm`.
   divergence-free characterization become unconditional and the entry promotes
   to `firm`.
 
+> **UNBLOCKED by the cycle-014 lowering-verifier audit**
+> (`reports/2026-05-28T2115Z-lowering-verifier-divfree-weakdiv-sign-convention-l0-verify/`,
+> verdict **UNBLOCK-PROMOTION**). The audit refuted the "out-of-scope MFEM-vendored
+> integrator" premise above: `MixedVectorWeakDivergenceIntegrator` is **Palace-owned,
+> libCEED-backed** (`palace/fem/integrator.hpp:218-226`), its bilinear form is
+> documented **in Palace source** as `a(u, v) = -(Q u, grad v)`
+> (`palace/fem/integrator.hpp:217`), and the negating sign is materialized as an
+> explicit `-1.0` coefficient `PopulateCoefficientContext(space_dim, Q, transpose, -1.0)`
+> (`palace/fem/integ/mixedvecgrad.cpp:202`) — side-by-side contrasted with the
+> non-negated `MixedVectorGradientIntegrator` (`palace/fem/integ/mixedvecgrad.cpp:142`,
+> no `-1.0`), and cross-validated against MFEM (`test/unit/test-libceed.cpp:905-916`).
+> The `WeakDiv ≈ -Gᵀ M` reading is therefore **positively anchored in scope**, and the
+> idempotence sub-law's contingency is **resolved at the evidence level**. The status
+> remains `partly-constructive` here only because the promotion is **gated to a
+> cycle-015 enactment dispatch** that applies the 5 firming edits (add the sign
+> anchors to §Signature/§Evidence; rewrite the idempotence Caveat to "confirmed";
+> flip `## Status` → `firm`; add the irrotational/divfree doc-tension Semantics note;
+> tighten three off-by-one anchors) and **then** drops this caveat. See OQ
+> `divfree-projector-partly-constructive-to-firm-enactment`. The per-report integrator
+> does NOT drop the caveat (that is the cycle-015 enactment).
+
 No dedicated unit test exists (`test/unit/test-divfree.cpp` is absent; confirmed
 by codemap call-site survey — only `divfree.cpp`-internal `Mult` calls and the
 `eigensolver.cpp` / `arpack.cpp` / `slepc.cpp` driver call sites appear). The

@@ -1,0 +1,283 @@
+---
+agent: layer-intro-author
+invoked_at: 2026-05-28T19:37:30Z
+scope: L0 reference-note bundle — palace/linalg/rap.{hpp,cpp} (RAP parallel-operator file); bundle-6 candidate #2
+status: integrated
+integrated_at: 2026-05-29T003000Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "cycle-014 position 6/8. NEW focused L0 file-overview chapter L0/linalg-rap-file.md written (RAP = R·A·P Galerkin triple-product; ParOperator + ComplexParOperator real/imag-split into two owned ParOperators — member anchor rap.hpp:142 repairer-corrected from :140 in all 4 spots — + BuildParSumOperator; matrix-free vs assembled performance dual; 7 cited anchors). 6 sibling cross-links + apply-linop-overload-set backlink ALL RESOLVE at build. SUMMARY + L0/index registered. Dispatch-prompt 'Restrictive Additive Schwarz' gloss corrected. Bundle-6 #2; L0 18→19 chapters. Next-ranked #4 fem/bilinearform (OQ bundle-6-l0-file-overview-next-ranking). Build clean."
+---
+
+# CYCLE: L0 `linalg-rap-file`
+
+## Summary
+
+Proposes a new L0 file-overview reference-note chapter `book/src/L0/linalg-rap-file.md` for
+`palace/linalg/rap.{hpp,cpp}` — the **R·A·P (Galerkin) parallel-operator** file (restriction
+R, assembled local operator A, prolongation P; usually R = Pᵀ). NOT "Restrictive Additive
+Schwarz"; the planner's gloss was wrong and the chapter states the correct R-A-P reading
+verbatim from `rap.hpp:17-19`. The file declares two classes — `ParOperator` (real-valued)
+and `ComplexParOperator` (complex-valued, real/imag-split into two owned `ParOperator`s) —
+plus the `BuildParSumOperator` weighted-summation family.
+
+**Scope chosen: FOCUSED single chapter, both classes.** I considered splitting
+`ComplexParOperator` into a sibling chapter but rejected it: `ComplexParOperator` is *defined
+by delegation* to two owned `ParOperator` objects (`rap.hpp:142` — `std::unique_ptr<ParOperator>
+RAPr, RAPi`), so its mechanics ARE `ParOperator`'s mechanics applied componentwise. Describing
+them in one chapter (mechanics anchored on `ParOperator`, complex sibling noted as the
+real/imag split) is more coherent than two chapters, and the chunk-by-anchor-surface style
+(declarations + 6 key method-body ranges, no per-method transcription) keeps the chapter at
+file-overview discipline (~3 paragraphs + chunked citations) despite the ~1231-line file. See
+Open Questions for the scoping rationale recorded as an OQ.
+
+The chapter is the L0 anchor for: the existing `apply-linop-overload-set` entry (which already
+lists `ParOperator` in its concrete-subclass family, `apply-linop-overload-set.md:34`); the
+`Par*` single-rank reading rule; and future L1 work on the assembled-operator / matrix-free
+apply duality. Chunk count: **7 cited anchor surfaces** (2 class declarations + constructor
+family + `ParallelAssemble`/`StealParallelAssemble` triple-product path + matrix-free
+`Mult`/`MultTranspose`/`AddMult` apply mechanics + the `RestrictionMatrixMult` R-vs-Pᵀ helper
++ `EliminateRHS` BC path + `BuildParSumOperator` summation family).
+
+## Proposed changes
+
+### 1. New chapter file
+
+```new-file:book/src/L0/linalg-rap-file.md
+# File — `palace/linalg/rap.{hpp,cpp}`
+
+A reference note for the **R·A·P (Galerkin) parallel-operator** file. Per the header comment
+(`palace/linalg/rap.hpp:17-19`): *"A parallel operator represented by RAP constructed through
+the actions of R, A, and P, usually with R = Pᵀ ... Here R and P are the parallel restriction
+and prolongation matrices."* This is the triple-product `RAP = R · A · P` — restriction `R`,
+assembled (or matrix-free) local operator `A`, prolongation `P` — **not** Restrictive Additive
+Schwarz. The file is the L0 anchor for how Palace turns a *local* (L-vector) finite-element
+operator into a *parallel* (true-dof / T-vector) operator: either lazily, by a matrix-free
+prolongate-apply-restrict sandwich, or eagerly, by assembling a single `mfem::HypreParMatrix`
+triple product. It is a sibling of [`linalg-operator-file`](./linalg-operator-file.md) (which
+holds the `Operator` / `ComplexOperator` base hierarchy `ParOperator` and `ComplexParOperator`
+inherit from) and is already cited by [`apply-linop-overload-set`](./apply-linop-overload-set.md)
+as a concrete member of the `Mult` / `AddMult` overload family.
+
+`rap.hpp` (252 lines) declares two classes inside `namespace palace`; `rap.cpp` (~979 lines)
+holds their method bodies plus the `BuildParSumOperator` weighted-summation family. Per the
+single-rank reading rule ([`par-types-single-rank-reading`](./par-types-single-rank-reading.md)),
+all `HypreParMatrix` / `MPI_Comm` / true-dof-vs-L-dof machinery collapses: at single rank the
+prolongation `P` and restriction `R` become local identity-ish maps and the parallel triple
+product `RAP` collapses to the local operator `A` (modulo essential-BC elimination). **MPI
+flagged once here; not re-flagged per method.**
+
+## At a glance — the two classes
+
+The header declares, inside `namespace palace` (opened at `rap.hpp:14`):
+
+- **`ParOperator : public Operator`** (`rap.hpp:24-121`) — the real-valued RAP operator. Holds
+  the local operator `A` (optionally owned via `data_A`, `rap.hpp:27-28`), trial/test
+  `FiniteElementSpace` references (`rap.hpp:31`), a `use_R` flag selecting true restriction `R`
+  vs prolongation-transpose `Pᵀ` (`rap.hpp:32`), an essential-BC true-dof list with a
+  `DiagonalPolicy` (`rap.hpp:35,38`), and a `mutable std::unique_ptr<mfem::HypreParMatrix> RAP`
+  (`rap.hpp:42`) — the lazily-assembled parallel matrix, `nullptr` until `ParallelAssemble`
+  forces it.
+- **`ComplexParOperator : public ComplexOperator`** (`rap.hpp:124-222`) — the complex-valued
+  RAP operator. Its real and imaginary parts are held as **two owned non-owning `ParOperator`
+  objects** `RAPr, RAPi` (`rap.hpp:142`); `Real()` / `Imag()` (`rap.hpp:175-176`) return them.
+  Its `Mult` family applies `A` once to a complex L-vector and prolongates/restricts the real
+  and imaginary components separately (`rap.cpp:486-499`), so the parallel machinery is exactly
+  `ParOperator`'s, run componentwise. It adds the Hermitian-transpose overloads
+  (`MultHermitianTranspose` / `AddMultHermitianTranspose`, `rap.hpp:209,220-221`) absent on the
+  real class — the only API delta beyond the element type.
+
+The local operator `A` is itself either an assembled `hypre::HypreCSRMatrix` or a matrix-free
+`ceed::Operator` (`rap.cpp:91-101`); the `ParOperator` is agnostic until assembly forces the
+distinction.
+
+## The two apply paths (matrix-free vs assembled)
+
+`ParOperator` has **two algebraically-equivalent ways to apply** the parallel operator, and the
+choice is a load-bearing performance dual (per
+[`transparent-vs-load-bearing-tricks`](./transparent-vs-load-bearing-tricks.md) the *result* is
+identical; the assembled path trades memory for repeated-apply speed):
+
+- **Matrix-free apply** — `Mult` (`rap.cpp:195-234`) does the sandwich directly: prolongate the
+  input T-vector to an L-vector (`P·x`), apply the local operator (`A·(P·x)`), then restrict
+  back (`R·(A·P·x)`), with essential-BC dofs zeroed before and re-imposed after per the diagonal
+  policy. `MultTranspose` (`rap.cpp:236-275`) runs the adjoint sandwich; `AddMult` /
+  `AddMultTranspose` (`rap.cpp:277-361`) accumulate with a scalar. The restrict step itself is
+  the `R` vs `Pᵀ` choice, isolated in the `RestrictionMatrixMult` helper (`rap.cpp:363-385`):
+  `use_R ? R.Mult : P.MultTranspose`.
+- **Assembled apply** — once `ParallelAssemble` (`rap.cpp:84-152`) has built the
+  `mfem::HypreParMatrix RAP` via the Hypre triple product (`hypre_ParCSRMatrixRAPKT(Rt, A, P)`
+  for the `R = Pᵀ` case, `rap.cpp:116-117`; an explicit `R·(A·P)` two-step
+  `hypre_ParCSRMatMat` chain for the `use_R` case, `rap.cpp:122-126`), every subsequent `Mult`
+  short-circuits to `RAP->Mult` (`rap.cpp:199-203`). Essential BCs are eliminated on the
+  assembled square matrix via `RAP->EliminateBC` (`rap.cpp:143`). `StealParallelAssemble`
+  (`rap.hpp:107-111`) forces assembly then moves the matrix out to a caller (used by direct
+  solvers that need an explicit `HypreParMatrix`).
+
+`EliminateRHS` (`rap.cpp:56-82`) is the BC-lifting companion: it moves the essential-dof
+contribution of a known solution `x` to the right-hand side `b` (the standard `b ← b − A·x_ess`
+lift), reusing the same prolongate-apply-restrict path.
+
+## `BuildParSumOperator` — weighted summation
+
+The header closes with a three-overload `BuildParSumOperator` template family (`rap.hpp:224-244`,
+bodies `rap.cpp:764-959`, explicit instantiations `rap.cpp:961-976`) that combines a fixed-size
+`std::array` of `ParOperator` (or `ComplexParOperator`) pointers into a single weighted-sum
+parallel operator, optionally extracting and re-applying the essential-dof list. This is the
+construction-side surface (how multiple assembled blocks — e.g. stiffness + mass + damping in
+the driven/transient pipelines — fuse into one `RAP`); the per-block apply algebra is the
+`SumOperator` material in [`linalg-operator-file`](./linalg-operator-file.md).
+
+## Notes for higher layers
+
+- **The matrix-free / assembled dual collapses at L1.** Both paths compute the same parallel
+  operator action; the L1 form is the single mathematical `y = (R·A·P)·x` map. The lazy `mutable
+  RAP` cache (`rap.hpp:42`) is an L0-internal memoization
+  ([`mutable-workspace-pattern`](./mutable-workspace-pattern.md)) — at L1 the operator is a pure
+  function of `(A, P, R)` and the assembled-vs-matrix-free choice is a performance annotation,
+  not algebra.
+- **`R` vs `Pᵀ` is a variant axis, not two operators.** The `use_R` flag (`rap.hpp:32`,
+  `rap.cpp:363-385`) selects whether the test-side restriction is a genuine restriction matrix
+  `R` or the transpose of the prolongation `Pᵀ`. For the usual square Galerkin case `R = Pᵀ`;
+  the rectangular case (different trial/test spaces, e.g. discrete gradient/curl operators) uses
+  the explicit `R`. At L1 this is one variant axis on the parallel-operator lift.
+- **`ComplexParOperator` collapses onto `ParOperator` componentwise.** The element-type axis (per
+  [`mfem-vector-types`](./mfem-vector-types.md)) is the only structural difference: the complex
+  operator is two real `ParOperator`s plus the Hermitian-transpose overloads. At L1 the
+  element-type axis is a variant on the operator *value*, not a separate operator family — the
+  same collapse [`linalg-solver-file`](./linalg-solver-file.md) records for `Solver<OperType>`.
+- **The essential-BC diagonal policy is state, not input.** `DiagonalPolicy ∈ {DIAG_ZERO,
+  DIAG_ONE}` (`rap.hpp:38`, set via `SetEssentialTrueDofs`, `rap.cpp:36-47`) determines what the
+  eliminated rows/cols carry. At L1 this lifts as a variant axis (or an explicit BC-set input) on
+  the parallel-operator construction, the same shape as the diagonal-policy material elsewhere in
+  `linalg/operator`.
+- **Single-rank collapse.** `P` and `R` are the FE-space prolongation/restriction maps; at single
+  rank the true-dof and L-dof spaces coincide up to the conforming-constraint map, so `R·A·P`
+  collapses toward `A` modulo conforming-prolongation and BC elimination. The `MPI_Comm`
+  (`rap.hpp:74`) and all `Hypre*` machinery are read single-rank per
+  [`par-types-single-rank-reading`](./par-types-single-rank-reading.md).
+
+## Referenced from
+
+*Forward-declared. L1 work on the parallel-operator lift (the assembled-vs-matrix-free dual and
+the FE-assembly pipeline, queued as FE-space material reaches the frontier) will reference this
+chapter.*
+
+- [`L0/apply-linop-overload-set`](./apply-linop-overload-set.md) — lists `ParOperator` in the
+  concrete-subclass `Mult` / `MultTranspose` / `AddMult` overload family; this chapter is the
+  file-level home for that member.
+- [`L0/linalg-operator-file`](./linalg-operator-file.md) — the `Operator` / `ComplexOperator`
+  base hierarchy `ParOperator` / `ComplexParOperator` inherit from, and the `SumOperator` algebra
+  behind `BuildParSumOperator`.
+- [`L0/par-types-single-rank-reading`](./par-types-single-rank-reading.md) — the `HypreParMatrix`
+  / `MPI_Comm` / prolongation-restriction single-rank reading rule applied throughout.
+- [`L0/mfem-vector-types`](./mfem-vector-types.md) — the real / complex element-type axis the two
+  classes instantiate.
+- [`L0/mutable-workspace-pattern`](./mutable-workspace-pattern.md) — the `mutable RAP` lazy-assembly
+  cache pattern.
+- [`L0/transparent-vs-load-bearing-tricks`](./transparent-vs-load-bearing-tricks.md) — the
+  matrix-free-vs-assembled performance dual classification.
+
+## Evidence (representative)
+
+- `palace/linalg/rap.hpp:1-252` — the header file (252 lines).
+- `palace/linalg/rap.hpp:14` — `namespace palace` open.
+- `palace/linalg/rap.hpp:17-19` — RAP definition comment ("constructed through the actions of R,
+  A, and P, usually with R = Pᵀ"); the authoritative reading.
+- `palace/linalg/rap.hpp:22-23` — `// Real-valued RAP operator.` + `class ParOperator : public Operator`.
+- `palace/linalg/rap.hpp:24-121` — `ParOperator` class body.
+- `palace/linalg/rap.hpp:27-28` — local operator storage (`std::unique_ptr<Operator> data_A;` + `const Operator *A;`).
+- `palace/linalg/rap.hpp:31-32` — trial/test `FiniteElementSpace` refs + `const bool use_R` (R-vs-Pᵀ selector).
+- `palace/linalg/rap.hpp:35,38` — essential-BC `dbc_tdof_list` + `DiagonalPolicy diag_policy = DIAG_ZERO`.
+- `palace/linalg/rap.hpp:42` — `mutable std::unique_ptr<mfem::HypreParMatrix> RAP;` (lazy assembled matrix).
+- `palace/linalg/rap.hpp:54-67` — owning + non-owning + square-shorthand constructor overloads.
+- `palace/linalg/rap.hpp:96` — `void EliminateRHS(const Vector &x, Vector &b) const;`.
+- `palace/linalg/rap.hpp:100` — `mfem::HypreParMatrix &ParallelAssemble(bool skip_zeros = false) const;`.
+- `palace/linalg/rap.hpp:103-111` — `StealParallelAssemble` (forces assembly, `std::move`s out the matrix).
+- `palace/linalg/rap.hpp:113-120` — `AssembleDiagonal` / `Mult` / `MultTranspose` / `AddMult` / `AddMultTranspose` overrides.
+- `palace/linalg/rap.hpp:123-124` — `// Complex-valued RAP operator.` + `class ComplexParOperator : public ComplexOperator`.
+- `palace/linalg/rap.hpp:124-222` — `ComplexParOperator` class body.
+- `palace/linalg/rap.hpp:142` — `std::unique_ptr<ParOperator> RAPr, RAPi;` (real/imag parts as owned `ParOperator`s).
+- `palace/linalg/rap.hpp:175-176` — `Real()` / `Imag()` overrides returning `RAPr.get()` / `RAPi.get()`.
+- `palace/linalg/rap.hpp:209,220-221` — `MultHermitianTranspose` / `AddMultHermitianTranspose` (complex-only overloads).
+- `palace/linalg/rap.hpp:224-244` — the three `BuildParSumOperator` template overloads (real array, complex array, deduced-array dispatcher).
+- `palace/linalg/rap.cpp:1-10` — source includes (`fem/bilinearform.hpp`, `linalg/hypre.hpp`) + `namespace palace`.
+- `palace/linalg/rap.cpp:12-33` — `ParOperator` constructor chain (private delegated ctor + owning + non-owning).
+- `palace/linalg/rap.cpp:36-47` — `SetEssentialTrueDofs` (binds BC dof list + diagonal policy).
+- `palace/linalg/rap.cpp:56-82` — `EliminateRHS` (`b ← b − A·x_ess` lift via prolongate-apply-restrict).
+- `palace/linalg/rap.cpp:84-152` — `ParallelAssemble`: dynamic-cast `A` to `HypreCSRMatrix` / `ceed::Operator` (91-101), Hypre triple product `hypre_ParCSRMatrixRAPKT(Rt, A, P)` for `R = Pᵀ` (116-117) vs explicit `R·(A·P)` for `use_R` (122-126), `EliminateBC` on assembled square matrix (143).
+- `palace/linalg/rap.cpp:195-234` — `ParOperator::Mult`: assembled short-circuit (199-203), matrix-free prolongate-apply-restrict sandwich with BC handling (205-233).
+- `palace/linalg/rap.cpp:236-275` — `ParOperator::MultTranspose` (adjoint sandwich).
+- `palace/linalg/rap.cpp:277-361` — `ParOperator::AddMult` / `AddMultTranspose` (scalar-accumulating variants).
+- `palace/linalg/rap.cpp:363-385` — `RestrictionMatrixMult` / `RestrictionMatrixMultTranspose` (the `use_R ? R : Pᵀ` selector).
+- `palace/linalg/rap.cpp:387-391` — `GetTestLVector` (square-vs-rectangular L-vector workspace selection).
+- `palace/linalg/rap.cpp:481-517` — `ComplexParOperator::Mult` (componentwise real/imag prolongate-restrict around one `A->Mult`).
+- `palace/linalg/rap.cpp:556-593` — `ComplexParOperator::MultHermitianTranspose` (complex-only adjoint).
+- `palace/linalg/rap.cpp:764-959` — `BuildParSumOperator` template bodies (real, complex, deduced-array dispatcher).
+- `palace/linalg/rap.cpp:961-976` — explicit `BuildParSumOperator` instantiations (`N ∈ {1,2,3,4}`).
+```
+
+### 2. `book/src/L0/index.md` — add a row to the "File overviews" cohort
+
+```edit:book/src/L0/index.md
+[old]: - [`linalg-solver-file`](./linalg-solver-file.md) — `palace/linalg/solver.{hpp,cpp}` at a glance. The home of the abstract `Solver<OperType>` base class (the type-axis root of every Palace solver — preconditioner, iterative, or MFEM-wrapped) plus `MfemWrapperSolver<OperType>` (the in-file concrete adapter). Eight concrete subclass families inherit from `Solver<OperType>`; this chapter is the file-level overview and the navigation hub for the subclass hierarchy. Detailed companion: [`mfem-wrapper-solver`](./mfem-wrapper-solver.md).
+[new]: - [`linalg-solver-file`](./linalg-solver-file.md) — `palace/linalg/solver.{hpp,cpp}` at a glance. The home of the abstract `Solver<OperType>` base class (the type-axis root of every Palace solver — preconditioner, iterative, or MFEM-wrapped) plus `MfemWrapperSolver<OperType>` (the in-file concrete adapter). Eight concrete subclass families inherit from `Solver<OperType>`; this chapter is the file-level overview and the navigation hub for the subclass hierarchy. Detailed companion: [`mfem-wrapper-solver`](./mfem-wrapper-solver.md).
+- [`linalg-rap-file`](./linalg-rap-file.md) — `palace/linalg/rap.{hpp,cpp}` at a glance. The home of the **R·A·P (Galerkin) parallel-operator** family: `ParOperator` (real-valued) and `ComplexParOperator` (complex-valued, real/imag-split into two owned `ParOperator`s), plus the `BuildParSumOperator` weighted-summation family. Turns a local (L-vector) FE operator into a parallel (true-dof) one either matrix-free (prolongate-apply-restrict sandwich) or assembled (one `HypreParMatrix` triple product); the two paths are an algebraically-equivalent performance dual. The L0 file-level home for the `ParOperator` member of the [`apply-linop-overload-set`](./apply-linop-overload-set.md) family.
+```
+
+### 3. `book/src/SUMMARY.md` — register the chapter under the L0 Part
+
+```edit:book/src/SUMMARY.md
+[old]: - [File — palace/linalg/solver.{hpp,cpp}](./L0/linalg-solver-file.md)
+[new]: - [File — palace/linalg/solver.{hpp,cpp}](./L0/linalg-solver-file.md)
+- [File — palace/linalg/rap.{hpp,cpp}](./L0/linalg-rap-file.md)
+```
+
+## Supporting evidence
+
+- Both class declarations verified via `palace-codemap` `get_symbol_def`: `ParOperator`
+  `rap.hpp:24-121` (class_specifier), `ComplexParOperator` `rap.hpp:124-222` (class_specifier).
+- RAP-definition reading verified verbatim against `rap.hpp:17-19` (`read_range`): "represented
+  by RAP constructed through the actions of R, A, and P, usually with R = Pᵀ".
+- All `.cpp` method-body ranges verified via `search_text` on the `palace/linalg/rap.cpp`
+  definition lines + `read_range` on the six core bodies (`ParallelAssemble` 84-152, `Mult`
+  195-234, `RestrictionMatrixMult` 363-385, `EliminateRHS` 56-82, `ComplexParOperator::Mult`
+  481-517, constructors 12-33).
+- The `ParOperator` ∈ `apply-linop-overload-set` cross-reference confirmed at
+  `book/src/L0/apply-linop-overload-set.md:34` (index.md row); the new chapter is the file-level
+  home that backlinks to it.
+- House style matched against the cycle-013 `linalg-orthog-file.md` and the bundle-6 #1
+  `linalg-solver-file.md` precedent chapters (At-a-glance / per-variant-or-class sections /
+  Notes-for-higher-layers / Referenced-from / Evidence layout; "MPI flagged once" discipline;
+  single-rank reading rule cross-reference).
+
+## Open questions / caveats
+
+- **OQ-A (scoping decision — focused vs split).** The file is ~1231 lines (`rap.hpp` 252 +
+  `rap.cpp` ~979), well above the cycle-013 orthog.hpp (93 lines) precedent and at the top of the
+  range for a single L0 file-overview chapter. I chose a **focused single chapter covering both
+  classes** rather than splitting `ComplexParOperator` into a sibling, because the complex class
+  is *defined by delegation* to two owned `ParOperator` objects (`rap.hpp:142`) — its mechanics
+  are not independent. The chapter holds discipline by chunking on **anchor surfaces** (7 chunks:
+  declarations + 6 method-body ranges) rather than transcribing per-method bodies. If a future
+  cross-cutter judges the chapter too dense, the natural split is to promote the
+  `BuildParSumOperator` summation family (`rap.hpp:224-244` / `rap.cpp:764-976`) into a sibling
+  construction-side note, leaving the two operator classes here. Surfaced for integrator/critic
+  awareness; no action required unless flagged.
+- **OQ-B (bundle-6 ranking update — next candidate after `rap`).** With `linalg-solver-file` (#1)
+  and `linalg-rap-file` (#2) landing, the remaining high-value L0 file-overview gaps observed
+  while localizing: (i) **`palace/fem/bilinearform.{hpp,cpp}`** — `BilinearForm::FullAssemble`
+  is the matrix-free→assembled bridge that `ParOperator::ParallelAssemble` calls
+  (`rap.cpp:101`), and is the obvious next anchor as FE-assembly material reaches the frontier;
+  (ii) **`palace/linalg/hypre.{hpp,cpp}`** — `hypre::HypreCSRMatrix` (the `A` storage type
+  `ParallelAssemble` dynamic-casts to, `rap.cpp:92`) and the Hypre triple-product helpers; (iii)
+  **`palace/fem/fespace.{hpp,cpp}`** — the `FiniteElementSpace` prolongation/restriction-matrix
+  source that `P` and `R` come from. Proposed bundle-6 #3 ranking: **`fem/bilinearform`** first
+  (it is the direct `ParallelAssemble` callee and bridges to FE-assembly, the next frontier),
+  then `linalg/hypre`, then `fem/fespace`. Recorded here for the cycle-014/015 planner; this is a
+  ranking suggestion, not an OQ-ledger blocker.
+- **OQ-C (`ParOperator` already partially cited).** `ParOperator` is listed in
+  `apply-linop-overload-set.md` as a concrete `Mult`-family member but had no file-level home
+  until now. The new chapter does not duplicate the overload-set material — it points back to it.
+  If the cycle-005 retroactive-thinning sweep (priority #11) revisits `apply-linop-overload-set`,
+  the `ParOperator` mention there could be thinned to a one-line forward to this chapter; noted,
+  not acted on (out of scope; one-file-per-invocation discipline).

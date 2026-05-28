@@ -16,8 +16,10 @@ recurrence collapses (fuses) upward into one named polynomial step at L1.
 
 The L2 form is the explicit degree-`order` three-term polynomial recurrence,
 built from named L1 leaf primitives, threaded by the variant scalar generator
-(`palace/linalg/chebyshev.cpp:188-220` 4th-kind, `:261-293` 1st-kind; the L2
-unfolding in [`chebyshev-iteration`](../L2/chebyshev-iteration.md) §Semantics):
+(`palace/linalg/chebyshev.cpp:190-220` 4th-kind signature-to-close — corrected
+from `:188-220`, whose start was the prior fn close brace (sig `:190`, brace
+`:191`); `:261-293` 1st-kind; the L2 unfolding in
+[`chebyshev-iteration`](../L2/chebyshev-iteration.md) §Semantics):
 
 ```text
 sweep(op, x, y, first):
@@ -149,9 +151,11 @@ already-firm vocabulary; this theme proposes no new operators.
 
 L0 evidence ranges (verified via `palace-codemap` read_range this cycle):
 
-- `palace/linalg/chebyshev.cpp:188-220` — 4th-kind `Mult2`: the `order`-step
-  recurrence (`ApplyOrder0`, the `k`-loop with `sd`/`sr` closed forms,
-  `ApplyOrderK`, the `y += d` accumulates) that L2 makes explicit and L1 fuses.
+- `palace/linalg/chebyshev.cpp:190-220` — 4th-kind `Mult2` (signature-to-close;
+  corrected from `:188-220`, whose start was the prior fn close brace — sig `:190`,
+  brace `:191`): the `order`-step recurrence (`ApplyOrder0`, the `k`-loop with
+  `sd`/`sr` closed forms, `ApplyOrderK`, the `y += d` accumulates) that L2 makes
+  explicit and L1 fuses.
 - `palace/linalg/chebyshev.cpp:261-293` — 1st-kind `Mult2`: same scaffold, the
   `ρ`-threaded scalars.
 - `palace/linalg/chebyshev.cpp:68-78` — `ApplyOrder0` (real overload; the
@@ -165,6 +169,29 @@ L1 / L2 anchors:
 - `book/src/L1/chebyshev-smoother.md` — the firm L1 closed-form action (RHS).
 - `book/src/L2/chebyshev-iteration.md` — the firm L2 explicit recurrence (LHS);
   its law 1 is this theme's core identity.
+
+Lowering-verifier audit (cycle-014, verdict **CONFIRMS** — fusion algebraically
+sound; firm status retained):
+
+```yaml
+verified_against:
+  - citation: palace/linalg/chebyshev.cpp:190-220
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: 4th-kind Mult2 recurrence (L2-explicit / L1-fused) signature-to-close; corrected from :188-220 (sig :190, brace :191)
+  - citation: palace/linalg/chebyshev.cpp:261-293
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: 1st-kind Mult2 recurrence (rho-threaded)
+  - citation: palace/linalg/chebyshev.cpp:68-78
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: ApplyOrder0 real (d <- sr*dinv*r); cycle-013-repaired range exact
+  - citation: palace/linalg/chebyshev.cpp:112-123
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: ApplyOrderK real (d <- sd*d + sr*dinv*r); cycle-013-repaired range exact
+```
 
 ## Status
 

@@ -418,6 +418,27 @@ by anchoring `forM_`/`foldM` as their own firm L4 rows — the entry over-claims
 `firm`. **Escalated to a combinator-miner / lifter follow-up** (see Open Question
 6). The body is firm; the wrapper-iteration vocabulary is the open part.
 
+**Resolution path (cycle-014 combinator-miner; enactment scheduled cycle-015).**
+The reconcile has a decided route: the cycle-014 combinator-miner
+(`reports/2026-05-28T193256Z-combinator-miner-chebyshev-l4-wrapper-iteration-vocabulary-reconcile/`)
+selected route (i) — **REUSE the `iterate-while` family, do NOT firm a new
+combinator.** The two un-anchored binds re-anchor onto the canonical firm
+vocabulary: `forM_` (outer `pc_it` sweep) and `foldM` (inner `k`-recurrence)
+both become [`iterate_while_pure`](./iterate-while.md) with a **step-count
+predicate** (`s.it <= bound`), the loop counter folded into the carry — the
+"fixed-count vs. convergence-gated" distinction lives in the **predicate**, not
+the combinator (strawman §6.5 step 5, `book/src/design/l4_calculus.md:418`; the
+`run_lbm` bounded-loop precedent `:382-385`). The inner `st`/`rho_prev`
+recurrence-carry may alternatively use
+[`iterate-while-with-prev`](./iterate-while-with-prev.md) (see OQ
+`chebyshev-l4-inner-loop-presentation-carry-st-vs-with-prev`). A **cycle-015
+lifter/abstractor** enacts the body re-anchor of §Signature/§Semantics + the
+`L4/index.md` dep-map row rewrite, **then flips this Status `rough-in`→`firm`**
+(L4 firm 3→4). The concrete re-anchored `apply` body sketch is staged in the
+combinator-miner CYCLE.md §"Proposed combinator". Tracking OQ:
+`chebyshev-l4-firm-via-iterate-while-reanchor`. (This note does not itself flip
+the status — enactment is the cycle-015 follow-up's work.)
+
 **Caveat (independent of the above; not the status driver)**: no dedicated unit
 test (multigrid-integration coverage only) — same justification as the firm L1/L2
 entries.

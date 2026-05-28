@@ -210,6 +210,22 @@ but never inspects the reason). This mirrors the parent theme's overall
 is the SLEPc-specific elaboration of that single partly-constructive
 sub-rewrite.
 
+Two distinct evidence bases underpin this entry; the cycle-014
+lowering-verifier audit (§Verified-against) keeps them separate:
+
+- The **Palace-side negative anchor** (Palace prints but never reads the
+  reason) is a **source anchor** — fully confirmed by whole-tree
+  `search_text` against the vendored `reference/palace/` tree. This is what
+  grounds the partly-constructive status.
+- The **8-row enum exhaustiveness** (that no SLEPc reason code a Palace
+  SLEPc solver could encounter is omitted) is a **literature anchor**,
+  checked against SLEPc's **documented** `EPS`/`PEP`/`NEP` convergence-reason
+  enums — the SLEPc/PETSc headers are **not** vendored under `reference/`,
+  so this half is verified against documentation rather than a vendored
+  positive source site. It does not strengthen or weaken the
+  partly-constructive status (which rests solely on the source-confirmed
+  negative anchor); it bounds only the enum-coverage claim.
+
 ## Speculative L1 operators
 
 **None.** This sub-theme refines the status-derivation of an existing
@@ -250,6 +266,49 @@ Parent / sibling themes:
   theme; `LinearSolveFailed` is the inner-solver failure this map's
   breakdown rows corroborate.
 
+### Lowering-verifier audit (cycle-014)
+
+Verdict: **NEGATIVE-ANCHOR-CONFIRMED → STAYS-PARTLY-CONSTRUCTIVE.** The
+whole-tree negative anchor was independently re-run this audit and is real
+and complete — Palace PRINTS the reason (the three `*ConvergedReasonView`
+sites) and never reads it into a status (zero `*GetConvergedReason`
+callsites, zero `EPS_*_DIVERGED/CONVERGED` enumerator references). The map
+is therefore a faithful forward-looking reconstruction with no positive
+Palace source site, exactly as this entry asserts; the partly-constructive
+status correctly **stays** (the promotion is NOT unblocked — no positive
+site exists to firm against; promotion remains gated on the same upstream
+behaviour change as parent Sub-pattern B). The 8-row diverged count HELD as
+exhaustive, but checked against SLEPc's **documented** enum — a **literature
+anchor** (SLEPc/PETSc headers are not vendored under `reference/`), NOT a
+vendored positive source site. This enum-coverage half is therefore a
+literature anchor; it is distinct from, and does not weaken, the Palace-side
+negative anchor that underpins the partly-constructive status (which is
+fully source-confirmed).
+
+```yaml
+verified_against:
+  - citation: palace/linalg/slepc.cpp:687-709
+    verdict: supports
+    audited_at: 2026-05-28T193309Z
+    note: EPSGetConverged@695 (count), EPSConvergedReasonView@699 (print-only), return num_conv@708 — all exact.
+  - citation: palace/linalg/slepc.cpp:1170-1191
+    verdict: supports
+    audited_at: 2026-05-28T193309Z
+    note: PEPGetConverged@1178, PEPConvergedReasonView@1182 (print-only), return num_conv@1191 — isomorphic to EPS.
+  - citation: palace/linalg/slepc.cpp:1515-1545
+    verdict: supports
+    audited_at: 2026-05-28T193309Z
+    note: NEPGetConverged@1525, NEPConvergedReasonView@1529 (print-only); no return-line over-claim.
+  - citation: "whole-tree negative anchor (EPS_DIVERGED/EPS_CONVERGED/GetConvergedReason/DIVERGED)"
+    verdict: supports
+    audited_at: 2026-05-28T193309Z
+    note: All four searches return zero hits; ConvergedReason returns only the 3 print-only Views; GetConverged returns count-readers only. Negative anchor CONFIRMED — status STAYS partly-constructive.
+  - citation: "SLEPc EPS/PEP/NEP ConvergedReason enums (documented; headers not vendored)"
+    verdict: partially-supports
+    audited_at: 2026-05-28T193309Z
+    note: 8-row diverged count is exhaustive over the documented enum; exhaustiveness checked against SLEPc docs (literature anchor), NOT a vendored positive header site (caveat).
+```
+
 ## Status
 
 `partly-constructive (structural decomposition firm; per-row status
@@ -270,9 +329,19 @@ carries a distinct promotion path, so the gate is stated once here rather
 than restated per row): promotion to firm is gated on the **same** upstream behaviour
 change as parent Sub-pattern B (reading the reason code via
 `EPSGetConvergedReason` + propagating to the outer-loop status); a
-`lowering-verifier` audit may UNBLOCK the promotion by confirming the
-enum partition against SLEPc's documented header and accepting the
+`lowering-verifier` audit may UNBLOCK the promotion by confirming a
+positive Palace source site reads the reason and accepting the
 forward-looking shape as a methodology pattern (per the cycle-012
 `partly-constructive`-first-class invariant). This sub-theme's gate is
 strictly downstream of the parent Sub-pattern B gate: the reason map
 only materialises once the per-callsite inner-solve capture lands.
+
+**Cycle-014 audit outcome (§Verified-against):** the status correctly
+**STAYS** partly-constructive — the lowering-verifier confirmed the
+negative anchor is real and complete and that **no positive site exists**
+to firm against, so the promotion is NOT unblocked (unlike cycle-012's
+eigsolve audit, which UNBLOCKED a gated promotion by identifying firming
+edits; here there are none to gate). The enum-exhaustiveness half of the
+verdict is a **literature anchor** (checked vs SLEPc's documented enum;
+headers not vendored), distinct from the source-confirmed Palace-side
+negative anchor — see §Justification kind.

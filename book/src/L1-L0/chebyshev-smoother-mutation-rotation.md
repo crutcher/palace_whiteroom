@@ -72,8 +72,9 @@ the L1 form erases:
   [`axpby-mutation-rotation`](./axpby-mutation-rotation.md), one level up: the
   destination is named in the call's argument list, not on the LHS.)
 - **Two scribbled workspaces.** `r` (the residual) is a *passed* workspace
-  argument; `d` (the direction) is a *member* workspace (`chebyshev.hpp:43` —
-  `mutable VecType d, r;`). Both are written every step and carry no value across
+  argument; `d` (the direction) is a *member* workspace (`chebyshev.hpp:44` —
+  `mutable VecType d, r;`; `:43` is the explanatory comment). Both are written
+  every step and carry no value across
   calls. At L1 they vanish — the smoother is a single value-producing action.
 - **Construction-bound spectral scalars.** `lambda_max` (4th-kind) /
   `theta`, `delta` (1st-kind) are read from member fields set once at
@@ -93,15 +94,18 @@ as the opaque realisation of the L1 `p_order(D⁻¹ A)·(·)` action and does NO
 re-derive the per-degree coefficients (those are the L2>L1 theme's concern).
 
 Citations:
-- `palace/linalg/chebyshev.cpp:188-220` — `ChebyshevSmoother<OperType>::Mult2`
-  (4th-kind): the `pc_it` outer sweep, the `initial_guess` branch, the in-place
+- `palace/linalg/chebyshev.cpp:190-220` — `ChebyshevSmoother<OperType>::Mult2`
+  (4th-kind, signature-to-close; corrected from `:188-220`, whose start was the
+  prior `SetOperator` close brace — the signature is `:190`, opening brace `:191`,
+  close `:220`): the `pc_it` outer sweep, the `initial_guess` branch, the in-place
   `y += d` / `y = 0.0`, the scribbled `r` / `d`, the `ApplyOrder0` / `ApplyOrderK`
   diagonal-scaled passes.
 - `palace/linalg/chebyshev.cpp:261-293` —
   `ChebyshevSmoother1stKind<OperType>::Mult2`: identical scaffold, 1st-kind
   scalars.
-- `palace/linalg/chebyshev.hpp:43` — `mutable VecType d, r;` (the two scribbled
-  workspaces; `d` is a member, `r` is passed).
+- `palace/linalg/chebyshev.hpp:44` — `mutable VecType d, r;` (the two scribbled
+  workspaces; `d` is a member, `r` is passed; corrected from `:43`, which is the
+  explanatory comment).
 
 ### Sub-pattern B — entry-point forwarding (`Mult` → `Mult2`; resize-on-demand)
 
@@ -191,11 +195,13 @@ gate construction step (same family as the
 pure function of the setup inputs modulo the opaque `spectrum_estimate`.
 
 Citations:
-- `palace/linalg/chebyshev.cpp:169-186` — 4th-kind `SetOperator`: capture `A`,
-  `AssembleDiagonal(dinv); dinv.Reciprocal()`, `lambda_max = sf_max *
+- `palace/linalg/chebyshev.cpp:169-188` — 4th-kind `SetOperator` (corrected from
+  `:169-186`, which undershot the close brace `:188`, missing `this->width`@187):
+  capture `A`, `AssembleDiagonal(dinv); dinv.Reciprocal()`, `lambda_max = sf_max *
   GetLambdaMax(...)`, `MFEM_VERIFY(lambda_max > 0.0, …)`.
-- `palace/linalg/chebyshev.cpp:232-259` — 1st-kind `SetOperator`: same scaffold
-  + `sf_min` default, `theta`, `delta`.
+- `palace/linalg/chebyshev.cpp:232-258` — 1st-kind `SetOperator` (corrected from
+  `:232-259`, one past the close brace `:258`): same scaffold + `sf_min` default,
+  `theta`, `delta`.
 - `palace/linalg/chebyshev.cpp:13-27` — `GetLambdaMax` (real + complex
   overloads): `DinvA = Dinv·A`; `linalg::SpectralNorm(comm, DinvA, hermitian)`.
 - `palace/linalg/chebyshev.cpp:161-167` / `:223-230` — the two ctors:
@@ -269,15 +275,20 @@ L0 evidence ranges (all verified via `palace-codemap` read_range this cycle):
 
 - `palace/linalg/chebyshev.cpp:13-27` — `GetLambdaMax` (real literal-`true` /
   complex `A.IsReal()`); `DinvA = Dinv·A`; `linalg::SpectralNorm`.
-- `palace/linalg/chebyshev.cpp:161-186` — 4th-kind ctor + `SetOperator`.
-- `palace/linalg/chebyshev.cpp:188-220` — 4th-kind `Mult2` (in-place `y`, `r`,
-  `d`; `ApplyOrder0` / `ApplyOrderK` diagonal-scaled passes).
-- `palace/linalg/chebyshev.cpp:223-259` — 1st-kind ctor + `SetOperator`
-  (`sf_min` default, `theta`, `delta`).
+- `palace/linalg/chebyshev.cpp:161-188` — 4th-kind ctor + `SetOperator`
+  (`SetOperator` close brace is `:188`; corrected from `:161-186`).
+- `palace/linalg/chebyshev.cpp:190-220` — 4th-kind `Mult2` (signature-to-close;
+  corrected from `:188-220`, whose start was the prior fn close brace — sig `:190`,
+  brace `:191`): in-place `y`, `r`, `d`; `ApplyOrder0` / `ApplyOrderK`
+  diagonal-scaled passes.
+- `palace/linalg/chebyshev.cpp:223-258` — 1st-kind ctor + `SetOperator`
+  (`sf_min` default, `theta`, `delta`; `SetOperator` close brace is `:258`,
+  corrected from `:223-259`).
 - `palace/linalg/chebyshev.cpp:261-293` — 1st-kind `Mult2`.
 - `palace/linalg/chebyshev.cpp:295-299` — element-type instantiations.
-- `palace/linalg/chebyshev.hpp:30-43` — 4th-kind member layout (`mutable VecType
-  d, r;`, `dinv`, `lambda_max`, `sf_max`).
+- `palace/linalg/chebyshev.hpp:30-44` — 4th-kind member layout (`mutable VecType
+  d, r;` is `:44`, `:43` the explanatory comment; `dinv`, `lambda_max`, `sf_max`;
+  corrected from `:30-43`).
 - `palace/linalg/chebyshev.hpp:50-76` — `Mult` / `MultTranspose` resize-forward;
   `Mult2` / `MultTranspose2` (symmetry alias).
 - `palace/linalg/chebyshev.hpp:80-114` — 1st-kind doc + member layout
@@ -291,6 +302,56 @@ L1 anchor:
 
 - `book/src/L1/chebyshev-smoother.md` — the firm L1 operator all sub-patterns
   lower from.
+
+Lowering-verifier audit (cycle-014, verdict **CONFIRMS-WITH-REFINEMENT** — no
+semantic defect; firm status retained):
+
+```yaml
+verified_against:
+  - citation: palace/linalg/chebyshev.cpp:190-220
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: 4th-kind Mult2 signature-to-close; corrected from :188-220 (start was prior fn close brace; sig is :190, brace :191)
+  - citation: palace/linalg/chebyshev.cpp:261-293
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+  - citation: palace/linalg/chebyshev.cpp:169-188
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: 4th-kind SetOperator; corrected from :169-186 (end undershot close @188)
+  - citation: palace/linalg/chebyshev.cpp:232-258
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: 1st-kind SetOperator; corrected from :232-259 (end was 1 past close @258)
+  - citation: palace/linalg/chebyshev.cpp:13-27
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: GetLambdaMax real(:18 true)/complex(:27 A.IsReal()); DinvA=Dinv*A
+  - citation: palace/linalg/chebyshev.cpp:183-184
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: 4th-kind MFEM_VERIFY(lambda_max>0) setup precondition (1st-kind :250-251)
+  - citation: palace/linalg/chebyshev.hpp:44
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: mutable VecType d, r (member d, passed r); corrected from :43 (:43 is the explanatory comment, member is :44)
+  - citation: palace/linalg/chebyshev.hpp:50-76
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: Mult resize-forward + Mult2 decl + MultTranspose2 symmetry alias
+  - citation: palace/linalg/chebyshev.cpp:295-299
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: both-kind x both-element-type instantiations
+  - citation: palace/linalg/distrelaxation.cpp:36
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: B_G->SetInitialGuess(false) per-call initial_guess control (exact line 36)
+  - citation: palace/linalg/chebyshev.cpp:101-110,150-159
+    verdict: supports
+    audited_at: 2026-05-28T19:33:25Z
+    note: dead-code complex conjugate-dinv transpose kernels (recognition rules)
+```
 
 ## Status
 

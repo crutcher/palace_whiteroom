@@ -1008,6 +1008,29 @@ relates_to: eigsolve-convergence-reason-mapping-promotion (this ledger)
 
 Two upstream-confirmation items for the SLEPc reason-mapping sub-theme, both for a `lowering-verifier` pass. (1) **Enum names are documented-not-source-anchored.** The enumerator names (`EPS_DIVERGED_BREAKDOWN`, `EPS_DIVERGED_SYMMETRY_LOST`, `NEP_DIVERGED_LINEAR_SOLVE`, etc.) come from SLEPc's public headers (`slepceps.h` / `slepcnep.h`), NOT from Palace source (Palace references none — confirmed whole-tree zero-hit). Per CLAUDE.md "Many symbols resolve into upstream libraries", cross-check the exact per-version enumerator set against installed SLEPc headers under `reference/` if present, or log an upstream-behaviour note. The mapping *shape* (converged->success, breakdown->`LinearSolveFailed`, its->`MaxIterReached`) is robust to enum-name drift across SLEPc versions; only the exact per-version list needs confirmation. (2) **PEP/NEP isomorphism asserted, not exhaustively tabled.** The EPS family is tabled fully; PEP is asserted isomorphic-to-EPS and NEP adds three enumerators (`NEP_DIVERGED_LINEAR_SOLVE` / `NEP_DIVERGED_FUNCTION_COUNT` / `NEP_DIVERGED_SUBSPACE_EXHAUSTED`). A lowering-verifier wanting the PEP rows tabled explicitly is a small expansion; the print-only negative anchor (PEP at 1182, NEP at 1529) is identical across families, so no constructive status changes. Source: cycle-013 slepc-convergence-reason-lift-sub-theme §"Open questions / caveats" items 1 + 4.
 
+```yaml
+---
+slug: chebyshev-l4-inner-loop-presentation-carry-st-vs-with-prev
+opened_at: cycle-014
+opened_by: repairer
+status: open
+relates_to: chebyshev-l4-firm-via-iterate-while-reanchor (this ledger)
+---
+```
+
+When the cycle-015 firming follow-up (lifter/abstractor) re-anchors `L4/chebyshev.md`'s inner `k`-recurrence loop onto the firm `iterate-while` family, two firm-vocabulary-valid presentations remain to choose between. (a) **Plain `iterate_while_pure` with `st` in the carry** — carry `{ r, d, st, k }`, predicate `\c -> c.k <= op.order - 1`. (b) **`iterate-while-with-prev` threading `st`/`rho_prev` as the closure `prev`** — narrowed carry `{ r, d, k }`, mirroring the CG `beta_prev` recurrence-variable treatment (`iterate-while-with-prev.md:7` names Chebyshev `x_{k-1}`). The combinator-miner recommends the **plain carry-`st` form** as default (4th-kind `st = ()` makes it the degenerate no-prev case, unifying all kinds without a bootstrap step); the with-prev alternative is flagged for `same-layer-cross-cutter` if it wants to unify the `st`-carry with the `beta_prev`-carry under one recurrence-variable-threading note. Source: cycle-014 combinator-miner CYCLE.md §"Open questions / caveats" item 1 + §"Variant axes". Routes to lifter/abstractor (the firming follow-up).
+
+```yaml
+---
+slug: chebyshev-l4-firm-via-iterate-while-reanchor
+opened_at: cycle-014
+opened_by: repairer
+status: open
+---
+```
+
+Firming follow-up for `L4/chebyshev.md` (cycle-013 rough-in). The cycle-014 combinator-miner decided route (i): the entry's two un-anchored `forM_`/`foldM` binds re-anchor onto the firm `iterate-while` family via `iterate_while_pure` with a **step-count predicate** (`s.it <= bound`), per strawman §6.5 step 5 (`l4_calculus.md:418`) + the canonical-primitive claim (`iterate-while.md:7`). A cycle-015 lifter/abstractor should enact: (1) the body re-anchor of §Signature/§Semantics (the concrete sketch is staged in the combinator-miner CYCLE.md §"Proposed combinator"), (2) the `L4/index.md` dep-map row rewrite — replace the `chebyshev` row's "iteration combinators UNRECONCILED" cell with the `iterate-while`-via-`iterate_while_pure` anchor, and flip Status `rough-in`→`firm`, moving chebyshev into the Firm-at-L4 cohort (count 3→4). The inner-loop presentation choice is the sibling OQ `chebyshev-l4-inner-loop-presentation-carry-st-vs-with-prev`. Source: cycle-014 combinator-miner CYCLE.md §"Proposed changes" (staged-not-applied edit block). Routes to lifter/abstractor.
+
 ## Investigating
 
 (empty)
@@ -2455,6 +2478,20 @@ route_to: lowering-verifier
 
 ```yaml
 ---
+slug: orthogonalize-mutation-rotation-audit-confirmed-rom-consumer-residual
+opened_at: cycle-014
+opened_by: lowering-verifier
+last_revisited: null
+status: open
+relates_to: book/src/L1-L0/orthogonalize-mutation-rotation.md (firm/structural, audit CONFIRMS-WITH-REFINEMENT cycle-014), orthogonalize-mutation-rotation-lowering-verifier-audit (this ledger, ANSWERED cycle-014 — both claims confirmed), palace/models/romoperator.cpp:51-66 (ROM dispatch wrapper, NOT the consumer)
+route_to: lowering-verifier (future ROM greedy-loop consumer audit)
+---
+```
+
+**[OQ] `orthogonalize-mutation-rotation` lowering-verifier audit ANSWERED (CONFIRMS-WITH-REFINEMENT, `firm` upheld) — one residual ROM-consumer audit-scope caveat.** The cycle-013 audit-request OQ `orthogonalize-mutation-rotation-lowering-verifier-audit` (above) is **answered cycle-014**: both claims confirmed. (a) **Exhaustiveness — confirmed closed.** The `Orthogonalization` enum has exactly 3 variants (`labels.hpp:165-170`); `get_call_sites` returns MGS→3 + CGS→6, every non-test site inside one of the two production dispatch switches (`OrthogonalizeIteration` `iterative.cpp:316/319/322`, `OrthogonalizeColumn` `romoperator.cpp:59/62/65`) + 3 test-harness sites; CGS2 is `OrthogonalizeColumnCGS(...,true)`, not a fourth free function. No unaccounted L0 variant. (b) **B-weighted hook invariance — confirmed.** The ROM `dot_op` only swaps the kernel inside `dot_op(w, V[j])`; the loop structure is unchanged. Refinement R1 (CGS2 dispatch cite `:321-323`→`:322`) + the `verified_against:` evidence block were applied to the theme cycle-014. **Residual (this OQ, low priority):** applicability condition 1 ("no observer of prior `w` after the call") was proven lexically only for GMRES (`iterative.cpp:630-632`) and FGMRES (`:809-811`); the **ROM greedy-sampling consumer** (the loop that calls `romoperator.cpp:OrthogonalizeColumn`) was NOT audited for prior-`w` discard — `romoperator.cpp:51-66` is the dispatch wrapper, not the consumer. Not a defect (the theme scopes its lexical proof to GMRES/FGMRES); a future `lowering-verifier` pass on the ROM greedy loop could extend condition-1 coverage to the third call family. Source: cycle-014 lowering-verifier report §"Open questions / caveats" item 2 + §Recognition-set closure.
+
+```yaml
+---
 slug: orthogonalize-mutation-rotation-l2-krylov-step-lift-notes
 opened_at: cycle-013
 opened_by: abstractor
@@ -2500,8 +2537,10 @@ route_to: lowering-verifier
 slug: krylov-step-typed-wrapper-dissolution-cg-md-citation-sweep
 opened_at: cycle-013
 opened_by: integrator-per-report
-last_revisited: null
-status: open
+last_revisited: cycle-014
+status: answered
+answered_in: cycle-014
+answer: The cycle-014 lifter sweep (reports/2026-05-28T193413Z-lifter-krylov-step-typed-wrapper-dissolution-cg-md-citation-sweep/CYCLE.md) re-anchored all 8 dangling cg.md pointers in book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md (theme lines 98/109/126/200/204/210/231/233) to their firm homes — body-identity (Claim 2; lines 109/126/204/210/231) → L3-L2/krylov-step-body-identity.md:125; outer-loop sequential-obstruction (Claim 1; lines 98/200/233) → L3/krylov-step.md §Algebraic-laws + concepts/sequential-obstruction.md. Historical cg.md ranges retained as parenthetical provenance. Theme stays firm; build clean (cargo make book exit 0). The SIBLING residual — the SAME dangling cg.md pointers in the DISTINCT L3 operator entry book/src/L3/krylov-step.md (lines 108/129/188/196/202/204) — is the explicitly-separate follow-up OQ l3-krylov-step-cg-md-citation-sweep (cycle-015 lifter); this theme-side OQ does NOT hold open for it.
 relates_to: book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md (lines 98, 109, 126, 200, 204, 210, 218, 231, 233), book/src/spec/slices/cg.md (reduced stub, 165 lines), book/src/L3-L2/krylov-step-body-identity.md
 route_to: dedicated citation-re-anchor dispatch (lifter or same-layer-cross-cutter)
 ---
@@ -2574,6 +2613,101 @@ relates_to: book/src/concepts/sequential-obstruction.md, book/src/concepts/varia
 ```
 
 **[OQ] The cycle-013 orthogonalization concept-audit was scoped to ONE page vs the firm L1 entry; it did NOT audit `concepts/sequential-obstruction.md` or `concepts/variant-absorption.md` for parallel drift.** Both are referenced by the firm `L1/orthogonalize` entry and by the refreshed `concepts/orthogonalization.md` (the MGS sequential-obstruction-at-L3 note + the all-three-level variant-absorption-under-residual-axis-disclosure note). A future `same-layer-cross-cutter` could spot-check both against the firm entry the way this dispatch did for `orthogonalization.md` — verifying the sequential-obstruction characterization and the variant-absorption residual-axis framing still match the firm L1/L3 vocabulary post-cycle-012/013 firming. Folds naturally into the broader pre-layered-era concept-page contamination sweep already tracked in this ledger (~lines 335/379). Low priority; not blocking. Source: cycle-013 concept-audit report §"Open questions / caveats" item 4 (scope discipline).
+
+```yaml
+---
+slug: bundle-6-l0-file-overview-next-ranking
+opened_at: cycle-014
+opened_by: repairer
+last_revisited: null
+status: open
+relates_to: book/src/L0/linalg-rap-file.md, book/src/L0/linalg-solver-file.md, palace/fem/bilinearform.{hpp,cpp}, palace/linalg/hypre.{hpp,cpp}, palace/fem/fespace.{hpp,cpp}
+---
+```
+
+**[OQ] Bundle-6 L0 file-overview next-candidate ranking after `linalg-solver-file` (#1) and `linalg-rap-file` (#2) land.** The cycle-014 `linalg-rap-file` layer-intro-author dispatch surfaced the three highest-value remaining L0 file-overview gaps observed while localizing `rap.{hpp,cpp}`: (i) **`palace/fem/bilinearform.{hpp,cpp}`** — `BilinearForm::FullAssemble` is the matrix-free→assembled bridge that `ParOperator::ParallelAssemble` directly calls (`rap.cpp:101`), the obvious next anchor as FE-assembly material reaches the frontier; (ii) **`palace/linalg/hypre.{hpp,cpp}`** — `hypre::HypreCSRMatrix` (the `A` storage type `ParallelAssemble` dynamic-casts to, `rap.cpp:92`) plus the Hypre triple-product helpers; (iii) **`palace/fem/fespace.{hpp,cpp}`** — the `FiniteElementSpace` prolongation/restriction-matrix source `P` and `R` come from. **Proposed bundle-6 #3 ranking: `fem/bilinearform` first** (direct `ParallelAssemble` callee, bridges to the next FE-assembly frontier), then `linalg/hypre`, then `fem/fespace`. Recorded for the cycle-014/015 planner. Ranking suggestion, not a blocker. Source: cycle-014 `linalg-rap-file` report §OQ-B (promoted from CYCLE.md by repairer).
+
+```yaml
+---
+slug: l3-krylov-step-cg-md-citation-sweep
+opened_at: cycle-014
+opened_by: repairer
+status: open
+relates_to: book/src/L3/krylov-step.md, book/src/spec/slices/cg.md (cycle-009 reduced stub), book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md
+---
+```
+
+**[OQ] The firm L3 entry `book/src/L3/krylov-step.md` carries the same dangling `cg.md:NNN-MMM` reduced-slice pointers — needs a sibling lifter (recommended cycle-015).** While the cycle-014 lifter sweep re-anchored the L4>L3 theme `krylov-step-typed-wrapper-dissolution.md` (8 dangling `cg.md` pointers → firm homes; OQ `krylov-step-typed-wrapper-dissolution-cg-md-citation-sweep` closed in full for the theme file), it found the firm L3 operator entry `book/src/L3/krylov-step.md` *itself* still cites the now-out-of-range reduced-slice ranges at its lines 108 (`cg.md:341-349`), 129 (`cg.md:341-349`), 188 (`cg.md:341-362`), 196 (`cg.md:103-115`, `:172-188`, `:393-425`), and 202/204 (`cg.md:208-220`, `:430-446`). These dangle for the same cycle-009-reduction reason (`cg.md` is a 165-line stub). They are in a different file (an L3 operator entry, not the L4>L3 theme) so re-anchoring them was correctly out-of-scope for the cycle-014 theme dispatch (touching them would be an unscoped dispatch-phase `book/` mutation). **Reflexivity note**: the cycle-014 theme re-anchors 1/4/8 designate `L3/krylov-step.md` §Algebraic-laws as the *firm narrative home* for the outer-loop-obstruction family — that designation is valid (the obstruction claim lives there in L3 vocabulary regardless of the target's own citation hygiene), but the sibling sweep should follow to fully close the loop. Recommend a cycle-015 lifter scope `l3-krylov-step-cg-md-citation-sweep` applying the cycle-013/014 lifted-evidence annotation convention verbatim. Low priority; not blocking; the theme-side closure stands on its own. Source: cycle-014 lifter report (`reports/2026-05-28T193413Z-lifter-krylov-step-typed-wrapper-dissolution-cg-md-citation-sweep/CYCLE.md`) §"Open questions / caveats" item 1 + critic Issue 2 (correctly-deferred) + repairer promotion.
+
+```yaml
+---
+slug: chebyshev-anchor-element-kernel-and-mult2-carry-forward-sweep
+opened_at: cycle-014
+opened_by: repairer
+last_revisited: null
+status: open
+relates_to: book/src/L1/chebyshev-smoother.md, book/src/L2/chebyshev-iteration.md, book/src/L1-L0/chebyshev-smoother-mutation-rotation.md, book/src/L2-L1/chebyshev-iteration-fusion.md, palace/linalg/chebyshev.{cpp,hpp}
+---
+```
+
+**[OQ] Chebyshev L1/L2 anchor entries carry pre-cycle-013 element-kernel ranges + the brace-start `Mult2` range — full carry-forward sweep needed.** The cycle-014 `lowering-verifier` audit of the two firm chebyshev lowering themes (`reports/2026-05-28T193325Z-lowering-verifier-chebyshev-lowering-themes-lowering-verifier-followup/`), per the cycle-014 critic + repairer, confirmed inherited citation drift in the **anchor entries** (NOT the lowering themes, which carry the cycle-013-repaired ranges). A follow-up abstractor/lifter must sweep ALL of:
+- **Element-kernel ranges** `ApplyOrder0 :69-78` → `:68-78` and `ApplyOrderK :114-123` → `:112-123` (the `:69`/`:114` starts are one line inside the signatures `:68`/`:112`). Critic-confirmed sites: **`book/src/L2/chebyshev-iteration.md` lines 35, 143, 245, 247 (FOUR sites)** and **`book/src/L1/chebyshev-smoother.md` lines 245, 247**. Sweep must hit all six, not just an §Evidence block.
+- **`Mult2` range** `:191-220` → `:190-220` in both anchors (the `:191` start is the opening brace; the signature is `:190`, verified via `read_range :185-200`; close `:220`).
+- (Theme-side, already corrected in this report's proposed-changes: smoother theme `Mult2 :188-220`→`:190-220`, `SetOperator :169-186`→`:169-188`, `:232-259`→`:232-258`, `hpp:43`→`:44`; fusion theme `:188-220`→`:190-220`.)
+
+Bounded citation-range correction per `lifter-scope-content-correction-boundary`; no status change (themes + anchors stay `firm`; the verdicts L1>L0 CONFIRMS-WITH-REFINEMENT / L2>L1 CONFIRMS / fusion-sound stand). Skill-candidate `audit-report-inherited-miscitation-lint` precedent. Source: cycle-014 lowering-verifier report §Open-questions item 1 (promoted by repairer) + cycle-014 critic Issues 1–3.
+
+```yaml
+---
+slug: divfree-projector-partly-constructive-to-firm-enactment
+opened_at: cycle-014
+opened_by: integrator-per-report
+last_revisited: null
+status: open
+relates_to: book/src/L1/divfree-projector.md, palace/fem/integrator.hpp:217, palace/fem/integ/mixedvecgrad.cpp:202, palace/fem/integ/mixedvecgrad.cpp:142, divfree-weakdiv-sign-convention-l0-verify
+---
+```
+
+**[OQ] `divfree-projector` is UNBLOCKED (cycle-014) for `partly-constructive`→`firm`; cycle-015 enacts the 5 firming edits + drops the caveat.** The cycle-014 `lowering-verifier` audit (`reports/2026-05-28T2115Z-lowering-verifier-divfree-weakdiv-sign-convention-l0-verify/`, verdict **UNBLOCK-PROMOTION**) refuted the cycle-013 "out-of-scope MFEM-vendored integrator" premise: `MixedVectorWeakDivergenceIntegrator` is **Palace-owned, libCEED-backed** (`palace/fem/integrator.hpp:218-226`), its bilinear form is documented in Palace source as `a(u, v) = -(Q u, grad v)` (`palace/fem/integrator.hpp:217`), and the negating sign is the explicit `-1.0` coefficient at `palace/fem/integ/mixedvecgrad.cpp:202` (contrast the non-negated `MixedVectorGradientIntegrator`, `palace/fem/integ/mixedvecgrad.cpp:142`, no `-1.0`; cross-validated at `test/unit/test-libceed.cpp:905-916`). The `WeakDiv ≈ -Gᵀ M` reading is **positively anchored in scope** — the idempotence sub-law's contingency is resolved at the evidence level. The cycle-014 per-report integrator updated ONLY the `## Status` note (UNBLOCKED, promotion-pending) and did NOT drop the `partly-constructive` caveat. This mirrors the cycle-013 eigsolve gated-promotion→cycle-013-enactment pattern; here divfree UNBLOCK(cycle-014)→enactment(cycle-015). **The cycle-015 enactment dispatch (abstractor on `divfree-projector`) applies the 5 firming edits below, THEN flips `## Status` → `firm` and closes the parent OQ `divfree-weakdiv-sign-convention-l0-verify`.** Anchors below are repairer-corrected (`mixedvecgrad.cpp:202`, not `:203`). The clean 5-edit block (preserve verbatim):
+
+- **Edit 1 (REQUIRED) — add the positive sign anchor to §Signature + §Evidence.** In the `P.WeakDiv` signature bullet (after the `divfree.cpp:111-116` citation) append: the integrator's bilinear form is `a(u, v) = -(ε u, ∇v)` for `u ∈ H(curl)`, `v ∈ H1` (`palace/fem/integrator.hpp:217`), materialized as an explicit `-1.0` coefficient in the assemble body (`palace/fem/integ/mixedvecgrad.cpp:202`) — contrast the non-negated `MixedVectorGradientIntegrator` (`palace/fem/integ/mixedvecgrad.cpp:142`, no `-1.0`); thus `WeakDiv = -Gᵀ` (ε-weighted), a positive Palace source site. In §Evidence append: `palace/fem/integrator.hpp:217` (`a(u,v) = -(Q u, grad v)` doc), `palace/fem/integ/mixedvecgrad.cpp:202` (the `-1.0`), `palace/fem/integ/mixedvecgrad.cpp:142` (sibling, no `-1.0`), `palace/fem/integrator.hpp:218-226` (Palace-owned class, NOT MFEM-vendored), `palace/linalg/divfree.hpp:51` (`(Gᵀ M G) y = x` conceptual normal-equations form), `test/unit/test-libceed.cpp:905-916` (cross-validation vs MFEM, L0-equivalent test).
+- **Edit 2 (REQUIRED) — rewrite the idempotence Caveat to "confirmed".** Replace the "Caveat (added on repair)" paragraph in the Idempotence bullet: the identification of `WeakDiv` with the (negated) `Gᵀ M` is now anchored (`palace/fem/integrator.hpp:217` + `palace/fem/integ/mixedvecgrad.cpp:202`), so the derivation is unconditional in exact arithmetic; holds modulo `ksp` tolerance (`palace/linalg/divfree.cpp:140,142`). Remove the `partly-constructive` tag from the law header.
+- **Edit 3 (REQUIRED) — rewrite §Status to firm.** Change `partly-constructive` → `firm`; remove the constructive-sub-part / negative-anchor / promotion-condition block; state the sign reading was audited (cycle-014) and positively anchored at `integrator.hpp:217` + `mixedvecgrad.cpp:202`; soften the no-dedicated-unit-test note (cite `test-libceed.cpp:905-916` integrator cross-validation as supporting test evidence); remove the UNBLOCKED note (it becomes moot once `firm`).
+- **Edit 4 (REQUIRED — substantive) — irrotational/divfree doc-tension Semantics note.** Add one sentence: the apply overwrites `y` with `y + Grad·ψ`, so the net mutated `y` is the divergence-free remainder (class doc `divfree.hpp:29`), while the `Mult` doc comment `divfree.hpp:64-66` ("the irrotational portion ... `∇×y=0`") is stale/misleading relative to the implemented behavior (the `+1.0` add nets to subtraction via the WeakDiv `-1.0`). File breadcrumb OQ `divfree-mult-doc-irrotational-vs-divfree-stale`. Does NOT change L1 semantics.
+- **Edit 5 (anchor hygiene, carry-forward) — tighten three off-by-one anchors.** `:141`→`:142` for "abs-tol = machine epsilon" (two occurrences: Idempotence bullet + abs-tol note parenthetical; confirmed `SetAbsTol` is `:142`); `divfree.hpp:68-72`→`:67-71` for the out-of-place `Mult(x,y)` body (`Mult(x,y)` decl opens `:67`); `divfree.hpp:28-31`→`:27-30` for the class-doc block (literal `Gᵀ M x = 0` is `:29`; low priority).
+
+Source: cycle-014 `lowering-verifier` report §Proposed changes (Edits 1-5) + META.md repair §"Gated firming edits preserved" (`:203`→`:202` corrected). NOT a blocker; gated enactment for cycle-015.
+
+```yaml
+---
+slug: partly-constructive-entry-mechanism-validated-eigsolve-convergence-reason-mapping
+opened_at: cycle-014
+opened_by: integrator-per-report
+last_revisited: null
+status: open
+relates_to: book/src/L1-L0/eigsolve-convergence-reason-mapping.md, book/src/L1-L0/eigsolve-mutation-rotation.md, cycle-012 partly-constructive-first-class invariant
+---
+```
+
+**[OQ] The `partly-constructive` ENTRY case is now validated — flag for the cycle-015 meta-phase's assessment of the partly-constructive mechanism.** The cycle-014 `lowering-verifier` audit of `eigsolve-convergence-reason-mapping` (`reports/2026-05-28T193309Z-lowering-verifier-eigsolve-convergence-reason-mapping-promotion/`, verdict **NEGATIVE-ANCHOR-CONFIRMED → STAYS-PARTLY-CONSTRUCTIVE**, critic-re-confirmed: zero materialization — `EPS_DIVERGED`/`EPS_CONVERGED`/`GetConvergedReason` all empty; only print-only `*ConvergedReasonView` at `slepc.cpp:{699,1182,1529}`) demonstrates the **ENTRY** case of the partly-constructive gate: a status that **correctly STAYS** because no positive source site exists to firm against (the promotion condition is genuinely open, not closeable yet). This complements **cycle-013's eigsolve EXIT case** (parent Sub-pattern B `LinearSolveFailed`, a partly-constructive status that PROMOTED). Together, ENTRY (status correctly stays) + EXIT (status promoted) demonstrate the `partly-constructive` gate is a **working transient, not a permanent escape hatch** — the cycle-012 `partly-constructive`-first-class invariant behaving as designed in both directions. Distinct from cycle-012's eigsolve audit, which UNBLOCKED a gated promotion by identifying firming edits; here there are NO firming edits to gate (no positive site). One residual carry-forward: the 8-row enum exhaustiveness is a **literature anchor** (checked vs SLEPc's documented enum; SLEPc/PETSc headers not vendored under `reference/`) — distinct from, and not weakening, the source-confirmed Palace-side negative anchor; low risk (enum stable across SLEPc 3.x), would only under-cover if a future SLEPc version adds a `*_DIVERGED_*` code. Recommend the cycle-015 meta-phase weigh this ENTRY+EXIT pairing in its assessment of the partly-constructive mechanism. Source: cycle-014 lowering-verifier report §Summary + §Open-questions items 1-2 + critic independent-confirmation statement.
+
+```yaml
+---
+slug: chebyshev-slice-l4-full-removal
+opened_at: cycle-014
+opened_by: integrator-per-report
+last_revisited: null
+status: open
+relates_to: book/src/spec/slices/chebyshev.md, book/src/L4/chebyshev.md, book/src/L2/krylov-step.md, book/src/L3/krylov-step.md, book/src/L3/apply_linop.md, book/src/L3-L2/krylov-step-body-identity.md, book/src/L2/index.md, chebyshev-l4-firm-via-iterate-while-reanchor
+---
+```
+
+**[OQ] `book/src/spec/slices/chebyshev.md` §L4 (now the sole retained section) cannot be removed until the firm `krylov-step` citations re-point AND `L4/chebyshev` firms.** The cycle-014 `same-layer-cross-cutter` slice-reduction audit (`reports/2026-05-28T193754Z-same-layer-cross-cutter-chebyshev-phase1-slice-reduction/`, verdict **`partially-absorbed`**) reduced §L1/§Consumers/§Open-questions/§Concept-references/§L2/§L3 to stub-and-pointer (those are fully absorbed by the firm/landed chebyshev cohort: `L1/chebyshev-smoother` + `L2/chebyshev-iteration` firm cycle-012, `L3/chebyshev` partial-obstruction cycle-013, `L1-L0`/`L2-L1` themes firm cycle-013 and confirmed by the sibling cycle-014 lowering-verifier audit) but **RETAINED §L4 verbatim**. Full §L4 removal is gated on two distinct sub-blockers, neither a content gap:
+
+- **(a) Citation re-point.** The firm `book/src/L2/krylov-step.md` (a DISTINCT operator that factors chebyshev as one of its five canonical kernel+driver pattern instances) cites slice §L4 line ranges directly: `chebyshev.md:354-362` (innerStep body, at krylov-step lines 7/79/85/140), `:355-362` (op.scalars, line 58), `:308-323` (ChebOp<E,S>, line 118), `:330-353` (apply/forM_-foldM, line 148), `:421-436` (initial-guess derived-view, line 77). Also `L2/index.md:35`, `L3/krylov-step.md:198,:206`, `L3/apply_linop.md:188`, `L3-L2/krylov-step-body-identity.md:127` cite `:354-362`/`:330-353`. A lifter dispatch on `krylov-step` (+ those siblings) must re-anchor these onto the now-firm-content `L4/chebyshev.md` anchors (`apply`, `innerStep`, `ChebOp<E,S>`, the `initial_guess` derived-view §) — precedent: the cycle-014 `lifter-krylov-step-typed-wrapper-dissolution-cg-md-citation-sweep` cross-operator sweep. **Sequencing constraint (load-bearing):** these citations are line-anchored to the (now-reduced) slice; they MUST re-point in the SAME batch as any §L4 stub, or they drift.
+- **(b) `L4/chebyshev` firming.** The `L4/chebyshev` entry is `rough-in` (its `forM_`/`foldM` wrapper vocabulary is queued for the cycle-015 `iterate-while` re-anchor per OQ `chebyshev-l4-firm-via-iterate-while-reanchor`). Until it firms, the slice §L4 is the most-stable detailed source for the `forM_`/`foldM` rendering that `krylov-step` cites.
+
+Route the §L4 removal to a **re-run of this slice-reduction audit post-cycle-015** (after both (a) and (b) close), then reduce §L4 to stub-and-pointer and eventually delete the slice per the monotonic-corpus-reduction invariant. Mirrors the `cg_preconditioning_framework` §L4-retention precedent (chebyshev is one step further: its L4 entry EXISTS but is rough-in + citation-blocked). Corpus note: chebyshev.md remains as a §L4-only slice after cycle-014 — this is a PARTIAL reduction, NOT a removal; do not record it as a corpus removal. Also note `spec/index.md:19` + `SUMMARY.md:100` carry slice TOC/metadata that the partial reduction does not invalidate (the file persists); full removal (later cycle) updates both. Source: cycle-014 same-layer-cross-cutter report §Verdict + §Open-questions item 1 + §Recommendation 2-3.
 
 ## Dropped
 

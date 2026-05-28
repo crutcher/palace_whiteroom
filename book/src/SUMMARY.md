@@ -85,6 +85,7 @@
 - [File — palace/linalg/iterative.{hpp,cpp}](./L0/linalg-iterative-file.md)
 - [File — palace/linalg/orthog.hpp](./L0/linalg-orthog-file.md)
 - [File — palace/linalg/solver.{hpp,cpp}](./L0/linalg-solver-file.md)
+- [File — palace/linalg/rap.{hpp,cpp}](./L0/linalg-rap-file.md)
 - [File — palace/utils/communication.hpp (MPI collectives)](./L0/mpi-globalsum-and-collectives.md)
 - [Overload set — Mult / MultTranspose / AddMult](./L0/apply-linop-overload-set.md)
 - [Class — BaseKspSolver](./L0/kspsolver-base-class.md)
