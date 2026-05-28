@@ -21,6 +21,7 @@ L2 vocabulary: tensors, linear operators, quadrature rules, basis transformation
 | Operator | Signature | Dependencies | Status |
 |---|---|---|---|
 | [`krylov-step`](./krylov-step.md) | `(op: OpParams, s: IterState) → { state: IterState', outputs: StepOutputs }` | L1: `apply_linop`, `axpy`, `axpby`, `axpbypcz`, `dot`, `nrm2`, `scal`. L2-composition: `apply_BA`, `orthogonalization`. Concepts: `derived-view-hoisting`, `variant-absorption`, `first-iteration-unrolling`, `sequential-obstruction`, `solve-monad`, `state-stratification`, `solver-as-operator`. | `firm` (harvested cycle-005; promoted from rough-in proposed-by combinator-miner:2026-05-26T231843Z) |
+| [`chebyshev-iteration`](./chebyshev-iteration.md) | `(op: ChebOp[N], x: Tensor[N], y: Tensor[N], initial_guess: Bool) → Tensor[N]` | L1: `apply_linop`, `axpy`, `axpby`, `scal`. Concepts: `elementwise-product`, `variant-absorption`, `sequential-obstruction`, `first-iteration-unrolling`. L1 sibling: `chebyshev-smoother`. L2 sibling: `krylov-step`. | `firm` (harvested cycle-012; the concrete L2 entry behind `krylov-step` variant-axis 3; test-coverage caveat, firm ratified) |
 
 ## Working Notes
 

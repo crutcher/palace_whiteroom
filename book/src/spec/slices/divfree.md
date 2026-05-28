@@ -1,5 +1,19 @@
 # Slice: divfree
 
+> **Reduction status (cycle-012+):** this slice is the cycle-001-era precursor to a firm `L1/divfree-projector` operator entry that has not yet been promoted. The slice's L1/L2/L3/L4 divergence-free-projection content is currently the **only** firm definition of the projector in the artifact, and it is **load-bearing evidence** cited by:
+> - `book/src/L1/ksp_solve.md:131` (`divfree.cpp:175` `ksp->Mult(rhs, psi)` is the direct L0 evidence of the `ksp_solve` use pattern) + `:143` (slice-corpus precedent for the L1/L2 `ksp_solve` use).
+> - `book/src/L1/eigsolve.md` (`DivFreeSolver[ComplexVector]` is the optional `projector` field bound into the eigensolver).
+> - `book/src/concepts/apply_linop.md` §"L2 use in divfree" (lines 41-54) — `rhs ← apply_linop(WeakDiv, y)` + `t ← apply_linop(Grad, psi)`.
+> - `book/src/concepts/ksp_solve.md:34` — `psi ← ksp_solve(ksp, rhs)` divfree §L2 step 3.
+> - `book/src/concepts/set_subvector_zero.md:27` — divfree §L2 step 2 essential-BC zeroing.
+> - `book/src/L0/eigensolver-wrapper.md:44` — `opProj` / `DivFreeSolver<ComplexVector>*` composition setter.
+>
+> The L2 *primitives* (`apply_linop`, `set_subvector_zero`, `ksp_solve`, `axpy`, `copy`) are each firm; the projector *composition* (`P(y) = y + Grad·K⁻¹(Z_bdr(WeakDiv·y))` + the construction-time operator assembly) is NOT firm. The slice is retained in full (minus the firm-covered tightening notes + the transparent-opacity list) pending lift to a firm `L1/divfree-projector` operator entry.
+>
+> **Pending lift / verify:**
+> - `L1/divfree-projector` — a strong harvester promotion candidate (small constructed-operator: Helmholtz-decomposition projector; lifting would let `L1/eigsolve` reference a firm operator type and let the three concept-page use-site citations point at a firm L1 entry). OQ `l1-divfree-projector-promotion`.
+> - The **WeakDiv sign-convention** claim (that `MixedVectorWeakDivergenceIntegrator` encodes the negative-divergence sign, making `+Grad·ψ` the correction) is an unverified L0 reading (slice §"Open questions"). A flipped L0 sign would invert the correction direction at every layer; a `verify-citation-range` pass should anchor it before the firm L1 entry treats it as load-bearing. OQ `divfree-weakdiv-sign-convention-l0-verify`.
+
 Scope question Q-divfree-leaf. Divergence-free projection: given a Nedelec
 (H(curl)) vector field, project onto the discrete divergence-free subspace
 (kernel of the discrete weighted divergence). Used by the eigensolver path
@@ -203,22 +217,13 @@ and `ComplexOperator` is the construction-time wrapper that makes
 
 ### Optimization opacity
 
-The following are **transparent** at L2 and unfolded silently:
+The load-bearing L2 claims (preserved verbatim; these recur as the load-bearing claims at L3 §"Load-bearing claims preserved from L2" and L4 §"Load-bearing claims preserved at L4"):
 
-- Whether `WeakDiv` is matrix-assembled or apply-only (partial assembly).
-- Whether `pc` is a GMG-wrapped BoomerAMG or BoomerAMG directly.
-- Whether the `ksp` CG iteration uses re-orthogonalization or not.
-- Whether `apply_linop(Grad, psi)` materializes `t` or fuses with `axpy`.
+- The sign convention on `WeakDiv` (so the correction is `+Grad·ψ`, not `−Grad·ψ`). An L0/L1 claim L2 honors verbatim.
+- The `set_subvector_zero(rhs, bdr_eff)` step ordering: must run **after** `apply_linop(WeakDiv, y)` and **before** `ksp_solve`. Reorder changes the solution.
+- `ksp_solve` returns the converged `ψ`; tolerance is baked into the ksp at construction.
 
-The following are **load-bearing** and preserved as explicit L2 claims:
-
-- The sign convention on `WeakDiv` (so that the correction is `+Grad·ψ`,
-  not `−Grad·ψ`). This is an L0/L1 claim that L2 must honor verbatim.
-- The `set_subvector_zero(rhs, bdr_eff)` step ordering: it must run
-  **after** `apply_linop(WeakDiv, y)` and **before** `ksp_solve`. Reorder
-  changes the solution.
-- `ksp_solve` returns the converged `ψ`; convergence tolerance is
-  baked into the ksp at construction.
+> **Reduced (cycle-012):** the transparent-optimization list — partial-vs-full assembly, GMG-vs-AMG, re-orthogonalization, fused apply+axpy — is firm-side: `concepts/apply_linop.md` §"L2 use in divfree" + `L0/transparent-vs-load-bearing-tricks.md`.
 
 ## L3 — tensor-field form
 
@@ -403,12 +408,6 @@ eigStep eig p s = do
 - **Approximate solve.** `kspSolve` returns the converged `ψ` up to the construction-time tolerance; the defining condition `Gᵀ M (P y) = 0` holds modulo ksp tolerance on the non-essential dofs, identical to the L3 caveat.
 - **Scratch reuse is non-observable.** `psi`, `rhs`, and `t` are ephemeral `SolveM`-scoped intermediates at L4; the C++ pooled allocation lifting them to construction-time storage (L1 schema) is a transparent optimization and does not change the L4 type. The function is pure over `SimState` and the pool does not appear in the calculus.
 
-## L4 tightening notes
+## L4 tightening notes (reduced)
 
-Cycle 167 (L4→L4 tightening). Two narrow corrections to the L4 calculus form:
-
-1. **Scratch buffers reclassified as ephemeral, not internal-parameter.** The original L4 prose (cycle 156) placed `psi`/`rhs` adjacent to `M`/`WeakDiv`/`Grad`/`bdrEff`/`ksp` as construction-time storage. This conflated *operator identity* (what makes two `DivFreeSolver` instances behave differently) with *implementation-side allocation strategy* (whether scratch is pooled or fresh-allocated per call). The L4 calculus distinguishes these via the [state-stratification](../../concepts/state-stratification.md) tiers: `psi`/`rhs`/`t` are ephemeral intermediates, scoped by `SolveM`. The C++ pooled-scratch realization is a [derived-view-hoisting](../../concepts/derived-view-hoisting.md) optimization beneath the calculus — visible at L1 (the schema names `psi`, `rhs` as scratch_buffer state to match the on-disk class members) but transparent at L4.
-
-2. **Polymorphism note made explicit at the V parameter.** The `SimState<V>` parametricity already captured both `Vector` and `ComplexVector` cases; the prose now names that `applyLinOp`, `setSubvectorZero`, `kspSolve`, and the `+` on `V` are each instance-resolved at the call site. No new structural claim — just naming what the type parameter already absorbs.
-
-Neither tightening changes the algorithmic content or the rotation_claims previously emitted for L0→L1, L1→L2, L2→L3, L3→L4. The slice's defining condition `Gᵀ M (P y) = 0`, the four-step apply sequence, the sign convention, and the load-bearing claims are all preserved. The tightening is purely about *which stratum each value lives in* — a state-stratification correction within L4.
+The cycle-167 L4→L4 tightening (scratch `psi`/`rhs`/`t` reclassified as ephemeral `SolveM`-scoped intermediates rather than construction-time internal-parameter storage; the V-parameter polymorphism note) is now firm-side: see [state-stratification](../../concepts/state-stratification.md) (the params/sim/ephemeral strata distinction) and [derived-view-hoisting](../../concepts/derived-view-hoisting.md) (the C++ pooled-scratch realization as a transparent hoist beneath the calculus). The §L4 §"State stratification" above already reflects the corrected stratification; no separate tightening narration is retained.

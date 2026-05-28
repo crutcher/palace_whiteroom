@@ -1,123 +1,62 @@
-## 2026-05-24 cycle-12 — forward chebyshev [L0→L1] — pass
+## 2026-05-28 cycle-012 — THIRD/FINAL primary cycle of meta-batch-2 (3:1 cadence) — CLOSES META-BATCH-2 — 8 reports — 2 new firm L1 operators (orthogonalize + chebyshev-smoother; L1 firm 8→10) + 1 new firm L2 (chebyshev-iteration; L2 firm 1→2, first L2 growth since cycle-005) + 2 lowering-verifier audits both resolved (eigsolve-mutation-rotation confirms-with-refinement/promotion-GATED-to-cycle-013 + SLEPc-NEP coordinate-convention resolved-with-refinement) + cycle-009 eigsolve OQ cluster fully closed across cycles 010/011/012 + 4 concept pages corrected/extended + L3 index refresh + L4 index SUPERSEDED drift cleaned + phase-1 corpus reduction batch-3 (3 reductions; cumulative 8/10; first intra-corpus-redundancy verdict)
 
-- Synthesis: 3 rotation_claim(s); diff applied
-- Verdict: pass.
-- Friction: diff-apply failed: git apply failed:
-STDERR:
-error: corrupt patch at line 113
+- **Phases fired**: plan (cycle-planner haiku) → dispatch (8 parallel specialized; cap 12 honored) → critique (8× critic) → repair (multiple repairers triggered, incl. one write-authority-violation Option-A revert) → **integrate (8× integrator-per-report serial → 1× integrator-finalize; eighth cycle under split integrator)** → **meta-phase fires next** (batch-2 closes after this finalize commit; dispatched separately by the orchestrator).
 
-DIFF:
---- /dev/null
-+++ b/book/src/spec/slices/chebyshev.md
-@@ -0,0 +1,118 @@
-+# Slice: chebyshev
-+
-+Chebyshev polynomial smoother applying `p_k(D^{-1} A)` to damp
-+high-frequency error on an SPD operator with extracted diagonal
-+preconditioner `D = diag(A)`. Used as the per-level smoother in
-+geometric multigrid and distributive-relaxation preconditioners.
-+
-+Two polynomial variants are exposed, selected at construction:
-+
-+- **4th-kind** (Phillips & Fischer 2022): requires only `lambda_max`.
-+- **1st-kind** (Adams-style): requires the spectral window
-+  `[lambda_min, lambda_max]`.
-+
-+The variants share an outer Richardson-like residual/accumulator
-+scaffold and differ only in the scalar recurrence that builds the
-+polynomial. Variant absorption is via **constructed-operator**: the
-+caller chooses 4th- vs. 1st-kind at construction, and the resulting
-+smoother exposes a uniform `apply_linop` interface; the per-iteration
-+procedure does not re-inspect the variant.
-+
-+## L1
-+
-+### State
-+
-+- Captured at `setup` (immutable through `apply_linop` calls):
-+  - `A` — SPD operator (by reference).
-+  - `dinv` — vector of `1 / diag(A)`, length `A.height`.
-+  - `lambda_max` — scalar, scaled spectral upper bound.
-+  - `lambda_min` — scalar, only for 1st-kind; from user `sf_min` or
-+    Phillips & Fischer (2022) eq. 2.24 default
-+    `1.69 / (order^{1.68} + 2.11*order + 1.98)`.
-+  - `order`, `pc_it`, `variant ∈ {4th-kind, 1st-kind}` — fixed.
-+- Ephemeral per `apply_linop` call: residual `r`, direction `d`
-+  (both length `A.height`); workspace.
-+
-+### Setup (pure of `(A, sf_max[, sf_min], order, pc_it, variant)`)
-+
-+1. `dinv := reciprocal(extract_diagonal(A))`.
-+2. `lambda_max := sf_max * spectrum_estimate(A, dinv)`, where
-+   `spectrum_estimate` returns the dominant eigenvalue magnitude of
-+   `D^{-1} A` via a Hermitian spectral-norm primitive (power
-+   iteration; SLEPc when configured). See
-+   `concepts/spectrum-estimate.md`.
-+3. If `variant = 1st-kind`: also set `lambda_min` (from `sf_min` or
-+   the default formula); precompute `theta := (lambda_max +
-+   lambda_min)/2`, `delta := (lambda_max - lambda_min)/2`.
-+
-+### Apply (`apply_linop`: given rhs `x`, accumulator `y`, optional `initial_guess`)
-+
-+Repeat `pc_it` times the Richardson-like sweep:
-+
-+1. Compute residual: `r := x - A*y` (or `r := x`, `y := 0` on the
-+   first iteration when `initial_guess = false`).
-+2. Apply the order-`order` polynomial of `D^{-1} A` to `r`,
-+   accumulating into `y`. The polynomial is a degree-`order`
-+   parameterized recurrence:
-+   - **Initial direction** (`k = 0`):
-+     `d := alpha_0 * dinv .* r` for a variant-dependent scalar `alpha_0`.
-+   - **Inner steps** (`k = 1 .. order - 1`):
-+     `y := y + d`
-+     `r := r - A*d`
-+     `d := sd_k * d + sr_k * dinv .* r`
-+     with variant-dependent scalars `(sd_k, sr_k)`.
-+   - **Final update**: `y := y + d`.
-+
-+The polynomial coefficients `(alpha_0, sd_k, sr_k)` are determined
-+by `variant` and the spectral bounds; their concrete recurrences are
-+L2 detail (the closed-form `k`-indexed coefficients for 4th-kind and
-+the three-term Chebyshev recurrence centered at `theta` with
-+half-width `delta` for 1st-kind).
-+
-+`MultTranspose` aliases `Mult` under the symmetry assumption.
-+
-+### Operator-kind support
-+
-+Real (`Operator`) and complex (`ComplexOperator`) instantiations
-+share the L1 procedure; the complex case uses `conj(dinv)` in the
-+transpose path.
-+
-+## Consumers
-+
-+- `gmg.cpp` (geometric multigrid): per-level relaxation.
-+- `distrelaxation.cpp` (distributive relaxation): smoother.
-+
-+The smoother is a leaf in the preconditioner stack: it consumes `A`
-+(plus its diagonal) and produces a `Solver<OperType>` exposing
-+`apply_linop`.
-+
-+## Open questions
-+
-+- No direct unit test under `test/unit/`; behavior exercised through
-+  multigrid integration only.
-+- `spectrum_estimate` has a build-flag-dependent backend (power
-+  iteration vs. SLEPc); L2 unfold will need to acknowledge both.
-+- MPI involvement is confined to `spectrum_estimate` (parallel norms
-+  inside power iteration); the polynomial recurrence itself is
-+  local.
-+
-+## Concept references
-+
-+- `concepts/apply-linop.md` — the apply interface.
-+- `concepts/axpy.md`, `concepts/elementwise-product.md` —
-+  primitives used by the inner recurrence.
-+- `concepts/extract-diagonal.md`, `concepts/reciprocal.md` — setup
-+  primitives.
-+- `concepts/spectrum-estimate.md` — dominant-eigenvalue estimate.
-+- `concepts/constructed-operators.md` — variant absorption route.
-+- `concepts/variant-absorption.md` — invariant/procedural/primitive
-+  axes.
-.
-- Structural change: applied diff (112 lines); 3 rotation_claim(s).
+- **Meta-batch context**: cycle-012 is the **third and final primary cycle of meta-batch-2** under the 3:1 meta cadence (user directive 2026-05-27 post-cycle-006 meta). Cycles 010/011/012 form batch-2; the meta-phase fires after **this** cycle-012 finalize, aggregating evidence across the full 3-cycle batch. Cycle counter does not reset at batch boundaries (cycles 007/008/009 formed batch-1, closed at the cycle-009 meta-phase commit `eac5007`; cycle-010 opened batch-2; cycle-011 was the middle cycle; cycle-012 closes batch-2 and triggers the next meta-phase). The meta-phase report filename uses the cycle-id of the third primary cycle in the batch (`reports/<timestamp>-meta-phase-cycle-012/CYCLE.md`).
+
+- **Substantive landed (8 reports, all `ready` / `pass-after-repair`)**:
+  - **Report 1 (harvester — closes HIGH-priority cycle-010 blocking OQ)**: `book/src/L1/orthogonalize.md` — **new firm L1 operator**; Gram-Schmidt orthogonalisation with `dot`+`axpy` deps only (`nrm2`/`scal` explicitly excluded per the "does not normalize the output" L0 contract). Two variant axes (`gs_orthog ∈ {MGS, CGS, CGS2}` + `dot_op` inner-product hook); element-type real|complex absorbed by `dot`. **All-three-levels (a/b/c) absorption under residual-axis disclosure** (per-variant collective shape m×1 / 1×m / 2×m as the residual axis); Householder explicitly scoped out (breaks level-(c), no Palace L0 path) per the unimplemented-component policy. 6 algebraic laws + 4 non-laws; header-only family (`orthog.hpp`, no `.cpp`). **Closes cycle-010 OQ `l1-orthogonalize-promotion-from-arnoldi-step-and-orthog`** (was the HIGH-confidence blocker for 2 slices + 5 firm entries; `open` → `answered`). L1 firm cohort 8 → 9.
+  - **Report 2 (harvester — closes cycle-011 firm-row-promotion OQ; firm RATIFIED by integrator)**: `book/src/L1/chebyshev-smoother.md` + `book/src/L2/chebyshev-iteration.md` — **new firm L1 + new firm L2 operators**. The L1 entry is the first L1 op that is a **fixed-degree polynomial action** (`y + p_order(D⁻¹A)·(x−A·y)` as one closed-form step) rather than a solve-to-convergence; deps `apply_linop` direct + opaque `spectrum_estimate`. The L2 entry unfolds that action into the explicit degree-`order` three-term recurrence built from base primitives (`apply_linop`/`axpby`/`scal`/`elementwise_product`) with the HPC element-fused kernels de-fused; it is the concrete L2 entry behind `L2/krylov-step` variant-axis 3. `rho_0 = delta/theta` per source (the slice's `delta/(2*theta)` at `chebyshev.md:160` is an error, correctly NOT inherited). **RATIFIED KEEP-FIRM in lockstep by the cycle-012 integrator** (the repairer surfaced the firm-without-dedicated-test decision; integrator verdict: every L1/L2 law is a verified-exact syntactic identity on fully-specified source + chebyshev is a bounded fixed-degree polynomial action with closed-form coefficients + live multigrid-integration coverage exists; the `eigsolve` literature-inference rough-in precedent does not bind). **Closes cycle-011 OQ `l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion`**. L1 firm cohort 9 → 10; **L2 firm cohort 1 → 2 (first L2 growth since cycle-005; addresses priority #17)**. Full `chebyshev.md` slice reduction remains gated on the L3/L4 rows (new OQ `l3-l4-chebyshev-rows-eligible`).
+  - **Report 3 (lowering-verifier — eigsolve theme audit; promotion GATED, NOT enacted)**: `book/src/L1-L0/eigsolve-mutation-rotation.md` — appended a machine-readable `verified_against:` YAML record folded into the existing `## Verified-against` prose section. Verdict **confirms-with-refinement**; **UNBLOCKS but does NOT enact** the Sub-pattern B partly-constructive → fully-firm promotion. The promotion is **GATED on a cycle-013 abstractor** that must first apply the GetConverged-forwarder snippet fix (audit Edit 2 — `opInv->GetConverged()` is not on the public surface; needs a one-line public forwarder on `BaseKspSolver` mirroring `GetRelTol()`) + the Sub-pattern A function-name attribution fix (audit Edit 3 — switch+abort live in `ArpackEigenvalueSolver::SolveInternal`, not `SetWhichEigenpairs`). The `## Status` partly-constructive caveat was **LEFT UNCHANGED** this cycle. New OQ `eigsolve-getconverged-forwarder-fix-and-gated-promotion`. **(Orchestrator correction note: this report's per-report integrator originally mis-filed its staging row to an erroneous `reports/cycle-013-integrator-staging/` directory; the orchestrator removed the misplaced directory, relocated the row to cycle-012 STAGING, and corrected the backward `cycle-013` references in the artifact + OQ to cycle-012. Forward-references to the gated cycle-013 abstractor follow-up are intentionally retained as cycle-013.)**
+  - **Report 4 (lowering-verifier — SLEPc-NEP coordinate-convention audit; resolved-with-refinement)**: `book/src/L1/eigsolve.md` §5 prose refinement + appended `## Verified-against` section (10-citation YAML). **Two-mechanism finding**: NEP solves the un-scaled problem directly (raw-operator function/jacobian callbacks; un-scaled `NEPSetTarget` vs scaled `EPSSetTarget`/`PEPSetTarget`); the NEP `SetOperators` gamma/delta are a **dead store** w.r.t. the coordinate transform; convention (b) holds uniformly across all 4 backends in result coordinates via two distinct mechanisms. **Carry-forward citation correction `arpack.cpp:387` → `:383`** applied at `eigsolve.md:116` + `:222` (repairer-flagged inherited miscitation; line 387 is a sort-branch condition, not the un-scale). **Closes cycle-011 OQ `eigsolve-slepc-nep-coordinate-convention-audit`** (`resolved-with-refinement`); new low-priority OQ `eigsolve-nep-coordinate-convention-empirical-witness` (source-read-confirmed, empirically-unwitnessed). **With this, the cycle-009 eigsolve OQ cluster is fully closed across cycles 010/011/012.**
+  - **Report 5 (layer-intro-author — L3 index refresh; 2 OQs closed)**: `book/src/L3/index.md` — refreshed the `## Semantics (overlay)` prose to name all 8 firm L3 operators grouped by kind (matvec `apply_linop` / linear-update family `axpy`/`axpby`/`axpbypcz`/`scal` / reductions `dot`/`nrm2` / composition `krylov-step`); the `matvec (apply_linop)` parenthetical reconcile retains the casual token for back-reference validity. **Closes 2 cycle-011 OQs** (`l3-index-semantics-overlay-blas1-cohort-prose-refresh` + `l3-index-matvec-naming-vs-apply_linop-slug`). Clean run — all 8 critic checks pass, no repair section.
+  - **Report 6 (layer-intro-author — 4 concept pages; write-authority violation remediated)**: 4 edits in `book/src/concepts/` — `nrm2.md` (**CORRECTION**: replaced the false §Contract scaled-summation stability claim with the L1-authoritative naïve `√⟨x,x⟩`-via-`Dot` finding, forwarding the citation to `L1/nrm2`) + `state-stratification.md` (four-stratum extension — Chebyshev scalar-recurrence stratum as a 4th kind of state) + `derived-view-hoisting.md` (control-flow-boundary extension — Chebyshev `initial_guess` branch) + `negative-result-slice.md` (partial-positive sub-pattern extension). **Closes 4 cycle-011 OQs** (5 status-closes incl. a cycle-003-vintage duplicate of the nrm2 slug). **WRITE-AUTHORITY PHASE-BOUNDARY VIOLATION (recurrence-1)**: this dispatch wrote its 4 edits directly to `book/` during the dispatch phase, violating the no-artifact-mutation-in-dispatch invariant; the critic caught it (HIGH), the repairer reverted all 4 files to HEAD (Option A), and the integrator-per-report applied normally from the proposed-changes blocks. First observed instance for layer-intro-author.
+  - **Report 7 (lifter — L4 index SUPERSEDED drift cleanup)**: `book/src/L4/index.md:40` — re-anchored the trailing consequence clause of the `krylov-step-typed-wrapper-dissolution` bullet, striking the stale cycle-006 "so no intermediate L3 `krylov-step` row is needed" verdict (superseded by the cycle-009 meta-phase "Identity-lowerings still require both L levels" invariant + the cycle-010 firm `L3/krylov-step.md` backfill). Added a forward-pointer to the firm L3 image + an explicit SUPERSEDED marking. **Resolves the integrator-signals carry-forward flag chain** (cycle-010 wave-1 pass-2 META Issue 1, re-flagged cycle-011) — marked resolved in integrator-signals this cycle per finalize-only authority. Theme-body line-20/line-220 residual routed to new OQ `krylov-step-theme-body-no-l3-row-drift-cycle-013`.
+  - **Report 8 (same-layer-cross-cutter — phase-1 corpus reduction batch-3)**: 3 reductions — `book/src/spec/slices/orthog.md` plane-rotation sub-slice **fully reduced** (376→234 lines; **both** near-duplicate `## L1 — per-element procedure` entries eliminated — **first intra-corpus-redundancy verdict**: `plane_rotation_stream` and orthog's plane-rotation sub-slice are the same algorithm, resolved-via-elimination; the unique LS-residual invariant `‖R·y−s‖²+|s[j+1]|²=‖H̄·y−βe₁‖²` was **hoisted into `plane_rotation_stream.md` FIRST** per the correctness sequencing) + `book/src/spec/slices/plane_rotation_stream.md` (partial reduction + invariant hoist; 418→367 lines; the entire §L3 obstruction source retained) + `book/src/spec/slices/divfree.md` (partial reduction; transparent-optimization list dropped, 3 load-bearing claims retained verbatim; 414→413 lines). **Cumulative slice-corpus coverage 8 of 10**; remaining 2 for batch-4 (`cg_preconditioning_framework` + `sparse_triangular_solve`). 5 new OQs (incl. HEADLINE `l1-divfree-projector-promotion` + `plane-rotation-concept-page-canonical-pointer-repoint`). **HIGH-severity line-map defect surfaced** (the audit verified the END boundary but not the START → mis-scoped the sub-slice; repaired pre-apply by the repairer correcting to the full text-anchored 225-376 span; STRONG `phase-1-slice-reduction-audit` skill-promotion candidate at **recurrence-3 + severity escalation**).
+
+- **Reports applied** (8 of 8):
+  - `reports/2026-05-28T034130Z-harvester-l1-orthogonalize/` (status: integrated; follow_up_agent: cycle-013+ abstractor/lifter for `orthogonalize-mutation-rotation-l1-l0-theme`; cycle-013+ layer-intro-author / same-layer-cross-cutter for `concepts-orthogonalization-coefficient-normalisation-drift`)
+  - `reports/2026-05-28T034154Z-harvester-chebyshev-l1-l2/` (status: integrated; follow_up_agent: cycle-013+ harvester for L3/L4 chebyshev rows `l3-l4-chebyshev-rows-eligible`; cycle-013+ abstractor for `chebyshev-l1-l0-and-l2-l1-lowering-themes`; cycle-013+ harvester for `spectrum_estimate-l1-rough-in-opacity`; slice-reduction follow-up for `chebyshev-slice-rho_0-coefficient-correction`)
+  - `reports/2026-05-28T034311Z-lowering-verifier-eigsolve-mutation-rotation/` (status: integrated; follow_up_agent: **GATED cycle-013 abstractor** for `eigsolve-getconverged-forwarder-fix-and-gated-promotion` — applies Edits 2+3 then drops the partly-constructive caveat; meta-phase for `partly-constructive-lowering-theme-status` codification + per-report-integrator cycle-mislabel guard)
+  - `reports/2026-05-28T034311Z-lowering-verifier-slepc-nep-coordinate-convention/` (status: integrated; follow_up_agent: cycle-013+ harvester-NEP / empirical witness for `eigsolve-nep-coordinate-convention-empirical-witness`; meta-phase for `negative-anchor-citation-pattern` + `lifter-scope-content-correction-boundary` codifications)
+  - `reports/2026-05-28T020000Z-layer-intro-author-l3-index-refresh/` (status: integrated; follow_up_agent: cycle-013+ lifter/cross-cutter for the LOW-severity `scal.md:137` "three of six" stale-prose + 7 back-reference re-point — not opened as an OQ, surfaced in staging)
+  - `reports/2026-05-28T034221Z-layer-intro-author-concept-corrections/` (status: integrated; follow_up_agent: cycle-013+ same-layer-cross-cutter for stale slice reduction-status banners; meta-phase for **write-authority-phase-boundary layer-intro-author prompt-guard**)
+  - `reports/2026-05-28T034235Z-lifter-l4-index-superseded-drift/` (status: integrated; follow_up_agent: cycle-013+ lifter for `krylov-step-theme-body-no-l3-row-drift-cycle-013` theme-body line-20/220 re-anchor)
+  - `reports/2026-05-28T034141Z-same-layer-cross-cutter-phase-1-corpus-reduction-batch-3/` (status: integrated; follow_up_agent: cycle-013+ harvester for `l1-divfree-projector-promotion` HEADLINE; cycle-013+ layer-intro-author for `plane-rotation-concept-page-canonical-pointer-repoint` HEADLINE; cycle-013+ same-layer-cross-cutter for batch-4; meta-phase for **`phase-1-slice-reduction-audit` skill promotion at recurrence-3 + severity escalation**)
+  - `reports/2026-05-28T072500Z-integrator-finalize-cycle-012/CYCLE.md` — batch report (this finalize).
+
+- **L1 firm cohort 8 → 10**: orthogonalize + chebyshev-smoother landed firm (Firm header `(8)` → `(10)`). The first runtime-variant-axis orthogonalisation operator + the first fixed-degree polynomial-action operator at L1.
+
+- **L2 firm cohort 1 → 2**: chebyshev-iteration is the **first L2 cohort growth since cycle-005** (krylov-step). Directly addresses the priority #17 lower-layer-shared-vocabulary signal flagged repeatedly through cycles 010/011.
+
+- **Two lowering-verifier audits, both resolved**: eigsolve-mutation-rotation (confirms-with-refinement; promotion **GATED to cycle-013**, NOT enacted) + SLEPc-NEP coordinate-convention (resolved-with-refinement; two-mechanism finding). The eigsolve audit is the first lowering-verifier dispatch to UNBLOCK-but-GATE a partly-constructive → firm promotion rather than enact it.
+
+- **Cycle-009 eigsolve OQ cluster fully closed across the batch**: cycle-010 (LinearSolveFailed partial-answer) + cycle-011 (3-OQ closure) + cycle-012 (SLEPc-NEP coordinate-convention resolved-with-refinement). A multi-cycle OQ-cluster closure spanning the entire batch-2 window.
+
+- **4 concept pages corrected/extended** (nrm2 stability-claim correction + state-stratification four-stratum / derived-view-hoisting control-flow-boundary / negative-result-slice partial-positive extensions), closing 4 cycle-011 concept-extension OQs (+ a cycle-003 duplicate nrm2 slug).
+
+- **L3 index refresh + L4 index SUPERSEDED drift cleaned**: the cycle-006 "no L3 row needed" verdict cross-reference in the L4 index is finally cleaned (the integrator-signals carry-forward flag chain is resolved this cycle); the L3 index Semantics overlay now names the full 8-operator firm cohort.
+
+- **Phase-1 corpus reduction batch-3**: 3 reductions (orthog plane-rotation sub-slice fully reduced + plane_rotation_stream partial + divfree partial). **Cumulative coverage 8 of 10 slices**; remaining 2 for batch-4. **First intra-corpus-redundancy verdict** (plane_rotation_stream + orthog sub-slice are the same algorithm).
+
+- **Wave-conflict observations** (captured in `scaffolding/integrator-signals.md`):
+  - **8-report single-wave dispatch**. All 8 applied as-is at integration; zero rework loops.
+  - **`scaffolding/open-questions.md` touched 8 times** at distinct line ranges. Zero collisions; append-before-Dropped convention held. **Pattern reaches recurrence-8** (cycles 005–012).
+  - **`book/src/L1/index.md` touched twice** (orthogonalize then chebyshev): the chebyshev landing re-read disk and adapted the Firm-count transition to `(9)→(10)` instead of the proposed `(8)→(9)` — clean re-read-disk adaptation, no merge conflict.
+  - **`book/src/SUMMARY.md` touched twice**; index files (L1 ×2, L2 ×1, L3 ×1, L4 ×1) each re-read disk before edit per discipline; no simultaneous-index collision needing re-merge beyond the L1 Firm-count adaptation.
+  - **Per-report integrator cycle-mislabeling (NEW, recurrence-1)**: report #3's integrator mis-filed to a `cycle-013-staging` directory; the orchestrator corrected (relocated row, removed misplaced dir, fixed backward cycle-013 refs); forward-refs to the gated cycle-013 abstractor intentionally retained.
+  - **No deferrals, no rejections, no rework loops.** All 8 reports applied as-is. **Clean-run streak continues** (cycles 005–012 — **eight consecutive clean cycles** since the split integrator), modulo the layer-intro-author write-authority violation which was caught + repaired within-cycle (Option A) before integration.
+
+- **Safety-net gates**: **2 hits cycle-wide** (citation-carry-forward-correction ×2 on report #4 — `arpack.cpp:387` → `:383` at `eigsolve.md:116` + `:222`; both repairer-flagged carry-forward fixes, verified against source content before correcting). **retroactive-budget global = 0** (well below the ≥4 block threshold); no per-slice retroactive-budget hits this cycle (contrast the eigsolve per-slice recurrence-2 of cycle-010/011). No index-placeholder displacement.
+
+- **Open questions**: **17 new** opened cycle-012 + **8 closed/resolved** (the cycle-010 HIGH-priority orthogonalize OQ + the cycle-011 chebyshev firm-row OQ + the cycle-011 SLEPc-NEP audit OQ + 2 L3-index OQs + the nrm2 stability OQ (× the cycle-003 duplicate) + 3 concept-extension OQs). Net OQ ledger growth modest given the batch-closing cleanup emphasis.
+
+- **Build**: `cargo make book` — exit 0 (`Build Done in 89s`). **ZERO genuine "File not found" broken-link errors; NO build-repair needed this cycle** (contrast cycle-011's 1 directory-link fix). The orthog.md full-file Write rewrite, the 2 new L1 chapters + 1 new L2 chapter, and the 3 slice reductions all rendered correctly (`book/book/html/L1/orthogonalize.html` + `L1/chebyshev-smoother.html` + `L2/chebyshev-iteration.html` confirmed). The 39 pre-existing katex/markdown "forget to define a URL" display warnings (in `design/l4_calculus.md` + `L4/iterate-while.md` + others) carry unchanged from cycle-011; non-blocking.
+
+- **Write-authority discipline**: **one recurrence** this cycle — the **layer-intro-author write-authority phase-boundary violation (recurrence-1)** on report #6 (caught by critic, reverted by repairer Option A, re-applied normally by integrator-per-report). Per-report `integrated_at:` write-authority drift: **eighth consecutive clean cycle** (zero recurrences cycles 006–012).
+
+- **Legacy log/cycle-012.md renamed**: pre-layered-era `log/cycle-012.md` (2026-05-24 `forward chebyshev [L0→L1] — pass`) renamed to `log/cycle-012-legacy.md` per the cycle-005..011 precedent.
+
+- **Two-phase SHA patch** (canonical pattern per role spec process step 13): all 8 reports' + this batch CYCLE.md's `integration_commit: PLACEHOLDER_SHA` are patched in a follow-up commit immediately after the finalize commit lands. Message: `patch commit-sha references for cycle-012 finalize commit (<finalize-sha>)`. Same two-phase pattern cycles 004..011 used.
+
+- **Meta-phase fires next** (batch-2 aggregating cycles 010/011/012; dispatched separately by the orchestrator after this finalize commit). Key aggregation targets surfaced this cycle: `l3-l1-directory-naming-structure-policy` closure decision (cumulative in-line identity-rotation count ~9+ exceeds threshold; codify in-line convention OR introduce `book/src/L3-L1/` directory); **`phase-1-slice-reduction-audit` skill promotion** (recurrence-3 + severity escalation); **skill-uptake-survey gap CYCLE-WIDE** (all 8 cycle-012 reports; 3-cycle pattern); **write-authority phase-boundary violation** (layer-intro-author prompt-guard candidate, recurrence-1); **per-report-integrator cycle-mislabeling guard** (NEW, recurrence-1); `partly-constructive-lowering-theme-status` + `negative-anchor-citation-pattern` + `lifter-scope-content-correction-boundary` codifications (recurrence-2/3); `dispatch-prompt-framing-drift` at recurrence-3 (cycle-012 planner cited `palace/eigensolver/slepc.cpp` — wrong; correct is `palace/linalg/slepc.cpp`); `mcp-codemap-permission-denied-across-batch-1` friction-ledger resolution.

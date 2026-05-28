@@ -189,11 +189,15 @@ The L2 dep-map now uses the same 4-column markdown table as L1 (`Operator | Sign
 slug: concepts-nrm2-stability-claim-correction
 opened_at: cycle-003
 opened_by: harvester
-status: open
+status: answered
+answered_at: cycle-012
+answered_in: book/src/concepts/nrm2.md (§Contract stability bullet)
 ---
 ```
 
 `book/src/concepts/nrm2.md:9` claims Palace uses "scaled summation (BLAS `nrm2` algorithm) to avoid overflow/underflow". This is **factually wrong**: `palace/linalg/vector.hpp:255-260` shows Palace's `linalg::Norml2` is the naive `√⟨x,x⟩` form (literal one-line `std::sqrt(std::abs(Dot(comm, x, x)))`). Either Palace's `dot` kernel ultimately bottoms out in a Hypre / BLAS routine that scales internally (worth verifying — L1>L0 lowering concern), or Palace is naive and the concept page is simply wrong. Routes to same-layer-cross-cutter (concept-page reconciliation) or layer-intro-author (per cycle-003 follow-up).
+
+**Answered cycle-012 (layer-intro-author concept-corrections; applied by integrator-per-report).** Resolved in favour of "Palace is naive and the concept page is simply wrong": the `linalg::Norml2` one-line body is the naïve `√⟨x,x⟩` via `Dot` with no internal scaling. The false stability bullet was replaced with the L1-authoritative description and now forwards to `[L1/nrm2](../L1/nrm2.md)`. This is the cycle-003-vintage original of the same correction tracked by the cycle-011 duplicate of this slug (also closed cycle-012); both are now landed. Source: cycle-012 layer-intro-author dispatch `reports/2026-05-28T034221Z-layer-intro-author-concept-corrections/CYCLE.md` Task 1.
 
 ```yaml
 ---
@@ -907,6 +911,78 @@ status: open
 ```
 
 `mutable-workspace-pattern.md`'s Category 4 (`MfemWrapperSolver::A` retained-assembled-matrix) is a slight stretch of the "mutable workspace" name — the `A` member is `std::unique_ptr<mfem::HypreParMatrix>`, not `mutable`, and the lifecycle is tied to `SetOperator` invocations rather than per-`Mult` lazy-resize. The pattern is *related* (lazy allocation, reuse across calls, instance-scoped lifetime) but mechanically different. The chapter calls this out explicitly in its Category 4 prose. If a future cross-cutter (or a critic on this report) thinks Category 4 should be in a sibling chapter rather than this one, the split is clean: extract Category 4 into a new `retained-assembled-matrix-pattern.md` chapter and have `mutable-workspace-pattern.md` link to it. Bundle-3 keeps them together for the workspace-discipline-as-cohort framing; a future cycle could split. Routes to cross-cutter or layer-intro-author follow-up. Source: `reports/2026-05-27T160728Z-layer-intro-author-L0-bootstrap-bundle-3/CYCLE.md` §Open questions item 4.
+
+```yaml
+---
+slug: krylov-step-theme-body-no-l3-row-drift-cycle-013
+opened_at: cycle-012
+opened_by: lifter
+status: open
+relates_to: krylov-step-l3-row-contingency (this ledger, answered cycle-006), krylov-step-l3-identity-in-form-audit-closure-cycle-006 (this ledger)
+---
+```
+
+The L4>L3 theme `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` carries the correct SUPERSEDED annotation at line 218 (the §"Audit of cycle-002 identity-in-form claim" section, recording that the cycle-006 "no L3 row needed" verdict is superseded by the CLAUDE.md §Methodology invariants bullet "Identity-lowerings still require both L levels", with the cycle-010 backfill `book/src/L3/krylov-step.md` enacting it). But two earlier passages in the theme body still phrase the old conclusion as if live: line 20 ("...so **no L3 `krylov-step` row is promoted by this theme**...") and line 220 ("...the assertion holds, the framing is sharpened, **no L3 row needed**"). The critic confirmed both passages present by direct read (true positive). These are internally reconciled by the line-218 SUPERSEDED annotation but read as drift to a fresh reader. The cycle-012 lifter dispatch (`reports/2026-05-28T034235Z-lifter-l4-index-superseded-drift/CYCLE.md`) re-anchored the *L4 index* cross-reference (`book/src/L4/index.md:40`) to the firm `L3/krylov-step.md` entry, resolving the last stale cross-reference in the L4 index, but the theme-body line-20/line-220 residual is outside that single-edit invocation's scope (one theme per invocation; that invocation re-anchored the L4 index). **Recommend a follow-up `lifter` dispatch** on `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` to re-anchor lines 20 and 220 to the firm `L3/krylov-step.md` entry, consistent with the line-218 annotation. Low-cost; not blocking. Routes to cycle-013+ planner.
+
+```yaml
+---
+slug: plane-rotation-concept-page-canonical-pointer-repoint
+opened_at: cycle-012
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: orthog-plane-rotation-stream-sub-slice-batch-3-joint-audit (this ledger, answered cycle-012), phase-1-corpus-reduction-audit (priority-19)
+---
+```
+
+After the cycle-012 batch-3 reduction of the `orthog.md` plane-rotation sub-slice to a stub-pointer at `plane_rotation_stream.md`, the firm concept pages `book/src/concepts/plane-rotation-stream.md:37` ("primary dissection" → `orthog` slice), `book/src/concepts/givens_generate.md:27` ("Used in" → `orthog` slice), and `book/src/concepts/givens_apply.md:27` ("Used in" → `orthog` slice) cite the `orthog` slice as the canonical plane-rotation dissection / use-site, but the more-complete dissection now lives in `plane_rotation_stream.md` (`concepts/givens.md:40` already correctly cites `plane_rotation_stream`). These three cross-references should be repointed to `plane_rotation_stream.md`. Dispatch `layer-intro-author` to repoint them. Not blocking — the cross-references target the `orthog.md` *file* (not a specific line), so they do not literally dangle, but they now point at a stub for the plane-rotation content. Source: cycle-012 phase-1-corpus-reduction-batch-3 §slice-1 residual gap 3 + §"Open questions / caveats" item 2 (HEADLINE).
+
+```yaml
+---
+slug: l1-divfree-projector-promotion
+opened_at: cycle-012
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: phase-1-corpus-reduction-audit (priority-19), divfree-weakdiv-sign-convention-l0-verify (this ledger)
+---
+```
+
+A firm `L1/divfree-projector` operator entry (Helmholtz-decomposition projector: `P(y) = y + Grad·K⁻¹(Z_bdr(WeakDiv·y))`) is pending lift. The slice-corpus `book/src/spec/slices/divfree.md` §L1/L2/L3/L4 is currently the only firm divfree definition; it is load-bearing evidence cited by `book/src/L1/ksp_solve.md:131,143`, `book/src/L1/eigsolve.md` (optional `projector` field), `book/src/concepts/apply_linop.md:41-54`, `book/src/concepts/ksp_solve.md:34`, `book/src/concepts/set_subvector_zero.md:27`, and `book/src/L0/eigensolver-wrapper.md:44`. Promotion criterion (small AND simplifies higher forms) is met: divfree is a small 4-step apply over a once-constructed operator, AND lifting would let `L1/eigsolve` reference `DivFreeSolver` as a firm operator type and let the three concept-page use-site citations point at a firm L1 entry rather than the slice. Strong harvester promotion candidate. Source: cycle-012 phase-1-corpus-reduction-batch-3 §slice-2 residual gap 1 + §"Open questions / caveats" item 3 (HEADLINE).
+
+```yaml
+---
+slug: plane-rotation-givens-l0-citation-range-reconcile
+opened_at: cycle-012
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: orthog-plane-rotation-stream-sub-slice-batch-3-joint-audit (this ledger, answered cycle-012)
+---
+```
+
+The `plane_rotation_stream.md` §L0 citation line ranges (`iterative.cpp:72-108` generate-real / `:226-242` apply) differ by one from the firm `book/src/concepts/givens.md:33-34` ranges (`:73-108` / `:227-241`). A `verify-citation-range` pass should reconcile (likely the firm concept page is canonical and the slice is off-by-one). Minor; non-blocking. Source: cycle-012 phase-1-corpus-reduction-batch-3 §slice-1 residual gap 4 + §"Open questions / caveats" item 4(a).
+
+```yaml
+---
+slug: divfree-weakdiv-sign-convention-l0-verify
+opened_at: cycle-012
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: l1-divfree-projector-promotion (this ledger)
+---
+```
+
+The divfree WeakDiv sign-convention claim — that `MixedVectorWeakDivergenceIntegrator` encodes the negative-divergence sign, making `+Grad·ψ` the correction (not `−Grad·ψ`) — is an unverified L0 reading (slice §"Open questions"). A flipped L0 sign would invert the correction direction at every layer. A `verify-citation-range` / harvester pass should anchor the sign to an L0 integrator citation before a firm `L1/divfree-projector` entry treats `+Grad·ψ` as a load-bearing claim. Source: cycle-012 phase-1-corpus-reduction-batch-3 §slice-2 residual gap 2 + §"Open questions / caveats" item 4(b).
+
+```yaml
+---
+slug: phase-1-corpus-reduction-batch-4-remaining-slices
+opened_at: cycle-012
+opened_by: same-layer-cross-cutter
+status: open
+relates_to: phase-1-corpus-reduction-audit (priority-19), phase-1-corpus-reduction-remaining-7-slices (this ledger)
+---
+```
+
+After batch-3 (cycle-012: `plane_rotation_stream` + `orthog` plane-rotation sub-slice [joint] + `divfree`), 8 of 10 slice files are audited. Two remain: `book/src/spec/slices/cg_preconditioning_framework.md` (priority #5; likely overlaps `L1/ksp_solve` + `L4/krylov-step` Form A + the chebyshev consumer pattern) and `book/src/spec/slices/sparse_triangular_solve.md` (priority #7; expected low-overlap / out-of-scope-obstruction per `concepts/sequential-obstruction.md` §"Sub-kind: out-of-scope-obstruction" which already cites it). Suggested batch-4: these final two slices via a cycle-013+ `same-layer-cross-cutter`-scoped dispatch per the "Phase 1 corpus reduces as material is lifted" invariant. Source: cycle-012 phase-1-corpus-reduction-batch-3 §"Open questions / caveats" item 8.
 
 ## Investigating
 
@@ -1824,10 +1900,14 @@ The Palace `!B && initial_guess` branch (`palace/linalg/iterative.cpp:399-412`) 
 slug: l1-orthogonalize-promotion-from-arnoldi-step-and-orthog
 opened_at: cycle-010
 opened_by: same-layer-cross-cutter
-status: open
+status: answered
+answered_at: cycle-012
+answered_in: book/src/L1/orthogonalize.md
 relates_to: phase-1-corpus-reduction-audit (priority-19)
 ---
 ```
+
+**Closed (cycle-012, integrator-per-report)**: the firm `L1/orthogonalize` operator landed at `book/src/L1/orthogonalize.md` via the cycle-012 wave-1 `harvester:2026-05-28T034130Z-harvester-l1-orthogonalize` dispatch (`pass-after-repair`). The promotion criterion ("small AND simplifies higher forms") is met: the operator is one variant-dispatched primitive (`gs_orthog ∈ {MGS, CGS, CGS2}`) with dependencies `dot` + `axpy` only (normalisation excluded per the L0 header "does not normalize the output" contract). All three variants carry dedicated parametric test coverage (real / complex / B-weighted + empty-basis + a direct `⟨w', V[i]⟩ ≈ 0` substitutability assertion); absorption corrected (by repair) to all-three-levels (a/b/c) under residual-axis disclosure; Householder explicitly scoped out per the unimplemented-component policy. This unblocks the deferred reductions of both `book/src/spec/slices/arnoldi_step.md` (cycle-010 batch-1) and `book/src/spec/slices/orthog.md` (cycle-011 batch-2 partial). Residual follow-ups spun out as their own OQs: `orthogonalize-mutation-rotation-l1-l0-theme` (L1>L0 lowering not yet authored) and `concepts-orthogonalization-coefficient-normalisation-drift` (concept-page refresh).
 
 Should a firm `L1/orthogonalize` (or `L1/orthogonalize-column`) operator be promoted from the speculative slice corpus? Promotion would unblock simpler reduction of `book/src/spec/slices/arnoldi_step.md` and `book/src/spec/slices/orthog.md`. Promotion criterion under the unimplemented-Palace-stub policy is "small AND simplifies higher forms" — both are plausibly met: `orthogonalize` is small (one variant-dispatched primitive with three implementations: MGS sequential / CGS batched / CGS2 batched-with-refine), and lifting it would let `L4/krylov-step.md` Form A reference `op.orthog` as a firm L1 operator type rather than as a slice-level concept. The variant-axis profile (`gs_orthog ∈ {MGS, CGS, CGS2}`) and the MPI-collective shape table (MGS = j+2 allreduces; CGS = 2; CGS2 = 3) are unique evidence justifying promotion. Source: cycle-010 phase-1-corpus-reduction-audit, residual gap #1 of slice-3 arnoldi_step.md + slice-recommendation §"Open questions" item 4.
 
@@ -1850,24 +1930,32 @@ The cycle-010 first-instance phase-1-corpus-reduction-audit (`reports/2026-05-27
 slug: l3-index-matvec-naming-vs-apply_linop-slug
 opened_at: cycle-011
 opened_by: harvester
-status: open
+status: answered
+answered_at: cycle-012
+answered_in: book/src/L3/index.md (§Semantics (overlay))
 relates_to: l3-vocabulary-inventory-gap (this ledger), l3-backfill-apply-linop-and-blas1-cohort (this ledger)
 ---
 ```
 
 The L3 index (`book/src/L3/index.md:13`) advertises whole-tensor primitives using the casual name "matvec" alongside "axpy, dot, nrm2 as field operations". The cycle-011 wave-1 firm L3 entry for the matvec primitive uses the formal slug **`apply_linop`** (inherited from the L1 entry's slug per the layer-coherence invariant + identity-in-form rotation). The two names refer to the same primitive — `apply_linop` is the matvec generalisation that subsumes square and rectangular operators, real and complex element types, all operator representations. The current divergence is benign: the new L3 entry's first paragraph makes the equivalence explicit, and a reader navigating from the L3 index's "matvec" prose to the `apply_linop` dep-map row will recognise the linkage. **Routing note for cycle-012+ planner**: if uniformity is desired, a future `lifter` dispatch could touch up the L3 index's prose to use the formal slug (`matvec → apply_linop`), or alternatively the L3 entry could expose an "also known as: matvec" annotation. Low-priority cleanup; not blocking any current work. Similar naming gaps may surface as the BLAS-1 cohort lands (the L3 index's "axpy, dot, nrm2" prose vs the formal slugs `axpy.md`, `dot.md`, `nrm2.md` — these align exactly, but the broader "matvec → apply_linop" pattern is the one that needs the alias annotation). Source: cycle-011 harvester dispatch `reports/2026-05-27T234502Z-harvester-l3-apply-linop/CYCLE.md` §"Open questions / caveats" item 4.
 
+**Answered (cycle-012, layer-intro-author L3-index-refresh; applied by integrator-per-report).** The refresh of `book/src/L3/index.md` §"Semantics (overlay)" adopted the **`matvec (apply_linop)`** parenthetical form — the casual name "matvec" is retained (so the existing back-references from `apply_linop.md:20,24,150,173` and `scal.md:26,49,137` to the index's "matvec ... as field operations" advertisement remain valid) and the formal slug `apply_linop` is parenthesized inline with the framing "the linear-operator-application generalisation of 'matvec'". This matches the `apply_linop` entry's own framing (`apply_linop.md:24`: "`apply_linop` is the matvec generalisation") and satisfies both alternatives the OQ proposed (the casual name survives AND the formal slug is present with the equivalence stated). The naming is now consistent across the index and the entry; the divergence is reconciled. Source: cycle-012 layer-intro-author dispatch `reports/2026-05-28T020000Z-layer-intro-author-l3-index-refresh/CYCLE.md` §"Open questions / caveats".
+
 ```yaml
 ---
 slug: concepts-nrm2-stability-claim-correction
 opened_at: cycle-011
 opened_by: harvester
-status: open
+status: answered
+answered_at: cycle-012
+answered_in: book/src/concepts/nrm2.md (§Contract stability bullet)
 relates_to: l3-backfill-apply-linop-and-blas1-cohort (this ledger), l3-vocabulary-inventory-gap (this ledger)
 ---
 ```
 
 The concept page `book/src/concepts/nrm2.md` line 9 carries an incorrect stability claim: "Stability: production implementations use scaled summation (BLAS `nrm2` algorithm) to avoid overflow/underflow when computing `√Σ|x_i|²`." This contradicts the firm L1 entry's finding at `book/src/L1/nrm2.md:11`: "Note: the concept page claims Palace uses 'scaled summation (BLAS `nrm2` algorithm) to avoid overflow/underflow'. This is **not** what `linalg::Norml2` actually does — it computes the naive `√⟨x, x⟩` via `Dot`." The L1 entry is authoritative; the concept page should be corrected. The cycle-011 wave-1 L3 backfill of `nrm2` (`book/src/L3/nrm2.md`) carries the same correction-pending note in §Context (referencing the L1 entry's note), which keeps the L3 entry internally consistent but leaves the concept page's text uncorrected. **Out of scope for harvester** — the concept page is owned by layer-intro-author / cross-cutter, not harvester. **Routing note for cycle-012+ planner**: dispatch a layer-intro-author or same-layer-cross-cutter touch-up on `book/src/concepts/nrm2.md:8-9` to correct the stability claim. The correction can be either (a) remove the incorrect claim and replace with the L1-authoritative description ("Palace's `linalg::Norml2` computes the naive `√⟨x, x⟩` via `Dot`; the BLAS scaled-summation algorithm is not used"), or (b) reframe the claim as a generic BLAS heritage note while explicitly noting Palace's deviation. Low-priority cleanup; not blocking any current work. Source: cycle-011 harvester dispatch `reports/2026-05-27T231500Z-harvester-l3-blas1-reduction-cohort/CYCLE.md` §"Open questions / caveats" item 2.
+
+**Answered cycle-012 (layer-intro-author concept-corrections; applied by integrator-per-report).** The false stability bullet at `book/src/concepts/nrm2.md:9` was replaced (option (a) — the L1-authoritative description) with: "Palace's `linalg::Norml2` computes the naïve `√⟨x, x⟩` via `Dot` (one-line body `std::sqrt(std::abs(Dot(comm, x, x)))`); it does **not** use scaled summation. There is no Palace-level overflow/underflow guarantee — Palace inherits whatever the underlying `dot` reduction provides. BLAS-style scaled-summation `nrm2` ... is **not present** in Palace." The bullet now forwards the citation to the authoritative `[L1/nrm2](../L1/nrm2.md)`. The correction matches the firm L1 entry's finding verbatim (`L1/nrm2.md:11, :84, :97`; `palace/linalg/vector.hpp:255-260`). This also closes the cycle-003-vintage duplicate of this slug (`opened_at: cycle-003`, same ledger) — both are the same correction, now landed. Source: cycle-012 layer-intro-author dispatch `reports/2026-05-28T034221Z-layer-intro-author-concept-corrections/CYCLE.md` Task 1.
 
 ```yaml
 ---
@@ -1886,12 +1974,16 @@ No firm `book/src/L1-L0/scal-mutation-rotation.md` theme exists. The L1 entry `b
 slug: l3-index-semantics-overlay-blas1-cohort-prose-refresh
 opened_at: cycle-011
 opened_by: harvester
-status: open
+status: answered
+answered_at: cycle-012
+answered_in: book/src/L3/index.md (§Semantics (overlay))
 relates_to: l3-vocabulary-inventory-gap (this ledger), l3-index-matvec-naming-vs-apply_linop-slug (this ledger)
 ---
 ```
 
 The L3 index's `## Semantics (overlay)` prose (`book/src/L3/index.md:11-15`) currently lists only "matvec, axpy, dot, nrm2 as field operations" as the L3 vocabulary; the closed BLAS-1 cohort (apply_linop + axpy + axpby + axpbypcz + dot + nrm2 + scal) is now fully reflected in the dep-map table below but the §"Semantics (overlay)" prose has not been updated. `scal`, `axpby`, `axpbypcz`, and `apply_linop` are implied by the cohort closure but not literally named in the inventory line. **Out of scope for harvester** — the index `Semantics (overlay)` prose is owned by `layer-intro-author`, not harvester. **Routing note for cycle-012+ planner**: dispatch a `layer-intro-author` refresh on `book/src/L3/index.md` to bring the §"Semantics (overlay)" prose into alignment with the closed BLAS-1 cohort's full inventory (or alternatively reframe the prose as describing the *kind* of primitives — "BLAS-1 whole-tensor primitives, linear operator application, reductions" — rather than enumerating specific names). Related to the broader `l3-vocabulary-inventory-gap` OQ but more concrete: the gap is now closed in the dep-map but not in the inventory prose. Low-priority cleanup. Source: cycle-011 harvester dispatch `reports/2026-05-27T234540Z-harvester-l3-scal/CYCLE.md` §"Open questions / caveats" item 5.
+
+**Answered (cycle-012, layer-intro-author L3-index-refresh; applied by integrator-per-report).** The refresh of `book/src/L3/index.md` §"Semantics (overlay)" took the OQ's suggested *kind*-of-primitives reframing AND named the full closed BLAS-1 cohort inline. The whole-tensor-field-operations bullet now reads: matvec (`apply_linop`), the linear-update family (`axpy`, `axpby`, `axpbypcz`, `scal`), and the reductions (`dot`, `nrm2`) — all 8 firm L3 operators (the 7 BLAS-1 cohort + `apply_linop`) are now named, cross-checked against the dep-map table (`index.md:19-28`); the composition operator `krylov-step` is named in the field-transitions bullet. The reframing as "kinds of primitives" with concrete slugs named inline means future cohort members (`gemv`, `trsv`) absorb without further prose churn. The dep-map/prose gap is closed. Note: the broader `l3-vocabulary-inventory-gap` OQ remains open (it tracks *which additional* operators warrant L3 backfill beyond the closed cohort — `gemv`/`trsv`/`ksp_solve`/`eigsolve` candidates). Source: cycle-012 layer-intro-author dispatch `reports/2026-05-28T020000Z-layer-intro-author-l3-index-refresh/CYCLE.md` §"Open questions / caveats".
 
 ```yaml
 ---
@@ -1934,10 +2026,15 @@ The cycle-011 wave-2 firm theme `book/src/L1-L0/eigsolve-mutation-rotation.md` i
 slug: eigsolve-slepc-nep-coordinate-convention-audit
 opened_at: cycle-011
 opened_by: repairer
-status: open
+status: answered
+answered_at: cycle-012
+answered_in: book/src/L1/eigsolve.md (§5 + Verified-against block)
+resolution: resolved-with-refinement
 relates_to: eigsolve-scaling-coordinate-convention (resolved cycle-011), eigsolve-mutation-rotation (book/src/L1-L0/)
 ---
 ```
+
+**Resolved cycle-012 (lowering-verifier, `reports/2026-05-28T034311Z-lowering-verifier-slepc-nep-coordinate-convention/`), verdict resolved-with-refinement.** The audit answers the open binary ("does the SLEPc NEP API un-scale internally so `return l` is correct, OR is there a missing `* gamma`?") in favour of the first horn: **NEP solves the original (un-scaled) problem directly, so `return l` is correct and there is no missing `* gamma`.** Decisive evidence: the NEP function/jacobian callbacks (`__form_NEP_function` / `__form_NEP_jacobian` at `slepc.cpp:2170-2202`) build `A(λ) = K + λC + λ²M + A2(Im{λ})` and its Jacobian from the **raw** operators with unit/`λ`/`λ²` coefficients (no `δ` premultiplier, no `γ`-reparametrization); the spectral target is set un-scaled (`NEPSetTarget(nep, sigma)` at `:1503`, contrast `EPSSetTarget(eps, sigma / gamma)` at `:674`, `PEPSetTarget(pep, sigma / gamma)` at `:1157`); the NEP residual path (`GetResidualNorm` / `GetBackwardScaling` at `:1760-1798`) recomputes operator norms independently and deliberately does not reuse the scaling-time `gamma`/`delta` (the `// Make sure not to use norms from scaling` comment at `:1781`). Consequently the `gamma`/`delta` that `SlepcNEPSolver::SetOperators` computes (`:1649-1650` linear, `:1715-1716` quadratic) are an **effectively-dead store w.r.t. the eigenvalue-coordinate transform**. The refinement: un-scale-at-accessor convention (b) holds **uniformly across all four backends in RESULT coordinates**, but via two distinct mechanisms — ARPACK / EPS / PEP solve-scaled-then-un-scale (`* gamma` at the accessor), SLEPc-NEP solve-and-return-un-scaled. §5 prose updated to state the per-backend mechanism precisely and drop the "pending audit" flag; the cycle-011 "Resolved" sentence (which flagged the NEP detail for follow-up) is retained verbatim, the cycle-012 "Resolved" sentence sits before it (the two close distinct OQs). Caveat: conclusion rests on source-read of the control flow, `empirically-unwitnessed` (no `test-eigensolver.cpp` NEP case) — see the low-priority OQ `eigsolve-nep-coordinate-convention-empirical-witness`.
 
 The cycle-011 lifter dispatch on the `eigsolve` OQ cluster (`reports/2026-05-27T235632Z-lifter-eigsolve-oq-cluster/`) resolved `eigsolve-scaling-coordinate-convention` by adopting convention (b) — L1 returns un-scaled eigenvalues, matching the L0 un-scale-at-accessor convention uniformly across the EPS / PEP / NLEPS backends. The cycle-011 critic + repairer identified an isolated SLEPc-NEP edge case that does NOT affect the broader resolution but warrants follow-up audit: `SlepcNEPSolverBase::GetEigenvalue(i)` at `palace/linalg/slepc.cpp:1554-1560` returns `l` directly without applying `* gamma`, BUT `SlepcNEPSolver::SetOperators` at `palace/linalg/slepc.cpp:1645-1651` (linear-K-M overload) AND `:1711-1719` (K-C-M overload) both compute `gamma = std::sqrt(normK / normM)` when `type != ScaleType::NONE` — the same Higham-norm scaling pattern as EPS / PEP. So the L0 behaviour is: NEP computes a non-trivial gamma at `SetOperators`, but its `GetEigenvalue` accessor does NOT apply `* gamma` — this is a genuine asymmetry in the L0 surface, NOT explained by the simpler "NEP gamma = 1" reading (which would be wrong). Open question: does the SLEPc NEP API itself un-scale before returning eigenpairs to the Palace wrapper (so the Palace `GetEigenvalue` returning `l` directly is correct), or is there a missing `* gamma` un-scale that would manifest as scaled eigenvalues being passed to callers? Recommended target: cycle-012+ `lifter` / `lowering-verifier` / harvester-NEP dispatch on `palace/linalg/slepc.cpp:1554-1719` (the `SlepcNEPSolverBase` constructor + `SetOperators` overloads + `GetEigenvalue` body). Provenance: cycle-011 repairer at `reports/2026-05-27T235632Z-lifter-eigsolve-oq-cluster/META.md` §Repair Finding 1 (NEP-gamma overclaim repaired by softening prose; the genuine asymmetry surfaced as this follow-up OQ).
 
@@ -1946,60 +2043,177 @@ The cycle-011 lifter dispatch on the `eigsolve` OQ cluster (`reports/2026-05-27T
 slug: orthog-plane-rotation-stream-sub-slice-batch-3-joint-audit
 opened_at: cycle-011
 opened_by: same-layer-cross-cutter
-status: open
+status: answered
+answered_at: cycle-012
+answered_in: book/src/spec/slices/orthog.md (plane-rotation sub-slice reduced to stub), book/src/spec/slices/plane_rotation_stream.md (partial-reduction + hoisted invariant)
 relates_to: phase-1-corpus-reduction-audit (priority-19), phase-1-corpus-reduction-remaining-7-slices (this ledger), l1-orthogonalize-promotion-from-arnoldi-step-and-orthog (this ledger)
 ---
 ```
 
 The plane-rotation-stream sub-slice in `book/src/spec/slices/orthog.md` lines 313-464 overlaps `book/src/spec/slices/plane_rotation_stream.md` (deferred to batch-3 of the phase-1-corpus-reduction-audit per the cycle-010 priority order). Both slices have unique material: `orthog.md` lines 313-464 contain a per-step driver decomposition (steps (i)-(iv): replay, generate, apply, propagate-to-RHS) + two near-duplicate L1 entries (lines 364-398 and lines 405-464) that should be merged. The eventual structural split into `orthog/gram_schmidt.md` + `orthog/plane_rotation.md` is flagged in the slice corpus' Open questions at `orthog.md:407` and `:449-450` but pending. Batch-3 of the audit should perform the joint reduction — audit `plane_rotation_stream.md` together with `orthog.md` lines 313-464 to decide where the canonical home for plane-rotation-stream L0/L1/L2/L3/L4 content lives. Doing the reduction unilaterally on either slice risks creating a stale stub in one slice that points at content that has been moved to the other. Source: cycle-011 phase-1-corpus-reduction-batch-2 §"Open questions" item 1.
 
+**Answered cycle-012** by the same-layer-cross-cutter dispatch `reports/2026-05-28T034141Z-same-layer-cross-cutter-phase-1-corpus-reduction-batch-3/CYCLE.md` (status `ready`, pass-after-repair). The joint audit's verdict: the `orthog.md` plane-rotation sub-slice is a strictly-less-complete duplicate of `plane_rotation_stream.md` (the actually-more-complete dissection IS the long-recorded `orthog/plane_rotation.md` split product). The integrator (this cycle) reduced the full `orthog.md` plane-rotation sub-slice (the `## Context` / `# Orthogonalization (plane-rotation stream)` block through EOF, line range corrected in repair from the originally-mis-stated 311-376 to the true 225-376, text-anchored) to a single stub-pointer at `plane_rotation_stream.md`, **eliminating both near-duplicate L1 entries** (resolving the batch-2 "should be merged" finding via elimination, not in-file merge). The one unique fragment — the formal least-squares-residual invariant formerly at `orthog.md:350` — was **hoisted first** into `plane_rotation_stream.md` §L1 §"Invariant" (proposed change 2A applied before the reduction per the repairer's sequencing note), so nothing was lost. `plane_rotation_stream.md` was partial-reduced in the same pass (L0-primitives / L1-procedure / L2-primitives stubbed against the firm Givens concept-page family; §L0 call-sites / §L0 negative-result / §L2 stream-operations-bridge / the entire §L3 retained as the canonical detailed obstruction source). **Residual follow-ups spun out** to cycle-012 OQs: `plane-rotation-concept-page-canonical-pointer-repoint` (the three firm concept pages still cite the `orthog` slice as canonical — `layer-intro-author` follow-up) and `plane-rotation-givens-l0-citation-range-reconcile` (the one-off `iterative.cpp` line-range discrepancy — `verify-citation-range` follow-up). The HIGH-severity line-map defect (the audit's own grep verified the END boundary but not the START boundary) is flagged for the cycle-012 meta-phase as a severity escalation of the `phase-1-slice-reduction-audit` skill-candidate / `phase-1-corpus-audit-line-range-arithmetic-brittleness` friction.
+
 ```yaml
 ---
 slug: l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion
 opened_at: cycle-011
 opened_by: same-layer-cross-cutter
-status: open
+status: answered
+answered_at: cycle-012
+answered_in: book/src/L1/chebyshev-smoother.md, book/src/L2/chebyshev-iteration.md
 relates_to: phase-1-corpus-reduction-audit (priority-19), phase-1-corpus-reduction-remaining-7-slices (this ledger)
 ---
 ```
 
 A firm `L1/chebyshev-smoother` operator entry (and possibly `L2/chebyshev-iteration`) is pending lift. The slice corpus' `book/src/spec/slices/chebyshev.md` §L1 and §L2 are currently the only firm Chebyshev definition in the artifact; they are cited as canonical evidence by `L2/krylov-step.md:140, :142` and `L4/krylov-step.md` §Variant axes list-item 3 (polynomial-kind at line 141, absorbed at level (c) into `op.scalars`). Promotion criterion under the unimplemented-Palace-stub policy is "small AND simplifies higher forms" — both plausibly met: the operator is a Richardson sweep over polynomial recurrence (small), and lifting would let `L2/krylov-step` variant axis (3) point at a concrete L2 row (simplifies higher forms). The `chebyshev.md` partial-reduction is gated on this promotion — the slice's L1/L2/L3/L4 content is retained pending firm L1/L2 entries. Source: cycle-011 phase-1-corpus-reduction-batch-2 §slice-2 residual gaps #1-2.
 
+**Answered cycle-012** by the harvester dispatch `reports/2026-05-28T034154Z-harvester-chebyshev-l1-l2/CYCLE.md` (status `pass-after-repair`). Both rows landed firm: `book/src/L1/chebyshev-smoother.md` (the third constructed-operator gate at L1, and the first that is a fixed-degree polynomial *action* rather than a solve-to-convergence; variant 4th-/1st-kind absorbed into `op.scalars`) and `book/src/L2/chebyshev-iteration.md` (the explicit degree-`order` three-term polynomial recurrence, the concrete L2 entry behind `L2/krylov-step` variant-axis 3). The firm-without-dedicated-test decision (multigrid-integration coverage only) was surfaced for integrator ratification and **ratified keep-firm** by the cycle-012 integrator: every law is a verified-exact syntactic identity on fully-specified source, chebyshev is a bounded fixed-degree polynomial action with closed-form coefficients and live integration coverage, and the `eigsolve` rough-in precedent does not bind (that rough-in was driven by literature-inferred convergence semantics absent here). **Residuals spun out** to four new cycle-012 OQs: `chebyshev-slice-rho_0-coefficient-correction` (the slice's `:160` `rho_0` error persists until reduction), `spectrum_estimate-l1-rough-in-opacity` (the opaque setup dependency lacks a firm L1 entry), `l3-l4-chebyshev-rows-eligible` (L3/L4 rows still block full `chebyshev.md` reduction), and `chebyshev-l1-l0-and-l2-l1-lowering-themes` (the forward lowering themes are abstractor candidates). The L1/L2 promotion this OQ specifically asked for is complete; full slice reduction remains gated on the L3/L4 rows (tracked in `l3-l4-chebyshev-rows-eligible`).
+
 ```yaml
 ---
 slug: concepts-state-stratification-four-stratum-extension
 opened_at: cycle-011
 opened_by: same-layer-cross-cutter
-status: open
+status: answered
+answered_at: cycle-012
+answered_in: book/src/concepts/state-stratification.md (§Worked example — Chebyshev smoother: a fourth stratum)
 relates_to: phase-1-corpus-reduction-audit (priority-19), l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion (this ledger)
 ---
 ```
 
 The `book/src/spec/slices/chebyshev.md` §L4 (lines 290-442) establishes a fourth state stratum (scalar-recurrence — per-call ephemeral but threaded across `k`-iterations) beyond the three documented in `book/src/concepts/state-stratification.md` (sim / operator-internal / ephemeral). Specifically the `ChebOp<E, S>` parameterized closure type with `Kind4 :: ChebOp<E, Unit>` and `Kind1 :: ChebOp<E, { rho_prev: E }>` encodes the scalar-recurrence stratum as a type parameter — unique methodology evidence for the "constructed-operator absorbs variant at level (c)" pattern. Should this be lifted as a firm extension to the state-stratification concept (four-stratum split), OR as a sub-kind of operator-internal stratum (the slice's framing: the scalar-recurrence stratum is per-call ephemeral but threaded across iterations, distinguishing it from both pure ephemeral and pure operator-internal strata)? Routing: cycle-012+ layer-intro-author / same-layer-cross-cutter dispatch on `concepts/state-stratification.md` to extend with the four-stratum worked example. Source: cycle-011 phase-1-corpus-reduction-batch-2 §slice-2 residual gap #3.
 
+**Answered cycle-012 (layer-intro-author concept-corrections; applied by integrator-per-report).** Resolved the "four-stratum split vs. sub-kind-of-operator-internal" question in favour of the **four-stratum split**: a new §"Worked example — Chebyshev smoother (slice: chebyshev, L4): a fourth stratum" was appended to `concepts/state-stratification.md` introducing the **scalar-recurrence stratum** as its own category (per-call ephemeral but threaded across the inner `k`-iterations within a single `apply` call — `rho_prev` carried by the inner `foldM`'s `ScalarState`). The extension argues the fourth stratum is distinct from both operator-internal params (does not persist across `apply` calls) and ordinary ephemerals (genuinely cross-iteration data-dependent), made visible at the type level via `ChebOp<E, S>` (`Unit` for 4th-kind, `{ rho_prev: E }` for 1st-kind), and adds a stratum-placement check plus the "three-way split suffices when no inner-loop-threaded scalar" condition (GMRES Givens-register case). Cited to `chebyshev.md:298, :300-321` (the report's currently-correct line numbers; the ledger's older "290-442" range had drifted). Source: cycle-012 layer-intro-author dispatch `reports/2026-05-28T034221Z-layer-intro-author-concept-corrections/CYCLE.md` Task 2.
+
 ```yaml
 ---
 slug: concepts-derived-view-hoisting-control-flow-boundary-extension
 opened_at: cycle-011
 opened_by: same-layer-cross-cutter
-status: open
+status: answered
+answered_at: cycle-012
+answered_in: book/src/concepts/derived-view-hoisting.md (§Worked example: Chebyshev initial-guess branch (control-flow boundary))
 relates_to: phase-1-corpus-reduction-audit (priority-19), l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion (this ledger)
 ---
 ```
 
 The `book/src/spec/slices/chebyshev.md` §L4 "Initial-guess shape: branch vs. derived view" section (lines 419-436) is unique methodology evidence for `derived-view-hoisting` applied at the **control-flow boundary** (as distinct from the state-shape boundary that's the typical case for derived-view-hoisting). The slice argues why `initial_guess: Bool` is a per-call argument rather than a constructed-operator variant axis — the branch lives at the control-flow boundary, not the state-shape boundary. The existing `book/src/concepts/derived-view-hoisting.md` worked examples are all state-shape-boundary applications. Lifting target: extend the concept page with the control-flow-boundary worked example, clarifying that derived-view-hoisting can be applied at either boundary. Routing: cycle-012+ layer-intro-author / same-layer-cross-cutter dispatch on `concepts/derived-view-hoisting.md`. Source: cycle-011 phase-1-corpus-reduction-batch-2 §slice-2 residual gap #4.
 
+**Answered cycle-012 (layer-intro-author concept-corrections; applied by integrator-per-report).** A new §"Worked example: Chebyshev initial-guess branch (control-flow boundary)" was inserted into `concepts/derived-view-hoisting.md` (before §"When the rotation applies"), pairing the existing CG state-shape-boundary example with the new control-flow-boundary case. The extension shows the `initial_guess = false` path as the algebraic specialization of the `true` path under `y_in = 0` (a degenerate-case absorption, not a residual variant axis), contrasts the **bad** option (promote `initial_guess` to a constructed-operator variant, inflating the closure-type lattice to four) against the **good** option (keep it a per-call argument), and surfaces the categorical distinction between a per-call flag and a constructed-operator variant — tying back to the [`variant-absorption`](./variant-absorption.md) discipline (avoid over-absorbing). Cited to `chebyshev.md:416-433` (the report's currently-correct line numbers; the ledger's older "419-436" had drifted). Source: cycle-012 layer-intro-author dispatch `reports/2026-05-28T034221Z-layer-intro-author-concept-corrections/CYCLE.md` Task 3.
+
 ```yaml
 ---
 slug: concepts-negative-result-slice-partial-positive-sub-pattern-extension
 opened_at: cycle-011
 opened_by: same-layer-cross-cutter
-status: open
+status: answered
+answered_at: cycle-012
+answered_in: book/src/concepts/negative-result-slice.md (§Partial-positive sub-pattern)
 relates_to: phase-1-corpus-reduction-audit (priority-19), phase-1-corpus-reduction-remaining-7-slices (this ledger)
 ---
 ```
 
 The `book/src/spec/slices/polynomial_recurrence_step.md` §L1↔L1 self-tightening section (lines 162-191) is unique methodology evidence for the "**partial-positive-within-a-negative-result-slice**" pattern — a slice that is cross-family negative (no shared kernel between Chebyshev / GMRES / eigenvalue-tracking) AND within-family partially positive (4-of-5-axes-shared between 4th-kind and 1st-kind Chebyshev; refactor potential as `ChebyshevSmootherBase<ScalarGenerator>`). The dedicated falsification criterion subsection (lines 183-191) is also structurally required per `concepts/negative-result-slice.md` §"Falsification criterion (required structural element)". Lifting target: extend `book/src/concepts/negative-result-slice.md` with a "Partial-positive sub-pattern" subsection citing this slice's self-tightening section as the canonical worked example. Until lifted, the polynomial_recurrence_step.md self-tightening section is retained in full (the cycle-011 batch-2 reduction does NOT touch this section). Routing: cycle-012+ layer-intro-author / same-layer-cross-cutter dispatch on `concepts/negative-result-slice.md`. Source: cycle-011 phase-1-corpus-reduction-batch-2 §slice-3 residual gap #4.
+
+**Answered cycle-012 (layer-intro-author concept-corrections; applied by integrator-per-report).** A new §"Partial-positive sub-pattern" subsection was inserted into `concepts/negative-result-slice.md` (between §"Examples in this spec" and §"Falsification criterion (required structural element)"). It documents the outer (cross-family) negative scope coexisting with a nested (within-family) partial-positive scope, kept honest by explicit scoping; gives the `polynomial_recurrence_step` §"L1↔L1 self-tightening" as the canonical worked example (cross-family negative across Chebyshev/GMRES/eigentracking; within-Chebyshev 4-of-5-axes agreement → `ChebyshevSmootherBase<ScalarGenerator>` parametric unification); and codifies a four-point discipline (state the cross-family negative first; scope the within-family positive explicitly; give the partial positive its own falsification criterion; do not promote on a single within-family case). Placement immediately before §"Falsification criterion" is deliberate (the partial-positive's own falsification surface specializes the section that follows). Cited to `polynomial_recurrence_step.md:170-199` (the report's currently-correct line numbers; the ledger's older "162-191" had drifted). Source: cycle-012 layer-intro-author dispatch `reports/2026-05-28T034221Z-layer-intro-author-concept-corrections/CYCLE.md` Task 4.
+
+```yaml
+---
+slug: orthogonalize-mutation-rotation-l1-l0-theme
+opened_at: cycle-012
+opened_by: harvester
+status: open
+relates_to: l1-orthogonalize-promotion-from-arnoldi-step-and-orthog (this ledger, answered cycle-012), scal-mutation-rotation-l1-l0-theme (this ledger)
+---
+```
+
+No firm `book/src/L1-L0/orthogonalize-mutation-rotation.md` theme exists. The cycle-012 firm `L1/orthogonalize` operator (`book/src/L1/orthogonalize.md`) firms the pure-functional L1 form `(w', H) = orthogonalize(w, V, variant)`, but the L1>L0 mutation-rotation theme — the rewrite narrated forward from L1 to L0 covering (a) the in-place `w` overwrite (`w.Add(-H[j], V[j])`), (b) the raw-pointer `H` write into the caller's Hessenberg-column buffer, and (c) the per-variant collective shape (MGS: `m` reductions of size 1; CGS: 1 of size `m`; CGS2: 2 of size `m`) materialising as `Mpi::GlobalSum` calls — has not been authored. The retained L2 section of the `orthog` slice (`book/src/spec/slices/orthog.md`) is the raw material. **Out of scope for harvester** — L1>L0 theme authoring is `abstractor` / `lifter` territory. **Routing note for cycle-012+ planner**: dispatch an `abstractor` on `orthogonalize-mutation-rotation` — analogous to the firm `ksp-solve-mutation-rotation`, `axpby-mutation-rotation`, and `axpbypcz-mutation-rotation` themes already landed at L1>L0. The theme should narrate the destination-buffer mutation pattern, the raw-pointer coefficient write, the variant-dispatched collective-shape disclosure, and the `dot_op` inner-product-hook substitution. Source: cycle-012 harvester dispatch `reports/2026-05-28T034130Z-harvester-l1-orthogonalize/CYCLE.md` §"Open questions / caveats" item 2 (L1>L0 lowering theme not yet authored).
+
+```yaml
+---
+slug: concepts-orthogonalization-coefficient-normalisation-drift
+opened_at: cycle-012
+opened_by: harvester
+status: open
+relates_to: l1-orthogonalize-promotion-from-arnoldi-step-and-orthog (this ledger, answered cycle-012), concepts-nrm2-stability-claim-correction (this ledger)
+---
+```
+
+The concept page `book/src/concepts/orthogonalization.md` carries a coefficient/normalisation contradiction with the firm `L1/orthogonalize` entry. The concept page's first concept block (`orthogonalization.md:3`) defines the output coefficient vector as `h = (h_0, …, h_{j+1})` "with `h_{j+1} = ‖w'‖`", folding the normalisation sub-diagonal into the coefficient vector. The firm L1 entry (`book/src/L1/orthogonalize.md` §Context, §Signature) is authoritative: `orthogonalize` returns the **length-`m`** coefficient vector `H[0..m-1]` only; `‖w'‖` is the *caller's* `nrm2` step (witnessed at `palace/linalg/iterative.cpp:631-632, 810-811`: `Hj[j+1] = Norml2(...); w *= 1/Hj[j+1]`), excluded by the L0 header's "does not normalize the output" contract (`orthog.hpp:18-23`). The critic additionally found the concept page is **internally inconsistent**: its second stacked concept block (`orthogonalization.md:29-30`) defines `h_{0..j-1}` and `w' = w − Σ h_i v_i` with **no** normalisation fold-in — so the page contradicts both the L1 entry and itself. **Out of scope for harvester** — concept pages are `layer-intro-author` / cross-cutter territory. **Routing note for cycle-012+ planner**: dispatch a `layer-intro-author` or `same-layer-cross-cutter` refresh on `book/src/concepts/orthogonalization.md:3, :29-30` to (a) remove the `h_{j+1} = ‖w'‖` fold-in from the first block (or reframe it as the caller's separate `nrm2` step), and (b) reconcile the two stacked concept blocks so the coefficient-vector length is consistent. The firm L1 entry is authoritative on the boundary in the meantime. Low-priority cleanup; not blocking any current work. Source: cycle-012 harvester dispatch `reports/2026-05-28T034130Z-harvester-l1-orthogonalize/CYCLE.md` §"Open questions / caveats" item 4 + critic META.md §cross-reference-integrity issue 3.
+
+```yaml
+---
+slug: chebyshev-slice-rho_0-coefficient-correction
+opened_at: cycle-012
+opened_by: harvester
+status: open
+relates_to: l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion (this ledger, answered cycle-012), phase-1-corpus-reduction-remaining-7-slices (this ledger)
+---
+```
+
+The Phase-1 slice `book/src/spec/slices/chebyshev.md:160` carries a **load-bearing numerical-coefficient error** that the firm cycle-012 Chebyshev entries do NOT inherit. The slice states the 1st-kind initial `rho_0 = delta / (2*theta)`. The L0 source is `rhop = delta / theta` (`palace/linalg/chebyshev.cpp:282`) — **no factor of 2**. The discrepancy is isolated to the `rho_0` initialiser: the slice's `alpha_0 = 1/theta` matches the source (`:281`). The critic independently confirmed the source value via `read_range`. The firm `L1/chebyshev-smoother` and `L2/chebyshev-iteration` entries use the **correct source value** (`δ/θ`); the erroneous `delta/(2*theta)` line persists only in the as-yet-unreduced slice. **Routing note**: when `book/src/spec/slices/chebyshev.md` is further reduced (this cycle-012 firm landing unblocks that reduction per `l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion`), correct or drop the erroneous `:160` line so the wrong coefficient does not survive into the (eventually authoritative) reduced slice. Not editable by this harvester (slice is not its authority; one-operator discipline). Source: cycle-012 harvester dispatch `reports/2026-05-28T034154Z-harvester-chebyshev-l1-l2/CYCLE.md` §"Open questions / caveats" item 1 + critic META.md §citation-validity (rho_0 discrepancy CONFIRMED).
+
+```yaml
+---
+slug: spectrum_estimate-l1-rough-in-opacity
+opened_at: cycle-012
+opened_by: harvester
+status: open
+relates_to: l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion (this ledger, answered cycle-012), matrix-weighted-norm-and-bilinear-form-l1-rough-ins (this ledger)
+---
+```
+
+The setup-side `spectrum_estimate(A, dinv)` sub-action is cited as an **opaque L1 dependency** of the firm `L1/chebyshev-smoother` but has no firm L1 entry of its own. At L0 it is `GetLambdaMax(comm, A, dinv) → linalg::SpectralNorm(comm, DinvA, hermitian)` (`palace/linalg/chebyshev.cpp:13-27`) — the power-iteration (SLEPc-backed when configured) dominant-eigenvalue estimate of `D⁻¹ A`. It is the `linalg::SpectralNorm` power-iteration sibling tracked under the cycle-008 OQ `matrix-weighted-norm-and-bilinear-form-l1-rough-ins` residual cohort. **Routing note for cycle-012+ planner**: a future harvester on `spectrum_estimate` (the `SpectralNorm` power-iteration primitive) would let `chebyshev-smoother`'s setup dependency point at a concrete L1 entry rather than naming it opaque; it would also serve the matrix-weighted-norm cohort. Source: cycle-012 harvester dispatch `reports/2026-05-28T034154Z-harvester-chebyshev-l1-l2/CYCLE.md` §"Open questions / caveats" item 2.
+
+```yaml
+---
+slug: l3-l4-chebyshev-rows-eligible
+opened_at: cycle-012
+opened_by: harvester
+status: open
+relates_to: l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion (this ledger, answered cycle-012), phase-1-corpus-reduction-remaining-7-slices (this ledger)
+---
+```
+
+The cycle-012 firm landing fired the L1 (`chebyshev-smoother`) and L2 (`chebyshev-iteration`) Chebyshev rows, but the slice `book/src/spec/slices/chebyshev.md` also carries firm **L3** (partial-obstruction; `chebyshev.md:229-440`) and **L4** (calculus; the L4 form is already drafted in the slice with `ChebOp<E, S>` typing and `foldM`/`forM_` monadic shape) Chebyshev content. Per the **identity-lowerings still require both L levels** invariant and the **lower-layer shared vocabulary takes priority** directive (CLAUDE.md §Methodology invariants), `L3/chebyshev-iteration` and `L4/chebyshev-smoother` are eligible future harvester targets. **The slice cannot fully reduce until L3/L4 are also lifted** — this blocks full `chebyshev.md` reduction. **Routing note for cycle-012+ planner**: schedule a harvester on `L3/chebyshev-iteration` (sequential-obstruction partial-obstruction form; the `k`-recurrence and `pc_it`-sweep sequentiality recorded in the L2 non-laws are its root) and on `L4/chebyshev-smoother` (the `ChebOp<E, S>` monadic-wrapper form). Out of scope for this 2-operator dispatch. Source: cycle-012 harvester dispatch `reports/2026-05-28T034154Z-harvester-chebyshev-l1-l2/CYCLE.md` §"Open questions / caveats" item 3.
+
+```yaml
+---
+slug: chebyshev-l1-l0-and-l2-l1-lowering-themes
+opened_at: cycle-012
+opened_by: harvester
+status: open
+relates_to: l1-l2-chebyshev-smoother-and-iteration-firm-row-promotion (this ledger, answered cycle-012), orthogonalize-mutation-rotation-l1-l0-theme (this ledger)
+---
+```
+
+The cycle-012 firm landing fired the L1 and L2 Chebyshev *operator* rows; the forward **lowering themes** between them are not yet authored — both are `abstractor` candidates. (1) `L1-L0/chebyshev-smoother-mutation-rotation` — the `Mult2` output-arg / workspace mutation rotation: the in-place `y` overwrite, the scribbled `r`/`d` workspaces, the construction-bound `lambda_max`/`theta`/`delta` reads, and the `SetOperator`/`Mult2` split. Analogous to the firm `ksp-solve-mutation-rotation` / `axpby-mutation-rotation` / `axpbypcz-mutation-rotation` themes. (2) `L2-L1/chebyshev-iteration-fusion` — the `ApplyOrder0`/`ApplyOrderK` element-fusion theme: narrates the de-fusion of the HPC element-fused kernels (one elementwise pass `d ← sd·d + sr·dinv·r`) into the base `scal`/`elementwise_product`/`axpby` composition, classifying the fusion as a transparent performance trick (with the bit-determinism non-law called out as load-bearing for reproduction). **Out of scope for harvester** — L1>L0 and L2>L1 theme authoring is `abstractor`/`lifter` territory. The firm L1 entry references the forthcoming L1>L0 theme in prose without linking a non-existent file. Source: cycle-012 harvester dispatch `reports/2026-05-28T034154Z-harvester-chebyshev-l1-l2/CYCLE.md` §"Open questions / caveats" item 5.
+
+```yaml
+---
+slug: eigsolve-getconverged-forwarder-fix-and-gated-promotion
+opened_at: cycle-012
+opened_by: lowering-verifier
+status: open
+relates_to: orthogonalize-mutation-rotation-l1-l0-theme (this ledger), partly-constructive theme-status codification (cycle-012 meta-phase; recurrence-2)
+---
+```
+
+The cycle-012 `lowering-verifier` audit of the `eigsolve-mutation-rotation` L1>L0 theme (`book/src/L1-L0/eigsolve-mutation-rotation.md`) returned **confirms-with-refinement** and **UNBLOCKS but does NOT enact** the Sub-pattern B partly-constructive → fully-firm promotion. The promotion is **GATED on a cycle-013 `abstractor` dispatch** applying the Sub-pattern B materialisation-snippet correction first (audit Edit 2, NOT applied by the verifier per role discipline): the snippet currently reads `if (!opInv->GetConverged())`, but `GetConverged()` is **not** on `opInv`'s type (`ComplexKspSolver = BaseKspSolver<ComplexOperator>`) public surface — it exists only on `IterativeSolver` (`iterative.hpp:98`), reached internally via the protected `ksp` member inside `BaseKspSolver::Mult` (`ksp.cpp:301`). The fix is a one-line public forwarder on `BaseKspSolver` mirroring the existing `GetRelTol()` forwarder at `ksp.hpp:64` (`bool GetConverged() const { return ksp->GetConverged(); }`), OR changing `Mult` to return status instead of `void`. The audit Edit 2 also tightens the prose immediately after the snippet to make the required forwarder explicit. **Fold into the same cycle-013 abstractor dispatch (audit Edit 3, also NOT applied by the verifier): Sub-pattern A function-name attribution fix** — the per-`WhichType` switch with the `MFEM_ABORT` for unimplemented TARGET_REAL/TARGET_IMAGINARY is attributed in the theme prose + citation list to `ArpackEigenvalueSolver::SetWhichEigenpairs`, but it actually lives in `ArpackEigenvalueSolver::SolveInternal` (the `SetWhichEigenpairs` body at `arpack.cpp:236-239` is a trivial `which_type = type` field-set; the switch + abort are in `SolveInternal` at ~280-307, abort at ~302-304). The cited range 236-308 covers both, so the citation is in-range; only the function-name label is imprecise. **Required sequence**: (1) the cycle-013 abstractor applies Edit 2 (GetConverged forwarder snippet/prose correction) and Edit 3 (Sub-pattern A attribution label fix) to the theme; (2) ONLY THEN is the `partly-constructive` caveat dropped and the theme `## Status` promoted to fully-firm per the theme's own promotion gate (b). The integrator did NOT auto-promote the theme this cycle — the `## Status` line remains `firm (structural; partly-constructive on Sub-pattern B ...)`. The ncv-clamp citation-drift (theme applicability-condition 4 cited `arpack.cpp:521-525`; actual clamp `if (ncv > N) {...}` is at 518-520 with `N=GlobalSize(...)` at 517 and the `arpack_it` default at 522-525) was already corrected in the audit's appended machine-readable `verified_against:` block (`citation: palace/linalg/arpack.cpp:518-520`); the abstractor may additionally align the inline applicability-condition-4 prose if it touches that paragraph. Source: cycle-012 lowering-verifier dispatch `reports/2026-05-28T034311Z-lowering-verifier-eigsolve-mutation-rotation/CYCLE.md` §"Proposed changes" Edits 2-3 + §"Open questions / caveats" "Sub-pattern B promotion verdict (GATED)" + critic META.md issues 1, 5, 7. (Audit + this OQ were authored in cycle-012; the gated follow-up `abstractor` dispatch is routed to cycle-013, the next primary cycle.)
+
+```yaml
+---
+slug: eigsolve-nep-coordinate-convention-empirical-witness
+opened_at: cycle-012
+opened_by: lowering-verifier
+status: open
+priority: low
+relates_to: eigsolve-slepc-nep-coordinate-convention-audit (this ledger, answered cycle-012)
+---
+```
+
+Low-priority empirical-witness gap surfaced by the cycle-012 SLEPc-NEP coordinate-convention audit (`reports/2026-05-28T034311Z-lowering-verifier-slepc-nep-coordinate-convention/`). The audit's verdict (NEP solves the original un-scaled problem directly; `return l` is correct; the NEP `SetOperators` gamma/delta are a dead store w.r.t. the coordinate transform; convention (b) holds uniformly across all four backends) rests on **direct source-read of the control flow** — the raw-operator function/jacobian callbacks (`slepc.cpp:2170-2202`), the un-scaled `NEPSetTarget(nep, sigma)` (`:1503`), and the un-scaled residual path (`:1760-1798`) — plus an exhaustive `search_text` for `gamma|delta` in the NEP region confirming the only hits are the dead `SetOperators` store and the independent `GetBackwardScaling` norm recomputation. There is **no `test-eigensolver.cpp` NEP case** that constructs a known-eigenvalue NEP and asserts the returned eigenvalue is in original-problem coordinates; the reading is `source-read-confirmed, empirically-unwitnessed`. Recommended (low-priority): if a future harvester firms up a `SlepcNEPSolver` L0 entry, or if a dedicated `test-eigensolver.cpp` NEP case lands, upgrade the §5 NEP convention claim from source-read-confirmed to empirically-witnessed. Related latent question (not separately filed, below the per-cycle problems-bar): *why* does NEP compute gamma/delta at all if they are unused — genuinely dead (vestigial copy-adaptation from `SlepcPEPSolver::SetOperators`) vs. latent (intended for a future `NEPSetScale`-style wiring never completed)? Either reading leaves the current coordinate-convention verdict unchanged. Source: cycle-012 lowering-verifier dispatch §"Open questions / caveats" items 1-2.
 
 ## Dropped
 

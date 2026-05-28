@@ -748,6 +748,138 @@ sub-pattern recognition is **complete** at the structural level; full
 per-step sub-rewrite verification against the inner bodies is deferred
 to a later `lowering-verifier` audit.
 
+### Machine-readable audit record (cycle-012 lowering-verifier)
+
+Per-citation audit verdicts from the cycle-012 `lowering-verifier`
+dispatch (`reports/2026-05-28T034311Z-lowering-verifier-eigsolve-mutation-rotation/`).
+Top-level verdict: **confirms-with-refinement**. All ten `opInv->Mult`
+callsites confirmed exhaustive (fresh `search_text` returns exactly ten,
+no others); per-step semantics match source comments; negative anchor
+confirms `void` return. The two `partially-supports` entries are
+citation-precision / attribution refinements, not contradictions (see
+`audit_note`).
+
+```yaml
+verified_against:
+  - citation: palace/linalg/arpack.cpp:574
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: ApplyOp non-sinvert; opK->Mult then opInv->Mult; y=M⁻¹Kx
+  - citation: palace/linalg/arpack.cpp:580
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: ApplyOp sinvert; opM->Mult then opInv->Mult; y=(K-σM)⁻¹Mx
+  - citation: palace/linalg/arpack.cpp:761
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: PEP non-sinvert; source comment y=L₁⁻¹L₀x (theme M⁻¹K gloss is component-level)
+  - citation: palace/linalg/arpack.cpp:778
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: PEP sinvert; y=(L₀-σL₁)⁻¹L₁x
+  - citation: palace/linalg/nleps.cpp:514
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: deflated_solve lambda; x1=T(σ)⁻¹b1
+  - citation: palace/linalg/slepc.cpp:1858
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: __pc_apply_EPS; y=M⁻¹x or (K-σM)⁻¹x
+  - citation: palace/linalg/slepc.cpp:1965
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: __pc_apply_PEPLinear non-sinvert; lower block M⁻¹x₂
+  - citation: palace/linalg/slepc.cpp:1978
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: __pc_apply_PEPLinear sinvert; (L₀-σL₁)⁻¹x
+  - citation: palace/linalg/slepc.cpp:2076
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: __pc_apply_PEP; y=M⁻¹x or P(σ)⁻¹x
+  - citation: palace/linalg/slepc.cpp:2159
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: __pc_apply_NEP; per-λ PC rebuild 2141-2158 then opInv->Mult
+  - citation: palace/linalg/ksp.cpp:297-310
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: BaseKspSolver::Mult void return + Mpi::Warning only; strong negative anchor
+  - citation: palace/linalg/ksp.hpp:30-72
+    verdict: partially-supports
+    audited_at: 2026-05-28T034311Z
+    note: GetConverged NOT on BaseKspSolver public surface — materialisation needs a public forwarder (one line, mirrors GetRelTol) or Mult status return
+  - citation: palace/linalg/iterative.hpp:98
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: GetConverged() defined here on IterativeSolver; reached only via the protected ksp member
+  - citation: palace/linalg/eps.hpp:57-74
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: three SetOperators overloads with MFEM_ABORT defaults; plus SetExtraSystemMatrix/SetPreconditionerUpdate at 76-86
+  - citation: palace/linalg/eps.hpp:102-103
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: GetScalingGamma/GetScalingDelta accessors
+  - citation: palace/linalg/arpack.cpp:236-308
+    verdict: partially-supports
+    audited_at: 2026-05-28T034311Z
+    note: MFEM_ABORT stub TRUE and in-range, but per-WhichType switch is in SolveInternal not SetWhichEigenpairs (236-239 is a trivial field-set)
+  - citation: palace/linalg/arpack.cpp:241-247
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: SetShiftInvert binds sigma, sinvert=true, rejects precond
+  - citation: palace/linalg/slepc.cpp:565-600
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: nine-way SLEPc EPS token switch; all implemented (asymmetry vs ARPACK abort)
+  - citation: palace/linalg/slepc.cpp:687-709
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: EPSSolve+EPSGetConverged; EPSConvergedReasonView print-only at 699; return (int)num_conv
+  - citation: palace/linalg/slepc.cpp:711-716
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: GetEigenvalue returns l*gamma (Higham un-scaling at accessor)
+  - citation: palace/linalg/arpack.cpp:513-560
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: SolveInternal 552, RescaleEigenvectors 555, info=0 reset 558, return 559
+  - citation: palace/linalg/nleps.cpp:780-806
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: target-range recovery + sort-by-imag perm + RescaleEigenvectors + return nev
+  - citation: palace/drivers/eigensolver.cpp:280-340
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: full setup composition; spectrum-target richer than inline Stage-A3 example (linear-EVP LARGEST_REAL/TARGET_REAL + SLP TARGET_MAGNITUDE branches); confirms applicability-condition 3
+  - citation: palace/models/modeeigensolver.cpp:1020-1054
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: backend dispatch; build-time #if + runtime type==; SLEPc KRYLOVSCHUR+GEN_NON_HERMITIAN
+  - citation: palace/linalg/arpack.cpp:518-520
+    verdict: supports
+    audited_at: 2026-05-28T034311Z
+    note: ncv-clamp against N (N=GlobalSize fetched at 517; applicability-condition 4 cited 521-525 — off by a few lines; clamp is 518-520, arpack_it default is 522-525)
+audit_verdict: confirms-with-refinement
+audit_note: >
+  All 10 opInv->Mult callsites confirmed exhaustive + per-step semantics
+  match source comments. Negative anchor (ksp.cpp:297-310) confirms void
+  return. Sub-pattern B materialisation snippet refinement: GetConverged()
+  is not on opInv's type (BaseKspSolver); needs a public forwarder
+  (one-line, mirrors GetRelTol) or a Mult status-return — strengthens the
+  partly-constructive verdict (change is mechanical, as claimed) but the
+  snippet should be corrected. Two minor citation-drift refinements
+  (SetWhichEigenpairs switch is in SolveInternal; ncv-clamp at 518-520 not
+  521-525, with N=GlobalSize at 517 and arpack_it default at 522-525).
+  UNBLOCKS but does NOT enact the partly-constructive → fully-firm
+  promotion of Sub-pattern B: promotion is GATED on a cycle-012 abstractor
+  dispatch applying the GetConverged forwarder snippet correction (Edit 2)
+  to the theme first — do not drop the partly-constructive caveat in the
+  same pass that defers the snippet fix. Supports cycle-012 meta-phase
+  codification of partly-constructive theme-status (recurrence-2).
+```
+
 ## Status
 
 `firm (structural; partly-constructive on Sub-pattern B LinearSolveFailed materialisation)` —

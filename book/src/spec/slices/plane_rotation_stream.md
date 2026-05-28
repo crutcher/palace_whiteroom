@@ -1,5 +1,11 @@
 # plane_rotation_stream
 
+> **Reduction status (cycle-012+):** the Givens-rotation primitives and the per-step procedure of this slice are firm in the concept-page family [`plane-rotation-stream`](../../concepts/plane-rotation-stream.md) (Shape) + [`givens`](../../concepts/givens.md) / [`givens_generate`](../../concepts/givens_generate.md) / [`givens_apply`](../../concepts/givens_apply.md) (the 2×2 primitives) + [`trsv`](../../concepts/trsv.md) (back-solve). The §L0 §Primitives, §L1 §Procedure/§Cross-target-reuse, and §L2 §Primitives/§Procedure are superseded by those firm pages. RETAINED here as unique material: §L0 §"Call sites" (the GMRES `iterative.cpp:634-643` / FGMRES `:813-822` byte-identical-site finding), §L0 §"Negative result" (no fused `xLASR`), §L2 §"Stream operations as primitive sequences" (the boundary-slot read-after-write analysis that bridges to L3), and the **entire §L3** — which is the canonical detailed source for [`sequential-obstruction`](../../concepts/sequential-obstruction.md) §"Worked example: Givens-stream replay-prefix" (that firm worked example cites this slice's §L3 and excerpts the loop + the boundary-slot RAW + the representational-obstruction framing, but elides this slice's quadratic-vs-linear cost argument, the cross-target-no-batch-dim analysis, the local-triviality-at-extend, and the Householder-WY sibling-slice boundary).
+>
+> **This slice is now the canonical plane-rotation-stream dissection** (the `orthog.md` plane-rotation sub-slice was reduced to a stub pointing here, cycle-012 — realizing the long-recorded `orthog/plane_rotation.md` split). The firm Givens concept pages' "Used in" / "primary dissection" cross-references should be repointed from the `orthog` slice to this slice (pending `layer-intro-author` dispatch; OQ `plane-rotation-concept-page-canonical-pointer-repoint`).
+>
+> **Pending lift / verify:** the L0 citation line ranges here (`iterative.cpp:72-108` generate-real / `:226-242` apply) differ by one from the firm `concepts/givens.md` ranges (`:73-108` / `:227-241`); a `verify-citation-range` pass should reconcile (OQ `plane-rotation-givens-l0-citation-range-reconcile`).
+
 ## Context
 
 GMRES and FGMRES maintain an upper-Hessenberg matrix `H̄` produced by Arnoldi
@@ -33,26 +39,12 @@ algebraic.
 
 ### Primitives
 
-- **`GeneratePlaneRotation<T, ScalarType>(dx, dy, cs, sn)`** —
-  [palace/linalg/iterative.cpp:72-108](../../../../reference/palace/linalg/iterative.cpp#L72-L108) (real specialization);
-  [palace/linalg/iterative.cpp:110-222](../../../../reference/palace/linalg/iterative.cpp#L110-L222) (complex specialization).
-  Read-only on `dx, dy` (by value); write-only on `cs, sn` (output reference
-  parameters). Real form: `cs: T, sn: T`. Complex form: `cs: T, sn: complex<T>`.
-  Both specializations port LAPACK `xLARTG` (real: 36 lines branching on
-  `dy == 0` / `dx == 0` / safe-range / overflow-scaling; complex: 112 lines
-  with additional `dy` purely-real / purely-imaginary sub-branches and an
-  inner re-scaling factor `w`). The algebraic invariant across all branches
-  is `cs² + |sn|² = 1` and applying the resulting rotation to `(dx, dy)`
-  yields `(r, 0)` with `r = sign(dx) · √(|dx|² + |dy|²)`.
-
-- **`ApplyPlaneRotation<T, ScalarType>(dx, dy, cs, sn)`** —
-  [palace/linalg/iterative.cpp:226-232](../../../../reference/palace/linalg/iterative.cpp#L226-L232) (real);
-  [palace/linalg/iterative.cpp:234-242](../../../../reference/palace/linalg/iterative.cpp#L234-L242) (complex).
-  In-place on `(dx, dy)`; read-only on `(cs, sn)`. Real form computes
-  `t = cs·dx + sn·dy; dy = -sn·dx + cs·dy; dx = t`. Complex form computes
-  `t = cs·dx + sn·dy; dy = -conj(sn)·dx + cs·dy; dx = t`. The scratch
-  `t` is the standard trick to break the read-write dependency between
-  the two output entries.
+> **Reduced (cycle-012):** the two 2×2-rotation primitives are firm at
+> [`givens_generate`](../../concepts/givens_generate.md) (`GeneratePlaneRotation`, real `iterative.cpp:72-108` / complex `:110-222`)
+> and [`givens_apply`](../../concepts/givens_apply.md) (`ApplyPlaneRotation`, real `:226-232` / complex `:234-242`).
+> Both port LAPACK `xLARTG` / `xROT`; the invariant `cs² + |sn|² = 1`, the safe-range branch detail,
+> and the scratch-`t` read-write-dependency-break are firm-side. (See the reduction-status note above re: the
+> one-off line-range discrepancy with `concepts/givens.md`.)
 
 ### Call sites
 
@@ -116,36 +108,28 @@ Both primitives are typed by the scalar field of their inputs; the
 real/complex split is static dispatch resolved at compile time, not a
 runtime variant.
 
-### Procedure (per Arnoldi step `j`)
+### Procedure (per Arnoldi step `j`) and cross-target reuse
 
-```
-step_plane_rotation_stream(state, j):
-    # 1. Replay accumulated stream on the new column tail.
-    for k in 0..j-1:
-        apply(Hj, k, cs[k], sn[k])
-    # 2. Extend the stream by generating from the bottom 2-tuple.
-    (cs[j], sn[j]) = generate(Hj[j], Hj[j+1])
-    # 3. Apply the fresh rotation to triangularize the column.
-    apply(Hj, j, cs[j], sn[j])
-    # 4. Apply the SAME fresh rotation to the rotated-RHS pair.
-    apply(s, j, cs[j], sn[j])
-    # The residual proxy is now |s[j+1]|; returned by the host slice.
-```
+> **Reduced (cycle-012):** the per-step procedure (replay-prefix on the new
+> column tail → generate from the bottom 2-tuple → apply-to-self → propagate
+> to the RHS pair → read residual proxy `|s[j+1]|`) is firm at
+> [`plane-rotation-stream`](../../concepts/plane-rotation-stream.md) §"Shape"
+> (steps 1-5). The two abstract stream operations — **replay-prefix** and
+> **extend** — are named there; the L2 binding is unfolded in §L2 below. See
+> §"Invariant" below (hoisted from `orthog.md`) for the formal
+> least-squares-residual relation.
 
-The stream interface at L1 is therefore an ordered append-only sequence of
-`(c, s)` pairs together with two operations: **replay-prefix** on a
-2-element window (a `for k < j` loop of `apply`s) and **extend** (one
-`generate` plus one `apply` on the producing window). No third operation
-exists at L1.
+### Invariant
+
+After `step_plane_rotation_stream(state, j)` returns: the product `G(c_j, s_j) ⋯ G(c_0, s_0)` applied to the original `H̄[0..j+1, 0..j]` equals `R[0..j+1, 0..j]` (upper-triangular through column `j`, with `R[j+1, 0..j] = 0`), and the same product applied to the original `s_0 = (β, 0, …, 0)ᵀ` equals the current `s[0..j+1]`. Equivalently, for any `y ∈ ℂ^{j+1}`: `‖R[0..j, 0..j]·y − s[0..j]‖² + |s[j+1]|² = ‖H̄[0..j+1, 0..j]·y − βe₁‖²`, so minimizing the first term yields the GMRES iterate and the second term gives the residual norm. (Hoisted from the now-reduced `orthog.md` plane-rotation sub-slice, cycle-012.)
 
 ### Cross-target reuse
 
-A single rotation index `k` is applied to two distinct targets — `Hj` and
-`s` — without re-deriving the rotation scalars. This is the structural
-reason `cs` and `sn` are stored as a stream rather than recomputed: the
-GMRES algorithm uses each pair twice (once on its producing column to
-zero a sub-diagonal entry, once on the RHS to propagate the
-triangularization to the residual proxy).
+> **Reduced (cycle-012):** the cross-target reuse — one `(c_j, s_j)` applied
+> to two distinct targets (`Hj` column triangularization + `s` residual-proxy
+> propagation) without re-derivation, the structural reason `(c, s)` is stored
+> as a stream rather than recomputed — is firm at [`givens`](../../concepts/givens.md)
+> §"L2 usage shape" (cross-target-reuse paragraph).
 
 ### Variant axes
 
@@ -190,52 +174,17 @@ primitives drawn from the [givens](../../concepts/givens.md) family;
 the stream's append-only structure becomes explicit as indexed buffer
 access.
 
-### Primitives
+### Primitives and procedure (L2)
 
-- **`givens_gen(dx, dy) → (c, s)`** — see
-  [givens](../../concepts/givens.md) primitive `gen`. LAPACK
-  `xLARTG`-equivalent: numerically-safe construction of a 2×2 unitary
-  zeroing the second input. Pure function on two scalars; the
-  overflow-scaling and zero-handling branches are absorbed inside the
-  primitive (they are L2-internal, not L1-visible).
-
-- **`givens_apply(x, y, c, s) → (x', y')`** — see
-  [givens](../../concepts/givens.md) primitive `apply`. Pure 2×2
-  unitary application. Real form: `x' = c·x + s·y; y' = -s·x + c·y`.
-  Complex form: `x' = c·x + s·y; y' = -conj(s)·x + c·y`. The L1 `apply
-  on window` reduces at L2 to `givens_apply` on the two scalars
-  read from / written to indexed buffer slots.
-
-### Procedure (per Arnoldi step `j`)
-
-```
-step_plane_rotation_stream(state, j):
-    # 1. Replay accumulated stream on the new column tail.
-    for k in 0..j-1:
-        (Hj[k], Hj[k+1]) = givens_apply(Hj[k], Hj[k+1], cs[k], sn[k])
-
-    # 2. Extend the stream: generate from the bottom 2-tuple.
-    (cs[j], sn[j]) = givens_gen(Hj[j], Hj[j+1])
-
-    # 3. Apply the fresh rotation to triangularize the column.
-    (Hj[j], Hj[j+1]) = givens_apply(Hj[j], Hj[j+1], cs[j], sn[j])
-
-    # 4. Apply the SAME fresh rotation to the rotated-RHS pair.
-    (s[j], s[j+1]) = givens_apply(s[j], s[j+1], cs[j], sn[j])
-
-    # Residual proxy: |s[j+1]|.
-```
-
-The procedure shape is the L1 shape with each abstract operation
-bound to its named L2 primitive. The buffer indexing made implicit
-by L1's `window` notation becomes explicit at L2 — `(Hj[k], Hj[k+1])`
-is the 2-tuple read/written by the rotation. The mutation pattern
-is legible at L2: `givens_apply` is a pure function returning a
-2-tuple, and assignment back into the indexed slots is the in-place
-update (per the meta-review #8 mutation-pseudocode discipline,
-explicit tuple destructuring makes the read-write dependency
-break visible without a scratch variable — the right-hand side
-reads both inputs before either assignment commits).
+> **Reduced (cycle-012):** the L2 primitive binding (`givens_gen` /
+> `givens_apply` from the [`givens`](../../concepts/givens.md) family) and the
+> 5-line per-step procedure are firm at `concepts/givens.md` §"L2 usage shape"
+> + [`plane-rotation-stream`](../../concepts/plane-rotation-stream.md) §"Shape".
+> The mutation-pattern legibility (pure `givens_apply` returning a 2-tuple,
+> tuple-destructuring breaking the read-write dependency) is firm-side. The
+> unique L2 material — the boundary-slot read-after-write analysis that is the
+> input to the L3 obstruction — is retained in §"Stream operations as primitive
+> sequences" below.
 
 ### Stream operations as primitive sequences
 

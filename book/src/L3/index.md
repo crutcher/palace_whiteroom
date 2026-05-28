@@ -9,10 +9,10 @@ Where the L2 algebra admits a global form, L3 captures it. Where no global form 
 ## Semantics (overlay)
 
 L3 expresses:
-- Whole-tensor primitives (matvec, axpy, dot, nrm2 as field operations)
-- Field transitions: state evolution over a single algorithmic step expressed as `state' = f(state, params)`
-- Convolution-like patterns where applicable (stencil sweeps, restriction/prolongation)
-- Sequential obstructions: explicit markers where global form is unavailable, with reason
+- **Whole-tensor field operations** — primitives that act on whole tensors with no element loop exposed at the layer's vocabulary, L3-native by signature shape. The closed BLAS-1 cohort: matvec (`apply_linop`, the linear-operator-application generalisation of "matvec" — square and rectangular operators, real and complex, all operator representations absorbed), the linear-update family (`axpy`, `axpby`, `axpbypcz`, `scal`), and the reductions (`dot`, `nrm2`).
+- **Field transitions** — state evolution over a single algorithmic step expressed as `state' = f(state, params)`. The composition operator `krylov-step` is the canonical instance: the value-threaded per-step kernel `(op, K, s) -> (K', s', outputs)` built from the whole-tensor field operations above.
+- **Convolution-like patterns** where applicable (stencil sweeps, restriction/prolongation).
+- **Sequential obstructions** — explicit markers where global form is unavailable, with reason (the outer loop folding `krylov-step` does not lift; recorded per `concepts/sequential-obstruction.md`).
 
 ## Operator dep-map
 

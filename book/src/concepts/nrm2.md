@@ -6,7 +6,7 @@ Base primitive: `α ← ‖x‖₂ = √⟨x, x⟩`. The Euclidean norm of a vec
 
 - Reads `x`; writes none.
 - Carries the same MPI-collective cost as one `dot`.
-- Stability: production implementations use scaled summation (BLAS `nrm2` algorithm) to avoid overflow/underflow when `|x[i]|` spans a wide range. A naïve `√Σ x[i]²` is not equivalent.
+- Stability: Palace's `linalg::Norml2` computes the naïve `√⟨x, x⟩` via `Dot` (one-line body `std::sqrt(std::abs(Dot(comm, x, x)))`); it does **not** use scaled summation. There is no Palace-level overflow/underflow guarantee — Palace inherits whatever the underlying `dot` reduction provides. BLAS-style scaled-summation `nrm2` (which would avoid overflow/underflow when `|x[i]|` spans a wide range, at the cost of extra arithmetic) is **not present** in Palace. If a caller needs scaling, that is a caller-side concern, not a variant of this operator. See [`L1/nrm2`](../L1/nrm2.md) (authoritative — §Variant axes "Stability variants" and the §Context correction note).
 
 ## Role in higher-layer rotations
 

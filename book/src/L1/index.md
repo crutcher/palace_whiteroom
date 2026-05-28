@@ -26,7 +26,7 @@ Shape contracts are declared at boundaries (per the bunsen `contracts::unpack_sh
 
 ## Vocabulary cohort
 
-**Firm (8)** — element-wise updates, BLAS-1 reductions, the opaque-operator gate, and the constructed-operator solve gate:
+**Firm (10)** — element-wise updates, BLAS-1 reductions, the opaque-operator gate, the constructed-operator solve gate, and the polynomial-smoother gate:
 
 - [`axpy`](./axpy.md) — vector-scalar fused update; canonical BLAS-1 leaf.
 - [`dot`](./dot.md) — Hermitian inner-product reduction (real / complex; `tdot` for unconjugated bilinear).
@@ -36,6 +36,8 @@ Shape contracts are declared at boundaries (per the bunsen `contracts::unpack_sh
 - [`apply_linop`](./apply_linop.md) — pure linear-operator application `y = A·x`; opaque-operator gate to the L2 `krylov-step` vocabulary.
 - [`axpbypcz`](./axpbypcz.md) — fused three-scalar three-vector update; subsumes `axpby` (γ=0) and `axpy` (β=1, γ=0).
 - [`ksp_solve`](./ksp_solve.md) — pure preconditioned Krylov solve `(x, status) = ksp_solve(K, b)`; constructed-operator gate. The first L1 operator whose primary argument is itself a structured value (`Solver[A]`) rather than a raw tensor or scalar.
+- [`orthogonalize`](./orthogonalize.md) — Gram-Schmidt orthogonalisation of a candidate against a stored basis; returns the orthogonal residual + projection coefficients. One runtime variant axis (`MGS | CGS | CGS2`); the contract is variant-uniform, the collective shape and stability are not.
+- [`chebyshev-smoother`](./chebyshev-smoother.md) — pure-functional diagonally-scaled Chebyshev polynomial smoother `y' = chebyshev_smoother(op, x, y, initial_guess)`; the third constructed-operator gate at L1 (after `ksp_solve` and `eigsolve`), and the first that is a fixed-degree polynomial *action* rather than a solve-to-convergence. Variant (4th-/1st-kind) absorbed into the closure's `scalars` generator. Firm-on-structural-grounds despite no dedicated unit test (multigrid-integration coverage only) — every law is a verified-exact syntactic identity on fully-specified source; the firm decision was ratified by the cycle-012 integrator (the `eigsolve` rough-in precedent does not bind: `eigsolve`'s rough-in was driven by literature-inferred convergence semantics absent here).
 
 **Rough-in (test-coverage-bounded)** — operators whose structural signature is well-anchored at L0 but whose algebraic-law confidence is reduced pending dedicated test coverage or expanded literature anchoring:
 
@@ -67,6 +69,8 @@ Shape contracts are declared at boundaries (per the bunsen `contracts::unpack_sh
 | [`eigsolve`](./eigsolve.md) | `(E: EigSolver[problem], control: EigControl) → EigResult[N, K_max]` | `ksp_solve` (direct, inner linear solver); `apply_linop` (direct, per-step matrix-vector); `dot`, `nrm2`, `axpy`, `axpby` (transitive via per-orchestration body) | `rough-in (test-coverage-bounded, harvested-by: harvester:2026-05-27T191929Z-harvester-eigsolve-L1)` |
 | [`matrix-weighted-norm`](./matrix-weighted-norm.md) | `(x: Tensor[N], B: LinearOperator[N, N]) → Scalar` (real-valued, SPD `B` required for norm) | `dot`, `apply_linop` | `rough-in (test-coverage-bounded, harvested-by: harvester:2026-05-27T215334Z-harvester-matrix-weighted-norm-l1)` |
 | [`bilinear-form`](./bilinear-form.md) | `(x: Tensor[M], M: LinearOperator[M, N], y: Tensor[N]) → Scalar` (i.e. `xᴴ M y`) | `apply_linop`, `dot` | `rough-in (lower-layer-shared-vocabulary, harvested-by: harvester:2026-05-27T215427Z-harvester-bilinear-form-l1)` |
+| [`orthogonalize`](./orthogonalize.md) | `(w: Tensor[N], V: Basis[N, m], variant) → (Tensor[N], Tensor[m])` | `dot`, `axpy` | `firm` |
+| [`chebyshev-smoother`](./chebyshev-smoother.md) | `(op: ChebSmoother[N], x: Tensor[N], y: Tensor[N], initial_guess: Bool) → Tensor[N]` | `apply_linop` (direct); `spectrum_estimate` (setup-only, opaque) | `firm` (constructed-operator gate; L0: `palace/linalg/chebyshev.cpp`; harvested cycle-012; test-coverage caveat, firm ratified) |
 | [`lanczos_step`](../L1-L0/minres-iteration.md) | `(A, B?, V_prev, V_curr) → (V_next, alpha, beta)` | `apply_linop`, `dot`, `axpy`, `nrm2` | `rough-in (obstruction, proposed-by: abstractor:2026-05-27T004641Z-abstractor-MINRES-L1-L0)` |
 | [`three_term_recurrence_update`](../L1-L0/minres-iteration.md) | `(alpha_curr, beta_prev, beta_curr) → BandColumn3` | (leaf) | `rough-in (obstruction, proposed-by: abstractor:2026-05-27T004641Z-abstractor-MINRES-L1-L0)` |
 | [`givens_apply_with_residual_min`](../L1-L0/minres-iteration.md) | `(qr_state, BandColumn3) → (qr_state', s_residual)` | `givens` | `rough-in (obstruction, proposed-by: abstractor:2026-05-27T004641Z-abstractor-MINRES-L1-L0)` |

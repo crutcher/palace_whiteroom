@@ -33,6 +33,7 @@
 # L2 — Algebraic Decompositions
 - [Overview](./L2/index.md)
 - [krylov-step](./L2/krylov-step.md)
+- [chebyshev-iteration](./L2/chebyshev-iteration.md)
 
 # L2 > L1 — Lowering
 - [Overview](./L2-L1/index.md)
@@ -50,6 +51,8 @@
 - [eigsolve](./L1/eigsolve.md)
 - [matrix-weighted-norm](./L1/matrix-weighted-norm.md)
 - [bilinear-form](./L1/bilinear-form.md)
+- [orthogonalize](./L1/orthogonalize.md)
+- [chebyshev-smoother](./L1/chebyshev-smoother.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)

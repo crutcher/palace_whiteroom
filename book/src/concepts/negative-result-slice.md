@@ -45,6 +45,26 @@ If a later cycle finds that the source HAS unified the sites (e.g., a refactor l
 
 - [`polynomial_recurrence_step`](../spec/slices/polynomial_recurrence_step.md) — three independent scalar-update sequences (Chebyshev-4th-kind, Chebyshev-1st-kind, GMRES Givens stream) plus one out-of-scope branch (eigenvalue tracking via SLEPc/ARPACK). No Palace-level unification.
 
+## Partial-positive sub-pattern
+
+A negative result at one scope can coexist with a *positive* unification at a narrower scope. A negative-result slice is not required to be uniformly negative — it should record **where unification fails AND where it would succeed**, scoped explicitly so the two claims do not contradict. This is the **partial-positive sub-pattern**.
+
+The shape:
+
+- The **outer (cross-family) scope** is the negative result: N≥2 independent sites that the scope question presupposed sharing a kernel, but the source does not unify. The distinction catalog and the five-axis difference table are the evidence.
+- A **nested (within-family) scope** is a partial positive: a *subset* of those sites agrees on most axes and differs on a single residual axis, so a clean parametric unification *would* land there. This is documented as a distinct claim, with its **own falsification criterion**, alongside the cross-family negative result.
+
+The two claims are kept honest by scope: "the sites do not unify" is true *cross-family*; "two of them differ on a single axis and could be parametrically unified" is true *within-family*. Conflating the scopes is the failure mode — either overstating the negative (eliding the within-family opportunity) or overstating the positive (claiming a unification the cross-family evidence refutes).
+
+The canonical worked example is the [`polynomial_recurrence_step`](../spec/slices/polynomial_recurrence_step.md) slice's "L1 ↔ L1 self-tightening" section. Cross-family (Chebyshev ↔ GMRES ↔ eigentracking) the result is negative — different scalar-state cardinalities, recurrence kinds, vector-update kernels, and termination shapes (the five-axis table). Within the Chebyshev family, however, 4th-kind and 1st-kind agree on **four of five axes** (vector-update shape, persisted-state shape, termination shape, outer-driver shape) and differ only on the **scalar-recurrence kind** — so a `ChebyshevSmootherBase<ScalarGenerator>` parameterized on the single residual axis would absorb both variants cleanly. That refactor is structurally documented as a within-family partial positive *without* weakening the cross-family negative result; the within-family claim carries its own falsification surface (the vector-update / outer-driver / termination shapes diverging between the two Chebyshev variants).
+
+When recording a partial positive, the discipline is:
+
+1. State the cross-family negative result first; it is the slice's primary output.
+2. Scope the within-family positive explicitly (which subset of sites, on which axes they agree, on which single axis they differ).
+3. Give the partial positive its **own** falsification criterion — what source-side divergence would downgrade it to "no within-family unification either." A partial positive without its own falsification surface is indistinguishable from spec-side wishful symmetry (the same bar the cross-family absence claim must meet).
+4. Do not promote the within-family unification to a Palace-level primitive on the strength of one within-family case — that is still spec invention. Record it as a documented refactor opportunity; promote to a concept only when a *second* within-family case appears.
+
 ## Falsification criterion (required structural element)
 
 A negative-result slice asserts the **absence** of a unification, kernel, or shared abstraction. Absence claims are only auditable if they specify what evidence would overturn them. Therefore every negative-result slice MUST include a `### Falsification criterion` subsection within its L1 (or wherever the negative claim is stated) enumerating:

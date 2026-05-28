@@ -43,3 +43,21 @@ The GMRES slice's L4 form is a worked example of the three-bundle split:
 - **Krylov** (ephemeral, solve-local, born at restart and discarded at restart-or-return): `V`, `Z`, `H`, `s`, `cs`, `sn`, `j`, `beta`. Mixes field-side state (`V`, `Z`) and small-dense LS-side state (`H`, `s`, `cs`, `sn`). The bundle is threaded through `inner_loop` as a plain value; it does NOT appear in SimState because it is reborn at each restart and discarded at return.
 
 The split mirrors Palace's L0 class layout: instance fields (configuration, persistent state) ↔ OpParams; lazy `Initialize`/`Update` workspace ↔ Krylov; the externally-observable `final_res` / `converged` flags ↔ SimState. Variant absorption is preserved at L4 because the bundles type the contract: `OpParams.flexible` determines whether `Krylov.Z` is present, but the main control flow does not branch on this — `apply_correction` closes over the right basis (V or Z) based on the captured OpParams.
+
+## Worked example — Chebyshev smoother (slice: chebyshev, L4): a fourth stratum
+
+The three strata above are the common case. Some operators have a **fourth** stratum: per-call ephemeral state that is *threaded across an inner loop within a single call* but does not survive the call. The Chebyshev smoother's L4 form (slice: chebyshev §L4) is the canonical example — it adds a **scalar-recurrence stratum** distinct from the other three:
+
+1. **Sim state** (caller-owned, threaded by the outer solve monad): `x` (rhs, read-only), `y` (accumulator/iterate, read-write). The capability split `{ x: Read<Field>; y: ReadWrite<Field> }` records the mutation discipline at the type surface.
+2. **Operator internal params** (captured at `setup`, immutable across `apply` calls): `A`, `dinv`, `order`, `pc_it`, and the variant-specific persisted scalars (`lambda_max` for 4th-kind; `theta`/`delta` for 1st-kind). Live inside the constructed-operator closure.
+3. **Ephemeral intermediates** (allocated per `apply_linop` call, discarded on return, *not* threaded): `r`, `d`, `t`, `Ay`, `Ad` — transient field-algebra values.
+4. **Scalar-recurrence state** (per-call ephemeral, but threaded across the inner `k`-iterations within a single `apply` call): `rho_prev` for the 1st-kind variant, carried by the inner `foldM`'s `ScalarState`. For 4th-kind, `ScalarState = ()`.
+
+The fourth stratum is its own category — it is neither (2) nor (3):
+
+- **Distinct from operator-internal params (2)**: the closure does *not* retain `rho_prev` across `apply` calls. Each call restarts the recurrence from `rho_0`. If it were in stratum (2), it would persist between calls and corrupt the next solve.
+- **Distinct from ordinary ephemerals (3)**: `rho_prev` is *genuinely threaded* across the `k`-loop (each step reads the previous step's value via `rho_k = 1/(2θ/δ - rho_{k-1})`), whereas `r`, `d`, `t` are transient temporaries recomputed each step. An ordinary ephemeral has no cross-iteration data dependence; the scalar-recurrence state does.
+
+At L4 the fourth stratum is made visible at the *type* level via a stratum-specific type parameter: `ChebOp<E, S>` where `S` is the scalar-state type, statically determined by variant (`Unit` for 4th-kind, `{ rho_prev: E }` for 1st-kind). The two variants are **distinct closure types**, not a runtime-tagged union — there is no apply-time variant discriminator. The scalar-recurrence state rides inside the inner `foldM` accumulator alongside the ephemeral field tuple `(r, d, st)`, and is `O(1)` work and memory per step.
+
+Stratum-placement check for the fourth stratum: a piece of state belongs here (not in (2) or (3)) when it is **threaded across an inner loop but reborn at each top-level call**. The lifetime is "one `apply` call, all `k`-iterations" — narrower than operator-internal (which is "all calls") and wider than an ordinary ephemeral (which is "one `k`-iteration"). When an operator has no inner-loop-threaded scalar (e.g. the GMRES example above, where the Givens registers `cs`/`sn` live in the `Krylov` ephemeral bundle and are not a separately-typed recurrence carrier), the fourth stratum is absent and the three-way split suffices.
