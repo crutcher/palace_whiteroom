@@ -339,3 +339,94 @@ All ranges `read_range`-verified via the `palace-codemap` MCP this dispatch (pat
   preconditioner / ROM-Galerkin deflation site is dissected and exhibits `lu_solve(XᴴX, c)`
   positively, BOTH the L2 entry and this theme promote together (a lowering-verifier UNBLOCK +
   follow-up ENACT, per the partly-constructive promotion checklist). Recorded as OQ below.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/nleps.cpp:505-537
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: firm Schur-form fan-down; every Stage 0-5 anchor zero-drift (citecheck --anchor)
+  - citation: palace/linalg/nleps.cpp:508-513
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: source block-elimination comment; :512 Schur complement, :513 back-projection
+  - citation: palace/linalg/nleps.cpp:515-518
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: Stage 0 k==0 short-circuit
+  - citation: palace/linalg/nleps.cpp:519-523
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: Stage 1 dot-fold; decisive :522 zero-drift
+  - citation: palace/linalg/nleps.cpp:524-531
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: Stage 2 Gram build; :524 materialization, :529 assignment zero-drift; SS buffer-aliasing confirmed
+  - citation: palace/linalg/nleps.cpp:532
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: Stage 3 Schur block S = eig_opInv*I - H
+  - citation: palace/linalg/nleps.cpp:533
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: Stage 3 multi-RHS solve SS = -S^-1(XHX) (lu_solve law 4)
+  - citation: palace/linalg/nleps.cpp:534
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: Stage 3 single-RHS solve c' = SS^-1 c
+  - citation: palace/linalg/nleps.cpp:535
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: Stage 3+4 fused MatVecMult(X, S^-1 c'); L2 un-fuse faithful
+  - citation: palace/linalg/nleps.cpp:536
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: Stage 5 in-place AXPY(-1, XSx2, x1)
+  - citation: palace/linalg/nleps.cpp:329-347
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: MatVecMult back-projection primitive (:329 sig, :347 close)
+  - citation: palace/linalg/nleps.cpp:354-362
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: literature anchors (Jarlebring-Koskela-Mele 2018 :354, SLEPc-NEP minimality :356, Effenberger 2013 :357)
+  - citation: palace/linalg/nleps.cpp:606-619
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: non-orthonormal precondition; only Norml2-normalization at :610-611, no orthonormalization
+  - citation: palace/linalg/nleps.cpp:562-563
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: residual-site reuse of Stages 3+4 (still Schur-wrapped)
+  - citation: palace/linalg/nleps.cpp:664-667
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: Jacobian reuse of Stages 3+4 with carried coordinates (still Schur-wrapped)
+  - citation: book/src/L2/deflate.md:343-348
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: negative anchor (no bare-Gram solve in Palace) re-confirmed complete by exhaustive *.cpp dense-solve search
+  - citation: book/src/L1/dot.md:43
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: arg-1-conjugated dot convention pinned at Stage 1
+  - citation: book/src/L1/lu_solve.md:58
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: multi-RHS column-wise law 4 (witnessed :533)
+  - citation: book/src/L1/lu_solve.md:59
+    verdict: supports
+    audited_at: 2026-05-29T15:19:15Z
+    note: solve-composition law 5 (witnessed nested :533-534)
+gate_verdict:
+  shared_gate: bare-Galerkin-core-positive-source-site
+  status: stays-gated-correctly
+  audited_at: 2026-05-29T15:19:15Z
+  finding: >-
+    Exhaustive codemap search of every dense .solve()/.inverse()/LU/LDLT/QR/Cholesky
+    site in palace/*.cpp found NO unwrapped bare-Gram (XHX)^-1 deflation solve. The
+    one near-candidate romoperator.cpp:757-765 solves against Ar = V^H A V (ROM-projected
+    system operator pencil, per romoperator.cpp:74 + :729-734), NOT a Gram matrix.
+    Negative anchor correct AND complete; NLEPS-scoped is acceptable; partly-constructive
+    correctly held across all 3 shared references.
+```

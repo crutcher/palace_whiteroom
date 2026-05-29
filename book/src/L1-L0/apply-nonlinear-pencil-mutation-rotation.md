@@ -381,3 +381,85 @@ L1 / cross-theme anchors:
   `AddMult(x, r, c) = axpby(c, op·x, 1, r)` accumulate-mode fusion (transitive).
 - No dedicated unit test (NLEPS test-coverage absence inherited from `apply_nonlinear_pencil` /
   `eigsolve`); the firm decision rests on exhaustive positive structural citation.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/nleps.cpp:807-821
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: Form A GetResidualNorm — full function read_range-confirmed; anchors 810/812/815/817/818/819/820 all citecheck-OK
+  - citation: palace/linalg/nleps.cpp:810-811
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: residual comment; citecheck anchor 'P(λ) x' at 810 within range — cycle-024 no-shift re-confirmed
+  - citation: palace/linalg/nleps.cpp:812
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+  - citation: palace/linalg/nleps.cpp:813-816
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: conditional opC->AddMult(x, r, l); anchor at 815
+  - citation: palace/linalg/nleps.cpp:817
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+  - citation: palace/linalg/nleps.cpp:818
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+  - citation: palace/linalg/nleps.cpp:819
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+  - citation: palace/linalg/nleps.cpp:820
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: fused Norml2 — correctly excluded from the apply itself
+  - citation: palace/linalg/nleps.cpp:556
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+  - citation: palace/linalg/nleps.cpp:557-558
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: Form B BuildParSumOperator {1, lam, lam², 1}; anchor at 557
+  - citation: palace/linalg/nleps.cpp:559
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+  - citation: palace/linalg/nleps.cpp:496-499
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: in-Solve setup; opA2 at 497, BuildParSumOperator at 498
+  - citation: palace/linalg/nleps.cpp:655
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: Jacobian {0, 1, 2·eig, 1}; opAJ divided-diff at 653
+  - citation: palace/linalg/nleps.cpp:729
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: lagged refresh; opA= at 728, coeff {1, eig_opInv, eig_opInv², 1} at 729
+  - citation: palace/linalg/nleps.cpp:177-181
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: SetExtraSystemMatrix real-argument closure; funcA2 = A2 at 180
+  - citation: palace/linalg/nleps.cpp:191
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: SetOperators(K, M) without-C overload
+  - citation: palace/linalg/nleps.cpp:221
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: SetOperators(K, C, M) with-C overload
+  - citation: palace/linalg/rap.cpp:832-841
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: BuildParSumOperator signature; nullptr-skip find_if at 837
+  - citation: palace/linalg/nleps.hpp:146
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: class comment K + λ C + λ² M + A2(λ)
+  - citation: palace/linalg/nleps.hpp:232-283
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: Interpolation (232) / NewtonInterpolationOperator (246) — A2-representation axis
+  - citation: palace/linalg/eps.hpp:69-74
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: nonlinear SetOperators virtual; A2 here is complex-arg closure (distinct from operative real-arg), correctly disambiguated by theme
+```

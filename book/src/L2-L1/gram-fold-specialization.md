@@ -57,7 +57,7 @@ $$ \text{gram}(\text{dot}, X)[i,j] = \text{inner\_product}(X[j], X[i]) = X[j]^{\
 The shape precondition `X : Basis[N, k]` (the `k` columns share one length axis `N`; the two
 index axes `k`, `m` may differ for `gram2`) is the aligned-pass precondition each per-cell L0
 reduction kernel requires — the same `MFEM_ASSERT(x.Size() == y.Size())`
-(`palace/linalg/vector.cpp:667`) the sibling scalar theme cites, applied per cell. The basis is
+(`palace/linalg/vector.cpp:668`) the sibling scalar theme cites, applied per cell. The basis is
 **not** required orthonormal — that is the entire point of building an explicit Gram for the
 non-orthonormal-basis consumer `deflate` (`L2/gram` §Signature, `book/src/L2/gram.md:60-63`).
 
@@ -237,7 +237,7 @@ The dispatch lowering preserves the L2 Gram value when:
 
 1. **Shared length axis per cell (the aligned-pass precondition).** Every column of `X` (and `Y`)
    shares one length axis `N`; each cell's leaf strides over that one axis (Palace's
-   `MFEM_ASSERT(x.Size() == y.Size())`, `palace/linalg/vector.cpp:667`, per cell). For the
+   `MFEM_ASSERT(x.Size() == y.Size())`, `palace/linalg/vector.cpp:668`, per cell). For the
    B-weighted hook, additionally `B`'s codomain matches the conjugated-column axis and `B`'s
    domain matches the linear-column axis (`bilinear-form` §Applicability conditions).
 
@@ -347,10 +347,11 @@ relative to `reference/`):
   S.fullPivLu().solve(vv2))` (`:563`) + residual coords `rr2(j) = linalg::Dot(GetComm(), vv,
   X[j])` (`:568`). A second consumer of the Gram-solve (not a fresh Gram build). **Self-verified
   via read_range (lines 561-569).**
-- `palace/linalg/nleps.cpp:613-619` — deflation-basis growth `X.resize(k+1); X[k] = v;
+- `palace/linalg/nleps.cpp:614-619` — deflation-basis growth `X.resize(k+1); X[k] = v;
   H.conservativeResizeLike(...); H(k,k) = eig; k++`: the basis grows one column per converged
   eigenpair (the incremental-Gram rank-1 border, `L2/gram` law 6) — the Gram is rebuilt at the
-  bordered `k+1` size on the next `deflated_solve`. **Self-verified.**
+  bordered `k+1` size on the next `deflated_solve`. **Self-verified.** (Range tightened from the
+  enclosing `:613-619`; `:613` is `eigs[k] = eig;`, a related-but-distinct statement.)
 - `palace/linalg/nleps.cpp:354-362` — the deflation-scheme literature anchors: Jarlebring/Koskela/
   Mele 2018 quasi-Newton (`:354-355`), SLEPc-NEP minimality index 1 (`:356`), Effenberger 2013
   successive eigenpair computation (`:357-358`). The standard-scheme anchor for the
@@ -473,3 +474,59 @@ follow-up, not a status reduction.
   `gram-fold-specialization` theme-list row + SUMMARY entry only. The `deflate` theme should append
   its own row. The two L2>L1 themes are siblings (both lower an NLEPS-deflation L2 operator) but
   distinct chapters — `gram` builds the matrix, `deflate` solves it; the rows do not collide.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/nleps.cpp:524-531
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: double-loop Gram-build materialization (SS decl :524 + nested loop :525-531); sole literal XHX build site (search_text)
+  - citation: palace/linalg/nleps.cpp:529
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: cell body SS(i,j)=linalg::Dot(GetComm(),X[i],X[j]) = X[j]ᴴX[i]; conjugate-pair re-order is no-op for Palace's operand order (chain verified nleps:529 -> vector.cpp:265-266 -> dot.md:43)
+  - citation: palace/linalg/nleps.cpp:515-518
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: k==0 early-return = empty-basis Matrix[0,0] (L2/gram law 2)
+  - citation: palace/linalg/nleps.cpp:520-523
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: x2 coordinate loop (Xᴴ· half); :522 observable-unweighted
+  - citation: palace/linalg/nleps.cpp:532-535
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: deflation complex LU solve (:533-534) consuming full Gram value -> off-diagonal re-order observable
+  - citation: palace/linalg/nleps.cpp:561-569
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: compute_residual second Gram-solve consumer (:563 MatVecMult, :568 rr2 coords)
+  - citation: palace/linalg/nleps.cpp:613-619
+    verdict: partially-supports
+    audited_at: 2026-05-29T151441Z
+    note: enclosing range encloses all cited basis-growth constructs but :613 is eigs[k]=eig; tight range is :614-619 (off-by-one at low boundary, in-bounds, value-faithful)
+  - citation: palace/linalg/nleps.cpp:354-362
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: Jarlebring/Koskela/Mele 2018 (:354-355), SLEPc-NEP minimality 1 (:356), Effenberger 2013 (:357-358)
+  - citation: palace/linalg/vector.cpp:263-266
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: ComplexVector::Dot = x·conj(y) = yᴴx (arg-2 conjugated); the re-order source kernel
+  - citation: palace/linalg/vector.cpp:665-672
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: real LocalDot single Hypre hypre_SeqVectorInnerProd pass (per-cell real tree)
+  - citation: palace/linalg/vector.cpp:674-685
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: complex LocalDot four-real-dot lift; Re=xr·yr+xi·yi, Im=xi·yr−xr·yi (per-cell complex tree)
+  - citation: palace/linalg/operator.cpp:621-638
+    verdict: supports
+    audited_at: 2026-05-29T151441Z
+    note: weighted two-stage Dot (Ax workspace then Dot(comm,Ax,y)); both Operator and ComplexOperator overloads (bilinear_form per-cell tree)
+  - citation: palace/linalg/vector.cpp:668
+    verdict: does-not-support-at-cited-line-667
+    audited_at: 2026-05-29T151441Z
+    note: MFEM_ASSERT(x.Size()==y.Size()) is at :668, not the theme's previously-cited :667 (:667 is `static hypre::HypreVector X, Y;`); corrected to :668 in-theme; inherited carry-forward drift shared with inner_product.md + inner-product-fold-specialization.md
+```

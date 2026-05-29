@@ -74,6 +74,7 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [counter-update](./counter-update.md) | primitive |
 | [derived-view-hoisting](./derived-view-hoisting.md) | layer-pattern |
 | [dot](./dot.md) | primitive |
+| [eigsolve](./eigsolve.md) | layer-pattern |
 | [elementwise-product](./elementwise-product.md) | primitive |
 | [finest-level-unwrap](./finest-level-unwrap.md) | primitive |
 | [first-iteration-unrolling](./first-iteration-unrolling.md) | layer-pattern |

@@ -56,6 +56,7 @@
 - [orthogonalize-composition-lowering](./L2-L1/orthogonalize-composition-lowering.md)
 - [gram-fold-specialization](./L2-L1/gram-fold-specialization.md)
 - [deflate-composition-lowering](./L2-L1/deflate-composition-lowering.md)
+- [eigsolve-spectral-transform-composition](./L2-L1/eigsolve-spectral-transform-composition.md)
 
 # L1 — Mutation-Lifted Forms
 - [Overview](./L1/index.md)
@@ -103,6 +104,8 @@
 - [lu-solve-mutation-rotation](./L1-L0/lu-solve-mutation-rotation.md)
 - [nleps-deflated-solve-mutation-rotation](./L1-L0/nleps-deflated-solve-mutation-rotation.md)
 - [apply-nonlinear-pencil-mutation-rotation](./L1-L0/apply-nonlinear-pencil-mutation-rotation.md)
+- [nleps-jacobian-action-mutation-rotation](./L1-L0/nleps-jacobian-action-mutation-rotation.md)
+- [nleps-eigenvalue-correction-mutation-rotation](./L1-L0/nleps-eigenvalue-correction-mutation-rotation.md)
 
 # L0 — Cited Palace Source + Reference Notes
 - [Overview](./L0/index.md)
@@ -183,6 +186,7 @@
   - [scope-out-obstruction](./concepts/scope-out-obstruction.md)
   - [scalar-promotion](./concepts/scalar-promotion.md)
   - [nested-constructed-operator-gate](./concepts/nested-constructed-operator-gate.md)
+  - [eigsolve](./concepts/eigsolve.md)
 
 # Design Artifacts
 - [Index](./design/index.md)
