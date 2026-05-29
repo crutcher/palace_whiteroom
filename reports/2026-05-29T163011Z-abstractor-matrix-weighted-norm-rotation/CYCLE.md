@@ -14,7 +14,7 @@ inputs:
   - reference/palace/palace/linalg/{arpack,slepc,nleps}.cpp (GetEigenvectorNorm callsite cohort; self-verified)
   - book/src/L0/linalg-operator-file.md:30-34 (the L0 file-layout chapter)
 integrated_at: 2026-05-29T203000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1de17ed
 integration_notes: "Applied clean (cycle-026 dispatch-3). L1>L0 matrix-weighted-norm-mutation-rotation STUB→FIRM (energy norm √(xᴴBx) → linalg::Norml2(comm,x,B,Bx), operator.cpp:599-619; sub-patterns A real/B complex/C Normalize consumer). L1-L0/index firm row inserted (firm-over-rough-in-L1 per eigsolve precedent) + SUMMARY (stub)-suffix dropped. L1>L0 firm themes +1. 4 OQ dispositions incl. 3 NEW carry-forwards (operator.cpp:601 brace-drift on L1 entry :58/:83; Category-4 workspace mislabel; mixed-element-type variant + paired bilinear-form audit). Zero gate hits."
 
 # CYCLE: L1>L0 theme promotion (stub→firm) — matrix-weighted-norm-mutation-rotation

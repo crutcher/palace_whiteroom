@@ -12,7 +12,7 @@ inputs:
   - book/src/L2-L1/eigsolve-spectral-transform-composition.md  (target — landed cycle-025 dispatch-3; firm)
   - book/src/L2-L1/gram-fold-specialization.md  (target — landed cycle-024/025; firm)
 integrated_at: 2026-05-29T203000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1de17ed
 integration_notes: "Applied clean (cycle-026 dispatch-7, 9th/final). 8 plain-text→live-link cross-ref upgrades across L1/L2/L3 eigsolve.md + L2/gram.md (concepts/eigsolve.md, L2-L1/eigsolve-spectral-transform-composition.md, L2-L1/gram-fold-specialization.md — all on-disk + SUMMARY-wired) + 1 bounded rough-in→firm prose self-description correction. L4/eigsolve + L3>L2 eigsolve correctly left plain-text (genuinely absent). 3 OQs RESOLVED. Zero gate hits, link-clean."
 
 # CYCLE: Re-anchor eigsolve-chain cross-references

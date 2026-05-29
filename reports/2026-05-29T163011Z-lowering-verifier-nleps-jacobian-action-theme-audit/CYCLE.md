@@ -9,7 +9,7 @@ inputs:
   - palace/linalg/nleps.cpp:329-347 (MatVecMult body), :412 (delta), :378 (w decl), :606-619 (deflation-basis growth), :673-676 (consumer)
   - book/src/L1/nleps_jacobian_action.md (the firm L1 operator the theme lowers)
 integrated_at: 2026-05-29T203000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1de17ed
 integration_notes: "Applied clean (cycle-026 dispatch-6a). Additive verified_against: YAML block (24 entries, all verdict:supports) appended at EOF; theme stays firm, ZERO content/status change. Audit-followup OQ DISCHARGED; the re-confirmed L1-entry +1 drift was resolved same-cycle by D1's lifter re-anchor. Zero gate hits."
 
 # CYCLE: Audit nleps-jacobian-action-mutation-rotation

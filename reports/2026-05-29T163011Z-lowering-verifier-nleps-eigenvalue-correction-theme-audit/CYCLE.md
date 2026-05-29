@@ -11,7 +11,7 @@ inputs:
   - book/src/L1/nleps_eigenvalue_correction.md (firm operator lowered)
   - book/src/L1/dot.md:43 (arg-1 conjugation convention)
 integrated_at: 2026-05-29T203000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1de17ed
 integration_notes: "Applied clean (cycle-026 dispatch-6b). Additive verified_against: YAML block (19 entries, all verdict:supports) appended at EOF; theme stays firm, ZERO content/status change. Audit-followup OQ DISCHARGED; the two re-confirmed L1-entry drifts (:596→:590, :709→:712) resolved same-cycle by D1's lifter re-anchor. Zero gate hits."
 
 # CYCLE: Audit nleps-eigenvalue-correction-mutation-rotation

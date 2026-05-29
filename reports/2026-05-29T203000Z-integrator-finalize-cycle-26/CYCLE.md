@@ -7,7 +7,7 @@ meta_batch: batch-7
 meta_batch_position: 2
 reports_consumed: 9
 staging_log: reports/cycle-026-integrator-staging/STAGING.md
-commit: PLACEHOLDER_SHA
+commit: 1de17ed
 ---
 
 # cycle-026 — integrator-finalize batch report

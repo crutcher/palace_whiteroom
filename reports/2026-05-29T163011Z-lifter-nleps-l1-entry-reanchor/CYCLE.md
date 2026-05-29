@@ -12,7 +12,7 @@ inputs:
   - reference/palace/palace/linalg/nleps.cpp (on-disk source of truth)
   - reference/palace/palace/linalg/vector.cpp (on-disk source of truth)
 integrated_at: 2026-05-29T203000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1de17ed
 integration_notes: "Applied clean (cycle-026 dispatch-1). 23 surgical citation-drift swaps across nleps_jacobian_action.md (16), nleps_eigenvalue_correction.md (2), inner_product.md (1), inner-product-fold-specialization.md (4); both L1 entries stay firm. 3 OQs RESOLVED (jacobian-six-anchor, eigenvalue-two-anchor, vector.cpp:667→:668 sibling sweep); codemap +1 brace-drift OQ left open with second-cycle-confirmation clause for batch-7 meta-phase. Zero gate hits."
 
 # CYCLE: Re-anchor NLEPS-interior L1 entries (citation-drift correction)

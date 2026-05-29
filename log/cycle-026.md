@@ -1,6 +1,6 @@
 # Cycle 026 — L1 firm 19→20 (+normalize) + L2 firm 8→9 (+incremental-least-squares, l2-named-composition-lifts COMPLETE 2/2) + matrix-weighted-norm L1>L0 firm + NLEPS/eigsolve citation-hygiene sweep (second primary cycle of meta-batch-7)
 
-**Date:** 2026-05-29 · **Commit:** `PLACEHOLDER_SHA` · **Status:** clean (zero deferrals/rejections/rework; zero build-repairs; twenty-second consecutive clean split-integrator cycle)
+**Date:** 2026-05-29 · **Commit:** `1de17ed` · **Status:** clean (zero deferrals/rejections/rework; zero build-repairs; twenty-second consecutive clean split-integrator cycle)
 
 **Batch position:** cycle-026 is the **SECOND** primary cycle of meta-batch-7 (cycles 025/026/027). **The batch-7 meta-phase fires after the cycle-027 finalize commit** (3:1 cadence; cycle counter does NOT reset across batch boundaries). This `log/cycle-026.md` + the `scaffolding/integrator-signals.md` cycle-026 section CONTINUE the batch-7 evidence window opened by cycle-025.
 

@@ -14,7 +14,7 @@ inputs:
   - book/src/L2-L1/orthogonalize-composition-lowering.md (nrm2/scal normalize step)
   - Palace evidence: linalg::Normalize template + 5 consuming call sites
 integrated_at: 2026-05-29T203000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1de17ed
 integration_notes: "Applied clean (cycle-026 dispatch-4). NEW firm L1 operator normalize :: Tensor[N] -> (Scalar, Tensor[N]) (decided YES; positive site linalg::Normalize, firm-on-positive-structure; nrm2+scal deps; normalize_B as in-chapter rough-in note). L1 firm 19→20. L1/index cohort bullet + dep-map row inserted (count-prose bump deferred to finalize → applied as Firm(19)→(20) at index.md:31). SUMMARY chapter registered. plan item normalize-l1-primitive-harvest COMPLETE; residual normalize-mutation-rotation L1>L0 theme forward-referenced (abstractor follow-up). Zero gate hits."
 
 # CYCLE: Formalize normalize at L1

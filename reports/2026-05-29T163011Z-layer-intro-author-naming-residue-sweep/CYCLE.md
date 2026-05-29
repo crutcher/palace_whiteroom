@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T16:37:46Z
 scope: rough-in naming-residue L0 hygiene sweep (dep-map + Part-overview repoints)
 status: pending
 integrated_at: 2026-05-29T203000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1de17ed
 integration_notes: "Applied clean (cycle-026 dispatch-5). 5 navigational repoints: 2 L0 overviews (linalg-operator-file.md §Notes/§Referenced-from + mpi-globalsum §Referenced-from — nrm2_weighted/dot_bilinear candidate-slugs → live matrix-weighted-norm/bilinear-form links), concepts/dependency-map.md (pruned stale orthog→plane-rotation-stream L1-tier edge), concepts/negative-result-slice.md (added sparse_triangular_solve reciprocal-membership row). 3 OQs RESOLVED + 1 ADDRESSED-AT-L0 (residual bilinear-form.md:416 dot_bilinear provenance note routed to follow-up). Pure hygiene, zero content authoring, zero gate hits."
 
 # CYCLE: rough-in naming-residue L0 hygiene sweep

@@ -14,7 +14,7 @@ inputs:
   - palace/linalg/iterative.hpp (GmresSolver rotation-register declarations)
   - OQ: incremental-least-squares-as-future-L2-firstclass-entry (≡ plan l2-named-composition-lifts), gmres-givens-stream-as-step-kernel-borderline, l2-ksp-solve-materialise-iterate-incremental-least-squares-cite-tightening
 integrated_at: 2026-05-29T203000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1de17ed
 integration_notes: "Applied clean (cycle-026 dispatch-2). L2 incremental-least-squares STUB→FIRM (GMRES/FGMRES running-QR / Givens-rotation stream, iterative.cpp); L2/index stub row replaced in place + SUMMARY (stub)-suffix dropped. L2 firm 8→9; the l2-named-composition-lifts cohort is COMPLETE (orthogonalize + incremental-least-squares both firm). 4 OQ dispositions; l2-ksp-solve-materialise-iterate cite-tightening now ACTIONABLE; new givens.md:29 source-staleness OQ. Zero gate hits."
 
 # CYCLE: Formalize incremental-least-squares at L2

@@ -12,7 +12,7 @@ inputs:
   - book/src/L1/{apply_linop,ksp_solve,scal,apply_nonlinear_pencil}.md (RHS leaves, all firm)
   - book/src/L3/eigsolve.md (partial-obstruction boundary, cycle-024)
 integrated_at: 2026-05-29T203000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1de17ed
 integration_notes: "Applied clean (cycle-026 dispatch-6c). Additive verified_against: YAML block (15 entries, all verdict:supports) appended at EOF; theme stays firm, ZERO content/status change. COMPLETES the lowering-verifier verified_against: audit cohort for all 3 cycle-025-new firm themes (jacobian-action 24 / eigenvalue-correction 19 / eigsolve-spectral-transform 15). Zero gate hits."
 
 # CYCLE: Audit eigsolve-spectral-transform-composition
