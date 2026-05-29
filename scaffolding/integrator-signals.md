@@ -37,6 +37,52 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-023 — 2026-05-29T1046Z
+
+(SECOND primary cycle of meta-batch-6 — cycles 022/023/024. **The batch-6 meta-phase fires after the cycle-024 finalize commit** — does NOT fire this cycle. **CRASH-RECOVERED:** a machine crash interrupted the cycle after all six `integrator-per-report` runs had completed + staged; `integrator-finalize` resumed clean from the authoritative STAGING.md + working-tree cross-check, no per-report re-application/reconciliation needed. 6 dispatches → 6 applied clean (all wave-1); staging reconcile clean (6 rows == 6 dispatched ready reports). Build: `cargo make book` exit 0, zero build-repairs, no dead-link errors.)
+
+### Unblocked
+- **The L3 `eigsolve` backfill (chain step 3)** is now UNBLOCKED — `book/src/L2/eigsolve.md` landed firm this cycle (chain step 2), and `book/src/L3/eigsolve.md` was materialized as a `stub` (its home). The strict prerequisite chain is now L1-firm (cycle-022) → L2-firm (cycle-023, DONE) → **L3 backfill (UNBLOCKED, the stub is its home)**, predicted terminal status `partial-obstruction` (the eigen-iteration loop is opaque-library-owned — SLEPc `EPSSolve` / ARPACK RCI, no Palace-authored kernel/driver pair). — OQ `eigsolve-l2-firm-landed-chain-step-2-done-l3-backfill-unblocked` / `eigsolve-l3-stub-materialized-cycle-024-backfill-refines-in-place` / `l3-eigsolve-linear-evp-has-no-krylov-step-kernel-analog`
+- **The eigsolve L2>L1 spectral-transform-composition lowering theme** is now authorable (the L2 `eigsolve` firm anchor exists) — narrates the `apply_shift_invert = apply_linop(M) ▷ ksp_solve((K − σM)⁻¹)` composition lowering forward into L1. — OQ `eigsolve-l2-l1-spectral-transform-composition-lowering-theme-needed`
+- **The remaining NLEPS interior atoms** (Jacobian-action + eigenvalue-correction) are the next fan-out-ranked NLEPS L1 pieces now that `nleps_deflated_solve` landed firm. — OQ `nleps-interior-atoms-remaining-jacobian-action-and-eigenvalue-correction`
+- **The `nleps_deflated_solve` L1>L0 lowering theme** is now authorable (the L1 anchor is firm). The `apply_nonlinear_pencil` L1>L0 leaf is the other still-unthemed NLEPS L1>L0 forward-reference. — OQ `nleps-deflated-solve-l1-l0-lowering-theme` / `nleps-deflated-residual-l1-l0-interior-leaf-themes-still-forward-referenced`
+- **A `concepts/eigsolve` page** is still absent despite the now-firm L1 + L2 `eigsolve` entries (a layer-intro-author candidate). — OQ `concepts-eigsolve-page-still-absent`
+
+### New dependencies
+- `book/src/L1/nleps_deflated_solve.md` (NEW firm) → the firm L1 leaves (`ksp_solve`, `lu_solve`, `dot`, …); the Schur-complement deflated block solve at `nleps.cpp:504-537`; the next fan-out-ranked NLEPS interior piece. L1 firm 16→17. — report 1
+- `book/src/L2/eigsolve.md` (NEW firm) → `ksp_solve` (L2; the inner solve inverting the shifted operator) + `apply_linop` / `apply_nonlinear_pencil` (L1; the M/PEP-block / NEP operand applies); the named shift-invert spectral-transform composition. Chain step 2. L2 firm 7→8. — report 3
+- `book/src/L3/eigsolve.md` (NEW `stub`) → claim-free placeholder; the chain step-3 home (implied-component stub, ≥2 converging refs). Refined in place cycle-024. — report 3 (discretionary stub)
+- `book/src/L1-L0/lu-solve-mutation-rotation.md` (NEW firm) → L0 inline-Eigen sites (`nleps.cpp` full-pivot-LU, `romoperator.{cpp,hpp}` full-pivot-QR) + the firm L1 `lu_solve` anchor; 2 sub-patterns + load-bearing factorization-kernel axis. Discharges the `lu_solve` half of the NLEPS L1>L0 cohort. — report 4
+- `book/src/L1-L0/nleps-deflated-residual-mutation-rotation.md` (NEW firm) → L0 `nleps.cpp:547-577` (`compute_residual` lambda) + `:329-347` (MatVecMult) + the firm L1 `nleps_deflated_residual` anchor; 3 sub-patterns. Discharges the `nleps_deflated_residual` half of the cohort. — report 5
+- `book/src/L2-L1/orthogonalize-composition-lowering.md` (stays firm; +`verified_against:` 17-citation yaml) → orthog.hpp ×5 + iterative.cpp/romoperator.cpp dispatch/consumers ×6 + test-orthog.cpp ×4 + cross-theme delegation anchors ×3; confirming audit, no status flip. 0 count delta. — report 6
+- `book/src/L1/index.md` semantic-motif taxonomy 4→6 (motif 5 operator-introspection + motif 6 coordinate-space dense direct algebra) + §Working-Notes eigsolve-firm bullet; navigational, 0 count delta. — report 2
+
+### Resolution implications
+- `eigsolve-l1-firm-landed-chain-step-1-done-l2-entry-unblocked` (cycle-022) — **answered** — the L2 entry landed firm this cycle (chain step 2 done).
+- `nleps-deflated-solve-is-next-fan-out-ordered-nleps-piece-and-l2-deflate-gram-positive-site` (cycle-022) — **partially-answered** — `nleps_deflated_solve` landed firm (the NLEPS-piece half); the deflate-positive-site half is **NEGATIVE** (the bare `(XᴴX)⁻¹` Galerkin core never appears — only ever Schur-wrapped), so the `deflate` promotion gate STAYS OPEN against a positive bare-Gram-solve site outside `nleps.cpp`.
+- `lu-solve-mutation-rotation-l1-l0-theme-needed` / `nleps-deflated-residual-l1-l0-lowering-theme-needed` (cycle-022) — **answered** — both L1>L0 themes landed firm this cycle.
+- `orthogonalize-composition-lowering-three-way-delegation-boundary-audit` (cycle-022) — **answered** — the lowering-verifier audit confirms fully-supported, theme stays firm; also discharges the cycle-019 `orthogonalize-composition-lowering-l2-l1-theme` (was blocked on the L2 anchor) + the L2>L1 side of `orthogonalize-mutation-rotation-l1-l0-theme-should-cite-dot-subpattern-d`.
+- `deflate-l2-partly-constructive-landed-promotion-gates-on-positive-galerkin-site` (cycle-022) — **needs-more** — CONFIRMED the gate stays open by this cycle's `nleps_deflated_solve` read; not closable until a positive bare-Gram-solve site surfaces.
+
+### Suggested next dispatches
+- (`harvester`/`lowering-verifier`, **L3 `eigsolve` backfill**) — chain step 3; refines the materialized stub in place; predicted `partial-obstruction` (the eigen-iteration loop does not lift).
+- (`harvester`, **`nleps_deflated_solve` adjacent NLEPS interior atoms** — Jacobian-action + eigenvalue-correction) — the remaining NLEPS L1 pieces.
+- (`abstractor`, **`nleps_deflated_solve` L1>L0 theme**) + optionally the `apply_nonlinear_pencil` L1>L0 leaf — closes the NLEPS L1>L0 cohort.
+- (`abstractor`, **`gram-fold-specialization` + `deflate-composition-lowering` L2>L1 themes**) — carried from cycle-022, not picked this cycle.
+- (`lifter`/`lowering-verifier`, **`dot-mutation-rotation` §Sub-pattern D `orthog.hpp:34`→`:35` one-token fix**) — at lines ~160, ~183; mechanical anchor correction.
+
+### Wave-conflict observations
+- **`book/src/L1/index.md` shared between report 1 (`nleps_deflated_solve` harvest — Firm-count headline 16→17 + firm-list bullet + dep-map row) and report 2 (motif refresh — §Semantics motif list + §Working-Notes), DISJOINT regions.** Report 2 re-read disk first, confirmed report 1's three landings present, then edited its non-overlapping regions. No reconciliation needed.
+- **`book/src/L1-L0/index.md` + `book/src/SUMMARY.md` shared between reports 4 + 5 (the two L1>L0 abstractor themes).** Report 5 re-read disk first, confirmed report 4's firm row + SUMMARY entry, then inserted its own at distinct (upstream) positions. Clean serial handoff.
+- **In-cycle implied-component stub + live-link upgrade** — report 3 materialized the `L3/eigsolve.md` stub and, in the same apply, upgraded the L2 §"Lifts to" plain-text forward-reference (the repairer's de-link fallback) back to a live link. The canonical implied-component-stub resolution, preferred over plain-text-defer per the directive; build-safe.
+
+### Integration-tooling friction
+- **Machine-crash recovery — finalize resumed from a fully-staged state (NEW; recovery-not-normal-path).** A machine crash interrupted the cycle after all six per-report integrators had completed + staged. Finalize recovered idempotently from the authoritative STAGING.md + working-tree cross-check (6 rows == 6 dispatched ready reports, all `applied`); no per-report re-application or working-tree reconciliation was needed. Validates the split-integrator design's crash-resilience (the staging log + on-disk artifact are sufficient to resume finalize). Batch-6 meta-phase: a clean crash/resume, no tooling gap surfaced — recorded as evidence of the design holding under a real interruption.
+- **Carry-forward inline-anchor drift: `orthog.hpp:34`→`:35`** in `book/src/L1-L0/dot-mutation-rotation.md` §Sub-pattern D (lines ~160, ~183; line 34 is the brace `{`, the `return LocalDot(x, y);` is `:35`). Out of the orthogonalize-audit's scope (a different existing file); routed as OQ for a future dot-mutation-rotation pass. Continues the inline-anchor-drift pattern feeding the batch-5-escalated codemap-backed citation-checker ASK (user decision pending).
+- **Repaired-CYCLE.md fence handling held for both paths.** Report 4 (`lu-solve-mutation-rotation`) used 4-space-indented inner samples (the cycle-019 fence-truncation guard); report 5 (`nleps-deflated-residual`) kept nested `text` fences intact (firm apparatus fully enclosed, no truncation). Both clean — the cycle-019/020/021 fence guidance continues to hold.
+
+---
+
 ## cycle-022 — 2026-05-29T1130Z
 
 (FIRST primary cycle of meta-batch-6 — cycles 022/023/024. **The batch-6 meta-phase fires after the cycle-024 finalize commit** — does NOT fire this cycle. 9 dispatches → 9 applied clean (7 wave-1 + 2 wave-2); staging reconcile clean (9 rows == 9 dispatched ready reports). Build: `cargo make book` exit 0, zero build-repairs, no dead-link errors.)

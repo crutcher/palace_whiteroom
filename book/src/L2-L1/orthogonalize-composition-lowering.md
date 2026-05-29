@@ -403,3 +403,83 @@ Sub-pattern D delegation boundary) is the standard follow-up, not a status reduc
   L1↔L2-test bar carries through from the sibling
   [`linear-combination-fold-specialization`](./linear-combination-fold-specialization.md)
   (which records the same inherited caveat).
+
+```yaml
+verified_against:
+  # L0 source — orthog.hpp (header-only; orthog.cpp does not exist)
+  - citation: palace/linalg/orthog.hpp:18-23
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: no-output-normalisation scope contract (applicability condition 2); text at :22.
+  - citation: palace/linalg/orthog.hpp:29-36
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: IdentityInnerProduct hook; return LocalDot(x, y) at :35 (NOT :34 — line 34 is the brace). Sub-pattern D pointer.
+  - citation: palace/linalg/orthog.hpp:41-53
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: OrthogonalizeColumnMGS; dot :49, Mpi::GlobalSum(1,&H[j]) :50, w.Add :51 — one interleaved j-loop, m size-1 reductions.
+  - citation: palace/linalg/orthog.hpp:57-74
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: OrthogonalizeColumnCGS non-refine; if(m==0) :62, m local dots, Mpi::GlobalSum(m,H) :70, m w.Adds — 1 size-m reduction.
+  - citation: palace/linalg/orthog.hpp:75-88
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: CGS2 if(refine) block :75; H[j] += dH[j] accumulate :85; second size-m reduction — [CGS]x2, non-fusible.
+  # L0 dispatch + consumers
+  - citation: palace/linalg/iterative.cpp:308-325
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: OrthogonalizeIteration switch(type); CGS2 = OrthogonalizeColumnCGS(...,true) at :322; variant bound+dispatched once.
+  - citation: palace/models/romoperator.cpp:51-66
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: ROM OrthogonalizeColumn sibling; threads dot_op hook through all 3 cases; CGS2 = refine=true at :65.
+  - citation: palace/models/romoperator.cpp:631-646
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: B-weighted op.dot substitution; W.InnerProduct(x,y,r.Real()) at :636 (L2 law 7 hook-invariance witness).
+  - citation: palace/linalg/iterative.cpp:630-632
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: GMRES consumer; OrthogonalizeIteration :630 then Norml2 :631 + scal :632 — normalisation is the caller's (condition 2).
+  - citation: palace/linalg/iterative.cpp:809-811
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: FGMRES consumer; byte-identical OrthogonalizeIteration + Norml2 + scal pattern.
+  - citation: palace/models/romoperator.cpp:224-226
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: ROM consumer; OrthogonalizeColumn :224 then Norml2 :225 + scal :226.
+  # L0 tests (L0-equivalent)
+  - citation: test/unit/test-orthog.cpp:99-120
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: empty-prefix edge; GENERATE(MGS,CGS,CGS2), m=0, CHECK_THAT(w, RangeEquals(w_orig)) :120 — law 3 across all variants.
+  - citation: test/unit/test-orthog.cpp:123-160
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: parametric real; GENERATE(MGS,CGS,CGS2); orthogonality assertion CHECK_THAT(dot, WithinAbs(0.0,1e-12)) :158, loop :154-159 — variant-agreement witness.
+  - citation: test/unit/test-orthog.cpp:276
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: weighted-real-1 TEST_CASE boundary — B-weighted op.dot variant witness.
+  - citation: test/unit/test-orthog.cpp:333
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: weighted-complex-1 TEST_CASE boundary — B-weighted op.dot variant witness.
+  # Cross-theme delegation boundaries (the three-way partition — clean, no overlap/gap)
+  - citation: book/src/L1-L0/dot-mutation-rotation.md:146-187
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: §Sub-pattern D — inner-product collective unfusing; cited not re-derived (boundary 2). Clean partition vs stage-selection orchestration. SEE carry-forward — Sub-pattern D's own :34 anchor for LocalDot is stale (should be :35); that is the cited theme's defect, not this theme's.
+  - citation: book/src/L1-L0/orthogonalize-mutation-rotation.md
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: L1>L0 in-place w.Add candidate-buffer rebinding (boundary 3); cited not re-derived. Owns the in-place mechanics (its :59/:94/:133, aliasing condition :177).
+  - citation: book/src/L2/orthogonalize.md:166-220
+    verdict: supports
+    audited_at: 2026-05-29T092943Z
+    note: laws 4 (variant agreement) + 5 (idempotence-as-CGS2) + 7 (hook invariance) + floating-point non-law — all hold; the dispatch rule IS these laws read-as-lowering.
+```

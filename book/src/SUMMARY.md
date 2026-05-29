@@ -28,6 +28,7 @@
 - [scal](./L3/scal.md)
 - [chebyshev](./L3/chebyshev.md)
 - [ksp_solve](./L3/ksp_solve.md)
+- [eigsolve (stub)](./L3/eigsolve.md)
 
 # L3 > L2 — Lowering
 - [Overview](./L3-L2/index.md)
@@ -45,6 +46,7 @@
 - [ksp_solve](./L2/ksp_solve.md)
 - [gram](./L2/gram.md)
 - [deflate](./L2/deflate.md)
+- [eigsolve](./L2/eigsolve.md)
 
 # L2 > L1 — Lowering
 - [Overview](./L2-L1/index.md)
@@ -73,6 +75,7 @@
 - [apply_nonlinear_pencil](./L1/apply_nonlinear_pencil.md)
 - [nleps_deflated_residual](./L1/nleps_deflated_residual.md)
 - [lu_solve](./L1/lu_solve.md)
+- [nleps_deflated_solve](./L1/nleps_deflated_solve.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -88,10 +91,12 @@
 - [chebyshev-smoother-mutation-rotation](./L1-L0/chebyshev-smoother-mutation-rotation.md)
 - [divfree-projector-mutation-rotation](./L1-L0/divfree-projector-mutation-rotation.md)
 - [dot-mutation-rotation](./L1-L0/dot-mutation-rotation.md)
+- [nleps-deflated-residual-mutation-rotation](./L1-L0/nleps-deflated-residual-mutation-rotation.md)
 - [nrm2-mutation-rotation](./L1-L0/nrm2-mutation-rotation.md)
 - [scal-mutation-rotation](./L1-L0/scal-mutation-rotation.md)
 - [assemble-diagonal-mutation-rotation](./L1-L0/assemble-diagonal-mutation-rotation.md)
 - [matrix-weighted-norm-mutation-rotation (stub)](./L1-L0/matrix-weighted-norm-mutation-rotation.md)
+- [lu-solve-mutation-rotation](./L1-L0/lu-solve-mutation-rotation.md)
 
 # L0 — Cited Palace Source + Reference Notes
 - [Overview](./L0/index.md)
