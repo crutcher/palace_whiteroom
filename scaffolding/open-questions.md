@@ -17,6 +17,8 @@ Three live sections: **Open — migrated to the plan** (pointers) · **Open — 
 
 These are genuinely-open AND actionable; they are tracked in `scaffolding/priorities.md` (the plan), ranked by fan-out impact. The pointer stays here so the ledger remains a complete index of open issues; the plan is the owner.
 
+**Stub homes materialized 2026-05-28:** most of these now have claim-free `stub` entries in the artifact (L2 `inner_product`/`orthogonalize`/`incremental-least-squares`/`ksp_solve`; L2-L1 `inner-product-fold-specialization`; L1-L0 `dot`/`nrm2`/`scal`/`matrix-weighted-norm`-mutation-rotation; L1 `assemble-diagonal`). The constituent OQ slugs below remain the refinement tracking; the work is now "firm the stub in place."
+
 - **l2-named-composition-lifts** → plan Backlog (High fan-out). Firm L2 `orthogonalize` + `incremental-least-squares`; carries `L2-layer-intro-refresh-for-named-compositions`. (Constituent OQs: `orthogonalize-as-future-L2-firstclass-entry`, `incremental-least-squares-as-future-L2-firstclass-entry`, `L2-layer-intro-refresh-for-named-compositions`.)
 - **ksp-solve-l2-promotion-non-identity-substantive-gap** → plan Backlog (High fan-out). L2 `ksp_solve` outer-driver framing.
 - **l3-vocabulary-inventory-gap** → plan Backlog (High fan-out). L3 backfill beyond BLAS-1 (gemv/trsv/ksp_solve/eigsolve).

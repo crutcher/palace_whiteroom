@@ -37,11 +37,16 @@
 - [krylov-step](./L2/krylov-step.md)
 - [chebyshev-iteration](./L2/chebyshev-iteration.md)
 - [linear_combination](./L2/linear_combination.md)
+- [inner_product (stub)](./L2/inner_product.md)
+- [orthogonalize (stub)](./L2/orthogonalize.md)
+- [incremental-least-squares (stub)](./L2/incremental-least-squares.md)
+- [ksp_solve (stub)](./L2/ksp_solve.md)
 
 # L2 > L1 — Lowering
 - [Overview](./L2-L1/index.md)
 - [chebyshev-iteration-fusion](./L2-L1/chebyshev-iteration-fusion.md)
 - [linear-combination-fold-specialization](./L2-L1/linear-combination-fold-specialization.md)
+- [inner-product-fold-specialization (stub)](./L2-L1/inner-product-fold-specialization.md)
 
 # L1 — Mutation-Lifted Forms
 - [Overview](./L1/index.md)
@@ -59,6 +64,7 @@
 - [orthogonalize](./L1/orthogonalize.md)
 - [chebyshev-smoother](./L1/chebyshev-smoother.md)
 - [divfree-projector](./L1/divfree-projector.md)
+- [assemble-diagonal (stub)](./L1/assemble-diagonal.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -73,6 +79,10 @@
 - [minres-iteration](./L1-L0/minres-iteration.md)
 - [chebyshev-smoother-mutation-rotation](./L1-L0/chebyshev-smoother-mutation-rotation.md)
 - [divfree-projector-mutation-rotation](./L1-L0/divfree-projector-mutation-rotation.md)
+- [dot-mutation-rotation (stub)](./L1-L0/dot-mutation-rotation.md)
+- [nrm2-mutation-rotation (stub)](./L1-L0/nrm2-mutation-rotation.md)
+- [scal-mutation-rotation (stub)](./L1-L0/scal-mutation-rotation.md)
+- [matrix-weighted-norm-mutation-rotation (stub)](./L1-L0/matrix-weighted-norm-mutation-rotation.md)
 
 # L0 — Cited Palace Source + Reference Notes
 - [Overview](./L0/index.md)
