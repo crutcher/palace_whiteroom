@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T105500Z
 scope: L1 operator: nleps_jacobian_action
 status: pending
 integrated_at: 2026-05-29T140000Z
-integration_commit: INTEGRATION_COMMIT_SHA
+integration_commit: f3be056
 integration_notes: "Applied cycle-024 (staging row 1). Firm L1 operator nleps_jacobian_action landed; L1 firm 17→18. New chapter book/src/L1/nleps_jacobian_action.md + L1/index.md (Firm count + cohort bullet + dep-map) + SUMMARY.md. No gate hits."
 inputs:
   - book/src/L1/apply_nonlinear_pencil.md (firm sibling — Jacobian recorded as deferred follow-up at its law 5 / :111)

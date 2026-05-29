@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T10:55:00Z
 scope: L1>L0 theme sketch — apply-nonlinear-pencil-mutation-rotation
 status: pending
 integrated_at: 2026-05-29T140000Z
-integration_commit: INTEGRATION_COMMIT_SHA
+integration_commit: f3be056
 integration_notes: "Applied cycle-024 (staging row 4). Firm L1>L0 theme apply-nonlinear-pencil-mutation-rotation landed (last NLEPS L1>L0 leaf); NLEPS L1>L0 cohort COMPLETE. New chapter + L1-L0/index.md dep-map row + SUMMARY.md. Citation nleps.cpp:810-811 kept verbatim per dispatch (no :809-810 shift). No gate hits."
 inputs:
   - book/src/L1/apply_nonlinear_pencil.md (firm L1 operator, cycle-021/022)

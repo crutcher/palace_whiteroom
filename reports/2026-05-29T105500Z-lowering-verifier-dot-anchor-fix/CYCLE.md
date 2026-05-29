@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T105500Z
 scope: L1>L0 theme audit — dot-mutation-rotation §Sub-pattern D (carry-forward anchor fix orthog.hpp:34→:35)
 status: pending
 integrated_at: 2026-05-29T140000Z
-integration_commit: INTEGRATION_COMMIT_SHA
+integration_commit: f3be056
 integration_notes: "Applied cycle-024 (staging row 8). dot-mutation-rotation §Sub-pattern D anchor fix orthog.hpp:34→:35 (lines 160 + 183) + verified_against: yaml append; theme stays firm. RESOLVES cycle-023 carry-forward OQ :847. Sole retroactive-evidence edit this cycle (per-slice retroactive count = 1, well under thresholds)."
 inputs:
   - book/src/L1-L0/dot-mutation-rotation.md (§Sub-pattern D, lines 146-187)

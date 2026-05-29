@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T105500Z
 scope: L2>L1 theme sketch — gram-fold-specialization
 status: pending
 integrated_at: 2026-05-29T140000Z
-integration_commit: INTEGRATION_COMMIT_SHA
+integration_commit: f3be056
 integration_notes: "Applied cycle-024 (staging row 5). Firm L2>L1 theme gram-fold-specialization landed (matrix-valued sibling of inner-product-fold-specialization). New chapter + L2-L1/index.md theme row + SUMMARY.md. Fence parity verified (8 backtick lines = 4 text pairs; 2 display-math pairs). No gate hits."
 inputs:
   - book/src/L2/gram.md (firm cycle-022 — the LHS all-pairs inner_product fold)

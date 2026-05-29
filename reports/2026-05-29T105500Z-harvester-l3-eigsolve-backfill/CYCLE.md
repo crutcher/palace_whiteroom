@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T105839Z
 scope: L3 operator: eigsolve
 status: pending
 integrated_at: 2026-05-29T140000Z
-integration_commit: INTEGRATION_COMMIT_SHA
+integration_commit: f3be056
 integration_notes: "Applied cycle-024 (staging row 7). L3 eigsolve refined stub→partial-obstruction (second L3 partial-obstruction, first opaque-library one); eigsolve L1→L2→L3 chain COMPLETE. Refined book/src/L3/eigsolve.md in place + L3/index.md dep-map row + SUMMARY.md (stub) relabel. Confirms cycle-021 prediction (no krylov-step kernel analog). No gate hits."
 inputs:
   - book/src/L3/eigsolve.md (the stub materialized cycle-023; carries Implied-by provenance)

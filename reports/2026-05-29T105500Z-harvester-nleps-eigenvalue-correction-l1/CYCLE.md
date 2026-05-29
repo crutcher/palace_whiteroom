@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T105500Z
 scope: L1 operator: nleps_eigenvalue_correction
 status: pending
 integrated_at: 2026-05-29T140000Z
-integration_commit: INTEGRATION_COMMIT_SHA
+integration_commit: f3be056
 integration_notes: "Applied cycle-024 (staging row 2). Firm L1 operator nleps_eigenvalue_correction landed (fifth/final NEP-interior atom); L1 firm 18→19, NEP-interior cohort COMPLETE. New chapter + L1/index.md + SUMMARY.md; jacobian-action forward-ref upgraded to live link. No gate hits."
 inputs:
   - book/src/L1/nleps_deflated_solve.md (firm sibling, cycle-023)

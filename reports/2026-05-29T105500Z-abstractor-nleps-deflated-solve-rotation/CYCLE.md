@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T105500Z
 scope: L1>L0 theme sketch — nleps-deflated-solve-mutation-rotation
 status: pending
 integrated_at: 2026-05-29T140000Z
-integration_commit: INTEGRATION_COMMIT_SHA
+integration_commit: f3be056
 integration_notes: "Applied cycle-024 (staging row 3). Firm L1>L0 theme nleps-deflated-solve-mutation-rotation landed; ENACTS OQ :784. New chapter + L1-L0/index.md dep-map row + SUMMARY.md. Confirms (does not change) the deflate Galerkin-core promotion gate stays open. No gate hits."
 inputs:
   - book/src/L1/nleps_deflated_solve.md (firm L1 operator, cycle-023)

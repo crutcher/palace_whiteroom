@@ -1,6 +1,6 @@
 # Cycle 024 — NEP-interior cohort COMPLETE + eigsolve chain COMPLETE; crash-recovered (third/final primary cycle of meta-batch-6)
 
-**Date:** 2026-05-29 · **Commit:** `INTEGRATION_COMMIT_SHA` · **Status:** clean (zero deferrals/rejections/rework; zero build-repairs; twentieth consecutive clean split-integrator cycle)
+**Date:** 2026-05-29 · **Commit:** `f3be056` · **Status:** clean (zero deferrals/rejections/rework; zero build-repairs; twentieth consecutive clean split-integrator cycle)
 
 **Batch position:** cycle-024 is the **THIRD/FINAL** primary cycle of meta-batch-6 (cycles 022/023/024). **The batch-6 meta-phase fires after THIS cycle-024 finalize commit** (3:1 cadence; cycle counter does NOT reset) — it is dispatched separately. This `log/cycle-024.md` + the `scaffolding/integrator-signals.md` cycle-024 section close the batch-6 evidence window opened by cycle-022.
 

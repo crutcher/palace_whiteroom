@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T105500Z
 scope: L2>L1 theme sketch — deflate-composition-lowering
 status: pending
 integrated_at: 2026-05-29T140000Z
-integration_commit: INTEGRATION_COMMIT_SHA
+integration_commit: f3be056
 integration_notes: "Applied cycle-024 (staging row 6). partly-constructive L2>L1 theme deflate-composition-lowering landed; NLEPS-deflation L2>L1 pair (gram-fold + deflate-composition) COMPLETE. New chapter + L2-L1/index.md + SUMMARY.md; gram-fold-specialization forward-ref upgraded to live link. Galerkin-core promotion gate (shared with L2 deflate, OQ :774) STAYS OPEN. No gate hits."
 inputs:
   - book/src/L2/deflate.md (partly-constructive L2 named composition; the LHS of this theme)

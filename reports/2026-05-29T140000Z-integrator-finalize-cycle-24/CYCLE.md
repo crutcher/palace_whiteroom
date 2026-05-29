@@ -13,7 +13,7 @@ reports_deferred: 0
 reports_rejected: 0
 gate_hits_total: 1
 build: clean (cargo make book exit 0, zero build-repairs)
-integration_commit: INTEGRATION_COMMIT_SHA
+integration_commit: f3be056
 crash_recovery: true
 ---
 
