@@ -62,10 +62,10 @@ Or for orthogonalization (cycle 23):
 ## Variant axes
 
 - `gs_orthog` ∈ {`MGS`, `CGS`, `CGS2`}: residual-axis (primitive-sequence diverges; see L2 §collective-shape)
-  - `MGS`: sequential `[dot, axpy] × m` — load-bearing primitive: per-step `dot` + `axpy` with sync-per-step.
-  - `CGS`: batched `[dot × m, allreduce_sum, gemv_basis]` — load-bearing primitive: `gemv_basis` (rank-1 fused).
-  - `CGS2`: `[CGS chain] × 2 + [axpy_scalar]` — load-bearing primitive: refinement re-entry with stability threshold scalar.
-  - State binding: shared `V[0..j]` basis; CGS2 additionally captures `refine_threshold` scalar in setup.
+  - `MGS`: sequential `[dot, axpy] × m` — load-bearing primitive: per-step `dot` + `axpy` with sync-per-step (`m` size-1 `Mpi::GlobalSum` collectives interleaved with `w.Add`).
+  - `CGS`: batched `[dot × m, allreduce_sum, axpy × m]` — ONE size-`m` `Mpi::GlobalSum`, then `m` plain `w.Add` (`axpy`) subtractions. NOTE: plain `w.Add`, **NOT** a fused `gemv_basis` — Palace's `OrthogonalizeColumnCGS` (`orthog.hpp:65-89`) does not fuse the rank-1 basis update.
+  - `CGS2`: `[CGS chain] × 2` — the second pass is **unconditional** (no `refine_threshold`; the `refine` branch always runs). `dH` is pass-local.
+  - State binding: shared `V[0..j]` basis only. No `refine_threshold` scalar is read (the cycle-019-corrected shape — the earlier example wrongly listed a threshold-gated second pass + a fused `gemv_basis`; verified against `orthog.hpp:65-89`).
 ```
 
 The slice's L1 state schema and procedure must be consistent — each

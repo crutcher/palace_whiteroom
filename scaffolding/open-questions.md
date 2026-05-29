@@ -7,7 +7,7 @@
 - At **every meta-phase**, the meta-phase runs the unification pass (see `.claude/agents/meta-phase.md` §OQ-ledger unification): triage each `Open` entry against the firm artifact → **close** (resolved/stale/duplicate), **migrate** (actionable → `priorities.md` backlog, ranked by fan-out impact), or **keep** (deferred/contingent, one-liner + trigger). Methodology/policy questions only the human can resolve are flagged `routes to meta-phase / human` and surfaced as an `ask`.
 - `cycle-planner` reads this ledger each primary cycle for fresh-intake plan candidates; it does not edit it.
 
-**Last unified:** 2026-05-28 (founding pass; reduced ~3040 lines / 89-stale-laden-`Open` + ~53 buried-open-in-`Answered` → the three-section shape below). Full prior answer prose lives in git history.
+**Last unified:** 2026-05-29 (batch-5 meta-phase, post-cycle-021; closed ~21 batch-5-resolved OQs to the Closed index + adjudicated all 4 next-meta-phase methodology-agenda items + migrated the batch-5 actionable intake into the plan). Prior: 2026-05-28 (founding pass; ~3040 lines / 89-stale-laden-`Open` + ~53 buried-open-in-`Answered` → the three-section shape). Full prior answer prose lives in git history.
 
 Three live sections: **Open — migrated to the plan** (pointers) · **Open — deferred / contingent** (waiting on a trigger) · **Closed (index)**.
 
@@ -19,18 +19,21 @@ These are genuinely-open AND actionable; they are tracked in `scaffolding/priori
 
 **Stub homes materialized 2026-05-28:** most of these now have claim-free `stub` entries in the artifact (L2 `inner_product`/`orthogonalize`/`incremental-least-squares`/`ksp_solve`; L2-L1 `inner-product-fold-specialization`; L1-L0 `dot`/`nrm2`/`scal`/`matrix-weighted-norm`-mutation-rotation; L1 `assemble-diagonal`). The constituent OQ slugs below remain the refinement tracking; the work is now "firm the stub in place."
 
-- **l2-named-composition-lifts** → plan Backlog (High fan-out). Firm L2 `orthogonalize` + `incremental-least-squares`; carries `L2-layer-intro-refresh-for-named-compositions`. (Constituent OQs: `orthogonalize-as-future-L2-firstclass-entry`, `incremental-least-squares-as-future-L2-firstclass-entry`, `L2-layer-intro-refresh-for-named-compositions`.)
-- **ksp-solve-l2-promotion-non-identity-substantive-gap** → plan Backlog (High fan-out). L2 `ksp_solve` outer-driver framing.
-- **l3-vocabulary-inventory-gap** → plan Backlog (High fan-out). L3 backfill beyond BLAS-1 (gemv/trsv/ksp_solve/eigsolve).
-- **blas1-l1-l0-lowering-theme-gap** → plan Backlog (High fan-out). Standalone L1>L0 themes for `dot`/`nrm2`/`scal`. (Constituent OQs: `l1-l0-dot-lowering-asymmetry`, `nrm2-lowering-theme-deliverables`, `scal-mutation-rotation-l1-l0-theme`, `nrm2-std-abs-defensive-guard-classification`.)
+- **l2-named-composition-lifts** → plan Backlog (Medium; `orthogonalize` firmed cycle-019; remaining: `incremental-least-squares` stub→firm). Carries `L2-layer-intro-refresh-for-named-compositions` (now part of a low-fan-out L2-index-prose-refresh cohort).
+- ~~**ksp-solve-l2-promotion-non-identity-substantive-gap**~~ — **RESOLVED cycle-021** (Closed index). L2 `ksp_solve` outer-driver firm.
+- **l3-vocabulary-inventory-gap** → plan Backlog (High fan-out; `gemv` done-via-`apply_linop`, `ksp_solve` done cycle-020). REMAINING: `eigsolve` (BLOCKED on the strict L1-firm→L2-entry→L3 prerequisite chain — see plan) + `trsv` (BLOCKED, no L1 anchor; likely obstruction-theme target).
+- **blas1-l1-l0-lowering-theme-gap** → plan Backlog (High fan-out; `dot`/`scal`/`nrm2`/`assemble-diagonal`/`axpby` firm — floor 7/8). REMAINING: `axpbypcz-mutation-rotation` callsite-correction + firm (closes 8/8; cycle-022). (Constituent OQ `axpbypcz-mutation-rotation-callsite-correction-and-firm`.)
 - **matrix-weighted-norm + bilinear-form firm-promotion** → plan Backlog (Medium). Mutation-rotation theme + variant-axis/test-coverage gates. (Constituent OQs: `matrix-weighted-norm-mutation-rotation-l1-l0-theme`, `matrix-weighted-norm-mixed-element-type-variant`, `bilinear-form-real-vector-coverage-gap`, `bilinear-form-variant-axis-test-coverage`.)
 - **normalize-l1-primitive-harvest** → plan Backlog (Medium). (Constituent OQs: `normalize-as-fused-l1-primitive`, `normalize-and-normalize-b-weighted-l1-candidates`.)
 - **diagonal-extraction-l1** → plan Backlog (Medium). Harvest `AssembleDiagonal` as an operator-to-data L1 primitive. (OQ `assemblediagonal-is-not-apply-linop-variant`.)
 - **rough-in-naming-residue-l0-sweep** → plan Backlog (Low/hygiene). (Constituent OQs: `matrix-weighted-norm-naming-sweep`, `bilinear-form-slug-name-coordination`, `dependency-map-orthog-plane-rotation-stale-edge-prune`, `negative-result-slice-examples-reciprocal-membership`.)
 - **cg-initial-residual-quirk-palace-bug-flag-lift** → plan Backlog (Low). (OQ `cg-initial-residual-quirk-palace-bug-flag-lift-path`.)
 - **floquet-correction-operator-construction-variants** → plan Backlog (Low).
-- **inner_product L2 firm operator** + **L2-L1/inner-product-fold-specialization theme** → plan **Now (active #1/#2)**. (OQs `inner-product-harvester-formalization-and-conjugation-pinning`, `linear-combination-fold-specialization-theme-followups`.)
-- **gmres.md §L4 v0.6→v0.7 self-rotation** + **NLEPS at L1+** → plan **Now (active #3/#4)** (large carry-forwards).
+- ~~**inner_product L2 firm operator** + **L2-L1/inner-product-fold-specialization theme**~~ — **RESOLVED cycle-019** (Closed index; were plan Now #1/#2). The `linear-combination-fold-specialization-theme-followups` were assessed non-blocking (caveats already in that theme; see deferred).
+- ~~**gmres.md §L4 v0.6→v0.7 self-rotation**~~ — **RESOLVED cycle-020** (slice §L4 v0.7; gmres + fgmres L4>L3 themes firm cycle-020/021). **NLEPS at L1+** → plan Backlog (High; `apply_nonlinear_pencil` firm cycle-021; 4 deferred pieces fan-out-ordered — see plan).
+- **lu_solve L1 dense-solve primitive** → plan Backlog (High fan-out — NEW cycle-021). The `fullPivLu().solve` small-dense `k×k` Gram solve; gates `deflate`/`gram` L2 firm. (OQ `deflate-needs-small-dense-lu-solve-primitive`.)
+- **deflate/gram L2 combinator** → plan Backlog (High; rough-in rows cycle-021; firm-gated on `lu_solve`). (OQs `deflate-project-oblique-core-vs-nleps-schur-modification`, `deflate-single-algorithm-concentration-scope-review`, `deflate-vs-orthogonalize-over-unification-guard`.)
+- **L3-entry citation-drift sweep** → plan Backlog (Low/mechanical). L3 `ksp_solve` `:464`→`:463`/`:564`→`:563` + inner-product-fold `operator.cpp` `:624`/`:634`/`:616`. (OQs `l3-ksp-solve-citation-drift-463-563-correction`, `inner-product-fold-specialization-operator-cpp-inline-anchor-drift`.)
 
 ## Open — deferred / contingent
 
@@ -91,12 +94,12 @@ The `nrm2-mutation-rotation` L1>L0 theme firmed up (stub→firm) cycle-019 — f
 - `l0-reference-note-citations-grep-vs-read-discipline` — re-read grep-verified ranges if a future audit extracts algebraic detail. *Trigger:* such an audit consumes those ranges.
 - `iterative-file-helper-citation-granularity` — per-overload helper enumeration if the small-dense kernel becomes load-bearing. *Trigger:* that.
 
-### Routes to meta-phase (methodology codification; next meta-phase agenda)
-Mirrored in `priorities.md` §Next-meta-phase methodology agenda.
-- `variant-absorption-vs-instance-counting-policy` — may already be addressed by the cycle-018 combinator-miner parametric-family mode; confirm at next meta-phase.
-- `combinator-miner-authority-defer-verdict-status-edit-scope` — role-spec authority question.
-- `test-coverage-bounded-rough-in-nomenclature` — canonicalize the status tier (as `partly-constructive` was).
-- `partial-obstruction-status-codification` — codify the status `L3/chebyshev` already uses.
+### Routes to meta-phase (methodology codification) — ALL FOUR ADJUDICATED batch-5 meta-phase (cycle-021); see Closed index
+The 2026-05-28-unification's four parked methodology questions were all adjudicated by the batch-5 meta-phase (cycle-021):
+- `variant-absorption-vs-instance-counting-policy` — **CLOSED-resolved** (Closed index): addressed by the cycle-018 parametric-family mode, confirmed concordant-and-complementary by the cycle-019 + cycle-021 live exercises.
+- `combinator-miner-authority-defer-verdict-status-edit-scope` — **CLOSED-resolved** (Closed index): moot under the universal dispatch-phase write-guard — combinator-miner is proposal-only (emits a rough-in dep-map row; never edits status / emits a binding `defer` verdict); promotion/deferral is the downstream harvester's call.
+- `test-coverage-bounded-rough-in-nomenclature` — **CLOSED-resolved** (Closed index): codified in CLAUDE.md §Methodology invariants as a first-class rough-in qualifier `rough-in (test-coverage-bounded)`.
+- `partial-obstruction-status-codification` — **CLOSED-resolved** (Closed index): codified in CLAUDE.md §Methodology invariants as a first-class L3 status `partial-obstruction`.
 
 ### fem / FE-space family
 *(opened_at: cycle-019, opened_by: layer-intro-author — from the `fespace-file` L0 anchor)*
@@ -233,6 +236,30 @@ One line per slug; full prose in git history. Slugs preserved as cross-reference
 - `linear-combination-harvester-formalization` — resolved cycle-018 — firm L2 chapter + L2>L1 lowering theme landed.
 - `inner-product-fold-sibling-candidate` — answered cycle-018 — inner_product rough-in L2 row landed (harvester/pinning → plan #1/#2).
 - `nested-constructed-operator-gate-concept-and-divfree-correction` — resolved cycle-018 — concept page authored + divfree "first" claims corrected.
+
+### Closed by the batch-5 meta-phase (cycles 019/020/021; 2026-05-29)
+
+- `divfree-mult-doc-irrotational-vs-divfree-stale` — resolved cycle-019 — Palace-internal stale per-method doc-comment (`divfree.hpp:64-66` inverted); authoritative L0 is class-doc `divfree.hpp:28-31` + impl `divfree.cpp:155-190,176`; no artifact defect (firm entries pin correct divfree semantics); upstream comment-fix out of scope.
+- `inner-product-harvester-formalization-and-conjugation-pinning` — resolved cycle-019 — L2 `inner_product` firm, conjugation PINNED arg-1 `xᴴ y`/`xᴴ M y`; was plan Now #1/#2; answer `book/src/L2/inner_product.md`.
+- `inner-product-fold-sibling-candidate` — resolved cycle-019 — firm entry draws the two-sided `inner_product`(reduce-to-Scalar)/`linear_combination`(reduce-to-Tensor[N]) boundary; reciprocated at `linear_combination.md`.
+- `inner-product-fold-specialization-l2-l1-theme` — resolved cycle-019 — `L2-L1/inner-product-fold-specialization.md` firm (conjugation/weight + element-type dispatch + conjugate-pair re-order + per-call reduction trees).
+- `assemblediagonal-is-not-apply-linop-variant` — resolved cycle-019 — `assemble_diagonal` lands its own firm L1 entry with the operator-to-data divide stated; answer `book/src/L1/assemble-diagonal.md`.
+- `nrm2-std-abs-defensive-guard-classification` — resolved cycle-019 — load-bearing defensive non-negativity guard (domain-safety for `sqrt`), not a transparent trick; consistent with `L0/transparent-vs-load-bearing-tricks.md:22`.
+- `nrm2-lowering-theme-deliverables` — resolved cycle-019 — `nrm2-mutation-rotation` firm: four-stage chain + 3 surface forms + variant collapse + abs-guard + MPI-collective.
+- `assemble-diagonal-mutation-rotation` (theme-authoring) — resolved cycle-020 — `assemble-diagonal-mutation-rotation` L1>L0 theme firm (4 sub-patterns + complex-split sub-rule + matrix-free non-law).
+- `gmres-inner-loop-iterate-while-migration` — resolved cycle-020 (supersedes the cycle-008 `answered-by-rough-in-theme` Closed-index line) — landed firm (slice §L4 v0.7, option (a) `check_stop_into_carry` witness-into-carry hoist).
+- `inner-product-conjugate-pair-reorder-caller-classification` — resolved cycle-020 — full `linalg::Dot` caller census (44+20 sites; `conjugation_caller_inventory:` in `inner-product-fold-specialization.md` §Condition 5); bare-`dot` convention load-bearing in exactly one algorithm (SLEPc-NEP, 4 sites). Corroborated cycle-021 by Sub-pattern D.
+- `l3-l2-ksp-solve-outer-driver-theme-warranted-gated-on-l2-promotion` — resolved cycle-021 — `book/src/L3-L2/ksp-solve-outer-driver.md` firm (substantive non-identity driver rotation; complement of `krylov-step-body-identity`); gate satisfied by L2 `ksp_solve` stub→firm same cycle.
+- `ksp-solve-l2-promotion-non-identity-substantive-gap` — resolved cycle-021 — L2 `ksp_solve` outer-driver firm; resolves the maturity-gradient inversion (firm cycle-020 L3 above an L2 stub); answer `book/src/L2/ksp_solve.md`.
+- `fgmres-inner-loop-iterate-while-migration-lifter-candidate` — resolved cycle-021 — terminally closed 5-batch carry-forward (cycle-010→021); `L4-L3/fgmres-inner-loop-iterate-while-migration.md` firm against the firm gmres sibling (no new self-rotation).
+- `fgmres-inner-loop-iterate-while-migration-firm-against-gmres-sibling` — resolved cycle-021 — the cycle-020 trigger; enacted by the cycle-021 fgmres firm lifter dispatch (dedup with the carry-forward above).
+- `orthog-hpp-localdot-globalsum-unfused-dot-surface` — resolved cycle-021 — Sub-pattern D (hook-routed `LocalDot` + batched `Mpi::GlobalSum`) added to `dot-mutation-rotation.md` + bypass-surface note on `inner-product-fold-specialization.md`; first unweighted-observable `dot` use outside the SLEPc-NEP cohort.
+- `orthog-hpp-localdot-globalsum-unweighted-inner-product-surface` — resolved cycle-021 — dedup of the cycle-020 coverage-gap flag with the cycle-021 Sub-pattern D resolution above.
+- `variant-absorption-vs-instance-counting-policy` — resolved cycle-021 meta-phase — addressed by the cycle-018 combinator-miner parametric-family mode, CONFIRMED concordant-and-complementary with same-shape instance-counting by the cycle-019 first live exercise (inner_product) + cycle-021 deflate/gram exercise; the mode's distinctive deliverable is the fold-law membership-test + axis taxonomy (a characterizer, not only a surfacer). See friction-ledger `combinator-miner-arity-blind-parametric-family-detection`.
+- `combinator-miner-authority-defer-verdict-status-edit-scope` — resolved cycle-021 meta-phase — moot under the universal dispatch-phase write-guard: combinator-miner is proposal-only (emits a rough-in dep-map row; never edits status / emits a binding defer verdict); promotion/deferral is the downstream harvester's call.
+- `test-coverage-bounded-rough-in-nomenclature` — resolved cycle-021 meta-phase — codified in CLAUDE.md §Methodology invariants as first-class rough-in qualifier `rough-in (test-coverage-bounded)` (structure firm; laws test/literature-gated).
+- `partial-obstruction-status-codification` — resolved cycle-021 meta-phase — codified in CLAUDE.md §Methodology invariants as first-class L3 status `partial-obstruction` (body lifts; loop is a witnessed sequential-obstruction).
+- `combinator-miner-nonfold-parametric-family-no-positive-channel` — resolved cycle-021 meta-phase — Qualification-B mode-gap CLOSED: combinator-miner gains a non-fold "constructed-operator-action family" reportable class (parametric over kernel + element-type, unified by a shared `Solver<OperType>::Mult` action contract, not a fold-law). See friction-ledger `combinator-miner-arity-blind-parametric-family-detection`.
 
 ### Resolved by the 2026-05-28 unification pass (artifact landed earlier; ledger never pruned)
 

@@ -194,7 +194,9 @@ promotion_note: promoted on the batch-3 3× lifecycle precedent (eigsolve EXIT c
 slug: classify-variant-axis-gs-orthog-example-drift
 proposer: repairer (cycle-019, repair of 2026-05-29T023000Z-harvester-orthogonalize-l2)
 proposed_at: cycle-019 / 2026-05-29
-status: open
+status: resolved
+resolved_at: cycle-021 meta-phase / 2026-05-29
+resolved_by: meta-phase in-place correction of skills/classify-variant-axis/SKILL.md:64-68 — CGS now `[dot×m, allreduce_sum, axpy×m]` (plain w.Add, no fused gemv_basis); CGS2 unconditional second pass (no refine_threshold); state binding drops the threshold scalar. Verified against orthog.hpp:65-89.
 kind: skill-friction (example-staleness, not a missing procedure)
 target_skill: skills/classify-variant-axis/SKILL.md
 target_lines: 64-68 (the gs_orthog worked example block)
@@ -210,7 +212,10 @@ target_lines: 64-68 (the gs_orthog worked example block)
 slug: verify-intro-firmness-survey-against-on-disk-status-lines
 proposer: critic (cycle-020, critique of 2026-05-29T034441Z-layer-intro-author-l2-refresh)
 proposed_at: cycle-020 / 2026-05-29
-status: proposed
+status: promoted-as-role-spec
+promoted_to: .claude/agents/layer-intro-author.md §Discipline ("Survey chapter firmness from the on-disk `## Status`, NOT the cycle record" bullet)
+promoted_at: cycle-021 meta-phase / 2026-05-29
+promotion_note: NOT promoted as a standalone skill. This candidate's root cause (an intro-refresh surveying firmness from the cycle record rather than the on-disk `## Status`) is the DOWNSTREAM symptom of the cycle-019 fence-truncation defect (`firm-chapter-body-authored-outside-proposed-changes-fence`); the high-leverage fix is the UPSTREAM critic build-readiness guard (promoted as `proposed-changes-fence-encloses-full-body-guard`). The downstream survey-check is folded into the layer-intro-author Discipline as a one-line "survey firmness from on-disk `## Status`" bullet rather than a separate skill — the two candidates are two ends of one defect.
 ---
 
 **Motivating observation**: the cycle-020 L2-intro-refresh report built its dep-map + Vocabulary-cohort split from a firmness survey claimed "verbatim from chapter headers." Six of seven rows were accurate, but `book/src/L2/orthogonalize.md` was surveyed `firm` while on disk it is a 14-line preamble with **no `## Status` line and none of the firm apparatus** (Signature/laws/variant-axis/Evidence) that the other four firm chapters carry. Root cause was an *upstream* cycle-019 integrator landing gap (commit `efb8a0b` stripped the stub banner without landing the firm body; the cycle-019 log still recorded the promotion). An intro-refresh that surveys firmness from the *cycle log / recorded state* rather than the *actual on-disk chapter status line* will faithfully propagate such a landing gap into the navigational source-of-truth. This is the second cycle in a row that `orthogonalize.md` drift surfaced at critique (cycle-019: the `classify-variant-axis` example; cycle-020: the on-disk firm-body gap).
@@ -223,7 +228,10 @@ status: proposed
 slug: sibling-slice-citation-reanchor-sweep
 proposer: critic (cycle-020, critique of 2026-05-29T034441Z-lifter-gmres-l4-self-rotation)
 proposed_at: cycle-020 / 2026-05-29
-status: proposed
+status: promoted-as-skill-extension
+promoted_to: skills/verify-citation-range/SKILL.md §"Sibling-slice / inherited-precedent re-anchor sub-case"
+promoted_at: cycle-021 meta-phase / 2026-05-29
+promotion_note: enacted per the candidate's own recommendation — folded into the existing `verify-citation-range` skill as a THIRD sub-case (after the cycle-012 audit-report/inherited-citation sub-case) rather than a standalone skill. The reduced-slice-drift mechanism is the same one `phase-1-slice-reduction-audit` + the focus-slice sweep already operate on; the gap is specifically the sibling/inherited citation. Friction-ledger `sibling-slice-citation-reanchor-sweep-gap` (addressed).
 ---
 
 **Motivating observation**: the cycle-020 lifter `gmres` §L4 v0.6→v0.7 dispatch correctly diagnosed that the `gmres` slice was *reduced* (its v0.1 form lifted to firm entries, v0.6 moved `:1067-1078`→`:594-606`) and swept every drifted `gmres.md:NNN` ref in the theme it firmed — a clean, correct re-anchor. But it re-emitted `cg.md:215-219` (the CG `iterate_while` precedent) in three places (one retained, two in NEW v0.7-append content) without checking that `cg.md` had undergone the *same* reduction: `cg.md` is now 166 lines and its v0.4 `iterate_while` form was lifted to `L4/krylov-step.md`, so `cg.md:215-219` is out of range. A reduction-class drift was caught for the focus slice and missed for a *sibling slice* cited in the same paragraphs. The reduced-slice stub-header (every reduced slice carries one, listing which firm entries superseded which sub-ranges) is the signal that a slice's old line-refs are presumptively stale.
@@ -236,7 +244,10 @@ status: proposed
 slug: proposed-changes-fence-encloses-full-body-guard
 proposer: critic (cycle-020, critique of 2026-05-29T034441Z-harvester-orthogonalize-l2-backfill)
 proposed_at: cycle-020 / 2026-05-29
-status: proposed
+status: promoted
+promoted_to: skills/proposed-changes-fence-encloses-full-body-guard/SKILL.md
+promoted_at: cycle-021 meta-phase / 2026-05-29
+promotion_note: promoted as a thin critic build-readiness checklist skill AND folded into the critic's `cross-reference-integrity` check (build-readiness guard) + a producer-spec reinforcement bullet across harvester/abstractor/lifter/lowering-verifier (the agents that author/flip firm bodies). The dispatch-prompt guidance held clean cycle-020/021 (zero recurrence) — promoted so the fix is STRUCTURAL (critic-side, durable) rather than per-dispatch-reminder-dependent. Friction-ledger `firm-chapter-body-authored-outside-proposed-changes-fence` (addressed). The sibling candidate `verify-intro-firmness-survey-against-on-disk-status-lines` (downstream symptom) is folded into layer-intro-author Discipline; this guards the upstream cause.
 ---
 
 **Motivating observation**: the cycle-019 `orthogonalize` L2 harvester authored a fully-vetted firm chapter body but left only the 14-line intro INSIDE the `edit:book/src/L2/orthogonalize.md` fenced block — the `## Context` … `## Evidence` sections were authored as the *report's own* top-level sections, OUTSIDE the fence. The integrator landed only the intro, so `book/src/L2/orthogonalize.md` shipped as a 14-line intro-only chapter while the dep-map row and `SUMMARY.md:41` both said `firm`. The cycle-019 critic+repairer validated the *content* (citations correct) but did not catch that most of the content never entered the artifact, because the report's prose carried it and the critique focused on claim/citation correctness, not on which lines sat inside the proposed-changes fence. This is a producer-side fencing-discipline defect, structurally distinct from the citation-drift family: a well-formed, well-cited body that is *partially outside the apply boundary*. The cycle-020 backfill (this report) recovers it correctly — closing fence after Evidence, verified — but the original defect went undetected for a full cycle.

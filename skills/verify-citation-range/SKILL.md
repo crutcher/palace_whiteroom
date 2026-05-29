@@ -65,6 +65,19 @@ Additional procedure for audit-shaped reports:
 
 **Worked example (cycle-012 SLEPc-NEP audit).** The lowering-verifier inherited an `arpack.cpp:387` miscitation verbatim from `book/src/L1/eigsolve.md:116,222` and asserted "no drift" over its own anchors while propagating the error. The un-scale `eig[i] = eig[i] * gamma;` is actually at `arpack.cpp:383` (line 387 is a sort-branch condition). The report was internally inconsistent: §Supporting-evidence cited the correct enclosing range `383-392` while body + `verified_against:` pinned `:387`. Resolution: independently `read_range`-confirm `383` carries the un-scale, fix the report anchor AND carry forward the artifact correction (`arpack.cpp:387` → `:383` at `eigsolve.md:116` + `:222`).
 
+## Sibling-slice / inherited-precedent re-anchor sub-case (added cycle-021 meta-phase)
+
+A dispatch whose **premise is a slice re-anchor** — "slice X was *reduced* (its v0.1–v0.4 forms lifted to firm entries), so re-anchor its drifted refs" — must NOT sweep only the focus slice. Sibling slices cited in the same paragraphs frequently underwent the *same* reduction-class drift, and the focus-slice sweep structurally skips them. A sibling cited as a **"precedent rendering"** is the high-risk case: precedents are exactly the v0.1–v0.4 forms most likely to have been lifted away, so a `<sibling>.md:NNN` ref into a reduced sibling is presumptively out of range.
+
+Additional procedure for slice-re-anchor dispatches:
+
+1. **Enumerate ALL distinct `<slice>.md` citations in the touched/authored content** — not just `<focus-slice>.md` refs. Include refs in NEW content you append, not only retained refs.
+2. **For each *distinct* slice cited, open it and check for a reduced-slice stub-header** (`# Slice: <name> (reduced)` / "**Firm entries that supersede…**"). Its presence is the signal that the slice's old numeric line-refs are presumptively stale.
+3. **If reduced, treat every numeric line-ref into that slice as presumptively drifted:** verify the ref resolves to the claimed content on the *current* file; if the cited form was lifted away (named in the stub-header's supersedes list), re-anchor to the firm home rather than the dead slice range.
+4. The check is **one read + stub-header scan per distinct cited slice** — cheap relative to the repair round a dangling sibling ref costs at integration.
+
+**Worked example (cycle-020 gmres self-rotation).** The lifter `gmres §L4 v0.6→v0.7` dispatch correctly swept every `gmres.md:NNN` ref (the focus slice it diagnosed as reduced) but re-emitted `cg.md:215-219` (the CG `iterate_while` precedent) in three places without checking that `cg.md` had undergone the *same* reduction: `cg.md` is now 166 lines and its v0.4 `iterate_while` form was lifted to `L4/krylov-step.md`, so `cg.md:215-219` is out of range. Reduction-class drift caught for the focus slice, missed for the sibling. Resolution: scan `cg.md` for its reduced-slice stub-header, re-anchor the precedent ref to the firm `L4/krylov-step.md` home.
+
 ## Worked examples
 
 **Cycle 69 (GMRES L0.13)**: cited `FgmresSolver::Mult` as `palace/linalg/iterative.cpp:733-875`. Actual `FgmresSolver::Mult` body ends at line 871; lines 872-875 are part of explicit-template-instantiation declarations at file scope. RE-ANCHOR to `733-871`.

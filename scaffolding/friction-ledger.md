@@ -938,12 +938,14 @@ addressed_by: cycle-018 meta-phase (dispatch-phase write-guard Discipline bullet
 ---
 slug: skill-uptake-survey-non-invocation-cycle-wide
 first_observed: cycle-010
-last_observed: cycle-018
-recurrence_count: 4
+last_observed: cycle-021
+recurrence_count: 5
 status: escalating
-addressed_by: cycle-012 meta-phase (no-go: telemetry-noise) — SUPERSEDED cycle-015 meta-phase by the quality-defect trigger; the citation-drift sub-pattern is now tracked + addressed under the dedicated entry `producer-citation-drift-verify-not-self-invoked` (which held clean through batch-4)
+addressed_by: cycle-012 meta-phase (no-go: telemetry-noise) — SUPERSEDED cycle-015 meta-phase by the quality-defect trigger; the citation-drift sub-pattern is split into the dedicated entry `producer-citation-drift-verify-not-self-invoked` (recurrence-4 fired batch-5 → mechanical-checker ASK). This broad-telemetry entry stays no-go on recalibration.
 ---
 ```
+
+**Cycle-021 meta-phase update (batch-5) — the benign-telemetry part continues; no-go on recalibrating the check; but note the actionable citation sub-pattern (split out) has NOW reached recurrence-4.** Batch-5 carried the pervasive `skill-uptake-survey` warning again — every cycle-021 report tripped it (`verify-citation-range`/`verify-refinement-surface`/`classify-variant-axis` used in spirit but not named by slug). For the NON-citation skills (`classify-variant-axis`, `verify-refinement-surface`), the warnings remain benign telemetry: the variant-axis classification and refinement-surface checks demonstrably happened (no un-classified axis or missed refinement-surface reached the artifact this batch); only the slug back-reference is absent, which is harmless for opus-tier agents who internalize the procedure. **No-go (continued) on recalibrating the `skill-uptake-survey` check itself** — the cost of touching the critic's 8th check is unjustified while the non-citation outcomes stay clean; the citation-specific part is the one that turned actionable, and it is handled by the split-out entry's mechanical-checker ASK (which would, if built, *also* relieve the citation arm of this telemetry warning by mechanizing the check). Status stays `escalating` (keeps the broad pattern visible); recurrence 4 → 5 (the batch-5 cycle-wide instance). Re-open for recalibration only if a NON-citation skill's *outcome* (an un-classified variant axis, a missed refinement-surface check) actually reaches the artifact.
 
 **Cycle-018 meta-phase update — batch-4: the benign-telemetry part continues; the actionable citation sub-pattern stayed CLEAN; no-go on recalibrating the check.** Batch-4 carried ~4+ `skill-uptake-survey` warnings (cycle-016 SEVEN-report-consistent `verify-citation-range` read-back without a named-by-slug invocation; cycle-017 4 warnings on `verify-citation-range`/`classify-variant-axis`/`propose-rotation`; similar cycle-018) — all repairer-ruled not-needed (procedure substance present, only the slug back-reference absent). Crucially, the one part of this broad pattern that became a quality defect in batch-3 (the citation drift, split out to `producer-citation-drift-verify-not-self-invoked`) **stayed clean through batch-4** — the producer self-verify bullets worked, so there is no batch-4 quality defect that a named skill invocation would have caught. The remaining signal is purely the named-by-slug telemetry gap, which is benign for opus-tier agents who internalize the procedure. **No-go on recalibrating the `skill-uptake-survey` check this cycle** (e.g. narrowing it to flag only missing *outcomes* rather than missing *invocation strings*): the cost of touching the critic's 8th check now is premature while the actionable sub-pattern is clean; the telemetry-only warnings are tolerable noise. Status stays `escalating` to keep the broad pattern visible, but the escalation has NOT converted to a new quality defect since the citation split-out. Re-open for recalibration only if a non-citation skill's *outcome* (an un-classified variant axis, a missed refinement-surface check) actually reaches the artifact.
 
@@ -1146,10 +1148,10 @@ addressed_by: cycle-012 meta-phase (CLAUDE.md §Target system MCP-first localiza
 ---
 slug: producer-citation-drift-verify-not-self-invoked
 first_observed: cycle-013
-last_observed: cycle-015
-recurrence_count: 3
-status: addressed
-addressed_by: cycle-015 meta-phase (4 producer role-spec self-verification Discipline bullets: harvester / abstractor / lifter / layer-intro-author + skill `verify-citation-range` §"Producer self-verification before emitting citations" section) — PLUS an open ASK for a mechanical codemap-backed citation-range checker tool under `tools/`
+last_observed: cycle-021
+recurrence_count: 4
+status: escalating
+addressed_by: cycle-015 meta-phase (4 producer role-spec self-verification Discipline bullets: harvester / abstractor / lifter / layer-intro-author + skill `verify-citation-range` §"Producer self-verification before emitting citations" section) — INSUFFICIENT; recurrence-4 fired batch-5; mechanical codemap-backed citation-range checker tool ESCALATED from defer to ASK→go-recommended (batch-5 meta-phase, user decision pending)
 ---
 ```
 
@@ -1173,6 +1175,17 @@ addressed_by: cycle-015 meta-phase (4 producer role-spec self-verification Disci
 **Watch:** if citation drift persists across batch-4 (016/017/018) despite the four producer role-spec bullets (recurrence-4 of THIS entry), the role-spec approach has reached its ceiling — escalate the mechanical-checker tool from ASK to a built `go` (or the user enacts the code). The cycle-014 auditor-drift already foreshadows this ceiling; batch-4 is the test of whether the producer-side bullets move the needle.
 
 **Cycle-018 meta-phase update — batch-4 outcome: the producer role-spec bullets HELD; recurrence-4 did NOT fire; the mechanical-checker ASK STAYS DEFERRED.** Batch-4 (016/017/018) carried substantial citation surface — cycle-016 cg.md sweeps (L4 7 + L2 12 re-anchors) and 2 chebyshev prose refreshes, cycle-017 divfree-projector 11-reference drift maintenance + L3-L2 body-identity 3 re-anchors + L3 chebyshev 5-site refresh, cycle-018 `linear_combination` 9 self-verified L0 ranges — yet **no new producer-emit drift required a repair round-trip of the cycle-013/014/015 shape.** The batch-4 citation edits were the *maintenance being applied* (re-anchoring known-dangling pointers to terminal firm homes), not fresh producer drift; and the one cycle-017 retroactive-budget item + cycle-018 retroactive-budget 0 confirm the producers were self-verifying at emit time. The recurrence-4 escalation condition (NEW drift despite the bullets) is **not met**. Status stays `addressed`; recurrence_count stays 3 (no recurrence-4 instance to count). The mechanical-checker tool ASK remains `reviewed: defer-confirmed` per the user's 2026-05-28 decision — the role-spec bullets are doing the job through batch-4; build the checker only if drift returns in batch-5+. The cycle-014 auditor-drift ceiling concern did not materialize in batch-4 (the lowering-verifier ran read-only/audit dispatches in 016/017 with no inherited-miscitation defect).
+
+**Cycle-021 meta-phase update (batch-5) — RECURRENCE-4 FIRED. The role-spec bullets reached their ceiling; the mechanical-checker tool is ESCALATED from defer to a go-recommended ASK.** The batch-4 watch clause was precise: "build the checker only if drift returns in batch-5+." It returned. Batch-5 (019/020/021) shows **fresh producer-emit inline-anchor drift in every one of the three cycles** — not maintenance being applied, but new pinpoint citations landing 1-2 lines off the true source line while the wide enclosing ranges stay correct:
+- **Cycle-019:** orthogonalize-l2 spot-line nits (orthogonality assertion, the `m==0` guard, the no-normalise marker) — though here the repairer's independent re-verify found the *critic* had drifted, not the producer; still a citation-precision dispute that a shared line-map would have settled.
+- **Cycle-020:** `dot` `:667`→`:668`/`:679`→`:678`; `scal` `nleps.cpp:491`→`:493`; `assemble-diagonal` `AbsMultTranspose :172`→`:174` (+3 more); `ksp_solve` accessor `:100-106`→`:101-108` (+3 more); inner-product-fold `operator.cpp:623`→`:624`/`:632`→`:634`/`:615-616`→`:616`.
+- **Cycle-021:** `apply_nonlinear_pencil` `GetResidualNorm` line-pin + `eps.hpp:69-74` + `:729`; `deflate` D3 `:663-668`→`:664/:666/:667` + reference `:356-362`→`:354-362`; the carried L3 `ksp_solve` `:464`→`:463`/`:564`→`:563`; the carried inner-product-fold drift.
+
+The drift is now a **stable 3-cycle pattern**, caught downstream (repairer + critic + verifier independent re-reads) but costing a repair/re-read round each time AND occasionally producing critic↔repairer↔verifier disagreement (cycle-019 orthogonalize: critic renumbered wrong, repairer's re-verify won; cycle-020 inner-product-fold: verifier flagged a phantom `:611`→`:612` the repairer had already fixed). The independent-re-read cross-check works but does not scale: three roles re-deriving the same line-map by hand is exactly the cost a shared mechanical line-map amortizes. **The cycle-014 auditor-drift ceiling concern HAS now materialized in the broader sense** — role-spec bullets are necessary but demonstrably not sufficient against pinpoint drift across a heavy-citation batch.
+
+**Decision (batch-5 meta-phase): ASK — escalate the mechanical codemap-backed citation-range checker tool to the human as a go-recommended build** (it is ask-class: it requires writing code under `tools/`, which is outside meta-phase write-authority — see CLAUDE.md §What you DO NOT do). The tool validates every `path:lo-hi` in a CYCLE.md's proposed-changes against `reference/` source via the codemap (`get_symbol_def`/`search_text`/`read_range`) as a pre-integration lint, emitting a per-citation OK/DRIFT(±N) report. The enabling conditions are all now met: (i) recurrence-4 fired (the agreed trigger); (ii) the codemap MCP is in routine zero-permission-denied use (it can back the checker); (iii) the drift is mechanical (line-offset, not semantic) — precisely what a mechanical check catches and a prose bullet does not. Surfaced as the leading ASK item in the batch-5 meta-phase report + the cycle-022 resume-notes. Status flipped `addressed` → `escalating`; recurrence_count 3 → 4.
+
+**Watch:** if the user builds the checker, re-status `addressed` and watch batch-6 for residual drift the lint missed. If the user declines, the producer-self-verify bullets remain the only line of defense and the drift-repair-round cost is accepted as standing overhead — re-surface only if drift severity escalates (a drift reaching the artifact uncaught, vs. the current always-caught-but-costly state).
 
 ---
 
@@ -1203,10 +1216,10 @@ addressed_by: cycle-015 meta-phase (skill `phase-1-slice-reduction-audit` §"Rem
 ---
 slug: combinator-miner-arity-blind-parametric-family-detection
 first_observed: cycle-016
-last_observed: cycle-018
+last_observed: cycle-021
 recurrence_count: 1
 status: addressed
-addressed_by: cycle-018 meta-phase (`.claude/agents/combinator-miner.md` new "Parametric / variadic-family detection mode" section + Discipline bullets) — HUMAN-RAISED prong-(a) of OQ `blas1-variadic-linear-combination-fold-unification`
+addressed_by: cycle-018 meta-phase (`.claude/agents/combinator-miner.md` "Parametric / variadic-family detection mode" section) — VALIDATED-BY-USE + EXTENDED cycle-021 meta-phase (non-fold "constructed-operator-action family" reportable class closes the Qualification-B mode-gap)
 ---
 ```
 
@@ -1218,7 +1231,11 @@ addressed_by: cycle-018 meta-phase (`.claude/agents/combinator-miner.md` new "Pa
 - New top-level section **"Parametric / variadic-family detection mode"**: run instance-counting in two complementary modes on every scan — (1) same-shape mode (the default), and (2) parametric-family mode (look for a set of operators differing only along a structured parameter axis — arity / element-type / conjugation / weight-presence — that share one *folding* combining step; propose the single variadic parent with the siblings as specializations). Family-detection triggers, the required `## Proposed combinator` additions (parameter axis / combining step + identity / unifying fold-law / over-unification guard), and the typical "one layer above" placement are all spelled out, with the `linear_combination` precedent.
 - Discipline bullets: a parametric family counts as ONE pattern (the unified operator, not its N leaves); the family bar is ≥2 siblings sharing a stateable fold-law (the law is the evidence, so 2-with-law beats 3-coincidental); the over-unification guard (e.g. `dot` reduce-to-scalar is a DIFFERENT fold, do not subsume); and **run family-mode on every scan, not as a same-shape fallback** (the miss happened while same-shape candidates existed).
 
-**Watch:** if a future parametric family (e.g. the `inner_product` conjugation-convention fold cohort, or a smoother/preconditioner family) is again missed by the miner and surfaces only via human/cross-cutter, escalate to recurrence-2 and consider a same-layer-cross-cutter companion "family-sweep" dispatch mode or a mechanical cohort-detection helper.
+**Cycle-021 meta-phase update (batch-5) — VALIDATED-BY-USE + the Qualification-B mode-gap CLOSED.** Two live exercises ran across batch-5: cycle-019 (the `inner_product` fold-family characterization — the mode independently surfaced the cohort as ONE candidate, catching a fold-family arity-blind counting would see only as 3 too-thin leaves; `tdot` is 0 call sites) and cycle-021 (the `deflate`/`gram` deflation-subspace combinator). The mode **performed to spec on fold cases** and confirmed the `variant-absorption-vs-instance-counting-policy` question (now closed): it is *concordant-and-complementary* with same-shape counting, and its distinctive deliverable is the fold-law membership-test + axis taxonomy (a *characterizer*, not only a *surfacer*).
+
+The cycle-019 exercise ALSO found a genuine spec gap (Qualification B, OQ `combinator-miner-nonfold-parametric-family-no-positive-channel`): the mode is **fold-complete but had no positive channel for NON-fold parametric families** — the smoother/constructed-operator-action cohort (`JacobiSmoother`/`ChebyshevSmoother`/`ChebyshevSmoother1stKind`/`DistRelaxationSmoother`, all `Solver<OperType>::Mult` actions parametric over kernel + element-type) is a structured parametric family but `Tensor[N]→Tensor[N]` action-shaped, NOT a fold; the mode's "no fold-law ⟹ not a parametric family" guard *correctly excludes* it from a fold candidate but gave no way to report it as the family it is. **Enacted (go):** `.claude/agents/combinator-miner.md` gains a **"Constructed-operator-action family (a non-fold parametric class)"** subsection — a distinct reportable class unified by a shared `Solver<OperType>::Mult` action contract (not a fold-law), with its own parameter-axis / shared-action-contract / over-unification-guard requirements and a "do NOT force it into a fold shape" caution. The mode is now parametric-family-complete (fold families + constructed-operator-action families), not just fold-complete. OQ `combinator-miner-nonfold-parametric-family-no-positive-channel` closed.
+
+**Watch:** if a future parametric family (fold OR constructed-operator-action) is again missed by the miner and surfaces only via human/cross-cutter, escalate to recurrence-2 and consider a same-layer-cross-cutter companion "family-sweep" dispatch mode or a mechanical cohort-detection helper.
 
 ---
 
@@ -1272,5 +1289,58 @@ addressed_by: cycle-018 meta-phase (`.claude/agents/integrator-per-report.md` Pr
 - (b) **`.claude/agents/integrator-finalize.md` Process step 1** — added a staging-row-count cross-check against the parent-stated count of dispatched ready reports; on `rows < dispatched`, flag LOUDLY (batch CYCLE.md + integrator-signals) AND reconcile from the working tree + report frontmatter + OQ-ledger so nothing is lost. The reconciliation is a recovery, not the normal path; (a) is the prevention.
 
 **Watch:** if STAGING.md rows are again incomplete despite the hard-step tightening (recurrence-2), the role-spec approach has reached its ceiling — consider a parent-orchestrator-side check that verifies each per-report dispatch returned a staging-row confirmation before dispatching the next, or a finalize-blocking gate (rather than warn-and-reconcile). The warn-and-reconcile path is deliberately non-blocking for now (no data was at risk).
+
+---
+
+```yaml
+---
+slug: firm-chapter-body-authored-outside-proposed-changes-fence
+first_observed: cycle-019
+last_observed: cycle-019
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-021 meta-phase (batch-5) — critic build-readiness guard added to the `cross-reference-integrity` check + a producer-spec reinforcement; skill-candidate `proposed-changes-fence-encloses-full-body-guard` promoted to a thin critic checklist skill
+---
+```
+
+**Pattern (new this batch; the headline batch-5 defect).** A producer authored a fully-vetted, correctly-cited FIRM chapter body but left only the intro INSIDE the `edit:<path>` proposed-changes fenced block — the `## Context` … `## Evidence` sections were authored as the *report's own* top-level sections, OUTSIDE the fence. The integrator-per-report landed only the enclosed intro, so the chapter shipped as an intro-only stub while the dep-map row + `SUMMARY.md` already said `firm`. A silent body-truncation masked by the dep-map/SUMMARY claiming firm. This is structurally distinct from the citation-drift family: it is a well-formed, well-cited body that is *partially outside the apply boundary*.
+
+**Single instance (cycle-019), surfaced cycle-020.** The cycle-019 `orthogonalize` L2 harvest (`reports/2026-05-29T023000Z-harvester-orthogonalize-l2/`, integrated `efb8a0b`) left the firm `## Context`…`## Evidence` body outside the `edit:book/src/L2/orthogonalize.md` fence; `book/src/L2/orthogonalize.md` shipped as a 14-line intro with NO `## Status` while `L2/index.md:27` + `SUMMARY.md:41` said `firm`. The cycle-019 critic+repairer validated the *content* (citations correct) but did not catch that most of it never entered the artifact, because the report's prose carried it and the critique focused on claim/citation correctness, not on which lines sat inside the proposed-changes fence. Caught cycle-020 by the L2-refresh critic (which surveyed firmness against the cycle log, found `orthogonalize.md` had no `## Status` on disk); corrected by the `harvester-orthogonalize-l2-backfill` full-file-replacement dispatch (one off-by-one boundary fix `test-orthog.cpp:71-96 → 71-97`).
+
+**Surfaced by:** cycle-020 integrator-signals §Integration-tooling friction (HEADLINE) + OQ `firm-chapter-body-authored-outside-proposed-changes-fenced-block` + two skill-candidates (`proposed-changes-fence-encloses-full-body-guard`, `verify-intro-firmness-survey-against-on-disk-status-lines`).
+
+**The dispatch-prompt guidance HELD across the rest of the batch.** Cycle-020 and cycle-021 producers ALL correctly enclosed their full firm bodies inside the proposed-changes fences (per-report fence-guard PASS on every report; e.g. cycle-021 `apply_nonlinear_pencil` CYCLE.md:24-143, `ksp_solve` full-replace, `ksp-solve-outer-driver` fence :49-232 with both inner ```text blocks nested+closed). **Zero recurrence in two cycles.** So the parent's per-dispatch "put the body INSIDE the fence" reminder works — but per-dispatch reminders are not durable (the `specialized-agent-direct-write-to-book-during-dispatch` lesson: parent reminders are not structural). The durable fix is a critic-side build-readiness guard that catches the defect at critique time regardless of producer discipline.
+
+**Mitigation (cycle-021 meta-phase, this entry — go).**
+- (a) **Critic build-readiness guard** added to `.claude/agents/critic.md` `cross-reference-integrity` check: when a report's proposed-changes (or the dep-map/SUMMARY row it relies on) asserts a chapter is `firm`, verify the `edit:`/`new:` block for that chapter ENCLOSES the firm apparatus (`## Status` + Signature + Algebraic-laws + Evidence) INSIDE the fence — a `firm` claim whose proposed-changes block carries only an intro is the signature of this defect. The check is a fence-enumeration + one "is `## Status` inside the block?" scan. This would have caught the cycle-019 truncation at critique time.
+- (b) **Producer-spec reinforcement** added to all 8 specialized agent Discipline sections (the producers that author firm chapters): "the firm chapter body must be authored INSIDE the proposed-changes `edit:`/`new:` fence — do NOT author chapter sections as your report's own top-level sections; only the enclosed block is applied."
+- (c) **Skill `proposed-changes-fence-encloses-full-body-guard` promoted** (`skills/proposed-changes-fence-encloses-full-body-guard/SKILL.md`) — the critic-facing fence-parity + last-section-inside-block + apparatus-inside-block checklist; the deterministic procedure backing guard (a).
+
+**Did NOT promote the sibling candidate `verify-intro-firmness-survey-against-on-disk-status-lines` as a standalone skill** — see the batch-5 meta-phase report no-go reasoning: that candidate's root cause (an intro-refresh surveying firmness from the cycle record rather than the on-disk `## Status`) is the *downstream* symptom of THIS *upstream* defect; with the upstream cause now guarded at critique time, the downstream survey-check is folded into the layer-intro-author Discipline as a one-line "survey firmness from the on-disk `## Status`, not the cycle log" bullet rather than a separate skill. The two candidates are two ends of one defect; guarding the upstream end is the high-leverage fix.
+
+**Watch:** if a `firm`-claimed chapter again lands intro-only despite the critic guard (recurrence-2), the critique-time check has a hole — escalate to an integrator-per-report apply-time gate (refuse to flip a dep-map/SUMMARY row to `firm` when the target chapter's enclosed body lacks `## Status`).
+
+---
+
+```yaml
+---
+slug: sibling-slice-citation-reanchor-sweep-gap
+first_observed: cycle-020
+last_observed: cycle-020
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-021 meta-phase (batch-5) — skill-candidate `sibling-slice-citation-reanchor-sweep` promoted as a third sub-case of the existing `verify-citation-range` skill (sibling/inherited-precedent re-anchor)
+---
+```
+
+**Pattern (new this batch).** A dispatch whose premise is "slice X was reduced, so re-anchor its drifted refs" correctly sweeps every `<focus-slice>.md:NNN` ref but MISSES `<sibling-slice>.md:NNN` refs cited in the same paragraphs — a *sibling* slice that underwent the *same* reduction-class drift. The focus-slice sweep structurally skips siblings; a sibling cited as a "precedent rendering" is the high-risk case (precedents are exactly the v0.1–v0.4 forms most likely to have been lifted away).
+
+**Single instance (cycle-020).** The cycle-020 lifter `gmres §L4 v0.6→v0.7` dispatch correctly diagnosed `gmres.md` was reduced and swept every drifted `gmres.md:NNN` ref it touched (a clean re-anchor) — but re-emitted `cg.md:215-219` (the CG `iterate_while` precedent) in three places (one retained, two in NEW v0.7-append content) without checking that `cg.md` had undergone the *same* reduction: `cg.md` is now 166 lines and its v0.4 `iterate_while` form was lifted to `L4/krylov-step.md`, so `cg.md:215-219` is out of range. Reduction-class drift caught for the focus slice, missed for the sibling.
+
+**Surfaced by:** cycle-020 integrator-signals §Integration-tooling friction (item c) + skill-candidate `sibling-slice-citation-reanchor-sweep` (critic-filed).
+
+**Mitigation (cycle-021 meta-phase, this entry — go).** The candidate's own promotion-bar note recommended folding into the existing `verify-citation-range` skill rather than a standalone skill (the reduced-slice-drift mechanism is the same one `phase-1-slice-reduction-audit` + the focus-slice sweep already operate on; the gap is specifically the *sibling/inherited* citation). Enacted: **`skills/verify-citation-range/SKILL.md` gains a third sub-case** ("Sibling-slice / inherited-precedent re-anchor") after the cycle-012 "audit-report / inherited-citation" sub-case: when a dispatch's premise is a slice re-anchor, enumerate ALL distinct `<slice>.md` citations in the touched/authored content (not just the focus slice); for each distinct cited slice, check for a reduced-slice stub-header and treat its numeric line-refs as presumptively drifted; re-anchor to the firm home if the cited form was lifted away. One read + stub-header scan per distinct cited slice.
+
+**Watch:** if a sibling-slice ref again dangles after a re-anchor dispatch despite the skill sub-case (recurrence-2), the producer-facing sub-case is being under-invoked (same telemetry-gap shape as the citation-drift family) — re-weigh whether the mechanical citation-checker tool (if built per the `producer-citation-drift-verify-not-self-invoked` ASK) should also flag out-of-range slice refs, which would catch this mechanically.
 
 ---
