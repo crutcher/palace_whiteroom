@@ -188,11 +188,11 @@ After enacting changes, **commit and push** the methodology-change commit (separ
 meta-phase cycle-<n>: <one-line summary of go decisions>
 ```
 
-## Post-meta compactification (parent-orchestrator action)
+## Post-meta session restart (parent-orchestrator action)
 
-After the meta-phase commit lands and is pushed, **the parent orchestrator runs `/compact`** to reduce primary-conversation context. This is a parent action, not a meta-phase enactment — but documenting it here keeps the cadence visible. Per user directive 2026-05-27 (mid-cycle-006, commit `2f5dbc6`): cycles are long-running and accumulate substantial agent dispatch transcripts; compactification keeps the next cycle's planner reads efficient. Do not compactify mid-cycle (would lose in-flight per-report dispatch / staging context that integrator-finalize needs). With the 3:1 cadence (post-cycle-006 meta directive), `/compact` now fires roughly every 3 primary cycles, not every cycle — the user confirmed this is the intended frequency.
+If the meta-phase enacts role-spec changes that affect `.claude/agents/<name>.md`, the parent orchestrator should **restart the Claude Code session** before the next cycle begins, so the new agent definitions are loaded (per friction-ledger entry `new-agent-defs-need-session-restart`). Write a cycle-N+1 resume-notes file at `scaffolding/cycle-N+1-resume-notes.md` listing the agent-defs that changed and why a restart is needed.
 
-If the meta-phase enacts role-spec changes that affect `.claude/agents/<name>.md`, the parent orchestrator should also **restart the Claude Code session** before the next cycle begins, so the new agent definitions are loaded (per friction-ledger entry `new-agent-defs-need-session-restart`). Write a cycle-N+1 resume-notes file at `scaffolding/cycle-N+1-resume-notes.md` listing the agent-defs that changed and why a restart is needed.
+The restart also resets the primary conversation context, which subsumes the old per-meta `/compact` step (retired by user directive 2026-05-29 — see CLAUDE.md §Methodology invariants). **Do NOT write a `/compact` reminder into the resume-notes** — the restart is the context-reset mechanism; there is no separate compaction action.
 
 ## Discipline
 

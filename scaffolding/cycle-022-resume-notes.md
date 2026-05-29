@@ -17,10 +17,6 @@ Per friction-ledger `new-agent-defs-need-session-restart`, **the parent should r
 
 A session restart ensures all 7 definitions load for cycle-022 dispatch.
 
-## Compactification
-
-Per CLAUDE.md §Methodology invariants "Compactify primary context after every meta-phase", **the parent should run `/compact`** after the meta-phase commit lands + pushes. With the 3:1 cadence this fires roughly every 3 primary cycles (this is the fifth such firing, closing batch-5).
-
 ## ASK items awaiting user decision
 
 > **UPDATE 2026-05-29 — ASK #1 RESOLVED (user: "go with the tooling ask").** The citation-range checker tool is **built and landed at `tools/citecheck/`** (stdlib-only Python; `--scan`/`--anchor`/`--batch`/`--json`; validated against batch-5 drift cases). It is **available for cycle-022 use NOW** (manual or dispatch invocation). **Remaining: role-spec wiring** — fold `citecheck --scan` (producer self-verify + integrator-per-report pre-apply) and `citecheck --anchor` (critic / lowering-verifier) into the relevant agent Discipline/procedure sections; this is left for the **next meta-phase** (write-authority partition over `.claude/agents/`), OR may be done sooner if the cycle-022 planner wants it wired immediately. See `tools/citecheck/README.md` §"Suggested integration points" + friction-ledger `producer-citation-drift-verify-not-self-invoked` (ENACTED). ASK #2 (clean-tree gate) remains held — no action.
