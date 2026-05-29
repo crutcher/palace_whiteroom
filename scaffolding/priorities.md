@@ -58,9 +58,6 @@ The 2026-05-28 unification surfaced four methodology questions parked in intake;
 - `test-coverage-bounded-rough-in-nomenclature` (canonicalize the status tier, as `partly-constructive` was).
 - `partial-obstruction-status-codification` (codify the status `L3/chebyshev` already uses).
 
-### Open ASK to human (policy; cannot self-resolve)
-- `minres-mfem-as-l0-substrate-policy` (+ dup `bicgstab-mfem-reanchor-policy`) — should MFEM's Krylov solvers (`mfem::MINRESSolver`, `mfem::BiCGSTAB`) count as L0 substrate, recovering the cycle-004 MINRES/BiCGStab obstruction themes as real lowerings? Or do the obstruction themes stand (cite Palace, not vendored upstream)? Routes to human; held in `open-questions.md` §deferred.
-
 ## Methodology priorities (codified; addressed — kept for planner reference)
 
 These were active priorities #18–#20 in batch-1; all are now codified in CLAUDE.md §Methodology invariants and watched, not active work items:

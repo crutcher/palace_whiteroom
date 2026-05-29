@@ -88,9 +88,6 @@ Mirrored in `priorities.md` §Next-meta-phase methodology agenda.
 - `test-coverage-bounded-rough-in-nomenclature` — canonicalize the status tier (as `partly-constructive` was).
 - `partial-obstruction-status-codification` — codify the status `L3/chebyshev` already uses.
 
-### Routes to human (policy ASK; cannot self-resolve)
-- `minres-mfem-as-l0-substrate-policy` (+ duplicate `bicgstab-mfem-reanchor-policy`) — should MFEM's Krylov solvers (`mfem::MINRESSolver`, `mfem::BiCGSTAB`) count as L0 substrate (recovering the cycle-004 MINRES/BiCGStab obstruction themes as real lowerings), or do the obstruction themes stand per "cite Palace, not vendored upstream"? Surfaced as an `ask`; mirrored in `priorities.md` §Open ASK to human.
-
 ## Closed (index)
 
 One line per slug; full prose in git history. Slugs preserved as cross-reference anchors.
@@ -202,7 +199,8 @@ One line per slug; full prose in git history. Slugs preserved as cross-reference
 - `lowering-verifier-yaml-in-prose-channel-format` — resolved cycle-003 — fenced ```yaml codified in lowering-verifier.md.
 - `subagent-skips-edit-on-explicit-instruction` — resolved cycle-018 — dispatch-phase write-guard across all 8 specialized specs.
 - `cycle-planner-grep-before-harvester` — resolved cycle-012 — MCP-first localization codified.
-- `bicgstab-mfem-reanchor-policy` — duplicate → `minres-mfem-as-l0-substrate-policy` (open; deferred ASK).
+- `minres-mfem-as-l0-substrate-policy` — resolved 2026-05-28 (user) — obstruction stands; Palace aborts on the MINRES/BiCGStab enum (ksp.cpp:53-57), so document "not implemented in Palace", do NOT re-anchor to vendored `mfem::MINRESSolver` (cite Palace; match-not-extend).
+- `bicgstab-mfem-reanchor-policy` — duplicate → `minres-mfem-as-l0-substrate-policy` (resolved 2026-05-28).
 - `bicgstab-enum-intent` — stale — unanswerable without upstream; obstruction theme stands.
 - `advertised-but-unimplemented-krylov-solvers-friction` — resolved — friction-ledger `advertised-but-unimplemented-krylov-solvers`.
 - `shared-infra-priorities-rescope-after-obstruction` — resolved — roadmap/plan mark MINRES/BiCGStab `[stub]`.
