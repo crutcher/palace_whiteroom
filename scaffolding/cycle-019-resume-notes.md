@@ -19,15 +19,15 @@ Per friction-ledger entry `new-agent-defs-need-session-restart`, **the parent sh
 
 **Integrator split-spec touches:**
 
-8. **`.claude/agents/integrator-per-report.md`** — Process step 7 (STAGING.md append) hardened to a HARD, non-skippable step (cycle-018 staging-log-append gap).
-9. **`.claude/agents/integrator-finalize.md`** — Process step 1 gains a staging-row-count cross-check vs dispatched-report-count + reconcile-on-mismatch.
+8. **`.claude/agents/integrator-per-report.md`** — Process step 7 (STAGING.md append) hardened to a HARD, non-skippable step (cycle-018 staging-log-append gap). **+ further edited post-meta (2026-05-28):** step 5 gains **implied-component stub materialization** (create a `stub` for a clearly-implied not-yet-existing slug instead of leaving a plain-text forward-reference; see §"Stub materialization" below).
+9. **`.claude/agents/integrator-finalize.md`** — Process step 1 gains a staging-row-count cross-check vs dispatched-report-count + reconcile-on-mismatch. **+ further edited post-meta (2026-05-28):** step 5 build-repair gains stub-create as the *preferred* repair for a dead-link to a clearly-implied component (de-link-to-plain-text is the fallback).
 
-**Plus, from the post-meta user-directed intake→plan refactor (2026-05-28; see §"Intake→plan refactor" below):**
+**Plus, from the post-meta user-directed intake→plan refactor + stub-materialization (2026-05-28; see §"Intake→plan refactor" and §"Stub materialization" below):**
 
 10. **`.claude/agents/meta-phase.md`** — new §Intake→plan migration (standing every-batch pass; OQ + friction → the plan, fan-out-ranked); sole-unifier of `open-questions.md`.
 11. **`.claude/agents/cycle-planner.md`** — the plan (`priorities.md`) is now the primary input; dispatch highest-fan-out first; co-owns + may update the plan; OQ/friction reframed as intake.
 
-A session restart ensures all of these definitions are loaded for cycle-019 dispatch.
+**11 distinct agent-def files changed** (items 8–9 each received two rounds of edits — the cycle-018 staging hardening + the 2026-05-28 stub authority). A session restart ensures all of these definitions are loaded for cycle-019 dispatch.
 
 ## HEADLINE enactment — combinator-miner parametric/variadic-family detection mode
 
@@ -58,9 +58,25 @@ After the batch-4 meta-phase landed, the user directed a structural change to ho
 - **`roadmap.md` is the coverage map + fan-out impact model that RANKS the plan** — not a task list.
 - **Planner consequence for cycle-019:** pick dispatches from the plan **highest-fan-out first**. The Backlog's High-fan-out tier (l2-named-composition-lifts, ksp-solve-l2-promotion, l3-vocabulary-inventory-gap, blas1-l1-l0-lowering-theme-gap) is now visible alongside the `Now` head — weigh those for slots not taken by the headline carry-forwards.
 
+## Stub materialization (post-meta user directive, 2026-05-28)
+
+A new methodology invariant + integrator authority, then a one-time harvest:
+
+- **Policy:** "**Integration may materialize implied components as stubs**" (CLAUDE.md §Methodology invariants). New thinnest maturity tier **`stub`** (`stub` → `rough-in` → (`partly-constructive`) → `firm`): a *claim-free placeholder* (status: stub + one-line definition + "Implied by" provenance + SUMMARY registration). When ≥2 passes converge on "slug X should exist," integration **creates the stub** instead of leaving a perpetually-deferred plain-text forward-reference. `integrator-per-report` step 5 + `integrator-finalize` step 5 carry the authority. The cycle-006/cycle-018 plain-text-forward-reference friction entries are **amended**: stub-creation is now preferred, plain-text-defer the fallback (speculative-only). Critic treats a `stub` as claim-free (citation/rotation/variant checks no-op; verify only provenance + SUMMARY wiring).
+- **One-time harvest (2026-05-28):** **10 stub entries materialized** from the converging surface + plan forward-references (build clean, `cargo make book` exit 0):
+  - **L1-L0** (BLAS-1 lowering-theme gap): `dot-`, `nrm2-`, `scal-`, `matrix-weighted-norm-` mutation-rotation.
+  - **L2:** `inner_product`, `orthogonalize`, `incremental-least-squares`, `ksp_solve`.
+  - **L2-L1:** `inner-product-fold-specialization`.
+  - **L1:** `assemble-diagonal`.
+- **Cycle-019 planner consequence:** these backlog items are now "**firm the stub in place**," not "create from scratch" — the homes, SUMMARY rows, and provenance exist. The `inner_product` L2 row in `L2/index.md` is now a live link. `normalize`, `check_stop_into_carry`, and the standalone `iterate-while-dissolution` themes were deliberately NOT stubbed (speculative / blocked / current-home-elsewhere — the plain-text-defer fallback case). **Stubs do NOT count toward firm/rough-in roadmap tallies** — they are claim-free placeholders; a stub→rough-in or stub→firm promotion is what moves the count.
+
 ## New / updated CLAUDE.md §Methodology invariants
 
-**One added (post-meta, 2026-05-28 user directive):** "The plan is the single ongoing work artifact; intake channels feed it, they don't hold work" — codifies the intake→plan→fan-out flow above. The batch-4 meta-phase enactments themselves added no invariants (role-spec + ledger + priorities only).
+**TWO added (post-meta, 2026-05-28 user directives):**
+1. "The plan is the single ongoing work artifact; intake channels feed it, they don't hold work" — codifies the intake→plan→fan-out flow (§Intake→plan refactor above).
+2. "Integration may materialize implied components as stubs" — the `stub` tier + integrator authority (§Stub materialization above).
+
+The batch-4 meta-phase enactments themselves added no invariants (role-spec + ledger + priorities only).
 
 ## New priorities surface (cycle-019+ active — see scaffolding/priorities.md §Now)
 
