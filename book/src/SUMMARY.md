@@ -32,6 +32,7 @@
 # L3 > L2 — Lowering
 - [Overview](./L3-L2/index.md)
 - [krylov-step-body-identity](./L3-L2/krylov-step-body-identity.md)
+- [ksp-solve-outer-driver](./L3-L2/ksp-solve-outer-driver.md)
 
 # L2 — Algebraic Decompositions
 - [Overview](./L2/index.md)
@@ -41,7 +42,7 @@
 - [inner_product](./L2/inner_product.md)
 - [orthogonalize](./L2/orthogonalize.md)
 - [incremental-least-squares (stub)](./L2/incremental-least-squares.md)
-- [ksp_solve (stub)](./L2/ksp_solve.md)
+- [ksp_solve](./L2/ksp_solve.md)
 
 # L2 > L1 — Lowering
 - [Overview](./L2-L1/index.md)
@@ -66,6 +67,7 @@
 - [chebyshev-smoother](./L1/chebyshev-smoother.md)
 - [divfree-projector](./L1/divfree-projector.md)
 - [assemble-diagonal](./L1/assemble-diagonal.md)
+- [apply_nonlinear_pencil](./L1/apply_nonlinear_pencil.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)

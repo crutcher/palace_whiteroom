@@ -143,6 +143,49 @@ Citations:
   form returns `double`. L0-equivalent semantic documentation (CLAUDE.md "Tests as semantic
   supplement").
 
+### Sub-pattern D — hook-routed `LocalDot` + batched `Mpi::GlobalSum` (the unfused form)
+
+    // orthog.hpp:29-36 — the canonical InnerProductHelper
+    struct IdentityInnerProduct {
+      template <typename VecType>
+      auto operator()(const VecType &x, const VecType &y) const { return LocalDot(x, y); }
+    };
+    // orthog.hpp:66-70 — CGS open-codes the two-step with a BATCHED collective
+    for (std::size_t j = 0; j < m; j++) { H[j] = dot_op(w, V[j]); }   // m local dots
+    Mpi::GlobalSum(m, H, comm);                                       // ONE size-m reduction
+
+Palace's Gram-Schmidt routines (`OrthogonalizeColumnMGS` / `OrthogonalizeColumnCGS`,
+`orthog.hpp`) do NOT call the fused `linalg::Dot` (Sub-pattern A). They reach the same
+`yᴴ x` reduction through the `InnerProductHelper` template hook, whose canonical
+`IdentityInnerProduct::operator()` returns `LocalDot(x, y)` (`orthog.hpp:34`), and the
+routine itself applies `Mpi::GlobalSum` over the coefficient buffer. This is the **unfused**
+realization of Sub-pattern A's `Mpi::GlobalSum ∘ LocalDot`: the local dot and the collective
+are split across the hook boundary so MGS can interleave `w.Add(-H[j], V[j])` per `j`
+(`:49-51`, `m` size-1 reductions) and CGS can **batch** the collective into one
+`Mpi::GlobalSum(m, H, comm)` across all `m` coefficients (`:68-70`, 1 size-`m` reduction;
+CGS2 = two such passes, `:75-88`). Value-identical to Sub-pattern A modulo the reduction-tree
+non-law; the batching is the transparent collective-shape trick that motivates the
+`L1/orthogonalize` `gs_orthog` variant axis (`book/src/L1/orthogonalize.md:107-110,184-189`).
+
+**Observability note.** Unlike the real-projected CG coefficients, the Gram-Schmidt `H[j]`
+is consumed as a **full complex value** (the residual update `w.Add(-H[j], V[j])` and the
+Hessenberg-column store), so this is an **unweighted observable** use of the arg-2-conj
+convention — the header's own `// Note order is important for complex vectors`
+(`orthog.hpp:48`) flags it. It is the first cited unweighted-observable `dot` use OUTSIDE
+the SLEPc-NEP deflation cohort (the cycle-020 `linalg::Dot`-caller census,
+`book/src/L2-L1/inner-product-fold-specialization.md:301-329`, found only `nleps.cpp` because
+it scoped `linalg::Dot` callers and `orthog.hpp` bypasses `linalg::Dot`).
+
+Justification kind: **structural** — the unfused two-step is the same expansion as
+Sub-pattern A with the collective lifted out of the per-dot call and (in CGS) batched.
+
+Citations:
+- `palace/linalg/orthog.hpp:29-36` — `IdentityInnerProduct`; `return LocalDot(x, y)` at `:34`.
+- `palace/linalg/orthog.hpp:46-52` — MGS per-`j` `H[j]=dot_op(w,V[j]); Mpi::GlobalSum(1,&H[j],comm); w.Add(-H[j],V[j])` (m size-1 collectives, interleaved).
+- `palace/linalg/orthog.hpp:66-88` — CGS `m` local dots then ONE `Mpi::GlobalSum(m, H, comm)` (`:70`); CGS2 `refine` second pass `:75-88`.
+- `palace/linalg/vector.cpp:665-685` — the `LocalDot` real (Hypre) / complex (four-real-dot, `yᴴ x`) kernels the hook resolves to.
+- `palace/utils/communication.hpp:266-270` — `Mpi::GlobalSum(len, buff, comm) → GlobalOp(..., MPI_SUM, ...)`.
+
 ## The conjugation asymmetry — the core theme content
 
 Resolves OQ `l1-l0-dot-lowering-asymmetry`. The L1 `dot` convention pins **arg-1 conjugated**

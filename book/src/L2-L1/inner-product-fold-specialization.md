@@ -328,6 +328,18 @@ conjugation_caller_inventory:
   finding: palace/fem/ has zero Dot callers; the only intra-linalg/ unweighted observable sites are the four nleps.cpp SLEPc-NEP deflation/Newton sites.
 ```
 
+**Bypass surface (out of the `linalg::Dot`-caller scope, recorded for completeness).** Palace's
+Gram-Schmidt routines (`palace/linalg/orthog.hpp`) reach the same unweighted `yᴴ x` reduction
+WITHOUT calling `linalg::Dot`: the `InnerProductHelper` hook's `IdentityInnerProduct` calls
+`LocalDot(x, y)` directly (`orthog.hpp:34`) and the routine applies `Mpi::GlobalSum` itself
+(the unfused two-step; CGS batches it into one size-`m` reduction, `orthog.hpp:68-70`). The
+coefficients `H[j]` are **unweighted observable** (consumed in the residual update
+`w.Add(-H[j], V[j])`, header flag `// Note order is important for complex vectors` at
+`orthog.hpp:48`) — the first unweighted-observable `dot` use outside the `nleps.cpp` deflation
+cohort. This surface is enumerated as Sub-pattern D of
+[`dot-mutation-rotation`](../L1-L0/dot-mutation-rotation.md); it is not in the
+`conjugation_caller_inventory` above because that block is scoped to `linalg::Dot` call sites.
+
 ## Justification kind
 
 `algebraic` — the dispatch rule **is** the L2 entry's already-firm laws read as a

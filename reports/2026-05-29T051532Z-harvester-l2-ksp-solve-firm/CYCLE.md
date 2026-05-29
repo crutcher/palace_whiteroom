@@ -1,4 +1,31 @@
 ---
+agent: harvester
+invoked_at: 2026-05-29T051532Z
+scope: L2 operator: ksp_solve
+status: integrated
+integrated_at: 2026-05-29T06:14:03Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "cycle-021 finalize (staging row #4). ksp_solve L2 operator PROMOTED stub→firm (full firm body landed — the outer-driver named-composition wrapping the firm L2 krylov-step kernel in a convergence-test/restart iterate_while fold; full body verified present, cycle-019 fence-truncation defect avoided). Establishes the NON-identity L2↔L1 (un-collapse) + L2↔L3 (iteration-view un-erasure) relationships; RESOLVES the maturity-gradient inversion below the firm cycle-020 L3 entry. dep-map :53 stub→firm; SUMMARY :44 in-place de-stub (replace, not append). Ordering: landed BEFORE the L3>L2 ksp-solve-outer-driver theme (#5) which depends on this firm L2 entry. L3-entry citation drift (:464→:463, :564→:563) routed to OQ (L3 append-only; new L2 entry uses corrected values). L2 firm 5→6. retroactive-budget 0; clean build. NOTE finalize moved ksp_solve from the L2/index Queued/stub cohort bullet to the Firm-at-L2 bullet (cohort-list consistency-repair to match this row)."
+inputs:
+  - book/src/L3/ksp_solve.md (firm L3 outer-driver fold, cycle-020 wave-1)
+  - book/src/L2/ksp_solve.md (the stub being promoted)
+  - book/src/L2/krylov-step.md (the L2 kernel sibling; ksp_solve is the driver)
+  - book/src/L1/ksp_solve.md (firm; the opaque solver-as-operator collapse this L2 entry un-collapses)
+  - book/src/concepts/ksp_solve.md (the methodology-era concept page)
+  - book/src/L2/index.md (dep-map; stub row → firm row)
+  - plan item ksp-solve-l2-promotion-non-identity-substantive-gap
+  - OQ ksp-solve-l2-promotion-non-identity-substantive-gap
+---
+
+# CYCLE: Formalize ksp_solve at L2
+
+## Summary
+Promotes `book/src/L2/ksp_solve.md` from `stub` to `firm`. `ksp_solve` at L2 is the **outer-driver composition** for preconditioned Krylov solvers — the convergence-test / restart fold that wraps the [`krylov-step`](./krylov-step.md) kernel into a complete solve. It is the L2 *driver* complementing the L2 *kernel* `krylov-step`: the kernel names the per-step primitive composition (`carry -> {carry', readout}`), `ksp_solve` names the composition that folds that kernel under a convergence predicate to produce a converged solution plus the four-field result record. This entry resolves a **maturity-gradient inversion** (cycle-020 landed a firm L3 `ksp_solve` above an L2 stub) and closes a **substantive, non-identity** L2 coverage gap: every one of the five Palace solver pipelines wraps a `ksp_solve`, and the L2↔L1 relationship is genuinely non-identity (L1 collapses the entire method body — loop included — into one opaque operator application; L2 opens the wrap into the explicit kernel-fold composition while still erasing the L3 iteration-rotation view to an outer-driver-by-role surface). The L3>L2 lowering theme (`L3-L2/ksp-solve-outer-driver`) is forward-referenced as plain-text (cycle-021 wave-2 dispatch #3 authors it); this entry records only the L2-native composition, in L2 vocabulary.
+
+## Proposed changes
+
+```edit:book/src/L2/ksp_solve.md
+---
 layer: L2
 operator: ksp_solve
 firmness: firm
@@ -185,3 +212,44 @@ The L2 driver composition is read directly from the Palace per-method `Mult` bod
 - `book/src/L3/ksp_solve.md` (cycle-020 firm) — the L3 iteration-rotation view this entry lifts to. §"Iteration-rotation marker" names the outer-loop `sequential-obstruction`; §"Lowers to" records the L3>L2 rotation as substantive (non-identity), the same rotation this entry's §"Lifts to" records from the L2 side.
 - `book/src/concepts/ksp_solve.md` — the methodology-era concept page (constructed-operator-companion-to-`apply_linop` framing; the divfree slice use). Cross-referenced, not duplicated.
 - `book/src/concepts/convergence-test.md`, `book/src/concepts/solve-monad.md`, `book/src/concepts/solver-as-operator.md`, `book/src/concepts/derived-view-hoisting.md`, `book/src/concepts/variant-absorption.md`, `book/src/concepts/constructed-operators.md`, `book/src/concepts/apply_BA.md` — cross-cutting concept anchors (predicate surface, L4 driver, consumer framing, demand-pruning, body-variant absorption, preconditioner-side absorption).
+```
+
+```edit:book/src/L2/index.md
+| [`ksp_solve`](./ksp_solve.md) | `(K: Solver[A], b: Tensor[N]) → SolveResult[N]` (body ≡ convergence-test `iterate_while` fold of `krylov-step op`) | **Outer-driver composition** above L1 `ksp_solve`. Wraps the [`krylov-step`](./krylov-step.md) kernel in the convergence-test / restart fold. **Direct L2 dep:** `krylov-step` (the folded kernel). L1 primitives + L2 named compositions (`orthogonalize`, `incremental-least-squares`) appear only *transitively* through `krylov-step`. Concepts: `convergence-test`, `solver-as-operator`, `solve-monad`, `derived-view-hoisting`, `variant-absorption`, `constructed-operators`, `apply_BA`. Establishes the **non-identity** L2↔L1 relationship (un-collapse of the L1 opacity) and the **non-identity** L3↔L2 relationship (L2 erases the iteration view, L3 un-erases it — theme `L3-L2/ksp-solve-outer-driver` pending). L0 anchors: CG `iterative.cpp:361-486`, GMRES `:544-705`, base `iterative.hpp:25-115`, driver wrap `ksp.cpp:296-309`. | `firm` (harvested cycle-021 wave-1; promoted from stub; closes plan item / OQ `ksp-solve-l2-promotion-non-identity-substantive-gap`; resolves the maturity-gradient inversion of the firm cycle-020 L3 entry above an L2 stub) |
+```
+
+```edit:book/src/SUMMARY.md
+# REPLACE-IN-PLACE (de-stub the existing line-44 entry; NOT an append — an append would create a duplicate TOC link → build error)
+OLD: - [ksp_solve (stub)](./L2/ksp_solve.md)
+NEW: - [ksp_solve](./L2/ksp_solve.md)
+```
+
+## Operator content
+
+The full firm body is inside the `edit:book/src/L2/ksp_solve.md` fence above. Key points:
+
+- **Slug + one-line**: `ksp_solve` at L2 — the outer-driver composition that wraps the `krylov-step` kernel in a convergence-test / restart fold to produce a complete solve.
+- **Signature**: `ksp_solve :: (K: Solver[A: LinearOperator[N, N]], b: Tensor[N]) -> SolveResult[N]`, body = `iterate_while (krylov-step op) s_init predicate`. `SolveResult` boundary type identical to the firm L1 entry (the rotation is on the body, not the boundary).
+- **Semantics**: four-phase composition (setup+init_convergence ▷ outer-driver fold ▷ materialise_iterate ▷ extract_result), iteration view erased to a named-by-role wrap (the L3 concern is the explicit recursion + obstruction).
+- **Algebraic laws**: four fold-terminal/structural laws that hold (terminal operator-inverse, zero-RHS short-circuit, terminal-solution linearity, per-call referential transparency) + inherited demand-pruning; six explicit non-laws (fold-merge/associativity, statistics-field linearity, exact apply_linop composition, nested-solve commutativity, bit-determinism across variants, identity/fold-lift).
+- **Dependencies**: direct L2 dep on `krylov-step` (the folded kernel); L1 primitives + L2 named compositions transitive through the kernel; seven cross-cutting concepts.
+- **Status**: `firm`.
+- **Variant axes**: six loop-shaping (solver-method, element-type, preconditioner-side, convergence-criterion, initial-guess-policy, convergence-failure-policy), complementary to `krylov-step`'s six body axes.
+
+## Supporting evidence
+
+All L0 citations self-verified against `reference/palace/` source via `palace-codemap` `read_range` this dispatch:
+
+- CG `Mult` def at `iterative.cpp:361`; `eps`/pre-loop `converged` at `:417-418`; loop guard `:427`; operator-apply `A->Mult(p,z)` at `:443`; in-loop `converged = (res < eps)` at **`:463`**; result write `final_res = res; final_it = it;` at `:484-485`.
+- GMRES `Mult` def at `iterative.cpp:544`; restart loop `for (; it < max_it; restart++)` at **`:563`**; result write `final_res = beta; final_it = it;` at `:703-704`.
+- `IterativeSolver` base: template + `ScalarType` element-type conditional `iterative.hpp:25-32`; tolerance/max_it `:42-46`; result fields `:52-55`; `GetConverged()` gate `:98`; accessors `:101-108`.
+- `BaseKspSolver::Mult` wrapper `ksp.cpp:296-309` (`ksp->Mult` at `:300`, warning `:301-306`, counters `:308-309`); factory `:34-58` with MINRES/BICGSTAB/DEFAULT abort at `:53-56`; instantiations `:312-313`.
+
+**Citation corrections vs. the L3 entry's starting set** (the L3 entry cited these, off-by-one from source): in-loop `converged` is at `:463` (L3 said `:464`); GMRES restart loop is at `:563` (L3 said `:564`). The L3 entry is append-only post-integration so I do not edit it; I flag the drift in Open questions for a future lifter/lowering-verifier pass.
+
+## Open questions
+
+- **L3 entry citation drift (`:463` / `:563`)**: `book/src/L3/ksp_solve.md` cites the CG in-loop `converged = (res < eps)` at `:464` (source `:463`) and the GMRES restart loop at `:564` (source `:563`) — each off-by-one. The L3 entry is firm + integrated (append-only), so this dispatch does not touch it; recommend a lowering-verifier or lifter pass correct the two anchors. Low severity (the surrounding ranges `:361-486` / `:544-705` are correct; only the inner point-citations drift).
+- **L2 index Working Note staleness**: `book/src/L2/index.md` Working Note (last bullet, "L3 driver/kernel complementarity") says "`L3/ksp_solve.md` not yet on disk" and asks for a forward-reference to be added once it lands — but the L3 entry *did* land cycle-020. This dispatch's dep-map row edit makes the L2 entry firm but does not rewrite that Working Note (out of one-operator scope; it is index prose, not the operator row). Recommend the layer-intro-author refresh the L2 index Working Note to (a) drop the "not yet on disk" clause, (b) note the L2 `ksp_solve` is now firm, and (c) point the complementarity note at the now-firm `L3/ksp_solve.md`.
+- **`L3-L2/ksp-solve-outer-driver` theme is the gated dependent**: this firm L2 entry unblocks cycle-021 wave-2 dispatch #3 (the abstractor/lifter authoring the L3>L2 theme narrating the fold→outer-driver-by-role consolidation forward). The theme is forward-referenced plain-text in this entry's §"Lifts to" and the dep-map row; it is NOT authored here (one-operator-per-dispatch + lowering-author-is-abstractor discipline).
+- **`materialise_iterate` for restarted methods**: the §Semantics phase-3 `materialise_iterate` (folding the last partial restart-cycle's basis correction `K.V · K.y` into `s.x`) leans on the GMRES restart-correction mechanics that live in the queued `incremental-least-squares` L2 stub. When that stub firms, the restart-correction reference here may want tightening to cite it directly (currently it cites `krylov-step` §Semantics + `solve-monad` §"Worked example — GMRES"). Not blocking; noted for the `incremental-least-squares` harvester.

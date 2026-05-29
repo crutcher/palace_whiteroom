@@ -28,7 +28,7 @@ A solver pipeline is *covered* when its driver algorithm has at least one slice 
 
 - [ ] **Electrostatic** — Poisson-like (∇·(ε∇φ) = ρ); SPD; uses CG + (eventually) geometric multigrid.
 - [ ] **Magnetostatic** — curl-curl (∇×(μ⁻¹∇×A) = J); uses GMRES + (eventually) AMS.
-- [ ] **Eigenmode** — generalized eigenvalue (∇×(μ⁻¹∇×E) = ω²εE); uses ARPACK/FEAST + shift-invert.
+- [ ] **Eigenmode** — generalized eigenvalue (∇×(μ⁻¹∇×E) = ω²εE); uses ARPACK/FEAST + shift-invert. **NLEPS interior atom landed firm cycle-021**: `book/src/L1/apply_nonlinear_pencil.md` (the `r = T(λ)·v` for `T(λ) = K + λC + λ²M + A2(λ)` residual-apply read from positive `QuasiNewtonSolver::GetResidualNorm` site; nonlinearity localised in the opaque `A2` closure — `apply_linop`-of-the-NEP-loop). 4 deferred NLEPS L1 pieces carried (deflated-residual → deflated-solve → Jacobian → eigenvalue-correction). **L3 `eigsolve` backfill BLOCKED cycle-021** (prerequisite chain: L1 `eigsolve` rough-in→firm → L2 `eigsolve` entry → L3 `eigsolve` backfill, in strict order; the linear-EVP has no Palace-authored kernel/driver pair — predicted sequential/partial-obstruction).
 - [ ] **Driven** (frequency-domain) — Helmholtz with complex shifts; uses GMRES with complex arithmetic.
 - [ ] **Transient** (time-domain) — ODE integrator over time stepping.
 
@@ -39,7 +39,7 @@ Detail rows for the prioritised section above.
 ### Krylov solvers
 
 - [x] **CG** — preconditioned conjugate gradient (cg slice at L4; v0.2 + preconditioned variant).
-- [x] **GMRES / FGMRES** — restarted with `pc_side × gs_orthog × flexible` variants at L4 (gmres slice).
+- [x] **GMRES / FGMRES** — restarted with `pc_side × gs_orthog × flexible` variants at L4 (gmres slice). **L4>L3 migration themes both firm as of cycle-021**: `gmres-inner-loop-iterate-while-migration` (firm cycle-020) + `fgmres-inner-loop-iterate-while-migration` (firm cycle-021 — closes the 5-batch carry-forward `fgmres-inner-loop-iterate-while-migration-lifter-candidate`, cycle-010→021; the FGMRES theme adds the two variant-axis collapses `pc_side=RIGHT`/`flexible=true` + the per-iteration `Z[j]` workspace over the firm gmres rotation). L4>L3 firm cohort 2→3; rough-in cohort 1→0.
 - [stub] **MINRES** — symmetric-indefinite three-term recurrence. Palace ships enum (`KspType::MINRES`) + JSON parser entry but routes to `MFEM_ABORT` at `palace/linalg/ksp.cpp:53-56`. L1>L0 obstruction theme landed cycle-004 (`book/src/L1-L0/minres-iteration.md`). NOT a direct implementation target per the unimplemented-stub policy; L1 form available as guidance for `krylov-step` at L2.
 - [stub] **BiCGStab** — non-symmetric short-recurrence. Same enum-only-with-MFEM_ABORT pattern as MINRES. L1>L0 obstruction theme landed cycle-004 (`book/src/L1-L0/bicgstab-iteration.md`). NOT a direct implementation target.
 
