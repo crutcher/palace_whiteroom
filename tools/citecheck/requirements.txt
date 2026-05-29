@@ -1,0 +1,4 @@
+# citecheck has NO third-party dependencies — Python 3.10+ standard library only.
+# No venv is required to run it (see README.md). This file documents that the
+# reproducible environment is "stock Python 3.10+", per the tools/ convention of
+# tracking a requirements manifest for each Python tool.
