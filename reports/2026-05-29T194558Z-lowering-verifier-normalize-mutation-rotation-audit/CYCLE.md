@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T19:45:58Z
 scope: L1>L0 theme audit — normalize-mutation-rotation
 status: integrated
 integrated_at: 2026-05-29T205500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3319d88
 integration_notes: "cycle-028 position 3/7 (per-report). Additive verified_against: audit of the firm L1>L0 normalize-mutation-rotation theme (landed c027 D1). UPHELD firm — 16-row yaml block (14 supports / 1 partially-supports / 1 does-not-support) + a :811→:810-811 second-GMRES-path citation-range parity fix at three occurrences. The 1 does-not-support row (F1: defined-but-uncalled fused Normalize(comm,x,B,Bx) at palace/linalg/operator.hpp:377-384 contradicts the theme's 'no fused B-Normalize' prose) recorded inline but the prose correction ROUTED to follow-up abstractor OQ normalize_B-note-says-no-fused-B-Normalize-but-uncalled-fused-operator-exists (substantive, exceeds integrator mechanical bar). Firm core UNAFFECTED; §Status untouched. Build clean (yaml fence balanced, zero build-repairs)."
 inputs:
   - book/src/L1-L0/normalize-mutation-rotation.md (the firm theme under audit, landed c027 D1)

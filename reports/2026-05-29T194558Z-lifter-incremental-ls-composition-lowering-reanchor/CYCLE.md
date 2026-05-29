@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T194828Z
 scope: L2>L1 theme re-anchor + rough-in→firm promotion — incremental-least-squares-composition-lowering
 status: integrated
 integrated_at: 2026-05-29T205500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3319d88
 integration_notes: "cycle-028 position 1/7 (per-report; dependency root — report-5's lowering-verifier audit appends to the theme file this report creates). Created NEW firm L2>L1 theme book/src/L2-L1/incremental-least-squares-composition-lowering.md (the c027 D5 draft was deferred needs-revision on an inverted coordinated-rename premise and never integrated, so created fresh) + L2-L1/index.md dep-map row 20 (4-col) + SUMMARY.md:57 registration. L2>L1 firm cohort 6→7. ls_update_column Face-1 forward-ref correctly left plain-text (file absent — a live link would be a linkcheck2 hard error); routed to follow-on harvester OQ ls_update_column-column-streaming-leaf-harvest. terminal back-solve = firm back_solve leaf, NOT general trsv. Closes the c027 D5 deferral. Build clean (cargo make book exit 0, theme rendered to HTML, zero build-repairs)."
 inputs:
   - book/src/L2-L1/incremental-least-squares-composition-lowering.md (the theme — NOT on disk; deferred c027 D5, content in reports/2026-05-29T175529Z-abstractor-.../CYCLE.md new: block)

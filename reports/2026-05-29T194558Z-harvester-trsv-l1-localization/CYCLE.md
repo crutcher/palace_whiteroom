@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T19:45:58Z
 scope: L1/L3 localization — trsv (triangular solve) primitive characterization (routing decision)
 status: integrated
 integrated_at: 2026-05-29T205500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3319d88
 integration_notes: "cycle-028 position 7/7 (per-report; LAST). HARVESTER localization-only dispatch — NO proposed-changes block / NO book/ mutation. Sole integration action = 2 OQ promotions. Negative-finding resolution of the LAST leaf of l3-vocabulary-inventory-gap: Palace exposes NO standalone trsv primitive (two exhaustive zero-hit searches, critic-reproduced; densematrix.hpp:24-36 has no triangular solve), so trsv routes resolved-by-obstruction (NOT perpetually BLOCKED) — opaque-library-owned (HYPRE GS/SSOR relax-type flags + external direct-solver wrappers) or a block-triangular red herring. Closes the parent migrated-plan-item l3-vocabulary-inventory-gap (all four leaves done). Routed fresh triangular-solve-obstruction L1>L0 obstruction-theme abstractor candidate. Critic-filed skill-candidate establish-negative-finding-exhaustiveness left for the meta-phase. Build-relevant: no."
 inputs:
   - OQ parent `l3-vocabulary-inventory-gap` REMAINING leaf: `trsv` (BLOCKED, no L1 anchor)

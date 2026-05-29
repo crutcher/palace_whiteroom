@@ -1,6 +1,6 @@
 # Cycle 028 — L2>L1 firm 6→7 (+incremental-least-squares-composition-lowering, closes c027 D5 deferral) + 3 verified_against audits (normalize/back_solve/incremental-ls) + citation-hygiene residual sweep + trsv resolved-by-obstruction (l3-vocabulary-inventory-gap CLOSED) (first primary cycle of meta-batch-8)
 
-**Date:** 2026-05-29 · **Commit:** `PATCH_AFTER_COMMIT` · **Status:** clean (7 of 7 dispatched-ready reports applied; zero deferrals; zero rejections; zero build-repairs; twenty-fourth consecutive clean split-integrator cycle)
+**Date:** 2026-05-29 · **Commit:** `3319d88` · **Status:** clean (7 of 7 dispatched-ready reports applied; zero deferrals; zero rejections; zero build-repairs; twenty-fourth consecutive clean split-integrator cycle)
 
 **Batch position:** cycle-028 is the **FIRST** primary cycle of **meta-batch-8** (cycles 028/029/030). The batch-8 meta-phase fires after the cycle-030 finalize commit (3:1 cadence; cycle counter does NOT reset across batch boundaries). This `log/cycle-028.md` + the `scaffolding/integrator-signals.md` cycle-028 section OPEN the batch-8 evidence window.
 

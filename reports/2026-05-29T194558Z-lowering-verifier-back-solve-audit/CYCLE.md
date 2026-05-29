@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T194558Z
 scope: L1 firm leaf audit — back_solve (GMRES/FGMRES restart-correction back-solve; landed firm cycle-027 dispatch-4, renamed-in-repair from ls_update_column)
 status: integrated
 integrated_at: 2026-05-29T205500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3319d88
 integration_notes: "cycle-028 position 4/7 (per-report). Additive verified_against: audit of the firm L1 leaf back_solve (landed firm c027 D4). Verdict fully-supported, UPHELD firm, no status change — 18-row yaml block, all supports. Firm-on-positive-structure (syntactic-identity laws; no-dedicated-test non-gating per lu_solve/apply_linop precedent; descending column-oriented back-substitution reduction-order recorded as a non-law, not a status reduction). §Status untouched. Build clean (yaml fence balanced, zero build-repairs)."
 inputs:
   - book/src/L1/back_solve.md (the firm L1 leaf under audit)

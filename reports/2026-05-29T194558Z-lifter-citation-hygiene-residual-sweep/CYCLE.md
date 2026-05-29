@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T19:50:00Z
 scope: cycle-028 mechanical citation-hygiene residual sweep — three carried-forward hygiene residuals (workspace-category mislabel residual lines :22/:87; incremental-least-squares stale self-description; gram forthcoming-text refresh)
 status: integrated
 integrated_at: 2026-05-29T205500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3319d88
 integration_notes: "cycle-028 position 2/7 (per-report). Pure mechanical citation-hygiene residual sweep. (a) L0/linalg-operator-file.md :22/:87 Category-2→Category-1 workspace relabel (now all five workspace-category mentions uniform; grounded in mutable-workspace-pattern.md:128-129); (b) L2/incremental-least-squares.md:13 dropped stale 'queued' self-description (firm since c026); (c) gram refresh verified no-op (already closed c026). No operator/theme signature/decomposition/semantics/law touched. Build clean (zero build-repairs)."
 inputs:
   - book/src/L0/linalg-operator-file.md

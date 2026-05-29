@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T19:48:49Z
 scope: L1 cross-cut — shared rough-in→firm test-coverage gate of matrix-weighted-norm + bilinear-form
 status: integrated
 integrated_at: 2026-05-29T205500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3319d88
 integration_notes: "cycle-028 position 6/7 (per-report). SURVEY/observation dispatch — NO book/ mutation (no proposed-changes block). Sole integration action = 4 OQ promotions. ASK-class verdict: BOTH matrix-weighted-norm + bilinear-form STAY rough-in (no dedicated test at the weighted entry point in the 23-file corpus; gates need an out-of-scope Palace-source change) — no promotion enacted. matrix-weighted-norm-mixed-element-type-variant OQ NARROWED (not closed — element-type axis shape-witnessed by test-orthog.cpp; residual = named-entry-point √+SPD-guard test). Surfaced the missing bilinear-form-mutation-rotation L1>L0 theme (NOT on disk) → routed as a fresh abstractor plan candidate. Build-relevant: no (no book rebuild needed for this report)."
 ---
 
