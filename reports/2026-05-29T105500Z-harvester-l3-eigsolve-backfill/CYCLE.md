@@ -1,4 +1,32 @@
 ---
+agent: harvester
+invoked_at: 2026-05-29T105839Z
+scope: L3 operator: eigsolve
+status: pending
+integrated_at: 2026-05-29T140000Z
+integration_commit: INTEGRATION_COMMIT_SHA
+integration_notes: "Applied cycle-024 (staging row 7). L3 eigsolve refined stub→partial-obstruction (second L3 partial-obstruction, first opaque-library one); eigsolve L1→L2→L3 chain COMPLETE. Refined book/src/L3/eigsolve.md in place + L3/index.md dep-map row + SUMMARY.md (stub) relabel. Confirms cycle-021 prediction (no krylov-step kernel analog). No gate hits."
+inputs:
+  - book/src/L3/eigsolve.md (the stub materialized cycle-023; carries Implied-by provenance)
+  - book/src/L2/eigsolve.md (firm, cycle-023 — the named shift-invert spectral-transform composition this L3 entry lifts from)
+  - book/src/L3/chebyshev.md (the precedent partial-obstruction L3 entry — body lifts, loop does not)
+  - book/src/L3/krylov-step.md (the precedent for L3 identity-in-form treatment + the contrast operator)
+  - OQ l3-eigsolve-linear-evp-has-no-krylov-step-kernel-analog (cycle-021 prediction)
+  - palace/linalg/arpack.cpp, palace/linalg/slepc.cpp (localized + verified via codemap this dispatch)
+---
+
+# CYCLE: Formalize eigsolve at L3
+
+## Summary
+
+Backfills the L3 `eigsolve` entry, refining the cycle-023 stub at `book/src/L3/eigsolve.md` in place — step 3 (final) of the eigsolve prerequisite chain (L1-firm cycle-022 → L2-firm cycle-023 → **L3-backfill this dispatch**). The cycle-021 prediction (`l3-eigsolve-linear-evp-has-no-krylov-step-kernel-analog`) and the cycle-023 finalize both predicted the terminal status is **`partial-obstruction`**: the per-step body lifts, the eigen-iteration loop does not. **The prediction is confirmed against positive Palace source.** The per-step transformed-operator application — the named shift-invert composition `apply_shift_invert = apply_linop(M) ▷ ksp_solve((K − σM)⁻¹)` that the firm L2 entry firms — lifts cleanly to a global tensor-field expression (it is the documented `apply_linop ▷ ksp_solve` composition, recorded **identity-in-form to the firm L2 body** at the body level). **But the eigen-iteration loop is a witnessed `sequential-obstruction` rooted in opaque-library-ownership**: ARPACK's RCI driver `naupd` owns the loop (Palace's `while(true)` RCI loop at `palace/linalg/arpack.cpp:315-339` only dispatches the `ApplyOp` matvec callback when `ido == ±1`), and SLEPc's `EPSSolve(eps)` (`palace/linalg/slepc.cpp:694`) is the entire opaque iteration — Palace supplies only the `__pc_apply_EPS` PC-shell matvec callback. There is **no Palace-authored eigen-step kernel / eigen-iteration driver pair** analogous to the `(krylov-step, ksp_solve)` pair. The status reflects the **loop structure, not the body**: this is the `partial-obstruction` shape (first-class per CLAUDE.md §Methodology invariants), the same shape as the precedent L3 [`chebyshev`](../../book/src/L3/chebyshev.md), but with the obstruction rooted in **library-ownership** (no removable recurrence to rotate) rather than in numerical-stability of an in-house recurrence.
+
+**Chain-closure status (for finalize/meta-phase):** the eigsolve prerequisite chain (L1-firm → L2-firm → L3-partial-obstruction) is now **structurally complete across all three layers**. The L3 row lands `partial-obstruction` (not `firm` — the loop does not lift; not full `obstruction` — the operator IS implemented and its body DOES lift). Two companion lowering themes remain pending (noted in Open questions): the L2>L1 `L2-L1/eigsolve-spectral-transform-composition` theme (separately pending from cycle-023) and the L3>L2 `eigsolve` body-identity annotation (which this dispatch handles **in-line** per the cycle-012 non-adjacent-identity convention — no `L3-L2/` theme file, matching the `chebyshev` precedent).
+
+## Proposed changes
+
+```edit:book/src/L3/eigsolve.md
+---
 layer: L3
 operator: eigsolve
 firmness: partial-obstruction
@@ -235,3 +263,54 @@ The L3 per-step body is read directly from the Palace per-step transformed-opera
 - `book/src/L3/apply_linop.md` (firm, cycle-011) — the body's first-stage whole-tensor operator-application dependency.
 - `book/src/concepts/sequential-obstruction.md`, `book/src/concepts/tensor-field-lift.md`, `book/src/concepts/constructed-operators.md`, `book/src/concepts/solver-as-operator.md`, `book/src/concepts/variant-absorption.md`, `book/src/concepts/solve-monad.md` — cross-cutting concept anchors (the opaque-library loop obstruction, the body-lifts-loop-doesn't partial case, the shifted constructed operator, the solver-as-operator inner solve, the backend-orchestration absorption, the future L4 outer-coordination surface).
 - `book/src/design/l4_calculus.md` — L4 strawman; the `iterate_while` the eigen-iteration loop would fold *if* Palace authored the loop — but it is library-owned, so the L4/L3 treatment is the `partial-obstruction` case.
+```
+
+```edit:book/src/L3/index.md
+| [`ksp_solve`](./ksp_solve.md) | `(op, K_0, s_0) -> (s_final, result)` (value-threaded outer-driver fold: `iterate_while_L3 (krylov-step op) (K_0, s_init) predicate` then result-extract; `result = { converged, iterations, initial_res, final_res }`). | L3 [`krylov-step`](./krylov-step.md) (the folded per-step kernel — direct, load-bearing); transitively the L3 BLAS-1 primitives via the kernel. Concepts: `sequential-obstruction` (the outer-loop obstruction this operator carries), `convergence-test`, `solve-monad`, `solver-as-operator`, `derived-view-hoisting`, `state-stratification`, `variant-absorption`, `constructed-operators`. L1 lift via [`L1/ksp_solve`](../L1/ksp_solve.md) (iteration-rotation un-collapse of the opaque solver-as-operator). | L2 [`ksp_solve`](../L2/ksp_solve.md) — **substantive (NOT identity-in-form)**: L3 explicit fold consolidates into L2 outer-driver-by-role; theme `L3-L2/ksp-solve-outer-driver` pending (L2 anchor still `stub`). | `firm` (harvested cycle-020T034441Z; driver-half layer-coherence backfill per CLAUDE.md §Methodology invariants **Identity-lowerings still require both L levels** + **Lower-level shared vocabulary takes priority** — the outer-loop `sequential-obstruction` complement of the firm `krylov-step` kernel; closes the `ksp_solve` portion of OQ `l3-vocabulary-inventory-gap`) |
+| [`eigsolve`](./eigsolve.md) | `(E, control) -> EigResult` (iteration-rotation view: the per-step body `apply_shift_invert = apply_linop(op.operand) ▷ ksp_solve(op.inv) ▷ scale_untransform [▷ project]` lifts whole-tensor; the eigen-iteration fold is named by role with a cited opaque-library `sequential-obstruction`). | L3 [`ksp_solve`](./ksp_solve.md) (the inner solve inverting the shifted operator `(K − σM)` — direct, load-bearing body constituent; first L3 op whose body's direct constituent is itself a constructed-solver fold), [`apply_linop`](./apply_linop.md) (the body's first-stage operator-apply + projector tail). Concepts: `sequential-obstruction` (the opaque-library loop obstruction this operator carries), `tensor-field-lift`, `constructed-operators`, `solver-as-operator`, `variant-absorption`, `solve-monad`. No firm L4 `eigsolve` (the L1-anchored `solve-monad` surface is unauthored); lifts from L2 only. | L2 [`eigsolve`](../L2/eigsolve.md) (body identity-in-form; the per-step body maps line-for-line to the firm L2 `apply_shift_invert`; surface adjustment makes the un-liftable eigen-iteration loop explicit as an obstruction marker; no L3-L2 theme file — in-line annotation per cycle-012 non-adjacent-identity convention, precedent `chebyshev`/`krylov-step`). | `partial-obstruction` (harvested cycle-024T105839Z; **final step of the eigsolve prerequisite chain** L1-firm cycle-022 → L2-firm cycle-023 → **this L3 entry**; the per-step body lifts to a global tensor-field expression — body laws are syntactic identities on positive `ApplyOp`/`__pc_apply_EPS` source, identity-in-form to firm L2 — but the eigen-iteration loop is a witnessed `sequential-obstruction` rooted in **opaque-library-ownership**: SLEPc `EPSSolve` `slepc.cpp:694` / ARPACK `naupd` RCI `arpack.cpp:318` own the loop, no Palace-authored kernel/driver pair analogous to `(krylov-step, ksp_solve)`. The canonical opaque-library partial-obstruction case, distinct from `chebyshev` (numerical-stability obstruction); confirms cycle-021 OQ `l3-eigsolve-linear-evp-has-no-krylov-step-kernel-analog`) |
+
+## Working Notes
+```
+
+```edit:book/src/SUMMARY.md
+Replace (NOT append) the existing L3 eigsolve line — the entry already exists as a stub
+(materialized cycle-023); this edit only drops the `(stub)` label now that the entry is
+`partial-obstruction`. Surgical line replacement at `book/src/SUMMARY.md:31`:
+
+OLD: - [eigsolve (stub)](./L3/eigsolve.md)
+NEW: - [eigsolve](./L3/eigsolve.md)
+```
+
+## Operator content
+
+(The full firm chapter body is authored inside the `edit:book/src/L3/eigsolve.md` proposed-changes fence above. Summary of the key sections:)
+
+- **Slug + one-line**: The L3 (iteration-rotation) view of `eigsolve` — the canonical **opaque-library partial-obstruction** case. Per-step body lifts; eigen-iteration loop does not (library-owned, no Palace loop to render).
+- **Signature**: `eigsolve :: (E, control) -> EigResult` (boundary identical to L1/L2); the per-step body `apply_shift_invert :: (op, v) -> v'` rendered as a value-threaded whole-tensor expression `apply_linop(op.operand) ▷ ksp_solve(op.inv) ▷ scale_untransform [▷ project]`. Value-threaded form renders `eigen_iterate` by role only (the obstruction).
+- **Semantics**: three phases (setup + spectral-transform binding; the lifting body folded by the non-lifting opaque library loop; eigenpair extraction). The iteration-rotation marker makes the body-lifts / loop-doesn't split explicit.
+- **Algebraic laws**: 5 hold (body-composition identity, per-step whole-tensor lift, spectral-transform eigenvalue correspondence, scaling-coordinate un-transform, inner-solve linearity). 7 explicit non-laws (the load-bearing one: eigen-iteration loop lift to a tensor-field op OR to an explicit `iterate_while_L3` tail recursion — the opaque-library `sequential-obstruction`).
+- **Dependencies**: same-layer L3 `ksp_solve` (inner solve, load-bearing), `apply_linop` (body first stage); concepts `sequential-obstruction`, `tensor-field-lift`, etc.
+- **Status**: `partial-obstruction` (loop structure, not body — first-class per CLAUDE.md).
+- **Evidence**: positive body anchors (`ApplyOp` `arpack.cpp:562-590`, `__pc_apply_EPS` `slepc.cpp:1847-1876`); negative loop anchors (`naupd` RCI `arpack.cpp:263-402`, `EPSSolve` `slepc.cpp:687-709`). All self-verified via codemap this dispatch.
+
+## Supporting evidence
+
+The cycle-021 prediction `l3-eigsolve-linear-evp-has-no-krylov-step-kernel-analog` and the cycle-023 finalize both predicted `partial-obstruction`. **Confirmed against positive Palace source this dispatch:**
+
+- **ARPACK loop is RCI-callback-dispatched** (`palace/linalg/arpack.cpp:315-339`): Palace's `while(true)` loop calls the opaque ARPACK driver `naupd` (`:318`) and dispatches the per-step `ApplyOp` matvec callback only when `naupd` returns `ido == ±1` (`:323-326`), breaking on `ido == 99` (`:330-333`). The eigen-iteration logic (basis extension, Rayleigh-Ritz, restart, convergence) is entirely inside `naupd`. Palace's loop body is a callback dispatcher, not an algorithm.
+- **SLEPc loop is a single opaque library call** (`palace/linalg/slepc.cpp:694`): `EPSSolve(eps)` is the entire iteration; Palace supplies only the `__pc_apply_EPS` PC-shell matvec callback. There is no Palace loop at all.
+- **The per-step body lifts identically at both backends**: `ApplyOp` (`arpack.cpp:579-581` + projection `:586`) and `__pc_apply_EPS` (`slepc.cpp:1858` + projection `:1870`) both realize the `apply_linop ▷ ksp_solve ▷ scale_untransform [▷ project]` composition — identity-in-form to the firm L2 body.
+
+Conclusion: **no Palace-authored eigen-step kernel / eigen-iteration driver pair** analogous to `(krylov-step, ksp_solve)`. The rotation cannot render a loop Palace does not author. This is the canonical opaque-library partial-obstruction, distinct from the `chebyshev` (numerical-stability) precedent.
+
+## Open questions / caveats
+
+1. **Companion L2>L1 theme still pending** (carried from cycle-023, not this dispatch's scope): `L2-L1/eigsolve-spectral-transform-composition` — narrates the L2 named composition lowering forward into the L1 collapse. Separately pending; this L3 backfill does not author it. Recommend routing to a cycle-025+ abstractor dispatch.
+
+2. **No L3>L2 `eigsolve` theme file is created** — by design. The body identity-in-form annotation lives **in-line** in this L3 entry (§Lowers to) per the cycle-012 non-adjacent-identity convention (precedent `book/src/L3/chebyshev.md`, `book/src/L3/krylov-step.md`). A `lowering-verifier` may want a dedicated audit anchor confirming the L3↔L2 body identity-in-form + the opaque-library obstruction; if so, that is a thin `L3-L2/eigsolve-body-identity` follow-up (OQ-worthy, low priority — the in-line annotation is sufficient for layer coherence).
+
+3. **No firm L4 `eigsolve` entry exists.** This L3 entry lifts from L2 only and notes the L4 `solve-monad` surface (anchored at L1) as a future dispatch. The L4 `eigsolve` (the sum-typed-termination outer-coordination surface richer than `ksp_solve`'s soft-fail) is a candidate for a future harvester/abstractor pass. When authored, the L4>L3 edge would be the `partial-obstruction` case (no clean `iterate_while` fold — the loop is library-owned). Recommend an OQ `l4-eigsolve-solve-monad-surface-unauthored` if not already tracked.
+
+4. **Chain-closure note for finalize/meta-phase:** the eigsolve prerequisite chain (L1-firm → L2-firm → L3-partial-obstruction) is now **structurally complete across all three core layers**. The L3 row is the terminal step; the chain's remaining open edges are the two lowering themes (the pending L2>L1 theme #1, and the optional L3>L2 audit anchor #2) plus the unauthored L4 surface (#3). The cycle-021 OQ `l3-eigsolve-linear-evp-has-no-krylov-step-kernel-analog` is **confirmed and can be closed** (the prediction held: opaque-library partial-obstruction).
+
+5. **L3 firm/partial-obstruction operator count:** with this landing, L3 has 9 firm operators (krylov-step, apply_linop, axpy, axpby, axpbypcz, dot, nrm2, scal, ksp_solve) + 2 partial-obstruction (chebyshev, eigsolve). The L3 index Working Notes could note the second partial-obstruction landing (a `layer-intro-author` follow-up — not in this harvester's scope per the role partition; flagged here for the integrator/planner).

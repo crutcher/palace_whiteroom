@@ -28,7 +28,7 @@
 - [scal](./L3/scal.md)
 - [chebyshev](./L3/chebyshev.md)
 - [ksp_solve](./L3/ksp_solve.md)
-- [eigsolve (stub)](./L3/eigsolve.md)
+- [eigsolve](./L3/eigsolve.md)
 
 # L3 > L2 — Lowering
 - [Overview](./L3-L2/index.md)
@@ -54,6 +54,8 @@
 - [linear-combination-fold-specialization](./L2-L1/linear-combination-fold-specialization.md)
 - [inner-product-fold-specialization](./L2-L1/inner-product-fold-specialization.md)
 - [orthogonalize-composition-lowering](./L2-L1/orthogonalize-composition-lowering.md)
+- [gram-fold-specialization](./L2-L1/gram-fold-specialization.md)
+- [deflate-composition-lowering](./L2-L1/deflate-composition-lowering.md)
 
 # L1 — Mutation-Lifted Forms
 - [Overview](./L1/index.md)
@@ -76,6 +78,8 @@
 - [nleps_deflated_residual](./L1/nleps_deflated_residual.md)
 - [lu_solve](./L1/lu_solve.md)
 - [nleps_deflated_solve](./L1/nleps_deflated_solve.md)
+- [nleps_jacobian_action](./L1/nleps_jacobian_action.md)
+- [nleps_eigenvalue_correction](./L1/nleps_eigenvalue_correction.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -97,6 +101,8 @@
 - [assemble-diagonal-mutation-rotation](./L1-L0/assemble-diagonal-mutation-rotation.md)
 - [matrix-weighted-norm-mutation-rotation (stub)](./L1-L0/matrix-weighted-norm-mutation-rotation.md)
 - [lu-solve-mutation-rotation](./L1-L0/lu-solve-mutation-rotation.md)
+- [nleps-deflated-solve-mutation-rotation](./L1-L0/nleps-deflated-solve-mutation-rotation.md)
+- [apply-nonlinear-pencil-mutation-rotation](./L1-L0/apply-nonlinear-pencil-mutation-rotation.md)
 
 # L0 — Cited Palace Source + Reference Notes
 - [Overview](./L0/index.md)

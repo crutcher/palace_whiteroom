@@ -157,7 +157,7 @@ Citations:
 Palace's Gram-Schmidt routines (`OrthogonalizeColumnMGS` / `OrthogonalizeColumnCGS`,
 `orthog.hpp`) do NOT call the fused `linalg::Dot` (Sub-pattern A). They reach the same
 `yᴴ x` reduction through the `InnerProductHelper` template hook, whose canonical
-`IdentityInnerProduct::operator()` returns `LocalDot(x, y)` (`orthog.hpp:34`), and the
+`IdentityInnerProduct::operator()` returns `LocalDot(x, y)` (`orthog.hpp:35`), and the
 routine itself applies `Mpi::GlobalSum` over the coefficient buffer. This is the **unfused**
 realization of Sub-pattern A's `Mpi::GlobalSum ∘ LocalDot`: the local dot and the collective
 are split across the hook boundary so MGS can interleave `w.Add(-H[j], V[j])` per `j`
@@ -180,7 +180,7 @@ Justification kind: **structural** — the unfused two-step is the same expansio
 Sub-pattern A with the collective lifted out of the per-dot call and (in CGS) batched.
 
 Citations:
-- `palace/linalg/orthog.hpp:29-36` — `IdentityInnerProduct`; `return LocalDot(x, y)` at `:34`.
+- `palace/linalg/orthog.hpp:29-36` — `IdentityInnerProduct`; `return LocalDot(x, y)` at `:35`.
 - `palace/linalg/orthog.hpp:46-52` — MGS per-`j` `H[j]=dot_op(w,V[j]); Mpi::GlobalSum(1,&H[j],comm); w.Add(-H[j],V[j])` (m size-1 collectives, interleaved).
 - `palace/linalg/orthog.hpp:66-88` — CGS `m` local dots then ONE `Mpi::GlobalSum(m, H, comm)` (`:70`); CGS2 `refine` second pass `:75-88`.
 - `palace/linalg/vector.cpp:665-685` — the `LocalDot` real (Hypre) / complex (four-real-dot, `yᴴ x`) kernels the hook resolves to.
@@ -398,3 +398,23 @@ structure is firm; only the unconjugated arm is behaviorally unexercised), not a
 reduction. A `lowering-verifier` audit attaching the `verified_against:` block (per the
 sibling-theme convention) confirming the surface-form recognition is exhaustive is the standard
 follow-up, not a status reduction.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/orthog.hpp:35
+    verdict: supports
+    audited_at: 2026-05-29T105500Z
+    note: IdentityInnerProduct::operator() body `return LocalDot(x, y);` confirmed at :35 (was miscited :34, the operator-body opening brace). Corrected in §Sub-pattern D lines 160 + 183.
+  - citation: palace/linalg/orthog.hpp:48
+    verdict: supports
+    audited_at: 2026-05-29T105500Z
+    note: "// Global inner product: Note order is important for complex vectors." re-confirmed at :48.
+  - citation: palace/linalg/orthog.hpp:46-52
+    verdict: supports
+    audited_at: 2026-05-29T105500Z
+    note: MGS per-j interleaved size-1 collective block re-confirmed (dot at :49, GlobalSum(1,...) at :50, Add at :51).
+  - citation: palace/linalg/orthog.hpp:66-88
+    verdict: supports
+    audited_at: 2026-05-29T105500Z
+    note: CGS m local dots then ONE Mpi::GlobalSum(m, H, comm) at :70; CGS2 refine second pass through :88.
+```
