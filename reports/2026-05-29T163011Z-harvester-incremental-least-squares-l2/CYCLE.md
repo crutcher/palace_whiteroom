@@ -1,3 +1,31 @@
+---
+agent: harvester
+invoked_at: 2026-05-29T163011Z
+scope: L2 operator: incremental-least-squares
+status: pending
+inputs:
+  - book/src/L2/incremental-least-squares.md (the stub being promoted; "Implied by" provenance)
+  - book/src/concepts/incremental-least-squares.md (the cross-cutting concept page)
+  - book/src/concepts/givens.md (the Givens kernel-pair concept page)
+  - book/src/L2/orthogonalize.md (the sibling named-composition firm template)
+  - book/src/L2/ksp_solve.md (the consumer; §Semantics materialise_iterate forward-references this)
+  - book/src/L2/krylov-step.md (names incremental-least-squares as a future L2 candidate)
+  - palace/linalg/iterative.cpp (GMRES + FGMRES running-QR stream; Givens kernels) — verified on-disk via tools/citecheck/citecheck.py --anchor
+  - palace/linalg/iterative.hpp (GmresSolver rotation-register declarations)
+  - OQ: incremental-least-squares-as-future-L2-firstclass-entry (≡ plan l2-named-composition-lifts), gmres-givens-stream-as-step-kernel-borderline, l2-ksp-solve-materialise-iterate-incremental-least-squares-cite-tightening
+integrated_at: 2026-05-29T203000Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "Applied clean (cycle-026 dispatch-2). L2 incremental-least-squares STUB→FIRM (GMRES/FGMRES running-QR / Givens-rotation stream, iterative.cpp); L2/index stub row replaced in place + SUMMARY (stub)-suffix dropped. L2 firm 8→9; the l2-named-composition-lifts cohort is COMPLETE (orthogonalize + incremental-least-squares both firm). 4 OQ dispositions; l2-ksp-solve-materialise-iterate cite-tightening now ACTIONABLE; new givens.md:29 source-staleness OQ. Zero gate hits."
+
+# CYCLE: Formalize incremental-least-squares at L2
+
+## Summary
+
+`incremental-least-squares` is the GMRES / FGMRES **running-QR / Givens-rotation stream**: the named L2 composition that triangularises the growing `(j+2)×(j+1)` upper-Hessenberg `H̄` one column at a time, maintaining the restart-cycle least-squares correction `y` (solving `min ‖β·e₁ − H̄·y‖₂`) and exposing the LS residual norm `β = |s[j+1]|` as a free byproduct — no explicit residual evaluation needed to test convergence. The stub at `book/src/L2/incremental-least-squares.md` (materialized 2026-05-28) is promoted to **firm**: it is the queued second named-composition motif (sibling to `orthogonalize`), and the Palace source is fully read in both the GMRES (`iterative.cpp:632-680`) and FGMRES (`:812-844`) arms plus the two scalar Givens kernels (`:73-108` generate, `:227-241` apply). This entry decides the `gmres-givens-stream-as-step-kernel-borderline` OQ in the negative: the Givens-stream is **not** a `krylov-step` instance — it operates on the small-dense `(j+2)×(j+1)` Hessenberg, not the length-`N` field, and is a composition *consumed within* the GMRES step's correction machinery. The Givens reduction-ordering (replay-then-generate) is **load-bearing**, not transparent: the running-QR is what makes the cheap residual-norm estimate exact, and the replay order is a stated algebraic claim.
+
+## Proposed changes
+
+```edit:book/src/L2/incremental-least-squares.md
 # incremental-least-squares
 
 The L2 first-class composition naming the GMRES / FGMRES **running-QR /
@@ -507,3 +535,39 @@ invariants "Two rough-in qualifiers").
 - `book/src/L2/ksp_solve.md` — the outer-driver consumer; §Semantics phase-3
   `materialise_iterate` (`:63`, `:83`) folds this composition's restart-cycle
   correction `K.V · K.y`.
+```
+
+```edit:book/src/L2/index.md
+| [`incremental-least-squares`](./incremental-least-squares.md) | `(op: LsqOp, st: LsqState, h_new: HessCol) -> { state: LsqState', beta: RealScalar }` (+ terminal `back_solve :: LsqState' -> { y: Coords[j+1], correction_basis: Basis[N, j+1] }`; ≡ the GMRES/FGMRES running-QR `replay ▷ generate ▷ apply ▷ apply_rhs` stream with `min ‖β·e₁ − H̄·y‖₂` back-solve, `β = |s[j+1]|` the free residual byproduct) | **Named composition — running-QR / Givens stream** (sibling to [`orthogonalize`](./orthogonalize.md)). Scalar kernels: `givens` generate/apply pair (concept `concepts/givens`). Producer of the input column: [`orthogonalize`](./orthogonalize.md) (`coeffs` = `h_new[0..j]`) + caller's `Norml2` sub-diagonal. Concepts: `incremental-least-squares` (cross-cut), `givens`, `sequential-obstruction` (the replay-before-generate ordering). Consumers: [`krylov-step`](./krylov-step.md) (folds it inside the GMRES/FGMRES step), [`ksp_solve`](./ksp_solve.md) (`materialise_iterate` folds the restart-cycle correction `V·y`/`Z·y`). Variant axes: `op.basis_kind` (`V`/`Z`, parametric — back-solve reconstruction target), `op.variant` (real/complex Givens, parametric). | `firm` (harvested cycle-026; promoted from stub; resolves `gmres-givens-stream-as-step-kernel-borderline` in the negative — distinct named composition, NOT a `krylov-step` axis; closes plan `l2-named-composition-lifts` / OQ `incremental-least-squares-as-future-L2-firstclass-entry`; firm-on-positive-structure — running-QR stream + back-solve read in full in both GMRES/FGMRES arms) |
+```
+
+```edit:book/src/SUMMARY.md
+- [incremental-least-squares](./L2/incremental-least-squares.md)
+```
+
+## Operator content
+
+Reproduced inline (the firm chapter body, as written into `book/src/L2/incremental-least-squares.md`):
+
+- **Slug + one-line**: `incremental-least-squares` — the GMRES/FGMRES running-QR / Givens-rotation stream that incrementally triangularises the upper-Hessenberg LS problem `min ‖β·e₁ − H̄·y‖₂`, exposing the LS residual norm `β = |s[j+1]|` as a free byproduct and back-solving for the restart-cycle correction `V·y` / `Z·y`.
+- **Signature** (Haskell `::` form): `incremental_least_squares :: (op: LsqOp, st: LsqState, h_new: HessCol) -> { state: LsqState', beta: RealScalar }`, with terminal `back_solve :: LsqState' -> { y: Coords[j+1], correction_basis: Basis[N, j+1] }`. Named axes pinned: `op.basis_kind ∈ {V, Z}`, `op.variant ∈ {real, complex}`; `st.{H, cs, sn, s}` the incremental factorisation state; `h_new` the arriving Hessenberg column (`orthogonalize` coeffs `0..j` + `Norml2` sub-diagonal `j+1`).
+- **Semantics**: the per-column `replay ▷ generate ▷ apply ▷ apply_rhs` pipeline + terminal back-solve; `β` read off the rotated RHS by unitarity.
+- **Algebraic laws** (those that hold): (1) residual exposure by unitarity, (2) replay-before-generate ordering (non-commutative, load-bearing), (3) norm preservation, (4) back-solve correctness, (5) empty/single-column boundary, (6) `op.basis_kind` invariance of the factorisation. Non-laws: sub-step commutativity, rotation-stream bit-level associativity (load-bearing numerical trick), convergence-test fold-merge, `krylov-step` membership.
+- **Dependencies**: scalar Givens kernel pair (`concepts/givens`), `ls_update_column` L1 leaf (forthcoming), `orthogonalize` (input-column producer + sibling step-fold), consumers `krylov-step` / `ksp_solve`.
+- **Status**: `firm` (promoted from stub; firm-on-positive-structure).
+- **Evidence**: `iterative.cpp:73-108`/`:112-118`/`:227-241` (Givens kernels); `:612`, `:631`, `:634-636`, `:638`, `:639`, `:640`, `:642`, `:644`, `:652-660`, `:666`, `:674-677` (GMRES); `:812-821`, `:831-844` (FGMRES); `iterative.hpp:193-194` (registers).
+
+## Supporting evidence
+
+All load-bearing pinpoint citations self-verified against on-disk `reference/palace/` via `tools/citecheck/citecheck.py --anchor` (the task-mandated authoritative check). Two citations drifted +1 from the codemap `read_range` and were corrected before emit: `s[i] /= Hi[i]` (`:655` → `:656`), `s[k] -= Hi[k]*s[i]` (`:658` → `:659`); and the two `iterative.hpp` register declarations drifted +1 from the codemap brace boundary (`:192/:193` → `:193/:194`), confirming the task's "codemap read_range may be +1 off on brace boundaries — citecheck/on-disk is authoritative" note. All corrected citations re-verified `[ok]`.
+
+Structural template: `book/src/L2/orthogonalize.md` (the sibling firm L2 named composition). Consumer forward-references: `book/src/L2/ksp_solve.md:63,83,123`, `book/src/L2/krylov-step.md:132`.
+
+## Open questions / caveats
+
+- **OQ `gmres-givens-stream-as-step-kernel-borderline` — RESOLVED (negative).** This entry decides it: the Givens-stream is **not** a `krylov-step` instance. It operates on the small-dense `(j+2)×(j+1)` Hessenberg (work `O(j)` scalar, independent of field dimension `N`), is folded *by* the GMRES/FGMRES step rather than being a step axis, and is a distinct named composition. Recorded in the entry §Context "Relation to `krylov-step`" + algebraic-laws non-law + Status. Meta-phase may migrate this OQ to the Closed index with answer-link `book/src/L2/incremental-least-squares.md`.
+- **OQ `incremental-least-squares-as-future-L2-firstclass-entry` (≡ plan `l2-named-composition-lifts`) — RESOLVED.** The stub is firm; the second named-composition motif is landed. Plan item `l2-named-composition-lifts` (the `orthogonalize` + `incremental-least-squares` cohort) is now complete.
+- **OQ `l2-ksp-solve-materialise-iterate-incremental-least-squares-cite-tightening` (`scaffolding/open-questions.md` lines 618/638) — now actionable (NOT applied here, out of one-operator scope).** `book/src/L2/ksp_solve.md` §Semantics phase-3 `materialise_iterate` (`:83`) currently references the restart-cycle correction `K.V · K.y` via `krylov-step` §Semantics + `solve-monad` §"Worked example — GMRES" (correct while the stub made no claims). With this entry firm, that reference may be tightened to cite `book/src/L2/incremental-least-squares.md` directly (the back-solve output `V·y`/`Z·y` is now a firm claim). This is a `ksp_solve` edit, not an `incremental-least-squares` edit — a future low-fan-out lifter/lowering-verifier re-cite dispatch (plan candidate `l2-ksp-solve-materialise-iterate-recite`). Flagged, not applied (one operator per invocation; modifying `ksp_solve` is out of scope).
+- **L2 index Working Notes refresh (layer-intro-author territory, NOT applied here).** The L2 `index.md` Working Notes (`:44-46` "Queued at L2" + `:78-79` "One stub queued") state `incremental-least-squares` is a queued stub; with this entry firm those notes are stale. The dep-map row is flipped stub→firm in the proposed changes, but the Working-Notes prose (and the "Named compositions" motif bullet `:21`, which calls it "the queued second named composition") is layer-intro-author scope. Flagged for a layer-intro-author refresh; OQ `L2-layer-intro-refresh-for-named-compositions` (`scaffolding/open-questions.md` line 124) already tracks the parallel `orthogonalize` refresh and should subsume this.
+- **L2>L1 lowering theme is now unblocked (abstractor work, NOT authored here).** The firm entry unblocks an `L2-L1/incremental-least-squares-composition-lowering` theme (narrating the running-QR lowering into the L1 `ls_update_column` leaf + the per-lowered-call finite-precision reduction-order pinning — the load-bearing rotation-stream non-associativity non-law). The L1 `ls_update_column` leaf itself is forthcoming (referenced as plain text / concept page, NOT a live link — it has no on-disk file yet). Forward-referenced as plain text per the `rough-in-forward-reference-must-be-plain-text-not-live-link` convention.
+- **SUMMARY.md `(stub)` label drop.** The current SUMMARY entry reads `incremental-least-squares (stub)` (`SUMMARY.md:45`); the proposed change replaces it with the un-suffixed `incremental-least-squares` chapter entry to match the firm status.

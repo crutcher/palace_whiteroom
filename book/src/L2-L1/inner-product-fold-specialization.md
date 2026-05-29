@@ -56,7 +56,7 @@ $$ \text{inner\_product}(x, y) = x^{\mathsf H} y = \textstyle\sum_{i} \overline{
 
 The shape precondition `x, y : Tensor[N]` (shared length axis) is the aligned-pass
 precondition the L0 fused reduction kernels require (Palace's
-`MFEM_ASSERT(x.Size() == y.Size())`, `palace/linalg/vector.cpp:667`).
+`MFEM_ASSERT(x.Size() == y.Size())`, `palace/linalg/vector.cpp:668`).
 
 ## L1 form (RHS)
 
@@ -257,7 +257,7 @@ The dispatch lowering preserves the L2 value when:
 1. **Shared length axis (the aligned-pass precondition).** `x, y : Tensor[N]` (the L2
    signature precondition). The fused reduction kernels stride over one length axis;
    Palace enforces it with `MFEM_ASSERT(x.Size() == y.Size())`
-   (`palace/linalg/vector.cpp:667`). For the weighted member, additionally `M`'s codomain
+   (`palace/linalg/vector.cpp:668`). For the weighted member, additionally `M`'s codomain
    matches `x`'s axis and `M`'s domain matches `y`'s axis
    ([`bilinear-form`](../L1/bilinear-form.md) §Applicability conditions).
 
@@ -400,7 +400,7 @@ producer-self-verification):
   `2·Im·Re` (`:272-273`). The unconjugated `tdot` kernel — differs from `Dot` only in the
   imag sign. **Self-verified.**
 - `palace/linalg/vector.cpp:664-672` — `LocalDot(Vector, Vector)` via a single Hypre
-  `hypre_SeqVectorInnerProd`, with `MFEM_ASSERT(x.Size()==y.Size())` at `:667`. The real
+  `hypre_SeqVectorInnerProd`, with `MFEM_ASSERT(x.Size()==y.Size())` at `:668`. The real
   member's fused kernel + the shape precondition. **Self-verified.**
 - `palace/linalg/vector.cpp:674-685` — `LocalDot(ComplexVector, ComplexVector)`: four real
   `LocalDot`s combined into `(Re, Im)`, `Im = LocalDot(xi,yr) − LocalDot(xr,yi)`, with the
@@ -550,7 +550,7 @@ verified_against:
   - citation: palace/linalg/vector.cpp:664-672
     verdict: supports
     audited_at: 2026-05-29T034441Z
-    note: real LocalDot single Hypre pass; MFEM_ASSERT(x.Size()==y.Size()) at :667. Exact.
+    note: real LocalDot single Hypre pass; MFEM_ASSERT(x.Size()==y.Size()) at :668. Exact.
   - citation: palace/linalg/vector.cpp:674-685
     verdict: supports
     audited_at: 2026-05-29T034441Z

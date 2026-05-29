@@ -36,7 +36,7 @@ The relationship to the adjacent layers:
 
 **Non-adjacent identity (in-line, no directory).** The L3>L2 body rotation is identity-in-form, and the L2>L1 body rotation is **non-identity** (the L2 entry's §"Lowers from" establishes the L2↔L1 rotation is the *partial un-collapse* of the L1 opacity into the named composition — a structural rewrite, not a resolution change). So the body-level identity stops at the L3↔L2 edge; it does **not** extend transitively to L1 (the L1 form is the opaque eigensolver-as-operator collapse, not a body composition). This is the **contrast** with `chebyshev` (whose L2↔L1 edge IS identity-in-form, giving a transitive L3↔L1 body identity): for `eigsolve` there is no non-adjacent identity to annotate, because the L2↔L1 edge breaks it. No `book/src/L3-L1/` directory is created (and none would be warranted — there is no non-adjacent identity here per the cycle-012 `l3-l1-inline-identity-rotation-convention`).
 
-A cross-cutting prose treatment does not yet exist at `concepts/eigsolve` (the firm L1/L2 entries note this gap); a future concept page would carry the narrative. This L3 entry is the iteration-rotation operator definition.
+The cross-cutting prose treatment lives at [`concepts/eigsolve`](../concepts/eigsolve.md) (the navigational/conceptual home for the chain, landed cycle-025); it does not restate the iteration-rotation algebra. This L3 entry is the iteration-rotation operator definition.
 
 ## Signature
 

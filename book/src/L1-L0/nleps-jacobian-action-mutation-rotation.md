@@ -528,3 +528,103 @@ L1 / cross-theme anchors:
 - No dedicated unit test: NLEPS has zero `test/unit/**` hits (same absence as `eigsolve` /
   `apply_nonlinear_pencil` / `nleps_deflated_residual` / `nleps_deflated_solve` /
   `nleps_jacobian_action`); the firm decision rests on exhaustive positive structural citation.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/nleps.cpp:649-669
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: complete `w = J * v` block; full read + per-line citecheck --anchor, zero drift
+  - citation: palace/linalg/nleps.cpp:649
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: "// Compute w = J * v. — source's own operator naming"
+  - citation: palace/linalg/nleps.cpp:650
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: opA2p bumped-frequency A2((1+δ)|Im λ|)
+  - citation: palace/linalg/nleps.cpp:651-652
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: denom = i·δ·|Im λ|
+  - citation: palace/linalg/nleps.cpp:653-654
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: divided-difference A2'(λ) (quasi-Newton non-law); anchor at 654
+  - citation: palace/linalg/nleps.cpp:655-656
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: derivative pencil T'(λ) coeffs {0, 1, 2λ, 1}; anchor at 655
+  - citation: palace/linalg/nleps.cpp:657
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: opJ->Mult(v, w) big-space apply w := T'(λ)·v
+  - citation: palace/linalg/nleps.cpp:658
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: if (k > 0) deflation guard; k=0 is the bare derivative-pencil apply
+  - citation: palace/linalg/nleps.cpp:660-661
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: source product-rule comment + scoping note (both present at this range)
+  - citation: palace/linalg/nleps.cpp:662-663
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: re-scoped value pencil T(λ) coeffs {1, λ, λ², 1} reusing cached A2n; anchor at 662
+  - citation: palace/linalg/nleps.cpp:664
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: block S = λI − H (on-disk truth; codemap was 663, +1 drift)
+  - citation: palace/linalg/nleps.cpp:665
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: first dense solve S⁻¹·v₂ (lu_solve, fresh destination)
+  - citation: palace/linalg/nleps.cpp:666
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: back-projection X·(S⁻¹·v₂) (MatVecMult / linear_combination)
+  - citation: palace/linalg/nleps.cpp:667
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: second sequential solve + back-projection X·S⁻²·v₂ (the S⁻¹-applied-twice signature)
+  - citation: palace/linalg/nleps.cpp:668
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: opJ->AddMult(XSv2, w, 1.0) +T'(λ)·X·S⁻¹·v₂ (derivative pencil, +1)
+  - citation: palace/linalg/nleps.cpp:669
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: A->AddMult(XSSv2, w, -1.0) −T(λ)·X·S⁻²·v₂ (value pencil, −1; the ∂_λ S⁻¹ = −S⁻² sign)
+  - citation: palace/linalg/nleps.cpp:412
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: δ = √ε divided-difference step (:411 comment confirms intent)
+  - citation: palace/linalg/nleps.cpp:378
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: w destination-buffer declaration (dead-on-entry scratch)
+  - citation: palace/linalg/nleps.cpp:329-347
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: MatVecMult(X, y) fold body (z=0; per-j complex AXPY via two AXPBYPCZ)
+  - citation: palace/linalg/nleps.cpp:606-619
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: deflation-basis growth (normalize :610-611, store X[k]=v :615, no orthogonalization)
+  - citation: palace/linalg/nleps.cpp:673
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: w2.adjoint()*u2 is the deflated-solve output, not a coordinate part of J·v
+  - citation: palace/linalg/nleps.cpp:675
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: w consumed only via big-space dot ⟨w, w0⟩ (big-space-only confirmation)
+  - citation: palace/linalg/nleps.cpp:676
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: z = −delta_eig·w − u Newton step direction (second consumer of w, big-space)
+  - citation: palace/linalg/nleps.cpp:177-181
+    verdict: supports
+    audited_at: 2026-05-29T16:47:29Z
+    note: SetExtraSystemMatrix — nonlinear closure type Real -> ComplexOperator (funcA2 provenance)
+```

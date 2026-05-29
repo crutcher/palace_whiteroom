@@ -357,7 +357,7 @@ sum, rather than the unfused seed-then-accumulate chain. They compute the same v
 the unfused fold modulo IEEE-754 summation order (the load-bearing reduction-tree
 non-law). The precondition for the strided pass is exactly the signature's shape
 precondition (`x`, `y` share the length axis `N` — Palace's
-`MFEM_ASSERT(x.Size() == y.Size())` at `palace/linalg/vector.cpp:667`). L2 de-fuses the
+`MFEM_ASSERT(x.Size() == y.Size())` at `palace/linalg/vector.cpp:668`). L2 de-fuses the
 fused reduction into the fold's seed-and-accumulate and records the fusion as this one
 note.
 

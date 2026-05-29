@@ -35,7 +35,7 @@ stateless-at-L2 / iteration-outside argument the sibling named composition
 This entry is defined in **L2 vocabulary** (the `inner_product` fold, the `dot` hook,
 matrix/basis axes); how the L2 all-pairs fold lowers onto Palace's `nleps.cpp` double-`Dot`
 loop (and which reduction tree each entry pins) is L2>L1 lowering work, narrated forward from
-L2 to L1 in a forthcoming theme — not authored here.
+L2 to L1 in [`L2-L1/gram-fold-specialization`](../L2-L1/gram-fold-specialization.md) (firm) — not authored here.
 
 ## Signature
 
@@ -173,7 +173,7 @@ Laws that explicitly **do not** hold:
   numerical tricks… non-associative reduction orderings… preserve as explicit algebraic claims",
   this is recorded, not erased: **`gram` is order-agnostic for value, but bit-identical
   reproduction of an L0 Gram requires matching each cell's pinned reduction tree.** Which tree a
-  given lowered Gram pins is recorded by the L2>L1 lowering theme (forthcoming).
+  given lowered Gram pins is recorded by the L2>L1 lowering theme [`gram-fold-specialization`](../L2-L1/gram-fold-specialization.md) (firm).
 
 - **Symmetry-exploitation is a transparent perf trick, NOT a structural law.** Palace's
   `:525-531` double-loop computes **all** `k²` cells without exploiting Hermitian symmetry (it
@@ -239,11 +239,10 @@ the fold over columns), not a family of fixed-`k` specializations.
   firm additionally needs the small-dense `lu_solve` primitive (OQ
   `deflate-needs-small-dense-lu-solve-primitive`), which is `deflate`'s dependency, not `gram`'s —
   `gram` builds the matrix; `deflate` solves it.
-- **L2>L1 lowering theme** (forthcoming; abstractor work — not authored here): how the L2
+- **L2>L1 lowering theme** [`gram-fold-specialization`](../L2-L1/gram-fold-specialization.md) (firm): how the L2
   all-pairs fold lowers onto Palace's `nleps.cpp:524-531` double-`linalg::Dot` loop (the dispatch
   of each cell to the Hermitian/weighted `dot` leaf; the symmetry-exploitation transparent note;
-  which reduction tree each cell pins — the load-bearing content of the IEEE non-law). Forward
-  reference only.
+  which reduction tree each cell pins — the load-bearing content of the IEEE non-law).
 
 ## Status
 

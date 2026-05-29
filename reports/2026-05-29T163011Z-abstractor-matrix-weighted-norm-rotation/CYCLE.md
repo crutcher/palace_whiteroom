@@ -1,3 +1,57 @@
+---
+agent: abstractor
+invoked_at: 2026-05-29T163011Z
+scope: L1>L0 theme promotion (stub→firm) — matrix-weighted-norm-mutation-rotation
+status: pending
+inputs:
+  - book/src/L1-L0/matrix-weighted-norm-mutation-rotation.md (the stub being promoted; "Implied by" provenance)
+  - book/src/L1/matrix-weighted-norm.md (the rough-in (test-coverage-bounded) L1 operator)
+  - book/src/L1-L0/dot-mutation-rotation.md (firm sibling — inherited inner-Dot sub-theme)
+  - book/src/L1-L0/nrm2-mutation-rotation.md (firm sibling — sqrt-of-self-dot precedent + abs-guard classification)
+  - book/src/L1-L0/apply-linop-mutation-rotation.md (rough-in sibling — inherited B.Mult sub-theme)
+  - reference/palace/palace/linalg/operator.cpp:599-619 (the two Norml2(comm,x,B,Bx) specializations; self-verified via citecheck --anchor)
+  - reference/palace/palace/linalg/operator.hpp:372-389 (decls: Norml2, Normalize, bilinear-form Dot boundary; self-verified)
+  - reference/palace/palace/linalg/{arpack,slepc,nleps}.cpp (GetEigenvectorNorm callsite cohort; self-verified)
+  - book/src/L0/linalg-operator-file.md:30-34 (the L0 file-layout chapter)
+integrated_at: 2026-05-29T203000Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "Applied clean (cycle-026 dispatch-3). L1>L0 matrix-weighted-norm-mutation-rotation STUB→FIRM (energy norm √(xᴴBx) → linalg::Norml2(comm,x,B,Bx), operator.cpp:599-619; sub-patterns A real/B complex/C Normalize consumer). L1-L0/index firm row inserted (firm-over-rough-in-L1 per eigsolve precedent) + SUMMARY (stub)-suffix dropped. L1>L0 firm themes +1. 4 OQ dispositions incl. 3 NEW carry-forwards (operator.cpp:601 brace-drift on L1 entry :58/:83; Category-4 workspace mislabel; mixed-element-type variant + paired bilinear-form audit). Zero gate hits."
+
+# CYCLE: L1>L0 theme promotion (stub→firm) — matrix-weighted-norm-mutation-rotation
+
+## Summary
+
+The `matrix-weighted-norm-mutation-rotation` stub (materialized 2026-05-28) is promoted to a
+**firm** L1>L0 mutation-rotation theme. The L1 energy-norm operator
+`matrix_weighted_norm(x, B) = √(xᴴ B x)` lowers forward into Palace's L0
+`linalg::Norml2(comm, x, B, Bx)` three-step composition `B.Mult(x, Bx); dot = Dot(comm, Bx, x);
+return std::sqrt(dot)` (`palace/linalg/operator.cpp:599-619`, two element-type specializations). The theme is
+**structural** (the syntactic expansion of one closed-form L1 step into the L0 three-step) and
+**reuses two already-authored sibling sub-themes** rather than restating them: the leading
+`B.Mult(x, Bx)` is `apply-linop-mutation-rotation` Sub-pattern A; the inner `Dot(comm, Bx, x)` is
+`dot-mutation-rotation` Sub-pattern A (the `Mpi::GlobalSum ∘ LocalDot` two-step). What this theme
+adds on top of the inherited pieces is exactly the matrix-weighted machinery: (i) the
+**caller-supplied workspace `Bx`** — a *destination* buffer (overwritten with `B·x`), not just
+scratch, whose ownership/lifetime/reuse disappears at L1; (ii) the **complex element-type
+real/imaginary split** of `B.Mult` (`B` is real-by-signature even when `x` is complex); (iii) the
+outer `std::sqrt`; (iv) the **`MFEM_ASSERT(dot > 0.0)` SPD run-time guard** classified as a
+load-bearing defensive guard with the property it buys (domain-safety for `sqrt`, plus a numerical
+Hermiticity witness on the complex branch). The rewrite carries the M-weighted / B-weighted
+variant axis (the operator-representation of `B` is the variant), the element-type axis
+(real | complex, collapsed at L1), and the unweighted-degenerate `B = I` collapse to `nrm2`.
+All citations self-verified via `tools/citecheck/citecheck.py --anchor` against on-disk
+`reference/palace/` (cycle-025 nleps.cpp +1 codemap drift does NOT affect operator.cpp/hpp or
+the callsite cohort — all anchors confirmed on the asserted lines). The theme is `firm`: every
+claim is positively anchored (no negative-anchor reconstruction); the only constructive ingredient
+is the value-level algebraic identity `xᴴ B x ∈ ℝ_{≥0}` for SPD `B`, read off the L0 source's own
+assertion. (The upstream L1 operator stays `rough-in (test-coverage-bounded)` — that is its own
+promotion gate, not this theme's; a firm lowering of a rough-in L1 operator is consistent, as the
+rewrite's structural fidelity is independent of the L1 law-confidence gate, same as
+`eigsolve-mutation-rotation` firm over rough-in `L1/eigsolve`.)
+
+## Proposed changes
+
+```edit:book/src/L1-L0/matrix-weighted-norm-mutation-rotation.md
 # matrix-weighted-norm-mutation-rotation
 
 The mutation rotation for the operator-weighted (energy) norm. Lowers the pure L1 form
@@ -456,3 +510,108 @@ A `lowering-verifier` audit attaching the `verified_against:` block (per the sib
 convention) confirming the surface-form recognition is exhaustive (no un-cited `Norml2` overload,
 the inherited-sub-theme boundaries hold, the `Bx` workspace reading is consistent) is the standard
 follow-up, not a status reduction.
+```
+
+Insert the new `matrix-weighted-norm-mutation-rotation` row into the §"Theme list" table,
+**after** the existing `dot-mutation-rotation` row (the two existing rows below are the
+context anchor; only the third row is new — the stub was never listed in this table, only in
+SUMMARY.md). The row's L0 anchor uses a `(rough-in)` L1-anchor annotation because the upstream
+L1 operator is `rough-in (test-coverage-bounded)`; the **theme itself** is `firm` (a firm
+lowering of a rough-in L1 operator, the `eigsolve-mutation-rotation` precedent).
+
+```edit:book/src/L1-L0/index.md
+| [scal-mutation-rotation](./scal-mutation-rotation.md) | `L1/scal` (firm) | `palace/linalg/vector.{hpp,cpp}`, `palace/linalg/{iterative,operator,nleps}.cpp` | firm *(structural; 2 element-type overloads; transparent complex imag==0 shape branch)* |
+| [dot-mutation-rotation](./dot-mutation-rotation.md) | `L1/dot` (firm) | `palace/linalg/vector.{hpp,cpp}`, `palace/utils/communication.hpp` | firm *(structural; 3 surface forms; conjugate-pair re-order `xᴴ y = conj(yᴴ x)`; tdot type-API-surface-only)* |
+| [matrix-weighted-norm-mutation-rotation](./matrix-weighted-norm-mutation-rotation.md) | `L1/matrix-weighted-norm` (rough-in) | `palace/linalg/operator.{hpp,cpp}`, `palace/linalg/{arpack,slepc,nleps}.cpp` | firm *(structural; 2 element-type sub-patterns A real/B complex + Normalize consumer C; reuses apply_linop A `B.Mult(x,Bx)` + dot A `Dot(comm,Bx,x)` + scal; caller-owned destination workspace Bx; SPD `MFEM_ASSERT(dot>0)` load-bearing defensive guard + complex Hermiticity witness; B=I collapses to nrm2)* |
+```
+
+SUMMARY.md already carries the entry at line 103 with a `(stub)` suffix; drop the suffix so the
+chapter link reflects the promoted status (the `[<slug>](path)` link itself is unchanged):
+
+```edit:book/src/SUMMARY.md
+- [matrix-weighted-norm-mutation-rotation](./L1-L0/matrix-weighted-norm-mutation-rotation.md)
+```
+
+## Speculative operators proposed
+
+**None.** This is a stub→firm promotion of a lowering theme for an **existing** L1 operator
+([`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md), rough-in). The theme decomposes
+entirely into existing firm L1 vocabulary — `apply_linop` (the `B·x` step), `dot` (the inner
+reduction `xᴴ(B·x)`), `scal` (the `Normalize` consumer's `x *= 1/norm`). No new L1 operators are
+needed; harvester has nothing to promote from this theme. (The sibling `bilinear-form` is an
+*already-queued* separate rough-in with its own forthcoming theme, not a speculative operator
+emitted by this one.)
+
+## Supporting evidence
+
+L0 source (all self-verified via `tools/citecheck/citecheck.py --anchor` against on-disk
+`reference/palace/` this invocation; `--scan` bounds-check clean — see Open questions):
+
+- `palace/linalg/operator.cpp:599-607` (real `Norml2`), `:609-619` (complex `Norml2`) — the two
+  three-step specializations. Body lines: real `B.Mult` `:602`, `Dot` `:603`, `MFEM_ASSERT`
+  `:604-605`, `sqrt` `:606`; complex SPD comment `:612`, lane-split `B.Mult` `:613-614`, `Dot`
+  `:615`, two-part `MFEM_ASSERT` `:616-617`, `sqrt(dot.real())` `:618`.
+- `palace/linalg/operator.hpp:372-374` (decl + SPD comment), `:377-384` (`Normalize` consumer),
+  `:386-389` (sibling bilinear-form boundary).
+- `palace/linalg/arpack.cpp:433-444,470` / `slepc.cpp:470-481,505` / `nleps.cpp:109-120,146` — the
+  three-backend `GetEigenvectorNorm` M-orthonormalisation callsite cohort (weighted dispatch +
+  `Bx`-reuse loop).
+- `book/src/L0/linalg-operator-file.md:30-34` — the L0 file-layout chapter.
+
+Sibling themes inherited (not restated): `apply-linop-mutation-rotation` Sub-pattern A,
+`dot-mutation-rotation` Sub-pattern A, `scal-mutation-rotation`; relative `nrm2-mutation-rotation`
+(the `B = I` degenerate collapse + abs-guard classification precedent).
+
+L1 anchors: `book/src/L1/matrix-weighted-norm.md` (the lowered operator),
+`book/src/L1/apply_linop.md:50,53-55`, `book/src/L1/dot.md:43,45`.
+
+## Open questions / caveats
+
+1. **Carry-forward correction for `L1/matrix-weighted-norm.md` (off-by-one on the real-spec body
+   span).** The L1 entry cites the real `Norml2` body as `palace/linalg/operator.cpp:601-606` in
+   two places (`:58` law 8, `:83` Composition note) and `:600-619` / `:599-619` for the full pair.
+   (The Evidence-section citation at `:128` is the *correct* full-span `:599-607` — NOT a drift
+   site.) On-disk
+   (citecheck-authoritative): the real specialization is `599-607` (`template <>` `:599`,
+   signature `:600`, `{` `:601`, body `602-606`, `}` `:607`). The cited `:601-606` starts at the
+   opening brace `{` (line 601 is `{`, not `B.Mult`); the body content is `602-606`. **This is a
+   change to PROPOSE for the L1 entry, not for me to apply** (the L1 entry is out of an abstractor's
+   write-scope and is append-only-after-integration; flagging for a `lowering-verifier` /
+   `harvester` follow-up). The complex-spec citations (`:609-619`, assert `:616-617`, split
+   `:613-614`) are all correct as cited. Recorded for OQ
+   `matrix-weighted-norm-mutation-rotation-l1-l0-theme`.
+2. **Pre-existing "Category 4 — synthetic workspace" mislabel** in both
+   `book/src/L1/matrix-weighted-norm.md:9` and `book/src/L0/linalg-operator-file.md:33` for the
+   sibling bilinear-form `Dot(comm, x, A, y)`. The `mutable-workspace-pattern.md` chapter has only
+   4 categories and **Category 4 is "assembled-matrix retention," not "synthetic workspace."** The
+   internally-allocated `Ax` of the bilinear form is not one of that chapter's four categories at
+   all (it is a per-call fresh allocation, not a retained `mutable` member). This theme does **not**
+   rely on that category (the `Norml2` workspace `Bx` is **caller-supplied**, described accurately
+   in §"The caller-owned workspace `Bx`"). Flagged as a drive-by cross-reference drift for a
+   `same-layer-cross-cutter` / `lowering-verifier` follow-up; not corrected here (out of write-scope
+   + not in this theme's focus). New OQ candidate:
+   `bilinear-form-workspace-category-4-mislabel`.
+3. **Paired firm-promotion gate: `matrix-weighted-norm-mixed-element-type-variant`.** The complex
+   branch's real-`B`-on-complex-`x` lane split (Sub-pattern B) is the variant-gate question the L1
+   entry flags (`:106`): does L1 admit real-`B`-on-complex-`x` as a distinct element-type variant
+   or absorb it into a uniform `apply_linop` rule? This theme records the L0 surface faithfully
+   (the two `B.Mult` lane applies) but does not resolve the L1-side variant policy. It is **paired**
+   with the `bilinear-form` firm-promotion gate (both share the real-`A`/`B`-on-complex-vector
+   plumbing and the same two L1 primitives). Recommend a follow-up `lowering-verifier` pass that
+   audits this theme + the (forthcoming) `bilinear-form-mutation-rotation` together for the
+   shared element-type-variant resolution, and (separately) audits the upstream
+   `L1/matrix-weighted-norm` test/literature coverage gate. OQ:
+   `matrix-weighted-norm-mixed-element-type-variant` (paired with `bilinear-form` promotion).
+4. **The forward-reference target named in the dispatch scope
+   (`book/src/L1-L0/bilinear-form-mutation-rotation.md`) does not yet exist.** The actual current
+   forward-references to `matrix-weighted-norm-mutation-rotation` are from the L1 entry and
+   `nrm2-mutation-rotation.md` (the bilinear-form *L1 entry* `book/src/L1/bilinear-form.md` exists,
+   but no `bilinear-form-mutation-rotation` L1>L0 theme does). This theme is now the live home for
+   those references; the `bilinear-form-mutation-rotation` theme remains a separate forthcoming
+   work item (the diagonal `y = x` boundary is noted in §"Speculative L1 operators"). No action —
+   recorded so the integrator/planner does not expect a `bilinear-form-mutation-rotation` anchor to
+   resolve yet.
+5. **`slepc.cpp` uses `GetComm()` not bare `comm`** in `GetEigenvectorNorm` (`:475`:
+   `linalg::Norml2(GetComm(), x, *opB, Bx)`), whereas arpack/nleps use `comm`. A cosmetic surface
+   difference (both resolve to the rank communicator); cited accurately. No semantic consequence
+   under single-rank scope.

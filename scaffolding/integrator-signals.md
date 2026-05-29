@@ -37,6 +37,46 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-026 — 2026-05-29T2030Z
+
+(Second primary cycle of meta-batch-7, cycles 025/026/027; meta-phase fires after cycle-027 finalize. 9 reports, all `applied`, 9/9 staging rows == dispatched-ready. Headlines: L1 firm 19→20 (+`normalize`), L2 firm 8→9 (+`incremental-least-squares`, `l2-named-composition-lifts` cohort COMPLETE 2/2), L1>L0 firm themes +1 (`matrix-weighted-norm-mutation-rotation`), the 3 cycle-025-new firm themes' `verified_against:` audit cohort complete, + NLEPS/eigsolve citation-hygiene + navigational sweep.)
+
+### Unblocked
+- `l2-ksp-solve-materialise-iterate-incremental-least-squares-cite-tightening` — NOW ACTIONABLE: the L2 `incremental-least-squares` entry is firm, so the `ksp_solve.md` §Semantics phase-3 `materialise_iterate` forward-reference to it can be cite-tightened (separate dispatch; gate satisfied). — citation: STAGING.md D2 row + OQ same-slug.
+- forward-referenced `normalize-mutation-rotation` L1>L0 theme — NOW AUTHORABLE: the firm L1 `normalize` operator exists, so the abstractor can author its `linalg::Normalize` → `nrm2`/`scal` lowering theme (stub-on-integration acceptable if forward-referenced again). — citation: STAGING.md D4 row + OQ `normalize-mutation-rotation-l1-l0-theme`.
+- paired `bilinear-form` firm-promotion + `matrix-weighted-norm-mixed-element-type-variant` lowering-verifier audit — NOW SCHEDULABLE: the `matrix-weighted-norm-mutation-rotation` theme is firm, so the standard `verified_against:` audit of it + the paired `bilinear-form-mutation-rotation` audit / firm-promotion can be dispatched. — citation: STAGING.md D3 row + OQ `matrix-weighted-norm-mixed-element-type-variant`.
+
+### New dependencies
+- L1 `normalize` → `nrm2`, `scal` (firm leaves) — NEW firm L1 operator; the fused vector-normalisation gate, returns the norm as a first-class result. — citation: `book/src/L1/normalize.md`, STAGING.md D4.
+- L2 `incremental-least-squares` → `iterative.cpp` running-QR / Givens-rotation stream (GMRES/FGMRES) — NEW firm L2 named composition (second after `orthogonalize`); the running-QR least-squares stream + terminal `back_solve`. — citation: `book/src/L2/incremental-least-squares.md`, STAGING.md D2.
+- L1>L0 `matrix-weighted-norm-mutation-rotation` → `operator.cpp:599-619` `linalg::Norml2(comm,x,B,Bx)` — NEW firm L1>L0 theme (the energy norm `√(xᴴBx)` lowering); a firm lowering of a rough-in L1 operator per the `eigsolve-mutation-rotation` precedent. — citation: `book/src/L1-L0/matrix-weighted-norm-mutation-rotation.md`, STAGING.md D3.
+- 8 plain-text→live-link cross-ref edges across the eigsolve chain (`L1/L2/L3/eigsolve.md` + `L2/gram.md` → `concepts/eigsolve.md`, `L2-L1/eigsolve-spectral-transform-composition.md`, `L2-L1/gram-fold-specialization.md`) — the chain's navigational wiring is now live (targets landed cycle-025). — citation: STAGING.md D7.
+
+### Resolution implications
+- `normalize-as-fused-l1-primitive` + `normalize-and-normalize-b-weighted-l1-candidates` — **answered** — decided YES for `normalize` (firm); `normalize_B` as an in-chapter rough-in note with a stated future-promotion trigger. Plan item `normalize-l1-primitive-harvest` COMPLETE. — STAGING.md D4.
+- `incremental-least-squares-as-future-L2-firstclass-entry` + `gmres-givens-stream-as-step-kernel-borderline` — **answered** — incremental-least-squares is a distinct named composition (NOT a krylov-step axis); the `l2-named-composition-lifts` cohort is COMPLETE (orthogonalize + incremental-least-squares both firm). — STAGING.md D2.
+- `matrix-weighted-norm-mutation-rotation-l1-l0-theme` — **answered** — theme firmed this cycle (stub→firm). — STAGING.md D3.
+- 3 NLEPS L1-entry re-anchor OQs (`nleps-jacobian-action-six-anchor`, `nleps-eigenvalue-correction-two-anchor`, `vector.cpp:667→:668 sibling-sweep`) — **answered** — all applied by D1's lifter; both L1 entries + the inner-product theme/entry now agree with on-disk source. — STAGING.md D1.
+- the 3 cycle-025-new firm themes' lowering-verifier audit-followup OQs — **answered** — all DISCHARGED (24/19/15-entry `verified_against:` landed, all fully-supported, all stay firm). — STAGING.md D6a/D6b/D6c.
+- the eigsolve-chain cross-ref / `gram.md` "(forthcoming)" / `concepts-eigsolve-chain-live-link` OQs — **answered** — all upgraded to live links by D7. — STAGING.md D7.
+- the L0 naming-residue / dependency-map-stale-edge / negative-result-slice-reciprocal OQs — **answered** — 3 RESOLVED + `bilinear-form-slug-name-coordination` ADDRESSED-AT-L0 (one residual `bilinear-form.md:416` routed to a follow-up). — STAGING.md D5.
+
+### Suggested next dispatches
+- (`abstractor`, `normalize-mutation-rotation`) — author the forward-referenced L1>L0 `normalize-mutation-rotation` theme now that the firm L1 `normalize` operator exists.
+- (`lifter`/`harvester`, `matrix-weighted-norm-l1-entry-reanchor` + `bilinear-form-provenance-refresh`) — apply the NEW carry-forward re-anchors: `operator.cpp:601` brace drift on the L1 `matrix-weighted-norm` entry (`:58`,`:83`); `bilinear-form.md:416` `dot_bilinear` provenance note; `concepts/givens.md:29` `gmres.md`→`iterative.cpp` staleness; the Category-4 workspace mislabel (`L1/matrix-weighted-norm.md:9` + `L0/linalg-operator-file.md:33`).
+- (`lowering-verifier`, `matrix-weighted-norm-mutation-rotation-audit` + paired `bilinear-form`) — the standard `verified_against:` audit of the now-firm `matrix-weighted-norm-mutation-rotation` + the paired `bilinear-form-mutation-rotation` audit / firm-promotion.
+- (`cross-layer-cross-cutter` / `combinator-miner`, frontier vocabulary) — next fan-out-ranked component per the plan (NEP cohort + eigsolve chain + l2-named-composition cohort now all complete; the frontier shifts to the remaining shared-infrastructure / intermediate-tier items — plane-rotation-stream L4, diagonal-preconditioner-apply, residual-update, restart-machinery).
+
+### Wave-conflict observations
+- **`SUMMARY.md` touched by 3 reports (D2 `:45`, D3 `:103`, D4 `:68`) at disjoint anchors** — the serial per-report integrator order re-read SUMMARY from disk before each edit; no collision. The per-layer index files (`L2/index.md` D2, `L1-L0/index.md` D3, `L1/index.md` D4) likewise disjoint.
+- **`eigsolve.md` (L1/L2/L3) touched by D7 only; the D6c audit touched the DIFFERENT file `L2-L1/eigsolve-spectral-transform-composition.md` (the theme)** — no contention; D7 (last) re-read all four entry files from disk before editing.
+- **Serial dependency held (no stub needed)** — D7's 8 live-link upgrades depend on the cycle-025-landed targets (`concepts/eigsolve.md`, the two L2-L1 themes), all on-disk before this cycle began; no plain-text forward-reference dangled.
+
+### Integration-tooling friction
+- **codemap `read_range` +1 brace-boundary drift CONFIRMED across a THIRD batch** — the cycle-026 D1 lifter + multiple producers re-confirmed the `+1` drift on brace-opening lines (`nleps.cpp` deflation block; `operator.cpp:601`). citecheck/`--anchor` + on-disk is the citation source-of-truth. **STRONG batch-7 meta-phase enactment candidate**: strengthen role-specs to "codemap is localization-only; citecheck/on-disk is the citation source of truth," and possibly add a standing citecheck per-report gate (now that `tools/citecheck` is wired). The standing OQ `codemap-read-range-plus-one-drift-on-brace-boundary` carries the second/third-cycle-confirmation clause.
+- **Non-blocking citecheck AMBIG prose tokens** inside report CYCLE.md files (bare-basename readability shorthand with a resolving full-path canonical form in the same report) — NOT in the artifact, not chased.
+- **`scaffolding/integrator-signals.md` ~1455 lines as of cycle-025** (over the ~500-line budget; entries older than 10 cycles should archive to `scaffolding/integrator-signals-archive/`) — still a pre-existing meta-phase archival backlog task; per-report/finalize integrators are append-only here and do not compact.
+
 ## cycle-025 — 2026-05-29T1715Z
 
 **FIRST primary cycle of meta-batch-7 (cycles 025/026/027). The batch-7 meta-phase fires after the cycle-027 finalize commit** (3:1 cadence; cycle counter does NOT reset across batch boundaries) — dispatched separately. 9 reports all applied clean (9/9 staging rows; SEVENTH consecutive cycle with no staging-completeness gap). Twenty-first consecutive clean split-integrator cycle. NO crash this cycle (cycles 023/024 were crash-recovered). HEADLINE: the **NEP-interior L1>L0 cohort is COMPLETE 5/5** AND the **eigsolve L1→L2→L3→L2>L1→concept chain is FULLY COMPLETE**; the **batch-6 lowering-verifier audit cohort is 4/4 discharged**.

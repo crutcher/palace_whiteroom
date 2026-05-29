@@ -451,3 +451,83 @@ L1 / cross-theme anchors:
   — same absence as `eigsolve` / `apply_nonlinear_pencil` / `nleps_deflated_residual` /
   `nleps_deflated_solve` / `nleps_jacobian_action`; the firm decision rests on exhaustive positive
   structural citation.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/nleps.cpp:672
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: source comment names the operator; --anchor lands at 672
+  - citation: palace/linalg/nleps.cpp:673
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "Sub-pattern A coordinate dot w2ᴴu2 (w2.adjoint()*u2); --anchor → 673"
+  - citation: palace/linalg/nleps.cpp:674-675
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "Sub-pattern A ratio δλ=−num/den; num=w0ᴴu+w2ᴴu2, den=w0ᴴw; --anchor delta_eig→674, Dot(w,w0)→675"
+  - citation: palace/linalg/nleps.cpp:676
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "Sub-pattern B axpby via AXPBYPCZ γ=0 (z=−δλ·w−u); --anchor → 676"
+  - citation: palace/linalg/nleps.cpp:677
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "Sub-pattern C scal α=−1 (z2=−u2); --anchor → 677"
+  - citation: palace/linalg/nleps.cpp:657
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "big/coordinate asymmetry — Jacobian action big-space-only (opJ->Mult(v,w)); :668/:669 AddMult also into w only, no w2 write"
+  - citation: palace/linalg/nleps.cpp:587
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "resid producer (compute_residual writes [u;u2])"
+  - citation: palace/linalg/nleps.cpp:542-545
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "proj_dir [w0;w2] = normalized deflated solve T(σ)⁻¹c"
+  - citation: palace/linalg/nleps.cpp:682
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "consumer — deflated_solve(z,z2,du,du2) inverts this atom's RHS"
+  - citation: palace/linalg/nleps.cpp:684-686
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "non-law (i) near-singularity <w0,w> — sound, recorded as partial function"
+  - citation: palace/linalg/nleps.cpp:691
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "non-law (ii) undamped δλ — eig_trial = eig + alpha*delta_eig"
+  - citation: palace/linalg/nleps.cpp:704-708
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "Armijo test + commit eig=eig_trial at :708"
+  - citation: palace/linalg/nleps.cpp:712
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "Armijo backtrack-factor update (theme correctly uses :712, not the operator-entry :709 drift)"
+  - citation: palace/linalg/nleps.cpp:637-647
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "divergence-restart recovery context for non-law (i)"
+  - citation: palace/linalg/nleps.cpp:606-619
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "variadic-in-k deflation growth (k++ at :619)"
+  - citation: palace/linalg/nleps.cpp:354-362
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "deflation-scheme literature (Jarlebring 2018, Effenberger 2013, SLEPc minimality index 1)"
+  - citation: palace/linalg/vector.hpp:246
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "Dot(comm,x,y)=yᴴx convention (arg-2 conjugated)"
+  - citation: palace/linalg/vector.cpp:674-685
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "LocalDot real/imag split corroborates conjugation"
+  - citation: book/src/L1/dot.md:43
+    verdict: supports
+    audited_at: 2026-05-29T16:47:49Z
+    note: "L1 arg-1-conjugated convention reconciles with C++ arg-2 form; both name projection direction"
+```

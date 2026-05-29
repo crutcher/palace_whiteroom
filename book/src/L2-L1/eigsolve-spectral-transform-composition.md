@@ -435,3 +435,67 @@ to L3) is the standard follow-up, not a status reduction.
   `book/src/SUMMARY.md` are shared-edit surfaces. My proposed rows are append-only and distinct: I append
   the `eigsolve-spectral-transform-composition` theme-list row (after `deflate-composition-lowering`) +
   the SUMMARY chapter entry (after `deflate-composition-lowering`) only. No collision with prior rows.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/arpack.cpp:562-590
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: ArpackEPSSolver::ApplyOp is line-for-line the L1 sequence — opM->Mult@579 ▷ opInv->Mult@580 ▷ y1*=gamma@581 (shift-invert); opK->Mult@573 ▷ opInv->Mult@574 ▷ y1*=1/gamma@575 (no-transform); opProj->Mult@586 (projector tail). read_range + citecheck all [ok].
+  - citation: palace/linalg/slepc.cpp:1801-1827
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: cycle-025 +7 repair CONFIRMED on disk, no regression — __mat_apply_EPS_A0 opK->Mult@1809 *=delta@1810; __mat_apply_EPS_A1 opM->Mult@1824 *=delta*gamma@1825. read_range + citecheck all [ok].
+  - citation: palace/linalg/slepc.cpp:1847-1877
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: __pc_apply_EPS inner solve opInv->Mult@1858; un-scale *=1/(delta*gamma)@1861 (no-transform) / *=1/delta@1865 (shift-invert); opProj->Mult@1870. read_range + citecheck all [ok]. Header comment @1849-1851 names it the (K-sigmaM)^-1 x inverse-apply.
+  - citation: palace/linalg/arpack.cpp:733-799
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: ArpackPEPSolver::ApplyOp quadratic-PEP operand variant — block comment L0=[[-K,0],[0,M]] L1=[[C,M],[M,0]] @736-743; opInv->Mult@761,778. read_range + citecheck [ok].
+  - citation: palace/linalg/arpack.cpp:191-193
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: SetLinearSolver opInv=&ksp (the inner-solver binding op.inv=E.linear). read_range [ok].
+  - citation: palace/linalg/arpack.cpp:245-246
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: SetShiftInvert sigma=s@245 sinvert=true@246 (precond MFEM_VERIFY abort @243-244). read_range [ok].
+  - citation: palace/linalg/arpack.cpp:263-358
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: SolveInternal naupd RCI driver — the opaque eigen-iteration loop, correctly referenced as the out-of-scope boundary, not lowered. --scan in-bounds [ok].
+  - citation: palace/linalg/slepc.cpp:364-366
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: SlepcEigenvalueSolver::SetLinearSolver opInv=&ksp. read_range [ok]. (Body is 364-367; cited 364-366 bounds the same construct — cosmetic 1-line span diff vs L2 entry, not a drift.)
+  - citation: palace/linalg/slepc.cpp:379-394
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: SetShiftInvert STPRECOND@384 / STSINVERT@388 / STSetTransform@390 / STSetMatMode ST_MATMODE_SHELL@391 (the ST-shell delegation) / sigma=s@392. read_range + citecheck [ok].
+  - citation: palace/linalg/slepc.cpp:674
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: EPSSetTarget(eps, sigma/gamma) deferred scaled-coordinate target. citecheck [ok].
+  - citation: palace/linalg/slepc.cpp:694
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: EPSSolve(eps) — the opaque library eigen-iteration entry, correctly referenced as the L3 partial-obstruction boundary, not lowered. citecheck [ok].
+  - citation: palace/linalg/slepc.cpp:715
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: GetEigenvalue boundary un-scale — line 715 IS "return l * gamma;" (the content cited). NOT a drift; the function-name token is at 714 but the cited line is the described return content.
+  - citation: palace/models/modeeigensolver.cpp:1030-1053
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: backend construction wiring inner ksp into eigensolver — ARPACK SetLinearSolver@1037; SLEPc SetType(KRYLOVSCHUR)@1045 + SetLinearSolver@1050. read_range + citecheck [ok].
+  - citation: book/src/L2/eigsolve.md:55-77,99,103,105,163
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: L2 LHS — Signature apply_shift_invert body (58-67 within 55-77); law 1 (composition identity)@99; law 3 (scaling un-transform)@103; law 4 (inner-solve linearity)@105; Lowers-from forward-ref@163 (this theme enacts it). read_range [ok].
+  - citation: book/src/L3/eigsolve.md
+    verdict: supports
+    audited_at: 2026-05-29T16:47:39Z
+    note: L3 partial-obstruction boundary (cycle-024) — "body lifts, loop does not"; this theme owns the per-step body, the L3 entry owns the loop sequential-obstruction. Boundary clean, no content duplication.
+```

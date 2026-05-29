@@ -44,6 +44,7 @@ If a later cycle finds that the source HAS unified the sites (e.g., a refactor l
 ## Examples in this spec
 
 - [`polynomial_recurrence_step`](../spec/slices/polynomial_recurrence_step.md) — three independent scalar-update sequences (Chebyshev-4th-kind, Chebyshev-1st-kind, GMRES Givens stream) plus one out-of-scope branch (eigenvalue tracking via SLEPc/ARPACK). No Palace-level unification.
+- [`sparse_triangular_solve`](../spec/slices/sparse_triangular_solve.md) — the scope question (sparse `Ly=b`/`Uy=b`, factor Allgatherv, residual check) returns a negative result: Palace carries no Palace-level triangular-solve form. SuperLU/STRUMPACK/MUMPS are thin opaque `mfem::Solver` forwarders (the factor interior lives below the project boundary). This is the canonical L0→L1 **scope-out obstruction** (`trsv` obstruction-shadow) — the L0→L1 analogue of [`sequential-obstruction`](./sequential-obstruction.md)'s L2→L3 negative result.
 
 ## Partial-positive sub-pattern
 

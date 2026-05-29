@@ -28,13 +28,14 @@ Shape contracts are declared at boundaries (per the bunsen `contracts::unpack_sh
 
 ## Vocabulary cohort
 
-**Firm (19)** — element-wise updates, BLAS-1 reductions, the opaque-operator gate, the constructed-operator solve gate, the eigenmode-solve gate, the polynomial-smoother gate, the divergence-free projector gate, the nonlinear-pencil interior atom, the NEP deflated-residual extension, the small-dense direct-solve gate, the NEP deflated-solve extension, the NEP quasi-Newton Jacobian action, and the NEP quasi-Newton eigenvalue-correction step:
+**Firm (20)** — element-wise updates, BLAS-1 reductions, the fused-normalise primitive, the opaque-operator gate, the constructed-operator solve gate, the eigenmode-solve gate, the polynomial-smoother gate, the divergence-free projector gate, the nonlinear-pencil interior atom, the NEP deflated-residual extension, the small-dense direct-solve gate, the NEP deflated-solve extension, the NEP quasi-Newton Jacobian action, and the NEP quasi-Newton eigenvalue-correction step:
 
 - [`axpy`](./axpy.md) — vector-scalar fused update; canonical BLAS-1 leaf.
 - [`dot`](./dot.md) — Hermitian inner-product reduction (real / complex; `tdot` for unconjugated bilinear).
 - [`nrm2`](./nrm2.md) — Euclidean norm; defined as `√dot(x, x)`.
 - [`axpby`](./axpby.md) — fused two-scalar two-vector update; subsumes `axpy` and pure-scaling as algebraic identities.
 - [`scal`](./scal.md) — pure vector-scalar multiply; the fourth BLAS-1 floor primitive (sibling-subsumed by `axpby` β=0).
+- [`normalize`](./normalize.md) — fused vector normalisation `(β, x/β) = normalize(x)`; the L1 lift of Palace's `linalg::Normalize`, composing [`nrm2`](./nrm2.md) + [`scal`](./scal.md) and **returning the norm** as a first-class result (load-bearing: Arnoldi Hessenberg sub-diagonal entry, spectral-radius eigenvalue estimate, deflation companion-vector scale). Firm-on-positive-structure (`linalg::Normalize` is a read closure). Partial: undefined at `x = 0` (L0 `MFEM_ASSERT`). Carries an in-chapter **rough-in note** for the B-weighted sibling `normalize_B` (no fused Palace site; inherits `matrix-weighted-norm`'s test-coverage bound).
 - [`apply_linop`](./apply_linop.md) — pure linear-operator application `y = A·x`; opaque-operator gate to the L2 `krylov-step` vocabulary.
 - [`axpbypcz`](./axpbypcz.md) — fused three-scalar three-vector update; subsumes `axpby` (γ=0) and `axpy` (β=1, γ=0).
 - [`ksp_solve`](./ksp_solve.md) — pure preconditioned Krylov solve `(x, status) = ksp_solve(K, b)`; constructed-operator gate. The first L1 operator whose primary argument is itself a structured value (`Solver[A]`) rather than a raw tensor or scalar.
@@ -73,6 +74,7 @@ Shape contracts are declared at boundaries (per the bunsen `contracts::unpack_sh
 | [`nrm2`](./nrm2.md) | `(x) → √⟨x,x⟩` | `dot` | `firm` |
 | [`axpby`](./axpby.md) | `(α, x, β, y) → α·x + β·y` | (leaf; subsumes `axpy`) | `firm` |
 | [`scal`](./scal.md) | `(α, x) → α·x` | (leaf; subsumed by `axpby` via β=0) | `firm` |
+| [`normalize`](./normalize.md) | `(x: Tensor[N]) → (Scalar, Tensor[N])` (i.e. `(β, x/β)`, `β = ‖x‖₂ > 0`) | `nrm2`, `scal` | `firm` (fused-normalise; firm-on-positive-structure; L0: `palace/linalg/vector.hpp:262-270` `linalg::Normalize` + call sites `palace/linalg/iterative.cpp:631-632,811`, `palace/linalg/operator.cpp:661,673`, `palace/linalg/nleps.cpp:610-611,617`; harvested cycle-026; partial at `x=0`; B-weighted `normalize_B` in-chapter rough-in note) |
 | [`apply_linop`](./apply_linop.md) | `(A: LinearOperator[M, N], x: Tensor[N]) → Tensor[M]` | (leaf; opaque operator) | `firm` |
 | [`axpbypcz`](./axpbypcz.md) | `(α, x, β, y, γ, z) → α·x + β·y + γ·z` | (leaf; subsumes `axpby` and `axpy`) | `firm` |
 | [`ksp_solve`](./ksp_solve.md) | `(K: Solver[A: LinearOperator[N, N]], b: Tensor[N]) → SolveResult[N]` | `apply_linop` (direct); `dot`, `nrm2`, `axpy` (transitive via per-method body) | `firm` (L1>L0: [`ksp-solve-mutation-rotation`](../L1-L0/ksp-solve-mutation-rotation.md), cycle-008) |

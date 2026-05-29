@@ -185,7 +185,6 @@ graph BT
   divfree --> state-stratification
   plane-rotation-stream --> givens_generate
   plane-rotation-stream --> givens_apply
-  orthog --> plane-rotation-stream
   cg --> nrm2
   cg --> scal
   gmres --> nrm2
