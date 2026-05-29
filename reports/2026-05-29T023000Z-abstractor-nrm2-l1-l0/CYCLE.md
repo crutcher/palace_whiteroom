@@ -1,3 +1,56 @@
+---
+agent: abstractor
+invoked_at: 2026-05-29T023000Z
+scope: L1>L0 theme firm-up — nrm2-mutation-rotation (stub→firm)
+status: integrated
+integrated_at: 2026-05-29T08:10:00Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "cycle-019 finalize. nrm2-mutation-rotation PROMOTED stub→firm (L1 LHS alpha=nrm2(x) → L0 Norml2 + four-stage Dot→MPI_Allreduce→std::abs→std::sqrt chain; 3 surface forms A/B/C; std::abs guard classified load-bearing defensive; element-type real/complex collapse). L1-L0/index dep-map row inserted between orthogonalize + minres; SUMMARY :83 in-place de-stub. L1>L0 themes 11→12. retroactive-budget 0; clean build."
+inputs:
+  - book/src/L1/nrm2.md (firm L1 operator; algebraic laws + nrm2(x)=√dot(x,x))
+  - book/src/L1-L0/nrm2-mutation-rotation.md (stub home, materialized 2026-05-28)
+  - book/src/L1-L0/axpby-mutation-rotation.md (structural model)
+  - palace/linalg/vector.hpp:254-269 (Norml2 + Normalize)
+  - palace/utils/communication.hpp:246-270 (GlobalOp/GlobalSum = MPI_Allreduce)
+  - palace/fem/errorindicator.hpp:43 (ErrorIndicator::Norml2 wrapper)
+  - palace/linalg/iterative.cpp:408,631 (PCG RHS-norm + GMRES Arnoldi subdiagonal)
+  - test/unit/test-vector.cpp:209-211 (Norml2((1,2,3))=√14)
+  - OQs nrm2-lowering-theme-deliverables, nrm2-std-abs-defensive-guard-classification
+---
+
+# CYCLE: L1>L0 theme firm-up — nrm2-mutation-rotation
+
+## Summary
+
+`nrm2(x) = √⟨x, x⟩` is the firm L1 Euclidean-norm reduction (`book/src/L1/nrm2.md`).
+The L1>L0 lowering home for it already exists as a `stub` (materialized 2026-05-28).
+This dispatch promotes it **stub→firm**, authoring the forward L1→L0 rewrite: how the
+single pure L1 reduction expands into Palace's one-line free-function template
+`linalg::Norml2(comm, x) = std::sqrt(std::abs(Dot(comm, x, x)))`. The interesting
+structure is that **the rewrite expands one pure L1 step into a four-stage L0 chain** —
+`LocalDot` → `MPI_Allreduce` (via `Mpi::GlobalSum`/`GlobalOp`) → `std::abs` defensive
+guard → `std::sqrt` — and that this chain is **shared verbatim** across the method-form
+(`Vector::Norml2()`, real, no MPI), the free-function template (real + complex), and the
+thin `ErrorIndicator::Norml2(comm)` caller-side wrapper. The theme classifies the outer
+`std::abs` per OQ `nrm2-std-abs-defensive-guard-classification`: it is a **load-bearing
+numerical guard** (domain-safety / non-negativity for `sqrt`), *not* a transparent
+performance trick — it is a no-op in exact arithmetic but prevents `sqrt`-of-tiny-negative
+NaN. On the complex path the guard performs the *same* sign-strip: the self-dot
+`ComplexVector::Dot(x,x)` returns imaginary part exactly `0.0` (the `this==&y` self-aliasing
+fast path, `vector.cpp:264-267`), so `std::abs(std::complex{re,0.0})` degenerates to `|re|`,
+not a residual-imaginary-folding modulus. The MPI collective
+is reintroduced here (it is absent from the L1 signature; single-rank is in scope, so the
+collective lowers to a no-op locally but is structurally present). Variant axis: real vs
+complex element type, which **collapses to one L1 operator** but appears at L0 as two
+template specialisations of `linalg::Norml2<VecType>` differing only in what `Dot` and
+`std::abs` mean at the leaf. Justification kind: **structural** (the rewrite is the
+syntactic expansion of one pure reduction into the L0 composition), with one algebraic
+sub-claim (the `√dot(x,x)` identity, L1 law 8) and one load-bearing-trick classification
+(the `std::abs` guard).
+
+## Proposed changes
+
+```edit:book/src/L1-L0/nrm2-mutation-rotation.md
 # nrm2-mutation-rotation
 
 The mutation rotation for the BLAS-1 Euclidean-norm reduction. Lowers the pure L1 form
@@ -231,3 +284,80 @@ buys stated. No constructive sub-part (no negative-anchor reconstruction): the t
 only positively-anchored claims, so `firm` rather than `partly-constructive`. The
 `verified_against:` audit block is deferred to a `lowering-verifier` cycle (its authorship,
 not the abstractor's).
+```
+
+```edit:book/src/L1-L0/index.md
+| [orthogonalize-mutation-rotation](./orthogonalize-mutation-rotation.md) | `L1/orthogonalize` (firm) | `palace/linalg/orthog.hpp`, `palace/linalg/iterative.cpp` | firm *(structural; 3 variant loop-structures)* |
+| [nrm2-mutation-rotation](./nrm2-mutation-rotation.md) | `L1/nrm2` (firm) | `palace/linalg/vector.hpp`, `palace/utils/communication.hpp`, `palace/fem/errorindicator.hpp` | firm *(structural; 3 surface forms; abs-guard classified load-bearing defensive)* |
+| [minres-iteration](./minres-iteration.md) | (speculative — `lanczos_step`, …) | (no Palace anchor — `MFEM_ABORT` at `ksp.cpp:53-57`) | obstruction |
+```
+
+**SUMMARY.md — in-place de-stub (NOT an append).** The `nrm2-mutation-rotation` entry already
+exists in `book/src/SUMMARY.md` (currently line 83) as a `(stub)` row. This promotion drops the
+`(stub)` marker on that existing row; do **not** append a new line (a second link would be a
+duplicate-link mdBook build error). Replace:
+
+```text
+- [nrm2-mutation-rotation (stub)](./L1-L0/nrm2-mutation-rotation.md)
+```
+
+with:
+
+```text
+- [nrm2-mutation-rotation](./L1-L0/nrm2-mutation-rotation.md)
+```
+
+## Speculative operators proposed
+
+None. This dispatch firms up an existing theme home for an already-firm L1 operator and
+introduces no new L1 vocabulary. (Harvester has nothing to pick up from this report.)
+
+## Supporting evidence
+
+All ranges self-verified against `reference/palace` source via `palace-codemap` read_range /
+search_text before emit:
+
+- **Core load-bearing line** `palace/linalg/vector.hpp:259`:
+  `return std::sqrt(std::abs(Dot(comm, x, x)));` (inside template at 256-260, comment 255,
+  sig 257, opening brace 258). This line is already within the L1 entry's `255-260` range —
+  nothing was wrong with the L1 citation; this report merely pins the exact body line.
+- **The Dot leaf** `palace/linalg/vector.hpp:247-252`: `auto dot = LocalDot(x, y);
+  Mpi::GlobalSum(1, &dot, comm); return dot;`.
+- **The MPI_Allreduce** `palace/utils/communication.hpp:246-249` (GlobalOp) +
+  `267-270` (GlobalSum delegating to GlobalOp with MPI_SUM).
+- **The wrapper** `palace/fem/errorindicator.hpp:43`.
+- **Fan-out use-sites** `palace/linalg/iterative.cpp:408` (PCG RHS norm) and `:631` (GMRES
+  Arnoldi subdiagonal + normalisation) — substantiate the High fan-out (convergence tests +
+  orthogonalisation/normalisation).
+- **Test** `test/unit/test-vector.cpp:209-211` — `nrm2((1,2,3)) = √14`, real `double` return.
+
+## Open questions / caveats
+
+- **`nrm2-std-abs-defensive-guard-classification` — RESOLVED by this theme.** Verdict:
+  load-bearing numerical defensive guard (domain-safety / non-negativity for `sqrt`), no-op
+  in exact arithmetic. NOT a transparent performance trick. This matches the existing L0
+  convention page `book/src/L0/transparent-vs-load-bearing-tricks.md:22` "Defensive
+  non-negativity guard" worked example for `linalg::Norml2` (with `L1/nrm2` already listed in
+  its "Referenced from"); no new L0-page subsection is needed — this theme is consistent with
+  the already-landed treatment.
+- **`nrm2-lowering-theme-deliverables` — addressed.** The theme delivers: the four-stage
+  `Dot→Allreduce→abs→sqrt` chain, the three surface forms (free-function / method / wrapper),
+  the variant-axis collapse, the abs-guard classification, and the MPI-collective
+  reintroduction. The B-weighted overload boundary is marked and deferred to
+  `matrix-weighted-norm-mutation-rotation`.
+- **`concepts/nrm2.md` BLAS-summation note — already reconciled (no carry-forward needed).**
+  `concepts/nrm2.md:9` already states `linalg::Norml2` computes the naive `√⟨x,x⟩` and does
+  **not** use BLAS scaled-summation (which is "not present in Palace"), pointing at the
+  authoritative `L1/nrm2`. This theme is consistent with that note; the earlier-drafted
+  carry-forward correction was stale and has been dropped — no downstream reconciliation work
+  is required.
+- **`dot-mutation-rotation` is still a `stub`** (forward-referenced from sub-pattern A as the
+  inherited MPI-collective sub-theme). The reference is kept as a live link because the stub
+  file exists; the `nrm2` theme leans on it for the `LocalDot`/`Allreduce` detail rather than
+  restating. When `dot-mutation-rotation` firms up, this theme's sub-pattern A should be
+  re-checked for any double-statement of the collective chain (lifter work, not abstractor).
+- **`verified_against:` block deferred.** Per the axpby-theme convention the audit block with
+  per-citation `verdict`/`audited_at` is the `lowering-verifier`'s output, not the
+  abstractor's. The theme is `firm` on its structural content; the audit will confirm
+  surface-form exhaustiveness (in particular whether any un-cited `Norml2` overload or
+  caller surface exists beyond A/B/C).

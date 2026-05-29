@@ -1,3 +1,47 @@
+---
+agent: harvester
+invoked_at: 2026-05-29T023000Z
+scope: L1 operator: assemble-diagonal
+status: integrated
+integrated_at: 2026-05-29T08:10:00Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "cycle-019 finalize. assemble-diagonal PROMOTED stub→firm (operator-to-data (A: LinearOperator[N,N]) -> Tensor[N]; 6 laws + 4 non-laws; element-type live axis + operator-representation absorbed axis; the fifth L1 motif). L1/index Firm 11→12 + cohort bullet + dep-map row; SUMMARY de-stub. L1 firm 11→12. reciprocal/elementwise_product + assemble-diagonal-mutation-rotation L1>L0 forward-refs correctly plain-text singletons. retroactive-budget 0; clean build."
+inputs:
+  - book/src/L1/assemble-diagonal.md (stub, materialized 2026-05-28)
+  - book/src/L1/apply_linop.md (firm; the "this is NOT an apply_linop variant" contrast)
+  - book/src/L1/scal.md, book/src/L1/nrm2.md (L1 entry models)
+  - book/src/L1/index.md (dep-map + cohort prose)
+  - OQ assemblediagonal-is-not-apply-linop-variant
+  - plan Backlog Medium diagonal-extraction-l1; roadmap §Intermediate "Diagonal-preconditioner apply"
+  - palace-codemap localization of AssembleDiagonal (decls, defns, call sites, test)
+---
+
+# CYCLE: Formalize assemble-diagonal at L1
+
+## Summary
+Promotes the L1 `assemble-diagonal` stub (materialized 2026-05-28) to a **firm** L1 operator. `assemble_diagonal` is the **operator-to-data** primitive `assemble_diagonal(A) -> Tensor[N]` — it extracts the main diagonal of a square linear operator into a vector. It is harvested as a primitive *distinct* from `apply_linop`: `apply_linop` is `(Operator, Tensor) -> Tensor` (the *action* of the operator on a vector); `assemble_diagonal` is `Operator -> Tensor` (operator *introspection / materialization* — no input vector, the result is determined by `A` alone). This distinction is the substance of OQ `assemblediagonal-is-not-apply-linop-variant`, and the entry makes it explicit. The signature is canonical (matches the `AssembleDiagonal(diag)` virtual across the Palace real/complex operator hierarchies and every concrete leaf), evidence is direct from `palace/linalg/{operator,rap,hypre}.{hpp,cpp}` + `palace/fem/libceed/operator.cpp` + the `test-libceed.cpp` diagonal-assembly test, and the operator carries one load-bearing numerical caveat (the diagonal is **approximate** for matrix-free high-order Nedelec spaces — a non-law, sourced from both the Palace AMR comment and the test's relaxed tolerance). The fan-out justification (Jacobi / Chebyshev / block-Jacobi / polynomial preconditioners all reuse it) is witnessed directly: `jacobi.cpp:79` and `chebyshev.cpp:177,240` all call `op.AssembleDiagonal(dinv); dinv.Reciprocal();`.
+
+## Proposed changes
+
+```edit:book/src/L1/assemble-diagonal.md
+[full-rewrite — stub → firm; see "Operator content" below for the file body]
+```
+
+```edit:book/src/L1/index.md
+[1) cohort count "Firm (11)" → "Firm (12)"; 2) add a firm-cohort bullet for assemble-diagonal; 3) add a dep-map row. See "Wiring edits" below for exact strings.]
+```
+
+```edit:book/src/SUMMARY.md
+[drop the "(stub)" label on the existing L1 chapter line so it reads as a firm chapter:
+ `- [assemble-diagonal](./L1/assemble-diagonal.md)`  (was `- [assemble-diagonal (stub)](./L1/assemble-diagonal.md)`)]
+```
+
+## Operator content
+
+The body to write into `book/src/L1/assemble-diagonal.md`:
+
+---
+
 # assemble-diagonal
 
 Mutation-lifted **operator-to-data** extraction: `d = diag(A)`, the main diagonal of a square linear operator materialised as a vector. The diagonal-introspection primitive at L1 — distinct from [`apply_linop`](./apply_linop.md) (which applies the operator to a vector); `assemble_diagonal` consumes only the operator and produces operator-derived data. The gate to diagonally-scaled preconditioners (Jacobi, Chebyshev, block-Jacobi, polynomial).
@@ -117,3 +161,35 @@ Non-axes (recorded for disambiguation):
 - `palace/linalg/chebyshev.cpp:233-241` — `ChebyshevSmoother1stKind::SetOperator`: the identical `op.AssembleDiagonal(dinv); dinv.Reciprocal();` setup (second consumer code path).
 - `test/unit/test-libceed.cpp:343-376` — diagonal-assembly test: `mat_ref->GetDiag(d_ref); op_test->AssembleDiagonal(d_test); d_test *= scaling; d_test -= d_ref;` then `REQUIRE(d_test * d_test < rtol * std::max(d_ref * d_ref, 1.0))`. Confirms `AssembleDiagonal` reproduces the **assembled-matrix** diagonal (`mfem::SparseMatrix::GetDiag`) to `rtol = 1.0e-12` in general, but relaxes to `rtol = 1.0` exactly for **high-order 3D Nedelec non-tensor-basis** spaces (lines 367-374) — the test-witnessed load-bearing approximation. L0-equivalent semantic documentation per CLAUDE.md "Tests as semantic supplement".
 - `book/src/L1/apply_linop.md` — the sibling firm L1 operator; the operator/data divide (`apply_linop` is operator-and-vector-to-vector; `assemble_diagonal` is operator-to-data) is stated against it.
+
+---
+
+## Wiring edits (book/src/L1/index.md)
+
+1. **Cohort count** — change `**Firm (11)**` → `**Firm (12)**` (line 29).
+
+2. **Cohort bullet** — append after the `divfree-projector` firm bullet (after line 41):
+
+```
+- [`assemble-diagonal`](./assemble-diagonal.md) — pure-functional operator-to-data diagonal extraction `d = assemble_diagonal(A)`; the diagonal-introspection primitive at L1, sibling to [`apply_linop`](./apply_linop.md) on the opaque-operator side (operator-to-data, where `apply_linop` is operator-and-vector-to-vector). Explicitly **not** an `apply_linop` variant (it consumes no vector; the result is a property of `A` alone — resolves OQ `assemblediagonal-is-not-apply-linop-variant`). The gate to diagonally-scaled preconditioners: Jacobi / Chebyshev / block-Jacobi / polynomial smoothers all reuse the `assemble_diagonal` → `reciprocal` → element-wise-product chain. Firm despite a single (libCEED diagonal-assembly) test, on the strength of exhaustive structural citation across all five concrete representations; carries one load-bearing non-law (matrix-free high-order-Nedelec diagonals are *approximate*, test-witnessed at the relaxed `rtol = 1.0`).
+```
+
+3. **Dep-map row** — append a row to the operator dep-map table (after the `divfree-projector` row, line 75):
+
+```
+| [`assemble-diagonal`](./assemble-diagonal.md) | `(A: LinearOperator[N, N]) → Tensor[N]` (i.e. `diag(A)`) | (leaf; opaque square operator; sibling to `apply_linop`, NOT a dependency) | `firm` (operator-to-data gate; L0: `palace/linalg/{operator,rap,hypre}.cpp` + `palace/fem/libceed/operator.cpp`; harvested cycle-019; matrix-free high-order-Nedelec approximate-diagonal load-bearing non-law) |
+```
+
+## Supporting evidence
+
+- All citations self-verified against source via `palace-codemap` `read_range` at emit time (cycle-015 producer self-verification; `verify-citation-range` skill). Verified line-exact: `operator.hpp:21,50-51,97`; `operator.cpp:25-28,85-96`; `hypre.cpp:85-89`; `hypre.hpp:70`; `libceed/operator.cpp:116-143` (square check line 120, zero-init 121, AddDiagonal 139); `libceed/operator.hpp:56`; `rap.cpp:154-193` (square check 165, abs-prolongation comment 163-164, `AbsMultTranspose` 172, DiagonalPolicy 180-191), `rap.cpp:467-479`; `rap.hpp:112,206`; `jacobi.cpp:75-82`; `jacobi.hpp:15-16`; `chebyshev.cpp:170-178,233-241`; `test-libceed.cpp:343-376`.
+- The "NOT an apply_linop variant" framing is anchored against the firm `apply_linop` entry's signature `(A: LinearOperator[M, N], x: Tensor[N]) → Tensor[M]` (`book/src/L1/apply_linop.md:16`).
+- Fan-out (Jacobi / Chebyshev consumers) witnessed directly at the three smoother call sites — this is the `diagonal-extraction-l1` Backlog item's reuse claim, confirmed in source.
+
+## Open questions
+
+- **`assemble-diagonal-mutation-rotation` L1>L0 lowering theme (NEW, abstractor)** — the L1>L0 lowering for `assemble_diagonal` is not yet authored. It must narrate forward from L1 `d = assemble_diagonal(A)` to the L0 `A.AssembleDiagonal(diag)` output-arg mutation, and absorb: (i) the destination sizing / `diag = 0.0` zero-init; (ii) the representation split (Hypre CSR exact read vs libCEED element-local accumulation vs `ParOperator` abs-prolongation-transpose); (iii) the Dirichlet `DiagonalPolicy` BC post-step; (iv) the matrix-free high-order-Nedelec approximation as a load-bearing assembly-order property. Recommend filing as a Backlog item paired with the existing `diagonal-extraction-l1`.
+- **Upstream MFEM `mfem::Operator::AssembleDiagonal` (real path)** — the real-operator `AssembleDiagonal` resolves into vendored MFEM via `using Operator = mfem::Operator` (`palace/linalg/operator.hpp:21`); Palace overrides it only on its own subclasses (`HypreCSRMatrix`, `ParOperator`, libCEED `Operator`). Per CLAUDE.md "Many symbols resolve into upstream libraries", the L1 entry cites the Palace *call sites* and overrides, not the MFEM base virtual. Log as an upstream-behavior dependency: the exact semantics of `mfem::Operator::AssembleDiagonal` for any Palace operator that does *not* override it (and inherits the MFEM default) is out-of-scope evidence. No such un-overridden real-operator path is surfaced in the consuming smoothers (they all call into overriding subclasses), so this does not block the firm status — but a future cross-layer pass should confirm no real-operator consumer relies on the MFEM default behaviour.
+- **`reciprocal` / `elementwise_product` L1 primitives (forthcoming)** — the diagonal-preconditioner apply completes via `mfem::Vector::Reciprocal` (`dinv.Reciprocal()`) and an element-wise product (`Apply(dinv, x, y)` in `jacobi.cpp:104`). These are referenced as plain text in the entry (not yet authored). Harvesting them would let the Jacobi/Chebyshev preconditioner-apply be expressed as a clean L1 composition `y = elementwise_product(reciprocal(assemble_diagonal(A)), x)`. Candidate Backlog items.
+- **OQ `assemblediagonal-is-not-apply-linop-variant` — resolve / close** — this harvest is the deliberate resolution: `assemble_diagonal` lands as its own firm L1 entry with the operator/data divide stated explicitly. The OQ should be closed (migrated out of the open-questions ledger) by the integrator / meta-phase, with this entry as the resolution anchor.
+- **Layer-intro refresh (layer-intro-author)** — the L1 `index.md` "Semantics (overlay)" section enumerates four recurring semantic motifs; `assemble_diagonal` introduces a fifth — **operator-to-data introspection** (an operator-argument primitive that returns operator-intrinsic data rather than the operator's action). The intro's motif list could note this fifth motif. Flagged here per harvester scope (intro edits are layer-intro-author's job).

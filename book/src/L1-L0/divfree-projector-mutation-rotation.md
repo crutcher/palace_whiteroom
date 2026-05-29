@@ -457,15 +457,25 @@ follow-up, not a status reduction.
 
 ## Open questions / caveats
 
-- **Stale `Mult` doc comment.** `palace/linalg/divfree.hpp:63-66` describes the
-  output as "the irrotational portion ... satisfying ∇ × y = 0", contradicting
-  the divergence-free implemented behaviour and the class doc
-  `palace/linalg/divfree.hpp:28-31` (`Gᵀ M x = 0`). This is a pre-existing
-  Palace-internal documentation inconsistency, already tracked as OQ
-  `divfree-mult-doc-irrotational-vs-divfree-stale` (carried from the L1 entry,
-  cycle-013). Not a defect in this theme; the rewrite honours the *implemented*
-  divergence-free semantics. Flag for the `lowering-verifier` (it should NOT
-  treat the stale comment as a citation against the divergence-free claim).
+- **Stale `Mult` doc comment (resolved cycle-019 — OQ closed).** The per-method
+  doc comment `palace/linalg/divfree.hpp:64-66` describes the output as "the
+  irrotational portion ... satisfying ∇ × y = 0". This is **inverted**: in the
+  Helmholtz/Hodge decomposition `y = y_divfree + Grad·ψ`, the *irrotational*
+  (curl-free, gradient-range) component is the `Grad·ψ` term that the projector
+  *removes* — the comment names the removed part and its trivially-curl-free
+  property (`∇ × ∇ψ = 0`) where it should describe the divergence-free
+  *remainder* the projector returns. The authoritative L0 site is the **class**
+  doc `palace/linalg/divfree.hpp:28-31` ("projection onto a divergence-free
+  space satisfying `Gᵀ M x = 0`"), which the implementation
+  (`palace/linalg/divfree.cpp:155-190`) realises; Palace's own inline comment at
+  `palace/linalg/divfree.cpp:176` ("Compute the irrotational portion of y and
+  subtract.") confirms the irrotational component is the *subtracted* part. A
+  pre-existing Palace-internal
+  documentation inconsistency, NOT a defect in this theme; the rewrite honours
+  the *implemented* divergence-free semantics. The `lowering-verifier` must NOT
+  treat the per-method comment as a citation against the divergence-free claim.
+  (OQ `divfree-mult-doc-irrotational-vs-divfree-stale`, carried from the L1
+  entry cycle-013, re-surfaced cycle-016, resolved cycle-019.)
 - **Inner `ksp_solve` is a nested constructed-operator gate.** `P.ksp :
   Solver[P.M]` means this theme's closure carries another L1 constructed-operator
   as a sub-field — an instance of the

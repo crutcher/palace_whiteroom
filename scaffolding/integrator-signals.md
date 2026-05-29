@@ -37,6 +37,55 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-019 — 2026-05-29T0810Z
+
+(FIRST primary cycle of meta-batch-5 — cycles 019/020/021; the **batch-5 meta-phase fires after the cycle-021 finalize commit**. Does NOT fire this cycle.)
+
+### Unblocked
+- The **BLAS-1 L1>L0 lowering-theme gap** is now partially closed and the rest is unblocked: `nrm2-mutation-rotation` firmed; `dot-mutation-rotation` (:82 stub) + `scal-mutation-rotation` (:84 stub) + `assemble-diagonal-mutation-rotation` are the remaining ready abstractor targets (the firm L1 leaves all exist). — OQ `blas1-l1-l0-lowering-theme-gap` / `assemble-diagonal-mutation-rotation`
+- **`orthogonalize-composition-lowering` L2>L1 theme** is now unblocked — the L2 `orthogonalize` operator firmed this cycle, so the lowering theme has a live firm L2 anchor. — OQ `orthogonalize-composition-lowering-l2-l1-theme`
+- **`inner-product-fold-specialization` lowering-verifier audit** is now tractable — the theme is firm with a per-line dispatch-rule + re-order-rule + summation-order-table ready for audit. — OQ `inner-product-fold-specialization-lowering-verifier-audit`
+- **The L2 Part-intro refresh** is now warranted and unblocked — L2 grew to 5 firm ops this cycle (added the named-composition `orthogonalize` + the fold cohort `inner_product`), so the `L2/index.md` Working-Notes prose + overlay is stale. Two converging refresh flags (`L2-layer-intro-refresh-for-named-compositions` + `L2-layer-intro-refresh-for-fold-cohort`) can fold into one dispatch. — OQ `L2-layer-intro-refresh-for-named-compositions` / `L2-layer-intro-refresh-for-fold-cohort`
+- **`assemble-diagonal` downstream** is unblocked: it is now a firm L1 leaf for Jacobi / Chebyshev / block-Jacobi / polynomial-preconditioner diagonal-extraction; the `reciprocal` + `elementwise_product` L1 primitives it forward-references are the next-ranked diagonal-preconditioner-apply backlog items. — OQ `assemble-diagonal-reciprocal-elementwise-product-l1-primitives`
+
+### New dependencies
+- `book/src/L2/inner_product.md` (firm) → L1 leaves `dot`/`tdot` (type-API-surface only — zero call sites) / `bilinear-form` (rough-in, M-weighted member) + `apply_linop` + sibling-fold `linear_combination` (do-NOT-merge) + consumer `nrm2`/`matrix-weighted-norm`. — report 7
+- `book/src/L2-L1/inner-product-fold-specialization.md` (firm) → `L2/inner_product` (firm, post-#7) + `L1/dot` (firm; `dot`+`tdot`) + `L1/bilinear-form` (rough-in). — report 8
+- `book/src/L2/orthogonalize.md` (firm) → L1 leaf `orthogonalize` (firm) + `dot`/`axpy` stage primitives + `krylov-step`/ROM consumers + `inner_product` sibling-fold-constituent. — report 4
+- `book/src/L1/assemble-diagonal.md` (firm) → operator/rap/hypre/libceed assembly sites + the two smoother consumers; forward (not-yet-live) deps on `reciprocal` / `elementwise_product` L1 primitives + the `assemble-diagonal-mutation-rotation` L1>L0 theme. — report 2
+- `book/src/L1-L0/nrm2-mutation-rotation.md` (firm) → `L1/nrm2` (firm) + L0 `vector.hpp`/`communication.hpp`/`errorindicator.hpp`; forward dep on `dot-mutation-rotation` (stub) for the collective-double recheck. — report 3
+- `book/src/L0/fespace-file.md` → forward (plain-text) deps on libceed basis/restriction + quadrature + geometric-factor L0 anchors (folded into OQ `fem-libceed-basis-restriction-l0-anchor`). — report 1
+
+### Resolution implications
+- `inner-product-harvester-formalization-and-conjugation-pinning` — **answered/resolved** — the headline plan Now #1/#2 item; conjugation PINNED arg-1 `xᴴ y`, reconciliation against Palace's arg-2 `yᴴ x` documented, Palace verified self-consistent. (Per-report integrator recorded RESOLVED-by-this-entry; meta-phase enacts the close + plan flip.) — report 7
+- `inner-product-fold-sibling-candidate` — **resolved** — the sibling-fold boundary (`inner_product` vs `linear_combination`) is drawn two-sided; the fold is firm. — report 7
+- `inner-product-fold-specialization-l2-l1-theme` — **resolved** — the forward pointer the #7 harvester opened is closed by the #8 theme. — report 8
+- `assemblediagonal-is-not-apply-linop-variant` — **resolved** — the firm `assemble-diagonal` entry is the resolution-anchor (it is a distinct operator-to-data primitive, NOT an `apply_linop` variant). — report 2
+- `nrm2-std-abs-defensive-guard-classification` — **resolved** — the `std::abs` is a load-bearing defensive guard (same-sign-strip on the real-projected complex path). — report 3
+- `divfree-mult-doc-irrotational-vs-divfree-stale` — **resolved/closure-ready** — the stale-`Mult`-doc tension is dispositioned with the authoritative L0 site named; meta-phase enacts the close + the `priorities.md` flip. — report 5
+- `combinator-miner-arity-blind-parametric-family-detection` — **partially-answered** — the cycle-018 parametric-family mode WORKS for fold-families (first live exercise characterized `inner_product`) but has NO positive channel for NON-fold parametric families (Qualification B); the mode-gap is the batch-5 meta-phase resolution target. — report 6
+
+### Suggested next dispatches
+- (`abstractor`, `inner-product-fold-specialization lowering-verifier audit + conjugate-pair-reorder caller-classification`) — the theme is firm; audit the per-line dispatch/re-order/summation-order rules + classify every `linalg::Dot` site real-projected-invisible vs full-complex-observable.
+- (`abstractor`, `dot-mutation-rotation + scal-mutation-rotation + assemble-diagonal-mutation-rotation L1>L0 themes`) — the BLAS-1 L1>L0 gap; the firm L1 leaves are all ready; the `(stub)` :82/:84 SUMMARY rows are the homes.
+- (`abstractor`, `orthogonalize-composition-lowering L2>L1 theme`) — now-firm L2 `orthogonalize` anchor ready.
+- (`layer-intro-author`, `L2 Part-intro refresh`) — L2 at 5 firm ops; folds the two converging refresh flags into one dispatch.
+- (`harvester/lifter`, `gmres.md §L4 v0.6→v0.7 self-rotation`) — large carry-forward, recurring across batches; would firm the cycle-008 GMRES + cycle-011 FGMRES sister themes.
+- (`harvester`, `NLEPS at L1+`) — large multi-cycle carry-forward.
+- (`harvester`, `l3-vocabulary-inventory-gap — gemv/trsv L3 cohort growth`) — lower-layer shared-vocabulary weight per the cycle-009 directive.
+
+### Wave-conflict observations
+- **`L2/index.md` adjacent-row case** — integration #4 (orthogonalize) ADDED a dep-map row after the `inner_product` rough-in row at `:26` (orthogonalize becomes `:27`); integration #7 (inner_product) then FLIPPED the `inner_product :26` row rough-in→firm by matching its full slug-text, NOT touching the orthogonalize `:27` row. **Auto-resolved by the per-report integrators' serial re-read of disk before each Edit** — the #7 integrator explicitly disambiguated by slug-text and confirmed the `:27` orthogonalize row was untouched.
+- **`SUMMARY.md` multi-de-stub case** — five reports (assemble-diagonal, nrm2, orthogonalize, inner_product, inner-product-fold-specialization) each did an IN-PLACE de-stub of their existing `(stub)` line (NOT an append — a second link would be a duplicate-link build error). Serial per-report dispatch + by-slug matching serialized them cleanly with zero collision.
+- **Intra-cycle ordering dependency handled correctly** — integration #8 (L2>L1 theme) links to `book/src/L2/inner_product.md` firmed by integration #7; #7 was dispatched before #8 by design so #8's L2 anchor resolves firm at the finalize rebuild — no broken-link wave conflict.
+
+### Integration-tooling friction
+- **critic-vs-repairer citation-renumbering disagreement on `orthogonalize-l2`** — the critic raised 3 `citation-validity: warning` spot-line nits (orthogonality assertion 158→156, `m==0` guard `orthog.hpp:62-64`→61, no-normalise `:22`→21); the repairer **independently re-verified** via `read_range`/`search_text` against `reference/palace` and found the report's ORIGINAL pointers correct (the critic read against a 1–2-line-shifted offset). The repairer's re-verify WON; citations stand AS-IS. A **3-of-3-same-direction critic line-offset-drift signal** worth a batch-5 meta-phase friction-window glance IF it recurs (single-cycle, not yet a pattern). Better tooling: a mechanical codemap-backed citation-range checker (the batch-3 meta-phase ASK item, still defer-confirmed) would have given both critic + repairer the same authoritative line-map and avoided the disagreement.
+- **`classify-variant-axis` SKILL.md:64-68 `gs_orthog` worked-example staleness** — the orthogonalize-l2 repairer flagged the skill's worked example as stale vs L0 (lists `gemv_basis`/`axpy_scalar`/a `refine_threshold` scalar the actual `OrthogonalizeColumnCGS` does not have) and filed it to `scaffolding/skill-candidates.md`. Meta-phase skill-correction authority.
+- **skill-uptake-survey named-skill-by-slug telemetry continues** — reports #4/#7/#8 performed `verify-citation-range`/`verify-rotation-citation`/`classify-variant-axis`/`find-tests-for-region` substance inline but named few/no skill invocations by slug. Pure batch-5 meta-phase telemetry (the verification was evidently done; only the slug back-reference is absent).
+
+---
+
 ## cycle-018 — 2026-05-29T0300Z
 
 (THIRD/FINAL primary cycle of meta-batch-4 — cycles 016/017/018; the **batch-4 meta-phase fires after this finalize commit**.)

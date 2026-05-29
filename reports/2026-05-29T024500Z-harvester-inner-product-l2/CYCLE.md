@@ -1,3 +1,60 @@
+---
+agent: harvester
+invoked_at: 2026-05-29T024500Z
+scope: L2 operator: inner_product
+status: integrated
+integrated_at: 2026-05-29T08:10:00Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "cycle-019 finalize. HEADLINE. inner_product PROMOTED rough-in→firm (reduce-to-Scalar fold (x,y) -> Scalar ≡ foldl (+) zero (zipWith kernel x y) unifying dot/tdot/bilinear-form along conjugation-convention/element-type/weight-presence axes; conjugation PINNED arg-1 xᴴ y with §reconciliation vs Palace arg-2 yᴴ x; 7 laws incl. IEEE reduction-tree non-law; sibling linear_combination NOT subsumed; consumer nrm2/matrix-weighted-norm = √∘inner_product). L2/index :26 row rough-in→firm flip (orthogonalize row :27 untouched); SUMMARY :40 de-stub. L2 firm contributes to 3→5; rough-in cohort → 0. retroactive-budget 0; clean build."
+inputs:
+  - reports/2026-05-29T023000Z-combinator-miner-parametric-family/CYCLE.md (wave-1 parametric-family characterization; fold-law + axis taxonomy + two caveats)
+  - book/src/L2/inner_product.md (the cycle-018-rough-in / cycle-019-stub being firmed)
+  - book/src/L2/index.md (dep-map row 26 — rough-in → firm flip)
+  - book/src/L2/linear_combination.md (structural precedent: L1-leaves → L2-fold harvest, cycle-018)
+  - book/src/L1/dot.md (the dot/tdot leaves; arg-1-conjugated L1 convention at :34,:43)
+  - book/src/L1/bilinear-form.md (the M-weighted leaf; arg-1-conjugated `xᴴ M y` convention at :19,:63; conjugation-anchor resolution at :50-53)
+  - OQ inner-product-harvester-formalization-and-conjugation-pinning (highest-fan-out head item)
+  - Self-verified Palace ranges: vector.cpp:263-274, :664-685, :700-712; vector.hpp:105-120, :240-262; operator.cpp:598-617, :621-638; operator.hpp:384-396; boundarymodeoperator.cpp:82-92; iterative.cpp:393-406; nleps.cpp:485-493; test/unit/test-vector.cpp:204-212
+---
+
+# CYCLE: Formalize inner_product at L2
+
+## Summary
+
+Promote the L2 `inner_product` stub (cycle-018 rough-in dep-map row; cycle-019 stub home `book/src/L2/inner_product.md`) to a **firm** L2 entry. `inner_product` is the reduce-to-`Scalar` fold `(Tensor[N], Tensor[N]) -> Scalar ≡ foldl (+) zero (zipWith kernel x y)`, the **conjugation-convention / element-type / weight-presence** sibling family of the BLAS-1 reduction cohort, unifying the L1 leaves `dot` (Hermitian), `tdot` (unconjugated bilinear), and the M-weighted member realized by `bilinear-form` (`xᴴ M y`). It is the structural sibling of the already-firm `linear_combination` (cycle-018) but a **different fold** (reduce-to-`Scalar`, not reduce-to-`Tensor[N]`) and must not be merged with it; nor does it subsume `nrm2` / `matrix-weighted-norm`, which are `√ ∘ inner_product` consumers at the diagonal. The two wave-1 combinator-miner caveats are handled in-entry: (1) the **conjugation convention is PINNED** — `inner_product(x, y) = xᴴ y` (conjugate-linear in **arg-1**), reconciled against Palace's source/doc `Dot(comm, x, y) = yᴴ x` (arg-2 conjugated) as the deliberate, self-consistent L1 mutation-rotation re-order that both `dot.md` and `bilinear-form.md` already adopt; (2) `tdot`'s **zero-call-site / type-API-surface-only** status is flagged, with positive anchors leaning on `dot` + the M-weighted bilinear form (both have call sites). The fold-law is split-additivity / length-concatenation-homomorphism `(length-concat, ++) → (Scalar, +)`.
+
+## Proposed changes
+
+```edit:book/src/L2/inner_product.md
+[full rewrite — stub → firm; see "Operator content" below for the file body]
+```
+
+```edit:book/src/L2/index.md
+[flip dep-map row 26 from rough-in to firm — replace the existing `inner_product` row]
+```
+
+Replace the current row (`book/src/L2/index.md:26`):
+
+```
+| [`inner_product`](./inner_product.md) (stub — harvester to firm) | `(Tensor[N], Tensor[N]) -> Scalar` (≡ `foldl (+) zero (zipWith kernel x y)`); M-weighted member `inner_product_M(x, M, y) = xᴴ M y` (shorthand — exact conjugation/arg-order convention to be pinned by harvester; Palace documents `Dot(comm,x,A,y)` as `yᴴ A x`, body `(Ax)ᴴ y = xᴴ Aᴴ y` — see caveat 7), plain ≡ `M = I` | L1 leaves it fuses up from: `dot`, `tdot` (firm), `bilinear-form` (rough-in, the M-weighted member). L2-composition for the weighted member: `apply_linop` (M applied to first arg). Concepts: `dot` (cross-cutting prose). **Sibling fold (do NOT merge):** `linear_combination` (reduce-to-`Tensor[N]`; different laws, no shared concatenation/PSD structure). Consumer (NOT an instance): `matrix-weighted-norm` = `√ ∘ inner_product_M` at `y=x`, SPD `B`. | `(rough-in, proposed-by: combinator-miner:2026-05-28T231046Z)` |
+```
+
+with:
+
+```
+| [`inner_product`](./inner_product.md) | `(x: Tensor[N], y: Tensor[N]) -> Scalar` (≡ `foldl (+) zero (zipWith kernel x y)`); M-weighted member `inner_product_M(x, M, y) = xᴴ M y` (arg-1-conjugated convention, pinned — matches the L1 `dot`/`bilinear-form` leaves; Palace's free-function `Dot(comm,x,y) = yᴴ x` conjugates arg-2, the deliberate L1 re-order — see entry §"Conjugation convention (pinned)"); plain ≡ `M = I` | L1 leaves it fuses up from: `dot` (Hermitian), `tdot` (unconjugated; firm but type-API-surface only — zero Palace call sites), `bilinear-form` (M-weighted member, rough-in). L2-composition for the weighted member: `apply_linop` (M applied to the linear/arg-1 operand). Concepts: `dot` (cross-cutting prose). **Sibling fold (do NOT merge):** `linear_combination` (reduce-to-`Tensor[N]`; folds the term axis, keeps `N`; different homomorphism). Consumer (NOT an instance): `nrm2` / `matrix-weighted-norm` = `√ ∘ inner_product` at `y=x`. | `firm` (harvested cycle-019; promoted from rough-in proposed-by combinator-miner:2026-05-28T231046Z; family-mode characterized combinator-miner:2026-05-29T023000Z; conjugation pinned per OQ inner-product-harvester-formalization-and-conjugation-pinning) |
+```
+
+```edit:book/src/SUMMARY.md
+[de-stub the L2 chapter entry: replace `- [inner_product (stub)](./L2/inner_product.md)` with `- [inner_product](./L2/inner_product.md)`]
+```
+
+## Operator content
+
+The full file body written into `book/src/L2/inner_product.md`:
+
+---
+
 # inner_product
 
 The conjugation-convention-family unification of the BLAS-1 reduce-to-scalar
@@ -515,3 +572,98 @@ bilinear-form), and the parametric-family mode independently characterized the c
   (`reports/2026-05-29T023000Z-combinator-miner-parametric-family/CYCLE.md` — parametric-
   family mode characterization: fold-law membership test, four-axis taxonomy, the
   conjugation-convention contradiction + `tdot`-uncalled caveats this entry resolves).
+
+---
+
+## Supporting evidence
+
+Self-verification log (every Palace range read this invocation via
+`mcp__palace-codemap__read_range` / `search_text`, confirming the cited construct sits on
+the asserted line):
+
+- `vector.cpp:263-274` — `ComplexVector::Dot` (`:263-267`) and `TransposeDot` (`:269-274`)
+  bodies; the imag-cross-term sign distinguishes them; `Dot` body = `x·conj(y) = yᴴ x`
+  (Palace arg-2-conjugated). Confirmed.
+- `vector.cpp:664-685` — `LocalDot(Vector)` (`:664-672`, single Hypre InnerProd,
+  `MFEM_ASSERT` at `:667`) and `LocalDot(ComplexVector)` (`:674-685`, four-real-dot lift,
+  self-dot imag=0 at `:679`). Confirmed.
+- `vector.cpp:700-712` — `AXPY` (read for context on the surrounding free-function block;
+  not cited in-entry). Confirmed adjacent.
+- `vector.hpp:105-120` — `Dot`/`TransposeDot`/`operator*` decls + `yᴴ x` comment at `:109`,
+  `TransposeDot` decl at `:112`. Confirmed.
+- `vector.hpp:240-262` — `LocalDot` decls + `yᴴ x` comment (`:242`), free-function `Dot`
+  (`:246-253`), `Norml2` (`:256-260`). Confirmed.
+- `operator.cpp:598-617` — `Norml2(…, B, Bx)` real (`:598-606`) + complex (`:608-617`);
+  "For SPD B" comment at `:611`, SPD-realness assertion `:615-616`. Confirmed.
+- `operator.cpp:621-638` — weighted `Dot(comm, x, A, y)` real-`Operator` (`:621-628`) +
+  `ComplexOperator` (`:631-638`) overloads. Confirmed.
+- `operator.hpp:384-396` — weighted `Dot` decls + `yᴴ A x` comments (`:386,:391`). Confirmed.
+- `boundarymodeoperator.cpp:82-92` — `linalg::Dot(comm, et, *Bttr, et)` at `:85`,
+  `linalg::Dot(comm, en, Atn, et)` at `:90`. Confirmed (corrects the miner's `:85,:90` —
+  both verified on-line).
+- `iterative.cpp:393-406` — `beta = linalg::Dot(comm, z, r)` at `:395`. Confirmed.
+- `nleps.cpp:485-493` — `std::abs(linalg::Dot(GetComm(), c, c))` at `:487`, `(v, v)` at
+  `:492`. Confirmed.
+- `test/unit/test-vector.cpp:204-212` — real dot test at `:206-207`. Confirmed (path is
+  `test/unit/`, not `palace/test/unit/`).
+- `search_text TransposeDot` over `palace/**` → exactly two hits (`vector.hpp:112` decl,
+  `vector.cpp:269` def). Confirms zero call sites — caveat 2. Confirmed.
+
+Conjugation reconciliation (caveat 1, the headline must-resolve):
+
+- **Palace convention** = `Dot(comm, x, y) = yᴴ x` (arg-2 conjugated), consistent across
+  doc strings (`vector.hpp:109,242,246`; `operator.hpp:386,391`) AND kernel bodies
+  (`vector.cpp:263-267,674-685`; `operator.cpp:621-628`). There is **no Palace-internal
+  contradiction** — I corrected the combinator-miner's framing: the contradiction is
+  between Palace's `yᴴ x` and the L1 `dot.md` entry's `xᴴ y`, not within Palace.
+- **L1/L2 representation convention** = `xᴴ y` (arg-1 conjugated), the deliberate L1
+  mutation-rotation re-order recorded at `dot.md:34,43` and `bilinear-form.md:19,63`. Both
+  L1 leaves already adopt it; `bilinear-form.md:50-53` independently verified the L0 source
+  is self-consistent and retracted an earlier alleged-disagreement gating reason.
+- **Decision**: the L2 `inner_product` entry **pins arg-1-conjugated** (`xᴴ y`,
+  `xᴴ M y`) to stay consistent with both leaves it fuses up from; the value-level
+  conjugation between Palace's `yᴴ x` and the representation's `xᴴ y` (they are complex
+  conjugates) is documented in § "Conjugation convention (pinned)" and handed to the
+  L2>L1 lowering theme to map onto the L0 call. This is internally consistent and does NOT
+  require an `unclear` mark — the convention is cleanly pinned and the prior L1 precedent
+  is unanimous.
+
+## Open questions
+
+- **`tdot` member status — carried `firm`-member with type-API-only behavioral weight.**
+  Per the combinator-miner caveat 2, I kept `tdot` as a full conjugation-axis member
+  (matching `dot.md`, which treats it as a co-defined firm operator) with the explicit
+  zero-call-site caveat, rather than demoting it to a documented-but-not-instantiated axis
+  value. The entry's overall status is `firm` (the fold structure + two exercised axis
+  values), with `tdot`'s behavioral weight flagged at member granularity. If a later audit
+  prefers the demote-to-axis-value posture, that is a member-level refinement, not an
+  entry-level status change. Tracked under OQ `inner-product-fold-sibling-candidate` (can
+  now be closed/migrated — the sibling fold is firm) and the `tdot`-coverage note shared
+  with `bilinear-form`'s narrow-coverage OQ.
+- **OQ `inner-product-harvester-formalization-and-conjugation-pinning` is resolved by this
+  entry** (conjugation pinned arg-1; reconciliation documented; `tdot` flagged). Recommend
+  the integrator close/migrate it. The sibling-candidate OQ
+  `inner-product-fold-sibling-candidate` is likewise resolvable (the fold is now firm).
+- **L2>L1 lowering theme is dispatch #2's job** (`inner-product-fold-specialization`,
+  currently a stub). This entry forward-references it plain-text and hands it: (a) the
+  conjugation/weight dispatch (Hermitian→`dot`, unconjugated→`tdot`, weighted→
+  `bilinear-form`); (b) the element-type dispatch (real Hypre kernel vs complex
+  four-real-dot lift); (c) the value-level conjugation re-order `xᴴ y ↔ yᴴ x` to map onto
+  the L0 call; (d) which L0 reduction tree each lowered call pins (the IEEE non-law's
+  load-bearing content). Not authored here per the layers-high→low discipline.
+- **Weighted split-additivity is whole-vector general only.** Law 2 (split-additivity)
+  holds elementwise/per-block for the plain/conjugate members; for `inner_product_M` the
+  per-block split requires `M` block-diagonal w.r.t. the split. I stated the law at
+  whole-vector granularity for the weighted member to avoid over-claiming a per-block
+  tiling law (combinator-miner caveat 4). No further action needed; recorded in § "Algebraic
+  laws" law 2 and § "Variant axes".
+- **Layer-intro refresh (note for layer-intro-author, not actioned here):** the L2
+  `index.md` §"Semantics (overlay)" primitive list (`axpy, dot, matvec, gemv, trsv, scal,
+  nrm2`) predates the L2 fold cohort; once `inner_product` + `linear_combination` are both
+  firm, the overlay could note the two reduce-to-X fold siblings as first-class L2 forms.
+  Out of harvester scope.
+- **`bilinear-form` is still rough-in at L1** (narrow variant-axis coverage). `inner_product`
+  fuses it up as the M-weighted member but does not depend on its promotion — the M-weighted
+  member's structure is firm at L2 (the composition `inner_product (apply_linop M x) y` is
+  clean). The rough-in status of the L1 leaf does not gate the L2 entry's `firm` status (the
+  L2 fold is firm in its decomposition; the leaf's coverage caveat lives at L1).

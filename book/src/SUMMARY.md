@@ -37,8 +37,8 @@
 - [krylov-step](./L2/krylov-step.md)
 - [chebyshev-iteration](./L2/chebyshev-iteration.md)
 - [linear_combination](./L2/linear_combination.md)
-- [inner_product (stub)](./L2/inner_product.md)
-- [orthogonalize (stub)](./L2/orthogonalize.md)
+- [inner_product](./L2/inner_product.md)
+- [orthogonalize](./L2/orthogonalize.md)
 - [incremental-least-squares (stub)](./L2/incremental-least-squares.md)
 - [ksp_solve (stub)](./L2/ksp_solve.md)
 
@@ -46,7 +46,7 @@
 - [Overview](./L2-L1/index.md)
 - [chebyshev-iteration-fusion](./L2-L1/chebyshev-iteration-fusion.md)
 - [linear-combination-fold-specialization](./L2-L1/linear-combination-fold-specialization.md)
-- [inner-product-fold-specialization (stub)](./L2-L1/inner-product-fold-specialization.md)
+- [inner-product-fold-specialization](./L2-L1/inner-product-fold-specialization.md)
 
 # L1 — Mutation-Lifted Forms
 - [Overview](./L1/index.md)
@@ -64,7 +64,7 @@
 - [orthogonalize](./L1/orthogonalize.md)
 - [chebyshev-smoother](./L1/chebyshev-smoother.md)
 - [divfree-projector](./L1/divfree-projector.md)
-- [assemble-diagonal (stub)](./L1/assemble-diagonal.md)
+- [assemble-diagonal](./L1/assemble-diagonal.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -80,7 +80,7 @@
 - [chebyshev-smoother-mutation-rotation](./L1-L0/chebyshev-smoother-mutation-rotation.md)
 - [divfree-projector-mutation-rotation](./L1-L0/divfree-projector-mutation-rotation.md)
 - [dot-mutation-rotation (stub)](./L1-L0/dot-mutation-rotation.md)
-- [nrm2-mutation-rotation (stub)](./L1-L0/nrm2-mutation-rotation.md)
+- [nrm2-mutation-rotation](./L1-L0/nrm2-mutation-rotation.md)
 - [scal-mutation-rotation (stub)](./L1-L0/scal-mutation-rotation.md)
 - [matrix-weighted-norm-mutation-rotation (stub)](./L1-L0/matrix-weighted-norm-mutation-rotation.md)
 
@@ -101,6 +101,7 @@
 - [File — palace/linalg/rap.{hpp,cpp}](./L0/linalg-rap-file.md)
 - [File — palace/fem/bilinearform.{hpp,cpp}](./L0/fem-bilinearform-file.md)
 - [File — palace/fem/libceed/operator.{hpp,cpp}](./L0/fem-libceed-operator-file.md)
+- [File — palace/fem/fespace.{hpp,cpp}](./L0/fespace-file.md)
 - [File — palace/utils/communication.hpp (MPI collectives)](./L0/mpi-globalsum-and-collectives.md)
 - [Overload set — Mult / MultTranspose / AddMult](./L0/apply-linop-overload-set.md)
 - [Class — BaseKspSolver](./L0/kspsolver-base-class.md)

@@ -1,3 +1,97 @@
+---
+agent: abstractor
+invoked_at: 2026-05-29T024500Z
+scope: L2>L1 theme — inner-product-fold-specialization (stub → firm)
+status: integrated
+integrated_at: 2026-05-29T08:10:00Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "cycle-019 finalize. LAST report (#8). inner-product-fold-specialization PROMOTED stub→firm (three-key dispatch conjugation-kernel/element-type/weight-presence selecting L1 leaves dot/tdot/bilinear-form; headline value-level conjugate-pair re-order xᴴ y = conj(yᴴ x) invisible under real-projection [iterative.cpp:395, boundarymodeoperator.cpp:85] / observable full-complex [:90]; pinned-reduction-tree §Summation-order table carrying the IEEE-non-law detail the L2 entry deferred). Depended on #7's firm L2 inner_product anchor (confirmed firm on disk). L2-L1/index row appended after linear-combination-fold-specialization :14; SUMMARY :49 de-stub. L2>L1 firm 2→3. tdot API-only + bilinear-form rough-in member caveats are member-level, NOT theme-status reductions. retroactive-budget 0; clean build."
+inputs:
+  - reports/2026-05-29T024500Z-harvester-inner-product-l2/CYCLE.md (dispatch #1; the firm L2 `inner_product` entry — pinned conjugation convention, fold-law, the four hand-offs (a)-(d) to this theme)
+  - book/src/L2-L1/inner-product-fold-specialization.md (the stub home, materialized 2026-05-28 — promoted stub → firm here)
+  - book/src/L2-L1/linear-combination-fold-specialization.md (the structural model — the sibling fold-specialization theme, cycle-018; mirrored for shape)
+  - book/src/L1/dot.md (firm L1 leaf — Hermitian `dot` + unconjugated `tdot`; arg-1-conjugated L1 convention at :34,:43-44; self-dot trick at :49)
+  - book/src/L1/bilinear-form.md (rough-in L1 leaf — the M-weighted member `xᴴ M y`; conjugation reconciliation at :119-145,:155-158; workspace `Ax` at :39-43)
+  - book/src/L2-L1/index.md (dep-map — append the firm theme row)
+  - book/src/SUMMARY.md (de-stub the L2-L1 chapter entry at :49)
+  - Self-verified Palace ranges (this invocation, via palace-codemap read_range / search_text): vector.cpp:263-274, :664-685; operator.cpp:598-618, :621-638; vector.hpp:240-262; iterative.cpp:393-396; boundarymodeoperator.cpp:83-91; search_text TransposeDot over palace/** (2 hits = zero call sites)
+---
+
+# CYCLE: L2>L1 theme sketch — inner-product-fold-specialization (stub → firm)
+
+## Summary
+
+The L2 `inner_product` reduce-to-scalar fold (firmed in dispatch #1) lowers into the L1
+inner-product leaves — `dot` (Hermitian), `tdot` (unconjugated bilinear), and the
+M-weighted member realized by `bilinear-form` — by a **conjugation-convention /
+element-type / weight-presence dispatch**: read the fold's `kernel` (conjugated vs
+unconjugated), its element type (real vs complex), and its optional pre-`apply_linop M`,
+and select the matching L1 leaf. This is the **structural sibling of cycle-018's
+`linear-combination-fold-specialization`** (which dispatches the `linear_combination`
+fold by *arity*); this one dispatches the `inner_product` fold by *conjugation
+convention* (the fold's namesake axis). The theme is the home for the four hand-offs the
+L2 entry deferred to it: (a) the conjugation/weight leaf dispatch, (b) the element-type
+dispatch (real Hypre kernel vs the complex four-real-dot lift), (c) the **value-level
+conjugate-pair re-order** — the L1/L2 representation pins `xᴴ y` (arg-1 conjugated) while
+the Palace L0 surface computes `yᴴ x` (arg-2 conjugated), and the two are complex
+conjugates, so the lowering must record where the re-order is invisible (real projection)
+and where it is observable (full complex value), and (d) which L0 reduction tree each
+lowered call pins (the load-bearing-numerical content of the IEEE-754 non-law). The
+proposed-changes promote the existing stub home `book/src/L2-L1/inner-product-fold-specialization.md`
+**stub → firm** (justification kind: `algebraic` — the dispatch rule *is* the L2 entry's
+already-firm laws read as a lowering, with the conjugate-pair re-order verified directly
+against the Palace `Dot`/`TransposeDot`/weighted-`Dot` bodies). No new operators are
+proposed: both sides are existing vocabulary (`tdot` carries the L2 entry's
+type-API-surface-only evidentiary caveat; `bilinear-form` is rough-in but its M-weighted
+member structure is firm).
+
+## Proposed changes
+
+### (a) Promote the theme: stub → firm
+
+```edit:book/src/L2-L1/inner-product-fold-specialization.md
+[full rewrite — stub → firm; replace the entire current stub body (lines 1-20) with the file body below under "Theme content"]
+```
+
+### (b) Append the firm theme row to the L2>L1 dep-map
+
+```edit:book/src/L2-L1/index.md
+[append one row to the theme-list table — after the `linear-combination-fold-specialization` row at :14]
+```
+
+Append (after the `linear-combination-fold-specialization` row, `book/src/L2-L1/index.md:14`):
+
+```
+| [inner-product-fold-specialization](./inner-product-fold-specialization.md) | `L2/inner_product` (firm) | `L1/dot` (firm; `dot` + `tdot`) + `L1/bilinear-form` (rough-in, M-weighted member) | firm *(algebraic; conjugation-convention / element-type / weight dispatch + value-level `xᴴ y`↔`yᴴ x` conjugate-pair re-order + pinned reduction tree)* |
+```
+
+### (c) De-stub the L2-L1 chapter entry in SUMMARY.md
+
+```edit:book/src/SUMMARY.md
+[replace the stub-marked chapter entry at :49]
+```
+
+Replace (`book/src/SUMMARY.md:49`):
+
+```
+- [inner-product-fold-specialization (stub)](./L2-L1/inner-product-fold-specialization.md)
+```
+
+with:
+
+```
+- [inner-product-fold-specialization](./L2-L1/inner-product-fold-specialization.md)
+```
+
+---
+
+## Theme content
+
+The full file body written into `book/src/L2-L1/inner-product-fold-specialization.md`
+(replacing the stub):
+
+---
+
 # inner-product-fold-specialization
 
 The conjugation-convention rotation for the BLAS-1 reduce-to-scalar inner-product cohort.
