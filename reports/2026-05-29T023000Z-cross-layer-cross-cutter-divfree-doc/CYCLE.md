@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T023000Z
 scope: L1↔L0 cross-cut — divfree.hpp Mult doc-comment irrotational-vs-divergence-free tension (carry-forward OQ divfree-mult-doc-irrotational-vs-divfree-stale)
 status: integrated
 integrated_at: 2026-05-29T08:10:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efb8a0b
 integration_notes: "cycle-019 finalize. OPTIONAL cross-link prose-sharpening of divfree-projector-mutation-rotation.md §Open-questions stale-Mult-doc bullet (:460-468): class doc :28-31 named authoritative L0 site + :155-190 impl + divfree.cpp:176 third witness folded in; Helmholtz/Hodge framing. ZERO semantics change — divfree firm unchanged. OQ divfree-mult-doc-irrotational-vs-divfree-stale recorded RESOLVED/closure-ready (meta-phase enacts close + priorities.md flip). retroactive-budget 0; clean build."
 ---
 

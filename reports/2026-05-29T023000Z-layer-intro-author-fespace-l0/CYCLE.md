@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T02:30:00Z
 scope: L0 anchor chapter — palace/fem/fespace.{hpp,cpp} (FE-space construction; bundle-6 #6)
 status: integrated
 integrated_at: 2026-05-29T08:10:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efb8a0b
 integration_notes: "cycle-019 finalize. New L0 source-anchor chapter book/src/L0/fespace-file.md (bundle-6 #6) + SUMMARY row + L0/index File-overviews bullet. libceed basis/restriction + quadrature + geometric-factor forward-refs correctly plain-text (folded into OQ fem-libceed-basis-restriction-l0-anchor). L0 21→22 chapters. retroactive-budget 0; clean build."
 ---
 

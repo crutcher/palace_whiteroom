@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T024500Z
 scope: L2>L1 theme — inner-product-fold-specialization (stub → firm)
 status: integrated
 integrated_at: 2026-05-29T08:10:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efb8a0b
 integration_notes: "cycle-019 finalize. LAST report (#8). inner-product-fold-specialization PROMOTED stub→firm (three-key dispatch conjugation-kernel/element-type/weight-presence selecting L1 leaves dot/tdot/bilinear-form; headline value-level conjugate-pair re-order xᴴ y = conj(yᴴ x) invisible under real-projection [iterative.cpp:395, boundarymodeoperator.cpp:85] / observable full-complex [:90]; pinned-reduction-tree §Summation-order table carrying the IEEE-non-law detail the L2 entry deferred). Depended on #7's firm L2 inner_product anchor (confirmed firm on disk). L2-L1/index row appended after linear-combination-fold-specialization :14; SUMMARY :49 de-stub. L2>L1 firm 2→3. tdot API-only + bilinear-form rough-in member caveats are member-level, NOT theme-status reductions. retroactive-budget 0; clean build."
 inputs:
   - reports/2026-05-29T024500Z-harvester-inner-product-l2/CYCLE.md (dispatch #1; the firm L2 `inner_product` entry — pinned conjugation convention, fold-law, the four hand-offs (a)-(d) to this theme)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T023000Z
 scope: L1>L0 theme firm-up — nrm2-mutation-rotation (stub→firm)
 status: integrated
 integrated_at: 2026-05-29T08:10:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efb8a0b
 integration_notes: "cycle-019 finalize. nrm2-mutation-rotation PROMOTED stub→firm (L1 LHS alpha=nrm2(x) → L0 Norml2 + four-stage Dot→MPI_Allreduce→std::abs→std::sqrt chain; 3 surface forms A/B/C; std::abs guard classified load-bearing defensive; element-type real/complex collapse). L1-L0/index dep-map row inserted between orthogonalize + minres; SUMMARY :83 in-place de-stub. L1>L0 themes 11→12. retroactive-budget 0; clean build."
 inputs:
   - book/src/L1/nrm2.md (firm L1 operator; algebraic laws + nrm2(x)=√dot(x,x))

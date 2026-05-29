@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T023000Z
 scope: Pattern proposal — inner-product reduce-to-scalar fold family (parametric/variadic-family mode validation)
 status: integrated
 integrated_at: 2026-05-29T08:10:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efb8a0b
 integration_notes: "cycle-019 finalize. FIRST live exercise of the cycle-018 combinator-miner parametric/variadic-family mode. PROPOSAL/mode-validation only — NO book mutation (build-relevant: no). Characterized the inner_product fold-family (fold-law membership + 4 parameter axes + 3 over-unification guards) as harvester-input for the #7 inner_product harvester; surfaced the Qualification-B mode-gap (non-fold parametric families have no positive channel) ROUTED TO BATCH-5 META-PHASE + confirmed the variant-absorption-vs-instance-counting-policy meta-agenda OQ. OQ-ledger appends only. retroactive-budget 0."
 ---
 

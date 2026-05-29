@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T024500Z
 scope: L2 operator: inner_product
 status: integrated
 integrated_at: 2026-05-29T08:10:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efb8a0b
 integration_notes: "cycle-019 finalize. HEADLINE. inner_product PROMOTED rough-in→firm (reduce-to-Scalar fold (x,y) -> Scalar ≡ foldl (+) zero (zipWith kernel x y) unifying dot/tdot/bilinear-form along conjugation-convention/element-type/weight-presence axes; conjugation PINNED arg-1 xᴴ y with §reconciliation vs Palace arg-2 yᴴ x; 7 laws incl. IEEE reduction-tree non-law; sibling linear_combination NOT subsumed; consumer nrm2/matrix-weighted-norm = √∘inner_product). L2/index :26 row rough-in→firm flip (orthogonalize row :27 untouched); SUMMARY :40 de-stub. L2 firm contributes to 3→5; rough-in cohort → 0. retroactive-budget 0; clean build."
 inputs:
   - reports/2026-05-29T023000Z-combinator-miner-parametric-family/CYCLE.md (wave-1 parametric-family characterization; fold-law + axis taxonomy + two caveats)

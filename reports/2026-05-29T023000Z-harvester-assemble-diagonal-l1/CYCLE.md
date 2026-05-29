@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T023000Z
 scope: L1 operator: assemble-diagonal
 status: integrated
 integrated_at: 2026-05-29T08:10:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efb8a0b
 integration_notes: "cycle-019 finalize. assemble-diagonal PROMOTED stub→firm (operator-to-data (A: LinearOperator[N,N]) -> Tensor[N]; 6 laws + 4 non-laws; element-type live axis + operator-representation absorbed axis; the fifth L1 motif). L1/index Firm 11→12 + cohort bullet + dep-map row; SUMMARY de-stub. L1 firm 11→12. reciprocal/elementwise_product + assemble-diagonal-mutation-rotation L1>L0 forward-refs correctly plain-text singletons. retroactive-budget 0; clean build."
 inputs:
   - book/src/L1/assemble-diagonal.md (stub, materialized 2026-05-28)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T023000Z
 scope: L2 operator: orthogonalize
 status: integrated
 integrated_at: 2026-05-29T08:10:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efb8a0b
 integration_notes: "cycle-019 finalize. orthogonalize PROMOTED stub→firm (named project ▷ subtract Gram-Schmidt composition lifting the firm L1 leaf; gs_orthog ∈ {MGS,CGS,CGS2} variant axis + collective-shape residual axis m×1/1×m/2×m; { residual, coeffs } record). L2/index dep-map row inserted after inner_product :26; SUMMARY :41 in-place de-stub. L2 firm contributes to 3→5. Citations applied AS-IS — repairer independently re-verified the report's original pointers correct vs the critic's 3 spot-line warnings (critic line-offset drift). orthogonalize-composition-lowering L2>L1 forward-ref plain-text. retroactive-budget 0; clean build."
 inputs:
   - book/src/L2/orthogonalize.md (stub, materialized 2026-05-28)

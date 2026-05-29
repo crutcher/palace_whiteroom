@@ -6,7 +6,7 @@ status: complete
 cycle_id: cycle-019
 meta_batch: batch-5
 meta_batch_position: 1
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efb8a0b
 ---
 
 # Cycle-019 — batch integration record (integrator-finalize)
