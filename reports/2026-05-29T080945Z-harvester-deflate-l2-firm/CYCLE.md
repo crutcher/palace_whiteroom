@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T080945Z
 scope: L2 operator: deflate
 status: pending
 integrated_at: 2026-05-29T1130Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c6e2884
 integration_notes: "cycle-022 report 9/9 (wave-2, final). Applied clean — NEW partly-constructive L2 deflate (oblique/Galerkin projector; firm Schur-form pipeline on nleps.cpp:505-537 + constructive bare-Galerkin core from literature+negative-anchor, promotion gate = positive Galerkin source site; over-unification guard vs orthogonalize). In-cycle gram plain-text→live-link upgrade applied. The final dep-map-edit block was truncated by a transient API 529 + orchestrator-completed (critic-verified faithful); SUMMARY auto-fix added the registration. L2 firm stays 7; L2 partly-constructive tier 0→1; L2 dep-map rough-in cohort 1→0 (drained). retroactive-budget 0; build clean. See reports/cycle-022-integrator-staging/STAGING.md row 9 + reports/2026-05-29T1130Z-integrator-finalize-cycle-022/CYCLE.md."
 inputs:
   - reports/2026-05-29T051532Z-combinator-miner-deflate-gram/CYCLE.md (the deflate/gram combinator proposal + provenance)

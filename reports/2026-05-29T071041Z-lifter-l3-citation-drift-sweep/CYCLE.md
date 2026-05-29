@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T071041Z
 scope: L3 mechanical citation-drift sweep — ksp_solve.md (:464→:463, :564→:563) + inner-product-fold-specialization.md (operator.cpp :623→:624, :632→:634, :615-616→:616)
 status: pending
 integrated_at: 2026-05-29T1130Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c6e2884
 integration_notes: "cycle-022 report 5/9 (wave-1). Applied clean — pure citation-drift sweep, 5 distinct inline-anchor re-anchors across L3/ksp_solve.md + L2-L1/inner-product-fold-specialization.md; both entries stay firm, 0 count delta. Enacts the inner-product theme's own embedded cycle-021 audit_caveat. retroactive-budget 0; build clean. See reports/cycle-022-integrator-staging/STAGING.md row 5 + reports/2026-05-29T1130Z-integrator-finalize-cycle-022/CYCLE.md."
 inputs:
   - book/src/L3/ksp_solve.md

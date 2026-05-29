@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T07:13:01Z
 scope: L1 operator: lu_solve
 status: pending
 integrated_at: 2026-05-29T1130Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c6e2884
 integration_notes: "cycle-022 report 2/9 (wave-1). Applied clean — NEW firm L1 lu_solve (small-dense k×k direct solve, firm-on-positive-structure); the HIGH-fan-out Gram-coordinate primitive (cycle-021 deflate-blocker). L1 firm 13→14; SUMMARY-registered. retroactive-budget 0; build clean. See reports/cycle-022-integrator-staging/STAGING.md row 2 + reports/2026-05-29T1130Z-integrator-finalize-cycle-022/CYCLE.md."
 inputs:
   - cycle-022 wave-1 dispatch #2 (HIGH-fan-out blocker; gates wave-2 deflate/gram L2 firm)

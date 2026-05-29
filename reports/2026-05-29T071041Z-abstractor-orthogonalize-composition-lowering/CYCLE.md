@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T07:20:26Z
 scope: L2>L1 theme sketch — orthogonalize-composition-lowering
 status: pending
 integrated_at: 2026-05-29T1130Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c6e2884
 integration_notes: "cycle-022 report 6/9 (wave-1). Applied clean — NEW firm L2>L1 theme orthogonalize-composition-lowering (gs_orthog MGS/CGS/CGS2 variant-dispatch rotation; CITES dot-mutation-rotation Sub-pattern D). The repairer relocated the reverse-direction caveat-bullet OUT of the chapter fence (high→low compliant). L2>L1 firm 3→4; SUMMARY-registered. retroactive-budget 0; build clean. See reports/cycle-022-integrator-staging/STAGING.md row 6 + reports/2026-05-29T1130Z-integrator-finalize-cycle-022/CYCLE.md."
 inputs:
   - book/src/L2/orthogonalize.md (firm L2 composition, cycle-019)

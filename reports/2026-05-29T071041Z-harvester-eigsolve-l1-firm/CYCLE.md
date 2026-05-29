@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T071041Z
 scope: L1 operator: eigsolve (rough-in → firm)
 status: pending
 integrated_at: 2026-05-29T1130Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c6e2884
 integration_notes: "cycle-022 report 3/9 (wave-1). Applied clean — eigsolve rough-in (test-coverage-bounded)→firm (law-confidence re-eval; positive-source syntactic identities). Eigsolve prerequisite chain step 1 DONE → L2 entry UNBLOCKED, L3 backfill STAYS BLOCKED. L1 firm 14→15; L1 rough-in (test-coverage-bounded) cohort 3→2. retroactive-budget 0; build clean. See reports/cycle-022-integrator-staging/STAGING.md row 3 + reports/2026-05-29T1130Z-integrator-finalize-cycle-022/CYCLE.md."
 inputs:
   - book/src/L1/eigsolve.md (current rough-in (test-coverage-bounded) entry, cycle-009 land + cycles 010/011/012 refinements)

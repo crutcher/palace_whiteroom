@@ -1,6 +1,6 @@
 # Cycle 022 — nine firm-and-vocabulary landings; BLAS-1 L1>L0 floor CLOSED 8/8 + eigsolve chain step-1 + L2 deflation vocabulary (first primary cycle of meta-batch-6)
 
-**Date:** 2026-05-29 · **Commit:** `PLACEHOLDER_SHA` · **Status:** clean (zero deferrals/rejections/rework; zero build-repairs; eighteenth consecutive clean split-integrator cycle)
+**Date:** 2026-05-29 · **Commit:** `c6e2884` · **Status:** clean (zero deferrals/rejections/rework; zero build-repairs; eighteenth consecutive clean split-integrator cycle)
 
 **Batch position:** cycle-022 is the **FIRST** primary cycle of meta-batch-6 (cycles 022/023/024). **The batch-6 meta-phase fires after cycle-024 finalize** (3:1 cadence; cycle counter does NOT reset). This `log/cycle-022.md` + the `scaffolding/integrator-signals.md` cycle-022 section open the batch-6 evidence window.
 

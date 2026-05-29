@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T07:10:41Z
 scope: L1>L0 theme audit — axpbypcz-mutation-rotation (enact cycle-021 drafted callsite corrections + promote rough-in→firm; closes BLAS-1 L1>L0 floor 7/8→8/8)
 status: pending
 integrated_at: 2026-05-29T1130Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c6e2884
 integration_notes: "cycle-022 report 1/9 (wave-1). Applied clean — axpbypcz-mutation-rotation rough-in→firm (3 callsite corrections + correction-6 range fix); CLOSES the BLAS-1 L1>L0 floor 8/8. retroactive-budget 0; build clean. See reports/cycle-022-integrator-staging/STAGING.md row 1 + reports/2026-05-29T1130Z-integrator-finalize-cycle-022/CYCLE.md."
 inputs:
   - book/src/L1-L0/axpbypcz-mutation-rotation.md (rough-in under audit)

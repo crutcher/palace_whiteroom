@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T080945Z
 scope: L2 operator: gram
 status: pending
 integrated_at: 2026-05-29T1130Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c6e2884
 integration_notes: "cycle-022 report 8/9 (wave-2). Applied clean — NEW firm L2 gram (all-pairs inner_product fold G=XᴴX → Matrix[k,k], firm-on-positive-structure on nleps.cpp:524-531). The final dep-map-edit block was truncated by a transient API 529 mid-dispatch + orchestrator-completed (critic-verified faithful); SUMMARY-chapter-registration auto-fix added the registration. L2 firm 6→7; L2 dep-map rough-in cohort 2→1. retroactive-budget 0; build clean. See reports/cycle-022-integrator-staging/STAGING.md row 8 + reports/2026-05-29T1130Z-integrator-finalize-cycle-022/CYCLE.md."
 inputs:
   - reports/2026-05-29T051532Z-combinator-miner-deflate-gram/CYCLE.md (the gram/deflate rough-in proposal; integrated cycle-021, commit 881f200)

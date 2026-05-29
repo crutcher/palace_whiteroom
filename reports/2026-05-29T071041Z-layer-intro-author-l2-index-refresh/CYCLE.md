@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T071041Z
 scope: L2 Part intro prose refresh (post cycle-020/021 landings)
 status: pending
 integrated_at: 2026-05-29T1130Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c6e2884
 integration_notes: "cycle-022 report 7/9 (wave-1, final wave-1). Applied clean — navigational L2 Part-intro refresh (no firmness promotion); dropped the stale 'L3 ksp_solve not on disk' clause, live-linked the firm L3 entry + L3>L2 theme; discharged 2 L2-intro-refresh flags + 1 working-note-staleness OQ. No count change. retroactive-budget 0; build clean. See reports/cycle-022-integrator-staging/STAGING.md row 7 + reports/2026-05-29T1130Z-integrator-finalize-cycle-022/CYCLE.md."
 ---
 

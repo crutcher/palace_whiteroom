@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T071041Z
 scope: L1 operator: nleps_deflated_residual
 status: pending
 integrated_at: 2026-05-29T1130Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c6e2884
 integration_notes: "cycle-022 report 4/9 (wave-1). Applied clean — NEW firm L1 nleps_deflated_residual (the deflation extension of apply_nonlinear_pencil; thin composition over apply_nonlinear_pencil+dot+nrm2+lu_solve). In-cycle lu_solve plain-text→live-link upgrade applied. L1 firm 15→16; SUMMARY-registered. retroactive-budget 0; build clean. See reports/cycle-022-integrator-staging/STAGING.md row 4 + reports/2026-05-29T1130Z-integrator-finalize-cycle-022/CYCLE.md."
 inputs:
   - palace/linalg/nleps.cpp:547-576 (compute_residual lambda — the deflated residual)
