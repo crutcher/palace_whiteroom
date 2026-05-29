@@ -412,10 +412,10 @@ firm-promotion-eligible.)*
 - `book/src/L0/linalg-operator-file.md` §"linalg:: free functions" (lines
   30-35) and §"Why this file pair matters" (line 73) — L0 chapter naming
   the matrix-weighted `Dot` overloads as the natural L0 anchor for an L1
-  matrix-weighted bilinear-form operator. The L0 chapter uses the candidate
-  slug `dot_bilinear`; this entry uses the dispatch-supplied slug
-  `bilinear-form` (matching the OQ candidate phrasing). The slug
-  discrepancy is noted in *Open questions* below.
+  matrix-weighted bilinear-form operator. The L0 chapter and this entry both
+  use the slug `bilinear-form` (the cycle-026 naming sweep repointed the
+  former candidate slug `dot_bilinear` to `bilinear-form` throughout). No slug
+  discrepancy remains.
 - `book/src/L1/dot.md` — the firm dependency for the final inner-product
   step; defines the conjugation convention this entry inherits.
 - `book/src/L1/apply_linop.md` — the firm dependency for the matrix-weight

@@ -456,3 +456,83 @@ A `lowering-verifier` audit attaching the `verified_against:` block (per the sib
 convention) confirming the surface-form recognition is exhaustive (no un-cited `Norml2` overload,
 the inherited-sub-theme boundaries hold, the `Bx` workspace reading is consistent) is the standard
 follow-up, not a status reduction.
+
+~~~yaml
+verified_against:
+  - citation: palace/linalg/operator.cpp:599-607
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: real Norml2 spec; B.Mult(:602)/Dot(:603)/MFEM_ASSERT(:604-605)/sqrt(:606) all citecheck --anchor OK
+  - citation: palace/linalg/operator.cpp:609-619
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: complex Norml2 spec; lane split(:613-614)/dot(:615)/two-part guard(:616-617)/sqrt(dot.real())(:618); SPD-real comment(:612) positively anchors xᴴBx∈ℝ
+  - citation: palace/linalg/operator.hpp:372-374
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: Norml2 decl + SPD comment(:372); precondition is documentation, structural SPD enforcement is the run-time guard
+  - citation: palace/linalg/operator.hpp:377-384
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: Sub-pattern C Normalize; norm=Norml2(:380)/assert(:381)/x*=1/norm(:382); assert redundant-but-boundary-documenting
+  - citation: palace/linalg/operator.hpp:386-389
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: bilinear-form boundary marker; internal Ax alloc confirmed at palace/linalg/operator.cpp:624; correctly excluded from theme
+  - citation: palace/linalg/arpack.cpp:433-444
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: GetEigenvectorNorm dispatch; weighted(:438)/unweighted-fallback(:442)
+  - citation: palace/linalg/arpack.cpp:470
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: reuse-Bx-across-eigenvectors loop body (y1 reused)
+  - citation: palace/linalg/slepc.cpp:470-481
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: identical pattern; GetComm()(:475) not bare comm, theme correctly flags; unweighted-fallback(:479)
+  - citation: palace/linalg/slepc.cpp:505
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: SLEPc reuse loop body
+  - citation: palace/linalg/nleps.cpp:109-120
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: identical pattern; weighted(:114)/unweighted-fallback(:118); NOT affected by cycle-025 nleps +1 codemap drift (anchors land on asserted lines)
+  - citation: palace/linalg/nleps.cpp:146
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: NLEPS reuse loop body
+  - citation: book/src/L0/linalg-operator-file.md:30-34
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: L0 chapter names the linalg:: free-function block; benign framing diff (:31 gives impl as :600-619 vs theme :599/:609)
+  - citation: book/src/L1/matrix-weighted-norm.md:58
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: L1 law 8 self-bilinear identity; underwrites the lowering's √(dot) structure
+  - citation: book/src/L1/matrix-weighted-norm.md:59
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: L1 law 9 identity-weight collapse; underwrites B=I→nrm2 degenerate boundary (eigensolver opB-null fallback is the L0 witness)
+  - citation: book/src/L1/matrix-weighted-norm.md:106
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: mixed-element-type variant gate is an UPSTREAM L1-entry promotion gate; faithfully recorded, not resolved by this theme, correctly not claimed resolved
+  - citation: book/src/L1-L0/apply-linop-mutation-rotation.md:43
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: Sub-pattern A reuse (step 1 B.Mult); complex-from-real-lift correctly attributed to apply-linop condition 3 (:216-225)
+  - citation: book/src/L1-L0/dot-mutation-rotation.md:44
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: Sub-pattern A reuse (step 2 Dot); arg-2-conjugated leaf(:59-60) + reduction-tree non-law inherited, not restated
+  - citation: book/src/L1/apply_linop.md:50
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: laws 1/4/5/6 (:50,:53-55) underwrite the B·x apply across operator-representation axis
+  - citation: book/src/L1/dot.md:43
+    verdict: supports
+    audited_at: 2026-05-29T18:03:03Z
+    note: conjugate-in-first convention(:43) + load-bearing reduction-tree non-law(:45)
+~~~

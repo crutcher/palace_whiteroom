@@ -82,6 +82,7 @@
 - [nleps_deflated_solve](./L1/nleps_deflated_solve.md)
 - [nleps_jacobian_action](./L1/nleps_jacobian_action.md)
 - [nleps_eigenvalue_correction](./L1/nleps_eigenvalue_correction.md)
+- [back_solve](./L1/back_solve.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -102,6 +103,7 @@
 - [scal-mutation-rotation](./L1-L0/scal-mutation-rotation.md)
 - [assemble-diagonal-mutation-rotation](./L1-L0/assemble-diagonal-mutation-rotation.md)
 - [matrix-weighted-norm-mutation-rotation](./L1-L0/matrix-weighted-norm-mutation-rotation.md)
+- [normalize-mutation-rotation](./L1-L0/normalize-mutation-rotation.md)
 - [lu-solve-mutation-rotation](./L1-L0/lu-solve-mutation-rotation.md)
 - [nleps-deflated-solve-mutation-rotation](./L1-L0/nleps-deflated-solve-mutation-rotation.md)
 - [apply-nonlinear-pencil-mutation-rotation](./L1-L0/apply-nonlinear-pencil-mutation-rotation.md)

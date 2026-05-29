@@ -26,7 +26,7 @@ Where `s̄n` is `conj(sn)` in the complex case. Applied to either column entries
 
 ## Role in higher-layer rotations
 
-In GMRES (`gmres.md`), the inner step's `ls_update_column` is a sequence of `givens_apply2` calls (replaying stored rotations on a new column) followed by one `givens_generate` (producing the new rotation) and two `givens_apply2` calls (annihilating `h[j+1]` and updating the RHS pair). This converts the Hessenberg least-squares problem into an upper-triangular one, enabling `back_solve` via `trsv`.
+In the GMRES inner step (`palace/linalg/iterative.cpp:634-640`), the `ls_update_column` is a sequence of `givens_apply2` calls (replaying stored rotations on a new column — `iterative.cpp:634-637`) followed by one `givens_generate` (producing the new rotation — `iterative.cpp:638`) and two `givens_apply2` calls (annihilating `h[j+1]` and updating the RHS pair — `iterative.cpp:639-640`). This converts the Hessenberg least-squares problem into an upper-triangular one, enabling `back_solve` via `trsv`.
 
 ## Palace mapping
 

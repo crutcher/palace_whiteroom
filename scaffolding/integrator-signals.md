@@ -28,6 +28,61 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 - <one-line case where the integrator hit a gap that better tooling would close>
 ```
 
+---
+
+## cycle-027 — 2026-05-29T211500Z
+
+**THIRD / FINAL primary cycle of meta-batch-7 (cycles 025/026/027). The batch-7 meta-phase fires after THIS cycle-027 finalize commit — this is the BATCH-CLOSING signal dump.** 5 of 6 dispatched reports applied clean; the 6th (D5) DEFERRED needs-revision. NO crash. Twenty-third consecutive clean split-integrator cycle. STAGING 5/5 rows == dispatched-ready-reports (D5 deferred, correctly NOT staged — not a completeness gap). Build `cargo make book` exit 0, ZERO build-repairs. retroactive-budget global 0.
+
+### Unblocked
+- `incremental-least-squares-composition-lowering` L2>L1 theme — now has a firm `back_solve` leaf to re-anchor its terminal back-solve refs to (the D5 deferral's primary blocker is partially lifted by the D4 `back_solve` landing) — `incremental-least-squares-composition-lowering-theme-deferred-needs-back-solve-reanchor`.
+- `normalize-mutation-rotation` lowering-verifier audit — the L1>L0 theme landed firm this cycle, so the standard `verified_against:` audit is now dispatchable (firm→next-cycle-audit pattern) — c028 lowering-verifier.
+- `back_solve` law-confidence / lowering-verifier audit — the new firm L1 leaf is audit-ready; also its own L1>L0 `back-solve-mutation-rotation` theme is now authorable (abstractor) — c028.
+- `ls_update_column` column-streaming leaf harvest — the slug is now cleanly reserved (D4 took `back_solve`, leaving `ls_update_column` free for the distinct GMRES/FGMRES per-column running-QR streaming step) — c028 harvester (gating the D5 promotion if needed).
+
+### New dependencies
+- `book/src/L1/back_solve.md` (firm) → `incremental-least-squares` (L2, firm) — the terminal `back_solve` projection of the firm L2 named composition; cited via the L1 entry's §Semantics — report-4 (`harvester-ls-update-column-l1`).
+- `book/src/L1-L0/normalize-mutation-rotation.md` (firm) → `book/src/L1/normalize.md` (firm) — the L1>L0 mutation-rotation lowering; the `normalize.md:104` ref UPGRADED plain-text→live-link this cycle — report-1 (`abstractor-normalize-rotation`).
+- `book/src/L2/ksp_solve.md` → `book/src/L2/incremental-least-squares.md` (live link) + the `back_solve`-output cross-reference at §Semantics phase-3 — report-6 (`lifter-ksp-solve-materialise-iterate-cite-tightening`).
+- `book/src/concepts/givens.md:29` → `palace/linalg/iterative.cpp:634-640` (source-cite re-anchor, was `gmres.md`) — report-2 (`lifter-cycle026-hygiene-reanchors`).
+
+### Resolution implications
+- `ls-update-column-l1-leaf` — **answered/RESOLVED** — landed firm under the renamed slug `back_solve` (NOT `ls_update_column`); the `ls_update_column` slug stays free for the column-streaming leaf; the `trsv` L3-inventory gap stays OPEN (`back_solve` is a sibling, not the realisation, of general `trsv`).
+- `normalize-mutation-rotation-l1-l0-theme` — **answered/ENACTED** — the firm L1>L0 theme landed; the residual is the standard `verified_against:` lowering-verifier audit (c028).
+- `matrix-weighted-norm-mutation-rotation-lowering-verifier-audit-followup` — **answered/AUDIT-CLOSED** — verdict fully-supported, theme stays firm; residual `matrix-weighted-norm-mixed-element-type-variant` L1-ENTRY promotion gate migrates to the plan (the L1 entry stays `rough-in (test-coverage-bounded)`).
+- `l2-ksp-solve-materialise-iterate-incremental-least-squares-cite-tightening` — **answered/ENACTED** — applied at both `:83` and `:123`.
+- the four cycle-026 carry-forward hygiene OQs (`matrix-weighted-norm-l1-entry-norml2-body-brace-boundary-drift-601-606`, `bilinear-form-workspace-category-4-mislabel`, `givens-concept-page-source-cite-staleness-gmres-md-should-be-iterative-cpp`, `bilinear-form-slug-name-coordination`) — **answered/RESOLVED** for the named sites (the `:22`/`:87` Category sites split off to a NEW residual OQ).
+- `incremental-least-squares-composition-lowering-theme-deferred-needs-back-solve-reanchor` — **needs-more** — D5 DEFERRED to c028; the `back_solve` leaf now exists to re-anchor to, but the theme also needs `trsv`↔`back_solve` reconciliation + possibly the column-streaming `ls_update_column` leaf.
+- `l2-incremental-least-squares-self-description-still-says-queued-after-firming` (NEW) + `linalg-operator-file-category-mislabel-residual-lines-22-87` (NEW) — **opened** for c028 follow-up sweeps.
+
+### Suggested next dispatches
+- (`lifter`, `incremental-least-squares-composition-lowering-promotion`) — the deferred D5 theme: re-anchor the terminal back-solve refs to the now-firm `back_solve` leaf + reconcile `trsv`↔`back_solve` + reconcile `ls_update_column` (column-streaming) vs `back_solve` (terminal solve). **HIGH-value c028 plan item.**
+- (`harvester`, `ls_update_column-column-streaming-leaf`) — the still-un-harvested column-streaming `ls_update_column` leaf (the GMRES/FGMRES per-column running-QR streaming step), if the D5 promotion needs it.
+- (`lifter`/`repairer`, `linalg-operator-file-category-mislabel-residual-sweep`) — the `:22`/`:87` Category-4→Category-1 residual sweep + the `incremental-least-squares.md:13` "queued"→"firm" self-description drop.
+- (`lowering-verifier`, `normalize-mutation-rotation-audit` + `back_solve`-paired) — the standard `verified_against:` audit of the now-firm `normalize-mutation-rotation` L1>L0 theme + the `back_solve` law-confidence audit (firm→next-cycle-audit pattern).
+- (`abstractor`, `back-solve-mutation-rotation`) — the L1>L0 lowering theme for the new firm `back_solve` leaf (`R·y=s` back-substitution → the in-place GMRES/FGMRES `iterative.cpp:652-660`/`:831-840` loops).
+
+### Wave-conflict observations
+- **`SUMMARY.md` serialized cleanly** across report-1 (`normalize-mutation-rotation` registration, L1>L0 Part) and report-4 (`back_solve` registration under L1) — disjoint anchors; serial per-report integrators re-read SUMMARY from disk before each edit.
+- **`matrix-weighted-norm` touched by two reports without conflict** — D2 touched the L1 entry `L1/matrix-weighted-norm.md` (brace + Category relabel); D3 touched the L1>L0 theme `L1-L0/matrix-weighted-norm-mutation-rotation.md` (additive `verified_against:`) — distinct files.
+- **D4/D5 slug collision = the coordinated-cross-report-rename trap.** D4 (`back_solve` harvest) + D5 (`incremental-least-squares-composition-lowering` theme) collided on `ls_update_column`; the coordinated-rename instruction's premise was INVERTED relative to the artifact (D5's theme legitimately keeps `ls_update_column` for the column-streaming step; D4's leaf is the terminal back-solve, renamed `back_solve`). D4 applied clean (its `back_solve` slug was re-confirmed collision-free at integration: grep `book/src/L1/` + `SUMMARY.md` → zero hits); D5's repairer caught the inversion → `needs-revision` → DEFERRED. **The collision was resolved by RENAMING the leaf (D4), not the theme (D5) — the theme's slug usage was correct.**
+
+### Integration-tooling friction
+- **(a) STRONG enactment candidate — codemap `read_range` +1 brace-boundary drift, CONFIRMED across batches 5/6/7.** Cycles 024/025/026/027 all hit it; this cycle the D2 lifter's `matrix-weighted-norm.md` brace re-anchor `:601-606`→`:602-606` is the same `+1` class on a brace-opening line, plus multiple producers + the audits re-confirmed across the batch. The standing OQ `codemap-read-range-plus-one-drift-on-brace-boundary` recommends strengthening role-specs to **"codemap is localization-only; citecheck/on-disk is the citation source of truth"** + possibly a standing citecheck `--anchor` per-report gate (now that `tools/citecheck` is wired). **The batch-7 meta-phase should ENACT this** — it is no longer a single-cycle noise signal, it is a persistent 4-cycle / 3-batch pattern.
+- **(b) NEW process-friction signal — the coordinated-cross-report-rename trap.** When two same-cycle dispatches collide on a slug and the parent issues a coordinated-rename instruction, that instruction can encode an INVERTED premise about which dispatch "owns" the slug's meaning. This cycle the premise was inverted (D5's theme legitimately owned `ls_update_column` for the column-streaming step; the rename should have — and did — fall on D4's terminal-back-solve leaf). The D5 repairer caught it and filed skill-candidate `audit-slug-meaning-before-coordinated-cross-report-rename`. **The meta-phase should evaluate that skill-candidate + consider whether harvester/abstractor dispatches should run a pre-harvest slug-collision check against the existing artifact vocabulary BEFORE harvesting** (catch the collision at dispatch-plan time, not at repair time).
+- **(c) D5 deferral mechanics.** The split-integrator deferral path worked correctly: D5 came back `needs-revision`, was NOT staged, NOT marked `integrated_at`, and was routed forward via a carry-forward OQ — the artifact stayed coherent (the un-landed theme left no dead link because its forward-refs were never applied). `rows (5) == dispatched-ready-reports (5)`; the deferral is the expected path, distinct from the cycle-018 staging-completeness GAP.
+- **(d) `scaffolding/integrator-signals.md` well over the ~500-line budget** (archival backlog accumulating since ~cycle-007; ~1455 lines as of cycle-025 + cycle-026/027 additions). **The batch-7 meta-phase should do the archival** (move pre-batch-5 sections to an archive file or compact them) alongside the OQ unification pass.
+- **(e) OQ-ledger retirement/unification readiness.** Many OQ lines are now retirement/unification-ready: the c025 `:327` four-slug audit-followup line + `:322` index-refresh line, plus this batch's many clause-scoped RESOLVED/ENACTED dispositions (append-only, status-lines not struck per convention). **The batch-7 meta-phase OQ unification pass should close/migrate/compact these.**
+
+### batch-7 cohort summary (for the meta-phase aggregation)
+- **L1 firm 19→21** (+`normalize` c026, +`back_solve` c027).
+- **L2 firm 8→9** (+`incremental-least-squares` c026 stub→firm).
+- **L1>L0 firm themes +2** (`matrix-weighted-norm-mutation-rotation` c026, `normalize-mutation-rotation` c027).
+- **L1>L0 lowering-verifier audits**: the 3 cycle-025-new themes audited c026 (all stay firm) + `matrix-weighted-norm-mutation-rotation` audited c027 (stays firm).
+- **Cohorts COMPLETE:** `l2-named-composition-lifts` 2/2 (orthogonalize + incremental-least-squares); `normalize-l1-primitive-harvest` (operator c026 + L1>L0 theme c027); NEP-interior atom cohort 5/5 (closed c024, audited c025/c026); eigsolve L1→L2→L3→L2>L1→concept chain FULLY COMPLETE + audited.
+- **Big multi-cycle citation-hygiene sweep** across the batch (NLEPS/eigsolve drift swaps c026 + the c027 brace/Category/source-cite re-anchors) — the codemap-drift friction was the recurring source.
+- **Unchanged at batch close:** L3 9 firm + 2 partial-obstruction; L4 4 firm; L0 22 chapters; Phase-1 removals 9/10.
+
 **Discipline:**
 
 - Integrator appends each cycle (prepended at top — newest first).
