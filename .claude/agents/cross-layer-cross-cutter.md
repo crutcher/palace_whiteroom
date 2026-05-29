@@ -60,6 +60,7 @@ status: pending
 
 ## Discipline
 
+- **Do NOT write to `book/` (or any artifact file) yourself.** You are a DISPATCH-phase agent (Phase 2): your output is typically a read-only audit (OQ-ledger appends only, no `book/` mutation), but if an observation does imply an edit, emit it as a **proposed-changes block** in your CYCLE.md for `integrator-per-report` to apply in Phase 5 — never touch `book/` directly. Writing directly to `book/` during dispatch violates the CLAUDE.md write-authority partition; the critic flags it HIGH and the repairer reverts your leak (skill `revert-dispatch-phase-book-mutation`). Friction-ledger `specialized-agent-direct-write-to-book-during-dispatch` (recurrence-3 cycle-017; the guard is now enacted across all 8 specialized specs).
 - **One observation per invocation.**
 - Coverage-gap is the most common useful observation — drives the abstractor's next dispatch.
 - Vocabulary-mismatch findings should be reported immediately even when minor — they accumulate quickly.

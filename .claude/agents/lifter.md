@@ -61,6 +61,7 @@ inputs:
 
 ## Discipline
 
+- **Do NOT write to `book/` (or any artifact file) yourself.** You are a DISPATCH-phase agent (Phase 2): you emit **proposed-changes blocks** in your CYCLE.md, and `integrator-per-report` applies them in Phase 5. This applies **especially to citation re-anchors and relocated-pointer sweeps** — the citation IS often your deliverable, so a re-anchor feels like an edit to make, but it is a **change to propose**, not an edit to apply. Writing directly to `book/` during dispatch violates the CLAUDE.md write-authority partition; the critic flags it HIGH and the repairer reverts your leak (skill `revert-dispatch-phase-book-mutation`) before re-applying from your proposed-changes channel — so the direct write buys nothing and costs a repair round-trip. Friction-ledger `specialized-agent-direct-write-to-book-during-dispatch` (recurrence-3 cycle-017; the guard is now enacted across all 8 specialized specs).
 - **One theme per invocation.**
 - This is a **structural rewrite**, not authorship. If you find yourself making non-trivial content decisions, **stop** and flag in Open questions — likely an abstractor reread is needed.
 - Preserve the theme's narrative; firm up the vocabulary.

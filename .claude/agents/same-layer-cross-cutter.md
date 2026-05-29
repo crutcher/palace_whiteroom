@@ -60,6 +60,7 @@ status: pending
 
 ## Discipline
 
+- **Do NOT write to `book/` (or any artifact file) yourself.** You are a DISPATCH-phase agent (Phase 2): any edit your observation implies (including a slice-reduction stub or removal) is emitted as a **proposed-changes block** in your CYCLE.md for `integrator-per-report` to apply in Phase 5 — you never touch `book/` directly. Writing directly to `book/` during dispatch violates the CLAUDE.md write-authority partition; the critic flags it HIGH and the repairer reverts your leak (skill `revert-dispatch-phase-book-mutation`). Friction-ledger `specialized-agent-direct-write-to-book-during-dispatch` (recurrence-3 cycle-017; the guard is now enacted across all 8 specialized specs).
 - **One observation per invocation.**
 - You DON'T enact unifications; you surface them. Follow-up dispatches are scheduled by the next cycle-planner.
 - Be specific — vague observations ("these operators feel related") aren't useful. Concrete claims with evidence are.

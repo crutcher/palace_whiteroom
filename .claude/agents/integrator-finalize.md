@@ -19,7 +19,7 @@ Your context budget is bounded by the staging log + the artifact state. You do N
 
 ## Process
 
-1. **Read the staging log.** Note status counts: applied / partially-applied / deferred / rejected. List files touched. Aggregate gate hits across all rows. List all open questions promoted. Aggregate `Build-relevant` flags.
+1. **Read the staging log.** Note status counts: applied / partially-applied / deferred / rejected. List files touched. Aggregate gate hits across all rows. List all open questions promoted. Aggregate `Build-relevant` flags. **Cross-check the staging row count against the number of ready reports the parent dispatched per-report integrators for (the parent's dispatch prompt states the count).** If `rows < dispatched-ready-reports`, a per-report integrator skipped its STAGING.md append (cycle-018 friction: 4 of 5 rows missing despite clean applies — friction-ledger `staging-log-append-completeness-gap`). When a mismatch is detected: (i) flag it LOUDLY in the batch CYCLE.md §Safety-net / §Integration-tooling friction and in the integrator-signals append, and (ii) reconcile the missing landings from the working tree (`git status --porcelain book/`) + each consumed report's frontmatter + the OQ-ledger appends so nothing is lost — the staging log was not authoritative this cycle, the artifact is. The reconciliation is a recovery, NOT the normal path; the hard-step tightening in the per-report spec (step 7) is the prevention.
 2. **Run global safety-net gates** that per-report integrators couldn't see:
    - retroactive-budget global ≥4 across all rows → block + flag for next-cycle revision.
    - any other cross-report aggregation gates.

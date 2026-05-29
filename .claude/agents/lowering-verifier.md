@@ -86,6 +86,7 @@ If the audit found contradictions, propose specific edits to fix the theme.]
 
 ## Discipline
 
+- **Do NOT write to `book/` (or any artifact file) yourself.** You are a DISPATCH-phase agent (Phase 2): even when your audit finds a contradiction, you **propose edits** in your CYCLE.md proposed-changes channel; you never apply them to `book/` directly. `integrator-per-report` applies them in Phase 5. Writing directly to `book/` during dispatch violates the CLAUDE.md write-authority partition; the critic flags it HIGH and the repairer reverts your leak (skill `revert-dispatch-phase-book-mutation`) before re-applying. Friction-ledger `specialized-agent-direct-write-to-book-during-dispatch` (recurrence-3 cycle-017; the guard is now enacted across all 8 specialized specs).
 - **One theme per invocation.**
 - You don't change the theme's content unless the audit found a contradiction. Even then, propose edits — don't decide unilaterally.
 - If evidence is wrong (citation range out of bounds, file moved, etc.), record as `out-of-range` — don't try to find the right range yourself.

@@ -899,10 +899,10 @@ addressed_by: cycle-009 meta-phase (CLAUDE.md §Repository status + §Methodolog
 ---
 slug: specialized-agent-direct-write-to-book-during-dispatch
 first_observed: cycle-008
-last_observed: cycle-012
-recurrence_count: 2
+last_observed: cycle-017
+recurrence_count: 3
 status: addressed
-addressed_by: cycle-012 meta-phase (`.claude/agents/layer-intro-author.md` top-level Discipline-bullet prompt-guard + skill `revert-dispatch-phase-book-mutation` promoted as repairer safety-net)
+addressed_by: cycle-018 meta-phase (dispatch-phase write-guard Discipline bullet enacted across ALL 8 specialized specs — harvester / abstractor / lifter / lowering-verifier / combinator-miner / same-layer-cross-cutter / cross-layer-cross-cutter + the pre-existing layer-intro-author) + skill `revert-dispatch-phase-book-mutation` (repairer safety-net, cycle-012)
 ---
 ```
 
@@ -921,18 +921,27 @@ addressed_by: cycle-012 meta-phase (`.claude/agents/layer-intro-author.md` top-l
 
 **Watch:** if a THIRD specialized agent leaks (recurrence-3), escalate: enact the prompt-guard across ALL specialized agent specs (harvester / abstractor / lifter / lowering-verifier / combinator-miner / same-layer-cross-cutter / cross-layer-cross-cutter), and re-weigh the integrator-per-report pre-dispatch clean-tree gate (ask the user, as it is a tooling change).
 
+**Cycle-018 meta-phase update — RECURRENCE-3 watch clause FIRED; enacted (go) + the clean-tree gate re-weighed (ask).** Cycle-017 was the third distinct specialized agent to leak (`harvester`, `divfree-l1-citation-fix`, edited `book/src/L1/divfree-projector.md` in-place during Phase 2; the repairer reverted via `revert-dispatch-phase-book-mutation` Option A and the 11 corrections re-applied the correct way). Three distinct agents now: cycle-008 `abstractor` → cycle-012 `layer-intro-author` → cycle-017 `harvester`. The cycle-012 prompt-guard lived only in `layer-intro-author.md`; the other 7 specs never received it. The watch clause's escalation condition is met.
+
+- **(a) ENACTED (go):** the dispatch-phase write-guard Discipline bullet is now the **first Discipline bullet in all 8 specialized specs** — `harvester` / `abstractor` / `lifter` / `lowering-verifier` / `combinator-miner` / `same-layer-cross-cutter` / `cross-layer-cross-cutter` (this cycle) + `layer-intro-author` (cycle-012). Each is tailored to that agent's most-likely leak shape (harvester: citation-line corrections feel like edits; lifter: re-anchors ARE the deliverable; cross-cutters: usually read-only but edit-implying observations are still proposals). This makes the cycle-018 zero-leak result **structural, not reminder-dependent** (cycle-018 had zero leaks only because the parent added explicit per-dispatch reminders — those are not durable).
+- **(b) RE-WEIGHED → ASK (deferred to user):** the integrator-per-report pre-dispatch clean-tree gate (the cycle-008 watch clause's option (b)) is a tooling/structural change (a gate that, before applying a report, checks `git status book/` is clean and refuses-or-flags if a dispatch already mutated `book/`). It is ask-class per write-authority (it would change the per-report apply protocol's preconditions, bordering tooling). The repairer already catches leaks reliably pre-apply via the promoted skill, and the now-universal prompt-guard is the prevention layer; the clean-tree gate would be a third backstop. **Recommendation: hold the gate unless a FOURTH leak occurs despite the universal prompt-guard** (recurrence-4) — at which point the prompt-guard has shown its ceiling (mirroring the citation-drift mechanical-checker logic) and the structural gate becomes warranted. Surfaced as an ASK item this cycle.
+
+**Watch:** if a specialized agent leaks AGAIN despite the universal prompt-guard (recurrence-4), the role-spec approach has reached its ceiling — enact the integrator-per-report pre-dispatch clean-tree gate (the held ASK item) as a `go`/user-enacted structural backstop.
+
 ---
 
 ```yaml
 ---
 slug: skill-uptake-survey-non-invocation-cycle-wide
 first_observed: cycle-010
-last_observed: cycle-015
+last_observed: cycle-018
 recurrence_count: 4
 status: escalating
-addressed_by: cycle-012 meta-phase (no-go: telemetry-noise) — SUPERSEDED cycle-015 meta-phase by the quality-defect trigger; the citation-drift sub-pattern is now tracked + addressed under the dedicated entry `producer-citation-drift-verify-not-self-invoked`
+addressed_by: cycle-012 meta-phase (no-go: telemetry-noise) — SUPERSEDED cycle-015 meta-phase by the quality-defect trigger; the citation-drift sub-pattern is now tracked + addressed under the dedicated entry `producer-citation-drift-verify-not-self-invoked` (which held clean through batch-4)
 ---
 ```
+
+**Cycle-018 meta-phase update — batch-4: the benign-telemetry part continues; the actionable citation sub-pattern stayed CLEAN; no-go on recalibrating the check.** Batch-4 carried ~4+ `skill-uptake-survey` warnings (cycle-016 SEVEN-report-consistent `verify-citation-range` read-back without a named-by-slug invocation; cycle-017 4 warnings on `verify-citation-range`/`classify-variant-axis`/`propose-rotation`; similar cycle-018) — all repairer-ruled not-needed (procedure substance present, only the slug back-reference absent). Crucially, the one part of this broad pattern that became a quality defect in batch-3 (the citation drift, split out to `producer-citation-drift-verify-not-self-invoked`) **stayed clean through batch-4** — the producer self-verify bullets worked, so there is no batch-4 quality defect that a named skill invocation would have caught. The remaining signal is purely the named-by-slug telemetry gap, which is benign for opus-tier agents who internalize the procedure. **No-go on recalibrating the `skill-uptake-survey` check this cycle** (e.g. narrowing it to flag only missing *outcomes* rather than missing *invocation strings*): the cost of touching the critic's 8th check now is premature while the actionable sub-pattern is clean; the telemetry-only warnings are tolerable noise. Status stays `escalating` to keep the broad pattern visible, but the escalation has NOT converted to a new quality defect since the citation split-out. Re-open for recalibration only if a non-citation skill's *outcome* (an un-classified variant axis, a missed refinement-surface check) actually reaches the artifact.
 
 **Cycle-015 meta-phase update (recurrence-4; watch-clause FIRED).** The cycle-012 watch clause said: "if a future cycle shows a *quality defect* that an explicitly-invoked skill would have caught (not just a telemetry gap), escalate to recurrence-4." Batch-3 (013/014/015) produced exactly that, every cycle: actual repairer-corrected citation drifts in ~6 reports (013), 5-of-8 reports incl. the citation-AUDITING lowering-verifier itself (014), and the bilinearform `RT_FECollection`/`L2_FECollection` attribution + 2 relocated-dangle re-anchors (015). These are quality defects, not telemetry gaps — a self-applied `verify-citation-range` pass would have caught each. The cycle-012 "telemetry-noise, no-go" judgment is **SUPERSEDED**. Status flipped `recurring` → `escalating`. The actionable sub-signal (the citation-drift specifically — the `skill-uptake-survey` check ALSO fires on `classify-variant-axis` / `verify-refinement-surface` non-invocation, which remain benign telemetry) is split out into the dedicated entry **`producer-citation-drift-verify-not-self-invoked`** below, which carries the cycle-015 enactment (producer role-spec self-verification bullets + an `ask` for a mechanical checker tool). This entry stays as the broad telemetry pattern; the citation-specific quality defect is the addressed sub-pattern.
 
@@ -1159,6 +1168,8 @@ addressed_by: cycle-015 meta-phase (4 producer role-spec self-verification Disci
 
 **Watch:** if citation drift persists across batch-4 (016/017/018) despite the four producer role-spec bullets (recurrence-4 of THIS entry), the role-spec approach has reached its ceiling — escalate the mechanical-checker tool from ASK to a built `go` (or the user enacts the code). The cycle-014 auditor-drift already foreshadows this ceiling; batch-4 is the test of whether the producer-side bullets move the needle.
 
+**Cycle-018 meta-phase update — batch-4 outcome: the producer role-spec bullets HELD; recurrence-4 did NOT fire; the mechanical-checker ASK STAYS DEFERRED.** Batch-4 (016/017/018) carried substantial citation surface — cycle-016 cg.md sweeps (L4 7 + L2 12 re-anchors) and 2 chebyshev prose refreshes, cycle-017 divfree-projector 11-reference drift maintenance + L3-L2 body-identity 3 re-anchors + L3 chebyshev 5-site refresh, cycle-018 `linear_combination` 9 self-verified L0 ranges — yet **no new producer-emit drift required a repair round-trip of the cycle-013/014/015 shape.** The batch-4 citation edits were the *maintenance being applied* (re-anchoring known-dangling pointers to terminal firm homes), not fresh producer drift; and the one cycle-017 retroactive-budget item + cycle-018 retroactive-budget 0 confirm the producers were self-verifying at emit time. The recurrence-4 escalation condition (NEW drift despite the bullets) is **not met**. Status stays `addressed`; recurrence_count stays 3 (no recurrence-4 instance to count). The mechanical-checker tool ASK remains `reviewed: defer-confirmed` per the user's 2026-05-28 decision — the role-spec bullets are doing the job through batch-4; build the checker only if drift returns in batch-5+. The cycle-014 auditor-drift ceiling concern did not materialize in batch-4 (the lowering-verifier ran read-only/audit dispatches in 016/017 with no inherited-miscitation defect).
+
 ---
 
 ```yaml
@@ -1181,5 +1192,79 @@ addressed_by: cycle-015 meta-phase (skill `phase-1-slice-reduction-audit` §"Rem
 **Mitigation (cycle-015 meta-phase, this entry):** Extended skill `skills/phase-1-slice-reduction-audit/SKILL.md` with a **"Removal sub-case: non-link prose-reference grep"** section + a Discipline bullet + a Failure-mode entry. The removal procedure now requires, before proposing a `git rm`: grep the WHOLE book tree (and scaffolding) for the slice's path in ALL reference shapes — markdown links `](.*<slice>)`, inline-code `` `<path>` ``, and bare-path prose mentions `<slice-stem>` — not just markdown links; enumerate every hit; re-point or strike each; and note that the build linkcheck is the markdown-link backstop only, insufficient on its own for removals. Recommended grep: `grep -rn "<slice-stem>" book/src/ scaffolding/` (the stem, not just the full `[..](..)` link form), then triage link vs prose vs inline-code per hit.
 
 **Watch:** if a future slice removal again strands a non-link prose reference despite the skill extension (recurrence-2), consider a mechanical removal-time grep tool (sibling to the citation-range checker ASK above — both are "mechanical reference-completeness check" tooling) and re-weigh whether the same-layer-cross-cutter removal dispatch should hand the grep enumeration to the integrator-per-report as a pre-`git-rm` gate.
+
+---
+
+```yaml
+---
+slug: combinator-miner-arity-blind-parametric-family-detection
+first_observed: cycle-016
+last_observed: cycle-018
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-018 meta-phase (`.claude/agents/combinator-miner.md` new "Parametric / variadic-family detection mode" section + Discipline bullets) — HUMAN-RAISED prong-(a) of OQ `blas1-variadic-linear-combination-fold-unification`
+---
+```
+
+**Pattern (HUMAN-RAISED, headline batch-4 meta-phase item).** The combinator-miner's instance-counting heuristic (≥3 occurrences of *the same fixed-arity shape*) is **arity-blind**: a family of fixed-arity operators that are all specializations of one variadic/parametric operator never surfaces as a single candidate — each specialization is a distinct shape with too-few same-shape instances, and the unifying variadic fold is invisible to instance-counting. The proximate consequence: the BLAS-1 scalar-weighted-sum fold (`scal`/`axpy`/`axpby`/`axpbypcz` = the arity-1/2/3/4 specializations of one variadic `linear_combination :: [(Scalar, Tensor[N])] -> Tensor[N]`) was **never auto-surfaced and had to be human-raised** (OQ `blas1-variadic-linear-combination-fold-unification`, opened cycle-016). The cohort was represented 3× at fixed arity (L1 leaves / L1>L0 themes / L3 identity cohort) but unified 0× — a strong missing-parent signal that instance-counting could not see.
+
+**Constructive prongs (the artifact work) landed across batch-4 BEFORE this meta-phase:** prong-(b) the L2 rough-in row (cycle-017 combinator-miner) → firm `book/src/L2/linear_combination.md` + L2>L1 `linear-combination-fold-specialization` theme (cycle-018 harvester + abstractor). The cycle-018 combinator-miner ALSO landed an `inner_product` rough-in row (the conjugation-convention sibling fold) — an early sign the family-mode lens is already useful. Prong-(a), this entry, is the **methodology fix**: teach the miner to detect parametric families so the NEXT such family surfaces automatically rather than waiting for a human.
+
+**Mitigation (cycle-018 meta-phase, this entry — go).** `.claude/agents/combinator-miner.md`:
+- New top-level section **"Parametric / variadic-family detection mode"**: run instance-counting in two complementary modes on every scan — (1) same-shape mode (the default), and (2) parametric-family mode (look for a set of operators differing only along a structured parameter axis — arity / element-type / conjugation / weight-presence — that share one *folding* combining step; propose the single variadic parent with the siblings as specializations). Family-detection triggers, the required `## Proposed combinator` additions (parameter axis / combining step + identity / unifying fold-law / over-unification guard), and the typical "one layer above" placement are all spelled out, with the `linear_combination` precedent.
+- Discipline bullets: a parametric family counts as ONE pattern (the unified operator, not its N leaves); the family bar is ≥2 siblings sharing a stateable fold-law (the law is the evidence, so 2-with-law beats 3-coincidental); the over-unification guard (e.g. `dot` reduce-to-scalar is a DIFFERENT fold, do not subsume); and **run family-mode on every scan, not as a same-shape fallback** (the miss happened while same-shape candidates existed).
+
+**Watch:** if a future parametric family (e.g. the `inner_product` conjugation-convention fold cohort, or a smoother/preconditioner family) is again missed by the miner and surfaces only via human/cross-cutter, escalate to recurrence-2 and consider a same-layer-cross-cutter companion "family-sweep" dispatch mode or a mechanical cohort-detection helper.
+
+---
+
+```yaml
+---
+slug: rough-in-forward-reference-must-be-plain-text-not-live-link
+first_observed: cycle-017
+last_observed: cycle-018
+recurrence_count: 2
+status: addressed
+addressed_by: cycle-018 meta-phase (`.claude/agents/combinator-miner.md` "Forward-reference convention" note + `.claude/agents/harvester.md` Discipline bullet) — companion to the cycle-006 dep-map-row entry `rough-in-rows-must-be-plain-text-when-anchor-missing`
+---
+```
+
+**Pattern.** A producer emits a markdown link to a chapter that does NOT yet exist (a forward-reference to a sibling/operator chapter a later dispatch will author). `mdbook-linkcheck2` treats a link to an absent file as a **hard build error** (exit 101, `File not found: ./<chapter>.md`), regardless of whether the slug is registered in `SUMMARY.md`. This is the in-chapter / dep-map-cell forward-reference cousin of the cycle-006 `rough-in-rows-must-be-plain-text-when-anchor-missing` entry (which covered dep-map-table rough-in ROWS authored by abstractor/layer-intro-author); this entry is specifically the **forward-reference to a future FIRM chapter** case, which the cycle-006 convention did not name and which the combinator-miner + harvester did not carry.
+
+**Two-cycle batch-4 evidence:**
+- **Cycle-017 (violation; 1 build-repair).** The combinator-miner's `linear_combination` L2 rough-in dep-map row used a live link `[`linear_combination`](./linear_combination.md)` to the not-yet-authored chapter. The build failed (`linkcheck2` exit 101). integrator-finalize de-linked the cell to plain-text (the cycle-015 `fem-bilinearform-file` no-dead-link convention). The per-report integrator's claim that the forward-link "matches krylov-step/chebyshev-iteration and does not break the build" was wrong — those rows' targets EXIST as files; an absent-file link is a hard error regardless of SUMMARY registration.
+- **Cycle-018 (honored; clean).** The harvester's `linear_combination.md` referenced the future `inner_product` chapter as plain-text/backtick code-span, and the combinator-miner's `inner_product` rough-in row was authored plain-text — both honored cleanly (zero build-repairs, clean linkcheck). The convention worked when followed; the goal of this entry is to make it followed structurally rather than reminder-dependent.
+
+**Surfaced by:** cycle-017 integrator-finalize §Build status + cycle-018 carry-forward to batch-4 meta-phase (item 3) + integrator-signals cycle-018 §Integration-tooling friction.
+
+**Mitigation (cycle-018 meta-phase, this entry — go).**
+- (a) **`.claude/agents/combinator-miner.md`** — "Forward-reference convention" note under `## Proposed changes`: a rough-in dep-map row that names a not-yet-authored chapter MUST use plain text / inline-code, NEVER a live markdown link; only switch to a live link in the later harvester pass that creates the file.
+- (b) **`.claude/agents/harvester.md` §Discipline** — bullet: an in-chapter forward-reference to a not-yet-authored sibling chapter MUST be plain text or inline-code, never a live link; cross-references the sibling cycle-006 dep-map-row convention.
+- The per-report integrator's surgical-defang at apply time remains the safety-net backstop (it already de-links on a `linkcheck2` File-not-found); the producer-side conventions are the prevention.
+
+**Watch:** if a producer again emits a live link to an absent file despite both conventions (recurrence-3), consider a per-report-integrator pre-apply lint that scans proposed-changes markdown links against the working tree + this report's own to-be-created files and auto-defangs absent-target links (sibling to the citation-range checker ASK).
+
+---
+
+```yaml
+---
+slug: staging-log-append-completeness-gap
+first_observed: cycle-018
+last_observed: cycle-018
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-018 meta-phase (`.claude/agents/integrator-per-report.md` Process step 7 hard-step tightening + `.claude/agents/integrator-finalize.md` Process step 1 staging-row-count cross-check)
+---
+```
+
+**Pattern (new this cycle).** Per-report integrators applied their `book/` changes + OQ promotions + OQ-ledger notes cleanly (all 5 reports `overall_status: ready`, clean build, verified against the working tree) but **4 of 5 did NOT append their STAGING.md row** after the clean apply. `STAGING.md` captured only report-1's row; integrator-finalize had to reconcile the full landing set from the working tree (`git status`) + report frontmatter + OQ-ledger appends rather than from the authoritative staging log. **The staging log was NOT authoritative this cycle — the artifact was.** Process-discipline gap, NOT data loss (no work lost; finalize reconciled correctly).
+
+**Surfaced by:** cycle-018 integrator-finalize §"Staging-log-completeness note" + integrator-signals cycle-018 §Integration-tooling friction ("STAGING-LOG-APPEND-COMPLETENESS GAP (NEW, recurrence-1)").
+
+**Mitigation (cycle-018 meta-phase, this entry — go).**
+- (a) **`.claude/agents/integrator-per-report.md` Process step 7** — tightened to a HARD, non-skippable step: do NOT finish the invocation without the STAGING.md append, even when the artifact apply went perfectly; the log is the authoritative record finalize reads. Cites this friction.
+- (b) **`.claude/agents/integrator-finalize.md` Process step 1** — added a staging-row-count cross-check against the parent-stated count of dispatched ready reports; on `rows < dispatched`, flag LOUDLY (batch CYCLE.md + integrator-signals) AND reconcile from the working tree + report frontmatter + OQ-ledger so nothing is lost. The reconciliation is a recovery, not the normal path; (a) is the prevention.
+
+**Watch:** if STAGING.md rows are again incomplete despite the hard-step tightening (recurrence-2), the role-spec approach has reached its ceiling — consider a parent-orchestrator-side check that verifies each per-report dispatch returned a staging-row confirmation before dispatching the next, or a finalize-blocking gate (rather than warn-and-reconcile). The warn-and-reconcile path is deliberately non-blocking for now (no data was at risk).
 
 ---

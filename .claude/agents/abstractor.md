@@ -72,6 +72,7 @@ inputs:
 
 ## Discipline
 
+- **Do NOT write to `book/` (or any artifact file) yourself.** You are a DISPATCH-phase agent (Phase 2): you emit **proposed-changes blocks** in your CYCLE.md, and `integrator-per-report` applies them in Phase 5. This applies **especially to theme-text or carry-forward corrections** — they feel like edits to make, but they are **changes to propose**, not edits to apply. Writing directly to `book/` during dispatch violates the CLAUDE.md write-authority partition; the critic flags it HIGH and the repairer reverts your leak (skill `revert-dispatch-phase-book-mutation`) before re-applying from your proposed-changes channel — so the direct write buys nothing and costs a repair round-trip. Cycle-008 friction: an abstractor dispatch (ksp_solve L1>L0) wrote 3 artifact files directly during Phase 2 (friction-ledger `specialized-agent-direct-write-to-book-during-dispatch`; the guard is now enacted across all 8 specialized specs after recurrence-3).
 - **One theme per invocation.** A theme covers one rewrite pattern; don't bundle.
 - Rough-in operators are **fine** — don't try to formalize them yourself. Name them, sketch their shape, hand off.
 - If your L_n evidence has no clean L_{n+1} abstraction (the pattern doesn't lift), record it as an `obstruction`-justified theme — negative results are first-class output.
