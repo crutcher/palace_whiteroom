@@ -297,7 +297,10 @@ promotion_note: promoted as the repair-side counterpart to the detection guard `
 slug: audit-slug-meaning-before-coordinated-cross-report-rename
 proposer: repairer
 proposed_at: cycle-027 / 2026-05-29
-status: proposed
+status: promoted
+promoted_to: skills/audit-slug-meaning-before-coordinated-cross-report-rename/SKILL.md
+promoted_at: cycle-027 meta-phase / 2026-05-29
+promotion_note: promoted as a thin repairer skill (default-accept under low-bar). The cycle-027 D4/D5 slug collision produced a coordinated-rename instruction whose premise was INVERTED relative to the artifact; the D5 repairer's denote-by-signature audit caught it, applied zero edits, and routed the real (inverse) gap as unrepairable. Concrete + high-cost hazard (an inverted rename corrupts correct references while missing the real gap). Friction-ledger `coordinated-cross-report-rename-premise-inversion`. A companion ASK (pre-harvest slug-collision check as a standing producer-spec bullet) is surfaced to the human in the cycle-027 meta-phase report.
 ---
 ```
 

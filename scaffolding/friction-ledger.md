@@ -1200,6 +1200,8 @@ The drift is now a **stable 3-cycle pattern**, caught downstream (repairer + cri
 
 **Watch:** batch-7 (025/026/027) is the test of whether the wired-in checker drops the drift-repair-round count. If producers run `--anchor` at emit time, fresh producer-emit drift should fall to near-zero (the tool is deterministic where the prose bullet was reminder-dependent). If drift still recurs at the batch-6 rate despite the wiring (recurrence-5), the gap is invocation-uptake (the same telemetry-gap shape as `skill-uptake-survey`) — escalate to a HARD integrator-per-report pre-apply `--anchor`-gate on every load-bearing pinpoint (currently only `--scan` bounds is gated; pinpoint-anchor gating needs the report to carry machine-readable anchor tokens, a CYCLE.md-format change — ask-class).
 
+**Cycle-027 meta-phase update (batch-7) — the wired-in checker WORKED for producer-emit drift; the residual drift split out to a DISTINCT tool-level entry. Status stays `addressed`; recurrence stays 4 (no recurrence-5 of the producer-emit shape).** Batch-7 was the uptake test. Outcome: **the wired-in `citecheck` is now visibly in routine emit-time use, and fresh producer-emit drift of the cycle-013/014/015 shape (citing from stale memory) did NOT recur.** Evidence the tool is being run at emit time: the cycle-027 D5 abstractor report self-reported `citecheck --scan` = `35 ok, 0 failing` (critic re-confirmed); the cycle-025 dispatch-2 L1>L0 theme was `citecheck`-verified `32 ok, 0 failing`; the cycle-026 D1 lifter mechanically re-anchored via `citecheck --anchor` (`[DRIFT]` pre / `[ok]` post on every site). The citation maintenance that DID happen in batch-7 was either (i) **re-anchoring already-landed entries** (the NLEPS-L1-entry secondary-context drifts, the `:667→:668` sibling sweep — pre-existing dangling pointers being closed, not fresh emit drift), or (ii) the **codemap tool-level +1 drift** — a producer faithfully transcribing what `read_range` returned, which is NOT this entry's failure mode (stale-memory citing). The tool-level drift is split out to the new dedicated entry **`codemap-read-range-plus-one-drift-on-brace-boundary`** (addressed this same meta-phase via the "codemap is localization-only; citecheck/on-disk is source of truth" role-spec sub-bullet). So: the producer-emit arm this entry tracks is **doing the job** through batch-7 (the wiring closed the loop the cycle-024 build opened); the residual drift is a different, now-separately-tracked cause. No recurrence-5 of the producer-emit shape. The HARD `--anchor` integrator-gate escalation stays HELD (no trigger fired for THIS entry; the codemap-drift entry carries its own deferred HARD-gate escalation if ITS recurrence-5 fires).
+
 ---
 
 ```yaml
@@ -1382,3 +1384,76 @@ addressed_by: cycle-005 split-integrator design (`integrator-per-report` + STAGI
 **Watch:** no action needed. If a future crash interrupts MID-per-report-apply (not between phases as here — i.e. a per-report integrator dies after editing `book/` but before its STAGING.md append), the finalize cross-check (`rows < dispatched`) would catch the gap and fall to working-tree reconciliation; that path is exercised-by-design but has not yet been crash-tested. Record if it occurs.
 
 ---
+
+```yaml
+---
+slug: codemap-read-range-plus-one-drift-on-brace-boundary
+first_observed: cycle-024
+last_observed: cycle-027
+recurrence_count: 4
+status: addressed
+addressed_by: cycle-027 meta-phase (batch-7) — "the codemap is localization-only; citecheck / on-disk is the citation source of truth" sub-bullet added to all 5 citing producer/auditor specs (harvester / abstractor / lifter / layer-intro-author / lowering-verifier §Discipline citecheck blocks)
+---
+```
+
+**Pattern (TOOL-level drift, distinct from producer-emit drift).** The `palace-codemap` MCP `read_range` line indexing drifts **+1 behind the on-disk `reference/palace/` file** on certain multi-line-comment + opening-`{`-brace boundaries — it appears to merge a comment-line + the following `{`-brace line into one logical line. A producer who **faithfully transcribes the line `read_range` returned** therefore still lands a +1-drifted citation. This is a *different failure mode* from `producer-citation-drift-verify-not-self-invoked` (where the producer cites from stale memory): here the producer did everything right against the codemap, but the **tool itself** disagrees with the on-disk file. `tools/citecheck/` (which reads the on-disk file directly) is the authoritative tie-breaker and caught every instance.
+
+**Evidence (the drift is localized to one boundary, but it recurs across batches when that region is touched):**
+- **cycle-024:** the `nleps.cpp` deflation block authored from codemap landed +1 (the original codemap-sourced anchors).
+- **cycle-025 (detection):** dispatch-1 abstractor's citecheck self-verify flagged the `nleps.cpp` deflation-block `:659+` anchors `[DRIFT +1]`; filed the standing OQ `codemap-read-range-plus-one-drift-on-brace-boundary` (open-questions.md:717) recommending the source-of-truth role-spec strengthening.
+- **cycle-026 (worked correction):** dispatch-1 lifter re-anchor pass mechanically corrected all six deflation-block anchors (`[DRIFT]` pre / `[ok]` post via `citecheck --anchor`), at the **same** `nleps.cpp` `if (k > 0)` `{`-brace boundary (`:659`).
+- **cycle-027:** dispatch-2 lifter re-anchored `matrix-weighted-norm.md` `operator.cpp:601→:602` at the same class of boundary; the deflation-block region stayed corrected.
+
+**Scope nuance (load-bearing).** The drift has been observed on the **same** `nleps.cpp` brace/comment boundary (the deflation block) re-touched across cycles, plus the `operator.cpp:601` boundary — NOT yet shown to be a tree-wide systematic off-by-one on *every* brace. So recurrence-4 counts the number of cycles the drift *cost a correction round*, not four independent boundaries. Either way the cost is real (a repair/re-anchor round each touch) and the fix is the same: never cite straight off codemap output.
+
+**Why role-spec strengthening (not a new gate) is the right enactment.** The mechanical defense — `citecheck --anchor` against on-disk — is **already wired** into all 5 specs (cycle-024, `producer-citation-drift-verify-not-self-invoked`). The gap was that the existing bullets treated `read_range` and codemap as *interchangeable* sources of truth ("`read_range` OR codemap... then confirm"). The cycle-027 sub-bullet makes the hierarchy explicit: codemap is a localization HINT; the emitted `path:lo-hi` must come from `citecheck`/on-disk; when they disagree, on-disk wins. This closes the conceptual gap (a faithful codemap transcription is NOT a verified citation) without adding a new pipeline gate. A standing per-report HARD citecheck `--anchor` gate was considered and is a no-go this batch (see Watch) — the `--scan` bounds gate (cycle-024) already runs per-report, and pinpoint `--anchor` requires CYCLE.md to carry machine-readable anchor tokens (a channel-format change, ask-class).
+
+**Watch:** if a citecheck-faithful producer STILL lands a codemap-drifted citation in batch-8 despite the source-of-truth bullet (recurrence-5), the conceptual fix has reached its ceiling — escalate to the ask-class HARD pinpoint-`--anchor` integrator gate (which needs the CYCLE.md anchor-token channel-format change). Also watch for the drift appearing on a NEW file/boundary (which would upgrade "localized re-touch" to "systematic tree-wide" and might warrant a codemap-server bug report — code change, ask-class).
+
+---
+
+```yaml
+---
+slug: cycle-planner-reproposes-already-landed-work
+first_observed: cycle-026
+last_observed: cycle-027
+recurrence_count: 2
+status: addressed
+addressed_by: cycle-027 meta-phase (batch-7) — two cycle-planner §Discipline bullets: "verify each candidate is genuinely OPEN (not already landed) before proposing" + "exactly ONE integrator-finalize per cycle; waves are dispatch ordering, not multiple finalizes"
+---
+```
+
+**Pattern (haiku cycle-planner staleness — distinct sibling of `cycle-planner-dispatch-prompt-framing-drift`).** The haiku cycle-planner re-proposes work that has ALREADY landed in a prior cycle, and/or builds a plan rationale on an incorrect pipeline model. This is distinct from the path-framing drift (citing wrong source paths, `cycle-planner-dispatch-prompt-framing-drift`): here the *scope is stale* (the work is done) or the *process model is wrong* (assumes multiple finalizes). Both were caught by the orchestrator pre-dispatch this batch.
+
+**Evidence (both instances orchestrator-caught pre-dispatch):**
+- **cycle-026:** the plan re-proposed the batch-6 lowering-verifier audit cohort that had ALREADY landed in cycle-025 (the apply-nonlinear-pencil / deflate-composition / gram-fold / orthogonalize-composition audits). The orchestrator caught it + re-scoped to the genuinely-unaudited cycle-025-new themes. The planner had not checked cycle-025's `counts_after` (which records the audit cohort 4/4 discharged).
+- **cycle-027:** the plan over-built — 10 dispatches / 4 waves — with (a) an incorrect "integrator-finalize rebuilds between waves" model (finalize runs ONCE per cycle), and (b) a stale "Firm 19→20" count-bump rationale that cycle-026's finalize had ALREADY applied as measurable housekeeping (`L1/index.md:31`). Both caught + corrected by the orchestrator.
+
+**Mitigation (cycle-027 meta-phase, this entry — go).** Two `.claude/agents/cycle-planner.md` §Discipline bullets: (1) **verify-candidate-is-genuinely-open** — before proposing a dispatch, scan the `cycle-record.jsonl` tail `counts_after`/`cycle_character` + the latest STAGING.md + the plan's `~~struck~~`/`DONE`/`COMPLETE` Backlog markers; a closed item is not re-proposable. (2) **one-finalize-per-cycle** — the pipeline runs exactly one `integrator-finalize` at cycle end; `## Sequencing schedule` waves order *dispatches* by forward-reference dependency, the book is not rebuilt between waves, and measurable count-bumps the prior finalize already applied are not to be re-scheduled (check `counts_after`).
+
+**Why role-spec (Medium-cascade), not escalate-to-opus.** Both drifts were cheap orchestrator corrections (the haiku planner produced an otherwise-sound plan; the orchestrator's pre-dispatch read is the existing safety net). The role-spec bullets are the minimal fix consistent with "don't over-ask" (the planner stays haiku; the bullets add two mechanical pre-checks that fit the tier — reading `counts_after` is a cheap lookup). Swapping the planner to opus stays a HELD escalation.
+
+**Watch:** if either drift recurs post-enactment (recurrence-3) despite the bullets, escalate — consider (a) the orchestrator running a "candidate-already-landed" lint over the plan before dispatch (cross-ref each candidate slug against the latest `counts_after`), or (b) swapping the cycle-planner to opus (the haiku tier may under-read the cycle-record). The drift has been cheaply corrected each time; the bullets should suffice.
+
+---
+
+```yaml
+---
+slug: coordinated-cross-report-rename-premise-inversion
+first_observed: cycle-027
+last_observed: cycle-027
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-027 meta-phase (batch-7) — promoted skill `skills/audit-slug-meaning-before-coordinated-cross-report-rename/SKILL.md` (repairer-facing denote-by-signature gate before applying a coordinated rename) + the D5 deferral migrated into the plan as a c028 lifter task
+---
+```
+
+**Pattern (new process-friction; the coordinated-cross-report-rename trap).** When two same-cycle dispatches collide on a slug, the repairer of the second may be handed a **coordinated cross-report rename** whose **premise is inverted relative to the artifact** — the instruction says "rename references meaning X" but in the report every reference under that slug means the *protected* (other) operation, and the real consistency gap is a *different* slug entirely. Blindly applying the literal rename would corrupt correct references AND miss the real gap.
+
+**Evidence (cycle-027 D4/D5).** Dispatch-4 harvested the terminal back-solve leaf and renamed it `ls_update_column` → `back_solve` (collision: `ls_update_column` already named the distinct column-streaming step `(K,j,h_new)→K'` in `L2/incremental-least-squares.md:412` + the concept page). Dispatch-5's repairer was told "rename this theme's back-solve-leaf `ls_update_column` refs → `back_solve`, but protect column-streaming refs." An exhaustive grep showed the INVERSE: every `ls_update_column` in the theme meant the column-streaming step (CAUTION-protected), NONE the back-solve leaf — the back-solve target was referenced under `trsv`/`back_solve`. The repairer correctly applied ZERO rename edits (`not-needed`), identified the real gap as the inverse `trsv↔back_solve` reconciliation (a content reclassification beyond repair scope), set `needs-revision`, and routed it to the integrator → the c028 lifter promotion task. The D5 deferral is the only deferral of batch-7 (otherwise 3 clean cycles, 0 rejections).
+
+**The collision was avoidable.** The L2 entry already used BOTH colliding slugs with distinct meanings (`ls_update_column` = column-streaming, `back_solve` = terminal back-solve). A pre-harvest slug-collision check against existing artifact vocabulary would have stopped dispatch-4 from binding `ls_update_column` to a second meaning. Whether to make that a standing producer-spec bullet is surfaced as an **ASK** in the cycle-027 meta-phase report (it adds a mechanical grep step to every harvest/abstract that introduces a new slug; low cost, but a producer-spec change worth confirming the appetite for vs. relying on the repairer-side gate skill).
+
+**Mitigation (cycle-027 meta-phase, this entry — go).** Promoted the repairer-facing skill `audit-slug-meaning-before-coordinated-cross-report-rename` (the 5-step denote-by-signature gate: read the landing report's ground truth → classify every occurrence by the operation it denotes → gate on premise contradiction → route a content-reclassification gap as `unrepairable` → record explicitly). It is a generalization of the `verify-citation-range` "verify against the artifact, not the paraphrase" discipline to slug-rename coordination.
+
+**Watch:** recurrence-1 (single instance). If a second inverted-premise coordinated rename surfaces, the repairer-side gate is necessary but the *avoidance* (a pre-harvest slug-collision check) becomes the better fix — enact the producer-spec bullet then (if the human's ASK response defers it now). Also a datapoint for the broader "one-operator-per-dispatch + forward-references create cross-report coordination" cost: when two in-cycle dispatches must coordinate a rename, the integration-ordering + repairer-gate handled it without a rejection (the surface accumulated with the friction embedded — the deferral routes to c028).
