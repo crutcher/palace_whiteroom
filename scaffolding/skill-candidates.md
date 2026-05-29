@@ -261,7 +261,10 @@ promotion_note: promoted as a thin critic build-readiness checklist skill AND fo
 slug: upgrade-plain-text-ref-to-live-link-when-target-on-disk
 proposer: repairer
 proposed_at: cycle-022 / 2026-05-29
-status: proposed
+status: promoted
+promoted_to: skills/upgrade-plain-text-ref-to-live-link-when-target-on-disk/SKILL.md
+promoted_at: cycle-024 meta-phase / 2026-05-29
+promotion_note: promoted as a thin repairer skill (default-accept under low-bar). The in-cycle live-link-upgrade pattern recurred across all three batch-6 cycles (cycle-022 ×2, cycle-024 ×2), well above the single-instance the candidate noted. The skill is the deterministic on-disk-partition + convention-survey + relative-path-upgrade + re-verify procedure behind that upgrade.
 ---
 ```
 
@@ -276,7 +279,10 @@ status: proposed
 slug: convert-nested-fences-to-indented-code-in-proposed-changes-block
 proposer: repairer
 proposed_at: cycle-023 / 2026-05-29
-status: proposed
+status: promoted
+promoted_to: skills/convert-nested-fences-to-indented-code-in-proposed-changes-block/SKILL.md
+promoted_at: cycle-024 meta-phase / 2026-05-29
+promotion_note: promoted as the repair-side counterpart to the detection guard `proposed-changes-fence-encloses-full-body-guard`. The root defect (firm body outside the apply boundary) recurred in a fresh nested-`text`-fence variant cycle-023 (recurrence-2 of friction-ledger `firm-chapter-body-authored-outside-proposed-changes-fence`); detection held (the critic guard caught it) but the repair is identical every time. Also enacted: a producer-spec bullet (use 4-space-indented code, not nested fences) across the 4 firm-body-authoring producers + lowering-verifier.
 ---
 ```
 

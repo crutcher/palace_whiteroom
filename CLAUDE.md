@@ -267,9 +267,9 @@ Filing rate is self-tuned per `scaffolding/problems-sensitivity.md`; target ~1/1
 
 Agent-invocable procedures under `skills/<name>/SKILL.md`. Any agent can propose via `scaffolding/skill-candidates.md`; meta-phase promotes with default-accept under low-bar policy. Promotion bar: pattern observed ≥2 cycles OR candidate sketch concrete enough to write as SKILL.md OR friction-ledger entry exists for the addressed pattern.
 
-Current skills (under `skills/`; updated cycle-012 meta-phase):
+Current skills (under `skills/`; updated cycle-024 meta-phase):
 - `classify-variant-axis`
-- `verify-citation-range` (extended cycle-012 meta-phase with an "Audit-report / inherited-citation sub-case" section)
+- `verify-citation-range` (extended cycle-012 with an "Audit-report / inherited-citation sub-case"; cycle-021 with a "Sibling-slice / inherited-precedent re-anchor sub-case"; cycle-024 with the mechanical `tools/citecheck/` `--anchor`/`--scan` realization)
 - `skill-selection`
 - `verify-refinement-surface`
 - `verify-rotation-citation`
@@ -281,6 +281,10 @@ Current skills (under `skills/`; updated cycle-012 meta-phase):
 - `summary-md-surgical-insert` (cycle-005)
 - `phase-1-slice-reduction-audit` (cycle-012; same-layer-cross-cutter slice-reduction audit with START+END boundary verification)
 - `revert-dispatch-phase-book-mutation` (cycle-012; repairer safety-net for dispatch-phase artifact leaks)
+- `partly-constructive-promotion-checklist` (cycle-015; the 4-point partly-constructive→firm promotion-record checklist)
+- `proposed-changes-fence-encloses-full-body-guard` (cycle-021; critic build-readiness fence-parity guard — DETECTS the firm-body-outside-fence defect)
+- `convert-nested-fences-to-indented-code-in-proposed-changes-block` (cycle-024; repairer REPAIR of the nested-`text`-fence truncation variant — counterpart to the detection guard)
+- `upgrade-plain-text-ref-to-live-link-when-target-on-disk` (cycle-024; repairer/producer on-disk→live-link upgrade for references needlessly left plain-text)
 - `embed-and-persist-subagent-dispatch` (pilot-1; retired-but-kept after the REPORT.md→CYCLE.md rename)
 
 ## Models
