@@ -2,6 +2,8 @@
 
 A coarse map of what this project intends to cover, what's currently in flight, and what's done. The roadmap is **deliberately abstract**: a few dozen items, not a granular task list. It exists so the README's *Relative Progress* section can report proportional coverage with real denominators.
 
+**Relationship to the plan** (user directive 2026-05-28): the granular, prioritized work backlog lives in `scaffolding/priorities.md` (**the plan**) — that is where open-questions/friction migrate and where the planner picks dispatches. This roadmap is the *coverage/goals map* plus the **fan-out impact model** (see §Intermediate-tier `impact_score`, and §How proportional coverage is computed) that **ranks** the plan's backlog by downstream impact. Use this file to judge how much a candidate unblocks; use the plan to decide what to dispatch.
+
 **Lifecycle.**
 
 - The Meta-Critic reviews this file during every meta-cycle. Items move between `not-started` (`[ ]`), `in-progress` (`[~]`), and `done` (`[x]`) based on what landed in the window. New items are added as scope clarifies; items are not removed without a meta-review note.

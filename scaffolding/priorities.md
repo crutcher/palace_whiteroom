@@ -1,16 +1,22 @@
-# Priorities
+# Plan (priorities)
 
-Short next-up list. Meta-phase and cycle-planner co-edit. Cycle-planner reads each cycle to inform dispatch selection.
+**This file is the project's single ongoing R&D plan** — the durable, fan-out-ranked backlog of component work. Co-owned by `meta-phase` and `cycle-planner`.
+
+**Intake → plan → dispatch (load-bearing flow; user directive 2026-05-28):**
+- **Intake channels are transient, not holding pens.** `scaffolding/open-questions.md`, `scaffolding/friction-ledger.md`, and `problems/` are where issues/friction are *reported*. Items do **not** accumulate there indefinitely.
+- **Migration is the resolution.** `meta-phase` (every batch) triages intake and **migrates actionable items INTO this plan** (closing / deferring the rest). `cycle-planner` surfaces fresh-intake plan candidates mid-batch via its `## Open questions / caveats`. An open question or a friction pattern is "resolved" into the plan, not parked.
+- **Fan-out ranking drives dispatch.** Every backlog item carries a **fan-out note** — what it unblocks downstream. The planning phase dispatches the **highest-fan-out** work first (use `roadmap.md`'s impact model: `|concepts| × |downstream-reuse| × 1/cost`). This is the *reason* the plan exists: so the planner prioritizes components with the most fan-out impact.
+- **Both phases maintain it.** `cycle-planner` reads it every primary cycle to pick dispatches and may append caveats; `meta-phase` reshapes it each batch from intake; `integrator-finalize` removes items as they land.
 
 **Discipline:**
-- Keep under 10 items.
-- Each item: one line, slug + one-sentence rationale.
-- Meta-phase adds when friction-ledger surfaces an actionable target.
-- Integrator removes when an item lands in the artifact.
+- **Now (active head)** stays focused (≤~10 picks for the current/next cycle).
+- **Backlog (fan-out-ranked)** is uncapped — it holds migrated work-items, grouped High/Medium/Low fan-out.
+- Each item: slug + one-line rationale + **fan-out:** note (what it unblocks).
+- Integrator removes when an item lands in the artifact; meta-phase re-ranks each batch.
 
 ## Now (active) — cycle-019+ (rewritten cycle-018 meta-phase, batch-4 closure)
 
-Batch-4 (cycles 016/017/018) landed: the divfree-projector L1>L0 mutation-rotation theme (firm; L1>L0 themes 10→11) + L0 bundle-6 #5 `fem-libceed-operator-file` (L0 20→21) cycle-016; the krylov-step `cg.md` re-anchor chain FULLY TERMINATED (L4 + L2 + L3-L2 body-identity sweeps) and the chebyshev `forM_`/`foldM`→`iterate_while` vocabulary-lag cohort FULLY TERMINATED (L4 + L3 sweeps) across 016/017; the eigsolve-convergence-reason-mapping THIRD re-verification (correctly STAYS partly-constructive); and the **human-raised BLAS-1 variadic-fold unification fully ENACTED** — `linear_combination` L2 rough-in (017)→firm (018) + `linear-combination-fold-specialization` L2>L1 theme + `inner_product` L2 rough-in (the conjugation-convention sibling) + the `nested-constructed-operator-gate` concept page + the divfree "first→third" provenance correction (018). L2 firm 2→3, L2>L1 firm 1→2, +1 concept page. The list below is the cycle-019+ active surface (carry-forward OQs the cycle-018 finalize flagged + the cycle-018 integrator-signals suggested dispatches). Landed batch-4 items are in git history; removed from the active list per the "keep under 10 items" discipline. **The combinator-miner parametric/variadic-family detection mode (BLAS-1 prong-a) was ENACTED by THIS meta-phase** — see §Methodology priorities; it is no longer a priority item.
+Batch-4 (cycles 016/017/018) landed: the divfree-projector L1>L0 mutation-rotation theme (firm; L1>L0 themes 10→11) + L0 bundle-6 #5 `fem-libceed-operator-file` (L0 20→21) cycle-016; the krylov-step `cg.md` re-anchor chain FULLY TERMINATED (L4 + L2 + L3-L2 body-identity sweeps) and the chebyshev `forM_`/`foldM`→`iterate_while` vocabulary-lag cohort FULLY TERMINATED (L4 + L3 sweeps) across 016/017; the eigsolve-convergence-reason-mapping THIRD re-verification (correctly STAYS partly-constructive); and the **human-raised BLAS-1 variadic-fold unification fully ENACTED** — `linear_combination` L2 rough-in (017)→firm (018) + `linear-combination-fold-specialization` L2>L1 theme + `inner_product` L2 rough-in (the conjugation-convention sibling) + the `nested-constructed-operator-gate` concept page + the divfree "first→third" provenance correction (018). L2 firm 2→3, L2>L1 firm 1→2, +1 concept page. The list below is the cycle-019+ active surface (carry-forward OQs the cycle-018 finalize flagged + the cycle-018 integrator-signals suggested dispatches). Landed batch-4 items are in git history; removed from the active list per the active-head focus discipline (the uncapped fan-out Backlog now holds migrated work — see header). **The combinator-miner parametric/variadic-family detection mode (BLAS-1 prong-a) was ENACTED by THIS meta-phase** — see §Methodology priorities; it is no longer a priority item.
 
 1. **(harvester — HEADLINE) `inner_product` L2 firm operator** — the cycle-018 combinator-miner landed the `inner_product` rough-in dep-map row (≥3-instance bar met: `dot`/`tdot`/`bilinear-form`; the conjugation-convention sibling fold of `linear_combination`, `(Tensor[N], Tensor[N]) -> Scalar`, M-weighted member `xᴴ M y`). Author `book/src/L2/inner_product.md` directly off the rough-in row, mirroring how cycle-018's harvester firmed `linear_combination` off the cycle-017 rough-in. **Pin the conjugation / arg-order convention** (`Dot(comm,x,A,y) = yᴴ A x`). OQ `inner-product-harvester-formalization-and-conjugation-pinning`. **Self-verify every citation before emitting**; **forward-references to not-yet-authored siblings stay plain-text** (cycle-018 conventions).
 2. **(abstractor) `L2-L1/inner-product-fold-specialization` theme + `linear-combination-fold-specialization-theme-followups`** — the L2>L1 lowering theme taking the L2 `inner_product` fold into its L1 specializations (mirrors the cycle-018 `linear-combination-fold-specialization` pairing); plus the carry-forward follow-ups on the just-landed `linear-combination-fold-specialization` theme. OQs (cycle-018).
@@ -20,11 +26,40 @@ Batch-4 (cycles 016/017/018) landed: the divfree-projector L1>L0 mutation-rotati
 6. **(lifter/cross-layer-cross-cutter) divfree.hpp doc-tension OQ** — residual divfree header/doc-comment tension (`divfree-mult-doc-irrotational-vs-divfree-stale`); resolve or document. Carry-forward OQ from batches 3/4.
 7. **(combinator-miner — try the NEW family-mode) candidate parametric families** — with the cycle-018 parametric/variadic-family detection mode now in the spec, scan for the next parametric family (the `inner_product` conjugation cohort is the obvious near-term test; longer-term, smoother/preconditioner families). First live exercise of the new mode. Friction-ledger `combinator-miner-arity-blind-parametric-family-detection`.
 
-## Near (queued)
+## Backlog — ranked by fan-out impact
 
-8. **lower-layer-shared-vocabulary-priority** (user directive 2026-05-27, mid-cycle-009; carried) — prefer populating lower-layer shared utility (L1/L2/L3) over expanding higher-layer vocabulary (L4) when both eligible. **Status: substantially discharged across batch-2+3+4** — L3 went 1→8 firm (BLAS-1 cohort), L2 1→3 firm (`linear_combination` cycle-018), L1 10→11 (divfree-projector cycle-015); the cycle-009 "L3 empty" signal is RESOLVED. Remaining bias-guidance for cycle-019+: keep weighting L1/L2/L3 firm additions and lowering-theme completion above further L4 vocabulary expansion. Friction-ledger `lower-vocabulary-priority-over-higher-expansion` (addressed).
-9. **bootstrap-L4-state-stratification** — write the L4 layer intro / dep-map exposing the sim-state vs operator-params vs ephemeral distinction. Lower-priority than the lower-layer work above per #8.
-10. **carry-forward large dispatches (residual)** — `slepc-convergence-reason-lift-sub-theme` (`abstractor`/`lifter`); `spectrum_estimate` L1 rough-in (`harvester`; shares matrix-weighted-norm cohort); `chebyshev-anchor-element-kernel-and-mult2-carry-forward-sweep` (firm L1/L2 chebyshev anchor reconcile; `lifter`). (`gmres.md §L4 self-rotation` + NLEPS promoted to active #3/#4.) Carried from cycles 008/009/011/012/013/014 OQs.
+Migrated from the OQ/friction intake during the 2026-05-28 unification pass (and carried-forward queued items). **Ranked by how much downstream work each unblocks** — the planner pulls from the top of each tier. Re-ranked by meta-phase each batch.
+
+### High fan-out (unblocks multiple downstream solvers/layers)
+- **l2-named-composition-lifts** — promote `orthogonalize` and `incremental-least-squares` to firm **L2** entries (both are firm/concept-only today; `orthogonalize` is firm at L1, `incremental-least-squares` is a concept page). **fan-out:** GMRES/FGMRES/Arnoldi/eigenmode all consume these as L2 compositions; firming them sharpens every Krylov L2 lowering. Routes `harvester` (+ `L2-layer-intro-refresh-for-named-compositions` rides along). OQs `orthogonalize-as-future-L2-firstclass-entry`, `incremental-least-squares-as-future-L2-firstclass-entry`, `L2-layer-intro-refresh-for-named-compositions`.
+- **ksp-solve-l2-promotion-non-identity-substantive-gap** — author the L2 `ksp_solve` outer-driver framing (non-identity vs the L1 entry; real coverage gap). **fan-out:** gates the per-solver pipeline L2 story (all 5 solvers wrap a ksp_solve). Routes `harvester`.
+- **l3-vocabulary-inventory-gap** — L3 backfill beyond the closed BLAS-1 cohort (`gemv`, `trsv`, `ksp_solve`, `eigsolve` identity rows). **fan-out:** every per-solver L3 lowering reuses these; L3 is the iteration-rotation layer. Routes `harvester`/`cross-layer-cross-cutter`. (Companion to roadmap §Layered-spec L3.)
+- **blas1-l1-l0-lowering-theme-gap** — author the missing standalone L1>L0 mutation-rotation themes for `dot`, `nrm2`, `scal` (only `axpby`/`axpbypcz`/`apply-linop` exist; `dot`/`nrm2`/`scal` lower-coverage is implicit). **fan-out:** completes BLAS-1 lowering coverage that every solver lowering leans on; pins the dot conjugation-asymmetry + nrm2 abs-guard + Dot/Allreduce/sqrt chain. Routes `abstractor`. OQs `l1-l0-dot-lowering-asymmetry`, `nrm2-lowering-theme-deliverables`, `scal-mutation-rotation-l1-l0-theme`, `nrm2-std-abs-defensive-guard-classification`.
+
+### Medium fan-out
+- **matrix-weighted-norm + bilinear-form firm-promotion** — author `matrix-weighted-norm-mutation-rotation` L1>L0 theme + close the variant-axis/test-coverage firm-promotion gates for both rough-ins. **fan-out:** energy-norm consumers (CG/eigenmode residual tests). Routes `abstractor` + `lowering-verifier`. OQs `matrix-weighted-norm-mutation-rotation-l1-l0-theme`, `matrix-weighted-norm-mixed-element-type-variant`, `bilinear-form-real-vector-coverage-gap`, `bilinear-form-variant-axis-test-coverage`.
+- **normalize-l1-primitive-harvest** — decide + (if yes) harvest a fused `normalize :: Tensor[N] -> (Scalar, Tensor[N])` L1 primitive (+ B-weighted sibling). **fan-out:** simplifies every Krylov-solver lowering theme that currently factors normalize into nrm2∘scal. Routes `harvester`. OQs `normalize-as-fused-l1-primitive`, `normalize-and-normalize-b-weighted-l1-candidates`.
+- **diagonal-extraction-l1** — harvest `AssembleDiagonal` as a distinct L1 "operator-to-data" primitive (NOT an `apply_linop` variant). **fan-out:** Jacobi / Chebyshev / block-Jacobi / polynomial preconditioners all reuse it (roadmap §Intermediate "Diagonal-preconditioner apply"). Routes `harvester`. OQ `assemblediagonal-is-not-apply-linop-variant`.
+
+### Low fan-out / hygiene
+- **rough-in-naming-residue-l0-sweep** — repoint stale `nrm2_weighted` / `dot_bilinear` references at L0 file overviews to `matrix-weighted-norm` / `bilinear-form`; prune the stale `orthog → plane-rotation-stream` dependency-map edge; add the `sparse_triangular_solve` reciprocal row to `negative-result-slice.md`. Routes `same-layer-cross-cutter`/`layer-intro-author`. OQs `matrix-weighted-norm-naming-sweep`, `bilinear-form-slug-name-coordination`, `dependency-map-orthog-plane-rotation-stale-edge-prune`, `negative-result-slice-examples-reciprocal-membership`.
+- **cg-initial-residual-quirk-palace-bug-flag-lift** — lift the likely-Palace-bug `initial_res` quirk annotation from the `cg.md` stub into the firm artifact. Routes `abstractor`. OQ `cg-initial-residual-quirk-palace-bug-flag-lift-path`.
+- **floquet-correction-operator-construction-variants** — survey `floquetcorrection.{hpp,cpp}` for operator-construction variants the `apply_linop` lowering would need to absorb. Routes `harvester`/`cross-layer-cross-cutter`. OQ `floquet-correction-operator-construction-variants`.
+
+### Carried-forward queued (pre-existing)
+- **lower-layer-shared-vocabulary-priority** (user directive 2026-05-27, mid-cycle-009; carried) — prefer populating L1/L2/L3 shared utility over L4 expansion. **Status: substantially discharged batch-2/3/4** (L3 1→8, L2 1→3, L1 10→11); bias-guidance only for cycle-019+. Friction-ledger `lower-vocabulary-priority-over-higher-expansion` (addressed).
+- **bootstrap-L4-state-stratification** — L4 layer intro / dep-map exposing sim-state vs operator-params vs ephemeral. Lower-priority than lower-layer work above. **fan-out:** organizes all future L4 entries.
+- **spectrum_estimate L1 rough-in** (`harvester`; shares matrix-weighted-norm cohort); **chebyshev anchor reconcile** carried — both low-priority residuals. (`gmres.md §L4 self-rotation` + NLEPS are active #3/#4.)
+
+### Next-meta-phase methodology agenda (routed from intake; NOT artifact work)
+The 2026-05-28 unification surfaced four methodology questions parked in intake; the **next meta-phase** should adjudicate (they live, flagged, in `open-questions.md` §deferred):
+- `variant-absorption-vs-instance-counting-policy` (may already be addressed by the cycle-018 combinator-miner parametric-family mode — confirm).
+- `combinator-miner-authority-defer-verdict-status-edit-scope` (role-spec authority).
+- `test-coverage-bounded-rough-in-nomenclature` (canonicalize the status tier, as `partly-constructive` was).
+- `partial-obstruction-status-codification` (codify the status `L3/chebyshev` already uses).
+
+### Open ASK to human (policy; cannot self-resolve)
+- `minres-mfem-as-l0-substrate-policy` (+ dup `bicgstab-mfem-reanchor-policy`) — should MFEM's Krylov solvers (`mfem::MINRESSolver`, `mfem::BiCGSTAB`) count as L0 substrate, recovering the cycle-004 MINRES/BiCGStab obstruction themes as real lowerings? Or do the obstruction themes stand (cite Palace, not vendored upstream)? Routes to human; held in `open-questions.md` §deferred.
 
 ## Methodology priorities (codified; addressed — kept for planner reference)
 
@@ -54,9 +89,7 @@ These were active priorities #18–#20 in batch-1; all are now codified in CLAUD
 ## Watch list (deferred)
 
 - **haiku-cycle-planner-cascade-pattern** — addressed across cycles 003–004 by user directive 8fc3a07. Cycle-004 planner ran 7 dispatches cleanly with parallel-when-in-doubt; no over-scoping observed. **Status: monitoring only**; demote from watch list if cycle-005 also clean.
-- **scalar-promotion-typing-rule lift** — open question `scalar-promotion-typing-rule`: now **5 operators** (`axpy`, `dot`, `axpby`, `axpbypcz`, `scal`). Promoted to active priority #9 above.
-- **l2-dep-map-format-vs-l1** — open question `l2-dep-map-format-vs-l1`: decide whether the L2 Working-Notes overflow is reusable across L2/L3/L4 dep-maps or a fifth column is cleaner. Routes back to meta-phase / channel-format change.
-- **axpby-corpus-coverage-exhaustive-indexing** — open question (cycle-003): the cycle-003 lowering-verifier deferred ~25 uncited corpus sites + 3 defined-not-used L0 forms for future exhaustive indexing. Defer until L1 vocabulary fully firm.
+- _(reconciled 2026-05-28 OQ unification: `scalar-promotion-typing-rule` and `l2-dep-map-format-vs-l1` are CLOSED-resolved; `axpby-corpus-coverage-exhaustive-indexing` is now tracked in `open-questions.md` §deferred. Removed from this watch list to avoid duplication — intake lives in the OQ ledger, work lives in the Backlog above.)_
 - **Obstruction-theme tooling decision** — cycle-004 introduced `justification kind: obstruction` as a new L1>L0 theme category. Cross-layer-cross-cutter consumers should treat these differently (skip evidence-walking; surface as "anticipated work"). Meta-phase to write a channel-format spec when the cross-layer-cross-cutter dispatch first encounters one.
 - **Other Claude Code project filter-repair pattern** — watch-list note: if other projects we work on hit the same content-pattern Write filter on REPORT/summary/findings/analysis files, apply the cycle-004 rename pattern (project-wide rename to non-keyword filename + retire workaround skills).
 - Phase 1 slice corpus move to `book/src/_phase1_corpus/` — 64 cross-references need rewriting; defer until pilot validates flow.

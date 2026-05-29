@@ -2,6 +2,8 @@
 
 Running list of NAMED friction patterns observed across cycles. One section per pattern.
 
+**This is an INTAKE channel, not a holding pen** (user directive 2026-05-28). Friction is *reported* here; its **resolution is migration**, not parking. When the meta-phase addresses a pattern, the corrective work-item is migrated **into the plan** (`scaffolding/priorities.md`) — a role-spec edit, a skill, a methodology codification, or a backlog component — and the pattern is marked `addressed`/`resolved` with `addressed_by` set. A pattern that recurs without a corresponding plan item is the signal that migration hasn't happened yet. The plan, not this ledger, is where "what we will do about it" lives; this ledger is the evidence trail of *why*.
+
 **Format** (frontmatter per section):
 
 ```yaml

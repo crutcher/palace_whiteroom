@@ -15,10 +15,10 @@ See `MIGRATION.md` for the full project spec (you don't need to read it every cy
 ## Inputs
 
 Read these every cycle:
-- `scaffolding/roadmap.md` — relative-progress vs project goals.
-- `scaffolding/priorities.md` — short next-up list (if it exists).
-- `scaffolding/friction-ledger.md` — running named patterns; **recurring-but-unaddressed patterns are priority signal**.
-- `scaffolding/open-questions.md` — long-open questions.
+- `scaffolding/priorities.md` — **THE PLAN. This is your primary input.** The project's ongoing, fan-out-ranked work backlog (co-owned by you and meta-phase). Pick this cycle's dispatches from it, **highest fan-out first** (`Now (active head)`, then the Backlog's High → Medium → Low fan-out tiers). You may **update** it (see Discipline) — examining and updating the plan is part of planning.
+- `scaffolding/roadmap.md` — coverage/goals map + the **fan-out impact model** (`|concepts| × |downstream-reuse| × 1/cost`) that ranks the plan. Use it to judge a candidate's fan-out, not as a task list.
+- `scaffolding/friction-ledger.md` — **INTAKE** (named friction patterns). Recurring-but-unaddressed patterns are priority signal; if one warrants component/methodology work not yet in the plan, surface it as a plan candidate (see Discipline).
+- `scaffolding/open-questions.md` — **INTAKE** (open questions). Its `Open — migrated to the plan` items already live in the plan; scan the `deferred / contingent` section for any whose trigger has now fired — those become fresh plan candidates.
 - `scaffolding/integrator-signals.md` — running tail of integrator-to-planner signals (what landed, what's unblocked, what new dependencies materialized, what resolution implications). **Read the most recent ~3 entries.** This is the integrator's structured handoff to you.
 - `reports/` — recent reports (last ~10 cycles): scan for unresolved caveats, deferred follow-ups.
 - The integrator's most recent batch report — `reports/<timestamp>-integrator-cycle-N/REPORT.md` — for what just landed, deferred, rejected.
@@ -64,13 +64,14 @@ status: pending
 - **Conflict-tolerance philosophy** (user directive 2026-05-27): minor wave conflict at integration is *useful signal* about integration tooling, not friction to avoid. **When in doubt, mark as PARALLEL.** False sequentialization (sequentialising work that doesn't actually conflict) is the worse error — it costs throughput and hides the integration cases that need tooling. False parallelization (marking parallel things that mildly conflict) is corrected cheaply by the integrator's merge handling and surfaces as an `integrator-signals` data point next cycle.
 - Two dispatches that **modify the same operator entry** OR **rewrite the same theme body** are genuinely overlapping → sequential. Two dispatches that **append distinct rows to the same dep-map table** are NOT overlapping at the operational level → parallel.
 - Read `scaffolding/integrator-signals.md` tail (most recent ~3 integrator signal sections) for unblocked items, resolution implications, and pattern hints from the last integration.
-- When friction-ledger has `escalating`-status patterns, prioritize work that would address them.
-- When the priority list mentions specific items, slot them in.
+- **Prioritize by fan-out impact.** The plan's backlog is ranked High → Medium → Low fan-out (what each item unblocks downstream). Fill the cycle's dispatch slots from the top of that ranking — a High-fan-out component (one that unblocks multiple downstream solvers/layers) outranks a low-fan-out one-off even if the latter is older. The `Now (active head)` picks come first; then the highest backlog tier with eligible (unblocked) work.
+- **You co-own the plan; update it.** Examining and updating `scaffolding/priorities.md` is part of planning (user directive 2026-05-28). You MAY: append a fresh plan candidate when an integrator-signal / fired-trigger OQ / escalating friction pattern surfaces actionable work not yet in the backlog (place it in the right fan-out tier with a `fan-out:` note); mark items you're dispatching this cycle; note a re-rank. You do NOT do the batch-level migration/compaction of intake — that is meta-phase's standing pass. Keep `Now (active head)` focused (≤~10); let the backlog hold the rest.
+- When friction-ledger has `escalating`-status patterns, prioritize work that would address them (and ensure that work is *in the plan* — add it if missing).
 - **Verify Palace source file paths and symbol locations via the MCP codemap before citing them in a dispatch scope.** Use `mcp__palace-codemap__list_files`, `mcp__palace-codemap__search_text`, `mcp__palace-codemap__get_symbol_def`. Do NOT cite a path from memory or inference — you have repeatedly drifted on `linalg/*` file paths (cycle-010 cited non-existent `eps.cpp`/`feast.cpp`; cycle-011 mis-framed `Solver<OperType>` as direct-solver-only; cycle-012 cited `palace/eigensolver/slepc.cpp` when the correct path is `palace/linalg/slepc.cpp`; the orchestrator corrected each in the briefs). If a codemap query is ambiguous, cite the scope by symbol/concept and note "path to be confirmed at dispatch" rather than guessing a path. The codemap tools are reliably available as of cycle-010 (pilot succeeded; routine use cycles 011/012). Friction-ledger `cycle-planner-dispatch-prompt-framing-drift`.
 
 ## What you DO NOT do
 
 - Author content in the artifact (book/, etc.).
 - Invoke other agents directly — the main session reads your plan and dispatches.
-- Modify `scaffolding/priorities.md` — meta-phase owns that.
+- Do the batch-level intake migration / compaction of `open-questions.md` / `friction-ledger.md` — that is meta-phase's standing pass. (You MAY append fresh plan candidates to `priorities.md` per Discipline; you do not rewrite the closed index or re-triage the whole ledger.)
 - Skip the overlap analysis. The dispatch plan IS the overlap reasoning.

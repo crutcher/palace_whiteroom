@@ -146,16 +146,17 @@ BOOTSTRAP.md               # original phased build spec (superseded; historical)
 
 | Agent | Writes to |
 |---|---|
-| cycle-planner, 8 specialized | `reports/<id>/CYCLE.md` + supporting docs in same dir only |
+| cycle-planner | `reports/<id>/CYCLE.md` + `scaffolding/priorities.md` (**the plan** — co-owned with meta-phase; append fresh fan-out-ranked candidates + mark dispatched picks; does NOT do batch-level intake migration/compaction) |
+| 8 specialized | `reports/<id>/CYCLE.md` + supporting docs in same dir only |
 | critic | `reports/<id>/META.md` critique section |
 | repairer | `reports/<id>/META.md` repair section + in-place edits to CYCLE.md / supporting docs |
 | integrator-per-report | `book/` (per-report proposed-changes), `scaffolding/open-questions.md` (append-only), `reports/<cycle-id>-integrator-staging/STAGING.md` (append-only) |
 | integrator-finalize | `book/` (build-repair only), `scaffolding/roadmap.md`, `scaffolding/cycle-record.jsonl`, `scaffolding/integrator-signals.md`, `log/`, `reports/<id>-integrator-finalize-cycle-N/CYCLE.md`, per-consumed-report `integrated_at` frontmatter touches |
-| meta-phase | `.claude/agents/`, `skills/`, `scaffolding/priorities.md`, `scaffolding/friction-ledger.md`, `scaffolding/skill-candidates.md` (status updates), `scaffolding/problems-sensitivity.md`, channel-format specs |
+| meta-phase | `.claude/agents/`, `skills/`, `scaffolding/priorities.md`, `scaffolding/friction-ledger.md`, `scaffolding/skill-candidates.md` (status updates), `scaffolding/problems-sensitivity.md`, `scaffolding/open-questions.md` (**unify only** — close/migrate/compact at meta-phase; see §Methodology invariants "Open-questions ledger is unified by the meta-phase"), channel-format specs |
 
 **Any-agent-appendable** (append sections, never edit existing):
 - `scaffolding/skill-candidates.md`
-- `scaffolding/open-questions.md`
+- `scaffolding/open-questions.md` (append-only between meta-phases; meta-phase has unify/edit authority — see partition note above)
 - `scaffolding/decisions/`
 - `scaffolding/test-linkages/`
 
@@ -163,6 +164,7 @@ BOOTSTRAP.md               # original phased build spec (superseded; historical)
 
 These are load-bearing — do not "improve" them away.
 
+- **The plan is the single ongoing work artifact; intake channels feed it, they don't hold work** (user directive 2026-05-28). `scaffolding/priorities.md` is **the plan**: the durable, fan-out-ranked component backlog, co-owned by `meta-phase` and `cycle-planner`. `scaffolding/open-questions.md`, `scaffolding/friction-ledger.md`, and `problems/` are **intake channels** — issues and friction are *reported* there, not parked. **Resolution = migration:** the meta-phase's standing every-batch pass (`.claude/agents/meta-phase.md` §Intake→plan migration) triages intake, **migrates actionable items into the plan** (ranked by fan-out), closes resolved/stale/duplicate to a compact index, and keeps genuinely-blocked items compacted with a trigger. `cycle-planner` examines the plan every primary cycle, dispatches **highest-fan-out work first**, and may append fresh plan candidates. `roadmap.md` is the coverage/goals map + the **fan-out impact model** (`|concepts| × |downstream-reuse| × 1/cost`) that ranks the plan — not itself a task list or a migration target. The *reason* for this structure: so the planning phase can prioritize the components with the most fan-out impact. An open question or friction pattern that lingers in its intake channel without a plan item means migration hasn't happened — that is the defect to catch, not unbounded ledger growth.
 - **Citations are mandatory.** Every claim carries `(file, start_line, end_line)`. No citation, no claim. Citation format: plain text `relative/path/file.ext:start-end` (relative to `reference/`).
 - **Roles do not share context.** Each subagent dispatch gets its own isolated context. The critic in particular must not see the producer's chain-of-thought.
 - **Reports are append-only after integration.** After `integrated_at:` is set, CYCLE.md content is not edited. (Repairer may edit pre-integration; bounded by repair authority.)
