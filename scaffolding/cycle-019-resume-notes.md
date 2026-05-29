@@ -22,7 +22,12 @@ Per friction-ledger entry `new-agent-defs-need-session-restart`, **the parent sh
 8. **`.claude/agents/integrator-per-report.md`** — Process step 7 (STAGING.md append) hardened to a HARD, non-skippable step (cycle-018 staging-log-append gap).
 9. **`.claude/agents/integrator-finalize.md`** — Process step 1 gains a staging-row-count cross-check vs dispatched-report-count + reconcile-on-mismatch.
 
-A session restart ensures these definitions are loaded for cycle-019 dispatch.
+**Plus, from the post-meta user-directed intake→plan refactor (2026-05-28; see §"Intake→plan refactor" below):**
+
+10. **`.claude/agents/meta-phase.md`** — new §Intake→plan migration (standing every-batch pass; OQ + friction → the plan, fan-out-ranked); sole-unifier of `open-questions.md`.
+11. **`.claude/agents/cycle-planner.md`** — the plan (`priorities.md`) is now the primary input; dispatch highest-fan-out first; co-owns + may update the plan; OQ/friction reframed as intake.
+
+A session restart ensures all of these definitions are loaded for cycle-019 dispatch.
 
 ## HEADLINE enactment — combinator-miner parametric/variadic-family detection mode
 
@@ -38,15 +43,24 @@ Per CLAUDE.md §Methodology invariants "Compactify primary context after every m
 
 1. **integrator-per-report pre-dispatch clean-tree gate (HELD).** The `specialized-agent-direct-write-to-book-during-dispatch` watch clause's option (b). With the prompt-guard now universal across all 8 specialized specs (the prevention layer) and the `revert-dispatch-phase-book-mutation` repairer skill (the recovery layer), a third backstop — a gate that checks `git status book/` is clean before applying a report and refuses/flags if a dispatch already mutated `book/` — is **held, NOT enacted**. It is ask-class (tooling/structural; changes the per-report apply preconditions). **Recommendation: enact ONLY on recurrence-4** (a fourth book-leak despite the universal prompt-guard), mirroring the citation-checker logic — if the universal prompt-guard shows its ceiling, the structural gate becomes warranted. No action needed unless the user wants the gate pre-emptively.
 
-2. **open-questions.md lazy de-dup / index rebuild.** `scaffolding/open-questions.md` is ~3040 lines with heavy append-only RESOLUTION notes accumulating in the per-block YAML region (the cycle-018 integrator-signals flagged this). **This file is NOT in the meta-phase write-authority partition** (it is integrator-per-report append-only + integrator-finalize status-flips), so the meta-phase cannot enact a rebuild. **Decision needed**: (a) route to integrator-finalize as a maintenance pass (compact resolved-and-flipped blocks to one-line stubs, keep the authoritative body-entries section); (b) build a sidecar index (`scaffolding/open-questions-index.md`) regenerated each cycle; (c) leave as-is (it is append-only-by-design and the body section stays authoritative). Recommendation: (a) — a finalize-side lazy compaction of fully-resolved blocks, since finalize already owns the status-flips. Surfaced for the human / the next finalize to action.
+2. **open-questions.md lazy de-dup / index rebuild — RESOLVED 2026-05-28 (user directive).** The user directed a fuller fix than option (a): unify the ledger AND empower the meta-phase to own the unification going forward (see §"Intake→plan refactor" below). The founding unification pass ran (3040 → 237 lines; 142 entries triaged) and the meta-phase now holds unify/edit authority over `open-questions.md`. No further action needed.
 
 ## Carried-forward ASK that did NOT escalate
 
 The batch-3 **mechanical codemap-backed citation-range checker tool** ASK (`tools/`) stays `reviewed: defer-confirmed`. Batch-4 was its test window: the producer self-verify bullets HELD (no new producer-emit drift across 016/017/018 despite heavy citation surface; recurrence-4 did NOT fire). Build the checker only if drift returns in batch-5+. No new decision needed.
 
+## Intake→plan refactor (post-meta user directive, 2026-05-28)
+
+After the batch-4 meta-phase landed, the user directed a structural change to how open questions and friction are managed. **Read this before planning cycle-019 — it changes what `priorities.md` is.**
+
+- **`scaffolding/priorities.md` is now THE PLAN** — the project's single ongoing, fan-out-ranked work backlog (`Now (active head)` + uncapped `Backlog — ranked by fan-out impact`). It is co-owned by meta-phase + cycle-planner. The cycle-019+ active picks (the seven above) are its `Now` head; the Backlog holds the migrated work.
+- **`open-questions.md` + `friction-ledger.md` are INTAKE channels, not holding pens.** Issues/friction are reported there; their *resolution is migration into the plan*. The meta-phase runs a standing every-batch §Intake→plan migration pass; the cycle-planner reads the plan and may append fresh candidates.
+- **`roadmap.md` is the coverage map + fan-out impact model that RANKS the plan** — not a task list.
+- **Planner consequence for cycle-019:** pick dispatches from the plan **highest-fan-out first**. The Backlog's High-fan-out tier (l2-named-composition-lifts, ksp-solve-l2-promotion, l3-vocabulary-inventory-gap, blas1-l1-l0-lowering-theme-gap) is now visible alongside the `Now` head — weigh those for slots not taken by the headline carry-forwards.
+
 ## New / updated CLAUDE.md §Methodology invariants
 
-**NONE added this meta-phase.** All batch-4 enactments are role-spec + ledger + priorities changes, not new CLAUDE.md invariants.
+**One added (post-meta, 2026-05-28 user directive):** "The plan is the single ongoing work artifact; intake channels feed it, they don't hold work" — codifies the intake→plan→fan-out flow above. The batch-4 meta-phase enactments themselves added no invariants (role-spec + ledger + priorities only).
 
 ## New priorities surface (cycle-019+ active — see scaffolding/priorities.md §Now)
 
