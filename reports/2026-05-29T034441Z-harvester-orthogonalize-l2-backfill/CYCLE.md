@@ -1,3 +1,57 @@
+---
+agent: harvester
+invoked_at: 2026-05-29T034441Z
+scope: L2 operator: orthogonalize (corrective backfill of cycle-019 fence-truncation defect)
+status: integrated
+integrated_at: 2026-05-29T06:05:00Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "cycle-020 finalize (staging row #1, applied FIRST by ordering constraint). CORRECTIVE BACKFILL of the cycle-019 orthogonalize L2 fence-truncation defect — cycle-019 (efb8a0b) landed only the 14-line intro because the firm body was authored OUTSIDE the proposed-changes edit: fence; book/src/L2/orthogonalize.md was a 14-line intro with NO ## Status while L2/index.md:27 + SUMMARY.md:41 already said firm. Full-file replacement recovered the complete firm chapter (## Status firm + Signature + 7 algebraic laws + Variant axes + L2-vs-L1 + Evidence). NOT a firm-count increment (orthogonalize already counted firm cycle-019); L2 firm stays 5. No dep-map/SUMMARY edit (both already firm, correctly not re-touched). TWO skill-candidates filed (proposed-changes-fence-encloses-full-body-guard, verify-intro-firmness-survey-against-on-disk-status-lines) + OQ firm-chapter-body-authored-outside-proposed-changes-fenced-block → batch-5 meta. retroactive-budget 0; clean build."
+inputs:
+  - reports/2026-05-29T023000Z-harvester-orthogonalize-l2/CYCLE.md (cycle-019 source-of-truth firm body; integrated efb8a0b)
+  - book/src/L2/orthogonalize.md (the truncated 15-line intro-only landed by cycle-019; this dispatch full-replaces it)
+  - book/src/L2/inner_product.md, book/src/L2/linear_combination.md, book/src/L2/krylov-step.md (canonical firm-L2-entry shape reference)
+  - book/src/L1/orthogonalize.md (firm L1 leaf this composition lifts; cycle-012)
+  - Re-verified L0 this dispatch (read_range): palace/linalg/orthog.hpp:18-90,
+    iterative.cpp:308-325/628-634/807-813, models/romoperator.cpp:51-66/222-227/631-646,
+    test/unit/test-orthog.cpp TEST_CASE boundaries :99/:123/:164/:234/:276/:333 + wrapper 71-97 + orthogonality assertion :158
+---
+
+# CYCLE: Formalize orthogonalize at L2 (corrective backfill)
+
+## Summary
+
+This is a **corrective backfill**, not new authoring. The cycle-019 harvester
+(`reports/2026-05-29T023000Z-harvester-orthogonalize-l2/CYCLE.md`, integrated `efb8a0b`)
+produced a fully-vetted firm L2 `orthogonalize` body, but a **fence-truncation defect** in
+that report left only the 14-line intro paragraph inside the
+`edit:book/src/L2/orthogonalize.md` fenced block (report lines 46–59); the firm body
+sections (`## Context` … `## Evidence`, report lines 62–468) were authored as the *report's
+own* top-level sections, **outside** the fenced edit block. The integrator therefore landed
+only the intro. The result: `book/src/L2/orthogonalize.md` is a 15-line intro with **no
+`## Status`, no Signature, no laws, no Evidence** — while the dep-map row
+(`L2/index.md`) and `SUMMARY.md:41` already mark it `firm`.
+
+This dispatch **recovers the cycle-019 vetted firm body verbatim** (no re-authoring), assembles
+intro + `## Context` … `## Evidence` into one complete firm chapter conforming to the canonical
+firm-L2-entry shape (verified against `inner_product.md` / `linear_combination.md` / `krylov-step.md`:
+intro → Context → Signature → Semantics → Algebraic laws → Dependencies → Variant axes → Status
+(`firm`) → L2-vs-L1 → Evidence; firm L2 entries carry **no YAML frontmatter**, beginning with
+`# <slug>`), and emits it as ONE clean `edit:book/src/L2/orthogonalize.md` full-file-replacement
+block with the closing fence placed AFTER the entire Evidence section. Every L0 citation was
+**re-verified against source this dispatch** (`palace-codemap read_range`); all of the cycle-019
+report's pointers verified correct (the repairer's cycle-019 re-verification stands), with **one
+off-by-one boundary correction**: the `orthogonalize_wrapper` test class closes at
+`test-orthog.cpp:97` (the `};`), not `:96` — corrected `71-96` → `71-97` in the Evidence section.
+
+The dep-map row (`L2/index.md`) and the `SUMMARY.md` entry are ALREADY correct (`firm`,
+de-stubbed) from cycle-019 — this dispatch proposes **NO change to them** (no double-edit). The
+single proposed change is the `book/src/L2/orthogonalize.md` body. The
+`L2-L1/orthogonalize-composition-lowering` forward-reference stays plain-text (the chapter does
+not yet exist).
+
+## Proposed changes
+
+```edit:book/src/L2/orthogonalize.md
 # orthogonalize
 
 The L2 first-class composition naming the Gram-Schmidt **orthogonalize-against-basis**
@@ -419,3 +473,80 @@ cycle-005 `krylov-step` L2 composition.
   (`op.orthog`); §"L2 vs L1 distinction" forecasts this exact entry.
 - `book/src/concepts/variant-absorption.md:131` — the residual-axis-disclosure ground for the
   collective-shape axis and the Householder scope-out.
+```
+
+## Citation self-verification log
+
+Every L0 citation in the recovered body was re-verified against source this dispatch via
+`palace-codemap read_range` / `search_text`. All cycle-019 pointers verified **correct** (the
+cycle-019 repairer's independent re-verification stands); one off-by-one boundary corrected.
+
+| Citation | Re-verification (read this dispatch) | Verdict |
+|---|---|---|
+| `orthog.hpp:18-23` header scope contract; `:22` "Assumes…normalized…does not normalize" | read 18-90: line 22 = `// Assumes that the input vectors are normalized, but does not normalize the output vectors!` | CORRECT |
+| `orthog.hpp:25-37` `IdentityInnerProduct` + `InnerProductHelper` concept | line 25 `// Concept: InnerProductHelper…`, struct `IdentityInnerProduct` 29–37 (`};` at 37) | CORRECT |
+| `orthog.hpp:38-53` `OrthogonalizeColumnMGS`, per-`j` `dot`/`GlobalSum(1,…)`/`w.Add` | MGS template 39–53; loop body `H[j]=dot_op(...)`/`Mpi::GlobalSum(1,&H[j],comm)`/`w.Add(-H[j],V[j])` present | CORRECT |
+| `orthog.hpp:55-89` `OrthogonalizeColumnCGS`; `m==0` guard `:62-64`; `GlobalSum(m,…)`; `refine`/`dH`/`H[j]+=dH[j]` | CGS template 55–89; `if (m == 0)` at 62, `return;` at 64; batched `GlobalSum(m, H, comm)`; refine block accumulates `H[j] += dH[j]` | CORRECT |
+| `iterative.cpp:308-325` `OrthogonalizeIteration` switch MGS/CGS/CGS2, CGS2=`...,true`, leading `j+1` | read 308-325: `switch (type)`, `CGS2: OrthogonalizeColumnCGS(comm, V, w, Hj, j + 1, true)` | CORRECT |
+| `iterative.cpp:630-632` GMRES: `OrthogonalizeIteration(...)` → `Hj[j+1]=Norml2(...)` → `w *= 1.0/Hj[j+1]` | read 628-634: line 630 call, 631 `Norml2`, 632 `w *= 1.0 / Hj[j + 1]` | CORRECT |
+| `iterative.cpp:809-811` FGMRES: identical call+`Norml2`+`scal` | read 807-813: lines 809/810/811 identical sequence | CORRECT |
+| `romoperator.cpp:51-66` `OrthogonalizeColumn` wrapper, switch + `dot_op` forward, CGS2=`refine=true` | read 51-66: `switch (type)` forwarding `dot_op`, `CGS2: OrthogonalizeColumnCGS(..., true, dot_op)` | CORRECT |
+| `romoperator.cpp:224-226` canonical-hook consumer: call → `Norml2` → `*= 1.0/norm` | read 222-227: line 224 `OrthogonalizeColumn(orthog_type, comm, Q, Q[dim_Q], R.col(dim_Q).data(), dim_Q)`, 225 `Norml2`, 226 `*= 1.0 / R(dim_Q,dim_Q)` | CORRECT |
+| `romoperator.cpp:631-646` B-weighted hook; closure capture `:635-636` | read 631-646: `OrthogonalizeColumn(..., [&W = *(this->weight_op_W), &r = this->r](const Vector &x, const Vector &y){ return W.InnerProduct(x, y, r.Real()); })`; capture line at 635, `W.InnerProduct` at 636 | CORRECT |
+| `test-orthog.cpp:71-96` wrapper class "comment 71 through `};` at 96" | read 71-97: comment at 71, class `orthogonalize_wrapper` 72–97, **`};` at line 97** (line 96 = `}` closing `operator()`) | **CORRECTED → `71-97`** |
+| `test-orthog.cpp:99-120` empty-prefix "Real Empty"; `m=0` identity | `TEST_CASE("OrthogonalizeColumn - Real Empty"...)` at 99 (search_text confirmed); `CHECK_THAT(w, RangeEquals(w_orig))` at 120 | CORRECT |
+| `test-orthog.cpp:123-160` parametric "Real 1"; assertion `:158`; loop 154-159; close 160 | `TEST_CASE(...Real 1)` at 123; counted: `CHECK_THAT(dot, WithinAbs(0.0,1e-12))` at 158, TEST_CASE close at 160 | CORRECT |
+| `test-orthog.cpp:154-159` per-rank orthogonality-check loop (iterates over MPI ranks) | comment at 154, `for` 155, `auto dot=...` 157, assertion 158, `}` 159 | CORRECT |
+| `test-orthog.cpp:164, 234, 276, 333` TEST_CASE boundaries (real-2 / complex-1 / weighted-real-1 / weighted-complex-1) | `search_text ^TEST_CASE` → 164 "Real 2", 234 "Complex 1", 276 "Weighted - Real 1", 333 "Weighted - Complex 1" | CORRECT (all four exact) |
+
+Single correction applied to the recovered body: the `orthogonalize_wrapper` Evidence line
+`71-96` → `71-97` (the class `};` is at line 97; line 96 is the `}` closing `operator()`). All
+other citations land on the asserted construct. No other drift found.
+
+## Open questions / caveats
+
+- **Provenance: this is a corrective backfill of the cycle-019 fence-truncation defect.** In
+  `reports/2026-05-29T023000Z-harvester-orthogonalize-l2/CYCLE.md` (integrated `efb8a0b`), the
+  firm chapter body (`## Context` … `## Evidence`, report lines 62–468) was authored as the
+  report's own top-level sections — only the intro paragraph (report lines 46–59) sat INSIDE
+  the `edit:book/src/L2/orthogonalize.md` fenced block. The integrator landed only the intro,
+  leaving `book/src/L2/orthogonalize.md` as a 15-line intro-only chapter with no `## Status` /
+  Signature / laws / Evidence, while the dep-map row and `SUMMARY.md:41` already marked it
+  `firm`. This dispatch full-replaces that stub with the complete recovered firm body,
+  correctly fenced (closing ``` AFTER the Evidence section). **Recommend the meta-phase log a
+  friction-ledger entry** for the recurring "firm chapter body authored outside the
+  proposed-changes fenced block" pattern (a producer-side fencing-discipline defect distinct
+  from the citation-drift family) and that the critic's `cross-reference-integrity` /
+  build-readiness checks add a guard: when a dep-map row / SUMMARY entry says `firm` but the
+  target chapter has no `## Status` section, flag it. The cycle-019 critic+repairer cycle
+  validated the *content* (citations correct) but did not catch that most of the content never
+  entered the artifact, because the report's prose carried it.
+
+- **No dep-map / SUMMARY change proposed (deliberate, to avoid a double-edit).** The
+  `L2/index.md` `orthogonalize` dep-map row and the `SUMMARY.md:41` de-stubbed entry
+  (`- [orthogonalize](./L2/orthogonalize.md)`) were both applied correctly by cycle-019 and
+  already say `firm`. This dispatch's single proposed change is the chapter body. If the
+  integrator finds either the dep-map row or the SUMMARY entry is somehow ALSO missing/wrong
+  (it should not be — verify against `efb8a0b`), that is a separate defect to file, not to
+  fold into this backfill.
+
+- **Inherited open questions (carried from cycle-019, still open; not re-opened here).** The
+  cycle-019 report's four caveats remain live and are NOT resolved by this backfill: (1) the
+  `L2-L1/orthogonalize-composition-lowering` theme is still unwritten (abstractor territory;
+  plain-text forward-reference retained in the chapter); (2) the `{ residual, coeffs }`
+  record-naming-vs-L1-`(w', H)`-tuple convention flag stands; (3) the `inner_product`
+  sibling-fold tightening (cite `inner_product` for the `project` stage once it firms) stands;
+  (4) the L2 layer-intro Working-Notes refresh (OQ `L2-layer-intro-refresh-for-named-compositions`,
+  layer-intro-author territory) stands. These were correctly logged at cycle-019 integration;
+  this dispatch does not re-append them to the OQ ledger (no duplication).
+
+- **`romoperator.cpp:644-645` / `:633-645` consumer-norm citations carried from the report,
+  not independently line-verified this dispatch.** The Semantics/Dependencies prose cites the
+  ROM second-consumer normalisation at `romoperator.cpp:224-226` (verified) and `:644-645`
+  (the `else`-branch `Norml2` after the canonical `OrthogonalizeColumn`, visible in the
+  631-646 read as `orth_R(dim_V, dim_V) = linalg::Norml2(...)` at the tail of that range) — the
+  range I read (631-646) covers it. The `:633` call-site referenced in Dependencies/Consumers
+  ("ROM basis-extension path `romoperator.cpp:224, 633-645`") is the B-weighted-branch
+  `OrthogonalizeColumn(...)` call inside the 631-646 block I read; it lands within the verified
+  range. No drift; flagged only for completeness since the report's prose split these into
+  several sub-references.

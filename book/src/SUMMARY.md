@@ -27,6 +27,7 @@
 - [nrm2](./L3/nrm2.md)
 - [scal](./L3/scal.md)
 - [chebyshev](./L3/chebyshev.md)
+- [ksp_solve](./L3/ksp_solve.md)
 
 # L3 > L2 — Lowering
 - [Overview](./L3-L2/index.md)
@@ -79,9 +80,10 @@
 - [minres-iteration](./L1-L0/minres-iteration.md)
 - [chebyshev-smoother-mutation-rotation](./L1-L0/chebyshev-smoother-mutation-rotation.md)
 - [divfree-projector-mutation-rotation](./L1-L0/divfree-projector-mutation-rotation.md)
-- [dot-mutation-rotation (stub)](./L1-L0/dot-mutation-rotation.md)
+- [dot-mutation-rotation](./L1-L0/dot-mutation-rotation.md)
 - [nrm2-mutation-rotation](./L1-L0/nrm2-mutation-rotation.md)
-- [scal-mutation-rotation (stub)](./L1-L0/scal-mutation-rotation.md)
+- [scal-mutation-rotation](./L1-L0/scal-mutation-rotation.md)
+- [assemble-diagonal-mutation-rotation](./L1-L0/assemble-diagonal-mutation-rotation.md)
 - [matrix-weighted-norm-mutation-rotation (stub)](./L1-L0/matrix-weighted-norm-mutation-rotation.md)
 
 # L0 — Cited Palace Source + Reference Notes

@@ -1,3 +1,53 @@
+---
+agent: abstractor
+invoked_at: 2026-05-29T034441Z
+scope: L1>L0 theme — scal-mutation-rotation (stub→firm)
+status: integrated
+integrated_at: 2026-05-29T06:05:00Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "cycle-020 finalize (staging row #3). scal-mutation-rotation PROMOTED stub→firm (in-place scalar multiply x ← α·x; element-type + scalar-promotion variant axes; nleps.cpp:486-493 normalize site). Full-file replacement of the stub; L1-L0/index dep-map row inserted after nrm2 / before dot; SUMMARY :84 in-place de-stub. Post-repair citation drift nleps.cpp (491)→(493) + range 486-491→486-493 already fixed before apply; sibling-maturity correction landed (nrm2 firm, axpby/axpbypcz rough-in). BLAS-1 L1>L0 floor NOT yet closed (axpby/axpbypcz still rough-in) — blas1-l1-l0-lowering-theme-gap closing but not closed; meta-phase reconciles the scal constituent strike against the remainder. L1>L0 themes contribute to 12→15. retroactive-budget 0; clean build."
+inputs:
+  - book/src/L1/scal.md (firm L1 anchor)
+  - book/src/L1-L0/scal-mutation-rotation.md (stub home, materialized 2026-05-28)
+  - book/src/L1-L0/axpby-mutation-rotation.md (structural model)
+  - reference/palace/linalg/vector.{hpp,cpp} (L0 sites, self-verified)
+  - reference/palace/linalg/iterative.cpp, operator.cpp, nleps.cpp (call sites, self-verified)
+  - reference/palace/test/unit/{test-orthog,test-lumpedportintegration}.cpp (tests, self-verified)
+  - OQ scal-mutation-rotation-l1-l0-theme
+---
+
+# CYCLE: L1>L0 theme — scal-mutation-rotation (stub→firm)
+
+## Summary
+
+`scal` (`x ← α·x`) is the simplest BLAS-1 in-place mutation — an element-local,
+reduction-free rescale of a vector by a scalar. The firm L1 operator
+[`L1/scal`](../../book/src/L1/scal.md) is the pure form `scal(α, x) = α·x`; this
+theme promotes the existing stub at `book/src/L1-L0/scal-mutation-rotation.md` to
+`firm` by narrating forward how that pure form lowers into Palace's L0 in-place
+mutation sites. Unlike `axpby`/`axpy`, `scal` has **no free-function form** and
+**no scalar-value constant-folding** — the L0 surface is exactly two
+receiver-mutating member overloads (`mfem::Vector::operator*=(double)` for real,
+`ComplexVector::operator*=(std::complex<double>)` for complex) reached either
+directly (`x *= α`) or through the fused `linalg::Normalize` construct
+(`x *= 1.0/norm`, factoring at L1 as `scal(1/nrm2(x), x)`). The rewrite is
+**structural** (re-bind the L1 result value into the in-place receiver buffer)
+with one **algebraic** sub-note: the complex path's `s.imag() == 0.0` fast branch
+is a transparent scalar-promotion shape-specialisation, algebraically exact, and
+disappears at L1. I self-verified every cited L0 range against source via
+`palace-codemap` `read_range` before emitting; tests give direct
+empirical-match evidence on both the real (`test-orthog.cpp:193`) and the
+real-α-on-complex promotion (`test-lumpedportintegration.cpp:394`) paths.
+
+This is a sibling of the BLAS-1 mutation-rotation theme family —
+`nrm2-mutation-rotation` (firm), `axpby-mutation-rotation` (rough-in), and
+`axpbypcz-mutation-rotation` (rough-in) — and is the fourth member of the
+BLAS-1 floor; promoting it to firm leaves `axpby`/`axpbypcz` still rough-in,
+so the floor is not yet complete.
+
+## Proposed changes
+
+```edit:book/src/L1-L0/scal-mutation-rotation.md
 # scal-mutation-rotation
 
 The mutation rotation for the BLAS-1 vector-scalar rescale. Lowers the pure L1
@@ -190,6 +240,56 @@ Test evidence (L0-equivalent semantic documentation; self-verified):
   a complex receiver). A second instance is at
   `test-lumpedportintegration.cpp:746`.
 
+verified_against:
+  - citation: palace/linalg/vector.hpp:98-99
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: ComplexVector::operator*=(std::complex<double> s) decl on line 99; comment "// Scale all entries by s." on line 98.
+  - citation: palace/linalg/vector.cpp:203-227
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: operator*= definition; sr/si extracted; if(si==0.0){Real()*=sr;Imag()*=sr;} at 207-211; forall_switch complex kernel at 212-225 with the XR/XI cross-term. Matches theme exactly.
+  - citation: palace/linalg/vector.hpp:262-270
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: Normalize<VecType> template; norm=Norml2; MFEM_ASSERT(norm>0.0); x *= 1.0/norm (line 268); return norm. Fused nrm2+scal construct confirmed.
+  - citation: palace/linalg/iterative.cpp:632
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: w *= 1.0 / Hj[j + 1]; preceded by Hj[j+1]=linalg::Norml2(comm,w). GMRES Arnoldi basis-normalize, real scal.
+  - citation: palace/linalg/iterative.cpp:811
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: w *= 1.0 / Hj[j + 1]; identical to 632 (second GMRES code path). Confirmed same source lines.
+  - citation: palace/linalg/iterative.cpp:222
+    verdict: supports (non-instance)
+    audited_at: 2026-05-29T034441Z
+    note: cs *= w; — cs is a scalar plane-rotation cosine (T d=sqrt(...); cs=dx2/d; ... cs*=w). Scalar-scalar *=, NOT a vector scal. Correctly recorded as a disambiguation non-instance.
+  - citation: palace/linalg/operator.cpp:661
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: Normalize(comm, u); after SetRandom(comm,u), before the power-iteration while-loop.
+  - citation: palace/linalg/operator.cpp:673
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: l = Normalize(comm, u); inside the while-loop after A.MultHermitianTranspose; returns eigenvalue estimate l.
+  - citation: palace/linalg/nleps.cpp:486-493
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: c *= 1.0/norm_c (488), c2 *= 1.0/norm_c (489), v *= 1.0/norm_v (493); each preceded by a sqrt(abs(Dot(...))+squaredNorm()) norm. In-place scal on complex vectors, real promoted scalars.
+  - citation: palace/test/unit/test-orthog.cpp:193
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: V[0] *= 1 / v0_norm; on real Vector, after CHECK_THAT(v0_norm, WithinRel(sqrt(mpi_size))...). Empirical-match sub-pattern A.
+  - citation: palace/test/unit/test-orthog.cpp:208
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: V[1] *= 1 / v1_norm; second real-path normalize-by-hand, after the v1_norm assertion.
+  - citation: palace/test/unit/test-lumpedportintegration.cpp:394
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: RHS *= 0.5; on ComplexVector RHS (RHS.UseDevice(true)). Real literal scalar against complex receiver — empirical-match for the si==0.0 promotion branch (sub-pattern B).
+
 Coverage note: the cited call sites are illustrative, not exhaustive. The
 two-overload recognition (real `mfem::Vector::operator*=(double)` vs complex
 `ComplexVector::operator*=(std::complex<double>)`) plus the fused `Normalize`
@@ -213,3 +313,82 @@ small, fully present, and positively cited. (Contrast the `partly-constructive`
 reconstructed.) The one named absence — no `linalg::Scal`/`linalg::Scale` symbol —
 is a *positive* zero-hit corpus result (it confirms the receiver-only surface),
 not a reconstruction.
+```
+
+```edit:book/src/L1-L0/index.md
+| [nrm2-mutation-rotation](./nrm2-mutation-rotation.md) | `L1/nrm2` (firm) | `palace/linalg/vector.hpp`, `palace/utils/communication.hpp`, `palace/fem/errorindicator.hpp` | firm *(structural; 3 surface forms; abs-guard classified load-bearing defensive)* |
+| [scal-mutation-rotation](./scal-mutation-rotation.md) | `L1/scal` (firm) | `palace/linalg/vector.{hpp,cpp}`, `palace/linalg/{iterative,operator,nleps}.cpp` | firm *(structural; 2 element-type overloads; transparent complex imag==0 shape branch)* |
+```
+
+In-place de-stub of `book/src/SUMMARY.md` line 84 — drop the ` (stub)` label,
+do NOT append (a bare append would duplicate the entry or leave the stale
+`(stub)` label). Replace the existing line:
+
+```text
+- [scal-mutation-rotation (stub)](./L1-L0/scal-mutation-rotation.md)
+```
+
+with:
+
+```text
+- [scal-mutation-rotation](./L1-L0/scal-mutation-rotation.md)
+```
+
+## Speculative operators proposed
+
+None. `scal` is a firm L1 leaf primitive; this theme introduces no rough-in
+operators. (The fused `normalize` primitive question is pre-existing and recorded
+at `L1/scal` §Dependencies — it is not a speculative operator of this theme.)
+
+## Supporting evidence
+
+All ranges self-verified against `reference/palace/` source via `palace-codemap`
+`read_range` at 2026-05-29T034441Z. The `scal` L0 surface is exactly two
+receiver-mutating member overloads (no free-function form — `linalg::Scal` /
+`linalg::Scale` grep returns zero hits, confirming the named absence at
+`L0/linalg-free-functions`), reached either directly (`x *= α`) or via the
+`linalg::Normalize` template (`x *= 1.0/norm; return norm;`, factoring at L1 as
+`scal(1/nrm2(x), x)`). The complex overload's `s.imag() == 0.0` branch is a
+transparent scalar-promotion shape-specialisation. See the Verified-against
+block above for the full per-citation audit table.
+
+## Open questions / caveats
+
+- **Scalar promotion (real⊑complex)** — the real-α-on-complex-vector
+  promotion is realised here at the value level by the `s.imag() == 0.0` branch
+  (`vector.cpp:207-211`), distinct from `axpy`'s overload-based promotion. This
+  theme's sub-pattern B documents the in-place site; the typing rule itself is
+  already formalized in [`concepts/scalar-promotion`](../concepts/scalar-promotion.md)
+  (the former `scalar-promotion-typing-rule` OQ, resolved cycle-005 — no live OQ
+  remains). Recorded here for cross-reference only.
+- **`normalize-as-fused-l1-primitive`** (existing registered OQ, constituent of
+  the `normalize-l1-primitive-harvest` plan item; also discussed in prose at
+  `L1/scal` §Dependencies) — `linalg::Normalize` is the dominant `scal` call
+  shape in the corpus (GMRES, power-iteration, nonlinear-EVP). This theme factors
+  it as
+  `scal(1/nrm2(x), x)` + returned norm; whether to harvest a fused `normalize`
+  L1 primitive is unchanged by this theme. Flagging for the planner: a fused
+  `normalize` would unify the GMRES Arnoldi, `operator.cpp` power-iteration, and
+  `nleps.cpp` eigenvector-normalisation sites under one L1 form, which would
+  simplify those higher abstractions (the CLAUDE.md "promote to firm only when it
+  simplifies higher forms" bar plausibly applies).
+- **Coverage exhaustiveness** — consistent with the sibling
+  `axpby-mutation-rotation`, the cited call sites are illustrative; a
+  `lowering-verifier` audit should confirm the two-overload + `Normalize`
+  recognition matches the L0 corpus exhaustively (additional `x *= α` sites under
+  `palace/models/`, `palace/fem/`). Not blocking the `firm` status — the
+  recognition rules themselves are small, complete, and positively anchored.
+- **Lifting note (working-note only; not in theme content per high→low
+  discipline)** — the reverse direction (L0 `x *= α` lifting into L1 `scal`)
+  requires the no-observer-of-prior-`x` applicability condition to hold; because
+  `scal` is element-local there is no aliasing precondition to lift (the simplest
+  case in the BLAS-1 family). This note is recorded here in the CYCLE.md working
+  notes only; the formal theme chapter stays high→low (L1 form → L0 sites).
+- The constituent OQ `scal-mutation-rotation-l1-l0-theme` is **closed** by this
+  theme (stub→firm). It is **not** a standalone ledger entry — it is a rolled-up
+  constituent inside the migrated plan item `blas1-l1-l0-lowering-theme-gap`
+  (`scaffolding/open-questions.md:25`). The integrator should strike this slug
+  from that constituent list at line 25 (and check whether the parent
+  `blas1-l1-l0-lowering-theme-gap` plan item warrants status movement now that
+  `nrm2` and `scal` are firm while `dot` remains a stub), not edit a standalone
+  OQ row.

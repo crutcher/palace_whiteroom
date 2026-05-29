@@ -37,6 +37,56 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-020 — 2026-05-29T0605Z
+
+(SECOND primary cycle of meta-batch-5 — cycles 019/020/021; the **batch-5 meta-phase fires after the cycle-021 finalize commit**. Does NOT fire this cycle.)
+
+### Unblocked
+- **`fgmres-inner-loop-iterate-while-migration` L4>L3 theme** is now firmable — the gmres sibling rotation landed firm this cycle (the `gmres.md` §L4 v0.7 self-rotation + the L4>L3 theme firm-flip), so the FGMRES sister-theme has a live firm precedent to re-anchor against. A cycle-021 lifter dispatch firms it. — OQ `fgmres-inner-loop-iterate-while-migration-firm-against-gmres-sibling`
+- **`L3-L2/ksp-solve-outer-driver` theme** is WARRANTED (the L3 `ksp_solve` outer-driver fold is firm and its L3>L2 rotation is substantive/non-identity) but **gated on the L2 `ksp_solve` stub→firm promotion** — so the immediate unblock is the L2 `ksp_solve` harvest, then the abstractor theme. — OQ `l3-l2-ksp-solve-outer-driver-theme-warranted-gated-on-l2-promotion`
+- **The `deflate`/`gram` combinator candidate** is now surfaced with evidence — the recurrent `X[j]ᴴ·` deflation-subspace projection pattern in `nleps.cpp` (`:522,:529,:568`) is a combinator-miner target (`deflate`/`gram` over an invariant-pair basis `X`; pins the conjugation convention once at the combinator boundary). — OQ `nleps-deflation-subspace-projection-combinator-deflate-gram`
+- **L2 `ksp_solve` + `incremental-least-squares` stub→firm promotions** are unblocked — both are live-linked L2 stubs (materialized 2026-05-28); the L2 `ksp_solve` promotion is now extra-warranted because the firm L3 `ksp_solve` landed above it (maturity-gradient inversion to resolve). — OQ `ksp-solve-l2-promotion-non-identity-substantive-gap` / `incremental-least-squares-as-future-L2-firstclass-entry`
+- **The next L3 inventory item is the `eigsolve` kernel+driver pair** — with the `ksp_solve` L3 constituent of `l3-vocabulary-inventory-gap` now done, `eigsolve` is the next L3 backfill (scope as kernel+driver, mirroring the krylov-step kernel / ksp_solve driver split); `trsv` stays blocked (no L1 anchor). — OQ `l3-vocabulary-inventory-gap-ksp-solve-resolved-and-remaining-inventory`
+- **The `orthog.hpp:35` `LocalDot`+`GlobalSum` unweighted-inner-product surface** is a now-identified coverage gap — a SECOND unweighted inner-product surface bypassing `linalg::Dot` (routes through `LocalDot`+`GlobalSum`), out of the Dot-caller census; likely a Condition-5 coverage-gap extension (Gram-Schmidt coefficients generally observable). — OQ `orthog-hpp-localdot-globalsum-unweighted-inner-product-surface`
+
+### New dependencies
+- `book/src/L1-L0/dot-mutation-rotation.md` (firm) → `L1/dot` (firm) + L0 `vector.cpp` sites; consumed by the `nrm2 = √∘abs∘dot` sub-pattern A of `nrm2-mutation-rotation`. — report 2
+- `book/src/L1-L0/scal-mutation-rotation.md` (firm) → `L1/scal` (firm) + `concepts/scalar-promotion` + sibling `axpby`/`axpbypcz` (rough-in) + `nleps.cpp:486-493` normalize site. — report 3
+- `book/src/L1-L0/assemble-diagonal-mutation-rotation.md` (firm) → `L1/assemble-diagonal` (firm) + `apply-linop-mutation-rotation` + L0 rap/hypre/libceed sites; forward (plain-text) deps on `reciprocal`/`elementwise_product` L1 primitives. — report 4
+- `book/src/L3/ksp_solve.md` (firm) → `L3/krylov-step` (kernel half, firm) + `L2/ksp_solve` (stub — maturity-gradient inversion) + 8 BLAS-1 L3 siblings + `L3-L2/krylov-step-body-identity` + 8 concept pages; the `L3-L2/ksp-solve-outer-driver` theme is a plain-text forward-ref (gated). — report 5
+- `book/src/L4-L3/gmres-inner-loop-iterate-while-migration.md` (firm) → `L4/iterate-while` + `L4/krylov-step` Form A + `L3/krylov-step` + `krylov-step-typed-wrapper-dissolution` + live-link sibling `fgmres-inner-loop-iterate-while-migration` (rough-in); LHS surface = `spec/slices/gmres.md` §L4 v0.7. — report 6
+- `book/src/L2-L1/inner-product-fold-specialization.md` gained a `verified_against:` EOF block (15 audit rows, fully-supported) + a `conjugation_caller_inventory:` §Condition 5 block (15 caller sites: 11 invisible + 4 observable, all SLEPc-NEP `nleps.cpp`). — reports 7 + 8
+- `book/src/L4/index.md` dep-map (:44 theme row + :53 iterate-while "Lowers to" cell) synced rough-in→firm for the gmres theme (consistency-repair by integrator-finalize). — finalize
+- `book/src/L2/index.md` (refreshed) → 5 firm L2 ops + 2 live-linked stubs (`incremental-least-squares`, `ksp_solve`); new §"Vocabulary cohort"; 7-row dep-map. — report 9
+
+### Resolution implications
+- `blas1-l1-l0-lowering-theme-gap` — **partially-resolved** — the `dot`/`scal`/`assemble-diagonal` constituents firmed this cycle (joining `nrm2` from cycle-019); the `l1-l0-dot-lowering-asymmetry` constituent is resolved. But `axpby`/`axpbypcz` mutation-rotation themes are STILL rough-in, so the parent is NOT fully closed — meta-phase reconciles the constituent strikes against the axpby/axpbypcz remainder. — reports 2/3/4
+- `l3-vocabulary-inventory-gap` — **partially-resolved** — the `ksp_solve` constituent is done (first non-identity L3 backfill); the parent stays open against `trsv` (blocked, no L1 anchor) + `eigsolve` (next, kernel+driver). `gemv` was done-via-`apply_linop`. — report 5
+- `inner-product-conjugate-pair-reorder-caller-classification` (:152) — **resolved** — the cross-layer dot-callers census classifies every `linalg::Dot` site (real-projected-invisible vs full-complex-observable); meta-phase migrates/closes. — report 8
+- `gmres-inner-loop-iterate-while-migration` (Closed-index :192, `answered-by-rough-in-theme cycle-008`) — **resolved cycle-020** — the migration landed firm (slice §L4 v0.7, option (a) `check_stop_into_carry`); meta-phase updates the Closed-index entry. — report 6
+- `inner-product-harvester-formalization-and-conjugation-pinning` (:140) — **confirmed-firm** — the lowering-verifier audit (`fully-supported`, keep firm) ratifies the cycle-019 conjugation pinning; meta-phase enacts the close + plan Now #2 flip. — report 7
+- `assemble-diagonal-mutation-rotation` (theme-authoring, :110) — **resolved** — the abstractor L1>L0 dispatch landed firm; meta-phase migrates :110 to the Closed index. — report 4
+
+### Suggested next dispatches
+- (`lifter`, `fgmres-inner-loop-iterate-while-migration`) — firm the FGMRES sister-theme against the now-firm gmres sibling (the obvious cycle-021 follow-on).
+- (`harvester`, `L2/ksp_solve` stub→firm) — promote the L2 `ksp_solve` outer-driver framing (resolves the maturity-gradient inversion below the firm L3 entry), THEN (`abstractor`, `L3-L2/ksp-solve-outer-driver`) for the substantive L3>L2 rotation.
+- (`same-layer-cross-cutter`/`harvester`, `orthog.hpp:35` `LocalDot`+`GlobalSum` unweighted-inner-product surface) — cover the second unweighted inner-product surface the Dot-caller census did not reach.
+- (`combinator-miner`, `deflate`/`gram` deflation-subspace candidate) — the recurrent nleps `X[j]ᴴ·` projection pattern; pins the conjugation convention at the combinator boundary.
+- (`abstractor`, `axpby`/`axpbypcz` L1>L0 mutation-rotation themes) — close the remaining BLAS-1 L1>L0 lowering floor.
+- (`harvester`, NLEPS at L1+) — large multi-cycle carry-forward (sustained context required); (`abstractor`, `orthogonalize-composition-lowering` L2>L1 theme) — carry from cycle-019 (now-firm L2 orthogonalize anchor ready).
+
+### Wave-conflict observations
+- **L1-L0/index.md multi-row-append (dot/scal/assemble-diagonal)** — integrations #2/#3/#4 each appended a dep-map row into the BLAS-1+ cohort after the nrm2 row; serial per-report dispatch + re-read-disk-before-edit serialized the three appends cleanly (dot after nrm2, scal inserted after nrm2 / before dot, assemble-diagonal after dot / before the minres/bicgstab obstruction rows). Zero collision; the SUMMARY.md de-stubs (#2/#3 in-place) + new chapter lines (#4/#5) serialized by-slug.
+- **Two appends to `inner-product-fold-specialization.md`** — #7 (lowering-verifier) appended a `verified_against:` yaml block at END OF FILE (~:488-553); #8 (cross-layer dot-callers) inserted a `conjugation_caller_inventory:` block into §Condition 5 (~:284-289), ~200 lines ABOVE #7's block. Serial, non-overlapping; the EOF block untouched. Composed cleanly — this is the canonical "two additive appends to the same firm chapter at distinct sections" pattern.
+- **Intra-cycle ordering dependency satisfied** — #1 (orthogonalize-backfill) landed FIRST so #9 (L2-refresh) firm-orthogonalize assertions resolve on-disk; #5 (L3/ksp_solve) created the file so #9's L2-index L3-crossref is now upgradeable (left plain-text per dispatch).
+
+### Integration-tooling friction
+- **HEADLINE — the cycle-019 orthogonalize fence-truncation defect.** The cycle-019 `orthogonalize` L2 harvest authored the firm chapter body OUTSIDE the report's proposed-changes `edit:` fenced block, so the cycle-019 integrator landed ONLY the 14-line intro; `book/src/L2/orthogonalize.md` was a 14-line intro with NO `## Status` while `L2/index.md:27` dep-map + `SUMMARY.md:41` already said `firm` — a silent body-truncation that the dep-map/SUMMARY masked. Caught cycle-020 by the L2-refresh critic; corrected by the `harvester-orthogonalize-l2-backfill` full-file replacement (staging row #1). TWO skill-candidates filed (`proposed-changes-fence-encloses-full-body-guard` — the full chapter body must be enclosed in the proposed-changes block; `verify-intro-firmness-survey-against-on-disk-status-lines` — the per-report integrator surveys intro-firmness assertions against on-disk `## Status`) + OQ `firm-chapter-body-authored-outside-proposed-changes-fenced-block`. ALL feed the batch-5 meta-phase.
+- **Recurring inline-anchor-drift** — now across cycle-019/020 in multiple reports (dot `:667`→`:668`/`:679`→`:678`; scal `nleps.cpp` `:491`→`:493`; assemble-diagonal `AbsMultTranspose` `:172`→`:174` + 3 more; ksp_solve accessor `:100-106`→`:101-108` + 3 more; inner-product-fold `operator.cpp` `:623`→`:624`/`:632`→`:634`/`:615-616`→`:616`). Wide enclosing ranges always correct; pinpoint anchors drift ±1-2 lines. The mechanical **codemap-backed citation-checker tool ASK** (deferred batch-3/4) is increasingly justified — the drift is now a stable 2-cycle pattern.
+- **Sibling-slice citation re-anchor gap** — `cg.md` drifted the same way as `gmres.md` (the lifter re-anchored stale `cg.md:215-219` CG-precedent refs to firm `L4/krylov-step` Form A while doing the gmres self-rotation). Skill-candidate `sibling-slice-citation-reanchor-sweep` filed: when a self-rotation re-anchors one slice, sibling slices carrying the same stale precedent ref should be swept in the same pass (otherwise the dangling ref surfaces a cycle or two later).
+
+---
+
 ## cycle-019 — 2026-05-29T0810Z
 
 (FIRST primary cycle of meta-batch-5 — cycles 019/020/021; the **batch-5 meta-phase fires after the cycle-021 finalize commit**. Does NOT fire this cycle.)

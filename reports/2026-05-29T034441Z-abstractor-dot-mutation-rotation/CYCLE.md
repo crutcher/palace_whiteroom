@@ -1,3 +1,121 @@
+---
+agent: abstractor
+invoked_at: 2026-05-29T034441Z
+scope: L1>L0 theme — dot-mutation-rotation (promote stub → firm)
+status: integrated
+integrated_at: 2026-05-29T06:05:00Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "cycle-020 finalize (staging row #2). dot-mutation-rotation PROMOTED stub→firm (Hermitian inner-product mutation-rotation; two variant axes element-type real/complex + tdot unconjugated sibling; closes the cycle-019 nrm2 sub-pattern-A forward-ref nrm2=√∘abs∘dot). Full-file replacement of the stub; L1-L0/index dep-map row appended after nrm2; SUMMARY :82 in-place de-stub. Post-repair citation inline-anchor drifts (:667→:668 ×5, :679→:678 ×3) already fixed in the report before apply; enclosing ranges always correct. Resolves OQ l1-l0-dot-lowering-asymmetry (constituent of blas1-l1-l0-lowering-theme-gap; meta-phase migrates). L1>L0 themes contribute to 12→15. retroactive-budget 0; clean build."
+inputs:
+  - book/src/L1/dot.md (firm L1 operator; pins arg-1-conjugated convention at :34,:43)
+  - book/src/L1-L0/dot-mutation-rotation.md (existing stub, materialized 2026-05-28)
+  - book/src/L1-L0/nrm2-mutation-rotation.md (cycle-019 firm sibling; structural model)
+  - book/src/L2-L1/inner-product-fold-specialization.md (cycle-019 firm; same conjugate-pair at L2>L1 edge)
+  - palace/linalg/vector.cpp:263-267 (ComplexVector::Dot kernel — self-verified)
+  - palace/linalg/vector.cpp:269-274 (ComplexVector::TransposeDot kernel — self-verified)
+  - palace/linalg/vector.cpp:665-672 (LocalDot(Vector,Vector) — self-verified)
+  - palace/linalg/vector.cpp:674-685 (LocalDot(ComplexVector,ComplexVector) — self-verified)
+  - palace/linalg/vector.hpp:110-113, :242-244, :246-253 (decls + Dot template — self-verified)
+  - palace/utils/communication.hpp:246-249, :266-270 (Mpi::GlobalSum / MPI_Allreduce — self-verified)
+  - palace/linalg/iterative.cpp:395 (CG live call site — self-verified)
+  - test/unit/test-vector.cpp:206-207 (real dot == 32.0 — self-verified)
+---
+
+# CYCLE: L1>L0 theme sketch — dot-mutation-rotation
+
+## Summary
+
+Promote the `dot-mutation-rotation` stub (materialized 2026-05-28) to a **firm** L1>L0
+lowering theme. The theme narrates, forward L1 → L0, how the pure L1 Hermitian inner-product
+`dot(x, y) = xᴴ y` (firm, `book/src/L1/dot.md`) lowers into Palace's L0 reduction surface:
+the local element-kernel `LocalDot` followed by the `Mpi::GlobalSum` / `MPI_Allreduce`
+collective (`linalg::Dot` = the two composed), plus the **conjugation asymmetry** — Palace's
+`ComplexVector::Dot(y)` / `linalg::Dot(comm, x, y)` compute `yᴴ x` (conjugate **arg-2**),
+while the L1 `dot` convention is `xᴴ y` (conjugate **arg-1**); the two are complex conjugates
+(`xᴴ y = conj(yᴴ x)`). Like `nrm2-mutation-rotation`, there is **no destination buffer** — the
+result lowers to a return register / stack scalar — so the "mutation rotation" is a no-op on
+the buffer side; what the theme records is (i) the expansion of one pure reduction step into
+the local-then-collective two-step the L1 signature hides, (ii) the conjugate-pair re-order
+against the L0 source, and (iii) the pinned reduction tree (load-bearing-numerical residue).
+`dot` is the **core** of the `nrm2` lowering (`nrm2 = √∘abs∘dot`, which already cites this
+theme forward); promoting it firm closes that forward-reference. Resolves OQ
+`l1-l0-dot-lowering-asymmetry`. Justification: **structural** (the rewrite is the syntactic
+expansion of one pure L1 reduction into the L0 composition) resting on one value-level
+algebraic identity (the conjugate-pair `xᴴ y = conj(yᴴ x)`).
+
+## Theme prose (forward L1 → L0)
+
+The narration below is high→low: LHS is the L1 `dot` form, RHS is the L0 source. The body of
+the proposed chapter (in §Proposed changes) is the authoritative version; this section is the
+prose walkthrough.
+
+**LHS (L1).** `dot :: (x: Tensor[N], y: Tensor[N]) -> Scalar`, the firm Hermitian
+inner-product `dot(x, y) = Σ conj(x[i])·y[i]` (complex) / `Σ x[i]·y[i]` (real), conjugate-
+linear in the **first** argument (`book/src/L1/dot.md:33-34,43`). Pure / out-of-place; no
+destination buffer; the MPI collective is **not** in the signature; the self-dot fast path
+and reduction-tree non-associativity are recorded as L1 claims, not separate operators. The
+unconjugated co-defined variant `tdot(x, y) = Σ x[i]·y[i]` (complex-only) shares the reduction
+skeleton.
+
+**RHS (L0).** The L1 step lowers into Palace's reduction family, in three surface forms that
+share the same local-then-collective skeleton and differ only in which leaf is invoked and
+whether the MPI collective is present:
+
+- **Sub-pattern A — free-function template `linalg::Dot(comm, x, y)` (the canonical form).**
+  Body (`vector.hpp:248-253`): `auto dot = LocalDot(x, y); Mpi::GlobalSum(1, &dot, comm);
+  return dot;`. This is the two-step the L1 signature hides — a rank-local kernel
+  (`LocalDot`) followed by the collective (`Mpi::GlobalSum` → `GlobalOp` →
+  `MPI_Allreduce(MPI_IN_PLACE, …, MPI_SUM, comm)`, `communication.hpp:246-249,266-270`). The
+  doc comment pins the L0 convention: `// Calculate the parallel inner product yᴴ x or yᵀ x`
+  (`vector.hpp:246`) — **arg-2 conjugated**. Single-rank is in scope, so the collective
+  lowers to a local no-op (one rank, nothing to reduce) but is structurally present and
+  carries the bit-deterministic-reduction-order trade-off.
+
+- **Sub-pattern B — method-form `(*this).Dot(y)` (complex, no MPI).** `ComplexVector::Dot`
+  (`vector.cpp:263-267`) returns `{Re(x)·Re(y)+Im(x)·Im(y), (this==&y) ? 0.0 :
+  Im(x)·Re(y)−Re(x)·Im(y)}` where `*this = x`. This equals `x·conj(y) = yᴴ x` — the receiver
+  `*this` is the **linear** operand, the call argument `y` is the **conjugated** one. The
+  declaration comment confirms: `// Vector dot product (yᴴ x) …` (`vector.hpp:110-111`). No
+  MPI collective (it is a rank-local method); at L1 this is the single-rank specialisation of
+  A with the collective elided.
+
+- **Sub-pattern C — real free-function leaf `LocalDot(Vector, Vector)` / `mfem::Vector::
+  operator*`.** The real leaf (`vector.cpp:665-672`) is one Hypre `hypre_SeqVectorInnerProd`
+  strided pass (with `MFEM_ASSERT(x.Size()==y.Size())` at `:668`). Conjugation is a no-op for
+  real element type, so `dot` and `tdot` collapse to the same `Σ x[i]·y[i]` here. The MFEM
+  `operator*` is the test-exercised surface (`test/unit/test-vector.cpp:206-207`,
+  `vec1 * vec2 == 32.0`).
+
+**The conjugation asymmetry (the load-bearing theme content).** The L1 `dot` convention is
+`xᴴ y` (arg-1 conjugated); every L0 surface form computes `yᴴ x` (arg-2 conjugated):
+`vector.hpp:110,242,246` doc strings all read `yᴴ x`, and the kernel bodies **agree** with the
+docs (`ComplexVector::Dot` body returns `x·conj(y) = yᴴ x`; the complex `LocalDot`,
+`vector.cpp:674-685`, has the same `Im = LocalDot(xi,yr) − LocalDot(xr,yi)` arg-2-conjugated
+sign). There is **no Palace-internal contradiction** — the asymmetry is between Palace's
+`yᴴ x` and the L1 representation's `xᴴ y`. The two are complex conjugates:
+`xᴴ y = conj(yᴴ x)`. So the L1 form `dot(x, y)` recovers from the L0 call by **either** the
+operand-swap form `linalg::Dot(comm, y, x)` (arg-2 becomes `x`, conjugated → `xᴴ y`) **or** the
+outer-conj form `conj(linalg::Dot(comm, x, y))`. For real-projected consumers (`std::real`,
+`std::abs`) the re-order is **invisible** (`Re(z)=Re(conj z)`, `|z|=|conj z|`) — e.g. CG's
+`β = ⟨r,z⟩` for SPD `B` (`iterative.cpp:395`, `beta = linalg::Dot(comm, z, r)`, used in real
+arithmetic). For full-complex-value consumers the re-order is value-bearing. This is the same
+conjugate-pair relationship the cycle-019 `inner-product-fold-specialization` theme narrated
+at the L2>L1 edge (`book/src/L2-L1/inner-product-fold-specialization.md` §"The conjugate-pair
+re-order"); this L1>L0 theme is the **L1-leaf-level** lowering of the same fact, cited there
+for consistency.
+
+**Reduction tree (load-bearing-numerical).** Reduction-tree non-associativity is load-bearing
+(L1 dot §Semantics). The real leaf pins one Hypre strided pass; the complex leaf pins **four**
+real Hypre passes combined into `(Re, Im)` by scalar `±`. Bit-identical reproduction of a
+specific Palace call requires matching that tree, not merely the value.
+
+**Self-dot fast path.** `&x == &y` triggers the transparent fast path: `ComplexVector::Dot`
+returns imag `0.0` directly (`vector.cpp:266`), the complex `LocalDot` returns imag `0.0`
+(`vector.cpp:678`). Transparent at L1 (`xᴴ x` is exactly real); it disappears in the lowering.
+
+## Proposed changes
+
+```edit:book/src/L1-L0/dot-mutation-rotation.md
 # dot-mutation-rotation
 
 The mutation rotation for the BLAS-1 inner-product reduction. Lowers the pure L1 form
@@ -355,3 +473,76 @@ structure is firm; only the unconjugated arm is behaviorally unexercised), not a
 reduction. A `lowering-verifier` audit attaching the `verified_against:` block (per the
 sibling-theme convention) confirming the surface-form recognition is exhaustive is the standard
 follow-up, not a status reduction.
+```
+
+```edit:book/src/L1-L0/index.md
+| [nrm2-mutation-rotation](./nrm2-mutation-rotation.md) | `L1/nrm2` (firm) | `palace/linalg/vector.hpp`, `palace/utils/communication.hpp`, `palace/fem/errorindicator.hpp` | firm *(structural; 3 surface forms; abs-guard classified load-bearing defensive)* |
+| [dot-mutation-rotation](./dot-mutation-rotation.md) | `L1/dot` (firm) | `palace/linalg/vector.{hpp,cpp}`, `palace/utils/communication.hpp` | firm *(structural; 3 surface forms; conjugate-pair re-order `xᴴ y = conj(yᴴ x)`; tdot type-API-surface-only)* |
+```
+
+De-stub the existing SUMMARY row (the `(stub)` annotation is dropped now the chapter is firm).
+
+```edit:book/src/SUMMARY.md
+- [dot-mutation-rotation](./L1-L0/dot-mutation-rotation.md)
+```
+
+(Existing line at SUMMARY.md ~:82 reads `- [dot-mutation-rotation (stub)](./L1-L0/dot-mutation-rotation.md)`; the change is to drop the ` (stub)` suffix — the path is unchanged.)
+
+## Speculative operators proposed
+
+**None.** This theme lowers the already-firm L1 `dot` operator (which co-defines `dot` +
+`tdot`); both RHS leaves are existing vocabulary. No new L1 vocabulary is introduced, so there
+is nothing for the harvester to promote from this theme.
+
+## Supporting evidence
+
+All L0 ranges self-verified this invocation (see §Verified-against in the proposed chapter).
+Key load-bearing citations:
+
+- `palace/linalg/vector.cpp:263-267` — `ComplexVector::Dot` body = `yᴴ x` (arg-2 conjugated);
+  the conjugate-pair re-order source.
+- `palace/linalg/vector.hpp:246-253` — `linalg::Dot` template = `Mpi::GlobalSum ∘ LocalDot`;
+  the local-then-collective two-step the L1 signature hides; doc comment `yᴴ x` at `:246`.
+- `palace/utils/communication.hpp:246-249` — `MPI_Allreduce(MPI_IN_PLACE, …, MPI_SUM, comm)`.
+- `palace/linalg/iterative.cpp:395` — CG `beta = linalg::Dot(comm, z, r)`, the re-order-invisible
+  live witness.
+- `search_text TransposeDot` over `palace/**/*.cpp` → only the definition `vector.cpp:269`;
+  `tdot` has zero call sites.
+
+## Open questions
+
+- **Resolved by this theme: OQ `l1-l0-dot-lowering-asymmetry`.** The conjugation asymmetry
+  (Palace L0 `yᴴ x` vs L1 `xᴴ y`) and the MPI-collective two-step are both narrated in the
+  firm chapter. Recommend the integrator **close/migrate** this OQ — the deliverables it named
+  are landed. (The bit-determinism half is tracked separately under
+  `dot-reduction-tree-determinism-survey`, deferred — see below.)
+
+- **Lifting note (reverse direction; working-notes only, NOT in the high→low chapter body).**
+  Lifting the L0 `linalg::Dot` call *up* to the L1 `dot` operator is determinate: the L0 call
+  IS the L1 reduction with the collective folded in and the convention re-handed. The lift
+  loses (a) the pinned reduction tree (the L1 form records non-associativity as a claim, not a
+  specific tree) and (b) the L0 arg-order/conjugation handedness (the L1 form pins arg-1). So
+  the lift is value-faithful but NOT bit-faithful and NOT handedness-faithful — re-lowering
+  recovers the original Palace call only if the reduction tree AND the operand-swap/outer-conj
+  re-order are re-applied. This reverse-direction note lives here in working notes per the
+  high→low layer-definition discipline; the formal chapter narrates only L1 → L0.
+
+- **Caller-audit follow-up (deferred, not blocking).** A full audit classifying every
+  `linalg::Dot` complex call site as "real-projected (re-order invisible)" vs "full-complex
+  (re-order observable)" would tighten the re-order story to per-site precision. The cycle-019
+  `inner-product-fold-specialization` theme already surfaced two M-weighted witnesses
+  (`boundarymodeoperator.cpp:85` invisible, `:90` observable); a `same-layer-cross-cutter` /
+  `lowering-verifier` pass extending that classification to the plain-`dot` sites is the
+  natural follow-up. Deferred; relatedly OQ `dot-reduction-tree-determinism-survey` covers the
+  bit-determinism half.
+
+- **`tdot` type-API-surface-only (member-level caveat, not a status reduction).** Carried into
+  the chapter §Variant axes: `ComplexVector::TransposeDot` has zero Palace call sites
+  (definition + declaration only, verified). The dispatch *structure* is firm and the `dot`
+  arm is behaviorally exercised; only the `tdot` arm's behavioral weight is API-only. No new OQ
+  — this mirrors the existing note in `inner-product-fold-specialization` and `L1/dot`.
+
+- **Lowering-verifier audit (standard follow-up).** A later `lowering-verifier` pass should
+  attach the `verified_against:` block (per the axpby/nrm2 convention) confirming the three
+  surface-form recognition is exhaustive (no un-cited fourth `Dot` overload missed) and the
+  reduction-tree table matches the L0 bodies. Not a status reduction — the theme is firm.

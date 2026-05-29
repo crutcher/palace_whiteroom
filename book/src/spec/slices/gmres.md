@@ -669,3 +669,79 @@ Variant absorption per [variant-absorption](../../concepts/variant-absorption.md
 - The `total_it` parameter to `classify` is dead in the `PostKrylov` case after the witness hoist; the v0.6 `restart_cycle` call site marks this with `error "total_it unused"`. A v0.7 would split `classify` into two functions (`classify_entry :: OpParams → Convergence → real → int → Outcome` and `classify_post :: Convergence → StopReason → Outcome`) to remove the dead parameter. This re-introduces two function names, which v0.5 deliberately consolidated — but the v0.7 split is on a different axis (signature compaction, not residual-policy unification), so it would not regress v0.5's level-(b) achievement. Not pursued here because the current `error "total_it unused"` is a minor blemish.
 - Whether `check_stop` should return `Maybe StopReason` or `Either Krylov StopReason` (i.e., return the still-running Krylov in the Nothing case) is a stylistic question; the current form keeps `inner_loop`'s recursion structure obvious (the `Nothing` branch recurses, the `Just` branch returns) and is preferred.
 - The witness approach generalises: any classifier whose dispatch tag is determined upstream of the classification site can be migrated to carry the tag as a constructor field. This is a candidate methodology concept ("witness-typed dispatch") that may warrant extraction if it recurs in other slices (Chebyshev's convergence-by-eigenvalue-band, GMG's coarse-grid-direct-solve trigger). Deferred until a second instance lands.
+
+## L4 v0.7 — inner-loop `iterate_while` migration (witness-into-carry hoist)
+
+The v0.6 form's `inner_loop` (above, this slice §L4 v0.6 §"`inner_loop` produces the witness") is an inline tail-recursive `Solve`-monad function whose recursion is exactly the value-threading fold that the firm L4 combinator [`iterate-while`](../../L4/iterate-while.md) (cycle-007) names. This v0.7 tightening (L4→L4 self-rotation, no layer advancement) re-renders `inner_loop` as a *direct* `iterate_while` invocation, so the GMRES inner loop reuses the firm iteration vocabulary rather than re-deriving the tail recursion in-line. It is the GMRES analogue of CG's v0.4 `iterate_while s0' (\s -> s.it < config.max_it && not s.converged) (\s -> cg_step opA eps s)` rendering, lifted to the firm L4 entry [`L4/krylov-step`](../../L4/krylov-step.md) §Semantics (Form A — the `krylov-step` body folded by `iterate_while`) when the cg slice was reduced.
+
+Two obstacles in v0.6 block a direct `iterate_while`:
+
+1. **`iterate_while`'s predicate reads the carry only** (`α -> Bool`, per `iterate-while.md` §Signature point 1). v0.6's continuation decision `check_stop op conv K3 s.it` reads `op`, `conv`, and the monad's `s.it` — none of which is the carry `K`.
+2. **`iterate_while` has no side-witness return slot** — its result is `{ final_state, trajectory }`. v0.6 returns `(K3, reason)`, threading the `StopReason` alongside the carry.
+
+### The witness-into-carry hoist
+
+Both obstacles are resolved by hoisting the v0.6 `check_stop` result into a carry field. This is the same [derived-view-hoisting](../../concepts/derived-view-hoisting.md) move v0.6 itself applied (lifting `StopReason` from `classify`'s recomputation into `check_stop`); v0.7 carries it one notch further — from a side-return into the carry.
+
+- The `Krylov` carry gains a `stop_reason :: Maybe StopReason` field.
+- `check_stop_into_carry` runs v0.6's `check_stop` and writes the result into `K.stop_reason` (a pure record update; no `Solve` effect).
+- The predicate is `\K -> isNothing K.stop_reason` — carry-only.
+- The witness is extracted from the carry after the loop via `fromJust K_final.stop_reason`, recovering v0.6's `(Krylov, StopReason)` return shape.
+
+```haskell
+-- v0.6's check_stop (this slice §L4 v0.6) wrapped to return the carry with
+-- stop_reason written, rather than a bare Maybe StopReason.
+check_stop_into_carry :: OpParams -> Convergence -> Krylov -> int -> Krylov
+check_stop_into_carry op conv K total_it =
+  K { stop_reason = check_stop op conv K total_it }
+
+-- The Krylov carry gains a stop_reason field (the v0.1 fields plus the v0.7 witness).
+-- (V, Z, H, s, cs, sn, j, beta unchanged from the v0.1+ Krylov.)
+
+inner_loop :: OpParams -> Convergence -> Krylov -> Solve (Krylov, StopReason)
+inner_loop op conv K0 = do
+  result <- iterate_while
+              K0
+              (\K -> isNothing K.stop_reason)                  -- predicate reads carry only
+              (\K -> do
+                let (w, z)      = apply_BA op K.j K.V[K.j]
+                    K1          = if op.flexible then K{ Z = K.Z `with` (K.j, z) } else K
+                    (v_next, h) = orthogonalize op (K1.V[0..K1.j]) w
+                    K2          = K1{ V = K1.V `with` (K1.j+1, v_next) }
+                    K3          = ls_update_column K2 h
+                modify (\s -> s{ it = s.it + 1 })
+                s <- get
+                let K4          = check_stop_into_carry op conv K3 s.it
+                    K5          = if isNothing K4.stop_reason then K4{ j = K4.j + 1 } else K4
+                pure { state = K5, residual_norm = K5.beta, breakdown_token = bt_of K5 })
+  let K_final = result.final_state
+  pure (K_final, fromJust K_final.stop_reason)
+```
+
+### Why v0.6 was tight-but-non-idiomatic
+
+v0.6's `inner_loop` is correct and tight, but it re-implements the tail-recursive value-threading fold by hand (`case check_stop ... of { Just -> pure; Nothing -> inner_loop ... }`). Every iterative algorithm in the spec reduces at L4 to one or more `iterate_while` folds (`iterate-while.md` §Context); a hand-rolled recursion is a *missed reuse* of the firm combinator, and it leaves the predicate-on-carry-only discipline (`iterate-while.md` §Signature point 1) implicit rather than structural. v0.7 makes the fold explicit and the discipline structural: the predicate is literally `α -> Bool` over the carry, and the `SimState`-effect (`modify it`) is the body's sole monadic action, orthogonal to the value-threaded carry (`iterate-while.md` §Semantics placement disciplines).
+
+The migration is **iteration-for-iteration equivalent** to v0.6: each step runs the identical body (`apply_BA → orthogonalize → ls_update_column → modify it`), `check_stop_into_carry` computes exactly v0.6's `check_stop`, and the loop stops on the same condition. The `j`-advance fires on the same `Nothing` test. No numerics change.
+
+### Trajectory pruning (the consumer pattern)
+
+The body returns extras `{ residual_norm: K5.beta, breakdown_token: bt_of K5 }` (matching `iterate-while.md` §Signature's GMRES instantiation, line 51). But `restart_cycle` (this slice §L4 v0.6, `gmres.md:613-631`) consumes only `(K, reason)` from `inner_loop` — both are `final_state`-equivalent (the final carry and its `stop_reason` witness). Per `iterate-while.md` Law 1 (§3.8 demand-pruning), when only `final_state` is observed the body's extras computation is pruned at the call site; the per-iteration residual printing (`reference/palace/palace/linalg/iterative.cpp:617-621`) is a logging side-effect outside the trajectory channel, not a trajectory read. So the trajectory prunes to `[]` and the L3 image is the single-readout form (the L4>L3 dissolution is the firm theme [`gmres-inner-loop-iterate-while-migration`](../../L4-L3/gmres-inner-loop-iterate-while-migration.md)).
+
+### What stays out of v0.7
+
+- **`classify` / `restart_cycle` are unchanged.** The witness extracted from the carry (`fromJust K_final.stop_reason`) feeds the existing v0.6 `classify op conv (PostKrylov K reason) ...` call exactly as before. v0.7 changes only how `inner_loop` produces `reason`, not how `restart_cycle` consumes it.
+- **The classifier-signature compaction** anticipated by the v0.6 §"Open questions" (splitting `classify` to drop the dead `total_it`) is a *different* v0.7-candidate on a different axis (signature compaction of the outer classifier); it is orthogonal to this inner-loop migration and is not pursued here. The two compose without conflict.
+
+### Citations
+
+- The v0.6 `inner_loop` + `check_stop` this rotation re-renders: this slice §L4 v0.6 §"`inner_loop` produces the witness" (`gmres.md:584-606`) and the `StopReason` sum type (`gmres.md:551-554`).
+- The firm `iterate_while` combinator and its predicate-on-carry-only / §3.8-pruning disciplines: [`iterate-while`](../../L4/iterate-while.md) §Signature (point 1), §Semantics, §Algebraic laws Law 1.
+- The CG precedent rendering (`iterate_while` at a solve loop): lifted to the firm L4 entry [`L4/krylov-step`](../../L4/krylov-step.md) §Semantics (Form A) when the cg slice was reduced; the cg slice (`cg.md`, now 166 lines) retains only the unique L4 v0.5 first-iteration-unrolling material (`iterate_while_with_prev` form, `cg.md:86-108`).
+- The L0 inner loop this names: `reference/palace/palace/linalg/iterative.cpp:615` (the `for (;; j++, it++)` GMRES Arnoldi loop), break test at `:645-648` (`if (converged || j + 1 == max_dim || it + 1 == max_it) { it++; break; }`).
+- `check_stop_into_carry` is a (rough-in) speculative L4 helper, proposed in the L4>L3 theme [`gmres-inner-loop-iterate-while-migration`](../../L4-L3/gmres-inner-loop-iterate-while-migration.md) §"Speculative L4 operators".
+
+### Open questions (L4 v0.7-specific)
+
+- `check_stop_into_carry` is a rough-in L4 helper. Promotion to a firm L4 row is deferred to a harvester decision: it is a thin pure wrapper (`K { stop_reason = check_stop ... }`) and adds vocabulary only if it recurs (FGMRES reuses it — see the fgmres sibling theme; a second consumer is the promotion trigger per the unimplemented-Palace-component promotion bar).
+- The classifier-signature compaction (the *other* candidate v0.7) remains open as a slice tightening on the `restart_cycle` classifier axis; it composes with this migration v0.7 without conflict.

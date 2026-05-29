@@ -288,6 +288,46 @@ The dispatch lowering preserves the L2 value when:
    `boundarymodeoperator.cpp:90`), the lowering must emit the operand-swap form
    `linalg::Dot(comm, y, x)` (or `conj(linalg::Dot(comm, x, y))`) to recover the L2 `xᴴ y`.
 
+   **Caller-site conjugation inventory** (every `linalg::Dot` caller across `palace/linalg/`
+   and `palace/fem/`, classified invisible/observable — cross-layer-cross-cutter census,
+   2026-05-29, answering this theme's own §Open-questions caller-audit item). The convention
+   is load-bearing in **exactly one algorithm**: the SLEPc-NEP deflated quasi-Newton in
+   `nleps.cpp`, at the four unweighted observable sites below. These four are the bare-`dot`
+   leaf's first cited **unweighted** observable witnesses (until now Condition 5's sole cited
+   observable site, `boundarymodeoperator.cpp:90`, was a *weighted* `bilinear_form` leaf).
+   `palace/fem/` has **zero** `Dot` callers; every `iterative.cpp` CG/PCG coefficient and
+   every `std::abs(·)`/`.real()` norm is invisible by real-projection.
+
+```yaml
+conjugation_caller_inventory:
+  audited_at: 2026-05-29T034441Z
+  by: cross-layer-cross-cutter
+  scope: every linalg::Dot caller across palace/linalg/ and palace/fem/
+  invisible_unweighted:
+    - palace/linalg/iterative.cpp:395   # PCG (Br,r), CheckDot SPD-real + abs
+    - palace/linalg/iterative.cpp:404   # PCG (Bb,b)
+    - palace/linalg/iterative.cpp:444   # PCG (Ap,p), CheckDot SPD-real
+    - palace/linalg/iterative.cpp:460   # PCG in-loop (Br,r)
+    - palace/linalg/nleps.cpp:487       # std::abs self-norm
+    - palace/linalg/nleps.cpp:492       # std::abs self-norm
+    - palace/linalg/nleps.cpp:543       # std::abs self-norm
+    - palace/linalg/nleps.cpp:696       # std::abs self-norm
+    - palace/linalg/nleps.cpp:737       # std::abs self-norm
+  invisible_weighted:
+    - palace/linalg/operator.cpp:603    # real Norml2 B-weighted, dot>0 assert
+    - palace/linalg/operator.cpp:615    # complex Norml2 B-weighted, SPD imag~0 assert + .real()
+  observable_unweighted:               # bare dot leaf — convention load-bearing
+    - palace/linalg/nleps.cpp:522       # deflation proj X[j]ᴴ x1 -> complex LU solve
+    - palace/linalg/nleps.cpp:529       # deflation Gram X[j]ᴴ X[i] -> complex LU solve
+    - palace/linalg/nleps.cpp:568       # residual deflation coords X[j]ᴴ vv -> Newton numerator via out-param u2
+    - palace/linalg/nleps.cpp:675       # complex eigenvalue Newton ratio -(w0ᴴu + u2_w0)/(w0ᴴw); TWO Dot calls on this line
+  observable_weighted:                 # bilinear_form leaf
+    - palace/models/boundarymodeoperator.cpp:90   # ComplexWrapperOperator Atn non-Hermitian off-diagonal (wave-1 witness, models/)
+  out_of_scope_observable_flagged:
+    - palace/models/postoperator.cpp:1759,1760,1795,1796  # port V/I real+imag separately consumed (models/, not audited line-by-line here)
+  finding: palace/fem/ has zero Dot callers; the only intra-linalg/ unweighted observable sites are the four nleps.cpp SLEPc-NEP deflation/Newton sites.
+```
+
 ## Justification kind
 
 `algebraic` — the dispatch rule **is** the L2 entry's already-firm laws read as a
@@ -484,3 +524,70 @@ reduction.
   L2-L1 `index.md` working-note and `L2/index.md` overlay refresh (note the two reduce-to-X
   fold siblings now both have firm specialization themes) are layer-intro-author scope, not
   actioned here.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/vector.cpp:263-267
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: ComplexVector::Dot = x·conj(y) = yᴴ x; Hermitian kernel + conjugate-pair source. Exact.
+  - citation: palace/linalg/vector.cpp:269-274
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: TransposeDot = x·y (unconjugated); real-part sign ALSO flips vs Dot (not only the Im cross-term) — prose nuance, value correct.
+  - citation: palace/linalg/vector.cpp:664-672
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: real LocalDot single Hypre pass; MFEM_ASSERT(x.Size()==y.Size()) at :667. Exact.
+  - citation: palace/linalg/vector.cpp:674-685
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: complex LocalDot four real dots, Im cross-term '−'; self-dot imag=0 branch at :678 (theme cites :679, off by 1, within fast-path span).
+  - citation: palace/linalg/vector.hpp:240-262
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: arg-2-conj doc comments :242,:246 exact; Dot template :247-253; Norml2 :257-260 (comment :255).
+  - citation: palace/linalg/operator.cpp:621-628
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: real-Operator weighted Dot body exact; INLINE Ax anchor drift — actual ComplexVector Ax(A.Height()) at :624 not :623.
+  - citation: palace/linalg/operator.cpp:631-638
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: ComplexOperator weighted Dot body exact; INLINE Ax anchor drift — actual Ax at :634 not :632.
+  - citation: palace/linalg/operator.cpp:598-617
+    verdict: partially-supports
+    audited_at: 2026-05-29T034441Z
+    note: Norml2 SPD-realness consumer present; SPD comment at :612 (theme ALREADY pins :612 — verified, no change); SPD assertion is a single line at :616 (theme says :615-616, but :615 is the dot=Dot(...) line — narrow to :616).
+  - citation: palace/linalg/iterative.cpp:395
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: CG beta = linalg::Dot(comm, z, r) exact; real-consumed (re-order invisible). Second site at :460.
+  - citation: palace/models/boundarymodeoperator.cpp:85
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: Poynting diagonal Dot(comm, et, *Bttr, et); realness rests on Bttr-Hermitian + diagonal (domain property, not source-asserted here).
+  - citation: palace/models/boundarymodeoperator.cpp:90
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: cross-coupling Dot(comm, en, Atn, et); en≠et off-diagonal, Atn ComplexWrapperOperator non-Hermitian → full complex value, re-order observable. Exact.
+  - citation: palace/linalg/nleps.cpp:487,492
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: std::abs(linalg::Dot(...)) norm witnesses (magnitude convention-blind). Exact.
+  - citation: TransposeDot search_text over palace/**
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: exactly 2 hits — vector.hpp:112 decl + vector.cpp:269 def; zero call sites. tdot type-API-surface-only caveat verified.
+  - citation: book/src/L1/dot.md:33-35,43,49
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: dot/tdot kernel rows, arg-1-conj convention, self-dot trick — all present.
+  - citation: book/src/L1/bilinear-form.md:39-43,63,119-145
+    verdict: supports
+    audited_at: 2026-05-29T034441Z
+    note: xᴴ M y signature, Category-4 workspace, conjugation-asymmetry reconciliation — all present.
+coverage_verdict: fully-supported
+status_recommendation: keep firm (no status change; semantic content fully supported)
+audit_caveat: three inline operator.cpp anchors drifted (Ax :623→:624, :632→:634; SPD assert range :615-616→:616) — citation-correction follow-up, not a status reduction. (SPD comment is ALREADY :612 in the live theme — verified, no change.)
+```
