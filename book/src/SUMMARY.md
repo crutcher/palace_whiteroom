@@ -36,10 +36,12 @@
 - [Overview](./L2/index.md)
 - [krylov-step](./L2/krylov-step.md)
 - [chebyshev-iteration](./L2/chebyshev-iteration.md)
+- [linear_combination](./L2/linear_combination.md)
 
 # L2 > L1 — Lowering
 - [Overview](./L2-L1/index.md)
 - [chebyshev-iteration-fusion](./L2-L1/chebyshev-iteration-fusion.md)
+- [linear-combination-fold-specialization](./L2-L1/linear-combination-fold-specialization.md)
 
 # L1 — Mutation-Lifted Forms
 - [Overview](./L1/index.md)
@@ -149,6 +151,7 @@
   - [capability-typing](./concepts/capability-typing.md)
   - [scope-out-obstruction](./concepts/scope-out-obstruction.md)
   - [scalar-promotion](./concepts/scalar-promotion.md)
+  - [nested-constructed-operator-gate](./concepts/nested-constructed-operator-gate.md)
 
 # Design Artifacts
 - [Index](./design/index.md)

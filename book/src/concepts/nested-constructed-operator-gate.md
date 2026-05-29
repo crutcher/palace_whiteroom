@@ -1,0 +1,139 @@
+# nested-constructed-operator-gate
+
+A layer-pattern concept naming the structural shape in which a
+[`constructed-operator`](./constructed-operators.md) gate's closure carries **one or
+more further constructed-operator gates as sub-fields**. The outer gate's per-call
+body invokes the inner gate(s) as opaque operator actions; the inner gate's own
+iteration is never spelled out at the outer gate's resolution. This is the
+*composition-of-gates* counterpart to [`constructed-operator-factory`](./constructed-operator-factory.md)
+(which names the *construction* site of a single gate).
+
+## Background
+
+A *constructed-operator gate* (see [`constructed-operators`](./constructed-operators.md)
+and [`solver-as-operator`](./solver-as-operator.md)) is a value materialised at
+construction — an opaque handle that internalises one or more variant axes and is
+invoked through a uniform operator interface. The basic shape is one gate over raw
+operators and tensors: e.g. `chebyshev-smoother`'s closure carries `op.A :
+LinearOperator[N, N]`, a **raw** operator (`book/src/L1/chebyshev-smoother.md:58`),
+not a gate.
+
+The *nested* shape is one level up: the closure's sub-field is **itself a gate**
+(`Solver[A]`, `DivFreeSolver`, …), not a raw operator. The distinguishing test:
+
+- **raw-operator field** → not nesting. `op.A : LinearOperator[N, N]`
+  (`chebyshev-smoother`), `apply_linop`'s operand argument. The field is applied as a
+  matrix-vector product; there is no inner solve loop.
+- **gate field** → nesting. `E.linear : Solver[A]` (`eigsolve`), `P.ksp : Solver[P.M]`
+  (`divfree-projector`). The field is itself a construction-bound solver carrying its
+  own iteration, preconditioner, tolerances, and variant absorption.
+
+The pattern is structural to the whole constructed-operator family — a solver
+absorbs a preconditioner, an eigensolver absorbs an inner linear solver, a projector
+absorbs an inner H1 solve — and it is load-bearing across the eigenmode pipeline (see
+the transitive-nesting note below), which is why it earns a named concept rather than
+ad-hoc per-instance prose.
+
+## The cross-layer fidelity rule
+
+The reason this shape needs a name is a **lowering discipline**: when an L_{n}>L_{n-1}
+mutation-rotation theme lowers the outer gate, the inner gate's iteration **stays
+interior to the inner gate's OWN lowering theme** and does not leak into the outer
+theme. At the outer theme's resolution the inner gate is an **opaque action**:
+
+- `divfree-projector`'s `ksp->Mult(rhs, psi)` is the opaque `K⁻¹` action; its CG
+  iteration is interior to [`ksp_solve`](./ksp_solve.md) and does not appear in the
+  divfree theme (`book/src/L1-L0/divfree-projector-mutation-rotation.md:108-113`).
+- `eigsolve`'s ten `opInv->Mult(b, x)` call sites are each the opaque inner-solve
+  action; each "rewrites by the firm `ksp-solve-mutation-rotation` theme"
+  (`book/src/L1-L0/eigsolve-mutation-rotation.md:213-258`, the **core sub-pattern** of
+  the eigsolve theme) — the inner solve's body is NOT re-narrated inside the eigsolve
+  theme.
+
+This is the "composed-not-inherited" remark at `book/src/L1/eigsolve.md:140`: the
+outer gate *composes against* the inner gate (delegating to its theme) rather than
+*inheriting* its body (re-spelling the iteration). The fidelity claim is that the
+outer theme is faithful precisely **because** it treats the inner gate opaquely — the
+nested iteration is the inner theme's concern, and the lowering of the whole is the
+**composition** of the two adjacent-edge themes, not a single flattened rewrite. A
+theme that re-spelled the inner iteration would double-count the rotation and lose the
+single-point-of-truth for the inner gate.
+
+## Firm instances
+
+Two FIRM L1 operators exhibit the gate-carrying-gate shape; a third site is latent.
+
+- **`eigsolve`** (firm structure; cycle-011, `8bb16b7`) — **two** nested gates. The
+  closure `E` binds `E.linear : Solver[A]` (the inner Krylov solver invoked per
+  RCI / shell-matrix callback for spectral-transformation modes) and `E.projector :
+  Maybe DivFreeSolver[ComplexVector]` (the optional divergence-free projector)
+  (`book/src/L1/eigsolve.md:60`). The L1 entry already names the shape in prose: "the
+  first L1 operator to compose two layers of constructed-operator absorption"
+  (`book/src/L1/eigsolve.md:136`) and "structurally the same nesting pattern …
+  composed-not-inherited" (`book/src/L1/eigsolve.md:140`). The theme's **core
+  sub-pattern B** lowers each of the ten `opInv->Mult` inner-solve call sites through
+  the firm [`ksp_solve`](./ksp_solve.md) theme
+  (`book/src/L1-L0/eigsolve-mutation-rotation.md:213-258`). The eigsolve theme is
+  `firm (structural)`; its `LinearSolveFailed` sub-part is a *separate*
+  partly-constructive status concern about a discarded convergence status, **not**
+  about the gate-nesting structure — the nesting (sub-pattern B) is itself firm and
+  source-anchored, so `eigsolve` is a clean FIRM instance of this shape independent of
+  that caveat.
+
+- **`divfree-projector`** (firm; cycle-016, `b54ea1c`) — **one** nested gate. The
+  closure `P` binds `P.ksp : Solver[P.M]` (a CG solver bound to the ε-weighted H1
+  mass-like operator `P.M` as both operator and preconditioner target), materialised
+  at construction (`book/src/L1-L0/divfree-projector-mutation-rotation.md:193-198`).
+  Its per-call `ksp->Mult(rhs, psi)` is the opaque inner H1 solve
+  (`book/src/L1-L0/divfree-projector-mutation-rotation.md:108-113`,
+  `book/src/L1/divfree-projector.md`).
+
+**Transitive nesting (three-deep).** `E.projector : Maybe DivFreeSolver` means the
+`divfree-projector` gate is *itself* a sub-field of the `eigsolve` closure — so the
+two instances are not merely parallel, they are transitively nested:
+
+    eigsolve  ⊃  divfree-projector  ⊃  ksp_solve
+      (E)            (E.projector)         (P.ksp)
+
+The eigsolve outer loop carries a divfree projector, which carries its own inner CG
+solve. The fidelity rule applies at each edge: the eigsolve theme treats `E.projector`
+opaquely; the divfree theme treats `P.ksp` opaquely. This three-deep transitivity is
+direct evidence the pattern is load-bearing across the eigenmode pipeline, not
+incidental.
+
+**Latent site — `ksp_solve` preconditioner.** `ksp_solve`'s closure `K` binds a
+preconditioner `M⁻¹` (`book/src/L1/ksp_solve.md:31`). Via [`solver-as-operator`](./solver-as-operator.md),
+a preconditioner **is-an** operator and may itself be a `Solver`-typed handle (a
+nested `ksp` used as a preconditioner). When `K.M⁻¹` is a `Solver`, `ksp_solve` is
+*also* gate-carrying-gate. But the L1 `ksp_solve` entry types `M⁻¹` as a plain
+`LinearOperator[N, N]` and the `ksp-solve-mutation-rotation` theme treats the
+preconditioner opaquely, so this is a **latent** nesting site, not a confirmed firm
+instance (no concrete Palace site where a `BaseKspSolver`'s preconditioner is itself a
+`BaseKspSolver` has been verified against L0 source — flagged for a future harvester).
+Chebyshev-as-preconditioner inside a Krylov method is a related but **weaker** nesting
+(`book/src/L1/chebyshev-smoother.md:140`): chebyshev is a smoother-as-operator, not a
+`Solver`-gate.
+
+## Relationship to siblings
+
+- [`constructed-operator-factory`](./constructed-operator-factory.md) — **the
+  materialisation site** of a single gate (consumes a config record + context, returns
+  a typed gate). This page is the **composition** counterpart: a gate whose closure
+  *carries* another gate that some factory already materialised. The factory answers
+  "where is a gate built?"; nested-gate answers "what happens when a gate's field is
+  another gate?".
+- [`solver-as-operator`](./solver-as-operator.md) — the type-level rotation that lets
+  an inner gate appear as an operator-typed sub-field (`Solver<OperType>` IS-A
+  `OperType`), which is precisely what makes the latent `ksp_solve` preconditioner
+  site possible.
+- [`constructed-operators`](./constructed-operators.md) / [`variant-absorption`](./variant-absorption.md)
+  — the absorption motif each gate (inner and outer) realises.
+
+## See also
+
+- [`ksp_solve`](./ksp_solve.md) — the innermost gate in every instance here; the inner
+  iteration's home theme.
+- `book/src/L1-L0/eigsolve-mutation-rotation.md` §"Sub-pattern B" — the two-gate
+  instance's lowering (delegates to `ksp-solve-mutation-rotation`).
+- `book/src/L1-L0/divfree-projector-mutation-rotation.md` §"Sub-pattern A" / §"Sub-pattern C"
+  — the one-gate instance's lowering + closure-field materialisation.

@@ -37,6 +37,48 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-018 — 2026-05-29T0300Z
+
+(THIRD/FINAL primary cycle of meta-batch-4 — cycles 016/017/018; the **batch-4 meta-phase fires after this finalize commit**.)
+
+### Unblocked
+- `inner_product` harvester formalization is now unblocked — the combinator-miner landed the rough-in dep-map row (≥3-instance bar met: `dot`/`tdot`/`bilinear-form`); a cycle-019 harvester can author `book/src/L2/inner_product.md` directly off it, mirroring how cycle-018's harvester firmed `linear_combination` off the cycle-017 rough-in row. — OQ `inner-product-harvester-formalization-and-conjugation-pinning`
+- The `linear-combination-fold-specialization` L2>L1 theme makes the L2 `linear_combination` operator's downward-lowering coverage live (operator chapter's forward-reference now resolves). — report 4 / OQ `linear-combination-harvester-formalization`
+- The `nested-constructed-operator-gate` concept page unblocks future nested-gate observations (they attach to a named page rather than re-deriving eigsolve ⊃ divfree ⊃ ksp each time); `ksp_solve`'s `K.M⁻¹` flagged as a latent further site to attach. — `book/src/concepts/nested-constructed-operator-gate.md`
+
+### New dependencies
+- `book/src/L2/linear_combination.md` (firm) → L1 leaves `scal`/`axpy`/`axpby`/`axpbypcz` + `scalar-promotion` concept (with its open upstream dep OQ `scalar-promotion-typing-rule`). — report 1
+- `book/src/L2-L1/linear-combination-fold-specialization.md` (firm) → `L2/linear_combination` (firm) + the four L1 leaves (firm). — report 4
+- `book/src/concepts/nested-constructed-operator-gate.md` → `constructed-operator-factory` (outbound); depended on by `divfree-projector-mutation-rotation` (inbound). — reports 2+3
+- `inner_product` rough-in row → forward (not-yet-live) dep on a future `book/src/L2/inner_product.md` + `L2-L1/inner-product-...` theme. — report 5
+
+### Resolution implications
+- `linear-combination-harvester-formalization` — resolved — firm operator chapter + dep-map flip + SUMMARY register landed.
+- `nested-constructed-operator-gate-concept-and-divfree-correction` — resolved — both prongs landed (concept page + divfree provenance correction).
+- `inner-product-fold-sibling-candidate` — answered — rough-in landed; harvester-formalization + conjugation-pinning follow-ups remain.
+- `divfree-closure-nesting-constructed-gate-carrying-constructed-gate` — resolved (was answered) — prong-b enacted via the concept page + provenance correction.
+- `blas1-variadic-linear-combination-fold-unification` — prong (b) FULLY ENACTED; prong (a) (combinator-miner spec parametric/variadic-family detection mode) remains OPEN → headline batch-4 meta-phase enactment.
+- 2 new OQs: `inner-product-harvester-formalization-and-conjugation-pinning`, `linear-combination-fold-specialization-theme-followups`.
+- The OQ ledger's per-block YAML region accumulates append-only RESOLUTION notes; **recommend the batch-4 meta-phase consider a lazy de-dup / index rebuild** (the body-entries section stays authoritative).
+
+### Suggested next dispatches
+- (`harvester`, `inner_product` L2 firm operator) + (`abstractor`, `L2-L1/inner-product-fold-specialization` theme) — mirrors the cycle-018 linear_combination operator+theme pairing; pin the conjugation/arg-order convention (`Dot(comm,x,A,y) = yᴴ A x`).
+- (`abstractor`/`lifter`, `gmres.md §L4 v0.6→v0.7` self-rotation) — large carry-forward, recurring across batches; would firm the cycle-008 GMRES + cycle-011 FGMRES sister themes.
+- (`harvester`, NLEPS at L1+) — large multi-cycle carry-forward.
+- (`layer-intro-author`, bundle-6 #6 / `fespace.{hpp,cpp}`) — input-side FE-space L0 anchor.
+
+### Wave-conflict observations
+- Intra-cycle ordering dependency handled correctly: report-4 (L2>L1 theme) links to `book/src/L2/linear_combination.md` (report-1); report-1 dispatched FIRST by design so the inbound link resolves at the finalize rebuild — no broken-link conflict. The two `L2/index.md` touches (report-1 row flip + report-5 row append) and the three SUMMARY touches serialized cleanly under serial per-report dispatch.
+- report-2 (concept page) and report-3 (divfree prose correction) touch the divfree↔concept link pair from opposite ends with no line-range overlap — composed cleanly.
+
+### Integration-tooling friction
+- **STAGING-LOG-APPEND-COMPLETENESS GAP (NEW, recurrence-1).** `STAGING.md` captured only report-1's row; reports 2–5 applied their `book/` changes + OQ promotions + OQ-ledger notes (verified against the working tree, all 5 `overall_status: ready`, clean build) but did NOT append staging rows. integrator-finalize had to reconcile the full landing set from the working tree (`git status`) + report frontmatter + OQ-ledger appends rather than from the authoritative staging log. **The staging log was NOT authoritative this cycle** — the artifact was. Carry to the batch-4 meta-phase: tighten the per-report-integrator role spec so the STAGING.md append is a hard step, and/or have integrator-finalize cross-check the staging row-count against the dispatched-report count and flag a mismatch loudly. Process-discipline gap, not data-loss (no work lost).
+- **`specialized-agent-direct-write-to-book-during-dispatch` RECURRENCE-3 carry-forward** (from cycle-017): cycle-018 had ZERO dispatch-phase book leaks — the explicit per-dispatch reminders worked. But the prompt-guard text lives only in `layer-intro-author.md`. Meta-phase should enact it across ALL 8 specialized specs so the zero-leak result is structural, not reminder-dependent.
+- **`rough-in-forward-reference-must-be-plain-text-not-live-link` carry-forward** (cycle-017 build-break root cause): cycle-018 honored it cleanly (both the `inner_product` and `linear_combination` forward-refs were authored as plain-text/backtick code-spans, confirmed pre-apply and by the clean linkcheck). Codify it (a producer-side discipline bullet + a per-report-integrator pre-apply check).
+- Build was clean on first rebuild (exit 0, zero broken links, zero repairs); the 6 katex math-display false-positives in `design/l4_calculus.md` continue to carry unchanged across batches (separate known-noise item).
+
+---
+
 ## cycle-017 — 2026-05-28T0200Z
 
 **Meta-batch context**: **SECOND primary cycle of meta-batch-4** under the 3:1 meta cadence (cycles 016/017/018 form batch-4; **the batch-4 meta-phase fires after the cycle-018 finalize commit**, aggregating cycles 016/017/018, as a SEPARATE step with a SEPARATE commit). Cycle counter does not reset at batch boundaries. Cycle-017 was a **consolidation/frontier cycle** — ONE new L2 rough-in combinator (dep-map row only) + firm-entry citation maintenance + two one-file-per-dispatch hygiene chains reaching TERMINAL state + a read-only cross-layer audit. 5-report single wave; all applied; zero deferrals/rejections/rework; **1 build-repair** (a single-cell de-link, not a content rework). Thirteenth consecutive clean cycle under the split integrator (cycles 005–017). **ZERO new firm operators** (L1/L2/L3/L4 firm unchanged 11/2/8/4); **L2 rough-in cohort 0 → 1**.

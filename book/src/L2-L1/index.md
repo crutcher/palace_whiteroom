@@ -11,6 +11,7 @@ L1 forms are pure-functional but **structurally close to the source loop** — e
 | theme | L2 anchor | L1 anchor | status |
 |---|---|---|---|
 | [chebyshev-iteration-fusion](./chebyshev-iteration-fusion.md) | `L2/chebyshev-iteration` (firm) | `L1/chebyshev-smoother` (firm) | firm *(algebraic; recurrence↔polynomial fusion)* |
+| [linear-combination-fold-specialization](./linear-combination-fold-specialization.md) | `L2/linear_combination` (firm) | `L1/scal` + `axpy` + `axpby` + `axpbypcz` (firm) | firm *(algebraic; arity-dispatch fusion-selection + pinned summation order)* |
 
 ## Working Notes
 

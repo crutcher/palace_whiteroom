@@ -108,9 +108,21 @@ the L1 form erases:
 - **Inner solve is itself a constructed-operator gate.** `ksp->Mult(rhs, psi)`
   (step 3) is the [`ksp_solve`](../L1/ksp_solve.md) inner H1 solve. Its CG
   iteration is interior to `ksp_solve` and does not leak into this theme; here
-  it is the opaque `K⁻¹` action. This is the first L1>L0 mutation-rotation whose
-  closure carries *another* constructed-operator gate as a sub-field
-  (`P.ksp : Solver[P.M]`).
+  it is the opaque `K⁻¹` action — the
+  [`nested-constructed-operator-gate`](../concepts/nested-constructed-operator-gate.md)
+  fidelity rule (the inner gate's iteration stays interior to its own lowering
+  theme). This theme's closure carries *another* constructed-operator gate as a
+  sub-field (`P.ksp : Solver[P.M]`) — the
+  [`nested-constructed-operator-gate`](../concepts/nested-constructed-operator-gate.md)
+  shape. It is **not the first** such case: the firm
+  [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md) theme (landed
+  cycle-011) is the prior and richer instance, whose closure `E` carries **two**
+  nested gates (`E.linear : Solver[A]` and `E.projector : Maybe
+  DivFreeSolver[ComplexVector]` — the latter being this projector itself,
+  [`L1/eigsolve`](../L1/eigsolve.md) §Shape contract `E`), so the nesting is
+  transitively three-deep (eigsolve ⊃ divfree ⊃ ksp). Divfree is the **second**
+  gate-carrying L1>L0 theme (after eigsolve), carrying the **third** nested gate
+  overall (after eigsolve's two, `E.linear` + `E.projector`).
 
 Justification kind: **structural** — re-bind the L1 output value into the L0
 in/out destination buffer `y`; erase the scratch members `rhs`, `psi`; the
@@ -456,12 +468,26 @@ follow-up, not a status reduction.
   treat the stale comment as a citation against the divergence-free claim).
 - **Inner `ksp_solve` is a nested constructed-operator gate.** `P.ksp :
   Solver[P.M]` means this theme's closure carries another L1 constructed-operator
-  as a sub-field — the first such case in the L1>L0 mutation-rotation family.
-  The CG iteration is interior to [`ksp_solve`](../L1/ksp_solve.md) and is the
-  standard Krylov sequential obstruction; it does not leak into this theme. A
-  cross-layer-cross-cutter pass may want to note the closure-nesting pattern
-  (constructed gate carrying a constructed gate) as a recurring structural shape
-  shared with no other current L1 op.
+  as a sub-field — an instance of the
+  [`nested-constructed-operator-gate`](../concepts/nested-constructed-operator-gate.md)
+  shape. The CG iteration is interior to [`ksp_solve`](../L1/ksp_solve.md) and is
+  the standard Krylov sequential obstruction; it does not leak into this theme
+  (the concept's cross-layer fidelity rule). This is **not** a shape unique to
+  this theme: the firm [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md)
+  theme (sub-pattern B, `book/src/L1-L0/eigsolve-mutation-rotation.md:213-258`;
+  the **core sub-pattern** of that theme, lowering ten `opInv->Mult` inner-solve
+  call sites through the firm `ksp-solve-mutation-rotation` theme) is the prior
+  (cycle-011) and richer instance — its closure carries **two** nested gates
+  (`E.linear`, `E.projector`; [`L1/eigsolve`](../L1/eigsolve.md) §Shape contract
+  `E` at `:60`, prose-named "the first L1 operator to compose two layers of
+  constructed-operator absorption" at `book/src/L1/eigsolve.md:136`, and
+  "composed-not-inherited" at `:140`). Divfree is the **second** gate-carrying
+  theme (after eigsolve), carrying the **third** nested gate overall (one gate
+  of its own, after eigsolve's two). Because `E.projector` is this projector itself, the two confirmed
+  instances are transitively nested three-deep (eigsolve ⊃ divfree ⊃ ksp). See
+  the [`nested-constructed-operator-gate`](../concepts/nested-constructed-operator-gate.md)
+  concept page for the full instance index, the latent `ksp_solve`-preconditioner
+  site, and the fidelity rule.
 - **L1 entry minor citation drift (corrected in this theme, NOT edited in the L1
   entry — out of abstractor authority).** (a) The apply close brace is `:187`,
   not the L1 entry's `:155-186`. (b) The CG rel-tol set is at
