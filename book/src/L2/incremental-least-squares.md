@@ -10,7 +10,7 @@ a **free byproduct** of the rotation applied to the right-hand side, never
 computed by an explicit residual evaluation. At the close of a restart cycle the
 triangular system is back-solved for the coordinate vector `y`, and the
 externally-visible iterate correction is `V·y` (GMRES) / `Z·y` (FGMRES). This is
-the queued second **named-composition** motif (sibling to
+the second **named-composition** motif (sibling to
 [`orthogonalize`](./orthogonalize.md)), the composition GMRES / FGMRES fold into
 their per-restart-cycle correction machinery and the one
 [`ksp_solve`](./ksp_solve.md) §Semantics `materialise_iterate` consumes to fold the

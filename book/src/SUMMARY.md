@@ -54,6 +54,7 @@
 - [linear-combination-fold-specialization](./L2-L1/linear-combination-fold-specialization.md)
 - [inner-product-fold-specialization](./L2-L1/inner-product-fold-specialization.md)
 - [orthogonalize-composition-lowering](./L2-L1/orthogonalize-composition-lowering.md)
+- [incremental-least-squares-composition-lowering](./L2-L1/incremental-least-squares-composition-lowering.md)
 - [gram-fold-specialization](./L2-L1/gram-fold-specialization.md)
 - [deflate-composition-lowering](./L2-L1/deflate-composition-lowering.md)
 - [eigsolve-spectral-transform-composition](./L2-L1/eigsolve-spectral-transform-composition.md)

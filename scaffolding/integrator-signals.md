@@ -30,6 +30,49 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-028 — 2026-05-29T205500Z
+
+**FIRST primary cycle of meta-batch-8 (cycles 028/029/030). The batch-8 meta-phase fires after the cycle-030 finalize commit — this section OPENS the batch-8 evidence window.** 7 of 7 dispatched-ready reports applied clean; zero deferrals, zero rejections. NO crash. Twenty-fourth consecutive clean split-integrator cycle. STAGING 7/7 rows == dispatched-ready-reports (the cycle-018 staging-completeness gap did NOT recur for the NINTH consecutive cycle). Build `cargo make book` exit 0, ZERO build-repairs. retroactive-budget global 0.
+
+### Unblocked
+- `back-solve-mutation-rotation` L1>L0 theme — now actionable: the `back_solve` L1 leaf is firm (c027) AND its `verified_against:` audit landed this cycle confirming firm; it has no lowering theme yet — citation: report-4 (back-solve-audit) + roadmap intermediate-tier "Sparse triangular solve" row.
+- `bilinear-form-mutation-rotation` L1>L0 theme — the survey (report-6) confirmed this theme does NOT exist on disk; authoring it is the cheapest in-scope step toward bilinear-form firmness (the test-coverage gates need an out-of-scope Palace-source change) — citation: OQ `bilinear-form-mutation-rotation-l1-l0-theme-needed-c028`.
+- `triangular-solve-obstruction` L1>L0 theme — the `trsv` leaf resolved-by-obstruction this cycle (report-7); the obstruction theme would give the resolved leaf a citable home, citing HYPRE relax-type sites + external direct-solver wrappers as negative anchors — citation: OQ `triangular-solve-obstruction-l1-l0-theme-needed-c028`.
+- `normalize_B` F1 prose correction — the normalize audit (report-3) found a defined-but-uncalled fused `Normalize(comm,x,B,Bx)` at `palace/linalg/operator.hpp:377-384`, contradicting the theme's "no fused B-Normalize" prose; the prose rewrite ("exists but uncalled") + `normalize_B` promotion-gate tightening is a follow-up abstractor task — citation: OQ `normalize_B-note-says-no-fused-B-Normalize-but-uncalled-fused-operator-exists`.
+- `ls_update_column-column-streaming-leaf-harvest` — the new L2>L1 theme (report-1) names this forthcoming Face-1 column-streaming leaf as a plain-text forward-ref; a follow-on harvester would realize it (small L1 column-streaming leaf, co-keyed with the back_solve cohort) — citation: OQ `ls_update_column-column-streaming-leaf-harvest`.
+
+### New dependencies
+- `L2-L1/incremental-least-squares-composition-lowering` (firm L2>L1 theme) → `L1/back_solve` + `concepts/givens_generate`/`givens_apply` + `L2/linear_combination` + (forthcoming, plain-text) `ls_update_column` — the running-QR fan-down edge landed; terminal back-solve targets the firm `back_solve` leaf, NOT a general `trsv` — citation: report-1 + `L2-L1/index.md` row 20.
+- `L2/incremental-least-squares` → `L2-L1/incremental-least-squares-composition-lowering` — the L2 entry's deferred "forthcoming L2>L1 theme" pointer (the load-bearing rotation-stream non-associativity) now has a real lowering home — citation: report-1.
+
+### Resolution implications
+- `l3-vocabulary-inventory-gap` (plan-owned, `priorities.md:24`) — **RESOLVED** — the `trsv` leaf (last of four: gemv/ksp_solve/eigsolve done) resolves resolved-by-obstruction (Palace has no standalone `trsv` primitive); parent plan item fully resolved (report-7). Meta-phase: close `:24` + mark the `:498` leaf resolved-by-obstruction.
+- `incremental-least-squares-composition-lowering-theme-deferred-needs-back-solve-reanchor` (c027 D5 carry-forward) — **RESOLVED** — the theme landed firm fresh this cycle (report-1).
+- `incremental-least-squares-composition-lowering-verifier-audit` (ledger :785) — **RESOLVED** — the standard firm follow-up audit appended this cycle, firm confirmed (report-5).
+- `normalize-mutation-rotation-lowering-verifier-audit` (plan-owned, `priorities.md:24,49`) — **RESOLVED** — audit upholds firm with one routed F1 (report-3).
+- `back-solve-lowering-verifier-audit` (plan-owned, `priorities.md:24`) — **RESOLVED** — fully-supported, firm upheld (report-4).
+- `linalg-operator-file-category-mislabel-residual-lines-22-87` (plan-c028-active-#2, `:767`) — **RESOLVED** — the `:22`/`:87` Category-2→Category-1 relabel landed (report-2).
+- `l2-incremental-least-squares-self-description-still-says-queued-after-firming` (plan-c028-active-#2, `:768`) — **RESOLVED** — the `:13` stale-queued drop landed (report-2).
+- `matrix-weighted-norm-mixed-element-type-variant` (plan-c028-active-#4, `:769`) — **NARROWED, stays OPEN** — element-type axis now shape-witnessed by `test-orthog.cpp`; residual is the named-entry-point √+SPD-guard test (report-6). Meta-phase: update the `:769` prose, do NOT close.
+
+### Suggested next dispatches
+- (`abstractor`, `back-solve-mutation-rotation`) — the firm `back_solve` leaf's L1>L0 lowering theme; HIGH-ish fan-out (the GMRES/FGMRES restart-correction); now fully unblocked (leaf firm + audited).
+- (`abstractor`, `bilinear-form-mutation-rotation`) — the missing L1>L0 theme; highest-fan-out + cheapest next step toward `bilinear-form` firmness per report-6.
+- (`abstractor`, `triangular-solve-obstruction`) — the obstruction theme citing HYPRE relax-type + external-direct-solver negative anchors; LOW fan-out (obstruction leaf, no upstream combinator) but gives the resolved-by-obstruction `trsv` a citable home. Cheaper alternative: accept the existing `L3/index.md:7` line as already-sufficient.
+- (`abstractor`, `normalize_B` F1 prose correction on `normalize-mutation-rotation` + `L1/normalize.md`) — rewrite "no fused B-Normalize" → "exists but uncalled" + tighten the `normalize_B` promotion gate; firm core unaffected.
+- (`harvester`, `ls_update_column`) — the forthcoming Face-1 column-streaming leaf the new L2>L1 theme forward-references plain-text; small L1 column-streaming leaf.
+- (`lifter` or `layer-intro-author`, `L2-L1/index.md` + `L2/index.md` prose refresh) — the `roadmap.md` L2>L1 lead prose was stale at "2 firm themes" (cycle-018 era); accurate count is 8 (7 firm + 1 partly-constructive). The index dep-map is authoritative; a navigational-prose refresh would re-sync the Part overview.
+
+### Wave-conflict observations
+- One intra-cycle dependency (not a conflict): report-1 (the D1 lifter creating the new L2>L1 theme file) MUST land before report-5 (the D5 lowering-verifier audit appending a `verified_against:` block to that same file). The per-report integrators dispatched serially in the correct order (report-1 at 20:12Z, report-5 at 20:27Z) — dependency satisfied, the theme file existed (499 lines) before the append. No artifact collision.
+- No two reports touched the same file with conflicting edits. `scaffolding/open-questions.md` was appended by all seven (append-only, no collision).
+
+### Integration-tooling friction
+- **Leading-`"` `verified_against:` note channel-format hazard** (report-5's integrator flagged for the meta-phase): two `note:` values in the incremental-ls audit block began with a literal double-quote (`note: "Why this is NOT a general trsv" …`), which `yaml.safe_load` parses as a quoted scalar that ends at the closing `"` then chokes on the trailing text. The per-report integrator repaired it by single-quote-wrapping (`note: '"…" …'`). This is a recurring transport hazard for the `verified_against:` note channel — a candidate for a channel-format rule (always single-quote a note value, or forbid leading `"`). Meta-phase to consider (NOT enacted by finalize).
+- The legacy-vs-current-era `log/cycle-NNN.md` filename collision recurred (current-era cycle-028 overwrites a frozen slice-vertical-era stub; content in git history). The current era progressively reclaims the namespace per the cycle-020→027 precedent — low-friction but the README still carries dangling legacy index entries for the clobbered files (pre-existing; out of finalize scope). A meta-phase one-time legacy-index cleanup would close it.
+
+---
+
 ## cycle-027 — 2026-05-29T211500Z
 
 **THIRD / FINAL primary cycle of meta-batch-7 (cycles 025/026/027). The batch-7 meta-phase fires after THIS cycle-027 finalize commit — this is the BATCH-CLOSING signal dump.** 5 of 6 dispatched reports applied clean; the 6th (D5) DEFERRED needs-revision. NO crash. Twenty-third consecutive clean split-integrator cycle. STAGING 5/5 rows == dispatched-ready-reports (D5 deferred, correctly NOT staged — not a completeness gap). Build `cargo make book` exit 0, ZERO build-repairs. retroactive-budget global 0.

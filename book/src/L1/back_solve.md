@@ -462,3 +462,79 @@ the `trsv` gap stays open (likely an obstruction-theme target, no positive L0 an
 - `book/src/L1/lu_solve.md` — the firm small-dense-general direct-solve sibling
   (cycle-022); the structural template and the firm-on-positive-structure /
   no-dedicated-test precedent.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/iterative.cpp:652
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: GMRES back-solve comment "Reconstruct the solution"; citecheck --anchor zero-drift on-disk.
+  - citation: palace/linalg/iterative.cpp:653
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: descending back-substitution sweep `for (int i = j; i >= 0; i--)`; empty-cycle (j=-1) skip grounds law 5; zero-drift.
+  - citation: palace/linalg/iterative.cpp:655
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: column-major stride `Hi = H.data() + i*(max_dim+1)`; grounds dense upper-triangular shape; zero-drift.
+  - citation: palace/linalg/iterative.cpp:656
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: diagonal division `s[i] /= Hi[i]` (laws 1,4; singular-R divide-by-zero boundary); zero-drift.
+  - citation: palace/linalg/iterative.cpp:657
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: inner super-diagonal loop `for (int k = i-1; k >= 0; k--)` (empty for j=0, law 5); zero-drift.
+  - citation: palace/linalg/iterative.cpp:659
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: column-oriented subtraction `s[k] -= Hi[k]*s[i]` (law 4 transposed-index; reduction-order non-law); zero-drift.
+  - citation: palace/linalg/iterative.cpp:666
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: downstream GMRES `V`-basis lift `x.Add(s[k], V[k])` (grounds law 6; NOT part of leaf); zero-drift.
+  - citation: palace/linalg/iterative.cpp:831-840
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: FGMRES back-solve twin (body range :831-840); full-range read confirms BYTE-IDENTICAL to GMRES :652-660 (law 6); :831/:835/:838 body anchors + :843 downstream Z-basis lift (outside the body range) all zero-drift.
+  - citation: palace/linalg/iterative.cpp:612
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: RHS seed `s[0] = beta` (s = β₀·e₁); back-solve RHS is its rotated descendant; zero-drift.
+  - citation: palace/linalg/iterative.cpp:631
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: "`Hj[j+1] = Norml2(comm, w)` sub-diagonal the running-QR stream annihilates (upper-triangularity is upstream); zero-drift."
+  - citation: palace/linalg/iterative.cpp:642
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: "`beta = std::abs(s[j+1])` LS residual tail entry, EXCLUDED from the back-solve RHS s[0..j]; zero-drift."
+  - citation: palace/linalg/iterative.cpp:644
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: convergence test `converged = (beta < eps)`; control-flow traced (outer :603-607 exits before seed :612 + inner loop) — singular-R back-solve unreachable in lucky-breakdown case; applicability boundary complete; zero-drift.
+  - citation: palace/linalg/iterative.hpp:193
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: RHS register `s, sn` ScalarType (H also ScalarType :192); grounds element-type axis; zero-drift.
+  - citation: palace/linalg/iterative.hpp:194
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: cosine register `cs` RealType; completes the real/complex element-type split; zero-drift.
+  - citation: book/src/L2/incremental-least-squares.md:81-83
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: parent L2 terminal `back_solve` projection (anchor at :83); confirms the artifact-native slug `back_solve` matches the L2 source (NOT ls_update_column).
+  - citation: book/src/L2/incremental-least-squares.md:225-232
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: residual-exposure law (unitary rotation 2-norm preservation) underwriting law 1's LS interpretation; in-bounds, semantically exact.
+  - citation: book/src/L2/incremental-least-squares.md:278-285
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: rotation-stream non-associativity load-bearing-numerical non-law the leaf's reduction-order non-law composes with; in-bounds, semantically exact.
+  - citation: book/src/concepts/givens.md:29
+    verdict: supports
+    audited_at: 2026-05-29T194558Z
+    note: 'the "back_solve via trsv" concept anchor (repair-corrected from the wrong pointer book/src/concepts/incremental-least-squares.md:10, where trsv does not appear); zero-drift; low-fan-out prose-tightening trigger noted (tighten to name back_solve).'
+```

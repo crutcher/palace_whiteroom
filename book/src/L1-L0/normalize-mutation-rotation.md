@@ -134,7 +134,7 @@ pairing is the natural unit):
    (it feeds the Givens plane-rotation least-squares solve at `iterative.cpp:636-639`),
    the unit `w` extends the Krylov basis. This is `normalize(w)` open-coded with both
    components retained — direct evidence the returned norm is not a discardable side
-   output. (A second identical GMRES code path is at `iterative.cpp:811`.)
+   output. (A second identical GMRES code path is at `iterative.cpp:810-811`.)
 
 2. **Dominant-eigenvalue estimate (spectral-radius power iteration)** — the norm is the
    working result and the unit vector is the carrier for the next iteration:
@@ -171,8 +171,8 @@ a distinct named operator rather than a bare `scal ∘ nrm2` composition.
 Citations (consumer evidence the returned norm is load-bearing):
 - `palace/linalg/iterative.cpp:631-632` — GMRES Arnoldi: `Hj[j + 1] = linalg::Norml2(comm, w);
   w *= 1.0 / Hj[j + 1];` (β → Hessenberg sub-diagonal AND rescale divisor; both outputs consumed).
-- `palace/linalg/iterative.cpp:811` — second analogous GMRES Arnoldi path, identical
-  `w *= 1.0 / Hj[j + 1];`.
+- `palace/linalg/iterative.cpp:810-811` — second analogous GMRES Arnoldi path:
+  `Hj[j + 1] = linalg::Norml2(comm, w); w *= 1.0 / Hj[j + 1];` (the two-line shape; `:811` is the rescale half).
 - `palace/linalg/operator.cpp:673` — `l = Normalize(comm, u);` (returned norm IS the
   dominant-eigenvalue estimate).
 - `palace/linalg/operator.cpp:676` — `res = std::abs(l - l0) / l0;` (convergence test
@@ -338,8 +338,8 @@ within the cited `262-270` range):
   w *= 1.0 / Hj[j + 1];` (returned norm → Hessenberg sub-diagonal AND rescale divisor; the inline
   un-fused `normalize` with both outputs consumed). **Self-verified** (`--anchor 'Hj[j + 1] =
   linalg::Norml2'` → 631; `--anchor '1.0 / Hj'` → 632).
-- `palace/linalg/iterative.cpp:811` — second analogous GMRES Arnoldi path, identical
-  `w *= 1.0 / Hj[j + 1];`. **Self-verified** (cited inherited via `scal-mutation-rotation.md:61-62`).
+- `palace/linalg/iterative.cpp:810-811` — second analogous GMRES Arnoldi path:
+  `Hj[j + 1] = linalg::Norml2(comm, w); w *= 1.0 / Hj[j + 1];`. **Audited** (`--anchor 'Hj[j + 1] = linalg::Norml2'` → 810; `--anchor 'w *= 1.0 / Hj[j + 1]'` → 811).
 - `palace/linalg/operator.cpp:660-661` — `SetRandom(comm, u); Normalize(comm, u);` (power-iteration
   seed normalise; returned norm discarded — the `snd ∘ normalize` shape). **Self-verified**
   (`--anchor 'SetRandom(comm, u)'` → 660).
@@ -402,3 +402,73 @@ A `lowering-verifier` audit attaching the `verified_against:` block (per the sib
 convention) confirming the surface-form recognition is exhaustive (the `linalg::Normalize`
 template is the sole fused-normalise overload; the inherited-sub-theme boundaries hold; the
 returned-norm consumer cohort is complete) is the standard follow-up, not a status reduction.
+This audit was performed cycle-028 (lowering-verifier); the `verified_against:` block below
+records the per-citation verdicts (fully-supported on the firm unweighted core).
+
+```yaml
+verified_against:
+  - citation: palace/linalg/vector.hpp:262-270
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "linalg::Normalize four-step composition read verbatim; def :264, reduction :266, guard :267, rescale :268, return :269 — all anchors land exactly on-disk (zero codemap drift)."
+  - citation: palace/linalg/vector.hpp:259
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "Norml2 body std::sqrt(std::abs(Dot(comm,x,x))) — inherited Sub-pattern A boundary; anchor at :259."
+  - citation: palace/linalg/vector.hpp:267
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "MFEM_ASSERT(norm > 0.0) partiality witness — positively anchored; the one non-syntactic ingredient; firm not partly-constructive confirmed."
+  - citation: palace/linalg/iterative.cpp:631-632
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "GMRES Arnoldi (first path): Hj[j+1]=Norml2 :631, w*=1.0/Hj[j+1] :632; beta feeds plane-rotation solve at :636-639 (GeneratePlaneRotation :638) — Hessenberg sub-diagonal consumer confirmed."
+  - citation: palace/linalg/iterative.cpp:810-811
+    verdict: partially-supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "Second GMRES path: the full two-line shape spans 810-811 (Hj[j+1]=Norml2 at :810, w*=1.0/Hj[j+1] at :811). Re-cited to 810-811 for parity with the first path (Edit 2). Both anchors land exactly on-disk."
+  - citation: palace/linalg/operator.cpp:660-661
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "Power-iteration seed: SetRandom :660, Normalize :661 (return discarded — snd-only projection shape)."
+  - citation: palace/linalg/operator.cpp:673
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "l = Normalize(comm, u) — returned norm IS the dominant-eigenvalue estimate; carrier u feeds next A.Mult(u,v) at :664."
+  - citation: palace/linalg/operator.cpp:676
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "res = std::abs(l - l0) / l0 — convergence test consuming the returned norm l; direct load-bearing evidence."
+  - citation: palace/linalg/nleps.cpp:610-611
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "NEP deflation: scale = Norml2(GetComm(), v) :610, v *= 1.0/scale :611 — inline unweighted normalise; :609 comment 'Update the invariant pair with normalization' confirms reading."
+  - citation: palace/linalg/nleps.cpp:617
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "H.col(k).head(k) = v2 / scale — returned norm reused to rescale coordinate companion v2; doubly load-bearing confirmed."
+  - citation: book/src/L1/normalize.md:50
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "Factorisation law 6 — the LHS the theme lowers; anchor at :50."
+  - citation: book/src/L1-L0/scal-mutation-rotation.md:48-58
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "scal Sub-pattern A names this Normalize site (Normalize token at :48 and :55) — inheritance boundary holds."
+  - citation: palace/test/unit/test-orthog.cpp:193
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "V[0] *= 1 / v0_norm — by-hand normalise empirical-match (real path); inherited test evidence."
+  - citation: palace/test/unit/test-orthog.cpp:208
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "V[1] *= 1 / v1_norm — second by-hand normalise instance."
+  - citation: palace/linalg/operator.hpp:377-384
+    verdict: does-not-support
+    audited_at: 2026-05-29T19:45:58Z
+    note: "Range correct, but the surrounding 'no fused linalg::Normalize-with-B free function' claim (lines 51, 285-287, 311-313) is WRONG: palace/linalg/operator.hpp:378 IS a fused B-weighted Normalize(comm, x, B, Bx) free function (reduction->guard->rescale->return, identical to vector.hpp:264). The defensible fact is that this fused B-Normalize is UNCALLED (no 4-arg rescaling callsite in the tree). Affects only the normalize_B rough-in note, NOT the firm unweighted core. Routed to follow-up abstractor (F1)."
+  - citation: palace/linalg/operator.cpp:599-619
+    verdict: supports
+    audited_at: 2026-05-29T19:45:58Z
+    note: "B-weighted Norml2 reduction (B.Mult(x,Bx) at :602) — the matrix-weighted-norm reduction; in-bounds. Note: it IS fused into palace/linalg/operator.hpp:378 (see palace/linalg/operator.hpp:377-384 row)."
+```
