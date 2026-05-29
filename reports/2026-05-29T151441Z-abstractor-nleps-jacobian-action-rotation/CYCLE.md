@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T151441Z
 scope: L1>L0 theme sketch — nleps-jacobian-action-mutation-rotation
 status: integrated
 integrated_at: 2026-05-29T17:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 210e622
 integration_notes: "cycle-025 finalize (first primary cycle of meta-batch-7). NEW firm L1>L0 theme nleps-jacobian-action-mutation-rotation (the quasi-Newton T'(λ)-derivative-pencil-action mutation rotation; composes apply_nonlinear_pencil laws 1/3 + lu-solve kernel + lin-comb fold L2>L1, zero law additions). L1-L0/index dep-map row appended after nleps-deflated-solve; SUMMARY :105 after apply-nonlinear-pencil. L1>L0 theme files 20→21. retroactive-budget 0; clean build. Carry-forward OQ: nleps-jacobian-action-l1-entry-six-anchor-reanchor (follow-up lifter/repairer on book/src/L1/nleps_jacobian_action.md)."
 inputs:
   - book/src/L1/nleps_jacobian_action.md (firm L1 operator, cycle-024)

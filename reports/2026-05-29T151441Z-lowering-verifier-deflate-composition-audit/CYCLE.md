@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T15:19:15Z
 scope: L2>L1 theme audit — deflate-composition-lowering
 status: integrated
 integrated_at: 2026-05-29T17:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 210e622
 integration_notes: "cycle-025 finalize (first primary cycle of meta-batch-7). Audit verdict gate STAYS-GATED-correctly → theme STAYS partly-constructive (NO status change; ## Status line untouched). Additive verified_against: YAML (19 entries, all supports) + gate_verdict: stays-gated-correctly block appended at EOF. No positive bare-Gram (XᴴX)⁻¹ Galerkin-core solve found in palace/*.cpp; the near-candidate romoperator.cpp:757-765 solves against Ar=VᴴAV (ROM system-operator pencil), not a Gram. The shared bare-Galerkin-core promotion gate STAYS OPEN, triple-referenced (L2 deflate :774 + L1>L0 nleps-deflated-solve + this L2>L1 theme). OQ RE-SCOPED (NOT closed): the 2nd of 4 slugs on open-questions.md:327 — audit half discharged, promotion-watch remains (co-keyed with deflate-galerkin-core-promotion at :35, trigger = a positive bare-Gram-solve site). retroactive-budget 0; clean build."
 inputs:
   - book/src/L2-L1/deflate-composition-lowering.md

@@ -1,6 +1,6 @@
 # Cycle 025 — NEP-interior L1>L0 cohort COMPLETE + eigsolve chain FULLY COMPLETE (first primary cycle of meta-batch-7)
 
-**Date:** 2026-05-29 · **Commit:** `PLACEHOLDER_SHA` · **Status:** clean (zero deferrals/rejections/rework; zero build-repairs; twenty-first consecutive clean split-integrator cycle)
+**Date:** 2026-05-29 · **Commit:** `210e622` · **Status:** clean (zero deferrals/rejections/rework; zero build-repairs; twenty-first consecutive clean split-integrator cycle)
 
 **Batch position:** cycle-025 is the **FIRST** primary cycle of meta-batch-7 (cycles 025/026/027). **The batch-7 meta-phase fires after the cycle-027 finalize commit** (3:1 cadence; cycle counter does NOT reset across batch boundaries). This `log/cycle-025.md` + the `scaffolding/integrator-signals.md` cycle-025 section OPEN the batch-7 evidence window.
 

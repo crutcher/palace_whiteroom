@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T151855Z
 scope: L2>L1 theme audit — orthogonalize-composition-lowering (three-way delegation boundary)
 status: integrated
 integrated_at: 2026-05-29T17:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 210e622
 integration_notes: "cycle-025 finalize (first primary cycle of meta-batch-7). VERDICT-ONLY audit — NO artifact mutation, NO new verified_against: rows. Verdict cleanly-partitioned: the three-way delegation boundary (stage-selection [this theme] ⟂ Sub-pattern D inner-product unfusing ⟂ orthogonalize-mutation-rotation in-place w.Add) is cleanly partitioned across the L2>L1 theme + its two L1>L0 delegatees; the cycle-023/024 18-entry verified_against block already covers the delegation-boundary dimension, so appending would duplicate (report proposed None). OQ orthogonalize-composition-lowering-three-way-delegation-boundary-audit RESOLVED (the 4th/last slug on open-questions.md:327 — the WHOLE :327 line is now retirement/unification-ready for meta-phase). 1 NEW optional-cleanup OQ: orthogonalize-composition-lowering-stale-good-direction-34-parenthetical-trim. Build-relevant: no (only open-questions.md appended)."
 inputs:
   - book/src/L2-L1/orthogonalize-composition-lowering.md

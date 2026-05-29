@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T151441Z
 scope: L2>L1 theme audit — gram-fold-specialization
 status: integrated
 integrated_at: 2026-05-29T17:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 210e622
 integration_notes: "cycle-025 finalize (first primary cycle of meta-batch-7). Audit verdict fully-supported → theme STAYS firm (## Status untouched). Three changes: (a) vector.cpp:667→:668 MFEM_ASSERT(x.Size()==y.Size()) aligned-pass anchor correction at both in-theme sites (lines 60 + 240); (b) enclosing-range tighten nleps.cpp:613-619→:614-619 in §Verified-against; (c) additive verified_against: YAML (13 entries) at EOF. Both findings are precision matters, not content contradictions. OQ gram-fold-specialization-l2-gram-forward-reference-closure-followup RESOLVED (forward-reference closure CONFIRMED; the 3rd of 4 slugs on open-questions.md:327). 2 NEW carry-forward OQs: vector-cpp-667-mfem-assert-citation-drift-to-668-sibling-sweep (inner_product.md:360 + inner-product-fold-specialization.md:59,260 still drifted) + gram-md-forward-ref-text-refresh-to-name-gram-fold-specialization. retroactive-budget 0; clean build."
 inputs:
   - book/src/L2-L1/gram-fold-specialization.md

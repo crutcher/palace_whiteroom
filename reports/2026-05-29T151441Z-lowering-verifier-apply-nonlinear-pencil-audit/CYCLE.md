@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T151441Z
 scope: L1>L0 theme audit — apply-nonlinear-pencil-mutation-rotation
 status: integrated
 integrated_at: 2026-05-29T17:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 210e622
 integration_notes: "cycle-025 finalize (first primary cycle of meta-batch-7). Audit verdict fully-supported → theme STAYS firm. Additive verified_against: YAML block (21 entries, all supports) appended at EOF; no content edit, no status change. OQ apply-nonlinear-pencil-mutation-rotation-lowering-verifier-audit-followup RESOLVED (clause-scoped disposition, the 1st of 4 slugs on open-questions.md:327 — NOT a whole-line close, meta-phase retires this clause at Closed-index migration). retroactive-budget 0; clean build (fenced YAML, no new links)."
 inputs:
   - book/src/L1-L0/apply-nonlinear-pencil-mutation-rotation.md

@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T151441Z
 scope: concepts/eigsolve.md cross-cutting concept page (navigational/conceptual home for the firm L1→L2→L3 eigsolve chain)
 status: integrated
 integrated_at: 2026-05-29T17:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 210e622
 integration_notes: "cycle-025 finalize (first primary cycle of meta-batch-7). NEW concept page concepts/eigsolve.md (the cross-cutting navigational home for the firm L1→L2→L3 eigsolve chain; introduces the EigSolver[problem] opaque type; frames solve-monad as the FUTURE L4 surface). Arrived as a FULL firm page from the producer (NOT a stub). SUMMARY :188 after nested-constructed-operator-gate (append-ordered concepts block); concepts/index alphabetical row between dot + elementwise-product. With dispatch-3's L2>L1 theme this same cycle, the migrated-to-plan item eigsolve-l2-l1-and-concept is FULLY discharged (both halves landed). retroactive-budget 0; clean build. Carry-forward OQs: concepts-eigsolve-page-still-absent (RESOLVED-disposition), constructed-solver-opaque-type-generic-concept-candidate (watch for 3rd consumer), no-l4-eigsolve-entry-yet."
 ---
 

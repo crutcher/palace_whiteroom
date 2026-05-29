@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T151441Z
 scope: L1 / L2 / L3 Part-overview prose refresh (batch-6 completions — NEP-interior atom cohort + eigsolve L1→L2→L3 chain)
 status: integrated
 integrated_at: 2026-05-29T17:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 210e622
 integration_notes: "cycle-025 finalize (first primary cycle of meta-batch-7). 4 surgical navigational-prose edits: L1/index.md:108 (cycle-009 Working-Notes bullet → past-tense historical marker + eigsolve-is-firm); L2/index.md:81 (repairer-folded single 1:1 [old]→[new] preserving the cycle-020 L3 driver/kernel complementarity bullet + appended consolidated batch-6 Working-Notes bullet); L3/index.md:15 (Sequential-obstructions overlay → names all three firm shapes: firm-driver ksp_solve + chebyshev/eigsolve partial-obstructions) + :43 (two Working-Notes bullets, count 9 firm + 2 partial-obstruction). No operator semantics authored; high→low structure preserved. 2 OQs RESOLVED on open-questions.md:322 (eigsolve-firm-stale-cycle-009-narrative-bullet ENACTED; lu-solve-layer-intro-count-refresh already-satisfied-on-disk) — the :322 line is now retirement-ready pending the 3rd-clause l1-index-fifth-motif confirm. retroactive-budget 0; clean build (all cross-refs live links to extant entries)."
 ---
 

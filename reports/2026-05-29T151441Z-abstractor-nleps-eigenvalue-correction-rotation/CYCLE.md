@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T151441Z
 scope: L1>L0 theme sketch — nleps-eigenvalue-correction-mutation-rotation
 status: integrated
 integrated_at: 2026-05-29T17:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 210e622
 integration_notes: "cycle-025 finalize (first primary cycle of meta-batch-7). NEW firm L1>L0 theme nleps-eigenvalue-correction-mutation-rotation (the per-step δλ Rayleigh-functional scalar-correction rotation over firm BLAS-1 leaves dot Sub-pattern A / axpbypcz γ=0 / scal negation; zero law additions). CLOSES the NEP-interior L1>L0 cohort 5/5 (apply-nonlinear-pencil/nleps-deflated-residual/nleps-deflated-solve/nleps-jacobian-action/nleps-eigenvalue-correction); the full per-step quasi-Newton chain is lowered L1>L0 end-to-end. L1-L0/index row + SUMMARY :106 inserted immediately after dispatch-1's nleps-jacobian-action (serial dependency held, primary anchors used). L1>L0 theme files 21→22. retroactive-budget 0; clean build. Carry-forward OQ: nleps-eigenvalue-correction-l1-entry-two-anchor-reanchor (co-schedulable with the jacobian-action re-anchor as one NLEPS-L1-entry citation-correction pass)."
 inputs:
   - book/src/L1/nleps_eigenvalue_correction.md (firm L1 operator, cycle-024)

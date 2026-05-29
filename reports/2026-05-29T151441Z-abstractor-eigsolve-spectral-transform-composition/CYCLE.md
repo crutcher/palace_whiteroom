@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T151441Z
 scope: L2>L1 theme — eigsolve-spectral-transform-composition (the per-step apply_shift_invert composition lowering)
 status: integrated
 integrated_at: 2026-05-29T17:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 210e622
 integration_notes: "cycle-025 finalize (first primary cycle of meta-batch-7). NEW firm L2>L1 theme eigsolve-spectral-transform-composition (the per-step shift-invert spectral-transform de-fusion apply_shift_invert = apply_linop(M) ▷ ksp_solve((K−σM)⁻¹); firm-on-positive-structure, both RHS leaves apply_linop+ksp_solve firm, LHS L2 eigsolve firm c023; L3 eigsolve partial-obstruction referenced as a BOUNDARY, not re-derived). This is the eigsolve chain's only remaining authoring gap — the L2>L1 edge — so the L1→L2→L3 chain is now authoring-complete. L2-L1/index row + SUMMARY :58 after deflate-composition-lowering. L2-L1 chapter count 6→7 (6 firm + 1 partly-constructive). retroactive-budget 0; clean build. Carry-forward OQ: eigsolve-l2-entry-lowers-from-pending-forward-reference-upgrade (upgrade L2/eigsolve.md:163 plain-text forward-ref → live link)."
 inputs:
   - book/src/L2/eigsolve.md (firm cycle-023 — the LHS: the named shift-invert spectral-transform composition apply_shift_invert = apply_linop(M) ▷ ksp_solve((K−σM)⁻¹))
