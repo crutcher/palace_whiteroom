@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T18:02:02Z
 scope: L1>L0 theme sketch — normalize-mutation-rotation
 status: integrated
 integrated_at: 2026-05-29T21:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8f14978
 integration_notes: "cycle-027 finalize (third/final primary cycle of meta-batch-7). NEW firm L1>L0 theme normalize-mutation-rotation (the fused-normalise lowering (β, x/β) = normalize(x) forward into L0 linalg::Normalize); the cycle-026 forward-referenced theme, now that the firm L1 normalize operator exists. L1>L0 firm themes +1. The normalize.md:104 plain-text→live-link upgrade ENACTED inline by the per-report integrator per skill upgrade-plain-text-ref-to-live-link-when-target-on-disk. With the c026 normalize operator this CLOSES the normalize-l1-primitive-harvest plan item end-to-end. SUMMARY-registered + link-clean; retroactive-budget 0; clean build."
 inputs:
   - book/src/L1/normalize.md (firm L1 operator, landed cycle-026)

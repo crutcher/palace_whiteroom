@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T18:02:38Z
 scope: L2 ksp_solve §Semantics materialise_iterate cite-tightening — re-anchor the restart-correction forward-reference to the now-firm L2 incremental-least-squares operator
 status: integrated
 integrated_at: 2026-05-29T21:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8f14978
 integration_notes: "cycle-027 finalize. 2 surgical cite/cross-ref upgrades in L2/ksp_solve.md (both ends firm same-layer L2, no forward-edge): Edit-1 §Dependencies :123 plain-text incremental-least-squares → live link [incremental-least-squares](./incremental-least-squares.md), 'queued'→'firm', correction-shape K.y→V·y/Z·y; Edit-2 §Semantics phase-3 :83 added live-link cross-reference resolving the K.V·K.y correction story to the firm operator's back_solve output. Surfaced NEW c028 OQ l2-incremental-least-squares-self-description-still-says-queued-after-firming (the producer entry incremental-least-squares.md:13 still self-describes as 'queued ... motif' despite status:firm — out of this report's one-operator scope). retroactive-budget 0; clean build; live links resolve (target on-disk firm)."
 inputs:
   - book/src/L2/ksp_solve.md

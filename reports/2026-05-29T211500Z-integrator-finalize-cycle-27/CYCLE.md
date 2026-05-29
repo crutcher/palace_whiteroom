@@ -46,7 +46,7 @@ THIRD / FINAL primary cycle of meta-batch-7 (cycles 025/026/027). 5 of 6 dispatc
 | retroactive-budget global (≥4 blocks) | **0** — all 5 rows 0-retroactive (hygiene re-anchors + cite/cross-ref upgrades + additive `verified_against:` append are not surface-rewrites); well below threshold, no block |
 | build-breakage repair | **none required** (`cargo make book` exit 0) |
 | commit atomicity | **single commit** (artifact + scaffolding + log + book output + consumed-report frontmatter + staging log) |
-| consumed-report frontmatter integrity | the **5 applied** reports marked `integrated_at` + `integration_commit` (PLACEHOLDER_SHA, two-phase) + `integration_notes`; **D5 (deferred) deliberately NOT marked** |
+| consumed-report frontmatter integrity | the **5 applied** reports marked `integrated_at` + `integration_commit` (8f14978, two-phase) + `integration_notes`; **D5 (deferred) deliberately NOT marked** |
 | implied-component-stub-created | **0** (no dangling forward-ref required a stub — D1's `normalize.md:104` resolved to a live link because the theme landed same-cycle ahead of it) |
 | in-cycle-live-link-upgrade | **1** (`normalize.md:104`, enacted by the per-report integrator) |
 | SUMMARY-chapter-registration auto-fix | **0** (every report proposed its own SUMMARY edit, correct slugs) |

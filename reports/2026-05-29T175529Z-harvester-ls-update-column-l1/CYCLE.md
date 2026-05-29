@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T175529Z
 scope: L1 operator: back_solve (harvested under dispatch-scope name `ls_update_column`; renamed to artifact-native `back_solve` at repair — `ls_update_column` collides with the L2 column-streaming step)
 status: integrated
 integrated_at: 2026-05-29T21:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8f14978
 integration_notes: "cycle-027 finalize. NEW firm L1 leaf back_solve (the GMRES/FGMRES restart-correction back-solve y = back_solve(R, s) over the small-dense Givens-rotated upper-triangular R-factor; terminal back_solve projection of the firm L2 incremental-least-squares; small-dense-triangular sibling of lu_solve on the coordinate-space dense-direct-solve axis [motif 6], explicitly NOT a general trsv and NOT an apply_linop variant; firm-on-positive-structure iterative.cpp:652-660 GMRES + line-for-line-identical FGMRES :831-840; one load-bearing non-law [descending column-oriented back-substitution reduction order]). L1 firm 20→21. RENAMED IN REPAIR from ls_update_column to back_solve to resolve a slug collision — the ls_update_column slug stays reserved for the distinct still-un-harvested column-streaming step. Resolves OQ ls-update-column-l1-leaf; the trsv L3-inventory gap stays OPEN. Finalize bumped L1/index.md:31 Firm (20)→(21) + motif enumeration as measurable housekeeping (harvester correctly deferred the count-prose bump). SUMMARY-registered + link-clean; retroactive-budget 0; clean build."
 inputs:
   - book/src/L2/incremental-least-squares.md (firm L2 named composition, cycle-026 — the back-solve is its terminal `back_solve` projection)

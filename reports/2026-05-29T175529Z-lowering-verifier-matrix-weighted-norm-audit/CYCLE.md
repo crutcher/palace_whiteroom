@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T18:03:03Z
 scope: L1>L0 theme audit — matrix-weighted-norm-mutation-rotation
 status: integrated
 integrated_at: 2026-05-29T21:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8f14978
 integration_notes: "cycle-027 finalize. Pure additive audit landing: appended a 19-entry verified_against: block (~~~yaml tilde-fenced at EOF, toggle-safe) to L1-L0/matrix-weighted-norm-mutation-rotation.md. Verdict fully-supported; theme STAYS firm; ZERO content/status change. Residual matrix-weighted-norm-mixed-element-type-variant L1-ENTRY promotion gate migrates to the plan (the L1 entry matrix-weighted-norm.md stays rough-in (test-coverage-bounded), its own independent gate; a firm lowering of a rough-in operator is legitimate per the eigsolve-mutation-rotation precedent). retroactive-budget 0; clean build (the tilde-fenced yaml renders as a fenced code block, intended)."
 inputs:
   - book/src/L1-L0/matrix-weighted-norm-mutation-rotation.md

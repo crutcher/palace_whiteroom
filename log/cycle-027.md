@@ -1,6 +1,6 @@
 # Cycle 027 — L1 firm 20→21 (+back_solve) + L1>L0 firm themes +1 (normalize-mutation-rotation) + matrix-weighted-norm verified_against audit + 6 hygiene re-anchors + 2 ksp_solve cite upgrades + D5 DEFERRED (third/final primary cycle of meta-batch-7)
 
-**Date:** 2026-05-29 · **Commit:** `__FINALIZE_SHA__` · **Status:** clean-with-one-deferral (5 of 6 dispatched reports applied; 1 deferred needs-revision [D5]; zero rejections/rework; zero build-repairs; twenty-third consecutive clean split-integrator cycle)
+**Date:** 2026-05-29 · **Commit:** `8f14978` · **Status:** clean-with-one-deferral (5 of 6 dispatched reports applied; 1 deferred needs-revision [D5]; zero rejections/rework; zero build-repairs; twenty-third consecutive clean split-integrator cycle)
 
 **Batch position:** cycle-027 is the **THIRD / FINAL** primary cycle of meta-batch-7 (cycles 025/026/027). **The batch-7 meta-phase fires after THIS cycle-027 finalize commit** (3:1 cadence; cycle counter does NOT reset across batch boundaries). This `log/cycle-027.md` + the `scaffolding/integrator-signals.md` cycle-027 section CLOSE the batch-7 evidence window opened by cycle-025 — the signals section is the BATCH-CLOSING signal dump for the meta-phase.
 

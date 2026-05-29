@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T18:03:05Z
 scope: cycle-026 mechanical hygiene re-anchor / cite-refresh — four bounded corrections (brace-boundary drift, workspace-category mislabel, givens source-cite staleness, dot_bilinear provenance-note refresh)
 status: integrated
 integrated_at: 2026-05-29T21:15:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8f14978
 integration_notes: "cycle-027 finalize. 6 mechanical hygiene edits, ALL pure re-anchor/cite-refresh (no content/structure change): matrix-weighted-norm.md brace re-anchor :601-606→:602-606 at :58/:83; Category-4→Category-1 workspace relabel at linalg-operator-file.md :33/:73/:80 + matrix-weighted-norm.md:9 (four named sites now internally consistent at 'Category 1 — operator-composition workspace'; :22/:87 out of scope → NEW residual OQ linalg-operator-file-category-mislabel-residual-lines-22-87 for c028); givens.md:29 source-cite gmres.md→palace/linalg/iterative.cpp:634-640; bilinear-form.md:416 dot_bilinear provenance refresh (false slug-discrepancy premise dropped). retroactive-budget 0; clean build. The expected non-blocking citecheck operator.cpp:621-639 AMBIG is inside the Correction-2 preserve-verbatim payload (must match linalg-operator-file.md:33 bare-basename verbatim), NOT a citation defect."
 inputs:
   - book/src/L1/matrix-weighted-norm.md
