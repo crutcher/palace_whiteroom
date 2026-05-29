@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T034441Z
 scope: L2>L1 theme audit — inner-product-fold-specialization
 status: integrated
 integrated_at: 2026-05-29T06:05:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14cc0bd
 integration_notes: "cycle-020 finalize (staging row #7). LOWERING-VERIFIER audit of inner-product-fold-specialization, verdict fully-supported / keep firm. Appended a verified_against: fenced yaml block at END OF FILE (15 audit rows + coverage_verdict fully-supported + status_recommendation keep firm + audit_caveat). Theme stays firm (no status change). Post-repair: the phantom :611→:612 SPD-comment drift dropped (file already pins :612); the 3 genuine inline-anchor corrections (:623→:624, :632→:634, :615-616→:616 on operator.cpp anchors) recorded in OQ inner-product-fold-specialization-operator-cpp-inline-anchor-drift for a future lifter touch (NOT applied this dispatch — not in the proposed-changes blocks). Confirms-firm plan Now #2; meta-phase enacts the plan flip + closes inner-product-harvester-formalization-and-conjugation-pinning (:140). Pure metadata append; retroactive-budget 0; clean build."
 inputs:
   - book/src/L2-L1/inner-product-fold-specialization.md

@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T034441Z
 scope: L2 Part intro refresh (semantics overlay + Vocabulary-cohort subsection + dep-map + Working Notes)
 status: integrated
 integrated_at: 2026-05-29T06:05:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14cc0bd
 integration_notes: "cycle-020 finalize (staging row #9, LAST). Structural L2 Part-overview refresh of book/src/L2/index.md (two surgical [old]/[new] section rewrites): §Semantics-overlay + two emergent motifs (named-composition + fold cohorts) + NEW §Vocabulary cohort subsection + 5-row→7-row dep-map; §Working Notes 4 refreshed bullets. 5 firm ops + 2 live-linked stubs (incremental-least-squares, ksp_solve, materialized 2026-05-28). ORDERING PRECONDITION SATISFIED — this report's firm-orthogonalize dep-map assertions depended on the harvester-orthogonalize-l2-backfill (staging row #1) landing first; the critic's two FAILs + cross-ref warning are dissolved post-backfill (this report's critic is what CAUGHT the cycle-019 fence-truncation defect). L3 ksp_solve cross-ref left plain-text per dispatch directive (L3/ksp_solve.md now exists via row #5 — upgrade captured as OQ l2-index-ksp-solve-l3-crossref-upgrade-now-possible). NOT a count change (structural refresh). retroactive-budget 0; clean build."
 ---
 

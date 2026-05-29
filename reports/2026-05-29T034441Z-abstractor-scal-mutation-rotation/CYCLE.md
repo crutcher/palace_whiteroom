@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T034441Z
 scope: L1>L0 theme — scal-mutation-rotation (stub→firm)
 status: integrated
 integrated_at: 2026-05-29T06:05:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14cc0bd
 integration_notes: "cycle-020 finalize (staging row #3). scal-mutation-rotation PROMOTED stub→firm (in-place scalar multiply x ← α·x; element-type + scalar-promotion variant axes; nleps.cpp:486-493 normalize site). Full-file replacement of the stub; L1-L0/index dep-map row inserted after nrm2 / before dot; SUMMARY :84 in-place de-stub. Post-repair citation drift nleps.cpp (491)→(493) + range 486-491→486-493 already fixed before apply; sibling-maturity correction landed (nrm2 firm, axpby/axpbypcz rough-in). BLAS-1 L1>L0 floor NOT yet closed (axpby/axpbypcz still rough-in) — blas1-l1-l0-lowering-theme-gap closing but not closed; meta-phase reconciles the scal constituent strike against the remainder. L1>L0 themes contribute to 12→15. retroactive-budget 0; clean build."
 inputs:
   - book/src/L1/scal.md (firm L1 anchor)

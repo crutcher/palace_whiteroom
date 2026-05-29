@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T034441Z
 scope: L2 operator: orthogonalize (corrective backfill of cycle-019 fence-truncation defect)
 status: integrated
 integrated_at: 2026-05-29T06:05:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14cc0bd
 integration_notes: "cycle-020 finalize (staging row #1, applied FIRST by ordering constraint). CORRECTIVE BACKFILL of the cycle-019 orthogonalize L2 fence-truncation defect — cycle-019 (efb8a0b) landed only the 14-line intro because the firm body was authored OUTSIDE the proposed-changes edit: fence; book/src/L2/orthogonalize.md was a 14-line intro with NO ## Status while L2/index.md:27 + SUMMARY.md:41 already said firm. Full-file replacement recovered the complete firm chapter (## Status firm + Signature + 7 algebraic laws + Variant axes + L2-vs-L1 + Evidence). NOT a firm-count increment (orthogonalize already counted firm cycle-019); L2 firm stays 5. No dep-map/SUMMARY edit (both already firm, correctly not re-touched). TWO skill-candidates filed (proposed-changes-fence-encloses-full-body-guard, verify-intro-firmness-survey-against-on-disk-status-lines) + OQ firm-chapter-body-authored-outside-proposed-changes-fenced-block → batch-5 meta. retroactive-budget 0; clean build."
 inputs:
   - reports/2026-05-29T023000Z-harvester-orthogonalize-l2/CYCLE.md (cycle-019 source-of-truth firm body; integrated efb8a0b)

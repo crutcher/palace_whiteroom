@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T035241Z
 scope: L4>L3 theme re-anchor — gmres-inner-loop-iterate-while-migration (firm against the now-authored gmres §L4 v0.6→v0.7 self-rotation)
 status: integrated
 integrated_at: 2026-05-29T06:05:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14cc0bd
 integration_notes: "cycle-020 finalize (staging row #6). gmres-inner-loop-iterate-while-migration L4>L3 theme PROMOTED rough-in→firm (9 surgical [old]/[new] firming edits) WITH its LHS surface landing the same apply (Edit 10 appended the gmres.md §L4 v0.6→v0.7 inner-loop iterate_while self-rotation via option (a) check_stop_into_carry to spec/slices/gmres.md). cg.md:215-219 stale CG-precedent re-anchored to firm L4/krylov-step Form A (+ cg.md:86-108). The L4/index.md:44 theme row + :53 iterate-while Lowers-to cell dep-map firm-sync was DEFERRED to finalize (layer-intro-author territory) — APPLIED by integrator-finalize this cycle as a consistency-repair (rough-in→firm). fgmres sibling row STAYS rough-in (held cycle-021; live-link, file exists). OQ gmres-inner-loop-iterate-while-migration Closed-index :192 → resolved cycle-020 (meta-phase updates). L4>L3 firm 1→2, rough-in 2→1. retroactive-budget 0; clean build."
 inputs:
   - book/src/L4-L3/gmres-inner-loop-iterate-while-migration.md

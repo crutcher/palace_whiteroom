@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T03:50:30Z
 scope: L1>L0 theme sketch — assemble-diagonal-mutation-rotation
 status: integrated
 integrated_at: 2026-05-29T06:05:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14cc0bd
 integration_notes: "cycle-020 finalize (staging row #4). assemble-diagonal-mutation-rotation NEW firm L1>L0 file (Write, not a stub promotion; operator-to-data diagonal extraction; 4 L0 sub-patterns). Landed firm NOT partly-constructive — the matrix-free high-order-Nedelec approximate-diagonal caveat is a POSITIVELY-ANCHORED load-bearing non-law (jacobi.hpp:15-16 + rap.cpp:163-164 + test-libceed rtol=1.0), not a negative-anchor reconstruction. New SUMMARY chapter line after scal; new L1-L0/index dep-map row after dot / before minres-bicgstab obstruction rows. reciprocal/elementwise_product forward-refs correctly plain-text (speculative-tier). Post-repair 4 narrow-line drifts (AbsMultTranspose :172→:174 + 3 more) already fixed before apply; enclosing ranges correct. Resolves theme-authoring OQ assemble-diagonal-mutation-rotation (:110; meta-phase migrates). L1>L0 themes contribute to 12→15. retroactive-budget 0; clean build."
 inputs:
   - book/src/L1/assemble-diagonal.md (firm L1 entry, landed cycle-019; operator-to-data primitive)

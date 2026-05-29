@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T034441Z
 scope: L3 operator: ksp_solve
 status: integrated
 integrated_at: 2026-05-29T06:05:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14cc0bd
 integration_notes: "cycle-020 finalize (staging row #5). ksp_solve NEW firm L3 operator (Write; the FIRST non-identity L3 backfill — the outer-driver iterate_while_L3 fold carrying the outer-loop sequential-obstruction, complementing the firm L3 krylov-step kernel half whose body IS identity-in-form; genuine iteration-rotation NOT a krylov-step corollary). Landed firm ABOVE a stub L2 ksp_solve anchor (maturity-gradient inversion, acceptable under identity-lowerings-still-require-both-L-levels — each layer coherent within itself). The L3-L2/ksp-solve-outer-driver theme is WARRANTED (substantive non-identity rotation) but gated on the L2 ksp_solve stub→firm promotion; forward-ref kept plain-text. New SUMMARY chapter line after chebyshev; new L3/index dep-map row. Resolves the ksp_solve constituent of l3-vocabulary-inventory-gap (parent stays open against trsv/eigsolve; meta-phase migrates). L3 firm 8→9. retroactive-budget 0; clean build."
 inputs:
   - book/src/L2/ksp_solve.md (stub — the L2 outer-driver anchor the L3 entry sits above)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T034441Z
 scope: L1>L0 theme — dot-mutation-rotation (promote stub → firm)
 status: integrated
 integrated_at: 2026-05-29T06:05:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14cc0bd
 integration_notes: "cycle-020 finalize (staging row #2). dot-mutation-rotation PROMOTED stub→firm (Hermitian inner-product mutation-rotation; two variant axes element-type real/complex + tdot unconjugated sibling; closes the cycle-019 nrm2 sub-pattern-A forward-ref nrm2=√∘abs∘dot). Full-file replacement of the stub; L1-L0/index dep-map row appended after nrm2; SUMMARY :82 in-place de-stub. Post-repair citation inline-anchor drifts (:667→:668 ×5, :679→:678 ×3) already fixed in the report before apply; enclosing ranges always correct. Resolves OQ l1-l0-dot-lowering-asymmetry (constituent of blas1-l1-l0-lowering-theme-gap; meta-phase migrates). L1>L0 themes contribute to 12→15. retroactive-budget 0; clean build."
 inputs:
   - book/src/L1/dot.md (firm L1 operator; pins arg-1-conjugated convention at :34,:43)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T034441Z
 scope: L2↔L1 / L1↔L0 cross-cut — caller-site classification of every Palace linalg::Dot site (conjugate-pair re-order risk inventory)
 status: integrated
 integrated_at: 2026-05-29T06:05:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14cc0bd
 integration_notes: "cycle-020 finalize (staging row #8). CROSS-LAYER census evidence-backfill (additive, NOT a status change). Appended a conjugation_caller_inventory: fenced yaml block + a one-paragraph lead-in into §Applicability — Condition 5 of inner-product-fold-specialization.md (AFTER Condition 5 prose, BEFORE ## Justification kind, ~200 lines ABOVE the #7 verified_against EOF block — non-overlapping, EOF block untouched). Headline: Dot conjugation load-bearing in exactly ONE algorithm (SLEPc-NEP nleps.cpp, 4 observable sites); palace/fem ZERO Dot callers; 11 invisible + 4 observable = 15 caller sites. Resolves OQ inner-product-conjugate-pair-reorder-caller-classification (:152; meta-phase migrates/closes). Two NEW follow-ups opened: nleps-deflation-subspace-projection-combinator-deflate-gram (combinator-miner) + orthog-hpp-localdot-globalsum-unweighted-inner-product-surface (coverage gap). Theme stays firm. retroactive-budget 0; clean build."
 inputs:
   - reports/2026-05-29T034441Z-lowering-verifier-inner-product-fold/CYCLE.md (wave-1 confirmed per-line rules)

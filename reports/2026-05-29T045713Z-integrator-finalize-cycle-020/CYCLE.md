@@ -5,7 +5,7 @@ cycle: cycle-020
 batch_position: meta-batch-5 second primary cycle (cycles 019/020/021; meta-phase fires after 021)
 reports_consumed: 9
 status: complete
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14cc0bd
 ---
 
 # CYCLE-020 — integrator-finalize batch report
@@ -65,7 +65,7 @@ A high-yield vocabulary-buildup + corrective-backfill cycle: **FIVE firm landing
 | retroactive-budget per-slice (≥3 blocks, per-report owned) | all 0 (reported per row) |
 | build-breakage repair (post-rebuild) | none (one routed dep-map consistency-repair, not a content break) |
 | commit atomicity | single commit |
-| consumed-report frontmatter integrity | all 9 marked `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes` |
+| consumed-report frontmatter integrity | all 9 marked `integrated_at` + `integration_commit: 14cc0bd` + `integration_notes` |
 | staging-row-count cross-check | **9 rows vs 9 dispatched ready reports — reconciles clean** (cycle-018 gap did NOT recur, 2nd consecutive cycle) |
 
 ## Build status
@@ -104,4 +104,4 @@ The batch-5 meta-phase fires after the cycle-021 finalize commit, aggregating cy
 
 ## Two-phase SHA patch
 
-`integration_commit` is recorded as `PLACEHOLDER_SHA` in this batch CYCLE.md, all 9 consumed reports' frontmatter, and `log/cycle-020.md`. After the finalize commit + push succeeds, a follow-up commit replaces every `PLACEHOLDER_SHA` with the actual SHA, then pushes again — canonical two-phase pattern (cycles 004..019 precedent). Patch-commit message: `patch commit-sha references for cycle-020 finalize commit (<finalize-sha>)`.
+`integration_commit` is recorded as `14cc0bd` in this batch CYCLE.md, all 9 consumed reports' frontmatter, and `log/cycle-020.md`. After the finalize commit + push succeeds, a follow-up commit replaces every `14cc0bd` with the actual SHA, then pushes again — canonical two-phase pattern (cycles 004..019 precedent). Patch-commit message: `patch commit-sha references for cycle-020 finalize commit (<finalize-sha>)`.

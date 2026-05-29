@@ -1,6 +1,6 @@
 # Cycle 020 — five firm landings + corrective orthogonalize backfill (second primary cycle of meta-batch-5)
 
-**Date:** 2026-05-29 · **Commit:** `PLACEHOLDER_SHA` · **Status:** clean (zero deferrals/rejections/rework; zero content build-repairs; one routed dep-map consistency-repair; sixteenth consecutive clean split-integrator cycle)
+**Date:** 2026-05-29 · **Commit:** `14cc0bd` · **Status:** clean (zero deferrals/rejections/rework; zero content build-repairs; one routed dep-map consistency-repair; sixteenth consecutive clean split-integrator cycle)
 
 **Batch position:** cycle-020 is the **SECOND** primary cycle of meta-batch-5 (cycles 019/020/021). The batch-5 meta-phase fires **after the cycle-021 finalize commit** (3:1 cadence; cycle counter does NOT reset). It does NOT fire this cycle.
 
