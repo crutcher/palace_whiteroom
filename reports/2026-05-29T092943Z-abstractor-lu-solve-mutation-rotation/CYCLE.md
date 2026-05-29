@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T092943Z
 scope: L1>L0 theme sketch — lu-solve-mutation-rotation
 status: pending
 integrated_at: 2026-05-29T10:46:32Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a74edcf
 integration_notes: "Applied clean (staging row 4); applied the REPAIRED CYCLE.md (4 inner samples 4-space-indented per the cycle-019 fence-truncation guard). NEW firm L1>L0 theme book/src/L1-L0/lu-solve-mutation-rotation.md (2 sub-patterns A NLEPS full-pivot-LU / B ROM full-pivot-QR; load-bearing factorization-kernel axis). L1>L0 firm themes +1; SUMMARY + L1-L0/index dep-map row. 3 OQs promoted. Discharges the lu_solve half of the NLEPS L1>L0 cohort. No gate hits."
 inputs:
   - book/src/L1/lu_solve.md (firm L1 operator, landed cycle-022)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T09:29:43Z
 scope: L1 operator: nleps_deflated_solve
 status: pending
 integrated_at: 2026-05-29T10:46:32Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a74edcf
 integration_notes: "Applied clean (staging row 1). NEW firm L1 operator book/src/L1/nleps_deflated_solve.md; L1 firm 16->17; SUMMARY + L1/index dep-map + firm-list bullet + Firm-count headline 16->17. 3 OQs promoted. Deflate bare-Galerkin-core promotion gate stays open (confirmed, not changed). No gate hits."
 inputs:
   - palace/linalg/nleps.cpp:504-537 (the `deflated_solve` lambda — primary positive site)

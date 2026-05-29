@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T092943Z
 scope: L2>L1 theme audit — orthogonalize-composition-lowering
 status: pending
 integrated_at: 2026-05-29T10:46:32Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a74edcf
 integration_notes: "Applied clean (staging row 6). Confirming audit — verdict fully-supported, theme STAYS firm. Single mutation: appended verified_against: yaml block (17 citations) to book/src/L2-L1/orthogonalize-composition-lowering.md EOF. No count change. retroactive-budget per-slice 1 (the only retroactive revision this cycle; global 1, under threshold). 3 OQs promoted. CARRY-FORWARD: stale orthog.hpp:34->:35 anchor in dot-mutation-rotation.md Sub-pattern D (not in this audit's scope; routed as OQ for a future dot-mutation-rotation pass). No gate hits."
 inputs:
   - book/src/L2-L1/orthogonalize-composition-lowering.md (firm; landed cycle-022)

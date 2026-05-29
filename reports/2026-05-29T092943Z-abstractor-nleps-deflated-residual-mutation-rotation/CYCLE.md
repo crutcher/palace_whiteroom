@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T09:29:43Z
 scope: L1>L0 theme sketch — nleps-deflated-residual-mutation-rotation
 status: pending
 integrated_at: 2026-05-29T10:46:32Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a74edcf
 integration_notes: "Applied clean (staging row 5); applied the REPAIRED CYCLE.md (scaffolding-section link-depth fix only; new: fence intact, no cycle-019 truncation). NEW firm L1>L0 theme book/src/L1-L0/nleps-deflated-residual-mutation-rotation.md (3 sub-patterns A Mult+AddMult collapse / B deflation back-projection / C extended-space norm). L1>L0 firm themes +1 (2nd this cycle); SUMMARY + L1-L0/index dep-map row. 2 OQs promoted. Discharges the nleps_deflated_residual half of the NLEPS L1>L0 cohort. apply_nonlinear_pencil + nleps_deflated_solve L1>L0 themes still plain-text forward-refs. No gate hits."
 inputs:
   - book/src/L1/nleps_deflated_residual.md (firm L1 operator, landed cycle-022)

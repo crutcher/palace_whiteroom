@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T092943Z
 scope: L2 operator: eigsolve
 status: pending
 integrated_at: 2026-05-29T10:46:32Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a74edcf
 integration_notes: "Applied clean (staging row 3). NEW firm L2 operator book/src/L2/eigsolve.md (shift-invert spectral-transform composition apply_linop(M) > ksp_solve((K-sM)^-1)); L2 firm 7->8. PLUS implied-component stub book/src/L3/eigsolve.md materialized per the stubs directive (chain step-3 home; >=2 converging refs). SUMMARY x2 (L2 + L3-stub) + L2/index dep-map row. L2 Lifts-to upgraded to live link; lowers_to frontmatter -> predicted partial-obstruction. 4 OQs promoted. Gate: implied-component-stub-created (1, applied-discretionarily). Eigsolve chain step-2 DONE; step-3 (L3 backfill) now unblocked."
 inputs:
   - book/src/L1/eigsolve.md (firm L1 anchor, cycle-022 — the operator-level contract this L2 entry unfolds)

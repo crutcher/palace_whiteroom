@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T092943Z
 scope: L1 index refresh — fifth/sixth semantic motif + eigsolve-firm narrative cleanup
 status: pending
 integrated_at: 2026-05-29T10:46:32Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a74edcf
 integration_notes: "Applied clean (staging row 2). book/src/L1/index.md semantic-motif taxonomy 4->6 (added motif 5 operator-introspection + motif 6 coordinate-space dense direct algebra) + Working-Notes cycle-022 eigsolve-firm bullet (repaired tight back-reference form). No count change (navigational/prose refresh; report 1 owns the Firm-count headline). 1 OQ promoted. No gate hits."
 ---
 

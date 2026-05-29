@@ -12,7 +12,7 @@ inputs:
   - scaffolding/roadmap.md, scaffolding/cycle-record.jsonl, scaffolding/integrator-signals.md
   - log/cycle-022.md + scaffolding/integrator-signals.md cycle-022 (cross-cycle context)
 status: complete
-commit: PLACEHOLDER_SHA
+commit: a74edcf
 ---
 
 # CYCLE: integrator-finalize cycle-023

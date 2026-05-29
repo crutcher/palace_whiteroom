@@ -1,6 +1,6 @@
 # Cycle 023 — eigsolve chain step-2 + NLEPS L1/L1>L0 vocabulary; crash-recovered (second primary cycle of meta-batch-6)
 
-**Date:** 2026-05-29 · **Commit:** `PLACEHOLDER_SHA` · **Status:** clean (zero deferrals/rejections/rework; zero build-repairs; nineteenth consecutive clean split-integrator cycle)
+**Date:** 2026-05-29 · **Commit:** `a74edcf` · **Status:** clean (zero deferrals/rejections/rework; zero build-repairs; nineteenth consecutive clean split-integrator cycle)
 
 **Batch position:** cycle-023 is the **SECOND** primary cycle of meta-batch-6 (cycles 022/023/024). **The batch-6 meta-phase fires after cycle-024 finalize** (3:1 cadence; cycle counter does NOT reset) — NOT this cycle. This `log/cycle-023.md` + the `scaffolding/integrator-signals.md` cycle-023 section continue the batch-6 evidence window opened by cycle-022.
 
