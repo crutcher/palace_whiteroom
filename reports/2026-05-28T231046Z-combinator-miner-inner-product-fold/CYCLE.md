@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T231046Z
 scope: Pattern proposal — inner-product reduce-to-scalar fold (inner_product at L2), sibling to linear_combination
 status: integrated
 integrated_at: 2026-05-29T030000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 19b53b4
 integration_notes: "cycle-018 finalize — inner_product rough-in dep-map row added to L2/index.md (conjugation-convention-axis fold-sibling of linear_combination; >=3-instance bar met: dot/tdot/bilinear-form); forward-ref to ./inner_product.md kept PLAIN-TEXT (no dead link); OQ inner-product-fold-sibling-candidate answered, harvester-formalization + conjugation-pinning follow-ups via OQ inner-product-harvester-formalization-and-conjugation-pinning. L2 rough-in cohort = inner_product (was linear_combination)."
 ---
 

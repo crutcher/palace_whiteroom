@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T231017Z
 scope: concepts/nested-constructed-operator-gate page authorship (OQ prong a)
 status: integrated
 integrated_at: 2026-05-29T030000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 19b53b4
 integration_notes: "cycle-018 finalize — concepts/nested-constructed-operator-gate.md authored (new concept page; inbound link from divfree-projector-mutation-rotation + outbound link to constructed-operator-factory) + SUMMARY register; prong (a) of OQ nested-constructed-operator-gate-concept-and-divfree-correction (resolved). +1 concept page."
 ---
 

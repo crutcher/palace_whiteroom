@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T231026Z
 scope: L2 operator: linear_combination
 status: integrated
 integrated_at: 2026-05-29T030000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 19b53b4
 integration_notes: "cycle-018 finalize — firm L2 operator linear_combination authored (chapter + L2/index dep-map flip rough-in->firm + SUMMARY register); arity-axis unification of the BLAS-1 scalar-weighted-sum cohort; constructive prong (b) of OQ blas1-variadic-linear-combination-fold-unification; OQ linear-combination-harvester-formalization resolved. L2 firm 2->3."
 inputs:
   - reports/2026-05-28T223022Z-combinator-miner-linear-combination-fold/CYCLE.md (the rough-in proposal; integrated cycle-017 commit 80db8d6)

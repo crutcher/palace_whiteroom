@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T231508Z
 scope: L2>L1 theme sketch — linear-combination-fold-specialization
 status: integrated
 integrated_at: 2026-05-29T030000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 19b53b4
 integration_notes: "cycle-018 finalize — L2>L1 theme linear-combination-fold-specialization authored (new chapter + L2-L1/index theme-list row + SUMMARY register); firm; the arity-dispatch fusion-selection lowering of L2 linear_combination into the L1 fixed-arity specializations; second chapter under the L2-L1 Part. L2-L1 firm 1->2. Follow-ups via OQ linear-combination-fold-specialization-theme-followups."
 inputs:
   - reports/2026-05-28T231026Z-harvester-linear-combination-L2/CYCLE.md (the firm L2 entry, this cycle; signature + 7 laws + 4 specializations + output-aliasing axis)

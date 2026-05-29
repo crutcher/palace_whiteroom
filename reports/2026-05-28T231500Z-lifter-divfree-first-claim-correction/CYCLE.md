@@ -4,7 +4,7 @@ invoked_at: 2026-05-28T231500Z
 scope: L1>L0 theme content-correction — divfree-projector-mutation-rotation "first"/"no other op" nesting-gate claims
 status: integrated
 integrated_at: 2026-05-29T030000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 19b53b4
 integration_notes: "cycle-018 finalize — divfree-projector-mutation-rotation.md 'first nested-gate instance' claim corrected to 'third' (eigsolve-mutation-rotation cycle-011 is the prior + richer instance; divfree is the 3rd); firm unchanged; prong (b) of OQ nested-constructed-operator-gate-concept-and-divfree-correction (resolved) + OQ divfree-closure-nesting-constructed-gate-carrying-constructed-gate (answered->resolved)."
 inputs:
   - book/src/L1-L0/divfree-projector-mutation-rotation.md

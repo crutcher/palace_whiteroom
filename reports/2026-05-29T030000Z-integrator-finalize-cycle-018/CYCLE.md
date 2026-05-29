@@ -6,7 +6,7 @@ batch_cycle_ids: [cycle-016, cycle-017, cycle-018]
 meta_batch: batch-4
 reports_consumed: 5
 build_status: clean
-commit: PLACEHOLDER_SHA
+commit: 19b53b4
 ---
 
 # CYCLE: cycle-018 integrator-finalize (batch report-of-record)
