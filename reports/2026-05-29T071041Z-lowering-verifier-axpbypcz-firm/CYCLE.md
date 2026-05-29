@@ -1,3 +1,148 @@
+---
+agent: lowering-verifier
+invoked_at: 2026-05-29T07:10:41Z
+scope: L1>L0 theme audit — axpbypcz-mutation-rotation (enact cycle-021 drafted callsite corrections + promote rough-in→firm; closes BLAS-1 L1>L0 floor 7/8→8/8)
+status: pending
+integrated_at: 2026-05-29T1130Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "cycle-022 report 1/9 (wave-1). Applied clean — axpbypcz-mutation-rotation rough-in→firm (3 callsite corrections + correction-6 range fix); CLOSES the BLAS-1 L1>L0 floor 8/8. retroactive-budget 0; build clean. See reports/cycle-022-integrator-staging/STAGING.md row 1 + reports/2026-05-29T1130Z-integrator-finalize-cycle-022/CYCLE.md."
+inputs:
+  - book/src/L1-L0/axpbypcz-mutation-rotation.md (rough-in under audit)
+  - reports/2026-05-29T051532Z-lowering-verifier-axpby-axpbypcz-firm/CYCLE.md (cycle-021 split-verdict; drafted firm body + corrections (1)-(6))
+  - reports/2026-05-29T051532Z-lowering-verifier-axpby-axpbypcz-firm/META.md (critic read_range-confirmed all 3 corrections)
+  - book/src/L1/axpbypcz.md (firm L1 anchor)
+  - book/src/L1/axpby.md (firm L1 anchor — γ==0 collapse target)
+  - book/src/L1-L0/axpby-mutation-rotation.md (firm-sibling shape reference; firmed cycle-021)
+  - book/src/L1-L0/index.md (dep-map row 19)
+  - L0 evidence (all read_range + citecheck re-verified): palace/linalg/vector.{hpp,cpp}, arpack.cpp, slepc.cpp, nleps.cpp; palace/models/{timeoperator,romoperator}.cpp
+---
+
+# CYCLE: Audit axpbypcz-mutation-rotation (enact callsite corrections + firm)
+
+## Summary
+
+This is the **cycle-022 follow-up** to the cycle-021 SPLIT verdict
+(`reports/2026-05-29T051532Z-lowering-verifier-axpby-axpbypcz-firm/`), which firmed
+`axpby-mutation-rotation` and **GATED** `axpbypcz-mutation-rotation` with a drafted
+firm body, a drafted `verified_against:` block, and three confirmed callsite
+classification corrections (plus corrections 4-6). The drafted body and corrections
+**are fully recoverable** from that report — I recovered them and then **independently
+re-verified every assertion against actual Palace source** (`palace-codemap`
+`read_range` + `search_text`, and `tools/citecheck/citecheck.py` bounds + anchor
+checks on all 23 citations).
+
+**Verdict: fully-supported — PROPOSE FIRMING.** All three callsite corrections
+re-confirm against source; the corpus census is exact; every decl/body/kernel/callsite
+range is in-bounds and every pinpoint anchor lands line-exact. The structural
+decomposition (4 sub-patterns + the mixed-justification γ==0 sub-rule) is sound. I
+propose the rough-in→firm flip via a single proposed-changes block that authors the
+**full corrected firm chapter** (corrections (1)-(6) applied, the appended fenced
+`verified_against:` block, `## Status` flipped to firm) plus the `index.md` dep-map
+row firm-flip.
+
+**One refinement to the cycle-021 draft (correction 6):** the report proposed
+tightening the sub-pattern-C γ==0 branch citation `vector.cpp:402-426` → `402-429`.
+My own `read_range` shows the γ==0 outer block **opens at 402 and closes at 427**
+(the `else` is at 428; the γ≠0 block's first body line is 429). So **402-429
+over-covers** by pulling in the `else {` line and the first γ≠0 line. The precise
+range is **402-427**. My firm body uses 402-427, not 402-429. (This is exactly the
+±1-2-line pinpoint drift the citecheck tool exists to catch — caught here before
+integration.)
+
+**BLAS-1 L1>L0 floor closure (`blas1-l1-l0-lowering-theme-gap`):** firming
+`axpbypcz` takes the floor from **7/8 → 8/8** (dot, scal, nrm2, assemble-diagonal,
+axpby, axpbypcz all firm; the floor OQ can close). This is the last rough-in BLAS-1
+L1>L0 theme.
+
+## Per-citation audit
+
+Every citation below was re-read via `read_range` (this dispatch, not transcribed
+from the cycle-021 report) and bounds-checked via `citecheck` (23 ok / 0 failing);
+the make-or-break pinpoints were additionally anchor-checked.
+
+### The three callsite corrections (the gate)
+
+| Citation | Theme (rough-in) claim | Found (read_range, this dispatch) | Verdict |
+|---|---|---|---|
+| `slepc.cpp:1986` | sub-pattern C, **γ≠0 (runtime)** | `ctx->y1.AXPBYPCZ(ctx->gamma/ctx->sigma, ctx->y2, -ctx->gamma/ctx->sigma, ctx->x1, 0.0)` — 5th/γ arg is literal `0.0`; `-gamma/sigma` is the **β** (4th slot). Receiver `ctx->y1` is `ComplexVector`. → **sub-pattern C, γ=0** | **does-not-support → CORRECT to γ=0** |
+| `nleps.cpp:343-344` | sub-pattern **D (real-on-complex)**, γ=1.0 | `linalg::AXPBYPCZ(y(j).real(), X[j].Real(), -y(j).imag(), X[j].Imag(), 1.0, z.Real())` (+ `.Imag()` sibling at 344). `.Real()`/`.Imag()` return real `Vector` halves; scalars `double`; γ=1.0 literal. Free-fn `AXPBYPCZ<VecType,ScalarType>` deduces `VecType=Vector, ScalarType=double` → real-real specialization at `vector.cpp:746`. → **sub-pattern A** | **does-not-support → CORRECT D→A** |
+| `romoperator.cpp:188-189` | sub-pattern **D (real-on-complex)**, γ=1.0 | `linalg::AXPBYPCZ(y(j).real(), V[j], y(j+1).real(), V[j+1], 1.0, u.Real())` (+ `.Imag()` sibling). `V` is `const std::vector<Vector>&` (sig at romoperator.cpp:178-180); `u.Real()` a `Vector` half; γ=1.0. → real-real **sub-pattern A**. Corroborated by the odd-`n` companion `linalg::AXPY(y(j).real(), V[j], u.Real())` at 193-194 (real-`Vector` AXPY overload). | **does-not-support → CORRECT D→A** |
+
+### Decl / body / kernel anchors (firm-body backbone)
+
+| Citation | Claim | Found (read_range) | Verdict |
+|---|---|---|---|
+| `vector.hpp:133-136` | member `AXPBYPCZ` decl + `(*this)=α·x+β·y+γ·(*this)` comment | L133 comment, L134-136 decl — verbatim | supports |
+| `vector.hpp:313-316` | free-fn template decl `z=α·x+β·y+γ·z` | L313 comment, L314-316 decl — verbatim | supports |
+| `vector.cpp:381-386` | outer member trampoline to static form on Real()/Imag() halves | L381-385 def (delegation at L385); enclosing range OK | supports |
+| `vector.cpp:388-455` | static member body; γ==0 outer branch; imaginary inner branches | L388 def; `if(gamma==0.0)` at L402; γ==0 path `Write` (L404-405, no prior-z read) + inner `ai==0&&bi==0` fast-path; γ≠0 path `ReadWrite` (L430-431) + inner `ai==0&&bi==0&&gi==0` fast-path (L433) — exactly as described | supports |
+| `vector.cpp:402-427` | sub-pat C γ==0 branch (**corrected from 402-426/429**) | `if(gamma==0.0)` opens at 402; outer block closes at **427** (`else` at 428; γ≠0 first line 429). 402-427 is the exact block | supports (range corrected) |
+| `vector.cpp:745-758` | free-fn real-real with γ==0 branch | L745 `template<>`, L746-747 sig, L749 `if(gamma==0.0)`, L751 `add(alpha,x,beta,y,z)`, L755-756 slow-path `AXPBY(alpha,x,gamma,z); z.Add(beta,y)`, L758 `}` — verbatim | supports |
+| `vector.cpp:749-751` | γ==0 fast-path MFEM 5-arg `add(α,x,β,y,z)` | exact (anchor `add(alpha, x, beta, y, z)` lands at 751) | supports |
+| `vector.cpp:755-756` | γ≠0 slow-path `AXPBY(α,x,γ,z); z.Add(β,y)` | exact | supports |
+| `vector.cpp:760-765` | free-fn complex-complex one-line delegate (defined-not-used) | L760 `template<>`, L761-762 sig, L764 `z.AXPBYPCZ(...)`, L765 `}` — verbatim; corpus census = no complex-scalar caller | supports (defined-not-used) |
+| `vector.cpp:767-772` | free-fn real-on-complex one-line delegate (sub-pat D) | L767 `template<>`, L768-769 sig, L771 `z.AXPBYPCZ(...)`, L772 `}` — verbatim. **Zero observed callers (corrected): D is defined-not-used** | supports (decl); defined-not-used |
+| `vector.cpp:729` | MFEM `add(α,x,β,y,y)` AXPBY real-real kernel reused by γ==0 fast-path | exact (anchor `add(alpha, x, beta, y, y)` lands at 729) | supports |
+
+### Sub-pattern A and C call sites (γ=0 corpus, unchanged from rough-in)
+
+| Citation | Claim | Found | Verdict |
+|---|---|---|---|
+| `timeoperator.cpp:139` | sub-pat A, γ=0, z aliases x | `AXPBYPCZ(-1.0, rhs1, dJ_coef(t), NegJ, 0.0, rhs1)` — γ=0 literal, rhs1 read+written, real Vectors | supports |
+| `timeoperator.cpp:217` | sub-pat A, γ=0 | `AXPBYPCZ(1.0, RHS2, dt, k1, 0.0, k2)` — γ=0 literal | supports |
+| `timeoperator.cpp:273` | sub-pat A, γ=0 | `AXPBYPCZ(1.0, b2, saved_gamma, x1, 0.0, x2)` — γ=0 literal (`saved_gamma` is the β slot) | supports |
+| `arpack.cpp:772` | sub-pat C, γ=0 | `y2.AXPBYPCZ(sigma, x1, gamma, x2, 0.0)` — γ=0 literal (the `gamma` var is the β slot) | supports |
+| `arpack.cpp:787` | sub-pat C, γ=0 | `y2.AXPBYPCZ(sigma/gamma, y1, 1.0, x1, 0.0)` — γ=0 literal | supports |
+| `nleps.cpp:471` | sub-pat C, γ=0 | `v.AXPBYPCZ(0.5, eigenvectors[i1], 0.5, eigenvectors[i2], 0.0)` — γ=0 literal | supports |
+| `nleps.cpp:676` | sub-pat C, γ=0 | `z.AXPBYPCZ(-delta_eig, w, -1.0, u, 0.0)` — γ=0 literal | supports |
+| `nleps.cpp:693` | sub-pat C, γ=0 | `v_trial.AXPBYPCZ(1.0, v, alpha, du, 0.0)` — γ=0 literal | supports |
+
+### Corpus census (complete, via `search_text "AXPBYPCZ\("`)
+
+The complete set of AXPBYPCZ **call sites** in `palace/**` is exactly:
+timeoperator{139,217,273}, arpack{772,787}, nleps{343,344,471,676,693},
+slepc{1986}, romoperator{188,189} — 13 sites. (The remaining `search_text` hits are
+decls/defs in `vector.{hpp,cpp}`.) **Every call site passes a literal in the γ slot:
+all `0.0` except the two real-real sites nleps:343-344 and romoperator:188-189 at
+`1.0`.** Consequences carried into the firm body:
+- Sub-pattern **D** (double scalars on `ComplexVector`) has **zero callers** →
+  defined-not-used (same status as sub-pattern B).
+- Sub-pattern **B** (complex scalars) has zero callers → defined-not-used (already
+  correctly noted).
+- The **only observed γ≠0 path** is sub-pattern A's real-real slow-path
+  (`AXPBY(α,x,γ,z); z.Add(β,y)`), exercised at nleps:343-344 and romoperator:188-189.
+
+## Applicability conditions
+
+| Condition (theme) | Verifiable from cited evidence? | Found counter-example? |
+|---|---|---|
+| 1. No x/y/z aliasing (+ timeoperator:139 γ=0 exception) | Yes — kernel reads `x[i]`/`y[i]`, writes `z[i]`; γ≠0 reads prior `z[i]`. timeoperator:139 exception (z=rhs1 aliases x=rhs1, γ=0) reduces by the γ==0 sub-rule to `axpby(-1.0, rhs1, dJ_coef, NegJ)` → MFEM `add(α,x,β,y,z)` kernel. | No (MFEM `add` alias-safety is an out-of-Palace-scope OQ, carried; not a firm-blocker — per-element value-correctness is self-evident) |
+| 2. No observer of prior `z` after call | Partial (lexical-sequencing; not single-range-mechanical). All cited sites overwrite-then-not-read. | No (in cited corpus) |
+| 3. Conforming shape/type; real-on-complex promotion via 767-772 | Yes — overload set enforces. **Corrected:** the 767-772 promotion overload is a *recognition rule*, defined-not-used (the two sites previously attributed to it are real-real, sub-pattern A). | The "observed promotion" framing is removed by correction (4); no residual counter-example |
+| 4. γ==0 syntactic recognition on literal | Yes — every site uses literal `0.0`/`1.0`; matches the L0 `gamma==0.0` value-branch at 402 (member) and 749 (free-fn) | No |
+| 5. No α==0/β==0 L0 branch (recognition-only at L1) | Yes — the member body branches only on `gamma==0.0` and on imaginary-scalar shape (`ai==0&&bi==0`, `gi==0`), never on α/β value | No |
+
+## Algebraic laws (cited)
+
+| Law / sub-rule | Holds on operators? |
+|---|---|
+| γ==0: `axpbypcz(α,x,β,y,0,z) = axpby(α,x,β,y)` (law #1 of L1/axpbypcz) | **Holds.** Real-real γ==0 fast-path calls `add(α,x,β,y,z)` (vector.cpp:751), the same MFEM kernel as AXPBY real-real `add(α,x,β,y,y)` (vector.cpp:729). Complex member γ==0 path shifts `ReadWrite`→`Write` and drops the `γ·Z_prev` cross-terms (vector.cpp:402-427). The structural+algebraic mixed framing is sound. |
+| γ≠0 load-bearing IEEE-order non-law | **Holds, and is now LIVE.** The γ≠0 slow-path `AXPBY(α,x,γ,z); z.Add(β,y)` (vector.cpp:755-756) sums in a different IEEE-754 order than the fused γ==0 `add`. Per the corrected corpus census this path **is exercised** (nleps:343-344, romoperator:188-189 — the only γ≠0 sites), so the cross-branch summation-order divergence is a live, not merely potential, reproduction concern. Recorded in `L1/axpbypcz` "Laws that explicitly do not hold". |
+
+All cited laws hold on the operator signatures; the mixed-justification framing matches
+the L0 control flow.
+
+## Proposed changes
+
+Promote `axpbypcz-mutation-rotation` rough-in→firm. The full corrected firm chapter
+is authored **inside the `edit:` fence below** (corrections (1)-(6) applied; appended
+fenced `verified_against:` block; `## Status` flipped to firm). A second `edit:` fence
+flips the `index.md` dep-map row. Per the batch-5 meta-phase fence-guard, the entire
+firm apparatus is enclosed in the proposed-changes fences — none of it is authored as a
+top-level report section.
+
+```edit:book/src/L1-L0/axpbypcz-mutation-rotation.md
+[replace the entire file with the corrected firm chapter below]
 # axpbypcz-mutation-rotation
 
 The mutation rotation for the fused three-scalar three-vector update. Lowers
@@ -412,3 +557,65 @@ verified_against:
     audited_at: 2026-05-29T07:10:41Z
     note: CORRECTED from cycle-021 draft: sub-pattern A (real-real), gamma=1.0 literal. V is std::vector<Vector>, u.Real() a Vector half (confirmed by AXPY companion at 193-194). NOT sub-pattern D. Second observed gamma!=0 site.
 ```
+```
+
+```edit:book/src/L1-L0/index.md
+[replace the axpbypcz-mutation-rotation dep-map row, current line 19]
+| [axpbypcz-mutation-rotation](./axpbypcz-mutation-rotation.md) | `L1/axpbypcz` (firm) | `palace/linalg/vector.{hpp,cpp}`, `arpack.cpp`, `slepc.cpp`, `nleps.cpp`; `palace/models/{timeoperator,romoperator}.cpp` | firm *(structural; 4 sub-patterns A/B/C/D; mixed-justification γ==0 algebraic sub-rule; B+D defined-not-used; sole γ≠0 path is A's real-real slow-path)* |
+```
+
+## Supporting evidence
+
+Files consulted (all via codemap `read_range` / `search_text` + `tools/citecheck/`,
+relative to `reference/`):
+- `palace/linalg/vector.hpp:133-136`, `144-146`, `313-316` — member + static + free-fn AXPBYPCZ decls.
+- `palace/linalg/vector.cpp:381-386` — ComplexVector::AXPBYPCZ outer member trampoline.
+- `palace/linalg/vector.cpp:388-455` — static member-form body (γ==0 branch at 402-427; γ≠0 branch 428-454).
+- `palace/linalg/vector.cpp:725-732` — AXPBY real-real `add(alpha,x,beta,y,y)` at 729 (γ==0 fast-path kernel source).
+- `palace/linalg/vector.cpp:745-772` — free-fn real-real (745-758), complex-complex (760-765), real-on-complex (767-772) specialisations.
+- `palace/linalg/arpack.cpp:770-789` — sub-pattern C γ=0 sites (772, 787).
+- `palace/linalg/slepc.cpp:1982-1990` — slepc AXPBYPCZ (γ=0 correction; 5th arg literal 0.0).
+- `palace/linalg/nleps.cpp:338-346` (real-real γ=1.0 sites 343-344), `471`, `676`, `693`.
+- `palace/models/timeoperator.cpp:137-141`, `217`, `273` — sub-pattern A sites (139 aliasing exception).
+- `palace/models/romoperator.cpp:176-195` — `ProlongatePROMSolution`; real-real γ=1.0 sites 188-189 + AXPY companion 193-194.
+- `search_text "AXPBYPCZ\("` — complete 13-site call-site census.
+- `tools/citecheck/citecheck.py` — 23 citations bounds-checked (23 ok / 0 failing); anchor-drift confirmed for slepc:1986 (AXPBYPCZ), nleps:343 (X[j].Real), romoperator:188 (V[j]), vector.cpp:402 (gamma == 0.0), vector.cpp:729 (add(...y,y)), vector.cpp:751 (add(...y,z)).
+
+## Open questions / caveats
+
+1. **Correction-6 refinement (folded into the firm body): the γ==0 branch range is
+   402-427, not the cycle-021 draft's 402-429.** The cycle-021 report proposed
+   tightening `vector.cpp:402-426` → `402-429`; my independent `read_range` shows the
+   γ==0 outer block opens at 402 and **closes at 427** (the `else` is at 428; the γ≠0
+   block's first body line is 429). So 402-429 over-covers into the `else` and the
+   first γ≠0 line. The firm body uses **402-427**. This is the ±1-2-line pinpoint drift
+   the citecheck tool targets — caught and corrected before integration. No
+   integrator carry-forward needed (the rough-in file's existing citation was 402-426,
+   which under-covered; the firm body replaces it with the exact 402-427).
+
+2. **BLAS-1 L1>L0 floor (`blas1-l1-l0-lowering-theme-gap`) closes 8/8 with this
+   dispatch.** dot, scal, nrm2, assemble-diagonal, axpby (firmed cycle-021), and now
+   axpbypcz are all firm. The floor OQ can be marked closed by the integrator /
+   meta-phase. This was the last rough-in BLAS-1 L1>L0 theme.
+
+3. **MFEM `add(α,x,β,y,z)` alias-safety (carried, out of Palace scope; NOT a
+   firm-blocker).** Applicability-condition-1 exception (timeoperator:139, z aliases x
+   with γ=0) relies on MFEM's `add` kernel being alias-safe when the destination
+   matches an input. This is an MFEM-library property, not verifiable from Palace
+   source; carried as the theme's existing flagged OQ per CLAUDE.md "symbols resolving
+   into MFEM are logged as open questions." Per-element value-correctness is
+   self-evident; only bit-level reproduction is unverified.
+
+4. **Naming-vs-scope nuance on the SIBLING `axpby-mutation-rotation` (NOT this
+   theme; carried from cycle-021 OQ `axpby-theme-covers-axpy-family-naming`).** The
+   cycle-021 audit flagged that `axpby-mutation-rotation` is *named* axpby but its body
+   covers the `axpy` family; the fused 2-scalar `AXPBY` L0 surface
+   (`vector.cpp:315-360`, `727-743`) is a separate uniformly-delegating lowering. That
+   is a sibling-theme concern, untouched by this dispatch; flagged here only so the
+   floor-closure bookkeeping does not conflate it with `axpbypcz`. The
+   `axpbypcz-mutation-rotation` theme is correctly named (it covers the genuine
+   3-scalar AXPBYPCZ surface).
+
+5. **Direction-of-definition: clean (high→low).** The firm body narrates the rewrite
+   forward (L1 `axpbypcz` pure form → L0 `AXPBYPCZ` kernels), per the high→low layer-
+   definition invariant. No reverse-direction (L0-lifts-to-L1) prose in the chapter.

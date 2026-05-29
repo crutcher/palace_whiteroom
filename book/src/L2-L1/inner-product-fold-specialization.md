@@ -139,7 +139,7 @@ The **selection rule** has three orthogonal dispatch keys, applied independently
 At L2 the weighted member is the clean composition `inner_product (apply_linop M x) y`
 (`L2/inner_product` §Semantics). The lowering reintroduces the **internal workspace `Ax`**
 that the L0 weighted `Dot` allocates (`ComplexVector Ax(A.Height())`,
-`palace/linalg/operator.cpp:623,632`) — the Category-4 "synthetic workspace" instance of
+`palace/linalg/operator.cpp:624,634`) — the Category-4 "synthetic workspace" instance of
 [`mutable-workspace-pattern`](../L0/mutable-workspace-pattern.md) recorded at
 [`bilinear-form`](../L1/bilinear-form.md):39-43. The workspace disappears at L2 (pure
 threading) and reappears here as the M-application buffer; it is invisible to the L2 value.
@@ -412,7 +412,7 @@ producer-self-verification):
   (`:256-260`). The documented arg-2 convention + the local-then-collective two-step + the
   norm consumer. **Self-verified.**
 - `palace/linalg/operator.cpp:621-628` — weighted `Dot(comm, x, A, y)` real-`Operator`:
-  allocates `ComplexVector Ax(A.Height())` (`:623`), `A.Mult(x.Real(), Ax.Real())` /
+  allocates `ComplexVector Ax(A.Height())` (`:624`), `A.Mult(x.Real(), Ax.Real())` /
   `A.Mult(x.Imag(), Ax.Imag())`, then `Dot(comm, Ax, y) = yᴴ A x`. The M-weighted dispatch
   arm + the workspace + the arg-2-conjugated weighted form. **Self-verified.**
 - `palace/linalg/operator.cpp:631-638` — weighted `Dot(comm, x, A, y)` `ComplexOperator`:
@@ -420,7 +420,7 @@ producer-self-verification):
   **Self-verified.**
 - `palace/linalg/operator.cpp:598-618` — `Norml2(comm, x, B, Bx)` real (`:599-606`) +
   complex (`:608-618`): the B-weighted norm `√ Dot(comm, Bx, x)`, with the SPD assertion
-  `dot.real() > 0.0 && |dot.imag()| < 1e-9·dot.real()` (`:615-616`, comment "For SPD B,
+  `dot.real() > 0.0 && |dot.imag()| < 1e-9·dot.real()` (`:616`, comment "For SPD B,
   xᴴ B x is real" at `:612`). The `matrix-weighted-norm` consumer + law-5/diagonal
   confirmation. **Self-verified.**
 - `palace/linalg/iterative.cpp:393-396` — `beta = linalg::Dot(comm, z, r)` (`:395`): CG's

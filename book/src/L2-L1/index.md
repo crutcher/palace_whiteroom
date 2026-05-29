@@ -13,6 +13,7 @@ L1 forms are pure-functional but **structurally close to the source loop** — e
 | [chebyshev-iteration-fusion](./chebyshev-iteration-fusion.md) | `L2/chebyshev-iteration` (firm) | `L1/chebyshev-smoother` (firm) | firm *(algebraic; recurrence↔polynomial fusion)* |
 | [linear-combination-fold-specialization](./linear-combination-fold-specialization.md) | `L2/linear_combination` (firm) | `L1/scal` + `axpy` + `axpby` + `axpbypcz` (firm) | firm *(algebraic; arity-dispatch fusion-selection + pinned summation order)* |
 | [inner-product-fold-specialization](./inner-product-fold-specialization.md) | `L2/inner_product` (firm) | `L1/dot` (firm; `dot` + `tdot`) + `L1/bilinear-form` (rough-in, M-weighted member) | firm *(algebraic; conjugation-convention / element-type / weight dispatch + value-level `xᴴ y`↔`yᴴ x` conjugate-pair re-order + pinned reduction tree)* |
+| [orthogonalize-composition-lowering](./orthogonalize-composition-lowering.md) | `L2/orthogonalize` (firm, cycle-019) | `L1/orthogonalize` (firm leaf) + `L1/dot` + `L1/axpy` (firm; `project`▷`subtract` de-fusion) | firm *(algebraic; MGS/CGS/CGS2 variant-dispatch = `[dot,axpy]` sequence selection; inner product cites `dot-mutation-rotation` Sub-pattern D; collective shape `m×1`/`1×m`/`2×m`)* |
 
 ## Working Notes
 

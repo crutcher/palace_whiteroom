@@ -43,12 +43,15 @@
 - [orthogonalize](./L2/orthogonalize.md)
 - [incremental-least-squares (stub)](./L2/incremental-least-squares.md)
 - [ksp_solve](./L2/ksp_solve.md)
+- [gram](./L2/gram.md)
+- [deflate](./L2/deflate.md)
 
 # L2 > L1 — Lowering
 - [Overview](./L2-L1/index.md)
 - [chebyshev-iteration-fusion](./L2-L1/chebyshev-iteration-fusion.md)
 - [linear-combination-fold-specialization](./L2-L1/linear-combination-fold-specialization.md)
 - [inner-product-fold-specialization](./L2-L1/inner-product-fold-specialization.md)
+- [orthogonalize-composition-lowering](./L2-L1/orthogonalize-composition-lowering.md)
 
 # L1 — Mutation-Lifted Forms
 - [Overview](./L1/index.md)
@@ -68,6 +71,8 @@
 - [divfree-projector](./L1/divfree-projector.md)
 - [assemble-diagonal](./L1/assemble-diagonal.md)
 - [apply_nonlinear_pencil](./L1/apply_nonlinear_pencil.md)
+- [nleps_deflated_residual](./L1/nleps_deflated_residual.md)
+- [lu_solve](./L1/lu_solve.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)

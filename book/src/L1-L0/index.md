@@ -16,7 +16,7 @@ Many themes here capture **how Palace expresses common patterns**:
 | theme | L1 anchor | L0 anchor | status |
 |---|---|---|---|
 | [axpby-mutation-rotation](./axpby-mutation-rotation.md) | `L1/axpy` (+ `axpby`/`axpbypcz` fwd-ref) | `palace/linalg/vector.{hpp,cpp}`, `operator.cpp`, `rap.cpp` | firm *(structural; 3 sub-patterns A/B/C; `α==1`/`α==-1` algebraic sub-rules; complex-α + Subtract forms defined-not-used)* |
-| [axpbypcz-mutation-rotation](./axpbypcz-mutation-rotation.md) | `L1/axpbypcz` (firm) | `palace/linalg/vector.{hpp,cpp}` | rough-in |
+| [axpbypcz-mutation-rotation](./axpbypcz-mutation-rotation.md) | `L1/axpbypcz` (firm) | `palace/linalg/vector.{hpp,cpp}`, `arpack.cpp`, `slepc.cpp`, `nleps.cpp`; `palace/models/{timeoperator,romoperator}.cpp` | firm *(structural; 4 sub-patterns A/B/C/D; mixed-justification γ==0 algebraic sub-rule; B+D defined-not-used; sole γ≠0 path is A's real-real slow-path)* |
 | [apply-linop-mutation-rotation](./apply-linop-mutation-rotation.md) | `L1/apply_linop` (firm) | `palace/linalg/operator.{hpp,cpp}`, `rap.cpp` | rough-in |
 | [ksp-solve-mutation-rotation](./ksp-solve-mutation-rotation.md) | `L1/ksp_solve` (firm) | `palace/linalg/ksp.cpp`, `palace/linalg/iterative.{hpp,cpp}` | rough-in *(firmed cycle-008)* |
 | [eigsolve-mutation-rotation](./eigsolve-mutation-rotation.md) | `L1/eigsolve` (rough-in) | `palace/linalg/{arpack,slepc,nleps}.cpp`, `palace/linalg/eps.hpp` | firm *(structural; partly-constructive on LinearSolveFailed)* |

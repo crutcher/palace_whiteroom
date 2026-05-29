@@ -1,0 +1,187 @@
+---
+agent: harvester
+invoked_at: 2026-05-29T07:13:01Z
+scope: L1 operator: lu_solve
+status: pending
+integrated_at: 2026-05-29T1130Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "cycle-022 report 2/9 (wave-1). Applied clean — NEW firm L1 lu_solve (small-dense k×k direct solve, firm-on-positive-structure); the HIGH-fan-out Gram-coordinate primitive (cycle-021 deflate-blocker). L1 firm 13→14; SUMMARY-registered. retroactive-budget 0; build clean. See reports/cycle-022-integrator-staging/STAGING.md row 2 + reports/2026-05-29T1130Z-integrator-finalize-cycle-022/CYCLE.md."
+inputs:
+  - cycle-022 wave-1 dispatch #2 (HIGH-fan-out blocker; gates wave-2 deflate/gram L2 firm)
+  - palace/linalg/nleps.cpp:533-535,562-563,665-667 (S.fullPivLu().solve — deflation extended-operator solves)
+  - palace/models/romoperator.cpp:757-758,765 (Ar.ldlt()/fullPivHouseholderQr().solve — PROM small-dense solve)
+  - precedent: book/src/L1/apply_nonlinear_pencil.md (firm-on-positive-structure status), book/src/L1/apply_linop.md (opaque/leaf operator)
+  - all 17 planned citations citecheck-verified (2 pinpoint drifts corrected: nleps:561→562, romoperator:716→717)
+---
+
+# CYCLE: Formalize lu_solve at L1
+
+## Summary
+`lu_solve` is a NEW firm L1 operator: the small-dense direct solve of `A x = b` for a square `k×k` (or `m×m`) dense matrix `A`, via a pivoted factorization (Eigen `fullPivLu().solve`, `fullPivHouseholderQr().solve`, `ldlt().solve`). It is the coordinate-space solve at the heart of Palace's eigensolver deflation (`nleps.cpp`) and reduced-order-model online evaluation (`romoperator.cpp`) — distinct from the iterative large-sparse `ksp_solve` (Krylov) and from the triangular `trsv`. The operator did not exist at L1 before this dispatch; it is a leaf primitive (depends on no other L1 operator). It lands **`firm`**: every algebraic law is a syntactic operator-algebra identity on a fully-specified positive source site (the `apply_linop` / `apply_nonlinear_pencil` precedent), so the absence of a dedicated unit test on the `.solve()` call does not gate the laws.
+
+## Proposed changes
+
+```new:book/src/L1/lu_solve.md
+# lu_solve
+
+Mutation-lifted small-dense direct solve: `x = lu_solve(A, b)` returns the unique solution of the dense linear system `A x = b` for a small square coefficient matrix `A` (size `k×k`), via a pivoted dense factorization (LU / QR / LDLT). The coordinate-space solve primitive of Palace's eigensolver deflation and reduced-order-model online evaluation — the *small dense* counterpart to the *large sparse iterative* [`ksp_solve`](./ksp_solve.md).
+
+## Context
+
+Palace contains two structurally distinct kinds of linear solve. The large one — `K x = b` for the assembled `N`-by-`N` (millions of DOFs) sparse/matrix-free operator — is the preconditioned **Krylov** solve, lifted at L1 as [`ksp_solve`](./ksp_solve.md). The small one — `A x = b` for a dense `k`-by-`k` matrix where `k` is the deflation rank or the ROM basis size (single to low tens) — is a **direct dense factorize-and-solve**, done in coordinate space with a dense linear-algebra library (Eigen). The two never compose into one operator: their cost models, representations, and numerical concerns are different (`ksp_solve` is iterative-to-tolerance and opaque about its inner method; `lu_solve` is a finite, exact-arithmetic-modulo-roundoff direct solve on a materialized dense matrix). `lu_solve` is the L1 name for the second kind.
+
+It appears at two families of L0 sites:
+
+- **Eigensolver deflation** (`QuasiNewtonSolver::Solve`, `palace/linalg/nleps.cpp`). The deflated NEP carries a `k`-by-`k` extended-operator block `S = λI − H` (`H` the `k`-by-`k` projected Hessenberg of the locked eigenvalues, `palace/linalg/nleps.cpp:397`). The block-elimination of the deflated `2×2` system repeatedly forms `S⁻¹`-applied vectors — `S.fullPivLu().solve(·)` on a single RHS (`x2`, `vv2`, `v2`, `Sv2`) and on a `k`-by-`k` RHS matrix (`SS`) — at the deflated-solve site (`palace/linalg/nleps.cpp:533-535`), the residual site (`palace/linalg/nleps.cpp:562-563`), and the deflation low-rank-update / Jacobian site (`palace/linalg/nleps.cpp:665-667`).
+- **ROM online evaluation** (`RomOperator::SolvePROM`, `palace/models/romoperator.cpp:701`). The projected reduced-order matrix `Ar(ω)` is `m`-by-`m` (`m = V.size()`, the ROM basis size, `palace/models/romoperator.hpp:188`); the PROM solution at a frequency is `RHSr ← Ar(ω)⁻¹ RHSr(ω)` via `Ar.fullPivHouseholderQr().solve(RHSr)` (`palace/models/romoperator.cpp:765`), with a disabled LDLT alternative (`palace/models/romoperator.cpp:757-758`).
+
+The factorization *kernel* differs across these sites — full-pivot LU at NLEPS, full-pivot Householder QR at ROM (with a commented-out LDLT path) — but the *operation* is identical: solve `A x = b` for a small dense `A` by a numerically-robust direct factorization. The kernel choice is a **variant axis** (see Variant axes); the L1 operator is the factorization-agnostic solve. The semantics of how `A.fullPivLu().solve(b)` lowers to L0 (the in-place Eigen factorization object, the permutation/pivot bookkeeping, the back-substitution) belong to a future `lu_solve-mutation-rotation` L1>L0 theme (not yet written — plain-text forward-reference, no live link).
+
+## Signature
+
+```text
+lu_solve
+  :: (A: Matrix[k, k], b: Tensor[k]) -> Tensor[k]            -- single RHS
+lu_solve
+  :: (A: Matrix[k, k], B: Matrix[k, m]) -> Matrix[k, m]      -- multi RHS (column-wise)
+
+lu_solve(A, b) = the unique x with  A · x = b   (A invertible)
+```
+
+Shape contract (bunsen-style, named axes):
+
+- `A` — `Matrix[k, k]` — the **dense, materialized, square** coefficient matrix. Read-only. The axis `k` is the small coordinate dimension (deflation rank or ROM basis size — single to low tens), **not** the large field dimension `N` of [`apply_linop`](./apply_linop.md) / [`ksp_solve`](./ksp_solve.md). `A` is a dense value (every entry present), in contrast to the opaque `LinearOperator[N, N]` of `apply_linop` whose representation is hidden. This denseness is load-bearing: it is what makes a *direct* factorization (rather than an iterative solve) the right kernel.
+- `b` — `Tensor[k]` (single-RHS form) or `B` — `Matrix[k, m]` (multi-RHS form) — the right-hand side(s). Read-only. The leading axis `k` must match `A`'s axes; the trailing axis `m` (multi-RHS) is the number of independent systems sharing the coefficient matrix `A`.
+- result — `Tensor[k]` / `Matrix[k, m]` — the solution(s), same shape as the RHS argument.
+
+The matrix is **square** (`k×k`) — both axes equal. The element type is **complex** at every Palace site (`Eigen::MatrixXcd` / `Eigen::VectorXcd` at NLEPS, complex `Ar`/`RHSr` at ROM); the real element type is a permitted-but-unwitnessed variant (see Variant axes). The multi-RHS form is column-wise: `lu_solve(A, B)[:, j] = lu_solve(A, B[:, j])` — the same factorization of `A` is reused across the `m` columns (witnessed at `palace/linalg/nleps.cpp:533`, where `SS` is a `k`-by-`k` RHS matrix).
+
+`Matrix[k, k]` is a **dense materialized value**, not an opaque operator — this is the structural distinction from [`apply_linop`](./apply_linop.md). `lu_solve` reads `A`'s entries (the factorization examines and permutes them); `apply_linop` never sees `A`'s entries (it only applies the opaque action). Consequently `lu_solve` is **not** an `apply_linop` variant and carries no opaque-operator dependency.
+
+## Semantics
+
+`lu_solve(A, b)` returns the unique vector `x` satisfying `A · x = b`, computed by factorizing the dense `A` (LU with full pivoting, or QR / LDLT — the kernel is a variant axis) and back-substituting against `b`. For the multi-RHS form, the columns of the result are the solutions for the corresponding columns of the RHS, sharing one factorization of `A`.
+
+The L1 form is pure-functional: the same `(A, b)` yields the same `x`. The L0 source overwrites the RHS buffer in place (`SS = -S.fullPivLu().solve(SS)`, `palace/linalg/nleps.cpp:533`; `RHSr = Ar.fullPivHouseholderQr().solve(RHSr)`, `palace/models/romoperator.cpp:765` — the destination *is* the RHS argument) and materializes a transient Eigen factorization object (`A.fullPivLu()` produces a decomposition value whose `.solve(b)` does the back-substitution). The in-place RHS overwrite, the factorization-object lifetime, and the pivot/permutation bookkeeping are L1>L0 lowering concerns, not part of the L1 signature.
+
+Three semantic points are load-bearing and recorded rather than smoothed:
+
+**(1) `A` must be invertible; the result is the unique exact-arithmetic solution.** The defining contract is `A · lu_solve(A, b) = b` for invertible `A`. At every Palace site `A` is a deflation block `S = λI − H` or a ROM matrix `Ar` that is expected invertible at the evaluation point (`λ` is a non-eigenvalue estimate where `S` is regular; `Ar(ω)` is the regular reduced system). Full-pivot LU / QR additionally yield a *least-norm / least-squares* answer when `A` is rank-deficient (Eigen's `fullPivLu().solve` returns a particular solution when one exists; `fullPivHouseholderQr().solve` returns the least-squares minimizer) — but Palace relies on the invertible-`A` case; the rank-deficient behaviour is a kernel detail not contracted at L1. The applicability condition is therefore: **`A` square and (for the contracted semantics) invertible.**
+
+**(2) The factorization kernel is a load-bearing numerical choice, not a transparent trick.** NLEPS uses `fullPivLu` (full-pivot LU); ROM uses `fullPivHouseholderQr` (full-pivot Householder QR) *and explicitly comments why*: "QR solve, for maximal stability. The small system is cheap to compute but can be numerically poorly conditioned due to the splitting of HDM solutions into Re and Im into separate columns" (`palace/models/romoperator.cpp:762-764`). The disabled LDLT path (`palace/models/romoperator.cpp:757-758`, under `if constexpr (false)`) is a faster-but-less-stable alternative the authors rejected for the ROM matrix. **Full pivoting is chosen for numerical robustness on a possibly-ill-conditioned small matrix** — per the CLAUDE.md taxonomy this is a *load-bearing numerical trick* (it buys stability / conditioning), not a transparent performance trick. The mathematical solution `x = A⁻¹b` is kernel-independent (law 1 holds for any kernel); the *floating-point* result and its conditioning behaviour are kernel-dependent (recorded as a non-law). The kernel is therefore a contracted variant axis with a stated numerical property, not an absorbed detail.
+
+**(3) Single factorization, multiple RHS.** When several systems share the coefficient matrix `A`, the dense factorization of `A` is computed once and reused (Eigen: one `A.fullPivLu()` decomposition object, multiple `.solve(·)` calls — witnessed in spirit at `palace/linalg/nleps.cpp:533-535` where three `.solve` calls share the same `S`, though the source re-factorizes per call; the multi-RHS *matrix* form `SS` at `:533` is the within-one-call batched version). The factor-once / solve-many structure is the algebraic content of law 4 (RHS-additivity / batching) and is a transparent performance trick at L1 (the value is identical whether `A` is factored once or per-RHS).
+
+## Algebraic laws
+
+The laws below hold; absences are deliberate.
+
+1. **Solve inverts apply (left inverse on the column space)**: `A · lu_solve(A, b) = b` for any `b`, and `lu_solve(A, A · x) = x` for any `x`, **when `A` is invertible**. This is the defining property — `lu_solve(A, ·) = A⁻¹` as a function. (Where `A·` denotes dense matrix-vector multiply; for the opaque large-`N` operator this is `apply_linop`, but here `A` is a materialized dense matrix.)
+2. **Linearity in the RHS**: `lu_solve(A, α·b₁ + β·b₂) = α·lu_solve(A, b₁) + β·lu_solve(A, b₂)` for scalars `α, β`. Holds because for fixed invertible `A`, `lu_solve(A, ·) = A⁻¹` is a linear map. In particular `lu_solve(A, 0) = 0` (zero-RHS annihilation, the `α = β = 0` case).
+3. **Compose-with-scale on the coefficient**: `lu_solve(c·A, b) = (1/c)·lu_solve(A, b)` for any nonzero scalar `c` (since `(cA)⁻¹ = c⁻¹A⁻¹`). Recorded because the NLEPS deflation forms `S = λI − H` with a `λ`-scaling structure; scaling the coefficient scales the solve reciprocally. (Not exploited as an optimization in Palace — the matrix is re-formed per `λ` — but it is a true identity.)
+4. **Multi-RHS = column-wise single-RHS (factor-once, solve-many)**: `lu_solve(A, B)[:, j] = lu_solve(A, B[:, j])` for each column `j`. The multi-RHS form is the column-stack of single-RHS solves against the *same* factorization of `A`. Witnessed by the `k`-by-`k` RHS-matrix solve `SS = -S.fullPivLu().solve(SS)` (`palace/linalg/nleps.cpp:533`) sitting alongside the single-RHS `x2 = SS.fullPivLu().solve(x2)` (`:534`).
+5. **Solve-composition (nested solves compose to product-inverse)**: a solve against `A₁` followed by a solve against `A₂` equals a single solve against the product, in the sense `lu_solve(A₂, lu_solve(A₁, b))` solves `(A₁ A₂)`-shaped systems only when the operands commute appropriately; the *recorded* form is the witnessed nested pattern `lu_solve(S, lu_solve(SS, x2))` at `palace/linalg/nleps.cpp:533-534` (form `SS⁻¹` then `S⁻¹` against derived RHS) — two successive direct solves, each individually law-1. Recorded as the compositional shape of the deflation block-elimination, not as a coefficient-merging identity (the source keeps the two factorizations distinct).
+
+Laws that explicitly **do not** hold:
+
+- **Kernel-independence of the floating-point result / conditioning**: `lu_solve` with the `fullPivLu` kernel and with the `fullPivHouseholderQr` kernel are *algebraically* identical (both return `A⁻¹b` in exact arithmetic) but **differ at the bit level** and, more importantly, in **conditioning behaviour** on an ill-conditioned `A` (the ROM comment at `palace/models/romoperator.cpp:762-764` chooses QR precisely because it is more stable than LDLT on the Re/Im-split matrix). Load-bearing per the CLAUDE.md numerical-trick taxonomy: the law-1 mathematical identity holds, but the kernel buys a stability property and the bit-level / accuracy realization is kernel-dependent. Recorded as a non-law so callers do not treat the kernel as a free choice.
+- **Linearity / any structure in the coefficient `A`**: `lu_solve(·, b)` is **not** linear in `A` (`lu_solve(A₁ + A₂, b) ≠ lu_solve(A₁, b) + lu_solve(A₂, b)` — matrix inversion is nonlinear). Recorded so deflation-update code does not attempt to distribute a solve over a coefficient sum.
+- **Definedness without invertibility**: for singular `A`, `lu_solve(A, b)` is **not** the unique solution (none exists, or infinitely many do). The full-pivot kernels return a particular / least-squares answer, but that is kernel-specific and outside the contracted semantics. Recorded as an applicability boundary, not a law.
+
+## Dependencies
+
+(leaf) — `lu_solve` depends on no other L1 operator. It consumes a **dense materialized matrix** `A` and a dense RHS, and produces a dense solution, all in small coordinate space; the factorization and back-substitution are atomic at L1 (the kernel internals — pivot search, elimination, triangular back-substitution — are below L1 resolution and surface only in the L1>L0 lowering). In particular it is **not** built on [`apply_linop`](./apply_linop.md) (which applies an *opaque* operator and never reads its entries) and is **not** built on [`ksp_solve`](./ksp_solve.md) (the large-sparse iterative solve). It is a sibling of `ksp_solve` on the "solve a linear system" axis, split by the dense-direct vs sparse-iterative representation/cost distinction — exactly as [`assemble-diagonal`](./assemble-diagonal.md) is a sibling (not a variant) of `apply_linop` on the opaque-operator axis.
+
+`lu_solve` is the per-step coordinate-solve atom that the L2 NEP-deflation vocabulary depends on: the cycle-022 wave-2 `deflate` / `gram` L2 combinators (the deflation block-elimination and the Gram-matrix small-dense solve) are composed of `lu_solve` calls over the `k×k` extended-operator block, exactly as `krylov-step` is composed of `apply_linop` calls. This is the fan-out that makes `lu_solve` a wave-2 blocker.
+
+## Variant axes
+
+`lu_solve` has the following variant axes at L1; one is a contracted load-bearing numerical choice, the rest are absorbed.
+
+- **factorization kernel** (contracted, load-bearing): `full-pivot-LU` | `full-pivot-Householder-QR` | `LDLT` | ... . NLEPS uses `fullPivLu` (`palace/linalg/nleps.cpp:533`); ROM uses `fullPivHouseholderQr` for stability (`palace/models/romoperator.cpp:765`) with a rejected `ldlt` alternative (`:757-758`). This axis is **not** absorbed because the kernel choice is a stated numerical-robustness decision (the ROM comment, `:762-764`) — the property it buys (conditioning stability) is part of the algorithm. The L1 operator is kernel-agnostic in its *value* (law 1) but the kernel is carried as a contracted parameter with the stability non-law. Per the CLAUDE.md taxonomy this is a load-bearing numerical trick, not a transparent one.
+- **single-RHS vs multi-RHS** (parameterised, absorbed-as-form): `b: Tensor[k]` | `B: Matrix[k, m]`. Per law 4 these are the same operator (multi-RHS = column-wise single-RHS over one factorization). Both forms are witnessed at NLEPS (`SS` is multi-RHS `:533`, `x2`/`v2` are single-RHS `:534`/`:665`). One operator, two RHS shapes.
+- **element type** (absorbed): `complex` | `real`. Every Palace site is complex (`Eigen::MatrixXcd`, complex `Ar`); the real case is permitted by the operation but unwitnessed in Palace. Absorbed as a uniform element-type parameter (the factorization is element-type-agnostic), with the real case flagged as a non-surfaced variant rather than a separate operator.
+
+## Status
+
+`firm` — the operator's structure is read directly from **positive** Palace source sites (`S.fullPivLu().solve(·)` at `palace/linalg/nleps.cpp:533-535,562-563,665-667`; `Ar.fullPivHouseholderQr().solve(RHSr)` at `palace/models/romoperator.cpp:765`), the signature's shape (square dense `k×k` matrix, single- and multi-RHS) matches the materialized `Eigen::MatrixXcd` / `Eigen::VectorXcd` values at those sites and the `Ar`/`RHSr` member declarations (`palace/models/romoperator.hpp:188-189`), and the algebraic laws are standard properties of the inverse of a fixed invertible matrix (solve-inverts-apply, RHS-linearity, multi-RHS column-wise, reciprocal-scaling) modulo the explicitly-recorded kernel-conditioning and `A`-nonlinearity non-laws.
+
+This is the **firm-on-positive-structure** decision, exactly as for [`apply_nonlinear_pencil`](./apply_nonlinear_pencil.md) and [`apply_linop`](./apply_linop.md): every law is a **syntactic identity on fully-specified positive source** (operator-algebra facts about `A⁻¹`), not a convergence fact. No dedicated unit test exercises the `.solve()` call directly — `test/unit/test-romoperator.cpp` exercises `CalculateNormalizedPROMMatrices` / `UpdatePROM` (the matrix *assembly*, `:332`/`:516`/`:587`) but not `SolvePROM`'s solve, and NLEPS has zero dedicated unit tests (`search_text` over `test/unit/**` for `nleps|NLEPS|fullPivLu|SolvePROM` returns no solve-call coverage). Per the CLAUDE.md status-tier guidance, **a missing test does not gate syntactic-identity laws** (the `apply_linop` / `apply_nonlinear_pencil` situation, not the `eigsolve`-convergence-semantics situation): the laws do not depend on iteration or convergence behaviour, so the absent test does not reduce law-confidence. Hence `firm`, not `rough-in (test-coverage-bounded)`. The one load-bearing caveat (the factorization-kernel conditioning non-law) is carried as a contracted variant axis with its numerical property stated, not as a status reduction — the *value* the operator computes is kernel-independent and fully specified.
+
+## L1 vs L0 distinction
+
+- **L0**: a dense Eigen factorize-and-solve overwriting the RHS buffer in place. NLEPS: `SS = -S.fullPivLu().solve(SS)` / `x2 = SS.fullPivLu().solve(x2)` (`palace/linalg/nleps.cpp:533-534`) — a transient `fullPivLu()` decomposition object built on `S` (or `SS`), its `.solve` doing pivoted LU back-substitution, the result assigned back over the RHS. ROM: `RHSr = Ar.fullPivHouseholderQr().solve(RHSr)` (`palace/models/romoperator.cpp:765`) — a Householder-QR decomposition of `Ar`, back-substituted against `RHSr`, in place. The factorization object is transient (rebuilt per call), the RHS buffer is the destination, the pivot/permutation arrays are internal Eigen state.
+- **L1**: pure-functional `x = lu_solve(A, b)`. No destination buffer in the signature, no factorization-object lifetime, no pivot bookkeeping. One operator parameterised by the factorization-kernel axis (contracted, with its stability non-law), the RHS-shape axis (single/multi), and the element-type axis (absorbed). Solve-inverts-apply and RHS-linearity hold; `A`-nonlinearity and kernel-conditioning are recorded as explicit non-laws. (The detailed lowering — how `A.fullPivLu().solve(b)` rewrites into the in-place Eigen factorization + back-substitution at L0 — belongs to the future `lu_solve-mutation-rotation` L1>L0 theme, not yet authored.)
+
+## Evidence
+
+- `palace/linalg/nleps.cpp:533-535` — `QuasiNewtonSolver::Solve` deflated-solve lambda: `SS = -S.fullPivLu().solve(SS)` (533, the **multi-RHS** `k×k` solve — witnesses law 4), `x2 = SS.fullPivLu().solve(x2)` (534, single-RHS), `const ComplexVector XSx2 = MatVecMult(X, S.fullPivLu().solve(x2))` (535, single-RHS). The block-elimination of the deflated `2×2` system via the `S = λI − H` extended block. Direct witness of the full-pivot-LU kernel, the single/multi-RHS axis, and the nested-solve compositional shape (law 5).
+- `palace/linalg/nleps.cpp:532` — `const Eigen::MatrixXcd S = eig_opInv * Eigen::MatrixXcd::Identity(k, k) - H;` — the materialized **dense square** `k×k` coefficient matrix `S = λI − H` (the `eig_opInv`-scaled identity minus the Hessenberg). Grounds the `A: Matrix[k, k]` dense-materialized shape contract.
+- `palace/linalg/nleps.cpp:524` — `Eigen::MatrixXcd SS(k, k);` — the `k×k` multi-RHS matrix (the Gram-like block built from `X[i]·X[j]` inner products, `:526-531`). Grounds the multi-RHS `Matrix[k, m]` form (here `m = k`).
+- `palace/linalg/nleps.cpp:562-563` — inside the `compute_residual` lambda (deflated residual): `const Eigen::MatrixXcd S = lam * Eigen::MatrixXcd::Identity(k, k) - H;` (562) and `const ComplexVector XSvv2 = MatVecMult(X, S.fullPivLu().solve(vv2));` (563) — second deflation solve site, single-RHS, same `S = λI − H` block at the residual-evaluation `λ`.
+- `palace/linalg/nleps.cpp:664-667` — deflation low-rank-update / Jacobian site: `const Eigen::MatrixXcd S = eig * Eigen::MatrixXcd::Identity(k, k) - H;` (664), `const Eigen::VectorXcd Sv2 = S.fullPivLu().solve(v2);` (665, single-RHS), `const ComplexVector XSSv2 = MatVecMult(X, S.fullPivLu().solve(Sv2));` (667, single-RHS, the nested `S⁻¹(S⁻¹v2)` — witnesses law 5). Third deflation solve site.
+- `palace/linalg/nleps.cpp:397` — `Eigen::MatrixXcd H;` — the `k×k` projected Hessenberg of the locked eigenvalues (the `H` in `S = λI − H`). Grounds the `k` (deflation-rank) axis.
+- `palace/models/romoperator.cpp:765` — `RHSr = Ar.fullPivHouseholderQr().solve(RHSr);` — the **active** ROM PROM online solve: `Ar(ω)⁻¹ RHSr(ω)` via full-pivot Householder QR. The second factorization-kernel witness (QR, not LU) — grounds the factorization-kernel variant axis.
+- `palace/models/romoperator.cpp:757-758` — `RHSr = Ar.ldlt().solve(RHSr);` and `RHSr = Ar.selfadjointView<Eigen::Lower>().ldlt().solve(RHSr);` — the **disabled** (`if constexpr (false)`, `:754`) LDLT alternative. The rejected faster-but-less-stable kernel — grounds the kernel choice as a *load-bearing* numerical decision (not a free swap).
+- `palace/models/romoperator.cpp:762-764` — the source comment: "QR solve, for maximal stability. The small system is cheap to compute but can be numerically poorly conditioned ... splitting of HDM solutions into Re and Im into separate columns." Direct witness that the full-pivot-QR kernel is chosen for a **stated numerical-robustness property** (the kernel-conditioning non-law).
+- `palace/models/romoperator.cpp:701` — `void RomOperator::SolvePROM(int excitation_idx, double omega, ComplexVector &u)` — the function that assembles and solves the small dense PROM system `Ar(ω) x = RHSr(ω)` (the assembly `Ar += Kr + iω Cr − ω² Mr + Vᴴ A2 V` at `:728-735`, the solve at `:765`).
+- `palace/models/romoperator.cpp:717` — `Ar.resize(V.size(), V.size());` — `Ar` is sized `m×m` with `m = V.size()` (the ROM basis size). Grounds the `m`-axis (ROM-basis-size) instance of the square-`k` shape.
+- `palace/models/romoperator.hpp:188-189` — `Eigen::MatrixXcd Ar;` / `Eigen::VectorXcd RHSr;` — the dense complex PROM matrix and RHS member declarations. Grounds the dense-materialized, complex element-type shape contract.
+- `test/unit/test-romoperator.cpp:332`, `:516`, `:587` — `CalculateNormalizedPROMMatrices(iodata.units)` / `UpdatePROM(...)` — the ROM unit test exercises PROM matrix *assembly* and basis update, **not** `SolvePROM`'s solve call. Confirms the no-dedicated-solve-test caveat (the firm decision rests on positive structural citation, not on a test).
+- No dedicated solve-call unit test: `search_text` for `fullPivLu|fullPivHouseholderQr|ldlt|SolvePROM|nleps|NLEPS` over `test/unit/**` returns only the assembly-side ROM cases above and zero NLEPS coverage — confirms the test-coverage caveat; per CLAUDE.md status guidance the absent test does not gate the syntactic-identity laws (firm-on-positive-structure, the `apply_linop` precedent).
+```
+
+```edit:book/src/L1/index.md
+- [`apply_nonlinear_pencil`](./apply_nonlinear_pencil.md) — pure-functional nonlinear-pencil residual application `r = apply_nonlinear_pencil(T, λ, v)` for `T(λ) = K + λC + λ²M + A2(λ)`; the interior atom of Palace's quasi-Newton NEP solver (`QuasiNewtonSolver`) — the `apply_linop`-of-the-NEP-loop. Read from a clean positive site (`GetResidualNorm`) and corroborated at four further sites (residual, linear-solver setup, Jacobian, lagged system-operator refresh — the same apply with a different coefficient vector). The whole nonlinearity is localised in the opaque `A2 : Real -> LinearOperator[N, N]` closure (evaluated at `|Im λ|`), read-but-not-reconstructed, so the apply is firm despite the `eigsolve`-inherited no-dedicated-test caveat (its laws are operator-algebra facts, not convergence facts). The first NEP-interior atom at L1.
+- [`lu_solve`](./lu_solve.md) — pure-functional small-dense direct solve `x = lu_solve(A, b)` of `A x = b` for a square dense `k×k` matrix `A` via a pivoted factorization (full-pivot LU / full-pivot QR / LDLT). The **coordinate-space** solve primitive — the small-dense sibling of [`ksp_solve`](./ksp_solve.md) (large-sparse iterative), split by the dense-direct vs sparse-iterative representation/cost distinction (NOT an `apply_linop` variant: it reads `A`'s entries, where `apply_linop` applies an opaque action). The per-step solve atom of Palace's eigensolver deflation (`QuasiNewtonSolver`, `k×k` extended block `S = λI − H`) and ROM online evaluation (`SolvePROM`, `m×m` PROM matrix `Ar(ω)`). The cycle-022 wave-2 `deflate`/`gram` L2 combinators are composed of `lu_solve` calls — the fan-out that makes it a wave-2 blocker. Firm-on-positive-structure (the `apply_linop`/`apply_nonlinear_pencil` precedent): every law is a syntactic operator-algebra identity on fully-specified positive source, so the absent dedicated `.solve()` test does not gate the laws. The factorization-kernel choice is a contracted *load-bearing numerical* variant axis (ROM's QR-for-stability over rejected LDLT, `palace/models/romoperator.cpp:762-764`), not a transparent trick.
+```
+
+```edit:book/src/L1/index.md
+| [`apply_nonlinear_pencil`](./apply_nonlinear_pencil.md) | `(T: NonlinearPencil[N], λ: Complex, v: Tensor[N]) → Tensor[N]` (i.e. `T(λ)·v = K·v + λ·C·v + λ²·M·v + A2(\|Im λ\|)·v`) | `apply_linop` (direct, per-term); `axpby`/`axpbypcz` (transitive, coefficient-weighted accumulation); `nrm2` (adjacent, for the residual norm) | `firm` (NEP interior atom; L0: `palace/linalg/nleps.cpp:807-821` positive site + `:496-499,:556-559,:655,:729`; harvested cycle-021; nonlinearity localised in opaque `A2` closure; `eigsolve`-inherited no-dedicated-test caveat) |
+| [`lu_solve`](./lu_solve.md) | `(A: Matrix[k, k], b: Tensor[k]) → Tensor[k]` (single-RHS) / `(A: Matrix[k, k], B: Matrix[k, m]) → Matrix[k, m]` (multi-RHS); i.e. `A⁻¹b` | (leaf; dense materialized square matrix; sibling to `ksp_solve` on the solve-a-system axis, NOT a dependency, NOT an `apply_linop` variant) | `firm` (small-dense direct-solve gate; L0: `palace/linalg/nleps.cpp:533-535,562-563,665-667` + `palace/models/romoperator.cpp:765,757-758`; harvested cycle-022; factorization-kernel load-bearing numerical variant axis; firm-on-positive-structure, no-dedicated-solve-test caveat) |
+```
+
+```edit:book/src/SUMMARY.md
+- [apply_nonlinear_pencil](./L1/apply_nonlinear_pencil.md)
+- [lu_solve](./L1/lu_solve.md)
+```
+
+## Operator content
+
+**Slug + one-line**: `lu_solve` — pure-functional small-dense direct solve `x = lu_solve(A, b)` of `A x = b` for a square dense `k×k` matrix `A` via a pivoted factorization (full-pivot LU / full-pivot QR / LDLT).
+
+**Signature**:
+```text
+lu_solve :: (A: Matrix[k, k], b: Tensor[k]) -> Tensor[k]            -- single RHS
+lu_solve :: (A: Matrix[k, k], B: Matrix[k, m]) -> Matrix[k, m]      -- multi RHS (column-wise)
+lu_solve(A, b) = the unique x with  A · x = b   (A invertible)
+```
+- `A: Matrix[k, k]` — dense, materialized, square (entries read by the factorization — distinct from the opaque `LinearOperator[N, N]` of `apply_linop`). Axis `k` is the small coordinate dimension (deflation rank / ROM basis size), not the large field dimension `N`. Complex element type at every Palace site.
+- `b: Tensor[k]` / `B: Matrix[k, m]` — RHS(s); `m` is the number of systems sharing `A`.
+- result — same shape as the RHS argument.
+
+**Semantics**: returns the unique `x` with `A·x = b` for invertible `A`, via a pivoted dense factorization. Pure-functional (the L0 in-place RHS overwrite + transient Eigen factorization object are L1>L0 concerns). Three load-bearing points: (1) invertibility is the applicability condition; (2) the factorization kernel is a load-bearing *numerical* choice (full pivoting for stability — ROM explicitly chooses QR over LDLT for conditioning, `romoperator.cpp:762-764`); (3) factor-once / solve-many for multi-RHS.
+
+**Algebraic laws** (hold): (1) solve-inverts-apply `A·lu_solve(A,b)=b` and `lu_solve(A,A·x)=x` for invertible `A`; (2) RHS-linearity (so zero-RHS annihilation); (3) reciprocal coefficient-scaling `lu_solve(c·A,b)=(1/c)·lu_solve(A,b)`; (4) multi-RHS = column-wise single-RHS over one factorization; (5) nested-solve compositional shape (witnessed deflation block-elimination). Non-laws (recorded): kernel-independence of floating-point result/conditioning is FALSE (load-bearing); linearity in `A` is FALSE; definedness without invertibility is FALSE.
+
+**Dependencies**: (leaf) — no L1 operator dependency. Sibling of `ksp_solve` (large-sparse iterative) on the solve-a-system axis; NOT an `apply_linop` variant (reads `A`'s entries). The L2 wave-2 `deflate`/`gram` combinators are composed of `lu_solve`.
+
+**Status**: `firm` — firm-on-positive-structure (the `apply_linop`/`apply_nonlinear_pencil` precedent). Every law is a syntactic operator-algebra identity on fully-specified positive source; the absent dedicated `.solve()` unit test does not gate syntactic-identity laws. The kernel-conditioning caveat is carried as a contracted load-bearing variant axis, not a status reduction.
+
+**Evidence**: `palace/linalg/nleps.cpp:533-535,562-563,665-667` (deflation `S.fullPivLu().solve`), `palace/models/romoperator.cpp:765` (ROM `Ar.fullPivHouseholderQr().solve`, active), `:757-758` (disabled LDLT alternative), `:762-764` (the stability comment), `:701`/`:717` (`SolvePROM` + `Ar` resize), `palace/models/romoperator.hpp:188-189` (dense `Ar`/`RHSr` members), `palace/linalg/nleps.cpp:524`/`:532`/`:397` (dense `SS`/`S`/`H` shape anchors), `test/unit/test-romoperator.cpp:332,516,587` (assembly-side coverage, not the solve — the no-dedicated-solve-test caveat).
+
+## Supporting evidence
+All 17 planned citations were mechanically verified via `tools/citecheck/citecheck.py --batch` with literal anchors before this report was emitted (15 OK on first pass; 2 pinpoint drifts caught and corrected: `nleps.cpp:561`→`562` for the `compute_residual` `S = λI−H` declaration, and `romoperator.cpp:716`→`717` for `Ar.resize`). The corrected ranges are what appear in the Evidence section.
+
+Cross-references:
+- Precedent for `firm`-on-positive-structure (laws are syntactic identities, missing test does not gate): `book/src/L1/apply_nonlinear_pencil.md` §Status (cycle-021), `book/src/L1/apply_linop.md`.
+- Precedent for "sibling, not variant" on a representation/cost split: `book/src/L1/assemble-diagonal.md` (sibling-not-variant of `apply_linop`); here `lu_solve` is sibling-not-variant of `ksp_solve` on the solve axis.
+- CLAUDE.md status-tier guidance: the `apply_linop` firm-on-positive-structure escape ("the missing test does not gate syntactic-identity laws") vs the `eigsolve` test-coverage-bounded situation (convergence-semantics laws).
+- CLAUDE.md "Optimization tricks vs base algebra": the factorization-kernel choice is a *load-bearing numerical trick* (buys conditioning/stability), preserved as a contracted variant axis with the property called out — not a transparent trick.
+
+## Open questions / caveats
+- **L1>L0 lowering theme `lu_solve-mutation-rotation` is not yet authored.** The chapter forward-references it as plain text (no live link, per the `rough-in-forward-reference-must-be-plain-text-not-live-link` convention). It should describe how `A.fullPivLu().solve(b)` (transient Eigen decomposition object + in-place RHS overwrite + pivot/permutation bookkeeping) lowers to L0, and how the multi-RHS batched form and the kernel variants (LU/QR/LDLT) realize at L0. Recommend the integrator note this for cycle-022 wave-2 / a later abstractor dispatch. (Abstractor's domain, not harvester's — flagged here per discipline.)
+- **L2 `deflate` / `gram` wave-2 firm depend on this entry.** This `lu_solve` is the per-step coordinate-solve atom those combinators compose; wave-2 should cite `book/src/L1/lu_solve.md` directly. The NLEPS deflation block-elimination (`nleps.cpp:519-537`) and the Gram-matrix construction (`SS(i,j) = Dot(X[i], X[j])`, `:526-531`) are the L2-level patterns that `deflate`/`gram` will lift — note the Gram matrix is itself a candidate small-dense object that `lu_solve` operates on.
+- **`MatVecMult` / `MatVecMult(X, ·)` adjacency**: every NLEPS `lu_solve` result is immediately fed to `MatVecMult(X, ·)` (e.g. `:535`, `:563`, `:667`) — the basis-expansion `X · (S⁻¹ v)`. This `X`-expansion (dense-tall-times-small-dense) is a separate small-dense primitive (a coordinate→field prolongation, sibling to ROM's `ProlongatePROMSolution`) that is NOT `lu_solve` and is out of scope here; flagging it as a likely future L1 leaf (`prolongate` / `basis_expand`) the same deflation/ROM cohort will need. Not promoted (one operator per invocation).
+- **Real element-type variant unwitnessed.** Every Palace site is complex; the real `lu_solve` is permitted by the operation but not surfaced in Palace. Recorded as an absorbed-but-non-surfaced variant rather than asserting a real witness.
+- **Layer-intro refresh**: `book/src/L1/index.md` §"Vocabulary cohort" prose now lists 13 firm; with `lu_solve` it becomes 14 firm. I have added the dep-map row and the cohort bullet via proposed-changes, but the "**Firm (13)**" count header in the cohort prose and the §Semantics "Four semantic motifs" framing (which may warrant a fifth motif: "small-dense direct solve in coordinate space") are layer-intro-author's domain — flagging for a layer-intro refresh, not editing here.
