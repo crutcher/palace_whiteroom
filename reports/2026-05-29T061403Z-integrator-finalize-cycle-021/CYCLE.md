@@ -7,7 +7,7 @@ cycle_id: cycle-021
 meta_batch: batch-5
 meta_batch_position: 3 (closure — batch-5 meta-phase fires AFTER this commit)
 staging_log: reports/cycle-021-integrator-staging/STAGING.md
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 881f200
 ---
 
 # Cycle-021 batch CYCLE.md — report of records
@@ -54,7 +54,7 @@ Vocabulary-buildup cycle. **Five firm landings spanning the full L1/L2/L3>L2/L4>
 - **retroactive-budget global = 0** (sum across all 8 rows; well below the ≥4 block threshold). Per-slice all 0 (per-report gates).
 - **build-breakage = none** — `cargo make book` exit 0, no `linkcheck2` dead-link errors. ONE cohort-list consistency-repair (not a content build-repair, see Build-status).
 - **commit atomicity = single commit** (artifact + scaffolding + log + book output + staging log + consumed-report frontmatter + the uncommitted planner plan/priorities).
-- **consumed-report frontmatter integrity = all 8 marked** `integrated_at` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows) + `integration_notes`.
+- **consumed-report frontmatter integrity = all 8 marked** `integrated_at` + `integration_commit: 881f200` (two-phase SHA patch follows) + `integration_notes`.
 
 ## Build-status
 

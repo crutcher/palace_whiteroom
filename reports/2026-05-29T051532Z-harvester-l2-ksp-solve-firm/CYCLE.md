@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T051532Z
 scope: L2 operator: ksp_solve
 status: integrated
 integrated_at: 2026-05-29T06:14:03Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 881f200
 integration_notes: "cycle-021 finalize (staging row #4). ksp_solve L2 operator PROMOTED stub→firm (full firm body landed — the outer-driver named-composition wrapping the firm L2 krylov-step kernel in a convergence-test/restart iterate_while fold; full body verified present, cycle-019 fence-truncation defect avoided). Establishes the NON-identity L2↔L1 (un-collapse) + L2↔L3 (iteration-view un-erasure) relationships; RESOLVES the maturity-gradient inversion below the firm cycle-020 L3 entry. dep-map :53 stub→firm; SUMMARY :44 in-place de-stub (replace, not append). Ordering: landed BEFORE the L3>L2 ksp-solve-outer-driver theme (#5) which depends on this firm L2 entry. L3-entry citation drift (:464→:463, :564→:563) routed to OQ (L3 append-only; new L2 entry uses corrected values). L2 firm 5→6. retroactive-budget 0; clean build. NOTE finalize moved ksp_solve from the L2/index Queued/stub cohort bullet to the Firm-at-L2 bullet (cohort-list consistency-repair to match this row)."
 inputs:
   - book/src/L3/ksp_solve.md (firm L3 outer-driver fold, cycle-020 wave-1)

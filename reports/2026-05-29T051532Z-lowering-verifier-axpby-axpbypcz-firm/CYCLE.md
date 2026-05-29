@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T05:22:35Z
 scope: L1>L0 theme audit — axpby-mutation-rotation + axpbypcz-mutation-rotation (BLAS-1 lowering floor closure)
 status: integrated
 integrated_at: 2026-05-29T06:14:03Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 881f200
 integration_notes: "cycle-021 finalize (staging row #3; status partially-applied BY DESIGN — SPLIT verdict). Theme 1 axpby-mutation-rotation ENACTED firm (3 edits: re-audited fenced verified_against block — 9 anchors line-exact, refreshed 2026-05-27→2026-05-29 + romoperator/drivensolver corpus-census note; ## Status rough-in→firm; dep-map :18 row flipped firm + L0-anchor column expanded). Theme 2 axpbypcz-mutation-rotation GATED — auditor UNBLOCKED (drafted corrections (1)-(6) + verified_against + firm Status) but did NOT enact per the cycle-012 gated-promotion discipline; ZERO edits to axpbypcz file; routed to cycle-022 plan item axpbypcz-mutation-rotation-callsite-correction-and-firm (3 confirmed call-site classification errors: nleps.cpp:343-344 D→A, romoperator.cpp:188-189 D→A, slepc.cpp:1986 γ≠0→γ=0, all critic read_range-confirmed). BLAS-1 L1>L0 floor reaches 7/8 firm (axpbypcz remains rough-in); floor OQ NOT closed. L1>L0 themes 15→16. retroactive-budget 0; clean build."
 inputs:
   - book/src/L1-L0/axpby-mutation-rotation.md

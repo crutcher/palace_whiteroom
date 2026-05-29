@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T051532Z
 scope: L4>L3 theme re-anchor — fgmres-inner-loop-iterate-while-migration (firm against the now-firm gmres rotation + sibling theme)
 status: integrated
 integrated_at: 2026-05-29T06:14:03Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 881f200
 integration_notes: "cycle-021 finalize (staging row #1). fgmres-inner-loop-iterate-while-migration L4>L3 theme PROMOTED rough-in→firm (11 surgical firming edits over the firm gmres sibling rotation, applying the pc_side=RIGHT/flexible=true variant-axis collapses + the per-iteration Z[j] workspace; the former Edit 7 NON-edit correctly skipped). CLOSES the 5-batch carry-forward fgmres-inner-loop-iterate-while-migration-lifter-candidate (cycle-010→021). Edit 12 ADDED the firm theme row to L4/index.md:44 (was absent from the L4 index entirely; consistency-repair mirroring the cycle-020 gmres dep-map firm-sync). check_stop_into_carry stays rough-in plain-text. L4>L3 firm 2→3, rough-in 1→0. retroactive-budget 0; clean build."
 inputs:
   - book/src/L4-L3/fgmres-inner-loop-iterate-while-migration.md

@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T051532Z
 scope: L1 cross-cut — orthog.hpp LocalDot+GlobalSum unweighted inner-product surface (the dot-census-bypass second surface)
 status: integrated
 integrated_at: 2026-05-29T06:14:03Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 881f200
 integration_notes: "cycle-021 finalize (staging row #7). APPLIED DIRECTLY (well-formed additive edits to firm themes; deferring fully-cited additive edits is friction). Proposal 1: added Sub-pattern D (unfused hook-routed LocalDot+Mpi::GlobalSum dot surface; first unweighted-observable dot use outside the SLEPc-NEP deflation cohort; IdentityInnerProduct+CGS sketch, Observability note, 5 verified citations) to book/src/L1-L0/dot-mutation-rotation.md §L0-form-RHS. Proposal 2: added a bypass-surface paragraph to book/src/L2-L1/inner-product-fold-specialization.md (cross-links Sub-pattern D; no new yaml keys). Both additive; themes STAY firm, no status change, no new files, no SUMMARY touch. CLOSES the cycle-020 dot-callers census coverage gap (OQ orthog-hpp-localdot-globalsum-unfused-dot-surface RESOLVED — recorded as append-only ...-RESOLVED for meta-phase Closed-index migration). retroactive-budget 0; clean build."
 ---
 

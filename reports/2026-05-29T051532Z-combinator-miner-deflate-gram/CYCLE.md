@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T051532Z
 scope: Pattern proposal — deflation-subspace projection (deflate / gram) in SLEPc-NEP
 status: integrated
 integrated_at: 2026-05-29T06:14:03Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 881f200
 integration_notes: "cycle-021 finalize (staging row #6). 2 rough-in L2 dep-map rows appended to L2/index.md after the now-firm ksp_solve row :53 — gram (all-pairs inner_product fold → Matrix[k,k]) + deflate (oblique projector I−X(XᴴX)⁻¹Xᴴ over gram+lu_solve+linear_combination+dot, with the do-NOT-merge orthogonalize=deflate|_gram=I over-unification guard). BOTH plain-text/inline-code forward-refs (gram.md/deflate.md absent on disk; no live link → no linkcheck2 break); NO stub created (clearly-implied bar NOT met — single-algorithm concentration, all 5 sites in nleps.cpp). Proposal-only; mutates no chapter files. Load-bearing firm-promotion BLOCKER = a NEW lu_solve L1 dense-solve primitive (HIGH fan-out; OQ deflate-needs-small-dense-lu-solve-primitive). L1/L2 boundary CLEAN against sibling harvester-nleps-l1 (this owns the L2 combinator; sibling owns the L1 pencil-apply). retroactive-budget 0; clean build."
 ---
 

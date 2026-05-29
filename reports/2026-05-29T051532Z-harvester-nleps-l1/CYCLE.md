@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T051532Z
 scope: L1 operator: apply_nonlinear_pencil
 status: integrated
 integrated_at: 2026-05-29T06:14:03Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 881f200
 integration_notes: "cycle-021 finalize (staging row #2). apply_nonlinear_pencil NEW firm L1 operator (Write) — the NLEPS interior atom r=T(λ)v for T(λ)=K+λC+λ²M+A2(λ); read from the positive GetResidualNorm site nleps.cpp:807-821 + 4 corroborating sites; nonlinearity localised in the opaque A2:Real→LinearOperator closure (read not reconstructed), so firm on positive structural citation — the apply_linop firm-on-structure precedent, NOT the eigsolve convergence-semantics rough-in precedent. L1/index cohort 12→13 + cohort bullet; SUMMARY :68 register after assemble-diagonal. L1/L2 boundary CLEAN against the sibling combinator-miner-deflate-gram (this owns the L1 pencil-apply; the sibling owns the L2 deflate/gram). 4 deferred NLEPS pieces consolidated into one fan-out-ordered carry-forward OQ. retroactive-budget 0; clean build. L1 firm 12→13."
 inputs:
   - palace/linalg/nleps.cpp (QuasiNewtonSolver — SLEPc-NEP-style quasi-Newton NEP solver)

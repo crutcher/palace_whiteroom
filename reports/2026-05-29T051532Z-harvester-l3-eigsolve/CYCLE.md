@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T051532Z
 scope: L3 operator: eigsolve (kernel+driver backfill — CONDITIONAL, anchor-check-first)
 status: integrated
 integrated_at: 2026-05-29T06:14:03Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 881f200
 integration_notes: "cycle-021 finalize (staging row #8; BLOCKED-inventory, Build-relevant:no, NO book changes). The L3 eigsolve backfill is BLOCKED on missing L1-firm + L2-entry anchors; the linear-EVP (SLEPc-EPS/ARPACK-EPS) has no Palace-authored kernel/driver pair (predicted sequential/partial-obstruction, the trsv-style outcome). NO L3 eigsolve stub materialized (honored META §Suggested resolution; clearly-implied bar NOT met — blocked-pending-prerequisites ≠ clearly-implied-ready; a stub would have no lowers_to target + would lift unconfirmed laws). 2 OQs promoted: the strict prerequisite chain (L1 eigsolve rough-in→firm → L2 eigsolve entry → L3 backfill) + the linear-EVP-no-krylov-step-kernel-analog structural prediction. ROUTED to the batch-5 meta-phase: reframe plan item #9 from 'next L3 inventory backfill' → 'blocked-pending-L1-firm+L2-entry' (priorities.md is meta/cycle-planner co-owned; not edited here). Linear-EVP scope kept distinct from the nonlinear-EVP NLEPS sibling dispatch. retroactive-budget 0; no rebuild needed on account of this report."
 decision: BLOCKED (anchors insufficient) — inventory observation, no L3 backfill
 inputs:

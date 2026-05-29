@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T051532Z
 scope: L3>L2 theme sketch — ksp-solve-outer-driver (firm; the substantive non-identity outer-driver consolidation complementing krylov-step-body-identity)
 status: integrated
 integrated_at: 2026-05-29T06:14:03Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 881f200
 integration_notes: "cycle-021 finalize (staging row #5). ksp-solve-outer-driver NEW firm L3>L2 theme (Write; entire fenced body landed, both inner ```text form-blocks nested+closed, no fence truncation) — the SUBSTANTIVE/non-identity outer-driver rotation (iteration-view un-erasure), the DRIVER COMPLEMENT of the kernel-identity krylov-step-body-identity sibling (kernel-identity + driver-non-identity = the full per-solver L3>L2 story). Ordering SATISFIED: RHS reproduces/cites the firm L2 ksp_solve form landed at #4 (firmness:firm confirmed on disk before applying). dep-map row after krylov-step-body-identity; SUMMARY :34 register. OQ CLOSURE: l3-l2-ksp-solve-outer-driver-theme-warranted-gated-on-l2-promotion RESOLVED (recorded as append-only ...-RESOLVED intake for meta-phase Closed-index migration). L3 citation-drift not re-promoted (already tracked by #4). L3>L2 firm 1→2 (first L3>L2 growth this batch). retroactive-budget 0; clean build."
 inputs:
   - book/src/L3/ksp_solve.md (firm, cycle-020 wave-1 — the L3 outer-driver fold; the iteration-rotation marker + outer-loop sequential-obstruction; the LHS of this theme)
