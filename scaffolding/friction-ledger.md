@@ -622,6 +622,8 @@ addressed_by: cycle-006 meta-phase (`.claude/agents/abstractor.md` + `.claude/ag
 
 **Watch:** if a future rough-in dep-map row lands with link syntax to a missing anchor, escalate to recurrence-2 and consider auto-fix gate in integrator-per-report.
 
+**Amended 2026-05-28 (user directive — CLAUDE.md §"Integration may materialize implied components as stubs").** The plain-text convention is now the *fallback*, not the only path. When a referenced slug is **clearly implied** (≥2 converging references / a standing rough-in row), the **preferred** resolution is for integration to **create the `stub`** (claim-free placeholder file + SUMMARY registration) so the reference becomes a live link, refined later. Plain-text-defer remains correct only when the component is merely speculative. See `.claude/agents/integrator-per-report.md` step 5 (implied-component stub materialization) + `.claude/agents/integrator-finalize.md` step 5.
+
 ---
 
 ```yaml
@@ -1245,6 +1247,8 @@ addressed_by: cycle-018 meta-phase (`.claude/agents/combinator-miner.md` "Forwar
 - The per-report integrator's surgical-defang at apply time remains the safety-net backstop (it already de-links on a `linkcheck2` File-not-found); the producer-side conventions are the prevention.
 
 **Watch:** if a producer again emits a live link to an absent file despite both conventions (recurrence-3), consider a per-report-integrator pre-apply lint that scans proposed-changes markdown links against the working tree + this report's own to-be-created files and auto-defangs absent-target links (sibling to the citation-range checker ASK).
+
+**Amended 2026-05-28 (user directive — CLAUDE.md §"Integration may materialize implied components as stubs").** The producer-side plain-text rule STANDS (producers still must not emit dead links). What changes is the *integration-side* resolution: rather than only de-linking, when the referenced chapter is **clearly implied** (a standing rough-in row / ≥2 converging references), integration's **preferred** move is to **create the `stub` chapter** so the forward-reference becomes a live link, refined later (`stub`→`rough-in`→`firm`). De-link-to-plain-text is the fallback for speculative-only targets. See `.claude/agents/integrator-{per-report,finalize}.md` step 5.
 
 ---
 
