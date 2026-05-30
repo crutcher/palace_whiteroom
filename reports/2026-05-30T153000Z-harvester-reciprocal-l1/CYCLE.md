@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T15:30:00Z
 scope: L1 operator: reciprocal
 status: applied
 integrated_at: 2026-05-30T18:00:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e8b9fcc
 integration_notes: |
   Cycle-033 D2; landed firm L1 leaf book/src/L1/reciprocal.md (the elementwise
   multiplicative-inverse primitive 1/x[i]; complex 1/(a+bi) = (a-bi)/|a+bi|²;

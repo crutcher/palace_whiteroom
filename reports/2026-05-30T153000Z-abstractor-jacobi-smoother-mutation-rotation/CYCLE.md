@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T15:30:00Z
 scope: L1>L0 theme sketch — jacobi-smoother-mutation-rotation (cycle-033 D1, lowering the firm L1 jacobi-smoother landed c032)
 status: applied
 integrated_at: 2026-05-30T18:00:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e8b9fcc
 integration_notes: |
   Cycle-033 D1; landed firm L1>L0 theme book/src/L1-L0/jacobi-smoother-mutation-rotation.md
   (~640 lines, 33 citations, 4 sub-patterns A/B/C/D; the diagonal-preconditioner-apply

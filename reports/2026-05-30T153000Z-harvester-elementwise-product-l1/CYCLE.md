@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T15:30:00Z
 scope: L1 operator: elementwise_product
 status: applied
 integrated_at: 2026-05-30T18:00:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e8b9fcc
 integration_notes: |
   Cycle-033 D3; landed firm L1 leaf book/src/L1/elementwise_product.md (the Hadamard
   pointwise-product primitive a ⊙ b; the diagonal-operator-action primitive at L1 —
