@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T053000Z
 scope: L1>L0 theme additive re-audit — back-solve-mutation-rotation (cycle-032 D2; closes c031 D2 lifter narrative-repair loop)
 status: pending
 integrated_at: 2026-05-30T060748Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e2b914d
 integration_notes: Applied by integrator-per-report at 2026-05-30T060500Z; finalized cycle-032. Additive second `verified_against:` yaml block appended to book/src/L1-L0/back-solve-mutation-rotation.md at chapter :888-912 (after c030 baseline 22-row block at :796-886). 4 rows (GMRES body :653-660, FGMRES body :832-839, GMRES brace :654, FGMRES brace :833), all `supports`, audited_at: 2026-05-30T053000Z. Confirms GMRES at :653-660 byte-identical to FGMRES at :832-839 with +179-line file offset NOT brace placement. Theme stays `firm`. Proper ` ```yaml ` fence (the c030 channel-format refinement `verified-against-note-no-leading-quote-of-either-kind` held; the c031-fence-form lift held; no `~~~yaml` substitution). YAML round-trip on landed block = 4 rows all `supports`, note first-chars G/F/G/F. Closes c031 D2 lifter narrative-repair loop.
 inputs:
   - book/src/L1-L0/back-solve-mutation-rotation.md (post-c031 D2 narrative-repair state)

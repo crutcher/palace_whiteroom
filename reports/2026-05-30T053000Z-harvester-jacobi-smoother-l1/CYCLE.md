@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T05:30:00Z
 scope: L1 operator: jacobi-smoother
 status: pending
 integrated_at: 2026-05-30T060748Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e2b914d
 integration_notes: Applied by integrator-per-report at 2026-05-30T063000Z; finalized cycle-032. NEW firm L1 operator chapter book/src/L1/jacobi-smoother.md (~550 lines) created + SUMMARY.md surgical insert after ls_update_column + L1/index.md prose+table rows after ls_update_column + 4 OQs promoted (jacobi-smoother-mutation-rotation-l1-l0, reciprocal-and-elementwise-product-l1-primitives, jacobi-fixed-damping-mode-consumer-coverage, polynomial-smoother-l2-combinator-from-jacobi-and-chebyshev). The dead-links to reciprocal.md/elementwise_product.md were stripped to plain-text inline-code at repair-time per implied-component-stub-creation deferral. L1/index.md `## Vocabulary cohort` "Firm (22)→(23)" updated by finalize, jacobi-smoother gate appended to enumeration. Roadmap.md §Foundational Jacobi row flipped `[?stub]` → `[~]`; §Foundational diagonal-preconditioner-apply row flipped `[ ]` → `[~]`. Citecheck --scan on landed chapter = 45/45 ok. 13 live cross-links all on-disk-resolved.
 inputs:
   - palace/linalg/jacobi.hpp (read in full)

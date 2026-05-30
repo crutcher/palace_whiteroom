@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T053000Z
 scope: L2>L1 theme prose-currency residual sweep — incremental-least-squares-composition-lowering (4 `forthcoming` `ls_update_column` L1>L0 mentions)
 status: pending
 integrated_at: 2026-05-30T060748Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e2b914d
 integration_notes: Applied by integrator-per-report at 2026-05-30T055500Z; finalized cycle-032. 4 prose-currency edits at book/src/L2-L1/incremental-least-squares-composition-lowering.md :114/:276/:300/:306 — "forthcoming"→"firm" qualifier flips on `ls_update_column` L1>L0 theme references; site :306 collapses "firm-or-forthcoming-firm vocabulary" → "firm vocabulary". Left 4 historical-quote refs at :15/:145/:204/:541 untouched (correctly-quoted historical references to the L2 entry's deferred-non-law text). Closed OQ `incremental-ls-composition-lowering-residual-forthcoming-mentions-c032` with RESOLVED cycle-032 marker. Theme `## Status: firm` line + signatures + decompositions + applicability conditions + verified-against block all untouched.
 inputs:
   - book/src/L2-L1/incremental-least-squares-composition-lowering.md
