@@ -33,6 +33,19 @@ The skill exists because the audit kept producing line-map defects: the cited li
 
 6. **Intra-corpus redundancy.** If two slices (or a slice and a sub-slice) describe the SAME algorithm (cycle-012 found `plane_rotation_stream` + the orthog plane-rotation sub-slice are identical), call it out: propose elimination of the duplicate, hoisting any unique invariant into the surviving canonical slice FIRST (sequence the hoist before the elimination so no content is lost).
 
+7. **Canonical-instance check — second necessary axis beyond firm-layered-home (added cycle-033 meta-phase).** Before recommending reduction-to-stub or removal, run a **concept-page grep** for the slice's filename + slug:
+   ```
+   grep -rn "spec/slices/<slice-stem>\|<slice-slug>" book/src/concepts/
+   ```
+   Triage each hit:
+   - **Named §Canonical-instance / "instance of" referent** — the slice is the named canonical-witness instance for a concept page (e.g. `polynomial_recurrence_step` is the canonical instance for the chebyshev polynomial-recurrence concept; `sparse_triangular_solve` is the canonical instance for 3 concept pages). Count these.
+   - **Cross-reference / "see also" mention** — a one-line "see `spec/slices/<slice>.md`" reference that COULD be re-anchored to a firm L_n entry. Not a canonical-instance binding.
+   - **False positive** — the stem matches an unrelated firm entry (e.g. `chebyshev` matches `L1/chebyshev-smoother.md`). Skip.
+
+   If the **named-canonical-instance count is ≥2** AND the slice carries unique L0 navigation (file:lines anchors) not covered elsewhere in the firm artifact, the audit verdict shifts to **DEFER-by-canonical-instance** — recommend `annotated-and-retained` (status `annotated-and-retained` in the slice frontmatter; cross-link to each canonical-binding concept page in the slice's intro; add the partner firm-layered-entry pointer if any). Do NOT recommend reduction-to-stub or removal regardless of firm-layered-home presence; the canonical-instance bindings would strand. Single canonical-instance reference is recoverable by re-anchoring the concept page; the ≥2 bar reflects that re-anchoring two-or-more concept pages is more expensive than retaining the slice.
+
+   CLAUDE.md §Methodology invariants "Phase 1 corpus reduces as material is lifted" §canonical-instance carve-out + friction-ledger `negative-result-slice-canonical-instance-blocks-reduction`.
+
 ## Removal sub-case: non-link prose-reference grep (added cycle-015 meta-phase)
 
 A slice **REDUCTION** (compact to a stub) leaves the file in place, so inbound references — markdown links AND prose mentions — still resolve to a (thinner) file; the mdBook build linkcheck (`cargo make book` exit 0) is a sufficient backstop. A slice **REMOVAL** (`git rm`) deletes the file, so EVERY inbound reference must be re-pointed or struck — and **the build linkcheck only catches the markdown-link subset.** A bare-path or inline-code prose mention (e.g. `` `spec/slices/<slice>.md` `` in prose, or a plain-text path in a narrative sentence) is NOT a markdown link, so the build passes while the reference is stranded pointing at a deleted file.
@@ -69,12 +82,14 @@ This sub-case applies to REMOVALS only. Reductions skip it (the file survives). 
 - **Sequence hoist-before-eliminate** for intra-corpus redundancy so no unique content is lost.
 - **Reduction is monotonic** — the corpus shrinks as the layered surface becomes authoritative; the git history is the historical record (do not preserve slice form "just in case").
 - **REMOVALS require the non-link reference grep** (cycle-015) — before any `git rm`, grep the whole tree for the slice STEM in all reference shapes (link + inline-code + bare-path prose), not just markdown links; the build linkcheck catches only the link subset. Reductions skip this (the file survives).
+- **Canonical-instance check before reduction** (cycle-033) — a slice that is the named §Canonical-instance referent of **≥2 concept pages** AND carries unique L0 navigation is **retained-by-design** (status `annotated-and-retained`) even when its firm layered home exists. The firm-layered-home check is necessary but not sufficient; the concept-page-grep is the second axis. Precedents: `polynomial_recurrence_step` (c013), `sparse_triangular_solve` (c031). Friction-ledger `negative-result-slice-canonical-instance-blocks-reduction`.
 
 ## Worked examples
 
 - **Cycle-010 (first instance, cg-chain slices).** Established the four-part template; critic surfaced citation drift + narrative/range disagreement (cg.md section the narrative said to stub but the range retained).
 - **Cycle-011 (batch-2).** `orthog.md` / `chebyshev.md` partial reductions + `polynomial_recurrence_step.md` first negative-result slice (`none`, retained verbatim — "the slice IS the artifact"). Ran the `grep -n "^## "` mitigation but still produced ~10 minor off-by-ones (recurrence-2).
 - **Cycle-012 (batch-3, HIGH-severity defect that motivated the START-boundary refinement).** The orthog plane-rotation sub-slice scoped as "lines 311-376" (the §Open-questions + the SECOND of two near-duplicate L1 entries) when it begins at line 225 (`## Context` introducing the `# Orthogonalization (plane-rotation stream)` H1) and spans 225-376. The "full reduction" as written would have orphaned ~86 lines. The dispatch DID `grep` — but against a mis-scoped "lines 300+" window, catching the tail not the head. Repaired pre-apply to the full text-anchored 225-376 span. First intra-corpus-redundancy verdict (`plane_rotation_stream` + orthog sub-slice are the same algorithm).
+- **Cycle-031 (canonical-instance carve-out precedent).** `sparse_triangular_solve` slice-reduction audit. The firm-layered-home check passed (c029 `triangular-solve-obstruction` L1>L0 theme on disk). The auditor surfaced the second axis independently: the slice is the named §Canonical-instance for **3 concept pages**. Verdict: DEFER (retain in full, `annotated-and-retained`). Phase-1 removals stay 9/10. The auditor's §Open-questions item routed the codification ask to the meta-phase, which enacted (a) CLAUDE.md amendment, (b) this skill's step 7, (c) friction-ledger `negative-result-slice-canonical-instance-blocks-reduction`.
 
 ## Cross-references
 

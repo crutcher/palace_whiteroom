@@ -1416,10 +1416,10 @@ addressed_by: cycle-027 meta-phase (batch-7) — "the codemap is localization-on
 ---
 slug: cycle-planner-reproposes-already-landed-work
 first_observed: cycle-026
-last_observed: cycle-027
-recurrence_count: 2
-status: addressed
-addressed_by: cycle-027 meta-phase (batch-7) — two cycle-planner §Discipline bullets: "verify each candidate is genuinely OPEN (not already landed) before proposing" + "exactly ONE integrator-finalize per cycle; waves are dispatch ordering, not multiple finalizes"
+last_observed: cycle-032
+recurrence_count: 4
+status: escalating
+addressed_by: cycle-027 meta-phase (batch-7) — two cycle-planner §Discipline bullets (verify-candidate-genuinely-open + one-finalize-per-cycle); **escalated batch-9 meta-phase** — the c027 bullets caught the c026/c027 sub-pattern but the c031/c032 recurrence surfaced a deeper sub-pattern (`cycle-planner-stale-priorities-line-recruitment`, the deliverable-presence shape) tracked separately below as the live escalation.
 ---
 ```
 
@@ -1553,3 +1553,62 @@ addressed_by: cycle-planner.md §Discipline pre-localize-known-heavy-regions bul
 **Watch:** if recurrence-4 surfaces (a fourth cycle hitting socket/timeout on the same region) before the human responds to the ask, escalate to the cycle-planner-bullet path unilaterally (the lower-cost repair). The harness-level fix stays open as a longer-term option.
 
 **Resolution (2026-05-30, user directive — path (a) chosen, enacted post-batch-8 meta-phase).** The human responded to the ask at recurrence-3 (did not wait for recurrence-4) and chose **path (a): the project-local cycle-planner role-spec bullet**. Enacted: `.claude/agents/cycle-planner.md` §Discipline gained a "Pre-localize known-heavy source regions and embed the exact L0 anchor ranges in the dispatch scope" bullet with an extensible known-heavy watch-list seeded with the `iterative.cpp` running-QR / restart machinery + Givens-kernel anchors. Status flips `watching (ask-surfaced)` → `addressed`. The cycle-planner now pre-fetches + embeds anchors for watch-list regions at plan time, so the orchestrator no longer needs the manual constrained-anchor-retry intervention for the known region. **The harness-level fix (path (b): auto-anchor-injection on transient-failure retry) stays an open longer-term option** — not enacted (it may need harness code changes the project can't make); recorded here so a future recurrence on a region NOT yet on the watch-list (where pre-localization didn't catch it) can re-open the harness-level discussion. **Watch (post-resolution):** confirm batch-9 dispatches against `iterative.cpp` run clean with the planner pre-supplying anchors (the bullet's first live test); add any new fail-and-recover region to the watch-list per the bullet's extension rule.
+
+---
+
+```yaml
+---
+slug: cycle-planner-stale-priorities-line-recruitment
+first_observed: cycle-031
+last_observed: cycle-033
+recurrence_count: 3
+status: addressed
+addressed_by: cycle-033 meta-phase (batch-9) — (a) cycle-033 cycle-planner WORKING PRECEDENT (deliverable-presence check ran 3/3 genuinely-open; canonical procedure captured); (b) promoted skill `verify-dispatch-scope-not-already-discharged` (the deeper-check pattern realized as skill); (c) `.claude/agents/cycle-planner.md` §Discipline ENFORCEMENT bullet wiring the deeper check (file existence + `verified_against:`-block presence + RESOLVED-grep + structural-block check) as MANDATORY pre-dispatch for any named-artifact-slug scope.
+---
+```
+
+**Pattern (deliverable-presence-staleness — the deeper sub-pattern that the c027 file-existence check does NOT catch).** The cycle-planner recruits a dispatch off a stale `priorities.md` line whose target is **already discharged** in one of four shapes the c027 file-existence bullet does not catch: (1) the target chapter is **firm on-disk** (file exists but is already firm at the proposed maturity); (2) the target theme **already has a `verified_against:` block** at the timestamp class the audit would emit; (3) the target slice-reduction audit was **completed in the immediately-prior cycle** (RESOLVED disposition in `open-questions.md`); (4) the proposed promotion is **structurally test-coverage-gated** and the gate has not changed since the priorities line was authored. Sibling-and-deeper of `cycle-planner-reproposes-already-landed-work` (the c027 entry, which addressed *file-existence* via `counts_after`/STAGING/struck-Backlog markers); this entry addresses *deliverable-presence* (the artifact's on-disk maturity + already-discharged state).
+
+**Evidence (recurrence-3 across batch-9).**
+- **cycle-031 (recurrence-1):** the D6 substantive-landing slot was filled twice with stale `priorities.md:36` (`nleps-interior-atom-l1-l0-themes`) and `:37` (`eigsolve-l2-l1-and-concept`) lines whose targets BOTH firm-landed at cycle-025 (six cycles out of date). Two no-op disposition-only CYCLE.md files emitted; orchestrator retired the two stale plan lines. Filed by orchestrator as `cycle-planner-pre-dispatch-existence-check-of-target-artifact` OQ + `verify-dispatch-scope-not-already-discharged` skill candidate.
+- **cycle-032 (recurrence-2, broader):** the planner's 6-dispatch plan was BROADLY STALE — **4 of 6 picks** stale. D3 re-proposed the `sparse_triangular_solve` slice-reduction audit completed in the **immediately-prior c031** (one cycle earlier). D4/D5 re-proposed `matrix-weighted-norm` promotion that is test-coverage-gated per the c021 codification (`rough-in (test-coverage-bounded)` first-class qualifier — stays rough-in until an out-of-scope Palace-source test change). D6 re-proposed lowering-verifier audits of 4 batch-6 themes that ALREADY have `verified_against:` blocks on disk. Orchestrator overrode the stale picks with existence-verified open work (3 dispatches landed; the cycle ran cleanly). **The c031 file-existence check is INSUFFICIENT** — it catches file presence, NOT (i) firm-theme-with-audit-block, (ii) audit-already-discharged-in-prior-cycle, (iii) test-coverage-structurally-blocked promotion.
+- **cycle-033 (working repair, NOT a recurrence in the failure sense):** the c033 cycle-planner adopted a deeper deliverable-presence check (file existence + `verified_against:`-block presence + RESOLVED-grep + structural-block check) BEFORE finalizing dispatches. 3/3 dispatched targets were genuinely-open frontier work; the batch ran cleanly. The c033 planner's `## Deliverable-presence verification` section (in its own CYCLE.md) is the canonical procedural precedent.
+
+**Mitigation (cycle-033 meta-phase, this entry — go).** Three coordinated edits enacted:
+- **(a) Cycle-033 cycle-planner CYCLE.md is the working precedent.** The four-check sequence (file existence + already-audited check + RESOLVED-grep on OQ ledger + structural-block check) is documented per-dispatch in the c033 plan with each candidate's check outcome.
+- **(b) Skill `verify-dispatch-scope-not-already-discharged` PROMOTED** (`skills/verify-dispatch-scope-not-already-discharged/SKILL.md`). The skill body specifies the deeper-check pattern + the c033 planner CYCLE.md as the canonical working reference. Default-accept under the low-bar promotion policy (recurrence ≥2; concrete procedure; pattern observed); the c031 candidate already sketched it, c032 OQ promoted it, c033 working precedent realises it.
+- **(c) Cycle-planner role-spec ENFORCEMENT bullet** (`.claude/agents/cycle-planner.md` §Discipline). The c027 bullet (`verify-candidate-is-genuinely-open` via `counts_after`/STAGING/struck-Backlog) is *guidance*; the c031/c032 recurrence demonstrates guidance is insufficient for the deeper sub-pattern. The new bullet wires the four-check sequence as a MANDATORY pre-dispatch ritual for any named-artifact-slug scope (every `(agent, scope)` tuple where `scope` resolves to a file path under `book/src/`). The bullet cites the skill + the c033 working precedent.
+
+**Why not swap to opus.** The c033 working precedent demonstrates that **the deeper check CAN be done by haiku** — the c033 planner ran 3/3 clean with the new procedure. The fix is in the *procedure*, not the *tier*. Swap-to-opus stays HELD; re-open ONLY if recurrence-4 surfaces after this batch-9 codification (the role-spec bullet was insufficient and the deeper-check procedure didn't stick).
+
+**Watch.** Confirm c034+ dispatches against the c033 procedure: every candidate dispatch should carry an inline deliverable-presence check (or omit it ONLY when the dispatch is open by construction — e.g. a fresh harvest of a new operator with no prior-cycle history). If recurrence-4 surfaces despite the role-spec enforcement bullet + skill + c033 precedent, swap-to-opus moves from HELD to GO.
+
+---
+
+```yaml
+---
+slug: negative-result-slice-canonical-instance-blocks-reduction
+first_observed: cycle-013
+last_observed: cycle-031
+recurrence_count: 4
+status: addressed
+addressed_by: cycle-033 meta-phase (batch-9) — (a) CLAUDE.md §Methodology invariants "Phase 1 corpus reduces as material is lifted" AMENDED with a canonical-instance carve-out (the slice may be retained-by-design when it is the named referent of ≥2 concept-pages and carries unique L0 navigation not covered elsewhere in the firm artifact); (b) `skills/phase-1-slice-reduction-audit/SKILL.md` checklist gained a canonical-instance check line; (c) this friction-ledger entry codifying the design exception.
+---
+```
+
+**Pattern (Phase-1 slice-reduction requires a SECOND axis beyond "firm layered home exists").** The CLAUDE.md invariant "Phase 1 corpus reduces as material is lifted" + the `phase-1-slice-reduction-audit` skill verify that the slice's content has a firm layered home and recommend reduction-to-stub when it does. This check is **necessary but not sufficient** — a slice may have a firm layered home AND still be load-bearing as the **named canonical-witness instance** of ≥1 downstream concept pages. Reducing it to a stub strands the concept page's "see also" / "instance of" reference. The audit needs a second axis: "is the slice a named §Canonical-instance on a concept page?"
+
+**Evidence (recurrence-4 — used implicitly cycles 013/022/028/031 before codification).**
+- **cycle-013:** `polynomial_recurrence_step` slice candidacy — slice retained-by-design as the canonical instance for the chebyshev cohort's polynomial-recurrence concept page (the SECOND-axis precedent that established the design exception).
+- **cycle-022:** revisited; the precedent held.
+- **cycle-028:** the `trsv` L1 leaf was routed to obstruction (cycle-029 `triangular-solve-obstruction` theme); the parent slice `sparse_triangular_solve` was a candidate for reduction.
+- **cycle-031 (D5 same-layer-cross-cutter):** `sparse_triangular_solve` slice-reduction audit ran the firm-layered-home check (positive: the c029 `triangular-solve-obstruction` is on disk) AND independently surfaced the canonical-instance second axis — the slice is the named §Canonical-instance for 3 concept pages. Verdict: **DEFER (retain in full, annotated-and-retained)**. The auditor's §Open-questions item flagged the two-axis pattern as a meta-phase candidate (CLAUDE.md amendment + skill update + friction-ledger entry). Phase-1 removals stay 9/10.
+
+**Mitigation (cycle-033 meta-phase, this entry — go).** Three coordinated edits enacted:
+- **(a) CLAUDE.md §Methodology invariants "Phase 1 corpus reduces as material is lifted" AMENDED.** The invariant gains a canonical-instance carve-out: a slice MAY be retained-by-design when it is named (by slug + filename) as the §Canonical-instance / "instance of" referent of ≥2 concept pages in `book/src/concepts/` AND carries unique L0 navigation (file:lines anchors) not covered elsewhere in the firm artifact. The carve-out is bounded by ≥2 concept-page references (a single concept-page reference is recoverable by re-anchoring the concept page); the carve-out does NOT license retaining slices that are only fully-lifted-AND-not-referenced.
+- **(b) `skills/phase-1-slice-reduction-audit/SKILL.md` checklist gains a canonical-instance check line.** Before recommending reduction-to-stub, the auditor scans `book/src/concepts/` for references to the slice (filename + slug) and counts named §Canonical-instance / "instance of" mentions. If count ≥2, the audit verdict shifts to DEFER-by-canonical-instance (retain in full, annotated) regardless of firm-layered-home presence.
+- **(c) This friction-ledger entry codifies the design-exception class.**
+
+**Why not promote the carve-out to a separate methodology pillar.** The carve-out is *bounded* — it applies only when the slice is genuinely load-bearing as a navigation referent — and the ledger's recurrence-count is small (4 cycles across the project lifetime, only the cycle-031 instance after the cycle-013 precedent). The CLAUDE.md amendment + skill checklist line is sufficient codification without a separate invariant heading. If the carve-out gets exercised more frequently (recurrence ≥6 cycles), revisit as a candidate for promotion to its own invariant.
+
+**Watch.** Confirm c034+ slice-reduction audits run the second-axis check. If a c034+ audit reduces a slice that is a canonical instance (failure mode — the second-axis check was not applied), reopen.
