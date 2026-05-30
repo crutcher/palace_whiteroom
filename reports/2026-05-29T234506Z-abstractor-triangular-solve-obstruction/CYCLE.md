@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T23:45:06Z
 scope: L1>L0 obstruction theme — triangular-solve-obstruction (general trsv has no positive Palace source site)
 status: pending
 integrated_at: 2026-05-30T004013Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e44896d
 integration_notes: "Applied cycle-029 (staging row 3). NEW L1>L0 obstruction theme triangular-solve-obstruction landed — the FIRST opaque-library-ownership obstruction in the cohort, distinct from the two cycle-004 enum-only-stub obstructions MINRES/BiCGStab. Gives the c028-resolved-by-obstruction trsv leaf its citable home (l3-vocabulary-inventory-gap parent gap was already CLOSED c028). In-cycle live-link upgrade ×2 (plain-text refs to back-solve-mutation-rotation → live links after report-1 landed the target earlier this cycle). 1 cross-reference-integrity repair (Related section + 3 verified_against rows + 1 Open-questions entry added by repairer). 2 OQ sections promoted (resolution-record + slice-reduction follow-up). Critic raised possible methodology refinement: opaque-library-ownership vs enum-only-stub obstruction sub-kinds → routed for batch-8 meta-phase. Citecheck --scan 52/52 anchor zero-drift. 9 live links all on-disk."
 inputs:
   - cycle-028 harvester localization `reports/2026-05-29T194558Z-harvester-trsv-l1-localization/CYCLE.md` (the authoritative negative finding + verified negative-anchor citations)

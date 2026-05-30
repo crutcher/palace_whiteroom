@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T205945Z
 scope: L1>L0 theme sketch — back-solve-mutation-rotation (firm)
 status: pending
 integrated_at: 2026-05-30T004013Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e44896d
 integration_notes: "Applied cycle-029 (staging row 1). NEW firm L1>L0 theme back-solve-mutation-rotation landed lowering the c027-firm L1 back_solve leaf into GMRES iterative.cpp:652-660 / FGMRES :831-840 restart-correction back-substitution loops; shape-identical brace-shifted +1 lines, basis-lift V[k]/Z[k] differs only downstream per law-6. L1>L0 firm themes +1 (joins matrix-weighted-norm-mutation-rotation / normalize-mutation-rotation precedent). 5 OQs promoted for cycle-030 follow-up. Citecheck --scan 33/33 anchor zero-drift. NO repair needed (overall_status: ready). No gate hits."
 inputs:
   - book/src/L1/back_solve.md (firm leaf, c028 audited)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T234506Z
 scope: L2-L1 + L2 Part-overview prose refresh (cohort + queue re-sync after cycle-026/028 firm landings)
 status: pending
 integrated_at: 2026-05-30T004013Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e44896d
 integration_notes: "Applied cycle-029 (staging row 6). PURE PROSE/NAVIGATIONAL refresh — NO dep-map rows, NO Status lines, NO chapter-body content edited. L2-L1/index.md: appended Vocabulary-cohort subsection (7 firm + 1 partly-constructive) between dep-map and Working Notes + cohort-growth-log bullet. L2/index.md: refreshed Named-compositions motif from 2-exemplar to 4-exemplar framing; removed now-empty Queued at L2 (stub) subsection; added incremental-least-squares + eigsolve to Firm at L2 sub-list (closing the stale-by-omission gap the critic flagged); refreshed stub-queue bullet to l2-named-composition-lifts-closed. Counts re-verified post-apply: 8 L2-L1 dep-map rows + 10 L2 dep-map rows match prose claims exactly. 1 pre-existing citecheck MISS at L2/index.md:70 (spec/slices/chebyshev.md:354-362 historical-provenance bullet narrating a c015 absorption — semantically intentional, NOT introduced this report). 0 OQs promoted (all 3 report §Open-questions items confirmed by critic+repairer as not-a-defect / framing-choice). NO repair needed (overall_status: ready)."
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T20:59:45Z
 scope: L1>L0 theme sketch — bilinear-form-mutation-rotation
 status: pending
 integrated_at: 2026-05-30T004013Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e44896d
 integration_notes: "Applied cycle-029 (staging row 2). NEW firm L1>L0 theme bilinear-form-mutation-rotation landed — the off-diagonal sibling of matrix-weighted-norm-mutation-rotation. Firm lowering of a rough-in (test-coverage-bounded) L1 entry (same precedent as matrix-weighted-norm / eigsolve themes). 3 citation-validity repairs by repairer (misquoted L1 composition identity dot(apply_linop(M,y),x) → upstream-canonical dot(x, apply_linop(M,y)) in 3 places + 1 cosmetic span correction :88-90 → :88-89). 4 OQs promoted. Internally-allocated workspace Mx (Category-4 in-theme contract, distinct from matrix-weighted-norm caller-supplied Bx). Citecheck --scan 19/19 anchor zero-drift. No additional gate hits."
 inputs:
   - book/src/L1/bilinear-form.md (the L1 operator, rough-in test-coverage-bounded)

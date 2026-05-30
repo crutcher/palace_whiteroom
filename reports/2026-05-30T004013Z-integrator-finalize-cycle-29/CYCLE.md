@@ -11,7 +11,7 @@ reports_applied: 6
 reports_deferred: 0
 reports_rejected: 0
 build_repairs: 0
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e44896d
 ---
 
 # CYCLE: integrator-finalize cycle-029 (batch CYCLE.md / report-of-records)

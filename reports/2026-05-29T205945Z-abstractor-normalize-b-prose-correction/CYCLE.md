@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T20:59:45Z
 scope: L1>L0 + L1 prose correction — normalize_B "no fused B-Normalize" defect (F1 from cycle-028 audit)
 status: pending
 integrated_at: 2026-05-30T004013Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e44896d
 integration_notes: "Applied cycle-029 (staging row 5). PROSE-ONLY correction (no Status changes, no new files, no SUMMARY edits, no dep-map edits). 3 edits to L1-L0/normalize-mutation-rotation.md + 4 paired edits to L1/normalize.md: §Speculative-L1-operators rough-in note no fused → exists but uncalled (both files); §promotion-gate find that the function exists → find a positive callsite (both files; gate STAYS open but bar tightens — mere existence now explicitly insufficient). Both files Status verified unchanged at firm. 1 path-hygiene repair at land-time: 3 bare-basename operator.hpp references → palace/linalg/operator.hpp full path against sibling palace/fem/libceed/operator.hpp ambiguity (mechanical-token substitution). 2 OQs promoted (closure-record for c028 OQ + follow-up F1-row staleness at :466-469). RESOLVES the c028-opened OQ normalize_B-note-says-no-fused-B-Normalize-but-uncalled-fused-operator-exists. NO repair needed (overall_status: ready)."
 inputs:
   - book/src/L1-L0/normalize-mutation-rotation.md (firm theme; lines 283-293 + 51 prose claim + `verified_against:` F1 row at :466-469)

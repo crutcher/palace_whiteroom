@@ -4,7 +4,7 @@ invoked_at: 2026-05-29T205945Z
 scope: L1 operator: ls_update_column
 status: pending
 integrated_at: 2026-05-30T004013Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e44896d
 integration_notes: "Applied cycle-029 (staging row 4). NEW firm L1 leaf ls_update_column landed — the GMRES/FGMRES per-column running-QR leaf, column-streaming producer sibling of back_solve, Face-1 opaque-leaf projection of firm L2 incremental-least-squares. L1 firm cohort 21→22; L1/index Firm header bumped. Closes c027 OQ ls-update-column-l1-leaf; closes the c027 D5 / back_solve slug-collision saga end-to-end. 1 citation-validity repair (off-by-one anchor :88 → :87-88 in 3 places on slug-bearing sentence in L2-L1 theme). 2 OQs promoted (L2-L1 plain-text-ref upgrade follow-up with substantive prose-rewrite note + forthcoming ls-update-column-mutation-rotation L1>L0 theme). Firm-on-positive-structure iterative.cpp:634-640 GMRES / line-for-line identical :813-819 FGMRES. Citecheck --scan 40/40 anchor zero-drift."
 inputs:
   - palace/linalg/iterative.cpp:629-642 (GMRES per-column running-QR update + residual exposure)

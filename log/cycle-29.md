@@ -1,6 +1,6 @@
 # Cycle 029 — L1>L0 firm themes +2 (back-solve-mutation-rotation + bilinear-form-mutation-rotation) + L1>L0 obstruction theme +1 (triangular-solve-obstruction — first opaque-library-ownership obstruction) + L1 firm 21→22 (+ls_update_column GMRES per-column running-QR leaf) + normalize_B F1 prose correction + L2-L1/L2 index prose refresh (second primary cycle of meta-batch-8)
 
-**Date:** 2026-05-30 · **Commit:** `PLACEHOLDER_SHA` · **Status:** clean (6 of 6 dispatched-ready reports applied; zero deferrals; zero rejections; zero build-repairs; twenty-fifth consecutive clean split-integrator cycle)
+**Date:** 2026-05-30 · **Commit:** `e44896d` · **Status:** clean (6 of 6 dispatched-ready reports applied; zero deferrals; zero rejections; zero build-repairs; twenty-fifth consecutive clean split-integrator cycle)
 
 **Batch position:** cycle-029 is the **SECOND** primary cycle of **meta-batch-8** (cycles 028/029/030). The batch-8 meta-phase fires after the cycle-030 finalize commit (3:1 cadence; cycle counter does NOT reset across batch boundaries). This `log/cycle-29.md` + the `scaffolding/integrator-signals.md` cycle-029 section CONTINUE the batch-8 evidence window opened by cycle-028.
 
