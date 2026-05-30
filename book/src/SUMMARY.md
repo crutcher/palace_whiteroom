@@ -86,6 +86,8 @@
 - [back_solve](./L1/back_solve.md)
 - [ls_update_column](./L1/ls-update-column.md)
 - [jacobi-smoother](./L1/jacobi-smoother.md)
+- [reciprocal](./L1/reciprocal.md)
+- [elementwise_product](./L1/elementwise_product.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -100,6 +102,7 @@
 - [minres-iteration](./L1-L0/minres-iteration.md)
 - [triangular-solve-obstruction](./L1-L0/triangular-solve-obstruction.md)
 - [chebyshev-smoother-mutation-rotation](./L1-L0/chebyshev-smoother-mutation-rotation.md)
+- [jacobi-smoother-mutation-rotation](./L1-L0/jacobi-smoother-mutation-rotation.md)
 - [divfree-projector-mutation-rotation](./L1-L0/divfree-projector-mutation-rotation.md)
 - [dot-mutation-rotation](./L1-L0/dot-mutation-rotation.md)
 - [nleps-deflated-residual-mutation-rotation](./L1-L0/nleps-deflated-residual-mutation-rotation.md)
