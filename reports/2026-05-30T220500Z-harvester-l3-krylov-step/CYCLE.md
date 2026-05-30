@@ -5,7 +5,7 @@ scope: L3 operator: krylov-step
 status: pending
 overall_status: negative-result-scope-already-discharged
 integrated_at: 2026-05-31T01:30:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 4655e1b
 integration_notes: |
   cycle-034 D3 — NEGATIVE-RESULT: scope already discharged. The on-disk `book/src/L3/krylov-step.md` is firm since cycle-010 (225 lines, `## Status: firm`, two cycle-013 maintenance passes). Zero proposed-changes applied, zero OQ deltas — the report correctly declined to file the redundant `krylov-step-l3-identity-harvester-backfill` OQ and the cycle-006 closures on related OQs are already in place. The c034 cycle-planner's deliverable-presence check asserted `ls book/src/L3/krylov-step.md → NOT found` but the file has existed for 24 cycles since c010 wave-1. This is RECURRENCE-1 of friction `cycle-planner-stale-priorities-line-recruitment` AFTER the batch-9 codification — the MANDATORY pre-dispatch deliverable-presence ENFORCEMENT bullet in `.claude/agents/cycle-planner.md` §Discipline did NOT prevent this. The D3 producer (harvester) DID catch it via the `verify-dispatch-scope-not-already-discharged` skill at dispatch entry, but at the cost of a wasted dispatch slot. Both the D3 report and D3 critic recommend MIGRATING the skill from producer-side discharge-check to planner-side pre-dispatch check. Routed forward to scaffolding/integrator-signals.md cycle-034 entry for the eventual batch-10 meta-phase (post-cycle-036 finalize) to weigh — NOT enacted this finalize (meta-batch-10 position 1, NOT a meta-phase trigger). Build-relevant: no. retroactive-budget 0. Wave-conflict: none.
 inputs:

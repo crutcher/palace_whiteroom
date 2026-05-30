@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T220500Z
 scope: L1>L0 dead-code complex-transpose kernel cohort — verdict-only audit (jacobi + chebyshev + axpby)
 status: pending
 integrated_at: 2026-05-31T01:30:00Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 4655e1b
 integration_notes: |
   cycle-034 D2 — verdict-only audit, NO `book/` artifact changes; applied clean. Audit verdicts: jacobi `:61-69` supports (template-dead correctly recorded); chebyshev `:101-110` supports + `:150-159` supports-with-citation-hygiene-note (overshoots by 4 lines; precise body is `:147-155` — INFORMATIONAL, routed forward as low-priority hygiene OQ `chebyshev-smoother-mutation-rotation-applyorderk-true-citation-tighten` at scaffolding/open-questions.md:489); axpby ComplexVector::Subtract does-not-support-planner-mischaracterization (defined-not-used recognition rule, NOT a transpose kernel — the audited theme's existing framing is correct). OQ closed: `jacobi-mutation-rotation-dead-code-complex-transpose-kernel-lowering-verifier-audit` (at scaffolding/open-questions.md:485). D2 verdict strengthens D1's caveat on jacobi `:61-69` template-dead — D1's per-theme OQ pointer `reciprocal-elementwise-product-mr-dead-code-transpose-consumer-branch` cross-references this audit's resolution. Planner-scope-precision callout (CYCLE.md:185 — "the cycle-034 dispatch scope conflated two distinct shapes of dead code under one umbrella") recorded as a methodology observation for the BATCH-10 meta-phase (NOT this finalize's cycle, since c034 is batch-10 position 1). Build-relevant: no. retroactive-budget 0. Wave-conflict: none. Per-report integrator confirmed clean.
 inputs:
