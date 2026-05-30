@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T010118Z
 scope: L1>L0 theme audit — back-solve-mutation-rotation (cycle-029 firm landing)
 status: integrated
 integrated_at: 2026-05-30T050000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 21dedc3
 integration_notes: Applied clean as report-2 of cycle-030; appended 22-row `verified_against:` block (21 supports + 1 partially-supports — narrative-only F1 routed to c031); theme stays firm. INDEPENDENT diff confirmation of GMRES `:653-660` ≡ FGMRES `:832-839` byte-identical. See `reports/cycle-030-integrator-staging/STAGING.md` row 2 + `log/cycle-30.md` HEADLINE 2.
 inputs:
   - book/src/L1-L0/back-solve-mutation-rotation.md (firm L1>L0 theme, c029 dispatch-1)

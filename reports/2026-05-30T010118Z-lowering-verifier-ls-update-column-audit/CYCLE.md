@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T010118Z
 scope: L1 leaf audit — ls_update_column (cycle-030 dispatch-3)
 status: integrated
 integrated_at: 2026-05-30T050000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 21dedc3
 integration_notes: Applied clean as report-4 of cycle-030; appended SECOND `verified_against:` block (25 rows, all supports, independent-verifier round) at `book/src/L1/ls-update-column.md:718-808`; dual-block convention with c029 21-row producer self-verify block at `:630-716` operating as designed; leaf stays firm. Paraphrase observation (firm-chapter-prose-cites-paraphrased-name-not-literal-anchor) recorded for batch-8 meta. See `reports/cycle-030-integrator-staging/STAGING.md` row 4 + `log/cycle-30.md` HEADLINE 2.
 inputs:
   - book/src/L1/ls-update-column.md (the L1 leaf to audit; firm cycle-029 dispatch-5)

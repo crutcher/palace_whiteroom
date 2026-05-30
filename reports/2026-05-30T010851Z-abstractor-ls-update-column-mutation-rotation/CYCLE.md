@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T010851Z
 scope: L1>L0 theme sketch — ls-update-column-mutation-rotation
 status: integrated
 integrated_at: 2026-05-30T050000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 21dedc3
 integration_notes: Applied clean as report-1 of cycle-030; created firm L1>L0 theme `book/src/L1-L0/ls-update-column-mutation-rotation.md` + dep-map row + SUMMARY entry; with sibling `back-solve-mutation-rotation` COMPLETES the GMRES restart-cycle L1>L0 cohort end-to-end. See `reports/cycle-030-integrator-staging/STAGING.md` row 1 + `log/cycle-30.md` HEADLINE 1.
 inputs:
   - book/src/L1/ls-update-column.md (firm L1 leaf, c029)

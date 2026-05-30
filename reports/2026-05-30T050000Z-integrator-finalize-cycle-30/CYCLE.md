@@ -11,7 +11,7 @@ inputs:
   - book/src/ (post-per-report state)
 status: integrated
 integrated_at: 2026-05-30T050000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 21dedc3
 ---
 
 # CYCLE-030 BATCH-CLOSING FINALIZE
@@ -56,7 +56,7 @@ Scaffolding changes:
 - `log/cycle-30.md` — NEW per-cycle log file
 - `log/README.md` — prepended one-line cycle-030 index entry
 
-Consumed-report frontmatter touches: 6 reports' frontmatter updated with `status: integrated`, `integrated_at: 2026-05-30T050000Z`, `integration_commit: PLACEHOLDER_SHA`, `integration_notes: ...`.
+Consumed-report frontmatter touches: 6 reports' frontmatter updated with `status: integrated`, `integrated_at: 2026-05-30T050000Z`, `integration_commit: 21dedc3`, `integration_notes: ...`.
 
 ## Safety-net gate results (aggregated)
 

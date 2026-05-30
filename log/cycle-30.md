@@ -1,6 +1,6 @@
 # Cycle 030 — L1>L0 firm themes +1 (ls-update-column-mutation-rotation — GMRES-restart L1>L0 cohort COMPLETE) + 3 additive verified_against audits (back-solve-MR / bilinear-form-MR / ls_update_column L1 leaf) + 1 F1 row refresh (normalize-MR) + 3 live-link upgrades (L2-L1 incremental-LS theme) (THIRD/FINAL primary cycle of meta-batch-8 — batch-8 meta-phase fires AFTER this finalize commit)
 
-**Date:** 2026-05-30 · **Commit:** `PLACEHOLDER_SHA` · **Status:** clean (6 of 6 dispatched-ready reports applied; zero deferrals; zero rejections; zero build-repairs; twenty-sixth consecutive clean split-integrator cycle)
+**Date:** 2026-05-30 · **Commit:** `21dedc3` · **Status:** clean (6 of 6 dispatched-ready reports applied; zero deferrals; zero rejections; zero build-repairs; twenty-sixth consecutive clean split-integrator cycle)
 
 **Batch position:** cycle-030 is the **THIRD / FINAL** primary cycle of **meta-batch-8** (cycles 028/029/030). **The batch-8 meta-phase fires immediately after this cycle-030 integrator-finalize commit** (3:1 cadence; cycle counter does NOT reset across batch boundaries). This `log/cycle-30.md` + the `scaffolding/integrator-signals.md` cycle-030 section CLOSE the batch-8 evidence window opened by cycle-028 and continued by cycle-029.
 

@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T01:01:18Z
 scope: L1>L0 verified_against row REFRESH — normalize-mutation-rotation F1 row (palace/linalg/operator.hpp:377-384) post-c029 prose correction
 status: integrated
 integrated_at: 2026-05-30T050000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 21dedc3
 integration_notes: Applied clean as report-5 of cycle-030; F1 row at `book/src/L1-L0/normalize-mutation-rotation.md:481-484` (NOT the stale `:466-469` ledger slug — line numbers shifted ~15 lines downward by c029 prose expansion) verdict flipped `does-not-support` → `supports`; theme stays firm. Completes the c028→c029→c030 metadata-refresh chain. Repairer prefixed 15 bare-basename `operator.{hpp,cpp}` narrative-prose refs with `palace/linalg/` for path-hygiene. See `reports/cycle-030-integrator-staging/STAGING.md` row 5 + `log/cycle-30.md` HEADLINE 3.
 inputs:
   - book/src/L1-L0/normalize-mutation-rotation.md (firm theme; F1 row at :481-484; c029-corrected prose)

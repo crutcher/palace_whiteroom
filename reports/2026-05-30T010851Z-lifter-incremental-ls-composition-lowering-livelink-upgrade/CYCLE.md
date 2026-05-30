@@ -7,7 +7,7 @@ inputs:
   - book/src/L1/ls-update-column.md
 status: integrated
 integrated_at: 2026-05-30T050000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 21dedc3
 integration_notes: Applied clean as report-6 of cycle-030; 3 plain-text `ls_update_column` refs at `:69`/`:87-88`/`:307` upgraded to live links; theme stays firm. 3 sibling `ls_update_column-mutation-rotation` mentions at `:85`/`:466`/`:480` NOT upgraded (each carries adjacent stale "forthcoming" framing requiring bounded prose rework) — routed to c031 small lifter touch. See `reports/cycle-030-integrator-staging/STAGING.md` row 6 + `log/cycle-30.md` HEADLINE 4.
 ---
 

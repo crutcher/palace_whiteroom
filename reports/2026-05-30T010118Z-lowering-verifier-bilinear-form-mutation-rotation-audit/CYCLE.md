@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T010118Z
 scope: L1>L0 theme audit — bilinear-form-mutation-rotation
 status: integrated
 integrated_at: 2026-05-30T050000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 21dedc3
 integration_notes: Applied clean as report-3 of cycle-030; appended 19-row `verified_against:` block (all supports, fully-supported); theme stays firm. Repairer fixed (a) bare-basename `operator.cpp:613-614` AMBIG → full path, (b) two leading-single-quote `note:` values that broke `yaml.safe_load` (the c030 refinement of the c028 leading-DOUBLE-quote hazard — recurrence-2 of channel-format friction). See `reports/cycle-030-integrator-staging/STAGING.md` row 3 + `log/cycle-30.md` HEADLINE 2.
 inputs:
   - book/src/L1-L0/bilinear-form-mutation-rotation.md (the firm theme under audit, landed cycle-029 dispatch-2)
