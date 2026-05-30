@@ -10,7 +10,7 @@ target_file: book/src/L1-L0/back-solve-mutation-rotation.md (the theme cross-anc
 leaf_unchanged: book/src/L1/back_solve.md (the citation TARGETS; on-disk content is authoritative and unchanged)
 emitted_at: 2026-05-30T050100Z
 integrated_at: 2026-05-30T051734Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2f9c08d
 integration_notes: Applied clean (cycle-031 D4). Mechanical 2-token cite-precision substitution in back-solve-mutation-rotation.md cross-anchor bullet (:78→:77-78 signature anchor, :218-221→:217-221 law 5 boundary anchor; third anchor :466-540 confirmed correct-as-is no-op). Closes c030 D1 audit Finding B mechanically. Same-file co-edit with D2 (D2 landed first +17 line offset; D4 cross-anchor bullet shifted from pre-D2 :685-694 to post-D2 :702-711 — both [old] strings unique-in-target on post-D2 on-disk state).
 ---
 

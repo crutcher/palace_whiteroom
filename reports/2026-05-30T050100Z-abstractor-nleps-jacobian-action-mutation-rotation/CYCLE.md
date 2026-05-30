@@ -12,7 +12,7 @@ inputs:
   - scaffolding/priorities.md:36 (stale "2 remaining" plan line)
   - reports/2026-05-30T043203Z-cycle-planner-cycle-031/CYCLE.md §"Dispatches" item #6 (open slot)
 integrated_at: 2026-05-30T051734Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2f9c08d
 integration_notes: noop-stale-scope (cycle-031 D6a) — target theme firm-landed c025, audited c026; cycle-031 D6 substantive-landing slot recruited from stale priorities.md:36 (six cycles out of date). Orchestrator retired stale line + filed OQ cycle-planner-pre-dispatch-existence-check-of-target-artifact + skill candidate verify-dispatch-scope-not-already-discharged. No book changes; CYCLE.md disposition recorded for traceability; routed as batch-9 meta-phase agenda item.
 ---
 

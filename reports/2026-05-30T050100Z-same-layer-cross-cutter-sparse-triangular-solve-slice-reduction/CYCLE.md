@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T050100Z
 scope: Phase-1 slice-reduction candidacy — book/src/spec/slices/sparse_triangular_solve.md (carry-forward from c029 now that the L1>L0 obstruction theme is on disk)
 status: pending
 integrated_at: 2026-05-30T051734Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2f9c08d
 integration_notes: Applied clean (cycle-031 D5 same-layer-cross-cutter). Verdict DEFER — slice retained-by-design as canonical-instance for 3 concept pages (concepts/sparse-triangular-solve.md / tracts-of-source-vs-targets-of-burn.md / negative-result.md). Single reciprocal cross-link added to slice :3-7 reduction-status header pointing at c029 L1>L0 obstruction theme :273-308. Phase-1 removals stay 9/10 unchanged. Meta-phase batch-9 candidate filed: negative-result-slice-canonical-instance-blocks-reduction.
 ---
 

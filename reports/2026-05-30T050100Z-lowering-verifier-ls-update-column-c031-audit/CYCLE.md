@@ -13,7 +13,7 @@ inputs:
   - book/src/L2-L1/incremental-least-squares-composition-lowering.md (firm L2>L1; Face-1 opaque-leaf wire)
   - tools/citecheck/citecheck.py --anchor (mechanical citation source-of-truth)
 integrated_at: 2026-05-30T051734Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2f9c08d
 integration_notes: Applied clean (cycle-031 D1). Additive 33-row verified_against block (all supports) appended to ls-update-column-mutation-rotation.md. Theme stays firm — c030-landed firm theme UPHELD. Closes c030 follow-up OQ ls-update-column-mutation-rotation-cycle-031-verified-against-audit-c030 — audit IS the resolution. Standard firm-theme additive audit cadence (precedent: back-solve-mutation-rotation c030 / normalize-mutation-rotation c028).
 ---
 

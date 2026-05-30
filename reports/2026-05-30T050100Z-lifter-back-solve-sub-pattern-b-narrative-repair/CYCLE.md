@@ -8,7 +8,7 @@ inputs:
   - reference/palace/palace/linalg/iterative.cpp (GMRES :652-660, FGMRES :831-840)
   - book/src/L1/back_solve.md (the L1 leaf the theme lowers; carries the correct "line-for-line identical" phrasing at :223-230)
 integrated_at: 2026-05-30T051734Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2f9c08d
 integration_notes: Applied clean (cycle-031 D2). 5 narrative-only edits to back-solve-mutation-rotation.md §Sub-pattern B prose (:198-244 / :575-580 / :518-521 / :729-731 / :811-814 F1 row flip partially-supports→supports). Theme stays firm — structural decomposition unchanged. Closes c030 OQ back-solve-mutation-rotation-sub-pattern-b-brace-placement-narrative-correction-c030. The wrong "+1-line brace-placement shift" prose corrected to factual byte-identity (+179-line file offset, zero local relative shift).
 ---
 

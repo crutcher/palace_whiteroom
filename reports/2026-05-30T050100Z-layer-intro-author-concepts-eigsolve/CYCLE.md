@@ -4,7 +4,7 @@ invoked_at: 2026-05-30T05:01:00Z
 scope: concepts/eigsolve.md cross-cutting concept page
 status: no-op-stale-scope
 integrated_at: 2026-05-30T051734Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2f9c08d
 integration_notes: noop-stale-scope (cycle-031 D6b) — concepts/eigsolve.md page firm-landed c025, refined c026; OQ-ledger marker concepts-eigsolve-page-still-absent already RESOLVED c025; cycle-031 D6 re-route recruited from stale priorities.md:37 (six cycles out of date). Orchestrator retired stale line + filed shared OQ cycle-planner-pre-dispatch-existence-check-of-target-artifact. No book changes; CYCLE.md disposition recorded for traceability; routed as batch-9 meta-phase agenda item.
 ---
 

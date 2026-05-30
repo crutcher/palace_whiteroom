@@ -10,7 +10,7 @@ inputs:
   - book/src/L1/back_solve.md (L1 leaf, firm c027; cited in §Status compaction)
   - scaffolding/open-questions.md (OQ closure confirmed at :388 Closed index)
 integrated_at: 2026-05-30T051734Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2f9c08d
 integration_notes: Applied clean (cycle-031 D5). 5 prose-currency edits to L2-L1/incremental-least-squares-composition-lowering.md (3 plain-text→live-link upgrades dropping "forthcoming", §Status compaction, §Open-questions cleanup; -33 lines net 591→558). Theme stays firm — structural decomposition unchanged. New OPEN OQ filed: incremental-ls-composition-lowering-residual-forthcoming-mentions-c032 covering 4 residual mentions at :114/:276/:300/:306 bounded out of this dispatch.
 ---
 
