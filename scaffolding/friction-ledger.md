@@ -1535,8 +1535,8 @@ slug: dispatch-resilience-iterative-cpp-running-qr-region
 first_observed: cycle-029
 last_observed: cycle-030
 recurrence_count: 3
-status: watching (ask-surfaced)
-addressed_by: null
+status: addressed
+addressed_by: cycle-planner.md §Discipline pre-localize-known-heavy-regions bullet (path (a), user directive 2026-05-30)
 ---
 ```
 
@@ -1551,3 +1551,5 @@ addressed_by: null
 **Adjudication (cycle-030 meta-phase, this entry — ask).** Per the memory `escalate-process-issues-dont-work-around` (if a workaround pattern surfaces, raise it to the user with a proposed repair path rather than silting), this is flagged as an **ask** for the human, not enacted by this meta-phase. The two repair paths above are both methodology-relevant (cycle-planner spec change vs. harness change); the choice depends on whether the human prefers a project-local fix (cycle-planner bullet) or a harness-level fix (which may need code changes the meta-phase can't enact). The workaround is effective enough that the c031+ batch-9 cycles will continue running cleanly; the ask is whether to address the underlying friction at recurrence-3 or to wait for recurrence-4.
 
 **Watch:** if recurrence-4 surfaces (a fourth cycle hitting socket/timeout on the same region) before the human responds to the ask, escalate to the cycle-planner-bullet path unilaterally (the lower-cost repair). The harness-level fix stays open as a longer-term option.
+
+**Resolution (2026-05-30, user directive — path (a) chosen, enacted post-batch-8 meta-phase).** The human responded to the ask at recurrence-3 (did not wait for recurrence-4) and chose **path (a): the project-local cycle-planner role-spec bullet**. Enacted: `.claude/agents/cycle-planner.md` §Discipline gained a "Pre-localize known-heavy source regions and embed the exact L0 anchor ranges in the dispatch scope" bullet with an extensible known-heavy watch-list seeded with the `iterative.cpp` running-QR / restart machinery + Givens-kernel anchors. Status flips `watching (ask-surfaced)` → `addressed`. The cycle-planner now pre-fetches + embeds anchors for watch-list regions at plan time, so the orchestrator no longer needs the manual constrained-anchor-retry intervention for the known region. **The harness-level fix (path (b): auto-anchor-injection on transient-failure retry) stays an open longer-term option** — not enacted (it may need harness code changes the project can't make); recorded here so a future recurrence on a region NOT yet on the watch-list (where pre-localization didn't catch it) can re-open the harness-level discussion. **Watch (post-resolution):** confirm batch-9 dispatches against `iterative.cpp` run clean with the planner pre-supplying anchors (the bullet's first live test); add any new fail-and-recover region to the watch-list per the bullet's extension rule.
