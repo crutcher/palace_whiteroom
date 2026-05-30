@@ -315,7 +315,10 @@ promotion_note: promoted as a thin repairer skill (default-accept under low-bar)
 slug: establish-negative-finding-exhaustiveness
 proposer: critic
 proposed_at: cycle-028 / 2026-05-29
-status: proposed
+status: promoted
+promoted_to: skills/establish-negative-finding-exhaustiveness/SKILL.md
+promoted_at: cycle-030 meta-phase (batch-8) / 2026-05-30
+promotion_note: promoted as a thin producer- and critic-facing skill (default-accept under low-bar). The negative-localization-with-routing shape recurs across the unimplemented-stub / opaque-library obstruction family (≥3 prior instances: cycle-004 minres/bicgstab, cycle-024 eigsolve opaque-library, cycle-028 trsv, cycle-029 triangular-solve-obstruction). The skill is the deterministic 5-step bar: stated-terms + broadened-sweep + residual-token accounting + positive-API confirmation + critic re-run. Companion to `verify-citation-range` (positive pinpoints) — this one sets the bar for the *absence* claim. Friction-ledger entry NOT opened (the procedure is captured in the skill; no recurring failure to ledger).
 ---
 ```
 
@@ -330,7 +333,10 @@ status: proposed
 slug: verified-against-note-no-leading-quote-of-either-kind
 proposer: repairer
 proposed_at: cycle-030 / 2026-05-30
-status: proposed
+status: promoted
+promoted_to: skills/verified-against-note-no-leading-quote-of-either-kind/SKILL.md
+promoted_at: cycle-030 meta-phase (batch-8) / 2026-05-30
+promotion_note: promoted as a thin producer/critic/repairer-facing channel-format skill (default-accept under low-bar; concrete + recurrence-2). The c028 leading-double-quote-only rule was too narrow — c030 single-quote variant slipped past the producer self-check that named only the narrower form. The generalized predicate (note value's first non-whitespace character ∈ {`'`, `"`}) is the leverage point. Three sites updated: (a) lowering-verifier role-spec `verified_against:` Discipline bullet (generalized rule + producer self-check + yaml.safe_load mechanical check); (b) critic role-spec `citation-validity` check (YAML round-trip sub-check on extracted `verified_against:` blocks); (c) this skill (deterministic repair pattern). Friction-ledger entry opened: `verified-against-note-no-leading-quote-of-either-kind` (recurrence-2 generalizing the c028 narrower hazard).
 ---
 ```
 

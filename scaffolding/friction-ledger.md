@@ -1457,3 +1457,97 @@ addressed_by: cycle-027 meta-phase (batch-7) — promoted skill `skills/audit-sl
 **Mitigation (cycle-027 meta-phase, this entry — go).** Promoted the repairer-facing skill `audit-slug-meaning-before-coordinated-cross-report-rename` (the 5-step denote-by-signature gate: read the landing report's ground truth → classify every occurrence by the operation it denotes → gate on premise contradiction → route a content-reclassification gap as `unrepairable` → record explicitly). It is a generalization of the `verify-citation-range` "verify against the artifact, not the paraphrase" discipline to slug-rename coordination.
 
 **Watch:** recurrence-1 (single instance). If a second inverted-premise coordinated rename surfaces, the repairer-side gate is necessary but the *avoidance* (a pre-harvest slug-collision check) becomes the better fix — enact the producer-spec bullet then (if the human's ASK response defers it now). Also a datapoint for the broader "one-operator-per-dispatch + forward-references create cross-report coordination" cost: when two in-cycle dispatches must coordinate a rename, the integration-ordering + repairer-gate handled it without a rejection (the surface accumulated with the friction embedded — the deferral routes to c028).
+
+---
+
+```yaml
+---
+slug: verified-against-note-no-leading-quote-of-either-kind
+first_observed: cycle-028
+last_observed: cycle-030
+recurrence_count: 2
+status: addressed
+addressed_by: cycle-030 meta-phase (batch-8) — generalized channel-format rule codified in `.claude/agents/lowering-verifier.md` §Discipline + `.claude/agents/critic.md` `citation-validity` YAML round-trip sub-check + promoted skill `skills/verified-against-note-no-leading-quote-of-either-kind/SKILL.md` (producer self-check + critic mechanical check + repairer rephrase pattern). Generalizes the c028 narrower "no leading double-quote" form to "no leading quote of EITHER kind".
+---
+```
+
+**Pattern (channel-format hazard for `verified_against:` `note:` values).** YAML's plain-scalar parser interprets a leading `'` OR `"` as opening a quoted scalar; any trailing unquoted prose after the closing quote breaks the block with `ParserError: expected <block end>, but found '<scalar>'`. The hazard is symmetric across the two quote characters: `note: 'X' — content` and `note: "X" — content` both fail `yaml.safe_load` identically. The leverage point is the *generalized* predicate "note value's first non-whitespace character ∈ {`'`, `"`}", not either narrower form.
+
+**Evidence (cycle-028 D5 + cycle-030 D2 — recurrence-2).** Cycle-028 D5 (`incremental-ls-composition-lowering` audit) emitted two `note:` values starting with `"`; the per-report integrator caught the parse failure and repaired by single-quote-wrapping (which works for double-quote-leading values but does NOT generalize to single-quote-leading values; the cycle-028 codification of the rule named only the double-quote hazard). Cycle-030 D2 (`bilinear-form-mutation-rotation` audit) emitted two `note:` values starting with `'`; the producer self-check in the report Summary explicitly claimed "no leading-double-quote note values (yaml.safe_load hazard avoided)" — exactly the narrower c028 form — and the single-quote variant slipped past, producing the identical `ParserError` at line 69 column 63 in `yaml.safe_load`. The c030 critic ran the round-trip and flagged `citation-validity: fail`; the repairer rephrased each note to start with prose (the quoted term embedded in the body of the note, not at its start).
+
+**Mitigation (cycle-030 meta-phase, this entry — go).** Three coordinated edits enacted: (a) `.claude/agents/lowering-verifier.md` §Discipline — new bullet stating the generalized rule + the producer self-check predicate + the `yaml.safe_load` mechanical check pre-emit; (b) `.claude/agents/critic.md` check 1 `citation-validity` — extended with the "`verified_against:` YAML round-trip sub-check" (extract the block; `yaml.safe_load` it; flag `citation-validity: fail` on `ParserError` with the line+column); (c) promoted skill `verified-against-note-no-leading-quote-of-either-kind` (the deterministic producer self-check + critic check + repairer rephrase pattern). The leverage point is *the generalized predicate*, not "ban single-quote too" — the producer must understand the *symmetry* of the hazard, not memorize two narrower bans.
+
+**Watch:** recurrence-2 (cycles 028 + 030 = two distinct cycles, both lowering-verifier emissions). The producer self-check predicate is now the symmetric form; the c031+ batch-9 cycle should not see recurrence-3 unless the producer skips the self-check entirely. If recurrence-3 surfaces, escalate (the producer-spec bullet is in place; a recurrence-3 means the bullet is being read but not applied, which is a different shape of problem).
+
+---
+
+```yaml
+---
+slug: firm-chapter-prose-cites-paraphrased-name-not-literal-anchor
+first_observed: cycle-024
+last_observed: cycle-030
+recurrence_count: 2
+status: addressed-by-acceptance
+addressed_by: cycle-030 meta-phase (batch-8) — accepted as a documented allowable convention. Producer prose may cite a concept by paraphrase (a semantically-matching nickname for the literal token) so long as the cited line-range CONTAINS the concept; the literal token may live elsewhere in the same chapter. No producer-spec bullet imposed (paraphrase aids readability + is bounded by the line-range containment guard). The auditor self-discloses the paraphrase, the critic verifies the range contains the semantics, and the latent friction-ledger entry is promoted to addressed (not escalated to a producer restriction).
+---
+```
+
+**Pattern (citation-by-paraphrase, range-containing-the-concept).** A producer's prose says e.g. "non-associativity non-law" and cites a range whose literal token "non-associativity" appears elsewhere in the chapter (e.g. at `:339`), while the cited range (e.g. `:278-285`) contains a *semantic match* (e.g. "Rotation-stream associativity / re-factorisation equivalence at the bit level"). The `citecheck --anchor 'non-associativity'` tool would drift the anchor to the literal `:339`, but the prose's cited range is correct in *meaning* — the cited range really does discuss the concept the prose names. The two distinct phrasings refer to the same algebraic fact.
+
+**Evidence (cycle-024 first instance, cycle-030 D3 second instance — recurrence-2).** First instance was a latent observation in the cycle-024 batch and was not promoted to the friction-ledger at that time (it didn't recur until cycle-030). Cycle-030 D3 (lowering-verifier on `ls_update_column` L1-leaf audit) self-discloses: the leaf prose nickname "rotation-stream non-associativity non-law" semantically matches the L2 chapter bullet at `:278-285` "Rotation-stream associativity / re-factorisation equivalence at the bit level," while the literal token `non-associativity` is at `:339` in a downstream summary. The c030 D3 auditor flagged it in §Open-questions as worth a meta-phase signal; the c030 D3 critic confirmed the auditor's "semantic match, paraphrase noted" verdict is correct and the cited range really contains the concept. Both the auditor and the critic agree the citation is sound — the paraphrase aids readability and the line-range containment is the guard that keeps the citation honest.
+
+**Adjudication (cycle-030 meta-phase, this entry — go, with status `addressed-by-acceptance`).** Two distinct outcomes were possible:
+- **Restrict** — require producers to cite the literal-anchor line (`:339`), not the paraphrased-matching range (`:278-285`). This would forbid the nickname-with-semantically-matching-range pattern entirely and force citations to chase the literal token wherever it lives in the chapter.
+- **Accept** — document the pattern as allowable when (a) the auditor self-discloses the paraphrase, AND (b) the cited line-range CONTAINS the concept semantically, AND (c) the critic verifies the containment. The literal-token line is a sibling locale, not the only valid citation site.
+
+**Decision: accept.** Rationale: (i) the paraphrase aids readability when the literal token is in a downstream summary or a different surrounding context — forcing producers to cite the literal site can pull the reader into a less-relevant section; (ii) the line-range containment IS a meaningful guard (a paraphrase that cites a range NOT containing the concept is a real defect, distinct from this pattern); (iii) the cost of forbidding paraphrase-citations would be high (a producer-spec bullet, repairer rounds chasing literal tokens, prose stiffness) for low benefit (the citation is already sound in meaning). The c030 D3 case demonstrates the auditor self-disclosure + critic containment-check is sufficient.
+
+**Watch:** if recurrence climbs (≥4 cycles), revisit — particularly if a future instance shows the auditor *failing* to self-disclose the paraphrase, which would weaken the acceptance argument (the disclosure is what makes the pattern auditable). Also revisit if the line-range containment guard fails (a paraphrase cites a range that does NOT actually contain the concept) — that would be a citation-honesty defect, not the benign paraphrase pattern.
+
+---
+
+```yaml
+---
+slug: obstruction-sub-kind-opaque-library-vs-enum-only-stub
+first_observed: cycle-029
+last_observed: cycle-029
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-030 meta-phase (batch-8) — codified the two sub-kinds (enum-only-stub vs opaque-library-ownership) in CLAUDE.md §Methodology invariants + the abstractor role-spec §Discipline. The sub-kind tag is mandatory in the `## Status: obstruction (<sub-kind>)` line going forward.
+---
+```
+
+**Pattern (two methodologically distinct shapes wearing the same `obstruction` status).** The `obstruction` category has covered two distinct shapes since cycle-004 (the MINRES + BiCGStab themes were enum-only Palace-internal stubs) and cycle-029 (the triangular-solve-obstruction was the FIRST opaque-library-ownership obstruction). The routing decision the obstruction encodes is different:
+- **`enum-only-stub`** — Palace-internal TODO / aborting branch; could in principle be implemented upstream.
+- **`opaque-library-ownership`** — functionality is library-owned (HYPRE / SLEPc / external direct-solver); Palace consumes it opaquely; nothing to fix upstream.
+
+**Evidence (cycle-029 D3 `triangular-solve-obstruction`).** The first opaque-library-ownership obstruction in the cohort. Its negative anchors are HYPRE relax-type enum strings (`palace/linalg/hypre.cpp`) + external direct-solver wrappers — none of which are Palace-owned method bodies. Structurally distinct from the cycle-004 MINRES/BiCGStab themes (which point at Palace-owned aborting branches like `MFEM_ABORT("MINRES is not implemented")`). The c029 integrator-signals dump flagged the distinction as a c028+c030 meta-phase agenda item; the c030 batch-closing finalize carried it forward.
+
+**Mitigation (cycle-030 meta-phase, this entry — go).** Two coordinated edits enacted: (a) CLAUDE.md §Methodology invariants — added a new invariant bullet "Obstruction themes have two sub-kinds" alongside the `partly-constructive` and `partial-obstruction` codifications; the bullet names the two sub-kinds, the routing implications, and the default-rules (Palace-owned TODO → enum-only-stub; non-Palace callable → opaque-library-ownership); (b) `.claude/agents/abstractor.md` §Discipline — added a producer-side bullet making the sub-kind tag mandatory in the `## Status` line, with the same default-rules. The cross-layer-cross-cutter is also informed (an enum-only-stub is "anticipated upstream work"; an opaque-library-ownership is "permanently library-owned, never re-promotable") via the CLAUDE.md prose.
+
+**Watch:** single instance so far (the cycle-029 trsv-obstruction is the only opaque-library-ownership entry). If the c031+ batch-9 surfaces more opaque-library obstruction candidates (the cycle-021 OQ `l3-eigsolve-linear-evp-has-no-krylov-step-kernel-analog` is a predicted future case at L3, but as `partial-obstruction` not full `obstruction`), the sub-kind tag will get more use. If after several cycles no new opaque-library-ownership entries surface, the sub-kind is still useful (it documents the cycle-029 boundary precisely + names the routing decision for future producers).
+
+---
+
+```yaml
+---
+slug: dispatch-resilience-iterative-cpp-running-qr-region
+first_observed: cycle-029
+last_observed: cycle-030
+recurrence_count: 3
+status: watching (ask-surfaced)
+addressed_by: null
+---
+```
+
+**Pattern (dispatch-resilience: API socket/timeout failures clustered on one source region).** Across batch-8 (cycles 028/029/030), **3 dispatch retries** all clustered on the same Palace source region — the `iterative.cpp` running-QR localization (`:634-640` GMRES Arnoldi column update + `:813-819` FGMRES variant). c029 D5 needed 2 retries (socket error + 63-min timeout); c029 D6 needed 2 retries (socket error); c030 D4 needed 1 retry (socket error). All 3 dispatches fixed CLEAN on the constrained-anchor-prelocalization retry strategy (the orchestrator pre-supplied the exact L0 anchors in the retry dispatch prompt, eliminating the over-long localization loop that triggered the API socket failure).
+
+**Hypothesis.** The `iterative.cpp` running-QR region is a token-dense, template-heavy block (GMRES/FGMRES variant dispatch + Givens-rotation kernel + per-column Hessenberg update). A producer dispatched against this region without pre-supplied anchors tends to enter a long localization loop (codemap calls + read_range expansions + token accumulation) that ultimately hits an API socket/timeout threshold. The constrained-anchor retry skips the localization loop because the anchors are already in the prompt — the producer reads the cited lines and proceeds directly to authoring.
+
+**Constrained-anchor-prelocalization workaround is effective but is silting (per memory `escalate-process-issues-dont-work-around`).** The fix is currently a *manual orchestrator intervention*: when a dispatch fails, the parent identifies the heavy region, pre-localizes via the codemap, and dispatches a retry with the anchors embedded. This is load-bearing process work that doesn't surface in the role-specs or skills — it lives only in the orchestrator's knowledge of which regions are heavy. If the pattern continues (recurrence-4 in batch-9), the workaround should be promoted to either:
+- **A cycle-planner role-spec bullet** — when dispatch scope includes `iterative.cpp` running-QR or similar known-heavy regions (a watch-list), pre-fetch the codemap range and embed it in the dispatch scope, eliminating the inflated context that triggers the API socket failures.
+- **A harness-level dispatch retry/backoff** — automatic constrained-anchor retry on transient API failure, with the anchors derived from the dispatch scope's named source regions.
+
+**Adjudication (cycle-030 meta-phase, this entry — ask).** Per the memory `escalate-process-issues-dont-work-around` (if a workaround pattern surfaces, raise it to the user with a proposed repair path rather than silting), this is flagged as an **ask** for the human, not enacted by this meta-phase. The two repair paths above are both methodology-relevant (cycle-planner spec change vs. harness change); the choice depends on whether the human prefers a project-local fix (cycle-planner bullet) or a harness-level fix (which may need code changes the meta-phase can't enact). The workaround is effective enough that the c031+ batch-9 cycles will continue running cleanly; the ask is whether to address the underlying friction at recurrence-3 or to wait for recurrence-4.
+
+**Watch:** if recurrence-4 surfaces (a fourth cycle hitting socket/timeout on the same region) before the human responds to the ask, escalate to the cycle-planner-bullet path unilaterally (the lower-cost repair). The harness-level fix stays open as a longer-term option.
