@@ -109,6 +109,7 @@
 - [bilinear-form-mutation-rotation](./L1-L0/bilinear-form-mutation-rotation.md)
 - [normalize-mutation-rotation](./L1-L0/normalize-mutation-rotation.md)
 - [back-solve-mutation-rotation](./L1-L0/back-solve-mutation-rotation.md)
+- [ls-update-column-mutation-rotation](./L1-L0/ls-update-column-mutation-rotation.md)
 - [lu-solve-mutation-rotation](./L1-L0/lu-solve-mutation-rotation.md)
 - [nleps-deflated-solve-mutation-rotation](./L1-L0/nleps-deflated-solve-mutation-rotation.md)
 - [apply-nonlinear-pencil-mutation-rotation](./L1-L0/apply-nonlinear-pencil-mutation-rotation.md)

@@ -66,7 +66,7 @@ factorisation state identically.
 
 ### Face 1 — the opaque single-column leaf (the fused face)
 
-The L1 column-streaming leaf `ls_update_column` (the per-column running-QR update; per the
+The L1 column-streaming leaf [`ls_update_column`](../L1/ls-update-column.md) (the per-column running-QR update; per the
 [`concepts/incremental-least-squares`](../concepts/incremental-least-squares.md) contract `:14`),
 mirroring Palace's per-column loop body one-to-one:
 
@@ -84,10 +84,10 @@ own lowering onto the L0 in-place free functions — the four `*PlaneRotation` c
 `iterative.cpp:634-642` writing `Hj`, `cs`, `sn`, `s` in place — is the **L1>L0** concern of the
 forthcoming `ls_update_column-mutation-rotation` theme; **this theme stops at the L1 leaf and does not
 re-derive that L0 in-place step** (the same boundary the sibling draws at the L1 `orthogonalize`
-leaf). The `ls_update_column` column-streaming leaf is itself **forthcoming** (not yet on disk; a
-follow-on harvester target — see §Open questions), so this Face-1 reference is **plain text** per the
-rough-in-forward-reference convention; the firm, co-extensive **Face 2** below carries the de-fused
-value, so the theme does not depend on the opaque-leaf face being on disk.
+leaf). The [`ls_update_column`](../L1/ls-update-column.md) column-streaming leaf is **firm**
+(cycle-029; `book/src/L1/ls-update-column.md`, firm-on-positive-structure per the running-QR loop body
+`iterative.cpp:634-640` / `:813-819`); the co-extensive **Face 2** below carries the same value via the
+de-fused scalar Givens kernel pair, so either face resolves the L1 RHS of this fan-down.
 
 ### Face 2 — the de-fused scalar Givens sub-step sequence (the spelled-out face)
 
@@ -304,10 +304,10 @@ L1>L0 theme; the back-solve's reduction-order non-law is delegated to the firm
 
 **None proposed by this theme.** The L1 RHS resolves to firm-or-forthcoming-firm vocabulary:
 
-- Face 1 — the L1 column-streaming leaf **`ls_update_column`** (the single-column running-QR update
-  `(K, j, h_new) → K'`; **forward-reference as plain text** — not yet on disk, a follow-on harvester
-  target). The co-extensive firm **Face 2** carries the de-fused value, so this opaque-leaf
-  forward-reference does not gate the theme's firmness.
+- Face 1 — the L1 column-streaming leaf **[`ls_update_column`](../L1/ls-update-column.md)**
+  (the single-column running-QR update `(K, j, h_new) → K'`; **firm** cycle-029,
+  firm-on-positive-structure). The co-extensive firm **Face 2** carries the de-fused value, so either
+  face resolves the L1 RHS.
 - Face 2 — the scalar Givens kernel pair [`concepts/givens_generate`](../concepts/givens_generate.md)
   / [`concepts/givens_apply`](../concepts/givens_apply.md) (firm concept pages; element-local
   kernels).

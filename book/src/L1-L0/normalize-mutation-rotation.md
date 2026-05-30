@@ -479,9 +479,9 @@ verified_against:
     audited_at: 2026-05-29T19:45:58Z
     note: "V[1] *= 1 / v1_norm — second by-hand normalise instance."
   - citation: palace/linalg/operator.hpp:377-384
-    verdict: does-not-support
-    audited_at: 2026-05-29T19:45:58Z
-    note: "Range correct, but the surrounding 'no fused linalg::Normalize-with-B free function' claim (lines 51, 285-287, 311-313) is WRONG: palace/linalg/operator.hpp:378 IS a fused B-weighted Normalize(comm, x, B, Bx) free function (reduction->guard->rescale->return, identical to vector.hpp:264). The defensible fact is that this fused B-Normalize is UNCALLED (no 4-arg rescaling callsite in the tree). Affects only the normalize_B rough-in note, NOT the firm unweighted core. Routed to follow-up abstractor (F1)."
+    verdict: supports
+    audited_at: 2026-05-30T01:01:18Z
+    note: "Refreshed cycle-030 after cycle-029 abstractor prose correction (commit e44896d) aligned the surrounding prose with the L0 source. Range correct; the c029-corrected prose at theme :286-303 (Speculative L1 operators rough-in note) and :51 (L0 form intro) accurately reads 'fused B-Normalize exists but is uncalled': definition at palace/linalg/operator.hpp:378 (def, reduction :380, guard :381, rescale :382, return :383 — all citecheck --anchor probes land within 377-384) is positively anchored; the 'uncalled' claim is grep-verified (zero 4-arg Normalize(comm, x, B, Bx) callsites across reference/palace/palace/). Affects only the normalize_B rough-in note, NOT the firm unweighted core. Prior c028 verdict does-not-support was against the WAS-prose; obsolete after c029."
   - citation: palace/linalg/operator.cpp:599-619
     verdict: supports
     audited_at: 2026-05-29T19:45:58Z
