@@ -47,7 +47,9 @@ it is the precondition the L0 `MFEM_ASSERT` enforces.
 
 ## L0 form (RHS)
 
-The L1 pair lowers into the free-function template `linalg::Normalize(comm, x)`
+The L1 pair lowers into the unweighted free-function template `linalg::Normalize(comm, x)`
+(the fused B-weighted overload `Normalize(comm, x, B, Bx)` at `palace/linalg/operator.hpp:377-384`
+exists but is uncalled — see the `normalize_B` rough-in note below)
 (`palace/linalg/vector.hpp:262-270`). The receiver `x` is **overwritten in place** with
 the unit vector, and the norm is **returned by value**:
 
@@ -280,25 +282,38 @@ normalisation `(β_B, x/β_B)` with `β_B = √(xᴴ B x)`) is recorded as a **r
 NOT a speculative operator of this theme, for the reasons the L1 entry gives
 (`book/src/L1/normalize.md:83-95`):
 
-- **No fused Palace site.** Palace has **no** `linalg::Normalize`-with-`B` free function;
-  the sole `Normalize` overload (`vector.hpp:264`) takes no `B`. The header comment
-  ("...possibly with respect to an SPD matrix B", `vector.hpp:262`) is aspirational. The
-  B-weighted reduction exists ([`matrix-weighted-norm`](../L1/matrix-weighted-norm.md), via
-  `linalg::Norml2(comm, x, B, Bx)`, `palace/linalg/operator.cpp:599-619`) but its callsites are
-  error-norm / eigenvector-norm computations that **do not rescale** — they feed residual
-  ratios, not an in-place normalise. (Contrast: the `Normalize`-with-`B` *inline* form
-  `x *= 1.0/norm` after a weighted `Norml2` IS the consumer Sub-pattern C of
+- **Fused B-Normalize exists but has no callsite.** Palace ships a fused B-weighted
+  free function `Normalize(comm, x, B, Bx)` at `palace/linalg/operator.hpp:377-384`
+  (def `:378`, B-weighted reduction `:380`, partiality guard `:381`, rescale `:382`,
+  return `:383`) — structurally identical to the unweighted `linalg::Normalize` at
+  `palace/linalg/vector.hpp:262-270` (the four-step composition reduction → guard →
+  rescale → return), differing only by threading `(B, Bx)` into the inner `Norml2`.
+  The header comment at `vector.hpp:262` ("...possibly with respect to an SPD
+  matrix B") is realised by this `palace/linalg/operator.hpp:378` overload, not by the unweighted
+  `vector.hpp:264`. **However, the fused B-Normalize is uncalled**: a grep across
+  `palace/` for 4-arg `Normalize(comm, x, B, Bx)` invocations finds **zero**
+  callsites. So the fused operator is defined-but-dead. The B-weighted *reduction*
+  `linalg::Norml2(comm, x, B, Bx)` ([`matrix-weighted-norm`](../L1/matrix-weighted-norm.md),
+  `palace/linalg/operator.cpp:599-619`) IS used at error-norm / eigenvector-norm
+  callsites (`arpack.cpp:438`, `slepc.cpp:475`, `nleps.cpp:114`) but they feed
+  residual ratios and do **not** rescale. The `Normalize`-with-`B` consumer site of
   [`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md)
-  at `palace/linalg/operator.hpp:377-384` — but that is the weighted-norm theme's consumer, not a fused
-  `normalize_B` operator.)
+  *is* this very `palace/linalg/operator.hpp:377-384` fused overload — but it is recorded there as
+  the *definition* of the B-weighted fused shape, not a callsite. So `normalize_B`
+  has **no live consumer in the tree**: definition exists, callsite does not.
 - **Inherited test-coverage bound.** `normalize_B`'s norm constituent
   [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) is `rough-in (test-coverage-bounded)`;
   a fused `normalize_B` cannot be firmer than its constituent.
 
-If/when an inline B-weighted-normalise site surfaces (a `scale = Norml2(comm, v, B, Bv);
-v *= 1.0/scale` pattern distinct from the unweighted `nleps.cpp:610-611`), `normalize_B`
-would promote to a firm sibling inheriting the `matrix-weighted-norm` promotion gate.
-Until then it is tracked as a queued candidate, not part of this theme's firm claim.
+If/when a positive *callsite* of the fused B-Normalize surfaces — either a direct
+4-arg `Normalize(comm, v, B, Bv)` invocation OR an inline B-weighted-rescale shape
+(`scale = Norml2(comm, v, B, Bv); v *= 1.0/scale`, distinct from the unweighted
+`nleps.cpp:610-611`) — `normalize_B` would promote to a firm sibling inheriting the
+`matrix-weighted-norm` promotion gate. The mere *existence* of the fused free function
+at `palace/linalg/operator.hpp:378` does NOT promote it: a defined-but-dead operator
+has no live algebraic-law evidence beyond the syntactic identity to the unweighted core.
+Until a callsite surfaces, `normalize_B` is tracked as a queued candidate, not part of
+this theme's firm claim.
 
 ## Variant axes
 

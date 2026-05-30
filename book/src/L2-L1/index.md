@@ -19,6 +19,23 @@ L1 forms are pure-functional but **structurally close to the source loop** — e
 | [eigsolve-spectral-transform-composition](./eigsolve-spectral-transform-composition.md) | `L2/eigsolve` (firm, cycle-023) | `L1/apply_linop` + `L1/ksp_solve` (firm leaves; `apply_linop`▷`ksp_solve`▷`scale_untransform` per-step de-fusion) | firm *(structural; two-stage pipeline de-fusion read line-for-line off `arpack.cpp:579-581` explicit + `slepc.cpp:1847-1877` ST-shell faces; `scale_untransform` `γ`/`δ` tail + optional projector tail; eigen-iteration LOOP out of scope — opaque-library sequential-obstruction at L3 `partial-obstruction`)* |
 | [incremental-least-squares-composition-lowering](./incremental-least-squares-composition-lowering.md) | `L2/incremental-least-squares` (firm, cycle-026) | `L1/back_solve` (firm leaf, cycle-027; terminal back-solve) + `concepts/givens_generate`/`givens_apply` (firm; de-fused 4-sub-step Face 2) + `L2/linear_combination` (firm; back-solve reconstruction) + `ls_update_column` *(forthcoming column-streaming leaf; plain-text forward-ref)* | firm *(algebraic; running-QR fan-down `replay▷generate▷apply▷apply_rhs`▷back-solve; FIXED sub-step sequence — replay-before-generate non-commutative load-bearing; two parametric axes `basis_kind∈{V,Z}` + `variant∈{real,complex}`; reduction-path = rotation-ordering + LAPACK scaling, NO MPI collective; terminal back-solve = firm `back_solve` leaf, NOT general `trsv` (separately blocked))* |
 
+## Vocabulary cohort
+
+**Firm at L2>L1** (lowering structure fully recognized; exhaustively cited; algebraic-laws complete):
+
+- `chebyshev-iteration-fusion` — three-term-recurrence ↔ scaled-polynomial-evaluation fusion (the load-bearing numerical re-association at the kernel boundary).
+- `linear-combination-fold-specialization` — arity-dispatch fusion-selection across `scal` / `axpy` / `axpby` / `axpbypcz` + pinned summation order; the term-axis fold cohort.
+- `inner-product-fold-specialization` — conjugation / element-type / weight dispatch across `dot` / `tdot` / `bilinear-form` + value-level conjugate-pair re-order + pinned reduction tree; the length-axis fold cohort (sibling of the term-axis fold, do-NOT-merge).
+- `orthogonalize-composition-lowering` — `project ▷ subtract` named composition (`dot` ▷ `axpy`); the MGS / CGS / CGS2 variant-dispatch realized as `[dot, axpy]`-sequence selection + collective-shape disclosure.
+- `gram-fold-specialization` — matrix-lift of `inner-product-fold-specialization` (the all-pairs double-loop materialization); per-cell conjugation / weight dispatch + `k²` independent per-cell reduction trees + symmetry-exploitation transparent note.
+- `eigsolve-spectral-transform-composition` — two-stage shift-invert pipeline de-fusion `apply_linop(M) ▷ ksp_solve((K−σM)⁻¹) ▷ scale_untransform`; per-step body de-fused, eigen-iteration loop is opaque-library sequential-obstruction (out of theme scope).
+- `incremental-least-squares-composition-lowering` — running-QR / Givens-stream fan-down `replay ▷ generate ▷ apply ▷ apply_rhs` ▷ back-solve; FIXED sub-step sequence (replay-before-generate non-commutative load-bearing); two parametric axes `basis_kind ∈ {V, Z}` + `variant ∈ {real, complex}`.
+
+**Partly-constructive at L2>L1** (firm Schur-form pipeline + a constructive bare-Galerkin sub-part with a stated promotion condition):
+
+- `deflate-composition-lowering` — `coords ▷ (schur-)solve ▷ back-project` reduction chain over `dot` + `gram` + `lu_solve` + `linear_combination` + `axpy`. The Schur fan-down is firm on positive site `nleps.cpp:533-535`; the Galerkin-core single-`lu_solve` fan-down is constructive on negative anchor + literature; gate = a positive bare-Gram-solve site (not closed).
+
 ## Working Notes
 
 - Themes here are heavy with optimization-trick unfolding (transparent performance tricks like fusion, tiling, packing; load-bearing numerical tricks preserved).
+- Cohort growth log (most-recent first): `incremental-least-squares-composition-lowering` firm cycle-028 (closes the L2 `l2-named-composition-lifts` lowering side); `eigsolve-spectral-transform-composition` + `gram-fold-specialization` firm cycle-022/023 (eigsolve chain-step-2 + Gram fold-lift); `deflate-composition-lowering` partly-constructive cycle-022 (first L2>L1 partly-constructive entry); `orthogonalize-composition-lowering` firm cycle-019; `inner-product-fold-specialization` + `linear-combination-fold-specialization` firm cycle-018/019 (the variadic-fold unification); `chebyshev-iteration-fusion` firm cycle-013 (first L2-L1 chapter).

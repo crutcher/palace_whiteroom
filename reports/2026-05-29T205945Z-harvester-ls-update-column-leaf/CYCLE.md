@@ -1,0 +1,923 @@
+---
+agent: harvester
+invoked_at: 2026-05-29T205945Z
+scope: L1 operator: ls_update_column
+status: pending
+integrated_at: 2026-05-30T004013Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "Applied cycle-029 (staging row 4). NEW firm L1 leaf ls_update_column landed — the GMRES/FGMRES per-column running-QR leaf, column-streaming producer sibling of back_solve, Face-1 opaque-leaf projection of firm L2 incremental-least-squares. L1 firm cohort 21→22; L1/index Firm header bumped. Closes c027 OQ ls-update-column-l1-leaf; closes the c027 D5 / back_solve slug-collision saga end-to-end. 1 citation-validity repair (off-by-one anchor :88 → :87-88 in 3 places on slug-bearing sentence in L2-L1 theme). 2 OQs promoted (L2-L1 plain-text-ref upgrade follow-up with substantive prose-rewrite note + forthcoming ls-update-column-mutation-rotation L1>L0 theme). Firm-on-positive-structure iterative.cpp:634-640 GMRES / line-for-line identical :813-819 FGMRES. Citecheck --scan 40/40 anchor zero-drift."
+inputs:
+  - palace/linalg/iterative.cpp:629-642 (GMRES per-column running-QR update + residual exposure)
+  - palace/linalg/iterative.cpp:811-821 (FGMRES per-column running-QR update, line-for-line identical)
+  - palace/linalg/iterative.cpp:73-118 (GeneratePlaneRotation real + complex kernels)
+  - palace/linalg/iterative.cpp:227-241 (ApplyPlaneRotation real + complex kernels)
+  - palace/linalg/iterative.hpp:193-194 (rotation-register element-type split)
+  - book/src/L1/back_solve.md (sibling leaf — same iterative.cpp cohort; structural template)
+  - book/src/L2/incremental-least-squares.md (parent L2 named composition; this leaf is the Face-1 single-column projection)
+  - book/src/L2-L1/incremental-least-squares-composition-lowering.md (the firm theme forward-referencing this leaf as Face-1)
+  - book/src/concepts/incremental-least-squares.md (the `ls_update_column` slug contract `:14`)
+  - book/src/concepts/givens.md, givens_generate.md, givens_apply.md, plane-rotation-stream.md (concept cross-cuts)
+  - book/src/L1/index.md (dep-map: insert new row after back_solve)
+  - book/src/SUMMARY.md (L1 Part: insert after back_solve)
+---
+
+# CYCLE: Formalize ls_update_column at L1
+
+## Summary
+
+Harvests `ls_update_column` as a firm L1 leaf — the **per-column running-QR update** of the GMRES / FGMRES least-squares Hessenberg triangularisation. Distinct from the now-firm `back_solve` leaf (cycle-027, the *terminal* small-dense back-substitution `R·y = s`): `ls_update_column` is the **column-streaming** step that *produces* the R-factor `R` and the rotated RHS `s` that `back_solve` consumes — one freshly-arrived Hessenberg column `h_new` is replayed against the stored rotations `0..j-1`, one new rotation `(cs[j], sn[j])` is generated, that rotation is applied to the column (annihilating the sub-diagonal) and to the RHS pair `(s[j], s[j+1])`, and the residual norm `β = |s[j+1]|` falls out as a unitary byproduct. The L0 site is the four `*PlaneRotation` calls at `iterative.cpp:634-640` (GMRES) / `:813-819` (FGMRES, line-for-line identical). It is the **Face-1 opaque-leaf** forward-reference in the firm L2>L1 theme [`incremental-least-squares-composition-lowering`](../L2-L1/incremental-least-squares-composition-lowering.md) — that theme's de-fused Face-2 (the scalar Givens kernel pair) carries the same value, and this leaf is the fused face that mirrors Palace's per-column loop body one-to-one. Firm-on-positive-structure (the `back_solve` / `apply_nonlinear_pencil` / `lu_solve` precedent): every law is a syntactic identity on fully-specified positive source.
+
+## Proposed changes
+
+```new:book/src/L1/ls-update-column.md
+# ls_update_column
+
+Mutation-lifted per-column running-QR update: `K' = ls_update_column(K, j, h_new)`
+returns an advanced incremental-factorisation bundle `K'` produced by **replaying**
+the stored Givens rotations `0..j-1` against the freshly-arrived Hessenberg column
+`h_new`, **generating** one new rotation `(cs[j], sn[j])` that annihilates the
+sub-diagonal `h_new[j+1]`, **applying** that rotation to the column (writing the
+triangularised column into the `j`-th Hessenberg slot), and **applying** the same
+rotation to the rotated-RHS pair `(s[j], s[j+1])` — concentrating the
+least-squares residual norm `β = |s[j+1]|` in the tail as a unitary byproduct. The
+**GMRES / FGMRES per-column running-QR step** — the column-streaming face that
+incrementally triangularises the `(j+2)×(j+1)` upper-Hessenberg least-squares
+problem `min_y ‖β₀·e₁ − H̄_j·y‖₂` and exposes the residual norm without an
+explicit residual evaluation.
+
+## Context
+
+The GMRES / FGMRES inner loop maintains a *running QR factorisation* of the
+growing `(j+2)×(j+1)` upper-Hessenberg matrix `H̄_j` produced by Arnoldi: each
+arriving Hessenberg column is reduced to upper-triangular form by replaying the
+stored plane rotations and generating one new rotation, so that after `j+1`
+columns the leading `(j+1)×(j+1)` block is an upper-triangular factor `R`, and the
+rotated RHS `s` (initialised `s = β₀·e₁`) carries the least-squares residual in its
+tail entry `s[j+1]`. This per-column update — `replay ▷ generate ▷ apply ▷
+apply_rhs` — is the **L2 named composition**
+[`incremental-least-squares`](../L2/incremental-least-squares.md) (firm cycle-026);
+the fan-down of that composition onto the L1 leaves is the firm theme
+[`incremental-least-squares-composition-lowering`](../L2-L1/incremental-least-squares-composition-lowering.md)
+(firm cycle-028).
+
+`ls_update_column` is the **opaque single-column leaf** of that fan-down — Face 1
+in the theme's two-face presentation. It mirrors Palace's per-column loop body
+one-to-one (`iterative.cpp:634-640` GMRES, `:813-819` FGMRES — line-for-line
+identical) and hides the four per-column sub-steps (replay / generate / apply /
+apply_rhs) and the residual-exposure mechanism inside the leaf as a single
+"incremental triangularisation with residual side-output" operation, exactly as
+the concept page's "What is *hidden* at L1" list states
+(`book/src/concepts/incremental-least-squares.md:22-27`). The co-extensive
+**de-fused Face 2** in the L2>L1 theme spells the same value out into the explicit
+scalar Givens kernel pair ([`givens_generate`](../concepts/givens_generate.md) /
+[`givens_apply`](../concepts/givens_apply.md)); the two faces advance the
+factorisation state identically — the choice is presentational, not algebraic.
+
+This leaf is the column-streaming **producer** of the R-factor `R` and rotated
+RHS `s` that the firm sibling [`back_solve`](./back_solve.md) consumes at
+restart-cycle close. The two are the **per-column** and **terminal** halves of
+the GMRES restart-cycle least-squares chain: `ls_update_column` is invoked once
+per Arnoldi column (the inner loop) and incrementally triangularises; `back_solve`
+is invoked once at convergence / restart / max-iterations (the outer cycle close)
+and finishes the LS solve. They share the rotation registers `cs`, `sn` and the
+RHS register `s` as bundle state, but they are distinct operators with distinct
+shapes and distinct algebraic content — naming distinction resolved cycle-027 (see
+`back_solve.md:30-34`).
+
+It is split out as its own firm L1 primitive — rather than left as a sub-step
+inside the L2 composition — because (i) each layer is coherent within itself
+(per CLAUDE.md "Identity-lowerings still require both L levels"), and the
+column-streaming step is a self-contained, reusable atomic update with its own
+laws; (ii) the L2 theme's Face-1 forward-reference was already plain-text-deferred
+to a follow-on harvester (`incremental-least-squares-composition-lowering.md:87-88,
+307-310`); and (iii) the per-column step is the cleanly-bounded L0 site — the
+**four** `*PlaneRotation` calls — whose own L1>L0 in-place mechanics are
+deferred to a forthcoming `ls-update-column-mutation-rotation` L1>L0 theme, sibling
+to `back-solve-mutation-rotation` and to `orthogonalize-mutation-rotation`.
+
+This leaf is **not** an [`apply_linop`](./apply_linop.md) variant (it operates on
+small-coordinate registers `cs`, `sn`, `s` and writes a single Hessenberg column,
+not a length-`N` field application of an opaque operator) and **not** a
+[`back_solve`](./back_solve.md) variant (the back-solve is the terminal triangular
+solve; this leaf produces the triangular factor the back-solve consumes). Its
+closest structural sibling at L1 is [`orthogonalize`](./orthogonalize.md) — both
+are column-streaming Krylov-state advance primitives, each invoked once per Arnoldi
+column inside the [`krylov-step`](../L2/krylov-step.md) inner loop; both consume
+the candidate column and the stored side-state and advance it; they differ in
+what they advance (`orthogonalize` advances the *basis* and produces the
+orthogonalisation coefficients that become the Hessenberg column `h_new`;
+`ls_update_column` advances the *factorisation* of that same column and produces
+the running R-factor + residual byproduct).
+
+## Signature
+
+    ls_update_column
+      :: (variant: GivensKind,
+          cs:    Tensor[m],          -- stored cosines, slots 0..j-1 populated
+          sn:    Tensor[m],          -- stored sines,   slots 0..j-1 populated
+          s:     Tensor[m+1],        -- rotated RHS, slots 0..j populated (s[j+1] yet to be touched)
+          j:     Int,                -- index of the new column (0-based; j+1 total columns after this call)
+          h_new: Tensor[j+2])        -- the freshly-arrived Hessenberg column, entries 0..j+1
+      -> { h_out: Tensor[j+2],       -- triangularised column: h_out[0..j] upper-triangular, h_out[j+1] = 0
+           cs_j:  RealScalar,        -- new cosine appended at slot j (always real)
+           sn_j:  Scalar,            -- new sine    appended at slot j (Scalar = ScalarType)
+           s_j:   Scalar,            -- updated RHS entry s[j]
+           s_jp1: Scalar,            -- updated RHS entry s[j+1] = the LS residual entry (|s_jp1| = β)
+           beta:  RealScalar }       -- |s_jp1|, the least-squares residual norm byproduct
+
+    ls_update_column variant cs sn s j h_new =
+      let h1            = replay   variant cs sn j h_new        -- apply stored rotations 0..j-1
+      let (cs_j, sn_j)  = generate variant h1[j] h1[j+1]        -- generate the new rotation
+      let (h_j, h_jp1)  = apply    variant cs_j sn_j h1[j] h1[j+1]  -- triangularise: h_jp1 := 0
+      let (s_j, s_jp1)  = apply    variant cs_j sn_j s[j] s[j+1]    -- propagate to RHS
+      let h_out         = h1 with [j ↦ h_j, j+1 ↦ h_jp1]        -- the triangularised column
+      in { h_out, cs_j, sn_j, s_j, s_jp1, beta = |s_jp1| }
+
+    where
+      replay :: (GivensKind, Tensor[m], Tensor[m], Int, Tensor[j+2]) -> Tensor[j+2]
+      replay variant cs sn j h_new
+        = foldl (\h k -> let (h_k', h_kp1') = apply variant cs[k] sn[k] h[k] h[k+1]
+                          in h with [k ↦ h_k', k+1 ↦ h_kp1'])
+                h_new
+                [0, 1, ..., j-1]                                  -- STRICTLY ordered, left-to-right
+
+      generate :: (GivensKind, Scalar, Scalar) -> (RealScalar, Scalar)
+        -- the firm `givens_generate` concept page; (cs, sn) annihilating dy against dx; cs² + |sn|² = 1
+      apply    :: (GivensKind, RealScalar, Scalar, Scalar, Scalar) -> (Scalar, Scalar)
+        -- the firm `givens_apply` concept page; (dx', dy') = (cs·dx + sn·dy, −s̄n·dx + cs·dy);  s̄n = conj(sn) complex
+
+Shape contract (bunsen-style, named axes):
+
+- `variant` — `GivensKind ∈ {real, complex}` — selects the scalar kernel pair; the
+  L0 type-split on `ScalarType` vs `RealType` registers (`iterative.hpp:193-194`).
+  Absorbed at solver instantiation; no per-call branching.
+- `cs` — `Tensor[m]` of `RealScalar` — the stored cosine register (always real per
+  `iterative.hpp:194` `mutable std::vector<RealType> cs;`). Slots `0..j-1` carry the
+  rotations accumulated by the prior `j` invocations; slot `j` is written by this
+  call. The register has capacity `m = max_dim` (the GMRES restart dimension).
+- `sn` — `Tensor[m]` of `Scalar` (`ScalarType` per `iterative.hpp:193`) — the
+  stored sine register. Same population / write pattern as `cs`.
+- `s` — `Tensor[m+1]` of `Scalar` — the rotated RHS register. Slots `0..j` carry
+  the rotated RHS so far (initialised `s[0] = β₀`, `s[k] = 0` for `k ≥ 1` at the
+  start of each restart cycle, `iterative.cpp:612`); this call updates `s[j]` and
+  writes `s[j+1]`.
+- `j` — `Int` — the index of the new column being absorbed, `0 ≤ j < m`. The
+  invariant is `j` = number of rotations already in `cs`/`sn` = number of
+  populated R-factor columns = `s`'s populated-prefix length minus one.
+- `h_new` — `Tensor[j+2]` of `Scalar` — the freshly-arrived Hessenberg column with
+  the orthogonalisation coefficients in entries `0..j` (produced by the upstream
+  [`orthogonalize`](./orthogonalize.md) call) and the sub-diagonal entry
+  `h_new[j+1] = ‖residual‖` produced by the [`nrm2`](./nrm2.md) of the
+  orthogonalisation residual (`iterative.cpp:629-631`). The orthogonalisation +
+  nrm2 step is **upstream**, not part of this leaf.
+- result `h_out` — `Tensor[j+2]` of `Scalar` — the triangularised column: entries
+  `h_out[0..j]` are the upper-triangular R-factor's `j`-th column (the
+  super-diagonal + diagonal entries of column `j` of the running `R`); entry
+  `h_out[j+1] = 0` (the apply sub-step's defining annihilation).
+- result `(cs_j, sn_j)` — the new rotation appended to the registers at slot `j`.
+- result `(s_j, s_jp1)` — the updated `s[j]` and `s[j+1]` entries.
+- result `beta` — `RealScalar` — `|s_jp1|`, the least-squares residual norm. This
+  is the load-bearing side-output: the convergence test reads `beta` without an
+  explicit residual evaluation (`iterative.cpp:642,:644`).
+
+The empty case (`j = 0`, first column of a restart cycle) is the **skip-replay**
+form: the replay fold has empty support (the `k < j` loop body does not execute,
+`iterative.cpp:634-636`), and the lowered call is `generate ▷ apply ▷ apply_rhs`
+only — the residual-exposure property still holds (`β = |s[1]|`). The leaf is
+**not invoked at `j = m`** (the restart bound; the outer loop terminates one short
+of overflow — `iterative.cpp:617`).
+
+The lift of the bundle state forward (the next call's `cs`/`sn`/`s` are this
+call's outputs spliced in) is performed by the caller (the L2
+[`incremental-least-squares`](../L2/incremental-least-squares.md) named composition
+that threads the column index across the inner loop). This leaf produces only the
+per-column updates and the residual byproduct; the state-threading is invisible
+here.
+
+## Semantics
+
+`ls_update_column(variant, cs, sn, s, j, h_new)` advances the incremental QR
+factorisation of the upper-Hessenberg least-squares system by **one column**: the
+new column is reduced to its place in the triangular factor, one new plane
+rotation is appended to the register, and the rotated RHS is brought up to the new
+column count. The four sub-steps:
+
+1. **Replay** — apply the stored rotations `0..j-1` to `h_new`, **strictly in the
+   order they were generated**. Each `apply(cs[k], sn[k], h[k], h[k+1])` overwrites
+   the pair `(h[k], h[k+1])` with `(cs[k]·h[k] + sn[k]·h[k+1], −s̄n[k]·h[k] +
+   cs[k]·h[k+1])`. After the fold, `h1[0..j-1]` are exactly the super-diagonal
+   entries of the R-factor's `j`-th column, and the pair `(h1[j], h1[j+1])` is the
+   un-annihilated 2-vector the new rotation will act on.
+2. **Generate** — produce `(cs_j, sn_j)` annihilating `h1[j+1]` against `h1[j]`
+   via [`givens_generate`](../concepts/givens_generate.md) (the LAPACK-style scaled
+   rotation; the real kernel at `iterative.cpp:73-108` with overflow/underflow
+   scaling `:101-108`, the complex kernel at `:112-118` with the
+   `cs²+|sn|²=1` unitarity contract `:118`).
+3. **Apply (column)** — apply the new rotation to its own pair: `(h_j, h_jp1) =
+   apply(cs_j, sn_j, h1[j], h1[j+1])`. By the generate contract,
+   `h_jp1 = 0` exactly: this is the sub-diagonal annihilation that makes the
+   running factor upper-triangular.
+4. **Apply (RHS)** — apply the *same* rotation to the RHS pair `(s[j], s[j+1])`:
+   `(s_j, s_jp1) = apply(cs_j, sn_j, s[j], s[j+1])`. Since `s[j+1] = 0` on entry
+   (the RHS was `β₀·e₁` and no rotation has yet touched the new tail), this is
+   `(s_j, s_jp1) = (cs_j · s[j], −s̄n_j · s[j])`. The new tail `s_jp1` carries the
+   least-squares residual: `|s_jp1| = β`, the **residual exposure** byproduct.
+
+The L1 form is pure-functional: the same `(variant, cs, sn, s, j, h_new)` yields
+the same `(h_out, cs_j, sn_j, s_j, s_jp1, beta)`. The L0 source overwrites the
+caller's `Hj` / `cs` / `sn` / `s` buffers in place — the destination *is* the
+input — via four `*PlaneRotation` reference-update calls:
+
+    // iterative.cpp:634-640  (GMRES; FGMRES :813-819 is line-for-line identical)
+    for (int k = 0; k < j; k++) {                                  // :634  replay loop, strictly ordered k=0..j-1
+      ApplyPlaneRotation(Hj[k], Hj[k + 1], cs[k], sn[k]);          // :636  apply stored rotation k to (Hj[k], Hj[k+1])
+    }
+    GeneratePlaneRotation(Hj[j], Hj[j + 1], cs[j], sn[j]);         // :638  generate the new rotation; writes cs[j], sn[j]
+    ApplyPlaneRotation(Hj[j], Hj[j + 1], cs[j], sn[j]);            // :639  apply it to the column; Hj[j+1] := 0
+    ApplyPlaneRotation(s[j], s[j + 1], cs[j], sn[j]);              // :640  apply it to the RHS pair; s[j+1] = residual entry
+
+The in-place reference semantics of the four kernel calls, the `Hj` column-pointer
+arithmetic into the flat Hessenberg register, and the register-vs-tensor
+representation difference are L1>L0 lowering concerns (the forthcoming
+`ls-update-column-mutation-rotation` theme), not part of the L1 signature.
+
+Three semantic points are load-bearing and recorded rather than smoothed:
+
+**(1) Replay-before-generate ordering is mandatory.** The stored rotations
+`0..j-1` MUST be applied to the new column before the new rotation `j` is
+generated (the `for k=0..j-1` loop at `iterative.cpp:634` strictly precedes the
+`GeneratePlaneRotation` at `:638`). Generating from an un-replayed column would
+annihilate against the wrong diagonal and produce a non-triangular running factor.
+This is the running-QR's **structural invariant**, inherited from the
+[`givens`](../concepts/givens.md) §Contract replay-order rule and recorded as the
+L2 entry's law 2 (`incremental-least-squares.md` §Algebraic-laws law 2). The leaf
+is **not** order-invariant in this sub-step.
+
+**(2) Residual exposure is a unitary byproduct, not an explicit norm computation.**
+The least-squares residual `β = min_y ‖β₀·e₁ − H̄_j · y‖₂` is read off `|s[j+1]|`
+*without* assembling or norming the residual vector in the length-`N` field — the
+rotation stream `Qⱼ` is unitary (`cs² + |sn|² = 1`, `iterative.cpp:118`), so
+2-norm preservation under `Qⱼ` reduces the field-space norm to the tail of the
+rotated RHS. This is the load-bearing numerical property the running-QR exists for
+(the *raison d'être* of the leaf, not a transparent reorder). The convergence test
+reads it directly: `beta = std::abs(s[j+1])` (`iterative.cpp:642`); `converged =
+(beta < eps)` (`iterative.cpp:644`).
+
+**(3) The replay chain is bit-level non-commutative; the in-kernel reduction is
+element-local.** The length-`j` ordered chain of 2-vector updates pins a specific
+finite-precision composition (the L2 entry's law 2 / rotation-stream
+non-associativity non-law, `book/src/L2/incremental-least-squares.md:278-285`);
+reordering the stored rotations would produce the same exact-arithmetic factor
+but a bit-different finite-precision factor. Per the CLAUDE.md numerical-trick
+taxonomy this is a **load-bearing numerical** detail — recorded as a non-law so
+callers do not treat the replay order as a free choice. **Within each scalar
+kernel call**, however,
+the work is element-local: a single 2-vector FMA, no cross-element reduction, no
+collective. The leaf has **no MPI collective** — the registers `cs`, `sn`, `s`
+are redundant-on-all-ranks small coordinate data, exactly like the registers
+[`back_solve`](./back_solve.md) consumes. The
+[`plane-rotation-stream`](../concepts/plane-rotation-stream.md) §"Sequential
+character" `:21-23` flags the replay chain as a `sequential-obstruction`
+candidate for the eventual L3 iteration rotation; recorded here as forward note.
+
+## Algebraic laws
+
+The laws below hold; absences are deliberate. "Exact" means exact arithmetic.
+
+1. **Sub-diagonal annihilation (the defining contract).** After the call,
+   `h_out[j+1] = 0` exactly. This is the definitional property of the
+   generate ▷ apply pair: the generated rotation is **precisely the one** that
+   zeros `h1[j+1]` against `h1[j]`, so the apply leaves zero in `h_out[j+1]`. The
+   L0 sequence `:638-639` (`GeneratePlaneRotation` then `ApplyPlaneRotation` on the
+   same pair) computes exactly this. With this law, the leading `(j+1)×(j+1)`
+   block of the Hessenberg register after the leaf's `j`-th invocation is **upper
+   triangular** — the structural invariant the `back_solve` leaf depends on.
+
+2. **Replay non-commutativity (recorded as a structural law, not a non-law).**
+   `ls_update_column(variant, cs, sn, s, j, h_new)` requires the stored rotations
+   `cs[0..j-1]`, `sn[0..j-1]` to be applied **in generation order** (`k = 0, 1,
+   …, j-1`). Reordering the stored rotations within `cs`/`sn` (or applying them
+   in a different order) yields a different rotation product `Q'_j ≠ Q_j` —
+   exactly as for the L2 composition (law 2; the
+   [`givens`](../concepts/givens.md) replay-order rule). This is a *structural*
+   law of the leaf's contract, not a finite-precision artefact: the rotation
+   product itself is order-sensitive in exact arithmetic.
+
+3. **Residual exposure (the load-bearing byproduct).** `beta = |s_jp1| =
+   min_y ‖β₀·e₁ − H̄_j · y‖₂` exactly. Holds because the rotation stream
+   `Qⱼ = R_j ∘ R_{j-1} ∘ … ∘ R_0` is unitary (`cs² + |sn|² = 1`,
+   `iterative.cpp:118`) and 2-norm-preserving: `‖β₀·e₁ − H̄_j · y‖₂ = ‖Qⱼ · (β₀·e₁
+   − H̄_j · y)‖₂`, and the `Qⱼ`-rotated system's residual lives entirely in the
+   last entry (the leading `(j+1)×(j+1)` block becomes triangular and is solvable
+   exactly). The L2 entry's law 1 read as a leaf-level law: `iterative.cpp:642`
+   reads `beta = std::abs(s[j+1])` without an explicit residual evaluation.
+
+4. **Unitarity preservation across the call.** If the input `(cs, sn)` are a
+   valid stored-rotation register (each `(cs[k], sn[k])` satisfies
+   `cs[k]² + |sn[k]|² = 1`), then the appended `(cs_j, sn_j)` also satisfies
+   `cs_j² + |sn_j|² = 1` (the generate kernel's contract, `iterative.cpp:118`),
+   and the rotated RHS magnitude is preserved: `|s_j|² + |s_jp1|² = |s[j]|²`
+   (since `s[j+1] = 0` on entry — the rotation is applied to the 2-vector
+   `(s[j], 0)`, yielding `(cs_j·s[j], −s̄n_j·s[j])` whose squared magnitude is
+   `(cs_j² + |sn_j|²)·|s[j]|² = |s[j]|²`). The whole stream `Qⱼ` is therefore
+   unitary, which underwrites law 3.
+
+5. **Empty / first-column boundary.** At `j = 0` (first column of a restart
+   cycle) the replay fold is empty (the `for (int k = 0; k < j; k++)` loop body
+   at `iterative.cpp:634-636` does not execute) and the lowered call is
+   `generate ▷ apply ▷ apply_rhs` only. Laws 1, 3, 4 hold: `h_out[1] = 0`,
+   `beta = |s_1|`, unitarity preserved. The single-rotation case (`j = 0`) is a
+   degenerate boundary of laws 1–4, not a special case.
+
+6. **Basis-lift independence (GMRES ≡ FGMRES).** The bundle update this leaf
+   computes is **independent of which basis the caller will lift the eventual
+   `y` against** (`V` for GMRES / left-preconditioned, `Z` for FGMRES). The GMRES
+   and FGMRES per-column running-QR code is line-for-line identical
+   (`iterative.cpp:634-640` ≡ `:813-819`); the registers `cs`, `sn`, `s` and the
+   Hessenberg column are basis-agnostic. Only the **downstream** `linear_combination`
+   reconstruction (`x.Add(s[k], V[k])` `iterative.cpp:666` vs `x.Add(s[k], Z[k])`
+   `:843`, after the `back_solve` leaf produces `y`) reads a different basis.
+   This leaf has no knowledge of the basis — the basis choice is the consuming L2
+   composition's `op.basis_kind` axis, invisible here. Same law shape as
+   [`back_solve`](./back_solve.md) law 6.
+
+7. **Per-call scalar-kernel-variant invariance (parametric absorption).** The
+   real and complex variants substitute only the element-local scalar kernel
+   (`generate` real `:73-108` ↔ complex `:112-118`; `apply` real `:227` ↔
+   complex `:235`, with `s̄n = conj(sn)` in the complex case). The sub-step
+   sequence, the ordering, the register-shape contract, and laws 1–6 are
+   variant-invariant. No per-call branching on `variant`; it is fixed at solver
+   instantiation.
+
+Laws that explicitly **do not** hold:
+
+- **Order-independence of the replay chain (bit-level).** The replay fold's
+  reduction order (`k = 0, 1, …, j-1`) pins a specific finite-precision
+  composition; reordering yields the same exact-arithmetic rotation product
+  `Q'_j ≠ Q_j` (law 2 — different in *exact* arithmetic, since rotations don't
+  commute) AND a bit-different finite-precision result even when the rotations
+  *do* approximately commute. Recorded so callers do not treat the replay order
+  as a free choice. (Composes with the back-solve's reduction-order non-law to
+  pin the entire GMRES finite-precision solution path; `back_solve.md`
+  §Algebraic-laws non-law.)
+
+- **Per-column commutativity of the call sequence.** `ls_update_column(…, j=i,
+  h_i) ▷ ls_update_column(…, j=i+1, h_{i+1})` is **not** equal to the reversed
+  sequence: the `j = i+1` call's replay sub-step reads the `i`-th rotation written
+  by the prior call. The leaf is **left-fold-only**, not commutative.
+
+- **Definedness when `(h1[j], h1[j+1]) = (0, 0)`.** If the new column's
+  `(j, j+1)` pair is exactly zero after replay (an Arnoldi lucky-breakdown:
+  the orthogonalisation residual was exact-zero and `nrm2` returned zero), the
+  generate kernel's behaviour is degenerate (`cs_j = 1`, `sn_j = 0` typically;
+  the rotation is the identity), and the downstream `back_solve` would hit a
+  zero diagonal `R[j][j]` and divide by zero (`back_solve.md` §Algebraic-laws
+  non-law). Palace handles this case by the residual test exiting **before** the
+  next outer iteration (the residual `beta` would already be at convergence). The
+  leaf does **not** guard against this — it is an applicability boundary, not a
+  law. Recorded so callers do not treat `h_new = 0` as a normal input.
+
+- **Avoidance of the unitarity exposure (the residual-by-shortcut).** The
+  load-bearing residual byproduct `β = |s_jp1|` is **not** a transparent
+  algebraic identity that could be skipped — it is the entire reason the
+  running-QR exists; replacing it with an explicit residual evaluation
+  (`r = b − A·x`, `‖r‖₂`) at every step would be `O(N)` work per column instead
+  of `O(j)` and would defeat the algorithm's structure. Recorded so the
+  residual-by-shortcut is not classified as a transparent optimization.
+
+## Dependencies
+
+(scalar-kernel-composed) — `ls_update_column` is the per-column orchestration of
+the firm scalar Givens kernel pair, with **no dependency on other L1 operators**.
+It consumes:
+
+- a **dense stored-rotation register** `(cs, sn)` (small coordinate space,
+  dimension `m = max_dim`, redundant-on-all-ranks),
+- a **dense rotated-RHS register** `s` (same dimension),
+- a **dense Hessenberg column** `h_new` (dimension `j+2`),
+
+and produces the updated rotation + RHS slots and the residual byproduct. The
+four `*PlaneRotation` calls (the replay loop, the generate, the
+column-apply, the RHS-apply) are atomic at L1 — their element-local 2-vector
+update bodies are L0 mechanism, deferred to the forthcoming
+`ls-update-column-mutation-rotation` L1>L0 theme (sibling to
+`back-solve-mutation-rotation`, sibling to `orthogonalize-mutation-rotation`).
+
+In particular it is **not** built on [`apply_linop`](./apply_linop.md) (which
+applies an *opaque* operator to a length-`N` field; this leaf operates on
+small-coordinate registers and a length-`j+2` column, with no opaque-operator
+application), **not** built on [`back_solve`](./back_solve.md) (the back-solve
+*consumes* this leaf's output `R`/`s` — apply/inverse duality, not a dependency),
+**not** built on [`nrm2`](./nrm2.md) (the residual exposure is a 2-norm-free
+byproduct — `|s_jp1|` reads a single scalar's magnitude, not a vector reduction),
+and **not** built on [`dot`](./dot.md) (no inner product appears; the scalar
+kernels are element-local FMAs).
+
+It is the column-streaming **producer** sibling of [`back_solve`](./back_solve.md)
+(the **terminal** consumer) on the GMRES restart-cycle least-squares chain
+(`ls_update_column` × (j+1) ▷ `back_solve`), split by per-column-incremental vs
+once-per-restart and by produces-R/s vs consumes-R/s. It is the
+factorisation-streaming sibling of [`orthogonalize`](./orthogonalize.md) (the
+basis-streaming column-update) on the Krylov-state-advance axis — both are invoked
+once per Arnoldi column inside [`krylov-step`](../L2/krylov-step.md), and
+`orthogonalize`'s output **is** this leaf's `h_new` input (the Hessenberg column
+the basis-streaming produces).
+
+`ls_update_column` is the per-column streaming atom that the L2
+[`incremental-least-squares`](../L2/incremental-least-squares.md) named
+composition's Face-1 (opaque-leaf) projection depends on, and the L2>L1 theme
+[`incremental-least-squares-composition-lowering`](../L2-L1/incremental-least-squares-composition-lowering.md)
+forward-references as Face 1 (the de-fused Face 2 is the alternative presentation,
+spelled out into the scalar Givens kernel pair).
+
+Concept references (cross-cutting; do not duplicate):
+
+- [`concepts/givens`](../concepts/givens.md) — the cross-cutting concept page;
+  contains the replay-before-generate ordering rule the leaf's law 2 inherits.
+- [`concepts/givens_generate`](../concepts/givens_generate.md) — the scalar
+  generate kernel concept page (the LAPACK-scaled rotation generator); the
+  kernel inside the leaf's `generate` sub-step.
+- [`concepts/givens_apply`](../concepts/givens_apply.md) — the scalar apply
+  kernel concept page (the element-local 2-vector FMA); the kernel inside the
+  leaf's `replay`, `apply`, and `apply_rhs` sub-steps.
+- [`concepts/plane-rotation-stream`](../concepts/plane-rotation-stream.md) —
+  the §"Sequential character" `:21-23` flagging the replay chain as a
+  `sequential-obstruction` candidate at L3 (forward note for the iteration
+  rotation).
+- [`concepts/incremental-least-squares`](../concepts/incremental-least-squares.md) —
+  the `ls_update_column` slug contract `:14` and the "What is hidden at L1" list
+  `:22-27` characterising the leaf's hiding boundary.
+
+## Variant axes
+
+`ls_update_column` has the following variant axes at L1; all are absorbed (no
+contracted load-bearing kernel axis — the sub-step sequence is fixed and unique).
+
+- **element type / scalar-kernel variant** (absorbed, parametric per law 7):
+  `complex` | `real`. The Palace GMRES/FGMRES registers are `ScalarType` (complex
+  in the complex-arithmetic case, real otherwise) — `s`, `sn`, `H`, `Hj` are
+  `ScalarType` (`iterative.hpp:193`); `cs` is always `RealType`
+  (`iterative.hpp:194`). The four `*PlaneRotation` calls dispatch to the
+  appropriate kernel variant uniformly (real `:73,:227` vs complex `:112,:235`,
+  with `s̄n = conj(sn)` in the complex case); the element type is fixed at
+  solver instantiation, no per-call branching. Absorbed as a uniform element-type
+  parameter.
+- **basis the eventual `y` is lifted against** (absorbed — NOT a structural axis
+  of this leaf): `V` (GMRES / left-preconditioned) | `Z` (FGMRES /
+  flexible-preconditioner). The per-column running-QR code is line-for-line
+  identical across the two (`iterative.cpp:634-640` ≡ `:813-819`); the basis is
+  read only by the **downstream** `linear_combination` reconstruction (after the
+  `back_solve`), not by this leaf. This is the consuming L2 composition's
+  `op.basis_kind` axis; it is invisible at this leaf and recorded here only to
+  make the no-structural-variant explicit (law 6).
+- **restart-cycle column index `j`** (parameterised, absorbed-as-form): the
+  per-call column index, `0 ≤ j < max_dim`. The replay-fold length scales with
+  `j`; the rest of the leaf is `j`-uniform. A size parameter, not a behavioural
+  variant.
+
+There is **no** sub-step-sequence axis (unlike the sibling
+[`orthogonalize`](./orthogonalize.md) `MGS | CGS | CGS2` axis): the running-QR
+stream has exactly one sub-step ordering, fixed at `iterative.cpp:632-642` —
+there is no Householder / two-sided alternative (Householder scoped out per
+CLAUDE.md unimplemented-component policy; recorded at the L2 entry §Variant axes
+and the L2>L1 theme §"Why the sequence is fixed"). There is **no**
+collective-reduction axis (the leaf has no MPI collective). There is **no**
+reduction-strategy axis on the replay fold — the strict `k = 0..j-1` ordering is
+fixed and load-bearing (the replay-non-commutativity law 2), not a selectable
+strategy.
+
+## Status
+
+`firm` — the operator's structure is read directly from **positive** Palace
+source: the per-column running-QR loop body `iterative.cpp:634-640` (GMRES) and
+its line-for-line identical FGMRES twin `:813-819`, both read in full; the four
+sub-step calls (replay `:636`/`:815`, generate `:638`/`:817`, apply
+`:639`/`:818`, apply_rhs `:640`/`:819`), the residual exposure `beta =
+std::abs(s[j+1])` (`:642`/`:821`), and the convergence test `converged = (beta <
+eps)` (`:644`/`:823`) are all positively anchored. The signature's shape (the
+`{cs, sn, s}` register triple typed by `iterative.hpp:193-194`'s `ScalarType` /
+`RealType` split, the `(j+2)`-length Hessenberg column, the four-tuple
+result-bundle) matches the L0 register layout exactly; the algebraic laws are
+standard properties of a per-column running-QR update under a unitary rotation
+stream (sub-diagonal annihilation, replay non-commutativity, residual exposure by
+unitarity, unitarity preservation, boundary cases, basis-lift independence,
+scalar-kernel-variant absorption) modulo the explicitly-recorded replay-order /
+per-column non-commutativity / `(0,0)`-pair-degenerate / residual-by-shortcut
+non-laws.
+
+This is the **firm-on-positive-structure** decision, exactly as for the sibling
+[`back_solve`](./back_solve.md) and for [`apply_linop`](./apply_linop.md) /
+[`lu_solve`](./lu_solve.md) / [`apply_nonlinear_pencil`](./apply_nonlinear_pencil.md):
+every law is a **syntactic identity on fully-specified positive source**
+(operator-algebra facts about the rotation product `Qⱼ` and its action on the
+register, plus the LAPACK-style generate kernel's annihilation contract), not a
+convergence fact. No dedicated GMRES/FGMRES running-QR unit test exists in
+`reference/palace/test/unit/` (the GMRES path is exercised only end-to-end — the
+same coverage situation as the parent L2
+[`incremental-least-squares`](../L2/incremental-least-squares.md), firm cycle-026,
+and the sibling `back_solve`, firm cycle-027). Per the CLAUDE.md status-tier
+guidance, **a missing test does not gate syntactic-identity laws** (the
+`apply_linop` / `lu_solve` firm-on-positive-structure situation, not the
+`eigsolve`-convergence-semantics situation): the laws do not depend on iteration
+or convergence behaviour, so the absent test does not reduce law-confidence.
+Hence `firm`, not `rough-in (test-coverage-bounded)`. The two load-bearing
+caveats (the replay-order non-law and the per-column non-commutativity) are
+carried as recorded non-laws with their numerical properties stated, not as a
+status reduction — the *value* the operator computes is fully specified.
+
+Resolves the L2>L1 theme's plain-text forward-reference to Face 1
+(`incremental-least-squares-composition-lowering.md:87-88,307-310`) — the leaf now
+has a firm, positively-anchored L1 home, and the theme's Face-1 forward-ref can
+be upgraded from plain text to a live link in a subsequent dispatch (the
+upgrade is the skill `upgrade-plain-text-ref-to-live-link-when-target-on-disk`).
+Completes the GMRES restart-cycle least-squares L1 cohort: the **producer**
+(this leaf, per-column streaming) and the **consumer** (`back_solve`, terminal,
+firm cycle-027) are both now firm L1 primitives.
+
+## L1 vs L0 distinction
+
+- **L0**: an in-place per-column running-QR update writing four registers
+  by reference. GMRES: `for (int k = 0; k < j; k++) ApplyPlaneRotation(Hj[k],
+  Hj[k+1], cs[k], sn[k]); GeneratePlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]);
+  ApplyPlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]); ApplyPlaneRotation(s[j],
+  s[j+1], cs[j], sn[j]);` (`iterative.cpp:634-640`) — the strict-order replay
+  loop, the generate-writes-into-registers call, the column-apply
+  sub-diagonal-zero, the RHS-apply residual-into-tail. FGMRES: line-for-line
+  identical (`iterative.cpp:813-819`). The `Hj` column-pointer arithmetic into
+  the flat Hessenberg register (`Hj = H + j * (max_dim + 1)`,
+  `iterative.cpp:632`), the in-place reference-update semantics of all four
+  kernel calls, the register-vs-tensor representation difference, and the four
+  scalar kernels' own LAPACK-style scaling are L0 mechanism.
+- **L1**: pure-functional `{h_out, cs_j, sn_j, s_j, s_jp1, beta} =
+  ls_update_column(variant, cs, sn, s, j, h_new)`. No destination buffer in the
+  signature, no `Hj` pointer arithmetic, no flat-storage stride; the result is
+  a value bundle, the inputs are read-only. One operator over the rotation
+  registers + RHS register + new Hessenberg column, parameterised by the
+  element-type axis (absorbed) and the column-index size (absorbed). Sub-diagonal
+  annihilation, replay non-commutativity, residual exposure, unitarity, and
+  variant invariance hold; replay-order, per-call non-commutativity,
+  `(0,0)`-pair degenerate behaviour, and residual-by-shortcut are recorded as
+  explicit non-laws. (The detailed lowering — how the value-bundle output
+  rewrites into the in-place four-register write at L0 — belongs to the
+  forthcoming L1>L0 `ls-update-column-mutation-rotation` theme, sibling to
+  `back-solve-mutation-rotation` and to `orthogonalize-mutation-rotation`.)
+
+## Evidence
+
+- `palace/linalg/iterative.cpp:634` — `for (int k = 0; k < j; k++)` — the GMRES
+  replay loop header; strictly-ordered `k = 0..j-1` (laws 1, 2; the
+  skip-replay-for-`j=0` boundary law 5). **Self-verified via citecheck
+  `--anchor 'for (int k = 0; k < j'`.**
+- `palace/linalg/iterative.cpp:636` — `ApplyPlaneRotation(Hj[k], Hj[k + 1],
+  cs[k], sn[k]);` — the replay sub-step body; each stored rotation `k` applied
+  in-place to the `(Hj[k], Hj[k+1])` pair (law 2). **Self-verified (`--anchor
+  'ApplyPlaneRotation(Hj[k]'`, line 636).**
+- `palace/linalg/iterative.cpp:638` — `GeneratePlaneRotation(Hj[j], Hj[j + 1],
+  cs[j], sn[j]);` — the generate sub-step; produces the new rotation
+  `(cs[j], sn[j])` annihilating the sub-diagonal `Hj[j+1]` against `Hj[j]` (laws
+  1, 4). **Self-verified (`--anchor 'GeneratePlaneRotation(Hj[j]'`, line 638).**
+- `palace/linalg/iterative.cpp:639` — `ApplyPlaneRotation(Hj[j], Hj[j + 1],
+  cs[j], sn[j]);` — the column-apply sub-step; writes `Hj[j+1] := 0` exactly
+  (law 1). **Self-verified (`--anchor 'ApplyPlaneRotation(Hj[j]'`, line 639).**
+- `palace/linalg/iterative.cpp:640` — `ApplyPlaneRotation(s[j], s[j + 1],
+  cs[j], sn[j]);` — the RHS-apply sub-step; the same rotation applied to the
+  RHS pair concentrates the residual in the new tail entry (law 3).
+  **Self-verified (`--anchor 'ApplyPlaneRotation(s[j]'`, line 640).**
+- `palace/linalg/iterative.cpp:642` — `beta = std::abs(s[j + 1]);` — the
+  residual exposure: the LS residual norm `β = |s[j+1]|` read off the RHS tail
+  with no explicit residual evaluation (law 3 byproduct). **Self-verified
+  (`--anchor 'beta = std::abs'`, line 642).**
+- `palace/linalg/iterative.cpp:629-632` — `Hj[j + 1] = linalg::Norml2(comm,
+  w);` (`:631`) — the upstream orthogonalisation + nrm2 producing the new
+  column's sub-diagonal entry; NOT part of this leaf (the
+  [`orthogonalize`](./orthogonalize.md) leaf produces `h_new[0..j]`, the
+  [`nrm2`](./nrm2.md) produces `h_new[j+1]`), grounded here to mark the leaf's
+  upstream boundary. **Self-verified (`--anchor 'Norml2'`).**
+- `palace/linalg/iterative.cpp:813-819` — FGMRES per-column running-QR update;
+  **line-for-line identical** to GMRES `:634-640` (law 6: GMRES ≡ FGMRES at
+  this leaf). **Self-verified (`--anchor 'ApplyPlaneRotation'`, range
+  813-819 hits :815/:818/:819; `--anchor 'GeneratePlaneRotation'`, line 817;
+  `--anchor 'ApplyPlaneRotation(s[j]'`, line 819).**
+- `palace/linalg/iterative.cpp:821` — FGMRES `beta = std::abs(s[j + 1]);` —
+  the residual exposure in the FGMRES twin; identical to GMRES `:642`.
+  **Self-verified (`--anchor 'beta = std::abs'`, line 821).**
+- `palace/linalg/iterative.cpp:73-108` — `GeneratePlaneRotation` (real): the
+  LAPACK-style scaled rotation generator inside the leaf's `generate` sub-step
+  for the real variant; scaling at `:101-108`. **Verified via the parent L2>L1
+  theme's `verified_against:` block (`incremental-least-squares-composition-lowering.md:503-506`,
+  `--anchor 'GeneratePlaneRotation'` line 73, audited 2026-05-29T195406Z).**
+- `palace/linalg/iterative.cpp:112-118` — `GeneratePlaneRotation` (complex):
+  the complex variant; in-comment unitarity contract "cs is real and
+  cs²+|sn|²=1" at `:118` (underwrites law 4). **Verified via parent
+  theme's `verified_against:` (`:507-510`, `--anchor 'cs is real'` line 118,
+  audited 2026-05-29T195406Z).**
+- `palace/linalg/iterative.cpp:227-241` — `ApplyPlaneRotation` (real `:227` +
+  complex `:235`): the in-place 2-vector update `(dx', dy') = (cs·dx + sn·dy,
+  −s̄n·dx + cs·dy)` inside the leaf's replay, column-apply, and RHS-apply
+  sub-steps. **Verified via parent theme's `verified_against:`
+  (`:511-514`, audited 2026-05-29T195406Z).**
+- `palace/linalg/iterative.cpp:644` — `converged = (beta < eps);` — the
+  convergence test reading the residual byproduct directly (the leaf's
+  byproduct law 3 ground-trothed; not part of the leaf but bounds when the
+  outer loop exits before the next call). **Verified via parent theme's
+  `verified_against:` (`:543-546`, `--anchor 'converged = (beta < eps)'`
+  exact, audited 2026-05-29T195406Z).**
+- `palace/linalg/iterative.cpp:612` — `s[0] = beta;` — the RHS initialisation
+  `s = β₀·e₁` at the start of each restart cycle; sets the leaf's first-call
+  input state. **Verified via parent theme's `verified_against:`
+  (`:515-518`, `--anchor 's[0] = beta'` exact, audited 2026-05-29T195406Z).**
+- `palace/linalg/iterative.hpp:193` — `mutable std::vector<ScalarType> s, sn;`
+  — the RHS register `s` and the sine register `sn` element type `ScalarType`
+  (complex in the complex case). Grounds the `s` / `sn` element-type axis (law
+  7). **Self-verified (`--anchor 'ScalarType> s, sn'`, line 193).**
+- `palace/linalg/iterative.hpp:194` — `mutable std::vector<RealType> cs;` —
+  the cosine register `cs` always `RealType` (the element-type split
+  underwriting the real/complex variant axis; cs is always real per the
+  generate kernel's contract `iterative.cpp:118`). **Self-verified (`--anchor
+  'RealType> cs'`, line 194).**
+- `book/src/L2/incremental-least-squares.md` — the firm L2 named composition
+  (cycle-026); this leaf is its Face-1 single-column projection (the
+  composition's per-column body collapses into one `ls_update_column` call).
+  The L2 entry's laws 1, 2, 3, 6 (residual exposure, replay ordering, unitary
+  byproduct, basis-lift independence) read as leaf-level laws 3, 2, 4, 6.
+- `book/src/L2-L1/incremental-least-squares-composition-lowering.md` — the firm
+  L2>L1 theme (cycle-028); §Face-1 (`:67-90`) forward-references this leaf as
+  the opaque-leaf face of the named-composition fan-down; §"Speculative L1
+  operators" (`:307-310`) records the leaf as a follow-on harvester target —
+  resolved by this entry.
+- `book/src/L1/back_solve.md` — the firm sibling leaf (cycle-027); the
+  terminal consumer of the R-factor and rotated RHS this leaf produces. The
+  structural template (small-dense register operating leaf,
+  firm-on-positive-structure with no dedicated test, recorded reduction-order
+  non-law) and the slug-naming precedent (`back_solve` distinct from the
+  general `trsv`; this leaf `ls_update_column` distinct from `back_solve`).
+- `book/src/concepts/incremental-least-squares.md:14` — the `ls_update_column`
+  slug contract (`ls_update_column(K, j, h_new) → K'`); the cross-method reuse
+  rationale and the "What is hidden at L1" list `:22-27` characterising the
+  leaf's hiding boundary.
+- `book/src/concepts/plane-rotation-stream.md:21-23` — the §"Sequential
+  character" flagging the replay chain as a `sequential-obstruction`
+  candidate at L3 (forward note; not content of this L1 entry).
+
+```yaml
+verified_against:
+  - citation: palace/linalg/iterative.cpp:634
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: GMRES replay loop header `for (int k = 0; k < j; k++)`; strict k=0..j-1 ordering (laws 1, 2; skip-replay-for-j=0 law 5); citecheck --anchor zero-drift on-disk.
+  - citation: palace/linalg/iterative.cpp:636
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: replay body `ApplyPlaneRotation(Hj[k], Hj[k+1], cs[k], sn[k])`; in-place pair update per stored rotation (law 2); zero-drift.
+  - citation: palace/linalg/iterative.cpp:638
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: generate `GeneratePlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j])`; writes new rotation into registers (laws 1, 4); zero-drift.
+  - citation: palace/linalg/iterative.cpp:639
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: column-apply `ApplyPlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j])`; Hj[j+1] := 0 exactly (law 1 defining contract); zero-drift.
+  - citation: palace/linalg/iterative.cpp:640
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: RHS-apply `ApplyPlaneRotation(s[j], s[j+1], cs[j], sn[j])`; concentrates residual in s[j+1] tail (law 3); zero-drift.
+  - citation: palace/linalg/iterative.cpp:642
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: residual exposure `beta = std::abs(s[j+1])`; byproduct read without explicit residual eval (law 3 load-bearing); zero-drift.
+  - citation: palace/linalg/iterative.cpp:629-632
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: upstream orthogonalize + nrm2 `Hj[j+1] = Norml2(comm, w)` producing h_new[j+1]; NOT part of leaf — grounds upstream boundary; --anchor 'Norml2' zero-drift.
+  - citation: palace/linalg/iterative.cpp:813-819
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: FGMRES per-column running-QR; range read confirms BYTE-IDENTICAL to GMRES :634-640 (law 6); :815/:817/:818/:819 per-line anchors all zero-drift.
+  - citation: palace/linalg/iterative.cpp:821
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: FGMRES residual exposure `beta = std::abs(s[j+1])`; identical to GMRES :642 (law 6); zero-drift.
+  - citation: palace/linalg/iterative.cpp:73-108
+    verdict: supports
+    audited_at: 2026-05-29T195406Z
+    note: inherited from parent L2>L1 theme verified_against (incremental-least-squares-composition-lowering.md:503-506); GeneratePlaneRotation real kernel + LAPACK scaling :101-108; --anchor 'GeneratePlaneRotation' line 73 zero-drift.
+  - citation: palace/linalg/iterative.cpp:112-118
+    verdict: supports
+    audited_at: 2026-05-29T195406Z
+    note: inherited from parent theme verified_against (:507-510); GeneratePlaneRotation complex + cs²+|sn|²=1 unitarity contract (law 4 underwriter); --anchor 'cs is real' line 118 exact.
+  - citation: palace/linalg/iterative.cpp:227-241
+    verdict: supports
+    audited_at: 2026-05-29T195406Z
+    note: inherited from parent theme verified_against (:511-514); ApplyPlaneRotation real :227 + complex :235; body (cs·dx+sn·dy, −conj(sn)·dx+cs·dy); the kernel inside replay/column-apply/RHS-apply.
+  - citation: palace/linalg/iterative.cpp:612
+    verdict: supports
+    audited_at: 2026-05-29T195406Z
+    note: inherited from parent theme verified_against (:515-518); RHS init s[0]=beta (s=β₀·e₁) at restart-cycle seed; --anchor 's[0] = beta' exact.
+  - citation: palace/linalg/iterative.cpp:644
+    verdict: supports
+    audited_at: 2026-05-29T195406Z
+    note: inherited from parent theme verified_against (:543-546); convergence test `converged = (beta < eps)` reads law-3 byproduct directly; --anchor exact.
+  - citation: palace/linalg/iterative.hpp:193
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: rotation-register split `mutable std::vector<ScalarType> s, sn;` grounding s/sn element type (law 7); the c026 codemap +1-drift register confirmed exact on-disk; --anchor 'ScalarType> s, sn' line 193 zero-drift.
+  - citation: palace/linalg/iterative.hpp:194
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: cosine register `mutable std::vector<RealType> cs;` grounding cs always-real (the law-4 cs²+|sn|²=1 contract relies on cs:Real); --anchor 'RealType> cs' line 194 zero-drift.
+  - citation: book/src/L2/incremental-least-squares.md
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: parent L2 named composition (firm cycle-026); this leaf is its Face-1 single-column projection; L2 laws 1/2/3/6 read as leaf laws 3/2/4/6.
+  - citation: book/src/L2-L1/incremental-least-squares-composition-lowering.md
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: parent L2>L1 theme (firm cycle-028); Face-1 forward-ref at :67-90 + speculative-L1 entry :307-310 resolved by this leaf; theme's Face-1 plain-text ref upgradable post-integration.
+  - citation: book/src/L1/back_solve.md
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: firm sibling leaf (cycle-027); structural template (small-dense register-operating, firm-on-positive-structure no-test, recorded reduction-order non-law); slug-naming precedent (back_solve ≠ general trsv; ls_update_column ≠ back_solve, c027 resolved).
+  - citation: book/src/concepts/incremental-least-squares.md:14
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: 'ls_update_column slug contract: (K, j, h_new) → K'';" cross-method reuse rationale; "What is hidden at L1" list :22-27 characterises leaf hiding boundary.'
+  - citation: book/src/concepts/plane-rotation-stream.md:21-23
+    verdict: supports
+    audited_at: 2026-05-29T210000Z
+    note: replay-chain sequential-obstruction candidate at L3 (forward note; not content of this L1 entry).
+```
+```
+
+```edit:book/src/L1/index.md
+[Update dep-map: bump Firm cohort 21→22, add bullet under firm-cohort list,
+ and add row in operator dep-map table — both immediately after the
+ `back_solve` entry.
+
+ (1) Header line — replace "Firm (21)" with "Firm (22)" and extend the
+     enumeration with ", and the GMRES/FGMRES per-column running-QR
+     leaf":
+       OLD: **Firm (21)** — ... and the GMRES/FGMRES restart-correction back-solve:
+       NEW: **Firm (22)** — ... the GMRES/FGMRES restart-correction back-solve,
+            and the GMRES/FGMRES per-column running-QR leaf:
+
+ (2) Cohort bullet list — insert IMMEDIATELY AFTER the existing
+     `- [`back_solve`](./back_solve.md) — ...` bullet on line 53,
+     before the blank-line + `**Rough-in (test-coverage-bounded)**` block:
+
+         - [`ls_update_column`](./ls-update-column.md) — pure-functional **GMRES / FGMRES per-column running-QR update** `K' = ls_update_column(variant, cs, sn, s, j, h_new)`; advances the incremental QR factorisation of the upper-Hessenberg least-squares system by one column — replays the stored rotations `0..j-1` against the new Hessenberg column, generates one new rotation `(cs[j], sn[j])` that annihilates the sub-diagonal, applies it to the column and to the RHS pair, and **exposes the LS residual norm** `β = |s[j+1]|` as a unitary byproduct (no explicit residual evaluation). The **column-streaming producer** sibling of [`back_solve`](./back_solve.md) (the terminal consumer): one runs per Arnoldi column (this leaf) and produces the R-factor + rotated RHS; the other runs once at restart-cycle close (the back-solve) and finishes the LS solve. The Face-1 opaque-leaf projection of the firm L2 named composition [`incremental-least-squares`](../L2/incremental-least-squares.md) — co-extensive with the de-fused Face-2 scalar-Givens-kernel-pair presentation surfaced by the L2>L1 theme [`incremental-least-squares-composition-lowering`](../L2-L1/incremental-least-squares-composition-lowering.md) (firm cycle-028). The factorisation-streaming sibling of [`orthogonalize`](./orthogonalize.md) (basis-streaming) on the Krylov-state-advance axis — both invoked once per Arnoldi column inside [`krylov-step`](../L2/krylov-step.md); `orthogonalize`'s output **is** this leaf's `h_new` input. Explicitly **NOT** an [`apply_linop`](./apply_linop.md) variant (operates on small-coordinate registers, no opaque-operator application) and **NOT** a [`back_solve`](./back_solve.md) variant (the back-solve consumes this leaf's output — apply/inverse duality, not a dependency). Firm-on-positive-structure: the per-column running-QR loop is read in full in both the GMRES (`palace/linalg/iterative.cpp:634-640`) and the line-for-line identical FGMRES (`:813-819`) arms; every law is a syntactic identity on positive source (sub-diagonal annihilation, replay non-commutativity, residual exposure by unitarity, unitarity preservation, GMRES≡FGMRES basis-lift independence, scalar-kernel-variant parametric absorption), so the absent dedicated running-QR test does not gate them (the `back_solve` / `lu_solve` / `apply_linop` precedent). Two load-bearing non-laws: the replay chain's bit-level reduction order and the per-column call sequence's non-commutativity (composes with the L2 running-QR rotation-stream non-associativity and with the `back_solve` reduction-order non-law to pin the entire GMRES finite-precision solution path). Resolves the L2>L1 theme's Face-1 plain-text forward-reference (upgrade to live link follow-up); completes the GMRES restart-cycle least-squares L1 cohort (`ls_update_column` × (j+1) ▷ `back_solve`).
+
+ (3) Dep-map table — insert IMMEDIATELY AFTER the existing back_solve row
+     (currently line 95, after the line beginning `| [`back_solve`](./back_solve.md) |`),
+     before the line beginning `| [`lanczos_step`](`:
+
+         | [`ls_update_column`](./ls-update-column.md) | `(variant: GivensKind, cs: Tensor[m], sn: Tensor[m], s: Tensor[m+1], j: Int, h_new: Tensor[j+2]) → { h_out: Tensor[j+2], cs_j: RealScalar, sn_j: Scalar, s_j: Scalar, s_jp1: Scalar, beta: RealScalar }` (i.e. one column of the running QR: replay ▷ generate ▷ apply ▷ apply_rhs; β = \|s_jp1\| the LS residual byproduct) | (scalar-kernel-composed; no L1 dependencies — uses the firm scalar Givens kernel pair [`givens_generate`](../concepts/givens_generate.md) / [`givens_apply`](../concepts/givens_apply.md) directly; sibling-producer to [`back_solve`](./back_solve.md), sibling on Krylov-state-advance axis to [`orthogonalize`](./orthogonalize.md); NOT an `apply_linop` variant) | `firm` (GMRES per-column running-QR leaf; L0: `palace/linalg/iterative.cpp:634-640` GMRES + `:813-819` FGMRES; harvested cycle-029; Face-1 of L2 `incremental-least-squares` named composition; firm-on-positive-structure, no-dedicated-test caveat non-gating; replay-non-commutativity + per-column-non-commutativity load-bearing non-laws) |
+]
+```
+
+```edit:book/src/SUMMARY.md
+[Insert a new chapter entry under the L1 Part, IMMEDIATELY AFTER the
+ existing `- [back_solve](./L1/back_solve.md)` line (currently line 86),
+ BEFORE the blank line that precedes `# L1 > L0 — Lowering`:
+
+         - [ls_update_column](./L1/ls-update-column.md)
+]
+```
+
+## Operator content
+
+The firm L1 entry is the body inside the `new:book/src/L1/ls-update-column.md` block above. Key shape:
+
+- **Slug**: `ls_update_column` (filename `ls-update-column.md`, matching the
+  `back_solve` / `back-solve.md` underscore-slug / hyphen-filename convention).
+- **Signature**: `(variant, cs, sn, s, j, h_new) → { h_out, cs_j, sn_j, s_j, s_jp1, beta }`
+  with bunsen-style named-axes shape contract (`m = max_dim` for the registers,
+  `j+2` for the Hessenberg column, `RealScalar` for `cs`/`cs_j` and `beta`,
+  `Scalar` = `ScalarType` for everything else, per `iterative.hpp:193-194`).
+- **Semantics**: the four sub-steps (replay ▷ generate ▷ apply ▷ apply_rhs)
+  with three load-bearing semantic points called out:
+  (1) replay-before-generate ordering is mandatory (structural invariant);
+  (2) residual exposure is a unitary byproduct (the raison d'être);
+  (3) replay chain is bit-level non-commutative but in-kernel reduction is
+  element-local (no MPI collective).
+- **Algebraic laws** (7 holding + 4 non-laws):
+  1. Sub-diagonal annihilation (`h_out[j+1] = 0`).
+  2. Replay non-commutativity (structural, not finite-precision — rotations
+     don't commute even in exact arithmetic).
+  3. Residual exposure (`beta = |s_jp1| = min_y ‖β₀·e₁ − H̄_j·y‖₂`).
+  4. Unitarity preservation across the call.
+  5. Empty / first-column boundary (`j = 0` skip-replay form).
+  6. Basis-lift independence (GMRES ≡ FGMRES at this leaf, mirroring
+     `back_solve` law 6).
+  7. Scalar-kernel-variant invariance (parametric absorption of real ↔ complex).
+  Non-laws: bit-level order-independence of replay (load-bearing finite-precision),
+  per-column commutativity of the call sequence (left-fold only),
+  definedness when `(h1[j], h1[j+1]) = (0, 0)` (lucky-breakdown applicability
+  boundary), residual-by-shortcut (the residual byproduct is NOT a transparent
+  optimization).
+- **Dependencies**: (scalar-kernel-composed) — no L1 dependencies. Uses the
+  firm scalar Givens concept pages directly (`givens_generate`, `givens_apply`).
+- **Status**: `firm` (firm-on-positive-structure; the `back_solve` / `lu_solve` /
+  `apply_linop` / `apply_nonlinear_pencil` precedent).
+
+## Supporting evidence
+
+L0 verification — all citations self-verified via `tools/citecheck/citecheck.py
+--anchor` against on-disk `reference/palace/` this invocation:
+
+- GMRES per-column running-QR body `iterative.cpp:634-640` and the FGMRES twin
+  `:813-819` — each per-line anchor (`:636`, `:638`, `:639`, `:640`, `:815`,
+  `:817`, `:818`, `:819`) verified individually.
+- Residual exposure `:642` (GMRES) / `:821` (FGMRES).
+- Upstream boundary `:629-632` (orthog + nrm2).
+- Register-type split `iterative.hpp:193-194` (`ScalarType` s/sn + `RealType`
+  cs).
+
+Scalar kernel anchors (`:73-108`, `:112-118`, `:227-241`) and convergence-test /
+RHS-seed anchors (`:612`, `:644`) are inherited from the parent L2>L1 theme's
+`verified_against:` block (cycle-028 audit 2026-05-29T195406Z), per the
+`verify-citation-range` skill's "Audit-report / inherited-citation sub-case" — the
+inheritance is recorded explicitly in each `verified_against:` entry.
+
+Structural precedent:
+- `book/src/L1/back_solve.md` (firm cycle-027) — sibling leaf; copied the
+  firm-on-positive-structure status framing, the no-dedicated-test caveat
+  language, the basis-lift-independence law (law 6 here ≡ back_solve law 6),
+  and the reduction-order non-law shape.
+- `book/src/L2-L1/incremental-least-squares-composition-lowering.md` (firm
+  cycle-028) — parent theme; its Face-1 description (`:67-90`) is the
+  characterisation this entry firms up; its "Speculative L1 operators" Face-1
+  entry (`:307-310`) records `ls_update_column` as the follow-on harvester
+  target this dispatch resolves.
+
+Slug-naming distinction (resolved cycle-027 at `back_solve.md:30-34`):
+`back_solve` (firm c027) is the TERMINAL small-dense triangular solve `R·y = s`
+at restart-cycle close; `ls_update_column` (this entry, firm c029) is the
+DISTINCT per-column streaming update that produces `R` and `s`. The L2 theme's
+forward-reference uses the slug `ls_update_column`; the filename uses the hyphen
+form `ls-update-column.md`, matching the `back_solve` / `back-solve.md` pattern.
+
+## Open questions / caveats
+
+- **Face-1 plain-text forward-reference upgrade — follow-up.** The L2>L1 theme
+  [`incremental-least-squares-composition-lowering`](../L2-L1/incremental-least-squares-composition-lowering.md)
+  has plain-text references to `ls_update_column` at `:69` (Face-1 description),
+  `:87-88` (slug-bearing sentence "The `ls_update_column` ... is itself forthcoming (not yet on disk)"), and `:307-310` (speculative-L1 entry
+  marking it as a follow-on harvester target). Once this entry lands, those
+  three plain-text references should be upgraded to live links
+  (`[`ls_update_column`](../L1/ls-update-column.md)` etc.) per the skill
+  `upgrade-plain-text-ref-to-live-link-when-target-on-disk`. The theme's
+  speculative-L1-operators §"None proposed by this theme" framing and the
+  ENTRY-EXIT lifecycle records will need to reflect that Face 1 is now firm.
+  This is a small mechanical follow-up dispatch (lifter or
+  same-layer-cross-cutter scope), NOT included in this harvest. Suggested plan
+  candidate under the `l2-l1-theme-follow-ups` cohort.
+
+- **`ls-update-column-mutation-rotation` L1>L0 theme — forthcoming.** The
+  detailed lowering — how the value-bundle output `{h_out, cs_j, sn_j, s_j,
+  s_jp1, beta}` rewrites into the in-place four-register write
+  (`Hj[k]/Hj[k+1]/cs[k]/sn[k]/s[j]/s[j+1]` writes via the four `*PlaneRotation`
+  reference-update calls) at L0 — is deferred to a forthcoming L1>L0 theme
+  `ls-update-column-mutation-rotation`. This theme is sibling to
+  `back-solve-mutation-rotation` (which itself is a forthcoming sibling per
+  `back_solve.md` §"L1 vs L0 distinction") and to the firm
+  `orthogonalize-mutation-rotation` — together they exhaust the L1>L0 lowering
+  of the GMRES inner-loop body. Recorded as a follow-on abstractor target. NOT
+  required to land this firm L1 entry (the L1 entry is value-complete; the L0
+  lowering is per-edge work).
+
+- **L3 sequential-obstruction forecast (replay chain).** The replay sub-step is
+  a length-`j` ordered chain of 2-vector updates (`iterative.cpp:634-636`),
+  each reading the previous — the
+  [`plane-rotation-stream`](../concepts/plane-rotation-stream.md) §"Sequential
+  character" (`:21-23`) flags it as a `sequential-obstruction` candidate for
+  the eventual L3 iteration rotation (jointly with the `back_solve` inner
+  `k`-recurrence — `back_solve.md` reduction-order non-law). Forward note for a
+  future L3 pass, NOT content of this L1 entry; recorded so the L3 author
+  finds it.
+
+- **OQ `ls-update-column-l1-leaf` interaction.** The c027 `back_solve.md` Status
+  states "Resolves OQ `ls-update-column-l1-leaf`" (`:364-366`). That OQ
+  originally tracked the slug confusion / which leaf to harvest first; the c027
+  resolution clarified the distinction and harvested `back_solve` first. With
+  this c029 harvest landing the per-column streaming leaf itself, the OQ
+  resolution is now complete: both halves of the chain
+  (`ls_update_column` producer + `back_solve` consumer) are firm. Meta-phase
+  should confirm the OQ stays Closed (it was already; no re-open needed) and
+  consider whether a fresh OQ should track the L2>L1 theme's plain-text-ref
+  upgrade as a small follow-up.
+
+- **Status judgment record.** This entry lands `firm` directly (not `rough-in
+  (test-coverage-bounded)`), on the firm-on-positive-structure precedent
+  (`back_solve` c027, `lu_solve` c022, `apply_linop`, `apply_nonlinear_pencil`
+  c021). The judgment: every algebraic law is a syntactic identity on
+  fully-specified positive source (the unitarity contract `iterative.cpp:118`
+  and the generate kernel's annihilation property are positively anchored; the
+  rotation product is operator-algebra fact; the residual byproduct is
+  2-norm-preservation under the unitary stream). No literature inference, no
+  convergence claim, no negative-anchor reconstruction. If a reviewer judges
+  the absent dedicated running-QR unit test should hold this at `rough-in
+  (test-coverage-bounded)` rather than `firm`, the only change is the `##
+  Status` value (the body is unaffected) — flagged here as the explicit
+  judgment so the integrator / critic can confirm or revert. The sibling
+  `back_solve` c027 carries the same judgment in its own §Status and was
+  ratified firm by the c027 integrator.

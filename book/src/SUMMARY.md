@@ -84,6 +84,7 @@
 - [nleps_jacobian_action](./L1/nleps_jacobian_action.md)
 - [nleps_eigenvalue_correction](./L1/nleps_eigenvalue_correction.md)
 - [back_solve](./L1/back_solve.md)
+- [ls_update_column](./L1/ls-update-column.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -96,6 +97,7 @@
 - [orthogonalize-mutation-rotation](./L1-L0/orthogonalize-mutation-rotation.md)
 - [bicgstab-iteration](./L1-L0/bicgstab-iteration.md)
 - [minres-iteration](./L1-L0/minres-iteration.md)
+- [triangular-solve-obstruction](./L1-L0/triangular-solve-obstruction.md)
 - [chebyshev-smoother-mutation-rotation](./L1-L0/chebyshev-smoother-mutation-rotation.md)
 - [divfree-projector-mutation-rotation](./L1-L0/divfree-projector-mutation-rotation.md)
 - [dot-mutation-rotation](./L1-L0/dot-mutation-rotation.md)
@@ -104,7 +106,9 @@
 - [scal-mutation-rotation](./L1-L0/scal-mutation-rotation.md)
 - [assemble-diagonal-mutation-rotation](./L1-L0/assemble-diagonal-mutation-rotation.md)
 - [matrix-weighted-norm-mutation-rotation](./L1-L0/matrix-weighted-norm-mutation-rotation.md)
+- [bilinear-form-mutation-rotation](./L1-L0/bilinear-form-mutation-rotation.md)
 - [normalize-mutation-rotation](./L1-L0/normalize-mutation-rotation.md)
+- [back-solve-mutation-rotation](./L1-L0/back-solve-mutation-rotation.md)
 - [lu-solve-mutation-rotation](./L1-L0/lu-solve-mutation-rotation.md)
 - [nleps-deflated-solve-mutation-rotation](./L1-L0/nleps-deflated-solve-mutation-rotation.md)
 - [apply-nonlinear-pencil-mutation-rotation](./L1-L0/apply-nonlinear-pencil-mutation-rotation.md)
