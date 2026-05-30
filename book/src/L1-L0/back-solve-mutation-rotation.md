@@ -884,3 +884,29 @@ verified_against:
     audited_at: 2026-05-30T010118Z
     note: FGMRES-specific `mutable std::vector<VecType> Z;` right-preconditioned-basis register; NOT read by the back-solve body (basis-lift independence boundary); zero-drift.
 ```
+
+```yaml
+# Additive c032 D2 re-verification — closes c031 D2 lifter narrative-repair loop.
+# The 22-row c030 baseline block above remains authoritative and is NOT re-audited here.
+# This block independently confirms the 5 narrative sites the c031 D2 repair changed
+# (Sub-pattern B header :198, Sub-pattern B prose :222-243, §Variant axes :591-594,
+# §Justification clause :532-536, §Status two-form bullet :747-750) and the
+# verified_against `:832` row flip (partially-supports → supports).
+verified_against:
+  - citation: palace/linalg/iterative.cpp:653-660
+    verdict: supports
+    audited_at: 2026-05-30T053000Z
+    note: GMRES back-solve body block re-verified cycle-032 D2 — cmp of sed-extracted ranges :653-660 vs :832-839 returns 0 (byte-identical); diff exit 0. Closes c031 D2 lifter narrative-repair loop. Independent re-verification of the Sub-pattern B header (line 198), Sub-pattern B prose with prior-draft retraction (lines 222-243), §Variant axes bullet (lines 591-594), §Justification clause (lines 532-536), and §Status two-form bullet (lines 747-750) — all 5 repaired sites now match on-disk source. Extended cmp 645-660 vs 824-839 (16-line epilogue+block) also byte-identical. citecheck --anchor zero-drift on for-loop opener.
+  - citation: palace/linalg/iterative.cpp:832-839
+    verdict: supports
+    audited_at: 2026-05-30T053000Z
+    note: FGMRES back-solve body block re-verified cycle-032 D2 — paired with GMRES :653-660; uniform +179-line file offset (832-653=179), zero local relative shift. Within-block relative offsets (0,+2,+3,+4,+6) byte-identical in both arms. Preceding break sits at +5 lines back from each arm for-line (GMRES :648, FGMRES :827); confirms boundary of the 16-line cmp-identical region. Resolves c029 D5 partial→supports flip and closes c031 D2 narrative-repair loop. citecheck --anchor zero-drift.
+  - citation: palace/linalg/iterative.cpp:654
+    verdict: supports
+    audited_at: 2026-05-30T053000Z
+    note: GMRES outer opening brace on its own line — Allman style; grep -cE for K&R-style braces (opening at end of for/if/while line) in iterative.cpp returns 0 (whole-file confirmation that the brace-on-own-line claim generalizes throughout the body). Grounds "throughout the whole iterative.cpp body" prose at theme line 238.
+  - citation: palace/linalg/iterative.cpp:833
+    verdict: supports
+    audited_at: 2026-05-30T053000Z
+    note: FGMRES outer opening brace on its own line — byte-identical to GMRES :654 (both bare opening-brace lines at indent 4). Paired anchor confirming "no brace-placement shift between the arms" prose at theme line 236.
+```

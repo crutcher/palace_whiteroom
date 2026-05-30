@@ -111,7 +111,7 @@ Face 2 is the de-fusion of Face 1's leaf body into the explicit scalar-kernel se
 the L2 composition surfaces as first-class structure. The scalar kernels' own L0 surfaces
 (`GeneratePlaneRotation` `iterative.cpp:73-118`, `ApplyPlaneRotation` `iterative.cpp:227-241`) are
 **element-local, no reduction** — their L1>L0 realisation is the leaf-internal in-place 2-vector
-update, deferred to the forthcoming `ls_update_column` L1>L0 theme; **this theme cites the kernel
+update, deferred to the firm `ls_update_column` L1>L0 theme; **this theme cites the kernel
 pair, it does not re-derive the kernels' LAPACK-style scaling** (the load-bearing finite-precision
 content lives in the kernel pages + the leaf's L1>L0 theme; this theme records only the per-variant
 *orchestration* of the kernel calls — the §"Reduction-path recording" table).
@@ -273,7 +273,7 @@ The fan-down preserves the L2 value when:
    vector `y`; the basis is read by the downstream `linear_combination` reconstruction only.
 
 5. **Leaf-stops-at-L1; kernel L0 deferred.** The de-fused face's scalar kernels and the opaque leaf's
-   in-place 2-vector updates are L1>L0 concerns of the forthcoming `ls_update_column` L1>L0 theme; the
+   in-place 2-vector updates are L1>L0 concerns of the firm `ls_update_column` L1>L0 theme; the
    terminal back-solve's in-place `s[0..j]` overwrite is the firm [`back_solve`](../L1/back_solve.md)
    leaf's own L1>L0 concern (`back_solve.md` §"L1 vs L0 distinction"), and the `x.Add` reconstruction
    loop is a [`linear_combination`](../L2/linear_combination.md) concern. **This theme stops at the L1
@@ -297,13 +297,13 @@ residual-exposure + replay-ordering laws, so the theme is classified `algebraic`
 sibling [`orthogonalize-composition-lowering`](./orthogonalize-composition-lowering.md) `algebraic`
 classification (both are L2-laws-read-as-lowering named-composition fan-downs). The per-variant
 reduction path is the load-bearing-numerical residue recorded in §"Reduction-path recording"; the
-scalar-kernel LAPACK scaling is delegated to the kernel pages + the forthcoming `ls_update_column`
+scalar-kernel LAPACK scaling is delegated to the kernel pages + the firm `ls_update_column`
 L1>L0 theme; the back-solve's reduction-order non-law is delegated to the firm
 [`back_solve`](../L1/back_solve.md) leaf.
 
 ## Speculative L1 operators
 
-**None proposed by this theme.** The L1 RHS resolves to firm-or-forthcoming-firm vocabulary:
+**None proposed by this theme.** The L1 RHS resolves to firm vocabulary:
 
 - Face 1 — the L1 column-streaming leaf **[`ls_update_column`](../L1/ls-update-column.md)**
   (the single-column running-QR update `(K, j, h_new) → K'`; **firm** cycle-029,

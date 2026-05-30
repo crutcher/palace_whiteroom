@@ -85,6 +85,7 @@
 - [nleps_eigenvalue_correction](./L1/nleps_eigenvalue_correction.md)
 - [back_solve](./L1/back_solve.md)
 - [ls_update_column](./L1/ls-update-column.md)
+- [jacobi-smoother](./L1/jacobi-smoother.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
