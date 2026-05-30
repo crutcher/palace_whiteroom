@@ -1,8 +1,9 @@
 # sparse_triangular_solve
 
-> **Reduction status (cycle-013+):** this slice is a **negative-result slice** (in the spirit of `concepts/negative-result-slice.md`; that concept page does not yet list this slice in its §"Examples in this spec") and is **retained in full** — it is the artifact, not redundant raw material to be lifted. It is the **canonical instance** of:
+> **Reduction status (cycle-013+, cross-link c029):** this slice is a **negative-result slice** (in the spirit of `concepts/negative-result-slice.md`; that concept page does not yet list this slice in its §"Examples in this spec") and is **retained in full** — it is the artifact, not redundant raw material to be lifted. It is the **canonical instance** of:
 > - `book/src/concepts/scope-out-obstruction.md` §"Canonical instance" (`:68`) — the L0→L1 scope-out obstruction (Palace forwards sparse-direct solves into MFEM/SuperLU_DIST/STRUMPACK/MUMPS opaquely; no Palace-level triangular-solve form to lift).
 > - `book/src/concepts/sequential-obstruction.md` §"Sub-kind: out-of-scope-obstruction" (`:53`) — the out-of-scope sub-kind distinguished from genuine L2→L3 sequential obstruction.
+> - `book/src/L1-L0/triangular-solve-obstruction.md` (cycle-029) — the L1>L0 obstruction theme that is the **layered-artifact partner record** for this slice's negative result. The theme records the engineered-absence evidence (Adams 2003 polynomial-over-GS, GPU AMG GS→Jacobi flip) that postdates this slice; the two records **cross-link rather than supersede** (see the theme's §"Related" at `:273-308`). The slice's reduction status remains **annotated-and-retained**.
 >
 > The §L0 opaque-forwarding evidence (`superlu.{hpp,cpp}`, `strumpack.hpp`, `mumps.hpp`, `communication.hpp`/`geodata.cpp`, `blockprecond.hpp`) is the citation grounding for those concept pages. There is — by construction — NO firm L0–L4 entry this slice's material lifts *into*; a negative result has no positive form to absorb. Per the `polynomial_recurrence_step.md` precedent ("the slice IS the artifact"), the corpus-reduction policy treats this slice as **annotated-and-retained**, not pending-lift.
 >

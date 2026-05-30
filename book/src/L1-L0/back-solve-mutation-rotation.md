@@ -195,38 +195,52 @@ Citations:
 - `palace/linalg/iterative.hpp:193` — `mutable std::vector<ScalarType> s,
   sn;` — the RHS / Givens-sine register `s` of element type `ScalarType`.
 
-### Sub-pattern B — the FGMRES twin (shape-identical body, line-shifted by brace placement)
+### Sub-pattern B — the FGMRES twin (byte-identical body, +179-line file offset)
 
-    // iterative.cpp:831  "Reconstruct the solution (for restart or due to
-    //                     convergence or maximum iterations)."
-    for (int i = j; i >= 0; i--)                       // :832  descending sweep
-    {                                                  // :833  opening brace on its own line
-      ScalarType *Hi = H.data() + i * (max_dim + 1);   // :834  column i of R
-      s[i] /= Hi[i];                                   // :835  y[i] = s[i] / R[i][i]
-      for (int k = i - 1; k >= 0; k--)                 // :836  super-diagonal column scan
-      {                                                // :837  inner brace on its own line
-        s[k] -= Hi[k] * s[i];                          // :838  s[k] -= R[k][i] * y[i]
-      }
-    }
+        // iterative.cpp:831  "Reconstruct the solution (for restart or due to
+        //                     convergence or maximum iterations)."
+        for (int i = j; i >= 0; i--)                       // :832  descending sweep
+        {                                                  // :833  opening brace on its own line
+          ScalarType *Hi = H.data() + i * (max_dim + 1);   // :834  column i of R
+          s[i] /= Hi[i];                                   // :835  y[i] = s[i] / R[i][i]
+          for (int k = i - 1; k >= 0; k--)                 // :836  super-diagonal column scan
+          {                                                // :837  inner brace on its own line
+            s[k] -= Hi[k] * s[i];                          // :838  s[k] -= R[k][i] * y[i]
+          }
+        }
 
-Structurally **identical** to Sub-pattern A — the four-element rewrite is the
+**Byte-for-byte identical** to Sub-pattern A — the four-element rewrite is the
 same, the register `H` is the same (FGMRES inherits `H` from `GmresSolver`,
 `iterative.hpp:250` — `using GmresSolver<OperType>::H`), the registers `s, sn,
-cs` are also inherited (`:251-253`), and the stride formula is the same. The
-only differences from Sub-pattern A are **purely textual** (lexical brace
-placement) and **purely downstream** (the basis the consumer reads):
+cs` are also inherited (`:251-253`), the stride formula is the same, **and the
+brace style is the same** (both arms place `{` on its own line — GMRES `:654`
+↔ FGMRES `:833` are both bare `{` lines; both arms' inner `{` likewise sits on
+its own line at `:658` ↔ `:837`). A `cmp` over the 9-line block
+`iterative.cpp:653-660` vs `:832-839` returns identical; a `cmp` extended
+backward through the preceding outer-`for(;;)` break-out epilogue
+(`:645-660` vs `:824-839`, 16-line block) also returns identical. The only
+differences from Sub-pattern A are **purely positional** (the +179-line file
+offset between the two arms in `iterative.cpp`) and **purely downstream** (the
+basis the consumer reads):
 
-- **Brace placement / line shift.** GMRES (Sub-pattern A) places `{` at the end
-  of the `for` line (one statement on the line); FGMRES (Sub-pattern B) places
-  `{` on the next line. This shifts every body line by +1: GMRES `:653`/`:655`/
-  `:656`/`:657`/`:659` ↔ FGMRES `:832`/`:834`/`:835`/`:836`/`:838`. The two
-  bodies compute identical values; the line offset is a pure brace-style
-  artefact. The L1 leaf's law-6 ("back-solve code line-for-line identical")
-  is **slightly imprecise**: the LINE NUMBERS differ by +1 (brace shift), but
-  the LINE CONTENT (loop bound, stride formula, division, subtraction) is
-  byte-identical. This is recorded faithfully here as **content-identical,
-  line-shifted** — the rotation is the same; the surface form is brace-style-
-  isomorphic but not byte-identical.
+- **+179-line file offset; zero local relative shift.** GMRES `:653`/`:655`/
+  `:656`/`:657`/`:659` ↔ FGMRES `:832`/`:834`/`:835`/`:836`/`:838`. The
+  per-line correspondence is `653→832 (+179)`, `655→834 (+179)`, `656→835
+  (+179)`, `657→836 (+179)`, `659→838 (+179)` — a **uniform +179-line offset
+  with zero relative shift**. The within-block relative offsets from each
+  arm's for-line `(0, +2, +3, +4, +6)` are byte-identical in both arms; the
+  preceding-code offset is also uniform (the preceding `break;` sits at +5
+  lines back from each arm's for-line — GMRES `:653 − 5 = :648` `break;` ↔
+  FGMRES `:832 − 5 = :827` `break;` — and the byte-identity confirmed by
+  `cmp` extends 5 lines into the preceding epilogue at minimum, 16 lines in
+  full). **There is NO brace-placement shift between the arms** — the prior
+  draft's "+1-line brace-style shift" claim was wrong; both arms use
+  brace-on-its-own-line style throughout the block (and indeed throughout
+  the whole `iterative.cpp` body). The L1 leaf's law-6 phrasing at
+  [`L1/back_solve`](../L1/back_solve.md)`:225-226` ("back-solve code line-for-
+  line identical") is **literally correct**: the LINE CONTENT (loop bound,
+  stride formula, division, subtraction, brace style) is byte-identical;
+  the LINE NUMBERS differ only by the constant +179 file offset.
 - **Downstream basis.** The consuming `linear_combination` lift reads `V[k]`
   in GMRES (`x.Add(s[k], V[k])`, `:666`) and `Z[k]` in FGMRES
   (`x.Add(s[k], Z[k])`, `:843`). This is **outside the leaf** — the basis-lift
@@ -241,7 +255,7 @@ Justification kind: **structural** — same as Sub-pattern A. This sub-pattern i
 recorded explicitly (rather than collapsed into A) because the two-form
 recognition is the load-bearing evidence for the L1 leaf's law-6 basis-lift
 independence: the body must be the same shape under both downstream basis
-readings, and it positively is.
+readings, and it positively is (literally — `cmp` byte-identical).
 
 Citations:
 
@@ -515,10 +529,11 @@ law-6 basis-lift independence.
   expansion `for ↓ i → stride → divide → for ↓ k → subtract`; result-buffer
   rotation is the receiver `s` being read-then-overwritten; the matrix-read
   rotation is the flat-column-major stride pointer.
-- **Sub-pattern B** (FGMRES twin) — `structural`. Shape-identical to A
-  (content-identical, brace-style line-shifted by +1); the rotation is
-  the same. Recorded explicitly to ground the L1 leaf's law-6 basis-lift
-  independence.
+- **Sub-pattern B** (FGMRES twin) — `structural`. **Byte-for-byte identical**
+  to A (`cmp`-confirmed over `iterative.cpp:653-660` ≡ `:832-839`; same brace
+  style throughout; uniform +179-line file offset, zero local relative shift);
+  the rotation is the same. Recorded explicitly to ground the L1 leaf's
+  law-6 basis-lift independence.
 - **Sub-pattern C** (downstream basis-lift) — boundary marker, NOT part of
   the leaf. Cited for the law-6 / variant-axis boundary; the lowering of
   `linear_combination` belongs to its own theme.
@@ -573,11 +588,13 @@ this dense-back-substitution one), not this theme.
   separate specializations). At L1 collapsed to one operator
   parameterised by element type (L1 leaf §Variant axes).
 - **GMRES vs FGMRES** (the two-form recognition, Sub-patterns A and B): the
-  back-solve body is **content-identical, line-shifted by +1** across the
-  two surface sites. The L1 form has no GMRES/FGMRES variant — they are
-  the same leaf, recorded twice in source. The basis the downstream
-  consumer reads (`V` vs `Z`) is the consuming L2 composition's
-  `op.basis_kind` axis (law 6), absorbed at this leaf.
+  back-solve body is **byte-for-byte identical** across the two surface sites
+  (`iterative.cpp:653-660` ≡ `:832-839`, `cmp`-confirmed; both arms use the
+  same brace-on-its-own-line style — no local relative shift, only a uniform
+  +179-line file offset). The L1 form has no GMRES/FGMRES variant — they are
+  the same leaf, recorded twice in source. The basis the downstream consumer
+  reads (`V` vs `Z`) is the consuming L2 composition's `op.basis_kind` axis
+  (law 6), absorbed at this leaf.
 - **restart dimension `j+1`** (size parameter, absorbed-as-form): the
   active dimension of the back-substitution, `j+1 ≤ max_dim`. A size
   parameter, not a behavioural variant; the loop bounds adapt
@@ -684,10 +701,10 @@ L1 / cross-theme anchors:
 
 - [`L1/back_solve`](../L1/back_solve.md) — the firm L1 operator this theme
   lowers; signature `back_solve :: (UpperTri[j+1,j+1], Tensor[j+1]) ->
-  Tensor[j+1]` (`:78`), the defining contract `R · back_solve(R, s) = s`
+  Tensor[j+1]` (`:77-78`), the defining contract `R · back_solve(R, s) = s`
   (law 1, `:187-195`), the back-substitution recurrence (law 4,
   `:207-215`), the empty-stream / single-column boundary (law 5,
-  `:218-221`), basis-lift independence (law 6, `:223-230`), the reduction-
+  `:217-221`), basis-lift independence (law 6, `:223-230`), the reduction-
   order non-law (`:234-243`), the singular-`R` applicability boundary
   (`:249-254`), the L1 vs L0 distinction section (`:371-390`), the firm-
   on-positive-structure status (`:330-369`), the cycle-028 `verified_against:`
@@ -727,8 +744,10 @@ verified evidence:
 - **The L1 leaf is firm + audited** (cycle-028 `verified_against:` block,
   every L0 anchor zero-drift on-disk).
 - **Both surface forms are positively anchored** (GMRES `:652-660` and
-  FGMRES `:831-840`); the two are content-identical, line-shifted by
-  brace style, grounding law-6 basis-lift independence.
+  FGMRES `:831-840`); the two are **byte-for-byte identical** within the
+  back-solve body (`cmp` over `:653-660` ≡ `:832-839`; uniform +179-line
+  file offset, zero local relative shift, same brace-on-its-own-line style),
+  grounding law-6 basis-lift independence.
 - **Every rewrite element is positively anchored**: the descending outer
   sweep, the column-major stride formula, the diagonal division, the
   inner column-oriented super-diagonal subtraction, the in-place RHS
@@ -809,9 +828,9 @@ verified_against:
     audited_at: 2026-05-30T010118Z
     note: FGMRES "Reconstruct the solution" comment; byte-for-byte identical to :652; zero-drift.
   - citation: palace/linalg/iterative.cpp:832
-    verdict: partially-supports
-    audited_at: 2026-05-30T010118Z
-    note: FGMRES outer descending sweep `for (int i = j; i >= 0; i--)` zero-drift; but the theme narrative claiming a "+1 line-shift from brace placement" is FACTUALLY WRONG (both GMRES and FGMRES place `{` on its own line; diff of :653-660 vs :832-839 is byte-for-byte zero) — repair follow-up noted; the L1 leaf at :225-226 has the correct "line-for-line identical" phrasing.
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: 'FGMRES outer descending sweep `for (int i = j; i >= 0; i--)`; byte-for-byte identical to GMRES :653 (cmp over :653-660 ≡ :832-839 zero; brace-on-its-own-line style identical in both arms; uniform +179-line file offset, zero local relative shift). Narrative Sub-pattern B repaired (cycle-031 D2 lifter): the prior "+1-line brace-style shift" claim was wrong — re-stated as byte-identical, +179-line file offset. Matches L1 leaf at L1/back_solve.md:225-226 "line-for-line identical" phrasing. citecheck --anchor zero-drift.'
   - citation: palace/linalg/iterative.cpp:834
     verdict: supports
     audited_at: 2026-05-30T010118Z

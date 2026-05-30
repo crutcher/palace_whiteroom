@@ -81,10 +81,11 @@ states ([`concepts/incremental-least-squares`](../concepts/incremental-least-squ
 L2 record `{ state, beta }` is the same value as the L1 leaf's advanced `Krylov'` bundle (its
 `K'.beta` is the L2 `beta`; its rotation registers + RHS + Hessenberg are the L2 `state`). The leaf's
 own lowering onto the L0 in-place free functions — the four `*PlaneRotation` calls at
-`iterative.cpp:634-642` writing `Hj`, `cs`, `sn`, `s` in place — is the **L1>L0** concern of the
-forthcoming `ls_update_column-mutation-rotation` theme; **this theme stops at the L1 leaf and does not
-re-derive that L0 in-place step** (the same boundary the sibling draws at the L1 `orthogonalize`
-leaf). The [`ls_update_column`](../L1/ls-update-column.md) column-streaming leaf is **firm**
+`iterative.cpp:634-642` writing `Hj`, `cs`, `sn`, `s` in place — is the **L1>L0** concern of the firm
+[`ls_update_column-mutation-rotation`](../L1-L0/ls-update-column-mutation-rotation.md) theme
+(cycle-030); **this theme stops at the L1 leaf and does not re-derive that L0 in-place step** (the
+same boundary the sibling draws at the L1 `orthogonalize` leaf). The
+[`ls_update_column`](../L1/ls-update-column.md) column-streaming leaf is **firm**
 (cycle-029; `book/src/L1/ls-update-column.md`, firm-on-positive-structure per the running-QR loop body
 `iterative.cpp:634-640` / `:813-819`); the co-extensive **Face 2** below carries the same value via the
 de-fused scalar Givens kernel pair, so either face resolves the L1 RHS of this fan-down.
@@ -426,15 +427,13 @@ rule **is** the L2 entry's already-firm laws 1/2/6 read as a lowering (the
 [`orthogonalize-composition-lowering`](./orthogonalize-composition-lowering.md) firm bar). No
 literature inference, no negative-anchor reconstruction, no speculative operator.
 
-The one remaining plain-text forward-reference — the opaque **Face-1** `ls_update_column`
-column-streaming leaf — does **not** gate firmness: Face 1 and Face 2 are co-extensive presentations
-of the same value ("a resolution choice, not a value choice"), and Face 2 (the de-fused scalar Givens
-sequence) is fully firm, so the theme's fan-down value is firm independent of the opaque-leaf face
-being on disk. (This is the one judgment that distinguishes this promotion from the deferred draft's
-`rough-in`, where the back-solve target was an unanchored general `trsv` forward-ref AND Face-1 was
-treated as the sole value-carrier; the re-anchor resolves the back-solve target to the firm
-`back_solve` leaf, which is what unblocks `firm` — see the report's §Open questions for the explicit
-judgment record.) The general `trsv` is a distinct, separately-blocked L3-inventory operator
+Both Face-1 and Face-2 of the L1 RHS resolve to firm vocabulary on disk: the opaque Face-1
+[`ls_update_column`](../L1/ls-update-column.md) column-streaming leaf (firm cycle-029,
+firm-on-positive-structure) and the de-fused Face-2 scalar Givens kernel pair
+([`givens_generate`](../concepts/givens_generate.md) /
+[`givens_apply`](../concepts/givens_apply.md)) are co-extensive presentations of the same value, and
+the terminal back-solve target is the firm L1 [`back_solve`](../L1/back_solve.md) leaf (cycle-027).
+The general `trsv` is a distinct, separately-blocked L3-inventory operator
 (`scaffolding/open-questions.md:24`), NOT this theme's back-solve target.
 
 A `lowering-verifier` audit attaching the `verified_against:` block (confirming the four-sub-step
@@ -444,31 +443,9 @@ not a status reduction.
 
 ## Open questions / caveats
 
-- **Firm-promotion judgment record (the one non-mechanical decision).** The deferred c027 D5 draft was
-  `rough-in`, gated on the Face-1 `ls_update_column` leaf not being on disk. That leaf is **still not on
-  disk**. The promotion to `firm` rests on the judgment that the opaque Face-1 leaf is co-extensive
-  with the **firm de-fused Face 2** (the scalar Givens kernel pair) — the theme's fan-down value is
-  carried by Face 2 + the now-firm `back_solve` leaf + firm `linear_combination`, so the opaque-leaf
-  forward-reference is an alternative presentation, not a value-gate. This matches the sibling
-  `orthogonalize-composition-lowering` reasoning where the fan-down rule IS the L2 entry's firm laws
-  read as a lowering. If a reviewer judges the opaque-leaf forward-ref should still hold the theme at
-  `rough-in` until `ls_update_column` lands, the only change is the `## Status` value (the body is
-  unaffected) — flagged here as the explicit judgment so the integrator/critic can confirm or revert.
-
-- **`ls_update_column` column-streaming leaf NOT harvested this dispatch (lifter-scope decision).** The
-  distinct, still-un-harvested Face-1 leaf — the per-column running-QR update `ls_update_column(K, j,
-  h_new) → K'` (`concepts/incremental-least-squares.md:14`), distinct from the terminal `back_solve` —
-  was offered as an optional harvest "only if clean and small". **Decision: NOT harvested.** Harvesting
-  a new L1 operator is harvester scope, not lifter scope (a lifter does pure structural re-anchoring,
-  not authoring new operators — CLAUDE.md §What you DO NOT do); it is also not required to tighten this
-  fan-down (Face 2 already carries the firm de-fused value). Left as a plain-text forward note;
-  **flagged for a follow-on harvester** (a small L1 column-streaming leaf whose L0 site is the
-  per-column loop body `iterative.cpp:634-642`, with its own forthcoming `ls_update_column-mutation-rotation`
-  L1>L0 theme). Suggested plan entry under the `l2-named-composition-lifts` / `back_solve` cohort.
-
 - **General `trsv` remains BLOCKED — not closed by this theme.** The terminal-back-solve target is the
   specific `back_solve` leaf, NOT the general `trsv` / `sparse_triangular_solve` (the Gauss-Seidel /
-  ILU smoother kernel on the length-`N` field, no positive L0 anchor, `scaffolding/open-questions.md:24,:498`). The
+  ILU smoother kernel on the length-`N` field, no positive L0 anchor, `scaffolding/open-questions.md:24,:537`). The
   re-anchor explicitly demotes the general-`trsv` mention to a forward note and does not claim it
   exists; the `trsv` L3-inventory gap stays open (likely obstruction-theme target). Recorded so the
   `trsv` gap is not falsely treated as touched by this firm theme.
@@ -476,10 +453,10 @@ not a status reduction.
 - **L1>L0 boundary deferred.** This theme stops at the L1 leaves and does NOT re-derive the L0 in-place
   running-QR mechanics (the four `*PlaneRotation` writes to `Hj`/`cs`/`sn`/`s`) or the back-solve
   in-place `s[0..j]` overwrite (the firm `back_solve` leaf's own L1>L0 concern) or the `x.Add`
-  reconstruction (a `linear_combination` concern). The per-column in-place step is the forthcoming
-  `ls_update_column-mutation-rotation` L1>L0 theme; the `lowering-verifier` audit should confirm this
-  boundary is clean (no duplication of the L0 in-place step across this L2>L1 theme and the leaf L1>L0
-  themes).
+  reconstruction (a `linear_combination` concern). The per-column in-place step is the firm
+  [`ls_update_column-mutation-rotation`](../L1-L0/ls-update-column-mutation-rotation.md) L1>L0 theme
+  (cycle-030); the `lowering-verifier` audit should confirm this boundary is clean (no duplication of
+  the L0 in-place step across this L2>L1 theme and the leaf L1>L0 themes).
 
 - **L3 sequential-obstruction forecast (replay chain + back-solve recurrence).** The replay sub-step is
   a length-`j` ordered chain of 2-vector updates (`iterative.cpp:634-636`), each reading the previous —
@@ -487,16 +464,6 @@ not a status reduction.
   flags it as a `sequential-obstruction` candidate for the eventual L3 iteration rotation (the
   back-solve's inner `k`-recurrence likewise — `back_solve.md` reduction-order non-law). Forward note
   for a future L3 pass, NOT content of this L2>L1 theme; recorded so the L3 author finds it.
-
-- **OQ `incremental-least-squares-composition-lowering-theme-deferred-needs-back-solve-reanchor`
-  (`scaffolding/open-questions.md:766`) — RESOLVED by this dispatch.** The c027 D5 deferral is closed: the theme is
-  re-anchored to the firm `back_solve` leaf, the `trsv`↔`back_solve` naming reconciled (option (a) from
-  the c027 repairer's META: re-point at `back_solve`, demote general `trsv` to a forward note), the
-  `ls_update_column` harvest decided (deferred to a follow-on harvester, recorded above), and the theme
-  promoted `rough-in → firm`. *Meta-phase action:* migrate the OQ to Closed (answer-link
-  `book/src/L2-L1/incremental-least-squares-composition-lowering.md`, status `firm`); the residual
-  `ls_update_column`-column-streaming-leaf harvest is a fresh plan candidate (small L1 leaf, follow-on
-  harvester), distinct from the now-resolved re-anchor.
 
 ```yaml
 verified_against:

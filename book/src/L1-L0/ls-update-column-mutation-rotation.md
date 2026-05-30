@@ -811,3 +811,139 @@ follow-up, not a status reduction. Completes the GMRES-restart L1>L0
 cohort: the per-column-incremental producer (this theme) and the
 restart-cycle terminal consumer (`back-solve-mutation-rotation`, firm
 cycle-029) are both now firm L1>L0 themes.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/iterative.cpp:634
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: GMRES strict-order replay-loop header for (int k = 0; k < j; k++) — citecheck --anchor zero-drift on-disk.
+  - citation: palace/linalg/iterative.cpp:636
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: GMRES replay sub-step body ApplyPlaneRotation(Hj[k], Hj[k+1], cs[k], sn[k]) — citecheck zero-drift.
+  - citation: palace/linalg/iterative.cpp:638
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: GMRES generate-into-registers GeneratePlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]) — citecheck zero-drift; writes cs[j], sn[j] by reference.
+  - citation: palace/linalg/iterative.cpp:639
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: GMRES column-apply ApplyPlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]) — citecheck zero-drift; post-condition Hj[j+1] = 0 by generate-apply pair contract (law 1).
+  - citation: palace/linalg/iterative.cpp:640
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: GMRES RHS-apply ApplyPlaneRotation(s[j], s[j+1], cs[j], sn[j]) — citecheck zero-drift; residual concentrated into s[j+1] (law 3).
+  - citation: palace/linalg/iterative.cpp:642
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: convergence-test residual read beta = std::abs(s[j+1]) — citecheck zero-drift; downstream boundary marker for the law-3 byproduct, NOT part of the leaf body.
+  - citation: palace/linalg/iterative.cpp:629-632
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: upstream Hj = H.data() + j*(max_dim+1) at :629 + OrthogonalizeIteration at :630 + Hj[j+1] = Norml2 at :631 + w-normalize at :632 — citecheck --anchor 'Hj = H.data' lands at 629 within range; upstream orthogonalize + nrm2 boundary marker, NOT part of the leaf.
+  - citation: palace/linalg/iterative.cpp:73-108
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: GeneratePlaneRotation real scalar kernel — citecheck --anchor 'GeneratePlaneRotation' lands at 73; LAPACK-scaled rotation generator with overflow/underflow scaling at :101-108 (the safmin/safmax branch).
+  - citation: palace/linalg/iterative.cpp:101-108
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: overflow/underflow scaling branch (the else clause guarding non-finite intermediates) — citecheck --anchor 'safmin' lands at 102 within range; pinned finite-precision composition path for the load-bearing-numerical replay chain.
+  - citation: palace/linalg/iterative.cpp:112-118
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: GeneratePlaneRotation complex scalar kernel — citecheck --anchor 'GeneratePlaneRotation' lands at 112 within range; signature with cs as RealType + sn as complex<T> at :112-113, in-comment unitarity contract cs is real and cs² + |sn|² = 1 at :118.
+  - citation: palace/linalg/iterative.cpp:118
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: in-comment unitarity contract cs is real and cs² + |sn|² = 1 — citecheck zero-drift; underwrites law 4 (unitarity preservation).
+  - citation: palace/linalg/iterative.cpp:227-241
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: ApplyPlaneRotation real :227 + complex :235 — citecheck --anchor 'ApplyPlaneRotation' lands at both 227 and 235 within range; the in-place 2-vector update kernel called at the replay loop, column-apply, and RHS-apply; complex variant uses conj(sn) at :239.
+  - citation: palace/linalg/iterative.cpp:227
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: ApplyPlaneRotation real-variant scalar kernel signature inline void ApplyPlaneRotation(T &dx, T &dy, const T cs, const T sn) — citecheck zero-drift.
+  - citation: palace/linalg/iterative.cpp:235
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: ApplyPlaneRotation complex-variant scalar kernel signature inline void ApplyPlaneRotation(std::complex<T> &dx, std::complex<T> &dy, const T cs, ...) — citecheck zero-drift.
+  - citation: palace/linalg/iterative.cpp:612
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: restart-cycle RHS seed s[0] = beta; — citecheck zero-drift; boundary marker establishing s[j+1] = 0 on entry (the applicability-condition 3 invariant for residual-into-tail).
+  - citation: palace/linalg/iterative.cpp:611
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: restart-cycle RHS zero-fill std::fill(s.begin(), s.end(), 0.0) — citecheck zero-drift; the upstream zeroing companion to :612 establishing the running-RHS invariant.
+  - citation: palace/linalg/iterative.cpp:615
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: GMRES outer iteration loop header for (;; j++, it++) — citecheck zero-drift; the unbounded outer iteration that drives this leaf's repeated invocation at columns j = 0, 1, ... max_dim - 1.
+  - citation: palace/linalg/iterative.cpp:631
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: upstream Hj[j+1] = linalg::Norml2(comm, w) — citecheck zero-drift; the nrm2 producer of h_new[j+1] (the orthogonalisation residual) — boundary marker NOT part of this leaf.
+  - citation: palace/linalg/iterative.cpp:644-645
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: convergence test converged = (beta < eps) at :644 + restart-cycle exit if (converged || j+1 == max_dim || it+1 == max_it) at :645 — citecheck --anchor 'converged' lands at both lines within range; the upstream-absorbed degenerate-input / restart-boundary guard cited in applicability conditions 4 and 7.
+  - citation: palace/linalg/iterative.cpp:666
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: GMRES basis-lift x.Add(s[k], V[k]) — citecheck zero-drift; the downstream consumer of the rotated RHS s[0..j] reading the Arnoldi basis V (basis-lift boundary marker for law-6 narrative).
+  - citation: palace/linalg/iterative.cpp:843
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: FGMRES basis-lift x.Add(s[k], Z[k]) — citecheck zero-drift; the downstream consumer reading the right-preconditioned basis Z; pairs with GMRES :666 to ground law-6 basis-lift independence.
+  - citation: palace/linalg/iterative.cpp:652-660
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: terminal back-solve range with "Reconstruct the solution" comment at :652 + descending for (int i = j; i >= 0; i--) at :653 + per-column-handle Hi = H.data() + i*(max_dim+1) at :655 + s[i] /= Hi[i] at :656 + inner eager-subtraction s[k] -= Hi[k]*s[i] at :659 — citecheck --anchor 'Reconstruct' lands at 652 within range; the downstream back-solve sibling theme entry point (NOT part of this leaf).
+  - citation: palace/linalg/iterative.hpp:192
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: flat Hessenberg slab declaration mutable std::vector<ScalarType> H — citecheck zero-drift; underwrites the flat column-major storage trick + the Hj = H.data() + j*(max_dim+1) stride pointer.
+  - citation: palace/linalg/iterative.hpp:193
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: RHS + sine registers mutable std::vector<ScalarType> s, sn — citecheck zero-drift; the element-type binding for s and sn (ScalarType, complex in the complex variant); underwrites law 7 (per-call scalar-kernel-variant invariance).
+  - citation: palace/linalg/iterative.hpp:194
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: cosine register mutable std::vector<RealType> cs — citecheck zero-drift; cs always RealType (the law-4 cs² + |sn|² = 1 contract relies on cs being real).
+  - citation: palace/linalg/iterative.cpp:813
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: FGMRES replay-loop header for (int k = 0; k < j; k++) — citecheck zero-drift; byte-identical to GMRES :634 (confirmed by literal-anchor match on the same text); the +5 line offset is from preceding FGMRES code, NOT brace placement.
+  - citation: palace/linalg/iterative.cpp:815
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: FGMRES replay sub-step ApplyPlaneRotation(Hj[k], Hj[k+1], cs[k], sn[k]) — citecheck zero-drift; byte-identical to GMRES :636.
+  - citation: palace/linalg/iterative.cpp:817
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: FGMRES generate-into-registers GeneratePlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]) — citecheck zero-drift; byte-identical to GMRES :638.
+  - citation: palace/linalg/iterative.cpp:818
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: FGMRES column-apply ApplyPlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]) — citecheck zero-drift; byte-identical to GMRES :639.
+  - citation: palace/linalg/iterative.cpp:819
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: FGMRES RHS-apply ApplyPlaneRotation(s[j], s[j+1], cs[j], sn[j]) — citecheck zero-drift; byte-identical to GMRES :640; the four-call sub-pattern B sequence cross-confirmed byte-identical to A.
+  - citation: palace/linalg/iterative.hpp:222
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: FGMRES class declaration (FgmresSolver derives publicly from GmresSolver<OperType>) — citecheck zero-drift; the public-inheritance binding underwriting law-6 basis-lift independence + the shared-register chassis at :250.
+  - citation: palace/linalg/iterative.hpp:250
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: FGMRES using-declaration using GmresSolver<OperType>::H — citecheck zero-drift; inherits the flat H slab from GmresSolver (the same register the four-call body indexes via Hj).
+  - citation: palace/linalg/iterative.hpp:256
+    verdict: supports
+    audited_at: 2026-05-30T050100Z
+    note: FGMRES Z register declaration mutable std::vector<VecType> Z — citecheck zero-drift; the FGMRES-specific right-preconditioned basis register (Z[k] = M⁻¹ V[k]); the basis-lift independence boundary marker (this leaf does NOT read Z).
+```
