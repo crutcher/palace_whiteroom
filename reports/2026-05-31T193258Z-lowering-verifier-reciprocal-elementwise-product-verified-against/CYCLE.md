@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T19:32:58Z
 scope: L1>L0 theme audit — reciprocal-elementwise-product-mutation-rotation
 status: integrated
 integrated_at: 2026-05-31T233000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b64fedc
 integration_notes: "Applied clean cycle-037 D3. Appended a 19-row verified_against: YAML block (all supports, top-level fully-supported) to book/src/L1-L0/reciprocal-elementwise-product-mutation-rotation.md; NO body edits, theme stays firm (grep -c verified_against: 0->1). Integrator-per-report path-hygiene repair: qualified 3 bare-basename operator.cpp:NNN note-text refs to palace/linalg/operator.cpp:NNN (citecheck --scan AMBIG, post-repair 42 ok/0 failing). Second independent dead-code-status confirmation of 3 pre-existing c034 D1 OQs (unchanged). retroactive-budget global 0; build exit 0."
 inputs:
   - book/src/L1-L0/reciprocal-elementwise-product-mutation-rotation.md

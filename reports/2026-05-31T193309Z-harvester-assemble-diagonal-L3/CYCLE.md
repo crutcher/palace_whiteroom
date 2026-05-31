@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T19:33:09Z
 scope: L3 operator: assemble-diagonal
 status: integrated
 integrated_at: 2026-05-31T233000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b64fedc
 integration_notes: "Applied clean cycle-037 D1 (10th firm L3 operator). New firm L3 entry book/src/L3/assemble-diagonal.md + SUMMARY entry (between apply_linop/axpy) + L3-index dep-map row. Identity-in-form backfill enacting the FIRST of six (A) firm candidates of the c036 D2 L3-cohort-growth audit. citecheck --scan 15 ok/0 failing. L3-index running tally reconciled 9->11 at finalize (consolidated with D2). retroactive-budget global 0; build exit 0, zero repairs."
 inputs:
   - book/src/L1/assemble-diagonal.md (firm L1 home; cycle harvested — signature/laws/variant-axes inherited)

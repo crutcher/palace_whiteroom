@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T193322Z
 scope: L3 operator: jacobi-smoother
 status: integrated
 integrated_at: 2026-05-31T233000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b64fedc
 integration_notes: "Applied clean cycle-037 D2 (11th firm L3 operator). New firm L3 entry book/src/L3/jacobi-smoother.md + SUMMARY entry (between scal/chebyshev) + L3-index dep-map row. The thinnest constructed-operator gate (apply = one elementwise product op.dinv ⊙ x, NO obstruction at L3); sixth/final (A) firm candidate of the c036 D2 L3-cohort-growth audit. divfree-projector reference left plain-text (repairer downgrade, sibling not-yet-on-disk). citecheck --scan 15 ok/0 failing. L3-index running tally reconciled 9->11 at finalize. retroactive-budget global 0; build exit 0, zero repairs."
 inputs:
   - book/src/L1/jacobi-smoother.md (firm L1 home being backfilled; signature/laws/variant-axes inherited)
