@@ -13,7 +13,7 @@ reports_deferred: 0
 reports_rejected: 0
 gate_hits_total: 1
 build_status: clean (cargo make book exit 0, ~90s)
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1f178ff
 ---
 
 # cycle-039 integrator-finalize — batch CYCLE.md
@@ -90,4 +90,4 @@ Scaffolding / housekeeping:
 
 ## Readiness note for the batch-11 meta-phase (fires next, separate dispatch)
 
-Weigh: **(a)** `cycle-planner-stale-priorities-line-recruitment` **3-of-3 CLEAN across batch-11** (c037/c038/c039) under the opus planner — the escalating recurrence-6 friction is structurally CLOSED by the haiku→opus swap + paste-inline-evidence requirement; record the close. **(b)** codemap-read-range +1 drift recurrence (D2: hint `:360` vs on-disk `:361`) — friction-cluster data point. **(c)** stale `PLACEHOLDER_SHA` debt in older finalize reports (cycle-019/033/034/036) — housekeeping. **(d)** the D3-count-ownership convention that cleanly avoided the c038 parallel-blind count-divergence — codification candidate.
+Weigh: **(a)** `cycle-planner-stale-priorities-line-recruitment` **3-of-3 CLEAN across batch-11** (c037/c038/c039) under the opus planner — the escalating recurrence-6 friction is structurally CLOSED by the haiku→opus swap + paste-inline-evidence requirement; record the close. **(b)** codemap-read-range +1 drift recurrence (D2: hint `:360` vs on-disk `:361`) — friction-cluster data point. **(c)** stale `1f178ff` debt in older finalize reports (cycle-019/033/034/036) — housekeeping. **(d)** the D3-count-ownership convention that cleanly avoided the c038 parallel-blind count-divergence — codification candidate.

@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T215306Z
 scope: L1>L0 theme re-anchor (ENACT) — floquet-correction-mutation-rotation, Sub-pattern B / Applicability-condition-2 AddMult inner-ksp aliasing-tolerance mechanism
 status: pending
 integrated_at: 2026-05-31T222451Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1f178ff
 integration_notes: "Applied clean by integrator-per-report (cycle-039 D2). 6 surgical edits re-anchored the AddMult aliasing mechanism from the ksp.cpp:297 delegation wrapper to the true gated CgSolver::Mult (iterative.cpp:361/:384-385) + SetInitialGuess(0) precondition (floquetcorrection.cpp:61); all verified_against rows now supports; theme stays firm. OQ floquet-corrector-addmult-aliasing-applicability-audit CLOSED. No build-repair needed (prose/citation/YAML only, no new live links)."
 inputs:
   - book/src/L1-L0/floquet-correction-mutation-rotation.md

@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T21:52:56Z
 scope: L3 operator: normalize
 status: pending
 integrated_at: 2026-05-31T222451Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1f178ff
 integration_notes: "Applied clean by integrator-per-report (cycle-039 D1). Firm L3 normalize (15th) landed; SUMMARY-registered; L3-index dep-map row added (tally deferred to D3 per COUNT-OWNERSHIP partition). CLOSES the c036 D2 (A) identity-in-form L3 cohort 6-of-6. No build-repair needed."
 inputs:
   - book/src/L1/normalize.md (firm L1 home, landed c026; firm-on-positive-structure)

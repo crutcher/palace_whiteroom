@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T21:52:58Z
 scope: L3 index — fold fourth obstruction profile into §Semantics-overlay taxonomy + own consolidated §Working-Notes firm-count tally
 status: pending
 integrated_at: 2026-05-31T222451Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1f178ff
 integration_notes: "Applied clean by integrator-per-report (cycle-039 D3). 2 prose edits to L3/index.md: §Semantics-overlay 4th obstruction profile shape (d) obstruction-carrying-by-reference (Three->Four firm shapes) + §Working-Notes consolidated tally 15 firm + 2 partial-obstruction (c036 (A) cohort 6-of-6 COMPLETE). D3 owned the count tally this cycle per COUNT-OWNERSHIP partition; cleanly avoided the c038 parallel-blind count-divergence. No build-repair needed."
 ---
 
