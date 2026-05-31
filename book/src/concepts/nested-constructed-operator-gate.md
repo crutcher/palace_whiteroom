@@ -61,7 +61,7 @@ single-point-of-truth for the inner gate.
 
 ## Firm instances
 
-Two FIRM L1 operators exhibit the gate-carrying-gate shape; a third site is latent.
+Three FIRM L1 operators exhibit the gate-carrying-gate shape; a fourth site is latent.
 
 - **`eigsolve`** (firm structure; cycle-011, `8bb16b7`) — **two** nested gates. The
   closure `E` binds `E.linear : Solver[A]` (the inner Krylov solver invoked per
@@ -88,31 +88,59 @@ Two FIRM L1 operators exhibit the gate-carrying-gate shape; a third site is late
   (`book/src/L1-L0/divfree-projector-mutation-rotation.md:108-113`,
   `book/src/L1/divfree-projector.md`).
 
-**Transitive nesting (three-deep).** `E.projector : Maybe DivFreeSolver` means the
+- **`floquet-correction`** (firm; cycle-036) — **one** nested gate. The closure `F`
+  binds `F.ksp : Solver[F.M_RT]` (a CG solver preconditioned by `JacobiSmoother`,
+  bound to the RT vector-FE mass operator `F.M_RT` as both operator and
+  preconditioner target), materialised at construction
+  (`palace/linalg/floquetcorrection.cpp:60-67`). Its per-call `ksp->Mult(rhs, y)`
+  is the opaque inner RT mass solve (`book/src/L1-L0/floquet-correction-mutation-rotation.md`
+  Sub-pattern A, `book/src/L1/floquet-correction.md`). Structurally isomorphic to
+  `divfree-projector` but strictly thinner (no boundary-zeroing, no gradient
+  correction, no empty-boundary nullspace pin). Element-type scope-out:
+  `<ComplexVector>` only (the first L1 nested-gate instance with a
+  deliberately-narrowed element-type scope).
+
+**Transitive nesting (three-deep) — two independent chains.** Both `eigsolve` and
+`floquet-correction` close a three-level nested chain, confirming the pattern is
+load-bearing across multiple pipelines (not eigsolve-incidental).
+
+**Chain 1 (eigsolve pipeline).** `E.projector : Maybe DivFreeSolver` means the
 `divfree-projector` gate is *itself* a sub-field of the `eigsolve` closure — so the
-two instances are not merely parallel, they are transitively nested:
+eigsolve and divfree instances are not merely parallel, they are transitively nested:
 
     eigsolve  ⊃  divfree-projector  ⊃  ksp_solve
       (E)            (E.projector)         (P.ksp)
 
 The eigsolve outer loop carries a divfree projector, which carries its own inner CG
-solve. The fidelity rule applies at each edge: the eigsolve theme treats `E.projector`
-opaquely; the divfree theme treats `P.ksp` opaquely. This three-deep transitivity is
-direct evidence the pattern is load-bearing across the eigenmode pipeline, not
-incidental.
+solve.
 
-**Latent site — `ksp_solve` preconditioner.** `ksp_solve`'s closure `K` binds a
-preconditioner `M⁻¹` (`book/src/L1/ksp_solve.md:31`). Via [`solver-as-operator`](./solver-as-operator.md),
-a preconditioner **is-an** operator and may itself be a `Solver`-typed handle (a
-nested `ksp` used as a preconditioner). When `K.M⁻¹` is a `Solver`, `ksp_solve` is
-*also* gate-carrying-gate. But the L1 `ksp_solve` entry types `M⁻¹` as a plain
-`LinearOperator[N, N]` and the `ksp-solve-mutation-rotation` theme treats the
-preconditioner opaquely, so this is a **latent** nesting site, not a confirmed firm
-instance (no concrete Palace site where a `BaseKspSolver`'s preconditioner is itself a
-`BaseKspSolver` has been verified against L0 source — flagged for a future harvester).
-Chebyshev-as-preconditioner inside a Krylov method is a related but **weaker** nesting
-(`book/src/L1/chebyshev-smoother.md:140`): chebyshev is a smoother-as-operator, not a
-`Solver`-gate.
+**Chain 2 (floquet pipeline).** `F.ksp.preconditioner = JacobiSmoother`, and via
+[`solver-as-operator`](./solver-as-operator.md) the JacobiSmoother is itself a firm
+L1 constructed-operator gate ([`jacobi-smoother`](../L1/jacobi-smoother.md)):
+
+    floquet-correction  ⊃  ksp_solve  ⊃  jacobi-smoother
+      (F)                    (F.ksp)        (F.ksp.preconditioner)
+
+The driver-side floquet correction carries an inner CG solve, which carries a
+diagonal-preconditioner gate. The fidelity rule applies at each edge of both chains:
+each outer theme treats its inner gate opaquely. Two independent three-deep chains
+is direct evidence the pattern is load-bearing across multiple pipelines, not
+incidental to one.
+
+**Latent site — `ksp_solve` `BaseKspSolver`-as-preconditioner.** `ksp_solve`'s
+closure `K` binds a preconditioner `M⁻¹` (`book/src/L1/ksp_solve.md:31`). Via
+[`solver-as-operator`](./solver-as-operator.md), a preconditioner **is-an** operator
+and may itself be a `Solver`-typed handle (a nested `ksp` used as a preconditioner).
+When `K.M⁻¹` is a `Solver`, `ksp_solve` is *also* gate-carrying-gate. The L1
+`ksp_solve` entry types `M⁻¹` as a plain `LinearOperator[N, N]` and the
+`ksp-solve-mutation-rotation` theme treats the preconditioner opaquely, so this is a
+**latent** nesting site, not a confirmed firm instance (no concrete Palace site where a
+`BaseKspSolver`'s preconditioner is itself a `BaseKspSolver` has been verified against
+L0 source — flagged for a future harvester). The floquet pipeline's
+`F.ksp.preconditioner = JacobiSmoother` realises the *non-ksp* form of this latent
+site (the preconditioner IS a constructed-operator gate, just a `Smoother`-gate
+rather than a `Solver`-gate); a future site with `BaseKspSolver`-as-preconditioner
+would be the strict version.
 
 ## Relationship to siblings
 
@@ -131,9 +159,14 @@ Chebyshev-as-preconditioner inside a Krylov method is a related but **weaker** n
 
 ## See also
 
-- [`ksp_solve`](./ksp_solve.md) — the innermost gate in every instance here; the inner
-  iteration's home theme.
+- [`ksp_solve`](./ksp_solve.md) — the innermost (solver) gate in eigsolve+divfree
+  chains; the inner iteration's home theme.
+- [`jacobi-smoother`](../L1/jacobi-smoother.md) — the innermost (smoother) gate in the
+  floquet chain; the diagonal-preconditioner gate.
 - `book/src/L1-L0/eigsolve-mutation-rotation.md` §"Sub-pattern B" — the two-gate
   instance's lowering (delegates to `ksp-solve-mutation-rotation`).
 - `book/src/L1-L0/divfree-projector-mutation-rotation.md` §"Sub-pattern A" / §"Sub-pattern C"
   — the one-gate instance's lowering + closure-field materialisation.
+- `book/src/L1-L0/floquet-correction-mutation-rotation.md` §"Sub-pattern A" / §"Sub-pattern C"
+  — the floquet one-gate instance's lowering + closure-field materialisation; the
+  second three-deep chain (floquet → ksp → jacobi-smoother).
