@@ -150,13 +150,39 @@ sequence is `Cross->Mult(x, this->rhs); this->ksp->Mult(this->rhs, y_arg =
 this->rhs);` — i.e. `ksp->Mult(b, x)` with `b == x` (the input RHS and the
 output buffer are the same `VecType`). This implies a **load-bearing aliasing
 applicability condition** (see Applicability conditions): the inner CG solver
-must accept input/output aliasing on its argument vectors. Palace's
-`BaseKspSolver::Mult(const VecType &x, VecType &y) const`
-(`palace/linalg/ksp.cpp:297`) accepts this aliasing — the CG iteration body
-reads `x` once into a residual register and thereafter writes `y` and internal
-workspace independently. This aliasing is the source of the four-byte buffer
-economy that the AddMult fusion exists for; reversing the fusion at L1 requires
-the same applicability guarantee.
+must accept input/output aliasing on its argument vectors.
+
+The inner ksp is reached through a delegation chain, and the aliasing tolerance
+lives at the *bottom* of it, not at the top. `F.ksp` is a
+`BaseKspSolver<OperType>` whose `Mult` (`palace/linalg/ksp.cpp:297`) is a **thin
+delegation wrapper** — it opens a `BlockTimer` and forwards `ksp->Mult(x, y)`
+(`palace/linalg/ksp.cpp:300`) verbatim to the wrapped inner solver, carrying no
+aliasing logic of its own. The wrapped inner solver is a `CgSolver<OperType>`
+(constructed at `palace/linalg/floquetcorrection.cpp:60`, wrapped into `F.ksp`
+at `:66`). The **actual aliasing-tolerance mechanism** is in
+`CgSolver<OperType>::Mult(const VecType &b, VecType &x) const`
+(`palace/linalg/iterative.cpp:361`): because the floquet setup calls
+`pcg->SetInitialGuess(0)` (`palace/linalg/floquetcorrection.cpp:61`), the
+`initial_guess == false` precondition holds, so `CgSolver::Mult` takes its
+else-branch (`palace/linalg/iterative.cpp:382-386`):
+
+    else
+    {
+      r = b;      // :384 — copy RHS into the residual register FIRST
+      x = 0.0;    // :385 — THEN zero the (possibly aliased) destination
+    }
+
+The `r = b;` at `:384` reads `b` into the residual register **before** the
+`x = 0.0;` at `:385` zeros the destination — so even when `b` and `x` alias the
+same buffer (`rhs`), the read of `b` completes before the write of `x`, and the
+solve proceeds correctly. The tolerance is therefore **conditional**: it holds
+*because* `SetInitialGuess(0)` selected the else-branch. Had `initial_guess`
+been true, the if-branch (`palace/linalg/iterative.cpp:377-381`) would compute
+`A->Mult(x, r)` — reading `x` before `r = b` — which under `b == x` aliasing
+would read the not-yet-set RHS and break the fusion. This conditional aliasing
+tolerance is the source of the buffer economy that the AddMult fusion exists
+for; reversing the fusion at L1 requires the same applicability guarantee — and
+the guarantee in turn rests on the `SetInitialGuess(0)` setup choice.
 
 Justification kind: **algebraic** (the AddMult-into-axpy unfolding is the
 `axpy(α, a, b) = a·α + b` definition with `a = floquet_correction(F, x)` and
@@ -173,8 +199,20 @@ Citations:
   VecType &y, ScalarType a = 1.0) const;` (decl; default `a = 1.0` makes the
   no-scale apply-and-accumulate `Mult-and-add`).
 - `palace/linalg/ksp.cpp:297` — `BaseKspSolver<OperType>::Mult(const VecType
-  &x, VecType &y) const` (the inner ksp whose aliasing tolerance is required;
-  the AddMult fusion depends on the ksp accepting `x == y` aliasing).
+  &x, VecType &y) const` (the **delegation wrapper** on the aliased call-path:
+  `:300` forwards `ksp->Mult(x, y)` to the inner CG solver; carries no aliasing
+  logic itself — this is the call-path, not the mechanism).
+- `palace/linalg/iterative.cpp:361` — `CgSolver<OperType>::Mult(const VecType
+  &b, VecType &x) const` (the **true aliasing-tolerance mechanism**; signature
+  `:361`, the `template` line is `:360`). With `initial_guess == false` the
+  else-branch (`:382-386`) runs `r = b;` (`:384`) **before** `x = 0.0;` (`:385`),
+  copying the RHS into the residual register before zeroing the aliased
+  destination — so `b == x` aliasing is safe. The `if (this->initial_guess)`
+  test is at `:377`; the aliasing-unsafe if-branch is `:377-381`.
+- `palace/linalg/floquetcorrection.cpp:61` — `pcg->SetInitialGuess(0)` (the
+  `initial_guess == false` **precondition** that gates the aliasing-safe
+  else-branch; `pcg` is the `CgSolver` made at `:60`, wrapped into `F.ksp` at
+  `:66`). The aliasing tolerance is conditional on this setup choice.
 
 ### Sub-pattern C — construction site: closure-field materialisation
 
@@ -311,17 +349,24 @@ The rewrite preserves semantics when:
    allocates `rhs` as a construction-bound member distinct from the caller's
    `x` and `y`. Inherited applicability-condition shape from
    [`apply-linop-mutation-rotation`](./apply-linop-mutation-rotation.md).
-2. **Inner ksp accepts input/output aliasing.** The `AddMult` body's nested
-   `this->Mult(x, rhs)` call binds `Mult`'s output argument to the scratch
-   member, and `Mult`'s step-2 body `ksp->Mult(rhs, y_arg = rhs)` therefore
-   calls the inner ksp with `b == x` (input RHS and output destination aliased
-   to the same buffer). The inner `BaseKspSolver::Mult`
-   (`palace/linalg/ksp.cpp:297`) tolerates this aliasing — the CG iteration
-   reads `x` once into a residual register and thereafter writes `y` and
-   internal workspace independently. **A lowering that re-derives `ksp->Mult`
-   without input/output aliasing tolerance breaks the AddMult fusion.** This
-   condition is **specific to this theme** (the divfree-projector AddMult-free
-   apply does not have this concern).
+2. **Inner ksp accepts input/output aliasing (conditional on `SetInitialGuess(0)`).**
+   The `AddMult` body's nested `this->Mult(x, rhs)` call binds `Mult`'s output
+   argument to the scratch member, and `Mult`'s step-2 body `ksp->Mult(rhs,
+   y_arg = rhs)` therefore calls the inner ksp with `b == x` (input RHS and
+   output destination aliased to the same buffer). The inner `BaseKspSolver::Mult`
+   (`palace/linalg/ksp.cpp:297`) is a thin delegation wrapper that forwards to
+   `ksp->Mult(x, y)` (`:300`); the wrapped `CgSolver<OperType>::Mult`
+   (`palace/linalg/iterative.cpp:361`) is what tolerates the aliasing — **but
+   only because** `pcg->SetInitialGuess(0)` (`palace/linalg/floquetcorrection.cpp:61`)
+   sets `initial_guess == false`, selecting the else-branch
+   (`palace/linalg/iterative.cpp:382-386`) which copies `r = b;` (`:384`) before
+   `x = 0.0;` (`:385`) — reading the RHS into the residual register before
+   zeroing the aliased destination. **A lowering that re-derives the inner solve
+   with `initial_guess == true` (the if-branch `:377-381`, which computes
+   `A->Mult(x, r)` and reads `x` first) breaks the AddMult fusion under
+   aliasing.** This condition is **specific to this theme** (the
+   divfree-projector AddMult-free apply does not have this concern) and its
+   safety rests on the `SetInitialGuess(0)` construction-time choice.
 3. **No observer of prior `y` after the in-place call.** `Mult(x, y)` writes
    `y` (the destination is overwritten with the new value); `AddMult` reads
    `y` (the destination is accumulated onto with the correction). If a
@@ -413,8 +458,16 @@ L0 evidence ranges (all verified via `citecheck` this cycle, 2026-05-31):
 - `palace/linalg/floquetcorrection.hpp:49` — `mutable VecType rhs;`.
 - `palace/linalg/floquetcorrection.hpp:52-53` — constructor decl.
 - `palace/linalg/floquetcorrection.hpp:58-59` — `Mult` and `AddMult` decls.
-- `palace/linalg/ksp.cpp:297` — `BaseKspSolver<OperType>::Mult` (the inner ksp
-  whose aliasing tolerance the AddMult fusion requires).
+- `palace/linalg/ksp.cpp:297` — `BaseKspSolver<OperType>::Mult` (the
+  **delegation wrapper** on the aliased AddMult call-path; `:300` forwards to
+  the inner CG solver, carrying no aliasing logic itself).
+- `palace/linalg/iterative.cpp:360-386` — `CgSolver<OperType>::Mult` (the
+  **true aliasing-tolerance mechanism** the AddMult fusion requires; signature
+  `:361`, `if (this->initial_guess)` `:377`, aliasing-safe else-branch
+  `:382-386` with `r = b;` `:384` before `x = 0.0;` `:385`).
+- `palace/linalg/floquetcorrection.cpp:61` — `pcg->SetInitialGuess(0)` (the
+  `initial_guess == false` precondition that gates the aliasing-safe
+  else-branch; makes the AddMult aliasing tolerance load-bearing-safe).
 - `palace/models/materialoperator.hpp:103,128` — `GetFloquetCross` accessors.
 - `palace/models/materialoperator.cpp:358` — `mat_kx(count).Set(1.0,
   wave_vector_cross)`.
@@ -458,7 +511,12 @@ lines `:83-85`.
 
 **No partly-constructive caveat applies.** This theme has a positive source
 site for every step, including the AddMult fusion's load-bearing aliasing
-applicability (`palace/linalg/ksp.cpp:297` + the L0 calling sequence). The L1
+applicability — its positive mechanism site is `CgSolver<OperType>::Mult`
+(`palace/linalg/iterative.cpp:361`, the aliasing-safe else-branch
+`:382-386` runs `r = b;` (`:384`) before `x = 0.0;` (`:385`)), gated by the
+`pcg->SetInitialGuess(0)` precondition (`palace/linalg/floquetcorrection.cpp:61`);
+`palace/linalg/ksp.cpp:297` is the `BaseKspSolver::Mult` delegation wrapper on
+the call-path (it forwards `ksp->Mult(x, y)` at `:300`), not the mechanism. The L1
 anchor is firm-on-positive-structure (the `divfree-projector` / `jacobi-smoother`
 / `chebyshev-smoother` precedent), so this theme is firm at birth.
 
@@ -549,9 +607,17 @@ verified_against:
     audited_at: 2026-05-31T210435Z
     note: void AddMult(const VecType &x, VecType &y, ScalarType a = 1.0) const; default a=1.0 (no-scale Mult-and-add) confirmed at :59 (citecheck OK).
   - citation: palace/linalg/ksp.cpp:297
-    verdict: partially-supports
-    audited_at: 2026-05-31T210435Z
-    note: site exists and is BaseKspSolver<OperType>::Mult, but :297-310 is a thin wrapper delegating to inner ksp->Mult(x,y) at :300 — it does NOT itself exhibit the reads-x-once-then-writes-y aliasing-tolerance the theme attributes to it (Applicability condition 2 / Sub-pattern B prose lines 154-159). The aliasing mechanism + its initial_guess==false precondition actually live at CgSolver<OperType>::Mult iterative.cpp:361 (else-branch :384-385 `r = b; x = 0.0;` reads b before zeroing the aliased x) gated by SetInitialGuess(0) at floquetcorrection.cpp:61. Aliasing IS safe, but the cited :297 is insufficient evidence for the mechanism; carry-forward correction recorded in Open questions. Structural AddMult-as-axpy rewrite itself is fully supported.
+    verdict: supports
+    audited_at: 2026-05-31T215306Z
+    note: BaseKspSolver<OperType>::Mult :297 is the DELEGATION WRAPPER (call-path, not mechanism) — :299 BlockTimer, :300 ksp->Mult(x,y) forwards verbatim to the inner CgSolver::Mult. Re-anchored cycle-039 D2 — the AddMult aliasing-tolerance MECHANISM is at CgSolver::Mult, see the iterative.cpp:360-386 and floquetcorrection.cpp:61 rows below (citecheck OK).
+  - citation: palace/linalg/iterative.cpp:360-386
+    verdict: supports
+    audited_at: 2026-05-31T215306Z
+    note: CgSolver<OperType>::Mult(const VecType &b, VecType &x) sig at :361 (:360 is the template line; planner hinted :360 — +1 drift corrected to :361) — the TRUE aliasing-tolerance mechanism. With initial_guess==false the else-branch :382-386 runs r = b; (:384) x = 0.0; (:385) — copies b into r BEFORE zeroing the aliased x, so when AddMult passes b==x==rhs the read of b precedes the write of x and aliasing is safe. The if(this->initial_guess) test is at :377; the aliasing-unsafe if-branch is :377-381. citecheck OK on :361/:377/:384/:385.
+  - citation: palace/linalg/floquetcorrection.cpp:61
+    verdict: supports
+    audited_at: 2026-05-31T215306Z
+    note: pcg->SetInitialGuess(0) sets the initial_guess==false precondition that gates the CgSolver::Mult else-branch — without it the if-branch at iterative.cpp:377-381 reads x (A->Mult(x,r)) before r is set, which WOULD break b==x aliasing. This SetInitialGuess(0) is what makes the AddMult aliasing tolerance load-bearing-safe (citecheck OK, anchor lit).
   # Sub-pattern C — construction-site closure materialisation
   - citation: palace/linalg/floquetcorrection.cpp:20-71
     verdict: supports

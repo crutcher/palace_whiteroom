@@ -30,6 +30,39 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-039 — 2026-05-31T235959Z — THIRD / FINAL primary cycle of meta-batch-11 (cycles 037/038/039; the batch-11 meta-phase fires AFTER this finalize commit, as a SEPARATE dispatch) — THIRD consecutive clean opus-planner cycle (3-of-3 batch-11)
+
+### Unblocked
+- The **c036 D2 (A) identity-in-form L3 cohort is fully closed 6-of-6** (`normalize` landed firm L3 this cycle) — the L3 frontier now shifts to the **(B) substantive candidates** (`orthogonalize` / `chebyshev-smoother` [subsumption-check first] / `apply_nonlinear_pencil` [fold into eigsolve-variant]) — citation: OQ `l3-cohort-growth-audit-c036-verdict` (FULLY CLOSED).
+- The floquet AddMult-aliasing citation gap is **fully closed** — the firm L1>L0 `floquet-correction-mutation-rotation` theme now has all `verified_against:` rows `supports`; no follow-up re-anchor needed — citation: OQ `floquet-corrector-addmult-aliasing-applicability-audit` (CLOSED).
+- The L3/index §Semantics-overlay obstruction-profile taxonomy now enumerates **4 firm shapes**; the fifth-profile (`fused-composite-obstruction-free`) overlay note is queued as a layer-intro-author follow-up — citation: OQ `l3-index-fifth-obstruction-profile-fused-composite-obstruction-free` (opened).
+
+### New dependencies
+- `book/src/L3/normalize.md` (firm) depends on `nrm2` + `scal` (fused magnitude-normalization); L3>L1 edge identity-in-form, substantive rotation at L1>L0 `normalize-mutation-rotation` — citation: report `2026-05-31T215256Z-harvester-normalize-L3`.
+- `floquet-correction-mutation-rotation` now anchors its AddMult aliasing mechanism on `CgSolver::Mult` (`iterative.cpp:361`, `:384-385`) + the `SetInitialGuess(0)` precondition (`floquetcorrection.cpp:61`) — the `ksp.cpp:297` site is re-framed as a delegation wrapper — citation: report `2026-05-31T214500Z-lowering-verifier-floquet-addmult-aliasing-reanchor`.
+
+### Resolution implications
+- `l3-cohort-growth-audit-c036-verdict` — **answered (FULLY CLOSED)** — `normalize` closes the 6th and final (A) firm backfill; the entire c036 D2 (A) identity-in-form cohort is 6-of-6 COMPLETE at L3.
+- `floquet-corrector-addmult-aliasing-applicability-audit` — **answered (CLOSED)** — all 6 `ksp.cpp:297` mention sites re-anchored to the true gated mechanism; supersedes the c038 D4 "sharpened-not-closed" carry-forward.
+- `l3-index-fourth-obstruction-profile-obstruction-carrying-by-reference` — **answered (RESOLVED)** — shape (d) `obstruction-carrying-by-reference` enacted in §Semantics-overlay.
+- `floquet-correction-real-vector-instantiation-dead-code` — **needs-more** — D2 explicitly retained it out of scope; stays open as filed.
+
+### Suggested next dispatches
+- (`harvester` or `same-layer-cross-cutter`, `orthogonalize` L3 backfill) — first of the (B) substantive L3 candidates now that the (A) cohort is closed; substantive iteration-rotation, not identity-in-form.
+- (`layer-intro-author`, `L3/index §Semantics-overlay fifth obstruction profile`) — fold `fused-composite-obstruction-free` per the queued OQ.
+- (`same-layer-cross-cutter`, `L3/index §Working-Notes compaction`) — prune the older c024/c037 inline count snapshots per `l3-index-working-notes-stale-snapshot-compaction-candidate` (minor/deferred).
+- HOLD: `normalize_B` L3 — gated until `matrix-weighted-norm` promotes at L1 (OQ `normalize_B-l3-l1-promotion-gated`). STOP-PROPOSING 7-operator negative list (lu_solve/back_solve/ls-update-column/4 nleps atoms) remains in force.
+
+### Wave-conflict observations
+- **NONE — and notably, the c038 parallel-blind L3 count-divergence was cleanly avoided this cycle** via the **D3-count-ownership partition**: D1 (`normalize`) appended ONLY its dep-map row and deferred the §Working-Notes firm-count tally to D3 (which depends on `normalize.md` being on disk and is dispatched after D1). No blind absolute-count reconciliation was needed at finalize — a candidate for codification by the batch-11 meta-phase.
+
+### Integration-tooling friction
+- **codemap-read-range +1 drift recurred** in D2: the planner-hint `iterative.cpp:360` was off-by-one against the on-disk anchor `:361`; the lowering-verifier corrected it via `--anchor` on-disk verification. A fresh data point for the meta-phase codemap-drift friction cluster — citation: OQ `floquet-corrector-addmult-aliasing-codemap-read-range-plus-one-drift-carry-forward`.
+- **`cycle-planner-stale-priorities-line-recruitment` 3-of-3 CLEAN across batch-11** (c037/c038/c039) under the opus planner. This `escalating` recurrence-6 friction (the batch-10 ASK that triggered the haiku→opus swap + paste-inline-evidence requirement) did NOT recur in any of the three batch-11 cycles. The batch-11 confirmation window is COMPLETE; the structural fix held. **The batch-11 meta-phase should record the close.**
+- **Stale `PLACEHOLDER_SHA` debt** in older finalize reports (cycle-019/033/034/036) — carried forward from the cycle-038 finalize note; a meta-phase housekeeping candidate (the two-phase SHA patch was not applied to those older reports).
+
+---
+
 ## cycle-038 — 2026-05-31T235900Z — SECOND primary cycle of meta-batch-11 (cycles 037/038/039; batch-11 meta-phase fires AFTER cycle-039) — SECOND consecutive clean opus-planner cycle
 
 ### Unblocked
