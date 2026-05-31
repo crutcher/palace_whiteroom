@@ -1,8 +1,19 @@
 # verify-dispatch-scope-not-already-discharged
 
-**Promoted:** cycle-033 meta-phase (batch-9). **Proposer:** abstractor (cycle-031 D6 no-op) + layer-intro-author (cycle-031 D6-reroute no-op); promoted on recurrence-3 across batch-9 (c031 file-existence-staleness, c032 broader 4-of-6 deliverable-presence-staleness, c033 working precedent). **Working precedent:** `reports/2026-05-30T150000Z-cycle-planner-cycle-033/CYCLE.md` §"Deliverable-presence verification (cycle-033 deeper-check enforcement per c032 orchestrator signal)" — the c033 cycle-planner ran the procedure inline per-dispatch and landed 3/3 genuinely-open dispatches; that section is the canonical worked example.
+**Promoted:** cycle-033 meta-phase (batch-9). **Strengthened:** cycle-036 meta-phase (batch-10) — recurrence-3 within batch-10 (c034/c035/c036) post-codification proved the skill text alone is insufficient; the paste-inline-evidence requirement is now load-bearing. **Proposer:** abstractor (cycle-031 D6 no-op) + layer-intro-author (cycle-031 D6-reroute no-op); promoted on recurrence-3 across batch-9 (c031 file-existence-staleness, c032 broader 4-of-6 deliverable-presence-staleness, c033 working precedent). **Working precedents:** `reports/2026-05-30T150000Z-cycle-planner-cycle-033/CYCLE.md` §"Deliverable-presence verification (cycle-033 deeper-check enforcement per c032 orchestrator signal)" — the c033 cycle-planner ran the procedure inline per-dispatch and landed 3/3 genuinely-open dispatches; AND `reports/2026-05-31T200000Z-cycle-planner-cycle-036/CYCLE.md` — the c036 cycle-planner correctly REJECTED stale picks WITH pasted inline evidence (the canonical paste-evidence working precedent, post-batch-10 strengthening).
 
-**Audience:** cycle-planner (the primary user; runs the procedure pre-dispatch). Also: orchestrator (the safety net — runs the same procedure when the planner skipped it).
+**Audience:** cycle-planner (the primary user; runs the procedure pre-dispatch). Also: orchestrator (the safety net — runs the same procedure when the planner skipped it OR when the planner's "compliance" was assertion-without-paste-evidence per the batch-10 strengthening).
+
+## Batch-10 strengthening: paste evidence, do not merely claim compliance
+
+The batch-9 codification (this skill + role-spec bullet) was demonstrably insufficient at the planner side: c034 D3 stale-dispatch (recurrence-1), c035 2-of-3-stale plan with planner *claiming* the check ran without verifying (recurrence-2), c036 with paste-evidence working (recurrence-3, but with successful inline-evidence pattern proving the demand works). The decisive observation: **when the cycle-planner is required to paste the literal `ls`/`grep`/`## Status`-line output inline per dispatch, the check actually runs; when only required to claim compliance, the claim is sometimes false.**
+
+The procedure below now demands:
+1. Per-dispatch `## Deliverable-presence verification` section in the plan.
+2. Each check's actual command output pasted as a code-fenced line (not paraphrased).
+3. The `VERDICT: GENUINELY OPEN` / `STALE / DROP` decision recorded explicitly with the citation that justifies it.
+
+**Orchestrator-side enforcement:** any plan whose deliverable-presence section asserts compliance without pasted command output is a recurrence-class fault — the orchestrator may reject the plan and request re-emission with paste evidence, OR substitute verified-open dispatches (the c034/c035/c036 orchestrator-substitution pattern).
 
 **Companion friction-ledger:** `cycle-planner-stale-priorities-line-recruitment` (the friction this skill addresses; sibling-and-deeper of `cycle-planner-reproposes-already-landed-work`, whose c027 file-existence bullet was necessary but insufficient).
 
@@ -55,6 +66,29 @@ Is the candidate dispatch's deliverable structurally blocked by a methodology ga
 - **`partly-constructive` promotion gate** (CLAUDE.md §Methodology invariants): the constructive sub-part's promotion condition (typically a positive Palace anchor) has not changed.
 - **`partial-obstruction` loop-lift** (CLAUDE.md §Methodology invariants): the operator's loop structure does not lift; the obstruction is permanent for that operator-shape.
 - **`obstruction (opaque-library-ownership)`** (CLAUDE.md §Methodology invariants): permanently library-owned, never re-promotable — do NOT re-propose a firm-promotion on such a theme.
+
+### 5. STOP-PROPOSING NEGATIVE LIST consult (added cycle-036 meta-phase, batch-10)
+
+The c036 D2 cross-layer-cross-cutter L3-cohort-growth audit produced a 7-operator (C) NEGATIVE LIST of L1 operators that should NOT receive L3 backfills (disqualified by the small-dense coordinate-space axis criterion at `book/src/L3/index.md:10-16` — deflation rank / ROM basis size / GMRES restart-cycle is NOT the field axis `N` that the L3 layer rotates). The negative list lives at `scaffolding/priorities.md` Backlog "STOP-PROPOSING marker" + at `book/src/L3/index.md:38`:
+
+- `lu_solve`
+- `back_solve`
+- `ls-update-column`
+- `nleps_deflated_residual`
+- `nleps_deflated_solve`
+- `nleps_jacobian_action`
+- `nleps_eigenvalue_correction`
+
+If a candidate dispatch's scope is `L3 <slug>` for any of these slugs, do NOT recruit. Record the disqualification inline: "STOP-PROPOSING list (c036 D2 audit; book/src/L3/index.md:38)." Extend the list when future audits produce additional permanent disqualifications.
+
+### 6. Audit-first vs reflexive-harvest framing (added cycle-036 meta-phase, batch-10)
+
+For an **operator-to-data primitive** (one that produces data rather than transforming fields — `assemble-diagonal`, `reciprocal-of-vector` etc.) or a **cross-cutting cohort question** (one that affects N siblings, not just one operator), prefer the **audit-first** framing over the **reflexive-harvest** framing:
+
+- **Reflexive-harvest**: a `harvester` dispatch directly authors the L_n entry; appropriate when the scope is a single operator with a clear identity-in-form relationship verified by the planner.
+- **Audit-first**: a `cross-layer-cross-cutter` (or `same-layer-cross-cutter`) dispatch first verifies the cohort question (which operators qualify? what's the systematic classification?), then a subsequent harvester pass lands the firm entries. Appropriate when the candidate sits at a cohort boundary or carries a representation-dependent caveat.
+
+The c036 D2 was originally proposed by the planner as `harvester` on `assemble-diagonal` L3 (reflexive identity-in-form harvest); the orchestrator reframed to `cross-layer-cross-cutter` audit-first, which CONFIRMED the same identity-in-form verdict for `assemble-diagonal` AND produced the systematic (A)/(B)/(C) classification + the (C) STOP-PROPOSING NEGATIVE LIST for the whole L3 cohort. The reframe cost was zero (one dispatch instead of one); the value was the cohort-wide settlement. **When the candidate sits at a cohort boundary, prefer audit-first.**
 
 ### Recruit decision
 
