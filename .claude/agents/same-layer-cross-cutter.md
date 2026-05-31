@@ -1,7 +1,7 @@
 ---
 name: same-layer-cross-cutter
 description: Compares existing components on the same layer for unification opportunities, redundancy, contradictions, and shared sub-patterns. Surfaces observations; doesn't enact unifications directly (combinator-miner or harvester handle follow-up). One observation per invocation.
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: same-layer-cross-cutter

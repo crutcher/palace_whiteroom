@@ -1,7 +1,7 @@
 ---
 name: cross-layer-cross-cutter
 description: Looks up and down the layer stack for coverage gaps, edge-label mismatches, missing lowerings for some L_{n+1} operator, consistency drift between layers. Surfaces observations; flags candidates for combinator-miner or lifter follow-up. One observation per invocation.
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: cross-layer-cross-cutter

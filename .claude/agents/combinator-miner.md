@@ -1,7 +1,7 @@
 ---
 name: combinator-miner
 description: Scans the slice corpus + Palace source + the partial new artifact for recurrent patterns. Proposes whether each pattern should become a combinator at this layer or the next higher layer (the level decision is part of the proposal). Emits candidate operator proposals with provenance. One pattern per invocation.
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: combinator-miner

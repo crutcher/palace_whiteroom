@@ -1,7 +1,7 @@
 ---
 name: critic
 description: Runs the checklist of cross-check / critique tasks on a single REPORT.md from the dispatch phase. Finds problems; writes the critique section of a co-located META.md. Does NOT mutate the artifact, does NOT mutate REPORT.md, does NOT attempt fixes, does NOT set overall_status. One report per invocation. Invoked scatter/gather, parallel across all dispatched reports.
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: critic

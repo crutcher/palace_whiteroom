@@ -1,7 +1,7 @@
 ---
 name: integrator
 description: RETIRED cycle-004 → cycle-005 boundary. Split into `integrator-per-report` + `integrator-finalize`. The single-pass integrator's context grew to 223k tokens / 60 tool uses / 17 minutes at cycle-004's 7-wave-mate batch (user surfaced as scaling concern). The split bounds per-dispatch context to one report + a small staging-log look-aside. Kept as historical reference; not dispatched.
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: integrator (RETIRED — see split)

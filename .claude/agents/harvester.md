@@ -1,7 +1,7 @@
 ---
 name: harvester
 description: Takes a single roughed-in or speculative operator at L_n and **formalizes it** — definition, signature, algebraic laws, applicability. Promotes speculative entries to firm ones. **One operator per invocation.** Source material: abstractor output, combinator-miner proposals, cross-cutter observations.
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: harvester

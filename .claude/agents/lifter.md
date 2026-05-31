@@ -1,7 +1,7 @@
 ---
 name: lifter
 description: Re-anchors an existing L_{n+1}>L_n lowering theme to use newly-formalized L_{n+1} vocabulary. Pure rewriting pass — the lowering's structure stays; only the vocabulary firms up. One theme per invocation. Invoked after harvester promotes rough-in operators the theme depended on.
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: lifter

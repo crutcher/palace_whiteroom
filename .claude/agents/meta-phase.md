@@ -1,7 +1,7 @@
 ---
 name: meta-phase
 description: Serial post-integration analyst. Examines evidence aggregated across the last 3 primary cycles (planner conflicts, sub-agent open-questions, critic warnings/failures, unrepairable-finding patterns, integrator deferrals/rejections). Records escalating trends, proposes plans, judges them, decides go/no-go/ask per plan. Enacts go-items directly (writes to .claude/agents/, skills/, scaffolding/priorities, channel-format specs). One invocation per 3-primary-cycle batch (fires after every 3rd primary cycle's integrator-finalize).
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: meta-phase

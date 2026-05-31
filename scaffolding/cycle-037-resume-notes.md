@@ -25,11 +25,11 @@ The batch-10 meta-phase enacted (separately from the c036 integrator-finalize co
 
 ## Friction-ledger status changes
 
-- `cycle-planner-stale-priorities-line-recruitment` — recurrence 3 → 6; status `addressed` → `escalating`. Watch trigger: recurrence-7 triggers ASK-1 swap-to-opus authorization.
+- `cycle-planner-stale-priorities-line-recruitment` — recurrence 3 → 6; status `addressed` → `escalating`. **ASK-1 RESOLVED 2026-05-31: swap-to-opus ENACTED** (see below) — the recurrence-7 trigger is moot; the planner now runs on opus *and* under the paste-inline-evidence procedure. Demote to `addressed` only if batch-11 (037/038/039) runs stale-free.
 - `firm-chapter-body-authored-outside-proposed-changes-fence` — recurrence 2 → 3; status stays `addressed (steady-state detect+repair)`. Watch trigger: recurrence-4 within ≤6 cycles.
 
-## Open ASK for human
+## Resolved ASK
 
-**ASK-1:** swap cycle-planner from haiku→opus? **Recommendation defer-with-trigger** (the c036 paste-inline-evidence working precedent + skill steps 5/6 amendments get one batch of validation runway; swap if recurrence-7 surfaces in batch-11). The swap is a single-line `.claude/agents/cycle-planner.md` `model:` field edit + session restart.
+**ASK-1 (RESOLVED 2026-05-31 — swap-now + all-opus-4.8):** the human, presented with the swap-to-opus ASK, chose **swap-now**, then directed **all** agent models to **Opus 4.8** (`claude-opus-4-8`). Enacted: every `.claude/agents/*.md` `model:` field is now `claude-opus-4-8` (was: `cycle-planner` haiku, all others `claude-opus-4-7`); CLAUDE.md §Models updated; friction-ledger `cycle-planner-stale-priorities-line-recruitment` updated to ENACTED. The cycle-planner now runs on opus *and* under the paste-inline-evidence procedure (both repairs active). **Session restart before cycle-037 covers this model change as well as the role-spec edits above.**
 
 See `reports/2026-05-31T233000Z-meta-phase-cycle-036/CYCLE.md` for the full meta-phase report.

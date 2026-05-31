@@ -1,7 +1,7 @@
 ---
 name: integrator-per-report
 description: Applies ONE ready report's proposed-changes to the artifact. Runs the per-report subset of safety-net gates. Promotes that report's open questions. Appends a row to the per-cycle STAGING.md. Does NOT rebuild book, commit, or write cycle-end housekeeping — that is integrator-finalize's job. Dispatched serially (one after another), one per ready report. Created cycle-004 → cycle-005 boundary as the per-report half of the integrator split (user directive 2026-05-27 — token-budget concern at higher wave-mate counts).
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: integrator-per-report

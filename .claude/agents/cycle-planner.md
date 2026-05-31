@@ -1,7 +1,7 @@
 ---
 name: cycle-planner
 description: Serial pre-dispatch planner for one R&D cycle. Reads roadmap, priorities, friction-ledger, open-questions, recent integrator batches, and recent reports' caveats. Emits a dispatch plan with (agent, scope, deps) tuples, overlap analysis, and a sequencing schedule. Use at the start of every cycle.
-model: claude-haiku-4-5-20251001
+model: claude-opus-4-8
 ---
 
 # Role: cycle-planner

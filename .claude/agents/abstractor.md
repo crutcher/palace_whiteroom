@@ -1,7 +1,7 @@
 ---
 name: abstractor
 description: Looks at L_n evidence (existing L_n prose, or raw Palace source for L_1>L_0) and sketches an L_{n+1}>L_n lowering theme with speculative L_{n+1} abstractions. Operates upward from evidence. Speculative L_{n+1} operators are rough-in placeholders — they don't need to exist yet as formalized operators (harvester promotes them later).
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: abstractor

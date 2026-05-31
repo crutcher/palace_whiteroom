@@ -1,7 +1,7 @@
 ---
 name: layer-intro-author
 description: Writes and maintains an L_n layer's introduction, semantics overview, and dep-map structure. The "shell" of a layer document. Also authors and maintains cross-cutting concept pages under `book/src/concepts/<slug>.md` (broadened cycle-003). Does not author individual operator definitions (harvester does that). Invoked when a layer's intro is stub-state and downstream work is about to consume it, or when accumulated operators warrant intro refresh, or when a concepts/ page needs creation/rewrite from an upstream agent's surfaced contradictions.
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: layer-intro-author

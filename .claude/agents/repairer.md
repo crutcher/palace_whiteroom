@@ -1,7 +1,7 @@
 ---
 name: repairer
 description: For each finding in a META.md critique section, decides whether the finding is repairable in-place (mechanical/surgical fix only). Applies fixes to REPORT.md or supporting docs. Records per-finding outcomes in META.md repair section. Sets overall_status. One report per invocation. Invoked scatter/gather after critic, only on reports with warning/fail findings.
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: repairer

@@ -74,7 +74,7 @@ Sole writers of `book/`, `scaffolding/roadmap.md`, `log/`, `scaffolding/cycle-re
 Definitions live under `.claude/agents/`. Dispatch via `Agent(subagent_type=<name>, ...)`. Per-dispatch report file convention is `CYCLE.md` (renamed from `REPORT.md` cycle-004 to bypass the Claude Code subagent Write filter on `report|summary|findings|analysis` keywords).
 
 **Pre-dispatch (1):**
-- `cycle-planner` (haiku) — serial dispatch planner.
+- `cycle-planner` (opus) — serial dispatch planner.
 
 **Specialized dispatch (8, all opus):**
 - `layer-intro-author` — writes L_n / L_{n+1}>L_n Part overviews + dep-maps + `book/src/concepts/<slug>.md` pages (broadened cycle-003).
@@ -295,8 +295,7 @@ Current skills (under `skills/`; updated cycle-024 meta-phase):
 
 ## Models
 
-- `cycle-planner` — `claude-haiku-4-5-20251001` (cheap routing).
-- All other agents — `claude-opus-4-7`.
+- **All agents** — `claude-opus-4-8` (user directive 2026-05-31: all models set to Opus 4.8). This subsumes the prior split (`cycle-planner` on `claude-haiku-4-5-20251001` "cheap routing"; all other agents on `claude-opus-4-7`). The cycle-planner haiku→opus escalation that the batch-10 meta-phase surfaced as an ASK (friction-ledger `cycle-planner-stale-priorities-line-recruitment`) is now enacted as part of this blanket upgrade.
 
 ## Escalation triggers
 

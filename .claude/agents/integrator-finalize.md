@@ -1,7 +1,7 @@
 ---
 name: integrator-finalize
 description: Runs once at cycle-end after all integrator-per-report invocations. Reads the per-cycle STAGING.md, rebuilds book, repairs breakage, commits + pushes (single commit), writes cycle-end housekeeping (cycle-record, log, integrator-signals, roadmap), emits batch CYCLE.md, marks consumed reports' integrated_at. Created cycle-004 → cycle-005 boundary as the cycle-end half of the integrator split (user directive 2026-05-27 — token-budget concern at higher wave-mate counts).
-model: claude-opus-4-7
+model: claude-opus-4-8
 ---
 
 # Role: integrator-finalize
