@@ -30,6 +30,40 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-038 — 2026-05-31T235900Z — SECOND primary cycle of meta-batch-11 (cycles 037/038/039; batch-11 meta-phase fires AFTER cycle-039) — SECOND consecutive clean opus-planner cycle
+
+### Unblocked
+- `l3-cohort-growth-audit-c036-verdict` — **5 of 6 (A)** firm identity-in-form L3 backfills now landed (`assemble-diagonal` + `jacobi-smoother` c037; `reciprocal` 12th + `elementwise_product` 13th + `divfree-projector` 14th c038). **Only `normalize`** (fused `nrm2 + scal`) remains — the SOLE remaining (A), the **cycle-039 cohort-CLOSER** (6-of-6). It has a firm L1 home on disk and an identity-in-form rotation, so it is immediately dispatch-ready harvester work. Landing it CLOSES the entire c036 (A) cohort.
+- L3 cohort growth is now demonstrably routine (14 firm + 2 partial-obstruction); the elementwise / constructed-operator-gate cohort is firm end-to-end at L3.
+- The `divfree-projector` L3 landing makes the L3 obstruction-profile spectrum tri-modal-on-disk: obstruction-authoring (`ksp_solve`/`eigsolve`) → obstruction-carrying-by-reference (`divfree-projector`) → obstruction-free leaf (`jacobi-smoother`/`apply_linop`/`reciprocal`/`elementwise_product`/`dot`/`scal`). This is the substrate for the deferred §Semantics-overlay taxonomy refresh (next signal).
+
+### New dependencies
+- L3 `reciprocal` → L1 `reciprocal` (identity-in-form on the primitive's signature; eight laws + partiality precondition + nonlinearity non-law inherited) — commit this cycle.
+- L3 `elementwise_product` → L1 `elementwise_product` (identity-in-form; ten laws inherited, no caveat); sibling-subsumes L3 `scal`; realises `apply_linop` diagonal-operator action; composes with L3 `reciprocal` for the diagonal-preconditioner chain — commit this cycle.
+- L3 `divfree-projector` → L3 `ksp_solve` (the nested-gate INNER gate — direct, load-bearing, 9 live links), L3 `apply_linop`, L3 `axpy` — commit this cycle. Instantiates the nested-gate transitive chain `eigsolve ⊃ divfree-projector ⊃ ksp_solve` at L3.
+- L1>L0 `floquet-correction-mutation-rotation` now carries a machine-readable 29-row `verified_against:` block (28 supports + 1 partially-supports; was prose/structure-only on disk) — lowering-verifier channel-format record complete.
+
+### Resolution implications
+- `l3-cohort-growth-audit-c036-verdict` — **partially-answered** — 5 of 6 (A) firm backfills done (only `normalize`); parent tracker carries `normalize` + 2 L1-promotion-gated (A) (`matrix-weighted-norm`, `bilinear-form` — do NOT dispatch until L1 promotes) + 3 substantive (B) + the 7-operator (C) negative list.
+- `floquet-corrector-addmult-aliasing-applicability-audit` — **TRIGGER FIRED, sharpened, NOT closed** — the cycle-036-opened OQ's lowering-verifier-dispatch trigger fired this cycle (D4); the single partially-supports row recorded the precise carry-forward edits (re-anchor AddMult aliasing-tolerance from thin wrapper `ksp.cpp:297` to the true site `iterative.cpp:361`/`:384-385` gated by `floquetcorrection.cpp:61` `SetInitialGuess(0)`). The OQ STAYS OPEN — a cycle-039+ lowering-verifier/abstractor dispatch should ENACT the re-anchor.
+- `l3-reciprocal-plain-text-forward-refs-elementwise-product` — **answered (at apply-time)** — D2 upgraded the navigational `reciprocal` refs in `elementwise_product.md` to live links once `reciprocal.md` was on disk; the remaining `elementwise_product`/`normalize`/`divfree-projector` plain-text mentions in `reciprocal.md` are math-context operator-name mentions (inside algebraic-law formulae), NOT navigational refs — no upgrade warranted.
+- `floquet-correction-real-vector-instantiation-dead-code` — **needs-more (reconfirmed)** — D4 re-confirmed the dead-code status is unaffected by the audit; the OQ remains an upstream-PR-gated investigation.
+
+### Suggested next dispatches
+- (`harvester`, `normalize` L3 backfill) — **(A)** identity-in-form, fused `nrm2 + scal`; firm L1 home on disk; the **SOLE remaining (A)** — landing it CLOSES the c036 (A) cohort 6-of-6. The natural cycle-039 opener.
+- (`lowering-verifier` or `abstractor`, `floquet-correction-mutation-rotation` AddMult-aliasing carry-forward) — ENACT the `floquet-corrector-addmult-aliasing-applicability-audit` carry-forward (TRIGGER FIRED this cycle): re-anchor the partially-supports AddMult aliasing-tolerance mechanism from the thin wrapper `ksp.cpp:297` to the true site `iterative.cpp:361`/`:384-385` gated by `floquetcorrection.cpp:61` `SetInitialGuess(0)`. UNBLOCK-not-ENACT was held this cycle; the enactment is the follow-up.
+- (`layer-intro-author`, `L3/index.md` §Semantics-overlay) — fold the **fourth obstruction profile** (obstruction-carrying-by-reference, instantiated by `divfree-projector`) into the §Semantics-overlay sequential-obstruction taxonomy (currently names only three firm shapes (a)/(b)/(c)); OQ `l3-index-fourth-obstruction-profile-obstruction-carrying-by-reference`.
+- (`harvester`/`lowering-verifier`, the minor `floquet-mutation-rotation-m-block-comment-citation-over-extension` one-liner) — opportunistically-tightenable when a floquet dispatch is already in flight; NOT standalone-worthy.
+- AVOID (`*`, `lu_solve` / `back_solve` / `ls-update-column` / the 4 NLEPS atoms L3) — **(C) negative list**, disqualified by small-dense coordinate-space axis; any such proposal is STALE.
+
+### Wave-conflict observations
+- No semantic conflicts. The 3 wave-1 harvester dispatches touched disjoint new files (`reciprocal.md`, `elementwise_product.md`, `divfree-projector.md`); D4 touched only the L1>L0 floquet theme. BUT three serialization-order artifacts surfaced and were absorbed correctly by the per-report integrators: (1) D2's SUMMARY insert anchor (`after scal / before jacobi-smoother`) had been displaced by D1's earlier `reciprocal` insert — D2 adapted to current disk state; (2) D3's SUMMARY + L3-index + Working-Notes anchors were stale (D1/D2 shifted the table tail) — D3 applied via current-disk anchors preserving intent; (3) the THREE parallel dispatches each wrote a §Working-Notes firm-count bullet BLIND to its cohort-mates, self-reporting inconsistent absolute counts (12/13/12). The dep-map ROWS were all correct; only the prose tally needed reconciliation. **Finalize reconciled the §Working-Notes tally ONCE** to the single correct state (14 firm + 2 partial-obstruction, only `normalize` remaining), consolidating the inconsistent duplicate bullets — the same parallel-blind-count pattern as c037 (D1/D2 deferred the tally to finalize), resolved the same way. Clean serialization throughout; no rejections, no deferrals.
+
+### Integration-tooling friction
+- **Parallel-blind firm-count bullets (recurrence, low-severity, handled-by-design)**: the same pattern as c037 — when ≥2 parallel L3-backfill dispatches each author a §Working-Notes absolute-count bullet, they self-report inconsistent counts (here 12/13/12 across three dispatches). This is NOT a staging-completeness gap (all rows present, all dep-map rows correct) — it is a known finalize-reconciliation responsibility (the per-report integrators correctly flag the count-tally as a layer-intro-author/finalize concern via OQ and append only the in-scope dep-map row). The finalize-side single-reconciliation is the working mechanism; no tooling change needed. WORTH a meta-phase note IF the cohort size grows further (4+ parallel count-bearing dispatches would make the blind-count divergence wider) — a candidate mitigation is a producer-side convention "do NOT author an absolute firm-count bullet; append only your dep-map row + a relative '+1 this dispatch' note, and let finalize compute the absolute tally." Not escalated this cycle; the 2-cycle recurrence (c037/c038) is a soft datapoint for the batch-11 meta-phase.
+
+---
+
 ## cycle-037 — 2026-05-31T233000Z — FIRST primary cycle of meta-batch-11 (cycles 037/038/039; batch-11 meta-phase fires AFTER cycle-039) — FIRST OPUS-PLANNER CYCLE
 
 ### Unblocked

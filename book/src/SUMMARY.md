@@ -27,10 +27,13 @@
 - [dot](./L3/dot.md)
 - [nrm2](./L3/nrm2.md)
 - [scal](./L3/scal.md)
+- [elementwise_product](./L3/elementwise_product.md)
+- [reciprocal](./L3/reciprocal.md)
 - [jacobi-smoother](./L3/jacobi-smoother.md)
 - [chebyshev](./L3/chebyshev.md)
 - [ksp_solve](./L3/ksp_solve.md)
 - [eigsolve](./L3/eigsolve.md)
+- [divfree-projector](./L3/divfree-projector.md)
 
 # L3 > L2 — Lowering
 - [Overview](./L3-L2/index.md)
