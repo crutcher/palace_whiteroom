@@ -9,7 +9,7 @@ inputs:
   - reports/2026-05-31T013000Z-integrator-finalize-cycle-34/ (cycle-034 D2 lowering-verifier audit precedent)
   - scaffolding/open-questions.md:489 (the OQ this dispatch resolves)
 integrated_at: 2026-05-31T18:01:20Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a0b4d99
 integration_notes: |
   cycle-035 D1 — applied by integrator-per-report at 2026-05-31T15:10:00Z (staging row 1); housekept by integrator-finalize at 2026-05-31T18:01:20Z. Three surgical cite-precision edits applied to book/src/L1-L0/chebyshev-smoother-mutation-rotation.md (prose line 145, verified_against: block line 350, prose line 372 — :150-159 → :147-155); theme stays firm. OQ chebyshev-smoother-mutation-rotation-applyorderk-true-citation-tighten RESOLVED on landing; sibling informational OQ chebyshev-smoother-mutation-rotation-applyorder0-true-citation-tighten-sibling filed for the :101-110 → :102-110 future-cycle hook. Citecheck 8 ok / 0 failing; YAML round-trip on edited verified_against: block PASSES (note value begins with `d`, no leading quote — clears verified-against-note-no-leading-quote-of-either-kind friction-ledger). No book rebuild here; finalize ran cargo make book exit 0 in 90.81s. Single commit covering all 3 cycle-035 reports + housekeeping.
 ---

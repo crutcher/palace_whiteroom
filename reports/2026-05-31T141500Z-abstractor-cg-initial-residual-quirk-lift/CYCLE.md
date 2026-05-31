@@ -10,7 +10,7 @@ inputs:
   - reference/palace/palace/linalg/vector.hpp:257-260 (`linalg::Norml2` definition — the asymmetry's mechanical cause)
   - scaffolding/open-questions.md:30 (OQ `cg-initial-residual-quirk-palace-bug-flag-lift-path`)
 integrated_at: 2026-05-31T18:01:20Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a0b4d99
 integration_notes: |
   cycle-035 D2 — applied by integrator-per-report at 2026-05-31T15:55:00Z (staging row 2); housekept by integrator-finalize at 2026-05-31T18:01:20Z. Two surgical additive edits applied to book/src/L1-L0/ksp-solve-mutation-rotation.md CG Sub-pattern B: (1) new Recognition note (likely-Palace-bug Norml2-vs-Dot initial-residual asymmetry; section header explicitly hedges "likely Palace bug; upstream confirmation pending") at lines 267-318, IMMEDIATELY AFTER the existing CheckDot Recognition note and BEFORE the Citations: block; (2) 2 new Citations: rows at lines 358-368 for iterative.cpp:398-411 + vector.hpp:257-260. Theme stays firm — additive caveat only; no laws/signatures/operators/status changes. OQ cg-initial-residual-quirk-palace-bug-flag-lift-path NARROWED: lift portion CLOSED on landing; narrower sub-OQ cg-initial-residual-quirk-upstream-confirmation-pending retained for bug-vs-intentional classification (out-of-scope for this project — requires Palace maintainer answer; Trigger: upstream issue filed or git blame iterative.cpp:408). Citecheck 26 ok / 0 failing; both new citations anchor-verified (initial_guess at 398; Norml2 at 257). No book rebuild here; finalize ran cargo make book exit 0 in 90.81s. Single commit covering all 3 cycle-035 reports + housekeeping.
 ---
