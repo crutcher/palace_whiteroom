@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T200500Z
 scope: L1↔L3 cross-cut — L3 cohort-growth verdict (settle the deferred audit at book/src/L3/index.md:38)
 status: integrated
 integrated_at: 2026-05-31T230000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7efd86d2c8c032ec693419d161b03281ecd448cc
 integration_notes: |
   Applied cycle-036 D2; observation-only audit that SETTLED the long-standing deferred-audit at book/src/L3/index.md:38. Single book edit at L3/index.md:38 (replaced the cohort-growth-candidates deferred bullet with the c036 verdict: 6 firm (A) identity-in-form L3-backfill candidates [assemble-diagonal, jacobi-smoother, reciprocal, elementwise_product, normalize, divfree-projector] + 2 L1-promotion-gated (A) [matrix-weighted-norm, bilinear-form] + 3 substantive (B) [orthogonalize, chebyshev-smoother, apply_nonlinear_pencil] + 7-operator (C) NEGATIVE LIST [lu_solve, back_solve, ls-update-column, 4 NLEPS atoms — disqualified by small-dense coordinate-space axis]). New OQ l3-cohort-growth-audit-c036-verdict filed (supersedes 2 predecessor OQs l3-vocabulary-inventory-gap + l3-backfill-apply-linop-and-blas1-cohort). The (C) negative-list is the new anti-recurrence data feed for the cycle-033-promoted verify-dispatch-scope-not-already-discharged skill. Migrated (A)+(B) candidates to priorities.md Backlog as cycle-037 active-head opener (the natural high-confidence batch-11 batch opener); recorded (C) negative-list prominently in priorities.md + integrator-signals.md. Build clean (~90s).
 ---

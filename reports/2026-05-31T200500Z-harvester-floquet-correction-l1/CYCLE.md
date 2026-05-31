@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T20:05:00Z
 scope: L1 operator floquet-correction + L1>L0 theme floquet-correction-mutation-rotation
 status: integrated
 integrated_at: 2026-05-31T230000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7efd86d2c8c032ec693419d161b03281ecd448cc
 integration_notes: |
   Applied cycle-036 D1; firm L1 chapter book/src/L1/floquet-correction.md (402 lines) + firm L1>L0 theme book/src/L1-L0/floquet-correction-mutation-rotation.md (525 lines, 4 sub-patterns A/B/C/D) + concept-page nested-constructed-operator-gate firm-instances 2→3 (second three-deep transitive chain floquet→ksp→jacobi-smoother) + L1/index 25→26 Firm count + L1-L0/index dep-map row + SUMMARY.md registration of both new chapters. Path-hygiene auto-fix applied (concepts/nested-constructed-operator-gate.md jacobi-smoother link). Fence-truncation recurrence-3 repaired by per-report-integrator using cycle-024 promoted skill. 3 new OQs filed + 2 closed (floquet-correction-l1-gate-harvest resolved by landing; nested-constructed-operator-gate-second-three-deep-chain-codified closes-on-landing tracker). Counts after: L1 firm 26, L1>L0 firm themes 24, concept firm-instances 3, build clean (~90s), zero build-repairs.
 inputs:
