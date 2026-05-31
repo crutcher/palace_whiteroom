@@ -264,6 +264,68 @@ see [`mutable-workspace-pattern`](../L0/mutable-workspace-pattern.md)
 notes-for-higher-layers §3 and [`L1/ksp_solve`](../L1/ksp_solve.md)
 "L1 vs L0 distinction" for the discussion.
 
+Recognition note (initial-residual `Norml2`-vs-`Dot` asymmetry —
+**likely Palace bug; upstream confirmation pending**): the
+`initial_guess`-branch initial-residual computation at
+`palace/linalg/iterative.cpp:398-411` exhibits a structural asymmetry
+between the preconditioned (`B`) and unpreconditioned (`!B`) arms that
+makes the L1 `initial_res` field's reconstruction quirky in the
+`!B && initial_guess` case. The two arms write `beta_rhs` differently
+before the shared `initial_res = std::sqrt(std::abs(beta_rhs));`
+collapse at line 411:
+
+    // B (preconditioned) arm — iterative.cpp:401-405
+    ApplyB(B, b, p, this->use_timer);
+    beta_rhs = linalg::Dot(comm, p, b);     // = (B·b, b) = ⟨b, b⟩_B
+
+    // !B (unpreconditioned) arm — iterative.cpp:406-409
+    beta_rhs = linalg::Norml2(comm, b);     // = ‖b‖₂ = sqrt(|b·b|)
+
+The mechanical cause is `linalg::Norml2`'s body at
+`palace/linalg/vector.hpp:257-260`:
+
+    template <typename VecType>
+    inline auto Norml2(MPI_Comm comm, const VecType &x)
+    {
+      return std::sqrt(std::abs(Dot(comm, x, x)));
+    }
+
+`Norml2` **already** square-roots-of-dot internally, so on the `!B` arm
+`beta_rhs = sqrt(|b·b|)` rather than the symmetry-consistent `b·b` the
+`B` arm produces. Then line 411 takes a **second** square root —
+`initial_res = sqrt(|beta_rhs|) = sqrt(sqrt(|b·b|)) = (b·b)^{1/4}` —
+where the algorithm's intent (the `B` arm reconstructs as
+`sqrt(⟨b, b⟩_B) = ‖b‖_B`, and in the `B == identity` limit this should
+collapse to `‖b‖₂ = (b·b)^{1/2}`) demands `initial_res = ‖b‖₂`. The
+two arms therefore disagree at `B == identity` by a missing inner
+square root: the `!B` arm produces the fourth root of `b·b`, not the
+square root. The downstream consumer is `eps = std::max(rel_tol *
+initial_res, abs_tol);` at line 417 — the convergence tolerance is
+quirky-scaled in the `!B && initial_guess` case, biasing
+relative-tolerance convergence for cold-vs-warm-start asymmetrically.
+The bug does not affect the unpreconditioned cold-start case (line 415
+falls through to `initial_res = res;` where `res = sqrt(|b·b|) = ‖b‖₂`
+correctly via the line-395-396 path), and does not affect the
+preconditioned warm-start case (the `B` arm computes the intended
+`‖b‖_B`). It affects **only** `!B && initial_guess`. The faithful L1>L0
+recognition rule is: the `!B && initial_guess` branch's `initial_res`
+field is `(b·b)^{1/4}` as written, not `‖b‖₂`; L1 consumers that
+interpret `initial_res` as `‖b‖₂` are reading the L1 abstraction's
+intended semantics rather than the L0 reality. **This is recorded as a
+likely Palace bug** (the symmetric form, by analogy with the `B` arm
+and the consistent `iterative.cpp:395-396` unpreconditioned cold-start
+`res` computation, would be `beta_rhs = linalg::Dot(comm, b, b);` at
+line 408); upstream confirmation that the asymmetry is unintentional is
+pending. The corresponding warm-vs-cold initial-residual computation in
+`GmresSolver` is factored into the `InitialResidual` helper
+(`palace/linalg/iterative.cpp:252-285`, called at
+`iterative.cpp:566-567`, noted in Sub-pattern C) which uses a different
+internal control flow and is **not** affected by this asymmetry — the
+bug is local to `CgSolver<OperType>::Mult`. See OQ
+`cg-initial-residual-quirk-palace-bug-flag-lift-path` (narrowed to
+upstream-confirmation; the lift annotation now lives here in the firm
+artifact).
+
 Citations:
 - `palace/linalg/iterative.hpp:117-150` — `CgSolver<OperType>` declaration;
   `mutable VecType r, z, p` workspace at line 144.
@@ -293,6 +355,18 @@ Citations:
   final_it = it;` — the `mutable`-state write-out that the outer
   `BaseKspSolver::Mult` reads via `GetFinalRes()` /
   `GetNumIterations()`.
+- `palace/linalg/iterative.cpp:398-411` — `initial_guess`-branch
+  `initial_res` computation; the `B` arm uses `linalg::Dot(comm, p, b)`
+  at line 404 (where `p = B·b`), the `!B` arm uses
+  `linalg::Norml2(comm, b)` at line 408 — the asymmetric form
+  documented in the "initial-residual `Norml2`-vs-`Dot` asymmetry"
+  recognition note above (likely Palace bug; upstream confirmation
+  pending).
+- `palace/linalg/vector.hpp:257-260` — `linalg::Norml2` definition:
+  `std::sqrt(std::abs(Dot(comm, x, x)))`. The internal square root is
+  the mechanical cause of the `initial_res = (b·b)^{1/4}` outcome on
+  the `!B && initial_guess` branch (line 411 takes the second square
+  root over `beta_rhs`).
 
 ### Sub-pattern C — inner GMRES body (`GmresSolver<OperType>::Mult`)
 

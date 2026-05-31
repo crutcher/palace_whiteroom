@@ -142,7 +142,7 @@ smoother is its own transpose. This realises L1 algebraic law 3
 (`chebyshev_smoother_transpose(op, …) = chebyshev_smoother(op, …)`,
 [`L1/chebyshev-smoother`](../L1/chebyshev-smoother.md) §Algebraic laws). The
 complex conjugate-`dinv` transpose kernels exist
-(`palace/linalg/chebyshev.cpp:101-110, :150-159`) but are dead code under the
+(`palace/linalg/chebyshev.cpp:101-110, :147-155`) but are dead code under the
 symmetric wiring — recognition rules for *potential* transpose sites, not
 observed ones (see Open questions).
 
@@ -347,10 +347,10 @@ verified_against:
     verdict: supports
     audited_at: 2026-05-28T19:33:25Z
     note: B_G->SetInitialGuess(false) per-call initial_guess control (exact line 36)
-  - citation: palace/linalg/chebyshev.cpp:101-110,150-159
+  - citation: palace/linalg/chebyshev.cpp:101-110,147-155
     verdict: supports
     audited_at: 2026-05-28T19:33:25Z
-    note: dead-code complex conjugate-dinv transpose kernels (recognition rules)
+    note: dead-code complex conjugate-dinv transpose kernels (recognition rules); second-kernel range tightened from :150-159 to :147-155 (cycle-035 D1)
 ```
 
 ## Status
@@ -369,7 +369,7 @@ consumer forwarding sites) is the standard follow-up, not a status reduction.
 ## Open questions / caveats
 
 - **Dead-code complex transpose kernels.** `palace/linalg/chebyshev.cpp:101-110,
-  :150-159` define conjugate-`dinv` transpose elementwise kernels that are
+  :147-155` define conjugate-`dinv` transpose elementwise kernels that are
   unreachable under the symmetric `MultTranspose2 → Mult2` wiring. They are
   recognition rules for *potential* non-symmetric sites, not observed ones —
   same defined-not-used status as the
