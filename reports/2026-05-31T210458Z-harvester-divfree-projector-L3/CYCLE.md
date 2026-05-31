@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T21:04:58Z
 scope: L3 operator: divfree-projector
 status: integrated
 integrated_at: 2026-05-31T235900Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14e80a66a8e0d6ac68c3fd4a2d3602b0b2d3e239
 integration_notes: "Applied clean cycle-038 (D3). NEW firm L3 book/src/L3/divfree-projector.md (14th firm L3, third constructed-operator gate, obstruction-carrying-by-reference, instantiates nested-gate chain eigsolve > divfree-projector > ksp_solve at L3 with 9 live inner-gate links) + SUMMARY + L3-index dep-map row + Working-Notes bullet. Enacts an (A) identity-in-form backfill of the c036 D2 audit verdict. The fourth-obstruction-profile Semantics-overlay taxonomy note PROMOTED as OQ l3-index-fourth-obstruction-profile-obstruction-carrying-by-reference (layer-intro-author follow-up), NOT enacted."
 inputs:
   - book/src/L1/divfree-projector.md (firm — the constructed-operator-gate L1 home; signature, five laws + two non-laws, evidence carried unchanged)

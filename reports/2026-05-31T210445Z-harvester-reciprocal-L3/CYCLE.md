@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T210445Z
 scope: L3 operator: reciprocal
 status: integrated
 integrated_at: 2026-05-31T235900Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14e80a66a8e0d6ac68c3fd4a2d3602b0b2d3e239
 integration_notes: "Applied clean cycle-038 (D1). NEW firm L3 book/src/L3/reciprocal.md (12th firm L3, elementwise multiplicative-inverse self-map) + SUMMARY + L3-index dep-map row. Enacts an (A) identity-in-form backfill of the c036 D2 audit verdict. Finalize reconciled the L3-index Working-Notes firm-count tally to 14 firm + 2 partial-obstruction (only normalize remaining (A), cycle-039 closer)."
 inputs:
   - book/src/L1/reciprocal.md (firm L1 home; cycle-pre-037)

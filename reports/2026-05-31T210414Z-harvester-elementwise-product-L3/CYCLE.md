@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T210414Z
 scope: L3 operator: elementwise_product
 status: integrated
 integrated_at: 2026-05-31T235900Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14e80a66a8e0d6ac68c3fd4a2d3602b0b2d3e239
 integration_notes: "Applied clean cycle-038 (D2). NEW firm L3 book/src/L3/elementwise_product.md (13th firm L3, Hadamard binary, firm-on-positive-structure) + SUMMARY + L3-index dep-map row. 3 in-cycle reciprocal plain-text->live-link upgrades applied at apply-time (D1 had landed reciprocal.md earlier). Enacts an (A) identity-in-form backfill of the c036 D2 audit verdict."
 inputs:
   - book/src/L1/elementwise_product.md (firm L1 home; cycle-019/032/036 chain — value-thread-isomorphic source)

@@ -10,7 +10,7 @@ reports_applied: 4
 reports_deferred: 0
 reports_rejected: 0
 build_status: clean (cargo make book exit 0, ~90s, zero build-repairs)
-commit: PLACEHOLDER_SHA
+commit: 14e80a66a8e0d6ac68c3fd4a2d3602b0b2d3e239
 ---
 
 # CYCLE-038 — integrator-finalize batch record

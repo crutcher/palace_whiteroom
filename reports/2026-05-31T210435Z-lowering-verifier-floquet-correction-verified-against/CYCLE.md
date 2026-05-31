@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T210435Z
 scope: L1>L0 theme audit — floquet-correction-mutation-rotation
 status: integrated
 integrated_at: 2026-05-31T235900Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 14e80a66a8e0d6ac68c3fd4a2d3602b0b2d3e239
 integration_notes: "Applied clean cycle-038 (D4). 29-row verified_against: YAML block (28 supports + 1 partially-supports) appended to firm book/src/L1-L0/floquet-correction-mutation-rotation.md; NO body edits, theme stays firm, citation NOT widened. The single partially-supports row (AddMult aliasing-tolerance cited to thin wrapper ksp.cpp:297 vs the true gated site iterative.cpp:361/:384-385 gated by floquetcorrection.cpp:61 SetInitialGuess(0)) applied as-is and routed to the OPEN follow-up OQ floquet-corrector-addmult-aliasing-applicability-audit (TRIGGER FIRED, sharpened, NOT closed) per UNBLOCK-not-ENACT discipline."
 inputs:
   - book/src/L1-L0/floquet-correction-mutation-rotation.md
