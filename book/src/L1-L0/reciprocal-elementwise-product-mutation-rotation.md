@@ -755,3 +755,86 @@ the FE-assembly multiplicity-averaging consumer
   MPI the disjoint-slice-per-rank decomposition is the standard parallel
   shape (every element write is rank-local; no boundary exchange). Per
   CLAUDE.md §Scope, MPI distribution is out of scope; flagged once here.
+
+```yaml
+verified_against:
+  # Sub-pattern A — reciprocal L0 anchors
+  - citation: palace/linalg/vector.hpp:20
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: using Vector = mfem::Vector — real-path type alias; anchor lit at line 20 (citecheck OK).
+  - citation: palace/linalg/vector.hpp:107-108
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: doc-comment "Set all entries to their reciprocal." at :107 and void Reciprocal() declaration at :108; both confirmed in-range (citecheck OK).
+  - citation: palace/linalg/vector.cpp:248-261
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: ComplexVector::Reciprocal() body; anchor lit at line 248; closed-form s=1/|z|^2 at :257, XR*=s at :258, XI*=-s at :259 match theme transcription verbatim (citecheck OK).
+  - citation: palace/linalg/jacobi.cpp:79-80
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: op.AssembleDiagonal(dinv) at :79 then dinv.Reciprocal() at :80 — the setup-chain prefix; exact (citecheck OK).
+  - citation: palace/linalg/jacobi.cpp:16
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: SPD precondition comment "Assumes A SPD (diag(A) > 0)..." at :16 discharges the x[i] != 0 reciprocal partiality; exact (citecheck OK).
+  - citation: palace/linalg/chebyshev.cpp:178
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: second Reciprocal() consumer (4th-kind Chebyshev) dinv.Reciprocal() at :178; anchor lit confirmed (citecheck OK).
+  - citation: palace/linalg/chebyshev.cpp:241
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: third Reciprocal() consumer (1st-kind Chebyshev) dinv.Reciprocal() at :241; anchor lit confirmed (citecheck OK).
+  - citation: palace/fem/bilinearform.cpp:278
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: fourth (non-preconditioner) Reciprocal() consumer test_multiplicity.Reciprocal() at :278; anchor lit confirmed (citecheck OK).
+  # Sub-pattern B — elementwise_product L0 anchors
+  - citation: palace/linalg/operator.cpp:478-487
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: real canonical BaseDiagonalOperator<Operator>::Mult; anchor lit at line 479; per-element body Y[i]=D[i]*X[i] confirmed at :486 (citecheck OK).
+  - citation: palace/linalg/operator.cpp:489-507
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: complex canonical BaseDiagonalOperator<ComplexOperator>::Mult; anchor lit at line 490; complex multiply body at :504-505 matches theme verbatim (citecheck OK).
+  - citation: palace/linalg/operator.cpp:545-568
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: complex conjugate-variant DiagonalOperatorHelper<...>::MultHermitianTranspose; anchor lit at line 548; three sign flips at :564-565 match theme verbatim (citecheck OK). This is the LIVE conjugate kernel.
+  - citation: palace/linalg/operator.hpp:279
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: real MultTranspose aliases to Mult (one-liner { Mult(x, y); }) at :279 — confirms no real-side conjugate body; localizing-evidence, not load-bearing (citecheck OK).
+  - citation: palace/linalg/jacobi.cpp:30-39
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: real consumer-duplicate Apply<Transpose>(dinv, x, y); body Y[i]=DI[i]*X[i] at :38 is line-for-line identical to palace/linalg/operator.cpp:486 modulo D->DI rename (citecheck OK).
+  - citation: palace/linalg/jacobi.cpp:41-69
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: complex consumer-duplicate Apply; forward branch :52-60 (:57-58) identical to palace/linalg/operator.cpp:504-505; transpose branch :61-69 (:66-67) identical to palace/linalg/operator.cpp:564-565 modulo DI->DIR,DII rename (citecheck OK).
+  - citation: palace/linalg/jacobi.cpp:99-104
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: JacobiSmoother<OperType>::Mult entry; anchor lit at :100; line :103 dispatches Apply(dinv, x, y) with default Transpose=false — the sole call into the consumer-duplicate kernel (citecheck OK).
+  - citation: palace/linalg/jacobi.hpp:43
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: MultTranspose(...) override one-liner { Mult(x, y); } at :43 — the symmetric self-alias that strands Apply<Transpose=true> as dead code; recognition-rule citation, confirmed exact (citecheck OK).
+  # Dead-code transpose-kernel cross-reference anchors (chebyshev sibling)
+  - citation: palace/linalg/chebyshev.cpp:101-110
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: chebyshev sibling dead-code transpose else-branch with conjugate sign pattern (+DII*RI / -DII*RR) at :107-108; cross-reference for the dead-code caveat, confirmed in-range (citecheck OK).
+  - citation: palace/linalg/chebyshev.cpp:150-159
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: chebyshev sibling dead-code transpose else-branch (1st-kind) conjugate sign pattern at :152-153; cross-reference for the dead-code caveat, confirmed in-range (citecheck OK).
+  - citation: palace/linalg/chebyshev.cpp:177-178
+    verdict: supports
+    audited_at: 2026-05-31T19:32:58Z
+    note: chebyshev setup-chain prefix AssembleDiagonal+Reciprocal at :177-178 — sibling of the jacobi.cpp:79-80 chain; confirmed exact (citecheck OK).
+```

@@ -1,0 +1,178 @@
+---
+layer: L3
+operator: jacobi-smoother
+firmness: firm
+lowers_to:
+  - book/src/L1/jacobi-smoother.md (identity-in-form on the constructed-operator-gate apply; no L3-L2 theme — the apply is a single elementwise-product whose L1 form is L3-native by signature shape; the substantive leaf-mutation rotation lives at L1>L0 reciprocal-elementwise-product-mutation-rotation)
+lifts_from:
+  - (no L4 entry; jacobi-smoother carries no monadic effect / state-stratification typing / outer-driver structure at L4 — the apply is one elementwise product, a leaf-shaped constructed-operator gate; same confirmed-not-needed L4 verdict as the firm apply_linop / ksp_solve constructed-operator gates)
+variant_axes:
+  orthogonal:
+    - element-type (real | complex; collapsed into the opaque JacobiSmoother closure)
+    - damping-mode (default ω=1.0 | fixed ω≠0 | estimated ω=0; collapsed into op.dinv's committed value at setup)
+  absorbed:
+    - operator-representation (sparse-CSR | matrix-free-Nedelec | parallel-wrapped | complex-wrapped; collapsed at setup through assemble-diagonal's own representation-axis absorption)
+---
+
+# jacobi-smoother
+
+Diagonal (Jacobi) preconditioner action as a whole-tensor field operation at L3: the constructed-operator gate `y = jacobi_smoother(op, x)` whose per-call body is one elementwise product `op.dinv ⊙ x = (ω · D⁻¹) ⊙ x` of the damped inverse diagonal against the input. The **thinnest constructed-operator gate** at the iteration-rotation layer — a single whole-tensor elementwise multiplication, no operator-apply, no reduction, no sweep loop, no convergence test. The iteration-rotation rendering of the same diagonal-preconditioner-apply that L1 [`jacobi-smoother`](../L1/jacobi-smoother.md) provides; identity-in-form lowering to L1 on the constructed-operator-gate apply.
+
+## Context
+
+L3 is the iteration-rotation layer: global tensor-field operations expressed as whole-tensor primitives with no element loop exposed at the layer's vocabulary, with sequential obstructions named explicitly per [`sequential-obstruction`](../concepts/sequential-obstruction.md). `jacobi-smoother` at L3 is the value-threaded form of the diagonal-preconditioner action — the same constructed-operator gate that L1 names (replacing the L0 `JacobiSmoother<OperType>::Mult(x, y)` in-place output-arg mutation idiom), read at L3 as a whole-tensor field operation.
+
+`jacobi-smoother` is a **constructed-operator gate** at L3, in the same family as the firm [`ksp_solve`](./ksp_solve.md) and [`eigsolve`](./eigsolve.md) (and the parallel cycle-037 `divfree-projector` backfill — referenced plain-text: `book/src/L3/divfree-projector.md` is not yet on disk this cycle, per `rough-in-forward-reference-must-be-plain-text-not-live-link`): its primary argument `op` is a structured opaque value built once at solver setup, carrying the captured operator `A` only via its assembled inverse diagonal `dinv`, the damping factor `ω`, and the spectral-bound scaling `sf_max`. It is the **thinnest** such gate — unlike `ksp_solve` (a value-threaded outer-driver fold over `krylov-step`) and `eigsolve` (an opaque-library-owned eigen-iteration), `jacobi_smoother`'s per-call action is **one elementwise product**. It carries **no sequential obstruction of any kind**: the apply is reduction-free, inner-product-free, and iteration-free — the structural distinction from `ksp_solve` / `eigsolve` (which carry outer-loop obstructions) and from [`chebyshev`](./chebyshev.md) (whose inner `k`-recurrence + outer `pc_it` sweep are `partial-obstruction` markers). In this respect `jacobi-smoother` at L3 is closest in shape to the firm leaf [`apply_linop`](./apply_linop.md): a single whole-tensor field operation with the operator-representation axis absorbed, no obstruction at the L3 level.
+
+The relationship to the adjacent layers:
+
+- **Upward** to L4: there is **no standalone L4 entry** for `jacobi-smoother`. Like the firm `apply_linop` / `ksp_solve` constructed-operator gates, the Jacobi apply carries no monadic effect, no state-stratification typing, and no outer-driver structure — its body is one elementwise product. The L4 layer's first-class vocabulary carries one of (a) monadic effect, (b) state-stratification typing, or (c) outer-driver structure; a single-elementwise-product preconditioner action carries none. Per CLAUDE.md §Methodology invariants "Layers are defined high→low", the absence of an L4 entry is a deliberate scoping verdict, not a gap.
+
+- **Downward** to L1: `jacobi-smoother` lowers to L1 [`jacobi-smoother`](../L1/jacobi-smoother.md) directly, with no interposed L2 entry and no `L3-L2/jacobi-smoother-identity` theme. The rotation is **identity-in-form on the constructed-operator-gate apply** — both L1 and L3 see `jacobi_smoother :: (op: JacobiSmoother[N], x: Tensor[N]) -> Tensor[N]` with the same shape contract, the same algebraic laws, the same variant-axis profile, and the same absorbed operator-representation type. The substantive rotation in the chain is the L1>L0 leaf-mutation rotation: the apply's single elementwise product lowers to Palace's in-place `forall_switch` element-loop (`Y[i] = DI[i] * X[i]`), captured by the firm L1>L0 theme [`reciprocal-elementwise-product-mutation-rotation`](../L1-L0/reciprocal-elementwise-product-mutation-rotation.md) (sub-pattern B) and the constructed-operator-closure theme [`jacobi-smoother-mutation-rotation`](../L1-L0/jacobi-smoother-mutation-rotation.md). The L3>L1 hop is by contrast a layer-coherence rotation (each layer is coherent within itself), not an algebraic one; no `L3-L2/` or non-adjacent `L3-L1/` directory is created — the identity-in-form annotation lives in-line per the cycle-012 non-adjacent-identity convention (precedent: the firm L3 `dot` / `scal` / `apply_linop` cohort, all of which note their identity rotations in-line).
+
+This L3 entry is the **layer-coherence anchor**: a reader at L3 can find `jacobi-smoother` here, in L3 vocabulary, without having to reach down to L1 to recover the constructed-operator-gate apply, and without having to consult a consuming solver's preconditioner slot to see the gate in use. The backfill is the cycle-037 enactment of the methodology invariant **Identity-lowerings still require both L levels** (CLAUDE.md §Methodology invariants, cycle-009 meta-phase codification; the firm L3 `krylov-step` cycle-010 backfill is the codified precedent). The cycle-036 D2 cross-layer-cross-cutter audit (`book/src/L3/index.md:38-43`) classified this backfill as one of the six (A) firm identity-in-form L3 candidates, naming it the "thinnest constructed-operator gate, one `elementwise_product`" (`book/src/L3/index.md:39`).
+
+## Signature
+
+    jacobi_smoother :: (op: JacobiSmoother[N], x: Tensor[N]) -> Tensor[N]
+    jacobi_smoother op x = op.dinv ⊙ x
+                         = (ω · diag(A)⁻¹) ⊙ x
+
+Shape contract (positional values; bunsen-style named axes; no element loop exposed at L3; no monadic effect, no `readonly` typing — the typing distinctions are deferred to the wrapper layers above):
+
+- **`op`** — `JacobiSmoother[N]` — the constructed smoother closure, an opaque value bound once at setup and immutable across calls. Carries `op.dinv : Tensor[N]` (the damped inverse diagonal `ω · diag(A)⁻¹`, same element-type as the operator), `op.omega : Real` (the damping factor, already absorbed into `dinv` at apply time), and `op.sf_max : Real` (the spectral-bound scaling factor, consumed only by the estimated-damping setup). The constructed-operator type is **opaque at L3** — the element-type variant and the operator-representation axis are absorbed; the L3 contract sees only the smoother-action interface.
+- **`x`** — `Tensor[N]` — the input vector (residual / RHS to smooth). Read-only at L3 (value-threaded positionally; the L3 layer has no in-place mutation in vocabulary — mutation reappears only in the L1>L0 lowering).
+- **result** — `Tensor[N]` — the post-smoothing output, a fresh value produced by the elementwise product; no L0 destination buffer is mentioned at L3 (the destination-binding rotation is an L1>L0 concern). Same length axis `N`.
+
+`JacobiSmoother[N]` is an **opaque constructed type** at L3: its internal representation (real vs. complex `dinv`; the underlying operator `A`, already forgotten once `dinv` is committed) is not part of the L3 signature. The setup that builds `JacobiSmoother[N]` from `(A, omega, sf_max)` — the `assemble_diagonal → reciprocal → ω-fold` chain, plus the opaque `spectrum_estimate(A, dinv)` sub-action on the `ω = 0` path — is a separate setup action (mirroring the L0 `SetOperator` / `Mult` split); it is authoritative at the L1 entry (`book/src/L1/jacobi-smoother.md` §Signature) and is not re-derived here. The L3 entry reads the apply, not the setup.
+
+No L4 wrapper machinery is present at L3, mirroring the firm `apply_linop` / `ksp_solve` L3 discipline:
+
+1. **No `Solve` monad.** `jacobi_smoother` is pure functional at L3; no `do`-block, no `modify`, no monadic effect. The apply consumes `x` and produces a fresh output; there is no `SimState` thread.
+2. **No `readonly` typing.** The L4 calculus would mark the `op` argument as `readonly` (the closure is never written through at apply time); at L3 this is a documented invariant (the L3 vocabulary has no `readonly` annotation; the convention is preserved by reading the apply's contract — `op.dinv` is read, never written).
+3. **No element-loop exposure.** The L3 form's "no element loop visible at the layer" property is structural — `jacobi_smoother`'s apply has the elementwise product as a single whole-tensor operation, never an iteration over the length axis `N`. This is what makes the gate L3-native by signature shape, the same property the firm L3 `dot` / `scal` / `apply_linop` cohort inherits.
+
+## Semantics
+
+`jacobi_smoother op x` returns the elementwise product of `x` with the damped inverse diagonal `op.dinv = ω · D⁻¹`. The result is determined entirely by `op` and `x` — no hidden state, no per-call side effects, no in-place mutation at the L3 surface. The L3 form is **pure functional** (the same `op` applied to the same `x` returns the same `Tensor[N]` value).
+
+The apply is **inner-product-free, iteration-free, and reduction-free**: it is a **single whole-tensor elementwise multiplication** — no `apply_linop` call, no residual recomputation, no `dot`/`nrm2` reduction, no sweep. This is the gate's defining communication profile at L3: linear-cost, embarrassingly parallel, zero collective. Where `ksp_solve` folds `krylov-step` over a convergence-tested trajectory and `chebyshev` runs an inner `k`-recurrence over an outer `pc_it` sweep, the Jacobi apply is one field operation. The L0 kernel realizes the apply as a single `mfem::forall_switch` element-loop with no cross-element dependency (`palace/linalg/jacobi.cpp:30-39` real; `:41-70` complex) — but that element-loop is an L0/L1>L0 concern; at L3 the apply is the whole-tensor elementwise product, agnostic to where it runs.
+
+The closure carries the **reduced** operator content: the underlying operator `A` is forgotten once `dinv` is committed at setup. The L3 apply forgets that the diagonal originated from any operator — it is a pure field operation against a pre-committed inverse-diagonal vector. The **no-initial-guess precondition** (the L0 `Mult` body asserts `!this->initial_guess`, `palace/linalg/jacobi.cpp:102`) carries through to L3 as a precondition on the apply: callers compose `jacobi_smoother` as a linear map (the gate is used as a preconditioner action, not as a Jacobi *iteration* — the Richardson sweep `y ← y + M·(x − A·y)` is the consumer's responsibility, realized by wrapping the gate in a Krylov or multigrid loop). At L3 this matters because it is what keeps the apply obstruction-free: folding a non-zero initial guess into the apply would require an `apply_linop` residual call the diagonal gate explicitly avoids.
+
+### Iteration-rotation marker
+
+L3 is the iteration-rotation layer. **`jacobi_smoother` lifts as a whole-tensor operation at L3** — the gate's apply has no element loop exposed at the layer, and the L1 form's `(JacobiSmoother[N], Tensor[N]) -> Tensor[N]` signature is identity-in-form to the L3 form. The gate carries **no obstruction at the L3 level**: the apply is one elementwise product over independent length-axis indices, a parallel operation in exact arithmetic. This is the sharpest contrast in the L3 constructed-operator-gate family — `ksp_solve` and `eigsolve` carry outer-loop sequential obstructions (the convergence-tested fold; the opaque-library eigen-iteration), and `chebyshev` is `partial-obstruction` (inner recurrence + outer sweep); `jacobi-smoother` carries none, because the diagonal preconditioner has no loop in its apply at all. The gate is, in obstruction-profile terms, a leaf — like `apply_linop`, `dot`, `scal` — not a step body or a driver.
+
+A subtle below-the-surface caveat: for matrix-free operator representations (high-order Nedelec, face-dof sharing in 3D), the `dinv` committed at setup is an **approximate** inverse diagonal — so the apply value differs from the assembled-`A` case. This is a **load-bearing** representation-dependence inherited from [`assemble-diagonal`](../L1/assemble-diagonal.md) via the L1 entry's law 6; the L3 form names it as a non-law (see Algebraic laws), not as an obstruction — the gate's algebraic correctness as a linear map is unaffected; only the bit-level value and the preconditioner *quality* depend on the representation.
+
+## Algebraic laws
+
+The six laws that hold at L1 transport unchanged to L3, because the constructed-operator-gate apply is identity-in-form across the L3→L1 hop. The non-laws also transport unchanged. The laws are reproduced here so the L3 reader does not have to reach to L1 for the listing; the L1 entry (`book/src/L1/jacobi-smoother.md` §Algebraic laws) is authoritative on every factual claim about the Palace surface.
+
+1. **Linearity in `x`.** `jacobi_smoother op (α·x + β·z) = α · jacobi_smoother op x + β · jacobi_smoother op z` for any scalars `α`, `β` and vectors `x`, `z`. The apply is the linear operator `M = diag(op.dinv)`; elementwise multiplication is linear in each argument. Witnessed by the elementwise-multiply kernel `Y[i] = DI[i] * X[i]` (`palace/linalg/jacobi.cpp:38`). This is the structural law that makes `jacobi_smoother` an `apply_linop`-shaped operation at L3 (it consumes a whole tensor and returns its image under the linear map `M = diag(dinv)`).
+
+2. **Zero-vector annihilation.** `jacobi_smoother op 0_N = 0_N`. Follows from law 1 with `α = β = 0`.
+
+3. **Diagonal-operator round-trip with `assemble_diagonal`.** For the default-damping setup (`ω = 1.0`): `jacobi_smoother (jacobi_setup A 1.0 sf_max) x = reciprocal(assemble_diagonal(A)) ⊙ x = D⁻¹ ⊙ x`. Witnessed by the setup chain `op.AssembleDiagonal(dinv); dinv.Reciprocal();` (`palace/linalg/jacobi.cpp:79-80`). Composes [`assemble-diagonal`](../L1/assemble-diagonal.md)'s diagonal-recovery law with the elementwise reciprocal; the law that names `jacobi_smoother` as the explicit realization of the `assemble_diagonal → reciprocal → elementwise_product` chain.
+
+4. **Damping absorption (`ω`-into-`dinv`).** For any `ω ≠ 0`: `jacobi_setup A ω sf_max = scale ω (jacobi_setup A 1.0 sf_max)`, so the damping factor is absorbed into the closure's `dinv` at setup and does not surface in the apply. Operationally `jacobi_smoother (jacobi_setup A ω ·) x = ω · (D⁻¹ ⊙ x) = (ω · D⁻¹) ⊙ x`. Witnessed by `if (omega != 1.0) { dinv *= omega; }` (`palace/linalg/jacobi.cpp:90-93`); the `ω == 1.0` skip is a transparent performance trick.
+
+5. **Estimated-damping degenerate case (`ω = 0.0`).** When `ω = 0.0`, the setup substitutes the optimal `ω* = 2/(sf_max · λ_max(D⁻¹A))`; the apply law is identical to laws 1 + 4 with the substituted `ω*`: `jacobi_smoother (jacobi_setup A 0.0 sf_max) x = (ω* · D⁻¹) ⊙ x`. A setup-side specialization, not an apply-time branch — at the L3 apply the gate has already committed to a fixed `op.dinv`.
+
+6. **Self-transpose under symmetric wiring.** `jacobi_smoother_transpose op x = jacobi_smoother op x`. Witnessed by `MultTranspose(x, y) const override { Mult(x, y); }` (`palace/linalg/jacobi.hpp:43`). For real `dinv` this is the mathematical identity `M = Mᵀ` for any diagonal matrix; for complex `dinv` this is the *transpose* (not conjugate-transpose) — see the non-law below.
+
+Laws that explicitly **do not** hold (inherited unchanged from L1):
+
+- **Hermitian-transpose identity for complex `dinv`.** Palace's `MultTranspose` aliases the *transpose* kernel (`palace/linalg/jacobi.hpp:43` calls `Mult`, not `Apply<true>`), so the realized `MultTranspose` is the transpose, not the Hermitian, for complex `dinv`. The conjugate-`dinv` Hermitian kernel exists in `Apply<Transpose=true>` (`palace/linalg/jacobi.cpp:61-69`) but is **dead code** under the current symmetric wiring. Recorded as a non-law because the law one might *expect* (Hermitian-transpose = conj-`dinv` apply) is not the law the source realizes; aligns with the SPD precondition under which the gate is consumed.
+
+- **Iteration / multi-sweep equivalence.** `jacobi_smoother` is a *single-step* application: there is no `pc_it` parameter (contrast `chebyshev`'s outer sweeps). Two consecutive applies `M·M·x = M²·x` is the *square* of the preconditioner map, **not** a Jacobi sweep on the residual (which would be `M·(x − A·M·x)`). The Jacobi *iteration* is the consumer's responsibility — the bare L3 gate is the preconditioner action, not the iteration. This is the structural reason the gate carries no L3 obstruction: there is no loop in the apply to obstruct.
+
+- **Bit-determinism across operator representations.** Inherited from [`assemble-diagonal`](../L1/assemble-diagonal.md): a matrix-free high-order Nedelec `A` yields a value-approximate `dinv` (face-dof sharing in 3D), so the apply value differs from the assembled-`A` case. Load-bearing per CLAUDE.md §"Optimization tricks vs. base algebra"; the L3 algebraic laws hold, but their floating-point realisations are representation-dependent.
+
+The non-law set is **inherited unchanged** from L1; the L3 rendering introduces no new non-laws and no new obstruction. This is what makes the L3>L1 hop identity-in-form on the gate's apply: the entire algebraic profile (laws + non-laws) transports unchanged.
+
+## Dependencies
+
+**Same-layer (L3)**: the per-call apply has **no L3 operator dependencies** — it is one elementwise product. Where `ksp_solve` lists `krylov-step` as a direct dependency, `eigsolve` lists `ksp_solve` + `apply_linop`, and `chebyshev` lists the linear-update family, `jacobi-smoother`'s apply lists **none** — the elementwise product is below the L3 layer's resolution as a sub-operation (the L3 vocabulary has no standalone `elementwise_product` entry; the operation is a single field operation at L3, the same way `scal`'s per-element multiplication is below L3's resolution). This is the gate's defining lightness at the iteration-rotation layer.
+
+The setup-side dependencies ([`assemble-diagonal`](../L1/assemble-diagonal.md) for the `op.AssembleDiagonal(dinv)` step, elementwise `reciprocal` for `dinv.Reciprocal()`, and the opaque `spectrum_estimate` for the `ω = 0` path) are L1-entry concerns, not part of the L3 apply — they are consumed once at construction, before the gate is folded into any L3 expression.
+
+**Cross-cutting concepts**:
+
+- [`constructed-operators`](../concepts/constructed-operators.md) — the level-(c) variant absorption of operator-representation; the `JacobiSmoother[N]` closure is the canonical thinnest instance (it carries only the inverse diagonal, having forgotten `A`).
+- [`variant-absorption`](../concepts/variant-absorption.md) — the level-(b)/(c) absorption discipline; the element-type and damping-mode axes are absorbed into the closure, the operator-representation axis into `dinv` at setup.
+
+**L1 anchor**: [`L1/jacobi-smoother`](../L1/jacobi-smoother.md) (firm; the constructed-operator gate at L1) — authoritative on the Palace surface details, the setup chain, the `spectrum_estimate` opaque sub-action, the dead-code Hermitian kernel caveat, and the complete L0 evidence list. This L3 entry does not duplicate those details; the L3>L1 rotation is identity-in-form on the gate's apply.
+
+**Strawman reference**: `book/src/design/l4_calculus.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation (rendered as 4-space-indented code blocks here). The L4 layer does not surface `jacobi-smoother` as a standalone entry (per the constructed-operator-gate L4 verdict shared with the firm `apply_linop` / `ksp_solve` gates).
+
+## Variant axes
+
+`jacobi_smoother` has **two orthogonal variant axes at L3, plus one absorbed axis** — the same framing as L1 (`book/src/L1/jacobi-smoother.md` §Variant axes), transported unchanged. All three are absorbed into the constructed-operator closure; none appears in the per-call apply's positional signature.
+
+Two orthogonal axes:
+
+1. **element-type** (`real` | `complex`) — collapsed into the opaque `JacobiSmoother[N]` closure. The L0 source instantiates both (`template class JacobiSmoother<Operator>;` and `<ComplexOperator>`, `palace/linalg/jacobi.cpp:106-107`); the apply is identical in form (one elementwise product) and the per-element kernel dispatches on element type. The complex `dinv` is a *true complex* inverse diagonal (divergence from `chebyshev`'s real-only `dinv`); at L3 the apply respects the complex structure fully. At L3 the absorption is a documented invariant (no `readonly` typing).
+
+2. **damping-mode** (`default ω = 1.0` | `fixed ω ≠ 0` | `estimated ω = 0`) — collapsed into `op.dinv`'s *committed* damping value at setup. The L0 source carries the three modes as ctor-argument branches; at L3 they collapse to one gate parameterised by the absorbed `dinv` (the apply does not branch on damping mode — the setup computes the absorbed `dinv`, the apply reads it). The `sf_max` spectral-bound scaling factor is a construction parameter carried in `op.sf_max`, *not* a variant axis (it parameterises one gate per call site, surfacing only in the `ω = 0` setup arithmetic).
+
+Absorbed axis:
+
+- **operator-representation** (`sparse-CSR | matrix-free-Nedelec | parallel-wrapped | complex-wrapped`) — **collapsed at setup** through the [`assemble-diagonal`](../L1/assemble-diagonal.md) operator's own representation-axis absorption. By the time `dinv` is committed to the closure, the representation distinction has been erased; the matrix-free-Nedelec approximation propagates as a non-law (the bit-determinism non-law above), not as a fresh axis. The L1 contract collapses this axis identically; the L3 inheritance is by signature shape — no per-representation branching at the L3 apply surface.
+
+The variant-axis profile (two orthogonal + one absorbed) matches the L1 entry exactly. **No new axes introduced by the L3 rendering; no axes merged or split; the orthogonal-vs-absorbed framing is preserved.**
+
+## Status
+
+`firm` — the L3 form is value-thread-isomorphic to the firm L1 form on the constructed-operator-gate apply (identity-in-form rotation); the algebraic laws are the same six that hold at L1 (linearity, zero-vector annihilation, the `assemble_diagonal` round-trip, damping absorption, the estimated-damping degenerate case, self-transpose under symmetric wiring); the non-laws are catalogued explicitly (the dead-code Hermitian-transpose non-realisation, the no-iteration non-equivalence, and the representation-dependent bit-determinism non-law); the variant-axis profile is two orthogonal + one absorbed, inherited unchanged. The constructed-operator-gate framing matches the firm L3 [`apply_linop`](./apply_linop.md) / [`ksp_solve`](./ksp_solve.md) precedents — opaque-operator gate, operator-representation absorbed, no L4 entry needed.
+
+The firm-on-positive-structure precedent (the firm L1 `jacobi-smoother` / `apply_linop` / `chebyshev-smoother`) governs the absence of a dedicated `test-jacobi.cpp` under `reference/palace/test/unit/`: every L3 law is a syntactic identity transported from the firm L1 entry, whose laws read straight off positive source (elementwise multiply at `palace/linalg/jacobi.cpp:38`; setup chain at `:79-93`; transpose alias at `palace/linalg/jacobi.hpp:43`; instantiations at `palace/linalg/jacobi.cpp:106-107`) — not literature-inferred convergence claims — so the missing dedicated test does not gate firm. Behaviour is exercised through integration paths only (`palace/linalg/ksp.cpp:198-200`, the principal Jacobi consumer; four further consumer sites per the L1 entry).
+
+This dispatch (cycle-037) is the **layer-coherence backfill** — the L3 form was previously implicit only in the L1 entry; it now has its own L3 entry per the methodology invariant **Identity-lowerings still require both L levels** (CLAUDE.md, cycle-009 meta-phase). It is the sixth and final (A) firm identity-in-form L3 backfill candidate the cycle-036 D2 cross-layer-cross-cutter audit named at `book/src/L3/index.md:39` ("thinnest constructed-operator gate, one `elementwise_product`"), under OQ `l3-cohort-growth-audit-c036-verdict`.
+
+**Caveats (not status reductions):**
+
+- The complex `Apply<Transpose=true>` Hermitian kernel (`palace/linalg/jacobi.cpp:61-69`) is dead code under symmetric wiring — `MultTranspose` aliases `Mult`, not `Apply<true>`. The conjugate-`dinv` Hermitian-transpose law is therefore *not realized* by the Palace surface even though the source contains the machinery. Inherited from the L1 entry's caveat; recorded as a non-law (above).
+- The `ω = 0.0` estimated-damping mode's setup-time correctness depends on the opaque `spectrum_estimate` sub-action (out-of-scope at L3), but the per-call apply law is identical regardless of damping mode (law 1 with the substituted `ω`).
+
+## Lowers to
+
+L3 `jacobi-smoother` lowers to L1 [`jacobi-smoother`](../L1/jacobi-smoother.md) directly — **no interposed L2 entry, no L3-L2 theme, no non-adjacent L3-L1 directory**. The rotation is identity-in-form on the constructed-operator-gate apply: both L1 and L3 see `jacobi_smoother :: (op: JacobiSmoother[N], x: Tensor[N]) -> Tensor[N]` with the same shape contract, the same six algebraic laws, the same three-non-law set, and the same two-orthogonal-plus-one-absorbed variant profile. The L3>L1 hop is a layer-coherence rotation (each layer is coherent within itself), not an algebraic one; the identity-in-form annotation lives in-line here (precedent: the firm L3 `dot` / `scal` / `apply_linop` cohort, cycle-011, all of which note their identity rotations in-line rather than in a separate theme file; cycle-012 non-adjacent-identity convention).
+
+The **substantive** rotation in the chain is the L1>L0 leaf-mutation rotation, not the L3>L1 hop: the apply's single elementwise product `op.dinv ⊙ x` lowers to Palace's in-place `mfem::forall_switch` element-loop `Y[i] = DI[i] * X[i]` writing through the output argument `y`. That rotation is captured by the firm L1>L0 theme [`reciprocal-elementwise-product-mutation-rotation`](../L1-L0/reciprocal-elementwise-product-mutation-rotation.md) (sub-pattern B — the `elementwise_product` leaf; the consumer-duplicate `Apply(dinv, x, y)` kernel at `palace/linalg/jacobi.cpp:30-39`) and the constructed-operator-closure theme [`jacobi-smoother-mutation-rotation`](../L1-L0/jacobi-smoother-mutation-rotation.md). None of that destination-binding / `forall_switch` content is L3 content; the L3 form sees a single-step whole-tensor elementwise product.
+
+## Lifts from
+
+**`jacobi-smoother` has no standalone L4 entry.** Like the firm `apply_linop` / `ksp_solve` constructed-operator gates, the Jacobi apply carries no monadic effect, no state-stratification typing, and no outer-driver structure — its body is one elementwise product. First-class L4 vocabulary carries one of (a) monadic effect (`Solve` monad threading `SimState`), (b) state-stratification typing (typed records), or (c) outer-driver structure (`iterate_while`, `solve_loop`); the Jacobi gate carries none. Promoting it to a standalone L4 entry would over-promote a leaf-shaped preconditioner action and add no calculus content.
+
+The L3 form is value-thread-isomorphic to the firm L1 form on the gate's apply; the entry exists for layer-coherence reasons — a reader navigating L3 (whose index advertises whole-tensor field operations and constructed-operator gates as L3 vocabulary) must find `jacobi-smoother` defined in L3 vocabulary, not have to reach down to L1 to recover the constructed-operator-gate apply. The firm L3 `krylov-step` backfill (`book/src/L3/krylov-step.md`, cycle-010) is the structural precedent for the constructed-operator-shaped layer-coherence backfill; the firm L3 `ksp_solve` (cycle-020) and `divfree-projector` (cycle-037, parallel) are the constructed-operator-gate siblings.
+
+## Evidence
+
+The L3 form is value-thread-isomorphic to the firm L1 form (per the identity-in-form rotation on the constructed-operator-gate apply); all L0 evidence is transitive through L1. Direct citations relevant to this L3 entry (self-verified via `tools/citecheck/citecheck.py --anchor` this invocation against `reference/palace/palace/linalg/jacobi.{hpp,cpp}` and `ksp.cpp`):
+
+- `book/src/L1/jacobi-smoother.md` (firm) — the L1 entry whose signature, semantics, six algebraic laws, three non-laws, two-orthogonal-plus-one-absorbed variant profile, and complete L0 evidence list are transported unchanged to L3. Authoritative on every Palace-surface factual claim.
+- `book/src/L3/index.md:39` — the cycle-036 D2 cross-layer-cross-cutter audit verdict naming `jacobi-smoother` as one of the six (A) firm identity-in-form L3 backfill candidates ("thinnest constructed-operator gate, one `elementwise_product`"). This entry is the enactment.
+- `book/src/L3/index.md:13` — the L3 vocabulary inventory advertising whole-tensor field operations / field transitions as L3 vocabulary; this entry honours the inventory for the diagonal-preconditioner gate.
+- `palace/linalg/jacobi.cpp:30-39` — real `Apply<Transpose>(dinv, x, y)`: `mfem::forall_switch(use_dev, N, [=] (int i) { Y[i] = DI[i] * X[i]; });` — the single elementwise-multiply kernel that realises the apply (law 1 witness; the body the L3 whole-tensor elementwise product lowers to). Self-verified — anchor `Y[i] = DI[i] * X[i]` at `:38`.
+- `palace/linalg/jacobi.cpp:41-70` — complex `Apply<Transpose>(dinv, x, y)`: the forward branch realises elementwise complex multiplication; the `Transpose = true` branch (`:61-69`) computes the conjugate-`dinv` apply (dead code under symmetric wiring; the non-law witness).
+- `palace/linalg/jacobi.cpp:79-93` — the `SetOperator` setup body: `op.AssembleDiagonal(dinv)` (`:79`), `dinv.Reciprocal()` (`:80`) — the `assemble_diagonal → reciprocal` chain (law 3); the `ω`-fold `dinv *= omega;` (`:90-93`, anchor at `:92`) — the damping absorption (law 4). Self-verified.
+- `palace/linalg/jacobi.cpp:99-104` — `JacobiSmoother<OperType>::Mult(x, y) const`: the apply entry; `MFEM_ASSERT(!this->initial_guess, ...)` (`:102`) — the no-initial-guess precondition; `Apply(dinv, x, y);` (`:103`) — the single dispatch that is the entire per-call action. Self-verified — anchor `Apply(dinv, x, y)` at `:103`.
+- `palace/linalg/jacobi.hpp:43` — `void MultTranspose(...) const override { Mult(x, y); }` — the transpose self-alias (law 6) and the source of the dead-code Hermitian caveat. Self-verified.
+- `palace/linalg/jacobi.cpp:106-107` — `template class JacobiSmoother<Operator>; template class JacobiSmoother<ComplexOperator>;` — the element-type variant axis instantiation. Self-verified.
+- `palace/linalg/ksp.cpp:198-200` — the principal consumer: `case LinearSolver::JACOBI: pc = std::make_unique<JacobiSmoother<OperType>>(comm); break;` — the default-damping preconditioner-instantiation site inside `ConfigurePreconditioner`. Self-verified — anchor `JACOBI` at `:198`.
+- `book/src/L1-L0/reciprocal-elementwise-product-mutation-rotation.md` (firm) — the L1>L0 leaf-mutation rotation the apply's elementwise product lowers through (sub-pattern B; the `elementwise_product` leaf + the consumer-duplicate `Apply(dinv, x, y)` kernel). The substantive rotation in the chain; not L3 content (referenced forward for the downward narrative).
+- `book/src/L3/krylov-step.md` (firm cycle-010), `book/src/L3/apply_linop.md` (firm cycle-011), `book/src/L3/ksp_solve.md` (firm cycle-020) — the L3 identity-in-form / constructed-operator-gate backfill precedents this entry follows.
+
+## L3 vs L4 distinction
+
+- **L4**: no standalone `jacobi-smoother` entry. A diagonal-preconditioner action carries no monadic effect, no typed records, no outer-driver structure; if it appeared at L4 it would be a let-binding consuming a constructed operator, not first-class L4 vocabulary. The constructed-operator-gate L4 verdict is shared with the firm `apply_linop` / `ksp_solve` gates.
+- **L3**: standalone entry (this file). Positional value-threading: `jacobi_smoother op x = op.dinv ⊙ x`. No monadic effect, no typed records, no `readonly` typing, no `do`-block. The gate's apply is one whole-tensor elementwise product with the operator-representation, element-type, and damping-mode axes absorbed into the opaque closure.
+
+## L3 vs L1 distinction
+
+- **L1**: constructed-operator gate as a pure-functional smoother action — the mutation-rotated form of the L0 `JacobiSmoother<OperType>::Mult(x, y)` output-arg-write idiom (the destination buffer `y` dropped from the signature; the `initial_guess` parameter dropped as a precondition; the element-type and damping-mode collapsed into the closure). The L1 vocabulary frames the gate against the L0 source.
+- **L3**: constructed-operator gate as a whole-tensor field operation — one of the iteration-rotation layer's gates (alongside `ksp_solve`, `eigsolve`), but the thinnest, carrying no obstruction because its apply is a single elementwise product. **The gate's apply is identity-in-form to L1** — no change in shape, no change in algebraic laws, no change in variant axes. The L3 entry exists for layer-coherence: a reader at L3 finds the gate defined in L3 vocabulary, without having to drop down to L1.
+
+The two layers' entries share signature, algebraic laws (six), non-laws (three), variant-axis profile (two orthogonal + one absorbed), and the cited L0 evidence (transitive). They differ in **layer interpretation**: L1 frames the gate as the mutation-rotated form of the L0 `Mult` virtual; L3 frames it as the thinnest of the iteration-rotation layer's constructed-operator gates. The two framings are complementary, and the layer-coherence invariant (CLAUDE.md §Methodology invariants "Identity-lowerings still require both L levels") requires both entries to exist.

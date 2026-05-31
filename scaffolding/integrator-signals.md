@@ -30,6 +30,38 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-037 — 2026-05-31T233000Z — FIRST primary cycle of meta-batch-11 (cycles 037/038/039; batch-11 meta-phase fires AFTER cycle-039) — FIRST OPUS-PLANNER CYCLE
+
+### Unblocked
+- `l3-cohort-growth-audit-c036-verdict` — 2 of 6 **(A)** firm identity-in-form L3 backfills now landed (`assemble-diagonal` 10th + `jacobi-smoother` 11th); the **4 remaining (A) backfills** (`reciprocal`, `elementwise_product`, `normalize`, `divfree-projector`) are the high-confidence batch-11 L3 follow-frontier — all four have firm L1 homes on disk and identity-in-form rotations, so they are immediately dispatch-ready harvester work.
+- L3 cohort growth is now demonstrably routine (11 firm + 2 partial-obstruction); the diagonal-preconditioner-apply chain is firm end-to-end at L3 (apply-side) and L1>L0 (leaf-side + consumer-side).
+
+### New dependencies
+- L3 `assemble-diagonal` → L1 `assemble-diagonal` (identity-in-form on the primitive's signature; six laws + the exact-vs-approximate non-law inherited unchanged) — commit this cycle.
+- L3 `jacobi-smoother` → L1 `jacobi-smoother` (identity-in-form on the constructed-operator-gate apply); the substantive rotation routes to L1>L0 `reciprocal-elementwise-product-mutation-rotation` sub-pattern B + `jacobi-smoother-mutation-rotation` — commit this cycle.
+- L1>L0 `reciprocal-elementwise-product-mutation-rotation` now carries a machine-readable 19-row `verified_against:` block (was prose-only on disk) — lowering-verifier channel-format record complete.
+
+### Resolution implications
+- `l3-cohort-growth-audit-c036-verdict` — **partially-answered** — assemble-diagonal + jacobi-smoother portions closed (2 of 6 (A) firm backfills done); parent tracker carries the 4 remaining (A) + 2 L1-promotion-gated (A) (`matrix-weighted-norm`, `bilinear-form` — do NOT dispatch until L1 promotes) + 3 substantive (B) + the 7-operator (C) negative list.
+- `assemble-diagonal-l3-reciprocal-elementwise-product-plain-text-forward-refs` — **needs-more** — the two plain-text forward-refs in `L3/assemble-diagonal.md` point at `reciprocal`/`elementwise_product`, both **(A)** candidates; once those L3 entries land (batch-11), a finalize-time live-link upgrade is eligible per `upgrade-plain-text-ref-to-live-link-when-target-on-disk`.
+- `reciprocal-elementwise-product-mr-dead-code-transpose-consumer-branch` / `safe-reciprocal-threshold-l1-candidacy` / `mfem-vector-reciprocal-upstream-body-investigation` — **needs-more (reconfirmed)** — the D3 audit independently re-confirmed the dead-code status (second confirmation); the 3 substantive sub-OQs remain open as upstream/literature investigations out of project scope.
+
+### Suggested next dispatches
+- (`harvester`, `reciprocal` L3 backfill) — **(A)** identity-in-form, elementwise self-map; firm L1 home on disk; closes one of the 4 remaining (A).
+- (`harvester`, `elementwise_product` L3 backfill) — **(A)** identity-in-form, Hadamard binary; firm L1 home on disk; landing both reciprocal + elementwise_product unblocks the live-link upgrade of the `assemble-diagonal`/`jacobi-smoother` plain-text forward-refs.
+- (`harvester`, `divfree-projector` L3 backfill) — **(A)** constructed-operator gate (like firm-L3 `ksp_solve`); firm L1 home on disk; note the `jacobi-smoother.md` §Context already references it plain-text (repairer downgrade) — landing it makes that reference live-link-upgrade-eligible.
+- (`harvester`, `normalize` L3 backfill) — **(A)** fused `nrm2 + scal`; the fourth and final remaining (A).
+- AVOID (`*`, `apply_nonlinear_pencil` / `lu_solve` / `back_solve` / `ls-update-column` / the 4 NLEPS atoms L3) — **(C) negative list**, disqualified by small-dense coordinate-space axis; any such proposal is STALE.
+
+### Wave-conflict observations
+- No conflicts. The 3 wave-1 dispatches touched disjoint files. D1 (`assemble-diagonal`) and D2 (`jacobi-smoother`) both appended distinct dep-map rows to `L3/index.md` (D1 anchored after the `apply_linop` row, D2 after the `eigsolve` row — no collision) and distinct SUMMARY entries; D3 touched only the L1>L0 theme. Both per-report integrators deferred the L3-index running-tally bump to finalize (correctly — layer-intro-author domain), and finalize reconciled the single tally line ONCE (9→11) for all c037 L3 landings rather than per-report. Clean serialization.
+
+### Integration-tooling friction
+- None new this cycle. The path-hygiene/citecheck-AMBIG repair (D3, `operator.cpp` basename → `palace/linalg/operator.cpp`) was caught-and-repaired by the cycle-024 citecheck `--scan` safety-net at integrator-per-report time (mechanical, unambiguous — only one `operator.cpp` referenced in the theme); not a tooling gap, the gate worked as designed.
+- PROCESS SIGNAL (positive): `cycle-planner-stale-priorities-line-recruitment` did NOT recur this cycle (first clean planner cycle since the haiku→opus escalation enacted as part of the user 2026-05-31 blanket Opus-4.8 model upgrade). The opus planner ran the deeper deliverable-presence check and all 3 dispatches were genuinely-open (2 missing L3 files + 1 missing `verified_against:` block on disk). The batch-11 meta-phase (post-cycle-039) should confirm whether the escalation closed the friction structurally — one clean cycle is encouraging but needs a 2-of-3 batch-11 confirmation before the friction is marked addressed.
+
+---
+
 ## cycle-036 — 2026-05-31T230000Z — THIRD/FINAL primary cycle of meta-batch-10 — BATCH-CLOSING (batch-10 meta-phase fires AFTER this finalize commit)
 
 **THIRD AND BATCH-CLOSING primary cycle of meta-batch-10 (cycles 034/035/036). The batch-10 meta-phase fires AFTER this finalize commit — NOT this cycle.** This c036 entry plus the c034 + c035 entries below comprise the full batch-10 evidence window for the meta-phase. **HEADLINE for the meta-phase:** cycle-036 landed firm L1 `floquet-correction` (third firm `nested-constructed-operator-gate` instance) + the definitive L3-cohort-growth audit that settles which L1 ops warrant L3 entries (stops the recurring stale L3-backfill picks), and the batch-10 evidence pattern across c034/c035/c036 of `cycle-planner-stale-priorities-line-recruitment` is now recurrence-3-WITHIN-BATCH-10 at decreasing severity (c034 recurrence-1, c035 recurrence-2, c036 softer-recurrence with correct instinct but reflexive-harvest framing); the batch-9 prompt-level codification (ENFORCEMENT bullet + skill at producer-side) is demonstrably insufficient at the planner side.
