@@ -3,7 +3,7 @@ layer: L3
 operator: axpby
 firmness: firm
 lowers_to:
-  - book/src/L1/axpby.md (identity-in-form rotation on the primitive's signature shape; whole-tensor in / whole-tensor out at both layers; no L2 intermediate because the BLAS-1 primitives are L1 leaves not L2 compositions)
+  - book/src/L2/axpby.md (present adjacent L2 floor, cycle-043; identity-in-form on the primitive's signature shape, via the `axpby-body-identity` L3>L2 theme; whole-tensor in / whole-tensor out at both layers) → book/src/L1/axpby.md (transitive L3>L1 identity in-line, L3>L2 ∘ L2>L1)
 lifts_from:
   - (no L4 entry — leaf primitive, not a calculus combinator; per cycle-010 cohort audit verdict)
 variant_axes:
@@ -98,7 +98,7 @@ The algebraic-law set at L3 is **identical** to the L1 algebraic-law set.
 - [`scalar-promotion`](../concepts/scalar-promotion.md) — the `real ⊑ complex` typing-rule. Inherited from L1 verbatim; no L3-specific semantics.
 - [`tensor-field-lift`](../concepts/tensor-field-lift.md) — underwrites the L3-native-by-signature-shape claim.
 
-No L4 monadic vocabulary; `axpby` is not a calculus combinator at L4. Per the cycle-010 cohort audit, the L4 candidate for `axpby` is **CONFIRMED-NOT-NEEDED** (leaf primitives don't get L4 rows). The L3>L1 rotation is direct; no L2 intermediate is required because `axpby` is an L1 leaf, not an L2 composition (per `book/src/L2/krylov-step.md:96` — the L2 layer references `axpby` by its L1 name).
+No L4 monadic vocabulary; `axpby` is not a calculus combinator at L4. Per the cycle-010 cohort audit, the L4 candidate for `axpby` is **CONFIRMED-NOT-NEEDED** (leaf primitives don't get L4 rows). The adjacent L3>L2 rotation passes through the **present** L2 floor [`axpby`](../L2/axpby.md) (cycle-043) via the firm [`axpby-body-identity`](../L3-L2/axpby-body-identity.md) L3>L2 theme — identity-in-form on the body, no wrapper rotation; onward to L1 [`axpby`](../L1/axpby.md). The L2 floor was backfilled under the foundation-first directive `l2-floor-under-l3-leaf-cohort` so the firm L3 entry rests on a *present* adjacent L2 parent, per **Identity-lowerings still require both L levels**.
 
 ## Variant axes
 
@@ -115,9 +115,9 @@ The variant-axis profile at L3 matches L1 exactly. No new axes introduced; no ax
 
 ## Lowers to
 
-L3 `axpby` lowers to L1 [`axpby`](../L1/axpby.md) via the **identity-in-form rotation on the primitive's signature shape**. The two surfaces are textually identical modulo layer-coherence vocabulary. The rotation does not pass through L2 because `axpby` is an L1 leaf, not an L2 composition.
+L3 `axpby` lowers to the **present adjacent L2 floor** [`axpby`](../L2/axpby.md) (cycle-043) as **identity-in-form on the primitive's signature shape**, via the firm [`axpby-body-identity`](../L3-L2/axpby-body-identity.md) L3>L2 theme (identity-in-form on the body, no wrapper rotation — `axpby` is a leaf whole-tensor field operation, not a step body), and onward to L1 [`axpby`](../L1/axpby.md). The three surfaces are textually identical modulo layer-coherence vocabulary (L1 / L2 / L3 all see `axpby :: Scalar -> Tensor[N] -> Scalar -> Tensor[N] -> Tensor[N]` with the same shape contract, the same nine algebraic laws, the same four non-laws, and the same variant-axis profile). The L2 floor is the standalone fold-member BLAS-1 leaf — landed by the cycle-043 L2-floor backfill under the foundation-first directive `l2-floor-under-l3-leaf-cohort` — so the L3>L2 hop passes through the adjacent floor rather than skipping a layer to L1, per **Identity-lowerings still require both L levels**.
 
-A thin L3>L1 identity-in-form theme could be authored to ratify the rotation explicitly; whether to create a `book/src/L3-L1/` directory is a structural-naming question deferred per OQ `l3-l1-directory-naming-structure-policy` (raised by the cycle-010 cohort audit). The current dispatch documents the rotation in-line at the L3 entry's "Lowers to" section, consistent with the cycle-010 `book/src/L3/krylov-step.md` precedent.
+The **transitive** L3>L1 identity (L3>L2 ∘ L2>L1, both identity-in-form) is annotated in-line per the cycle-012 non-adjacent-identity convention; no `book/src/L3-L1/` directory is created. The substantive rotation in the chain is the L1>L0 [`axpby-mutation-rotation`](../L1-L0/axpby-mutation-rotation.md).
 
 ## Lifts from
 
@@ -127,7 +127,9 @@ No L4 entry exists for `axpby` (the cohort audit verdict is **CONFIRMED-NOT-NEED
 
 All L0 evidence is inherited via L1 (`book/src/L1/axpby.md` §Evidence). Direct citations relevant to this L3 entry:
 
-- `book/src/L1/axpby.md` (cycle-003 firm) — the L1 form this L3 entry rotates from. Body shape, semantics, nine algebraic laws, four non-laws, variant-axis profile.
+- `book/src/L2/axpby.md` (cycle-043 firm) — the present adjacent L2 floor this L3 entry lowers into via the `axpby-body-identity` theme; identity-in-form on the primitive's signature.
+- `book/src/L3-L2/axpby-body-identity.md` (cycle-043 firm) — the adjacent L3>L2 body-identity theme; identity-in-form on the body, no wrapper rotation.
+- `book/src/L1/axpby.md` (cycle-003 firm) — the L1 form this L3 entry transitively rotates from (L3>L2 ∘ L2>L1). Body shape, semantics, nine algebraic laws, four non-laws, variant-axis profile.
 - `book/src/L3-L2/krylov-step-body-identity.md:97` (firm) — names `axpby` as L3-native by signature shape.
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:67` (firm) — renders `axpby` in the L3 body let-chain identically to L1.
 - `book/src/L3/index.md:13` — L3 vocabulary inventory implicitly covering the linear-update cohort.

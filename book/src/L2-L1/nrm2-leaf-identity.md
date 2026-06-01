@@ -219,7 +219,7 @@ content is the resolution change on the two scalar post-steps (`√`/`abs` named
 L1 resolution; `abs` guard preserved-as-claim at L2 → absorbed-by-non-negativity-claim at L1).
 This is a BLAS-1-leaf thin-identity theme — the consumer sibling of the
 [`inner-product-fold-specialization`](./inner-product-fold-specialization.md) fold theme — under
-the 2026-05-31 `l2-floor-under-l3-blas1-cohort` foundation-first directive: it completes the
+the 2026-05-31 `l2-floor-under-l3-leaf-cohort` foundation-first directive: it completes the
 adjacent-edge chain below the firm L3 [`nrm2`](../L3/nrm2.md) anchor. A `lowering-verifier`
 audit attaching a `verified_against:` block (per the sibling-theme convention) confirming the
 identity-in-form rotation against the L0 corpus is the standard follow-up, not a status reduction.

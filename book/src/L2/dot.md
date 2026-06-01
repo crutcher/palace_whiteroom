@@ -17,7 +17,7 @@ reduction at that layer — a pure value-producing reduction over the length axi
 no control flow, no monadic state threading, and no convergence predicate.
 
 This entry is a **thin floor entry**, authored under the 2026-05-31 foundation-first
-directive `l2-floor-under-l3-blas1-cohort`. Its purpose is floor *presence*: the firm L3
+directive `l2-floor-under-l3-leaf-cohort`. Its purpose is floor *presence*: the firm L3
 [`dot`](../L3/dot.md) (the iteration-rotation rendering, consumed inside the `krylov-step`
 body) and the firm L1 [`dot`](../L1/dot.md) (the mutation-rotation leaf) sandwich a layer
 at which `dot` had no chapter. The L2 entry fills it so the lowering chain L3 → L2 → L1
@@ -263,7 +263,7 @@ sesquilinear / bilinear fact inherited unchanged, with the PSD-at-diagonal law d
 confirmed by the in-source `&x==&y` imag=`0.0` elision (`palace/linalg/vector.cpp:266`), and
 the reduction-tree associativity paired as the explicit IEEE non-law per the
 load-bearing-numerical-trick discipline. This is a **thin floor entry** authored under the
-2026-05-31 foundation-first directive `l2-floor-under-l3-blas1-cohort`: its purpose is floor
+2026-05-31 foundation-first directive `l2-floor-under-l3-leaf-cohort`: its purpose is floor
 *presence* so the firm L3 [`dot`](../L3/dot.md) leaf rests on an adjacent same-named L2
 parent (per CLAUDE.md §Methodology invariants **Identity-lowerings still require both L
 levels**) rather than skipping a layer to L1. The fusion-rotation content is the

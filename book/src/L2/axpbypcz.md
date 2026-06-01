@@ -60,7 +60,7 @@ This is a thin **floor presence** entry. It exists so the firm L3
 methodology invariant **Identity-lowerings still require both L levels** (CLAUDE.md
 §Methodology invariants, cycle-009 codification): each layer is coherent within itself,
 and a reader at L2 must find `axpbypcz` defined in L2 vocabulary without reaching down to
-L1 or up to L3. The foundation-first directive `l2-floor-under-l3-blas1-cohort`
+L1 or up to L3. The foundation-first directive `l2-floor-under-l3-leaf-cohort`
 (2026-05-31) names exactly this gap: the L3 BLAS-1 cohort
 (`axpy`/`axpby`/`axpbypcz`/`dot`/`nrm2`/`scal`) was backfilled to L3 in cycle-011 without
 the corresponding L2 floor entries being present, so the L3 cohort rested on the L1 leaves
@@ -347,7 +347,7 @@ unit test does not gate firm (the syntactic-identity-laws-on-positive-source esc
 firm-without-dedicated-test bar the fold-parent `linear_combination` rests on — see its
 §Status empirical-match caveat). This dispatch is the **L2 floor backfill** (cycle-043 D5)
 under the `l2-floor-under-l3-leaf-cohort` plan item (continuation of the
-`l2-floor-under-l3-blas1-cohort` foundation-first directive): the L2 form was previously
+`l2-floor-under-l3-leaf-cohort` foundation-first directive): the L2 form was previously
 referenced only as the arity-3 leaf of `linear_combination` and inside `krylov-step` /
 `chebyshev-iteration` dependency lists; it now has its own L2 entry per **Identity-lowerings
 still require both L levels**, the arity-3 sibling of the cycle-041 `scal` floor. The

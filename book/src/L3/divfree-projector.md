@@ -117,7 +117,7 @@ both L levels** (CLAUDE.md §Methodology invariants, cycle-009 meta-phase
 codification; the firm L3 `krylov-step` cycle-010 backfill is the codified
 precedent, the firm L3 `ksp_solve` cycle-020 + `jacobi-smoother` cycle-037 the
 constructed-operator-gate siblings). The cycle-036 D2 cross-layer-cross-cutter audit
-(`book/src/L3/index.md:41`) classified this backfill as one of the six (A) firm
+(`book/src/L3/index.md:46`) classified this backfill as one of the six (A) firm
 identity-in-form L3 candidates, naming it "constructed-operator gate, like firm-L3
 `ksp_solve`".
 
@@ -452,7 +452,7 @@ previously implicit only in the L1 entry; it now has its own L3 entry per the
 methodology invariant **Identity-lowerings still require both L levels** (CLAUDE.md,
 cycle-009 meta-phase). It is one of the six (A) firm identity-in-form L3 backfill
 candidates the cycle-036 D2 cross-layer-cross-cutter audit named at
-`book/src/L3/index.md:41` ("constructed-operator gate, like firm-L3 `ksp_solve`"), under
+`book/src/L3/index.md:46` ("constructed-operator gate, like firm-L3 `ksp_solve`"), under
 OQ `l3-cohort-growth-audit-c036-verdict`.
 
 **Caveats (not status reductions):**
@@ -533,7 +533,7 @@ L1. Direct citations relevant to this L3 entry (self-verified via
   five algebraic laws, two non-laws, one-orthogonal-plus-one-absorbed variant profile, and
   complete L0 evidence list are transported unchanged to L3. Authoritative on every
   Palace-surface factual claim.
-- `book/src/L3/index.md:41` — the cycle-036 D2 cross-layer-cross-cutter audit verdict
+- `book/src/L3/index.md:46` — the cycle-036 D2 cross-layer-cross-cutter audit verdict
   naming `divfree-projector` as one of the six (A) firm identity-in-form L3 backfill
   candidates ("constructed-operator gate, like firm-L3 `ksp_solve`"). This entry is the
   enactment.

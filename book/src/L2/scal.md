@@ -57,7 +57,7 @@ This is a thin **floor presence** entry. It exists so the firm L3 [`scal`](../L3
 **Identity-lowerings still require both L levels** (CLAUDE.md §Methodology invariants,
 cycle-009 codification): each layer is coherent within itself, and a reader at L2 must
 find `scal` defined in L2 vocabulary without reaching down to L1 or up to L3. The
-foundation-first directive `l2-floor-under-l3-blas1-cohort` (2026-05-31) names exactly
+foundation-first directive `l2-floor-under-l3-leaf-cohort` (2026-05-31) names exactly
 this gap: the L3 BLAS-1 cohort (`axpy`/`axpby`/`axpbypcz`/`dot`/`nrm2`/`scal`) was
 backfilled to L3 in cycle-011 without the corresponding L2 floor entries being present,
 so the L3 cohort rests on the L1 leaves directly. This dispatch floors `scal`; the
@@ -277,7 +277,7 @@ identity on that closure — the absence of a dedicated `scal` unit test does no
 (the syntactic-identity-laws-on-positive-source escape, the `apply_linop` situation, not
 the `eigsolve`-convergence-semantics situation). This dispatch is the **L2 floor
 backfill** (cycle-041 D3) under the foundation-first directive
-`l2-floor-under-l3-blas1-cohort`: the L2 form was previously referenced only as the
+`l2-floor-under-l3-leaf-cohort`: the L2 form was previously referenced only as the
 arity-1 leaf of `linear_combination` and inside `krylov-step` / `chebyshev-iteration`
 dependency lists; it now has its own L2 entry per **Identity-lowerings still require both
 L levels**.
@@ -361,5 +361,5 @@ the firm L1 entry. Direct citations relevant to this L2 entry:
 The L2 ↔ L1 rotation is identity-in-form on the body and signature; the surface
 adjustment is documentary. The methodology invariant **each layer is coherent within
 itself** is what compels the L2 entry to exist as its own anchor — and the
-foundation-first directive `l2-floor-under-l3-blas1-cohort` is what schedules it, so the
+foundation-first directive `l2-floor-under-l3-leaf-cohort` is what schedules it, so the
 firm L3 [`scal`](../L3/scal.md) rests on a present adjacent L2 parent.

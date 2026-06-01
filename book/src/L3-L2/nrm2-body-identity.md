@@ -41,7 +41,7 @@ The L3 `nrm2` (firm cycle-011) and the L2 `nrm2` floor (firm cycle-041, wave-1 D
 both L levels** (CLAUDE.md §Methodology invariants, codified cycle-009): each layer is coherent
 within itself, so the reduction is defined in L3 vocabulary at L3 and L2 vocabulary at L2, and
 this theme is the adjacent-edge identity rotation between them. The L2 floor exists under the
-2026-05-31 `l2-floor-under-l3-blas1-cohort` foundation-first directive so the firm L3 anchor
+2026-05-31 `l2-floor-under-l3-leaf-cohort` foundation-first directive so the firm L3 anchor
 rests on a present adjacent L2 parent; this theme completes that adjacent edge.
 
 ## L3 form (LHS)
@@ -229,7 +229,7 @@ fully-specified source). The only textual difference between the L3 and L2 forms
 inner-reduction name (`dot` leaf at L3 vs `inner_product` fold at L2 at the diagonal), which
 denotes the same value. This is the BLAS-1-leaf analogue of
 [`krylov-step-body-identity`](./krylov-step-body-identity.md), under the 2026-05-31
-`l2-floor-under-l3-blas1-cohort` foundation-first directive: it completes the adjacent edge
+`l2-floor-under-l3-leaf-cohort` foundation-first directive: it completes the adjacent edge
 below the firm L3 [`nrm2`](../L3/nrm2.md) anchor. A `lowering-verifier` audit attaching a
 `verified_against:` block confirming the identity-in-form rotation is the standard follow-up,
 not a status reduction.

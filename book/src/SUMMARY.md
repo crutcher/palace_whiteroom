@@ -53,6 +53,7 @@
 - [reciprocal-body-identity](./L3-L2/reciprocal-body-identity.md)
 - [elementwise-product-body-identity](./L3-L2/elementwise-product-body-identity.md)
 - [normalize-body-identity](./L3-L2/normalize-body-identity.md)
+- [orthogonalize-variant-split](./L3-L2/orthogonalize-variant-split.md)
 
 # L2 — Algebraic Decompositions
 - [Overview](./L2/index.md)

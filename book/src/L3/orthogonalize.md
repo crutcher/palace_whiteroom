@@ -5,7 +5,7 @@ firmness: partial-obstruction
 lifts_from:
   - book/src/L2/orthogonalize.md (the named `project ▷ subtract` composition; the L2 per-variant batched/interleaved primitive sequence lifts to this L3 body, with the per-variant collective shape disclosed as the residual axis — see §"Lifts from"; the MGS interleaving is the obstruction, CGS/CGS2 lift)
 lowers_to:
-  - book/src/L2/orthogonalize.md (body identity-in-form on the per-step `dot`+`axpy`; the surface adjustment makes the MGS `j`-recurrence explicit as a sequential-obstruction marker and the CGS/CGS2 batched form explicit as a clean lift; no L3-L2 theme file — in-line annotation per cycle-012 non-adjacent-identity convention, precedent book/src/L3/chebyshev.md / book/src/L3/eigsolve.md)
+  - book/src/L2/orthogonalize.md (per-step `dot`+`axpy` body identity-in-form, annotated in-line per cycle-012; the SUBSTANTIVE loop-structure variant split — MGS `jloop`/CGS-batched-arm collapse into the L2 per-variant sequencing — is the dedicated `orthogonalize-variant-split` L3>L2 theme, cycle-044)
 variant_axes:
   - gs_orthog (MGS = sequential per-column projector chain, NON-lifting / CGS = batched single-reduction, lifts / CGS2 = two CGS passes, lifts — this is the axis along which the L3 lift verdict SPLITS)
   - dot-hook (canonical ⟨·,·⟩ / B-weighted — parametric, the lift verdict is invariant under the hook substitution)
@@ -66,7 +66,7 @@ shape **variant-dependent**:
 The load-bearing structural fact this entry records: **`orthogonalize` at L3 has a lifting body
 and a loop whose liftability is variant-dependent — CGS/CGS2 lift, MGS is a Palace-authored
 numerical-stability sequential obstruction.** This is the cycle-036 D2 audit's **(B)**
-prediction enacted (`book/src/L3/index.md:47`: "MGS variant has sequential-obstruction at L3
+prediction enacted (`book/src/L3/index.md:48`: "MGS variant has sequential-obstruction at L3
 explicitly noted at L1; CGS/CGS2 variants lift cleanly — would be a third `partial-obstruction`
 row after `chebyshev` and `eigsolve`").
 
@@ -399,13 +399,19 @@ contract — they are not dependencies of this operator.
 - L4: no firm `L4/orthogonalize.md` (unauthored; the natural Arnoldi-step-monad target is a
   future dispatch).
 
-The **substantive** rotation is downward at L1>L0: the in-place `w` overwrite
+The **substantive** rotation is downward in two places. At L1>L0 the in-place `w` overwrite
 (`w.Add(-H[j], V[j])`), the raw-pointer `H` write, and the per-variant collective shape are
 narrated forward from L1 to L0 by the firm
 [`orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md) theme (and the
 L2>L1 [`orthogonalize-composition-lowering`](../L2-L1/orthogonalize-composition-lowering.md)
-theme narrates the L2 composition into the L1 leaf). The L3>L2 edge is identity-in-form on the
-body (no `L3-L2/` theme file — in-line per the cycle-012 non-adjacent-identity convention).
+theme narrates the L2 composition into the L1 leaf). At L3>L2 the **per-step `dot`+`axpy` body** is
+identity-in-form (annotated in-line above, per the cycle-012 non-adjacent-identity convention), but
+the **variant-split loop rotation** — the MGS `jloop` tail recursion collapsing into the L2
+per-variant sequencing, and the CGS/CGS2 batched-arm straight-line statements collapsing into the
+L2 collective-shape residual axis — is **substantive** and is narrated forward from L3 to L2 by the
+[`orthogonalize-variant-split`](../L3-L2/orthogonalize-variant-split.md) theme (cycle-044). The
+L3>L2 edge therefore carries both an in-line body-identity note (the per-step body) and a dedicated
+theme (the loop-structure variant split).
 
 ## Variant axes
 
@@ -477,10 +483,13 @@ firmness is on the per-step body and the variant contract, both of which hold).
   non-commutativity non-law rather than as an explicit obstruction marker.
 
 The L3>L2 hop erases the explicit iteration view (the `jloop` tail recursion / the batched-arm
-straight-line statements collapse to L2's per-variant sequencing) and leaves the body
-identity-in-form. No `L3-L2/` theme file — the body identity-in-form annotation lives in-line
-here (per the cycle-012 meta-phase non-adjacent-identity convention; precedent
-`book/src/L3/chebyshev.md`, `book/src/L3/eigsolve.md`).
+straight-line statements collapse to L2's per-variant sequencing) and leaves the **per-step body**
+identity-in-form. The body identity-in-form annotation lives in-line here (per the cycle-012
+meta-phase non-adjacent-identity convention; precedent `book/src/L3/chebyshev.md`,
+`book/src/L3/eigsolve.md`); the **substantive loop-structure variant split** (which is NOT an
+identity rotation — the MGS `jloop`/CGS-batched-arm collapse is a real rewrite) is the dedicated
+[`orthogonalize-variant-split`](../L3-L2/orthogonalize-variant-split.md) L3>L2 theme (cycle-044, the
+first substantive — non-identity — `L3-L2/` theme).
 
 ## Evidence
 
@@ -547,7 +556,7 @@ here (per the cycle-012 meta-phase non-adjacent-identity convention; precedent
 ## Supporting evidence
 
 - cycle-036 D2 L3-cohort-growth audit (`reports/2026-05-31T200500Z-cross-layer-cross-cutter-l3-cohort-growth-audit/CYCLE.md`),
-  verdict (B) at `book/src/L3/index.md:47`: "`orthogonalize` (MGS variant has
+  verdict (B) at `book/src/L3/index.md:48`: "`orthogonalize` (MGS variant has
   sequential-obstruction at L3 explicitly noted at L1; CGS/CGS2 variants lift cleanly — would be
   a third `partial-obstruction` row after `chebyshev` and `eigsolve`)". This dispatch enacts that
   verdict.
@@ -589,3 +598,103 @@ here (per the cycle-012 meta-phase non-adjacent-identity convention; precedent
   `parallel-blind-shared-index-count-divergence`), I do **not** write the §Working-Notes
   consolidated firm / partial-obstruction running-count tally — the D2 layer-intro-author owns it
   this cycle. My `book/src/L3/index.md` edit is the dep-map **row only**.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/orthog.hpp:18-23
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: header scope contract; modified-or-classical Gram-Schmidt against a basis set
+  - citation: palace/linalg/orthog.hpp:22
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: the no-output-normalisation contract sentence -- citecheck anchor "does not normalize" OK at :22
+  - citation: palace/linalg/orthog.hpp:41-53
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: OrthogonalizeColumnMGS; dot+GlobalSum+w.Add interleaved in the SAME j-loop iteration (:49/:50/:51) -- the MGS sequential-obstruction source witness
+  - citation: palace/linalg/orthog.hpp:46-52
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: the MGS j-loop body; w.Add(:51) feeds the next iteration dot(:49) -- loop-carried candidate
+  - citation: palace/linalg/orthog.hpp:57-89
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: OrthogonalizeColumnCGS; m dots-against-original-w then single GlobalSum then m w.Add -- the lifting half; refine branch is the CGS2 second pass
+  - citation: palace/linalg/orthog.hpp:62-64
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: CGS empty-basis early return (m == 0) -- law 3 source
+  - citation: palace/linalg/orthog.hpp:66-69
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: m batched local dots into H against the original w (not progressively-subtracted) -- the basis index is a reduction axis
+  - citation: palace/linalg/orthog.hpp:70
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: single Mpi::GlobalSum(m, H, comm) -- one reduction of size m, the batched CGS reduction
+  - citation: palace/linalg/orthog.hpp:71-74
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: m batched w.Add subtractions -- the w - V H matvec
+  - citation: palace/linalg/orthog.hpp:75-88
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: CGS refine branch; dH against once-projected w then H[j] += dH[j] -- the CGS2 [CGS] x 2 non-fusible second pass
+  - citation: palace/linalg/iterative.cpp:308-325
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: OrthogonalizeIteration dispatcher; orthogonalizes against leading j+1 columns
+  - citation: palace/linalg/iterative.cpp:313-323
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: switch(type) over MGS/CGS/CGS2 -- the L3 case op.variant; inspected once at dispatch
+  - citation: palace/linalg/iterative.cpp:321-322
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: CGS2 = OrthogonalizeColumnCGS(..., true) -- the refine=true CGS2 binding
+  - citation: palace/linalg/iterative.cpp:630-632
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: GMRES consumer; OrthogonalizeIteration(:630) then Norml2(:631) then w *= 1/Hj (scal, :632) -- normalisation is the caller's, outside the operator
+  - citation: palace/linalg/iterative.cpp:809-811
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: FGMRES consumer; identical OrthogonalizeIteration + Norml2 + scal sequence
+  - citation: test/unit/test-orthog.cpp:99-120
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: empty-prefix edge; all three variants GENERATE'd, w unchanged (RangeEquals) at :120 -- law 3 empirical
+  - citation: test/unit/test-orthog.cpp:123-160
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: parametric real; per-rank component zeroed (:152) and orthogonality loop (comment :154, for :155, body :155-159) asserting WithinAbs(0.0,1e-12) at :158 -- law 1 substitutability witness across MGS/CGS/CGS2
+  - citation: test/unit/test-orthog.cpp:234
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: complex parametrisation TEST_CASE -- element-type axis coverage
+  - citation: book/src/concepts/sequential-obstruction.md:37-48
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: canonical MGS-as-sequential-obstruction argument; the (I - V[m-1]...) ... (I - V[0]...) w projector composition matches the entry
+  - citation: book/src/concepts/sequential-obstruction.md:22
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: MGS example classifying CGS as the parallel-reduction alternative exposed as the gs_orthog variant
+  - citation: book/src/concepts/variant-absorption.md:131
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: gs_orthog axis absorbed at all three levels under residual-axis disclosure; Householder scoped out
+  - citation: book/src/L2/orthogonalize.md:133-134
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: L2 forecast of the L3 MGS sequential-obstruction / CGS-CGS2-lift split
+  - citation: book/src/L2/orthogonalize.md:290-292
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: L2 reading of the lift split as the collective-shape residual axis + MGS column-order non-commutativity non-law
+  - citation: book/src/L1/orthogonalize.md:200-203
+    verdict: supports
+    audited_at: 2026-06-01T125900Z
+    note: L1 leaf forecast that the MGS sequential-obstruction is an L3 property of the variant, not an L1 contract distinction
+```

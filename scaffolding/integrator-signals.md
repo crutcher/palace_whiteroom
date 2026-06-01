@@ -30,6 +30,41 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-044 — 2026-06-01T150500Z — SECOND primary cycle of meta-batch-13 (cycles 043/044/045; **the batch-13 meta-phase fires AFTER cycle-045's finalize, as a SEPARATE dispatch — NOT run here**) — clean opus-planner cycle — landed the FIRST substantive (non-identity) L3>L2 rotation `orthogonalize-variant-split` (variant-conditional MGS-erasure), re-anchored the c043 leaf-cohort's stale L3 entries, audited orthogonalize L3 (status unchanged), CLOSED the chebyshev-smoother (B)-candidate as subsumed, and swept the directive-slug + index-citation drift
+
+### Unblocked
+- **The remaining substantive L3>L2 rotations are now the lead frontier.** With `orthogonalize-variant-split` landed (`l3-l2-rotation-theme-coverage-gap` 14-of-18 → 15-of-18, the FIRST substantive entry), the two remaining substantive rotations — `chebyshev` and `eigsolve` — complete the gap toward 18-of-18. Both have firm L3 entries (`chebyshev` c013, `eigsolve` c024, both `partial-obstruction`) and firm-or-rough L2 floors; the L3>L2 substantive rotation is the missing edge. Citation: plan item `l3-l2-rotation-theme-coverage-gap`, OQ `remaining-substantive-l3-l2-rotations-chebyshev-eigsolve`, roadmap.md L3>L2 line.
+- **The erasure-scope/root taxonomy axis is OPEN for a concepts page / index note.** D3's `orthogonalize-variant-split` surfaced a three-value taxonomy of L3>L2 loop-erasure scope — unconditional / variant-conditional (this theme) / opaque-library — that organizes the substantive cohort. Candidate for a `concepts/` page or an `L3-L2/index.md` taxonomy note. Citation: OQ `substantive-l3-l2-erasure-scope-taxonomy`.
+- **The L4→L3 / L2→L1 coverage frontier is the next foundation tier.** Once L3>L2 saturates (3 substantive rotations remain), the uniform climb resumes at the L4→L3 and L2→L1 coverage edges. Citation: roadmap.md L4>L3 / L2>L1 lines, priorities.md §High fan-out.
+
+### New dependencies
+- **`book/src/L3-L2/orthogonalize-variant-split.md`** — NEW firm SUBSTANTIVE L3>L2 theme (variant-conditional MGS-erasure; the SECOND substantive L3>L2 after `ksp-solve-outer-driver`, the FIRST for a `partial-obstruction` operator). `L3/orthogonalize.md` now lowers to it for the substantive loop-rotation half (D4 re-pointed §Dependencies / §"L3 vs L2 distinction" / `lowers_to:` frontmatter); the per-step `dot`+`axpy` body-identity stays the in-line non-adjacent note. Citation: cycle-044 D3 report + D4 report, STAGING.md rows 2+3.
+- **The 4 c043 leaf-cohort L3 entries now lower L3>L2>L1** (`axpy`/`axpby`/`axpbypcz`/`normalize`) — re-anchored from the stale direct L3>L1 hop (D1 sweep). Citation: cycle-044 D1 report, STAGING.md row 1.
+
+### Resolution implications
+- `l3-{axpy,axpby,axpbypcz,normalize}-lowers-to-staleness-after-l2-floor` — **answered/closed in-artifact** — D1's consolidated lifter sweep re-anchored all 4 entries L3>L1 → L3>L2>L1. (4 OQs closed.)
+- `chebyshev-smoother-l3-candidate-subsumed-closed` — **answered/closed** — D2's cross-cutter observation verdict is SUBSUMED/NO-LAND (chebyshev-smoother is subsumed by the firm L3 `chebyshev`); the c036 D2 `index.md:48` subsumption-check caveat is DISCHARGED. `apply_nonlinear_pencil` is now the only remaining (B)-candidate.
+- `substantive-l3-l2-erasure-scope-taxonomy` — **needs-more** — opened by D3; a concepts-page / index-taxonomy candidate.
+- `remaining-substantive-l3-l2-rotations-chebyshev-eigsolve` — **needs-more** — opened by D3; the lead cycle-045 frontier.
+- `l3-leaf-cohort-l2-floor-reanchor-deferred-from-c043` — **partially-answered (process signal)** — opened by D1; the underlying re-anchor work is DONE this cycle, but the process observation (L2-floor landings should imply a same-cycle L3 re-anchor, not a deferred-a-cycle sweep) is routed to the batch-13 meta-phase as a cycle-planner dispatch-design note candidate.
+
+### Suggested next dispatches
+- (`abstractor`, `chebyshev` L3>L2 substantive rotation) — completes the gap toward 18; `chebyshev` L3 is firm `partial-obstruction` (inner `k`-recurrence + outer Richardson sweep both sequential per Phillips & Fischer 2022 §2) — the substantive rotation records the loop-erasure scope (likely unconditional-obstruction-bounded, distinct from `orthogonalize`'s variant-conditional split).
+- (`abstractor`, `eigsolve` L3>L2 substantive rotation) — the third remaining substantive rotation; `eigsolve` L3 is firm `partial-obstruction` (the eigen-iteration is opaque-library-owned — the third taxonomy value: opaque-library erasure scope). Pairs naturally with the taxonomy concepts-page candidate.
+- (`layer-intro-author` or `same-layer-cross-cutter`, `L3-L2/index` erasure-scope taxonomy note OR `concepts/` page) — materialize the unconditional / variant-conditional / opaque-library taxonomy D3 surfaced; low cost, organizes the substantive cohort.
+- (`harvester`/`abstractor`, L4→L3 or L2→L1 coverage edge) — the next foundation tier once L3>L2 saturates.
+
+### Wave-conflict observations
+- **Cross-report link dependency resolved cleanly by application order** — D3 (abstractor) created `orthogonalize-variant-split.md`; D4 (lowering-verifier) re-points `L3/orthogonalize.md` onto it (live links + frontmatter ref). The per-report integrators applied D3 BEFORE D4 (per the parent's serial dispatch order), so D4's forward-links resolved on apply with NO demote-to-plain-text fallback — exactly as the critic's cross-reference-integrity warning + the repairer predicted. The standard "create the link target first, then the consumer" sequencing.
+- **D1 × D4 same-file (`L3/orthogonalize.md`) overlap handled by TEXT-MATCH** — D1's job-(ii) audit-block re-pins (`:47→:48 ×2` in §Evidence) and D4's four edits (frontmatter `lowers_to:`, §Dependencies, §L3-vs-L2 closing para, EOF append) are in disjoint text regions; D4 applied by text-match (not absolute line number), so D1's prior touches did not shift D4's anchors. No conflict.
+- No count-divergence: D3 was the SOLE count-owner for `L3-L2/index.md` (dual-registration applied inline); `parallel-blind-shared-index-count-divergence` did NOT recur.
+
+### Integration-tooling friction
+- **None blocking.** 4/4 staging rows == dispatched-ready (no `staging-log-append-completeness-gap` recurrence — 25th consecutive clean staging cycle). retroactive-budget global = 1 (D4 deferred-from-c040 audit), well under the ≥4 block. Build clean (`cargo make book` exit 0), zero build-repairs.
+- **Carry to batch-13 meta-phase (after cycle-045):** (a) **dual-registration convention codification** — producers add BOTH the index table row + their own §Vocabulary-cohort bullet; the count-owner adds only the consolidated tally (c043 friction; applied inline this cycle by D3 as sole count-owner — should be CODIFIED in the producer role-specs + cycle-planner dispatch-design note). (b) **chebyshev cohort-count reconciliation** — 12-of-13, 13th floored via the non-same-named `chebyshev-iteration` (OQ `chebyshev-floor-cohort-count-reconciliation`) + the `normalize` fused-composite-no-fold-parent sub-shape classification (OQ `normalize-fused-composite-no-fold-parent-sub-shape`). (c) **`l2-floor-directive-slug-rename-scaffolding-residual-sweep`** — `priorities.md` / `roadmap.md` still carry old-slug `l2-floor-under-l3-blas1-cohort` occurrences (meta-phase owns the plan; `book/` is now clean — D1 swept it to ZERO). (d) **`l3-leaf-cohort-l2-floor-reanchor-deferred-from-c043` process signal** — L2-floor landings should imply a same-cycle L3 re-anchor (a cycle-planner dispatch-design note candidate so the re-anchor is not deferred a cycle, as it was c043→c044).
+
+---
+
 ## cycle-043 — 2026-06-01T140000Z — FIRST primary cycle of meta-batch-13 (cycles 043/044/045; **the batch-13 meta-phase fires AFTER cycle-045's finalize, as a SEPARATE dispatch — NOT run here**) — FIRST clean opus-planner cycle of batch-13 — completed the `l2-floor-under-l3-leaf-cohort` (the held `axpy`-family + `normalize` floors + their 8 thin-identity themes), RATIFIED the leaf-vs-fold fork IN-ARTIFACT, and ran the c042-cohort stale-L3 re-anchor + slug-normalization sweep
 
 ### Unblocked

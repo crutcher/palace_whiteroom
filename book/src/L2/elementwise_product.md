@@ -72,7 +72,7 @@ adjacent L2 parent, per the methodology invariant **Identity-lowerings still req
 levels** (CLAUDE.md §Methodology invariants, cycle-009 codification): each layer is coherent
 within itself, and a reader at L2 must find `elementwise_product` defined in L2 vocabulary
 without reaching down to L1 or up to L3. The foundation-first directive
-`l2-floor-under-l3-blas1-cohort` (2026-05-31) names exactly this gap: the L3 cohort was
+`l2-floor-under-l3-leaf-cohort` (2026-05-31) names exactly this gap: the L3 cohort was
 backfilled to L3 in cycle-011/038 without the corresponding L2 floor entries being present,
 so the L3 leaves rested on the L1 leaves directly. This dispatch floors
 `elementwise_product` as the **standalone (fork-independent) member** of that floor batch.
@@ -374,7 +374,7 @@ situation, not the `eigsolve`-convergence-semantics situation). There is **no ca
 record — the Hadamard product is exact per element across all representations.
 
 This dispatch is the **L2 floor backfill** (cycle-042 D3) under the foundation-first directive
-`l2-floor-under-l3-blas1-cohort`: the L2 form was previously referenced only inside
+`l2-floor-under-l3-leaf-cohort`: the L2 form was previously referenced only inside
 `chebyshev-iteration`'s dependency list and as the `dinv ⊙ r` step of the smoother bodies; it
 now has its own L2 entry per **Identity-lowerings still require both L levels**.
 **Fork-INDEPENDENT — standalone elementwise binary, NO fold-parent**: this entry is
@@ -492,5 +492,5 @@ this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified vi
 The L2 ↔ L1 rotation is identity-in-form on the body and signature; the surface adjustment is
 documentary. The methodology invariant **each layer is coherent within itself** is what compels
 the L2 entry to exist as its own anchor — and the foundation-first directive
-`l2-floor-under-l3-blas1-cohort` is what schedules it, so the firm L3
+`l2-floor-under-l3-leaf-cohort` is what schedules it, so the firm L3
 [`elementwise_product`](../L3/elementwise_product.md) rests on a present adjacent L2 parent.

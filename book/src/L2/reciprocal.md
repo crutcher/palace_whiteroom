@@ -39,7 +39,7 @@ acting pointwise over the length axis `N`, with no control flow, no monadic stat
 threading, no reduction, and no convergence predicate.
 
 This is a thin **floor presence** entry, authored under the 2026-05-31 foundation-first
-directive `l2-floor-under-l3-blas1-cohort`. Its purpose is floor *presence*: the firm L3
+directive `l2-floor-under-l3-leaf-cohort`. Its purpose is floor *presence*: the firm L3
 [`reciprocal`](../L3/reciprocal.md) (the iteration-rotation rendering, cycle-038, consumed
 inside the diagonal-preconditioner-apply chain) and the firm L1
 [`reciprocal`](../L1/reciprocal.md) (the mutation-rotation leaf) sandwich a layer at which
@@ -334,7 +334,7 @@ integration coverage of the four consumer sites (Jacobi `palace/linalg/jacobi.cp
 Chebyshev `:178, :241`; bilinearform `:278`).
 
 This is a **thin floor entry** authored under the 2026-05-31 foundation-first directive
-`l2-floor-under-l3-blas1-cohort`: its purpose is floor *presence* so the firm L3
+`l2-floor-under-l3-leaf-cohort`: its purpose is floor *presence* so the firm L3
 [`reciprocal`](../L3/reciprocal.md) leaf (cycle-038) rests on an adjacent same-named L2 parent
 (per CLAUDE.md §Methodology invariants **Identity-lowerings still require both L levels**)
 rather than skipping a layer to L1. No fusion structure unique to the leaf — beyond the
@@ -382,7 +382,7 @@ elementwise-multiplicative-inverse primitive, not have to reach down to L1 (or u
 recover the field-operation shape.
 
 The cycle-041 BLAS-1-floor entries [`dot`](./dot.md), [`nrm2`](./nrm2.md), [`scal`](./scal.md)
-are the freshest structural precedents on the same `l2-floor-under-l3-blas1-cohort` directive:
+are the freshest structural precedents on the same `l2-floor-under-l3-leaf-cohort` directive:
 identity-in-form rotation on the primitive's signature, thin floor presence, methodology
 invariant enacted. `reciprocal` is the **fold-parent-free** member of the broader floor effort
 (the elementwise self-map, distinct from the fold-leaf `dot`/`scal` and the fold-consumer

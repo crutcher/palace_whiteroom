@@ -22,7 +22,7 @@ opaque square operator to its diagonal vector, with no control flow, no monadic 
 threading, and no convergence predicate.
 
 This entry is a **thin floor entry**, authored under the 2026-05-31 foundation-first
-directive `l2-floor-under-l3-blas1-cohort` (extended this cycle from the BLAS-1 leaf
+directive `l2-floor-under-l3-leaf-cohort` (extended this cycle from the BLAS-1 leaf
 cohort to the operator-to-data primitive). Its purpose is floor *presence*: the firm L3
 [`assemble-diagonal`](../L3/assemble-diagonal.md) (the iteration-rotation rendering, the
 operator-to-data sibling of [`apply_linop`](../L3/apply_linop.md) consumed inside the
@@ -342,7 +342,7 @@ variant-axis profile is one orthogonal (element-type) + one absorbed (operator-r
 inherited unchanged from L1.
 
 This is a **thin floor entry** authored under the 2026-05-31 foundation-first directive
-`l2-floor-under-l3-blas1-cohort` (extended this cycle from the BLAS-1 leaf cohort to the
+`l2-floor-under-l3-leaf-cohort` (extended this cycle from the BLAS-1 leaf cohort to the
 operator-to-data primitive): its purpose is floor *presence* so the firm L3
 [`assemble-diagonal`](../L3/assemble-diagonal.md) field operation rests on an adjacent
 same-named L2 parent (per CLAUDE.md §Methodology invariants **Identity-lowerings still require
@@ -399,7 +399,7 @@ to this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified
   consumer this floor goes under; the iteration-rotation rendering whose adjacent L2 parent
   this entry supplies; the operator-to-data sibling of [`L3/apply_linop`](../L3/apply_linop.md).
 - [`book/src/L2/index.md`](./index.md) §"Identity-in-form BLAS-1 floors" — the floor cohort
-  and the foundation-first directive `l2-floor-under-l3-blas1-cohort` this entry extends to the
+  and the foundation-first directive `l2-floor-under-l3-leaf-cohort` this entry extends to the
   operator-to-data primitive.
 - [`book/src/L2/dot.md`](./dot.md) (firm cycle-041) — the structural precedent: a thin
   identity-in-form L2 floor entry. (`dot` is leaf-of a fold; this entry is fork-independent —
