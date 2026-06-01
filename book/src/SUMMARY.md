@@ -15,6 +15,8 @@
 - [krylov-step-typed-wrapper-dissolution](./L4-L3/krylov-step-typed-wrapper-dissolution.md)
 - [gmres-inner-loop-iterate-while-migration](./L4-L3/gmres-inner-loop-iterate-while-migration.md)
 - [fgmres-inner-loop-iterate-while-migration](./L4-L3/fgmres-inner-loop-iterate-while-migration.md)
+- [iterate-while-dissolution](./L4-L3/iterate-while-dissolution.md)
+- [iterate-while-with-prev-dissolution](./L4-L3/iterate-while-with-prev-dissolution.md)
 
 # L3 — Global Tensor-Field Operations
 - [Overview](./L3/index.md)
@@ -104,6 +106,8 @@
 - [deflate-composition-lowering](./L2-L1/deflate-composition-lowering.md)
 - [eigsolve-spectral-transform-composition](./L2-L1/eigsolve-spectral-transform-composition.md)
 - [divfree-projector-leaf-identity](./L2-L1/divfree-projector-leaf-identity.md)
+- [ksp-solve-outer-driver-unfold](./L2-L1/ksp-solve-outer-driver-unfold.md)
+- [krylov-step-kernel-defusion](./L2-L1/krylov-step-kernel-defusion.md)
 
 # L1 — Mutation-Lifted Forms
 - [Overview](./L1/index.md)
