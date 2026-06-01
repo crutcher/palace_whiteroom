@@ -263,8 +263,8 @@ reconstruction, no literature inference — the one rotation reads off positive 
 (`palace/linalg/divfree.cpp:185` / `:180-181`).
 
 This is the **standalone-gate** counterpart of the cycle-041 BLAS-1 floor-edge cohort
-([`dot-leaf-identity`](./dot-leaf-identity.md) / [`nrm2-fold-specialization`](./nrm2-fold-specialization.md)
-/ [`scal-fold-specialization`](./scal-fold-specialization.md)) — but with two structural differences:
+([`dot-leaf-identity`](./dot-leaf-identity.md) / [`nrm2-leaf-identity`](./nrm2-leaf-identity.md)
+/ [`scal-leaf-identity`](./scal-leaf-identity.md)) — but with two structural differences:
 **(a)** `divfree-projector` is **NOT a fold member** (no fold-parent, fork-independent), so the one
 fusion lives on this edge itself, not deferred to a sibling fold theme; and **(b)** the edge is **not
 pure identity** — it carries one genuine re-fusion rotation, where the BLAS-1 leaf edges are

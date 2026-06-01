@@ -12,7 +12,7 @@ binary `(Tensor[N], Tensor[N]) -> Tensor[N]` field operation, neither the length
 `inner_product` (reduce-to-`Scalar`) nor the term-axis fold `linear_combination`
 (reduce-to-`Tensor[N]`). So there is no fusion to defer (the L0 `forall_switch` per-element multiply is
 already the unfolded single-pass form). This theme records the identity edge; it is the L2>L1 analogue
-of the L3>L2 [`elementwise_product-body-identity`](../L3-L2/elementwise_product-body-identity.md) (the
+of the L3>L2 [`elementwise-product-body-identity`](../L3-L2/elementwise-product-body-identity.md) (the
 other thin edge of the same leaf).
 
 ## Slug
@@ -30,7 +30,7 @@ rather than skipping a layer to L1. This theme is the L2>L1 edge of that floor.
 
 The edge is the **identity-in-form** case: the L2 `elementwise_product` floor and the L1
 `elementwise_product` leaf are value-thread-isomorphic on the primitive. This is the L2>L1 analogue of
-the L3>L2 [`elementwise_product-body-identity`](../L3-L2/elementwise_product-body-identity.md) theme
+the L3>L2 [`elementwise-product-body-identity`](../L3-L2/elementwise-product-body-identity.md) theme
 (the other thin edge of the same leaf).
 
 **Why this edge is identity AND fork-independent (the distinction from `dot-leaf-identity`).** The
@@ -184,7 +184,7 @@ L2 / L1 anchors (the two endpoints):
   signature, the per-element kernel, the conjugation sub-axis (§Variant axes), the ten algebraic laws
   (the diagonal-operator-action law 9, the `scal` broadcast-subsumption law 7), the complete L0
   evidence list. Authoritative on every Palace-surface fact.
-- `book/src/L3-L2/elementwise_product-body-identity.md` (firm cycle-042 D10) — the sibling L3>L2 edge
+- `book/src/L3-L2/elementwise-product-body-identity.md` (firm cycle-042 D10) — the sibling L3>L2 edge
   of the same leaf (the other thin edge); co-dispatched this cycle.
 - this L2>L1 leaf-identity edge composes with the firm L1>L0
   `book/src/L1-L0/reciprocal-elementwise-product-mutation-rotation.md` (firm) — the **substantive**

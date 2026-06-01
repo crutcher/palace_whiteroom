@@ -1,4 +1,4 @@
-# scal-fold-specialization
+# scal-leaf-identity
 
 The degenerate **arity-1** member of the BLAS-1 scalar-weighted-vector-sum
 fusion-selection cohort. Lowers the L2 floor primitive [`scal`](../L2/scal.md) into the
@@ -17,7 +17,7 @@ relies on). The thinnest member of the L2>L1 lowering family.
 
 ## Slug
 
-`scal-fold-specialization`
+`scal-leaf-identity`
 
 ## L2 form (LHS)
 

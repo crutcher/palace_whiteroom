@@ -127,7 +127,7 @@ The rewrite is valid when (all hold for the firm L3 form by construction):
    Hermitian self-inner-product `Σ_i |x[i]|²` (real, non-negative — L1 dot laws 4 / 9). The L2
    inner-product surface is the *fold* (firm cycle-019); the L3 surface is the *leaf* `dot`
    (firm). Both denote the diagonal degeneration of the same reduction; the L2>L1 sibling theme
-   [`nrm2-fold-specialization`](../L2-L1/nrm2-fold-specialization.md) lowers the L2 form the rest
+   [`nrm2-leaf-identity`](../L2-L1/nrm2-leaf-identity.md) lowers the L2 form the rest
    of the way to the L1 `dot(x, x)` leaf. Currently satisfied.
 
 3. **The `√ ∘ abs` post-step is shared (modulo the abs-preserved/abs-absorbed framing).** The
@@ -204,7 +204,7 @@ L3 / L2 anchors:
   §"The diagonal degeneration (`y = x`)" — the inner-product fold's diagonal degeneration, where
   `dot(x, x) = inner_product(x, x)`; the basis for the inner-reduction-name equivalence in
   §"The rewrite" condition 2.
-- [`book/src/L2-L1/nrm2-fold-specialization.md`](../L2-L1/nrm2-fold-specialization.md) (this
+- [`book/src/L2-L1/nrm2-leaf-identity.md`](../L2-L1/nrm2-leaf-identity.md) (this
   cycle, sibling D5 theme) — the adjacent L2>L1 hop that lowers the L2 `nrm2` form the rest of
   the way to the L1 `nrm2` leaf; together the two D5 themes complete the `nrm2` adjacent-edge
   chain below the firm L3 anchor.
@@ -243,7 +243,7 @@ anchor cleanly, both identity-in-form:
   fusion composition. Identity on the leaf; the only textual change is the inner-reduction name
   (`dot` leaf → `inner_product` fold at the diagonal) and the surfacing of the `abs` guard as an
   explicit L2 claim. No wrapper rotation.
-- **L2>L1 (`nrm2-fold-specialization`)**: the L2 fusion composition re-fuses onto the single L1
+- **L2>L1 (`nrm2-leaf-identity`)**: the L2 fusion composition re-fuses onto the single L1
   `nrm2` leaf. Identity on the primitive's signature; the only change is the resolution drop of
   the `√`/`abs` scalar post-steps (named L2 fusion steps → below-L1-resolution IEEE-754
   primitives) and the absorption of the preserved `abs` guard into the L1 non-negativity claim.

@@ -1,4 +1,4 @@
-# elementwise_product-body-identity
+# elementwise-product-body-identity
 
 The L3>L2 lowering theme for the Hadamard binary product leaf `elementwise_product`. The rewrite is
 **identity-in-form on the body** with **no wrapper rotation** — `elementwise_product` is a leaf
@@ -15,17 +15,16 @@ member of `inner_product` nor of `linear_combination`.
 
 ## Slug
 
-`elementwise_product-body-identity`
+`elementwise-product-body-identity`
 
-> **Filename-convention note.** This chapter uses the **underscore** spelling
-> `elementwise_product-body-identity.md`, matching the underscore operator-chapter convention of the
-> L1/L2/L3 `elementwise_product.md` entries (per the dispatch directive). The L2>L1 sibling uses the
-> **hyphen** spelling `elementwise-product-leaf-identity.md` (matching the `dot-leaf-identity` /
-> `nrm2-fold-specialization` L2>L1 sibling convention, which is hyphenated). The underscore-vs-hyphen
-> split (underscore operator chapters + body-identity theme; hyphen concept page + leaf-identity theme)
-> is consistent within the `elementwise_product` family but heterogeneous across the L2>L1 / L3>L2
-> theme slugs; surfaced for the batch-12 meta-phase to normalize (see this theme's authoring report
-> §Open questions).
+> **Filename-convention note (normalized cycle-043).** This chapter uses the **hyphen** spelling
+> `elementwise-product-body-identity.md`, matching its hyphenated L2>L1 sibling
+> `elementwise-product-leaf-identity.md` and the uniform `-leaf-identity` / `-body-identity`
+> theme-slug convention ratified by the batch-12 meta-phase. The underscore operator chapters
+> (`L1/L2/L3 elementwise_product.md`) keep the underscore spelling that matches the firm operator
+> entries; the theme slugs are hyphenated. This resolves the cycle-042 underscore-vs-hyphen split
+> (the theme slug was originally underscored to match the operator chapters; the batch-12
+> normalization moved all theme slugs to hyphen).
 
 ## Context
 
@@ -262,8 +261,9 @@ additionally fork-independent.
   identity; a downstream-consistency touch re-anchoring it to the now-present adjacent edges is a
   follow-up (flagged in the authoring report).
 
-- **Filename underscore-vs-hyphen split (for the meta-phase).** This theme is `_`-spelled
-  (`elementwise_product-body-identity.md`, matching the operator chapters); the L2>L1 sibling is
-  `-`-spelled (`elementwise-product-leaf-identity.md`, matching the hyphenated L2>L1 theme-slug
-  convention). Heterogeneous but each link resolves on disk; surfaced for the batch-12 meta-phase to
+- **Filename convention (normalized cycle-043).** This theme is now `-`-spelled
+  (`elementwise-product-body-identity.md`, matching the hyphenated theme-slug convention) and its
+  L2>L1 sibling is likewise `-`-spelled (`elementwise-product-leaf-identity.md`). The batch-12
+  meta-phase normalized all theme slugs to the uniform `-leaf-identity` / `-body-identity` hyphen
+  convention; the underscore operator chapters are unaffected. Surfaced for the batch-12 meta-phase to
   normalize the operator-chapter / theme-slug / concept-page slug spelling across the artifact.

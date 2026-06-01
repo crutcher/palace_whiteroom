@@ -160,7 +160,7 @@ The identity rewrite is valid when:
    carried across the edge unchanged, NOT erased.
 
 This theme does **not** depend on any fold-design adjudication. Unlike the cycle-041
-`dot-leaf-identity` / `scal-fold-specialization` edges — which presuppose the wave-1 (b) leaf-floor
+`dot-leaf-identity` / `scal-leaf-identity` edges — which presuppose the wave-1 (b) leaf-floor
 reading of a *fold-parent*'s surface and re-anchor under the (a) fold-only reading (OQ
 `dot-l2-leaf-floor-vs-fold-only-design`) — `assemble_diagonal` has **no fold-parent**, so there is no
 fold-only reading to collapse into. The floor is standalone regardless of how the batch-12 meta-phase
@@ -250,7 +250,7 @@ test-witnessed `test-libceed.cpp:367-376`), NOT erased. No speculative operator,
 reconstruction, no literature inference — so `firm`, not `partly-constructive`.
 
 > **Fork-independence note (not a status reduction).** Unlike the cycle-041 `dot-leaf-identity` /
-> `scal-fold-specialization` floor-edges, this theme does **not** presuppose any fold-design reading:
+> `scal-leaf-identity` floor-edges, this theme does **not** presuppose any fold-design reading:
 > `assemble_diagonal` is fork-independent (NO fold-parent — the operator-to-data sibling of
 > `apply_linop`, not a fold leaf). It is therefore **unaffected** by the batch-12 meta-phase
 > adjudication of the BLAS-1 design fork `dot-l2-leaf-floor-vs-fold-only-design` (the (a) fold-only

@@ -11,8 +11,8 @@ fusion to defer: the only intra-element factoring (the complex `s = 1/|z|²` int
 transparent performance trick already recorded at L1/L2/L3, not a multi-operation kernel fusion. This
 theme records the identity edge; it is the L2>L1 analogue of the L3>L2
 [`reciprocal-body-identity`](../L3-L2/reciprocal-body-identity.md) (the other thin edge of the same
-leaf), and a sibling shape to [`scal-fold-specialization`](./scal-fold-specialization.md) and
-[`nrm2-fold-specialization`](./nrm2-fold-specialization.md) — except those defer to a fold-parent or
+leaf), and a sibling shape to [`scal-leaf-identity`](./scal-leaf-identity.md) and
+[`nrm2-leaf-identity`](./nrm2-leaf-identity.md) — except those defer to a fold-parent or
 consume a fold, while this leaf is fold-free.
 
 ## Slug

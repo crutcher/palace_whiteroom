@@ -28,7 +28,7 @@ because `scal` is a BLAS-1 leaf with no iteration view and no kernel fusion:
 - **L2 form** ([`L2/scal`](../L2/scal.md), firm cycle-041 D3) — the fusion-rotation floor
   leaf, the base scalar-vector-multiply primitive and the arity-1 member of the
   `linear_combination` fold. The RHS of this theme.
-- **L2>L1 form** ([`L2-L1/scal-fold-specialization`](../L2-L1/scal-fold-specialization.md),
+- **L2>L1 form** ([`L2-L1/scal-leaf-identity`](../L2-L1/scal-leaf-identity.md),
   firm cycle-041 D6) — the onward edge into the L1 leaf; also identity-in-form (the fold's
   arity-1 row).
 
@@ -189,7 +189,7 @@ Cross-layer audit (the empirical-match anchor):
 
 Onward edges (cross-reference, not this theme's content):
 
-- `book/src/L2-L1/scal-fold-specialization.md` (cycle-041 D6) — the onward L2>L1 edge into
+- `book/src/L2-L1/scal-leaf-identity.md` (cycle-041 D6) — the onward L2>L1 edge into
   the L1 leaf; also identity-in-form (the fold's arity-1 row). Co-dispatched this cycle.
 - `book/src/L1/scal.md` (cycle-004 firm) + `book/src/L1-L0/scal-mutation-rotation.md`
   (firm) — the L1 leaf and its in-place L0 mutation rotation, reached via the onward edge.
@@ -238,8 +238,8 @@ consistent with the firm L2 floor entry D3 lands this cycle.
   cross-CYCLE OQ `scal-leaf-vs-linear-combination-fold-realization-fork`.
 
 - **Non-adjacent L3>L1 identity is in-line, not a directory.** The transitive L3>L1
-  identity (this theme's L3>L2 identity ∘ the L2>L1 `scal-fold-specialization` identity)
+  identity (this theme's L3>L2 identity ∘ the L2>L1 `scal-leaf-identity` identity)
   is annotated in-line at the `scal` entries per the CLAUDE.md invariant "Identity
   rotations across non-adjacent layers are annotated in-line, not via a dedicated lowering
   directory" — no `book/src/L3-L1/` directory. This theme + the co-dispatched
-  `scal-fold-specialization` compose to capture it.
+  `scal-leaf-identity` compose to capture it.

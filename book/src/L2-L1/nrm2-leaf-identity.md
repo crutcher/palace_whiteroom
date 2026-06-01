@@ -1,4 +1,4 @@
-# nrm2-fold-specialization
+# nrm2-leaf-identity
 
 The thin-identity rotation for the BLAS-1 Euclidean-norm reduction at the fusion→mutation
 edge. Lowers the L2 `nrm2` floor form (`book/src/L2/nrm2.md`, firm cycle-041) into its L1
@@ -17,15 +17,16 @@ This is the BLAS-1-leaf sibling of
 dispatches a reduce-to-`Scalar` *fold* by conjugation convention onto a bounded family of
 distinct L1 reduction leaves; this one lowers a *consumer* of that fold (the `√`-post-step
 at the diagonal `y = x`) onto a single L1 leaf with **no dispatch** — there is exactly one
-L1 `nrm2`. The `-fold-specialization` slug is carried for sibling-naming continuity (the
-BLAS-1 reduce-to-scalar cohort), but `nrm2` is explicitly **not a fold member** (do-NOT-merge
+L1 `nrm2`. The `-leaf-identity` slug names the identity-in-form lowering of the single L2
+floor onto the single L1 leaf (the cycle-043 batch-12 normalization from the cycle-041
+`-fold-specialization` outlier; neither edge is a fold-dispatch); `nrm2` is explicitly **not a fold member** (do-NOT-merge
 per [`L2/inner_product`](../L2/inner_product.md) §"Consumer (NOT an instance)" and the wave-1 D2
 `L2/nrm2` floor's "Consumer of `inner_product`, NOT a fold member"); the namesake "fold" here
 is the `inner_product` fold `nrm2` *consumes* at `y = x`, not a fold `nrm2` instantiates.
 
 ## Slug
 
-`nrm2-fold-specialization`
+`nrm2-leaf-identity`
 
 ## L2 form (LHS)
 
