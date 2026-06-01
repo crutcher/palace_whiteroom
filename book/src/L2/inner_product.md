@@ -21,9 +21,10 @@ the fold's seed-and-accumulate.
 > now the **layer's primary entry** and the members are specialization notes under it.
 > The standalone `L2/dot.md` leaf-floor is collapsed into a §"Specializations" note
 > (cycle-050 enactment — see combinator-miner refactor-pass report); the degenerate
-> `L3-L2/dot-body-identity` + `L2-L1/dot-leaf-identity` identity-in-named-terms themes
-> are demoted to in-line notes (they are vocabulary-failed-to-shift smells, not
-> translations). The combinator propagates **up** to a new `L3/inner_product` entry
+> `L3-L2/dot-body-identity` + `L2-L1/dot-leaf-identity` identity-in-named-terms theme
+> files were deleted at cycle-051, their identity-in-form content absorbed into the
+> combinator homes (they were vocabulary-failed-to-shift smells, not translations). The
+> combinator propagates **up** to a new `L3/inner_product` entry
 > (cycle-050) through which the L3 leaf cohort re-expresses, rather than each L3 leaf
 > re-deriving a base form. `nrm2` is **not** a member — it is a `√ ∘ abs ∘
 > inner_product` **consumer** (§"Consumer (NOT an instance)").
@@ -468,9 +469,10 @@ the 2026-06-01 vocabulary-shift redirect this entry was inverted from mine-and-s
 §Context, §"Specializations" (formerly the §Signature "recovered as specializations"
 block), and §Dependencies now state the combinator IS the L2 inner-product entry and the
 members (`dot`/`tdot`/`bilinear_form`) are specialization notes under it. The standalone
-`L2/dot.md` leaf-floor collapse + the `L3/inner_product` upward propagation + the
-`L3-L2/dot-body-identity` / `L2-L1/dot-leaf-identity` smell-theme demotions are the
-cycle-050 enactment (mapped in the refactor-pass report). The combinator's own substantive
+`L2/dot.md` leaf-floor collapse + the `L3/inner_product` upward propagation are the
+cycle-050 enactment (mapped in the refactor-pass report); the
+`L3-L2/dot-body-identity` / `L2-L1/dot-leaf-identity` smell-theme files were deleted at
+cycle-051 (their identity-in-form content absorbed into the combinator homes). The combinator's own substantive
 lowering [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md)
 is a GENUINE translation (conjugation/element-type/weight dispatch + the value-level
 `xᴴ y` ↔ `yᴴ x` re-order) and is KEPT (re-audited cycle-049, D2).

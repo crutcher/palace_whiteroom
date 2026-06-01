@@ -3,7 +3,7 @@ layer: L3
 operator: inner_product
 firmness: firm
 lowers_to:
-  - book/src/L2/inner_product.md (identity-in-form on the body — value-thread-isomorphic to the L2 reduction; no L3-L2 theme, in-line §"Downward to L2"; the pre-built home dot-body-identity demotes into at cycle-051)
+  - book/src/L2/inner_product.md (identity-in-form on the body — value-thread-isomorphic to the L2 reduction; no L3-L2 theme, in-line §"Downward to L2"; the home the degenerate dot-body-identity theme was demoted into at cycle-051)
 lifts_from:
   - (none) — no L4 inner_product (folds/leaves are not first-class L4 vocabulary per the cycle-010 audit verdict; the combinator appears inside L4 composed entries like krylov-step §Semantics as a let-binding)
 variant_axes:
@@ -370,11 +370,13 @@ fusion-rotation framing names it the canonical fold the fused kernels unfold int
 *value thread is identical*). There is **no L3-L2 theme file** — the identity-in-form
 annotation lives in-line here, per the cycle-012 non-adjacent-identity convention (CLAUDE.md
 §Methodology invariants "Identity rotations across non-adjacent layers are annotated
-in-line"; precedent `book/src/L3/dot.md` §"Lowers to", `book/src/L3/krylov-step.md`). This
-section is the **pre-built home** that the degenerate `dot-body-identity` L3>L2
-identity-in-named-terms theme demotes into at cycle-051 (combinator-miner refactor-pass
-(b.3): "L3>L2 is identity-in-named-terms — no rotation; `dot` is the Hermitian
-specialization of the `inner_product` combinator at both layers").
+in-line"; precedent `book/src/L3/dot.md` §"Downward to L2 (through inner_product)",
+`book/src/L3/krylov-step.md`). This section is the **home** the degenerate
+`dot-body-identity` L3>L2 identity-in-named-terms theme was demoted into at cycle-051
+(combinator-miner refactor-pass (b.3): "L3>L2 is identity-in-named-terms — no rotation;
+`dot` is the Hermitian specialization of the `inner_product` combinator at both layers";
+the `L3-L2/dot-body-identity.md` file was deleted, its identity-in-form content absorbed
+here).
 
 Transitively (L3>L2 identity ∘ L2>L1 substantive), the L3 form lowers to the L1 leaves
 through the L2 combinator: the **genuine** translation is the L2>L1

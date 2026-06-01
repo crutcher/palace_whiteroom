@@ -3,7 +3,7 @@ layer: L3
 operator: divfree-projector
 firmness: firm
 lowers_to:
-  - book/src/L2/divfree-projector.md (identity-in-form on the constructed-operator-gate apply; lowers through the present adjacent L2 floor via the `divfree-projector-body-identity` L3>L2 theme — the four-step apply is a fixed straight-line composition whose L2 floor form is value-thread-isomorphic by signature shape; the substantive leaf-mutation rotation lives at L1>L0 divfree-projector-mutation-rotation, and the inner-solve obstruction is carried BY REFERENCE through the firm-L3 ksp_solve dependency, never introduced or erased here)
+  - book/src/L2/divfree-projector.md (identity-in-form on the constructed-operator-gate apply; lowers through the present adjacent L2 floor — the L3>L2 rotation is a degenerate identity-in-named-terms lowering annotated in-line in §"Lowers to" as of cycle-051 demotion, no dedicated L3>L2 theme file; the four-step apply WeakDiv→Z→ksp_solve→Grad is a fixed straight-line composition whose L2 floor form is value-thread-isomorphic by signature shape. The ONE genuine fusion rotation in the chain lives on the L2>L1 edge: the step-4 Grad->AddMult re-fusion, captured by the KEPT firm theme book/src/L2-L1/divfree-projector-leaf-identity.md — reachable onward from the L2 floor, not orphaned. The substantive leaf-mutation rotation lives at L1>L0 divfree-projector-mutation-rotation; the inner-solve obstruction is carried BY REFERENCE through the firm-L3 ksp_solve dependency, never introduced or erased here)
 lifts_from:
   - (no L4 entry; divfree-projector carries no monadic effect / state-stratification typing / outer-driver structure at L4 of its own — the apply is a fixed four-step composition delegating its only iteration to the inner ksp_solve gate; same confirmed-not-needed L4 verdict as the firm apply_linop / ksp_solve / jacobi-smoother constructed-operator gates)
 variant_axes:
@@ -88,25 +88,38 @@ The relationship to the adjacent layers:
   verdict, not a gap.
 
 - **Downward** to L2/L1: `divfree-projector` lowers to the **present adjacent L2 floor**
-  [`divfree-projector`](../L2/divfree-projector.md) (cycle-042) via the
-  `divfree-projector-body-identity` L3>L2 theme, and onward to L1
-  [`divfree-projector`](../L1/divfree-projector.md). The rotation is **identity-in-form on the
-  constructed-operator-gate apply** — L1, L2, and L3 all see
+  [`divfree-projector`](../L2/divfree-projector.md) (cycle-042) and onward to L1
+  [`divfree-projector`](../L1/divfree-projector.md). The L3>L2 rotation is a **degenerate
+  identity-in-named-terms lowering**, annotated in-line here (no dedicated L3>L2 theme file):
+  L1, L2, and L3 all see
   `divfree_project :: (P: DivFreeProjector[N_nd, N_h1], y: Field[N_nd]) -> Field[N_nd]`
-  with the same shape contract, the same five algebraic laws (plus the two
-  load-bearing non-laws), and the same element-type variant axis. The L2 floor is the
-  same-named fusion-rotation floor under the firm L3 gate (cycle-042); the L3>L2 hop passes
-  through the adjacent floor rather than skipping a layer to L1, per **Identity-lowerings
-  still require both L levels**. The substantive rotation in the chain is the L1>L0
-  leaf-mutation rotation: the four-step apply lowers to Palace's in-place `Mult(VecType &y)`
+  with the same shape contract, the same five algebraic laws (plus the two load-bearing
+  non-laws), and the same element-type variant axis. The four-step composition
+  `WeakDiv → Z_{bdr_eff} → ksp_solve → Grad` is **explicit and value-thread-isomorphic at
+  BOTH L3 and L2** (the composition is not exposed at one layer and collapsed at the other —
+  there is no vocabulary shift across the L3>L2 edge to rotate). The L2 floor is the
+  same-named floor under the firm L3 gate (cycle-042); the L3>L2 hop passes through the
+  adjacent floor rather than skipping a layer to L1, per **Identity-lowerings still require
+  both L levels**. (The former `divfree-projector-body-identity` L3>L2 theme file was demoted
+  to this in-line identity note cycle-051 under the 2026-06-01 VOCABULARY-SHIFT REDIRECT
+  `METHODOLOGY-REDIRECT.md`; cycle-050 D8 verify-body audit DEMOTE-OK,
+  `reports/2026-06-01T195100Z-cross-layer-cross-cutter-verify-divfree-jacobi/CYCLE.md`.)
+  **The ONE genuine fusion rotation in the whole projector chain lives on the L2>L1 edge,
+  NOT this one**: the step-4 gradient correction de-fuses at L2 into
+  `apply_linop(P.Grad, ψ) ▷ axpy` and re-fuses at L1 into the single fused
+  `Grad->AddMult(ψ, y, 1.0)` apply-accumulate (`palace/linalg/divfree.cpp:185` real /
+  `:180-181` complex) — a real translation across the L2↔L1 vocabulary boundary, captured by
+  the KEPT firm theme [`divfree-projector-leaf-identity`](../L2-L1/divfree-projector-leaf-identity.md),
+  reachable directly from this L3 entry via the live link above (the L2 floor entry itself
+  carries no live link to the KEPT theme, only descriptive prose). The substantive leaf-mutation rotation in the chain is
+  the L1>L0 rotation: the four-step apply lowers to Palace's in-place `Mult(VecType &y)`
   mutation idiom, captured by the firm L1>L0 theme
   [`divfree-projector-mutation-rotation`](../L1-L0/divfree-projector-mutation-rotation.md).
-  The L3>L2 hop is a layer-coherence rotation (each layer is coherent within itself),
-  not an algebraic one; the L3>L2 identity-in-form annotation is captured by the adjacent-edge
-  `divfree-projector-body-identity` theme, with no non-adjacent `L3-L1/` directory created —
-  the transitive L3>L1 identity is annotated in-line per the cycle-012 non-adjacent-identity
-  convention (precedent: the firm L3 `jacobi-smoother` / `apply_linop` / `dot` / `scal`
-  cohort, all of which note their identity rotations in-line).
+  The L3>L2 hop is a layer-coherence identity (each layer is coherent within itself), not an
+  algebraic one; with no non-adjacent `L3-L1/` directory created — the transitive L3>L1
+  identity is annotated in-line per the cycle-012 non-adjacent-identity convention (precedent:
+  the firm L3 `jacobi-smoother` / `apply_linop` / `dot` / `scal` cohort, all of which note
+  their identity rotations in-line).
 
 This L3 entry is the **layer-coherence anchor**: a reader at L3 can find
 `divfree-projector` here, in L3 vocabulary, without having to reach down to L1 to
@@ -472,20 +485,32 @@ OQ `l3-cohort-growth-audit-c036-verdict`.
 ## Lowers to
 
 L3 `divfree-projector` lowers to the **present adjacent L2 floor**
-[`divfree-projector`](../L2/divfree-projector.md) (cycle-042) via the
-`divfree-projector-body-identity` L3>L2 theme, and onward to L1
+[`divfree-projector`](../L2/divfree-projector.md) (cycle-042) and onward to L1
 [`divfree-projector`](../L1/divfree-projector.md) — **no non-adjacent L3-L1 directory**.
-The rotation is identity-in-form on the constructed-operator-gate apply: L1, L2, and L3
-all see `divfree_project :: (P: DivFreeProjector[N_nd, N_h1], y: Field[N_nd]) -> Field[N_nd]`
+The L3>L2 rotation is a **degenerate identity-in-named-terms lowering**, annotated in-line
+here rather than as a dedicated L3>L2 theme file: L1, L2, and L3 all see
+`divfree_project :: (P: DivFreeProjector[N_nd, N_h1], y: Field[N_nd]) -> Field[N_nd]`
 with the same shape contract, the same five algebraic laws, the same two-non-law set, and
-the same one-orthogonal-plus-one-absorbed variant profile. The L2 floor is the same-named
-fusion-rotation floor under the firm L3 gate (cycle-042); the L3>L2 hop passes through the
-adjacent floor rather than skipping a layer to L1, per **Identity-lowerings still require
-both L levels**. The L3>L2 hop is a layer-coherence rotation (each layer is coherent within
-itself), not an algebraic one; the L3>L2 identity-in-form annotation is captured by the
-adjacent-edge theme, and the transitive L3>L1 identity is annotated in-line here (precedent:
-the firm L3 `jacobi-smoother` / `apply_linop` / `dot` / `scal` cohort, all of which note their
-identity rotations in-line; cycle-012 non-adjacent-identity convention).
+the same one-orthogonal-plus-one-absorbed variant profile. The four-step composition
+`WeakDiv → Z_{bdr_eff} → ksp_solve → Grad` is explicit and value-thread-isomorphic at BOTH
+L3 and L2 — no vocabulary shift across the edge to rotate. The L2 floor is the same-named
+floor under the firm L3 gate (cycle-042); the L3>L2 hop passes through the adjacent floor
+rather than skipping a layer to L1, per **Identity-lowerings still require both L levels**.
+(The former `divfree-projector-body-identity` L3>L2 theme file was demoted to this in-line
+identity note cycle-051 under the 2026-06-01 VOCABULARY-SHIFT REDIRECT
+`METHODOLOGY-REDIRECT.md`; cycle-050 D8 verify-body audit DEMOTE-OK,
+`reports/2026-06-01T195100Z-cross-layer-cross-cutter-verify-divfree-jacobi/CYCLE.md`.)
+**The ONE genuine fusion rotation in the projector chain lives on the L2>L1 edge, not this
+one**: the step-4 `Grad->AddMult` apply-accumulate (`palace/linalg/divfree.cpp:185` real /
+`:180-181` complex) de-fuses at L2 into `apply_linop(P.Grad, ψ) ▷ axpy` and re-fuses at L1,
+captured by the KEPT firm theme
+[`divfree-projector-leaf-identity`](../L2-L1/divfree-projector-leaf-identity.md) — reachable
+directly from this L3 entry via the live link above (not via the L2 floor, which carries no
+live link to the KEPT theme), so not orphaned by this demotion. The L3>L2 hop is a layer-coherence
+identity (each layer is coherent within itself), not an algebraic one; the transitive L3>L1
+identity is annotated in-line here (precedent: the firm L3 `jacobi-smoother` / `apply_linop`
+/ `dot` / `scal` cohort, all of which note their identity rotations in-line; cycle-012
+non-adjacent-identity convention).
 
 The **substantive** rotation in the chain is the L1>L0 leaf-mutation rotation, not the
 L3>L1 hop: the four-step apply lowers to Palace's in-place `Mult(VecType &y)` mutation

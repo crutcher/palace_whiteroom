@@ -3,7 +3,7 @@ layer: L2
 operator: jacobi-smoother
 firmness: firm
 lowers_to:
-  - book/src/L1/jacobi-smoother.md (identity-in-form on the constructed-operator-gate apply; the apply is a single whole-tensor elementwise product with no kernel fusion to unfold — the L2>L1 theme is the thin `jacobi-smoother-apply-identity` D8 this cycle; the substantive leaf-mutation rotation lives at L1>L0 reciprocal-elementwise-product-mutation-rotation sub-pattern B + jacobi-smoother-mutation-rotation)
+  - book/src/L1/jacobi-smoother.md (identity-in-form on the constructed-operator-gate apply; the apply is a single whole-tensor elementwise product with no kernel fusion to unfold — the L2>L1 rotation is a degenerate identity-in-named-terms lowering annotated in-line in §"Lowers to", no dedicated theme file as of cycle-051 demotion; the substantive leaf-mutation rotation lives at L1>L0 reciprocal-elementwise-product-mutation-rotation sub-pattern B + jacobi-smoother-mutation-rotation)
 lifts_from:
   - book/src/L3/jacobi-smoother.md (firm cycle-037; value-thread-isomorphic on the gate apply; the L3 iteration-rotation rendering this L2 floor sits beneath — identity-in-form, no L3-L2 theme, in-line annotation per cycle-012 non-adjacent-identity convention)
 fold_parent: none (standalone constructed-operator gate; NOT a member of the linear_combination / inner_product fold cohort — fork-INDEPENDENT, the cycle-041 dot-l2-leaf-floor-vs-fold-only-design fork does not apply)
@@ -451,14 +451,19 @@ cycle-041 leaf-vs-fold design fork.
 ## Lowers to
 
 L2 `jacobi-smoother` lowers to L1 [`jacobi-smoother`](../L1/jacobi-smoother.md)
-via an **identity-in-form** rotation: both layers see `jacobi_smoother :: (op:
-JacobiSmoother[N], x: Tensor[N]) -> Tensor[N]` with the same shape contract, the
-same six algebraic laws, the same non-law set, and the same two-orthogonal-plus-one-absorbed
-variant profile. There is **no kernel fusion to unfold** — the apply is a single
-elementwise product (the negative fusion observation above). The thin L2>L1 theme
-`jacobi-smoother-apply-identity` (D8 this cycle — plain-text forward-reference,
-file not yet on disk) narrates the identity rotation; this entry captures it
-in-line following the `scal` / `dot` / `nrm2` L2-floor precedent for in-line
+via a **degenerate identity-in-named-terms** rotation, annotated in-line here
+rather than as a dedicated L2>L1 theme file: both layers see `jacobi_smoother ::
+(op: JacobiSmoother[N], x: Tensor[N]) -> Tensor[N]` with the same shape contract,
+the same six algebraic laws, the same non-law set, and the same
+two-orthogonal-plus-one-absorbed variant profile. There is **no kernel fusion to
+unfold** — the apply is a single elementwise product (the negative fusion
+observation above), so there is no vocabulary shift across the edge to rotate.
+(The former `jacobi-smoother-leaf-identity` L2>L1 theme file was demoted to this
+in-line note cycle-051 under the 2026-06-01 VOCABULARY-SHIFT REDIRECT
+`METHODOLOGY-REDIRECT.md` — a degenerate identity-in-named-terms lowering, the §1d
+smell the redirect names; cycle-050 D8 verify-body audit DEMOTE-OK,
+`reports/2026-06-01T195100Z-cross-layer-cross-cutter-verify-divfree-jacobi/CYCLE.md`.)
+This follows the `scal` / `dot` / `nrm2` L2-floor precedent for in-line
 identity-rotation annotation.
 
 The **substantive** rotation in the chain is the L1>L0 leaf-mutation rotation, not

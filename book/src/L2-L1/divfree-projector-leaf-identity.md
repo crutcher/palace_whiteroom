@@ -16,10 +16,10 @@ dependency — neither introduced nor erased at this edge.
 
 `divfree-projector-leaf-identity`
 
-The `-leaf-identity` slug (matching the cycle-041 [`dot-leaf-identity`](./dot-leaf-identity.md)
+The `-leaf-identity` slug (matching the cycle-041 `dot-leaf-identity` precedent — that theme deleted cycle-051, its content absorbed into the `inner_product` combinator homes
 convention, NOT `-fold-specialization`) records that this is an identity-leaf-lowering of a
 constructed-operator gate — a single gate's L2>L1 edge that is identity-in-form modulo one
-value-preserving step-4 fusion, NOT a fold→leaf dispatch across a family. Unlike `dot-leaf-identity`,
+value-preserving step-4 fusion, NOT a fold→leaf dispatch across a family. Unlike the (deleted cycle-051) `dot-leaf-identity`,
 this gate is **standalone — NO fold-parent**; the one fusion treatment lives on this edge itself, not
 deferred to a sibling fold theme.
 
@@ -33,8 +33,10 @@ rendered at the fusion-rotation layer, present so the firm L3
 layer to L1. This theme is the L2>L1 edge of that floor.
 
 The edge is the **mostly-identity-in-form** case with **one genuine fusion rotation**. This is the
-sibling of the L3>L2 [`divfree-projector-body-identity`](../L3-L2/divfree-projector-body-identity.md)
-theme (the identity-in-form edge above it). The two themes split the projector's lowering story:
+sibling of the L3>L2 identity-in-form rotation — the degenerate `divfree-projector-body-identity`
+lowering demoted cycle-051 (D4) to an in-line §"Downward to L2" note on the L3 entry
+[`divfree-projector`](../L3/divfree-projector.md) (above it). The two edges split the projector's
+lowering story:
 
 - the **L3>L2** edge is pure identity-in-form (the four-step composition is explicit at both layers;
   step 4's fusion treatment is not the L3>L2 edge's content);
@@ -263,8 +265,10 @@ reconstruction, no literature inference — the one rotation reads off positive 
 (`palace/linalg/divfree.cpp:185` / `:180-181`).
 
 This is the **standalone-gate** counterpart of the cycle-041 BLAS-1 floor-edge cohort
-([`dot-leaf-identity`](./dot-leaf-identity.md) / [`nrm2-leaf-identity`](./nrm2-leaf-identity.md)
-/ [`scal-leaf-identity`](./scal-leaf-identity.md)) — but with two structural differences:
+(`dot-leaf-identity` (deleted cycle-051; absorbed into the `inner_product` combinator homes) / `nrm2-leaf-identity` (demoted cycle-051 to an in-line consumer note on `book/src/L2/nrm2.md` §"Downward to L1" under the 2026-06-01 vocabulary-shift redirect);
+the scalar-weighted-sum members `scal`/`axpy`/`axpby`/`axpbypcz` `*-leaf-identity` were demoted
+cycle-051 D1, their L2>L1 edge absorbed into the [`linear-combination-fold-specialization`](./linear-combination-fold-specialization.md)
+fold-parent) — but with two structural differences:
 **(a)** `divfree-projector` is **NOT a fold member** (no fold-parent, fork-independent), so the one
 fusion lives on this edge itself, not deferred to a sibling fold theme; and **(b)** the edge is **not
 pure identity** — it carries one genuine re-fusion rotation, where the BLAS-1 leaf edges are

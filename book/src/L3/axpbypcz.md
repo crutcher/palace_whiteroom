@@ -3,9 +3,9 @@ layer: L3
 operator: axpbypcz
 firmness: firm
 lowers_to:
-  - book/src/L2/axpbypcz.md (present adjacent L2 floor, cycle-043 D5; identity-in-form on the primitive's signature shape, via the `axpbypcz-body-identity` L3>L2 theme; whole-tensor in / whole-tensor out at both layers) → book/src/L1/axpbypcz.md (transitive L3>L1 identity in-line, L3>L2 ∘ L2>L1)
+  - book/src/L2/linear_combination.md (the arity-3 specialization of the firm L3/L2 `linear_combination` fold; `axpbypcz(α,x,β,y,γ,z) = linear_combination [(α,x),(β,y),(γ,z)]`; lowers via the combinator's §"Downward to L2" identity-in-form edge, then the substantive arity-dispatch is the L2>L1 `linear-combination-fold-specialization` theme) → book/src/L1/axpbypcz.md (transitive L3>L1 identity in-line, the fold-specialization picking the `AXPBYPCZ` L0 leaf incl. the γ==0 arity-collapse)
 lifts_from:
-  - (no L4 entry — leaf primitive, not a calculus combinator; per cycle-010 cohort audit verdict)
+  - book/src/L3/linear_combination.md (the family combinator this leaf is the arity-3 specialization of — `axpbypcz` speaks through `linear_combination`, not as a re-derived base form, per the 2026-06-01 vocabulary-shift redirect; no L4 entry — the fold is a pure value-producing reduction, not a calculus combinator)
 variant_axes:
   - element-type (real | complex)
   - scalar-promotion (sub-axis on complex element-type)
@@ -13,7 +13,7 @@ variant_axes:
 
 # axpbypcz
 
-Whole-tensor fused three-scalar three-vector update at L3: `axpbypcz(α, x, β, y, γ, z) = α·x + β·y + γ·z`. The L3-native rendering of the fused BLAS-1-extended primitive that subsumes [`axpby`](./axpby.md) (γ=0), [`axpy`](./axpy.md) (β=1, γ=0), and pure-scaling (α=0, β=0), firm at L1 ([`axpbypcz`](../L1/axpbypcz.md)), surfaced here in L3 vocabulary because **each layer is internally coherent** (CLAUDE.md §Methodology invariants).
+Whole-tensor fused three-scalar three-vector update at L3: `axpbypcz(α, x, β, y, γ, z) = α·x + β·y + γ·z` — the **arity-3 specialization of the [`linear_combination`](./linear_combination.md) fold**: `axpbypcz(α, x, β, y, γ, z) = linear_combination [(α, x), (β, y), (γ, z)]` (CLAUDE.md §Methodology invariants ⟢, the 2026-06-01 vocabulary-shift redirect; `L3/linear_combination.md:50-61` §"Arity specializations"). At L3 and above the four arity forms speak **through** the combinator, not as re-derived base forms — `axpbypcz` is the combinator at term-list length 3 (subsuming [`axpby`](./axpby.md) at γ=0 and [`axpy`](./axpy.md) at β=1, γ=0). This chapter is the arity-3 readout label for the bounded-arity L0 call shape (`AXPBYPCZ`, the top of Palace's bounded-arity surface); its algebra is the fold's law set read at that fixed length, and its lowering routes through the combinator's §"Downward to L2" identity edge + the substantive L2>L1 [`linear-combination-fold-specialization`](../L2-L1/linear-combination-fold-specialization.md) theme.
 
 ## Context
 
@@ -103,7 +103,7 @@ The algebraic-law set at L3 is **identical** to the L1 algebraic-law set.
 - [`scalar-promotion`](../concepts/scalar-promotion.md) — the `real ⊑ complex` typing-rule.
 - [`tensor-field-lift`](../concepts/tensor-field-lift.md) — underwrites the L3-native-by-signature-shape claim.
 
-No L4 monadic vocabulary; `axpbypcz` is not a calculus combinator at L4. Per the cycle-010 cohort audit, the L4 candidate for `axpbypcz` is **CONFIRMED-NOT-NEEDED**. The adjacent L3>L2 rotation passes through the **present** L2 floor [`axpbypcz`](../L2/axpbypcz.md) (cycle-043 D5) via the firm [`axpbypcz-body-identity`](../L3-L2/axpbypcz-body-identity.md) L3>L2 theme — identity-in-form on the body, no wrapper rotation; onward to L1 [`axpbypcz`](../L1/axpbypcz.md). The L2 floor was backfilled under the foundation-first directive `l2-floor-under-l3-leaf-cohort` so the firm L3 entry rests on a *present* adjacent L2 parent, per **Identity-lowerings still require both L levels**.
+No L4 monadic vocabulary; neither `axpbypcz` nor the `linear_combination` fold it specializes is a calculus combinator at L4 (the cohort audit verdict is **CONFIRMED-NOT-NEEDED**; `L3/linear_combination.md:152-154`). The downward rotation passes through the firm L2 [`linear_combination`](../L2/linear_combination.md) via the combinator's §"Downward to L2" identity edge (`L3/linear_combination.md:107-113`), read at term-list length 3 — `axpbypcz` is the arity-3 fold member. The substantive arity-dispatch (length → maximal fused L0 leaf, here the `AXPBYPCZ` symbol, including the `γ==0` arity-collapse to `axpby`) + the pinned summation order live in the L2>L1 [`linear-combination-fold-specialization`](../L2-L1/linear-combination-fold-specialization.md) theme, NOT in a per-leaf theme.
 
 ## Variant axes
 
@@ -122,9 +122,9 @@ The variant-axis profile at L3 matches L1 exactly.
 
 ## Lowers to
 
-L3 `axpbypcz` lowers to the **present adjacent L2 floor** [`axpbypcz`](../L2/axpbypcz.md) (cycle-043 D5) as **identity-in-form on the primitive's signature shape**, via the firm [`axpbypcz-body-identity`](../L3-L2/axpbypcz-body-identity.md) L3>L2 theme (identity-in-form on the body, no wrapper rotation — `axpbypcz` is a leaf whole-tensor field operation, not a step body), and onward to L1 [`axpbypcz`](../L1/axpbypcz.md). The three surfaces are textually identical modulo layer-coherence vocabulary (L1 / L2 / L3 all see `axpbypcz :: Scalar -> Tensor[N] -> Scalar -> Tensor[N] -> Scalar -> Tensor[N] -> Tensor[N]` with the same shape contract, the same twelve algebraic laws, the same four non-laws, and the same variant-axis profile). The L2 floor is the standalone fold-member BLAS-1-extended leaf — landed by the cycle-043 L2-floor backfill under the foundation-first directive `l2-floor-under-l3-leaf-cohort` — so the L3>L2 hop passes through the adjacent floor rather than skipping a layer to L1, per **Identity-lowerings still require both L levels**.
+L3 `axpbypcz` lowers as the **arity-3 specialization of [`linear_combination`](./linear_combination.md)** (`axpbypcz(α, x, β, y, γ, z) = linear_combination [(α, x), (β, y), (γ, z)]`). The combinator lowers to the firm L2 [`linear_combination`](../L2/linear_combination.md) as identity-in-form on the fold body (`L3/linear_combination.md:107-113` §"Downward to L2"). The substantive rotation in the downward chain is the L2>L1 [`linear-combination-fold-specialization`](../L2-L1/linear-combination-fold-specialization.md) theme: it reads the term-list length (here 3) and selects the maximal fused L0 leaf — the `AXPBYPCZ` symbol, including the `γ == 0` arity-collapse branch (`palace/linalg/vector.cpp:745-758`, the `:749-751` `add(α, x, β, y, z)` fast-path that is the exact algebraic content of the fold's zero-coefficient term-drop law) — and records the pinned summation order of each L0 branch. All arity dispatch and summation-order residue are the fold-parent's, not this leaf's.
 
-The **transitive** L3>L1 identity (L3>L2 ∘ L2>L1, both identity-in-form) is annotated in-line per the cycle-012 non-adjacent-identity convention; no `book/src/L3-L1/` directory is created. The substantive rotation in the chain is the L1>L0 [`axpbypcz-mutation-rotation`](../L1-L0/axpbypcz-mutation-rotation.md).
+The **transitive** L3>L1 identity (the combinator's L3>L2 identity ∘ the L2>L1 fold-specialization's value-identity at this list length) is annotated in-line per the cycle-012 non-adjacent-identity convention; no `book/src/L3-L1/` directory is created. The substantive in-place mutation rotation, reached transitively, is the L1>L0 [`axpbypcz-mutation-rotation`](../L1-L0/axpbypcz-mutation-rotation.md).
 
 ## Lifts from
 
@@ -134,9 +134,9 @@ No L4 entry exists for `axpbypcz` (CONFIRMED-NOT-NEEDED per cohort audit). Appea
 
 All L0 evidence is inherited via L1 (`book/src/L1/axpbypcz.md` §Evidence). Direct citations:
 
-- `book/src/L2/axpbypcz.md` (cycle-043 D5 firm) — the present adjacent L2 floor this L3 entry lowers into via the `axpbypcz-body-identity` theme; identity-in-form on the primitive's signature.
-- `book/src/L3-L2/axpbypcz-body-identity.md` (cycle-043 firm) — the adjacent L3>L2 body-identity theme; identity-in-form on the body, no wrapper rotation.
-- `book/src/L1/axpbypcz.md` (cycle-003 firm) — the L1 form this L3 entry transitively rotates from (L3>L2 ∘ L2>L1). Body shape, semantics, twelve algebraic laws, four non-laws, variant-axis profile.
+- `book/src/L3/linear_combination.md` (cycle-050 firm) + `book/src/L2/linear_combination.md` (inverted-to-entry cycle-049 D1) — the family combinator this leaf is the arity-3 specialization of; §"Arity specializations" (`L3/linear_combination.md:50-61`) names `axpbypcz = linear_combination [(α,x),(β,y),(γ,z)]`, §"Downward to L2" (`:107-113`) is the identity-in-form edge this leaf's lowering reads at length 3.
+- `book/src/L2-L1/linear-combination-fold-specialization.md` (firm; cycle-049 D1(c) KEEP verdict) — the substantive L2>L1 fusion-selection theme that picks the `AXPBYPCZ` L0 leaf at this list-length, handles the `γ==0` arity-collapse, and records the pinned summation order of each L0 branch (the lowering's substantive content, deferred here, not in a per-leaf theme).
+- `book/src/L1/axpbypcz.md` (cycle-003 firm) — the L1 leaf the fold-specialization recovers at this arity (the L1>L0 one-to-one `AXPBYPCZ` symbol shape). Body shape, semantics, twelve algebraic laws, four non-laws, variant-axis profile.
 - `book/src/L3-L2/krylov-step-body-identity.md:97` (firm) — names `axpbypcz` as L3-native by signature shape.
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:67` (firm) — renders `axpbypcz` in the L3 body let-chain identically to L1.
 - `book/src/L3/krylov-step.md` (cycle-010 firm; the precedent layer-coherence backfill) — the template this entry follows.
