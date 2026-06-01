@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T125900Z
 scope: L3↔L1 cross-cut — chebyshev-smoother L3 subsumption check (cycle-044 D2)
 status: pending
 integrated_at: 2026-06-01T150500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: d88f7b6
 integration_notes: "cycle-044 batch integration; D2 cross-layer-cross-cutter — read-only OBSERVATION (NO book mutation). Verdict: chebyshev-smoother L3 SUBSUMED by firm L3 chebyshev (c013, partial-obstruction) — NO-LAND; discharges the c036 D2 index.md:48 subsumption-check caveat; a clean negative result that REMOVES the chebyshev-smoother (B)-candidate, leaving apply_nonlinear_pencil as the only remaining (B)-candidate. Scaffolding-only landings: priorities.md candidate-closure + closure OQ chebyshev-smoother-l3-candidate-subsumed-closed; see reports/2026-06-01T150500Z-integrator-finalize-cycle-44/CYCLE.md + cycle-044 STAGING row 4."
 ---
 

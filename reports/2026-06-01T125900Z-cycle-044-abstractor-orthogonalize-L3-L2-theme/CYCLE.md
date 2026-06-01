@@ -11,7 +11,7 @@ inputs:
   - reference/palace/palace/linalg/orthog.hpp:41-89 (MGS / CGS / CGS2 bodies, read in full, self-verified)
   - reference/palace/palace/linalg/iterative.cpp:308-325 (OrthogonalizeIteration variant dispatch, self-verified)
 integrated_at: 2026-06-01T150500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: d88f7b6
 integration_notes: "cycle-044 batch integration; D3 abstractor — NEW firm SUBSTANTIVE L3>L2 theme orthogonalize-variant-split (variant-conditional MGS-erasure; the SECOND substantive L3>L2 after ksp-solve-outer-driver, FIRST for a partial-obstruction operator); sole count-owner L3-L2/index dual-registration (TABLE row + Vocabulary-cohort Substantive/non-identity sub-grouping + TALLY firm 14→15 + coverage-gap 14-of-18→15-of-18 + first-substantive-partial-obstruction taxonomy bullet); SUMMARY-wired; applied clean; see reports/2026-06-01T150500Z-integrator-finalize-cycle-44/CYCLE.md + cycle-044 STAGING row 2."
 ---
 

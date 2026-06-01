@@ -32,7 +32,7 @@ inputs:
   - book/src/L2-L1/nrm2-leaf-identity.md
   - book/src/L3-L2/nrm2-body-identity.md
 integrated_at: 2026-06-01T150500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: d88f7b6
 integration_notes: "cycle-044 batch integration (FIRST substantive L3>L2 rotation cycle); D1 consolidated lifter cohort-completion sweep — re-anchored axpy/axpby/axpbypcz/normalize L3 entries L3>L1 → L3>L2>L1 (closing 4 staleness OQs) + co-located audit-block citation re-pins + directive-slug rename l2-floor-under-l3-blas1-cohort → -leaf-cohort book-wide (ZERO old-slug remain in book/); applied clean, build exit 0, zero build-repairs; see reports/2026-06-01T150500Z-integrator-finalize-cycle-44/CYCLE.md + cycle-044 STAGING row 1."
 ---
 

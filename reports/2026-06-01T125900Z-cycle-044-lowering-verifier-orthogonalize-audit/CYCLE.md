@@ -12,7 +12,7 @@ inputs:
   - book/src/concepts/variant-absorption.md:131 (gs_orthog absorption)
   - book/src/L2/orthogonalize.md, book/src/L1/orthogonalize.md (firm sibling forecasts)
 integrated_at: 2026-06-01T150500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: d88f7b6
 integration_notes: "cycle-044 batch integration; D4 lowering-verifier (deferred-from-c040 audit) — appended 24-row verified_against block to L3/orthogonalize.md (all supports), status stays partial-obstruction NO FLIP; re-pointed §Dependencies / §L3-vs-L2-distinction / lowers_to frontmatter onto the live ../L3-L2/orthogonalize-variant-split.md link for the substantive loop-rotation half (D3's target landed first, links resolved on apply); retroactive per-slice=1 (global=1, under ≥4 block); applied clean; see reports/2026-06-01T150500Z-integrator-finalize-cycle-44/CYCLE.md + cycle-044 STAGING row 3."
 ---
 
