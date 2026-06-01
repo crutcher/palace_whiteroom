@@ -30,6 +30,40 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-045 — 2026-06-01T143625Z — THIRD/FINAL primary cycle of meta-batch-13 (cycles 043/044/045; **the batch-13 meta-phase fires AFTER this cycle-045 finalize, as a SEPARATE dispatch — NOT run here**) — clean opus-planner cycle — completed the substantive L3>L2 rotation frontier: `eigsolve-opaque-eigen-iteration` (opaque-library root) + `chebyshev-nested-recurrence` (unconditional-nested-double-loop root) landed firm, COMPLETING the four-root erasure-scope taxonomy; L3>L2 firm 15→17 (17-of-18, effectively complete); 3/3 reports applied clean, zero deferrals/rejections/build-repairs
+
+> **STRONG CARRY-FORWARD TO THE BATCH-13 META-PHASE (fires next).** Cycle-045 is the FINAL primary cycle of meta-batch-13. The meta-phase aggregates evidence across cycles 043/044/045. The decision queue below (especially the taxonomy ratification + OQ unification) is collated for it.
+
+### Unblocked
+- **L3>L2 connective tissue is effectively COMPLETE — 17-of-18; the 18th is `apply_linop`, no-L2-by-design** (`book/src/L3/apply_linop.md:146`). The whole L2-floor + L3>L2-rotation foundation campaign (cycles 041–045, under the 2026-05-31 uniform-pull-up directive) has filled the middle of the stack: **L2 9→21, L2>L1 7→19, L3>L2 2→17.** The stack is now **substantially rectangular through L0–L3.** — `l3-l2-rotation-theme-coverage-gap`
+- **The NEXT FRONTIER — the uniform climb resumes UPWARD.** With L0–L3 substantially rectangular, weight UPWARD work: **L4>L3 coverage + L4 expansion (L4 is only 4 firm)** + any remaining L2>L1 gaps. This is the batch-14+ forward-frontier direction. — `roadmap.md` L4 / L4>L3 rows
+- The substantive L3>L2 erasure-scope taxonomy is COMPLETE with **4 roots** — unconditional-single-loop / variant-conditional-single-loop / unconditional-nested-double-loop / opaque-library — ready for meta-phase ratification + a possible `concepts/erasure-scope.md` page. — `l3-l2-erasure-scope-taxonomy-FOUR-root-complete-ratify-plus-concepts-page`
+
+### New dependencies
+- `book/src/L3-L2/eigsolve-opaque-eigen-iteration.md` (NEW firm SUBSTANTIVE theme; opaque-library erasure-scope root) — `L3/eigsolve.md` now `lowers_to:` it (frontmatter + §Downward + §Lowers-to + §"L3 vs L2 distinction" re-anchored off the stale in-line note). — D1 (cycle-045 abstractor)
+- `book/src/L3-L2/chebyshev-nested-recurrence.md` (NEW firm SUBSTANTIVE theme; unconditional-nested-double-loop erasure-scope root) — `L3/chebyshev.md` + `L3/index.md` dep-map now `lowers_to:` / point at it (re-anchored off the stale in-line note). — D2 (cycle-045 cross-cutter)
+- The consolidated `book/src/L3-L2/index.md` §Working-Notes tally now reads **firm 17 / coverage-gap 17-of-18** + the four-root erasure-scope taxonomy paragraph. — D3 (cycle-045 layer-intro-author, SOLE count-owner)
+
+### Resolution implications
+- `remaining-substantive-l3-l2-rotations-chebyshev-eigsolve` (c044) — **answered (BOTH halves landed)** — the eigsolve half closed by D1, the chebyshev half by D2; ready for the meta-phase to CLOSE.
+- `l3-l2-chebyshev-substantive-theme-vs-in-line-decision` (c045 D2) — **answered** — dedicated theme warranted + LANDED (`book/src/L3-L2/chebyshev-nested-recurrence.md`).
+- `substantive-l3-l2-erasure-scope-taxonomy` (c044) / `l3-l2-substantive-erasure-scope-taxonomy` (c045 D1) / `l3-l2-erasure-scope-taxonomy-FOUR-root-complete-ratify-plus-concepts-page` (c045 D3) — **partially-answered** — these THREE are the SAME question at three growth stages; the meta-phase should UNIFY them into one ratified taxonomy slug + decide on the `concepts/erasure-scope.md` page.
+- `l3-l2-coverage-gap-denominator-reconciliation-17-of-18-vs-17-of-17-applicable` (c045 D3) — **needs-more** — the coverage gap reaches 17-of-18; `apply_linop` is the by-design non-applicable 18th. Meta-phase to re-denominate (17-of-17-applicable).
+- `concepts-sequential-obstruction-opaque-library-marker-distinction` (c045 D1) — **needs-more** — opaque-library-rooted-marker vs Palace-authored-recurrence distinction for `concepts/sequential-obstruction.md`; layer-intro-author / cross-cutter territory.
+
+### Suggested next dispatches
+- **(batch-13 meta-phase — fires next, NOT a cycle-planner dispatch):** the decision queue — (a) ratify the 4-root erasure-scope taxonomy + decide on `concepts/erasure-scope.md` (unify the 3 predecessor OQ slugs); (b) CLOSE `remaining-substantive-l3-l2-rotations-chebyshev-eigsolve` (both halves landed); (c) re-denominate the coverage gap (17-of-17-applicable, `apply_linop` the non-applicable 18th); (d) the STANDING batch-13 items from c043/c044 — dual-registration convention codification, chebyshev cohort-count reconciliation + normalize fused-composite sub-shape, the scaffolding slug-rename residual sweep, the L2-floor-implies-same-cycle-L3-reanchor process signal (cycle-planner dispatch-design note candidate).
+- (`layer-intro-author` / `combinator-miner`, `L4>L3 coverage + L4 expansion`) — the next forward frontier: with L0–L3 substantially rectangular, climb UPWARD. L4 is only 4 firm; L4>L3 coverage is the thinnest connective tissue now. — fan-out-rank in the plan at the next primary cycle.
+- (`cross-cutter` / `same-layer-cross-cutter`, `residual L2>L1 gap audit`) — sweep for any remaining L2>L1 gaps now that the L2 floor is at 21.
+
+### Wave-conflict observations
+- **None this cycle.** The count-ownership partition (cycle-039 convention) held cleanly: D1 + D2 each owned their own L3-L2/index TABLE row + §Vocabulary-cohort bullet; D3 was the SOLE consolidated count-owner. D2's Change 5 (the §Working-Notes tally rewrite) was correctly SKIPPED at D2's integration per the partition, leaving D3's Edit 1 as the authoritative whole-bullet rewrite from the on-disk base. No `parallel-blind-shared-index-count-divergence`. The serial per-report application order (D1 → D2 → D3) meant D3 re-read the on-disk index (after D1/D2's row/bullet shifts moved its `[old]` anchors from :62/:63 to :66/:67) and text-matched rather than trusting stale report line numbers — exactly the discipline the count-ownership partition exists to support.
+
+### Integration-tooling friction
+- **None blocking.** 3/3 staging rows == dispatched-ready (cycle-018 staging-completeness gap did NOT recur, TWENTY-SIXTH consecutive clean staging cycle / FORTIETH consecutive clean split-integrator cycle). Build clean (`cargo make book` exit 0, ~90s); the only noise is pre-existing (KaTeX "Potential incomplete link" false-positives in `design/l4_calculus.md` + unclosed-HTML-tag WARNs in older `L1-L0/`+`L0/` files) — none introduced this cycle, none affecting the new files. The `chebyshev-nested-recurrence.md` inner ```` ```text ```` pseudo-code fences built without issue. Minor note (NOT blocking, surfaced for the meta-phase's OQ-unification pass): the THREE erasure-scope-taxonomy OQ slugs accreting one-per-cycle (c044 + c045-D1 + c045-D3) is exactly the kind of intake-channel duplication the meta-phase unify pass exists to collapse — the substance is one question that grew a root per cycle.
+
+---
+
 ## cycle-044 — 2026-06-01T150500Z — SECOND primary cycle of meta-batch-13 (cycles 043/044/045; **the batch-13 meta-phase fires AFTER cycle-045's finalize, as a SEPARATE dispatch — NOT run here**) — clean opus-planner cycle — landed the FIRST substantive (non-identity) L3>L2 rotation `orthogonalize-variant-split` (variant-conditional MGS-erasure), re-anchored the c043 leaf-cohort's stale L3 entries, audited orthogonalize L3 (status unchanged), CLOSED the chebyshev-smoother (B)-candidate as subsumed, and swept the directive-slug + index-citation drift
 
 ### Unblocked

@@ -54,6 +54,8 @@
 - [elementwise-product-body-identity](./L3-L2/elementwise-product-body-identity.md)
 - [normalize-body-identity](./L3-L2/normalize-body-identity.md)
 - [orthogonalize-variant-split](./L3-L2/orthogonalize-variant-split.md)
+- [eigsolve-opaque-eigen-iteration](./L3-L2/eigsolve-opaque-eigen-iteration.md)
+- [chebyshev-nested-recurrence](./L3-L2/chebyshev-nested-recurrence.md)
 
 # L2 — Algebraic Decompositions
 - [Overview](./L2/index.md)

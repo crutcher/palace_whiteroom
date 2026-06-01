@@ -3,7 +3,7 @@ layer: L3
 operator: chebyshev
 firmness: partial-obstruction
 lowers_to:
-  - book/src/L2/chebyshev-iteration.md (body identity-in-form; surface adjustments consolidate `(r, d, y, scalar_state)` carry into the L2 sweep; no L3-L2 theme file — in-line annotation)
+  - book/src/L2/chebyshev-iteration.md (body identity-in-form in-line; substantive nested-loop erasure via book/src/L3-L2/chebyshev-nested-recurrence.md)
 lifts_from:
   - book/src/L4/chebyshev.md (typed-wrapper / Solve-monad dissolution; identity-in-form on the kernel body, substantive at the wrapper)
 variant_axes:
@@ -76,10 +76,16 @@ The relationship to the adjacent layers:
   is that L3 carries `(r, d, y, scalar_state)` as a positional recurrence tuple
   threaded by the explicit tail recursion, whereas L2 consolidates the same
   threading into its `for k in 1 .. order-1` loop with `op.scalars(k, st)`
-  state. This is information-preserving. **No `book/src/L3-L2/` theme file is
-  created** — the body identity-in-form annotation lives in-line here per the
-  cycle-012 meta-phase non-adjacent-identity convention (precedent:
-  `book/src/L3/krylov-step.md` §Downward).
+  state. This is information-preserving. The **body identity-in-form** annotation
+  lives in-line here per the cycle-012 meta-phase non-adjacent-identity convention
+  (precedent: `book/src/L3/krylov-step.md` §Downward); the **substantive
+  nested-loop erasure** (the two `iterate_while_pure_L3` tail recursions dissolving
+  into the L2 loop-as-driver + role reference, with the inner-`k` + outer-`pc_it`
+  `sequential-obstruction`s erased to the L2 non-laws) is the dedicated L3>L2 theme
+  [`chebyshev-nested-recurrence`](../L3-L2/chebyshev-nested-recurrence.md)
+  (cycle-045) — the loop surface exceeds the identity-only convention, the same
+  body-identity-in-line / loop-erasure-as-theme division `ksp_solve` makes
+  (`krylov-step-body-identity` + `ksp-solve-outer-driver`).
 
 **Non-adjacent identity (in-line, no directory).** Because the L3>L2 body
 rotation is identity-in-form **and** the L2>L1 body rotation is identity-in-form
@@ -470,10 +476,12 @@ does not impeach the firm L1/L2 rows.
   composition.
 
 The L3>L2 hop erases the explicit iteration view (the tail recursions collapse
-to L2's loop-as-composition-driver) and leaves the body identity-in-form. No
-`L3-L2/` theme file — the identity-in-form annotation lives in-line here (per the
-cycle-012 meta-phase non-adjacent-identity convention; precedent
-`book/src/L3/krylov-step.md`).
+to L2's loop-as-composition-driver) and leaves the body identity-in-form. The
+**body** identity-in-form annotation lives in-line here (per the cycle-012
+meta-phase non-adjacent-identity convention; precedent
+`book/src/L3/krylov-step.md`); the **substantive loop erasure** is the dedicated
+L3>L2 theme [`chebyshev-nested-recurrence`](../L3-L2/chebyshev-nested-recurrence.md)
+(cycle-045).
 
 ## L3 vs L4 distinction
 
