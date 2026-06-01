@@ -11,7 +11,7 @@ inputs:
   - book/src/L3-L2/dot-body-identity.md (cycle-041; the L3>L2 -body-identity slug + structure precedent)
   - palace/linalg/divfree.cpp:155-187 (the four-step Mult apply; step-4 AddMult de-fusion at :180-181 complex / :185 real; read this invocation)
 integrated_at: 2026-06-01T081245Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1d6592a
 integration_notes: "cycle-042 batch integration (foundation-first L2-floor build); applied clean; see reports/2026-06-01T081245Z-integrator-finalize-cycle-42/CYCLE.md + cycle-042 STAGING row."
 ---
 

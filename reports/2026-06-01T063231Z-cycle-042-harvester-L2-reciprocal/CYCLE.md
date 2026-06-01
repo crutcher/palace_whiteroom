@@ -16,7 +16,7 @@ inputs:
     palace/fem/bilinearform.cpp:278 (multiplicity-averaging consumer)
   - dispatch directive: l2-floor-under-l3-blas1-cohort (2026-05-31 foundation-first)
 integrated_at: 2026-06-01T081245Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1d6592a
 integration_notes: "cycle-042 batch integration (foundation-first L2-floor build); applied clean; see reports/2026-06-01T081245Z-integrator-finalize-cycle-42/CYCLE.md + cycle-042 STAGING row."
 ---
 

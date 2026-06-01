@@ -12,7 +12,7 @@ inputs:
   - L0: palace/linalg/jacobi.cpp:30-39 (real Apply), :41-70 (complex Apply + dead-code transpose :61-69), :74-97 (SetOperator), :99-104 (Mult), :106-107 (instantiations); jacobi.hpp:19/:28/:43; ksp.cpp:198-200; errorestimator.cpp:75-77
   - dispatch: cycle-042 D5 (fork-INDEPENDENT, constructed-operator gate, NO fold-parent; foundation-first directive l2-floor-under-l3-jacobi-smoother)
 integrated_at: 2026-06-01T081245Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1d6592a
 integration_notes: "cycle-042 batch integration (foundation-first L2-floor build); applied clean; see reports/2026-06-01T081245Z-integrator-finalize-cycle-42/CYCLE.md + cycle-042 STAGING row."
 ---
 

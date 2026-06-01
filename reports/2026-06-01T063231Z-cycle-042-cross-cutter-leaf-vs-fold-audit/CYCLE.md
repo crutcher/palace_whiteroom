@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T063231Z
 scope: L2 cross-cut — leaf-vs-fold-design-fork-audit
 status: pending
 integrated_at: 2026-06-01T081245Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1d6592a
 integration_notes: "cycle-042 batch integration (foundation-first L2-floor build); applied clean; see reports/2026-06-01T081245Z-integrator-finalize-cycle-42/CYCLE.md + cycle-042 STAGING row."
 ---
 

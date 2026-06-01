@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T063231Z
 scope: cycle-042 D11 — sole-owner consolidated-tally refresh of three indices (L2, L2-L1, L3-L2) for the standalone-floor cohort (5 L2 floors + 10 themes)
 status: pending
 integrated_at: 2026-06-01T081245Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1d6592a
 integration_notes: "cycle-042 batch integration (foundation-first L2-floor build); applied clean; see reports/2026-06-01T081245Z-integrator-finalize-cycle-42/CYCLE.md + cycle-042 STAGING row."
 ---
 

@@ -11,7 +11,7 @@ inputs:
   - book/src/L3-L2/dot-body-identity.md (firm cycle-041 — the -body-identity slug + thin-identity structure precedent)
   - book/src/L3-L2/krylov-step-body-identity.md:97 (the L3-native-by-signature-shape statement)
 integrated_at: 2026-06-01T081245Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1d6592a
 integration_notes: "cycle-042 batch integration (foundation-first L2-floor build); applied clean; see reports/2026-06-01T081245Z-integrator-finalize-cycle-42/CYCLE.md + cycle-042 STAGING row."
 ---
 

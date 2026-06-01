@@ -10,7 +10,7 @@ inputs:
   - book/src/L2/index.md (the L2 Part overview; "Identity-in-form BLAS-1 floors" cohort + foundation-first directive l2-floor-under-l3-blas1-cohort)
   - L0: palace/linalg/operator.cpp:25-28,85-96; palace/linalg/rap.cpp:154-193,467-479; palace/linalg/hypre.cpp:85-89; palace/fem/libceed/operator.cpp:116-143; palace/linalg/jacobi.cpp:75-82; palace/linalg/chebyshev.cpp:170-178; test/unit/test-libceed.cpp:343-376 (all self-verified via tools/citecheck/citecheck.py --anchor this invocation)
 integrated_at: 2026-06-01T081245Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1d6592a
 integration_notes: "cycle-042 batch integration (foundation-first L2-floor build); applied clean; see reports/2026-06-01T081245Z-integrator-finalize-cycle-42/CYCLE.md + cycle-042 STAGING row."
 ---
 

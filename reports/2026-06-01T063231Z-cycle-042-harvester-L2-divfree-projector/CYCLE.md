@@ -13,7 +13,7 @@ inputs:
   - book/src/L2/index.md (the dep-map + named-composition / floor motif framing)
   - resolved OQ divfree-mult-doc-irrotational-vs-divfree-stale (the divfree.hpp:64-66 per-method doc is inverted; authoritative semantics = Gᵀ M x = 0)
 integrated_at: 2026-06-01T081245Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1d6592a
 integration_notes: "cycle-042 batch integration (foundation-first L2-floor build); applied clean; see reports/2026-06-01T081245Z-integrator-finalize-cycle-42/CYCLE.md + cycle-042 STAGING row."
 ---
 

@@ -12,7 +12,7 @@ inputs:
   - L0 (transitive through L1): palace/linalg/jacobi.cpp:38 (real apply kernel), :61-69 (dead-code transpose branch), :79-80 (setup chain), :103 (Apply dispatch); jacobi.hpp:43 (transpose alias)
   - dispatch: cycle-042 D8 (wave-2; fork-INDEPENDENT, standalone constructed-operator gate, NO fold-parent; COUNT-OWNERSHIP deferred to D11)
 integrated_at: 2026-06-01T081245Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1d6592a
 integration_notes: "cycle-042 batch integration (foundation-first L2-floor build); applied clean; see reports/2026-06-01T081245Z-integrator-finalize-cycle-42/CYCLE.md + cycle-042 STAGING row."
 ---
 

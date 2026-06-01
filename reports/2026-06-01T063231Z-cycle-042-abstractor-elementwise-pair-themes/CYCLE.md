@@ -17,7 +17,7 @@ inputs:
     palace/linalg/vector.hpp:20 (using Vector = mfem::Vector);
     palace/linalg/operator.cpp:478-487 (BaseDiagonalOperator<Operator>::Mult), :486 (Y[i]=D[i]*X[i]), :545-568 (MultHermitianTranspose)
 integrated_at: 2026-06-01T081245Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 1d6592a
 integration_notes: "cycle-042 batch integration (foundation-first L2-floor build); applied clean; see reports/2026-06-01T081245Z-integrator-finalize-cycle-42/CYCLE.md + cycle-042 STAGING row."
 ---
 
