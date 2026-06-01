@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T154713Z
 scope: Coverage survey + fan-out ranking — L4-cap / L4>L3-theme picks for cycle-047+ (LEAD frontier l4-l3-coverage-and-l4-expansion)
 status: integrated
 integrated_at: 2026-06-01T161013Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f35507b1671d6f61814ad6425016d717443753b3
 integration_notes: |
   cycle-046 D1, applied clean (observation/survey, NO book mutation — no `book/` proposed-changes block). Appended 4 OQ slugs to scaffolding/open-questions.md as the cycle-047 L4-frontier dispatch index: iterate-while-l4-l3-standalone-theme-warranted-lifter-vs-abstractor (R1 lead), l4-ksp-solve-eigsolve-caps-gated-on-solve-monad-outer-driver-vocabulary (R2/R3), l4-orthogonalize-cap-marginal-defer (R5), l4-native-combinator-denominator-completeness-survey. The fan-out-ranked pick list (R1 standalone L4>L3 iterate-while/iterate-while-with-prev themes [paired, lead] / R2 L4/ksp_solve cap / R3 L4/eigsolve cap / R5 defer L4/orthogonalize) is consumed DIRECTLY by the cycle-047 planner. Key finding: the L4 layer is mostly intentionally complete (13 of 18 L3 ops carry an on-disk CONFIRMED-NOT-NEEDED L4 verdict, no-L4-by-design per the cycle-010 leaf-primitive rule). Gate hits: 0 (citecheck 37 ok / 1 non-blocking scaffolding-path self-ref). No deferrals/rejections.
 ---

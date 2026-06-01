@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T154713Z
 scope: concepts/erasure-scope.md — NEW cross-cutting concept page (four-root erasure-scope taxonomy)
 status: integrated
 integrated_at: 2026-06-01T161013Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f35507b1671d6f61814ad6425016d717443753b3
 integration_notes: |
   cycle-046 D2, applied clean — THE ONLY book/ mutation of the cycle. Created book/src/concepts/erasure-scope.md (NEW four-root erasure-scope taxonomy concept page; verified ABSENT pre-apply) + SUMMARY.md surgical insert ([erasure-scope] row after [eigsolve]) + concepts/index.md surgical insert (erasure-scope | layer-pattern row, alphabetical). The kind classification was the critic's one plan-kind-consistency:warning — repairer left unrepairable + routed to integrator; ADJUDICATED `layer-pattern` at integration (the page names how the L3>L2 layer-edge works — layer-mechanism, not process-methodology; reinforced by the layer-pattern sibling concepts sequential-obstruction + tensor-field-lift). All 14 live links resolve; built clean (concepts/erasure-scope.html, linkcheck2 green). Appended 2 OQ entries (erasure-scope-kind-classification CLOSED decision-of-record + erasure-scope-l3-l2-index-line-anchor-drift-risk open low-severity caveat). Gate hits: 0 (plan-kind adjudication non-blocking; citecheck 4 ok). No deferrals/rejections.
 ---

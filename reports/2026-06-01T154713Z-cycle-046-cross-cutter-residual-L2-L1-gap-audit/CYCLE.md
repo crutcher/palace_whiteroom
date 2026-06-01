@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T154713Z
 scope: L1↔L2 cross-cut — residual-L2>L1-gap census after L2-floor reaches 21 firm operators
 status: integrated
 integrated_at: 2026-06-01T161013Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f35507b1671d6f61814ad6425016d717443753b3
 integration_notes: |
   cycle-046 D3, applied clean (observation/audit, NO book mutation — no `book/` proposed-changes block). Independent census of all 22 L2 chapters against 20 L2-L1/ theme files found TWO genuine L2>L1 gaps: ksp_solve (rank 1, driver tier) + krylov-step (rank 2, kernel tier) — both firm L2 entries with non-identity L2↔L1 rotations and no dedicated L2-L1/* theme file (NOT no-theme-by-design; the apply_linop no-L2 precedent does not transfer). Appended 4 OQ entries: ksp-solve-l2-l1-theme-gap + krylov-step-l2-l1-theme-gap (cycle-047 abstractor x2 candidates, close residual-l2-l1-gap-audit jointly) + residual-l2-l1-gap-audit-planner-undercount (benign data point: census 2 vs dispatch-framing 1) + residual-l2-l1-gap-audit-ksp-solve-edge-mislabel (CLOSED in critique in the report's favor — ksp_solve is a genuine gap). The cycle-047 abstractor x2 pick list is consumed DIRECTLY by the cycle-047 planner. Gate hits: 0 (citecheck 12 ok). No deferrals/rejections.
 ---
