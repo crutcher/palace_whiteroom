@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T135812Z
 scope: L3↔L2 cross-cut — chebyshev-L3-L2-substantive-theme-decision
 status: pending
 integrated_at: 2026-06-01T143625Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 851fd46
 integration_notes: "cycle-045 batch integration; D2 cross-layer-cross-cutter — decision RESOLVED (dedicated theme warranted) + NEW firm SUBSTANTIVE L3>L2 theme chebyshev-nested-recurrence (the unconditional-nested-double-loop erasure-scope root — inner k-recurrence + outer pc_it Richardson sweep, loop-invariant polynomial-kind/element-type axes); re-anchored L3/chebyshev.md (frontmatter+Downward+L3-vs-L2) + L3/index.md dep-map off the stale no-L3-L2-theme in-line note; inner ```text``` pseudo-code fences restored + built clean; SUMMARY-wired; Change 5 (tally) correctly SKIPPED — D3 sole count-owner; applied clean; see reports/2026-06-01T143625Z-integrator-finalize-cycle-45/CYCLE.md + cycle-045 STAGING row 2."
 ---
 

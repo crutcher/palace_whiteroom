@@ -13,7 +13,7 @@ inputs:
   - reference/palace/palace/linalg/slepc.cpp:694 / :687-709 / :1847-1876 (L0; EPSSolve + Solve + __pc_apply_EPS — verified)
   - reference/palace/palace/linalg/arpack.cpp:318 / :315-339 / :562-590 (L0; naupd + RCI loop + ApplyOp — verified)
 integrated_at: 2026-06-01T143625Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 851fd46
 integration_notes: "cycle-045 batch integration; D1 abstractor — NEW firm SUBSTANTIVE L3>L2 theme eigsolve-opaque-eigen-iteration (the opaque-library erasure-scope root — eigen-iteration is SLEPc/ARPACK-owned, body lifts but loop is library-owned; the THIRD substantive L3>L2 after ksp-solve-outer-driver + orthogonalize-variant-split); re-anchored L3/eigsolve.md frontmatter+Downward+Lowers-to+L3-vs-L2 off the stale no-L3-L2-theme in-line note; SUMMARY-wired; applied clean (tally owned by D3); see reports/2026-06-01T143625Z-integrator-finalize-cycle-45/CYCLE.md + cycle-045 STAGING row 1."
 ---
 

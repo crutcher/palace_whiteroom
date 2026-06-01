@@ -12,7 +12,7 @@ inputs:
   - book/src/L3/apply_linop.md (the by-design no-L2-entry / no-L3-L2-theme operator — the remaining 1-of-18)
   - scaffolding/open-questions.md slugs l3-l2-rotation-theme-coverage-gap / remaining-substantive-l3-l2-rotations-chebyshev-eigsolve / l3-l2-substantive-erasure-scope-taxonomy
 integrated_at: 2026-06-01T143625Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 851fd46
 integration_notes: "cycle-045 batch integration; D3 layer-intro-author (SOLE count-owner) — consolidated L3-L2/index §Working-Notes tally (firm 15→17, l3-l2-rotation-theme-coverage-gap 15-of-18→17-of-18 + denominator-reconciliation prose apply_linop=by-design-no-L2) + the now-COMPLETE four-root erasure-scope taxonomy (unconditional-single-loop / variant-conditional-single-loop / unconditional-nested-double-loop / opaque-library, distinguished from the 13 thin -body-identity themes); D2 Change-5 supersede honored; applied clean; see reports/2026-06-01T143625Z-integrator-finalize-cycle-45/CYCLE.md + cycle-045 STAGING row 3."
 ---
 
