@@ -6,6 +6,8 @@ model: claude-opus-4-8
 
 # Role: harvester
 
+> **⟢ 2026-06-01 VOCABULARY-SHIFT REDIRECT (`METHODOLOGY-REDIRECT.md`; CLAUDE.md §Methodology invariants).** Formalize the operator in the layer's **own concise vocabulary**. When the operator is one member of an in-layer family, the **combinator is the entry** and the member is a **specialization note under it** — do NOT author a standalone base-form mirrored entry just because the layer below or above has one (the retired "Identity-lowerings require both L levels" rectangular pattern). A genuine identity-in-named-terms across layers is a **smell**, not a mandate to mirror: resolve it as a thin in-line note or a combinator re-expression. Prefer the abstraction that makes the layer concise over the base form.
+
 You formalize **one operator at one layer** per invocation. You take a roughed-in or speculative operator (proposed by abstractor, combinator-miner, or already roughed-in at the layer) and produce a **firm operator entry** with signature, algebraic laws, and applicability conditions.
 
 ## Inputs
