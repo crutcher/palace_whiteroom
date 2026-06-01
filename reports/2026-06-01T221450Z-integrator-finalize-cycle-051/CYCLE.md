@@ -17,7 +17,7 @@ retroactive_budget_global: 0
 theme_files_deleted: 15
 l3_leaves_re_expressed: 5
 substantive_keep: 1
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 76721fec7a70c2ceed5e17de8c0f06ab3ad56205
 ---
 
 # cycle-051 integrator-finalize — refactor-pass theme-demotion sweep COMPLETE

@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T210700Z
 scope: L3>L2 + L2>L1 theme re-anchor — enact cycle-050 D8 DEMOTE-OK verdicts (jacobi-smoother both edges + divfree-projector-body-identity L3>L2); KEEP divfree-projector-leaf-identity (L2>L1)
 status: integrated
 integrated_at: 2026-06-01T22:14:50Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 76721fec7a70c2ceed5e17de8c0f06ab3ad56205
 integration_notes: "Applied clean by integrator-per-report (D4 of cycle-051); finalized cycle-051. jacobi-smoother-{body,leaf}-identity + divfree-projector-body-identity deleted (3 theme files); L3/jacobi-smoother + L2/jacobi-smoother + L3/divfree-projector re-anchored to in-line notes; KEPT divfree-projector-leaf-identity (genuine step-4 Grad->AddMult fusion rotation) reachable via 2 direct live links from L3/divfree-projector; cross-dispatch danglers at :22/:231 resolved by deletion; zero dangling live links to deleted slugs; build exit 0."
 inputs:
   - reports/2026-06-01T195100Z-cross-layer-cross-cutter-verify-divfree-jacobi/CYCLE.md (the D8 verdict source)

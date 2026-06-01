@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T210700Z
 scope: L3>L2 + L2>L1 theme consumer-demotion (do-NOT-merge) — nrm2
 status: integrated
 integrated_at: 2026-06-01T22:14:50Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 76721fec7a70c2ceed5e17de8c0f06ab3ad56205
 integration_notes: "Applied clean by integrator-per-report (D3 of cycle-051); finalized cycle-051. nrm2-{body,leaf}-identity deleted; in-line CONSUMER notes on L3/nrm2 + L2/nrm2 (do-NOT-merge; std::abs guard preserved as load-bearing claim; Norml2 vector.hpp:255-260 anchor preserved); 3-way co-edit of KEPT divfree-projector-leaf-identity line 266 (nrm2- de-link); zero dangling live links to deleted slugs; build exit 0."
 inputs:
   - book/src/L3-L2/nrm2-body-identity.md (DELETE)

@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T21:14:28Z
 scope: L3>L2 + L2>L1 theme demotion + L3-leaf re-expression — linear_combination family (8 themes deleted + 4 L3 leaves re-expressed through the combinator)
 status: integrated
 integrated_at: 2026-06-01T22:14:50Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 76721fec7a70c2ceed5e17de8c0f06ab3ad56205
 integration_notes: "Applied clean by integrator-per-report (D1, first of cycle-051); finalized cycle-051. 8 themes deleted (scal/axpy/axpby/axpbypcz-{body,leaf}-identity); 4 L3 leaves re-expressed through L3/linear_combination; BUILD-CRITICAL L3/index.md link re-points; zero dangling live links to deleted slugs; build exit 0."
 inputs:
   - book/src/L3-L2/scal-body-identity.md

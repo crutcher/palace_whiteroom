@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T210700Z
 scope: L3>L2 + L2>L1 theme re-anchor — inner_product/dot family demotion (delete dot-body-identity + dot-leaf-identity; re-express L3/dot through L3/inner_product)
 status: integrated
 integrated_at: 2026-06-01T22:14:50Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 76721fec7a70c2ceed5e17de8c0f06ab3ad56205
 integration_notes: "Applied clean by integrator-per-report (D2 of cycle-051); finalized cycle-051. dot-{body,leaf}-identity deleted; L3/dot re-expressed through L3/inner_product; 3-way co-edit of KEPT divfree-projector-leaf-identity line 266 (dot- de-link via distinct substring); zero dangling live links to deleted slugs; build exit 0."
 inputs:
   - book/src/L3-L2/dot-body-identity.md (DELETE)

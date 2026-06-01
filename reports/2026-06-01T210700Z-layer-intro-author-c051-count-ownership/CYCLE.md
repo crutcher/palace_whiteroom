@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T21:07:00Z
 scope: cycle-051 consolidated count-ownership — L3>L2 + L2>L1 firm tallies + degenerate-cohort discharge narrative (D5, sole count-owner; D1–D4 deferred all consolidated tallies)
 status: integrated
 integrated_at: 2026-06-01T22:14:50Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 76721fec7a70c2ceed5e17de8c0f06ab3ad56205
 integration_notes: "Applied clean by integrator-per-report (D5 of cycle-051, SOLE count-owner); finalized cycle-051. Consolidated tallies: L3>L2 firm 13->5, L2>L1 firm 17->10 (+1 partly-constructive), L3 firm UNCHANGED at 17 + 3 partial-obstruction; degenerate-cohort discharge narrative; serial-order + reconcile-on-C honored; finalize re-verified on-disk survivor counts (L3-L2 = 5, L2-L1 = 11 = 10 firm + 1 pc); build exit 0."
 inputs:
   - reports/2026-06-01T210700Z-lifter-linear-combination-family-demotion/CYCLE.md (D1)
