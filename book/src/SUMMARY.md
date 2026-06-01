@@ -9,6 +9,8 @@
 - [iterate-while](./L4/iterate-while.md)
 - [iterate-while-with-prev](./L4/iterate-while-with-prev.md)
 - [chebyshev](./L4/chebyshev.md)
+- [ksp_solve](./L4/ksp_solve.md)
+- [eigsolve](./L4/eigsolve.md)
 
 # L4 > L3 — Lowering
 - [Overview](./L4-L3/index.md)
@@ -17,6 +19,7 @@
 - [fgmres-inner-loop-iterate-while-migration](./L4-L3/fgmres-inner-loop-iterate-while-migration.md)
 - [iterate-while-dissolution](./L4-L3/iterate-while-dissolution.md)
 - [iterate-while-with-prev-dissolution](./L4-L3/iterate-while-with-prev-dissolution.md)
+- [ksp-solve-driver-dissolution](./L4-L3/ksp-solve-driver-dissolution.md)
 
 # L3 — Global Tensor-Field Operations
 - [Overview](./L3/index.md)
