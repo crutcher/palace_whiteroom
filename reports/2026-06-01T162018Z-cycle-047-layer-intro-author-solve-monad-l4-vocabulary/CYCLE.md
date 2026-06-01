@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T16:27:12Z
 scope: L4 index — anchor the solve-monad outer-driver vocabulary (restart_cycle / solve_loop / Outcome)
 status: integrated
 integrated_at: 2026-06-01T171229Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: bcd3bed
 integration_notes: "Applied clean (D5; cycle-047). L4/index.md anchor: §Vocabulary-cohort header (4)->(4 + 3 outer-driver) + solve-monad block; §Queued-at-L4 :47 deferral discharge; 3 NEW firm dep-map rows (solve_loop/restart_cycle/Outcome). Maturity adjudicated firm at integration (dep-map row contract excludes laws; vocabulary fully determined by concepts/solve-monad.md; the page-existence asymmetry surfaced as a cycle-048 cap-author harvest-depth follow-up note). Anchor-half of l4-ksp-solve-eigsolve-caps-gated-on-solve-monad-outer-driver-vocabulary DISCHARGED; the R2/R3 caps L4/ksp_solve.md + L4/eigsolve.md remain queued for cycle-048. OQs opened: solve-monad-l4-row-firm-maturity-straddle + outcome-sum-one-row-vs-per-cap-specialisation. Build clean, linkcheck2 green (premature-link guard PASS — cap pages absent, no live link)."
 ---
 

@@ -58,7 +58,7 @@ All 5 applied clean (per-report staging rows: 5/5 present). No deferrals, no rej
 - **retroactive-budget global:** 0 (per-report all 0; no cross-report aggregation block).
 - **build-breakage repair:** none required — `cargo make book` exit 0, all 4 chapters rendered, linkcheck2 green.
 - **commit atomicity:** single commit (artifact + scaffolding + log + book output + consumed-report frontmatter + staging log).
-- **consumed-report frontmatter integrity:** all 5 marked `status: integrated` + `integrated_at: 2026-06-01T171229Z` + `integration_commit` (PLACEHOLDER_SHA, two-phase-patched post-commit) + `integration_notes`.
+- **consumed-report frontmatter integrity:** all 5 marked `status: integrated` + `integrated_at: 2026-06-01T171229Z` + `integration_commit` (bcd3bed, two-phase-patched post-commit) + `integration_notes`.
 - **dual-registration count-ownership:** held — D3 SOLE `L2-L1/index` tally-owner (19→21), D4 deferred; D1/D2 (L4-L3/index has no consolidated tally) appended distinct rows. No parallel-blind-shared-index-count-divergence.
 
 ## Wave-conflict observations

@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T162018Z
 scope: L4>L3 theme sketch — iterate-while-dissolution (extraction + re-homing of a buried sub-component into a dedicated layer-coherent chapter)
 status: integrated
 integrated_at: 2026-06-01T171229Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: bcd3bed
 integration_notes: "Applied clean (D1; cycle-047). NEW firm L4>L3 theme book/src/L4-L3/iterate-while-dissolution.md (the no-prev standalone dissolution; R1 lead pick of the c046 L4-frontier survey) + 3 re-anchors (L4/iterate-while.md ×2 §Lowers-to + §L4-vs-L3-distinction, L4/index.md:54 dep-map cell) + L4-L3/index row + SUMMARY line. L4>L3 firm 3->5 (with D2). Closes iterate-while-l4-l3-standalone-theme-warranted-lifter-vs-abstractor + iterate-while-l3-rendering-trajectory-accumulation-gap (recommendations; meta-phase authority). Build clean, linkcheck2 green."
 inputs:
   - book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:158-200 (the buried sub-component being extracted)

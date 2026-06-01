@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T162018Z
 scope: L4>L3 theme sketch — iterate-while-with-prev-dissolution (sister of D1; extraction + re-homing of the buried Form-B sub-component into a dedicated layer-coherent chapter)
 status: integrated
 integrated_at: 2026-06-01T171229Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: bcd3bed
 integration_notes: "Applied clean (D2; cycle-047). NEW firm L4>L3 theme book/src/L4-L3/iterate-while-with-prev-dissolution.md (the carry-bootstrapped with-prev sister of D1) + 3 re-anchors (L4/iterate-while-with-prev.md:200/:223, L4/index.md:55 dep-map cell) + L4-L3/index row + SUMMARY line (distinct from D1, no clobber). Live-links D1's sibling chapter (same-cycle co-land, resolved). One DELIBERATE cg.md:441-446 OOB historical-provenance prose mention (by-design, not a build/link error). L4>L3 firm 3->5. Jointly closed iterate-while-l4-l3-standalone-theme-warranted + iterate-while-with-prev-lowers-to-reanchor (recommendations; meta-phase authority). Build clean, linkcheck2 green."
 inputs:
   - reports/2026-06-01T162018Z-cycle-047-abstractor-iterate-while-dissolution/CYCLE.md (D1 companion theme; structure/altitude reference + same-cycle sibling cross-reference)

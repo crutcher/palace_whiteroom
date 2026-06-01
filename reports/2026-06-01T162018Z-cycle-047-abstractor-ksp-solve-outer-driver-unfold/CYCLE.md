@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T162018Z
 scope: L2>L1 theme sketch — ksp-solve-outer-driver-unfold (the opacity-uncollapse rotation)
 status: integrated
 integrated_at: 2026-06-01T171229Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: bcd3bed
 integration_notes: "Applied clean (D3; cycle-047). NEW firm L2>L1 theme book/src/L2-L1/ksp-solve-outer-driver-unfold.md (the rank-1 DRIVER-tier composition->opacity edge) + SOLE L2-L1/index count-owner (tally 19->21 firm + 1 partly-constructive) + own row + NEW §Vocabulary-cohort driver-tier sub-group + SUMMARY line. Closes ksp-solve-l2-l1-theme-gap; jointly with D4 closes residual-l2-l1-gap-audit + residual-l2-l1-gap-audit-planner-undercount (recommendations; meta-phase authority). Build clean, linkcheck2 green."
 inputs:
   - book/src/L2/ksp_solve.md (firm; LHS — the outer-driver composition; §"Lowers from" :155-157 in-line narration the dedicated theme firms)

@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T162018Z
 scope: L2>L1 theme sketch — krylov-step-kernel-defusion (the per-step kernel de-fusion into seven L1 leaves + in-place→out-of-place buffer rotation)
 status: integrated
 integrated_at: 2026-06-01T171229Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: bcd3bed
 integration_notes: "Applied clean (D4; cycle-047). NEW firm L2>L1 theme book/src/L2-L1/krylov-step-kernel-defusion.md (the rank-2 KERNEL-tier per-step kernel de-fusion; resolves the dangling L2/krylov-step.md:121 variant-axis-6 forward-ref) + own row + §Vocabulary-cohort bullet + SUMMARY line; DEFERRED the consolidated tally to D3 per the dual-registration partition (count-ownership honored). Live-links D3's sibling chapter (same-cycle co-land, resolved). L2>L1 firm 19->21. Jointly with D3 CLOSES ksp-solve-l2-l1-theme-gap + krylov-step-l2-l1-theme-gap + residual-l2-l1-gap-audit (recommendations; meta-phase authority). Build clean, linkcheck2 green."
 inputs:
   - book/src/L2/krylov-step.md (firm L2 LHS; esp. :96 seven-leaf list, :121 variant-axis-6 forward-ref, :129-132 L2-vs-L1 distinction)
