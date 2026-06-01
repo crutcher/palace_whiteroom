@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T223300Z
 scope: L3>L2 leaf-chapter reduce-to-stub — L3 linear_combination-family leaves (scal/axpy/axpby/axpbypcz)
 status: pending
 integrated_at: 2026-06-02T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 9633c134b333932b31f2823c558398fafdaa9750
 integration_notes: "cycle-052 D2 — applied clean (full-body replace reduce-to-stub for 4 L3 linear_combination leaves; frontmatter untouched, unique L0 anchors retained); no build-repair needed; refactor pass COMPLETE."
 inputs:
   - book/src/L3/linear_combination.md (the firm L3 family combinator the four leaves speak through; the semantics home)

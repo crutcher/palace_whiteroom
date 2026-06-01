@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T223300Z
 scope: L2 linear_combination-family leaf reduce-to-stub — scal / axpy / axpby / axpbypcz
 status: pending
 integrated_at: 2026-06-02T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 9633c134b333932b31f2823c558398fafdaa9750
 integration_notes: "cycle-052 D1 — applied clean (full-file overwrite reduce-to-stub for 4 L2 linear_combination leaves; old 365–449-line bodies removed, unique L0 anchors retained); no build-repair needed; refactor pass COMPLETE."
 inputs:
   - book/src/L2/scal.md

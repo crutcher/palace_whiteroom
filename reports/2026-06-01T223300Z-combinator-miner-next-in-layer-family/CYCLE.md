@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T22:33:00Z
 scope: Pattern proposal — next in-layer utility combinator family (redirect item 2b); NEGATIVE finding
 status: pending
 integrated_at: 2026-06-02T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 9633c134b333932b31f2823c558398fafdaa9750
 integration_notes: "cycle-052 D5 — applied clean (NEGATIVE / spine-coverage finding; NO book mutation — firm L2/L3 surface is combinator-complete for in-layer conciseness; 2 OQs promoted; next combinator from solver test-load material). Build-relevant: no."
 ---
 

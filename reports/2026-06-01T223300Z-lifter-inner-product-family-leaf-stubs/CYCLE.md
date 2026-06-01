@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T223300Z
 scope: inner_product-family leaf reduction-to-stub — L2/dot, L3/dot (specialization-stubs) + L2/nrm2, L3/nrm2 (consumer-stubs)
 status: pending
 integrated_at: 2026-06-02T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 9633c134b333932b31f2823c558398fafdaa9750
 integration_notes: "cycle-052 D3 — applied clean (dot L2+L3 → specialization-stubs; nrm2 L2+L3 → consumer-stubs, do-NOT-merge, std::abs guard + Norml2 anchor + verbatim Downward consumer note retained); member-vs-consumer gate PASS; no build-repair needed; refactor pass COMPLETE."
 inputs:
   - book/src/L2/dot.md (345 ln)

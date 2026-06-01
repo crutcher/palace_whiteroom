@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T223300Z
 scope: cycle-052 D4 — L2/index.md + L3/index.md dep-map row + consolidated-cohort-narrative reconciliation for the 12 reduced fold-family leaves (SOLE index-owner + count-owner of the wave); co-scheduled bounded narrative micro-sweep
 status: pending
 integrated_at: 2026-06-02T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 9633c134b333932b31f2823c558398fafdaa9750
 integration_notes: "cycle-052 D4 — applied clean (SOLE index/count owner; 21 edit blocks reconciling L2/L3 index dep-map rows + cohort narrative [rectangular-floor framing retired] + micro-sweep removing stale normalize.md OOB code-spans + softening L3/axpy.md:58/:75 OOB-after-reduction pinpoints to section-level); count-integrity-no-delta gate VERIFIED; closed collapsed-leaf-disposition-convention for the fold family; no build-repair needed."
 inputs:
   - reports/2026-06-01T223300Z-lifter-l2-linear-combination-leaf-stubs/CYCLE.md (D1)
