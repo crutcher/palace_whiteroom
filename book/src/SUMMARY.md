@@ -249,6 +249,7 @@
   - [scalar-promotion](./concepts/scalar-promotion.md)
   - [nested-constructed-operator-gate](./concepts/nested-constructed-operator-gate.md)
   - [eigsolve](./concepts/eigsolve.md)
+  - [erasure-scope](./concepts/erasure-scope.md)
 
 # Design Artifacts
 - [Index](./design/index.md)

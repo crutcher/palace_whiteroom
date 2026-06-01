@@ -30,6 +30,41 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-046 — 2026-06-01T161013Z — FIRST primary cycle of meta-batch-14 (cycles 046/047/048; the batch-13 meta-phase already fired AFTER cycle-045) — clean opus-planner cycle — SURVEY-HEAVY OPENING cycle: 1 `book/` landing (the erasure-scope concept page) + 2 observation/survey dispatches handing fan-out-ranked pick lists to cycle-047; the L4 frontier is now the lead; 3/3 reports applied clean, zero deferrals/rejections/build-repairs
+
+> **OPENING CYCLE OF BATCH-14.** The L0–L3-rectangular foundation campaign (cycles 041–045) is COMPLETE; cycle-046 OPENS the new forward direction — the uniform climb UPWARD to **L4 (the lowest incomplete layer: 4 firm L4 ops + 3 firm L4>L3 themes, the lead frontier)**. This was a survey cycle: it produced the L4-frontier pick list (D1) + the residual-L2>L1 gap census (D3) that the cycle-047 planner consumes directly. The single substantive landing is the `erasure-scope` concept page (D2).
+
+### Unblocked
+- **The L4 lead frontier is now SURVEYED + fan-out-ranked.** D1 (combinator-miner) pre-surveyed the L4 + L4>L3 coverage denominator. The cycle-047 pick list: **R1** the standalone L4>L3 `iterate-while` / `iterate-while-with-prev` themes (paired, lead); **R2** an `L4/ksp_solve.md` cap; **R3** an `L4/eigsolve.md` cap; **R5** defer `L4/orthogonalize.md`. The R2/R3 caps carry a flagged `solve-monad` L4-vocabulary prerequisite (an outer-driver monad surface). — `l4-l3-coverage-and-l4-expansion`
+- **2 residual L2>L1 gaps are now CENSUSED + ranked, ready for cycle-047 abstractor ×2.** D3 (cross-layer-cross-cutter) swept the L2 floor (now 21 firm) for L2>L1 gaps: **`ksp_solve` (rank 1, driver tier) + `krylov-step` (rank 2, kernel tier)** both lack an L2>L1 lowering theme. `ksp_solve`'s `L3-L2/ksp-solve-outer-driver` delegates the L2>L1 edge in-line (a genuine gap, not a mislabel); `krylov-step`'s gap resolves a dangling `:121` forward-ref. — `ksp-solve-l2-l1-theme-gap` + `krylov-step-l2-l1-theme-gap` (close `residual-l2-l1-gap-audit` jointly)
+- **The `erasure-scope` concept page is LANDED** — the RATIFIED four-root taxonomy now has a cross-cutting home at `book/src/concepts/erasure-scope.md` (kind `layer-pattern`), adjacent to `concepts/sequential-obstruction.md` + `concepts/tensor-field-lift.md`. The `erasure-scope-taxonomy-concept-page` plan item is DISCHARGED (left for the cycle-047 planner to strike in priorities.md). — `erasure-scope-taxonomy-concept-page`
+
+### New dependencies
+- `book/src/concepts/erasure-scope.md` → forward-cites the 4 substantive L3>L2 themes (`ksp-solve-outer-driver`/`orthogonalize-variant-split`/`chebyshev-nested-recurrence`/`eigsolve-opaque-eigen-iteration`) + the operators exhibiting each root — `reports/2026-06-01T154713Z-cycle-046-layer-intro-author-erasure-scope-concept`
+- `concepts/index.md` gains an `erasure-scope | layer-pattern` row; `SUMMARY.md` gains an `[erasure-scope]` row after `[eigsolve]` (the concept-library cohort) — same report
+
+### Resolution implications
+- `l3-l2-rotation-theme-coverage-gap` — **answered/COMPLETE** (17-of-17-applicable, re-denominated by the batch-13 meta-phase); the `erasure-scope` concept page is its conceptual yield, now landed.
+- `erasure-scope-taxonomy-concept-page` — **answered** (page landed; kind adjudicated `layer-pattern` at integration).
+- `residual-l2-l1-gap-audit` — **partially-answered → 2 actionable gaps surfaced** (`ksp_solve` + `krylov-step`); closes jointly once both L2>L1 themes land (cycle-047 candidates).
+- `l4-l3-coverage-and-l4-expansion` — **needs-more → now surveyed**; the 4 promoted OQ slugs (`iterate-while-l4-l3-standalone-theme-warranted-lifter-vs-abstractor`, `l4-ksp-solve-eigsolve-caps-gated-on-solve-monad-outer-driver-vocabulary`, `l4-orthogonalize-cap-marginal-defer`, `l4-native-combinator-denominator-completeness-survey`) are the cycle-047 L4-frontier dispatch index.
+- `erasure-scope-kind-classification` — **answered/CLOSED** (decision-of-record: `layer-pattern`, so a later width pass does not re-litigate).
+- `residual-l2-l1-gap-audit-ksp-solve-edge-mislabel` — **answered/CLOSED in critique** (in the report's favor — `ksp_solve` is a genuine gap).
+
+### Suggested next dispatches
+- (`lifter`/`abstractor`, **R1 standalone L4>L3 `iterate-while` + `iterate-while-with-prev` themes** [paired, lead]) — the L4>L3 analog of the just-closed L3>L2 gap; the lifter-vs-abstractor convention call is flagged in `iterate-while-l4-l3-standalone-theme-warranted-lifter-vs-abstractor`.
+- (`abstractor`, **`ksp_solve` L2>L1 theme** [rank 1, driver tier]) — closes `ksp-solve-l2-l1-theme-gap`; possibly gated on / coupled with the `solve-monad` outer-driver vocabulary if also doing the R2 L4 cap.
+- (`abstractor`, **`krylov-step` L2>L1 theme** [rank 2, kernel tier]) — closes `krylov-step-l2-l1-theme-gap`; resolves the dangling `:121` forward-ref.
+- (`harvester`, **`L4/ksp_solve.md` cap** [R2] then **`L4/eigsolve.md` cap** [R3]) — under the L4 strawman conventions (`book/src/design/l4_calculus.md`); check the `solve-monad` prerequisite first.
+
+### Wave-conflict observations
+- **None.** Serial per-report application order resolved cleanly: D1 (observation, no book) → D2 (the SINGLE `book/` mutation — `concepts/erasure-scope.md` + SUMMARY/index inserts) → D3 (observation, no book). Only D2 touches `book/`, so there was zero cross-report artifact interaction. The two observation dispatches appended only to `open-questions.md` (distinct New-intake blocks).
+
+### Integration-tooling friction
+- **None blocking.** One benign DATA POINT handed to the cycle-047 pre-dispatch cross-check (NOT a defect, NOT a tooling gap): the residual-L2>L1-gap census (D3) found **2 gaps where the dispatch framing reported 1** (`residual-l2-l1-gap-audit-planner-undercount`). The census output is the authoritative gap-set; the cycle-047 cross-cutter/planner should cross-check the dispatch-framing gap-count against the census when scoping the L2>L1 follow-ups. Staging-log completeness held (3/3 rows == dispatched-ready, 27th consecutive clean staging cycle); no reconciliation-from-working-tree needed.
+
+---
+
 ## cycle-045 — 2026-06-01T143625Z — THIRD/FINAL primary cycle of meta-batch-13 (cycles 043/044/045; **the batch-13 meta-phase fires AFTER this cycle-045 finalize, as a SEPARATE dispatch — NOT run here**) — clean opus-planner cycle — completed the substantive L3>L2 rotation frontier: `eigsolve-opaque-eigen-iteration` (opaque-library root) + `chebyshev-nested-recurrence` (unconditional-nested-double-loop root) landed firm, COMPLETING the four-root erasure-scope taxonomy; L3>L2 firm 15→17 (17-of-18, effectively complete); 3/3 reports applied clean, zero deferrals/rejections/build-repairs
 
 > **STRONG CARRY-FORWARD TO THE BATCH-13 META-PHASE (fires next).** Cycle-045 is the FINAL primary cycle of meta-batch-13. The meta-phase aggregates evidence across cycles 043/044/045. The decision queue below (especially the taxonomy ratification + OQ unification) is collated for it.
