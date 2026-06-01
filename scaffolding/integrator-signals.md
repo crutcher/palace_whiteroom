@@ -30,6 +30,41 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-041 — 2026-06-01T064500Z — SECOND primary cycle of meta-batch-12 (cycles 040/041/042; the batch-12 meta-phase fires AFTER cycle-042's finalize, as a SEPARATE dispatch) — SECOND clean opus-planner cycle of batch-12 — FIRST foundation-first build cycle under the 2026-05-31 `foundation_solidity` directive
+
+### Unblocked
+- The **foundation-first frontier is OPEN and validated** — the L2 floor under the 3 most-reused BLAS-1 leaves (`dot`/`nrm2`/`scal`) landed firm + their L2>L1 leaf-identity + L3>L2 body-identity themes, proving the 7-wide foundation-build wave (3 floors + 3 paired theme units + 1 index refresh) runs clean. The remaining 10 of the 13-entry cohort are now the immediate follow-frontier — citation: plan item `l2-floor-under-l3-blas1-cohort` (now 3-of-13), roadmap.md §foundation_solidity.
+- **`l3-l2-rotation-theme-coverage-gap` advanced 2-of-18 → 5-of-18** — the 3 BLAS-1-leaf body-identity themes are the first cohort-batch progress on this plan item since `ksp-solve-outer-driver`. The L3-L2/index §Vocabulary-cohort subsection PROMOTED first-time at this index (crossed ≥3-firm threshold) — citation: plan item `l3-l2-rotation-theme-coverage-gap` (priorities.md:62), report `2026-06-01T051607Z-cycle-041-layer-intro-author-index-refresh`.
+- **The L2 floor now exists under `dot`/`nrm2`/`scal`** so any downstream component that wanted a same-named L2 parent for these three leaves is unblocked (the maturity-gradient inversion that `ksp_solve` L3-above-stub-L2 exhibited does NOT apply here — these are firm-floor-under-firm-L3) — citation: `book/src/L2/{dot,nrm2,scal}.md`.
+
+### New dependencies
+- `book/src/L2/dot.md` (firm) ← `palace/linalg/vector.hpp:246` (standalone leaf floor) — citation: report `...-harvester-L2-dot`.
+- `book/src/L2/nrm2.md` (firm) → consumes `inner_product` fold (`√∘abs∘inner_product` at `y=x`, consumer-NOT-member) — citation: report `...-harvester-L2-nrm2`.
+- `book/src/L2/scal.md` (firm) → arity-1 member of `linear_combination` (cited-NOT-merged) — citation: report `...-harvester-L2-scal`.
+- 3 L2>L1 leaf-identity themes (`dot-leaf-identity`/`nrm2-fold-specialization`/`scal-fold-specialization`) + 3 L3>L2 body-identity themes (`dot-body-identity`/`nrm2-body-identity`/`scal-body-identity`), each cross-linking its L2 floor + its L1/L3 same-named entries — citation: reports `...-abstractor-{dot,nrm2,scal}-themes`.
+
+### Resolution implications
+- **`dot-l2-leaf-floor-vs-fold-only-design`** — **OPEN / needs-meta-phase-adjudication** — **THE HEADLINE batch-12 meta-phase signal.** D1 built same-named L2 leaf floors; D2 argued fold-only. All 6 cycle-041 lowering entries presuppose the (b) leaf-floor reading. This governs the WHOLE 13-entry cohort + the `axpy`/`axpby`/`axpbypcz` arity-family framing. If the meta-phase adopts fold-only, the L2>L1 leaf themes dissolve + the L3>L2 body-identity themes re-home as non-adjacent in-line identity notes at `L3/{dot,nrm2,scal}`. The cohort is NOT design-final until adjudicated. D5/D6 ride the same fork (`nrm2-l2-floor-rides-...-design-fork`, `scal-leaf-vs-linear-combination-fold-realization-fork`); D7 reaffirms via a consolidation pointer.
+- **Slug-naming split** (`nrm2-fold-specialization-slug-vs-consumer-framing-rename-candidate` + `scal-fold-specialization-slug-vs-leaf-identity-rename-candidate`) — **OPEN / needs-meta-phase-normalization** — D4 renamed its L2>L1 `dot` theme to `dot-leaf-identity` (correct: the RHS is `L1/dot`, an identity-leaf-edge), while D5/D6 kept `-fold-specialization` per dispatch — same shape, divergent slug convention across the 3 sibling themes. Meta-phase should normalize (likely toward `-leaf-identity` for all three, but the adjudication is meta-phase territory).
+- **`l2-scal-fold-parent-frontmatter-field-convention`** — OPEN — D3's `scal.md` carries a `fold_parent:` frontmatter field; L1/L3 `scal` carry no such field. Adopt-across-cohort vs keep-prose-only is a meta-phase ratification.
+- **`l3-dot-lowers-to-non-adjacent-l1-wants-reanchor-to-new-l2-floor`** — partially-answered — D1+D4 both flag that the firm L3 `dot` §"Lowers to" non-adjacent in-line identity-to-L1 may want a light re-anchor to the new L2 floor + the D4 `dot-body-identity` theme. A firm-L3-entry edit is harvester/lifter scope (NOT abstractor), routed as a cycle-042 candidate.
+
+### Suggested next dispatches
+- (`harvester`/`abstractor`, `axpy`/`axpby`/`axpbypcz` arity-family L2-floor unit) — the natural next foundation slice; maps onto the `linear_combination` fold as a single coherent arity-family unit. **GATED by the leaf-vs-fold fork** — this family is the SAME design question; cycle-042 should either hold it pending the batch-12 meta-phase adjudication or proceed under the established (b) leaf-floor reading for meta-phase ratification.
+- (`harvester`/`abstractor`, remaining L2-floor cohort entries) — `assemble-diagonal`/`jacobi-smoother`/`divfree-projector`/`elementwise_product`/`reciprocal`/`normalize`/`chebyshev` (7 of the remaining 10).
+- (`harvester`/`lifter`, `L3/dot` §"Lowers to" re-anchor) — small downstream-consistency touch to re-anchor the firm L3 `dot` non-adjacent identity to the new L2 floor + `dot-body-identity` theme (LOW fan-out hygiene; the converging D1+D4 OQ).
+- (`lowering-verifier`, the 6 new BLAS-1 thin-identity themes) — `verified_against:` evidence-backfill rounds were deferred per the sibling-theme convention (all firm on positive source); a verifier pass corroborates without gating.
+
+### Wave-conflict observations
+- **Co-landing sequencing resolved by serial application** — the 6 lowering themes reference their L2 floors via LIVE links; the floors landed earlier in the serial per-report sequence, so every link resolved at the single post-stage `cargo make book`. Producers correctly kept forward-refs to UNWRITTEN siblings plain-text. No dead-link hazard at any point; zero stubs needed.
+- **Count-ownership partition held cleanly across the broadest 7-wide wave yet** — D1-D6 each touched ONLY their own dep-map/SUMMARY rows; D7 was SOLE owner of the three consolidated index tallies + §Vocabulary-cohort lists + the third-category motif naming. The c038-style `parallel-blind-shared-index-count-divergence` was cleanly AVOIDED — the partition is now validated at 7-wide (the most parallel index-touching wave to date). Strong codification-candidate data point for the batch-12 meta-phase.
+- **The design-fork is a genuine wave-1 contradiction, captured-NOT-resolved at integration** — D1 (leaf-floor) vs D2 (fold-only); the integrator does NOT adjudicate (out of authority). Promoted prominently for the meta-phase; all downstream entries self-coherent under the (b) reading they are built on.
+
+### Integration-tooling friction
+- **None hit this cycle.** The 7-wide foundation-build wave ran clean: 7/7 staging rows == 7 dispatched-ready (staging-completeness gap did NOT recur, TWENTY-SECOND consecutive), zero build-repairs, zero deferrals/rejections, all retroactive-budgets 0. The two repairer `edit:`→`new:` directive fixes (D2, D5) + the D5 section-anchor correction were caught at per-report time (not finalize). The only standing finalize-side annoyance remains the pre-existing KaTeX "Potential incomplete link" false-positives in `design/l4_calculus.md` (math-display HTML mistaken for link syntax by linkcheck2's heuristic) — cosmetic, recurs every build, NOT cycle-041-introduced; a candidate for a linkcheck2-suppression config if the meta-phase wants to silence the noise.
+
+---
+
 ## cycle-040 — 2026-06-01T010000Z — FIRST primary cycle of meta-batch-12 (cycles 040/041/042; the batch-12 meta-phase fires AFTER cycle-042's finalize, as a SEPARATE dispatch) — FIRST clean opus-planner cycle of batch-12
 
 ### Unblocked
