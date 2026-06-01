@@ -12,7 +12,7 @@ inputs:
   - book/src/L3-L2/krylov-step-body-identity.md (firm cycle-007/009 — point-3 L3-native-by-signature classification + body-vs-wrapper division)
   - L0: palace/linalg/vector.hpp:262-270 (linalg::Normalize), :267 (MFEM_ASSERT partiality), :268 (rescale), :269 (return norm) — all self-verified via citecheck --anchor 2026-06-01
 integrated_at: 2026-06-01T140000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3f9a7d0
 integration_notes: "cycle-043 batch integration (cohort-completing L2-floor build); D10 normalize theme pair (L2>L1 normalize-leaf-identity + L3>L2 normalize-body-identity); cross-report rename repair (3 classes) applied; clean; see reports/2026-06-01T140000Z-integrator-finalize-cycle-43/CYCLE.md + cycle-043 STAGING row."
 ---
 

@@ -12,7 +12,7 @@ inputs:
   - reference/palace/palace/linalg/vector.{hpp,cpp} (L0 anchors, on-disk-verified 2026-06-01)
   - dispatch: cycle-043 D5; plan item l2-floor-under-l3-leaf-cohort; fork resolved (keep leaf-floor (b))
 integrated_at: 2026-06-01T140000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3f9a7d0
 integration_notes: "cycle-043 batch integration (cohort-completing L2-floor build); D5 L2 axpbypcz floor (firm; arity-3 fold-member, vector.cpp:745-772); applied clean; see reports/2026-06-01T140000Z-integrator-finalize-cycle-43/CYCLE.md + cycle-043 STAGING row."
 ---
 

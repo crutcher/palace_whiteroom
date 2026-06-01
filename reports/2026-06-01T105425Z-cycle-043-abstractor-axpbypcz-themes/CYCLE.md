@@ -14,7 +14,7 @@ inputs:
   - book/src/L3-L2/krylov-step-body-identity.md:97 (firm; names axpbypcz L3-native by signature shape)
   - dispatch: cycle-043 D8 (wave-2); slugs -leaf-identity / -body-identity ratified
 integrated_at: 2026-06-01T140000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3f9a7d0
 integration_notes: "cycle-043 batch integration (cohort-completing L2-floor build); D8 axpbypcz theme pair (L2>L1 axpbypcz-leaf-identity + L3>L2 axpbypcz-body-identity); cross-report rename repair applied; clean; see reports/2026-06-01T140000Z-integrator-finalize-cycle-43/CYCLE.md + cycle-043 STAGING row."
 ---
 

@@ -13,7 +13,7 @@ inputs:
   - book/src/L3-L2/dot-body-identity.md + book/src/L3-L2/scal-body-identity.md (sibling L3>L2 precedents this edge mirrors)
   - book/src/L3-L2/krylov-step-body-identity.md:97 (firm; names axpby among the seven L3-native-by-signature BLAS-1 primitives — the structural justification for both identity edges; self-verified via citecheck --anchor 'axpby' @97)
 integrated_at: 2026-06-01T140000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3f9a7d0
 integration_notes: "cycle-043 batch integration (cohort-completing L2-floor build); D7 axpby theme pair (L2>L1 axpby-leaf-identity + L3>L2 axpby-body-identity); cross-report rename repair applied; clean; see reports/2026-06-01T140000Z-integrator-finalize-cycle-43/CYCLE.md + cycle-043 STAGING row."
 ---
 

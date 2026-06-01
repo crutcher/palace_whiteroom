@@ -12,7 +12,7 @@ inputs:
   - L0: palace/linalg/vector.hpp:262-270 (linalg::Normalize); palace/linalg/vector.hpp:256-260 (Norml2); consumer sites palace/linalg/iterative.cpp:631-632, palace/linalg/operator.cpp:673, palace/linalg/operator.cpp:676, palace/linalg/nleps.cpp:610-611, palace/linalg/nleps.cpp:617
   - directive: l2-floor-under-l3-leaf-cohort (2026-05-31 foundation-first)
 integrated_at: 2026-06-01T140000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3f9a7d0
 integration_notes: "cycle-043 batch integration (cohort-completing L2-floor build); D9 L2 normalize floor (firm; FUSED-COMPOSITE-with-no-fold-parent, consumes nrm2+scal, linalg::Normalize vector.hpp:262-270); applied clean; see reports/2026-06-01T140000Z-integrator-finalize-cycle-43/CYCLE.md + cycle-043 STAGING row."
 ---
 

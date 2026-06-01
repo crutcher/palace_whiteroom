@@ -11,7 +11,7 @@ inputs:
   - reports/2026-06-01T105425Z-cycle-043-lifter-consolidated-sweep/CYCLE.md (D1 — three renames; net-zero on counts; C8 co-touches L2/index lines 106/108 — DISJOINT from my edits)
   - reports/2026-06-01T105425Z-cycle-043-harvester-L2-{axpy,axpby,axpbypcz,normalize}/CYCLE.md (the 4 floors I count)
 integrated_at: 2026-06-01T140000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3f9a7d0
 integration_notes: "cycle-043 batch integration (cohort-completing L2-floor build); D2 fork-ratification + SOLE count-owner (leaf-vs-fold fork flipped provisional->RATIFIED keep-(b) in all 3 indexes; L2 17->21, L2>L1 15->19, L3>L2 10->14); applied clean; see reports/2026-06-01T140000Z-integrator-finalize-cycle-43/CYCLE.md + cycle-043 STAGING row."
 ---
 

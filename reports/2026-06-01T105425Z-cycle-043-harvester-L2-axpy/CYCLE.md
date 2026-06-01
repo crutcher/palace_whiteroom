@@ -12,7 +12,7 @@ inputs:
   - L0 anchors (self-verified via citecheck --anchor + Read, 2026-06-01): palace/linalg/vector.cpp:702-712, :714-718, :720-724; palace/linalg/vector.hpp:115-118, :305-307; palace/linalg/vector.cpp:276-311
   - foundation-first directive l2-floor-under-l3-leaf-cohort (2026-05-31); leaf-vs-fold fork RESOLVED keep-(b); axpy IS a fold-member (arity-2)
 integrated_at: 2026-06-01T140000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3f9a7d0
 integration_notes: "cycle-043 batch integration (cohort-completing L2-floor build); D3 L2 axpy floor (firm; arity-2 member of linear_combination cited-NOT-merged); applied clean; see reports/2026-06-01T140000Z-integrator-finalize-cycle-43/CYCLE.md + cycle-043 STAGING row."
 ---
 

@@ -16,7 +16,7 @@ inputs:
   - book/src/L3-L2/krylov-step-body-identity.md:97 (firm; the L3-native-by-signature-shape classification naming axpy)
   - L0 anchors (self-verified via citecheck --anchor, 2026-06-01): palace/linalg/vector.cpp:702-712 (`α==1.0` fast-path at :704), :276-311 (`ComplexVector::AXPY`); vector.hpp:115-118, :305-307
 integrated_at: 2026-06-01T140000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3f9a7d0
 integration_notes: "cycle-043 batch integration (cohort-completing L2-floor build); D6 axpy theme pair (L2>L1 axpy-leaf-identity + L3>L2 axpy-body-identity); cross-report rename repair (D1 git-mv x pre-rename slug) applied; clean; see reports/2026-06-01T140000Z-integrator-finalize-cycle-43/CYCLE.md + cycle-043 STAGING row."
 ---
 

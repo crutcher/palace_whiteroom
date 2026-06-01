@@ -24,7 +24,7 @@ inputs:
   - book/src/L3-L2/elementwise_product-body-identity.md (→ elementwise-product-body-identity)
   - reference/palace/palace/linalg/rap.cpp
 integrated_at: 2026-06-01T140000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3f9a7d0
 integration_notes: "cycle-043 batch integration (cohort-completing L2-floor build); D1 consolidated lifter sweep — 4 stale c042-cohort firm L3 entries re-anchored L3>L1->L3>L2>L1 (closing l3-divfree-projector-stale-no-interposed-l2-entry-lifter-reanchor) + 3 theme-slug git-mv renames + B1/B2 citation-drift fixes; ~62 proposed-changes blocks applied clean; see reports/2026-06-01T140000Z-integrator-finalize-cycle-43/CYCLE.md + cycle-043 STAGING row."
 ---
 
