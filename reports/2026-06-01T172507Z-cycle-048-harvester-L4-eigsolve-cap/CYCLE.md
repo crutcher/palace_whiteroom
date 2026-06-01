@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T172507Z
 scope: L4 operator: eigsolve (outer-driver cap)
 status: integrated
 integrated_at: 2026-06-01T181949Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ce7926f
 integration_notes: "Applied clean (D2; cycle-048). NEW firm L4 outer-driver cap book/src/L4/eigsolve.md (R3; opaque-library role-wrapper, EigOutcome sum with first-class PartialConverged arm) over partial-obstruction L3/eigsolve + NEW EigOutcome clean-addition outer-driver dep-map row + 7-site L3/eigsolve stale-assertion re-anchor (:19/:34/:78/:166/:172/:203/:214 'no L4 cap' -> 'lowers from firm L4/eigsolve cap, in-line marker-erasure'; firmness partial-obstruction unchanged) + own dual-registration + SUMMARY line. L4 firm 4->6 (with D1); outer-driver vocab 3->4. Closed eigsolve-half -> the WHOLE l4-ksp-solve-eigsolve-caps-gated... OQ now closed. outcome-sum-one-row-vs-per-cap-specialisation KEPT-OPEN for batch-14 meta-phase (EigOutcome vs polymorphic Outcome alpha). retroactive-budget 0; build clean, linkcheck2 green."
 inputs:
   - book/src/L4/index.md (firm c047 outer-driver vocabulary: solve_loop / restart_cycle / Outcome rows; §Queued-at-L4 names L4/eigsolve)

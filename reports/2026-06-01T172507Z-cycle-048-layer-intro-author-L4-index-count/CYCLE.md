@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T172507Z
 scope: L4/index.md consolidated-count owner (cycle-048 D4, wave 3) — the tally + §Queued-prose flip + §Vocabulary-cohort narrative refresh that D1/D2 deferred
 status: integrated
 integrated_at: 2026-06-01T181949Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ce7926f
 integration_notes: "Applied clean (D4; cycle-048; sole L4/index count-owner). Firm-at-L4 tally (4 + 3 outer-driver)->(6 + 4 outer-driver) + outer-driver sub-header (3)->(4) + §Queued-at-L4 prose flip (L4 near-exhausted; R5 orthogonalize deferred-marginal kept plain-text; batch-14 meta-phase hand-off) + §Vocabulary-cohort narrative refresh. NO operator surface, no clobber of D1/D2 own rows/bullets. Opened 2 OQs (l4-near-exhaustion-assessment-batch-14; eigoutcome-vs-polymorphic-outcome-count-dependency). Count verified against disk (6 L4 chapters, 4 outer-driver rows). retroactive-budget 0; build clean, linkcheck2 green. integrator-finalize ALSO added the ksp-solve-driver-dissolution row to L4/index §'L4>L3 lowering themes' narrative sub-list (D4-flagged discoverability touch -- mechanical, not a build break)."
 inputs:
   - book/src/L4/index.md (on-disk; the §Vocabulary-cohort header :32 + outer-driver sub-header :39 + §Queued-at-L4 prose :53-58)

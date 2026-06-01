@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T172507Z
 scope: L4 operator: ksp_solve (outer-driver cap)
 status: integrated
 integrated_at: 2026-06-01T181949Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ce7926f
 integration_notes: "Applied clean (D1; cycle-048). NEW firm L4 outer-driver cap book/src/L4/ksp_solve.md (R2) over firm L3/ksp_solve, consuming the c047 solve-monad outer-driver vocabulary + 3 floor-landing L3/ksp_solve solve-monad live-link upgrades (:78/:142/:160) + own dual-registration (L4/index dep-map row + §Vocabulary-cohort bullet, canonical Lowers-to slug ksp-solve-driver-dissolution) + SUMMARY line. L4 firm 4->6 (with D2). Closed ksp_solve-half of l4-ksp-solve-eigsolve-caps-gated-on-solve-monad-outer-driver-vocabulary; resolved solve-monad-l4-row-firm-maturity-straddle for solve_loop/restart_cycle. retroactive-budget 0; build clean, linkcheck2 green."
 inputs:
   - book/src/L4/index.md (firm c047 outer-driver vocabulary: solve_loop / restart_cycle / Outcome rows)

@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T172507Z
 scope: L4>L3 theme sketch — ksp-solve-driver-dissolution (the dedicated rotation for the R2 cap D1 authored)
 status: integrated
 integrated_at: 2026-06-01T181949Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ce7926f
 integration_notes: "Applied clean (D3; cycle-048). NEW firm L4>L3 theme book/src/L4-L3/ksp-solve-driver-dissolution.md (driver-half dissolution for the R2 L4/ksp_solve cap; composes strictly above the inner-fold iterate-while-dissolution, driver-half companion to krylov-step-typed-wrapper-dissolution) + own L4-L3/index theme-table row + SUMMARY line. L4>L3 firm 5->6. The c047 D1-flagged working-slug-vs-canonical-slug mismatch (ksp-solve-outer-driver-dissolution vs canonical ksp-solve-driver-dissolution) RESOLVED at repair/integrate -- zero ksp-solve-outer-driver-dissolution refs remain in book/. Same-cycle live-link to D1's cap resolves at finalize build. retroactive-budget 0; build clean, linkcheck2 green."
 inputs:
   - reports/2026-06-01T172507Z-cycle-048-harvester-L4-ksp-solve-cap/CYCLE.md (D1, wave 1 — the firm L4 ksp_solve cap; LHS of this theme; same-cycle sibling, lands before finalize build)

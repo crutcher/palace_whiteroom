@@ -49,7 +49,7 @@ THIRD and FINAL primary cycle of meta-batch-14 (cycles 046/047/048). A clean opu
 - **retroactive-budget global = 0** (all rows are new firm chapters + floor-landing live-link upgrades of existing forward-references; no new retroactive slices). Well below the global ≥4 block threshold.
 - **build-breakage repair = 0.**
 - **commit atomicity:** single commit (artifact + scaffolding + log + book output + staging log + consumed-report frontmatter) + a two-phase SHA-patch follow-up commit.
-- **consumed-report frontmatter integrity:** all 4 marked `status: integrated` + `integrated_at: 2026-06-01T181949Z` + `integration_commit` (PLACEHOLDER_SHA, two-phase-patched post-commit) + `integration_notes`.
+- **consumed-report frontmatter integrity:** all 4 marked `status: integrated` + `integrated_at: 2026-06-01T181949Z` + `integration_commit` (ce7926f, two-phase-patched post-commit) + `integration_notes`.
 - **staging completeness:** 4 staging rows == 4 dispatched-ready reports (**29th consecutive clean staging cycle / 43rd consecutive clean split-integrator cycle**; the cycle-018 staging-completeness gap did NOT recur).
 - **slug-consistency:** zero `ksp-solve-outer-driver-dissolution` dead refs in `book/` (the c047 D1-flagged mismatch reconciled at repair/integrate).
 
