@@ -59,7 +59,7 @@ build-repairs.
 - **retroactive-budget global = 0** — all three reports are in-cycle; no retroactive-slice budget pressure. Well below the global ≥4 block threshold.
 - **build-breakage repair** — NONE. `cargo make book` exit 0 (~91.7s); all 3 changed chapters re-rendered; mdbook-linkcheck2 green. The only build noise is pre-existing and unrelated: 4 KaTeX "Potential incomplete link" false-positives in `design/l4_calculus.md` (ignored per dispatch directive) + the pre-existing markdown-table HTML-tag WARNs in unchanged `L1-L0/`/`L0/`/`meta-reviews/` files (e.g. `<opertype>`/`<operator>`/`<complexoperator>`/`<other>` — table-cell bracket false-positives, NOT dead links).
 - **commit atomicity** — artifact + scaffolding + log + book output + reports committed as one unit; pushed immediately. Two-phase SHA patch follows.
-- **consumed-report frontmatter integrity** — all 3 marked `status: integrated` + `integrated_at` + `integration_commit: PLACEHOLDER_SHA` (two-phase patch) + `integration_notes`.
+- **consumed-report frontmatter integrity** — all 3 marked `status: integrated` + `integrated_at` + `integration_commit: 92327f7` (two-phase patch) + `integration_notes`.
 - **staging-log completeness cross-check** — 3 staging rows == 3 dispatched-ready reports. NO mismatch; the cycle-018 staging-completeness gap did NOT recur (30th consecutive clean staging cycle). Cross-checked against `git status --porcelain book/` (3 `M` book files, all belonging to D1/D2) + each report's frontmatter + the OQ-ledger appends.
 - **implied-component-stub-created = 0** — the only new reference (the plain-text `L3/inner_product` dep-map row) was correctly NOT a live link; the implied-component-stub bar is NOT met (single forward plan, leaf-disposition convention unsettled), so no stub created (deliberate cycle-050 deferral, per both D1 and D2's discipline).
 
@@ -111,5 +111,5 @@ crossed — assess whether a stronger prevention is warranted).
 ## Process note
 
 Written by `integrator-finalize` (split integrator-per-report ×3 + finalize ×1). The two-phase
-SHA patch (replace `PLACEHOLDER_SHA` with the actual commit SHA, then push again) follows the
+SHA patch (replace `92327f7` with the actual commit SHA, then push again) follows the
 single finalize commit, per the cycle-004/005 canonical pattern.

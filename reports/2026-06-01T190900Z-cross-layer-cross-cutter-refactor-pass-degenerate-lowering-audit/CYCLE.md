@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T190900Z
 scope: L3↔L2 + L2↔L1 cross-cut — cohort-wide degenerate-lowering classification (the cycle-050 demotion worklist)
 status: integrated
 integrated_at: 2026-06-01T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 92327f7
 integration_notes: APPLIED clean (cycle-049 D3) — observation-only, NO book/ mutation (D3 proposed none; deliverable is the cycle-050 demotion worklist + the load-bearing scope finding, promoted as 3 OQs). HEADLINE FINDING the degenerate-lowering cohort is 18 themes (9 pairs) NOT 12 — the controlling cycle-050 scope input (demoting only 12 + stranding 6 re-creates the mirrored floor the redirect corrects); 2 themes divfree-projector/jacobi-smoother marked verify-body-before-demoting. D1/D2/D3 reconciliation CLOSED-as-agreement on nrm2-consumer-not-member (no divergence to escalate). Build-relevant no. FIRST cohort-wide degenerate-lowering audit under the 2026-06-01 VOCABULARY-SHIFT REDIRECT.
 ---
 

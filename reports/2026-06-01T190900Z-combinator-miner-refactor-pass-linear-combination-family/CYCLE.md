@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T19:09:00Z
 scope: Refactor pass (cycle-049 D1) — linear_combination family combinator-as-entry inversion + replace-and-propagate map + L2-L1 lowering re-audit
 status: integrated
 integrated_at: 2026-06-01T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 92327f7
 integration_notes: APPLIED clean (cycle-049 D1). The 4-edit combinator-as-entry inversion of book/src/L2/linear_combination.md landed exactly as scoped; the (b) replace-and-propagate MAP (leaf-collapse, thin-theme demotion, L3/linear_combination authoring, L4-propagation) is a cycle-050 forward plan NOT enacted; the (c) KEEP verdict on L2-L1/linear-combination-fold-specialization.md is a no-mutation verdict. 3 OQs promoted. Build-relevant yes (cargo make book exit 0, linkcheck2 green, zero build-repairs). No wave conflict (disjoint file from D2). FIRST refactor-pass cycle under the 2026-06-01 VOCABULARY-SHIFT REDIRECT.
 ---
 

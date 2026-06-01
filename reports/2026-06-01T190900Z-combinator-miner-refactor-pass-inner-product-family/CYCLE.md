@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T190900Z
 scope: Refactor-pass (D2, cycle-049) — inner_product family combinator-as-entry inversion + replace-and-propagate map + L2-L1 lowering re-audit
 status: integrated
 integrated_at: 2026-06-01T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 92327f7
 integration_notes: APPLIED clean (cycle-049 D2) through the AUTHORIZED path. D2 originally LEAKED a direct dispatch-phase write to book/src/L2/inner_product.md (write-authority violation); the repairer reverted the leak (file restored to committed HEAD) and reconstructed the inversion as 8 authorized edit:-fenced proposed-changes blocks, which integrator-per-report applied against the restored file — applied state correct. Landed the 8-edit combinator-as-entry inversion + the plain-text L3/inner_product rough-in dep-map row in book/src/L3/index.md (correctly NOT a live link); nrm2 stays a thin CONSUMER of inner_product NOT a fold member. The (b) replace-and-propagate MAP is a cycle-050 forward plan NOT enacted; the (c) KEEP verdict on L2-L1/inner-product-fold-specialization.md is a no-mutation verdict. 3 OQs promoted. Build-relevant yes (cargo make book exit 0, linkcheck2 green, zero build-repairs). No wave conflict (disjoint file from D1; D1-A4 + D2-Site-6 reciprocal sibling-fold cross-references mutually aligned). RECURRENCE specialized-agent-direct-write-to-book-during-dispatch flagged for the batch-15 meta-phase.
 ---
 
