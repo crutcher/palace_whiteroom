@@ -104,9 +104,16 @@ Candidates, roughly ordered by impact:
 impact_score(slice) = |concepts(slice)|
                     × |slices_that_reuse(concepts(slice))|
                     × (1 / cycles_to_extract_estimate)
+                    × foundation_solidity(item)
 ```
 
 The intermediate-tier candidates above have impact scores estimated as: Arnoldi step ≫ Plane-rotation stream ≈ Polynomial-recurrence step > Sparse triangular solve > Diagonal-preconditioner apply > Residual update > Restart machinery.
+
+**`foundation_solidity(item)` — uniform-pull-up / foundation-first factor (user directive 2026-05-31, post-cycle-040).** A multiplicative ranking weight that biases the plan toward a **uniform L0→L4 climb on solid foundations** (CLAUDE.md §Methodology invariants "Uniform pull-up L0→L4; foundation-solidity is a ranking weight"). **Soft weight, not a hard gate** — exceptions allowed with stated rationale.
+- `> 1` (**boost**) when the item *completes a foundation gap*: fills an **absent L_n parent** under an existing L_{n+1} entry, or authors a **missing L_{n+1}>L_n rotation theme**. These advance the front toward rectangular.
+- `< 1` (**discount**) when the item *adds L_{n+1} width whose L_n support is absent or non-firm* — racing a layer ahead of its floor.
+- `= 1` otherwise (the L_n floor + L_{n+1}>L_n rotation beneath the item are already firm).
+Triggering state as of 2026-05-31: L3 has 18 entries but only 5 rest on a same-named L2 parent and only 2 of 18 carry an L3>L2 rotation theme. The two highest-`foundation_solidity` items are therefore `l2-floor-under-l3-blas1-cohort` (build the 13 missing L2 entries + L2>L1 identity themes) and `l3-l2-rotation-theme-coverage-gap` (author the 16 missing L3>L2 themes) — both in `scaffolding/priorities.md` §High fan-out. Further L3 (B) substantive width (`chebyshev-smoother`/`apply_nonlinear_pencil`) carries `foundation_solidity < 1` until its L2 floor exists and so is demoted below the two foundation items.
 
 The Planner uses this list (and the impact score) as input to the forward-frontier criterion (`prompts/planner.md`). Lifting any of these from "embedded in a root slice" to a standalone intermediate slice simultaneously:
 
