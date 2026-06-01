@@ -35,6 +35,7 @@
 - [eigsolve](./L3/eigsolve.md)
 - [divfree-projector](./L3/divfree-projector.md)
 - [normalize](./L3/normalize.md)
+- [orthogonalize](./L3/orthogonalize.md)
 
 # L3 > L2 — Lowering
 - [Overview](./L3-L2/index.md)

@@ -30,6 +30,38 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-040 — 2026-06-01T010000Z — FIRST primary cycle of meta-batch-12 (cycles 040/041/042; the batch-12 meta-phase fires AFTER cycle-042's finalize, as a SEPARATE dispatch) — FIRST clean opus-planner cycle of batch-12
+
+### Unblocked
+- The **(B) substantive L3 cohort is now OPEN and validated** — `orthogonalize` landed firm-body `partial-obstruction` L3 (third after `chebyshev`/`eigsolve`), the FIRST substantive (B)-cohort member of the c036 D2 L3-cohort-growth audit, proving the substantive-harvester route at L3 (variant-conditional obstruction: MGS sequential, CGS/CGS2 lift). The remaining (B) candidates are now the L3 follow-frontier — citation: OQ `l3-cohort-growth-audit-c036-verdict` (the (B) tranche).
+- The L3/index §Semantics-overlay now enumerates **five non-trivial obstruction shapes (a)–(e)** with shape (e) `orthogonalize` variant-conditional folded + the `fused-composite-obstruction-free` (`normalize`) profile; the single authoritative §Working-Notes tally is **15 firm + 3 partial-obstruction**, internally consistent across dep-map / §Working-Notes / §Semantics-overlay — citation: report `2026-05-31T235349Z-cycle-040-layer-intro-author-L3-index-refresh`.
+- Two firm L1>L0 themes had their cited byte-ranges firmed up (no status change) — closes the c038 D4 + c035 D1 citation-tighten OQs — citation: report `2026-05-31T235349Z-cycle-040-lifter-citation-tightens`.
+
+### New dependencies
+- `book/src/L3/orthogonalize.md` (`partial-obstruction`) depends on firm L1 `orthogonalize` + L2 `orthogonalize` (cycle-012); the L3>L1 edge is variant-conditional (MGS carries the inner-loop `sequential-obstruction`, CGS/CGS2 identity-in-form); `L4/orthogonalize.md` referenced only as a backticked code-span (NOT a live link — no edge claimed, no stub) — citation: report `2026-05-31T235349Z-cycle-040-harvester-orthogonalize-L3`.
+- No new firm L1>L0 / L2>L1 edges this cycle; D3 was pure citation-range tighten on existing firm edges.
+
+### Resolution implications
+- `l3-cohort-growth-audit-c036-verdict` ((B) tranche) — **partially-answered** — `orthogonalize` discharges the first of the three (B) substantive candidates; `chebyshev-smoother` L3 + `apply_nonlinear_pencil` L3 remain.
+- `l3-index-fifth-obstruction-profile-fused-composite-obstruction-free` — **answered (DISCHARGED)** — D2 folded the `fused-composite-obstruction-free` (`normalize`) profile into §Semantics-overlay.
+- `l3-index-working-notes-stale-snapshot-compaction-candidate` — **answered (DISCHARGED)** — D2 relabeled c024/c037/c039 snapshots SUPERSEDED + established the single authoritative tally.
+- `floquet-mutation-rotation-m-block-comment-citation-over-extension` — **answered (DISCHARGED)** — D3 re-anchored `:25-26`→`:25` (closes the c038 D4 OQ).
+- `chebyshev-smoother-mutation-rotation-applyorder0-true-citation-tighten-sibling` — **answered (DISCHARGED)** — D3 re-anchored `:101-110`→`:102-110` at all 3 occurrences (closes the c035 D1 OQ).
+
+### Suggested next dispatches (for cycle-041)
+- (`cross-layer-cross-cutter`, `chebyshev-smoother L3 subsumption-check vs firm L3 chebyshev`) — **DO THIS FIRST** before any `chebyshev-smoother` L3 harvest: the second (B) candidate may be subsumed by the existing firm L3 `chebyshev` (c013) — run the subsumption check before committing a harvester to a possibly-redundant chapter.
+- (`lowering-verifier`, `orthogonalize L3 verified_against: audit`) — the natural cycle-041 follow-up to this cycle's `orthogonalize` L3 landing; append the machine-readable `verified_against:` evidence block against the MGS/CGS/CGS2 variant split (no body edits; theme stays firm).
+- (`abstractor`, `L4 orthogonalize / arnoldi-step monad surface`) — backlog migration candidate for OQ `l4-orthogonalize-arnoldi-step-monad-surface-unauthored` (the `L4/orthogonalize.md` code-span referent is unauthored; sketch the monad surface).
+- HOLD: `apply_nonlinear_pencil` L3 (third (B) candidate) — folds into a FUTURE eigsolve-variant pass, not a standalone L3 harvest; route via the eigsolve-variant track, not as an isolated dispatch. The STOP-PROPOSING 7-operator (C) negative list (lu_solve/back_solve/ls-update-column/4 nleps atoms) remains in force.
+
+### Wave-conflict observations
+- **NONE.** The D1-row / D2-tally **count-ownership partition** (codified at the batch-11 meta-phase into cycle-planner + harvester + layer-intro-author role-specs, friction-ledger `parallel-blind-shared-index-count-divergence`) worked cleanly its first batch-12 cycle: D1 (`orthogonalize` harvester) appended ONLY its dep-map row and deferred the 2→3 partial-obstruction §Working-Notes tally to D2 (the layer-intro-author, SOLE count-owner, dispatched after D1 with `orthogonalize.md` already on disk). No parallel-blind absolute-count reconciliation was needed at finalize. D3 (two L1>L0 theme files) was disjoint from D1/D2's L3 surface. The codified convention is holding.
+
+### Integration-tooling friction
+- **NONE this cycle.** No codemap drift (D3 re-confirmed both citation boundaries via `citecheck --anchor` against on-disk `reference/`, not codemap output; the `codemap-read-range-plus-one-drift` guard had nothing to catch). No staging-completeness gap (3 rows == 3 dispatched-ready, TWENTY-FIRST consecutive). No PLACEHOLDER_SHA escape (the two-phase patch is applied this cycle per the cycle-004/005 canonical pattern; recorded as a Low-hygiene plan item at the batch-11 meta-phase, NO-GO for a dedicated backfill cycle — it stays the standing convention).
+
+---
+
 ## cycle-039 — 2026-05-31T235959Z — THIRD / FINAL primary cycle of meta-batch-11 (cycles 037/038/039; the batch-11 meta-phase fires AFTER this finalize commit, as a SEPARATE dispatch) — THIRD consecutive clean opus-planner cycle (3-of-3 batch-11)
 
 ### Unblocked

@@ -265,7 +265,7 @@ Citations:
 
 - `palace/linalg/floquetcorrection.cpp:20-23` — ctor signature.
 - `palace/linalg/floquetcorrection.cpp:26-39` — `M_RT` assembly: comment
-  `:25-26`, `BilinearForm a(rt_fespace)` `:28`, `VectorFEMassIntegrator` `:29`,
+  `:25`, `BilinearForm a(rt_fespace)` `:28`, `VectorFEMassIntegrator` `:29`,
   `Assemble(skip_zeros)` `:30`, `ComplexParOperator` wrap with `nullptr` imag
   `:33`, real fallback `ParOperator` wrap `:37` (dead-code under the
   `<ComplexVector>`-only instantiation).
@@ -622,7 +622,7 @@ verified_against:
   - citation: palace/linalg/floquetcorrection.cpp:20-71
     verdict: supports
     audited_at: 2026-05-31T210435Z
-    note: ctor body; sig :20-23, M assembly :26-39 (ComplexParOperator wrap :33 / dead-code ParOperator :37), Cross assembly :41-57 (MaterialPropertyCoefficient :42, GetFloquetCross :43, ComplexParOperator :50-51 / dead-code :55), ksp+JacobiSmoother :60-66 (CgSolver :60, JacobiSmoother :65), SetOperators(*M,*M) :67, rhs sizing :69-70 — all finer anchors lit (citecheck OK). MINOR — theme body line 229 cites the M-block comment as :25-26 but it is at :25 only (:26 is the opening brace); non-load-bearing over-extension, range :26-39 itself correct.
+    note: ctor body; sig :20-23, M assembly :26-39 (ComplexParOperator wrap :33 / dead-code ParOperator :37), Cross assembly :41-57 (MaterialPropertyCoefficient :42, GetFloquetCross :43, ComplexParOperator :50-51 / dead-code :55), ksp+JacobiSmoother :60-66 (CgSolver :60, JacobiSmoother :65), SetOperators(*M,*M) :67, rhs sizing :69-70 — all finer anchors lit (citecheck OK). M-block comment anchored at :25 (the comment line; :26 is the opening brace) — tightened from the earlier :25-26 over-extension (cycle-040 D3).
   - citation: palace/linalg/floquetcorrection.cpp:67
     verdict: supports
     audited_at: 2026-05-31T210435Z
