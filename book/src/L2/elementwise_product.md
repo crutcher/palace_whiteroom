@@ -3,7 +3,7 @@ layer: L2
 operator: elementwise_product
 firmness: firm
 lowers_to:
-  - book/src/L1/elementwise_product.md (identity-in-form on the primitive's signature; no firm `L2-L1/elementwise-product-fusion` theme yet — leaf binary field operation, no multi-operation kernel fusion to unfold; in-line below at "Lowers to")
+  - book/src/L1/elementwise_product.md (identity-in-form on the primitive's signature; degenerate identity-in-named-terms edge — recorded in-line below at "Lowers to" per the 2026-06-01 vocabulary-shift redirect, no dedicated L2>L1 theme; leaf binary field operation, no multi-operation kernel fusion to unfold; substantive rotation deferred to the L1>L0 `reciprocal-elementwise-product-mutation-rotation` sub-pattern B)
 lifts_from:
   - book/src/L1/elementwise_product.md (value-thread-isomorphic; same signature shape; whole-tensor leaf binary field operation, no kernel fusion to unfold)
 fold_parent:
@@ -297,13 +297,16 @@ diagonal-preconditioner-apply fan-out:
   treatment (Hadamard / pointwise-product background, the diagonal-operator-apply role at L2,
   the Palace mapping).
 
-**Lowering themes (forthcoming — plain-text forward-reference, files do not yet exist)**: an
-`L2-L1/elementwise-product-fusion` theme (or the identity-in-form annotation folded into the
-existing L1>L0 `reciprocal-elementwise-product-mutation-rotation` sub-pattern B) will narrate
-how the L2 leaf lowers into the L1 leaf (identity-in-form; no multi-operation kernel fusion to
-unfold — only the single per-element multiply pass); the L3>L2 identity rotation for
-`elementwise_product` is the iteration-rotation re-erasure recorded in-line at the L3 entry.
-Forward-reference only — that L2>L1 theme chapter does not yet exist; do not link.
+**Lowering themes**: both adjacent edges of `elementwise_product` are **degenerate
+identity-in-named-terms** rotations recorded **in-line** (no dedicated theme files), per the
+2026-06-01 vocabulary-shift redirect (a degenerate identity-in-named-terms lowering is a smell
+resolved as a thin in-line note). The L2>L1 edge is recorded in-line at §"Lowers to" below (the L2
+leaf lowers into the L1 leaf identity-in-form; no multi-operation kernel fusion to unfold — only the
+single per-element `forall_switch` multiply pass, already the unfolded single-pass form); the L3>L2
+edge is recorded in-line at the L3 entry's §"Lowers to". The substantive rotation in the chain is the
+L1>L0 [`reciprocal-elementwise-product-mutation-rotation`](../L1-L0/reciprocal-elementwise-product-mutation-rotation.md)
+(sub-pattern B). (The former thin `L2-L1/elementwise-product-leaf-identity` + `L3-L2/elementwise-product-body-identity`
+themes were demoted to these in-line notes cycle-050 D4.)
 
 **L1 anchor**: [`L1/elementwise_product`](../L1/elementwise_product.md) (firm;
 cycle-019/032/036 chain) — authoritative on the Palace surface details (the canonical
@@ -385,15 +388,18 @@ about the BLAS-1 floors' relationship to the *fold* parents `inner_product` /
 ## Lowers to
 
 L2 `elementwise_product` lowers to L1 [`elementwise_product`](../L1/elementwise_product.md)
-via an **identity-in-form** rotation: the signature
-`(Tensor[N], Tensor[N]) -> Tensor[N]` is textually identical at both layers; the body is the
-same Hadamard binary field operation. There is no multi-operation kernel fusion to unfold —
-`elementwise_product` is a leaf binary field operation, and the L0 `forall_switch` per-element
-multiply is already the unfolded single-pass form (contrast `dot`, which de-fuses a family of
-fused reduction kernels into the canonical reduction). No firm `L2-L1/elementwise-product-fusion`
-theme file yet exists; this entry captures the identity rotation in-line, following the
-cycle-041 `dot` / `scal` floor precedent for in-line identity-rotation annotation. The
-**substantive** rotation in the chain is the L1>L0
+via a **degenerate identity-in-named-terms** rotation, recorded **in-line** (no dedicated theme) per
+the 2026-06-01 vocabulary-shift redirect: the signature `(Tensor[N], Tensor[N]) -> Tensor[N]` is
+textually identical at both layers, and the mapping is the total bijective identity on the leaf —
+every L2 binding (the `a ⊙ b` body, the ten algebraic laws, both variant axes: element-type +
+conjugation sub-axis) maps to the same L1 binding at the same position. There is no multi-operation
+kernel fusion to unfold — `elementwise_product` is a leaf binary field operation with **no fold-parent**
+(fork-INDEPENDENT; the inverse-subsumption generalisation of `scal`, not a fold member), and the L0
+`forall_switch` per-element multiply is already the unfolded single-pass form (contrast `dot`, which
+de-fuses a family of fused reduction kernels into the canonical reduction). Because the vocabulary does
+not shift across this edge, it is a thin in-line note, not a mirrored theme. (Demoted from the former
+`L2-L1/elementwise-product-leaf-identity.md` theme, cycle-050 D4.) The **substantive** rotation in the
+chain is the L1>L0
 [`reciprocal-elementwise-product-mutation-rotation`](../L1-L0/reciprocal-elementwise-product-mutation-rotation.md)
 (sub-pattern B) — it reintroduces the L0 in-place destination buffer (the real single-multiply
 `Y[i] = A[i] * B[i]`, the complex six-multiply-add, the conjugate two-sign-flip variant, and

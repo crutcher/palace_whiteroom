@@ -34,10 +34,14 @@ can lower to an adjacent L2 parent rather than non-adjacently to L1.
 
 `assemble_diagonal` is **defined in L2 vocabulary** here (high→low discipline, CLAUDE.md
 §Methodology invariants "Layers are defined high→low"): the signature, semantics, and
-algebraic laws are stated at the L2 fusion-rotation resolution. The two adjacent rotations
-— how the L2 form lowers to L1 (the forthcoming L2>L1 thin-identity theme this cycle's D7
-dispatch authors) and how the L3 form lowers to L2 (the L3>L2 body-identity theme) — are
-narrated by the separate lowering themes, not here. This chapter does not define
+algebraic laws are stated at the L2 fusion-rotation resolution. Both adjacent rotations
+are **degenerate identity-in-named-terms lowerings** (the vocabulary does not shift across
+either edge), so per the 2026-06-01 vocabulary-shift redirect each is recorded as an
+**in-line note rather than a dedicated theme**: how the L2 form lowers to L1 is the
+§"Downward to L1" note below (demoted from the former `assemble-diagonal-leaf-identity`
+L2>L1 theme cycle-050); how the L3 form lowers to L2 is the §"Downward to L2" in-line note
+on the L3 [`assemble-diagonal`](../L3/assemble-diagonal.md) entry (demoted from the former
+`assemble-diagonal-body-identity` L3>L2 theme cycle-050). This chapter does not define
 `assemble_diagonal` in terms of L1 primitives or L0 mechanics.
 
 The L1 entry [`L1/assemble-diagonal`](../L1/assemble-diagonal.md) is authoritative on every
@@ -117,8 +121,9 @@ Variant axes).
 The L2 signature is identical in shape to the L1
 [`assemble-diagonal`](../L1/assemble-diagonal.md) signature; the rotation L2 → L1 is
 identity-in-form on the primitive (the de-fusion the L2 layer un-does lives at the L0
-representation's diagonal-extraction *implementation*, recorded by the L2>L1 lowering theme,
-not in the signature).
+representation's diagonal-extraction *implementation*, recorded by the §"Downward to L1"
+in-line note below — a degenerate identity-in-named-terms edge, not a dedicated theme — not
+in the signature).
 
 ## Semantics
 
@@ -382,6 +387,46 @@ signature, algebraic laws (six), non-laws (four, including the load-bearing exac
 caveat), and variant-axis profile (one orthogonal + one absorbed). The L2 entry exists for
 floor presence — so the L3 [`assemble-diagonal`](../L3/assemble-diagonal.md) field operation
 has an adjacent L2 parent.
+
+## Downward to L1 (in-line note)
+
+The L2>L1 edge is a **degenerate identity-in-named-terms lowering** — the L2 floor and the L1
+[`assemble-diagonal`](../L1/assemble-diagonal.md) leaf are value-thread-isomorphic on the leaf:
+same signature `assemble_diagonal :: LinearOperator[N, N] -> Tensor[N]`, same
+`assemble_diagonal A = diag(A)` extraction (`result[i] = Aᵢᵢ`), same intrinsic-square `M = N`
+precondition, same opaque-`LinearOperator` representation-axis absorption, same six laws + four
+non-laws. The vocabulary does not shift across the edge, so per the 2026-06-01 vocabulary-shift
+redirect this is recorded **as this in-line note, NOT as a dedicated L2>L1 theme** (the former
+`assemble-diagonal-leaf-identity.md` theme, demoted cycle-050).
+
+There is **no fold-parent**: unlike the cycle-041 BLAS-1 floors (`dot` leaf-of `inner_product`,
+`scal` member-of `linear_combination`), `assemble_diagonal` is the operator-to-data sibling of
+`apply_linop`, belonging to no fold cohort, so there is nothing to defer fusion to. The L2 layer's
+defining work — kernel-fusion de-fusion — is **degenerate** here: the operator-to-data boundary
+carries no multi-operation kernel-fusion. The L0 "fusion" present in the diagonal-extraction
+realizations is the *representation-specific diagonal-extraction mechanic* (the sparse-CSR
+`hypre_CSRMatrixExtractDiagonal` read, `palace/linalg/hypre.cpp:88`; the matrix-free
+`CeedOperatorLinearAssembleAddDiagonal` element-local accumulation, `palace/fem/libceed/operator.cpp:139`;
+the AMR `|P|ᵀ dₗ` absolute-value-prolongation assembly, `palace/linalg/rap.cpp:174`; the complex
+real/imag split, `palace/linalg/operator.cpp:85-96` / `palace/linalg/rap.cpp:467-479`) — all
+representation-axis-absorbed L0 concerns surfaced by the L1>L0 lowering, not an L2 composition to
+de-fuse. So the L2>L1 edge is the identity, with the representation-selection / zero-init /
+element-accumulation-order treatment deferred to the L1>L0
+[`assemble-diagonal-mutation-rotation`](../L1-L0/assemble-diagonal-mutation-rotation.md) theme.
+
+**Load-bearing non-law preserved through the edge (NOT erased).** The matrix-free
+high-order-Nedelec (H(curl)) **approximate-diagonal** non-law carries across this edge unchanged: a
+sparse-matrix realization of `A` reads the **exact** stored diagonal, while a matrix-free
+high-order-Nedelec realization of the *same* mathematical operator produces an **approximate**
+diagonal (face dofs shared across elements in 3D). Load-bearing per the CLAUDE.md taxonomy — the
+representation can change the diagonal *value*, not merely its bit pattern. Because the L2 fusion
+content is degenerate there is no de-fusion step in which the approximation could be lost; the
+non-law is preserved by reference, NOT erased. Sourced from the Palace AMR convergent-diagonal note
+(`palace/linalg/rap.cpp:163-164`), the matrix-free element-accumulation site
+(`palace/fem/libceed/operator.cpp:139`), the Palace comment naming the matrix-free *approximate*
+diagonal at the consumer (`palace/linalg/jacobi.hpp:15-16`), and test-witnessed
+(`test/unit/test-libceed.cpp:367-376`, relaxing `rtol` to `1.0` for the high-order 3D Nedelec
+non-tensor-basis case) — all transitive through the L1 home.
 
 ## Evidence
 

@@ -3,7 +3,7 @@ layer: L3
 operator: assemble-diagonal
 firmness: firm
 lowers_to:
-  - book/src/L2/assemble-diagonal.md (identity-in-form on the primitive's signature; lowers through the present adjacent L2 floor via the `assemble-diagonal-body-identity` L3>L2 theme — see Lowers-to)
+  - book/src/L2/assemble-diagonal.md (identity-in-form on the primitive's signature; the L3>L2 edge is a degenerate identity-in-named-terms lowering recorded as an in-line note here — see Lowers-to — not a dedicated theme, per the 2026-06-01 vocabulary-shift redirect)
 lifts_from:
   - (none) — `assemble_diagonal` is a leaf primitive; no L4 entry exists (leaf primitives don't get L4 rows per cycle-010 audit verdict; the operator-to-data sibling of `apply_linop`, which is likewise L4-row-free)
 variant_axes:
@@ -25,7 +25,7 @@ The relationship to the adjacent layers:
 
 - **Upward** to L4: there is **no standalone L4 entry** for `assemble_diagonal`. It is a leaf operator-introspection primitive carrying no monadic effect, no state-stratification typing, no novel calculus content at L4 — the same `CONFIRMED-NOT-NEEDED` verdict the cycle-010 cross-layer audit reached for `apply_linop` and the BLAS-1 cohort. At L4 it appears (where consumed) inside operator bodies as a let-binding feeding the diagonal-preconditioner-apply chain, not as first-class L4 vocabulary. Per CLAUDE.md §Methodology invariants "Layers are defined high→low", the absence of an L4 entry is a deliberate scoping verdict, not a gap.
 
-- **Downward** to L2/L1: `assemble_diagonal` lowers to the **present adjacent L2 floor** [`assemble-diagonal`](../L2/assemble-diagonal.md) (cycle-042) via the `assemble-diagonal-body-identity` L3>L2 theme, and onward to L1 [`assemble-diagonal`](../L1/assemble-diagonal.md). The rotation is **identity-in-form on the primitive's signature** — L1, L2, and L3 all see `assemble_diagonal :: LinearOperator[N, N] -> Tensor[N]` with the same shape contract, the same six algebraic laws, the same non-law set (including the load-bearing exact-vs-approximate caveat), and the same variant-axis profile (one orthogonal element-type axis + one absorbed operator-representation axis). The L2 floor is the standalone (fork-independent) operator-to-data sibling of `apply_linop`; the L3>L2 hop passes through the adjacent floor, mirroring the `apply_linop` floor discipline. The L3>L2 identity-in-form annotation is captured by the adjacent-edge theme per the cycle-012 per-adjacent-edge lowering-directory convention (precedent: `apply_linop`, `dot`, `scal`, `krylov-step`); the transitive L3>L1 identity remains in-line, with no non-adjacent `L3-L1/` lowering directory created.
+- **Downward** to L2/L1: `assemble_diagonal` lowers to the **present adjacent L2 floor** [`assemble-diagonal`](../L2/assemble-diagonal.md) (cycle-042) as **identity-in-form on the primitive's signature**, recorded as the in-line §"Downward to L2" note below (NOT a dedicated L3>L2 theme — the edge is a degenerate identity-in-named-terms lowering demoted to an in-line note per the 2026-06-01 vocabulary-shift redirect), and onward to L1 [`assemble-diagonal`](../L1/assemble-diagonal.md). The rotation is **identity-in-form on the primitive's signature** — L1, L2, and L3 all see `assemble_diagonal :: LinearOperator[N, N] -> Tensor[N]` with the same shape contract, the same six algebraic laws, the same non-law set (including the load-bearing exact-vs-approximate caveat), and the same variant-axis profile (one orthogonal element-type axis + one absorbed operator-representation axis). The L2 floor is the standalone (fork-independent) operator-to-data sibling of `apply_linop`. The transitive L3>L1 identity remains in-line, with no non-adjacent `L3-L1/` lowering directory created.
 
 This L3 entry is the **layer-coherence anchor**: a reader navigating L3 (the iteration-rotation layer that composes whole-operator and whole-tensor primitives into smoother / solver bodies) can find `assemble_diagonal` here, in L3 vocabulary, without having to reach down to L1 to recover the signature. The backfill is the cycle-037 enactment of the methodology invariant **Identity-lowerings still require both L levels** (CLAUDE.md §Methodology invariants, cycle-009 meta-phase codification), on the cycle-036 D2 cross-layer-cross-cutter L3-cohort-growth audit's **(A) identity-in-form** verdict (`book/src/L3/index.md:46`): "`assemble-diagonal` ... verdict YES — structurally identical to the firm `apply_linop` opaque-operator-gate precedent, with the exact-vs-approximate caveat absorbed as a representation-aware L1>L0 non-law."
 
@@ -127,9 +127,40 @@ The pattern is well-attested via the chain: L1 firm-up (the operator-to-data pri
 
 ## Lowers to
 
-L3 `assemble_diagonal` lowers to the **present adjacent L2 floor** [`assemble-diagonal`](../L2/assemble-diagonal.md) (cycle-042) as **identity-in-form on the primitive's signature**, via the `assemble-diagonal-body-identity` L3>L2 theme, and onward to L1 [`assemble-diagonal`](../L1/assemble-diagonal.md). L1, L2, and L3 all see `assemble_diagonal :: LinearOperator[N, N] -> Tensor[N]` with the same shape contract, the same six algebraic laws, the same non-law set (including the load-bearing exact-vs-approximate caveat), and the same variant-axis profile (one orthogonal + one absorbed). The L2 floor is the standalone (fork-independent) operator-to-data sibling of `apply_linop` — landed by the cycle-042 L2-floor backfill under the foundation-first directive `l2-floor-under-l3-leaf-cohort` — so the L3>L2 hop passes through the adjacent floor rather than skipping a layer to L1, per **Identity-lowerings still require both L levels**.
+L3 `assemble_diagonal` lowers to the **present adjacent L2 floor** [`assemble-diagonal`](../L2/assemble-diagonal.md) (cycle-042) as **identity-in-form on the primitive's signature**, recorded by the in-line §"Downward to L2 (in-line note)" below, and onward to L1 [`assemble-diagonal`](../L1/assemble-diagonal.md). L1, L2, and L3 all see `assemble_diagonal :: LinearOperator[N, N] -> Tensor[N]` with the same shape contract, the same six algebraic laws, the same non-law set (including the load-bearing exact-vs-approximate caveat), and the same variant-axis profile (one orthogonal + one absorbed). The L2 floor is the standalone (fork-independent) operator-to-data sibling of `apply_linop` — landed by the cycle-042 L2-floor backfill under the foundation-first directive `l2-floor-under-l3-leaf-cohort` — so the L3>L2 hop passes through the adjacent floor rather than skipping a layer to L1, per **Identity-lowerings still require both L levels**.
 
-The L3>L2 identity rotation is captured by the adjacent-edge `assemble-diagonal-body-identity` L3>L2 theme (per the cycle-012 meta-phase per-adjacent-edge lowering-directory convention); the transitive L3>L1 identity (L3>L2 ∘ L2>L1) is annotated in-line, with no `book/src/L3-L1/` directory created. Per the cycle-010 `krylov-step` and cycle-011 BLAS-1 / `apply_linop` precedents this entry captures the in-line identity-rotation discipline for the floor cohort. The substantive rotation in the chain is the L1>L0 [`assemble-diagonal-mutation-rotation`](../L1-L0/assemble-diagonal-mutation-rotation.md) theme — it lowers the L1 pure-functional form into Palace's output-arg-mutating L0 virtual `AssembleDiagonal(diag)` family (the destination sizing `diag.SetSize(height)`, the `diag = 0.0` zero-init, the sparse-CSR `hypre_CSRMatrixExtractDiagonal` read, the matrix-free `CeedOperatorLinearAssembleAddDiagonal` accumulation, the AMR `|P|ᵀ dₗ` absolute-value-prolongation assembly, and the Dirichlet `DiagonalPolicy` BC post-step). The L3>L1 hop is by contrast a layer-coherence rotation (each layer is coherent within itself), not an algebraic one.
+### Downward to L2 (in-line note)
+
+The L3>L2 edge is a **degenerate identity-in-named-terms lowering** — the L3 whole-operator field
+operation `assemble_diagonal :: LinearOperator[N, N] -> Tensor[N]` and the L2 floor are
+value-thread-isomorphic on the body: same signature, same `assemble_diagonal A = diag(A)`
+extraction (`result[i] = Aᵢᵢ`), same intrinsic-square `M = N` precondition, same opaque-`LinearOperator`
+representation-axis absorption, same six laws + four non-laws. The vocabulary does not shift across
+the edge, so per the 2026-06-01 vocabulary-shift redirect this is recorded **as this in-line note,
+NOT as a dedicated L3>L2 theme** (the former `assemble-diagonal-body-identity.md` theme, demoted
+cycle-050). There is **no wrapper** (it is a leaf field operation, not a kernel body inside an
+`IterState`/outer-driver wrapper) and **no fold-parent** (it is the operator-to-data sibling of
+`apply_linop`, belonging to no fold cohort), so there is no surface adjustment and no fold-level
+rotation to carry — the edge is the pure identity. `assemble_diagonal` is **L3-native by signature
+shape** (the per-row read of the `(i, i)` entries is a single semantic step at both layers; no
+element loop is visible, no sequential obstruction — the iteration rotation is already complete at
+the signature level), the same property `apply_linop` and the BLAS-1 cohort satisfy.
+
+**Load-bearing non-law preserved through the edge (NOT erased).** The matrix-free
+high-order-Nedelec (H(curl)) **approximate-diagonal** non-law carries across this edge unchanged: a
+sparse-matrix realization of `A` reads the **exact** stored diagonal, while a matrix-free
+high-order-Nedelec realization of the *same* mathematical operator produces an **approximate**
+diagonal (face dofs shared across elements in 3D make the element-local summation differ from the
+true assembled diagonal). Load-bearing per the CLAUDE.md taxonomy — the representation can change the
+diagonal *value*, not merely its bit pattern. Because the L2 fusion content is degenerate there is no
+de-fusion step in which the approximation could be lost; the non-law is preserved by reference, NOT
+erased. Sourced from the Palace AMR convergent-diagonal note (`palace/linalg/rap.cpp:163-164`),
+the matrix-free element-accumulation site (`palace/fem/libceed/operator.cpp:139`), and test-witnessed
+(`test/unit/test-libceed.cpp:367-376`, relaxing `rtol` to `1.0` for the high-order 3D Nedelec
+non-tensor-basis case) — all transitive through the L1 home. Concretized at the L1>L0
+[`assemble-diagonal-mutation-rotation`](../L1-L0/assemble-diagonal-mutation-rotation.md) lowering.
+
+The L3>L2 identity rotation is recorded by the §"Downward to L2 (in-line note)" above (a degenerate identity-in-named-terms edge demoted from a dedicated theme to an in-line note cycle-050 per the 2026-06-01 vocabulary-shift redirect); the transitive L3>L1 identity (L3>L2 ∘ L2>L1) is likewise annotated in-line, with no `book/src/L3-L1/` directory created. The substantive rotation in the chain is the L1>L0 [`assemble-diagonal-mutation-rotation`](../L1-L0/assemble-diagonal-mutation-rotation.md) theme — it lowers the L1 pure-functional form into Palace's output-arg-mutating L0 virtual `AssembleDiagonal(diag)` family (the destination sizing `diag.SetSize(height)`, the `diag = 0.0` zero-init, the sparse-CSR `hypre_CSRMatrixExtractDiagonal` read, the matrix-free `CeedOperatorLinearAssembleAddDiagonal` accumulation, the AMR `|P|ᵀ dₗ` absolute-value-prolongation assembly, and the Dirichlet `DiagonalPolicy` BC post-step). The L3>L1 hop is by contrast a layer-coherence rotation (each layer is coherent within itself), not an algebraic one.
 
 **Practical reading**: an algorithm written at L3 that calls `assemble_diagonal` (e.g. the diagonal-preconditioner-apply setup of a Jacobi or Chebyshev smoother body) is reading the L1 entry's algebraic content (laws, non-laws, signature) one layer down; the L3 entry's role is to anchor the primitive in the L3 vocabulary inventory of whole-operator / whole-tensor field operations.
 

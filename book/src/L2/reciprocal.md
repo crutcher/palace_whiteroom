@@ -3,7 +3,7 @@ layer: L2
 operator: reciprocal
 firmness: firm
 lowers_to:
-  - book/src/L1/reciprocal.md (identity-in-form; no firm `L2-L1/reciprocal-elementwise-identity` theme yet — the only fusion content is the transparent `s = 1/|z|²` factoring of the complex closed form, not a multi-op kernel fusion; in-line below at "Lowers to")
+  - book/src/L1/reciprocal.md (identity-in-form; no dedicated L2>L1 theme file — the vocabulary does not shift across this edge, so the degenerate identity is recorded in-line below at §"Downward to L1"; the only fusion content is the transparent `s = 1/|z|²` factoring of the complex closed form, not a multi-op kernel fusion)
 lifts_from:
   - book/src/L1/reciprocal.md (value-thread-isomorphic; same signature shape; whole-tensor elementwise leaf primitive, no kernel fusion to unfold)
 variant_axes:
@@ -348,28 +348,30 @@ fold-parent** for the (a) fold-only reading to re-anchor it into. Its L2 floor i
 same-named standalone leaf regardless of the meta-phase decision; this entry is stable on that
 axis (see § "No fold-parent").
 
-## Lowers to
+## Downward to L1
 
 L2 `reciprocal` lowers to L1 [`reciprocal`](../L1/reciprocal.md) via an **identity-in-form**
-rotation: the signature `Tensor[N] -> Tensor[N]` is textually identical at both layers; the
+relationship: the signature `Tensor[N] -> Tensor[N]` is textually identical at both layers; the
 body is the same elementwise multiplicative-inverse field operation; the eight algebraic laws,
 the non-law set (partiality, nonlinearity, IEEE-754 caveats), and the single-orthogonal-axis
 variant profile (element-type) all transport unchanged. The only fusion content is the
 transparent `s = 1/|z|²` factoring of the complex closed form (§ "Fusion note") — not a
-multi-operation kernel fusion to de-fuse — so the rotation carries no algebraic novelty.
+multi-operation kernel fusion to de-fuse — so **the vocabulary does not shift across this edge**.
 
-No firm `L2-L1/reciprocal-elementwise-identity` theme file yet exists (the D10 dispatch this
-cycle authors the L2>L1 lowering theme for `reciprocal`); this entry captures the identity
-rotation **in-line**, following the L3 `reciprocal` and L2 `scal` backfill precedents for
-in-line identity-rotation annotation (per the cycle-012 meta-phase non-adjacent-identity
-convention — lowering directories are per-adjacent-edge only). The substantive rotation in the
-chain is the firm L1>L0
+There is **no dedicated `L2-L1/` theme file** for `reciprocal`: a mirrored L2/L1 entry plus a
+thin identity-in-named-terms theme is the degenerate smell the 2026-06-01 VOCABULARY-SHIFT
+REDIRECT names, so the relationship is recorded here as an in-line note. (The degenerate
+`reciprocal-leaf-identity` L2>L1 theme, authored cycle-042 D10, was demoted to this note in
+cycle-050.) This follows the in-line identity-rotation discipline for the floor cohort (lowering
+directories carry genuine vocabulary-shifting rotations, not identities). The substantive
+rotation in the chain is the firm L1>L0
 [`reciprocal-elementwise-product-mutation-rotation`](../L1-L0/reciprocal-elementwise-product-mutation-rotation.md)
 theme — it lowers the L1 pure-functional form into Palace's L0 in-place receiver-self-overwrite
 `Reciprocal()` member-method pair (the real upstream `mfem::Vector::Reciprocal()`, the complex
-`ComplexVector::Reciprocal()` kernel `s = 1/(XR²+XI²); XR *= s; XI *= -s`, the `forall_switch`
-host/device dispatch, and the no-zero-guard policy). The L2>L1 hop is by contrast a
-layer-coherence rotation (each layer is coherent within itself), not an algebraic one.
+`ComplexVector::Reciprocal()` kernel `s = 1/(XR²+XI²); XR *= s; XI *= -s` at
+`palace/linalg/vector.cpp:257-259`, the `forall_switch` host/device dispatch, and the
+no-zero-guard policy). The L2>L1 hop is by contrast a layer-coherence relationship (each layer is
+coherent within itself), not a vocabulary-shifting rotation.
 
 ## Lifts from
 
