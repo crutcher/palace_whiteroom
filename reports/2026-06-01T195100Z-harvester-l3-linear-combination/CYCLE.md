@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T19:51:00Z
 scope: L3 operator: linear_combination (propagate-half of the cycle-049 D1 replace-and-propagate map)
 status: integrated
 integrated_at: 2026-06-01T222000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 6985e03
 integration_notes: APPLIED clean (cycle-050 D1, propagation half). Authored book/src/L3/linear_combination.md (firm L3 combinator — whole-tensor variadic fold, no sequential obstruction) carrying an in-line §"Downward to L2" identity note (the pre-built fold-family demotion home for c051) + own L3/index dep-map row + SUMMARY row. Did NOT touch the L3 leaves (re-expression is c051). 3 OQs promoted. Build-relevant yes (cargo make book exit 0, linkcheck2 green). L3 firm 15→17 jointly with D2. refactor-pass ENACTMENT under the 2026-06-01 VOCABULARY-SHIFT REDIRECT.
 inputs:
   - book/src/L2/linear_combination.md (the inverted L2 combinator-as-entry, cycle-049 D1 / commit 92327f7) — the upward reference

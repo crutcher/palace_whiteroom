@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T195100Z
 scope: L3 operator: inner_product
 status: integrated
 integrated_at: 2026-06-01T222000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 6985e03
 integration_notes: APPLIED clean (cycle-050 D2, propagation half). Authored book/src/L3/inner_product.md (firm L3 combinator — reduce-to-scalar whole-tensor reduction, no sequential obstruction) carrying an in-line §"Downward to L2" identity note (demotion home for dot-body-identity; nrm2 is the CONSUMER demoted on the nrm2 entry not here) + upgraded the plain-text L3/index rough-in row to a live link + SUMMARY row. Did NOT touch the L3 dot/nrm2 leaves (c051). 2 OQs promoted. Build-relevant yes (cargo make book exit 0, linkcheck2 green). L3 firm 15→17 jointly with D1. refactor-pass ENACTMENT under the 2026-06-01 VOCABULARY-SHIFT REDIRECT.
 inputs:
   - book/src/L2/inner_product.md (the inverted L2 combinator-as-entry, cycle-049 D2 / commit 92327f7 — upward reference)

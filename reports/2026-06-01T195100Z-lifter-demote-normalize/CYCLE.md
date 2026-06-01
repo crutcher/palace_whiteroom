@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T195100Z
 scope: L3>L2 + L2>L1 theme demotion — normalize degenerate identity-in-named-terms pair → in-line notes
 status: integrated
 integrated_at: 2026-06-01T222000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 6985e03
 integration_notes: APPLIED clean (cycle-050 D6, CLEAN non-fold demotion). DELETED normalize-body-identity (L3>L2) + normalize-leaf-identity (L2>L1) OUTRIGHT (so the D3/D4/D5 de-link survivors inside them vanished as predicted); folded the fused-composite nrm2∘scal identity + linalg::Normalize vector.hpp:262-270 anchor (transitively via §Evidence, bare-path not reference-prefixed) into in-line §"Downward to L2"/§"Downward to L1" notes on L3/L2 normalize; SUMMARY rows + index rows/bullets removed; L3/index normalize-row links re-anchored. CONSTITUENT BOUNDARY HELD — no nrm2/scal entry or theme touched (the constituent re-expression is c051 fold-family work). NO operator-chapter deletion (fused composite, fork-INDEPENDENT no fold-parent). 2 OQs promoted (1 d7-count-reconciliation RESOLVED by D7; 1 planner-routed L2/normalize c044-staleness now doubly-stale). Build-relevant yes. refactor-pass ENACTMENT under the 2026-06-01 VOCABULARY-SHIFT REDIRECT.
 inputs:
   - book/src/L3-L2/normalize-body-identity.md (DELETE)

@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T195100Z
 scope: cycle-050 SOLE consolidated-count owner — L3/index + L3-L2/index + L2-L1/index tallies + degenerate-cohort narrative reconciliation
 status: integrated
 integrated_at: 2026-06-01T222000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 6985e03
 integration_notes: APPLIED clean (cycle-050 D7, SOLE consolidated-count owner). Reconciled tallies — L3/index 15→17 firm (+linear_combination +inner_product; partial-obstruction unchanged at 3); L3-L2/index 17→13 firm; L2-L1/index 21→17 firm; §Working-Notes c050-vs-c051 split + the D8 17-denominator. On-disk firm-count verified (counted real files): L3 20−3=17, L3-L2 13, L2-L1 18−1=17 — all match. Whole-book dead-link grep for all 8 deleted slugs CLEAN. 1 OQ promoted (c050-firm-theme-count-drop-is-vehicle-change-not-coverage-regression). The 4 D3–D6 d7-count-reconciliation OQs RESOLVED by this landing. NOTE: D7's scope excluded dep-map ROWS — the 4 de-linked-but-present rows D4/D5 left were physically removed by integrator-finalize as build-repair. Build-relevant yes. refactor-pass ENACTMENT under the 2026-06-01 VOCABULARY-SHIFT REDIRECT.
 ---
 

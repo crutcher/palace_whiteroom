@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T195100Z
 scope: L3>L2 + L2>L1 degenerate-theme DEMOTE-to-inline — elementwise_product (cycle-050 D4)
 status: integrated
 integrated_at: 2026-06-01T222000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 6985e03
 integration_notes: APPLIED clean (cycle-050 D4, CLEAN non-fold demotion). DELETED elementwise-product-body-identity (L3>L2) + elementwise-product-leaf-identity (L2>L1); folded the load-bearing facts (total-bijective-identity-on-single-binding justification + both variant axes element-type+conjugation, fork-INDEPENDENT no-fold-parent) into in-line §"Downward"/"Lowers to" notes on L3/L2 elementwise_product; bounded §3b prose-correction (stale -fusion forward-ref removed) applied; SUMMARY rows removed. De-linked normalize-leaf-identity:12 surviving live link (hard dangling-link gate; idempotent, D6 deletes that file). NO operator-chapter deletion. 1 OQ promoted (d7-count-reconciliation, RESOLVED by D7). NOTE: this report's de-linked dep-map rows (L3-L2 + L2-L1) were physically removed by integrator-finalize as build-repair. Build-relevant yes. refactor-pass ENACTMENT under the 2026-06-01 VOCABULARY-SHIFT REDIRECT.
 inputs:
   - book/src/L3-L2/elementwise-product-body-identity.md

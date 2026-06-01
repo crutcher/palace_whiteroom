@@ -8,7 +8,7 @@ redirect_context: refactor-pass ENACTMENT under the 2026-06-01 VOCABULARY-SHIFT 
 staging_log: reports/cycle-050-integrator-staging/STAGING.md
 reports_consumed: 8
 build_exit: 0
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 6985e03
 ---
 
 # cycle-050 integrator-finalize — batch CYCLE.md
@@ -49,7 +49,7 @@ Staging rows = **8**; dispatched-ready reports (per the cycle-050 planner / acti
 - **build-breakage repair:** surgical + build-safe only — 4 de-linked-but-present plain-text dep-map rows removed (`reciprocal`/`elementwise-product` body-identity in `L3-L2/index.md`; `reciprocal`/`elementwise-product` leaf-identity in `L2-L1/index.md`). No new content authored.
 - **MANDATORY dead-link sweep** (`grep -rnE "\]\([^)]*(assemble-diagonal|elementwise-product|reciprocal|normalize)-(body|leaf)-identity\.md\)" book/src/`): **ZERO live links** to any of the 8 deleted slugs.
 - **commit atomicity:** single commit (artifact + scaffolding + log + staging + consumed-report frontmatter + rebuilt book output).
-- **consumed-report frontmatter integrity:** all 8 marked `integrated_at: 2026-06-01T222000Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch to follow) + `integration_notes`.
+- **consumed-report frontmatter integrity:** all 8 marked `integrated_at: 2026-06-01T222000Z` + `integration_commit: 6985e03` (two-phase SHA patch to follow) + `integration_notes`.
 
 ## Wave-conflict observations
 

@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T195100Z
 scope: L3>L2 + L2>L1 degenerate-theme DEMOTE-to-inline — assemble-diagonal
 status: integrated
 integrated_at: 2026-06-01T222000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 6985e03
 integration_notes: APPLIED clean (cycle-050 D3, CLEAN non-fold demotion). DELETED assemble-diagonal-body-identity (L3>L2) + assemble-diagonal-leaf-identity (L2>L1); folded the load-bearing matrix-free high-order-Nedelec approximate-diagonal non-law verbatim into in-line §"Downward to L2"/§"Downward to L1" notes on L3/L2 assemble-diagonal; SUMMARY rows + dangling index rows removed. NO operator-chapter deletion (standalone, no fold-parent). 1 OQ promoted (d7-count-reconciliation, RESOLVED by D7). Build-relevant yes. refactor-pass ENACTMENT under the 2026-06-01 VOCABULARY-SHIFT REDIRECT.
 inputs:
   - book/src/L3-L2/assemble-diagonal-body-identity.md (DELETE)

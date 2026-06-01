@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T195100Z
 scope: VERIFY-body audit of the 2 gated constructed-operator-gate theme pairs (divfree-projector, jacobi-smoother) before cycle-051 demotion
 status: integrated
 integrated_at: 2026-06-01T222000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 6985e03
 integration_notes: APPLIED clean (cycle-050 D8, observation-only — NO book/ mutation). VERIFY-body audit of the 2 gated constructed-operator-gate theme pairs. Verdicts feed c051 enactment: jacobi-smoother-body-identity (L3>L2) DEMOTE-OK + jacobi-smoother-leaf-identity (L2>L1) DEMOTE-OK + divfree-projector-body-identity (L3>L2) DEMOTE-OK + divfree-projector-leaf-identity (L2>L1) KEEP-substantive (the one genuine fusion rotation — step-4 apply_linop ▷ axpy de-fuse/re-fuse to Grad->AddMult, divfree.cpp:185/:180-181). OVERTURNS the c049 D3 head-only classification for one pair; corrects the degenerate-cohort denominator 18→17. Load-bearing orphan-avoidance constraint promoted for c051 (the divfree L3>L2 demotion must keep the L2 floor + KEPT L2>L1 fusion theme reachable from the L3 entry). 3 OQs promoted. Build-relevant no (scaffolding-only). refactor-pass ENACTMENT under the 2026-06-01 VOCABULARY-SHIFT REDIRECT.
 ---
 

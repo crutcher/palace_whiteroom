@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T195100Z
 scope: L3>L2 + L2>L1 degenerate-theme DEMOTE-to-inline — reciprocal (cycle-050 D5)
 status: integrated
 integrated_at: 2026-06-01T222000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 6985e03
 integration_notes: APPLIED clean (cycle-050 D5, CLEAN non-fold demotion). DELETED reciprocal-body-identity (L3>L2) + reciprocal-leaf-identity (L2>L1); folded the identity relationship + transparent s=1/|z|² complex-intermediate note (vector.cpp:257-259) into in-line §"Downward to L2"/§"Downward to L1" notes on L3/L2 reciprocal; bounded prose-correction (phantom slug reciprocal-elementwise-identity de-staled) applied; intentional L3-vs-L2 §"Lowers to" heading asymmetry preserved; SUMMARY rows removed. De-linked 6 surviving live links to the deleted slugs (2 index rows + 4 inside D6 normalize files; hard dangling-link gate). NO operator-chapter deletion (nonlinear self-map, no fold-parent). 2 OQs promoted (incl. the mandatory post-deletion build-gate, satisfied by finalize's dead-link sweep). NOTE: this report's de-linked dep-map rows physically removed by integrator-finalize as build-repair. Build-relevant yes. refactor-pass ENACTMENT under the 2026-06-01 VOCABULARY-SHIFT REDIRECT.
 inputs:
   - book/src/L3-L2/reciprocal-body-identity.md
