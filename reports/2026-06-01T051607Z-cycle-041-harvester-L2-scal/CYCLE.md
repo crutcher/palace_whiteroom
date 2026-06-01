@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T051607Z
 scope: L2 operator: scal
 status: pending
 integrated_at: 2026-06-01T062913Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c1f7ea3c651e65ed212aa8500c7c8572aaa2ec92
 integration_notes: "Applied clean (staging row D3). book/src/L2/scal.md created firm (arity-1 member of linear_combination, cited-NOT-merged). vector.cpp:207-211 pinpoint kept UNCHANGED. fold_parent frontmatter field kept AS AUTHORED (meta-phase convention signal). SUMMARY + L2/index dep-map row. L2 firm 9->12 (cohort 3-of-13)."
 inputs:
   - book/src/L1/scal.md (firm; authoritative L1 surface + L0 evidence)

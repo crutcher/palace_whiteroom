@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T051607Z
 scope: L2 operator: nrm2
 status: pending
 integrated_at: 2026-06-01T062913Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c1f7ea3c651e65ed212aa8500c7c8572aaa2ec92
 integration_notes: "Applied clean (staging row D2). book/src/L2/nrm2.md created firm (consumer-of-fold sqrt-abs-inner_product at y=x, NOT a fold member; std::abs load-bearing guard preserved). Repairer fixed edit:->new: directive. SUMMARY + L2/index dep-map row. Rides the design-fork (carried to batch-12 meta-phase). L2 firm 9->12 (cohort 3-of-13)."
 inputs:
   - book/src/L1/nrm2.md (firm cycle-003; authoritative Palace-surface + L0 evidence)

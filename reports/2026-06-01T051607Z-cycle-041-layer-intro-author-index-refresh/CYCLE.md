@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T051607Z
 scope: cycle-041 D7 (wave-3) — consolidated count refresh of THREE shared indices (L2, L2>L1, L3>L2) folding in the six wave-1/wave-2 BLAS-1-floor landings (dot/nrm2/scal + their adjacent thin-identity themes); SOLE count-owner this cycle
 status: pending
 integrated_at: 2026-06-01T062913Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c1f7ea3c651e65ed212aa8500c7c8572aaa2ec92
 integration_notes: "Applied clean (staging row D7). SOLE count-owner: L2/index firm 9->12, L2-L1/index firm 7->10, L3-L2/index firm 2->5 (l3-l2-rotation-theme-coverage-gap 2-of-18 -> 5-of-18; §Vocabulary-cohort subsection PROMOTED first-time at L3-L2/index). Created NO files, touched NO dep-map ROW (D1-D6's). Consistency VERIFIED against on-disk anchor-text row enumeration. count-ownership partition held across the 7-wide wave."
 ---
 

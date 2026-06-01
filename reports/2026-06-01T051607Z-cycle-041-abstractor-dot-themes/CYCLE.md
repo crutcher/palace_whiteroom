@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T051607Z
 scope: TWO adjacent thin-identity lowering themes for `dot` — L2>L1 (`dot-leaf-identity`) + L3>L2 (`dot-body-identity`)
 status: pending
 integrated_at: 2026-06-01T062913Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c1f7ea3c651e65ed212aa8500c7c8572aaa2ec92
 integration_notes: "Applied clean (staging row D4). L2-L1/dot-leaf-identity.md + L3-L2/dot-body-identity.md created firm. Slug rename dot-fold-specialization->dot-leaf-identity applied (RHS is L1/dot, an identity-leaf-edge NOT a fold-dispatch). PROMOTED the LOAD-BEARING design-fork OQ dot-l2-leaf-floor-vs-fold-only-design prominently for the batch-12 meta-phase. L2>L1 firm 7->10, L3>L2 firm 2->5."
 inputs:
   - reports/2026-06-01T051607Z-cycle-041-harvester-L2-dot/CYCLE.md (wave-1 D1 — the proposed `book/src/L2/dot.md` body; NOT yet on disk, lands this cycle's integration)

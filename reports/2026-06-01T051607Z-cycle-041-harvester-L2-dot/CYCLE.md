@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T051607Z
 scope: L2 operator: dot
 status: pending
 integrated_at: 2026-06-01T062913Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c1f7ea3c651e65ed212aa8500c7c8572aaa2ec92
 integration_notes: "Applied clean (staging row D1). book/src/L2/dot.md created firm (thin-identity-floor); SUMMARY + L2/index dep-map row. vector.hpp:246 pinpoint kept UNCHANGED (critic citation-validity warning was a -1 read-drift false positive). LOAD-BEARING design-fork dot-l2-leaf-floor-vs-fold-only-design carried to batch-12 meta-phase. L2 firm 9->12 (cohort 3-of-13)."
 inputs:
   - book/src/L1/dot.md (firm L1 leaf — authoritative on Palace surface + full L0 evidence)

@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T051607Z
 scope: TWO adjacent thin-identity lowering themes for `scal` — L2>L1 `scal-fold-specialization` + L3>L2 `scal-body-identity` (cycle-041 D6, wave-2)
 status: pending
 integrated_at: 2026-06-01T062913Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c1f7ea3c651e65ed212aa8500c7c8572aaa2ec92
 integration_notes: "Applied clean (staging row D6). L2-L1/scal-fold-specialization.md + L3-L2/scal-body-identity.md created firm. vector.cpp:207-211 pinpoint kept UNCHANGED. Non-adjacent L3>L1 scal identity stays in-line (no L3-L1/ directory). Third divergent-slug data point (scal-fold-specialization vs dot-leaf-identity) for batch-12 meta-phase. L2>L1 firm 7->10, L3>L2 firm 2->5."
 inputs:
   - reports/2026-06-01T051607Z-cycle-041-harvester-L2-scal/CYCLE.md (wave-1 D3; the source-of-truth L2 `scal` floor body — lands at integration alongside these themes)

@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T051607Z
 scope: L2>L1 + L3>L2 thin-identity nrm2 lowering themes (dispatch D5, wave-2)
 status: pending
 integrated_at: 2026-06-01T062913Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c1f7ea3c651e65ed212aa8500c7c8572aaa2ec92
 integration_notes: "Applied clean (staging row D5). L2-L1/nrm2-fold-specialization.md + L3-L2/nrm2-body-identity.md created firm. Repairer fixed edit:->new: + section-anchor §Fold-cohort-boundary->§Consumer-(NOT-an-instance). Rides the design-fork. Kept -fold-specialization slug -> SLUG-NAMING tension vs D4 dot-leaf-identity (rename-reconciliation OQ for batch-12 meta-phase). L2>L1 firm 7->10, L3>L2 firm 2->5."
 inputs:
   - reports/2026-06-01T051607Z-cycle-041-harvester-L2-nrm2/CYCLE.md (wave-1 D2 source-of-truth; proposed book/src/L2/nrm2.md body — lands at integration alongside these themes)

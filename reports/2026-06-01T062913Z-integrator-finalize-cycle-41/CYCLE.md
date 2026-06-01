@@ -12,7 +12,7 @@ reports_deferred: 0
 reports_rejected: 0
 build_exit: 0
 build_repairs: 0
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c1f7ea3c651e65ed212aa8500c7c8572aaa2ec92
 ---
 
 # cycle-041 — integrator-finalize batch record
@@ -61,7 +61,7 @@ All 7 META `overall_status: ready`. All per-report safety-net gates passed (cite
 - **retroactive-budget global**: **0** (well under the ≥4 block threshold) — all 7 rows pure additive (new files + index prose); no re-architecting of existing entries. Per-row retroactive-budget all 0. PASS.
 - **build-breakage repair**: **0** — `cargo make book` exit 0 (~90s); linkcheck2 backend green; all 9 new live links (`../L2/{dot,nrm2,scal}.md` + the 6 cross-theme links) resolve; the 9 new chapters are SUMMARY-wired. Only pre-existing KaTeX "Potential incomplete link" false-positives in `design/l4_calculus.md` (math-display `<span class="mspace">` HTML mistaken for link syntax), NONE from this cycle's files. PASS — no repair needed.
 - **commit atomicity**: single commit (artifact + scaffolding + log + book output + staging + consumed-report frontmatter). PASS.
-- **consumed-report frontmatter integrity**: 7/7 marked `integrated_at` + `integration_commit` (PLACEHOLDER_SHA two-phase patch) + `integration_notes`. PASS.
+- **consumed-report frontmatter integrity**: 7/7 marked `integrated_at` + `integration_commit` (c1f7ea3c651e65ed212aa8500c7c8572aaa2ec92 two-phase patch) + `integration_notes`. PASS.
 - **staging-completeness cross-check**: 7 staging rows == 7 dispatched-ready reports — gap did NOT recur (TWENTY-SECOND consecutive clean). PASS.
 
 ## Wave-conflict observations
