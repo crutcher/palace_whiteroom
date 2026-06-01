@@ -16,8 +16,17 @@ one-to-one — that one-to-one shape is load-bearing for the L1>L0 mutation rota
 which rewrites *each fixed-arity symbol* into its receiver-mutating / output-arg
 idiom. The `axpby-as-primitive` decision
 ([`scaffolding/decisions/axpby-as-primitive.md`](../../../scaffolding/decisions/axpby-as-primitive.md))
-correctly keeps each as a leaf (fuse, don't decompose). `linear_combination` is the
-form the four leaves fuse *up* into at L2; it does not replace them.
+keeps the fused scalar-vector update whole at L1 (fuse, don't decompose) — that decision
+governs the L1>L0 mutation rotation, where each fixed-arity symbol mirrors one L0 C++ call
+one-to-one. **At L2, `linear_combination` is the entry for this family** (vocabulary-shift
+redirect 2026-06-01, `CLAUDE.md` §Methodology invariants): the four arity forms `scal` /
+`axpy` / `axpby` / `axpbypcz` are **specialization notes under the combinator** (§"Arity
+specializations"), not standalone mirrored L2 chapters. This supersedes the cycle-018
+"the fold does not replace the leaves" framing and the batch-12 "keep leaf-floor (b)"
+ratification (`book/src/L2/index.md`): under the redirect, a same-named base-form floor
+mirrored beside the combinator is the retired rectangular pattern. The L1 leaves remain
+firm (the L1>L0 one-to-one shape is load-bearing there); what changes is L2's *entry* — the
+family speaks through the combinator at L2 and above.
 
 L2 is exactly the fusion-rotation layer (`book/src/L2/index.md`): "Kernel fusion
 across multiple algebraic operations is unfolded into composition… Batched specialized
@@ -62,14 +71,27 @@ Shape contract (bunsen-style; named axes):
   (promote all-or-none across the scalar list).
 - result — `Tensor[N]` — same length axis `N`; `zeros[N]` on the empty list.
 
-The four fixed-arity specializations (the L1 leaves as derived identities):
+### Arity specializations (the family members, as notes under the combinator)
+
+The four arity forms are list-length specializations of the combinator — **specialization
+notes, not standalone L2 chapters** (vocabulary-shift redirect). Each is the combinator at a
+fixed term-list length:
 
 ```text
-scal(α, x)                 = linear_combination [(α, x)]
-axpy(α, x, y)              = linear_combination [(α, x), (1, y)]      -- second coeff fixed to 1
-axpby(α, x, β, y)          = linear_combination [(α, x), (β, y)]
-axpbypcz(α, x, β, y, γ, z) = linear_combination [(α, x), (β, y), (γ, z)]
+scal(α, x)                 = linear_combination [(α, x)]              -- arity 1
+axpy(α, x, y)              = linear_combination [(α, x), (1, y)]      -- arity 2, second coeff fixed to 1
+axpby(α, x, β, y)          = linear_combination [(α, x), (β, y)]      -- arity 2, general
+axpbypcz(α, x, β, y, γ, z) = linear_combination [(α, x), (β, y), (γ, z)] -- arity 3
 ```
+
+These names remain useful as *readout labels* for the bounded-arity L0 call shapes (the
+L2>L1 [`linear-combination-fold-specialization`](../L2-L1/linear-combination-fold-specialization.md)
+fusion-selection theme picks the maximal fused L0 leaf per list-length). They are NOT
+separate L2 operators with their own algebra — every law below is the combinator's; the
+per-arity facts (`axpby` bilinearity, `axpbypcz` trilinearity, etc.) are the multilinearity
+law (law 3) read at a fixed list length. The L1 leaf chapters (`book/src/L1/{scal,axpy,axpby,axpbypcz}.md`)
+stay firm — they carry the L1>L0 one-to-one symbol shape; the *L2* family entry is this
+combinator.
 
 The L2 form differs from the L1 leaves in **resolution**, along the arity axis: L1
 sees four distinct fixed-arity operators (mirroring Palace's four L0 symbols); L2 sees
@@ -190,11 +212,15 @@ Laws that explicitly **do not** hold:
 
 ## Dependencies
 
-- L1 fixed-arity specializations (the fold's leaves, recovered at each list length):
+- L1 fixed-arity specializations (the family members, recovered at each list length):
   [`scal`](../L1/scal.md) (arity 1), [`axpy`](../L1/axpy.md) (arity 2, second coeff 1),
   [`axpby`](../L1/axpby.md) (arity 2), [`axpbypcz`](../L1/axpbypcz.md) (arity 3). These
-  stay firm L1 leaves — `linear_combination` is the form they fuse up into, not a
-  replacement; the `axpby-as-primitive` decision keeps them as leaves.
+  stay firm **L1** leaves (the L1>L0 one-to-one symbol shape is load-bearing for the
+  mutation rotation; `axpby-as-primitive` keeps them fused there). **At L2 and above the
+  family speaks through this combinator** — the separate L2 `scal`/`axpy`/`axpby`/`axpbypcz`
+  chapters are scheduled to collapse into the §"Arity specializations" notes above
+  (cycle-050 refactor; see the replace-and-propagate map in
+  `reports/2026-06-01T190900Z-combinator-miner-refactor-pass-linear-combination-family/CYCLE.md`).
 - Concepts: [`scalar-promotion`](../concepts/scalar-promotion.md) — the element-type
   axis (`real ⊑ complex`), the concept-page-level sibling of this arity-axis unification;
   inherited unchanged, including its open upstream dependency (closure depends on the L1
@@ -263,10 +289,14 @@ collective), whereas `linear_combination` is element-local in `N` and folds over
 term list. Its laws are symmetry / Hermitian-symmetry / positive-semi-definiteness, which
 have no analogue here. The target is a small **algebra of folds** — a tensor-producing
 linear-combination fold AND a scalar-producing inner-product fold — not one
-mega-combinator. A sibling `inner_product` L2 fold capturing `dot` / `tdot` as
-conjugation-convention variants is a separate candidate, tracked under OQ
-`inner-product-fold-sibling-candidate` (the axis there is conjugation-convention, not
-arity). It is deliberately NOT merged into `linear_combination`.
+mega-combinator. The sibling [`inner_product`](./inner_product.md) L2 fold (firm cycle-019) captures `dot` /
+`tdot` as conjugation-convention variants (the axis there is conjugation-convention, not
+arity). It is deliberately **NOT merged** into `linear_combination`: same operand shape
+`(Tensor[N], Tensor[N])`-ish, but a different codomain (`Scalar` vs `Tensor[N]`) and a
+different combining step (zip-and-reduce-over-`N` vs scale-and-accumulate-over-the-term-list).
+The do-NOT-merge boundary is load-bearing and symmetric — recorded here and in
+[`inner_product`](./inner_product.md) §"Sibling fold". The two are the small algebra of
+folds (one tensor-producing, one scalar-producing), not one mega-combinator.
 
 ## Status
 

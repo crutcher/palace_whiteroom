@@ -1,24 +1,44 @@
 # inner_product
 
-The conjugation-convention-family unification of the BLAS-1 reduce-to-scalar
-inner-product cohort: the L1 leaves [`dot`](../L1/dot.md) (Hermitian),
-`tdot` (the unconjugated bilinear variant, co-defined in [`dot`](../L1/dot.md)),
-and the matrix-weighted member [`bilinear-form`](../L1/bilinear-form.md)
-(`xᴴ M y`) are the conjugation / element-type / weight-presence specializations
-of a single **reduce-to-scalar fold** over the length axis. The fusion-rotation
-form: Palace's distinct reduction call shapes (`ComplexVector::Dot` /
-`TransposeDot`, `linalg::LocalDot` over real and complex, `linalg::Dot(comm,x,A,y)`
-for the weighted member — each a Hypre-kernel + MPI-tree-reduce fusion choice) are
-unfolded into the canonical `foldl (+) zero (zipWith kernel x y)`, with the pinned
-reduction tree de-fused into the fold's seed-and-accumulate.
+**`inner_product` is the L2 entry for the reduce-to-scalar inner-product family**
+— the combinator IS the inner product at this layer. The conjugation /
+element-type / weight specializations Palace exposes — the Hermitian `dot`, the
+unconjugated bilinear `tdot`, the matrix-weighted `xᴴ M y` (`inner_product_M`) — are
+**specialization notes under this entry** (§"Specializations"), not separate
+co-equal chapters: they are this one **reduce-to-scalar fold** over the length axis
+read at fixed axis-values. The fusion-rotation form: Palace's distinct reduction
+call shapes (`ComplexVector::Dot` / `TransposeDot`, `linalg::LocalDot` over real and
+complex, `linalg::Dot(comm,x,A,y)` for the weighted member — each a Hypre-kernel +
+MPI-tree-reduce fusion choice) are unfolded into the canonical
+`foldl (+) zero (zipWith kernel x y)`, with the pinned reduction tree de-fused into
+the fold's seed-and-accumulate.
+
+> **Vocabulary-shift redirect (2026-06-01) — combinator-as-entry inversion.** This
+> entry was authored cycle-019 under the retired mine-and-strand regime, which stated
+> `inner_product` was "the form they fuse *up* into, not a replacement" and stood it
+> *beside* same-named L2 leaf chapters (`L2/dot`). Per the redirect (replace-and-
+> propagate, not mine-and-strand; `METHODOLOGY-REDIRECT.md` §4-§5), the combinator is
+> now the **layer's primary entry** and the members are specialization notes under it.
+> The standalone `L2/dot.md` leaf-floor is collapsed into a §"Specializations" note
+> (cycle-050 enactment — see combinator-miner refactor-pass report); the degenerate
+> `L3-L2/dot-body-identity` + `L2-L1/dot-leaf-identity` identity-in-named-terms themes
+> are demoted to in-line notes (they are vocabulary-failed-to-shift smells, not
+> translations). The combinator propagates **up** to a new `L3/inner_product` entry
+> (cycle-050) through which the L3 leaf cohort re-expresses, rather than each L3 leaf
+> re-deriving a base form. `nrm2` is **not** a member — it is a `√ ∘ abs ∘
+> inner_product` **consumer** (§"Consumer (NOT an instance)").
 
 ## Context
 
 At L1, the inner-product leaves mirror Palace's L0 reduction surface: `dot`/`tdot`
 share [`dot`](../L1/dot.md) (the conjugation axis at one chapter), and the
 M-weighted reduction is the separate leaf [`bilinear-form`](../L1/bilinear-form.md).
-Those leaves stay firm L1 — `inner_product` is the form they fuse *up* into at L2;
-it does not replace them.
+Those leaves stay firm at **L1** (the mutation-rotation layer, where each mirrors one
+Palace L0 call surface one-to-one). **At L2, `inner_product` is the entry** — it does
+not stand beside same-named L2 leaf chapters; the conjugation / weight specializations
+are read off it at fixed axis-values (§"Specializations"). The L1→L2 step IS the
+vocabulary shift the redirect calls for: L1's three separate call-shaped leaves become
+one L2 fold parameterized by the conjugation/element-type/weight axes.
 
 L2 is the fusion-rotation layer (`book/src/L2/index.md`): "Batched specialized BLAS
 calls are written as compositions of base primitives… Kernel fusion across multiple
@@ -134,19 +154,35 @@ Per-element kernel (the conjugation × element-type axes):
 | `complex` | `inner_product` | `conj(x[i]) · y[i]`      | Hermitian sesquilinear (arg-1 conjugated) |
 | `complex` | `tdot`          | `x[i] · y[i]`            | unconjugated bilinear (see § "tdot") |
 
-The three L1 leaves recovered as specializations along the family axes:
+## Specializations (the members, as notes under the combinator)
+
+The members are **not separate L2 chapters** — they are this fold read at fixed
+axis-values. Each row is the combinator with one axis pinned; there is no co-equal
+`L2/dot` / `L2/bilinear-form` floor beside this entry (the standalone `L2/dot.md` is
+collapsed into this note per the 2026-06-01 redirect; `bilinear-form` never had a
+standalone L2 chapter — it lives only as the L1 leaf and as the weighted member here):
 
 ```text
-dot(x, y)              = inner_product x y                       -- Hermitian (complex) / symmetric (real)
-tdot(x, y)             = inner_product x y  with unconjugated kernel  -- complex-only, see § "tdot"
-bilinear_form(x, M, y) = inner_product_M x M y                   -- M-weighted member
+dot(x, y)              = inner_product x y                          -- Hermitian (complex) / symmetric (real); conjugated kernel, M = I
+tdot(x, y)             = inner_product x y  with unconjugated kernel -- complex-only specialization, see § "tdot"
+bilinear_form(x, M, y) = inner_product_M x M y                      -- M-weighted member: weight axis = general M
 ```
 
-The L2 form differs from the L1 leaves in **resolution**, along the
+- **`dot`** — the conjugation axis at value *Hermitian* (complex) / *symmetric* (real),
+  with `M = I`. This is the workhorse specialization (CG coefficients, orthogonalization,
+  NLEPS). Its L1 leaf [`dot`](../L1/dot.md) stays firm; at L2 there is no separate `dot`
+  entry — it is this note.
+- **`tdot`** — the conjugation axis at value *unconjugated bilinear* (complex-only). Co-
+  defined with `dot` at L1; carried here with the type-API-surface-only caveat (§"tdot").
+- **`bilinear_form`** — the weight axis at value *general / SPD `M`* (`inner_product_M`),
+  realized as the pre-application `inner_product (apply_linop M x) y`. Its L1 leaf is
+  [`bilinear-form`](../L1/bilinear-form.md) (rough-in).
+
+The L2 entry differs from the L1 leaves in **resolution**, along the
 conjugation-convention / weight-presence axes: L1 sees `dot`/`tdot` (the conjugation
 axis at one chapter) and `bilinear-form` (the separate M-weighted chapter); L2 sees one
-fold whose `kernel` and optional pre-`apply_linop M` recover each leaf. The element-type
-sub-axis is identical to the leaves' (inherited, not re-derived).
+fold whose `kernel` and optional pre-`apply_linop M` recover each member as a note. The
+element-type sub-axis is identical to the leaves' (inherited, not re-derived).
 
 ## Semantics
 
@@ -289,11 +325,12 @@ structural claim it is a family member is firm; only its *behavioral* weight is 
 
 ## Dependencies
 
-- L1 leaves it fuses up from (recovered as family-axis specializations):
-  [`dot`](../L1/dot.md) (the Hermitian / symmetric member, and `tdot` the unconjugated
-  member, co-defined there), [`bilinear-form`](../L1/bilinear-form.md) (the M-weighted
-  member). These stay firm/rough-in L1 leaves — `inner_product` is the form they fuse up
-  into, not a replacement.
+- L1 leaves the specializations rest on (each member is this fold at a fixed axis-value —
+  see §"Specializations"): [`dot`](../L1/dot.md) (the Hermitian / symmetric member, and
+  `tdot` the unconjugated member, co-defined there), [`bilinear-form`](../L1/bilinear-form.md)
+  (the M-weighted member). These stay firm/rough-in **L1** leaves (the mutation-rotation
+  layer, one per Palace L0 call surface); at **L2** `inner_product` is the single entry and
+  they are specialization notes under it — there is no separate same-named L2 leaf chapter.
 - L2-composition (weighted member): [`apply_linop`](../L1/apply_linop.md) — `M` applied
   to the linear (arg-1) operand before the plain fold (`inner_product_M x M y =
   inner_product (apply_linop M x) y`).
@@ -382,10 +419,13 @@ tensor** scalar-weighted sum, NOT a reduce-to-scalar inner product. The boundary
   which have no analogue for `linear_combination`; `linear_combination` has multilinearity
   in the scalar list, which has no analogue here.
 
-The target is a small **algebra of folds** — a scalar-producing inner-product fold AND a
-tensor-producing linear-combination fold — not one mega-combinator. They are deliberately
-NOT merged. (`linear_combination` records the reciprocal boundary at
-[`linear_combination`](./linear_combination.md) §"Sibling fold: dot is not subsumed".)
+The target is a small **algebra of fold combinators** — a scalar-producing inner-product
+combinator (this entry) AND a tensor-producing linear-combination combinator (the D1
+sibling entry) — each the **primary L2 entry for its family**, not one mega-combinator and
+not a leaf-floor lattice. They are deliberately NOT merged. (`linear_combination` records
+the reciprocal boundary at its own §"Sibling fold: dot is not subsumed" — that entry is
+D1's refactor scope this batch; this note is the `inner_product`-side half of the
+two-combinator boundary and is edited here only.)
 
 ## Consumer (NOT an instance): nrm2 / matrix-weighted-norm
 
@@ -421,6 +461,19 @@ explicit IEEE non-law per the load-bearing-numerical-trick discipline. The
 combinator-miner same-shape rough-in cleared the ≥3-instance bar (dot + tdot +
 bilinear-form), and the parametric-family mode independently characterized the cohort
 (combinator-miner:2026-05-29T023000Z) with the fold-law membership test + axis taxonomy.
+
+**Combinator-as-entry inversion (combinator-miner refactor-pass, cycle-049, D2).** Under
+the 2026-06-01 vocabulary-shift redirect this entry was inverted from mine-and-strand
+(combinator beside same-named L2 leaf chapters) to **combinator-as-entry**: the lede,
+§Context, §"Specializations" (formerly the §Signature "recovered as specializations"
+block), and §Dependencies now state the combinator IS the L2 inner-product entry and the
+members (`dot`/`tdot`/`bilinear_form`) are specialization notes under it. The standalone
+`L2/dot.md` leaf-floor collapse + the `L3/inner_product` upward propagation + the
+`L3-L2/dot-body-identity` / `L2-L1/dot-leaf-identity` smell-theme demotions are the
+cycle-050 enactment (mapped in the refactor-pass report). The combinator's own substantive
+lowering [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md)
+is a GENUINE translation (conjugation/element-type/weight dispatch + the value-level
+`xᴴ y` ↔ `yᴴ x` re-order) and is KEPT (re-audited cycle-049, D2).
 
 > **Member-level caveat (not a status reduction).** `tdot` is carried as the unconjugated
 > conjugation-axis value with a **type-API-surface-only** evidentiary note: it has zero
