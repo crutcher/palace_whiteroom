@@ -377,8 +377,12 @@ Complements the c027 cycle-planner §Discipline bullets (verify-candidate-is-gen
 slug: deleted-slug-inbound-live-link-sweep
 proposer: critic
 proposed_at: 2026-06-01
-status: proposed
+status: promoted
+promoted_at: cycle-051 (batch-15 meta-phase)
+promoted_to: skills/deleted-slug-inbound-live-link-sweep/SKILL.md
 ---
+
+**PROMOTED cycle-051 (batch-15 meta-phase, default-accept under low bar).** Promotion bar met three ways: (1) pattern observed ≥2 cycles (c050 + c051 both exercised the inbound-sweep / de-link heavily); (2) the sketch was concrete enough to write as SKILL.md directly; (3) friction-ledger entry `multi-deletion-cross-dispatch-dangling-link-coordination` (recurrence-2, addressed) exists for the exact pattern. The skill formalizes the enumerate-then-check inbound-grep + the (i)/(ii) exempt-set subtraction + the KEPT-sibling exclusion + the cross-dispatch dies-with-file rule + the N-dispatch distinct-substring line co-edit. The next multi-deletion cycle is the batch-16 leaf-CHAPTER disposition enactment — the skill is the steady-state expectation there.
 
 ### deleted-slug-inbound-live-link-sweep
 
