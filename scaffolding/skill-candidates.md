@@ -367,7 +367,7 @@ Complements the c027 cycle-planner §Discipline bullets (verify-candidate-is-gen
 ## verify-slug-rename-completeness
 
 - **proposed_by**: critic (cycle-043 lifter-consolidated-sweep verification)
-- **status**: proposed
+- **status**: promoted (cycle-045 meta-phase, batch-13 — `skills/verify-slug-rename-completeness/SKILL.md`; default-accept under low-bar, concrete sketch + the c043 D1 sweep is the working precedent; companion to `audit-slug-meaning-before-coordinated-cross-report-rename` (premise) — this is the completeness/collision-safety half)
 
 **Motivating observation**: the cycle-043 consolidated sweep renamed three theme slugs (`nrm2-fold-specialization`→`nrm2-leaf-identity`, `scal-fold-specialization`→`scal-leaf-identity`, `elementwise_product-body-identity`→`elementwise-product-body-identity`) across ~15 files. The load-bearing risk for any rename is a dangling old-slug reference surviving the apply as a `linkcheck2` build break. The lifter hand-rolled a grep inventory ("36 occurrences") and the critic had to independently re-run `grep -rn` for all three old slugs and map every occurrence to a report edit to clear cross-reference-integrity — distinguishing path-based links (`[...](./...-old.md)`, hard build breaks if missed) from prose slug-mentions (soft), and confirming the THREE same-suffix-but-NOT-renamed sibling themes (`inner-product-`/`linear-combination-`/`gram-fold-specialization`) were neither swept by accident nor left referencing a renamed target. This grep-map-confirm procedure is repeatable and error-prone enough to crystallize.
 
