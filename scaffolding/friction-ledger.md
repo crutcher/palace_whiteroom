@@ -1634,9 +1634,9 @@ addressed_by: cycle-033 meta-phase (batch-9) — (a) CLAUDE.md §Methodology inv
 ---
 slug: parallel-blind-shared-index-count-divergence
 first_observed: cycle-037
-last_observed: cycle-039
+last_observed: cycle-042
 recurrence_count: 3
-status: addressed
+status: addressed (batch-12 confirmation window CLEAN at 7-wide + 11-wide)
 addressed_by: cycle-039 meta-phase (batch-11) — (a) D3-count-ownership convention codified as a cycle-planner dispatch-design §Discipline bullet (when ≥2 parallel dispatches touch a shared running-count / tally in a layer index, assign ONE owner and instruct the other dispatches to skip the tally and emit only their own non-count rows); (b) matching producer-side note in harvester + layer-intro-author role specs (do not write the consolidated index tally when another co-dispatched agent owns it this cycle). The c039 cycle (D3 layer-intro-author sole-owns the L3/index Working-Notes tally; D1 harvester appends only its dep-map row) is the working precedent.
 ---
 ```
@@ -1655,3 +1655,24 @@ addressed_by: cycle-039 meta-phase (batch-11) — (a) D3-count-ownership convent
 **Why role-spec convention (Medium-cascade), not a structural change.** The divergence was always cheaply reconciled by the finalize (no artifact damage, just a reconciliation step), and the c039 partition demonstrably eliminated it at near-zero cost (one sentence of dispatch-design + a producer skip-instruction). This is the minimal fix — it does not change the cycle structure or add a gate; it just assigns single-ownership of a shared aggregate, the standard concurrency fix. Genuine recurrence (c037 + c038 divergence) with a demonstrated clean fix (c039) clears the codification bar.
 
 **Watch.** Confirm batch-12+ multi-parallel-landing cycles carry the count-ownership partition (the planner assigns ONE tally owner). If a cohort still produces divergent blind counts despite the bullet (recurrence-4), consider making the index running-count a finalize-computed field (the finalize already reconciles it — formalizing it as "the finalize owns the tally, producers never write it" would remove the convention's reliance on the planner remembering to partition).
+
+**Batch-12 confirmation (cycle-042 meta-phase — recurrence did NOT fire; watch trigger satisfied POSITIVELY).** The convention held cleanly across the **two broadest index-touching waves to date**: cycle-041 (7-wide: D1–D6 each touched only their own dep-map/SUMMARY rows, D7 layer-intro-author sole-owned the three consolidated `L2/index.md` + `L2-L1/index.md` + `L3-L2/index.md` tallies) and cycle-042 (11-wide: D2–D10 own only their own rows, D11 sole-owned the consolidated count + re-homed two orphaned §Vocabulary bullets). Both finalize reports recorded the divergence was AVOIDED (c038-style blind-count reconciliation did NOT recur) and flagged the partition as a strong codification data point. The convention scales to 11-wide; recurrence stays at 3 (no new divergence). The finalize-owns-the-tally structural fallback stays unenacted (NO-GO — the planner-partition is sufficient at 11-wide; revisit only on a recurrence-4 despite the partition). Effectively `resolved` pending the 10-cycle no-recurrence window.
+
+---
+
+```yaml
+---
+slug: co-dispatched-harvesters-reach-contradictory-design-conclusions
+first_observed: cycle-041
+last_observed: cycle-041
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-042 meta-phase (batch-12) — adjudicated the leaf-vs-fold design fork `dot-l2-leaf-floor-vs-fold-only-design` (RATIFIED the (b) leaf-floor reading cohort-wide as a standing convention into priorities.md §Methodology; the fork OQ closed; the held axpy-family unblocked). The cycle-042 dedicated `same-layer-cross-cutter` audit was the resolution mechanism: a cross-cutter dispatch to supply the count-delta + distinctness evidence the meta-phase then adjudicates.
+---
+```
+
+**Pattern (two parallel same-cohort harvesters reach OPPOSITE conclusions about a shared design question).** In cycle-041, two co-dispatched L2-floor harvesters — D1 (`dot`) and D2 (`nrm2`) — reached contradictory conclusions about whether `L2/dot` should exist as a standalone same-named chapter at all: D1 built it as a leaf-floor of `inner_product`; D2 argued the L2 inner-product surface should be the fold ONLY, with no `dot` leaf. The contradiction was upstream of the whole cycle-041 cohort + its six themes (all built under the D1 (b) reading). This is distinct from the `wave-conflict-philosophy-scales` row-level *edit* conflict (benign, anchor-distinct) and from `parallel-blind-shared-index-count-divergence` (a derived-aggregate write conflict): here the conflict is a genuine **design disagreement** about whether an artifact should exist, which only a methodology adjudicator (the meta-phase) can settle.
+
+**Resolution mechanism (the working precedent — recommended for future design forks).** Rather than the meta-phase adjudicating from cold prose, the cycle-042 planner steered around the fork by (i) advancing only the **fork-INDEPENDENT** slice of the cohort (the 5 standalone floors with no fold-parent) and (ii) dispatching a dedicated `same-layer-cross-cutter` AUDIT (`reports/2026-06-01T063231Z-cycle-042-cross-cutter-leaf-vs-fold-audit/CYCLE.md`) to produce the count-delta table + distinctness verdict + asymmetry carve-out as explicit meta-phase INPUT. The meta-phase then ratified with strong evidence in hand. **The pattern to carry forward: when two co-dispatched producers reach a contradictory design conclusion, the next planner HOLDS the fork-exposed work, advances the fork-independent slice, and tees up a dedicated cross-cutter audit as the meta-phase adjudication evidence** — the same shape as the `partly-constructive` lowering-verifier-unblocks-then-harvester-enacts split. No role-spec edit warranted at recurrence-1 (the cycle-042 planner already executed this organically); recorded as the working precedent.
+
+**Watch.** If a future cycle's co-dispatched producers reach a contradictory design conclusion AND the planner does NOT hold + audit (just lands one reading blind), escalate to recurrence-2 and consider a cycle-planner §Discipline bullet ("when two same-cohort dispatches could reach opposite design conclusions, hold the fork-exposed work and dispatch a cross-cutter audit before treating either reading as final").
