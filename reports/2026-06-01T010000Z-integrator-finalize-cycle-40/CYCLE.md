@@ -11,7 +11,7 @@ reports_deferred: 0
 reports_rejected: 0
 build_exit: 0
 build_repairs: 0
-commit: PLACEHOLDER_SHA
+commit: 26b58f6
 ---
 
 # CYCLE-040 batch integration record (integrator-finalize)
@@ -54,7 +54,7 @@ commit: PLACEHOLDER_SHA
 - **retroactive-budget global**: 0 (cross-report aggregate; ≥4 = block — well clear). All rows pure additive / citation-tighten.
 - **build-breakage repair**: 0. `cargo make book` exit 0; linkcheck2 backend clean (no dead links, no "does not exist"); the `[orthogonalize](./orthogonalize.md)` index link + new chapter + SUMMARY entry all resolve (`book/book/html/L3/orthogonalize.html` built). Only pre-existing KaTeX "Potential incomplete link" false-positives (set-builder math), NONE from this cycle's files.
 - **commit atomicity**: single commit (artifact + scaffolding + log + book output + staging + consumed-report frontmatter).
-- **consumed-report frontmatter integrity**: 3/3 marked; PLACEHOLDER_SHA two-phase patch applied (cycle-004/005 canonical).
+- **consumed-report frontmatter integrity**: 3/3 marked; 26b58f6 two-phase patch applied (cycle-004/005 canonical).
 - **staging-completeness cross-check**: 3 staging rows == 3 dispatched-ready reports — gap did NOT recur (TWENTY-FIRST consecutive). The staging log was authoritative this cycle; no working-tree reconciliation needed.
 - **per-report gate hits (from staging rows)**: all 0 (citecheck bounds + path-hygiene, fence parity, SUMMARY wiring, index-placeholder, implied-component-stub, retroactive, cross-reference-integrity) across D1/D2/D3.
 

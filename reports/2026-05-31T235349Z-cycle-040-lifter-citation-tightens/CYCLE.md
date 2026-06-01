@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T235349Z
 scope: L1>L0 opportunistic citation-range tightens (×2, disjoint files) — floquet M-block comment :25-26→:25 + chebyshev dead-transpose-kernel :101-110→:102-110
 status: integrated
 integrated_at: 2026-06-01T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 26b58f6
 integration_notes: "Applied clean (D3/3, cycle-040). 2 pure citation-range tightens on firm L1>L0 themes, disjoint files: floquet-correction-mutation-rotation M-block :25-26->:25 (2 edits, drops stale 'theme body line 229' ref + MINOR over-extension flag); chebyshev-smoother-mutation-rotation dead-transpose-kernel :101-110->:102-110 at 3 occurrences (sibling :147-155 untouched). Status firm preserved on both — no structural/signature/status change. Both re-confirmed via citecheck --anchor against reference/. DISCHARGED 2 OQs (closes c038 D4 + c035 D1). No codemap drift."
 inputs:
   - book/src/L1-L0/floquet-correction-mutation-rotation.md

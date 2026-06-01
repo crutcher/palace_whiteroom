@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T235349Z
 scope: L3 operator: orthogonalize
 status: integrated
 integrated_at: 2026-06-01T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 26b58f6
 integration_notes: "Applied clean (D1/3, cycle-040). Created book/src/L3/orthogonalize.md — THIRD L3 partial-obstruction + FIRST substantive (B)-cohort member of the c036 D2 audit; variant-conditional obstruction (MGS sequential inner-loop, CGS/CGS2 lift). SUMMARY-registered + L3/index dep-map row (D1 wrote ONLY its row; D2 owns the 2->3 tally per the count-ownership convention). citecheck --scan 36 ok/0 failing; 16 in-chapter live links resolve; L4/orthogonalize.md is a code-span only (no stub needed). Opened 2 OQs. Build clean, linkcheck2 backend clean, zero build-repairs."
 inputs:
   - cycle-040 plan D1 (substantive (B) iteration-rotation backfill — third L3 partial-obstruction)

@@ -4,7 +4,7 @@ invoked_at: 2026-05-31T235349Z
 scope: L3 index refresh — §Semantics-overlay taxonomy + §Working-Notes consolidated count tally (cycle-040 D2; SOLE OWNER of the L3/index count this cycle)
 status: integrated
 integrated_at: 2026-06-01T010000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 26b58f6
 integration_notes: "Applied clean (D2/3, cycle-040). 4 surgical edits to book/src/L3/index.md — §Semantics-overlay shape (e) orthogonalize variant-conditional + fused-composite-obstruction-free (normalize) fold; c024/c037 snapshot relabels SUPERSEDED; c039 bullet rewrite + NEW cycle-040 authoritative tally 15 firm + 3 partial-obstruction. SOLE count-owner; internal consistency VERIFIED across dep-map / §Working-Notes / §Semantics-overlay (partial-obstruction rows chebyshev/eigsolve/orthogonalize). DISCHARGED 2 OQs. count-ownership partition held cleanly, no parallel-blind divergence."
 inputs:
   - book/src/L3/index.md (current state — 15 firm + 2 partial-obstruction, four obstruction shapes (a)/(b)/(c)/(d))
