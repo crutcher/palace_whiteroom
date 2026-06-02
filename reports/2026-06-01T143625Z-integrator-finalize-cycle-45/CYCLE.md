@@ -54,7 +54,7 @@ The **cycles-041–045 L2-floor + L3>L2-rotation foundation campaign** (2026-05-
 - `scaffolding/open-questions.md` — 4 OQs appended by the per-report integrators (during their phase).
 - `scaffolding/priorities.md` — touched by the cycle-planner during its phase.
 - `log/cycle-045.md` (layered-era entry prepended above the legacy slice-vertical-era entry) + `log/README.md` (index entry prepended).
-- 3 consumed reports' frontmatter — `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes` (SHA patched two-phase post-commit).
+- 3 consumed reports' frontmatter — `integrated_at` + `integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b` + `integration_notes` (SHA patched two-phase post-commit).
 
 ## Safety-net gate results (aggregated)
 

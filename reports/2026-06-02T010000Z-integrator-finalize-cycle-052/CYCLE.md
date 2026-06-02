@@ -50,7 +50,7 @@ All 6 dispatched-ready reports applied clean (6/6 staging rows == dispatched-rea
 - **retroactive-budget global**: 0 (well under the ≥4 block threshold). No cross-report aggregation block.
 - **build-breakage**: none — `cargo make book` exit 0 (~90.4s). NO build-repair needed.
 - **commit atomicity**: single commit (artifact + scaffolding + log + book output + staging log + consumed-report frontmatter touches) + the two-phase SHA patch follow-up.
-- **consumed-report frontmatter integrity**: all 6 marked `integrated_at: 2026-06-02T010000Z` + `integration_commit` (PLACEHOLDER_SHA → patched) + `integration_notes`.
+- **consumed-report frontmatter integrity**: all 6 marked `integrated_at: 2026-06-02T010000Z` + `integration_commit` (e9bbbbf9fcee8786ad94305a482f6835d2e0f40b → patched) + `integration_notes`.
 - **per-report gates (from staging)**: old-body-survives-below-stub 0 ×12; member-vs-consumer-distinction PASS (nrm2=consumer, dot=specialization); fence-parity 0; dangling-link (12 reduced slugs) 0 (files KEPT → inbound links stay live by construction); count-integrity-no-delta VERIFIED (L2 22 dep-map rows UNCHANGED); load-bearing-unique-anchor retention PASS.
 
 ## Build status

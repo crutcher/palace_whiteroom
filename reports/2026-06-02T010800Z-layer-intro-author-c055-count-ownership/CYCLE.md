@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T010800Z
 scope: cycle-055 (batch-17) consolidated-count owner — L4/index, L4-L3/index, L1/index tallies + cohort/frontier narratives
 status: integrated
 integrated_at: 2026-06-02T034000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b
 integration_notes: "D7 cycle-055, PARTIALLY-APPLIED per dispatch. Applied edit #1 (L4/index rough-in tally 0→1 for solve_family, L4 firm STAYS 6, retired stale near-exhausted-frontier prose) + edit #3 (L1/index FE-cohort header flip all-3-firm + grand total 27→29). Edit #2 (L4-L3 tally) deliberately SKIPPED — superseded by D8 (it had trusted the stale L4-L3 table). Discretionary producer-bullet dedup (did not re-emit the 3 FE bullets already on disk at :72-74). The repairer's needs-revision on edit #2 was the correct catch."
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T01:14:53Z
 scope: L1>L0 theme re-anchor — fe-operator-assemble-mutation-rotation (citation-drift cleanup + LHS re-anchor to firm fe_assemble)
 status: integrated
 integrated_at: 2026-06-02T034000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b
 integration_notes: "D6 cycle-055. Applied clean — 8 surgical re-anchor edits to book/src/L1-L0/fe-operator-assemble-mutation-rotation.md: LHS → firm fe_assemble live link; citation drift :73-75/:93-95 → :77/:97 (AddSubOperator) + :75-76 (the one integ->Assemble site). Theme STAYS rough-in pending the eliminate_* elimination-leg re-anchors (future lifter). No SUMMARY/index/count touched."
 inputs:
   - book/src/L1-L0/fe-operator-assemble-mutation-rotation.md

@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T010700Z
 scope: L1 operator: eliminate_rhs
 status: integrated
 integrated_at: 2026-06-02T034000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b
 integration_notes: "D3 cycle-055. Applied clean — new book/src/L1/eliminate_rhs.md (firm L1, b'=b−K·x_bc, essential rows pinned per diagonal policy; firm-on-positive-structure, separable post-composition after fe_assemble) + L1/index :74 bullet rough-in→firm + dep-map row + SUMMARY. L1 firm 27→28 (with D4 → 29). Repairer pre-applied :248→:247 witness-drift + orphan-fence fixes."
 inputs:
   - dispatch D3 cycle-055 (batch-17, VOCABULARY-SHIFT REDIRECT 2026-06-01)

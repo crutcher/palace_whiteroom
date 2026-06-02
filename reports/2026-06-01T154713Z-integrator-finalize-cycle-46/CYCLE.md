@@ -49,7 +49,7 @@ Of the 3 dispatches, **only D2 mutated `book/`** — `book/src/concepts/erasure-
 - `scaffolding/integrator-signals.md` — cycle-046 section prepended (all 6 subsections; the L4-frontier pick list + the 2-gap L2>L1 census + the planner-undercount cross-check data point handed to cycle-047).
 - `scaffolding/open-questions.md` — 8 OQs appended by the per-report integrators during their phase (D1: 4 L4-frontier slugs; D2: 2 [1 CLOSED decision-of-record + 1 open caveat]; D3: 4 [2 gap candidates + 1 planner-undercount data point + 1 CLOSED caveat]).
 - `log/cycle-046.md` (layered-era entry prepended above the legacy 2026-05-25 slice-vertical-era entry) + `log/README.md` (index entry prepended, newest-first).
-- 3 consumed reports' frontmatter — `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes` (SHA patched two-phase post-commit).
+- 3 consumed reports' frontmatter — `integrated_at` + `integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b` + `integration_notes` (SHA patched two-phase post-commit).
 
 **priorities.md (the plan) — NOT reshaped by integrator-finalize** (co-owned by cycle-planner + meta-phase). The `erasure-scope-taxonomy-concept-page` active-head item LANDED this cycle but is left for the cycle-047 cycle-planner to strike + reshape the CYCLE-046 active head into a cycle-047 head. Noted in the cycle log + signals.
 

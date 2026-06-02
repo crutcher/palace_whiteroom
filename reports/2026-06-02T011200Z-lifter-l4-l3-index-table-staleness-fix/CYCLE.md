@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T011200Z
 scope: L4>L3 index theme-table staleness-fix — 3 stale status cells (krylov/gmres/fgmres) + consolidated 6→7 firm tally reconcile (supersedes D7 edit #2)
 status: integrated
 integrated_at: 2026-06-02T034000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b
 integration_notes: "D8 cycle-055, corrective lifter for the needs-revision D7 edit #2 flagged. Applied clean — fixed 3 STALE L4-L3 index-table status cells (krylov-step firm c008, gmres firm c020 + slug→live link, fgmres firm c021 — all firm-on-disk but table-stale) + appended the corrected consolidated tally 6→7. Table now consistent at 7 firm; D7's l4-l3-fgmres-firmness-prose-vs-table-divergence OQ RESOLVED (prose was right, table was stale). Root-cause OQ index-table-status-cell-drifts-when-theme-file-promoted routed to batch-17 meta-phase."
 inputs:
   - book/src/L4-L3/index.md

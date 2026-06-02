@@ -41,7 +41,7 @@ Cycle-036 was a **substantive frontier-broadening + audit-settling cycle**: 2 of
 - **Edited concept page (1)**: `book/src/concepts/nested-constructed-operator-gate.md` (firm-instances 2→3 + second three-deep transitive chain + §Latent-site refinement + §See-also; path-hygiene auto-fix applied 2 sites).
 - **Edited scaffolding (3)**: `scaffolding/roadmap.md` (Driven row + Current measurable counts narrative footnote), `scaffolding/cycle-record.jsonl` (1 new line), `scaffolding/integrator-signals.md` (cycle-036 section prepended), `scaffolding/priorities.md` (Now active head + Backlog migration), `scaffolding/open-questions.md` (3 NEW OQs + 2 closed via per-report-integrator).
 - **Log (2)**: `log/cycle-036.md` (modern format, supersedes the renamed `log/cycle-036-legacy.md`), `log/README.md` (cycle-036 index entry prepended).
-- **Per-consumed-report frontmatter (2)**: `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes` on both consumed reports (SHA patched in a follow-up commit per the two-phase pattern).
+- **Per-consumed-report frontmatter (2)**: `integrated_at` + `integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b` + `integration_notes` on both consumed reports (SHA patched in a follow-up commit per the two-phase pattern).
 - **Staging log retained**: `reports/cycle-036-integrator-staging/STAGING.md` (2 rows).
 
 ## Safety-net gate results (aggregated across the cycle)

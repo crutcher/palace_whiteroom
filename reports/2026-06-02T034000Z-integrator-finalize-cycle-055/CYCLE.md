@@ -6,7 +6,7 @@ status: complete
 cycle_id: cycle-055
 meta_batch: batch-17
 meta_batch_position: 1
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b
 ---
 
 # cycle-055 — integrator-finalize batch report
@@ -44,7 +44,7 @@ integration_commit: PLACEHOLDER_SHA
 - **retroactive-budget global ≥4:** NOT hit — all 8 rows report 0 per-slice + 0 global. PASS.
 - **build-breakage repair:** one surgical repair (leaked tool-invocation tags). PASS (`cargo make book` exit 0 post-repair).
 - **commit atomicity:** single commit (below). PASS.
-- **consumed-report frontmatter integrity:** all 8 marked `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes`. PASS.
+- **consumed-report frontmatter integrity:** all 8 marked `integrated_at` + `integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b` + `integration_notes`. PASS.
 - **staging-row vs dispatched-ready cross-check:** 8 rows == 8 dispatched-ready. PASS (no staging-completeness gap).
 
 ## Wave-conflict observations

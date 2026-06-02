@@ -67,7 +67,7 @@ Staging cross-check: 8 staging rows vs 8 dispatched ready reports → **8/8 matc
 | retroactive-budget global ≥4 | **0** — NO block (5 stub/rough-in→firm fresh-surface + 1 new L0 create + 1 firm-entry optional prose-sharpen + 1 OQ-only proposal; per-slice max 0) |
 | build-breakage repair | **none needed** — clean first build, exit 0 |
 | commit atomicity | single commit |
-| consumed-report frontmatter integrity | all 8 marked `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes` |
+| consumed-report frontmatter integrity | all 8 marked `integrated_at` + `integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b` + `integration_notes` |
 | per-report gates (aggregated from staging) | all 0 — retroactive-per-slice / concept_writes / edge-label / H1 / append-on-missing-slug / variant-axis-missing / SUMMARY-chapter-registration / index-placeholder / implied-component-stub-materialization all no-op across the 8 rows |
 
 ## Build status
@@ -113,4 +113,4 @@ The 8 per-report integrators appended a large batch of OQ groups (RESOLVED/ADDRE
 
 ## Two-phase SHA patch
 
-`integration_commit` is recorded as `PLACEHOLDER_SHA` in this batch CYCLE.md + all 8 consumed reports' frontmatter + `log/cycle-019.md` + `scaffolding/cycle-record.jsonl`. After the finalize commit, a follow-up commit replaces every placeholder with the actual SHA (canonical two-phase pattern, cycles 004..018 precedent). Patch message: `patch commit-sha references for cycle-019 finalize commit (<finalize-sha>)`.
+`integration_commit` is recorded as `e9bbbbf9fcee8786ad94305a482f6835d2e0f40b` in this batch CYCLE.md + all 8 consumed reports' frontmatter + `log/cycle-019.md` + `scaffolding/cycle-record.jsonl`. After the finalize commit, a follow-up commit replaces every placeholder with the actual SHA (canonical two-phase pattern, cycles 004..018 precedent). Patch message: `patch commit-sha references for cycle-019 finalize commit (<finalize-sha>)`.

@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T010800Z
 scope: L4>L3 theme sketch — solve-family-map-dissolution
 status: integrated
 integrated_at: 2026-06-02T034000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b
 integration_notes: "D2 cycle-055. Applied clean — new book/src/L4-L3/solve-family-map-dissolution.md (firm, the outer map-shell dissolution completing the solve_family propagation, composes above ksp-solve-driver-dissolution; firm-on-structure, no sequential obstruction) + L4-L3/index theme-list row + §Vocabulary-cohort seed bullet + SUMMARY. Same-cycle cross-ref warning discharged (D1 landed solve_family.md first). L4>L3 firm 6→7."
 inputs:
   - reports/2026-06-02T010700Z-harvester-solve-family-firm-entry/CYCLE.md (c055 D1 — the LHS L4 solve_family firm entry; signature, laws, 2 witnesses, status)

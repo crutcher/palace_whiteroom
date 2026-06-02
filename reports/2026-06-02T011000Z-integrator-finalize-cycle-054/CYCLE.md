@@ -27,7 +27,7 @@ status: complete
 | D1 | `reports/2026-06-02T002600Z-combinator-miner-solve-family-combinator/` | combinator-miner | applied | batch-17: `solve_family` full L4 entry + 2 specializations + `L4-L3/solve-family-map-dissolution` theme; general `map_solve_over_(operator,rhs)_family` superset + driven/transient 3rd-probe (fold-vs-map over-unification guard) |
 | D2 | `reports/2026-06-02T002600Z-harvester-fe-assemble-firm-l1/` | harvester | applied | batch-17 lifter: theme re-anchor-to-firm-LHS + `AddSubOperator` body-anchor +2-drift correction (`:73-75`/`:93-95` → `:71-77`/`:91-97`); harvester: `weak_form_term`/`eliminate_*`; meta-phase: libCEED-boundary classification, L1-index cohort-header staleness |
 
-Both reports' `integrated_at: 2026-06-02T011000Z` frontmatter set; `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch to follow).
+Both reports' `integrated_at: 2026-06-02T011000Z` frontmatter set; `integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b` (two-phase SHA patch to follow).
 
 ## Artifact changes (aggregate, from staging Files-touched)
 
@@ -40,7 +40,7 @@ Both reports' `integrated_at: 2026-06-02T011000Z` frontmatter set; `integration_
 - **retroactive-budget global (≥4 blocks):** 0 across both rows — PASS.
 - **build-breakage repair:** none needed — `cargo make book` exit 0; D2 proposed its own SUMMARY+index+dep-map wiring in the same pass as the new file; D1's row is plain-text inline-code.
 - **commit atomicity:** single commit (below).
-- **consumed-report frontmatter integrity:** both `integrated_at` set; PLACEHOLDER_SHA two-phase patch to follow.
+- **consumed-report frontmatter integrity:** both `integrated_at` set; e9bbbbf9fcee8786ad94305a482f6835d2e0f40b two-phase patch to follow.
 - Per-report gates (fence-parity, forward-reference-plain-text, summary-md-registration, slug-collision-distinction, variant-axis, edge-label, H1, anchor-byte-exactness): all 0 per the STAGING rows.
 
 ## Wave-conflict observations

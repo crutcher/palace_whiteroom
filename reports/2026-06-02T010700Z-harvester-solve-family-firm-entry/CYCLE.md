@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T010700Z
 scope: L4 operator: solve_family
 status: integrated
 integrated_at: 2026-06-02T034000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b
 integration_notes: "D1 cycle-055. Applied clean — new book/src/L4/solve_family.md (rough-in (test-coverage-bounded), the headline fixed-operator map-over-RHS-family L4 combinator) + L4/index :76 row flipped to live link + SUMMARY registration; 2 specializations (electrostatic+magnetostatic) authored as notes-in-entry per combinator-as-entry. Renders, links resolve. L4 rough-in +1 (L4 firm STAYS 6)."
 inputs:
   - reports/2026-06-02T002600Z-combinator-miner-solve-family-combinator/CYCLE.md (c054 D1 — the mined shape: signature, layer justification, laws, 2 witnesses)

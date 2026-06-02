@@ -36,7 +36,7 @@ Cycle-033 is the BATCH-CLOSING (third) primary cycle of meta-batch-9 (cycles 031
 - **log/cycle-33.md**: NEW per-cycle log.
 - **log/README.md**: cycle-033 index entry prepended.
 - **scaffolding/integrator-signals.md**: cycle-033 BATCH-CLOSING signal dump prepended (the meta-phase's primary input).
-- **3 consumed reports' frontmatter**: `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes:` written (two-phase SHA patch follows the finalize commit).
+- **3 consumed reports' frontmatter**: `integrated_at` + `integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b` + `integration_notes:` written (two-phase SHA patch follows the finalize commit).
 
 ## Safety-net gate results (aggregated, finalize-side)
 

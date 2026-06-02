@@ -48,7 +48,7 @@ The cycle is **narrow-but-substantive**: 1 substantive landing + 1 clean verdict
 - `scaffolding/cycle-record.jsonl` — cycle-034 integration record appended.
 - `log/cycle-34.md` — per-cycle human-readable summary written.
 - `log/README.md` — index entry prepended (newest first).
-- Consumed reports' CYCLE.md frontmatters — `integrated_at: 2026-05-31T01:30:00Z` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes:` block added per the two-phase SHA pattern (the SHA is patched in a follow-on commit).
+- Consumed reports' CYCLE.md frontmatters — `integrated_at: 2026-05-31T01:30:00Z` + `integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b` + `integration_notes:` block added per the two-phase SHA pattern (the SHA is patched in a follow-on commit).
 
 ## Safety-net gate results (aggregated across staging rows)
 
@@ -60,7 +60,7 @@ The cycle is **narrow-but-substantive**: 1 substantive landing + 1 clean verdict
 | build-breakage | none introduced by this cycle (2 non-fatal pulldown-cmark unclosed-HTML-tag WARNs on `<operator>`/`<complexoperator>` from C++-template-in-prose are an artifact-wide convention; 74 KaTeX `Potential incomplete link` warnings are pre-existing across many corpus files) |
 | build-repair | not needed (`cargo make book` exit 0, 88.60s) |
 | commit atomicity | satisfied (single commit + push at finalize end) |
-| consumed-report frontmatter integrity | satisfied (all 3 reports stamped with PLACEHOLDER_SHA pattern) |
+| consumed-report frontmatter integrity | satisfied (all 3 reports stamped with e9bbbbf9fcee8786ad94305a482f6835d2e0f40b pattern) |
 | citecheck-bounds-scan (per-report; applied) | D1: 40 ok, 0 failing; D2: 36 ok, 0 failing; D3: not-applicable (no book changes) |
 | proposed-changes-fence-encloses-full-body-guard (per-report) | D1: clean; D2/D3: not-applicable |
 | SUMMARY.md chapter registration | D1: applied directly per repaired edit-instruction; D2/D3: not-applicable |

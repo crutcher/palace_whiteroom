@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T010700Z
 scope: L1 operator: eliminate_essential_bc
 status: integrated
 integrated_at: 2026-06-02T034000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b
 integration_notes: "D4 cycle-055. Applied clean — new book/src/L1/eliminate_essential_bc.md (firm L1, square-operator essential-Dirichlet pin: zero rows/cols + diagonal-policy DIAG_ONE/DIAG_ZERO; 4 laws + 3 non-laws; firm-on-positive-structure) + L1/index :73 bullet rough-in→firm (corrected :216-217) + dep-map row after D3's eliminate_rhs row + SUMMARY. With D3, all 3 FE-assembly operators now firm; L1 firm →29. FINALIZE BUILD-REPAIR: removed 2 leaked tool-invocation tags </content></invoke> from the chapter tail (a Write artifact; chapter content unaffected)."
 inputs:
   - dispatch D4 cycle-055 (batch-17, VOCABULARY-SHIFT REDIRECT)

@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T010700Z
 scope: L1>L0 theme sketch — fe-assemble-libceed-boundary-obstruction (D5, cycle-055, batch-17)
 status: integrated
 integrated_at: 2026-06-02T034000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e9bbbbf9fcee8786ad94305a482f6835d2e0f40b
 integration_notes: "D5 cycle-055. Applied clean — new book/src/L1-L0/fe-assemble-libceed-boundary-obstruction.md (obstruction (opaque-library-ownership), settles the c053 libCEED-boundary OQ per batch-16 meta ratification; libCEED owns the element-local quadrature kernel + COO materialization, Palace owns fold/dispatch/shuffle/BC-elimination; fe_assemble STAYS firm) + L1-L0/index dep-map row + SUMMARY. Repairer widened bilinearform.cpp:67-70→64-70. L1>L0 +1 obstruction annotation."
 inputs:
   - reference/palace/palace/fem/bilinearform.cpp:64-70 (leaf CeedOperator inputs: CeedElemRestriction trial/test_restr + CeedBasis trial/test_basis built by integ->Assemble)
