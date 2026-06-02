@@ -1,32 +1,30 @@
-## 2026-05-25 cycle-60 — back divfree — pass
+## 2026-06-02 cycle-060 — 2 reports applied clean — fifty-fifth consecutive cycle under split integrator — THIRD/FINAL PRIMARY CYCLE OF META-BATCH-18 — CLEAN CLOSE-OUT: the `fold_solve` L3 descent is TIED OFF — D1 syncs `L3/index` §Semantics-overlay spectrum prose to SIX profile shapes / FOUR partial-obstruction (matching the authoritative `:64` tally) + D2 CONFIRMS the L2/`fold_solve` NO-FLOOR-WARRANT descent-complete — NO measurable count delta — **the batch-18 meta-phase is now DUE (fires after this finalize as a SEPARATE dispatch)** — pass
 
-- Synthesis: Retroactive L0→L1 rotation_claim for divfree slice. The slice already has L1, L2, L3, L4 content on disk (cycles prior to this audit); the producer-side claim for the L0→L1 edge was missing. Plan_kind=retroactive_claims with retroactive_claim_evidence below.
+> **Note:** this file supersedes a stale May-25 slice-vertical-era `cycle-60` placeholder (back-divfree L0→L1 retroactive claim; pre-structural-redirect numbering collision). The prior content is preserved in git history.
 
-retroactive_claim_evidence:
-  - claim_index: 0
-    on_disk_path: book/src/spec/slices/divfree.md
-    section: ## L1
-    quoted_lines: |
-      ### Defining condition
-      A `DivFreeSolver` represents the discrete projector `P` onto the
-      divergence-free subspace of an Nedelec field, defined by
-          Gᵀ M (P x) = 0
-      where
-      - `G : H1 → Nedelec` is the discrete gradient (the H1→Nedelec interpolator),
-      - `M : H1 → H1` is the ε-weighted H1 mass-like operator
+**THIRD/FINAL PRIMARY CYCLE OF META-BATCH-18** (3:1 cadence; cycles 058/059/060; the cycle counter does NOT reset across batch boundaries; **the batch-18 meta-phase fires AFTER this cycle-060 finalize as a SEPARATE dispatch** — the parent dispatches it next). A clean opus-planner close-out cycle under the 2026-06-01 VOCABULARY-SHIFT REDIRECT (`METHODOLOGY-REDIRECT.md`; CLAUDE.md §Methodology invariants ⟢: solvers advance a layer only when **cleanly describable**, never forcing the spine; what a solver can't cleanly say is a finding about the spine).
 
-      ### Apply (`P x → y`)
-      1. Form the H1 residual:        `rhs ← WeakDiv · y`.
-      2. Impose essential BC on rhs:  zero entries of `rhs` on `bdr_tdof_list_M`.
-      3. Solve the projected system:  `M · ψ = rhs`         via `ksp`.
-      4. Apply the gradient correction: `y ← y + Grad · ψ`.
+**Headline: the `fold_solve` L3 descent is tied off. NO measurable count delta — both reports are hygiene/consistency work.** D1 syncs the `L3/index` §Semantics-overlay spectrum **prose** to the already-authoritative `:64` count tally (SIX non-trivial obstruction shapes / FOUR `partial-obstruction`, with shape (f) `fold_solve` fully enumerated); D2 CONFIRMS the L2/`fold_solve` NO-FLOOR-WARRANT is descent-complete (no `L2/fold_solve.md` owed). Both findings route to the batch-18 meta-phase for formal close.
 
-      ## Variant axes (absorption status)
-      - **VecType ∈ {Vector, ComplexVector}.** Parametric absorption.
-      - **H1 hierarchy depth = 1 vs > 1.** Constructed-operator absorption.
-      - **Boundary-dof list empty vs non-empty.** Absorbed at construction.
+- **Staging completeness:** 2 of 2 dispatched-ready reports applied clean (2/2 staging rows == dispatched-ready — the cycle-018 staging-completeness gap did NOT recur for the FORTY-FIRST consecutive cycle / FIFTY-FIFTH consecutive clean split-integrator cycle); zero deferrals, zero rejections.
 
-The quoted prose supports the claim: it names the defining condition (state-hiding via the Gᵀ M P = 0 mathematical identity), surfaces the four role-named steps (the procedural form hides the BilinearForm machinery), preserves the sign convention as an explicit L1 invariant (+Grad·ψ), and explicitly catalogs the three variant absorptions matching the rotation criteria.
-- Verdict: pass.
-- Friction: none.
-- Structural change: applied: 1 lesson(s); 1 rotation_claim(s).
+### What landed
+
+- **D1 (layer-intro-author, build-relevant) — `book/src/L3/index.md:15` §Semantics-overlay spectrum PROSE synced to the authoritative count tally.** The c059 D1 abstractor (sole L3-touching dispatch) landed `fold_solve` and bumped the single authoritative count-tally at `:64` to **17 firm + 4 `partial-obstruction`** with shape (f) fully enumerated — but the spectrum PROSE at `:15` was left STALE at "**Five** non-trivial-obstruction shapes then coexist" / "(b), (c), and (e) are the **three** `partial-obstruction` operators". D1 synced the `:15` prose: "Five → **Six** … shapes", "(b), (c), and (e) … three → **(b), (c), (e), and (f) … four** `partial-obstruction` operators", + the full shape (f) `fold_solve` clause and the closing distinction sentence extended. Shape (f) characterization: a **combined** obstruction — a **carry-threading** `sequential-obstruction` (each step's input is the prior step's in-place write to `sol`, the schedule does not commute) PLUS an **opaque-library per-step leaf** (the MFEM `ODESolver` step); distinct from each precedent — unlike (b)/(c) its per-step body is an opaque leaf with **no** L2 composition, and unlike (c) **Palace authors the outer sweep** (`transientsolver.cpp:77`) so the loop RENDERS as an explicit tail recursion (the `ksp_solve`/`chebyshev` rendering, NOT `eigsolve`'s un-renderable case). A **PROSE-only intra-file divergence repair** — the `:64` single-authoritative count-tally was deliberately NOT touched (already current; per the c057-meta count-owner guard the prose matches the count, not vice-versa). The `[old]` anchor "Five non-trivial-obstruction shapes then coexist" was unique (grep count 1). **Resolves OQ `l3-index-sixth-obstruction-profile-shape-f-combined-carry-threading-opaque-per-step`** (RESOLVED c060 D1; flagged for the batch-18 meta-phase to CLOSE to the resolved index). The stale-snapshot compaction candidate `l3-index-working-notes-stale-snapshot-compaction-candidate` noted no-action (future meta-phase compaction candidate, already tracked). `citecheck --scan` 13 ok / 0 failing.
+- **D2 (cross-layer-cross-cutter, observation-only, NO book change) — the L2/`fold_solve` NO-FLOOR-WARRANT CONFIRMED descent-complete.** The c059 D1 dispatch recorded INLINE the warrant that `fold_solve` owes **no L2 floor entry**: its per-step body is the opaque MFEM `ode->Step` integrator leaf with NO L2 composition (unlike `eigsolve`, whose per-step body opens to `apply_linop ▷ ksp_solve`), so the substantive L3>L2 content is the outer-sweep erasure, NOT a body-composition rotation, and the L2 RHS is a by-design fold-by-role form modeled on `L2/eigsolve.md`, NOT a degenerate `L2/fold_solve` mirror. D2 verified this warrant **CONSISTENT across all three places it must cohere** — (1) the L3 entry's frontmatter + body, (2) the L3>L2 theme's opaque-leaf rationale, (3) the absence-by-warrant of `book/src/L2/fold_solve.md` on disk. **Warrant consistent: YES.** Disposition: descent complete, no L2 floor owed; **recommend AGAINST authoring `L2/fold_solve.md`** (would manufacture the exact §1d vocabulary-shift-redirect degenerate-mirror smell). Routed to the batch-18 meta-phase for formal close (**RESOLVED-BY-WARRANT**). This is the **anti-mirror discipline applied at the L2 floor** — the absence-by-warrant is correct, NOT a coverage gap. D2 did NOT touch any `book/` file; the dispatch-time OQ intake `fold-solve-l2-floor-no-warrant-descent-complete` was verified present and NOT duplicated; the repairer-routed cosmetic-residue note `fold-solve-time-step-body-sole-act-phrasing-cosmetic-residue` (the `:82` "sole act" phrasing residue, a future low-priority lifter touch) was absent and IS now appended (the 1 OQ opened this cycle). `citecheck --scan` 6 ok / 0 failing.
+
+### Counts
+
+- **NO measurable count delta this cycle.** All firm/rough-in counts UNCHANGED from cycle-059: L1 firm 29, L2 firm 21 + 1 partly-constructive, L2>L1 firm 21, L3 firm 17 + 4 partial-obstruction, L3>L2 firm 6, L4 firm 7 + 1 rough-in (`solve_family`), L4>L3 firm 8, L4 outer-driver rows 5, L0 chapters 22, Phase-1 removals 9/10.
+- D1's edit is intra-file PROSE sync (no count-cell touched); D2 is observation-only (no book mutation). The `L3/index` §Semantics-overlay prose is now consistent with the `:64` authoritative tally at **six profile shapes / four `partial-obstruction`**.
+
+### Process
+
+- retroactive-budget global = 0; ZERO dispatch-phase leaks; 1 OQ opened (the c060 D2 `:82` cosmetic-residue intake), 0 closed in-artifact, **1 RESOLVED via resolve-note** (`l3-index-sixth-obstruction-profile-shape-f-…` D1 — flagged for the batch-18 meta-phase to CLOSE, per the partition: per-report integrators append/resolve-note, meta-phase has unify/close authority).
+- **Reusable signal — the `fold_solve` L3 descent is fully tied off.** With c060's prose-sync + NO-FLOOR-WARRANT confirm, the `fold_solve` L4→L3 descent (firm L4 c058, firm L4>L3 c058, `partial-obstruction` L3 c059) is complete and internally consistent; the L2 floor is correctly absent-by-warrant. No further `fold_solve` descent work is owed.
+- **Reusable signal — the two-combinator MAP/FOLD spine is mature end-to-end for the batch-18 meta-phase.** `solve_family` MAP + `fold_solve` FOLD now span L4 / L4>L3 / L3; 3-of-5 solver pipelines are characterized vs the spine (electrostatic/magnetostatic = `solve_family` MAP witnesses, transient = `fold_solve` FOLD witness, driven = `map_solve` single-witness deferred, eigenmode = NOT-A-WITNESS opaque-single-solve). The disciplined solver-test-load worked as designed across the whole batch.
+- **Process note — the batch (058/059/060) was clean throughout:** 0 critic failures / 0 unrepairable / 0 gate-hits / 0 deferrals / 0 rejections; staging completeness 4/4 + 3/3 + 2/2 (no cycle-018 gap recurrence across the batch). The batch-18 meta-phase aggregating these three cycles should find a clean evidence window.
+- **Build:** clean 2-report serial application (D1 prose-only single-bullet edit; D2 observation-only); `cargo make book` exit 0 ~90s; no new pages this cycle; `SUMMARY.md` unchanged; no `linkcheck2` dead-link; NO build-repair needed. The only build noise is the pre-existing KaTeX false-positive "Potential incomplete link" WARNs in `design/l4_calculus.md` + markdown-table HTML WARNs (ignored per task). No tool-tag leaks in any authored file.
+- **NEXT: the batch-18 meta-phase is DUE NOW** — it aggregates cycles 058/059/060 and fires after THIS cycle-060 finalize as a SEPARATE dispatch (the parent dispatches it next; the cycle counter does NOT reset). Formal-close candidates queued: the `map_solve` permanent-single-witness spine-coverage finding (c058 D3 NON-DISCHARGE); the eigenmode SPINE-COMPLETE record (c059 D3); the L2/`fold_solve` NO-FLOOR-WARRANT descent-complete confirm (c060 D2); the c059-resolved OQs (`fold-solve-l3-entry-vs-dissolution-home`, `fold-solve-l4-index-vocabulary-cohort-firmness-split-refresh`) + the c060-resolved shape-(f) prose-sync OQ to CLOSE to the resolved index; the c059 D1 `fold-solve-time-step-body` slug-hygiene rename candidate + the c060 D2 `:82` "sole act" cosmetic-residue note (low-priority lifter touches); the `L3_L2_firm` jsonl-count alignment note.
+
+Written by `integrator-finalize` (split integrator-per-report ×2 + finalize ×1).
