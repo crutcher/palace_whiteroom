@@ -7,11 +7,14 @@
 # L4 — Graph-Evaluation Calculus
 - [Overview](./L4/index.md)
 - [krylov-step](./L4/krylov-step.md)
+- [inner_product](./L4/inner_product.md)
 - [iterate-while](./L4/iterate-while.md)
 - [iterate-while-with-prev](./L4/iterate-while-with-prev.md)
 - [chebyshev](./L4/chebyshev.md)
 - [ksp_solve](./L4/ksp_solve.md)
+- [linear_combination](./L4/linear_combination.md)
 - [eigsolve](./L4/eigsolve.md)
+- [fe_assemble](./L4/fe_assemble.md)
 - [solve_family](./L4/solve_family.md)
 - [fold_solve](./L4/fold_solve.md)
 
@@ -25,6 +28,7 @@
 - [ksp-solve-driver-dissolution](./L4-L3/ksp-solve-driver-dissolution.md)
 - [solve-family-map-dissolution](./L4-L3/solve-family-map-dissolution.md)
 - [fold-solve-time-step-dissolution](./L4-L3/fold-solve-time-step-dissolution.md)
+- [fe-assemble-fold-dissolution](./L4-L3/fe-assemble-fold-dissolution.md)
 
 # L3 — Global Tensor-Field Operations
 - [Overview](./L3/index.md)

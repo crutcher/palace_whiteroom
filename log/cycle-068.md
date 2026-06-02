@@ -1,47 +1,33 @@
-## 2026-05-25 cycle-68 — forward orthog [L1→L2] — pass
+## 2026-06-02 cycle-068 — 3 reports applied clean — sixty-third consecutive cycle under split integrator — **POSITION 2/3 OF META-BATCH-21** — the **FE-cohort→L4 lift frontier LANDED its rank-1 opener** (`fe_assemble` L4 + the `fe-assemble-fold-dissolution` L4>L3 theme) + the **two BLAS-1 data-algebra combinators ROSE to L4** (`linear_combination` + `inner_product`) — **+4 firm L4 entries, L4 firm 7→10** — the assemble-half of the deliverable now has an L4 surface — pass
 
-- Synthesis: Emit retroactive L1→L2 rotation_claims for the orthog slice, whose L2 section already exists on disk (landed in a prior cycle alongside L3/L4). Three per-variant claims (MGS, CGS, CGS2) plus one structural claim for the allreduce_sum promotion. retroactive_claim_evidence quoted below.
+> **Note:** this file supersedes a stale May-25 slice-vertical-era `cycle-68` placeholder (forward orthog L1→L2; pre-structural-redirect numbering collision). The prior content is preserved in git history.
 
-retroactive_claim_evidence:
-  - claim_index: 0
-    on_disk_path: book/src/spec/slices/orthog.md
-    section: ## L2 — primitive composition (MGS pass)
-    quoted_lines: |
-      mgs_pass(V[0..m-1], w, dot_op):
-          H : array of m scalars
-          for j in 0..m-1:
-              h_local := dot_op(V[j], w)               # local dot
-              H[j]    := allreduce_sum(h_local, 1)     # global reduction, size 1
-              w       := axpy(w, -H[j], V[j])          # w ← w − H[j] V[j]
-          return (H, w)
-      The j-th `axpy` *must* complete before the (j+1)-th `dot_op` (else the algorithm is no longer MGS).
-  - claim_index: 1
-    on_disk_path: book/src/spec/slices/orthog.md
-    section: ## L2 — primitive composition (CGS pass)
-    quoted_lines: |
-      cgs_pass(V[0..m-1], w, dot_op):
-          h_local[0..m-1] := [ dot_op(V[j], w) for j in 0..m-1 ]   # m local dots, no comm
-          H[0..m-1]       := allreduce_sum(h_local, m)             # one reduction, size m
-          w               := gemv_basis(w, -1.0, V, H)             # w ← w − V H, batched
-          return (H, w)
-      The local dots over j are independent (no inter-j ordering); the reduction is hoisted out of the loop and batched; the rank-1 updates fuse into one `gemv_basis`.
-  - claim_index: 2
-    on_disk_path: book/src/spec/slices/orthog.md
-    section: ## L2 — primitive composition (CGS2)
-    quoted_lines: |
-      cgs2(V[0..m-1], w, dot_op):
-          (H,  w) := cgs_pass(V, w, dot_op)
-          (dH, w) := cgs_pass(V, w, dot_op)
-          H := axpy_scalar(H, 1.0, dH)                 # H ← H + dH (length-m vector add)
-          return (H, w)
-      The second pass operates on the once-orthogonalized `w` and accumulates the correction `dH`.
-  - claim_index: 3
-    on_disk_path: book/src/spec/slices/orthog.md
-    section: ## L2 — primitive composition (allreduce_sum promotion + variant absorption at L2)
-    quoted_lines: |
-      `allreduce_sum` (the explicit global reduction; promoted from being implicit inside `dot` to a primitive in its own right because each variant fires it a different number of times and with a different message size, which is the dominant cost structure at L2).
-      ...
-      The L1 procedure inspected `variant` exactly once (dispatch). The L2 primitive-sequence does **not** unify across variants: MGS's chain is `[dot, allreduce_sum, axpy] × m`, CGS's is `[dot × m, allreduce_sum, gemv_basis]`, CGS2's is `[CGS chain] × 2 + [axpy_scalar]`.
-- Verdict: pass.
-- Friction: none.
-- Structural change: none.
+**POSITION 2/3 OF META-BATCH-21** (3:1 cadence; cycles 067/068/069; the cycle counter does NOT reset across batch boundaries; **the batch-21 meta-phase fires AFTER cycle-069's finalize as a SEPARATE dispatch** — not this cycle; this finalize does NOT run meta-phase housekeeping). Under the 2026-06-01 VOCABULARY-SHIFT REDIRECT (`METHODOLOGY-REDIRECT.md`) + the FOUR 2026-06-02 user directives: directive-1 *L4 is the backend-lowering target* (every in-scope feature must reach L4); directive-2 *black-box vs accelerated kernels* (three-way disposition for opaque/special ops); directive-3 *mdBook sub-chapter grouping + alphabetical API lists*; directive-4 *reader-facing Methodology GOAL+FLOW chapter*.
+
+**Headline: the rank-1 FE-cohort→L4 lift opener landed and the two BLAS-1 data-algebra combinators rose to L4 — +4 firm L4 entries, L4 firm 7→10.** The c067 survey's rank-1 dispatch (`fe_assemble`) was authored at L4 with its coupled L4>L3 dissolution theme, opening the **assemble-half** of the deliverable's L4 surface (directive-1: L4 is the outward backend-lowering target; the FE-assembly cohort stranded at L1 was the hole). In parallel the combinator-miner lifted `linear_combination` + `inner_product` to L4 as feature-surface verbs (directive-2: the combinators rise regardless), correcting the `L4/index.md:66` "13-of-18 no-L4-by-design" blanket to the per-case disposition.
+
+- **Staging completeness:** 3 of 3 dispatched-ready reports applied clean (3/3 staging rows == dispatched-ready — the cycle-018 staging-completeness gap did NOT recur for the FORTY-NINTH consecutive clean staging / SIXTY-THIRD consecutive clean split-integrator cycle); zero deferrals, zero rejections, zero gate-hits, zero build-repairs.
+
+### What landed
+
+- **D1 (harvester, build-relevant) — `fe_assemble` PROMOTED FIRM L4 (the rank-1 FE-cohort→L4 lift opener).** `book/src/L4/fe_assemble.md`: the **assemble-fold combinator** `fe_assemble space terms = foldr (\t acc -> assemble_term space t + acc) zero terms = sum (map (assemble_term space) terms)` — capture the FE space once (`readonly`), fold the immutable `[WeakFormTerm]` list by the opaque per-term libCEED leaf `assemble_term`, and **sum** the contributions into the global operator `K`. The **concatenation-homomorphism `foldr` producing a sum** — the homomorphic sibling of `solve_family`'s map (both fold independent per-element work; `solve_family` reduces by list-collect, `fe_assemble` by the operator-`+` commutative monoid), distinct from `fold_solve`'s carry-threaded sequential fold. The opaque per-term quadrature leaf `assemble_term` rises as a **black-box-kernel `readonly` input** (`concepts/black-box-vs-accelerated-kernels.md` case 1 — the identical opaque-leaf-wrapping pattern `eigsolve`/`fold_solve` use), lifting the `fe-assemble-libceed-boundary-obstruction`. Status **firm** (firm-on-positive-structure escape — every fold law a read-off syntactic identity on the positive integrator-fold + the firm L1 `fe_assemble`; ≥2-witness mining-gate met with 3 witnesses [electrostatic ∇, magnetostatic ∇×, mass I], no break-witness, map-not-fold guard honored). 4 variant axes (all absorbed; the 3 construction inputs absorbed into the `readonly` construction stratum). Appended its OWN `L4/index.md` dep-map row + §Vocabulary-cohort bullet + SUMMARY L4 alpha-insert (NOT the firm tally — D3 is the sole count-owner). 1 OQ promoted (`fe-assemble-l4-construction-input-absorb-reopen-on-downstream-demand`). `citecheck --scan`: report 45 ok / 0 fail, `fe_assemble.md` 34 ok / 0 fail. (First per-report integrator of c068 — created the staging dir + file; D1 MUST go first since D2+D3 forward-reference `fe_assemble`.)
+- **D2 (abstractor, build-relevant) — `fe-assemble-fold-dissolution` LANDED FIRM L4>L3 (DISSOLUTION-HOME verdict).** `book/src/L4-L3/fe-assemble-fold-dissolution.md`: the substantive L4>L3 dissolution narrating the `foldr`/sum collapse to the L3 explicit accumulating composite-operator build (the `for`-over-integrators + `AddSubOperator` shape), the space-capture-once hoist → `BilinearForm space(...)`-outside-the-loop placement, the per-term black-box leaf bottoming out in the `obstruction (opaque-library-ownership)` boundary. **DISSOLUTION-HOME verdict — NO interposed `L3/fe_assemble` entry**: the term contributions are independent (embarrassingly parallel, summed; no `sequential-obstruction`), so the dissolution theme is the authoritative downward home (the `solve_family` NO-ENTRY shape). The **homomorphic sibling** of `solve-family-map-dissolution` (both dissolve an independent family-loop with no carry), **explicitly NOT** the carry-threaded `fold-solve-time-step-dissolution` (the map-not-fold guard honored). The LHS live-links D1's now-on-disk `L4/fe_assemble.md` — resolving D1's same-cycle forward-link. Sole L4-L3-index toucher this cycle: appended the theme row + §Vocabulary-cohort bullet + the consolidated firm-theme tally **8→9** + SUMMARY L4>L3 insert. 1 OQ promoted (`fe-assemble-l1-cap-weak-form-term-witness-line-drift-reanchor`). `citecheck --scan`: report 26 ok / 2 fail — **both prose-shorthand false-positives** (`integrator.hpp:58-61` + `libceed/operator.cpp:455` resolve at their full `palace/fem/` paths, critic-verified on disk), non-blocking. (Second per-report integrator of c068.)
+- **D3 (combinator-miner, build-relevant) — `linear_combination` + `inner_product` PROMOTED FIRM L4 (the two BLAS-1 data-algebra combinators rise).** `book/src/L4/linear_combination.md` — the **scalar-weighted-tensor-sum combinator** `Σᵢ aᵢ·tᵢ` over `[(Scalar, Tensor[N])]`, the four arity leaves `scal`/`axpy`/`axpby`/`axpbypcz` as accelerated-kernel specialization notes tied below (stopped low; the combinator rises in their place); the next-pull operator-operand consumer is the driven `assemble_frequency_operator` (c069, gated on this entry). `book/src/L4/inner_product.md` — the **reduce-to-scalar inner-product combinator** `α = ⟨x,y⟩`, the conjugation/element-type/weight specializations `dot`/`tdot`/`bilinear_form` as notes; the kept named abstractions `dot`/`nrm2` rise *alongside* as named verbs (next-pull `L4/dot`/`L4/nrm2`). Both rise as **feature-surface verbs the backend wants** (directive-1/directive-2; `concepts/black-box-vs-accelerated-kernels.md` §"The combinators rise regardless"; L4>L3 identity-in-form on the body, the in-line-marker route — no dedicated theme files). **D3 SOLE count-owner this cycle**: corrected the `L4/index.md:66` "13-of-18 no-L4-by-design" blanket to the per-case disposition; moved the firm tally `(7+4)`→`(10+4)` (counting D1's `fe_assemble` = firm + the 2 new combinators = firm, all verified firm from each chapter's `## Status` line); authored the §Active-frontier c068 3-landing paragraph + the two new combinators' own dep-map rows + §Vocabulary-cohort bullets + SUMMARY L4 alpha-inserts. 2 OQs promoted (`l3-data-algebra-combinators-stale-no-l4-reanchor` + `l4-dot-nrm2-named-verb-next-pull`). `citecheck --scan`: report 9 ok / 0 fail, `linear_combination.md` 5 ok / 0 fail, `inner_product.md` 7 ok / 0 fail, `L4/index.md` 19 ok / 0 fail. (Third/last per-report integrator of c068.)
+
+### Counts
+
+- **+4 firm L4 entries; L4 firm 7→10; L4>L3 firm themes 8→9.** L4 firm cohort: `fe_assemble` (D1), `linear_combination` (D3), `inner_product` (D3) added to the prior 7 (krylov-step, iterate-while, iterate-while-with-prev, chebyshev, ksp_solve, eigsolve, fold_solve). The L4 outer-driver vocabulary rows (solve_loop/restart_cycle/Outcome/EigOutcome = 4) unchanged; the `(7+4)` inner+outer-driver tally moves to `(10+4)`. L4 rough-in (1) `solve_family` unchanged.
+- All other layer counts UNCHANGED from cycle-067: L1 firm 34, L2 firm 21 + 1 partly-constructive, L2>L1 firm 21, L3 firm 17 + 4 partial-obstruction, L3>L2 firm 6, L0 chapters 22, Phase-1 removals 9/10; FE-assembly sub-spine 4, FE-space sub-spine 3 firm L1 operators; concepts pages 26, methodology chapters 2.
+
+### Process
+
+- retroactive-budget global = 0; ZERO dispatch-phase leaks; 4 OQs opened this cycle (1 D1 + 1 D2 + 2 D3), 0 closed in-artifact, 0 resolved-in-report-notes.
+- **Serial per-report application order D1→D2→D3 (per staging timestamps 200500Z/201800Z/203100Z) partitioned cleanly.** D1 created `L4/fe_assemble.md` + its own `L4/index` row/bullet + SUMMARY L4 insert; D2 created `L4-L3/fe-assemble-fold-dissolution.md` + `L4-L3/index` row/bullet/tally + SUMMARY L4>L3 insert (sole L4-L3-index toucher); D3 created the two combinator chapters + the `L4/index` sole-count-owner tally/frontier/rows/bullets + SUMMARY L4 inserts. **D1-first ordering is load-bearing** — D2's LHS link + D3's `L4/index` live-link both target D1's `fe_assemble`, both resolve because D1 landed first. No reconciliation needed.
+- **COUNT-OWNER:** D3 is the sole `L4/index` count-owner this cycle; counted from each new chapter's `## Status` line (all 3 verified firm) per the c057-meta count-from-Status guard.
+- **Same-cycle cross-links all resolve:** D1→D2 dissolution forward-link, D2→D1 `fe_assemble` LHS link, D3 `L4/index`→`fe_assemble` live-link. No stub materialized, no plain-text downgrade — the lone D1 forward-ref was D2's same-cycle live link, handled by ordering not stub.
+- **Build:** `cargo make book` exit 0 (~91s); all 4 new pages render (`book/book/html/L4/fe_assemble.html` + `L4/linear_combination.html` + `L4/inner_product.html` + `L4-L3/fe-assemble-fold-dissolution.html`); `SUMMARY.md` wires all 4 (L4 Part flat-list alpha-interim; L4>L3 after `fold-solve-time-step-dissolution`); no `linkcheck2` dead-link; no build-repair needed. The only build noise is the pre-existing KaTeX false-positive "Potential incomplete link" WARNs in `design/l4_calculus.md` (unchanged this cycle). All 4 new chapters use 4-space-indented code blocks (0 backtick fences) — no fence-parity risk. No tool-tag leaks.
+- **CARRIED-COSMETIC for c069:** the `L3/linear_combination` + `L3/inner_product` "no L4" lines are now stale (the combinators DID rise) — a thin re-anchor pass (OQ `l3-data-algebra-combinators-stale-no-l4-reanchor`).
+- **CARRIED meta-phase items (batch-21, fires after c069):** directive-3 one-time mdBook by-kind sub-chapter grouping + global alpha re-sort reorg (OQ `concepts-list-global-alpha-resort-vs-local-cluster-insert`, restart-pending, may want its own wave); directive-4 `methodology/goal-flow.md` ownership-transfer to the meta-phase (codify into `meta-phase.md` role-spec, restart-pending).
+- **NEXT: cycle-069 (batch-21 position 3/3, the LAST primary cycle before the batch-21 meta-phase)** picks from the now-unblocked c069 candidates: rank-2 `assemble_frequency_operator` → L4 *through* `linear_combination`'s operator-operand corner (now UNBLOCKED — its gating combinator is firm at L4); ranks 3-4 the `eliminate_*` BC post-compositions → L4; the `L4/dot` + `L4/nrm2` named-verb next-pull through `L4/inner_product`; the `L3` stale-no-L4 thin re-anchor pass. The batch-21 meta-phase fires after cycle-069's finalize.
+
+Written by `integrator-finalize` (split integrator-per-report ×3 + finalize ×1).
