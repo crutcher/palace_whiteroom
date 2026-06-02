@@ -13,7 +13,7 @@ inputs:
   - reports/2026-06-02T091509Z-abstractor-fe-assemble-upward-warrant/CYCLE.md (D1 — fe_assemble → NO L2 ENTRY, anti-mirror warrant)
 closes_oq: l1-index-fe-assemble-needs-dep-map-row-for-self-summing-table
 integrated_at: 2026-06-02T101500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8fdf448
 integration_notes: "cycle-063 D3 (batch-19 close-out, build-relevant). Applied 3 in-place edits to book/src/L1/index.md: (a) fe_assemble dep-map row added (fold-then-members, before eliminate_rhs); (b) §Vocabulary-cohort reconciliation note updated off-table->in-table self-summing (31 in-table, all firm rows on-table); (c) §Working-Notes cycle-063 bullet appended recording the 3 NO-ENTRY upward-propagation warrants (fe_assemble, weak_form_term, assemble_frequency_operator) routing their formal close to the batch-19 meta-phase. Count self-sum verified: in-table firm rows 30->31 with the fe_assemble row; 31 = grand total (27 main + 4 FE-assembly); grand total UNCHANGED (no double-count). NO status flip -> index-status-cell anti-drift guard NOT fired. RESOLVED-BY-LANDING-c063-D3 the cosmetic c062 OQ l1-index-fe-assemble-needs-dep-map-row-for-self-summing-table. No gate triggered. citecheck --scan 8 ok / 0 failing. Build: cargo make book exit 0; ./fe_assemble.md row link rendered in book/book/html/L1/index.html."
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T091509Z
 scope: L2 upward-propagation WARRANT for fe_assemble (record-only; anti-mirror; NO chapter forced)
 status: pending
 integrated_at: 2026-06-02T101500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8fdf448
 integration_notes: "cycle-063 D1 (batch-19 close-out). Applied record-only -- NO book change (fe_assemble NO-ENTRY-BY-WARRANT: declines an L2 floor, degenerate anti-mirror on both axes -- no-carry concatenation-homomorphism fold + opaque-libCEED per-term leaf). OQ l2-fe-assemble-NO-ENTRY-by-warrant appended to scaffolding/open-questions.md New-intake, routed to the batch-19 meta-phase for formal close + STOP-PROPOSING-negative-list addition (paralleling c060 D2 L2/fold_solve no-floor-warrant). No safety-net gate triggered (no proposed-changes block). citecheck --scan 17 ok / 0 failing."
 inputs:
   - book/src/L1/fe_assemble.md (firm L1 — the bilinear-form assembly fold over weak_form_terms)

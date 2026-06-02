@@ -50,7 +50,7 @@ No new chapter file created; no stub materialized; no plain-text downgrade; no S
 - **retroactive-budget global:** 0 (well below the ≥4 block threshold). No block.
 - **build-breakage repair:** none needed — `cargo make book` exit 0.
 - **commit atomicity:** single commit (below).
-- **consumed-report frontmatter integrity:** 3/3 marked `integrated_at: 2026-06-02T101500Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch to follow) + `integration_notes`.
+- **consumed-report frontmatter integrity:** 3/3 marked `integrated_at: 2026-06-02T101500Z` + `integration_commit: 8fdf448` (two-phase SHA patch applied) + `integration_notes`.
 - **per-report gates (from staging rows):** 0 hits across all 3 rows (D1 record-only no proposed-changes block; D2 single substring edit, no status flip, index-cell anti-drift guard NOT fired; D3 ×3 table/prose edits, no status flip, anti-drift guard NOT fired, no new chapter/SUMMARY).
 
 ## Wave-conflict observations

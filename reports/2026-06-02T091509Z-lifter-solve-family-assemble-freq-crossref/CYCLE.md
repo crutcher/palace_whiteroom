@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T091509Z
 scope: L4 solve_family map_solve scope-boundary cross-ref firm — name assemble_frequency_operator as the per-ω operator
 status: pending
 integrated_at: 2026-06-02T101500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8fdf448
 integration_notes: "cycle-063 D2 (batch-19 close-out, build-relevant). Applied single in-place edit to book/src/L4/solve_family.md (§Status Scope-load-bearing paragraph :146): map_solve scope-note re-anchored to name the firm per-ω operator assemble_frequency_operator via live link ../L1/assemble_frequency_operator.md (reciprocal L1->L4 ref already present -> mutual link). RESOLVED-BY-LANDING-c063-D2 the deferred c062 cross-ref OQ assemble-frequency-operator-map-solve-scope-boundary-cross-ref-refresh; opened optional low-value breadth-pass OQ solve-family-name-assemble-frequency-operator-at-all-per-omega-rebuild-loci. solve_family status/laws/axes UNTOUCHED -> no L4/index status-cell update owed (anti-drift guard NOT fired). No gate triggered. citecheck --scan 6 ok / 0 failing. Build: cargo make book exit 0; link rendered in book/book/html/L4/solve_family.html."
 inputs:
   - book/src/L4/solve_family.md
