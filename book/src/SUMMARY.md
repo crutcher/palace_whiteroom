@@ -12,6 +12,7 @@
 - [ksp_solve](./L4/ksp_solve.md)
 - [eigsolve](./L4/eigsolve.md)
 - [solve_family](./L4/solve_family.md)
+- [fold_solve](./L4/fold_solve.md)
 
 # L4 > L3 — Lowering
 - [Overview](./L4-L3/index.md)
@@ -22,6 +23,7 @@
 - [iterate-while-with-prev-dissolution](./L4-L3/iterate-while-with-prev-dissolution.md)
 - [ksp-solve-driver-dissolution](./L4-L3/ksp-solve-driver-dissolution.md)
 - [solve-family-map-dissolution](./L4-L3/solve-family-map-dissolution.md)
+- [fold-solve-time-step-dissolution](./L4-L3/fold-solve-time-step-dissolution.md)
 
 # L3 — Global Tensor-Field Operations
 - [Overview](./L3/index.md)
