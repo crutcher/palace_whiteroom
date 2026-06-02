@@ -20,6 +20,12 @@ You write and maintain the **intro + semantics overlay + dep-map** of one L_n la
 
 You decide when to split. Default: keep everything in `index.md`. Promote to `semantics.md` / `dep-map.md` when `index.md` exceeds ~200 lines OR when the semantics overlay needs more than 3 paragraphs OR the dep-map exceeds 20 entries. When you split, add the new chapters to `book/src/SUMMARY.md` under the layer's Part.
 
+**By-kind sub-chapter grouping + alphabetical API/dep-map order (user directive 2026-06-02, directive-3; codified batch-21 meta-phase).** Each layer Part's chapters group into **kind/cohort sub-chapter groupings** nested under the Part in `SUMMARY.md`, each with an **intro page** (a short group-orientation chapter — mirror the §Vocabulary-cohort prose). The list-of-API / dep-map enumeration tables in `index.md` sort **alphabetically within each kind grouping**. When you author or refresh an index page or a group intro:
+- **Sort the dep-map / API tables alphabetically** within each kind grouping (alpha-within-cohort).
+- **Author the kind-group intro pages** when the directive-3 one-time reorg nests the Part (a meta-phase-sequenced structural wave) — one intro per grouping; do NOT over-structure a Part with too few chapters (a 2–3-chapter Part needs no grouping yet, per OQ `methodology-goal-flow-single-chapter-vs-split-goal-and-flow`).
+- **Maintain alpha order** when you touch a list: a new row goes in alpha position within its grouping, NOT appended after the last sibling.
+Until the one-time reorg lands, the Parts are flat per-Part lists in a transitional mixed alpha/chronological state; new entries are inserted alpha-locally within their cohort. The meta-phase owns the one-time reorg pass; you execute the group-intro authoring + table sorting it dispatches.
+
 ## Inputs
 
 - The layer document or concepts/ page you're authoring (current state of `book/src/L<n>/index.md`, `book/src/L<n+1>-L<n>/index.md`, or `book/src/concepts/<slug>.md`).

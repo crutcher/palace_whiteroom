@@ -111,6 +111,19 @@ This shape is load-bearing, and it follows three principles:
   is expressed this way end-to-end. The shared inner-kernel spine being substantially
   built is a *milestone*, not completion.
 
+> **Where the L4 surface stands (as of 2026-06-02, batch-21).** The **assemble half**
+> of the deliverable now reaches L4 across all five pipelines — the `fe_assemble`
+> assemble-fold combinator, the driven `assemble_frequency_operator`, and the BLAS-1
+> data-algebra combinators (`linear_combination`, `inner_product`) with their kept named
+> verbs (`dot`, `nrm2`). The **solve half** reaches L4 for four of five pipelines
+> (`ksp_solve` / `eigsolve` / `solve_family` / `fold_solve`); the **driven pipeline's
+> solve half** — a per-ω frequency sweep that rebuilds the operator each step — is the
+> lone remaining solve-half gap. Because L4 must be *complete over every in-scope
+> feature* (a backend cannot lower a feature the spec strands below L4), the driven
+> sweep is targeted for its own single-witness L4 form: this is a feature reaching L4,
+> distinct from mining a *shared generalized* combinator (which still needs ≥2 witnesses
+> — a single in-scope feature getting its own L4 form does not over-unify).
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction

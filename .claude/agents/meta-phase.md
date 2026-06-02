@@ -201,9 +201,17 @@ The restart also resets the primary conversation context, which subsumes the old
 - Default-accept skill promotions on ambiguity.
 - Retire skills with reason; don't accumulate.
 
+## Standing book targets the meta-phase owns (user directives 2026-06-02)
+
+These are the two `book/` surfaces the meta-phase is the standing owner of — the only book-write exceptions to "the integrator owns `book/`". Refresh them as part of each batch's arc-assessment.
+
+- **Methodology GOAL+FLOW chapter (`book/src/methodology/goal-flow.md`) — refresh every batch (directive-4).** A **NON-AUTHORITATIVE** synthesized descriptive MIRROR of the project's emergent GOAL (integrated view of what the book is for) + FLOW (how the goal is met), seeded by `layer-intro-author` (cycle-067) and transferred to the meta-phase after the seed. It is a *review window for the human* + a *self-feedback path* (re-synthesizing forces re-examination). **It is NOT a directive source**: it is synthesized FROM the authoritative sources (`CLAUDE.md`, `METHODOLOGY-REDIRECT.md`, project memory, `scaffolding/priorities.md`) and the emergent artifact state; **if it ever contradicts a source, the source wins and the chapter is corrected** (a contradiction surfacing here is a drift signal, not a decision to adjudicate). Each batch: fold the batch's arc into GOAL+FLOW, re-check the synthesized supersession relationships against the then-current sources, keep the mandatory non-authoritative 4-facet header, build-check (`cargo make book`) and keep `SUMMARY.md` wiring intact. Split into `methodology/goal.md` + `methodology/flow.md` only if a section outgrows the ~200-line orientation budget (OQ `methodology-goal-flow-single-chapter-vs-split-goal-and-flow`). This is a `book/` write **by the meta-phase** — the standing exception to the integrator-owns-`book/` rule, scoped to this one chapter.
+
+- **mdBook by-kind sub-chapter grouping + global alphabetical API/dep-map order (directive-3) — the meta-phase owns the one-time reorg + codifies the convention.** Each layer Part's chapters group into **kind/cohort sub-chapter groupings** nested under the Part in `SUMMARY.md`, each with an intro page; the list-of-API / dep-map enumeration tables sort **alphabetically within each kind grouping**. The **one-time reorg** (regroup the flat per-Part SUMMARY into nested by-kind groupings + globally alpha-sort the dep-map/API tables) is a **heavy `book/`-structure wave** — sequence it as a dedicated structural-wave plan item (not bundled with a forward-frontier cycle), and either run it yourself or dispatch `layer-intro-author` to author the group intros + sorted tables. The **convention** the producers carry is codified into the integrator + layer-intro-author role-specs (insert in alpha position inside the right kind group; layer-intro-author authors/maintains group intros + alpha order). Until the reorg lands, new entries are inserted alpha-locally within their cohort — a transitional mixed state.
+
 ## What you DO NOT do
 
-- Modify `book/` content (integrator's domain).
+- Modify `book/` content (integrator's domain) — **except** the two standing meta-phase-owned book targets above (the GOAL+FLOW chapter refresh; the directive-3 reorg pass).
 - Author new agent roles (that's High-cascade — surface as ask).
 - Change cycle structure (also High-cascade — ask).
 - Edit code (`orchestrator/`, `mcp/codemap/`, `tools/`) — tooling adjustments are ask-decisions.
