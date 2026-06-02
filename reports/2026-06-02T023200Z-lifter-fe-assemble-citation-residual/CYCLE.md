@@ -7,7 +7,7 @@ inputs:
   - book/src/L1/fe_assemble.md
   - reference/palace/palace/models/laplaceoperator.cpp:213-218 (ground-truth re-read on-disk)
 integrated_at: 2026-06-02T040000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a91f0bc
 integration_notes: "cycle-056 D3 (build-relevant). Citation-hygiene fix applied to book/src/L1/fe_assemble.md: essential-BC pinpoint laplaceoperator.cpp:215-217 -> :216-217 at TWO occurrences (line 147 full-path form + line 257 abbreviated form); :215 is a stray closing brace, :216=ParOperator construction, :217=SetEssentialTrueDofs; on-disk re-read confirmed. The legitimate :184-223 GetStiffnessMatrix broader span deliberately NOT touched. No fence/body change. Build: cargo make book exit 0; fe_assemble.html renders with :216-217 (2 occurrences, 0 stray :215-217). Closes the cycle-055 deferred fe_assemble.md:147 citation-residual OQ. NO count delta."
 ---
 

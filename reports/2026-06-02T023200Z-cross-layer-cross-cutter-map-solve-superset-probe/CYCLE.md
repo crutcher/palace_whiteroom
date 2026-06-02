@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T023200Z
 scope: L2/L3 cross-cut — map_solve superset shape-classification probe (driven/transient/eigenmode vs solve_family)
 status: pending
 integrated_at: 2026-06-02T040000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a91f0bc
 integration_notes: "cycle-056 D1 (OBSERVATION-ONLY, no book mutation). Verdict applied as observation: do NOT author map_solve.md. Three-way solver-family shape classification — driven = operator-varying MAP (1 witness, drivensolver.cpp uniform Sweep with SetOperators-inside-loop); transient = state-threaded FOLD → a DISTINCT future fold_solve/time_step_fold combinator (SPINE FINDING, NOT a 2nd map witness — the fold-vs-map guard correctly refused to over-unify); eigenmode = opaque single solve. With 1 operator-varying-map witness, the map_solve superset is DEFERRED below the 2-witness authoring gate (skills/disciplined-cross-pipeline-combinator-mining-gate); the recorded map_solve Haskell candidate stays unpromoted. DrivenSolver::SweepAdaptive (drivensolver.cpp:231+) is the cheap 2nd-witness probe (batch-18 candidate). 2 OQs promoted to scaffolding/open-questions.md. NO book mutation, NO count delta."
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T023200Z
 scope: L3-L2 ↔ L2-L1 index-table-staleness sweep — index-status-cell-vs-theme-file-Status-line audit (cycle-055 D8 OQ)
 status: pending
 integrated_at: 2026-06-02T040000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a91f0bc
 integration_notes: "cycle-056 D2 (OBSERVATION-ONLY, no book mutation). Verdict applied as observation: CONFIRM-CLEAN — all 16/16 L3-L2 + L2-L1 index-table status cells MATCH their theme-file ## Status lines (row/file reconciliation 5/5 + 11/11); the cycle-055 L4-L3 in-place-promotion drift did NOT propagate to these deletion-swept tables (the deletion-sweep mechanism leaves no desync window). PARTIAL CLOSURE of the cycle-055 D8 OQ index-table-status-cell-drifts-when-theme-file-promoted for the L3-L2 + L2-L1 tables (D8 stays OPEN for L1/L1-L0/L4/L3/L2/L0); a finalize-time re-sweep would flag 0/16 here → the lightweight promotion-time guard preferred over a heavyweight finalize-time re-sweep (batch-17 meta-phase input). 3 OQs promoted to scaffolding/open-questions.md. NO book mutation, NO count delta."
 ---
 
