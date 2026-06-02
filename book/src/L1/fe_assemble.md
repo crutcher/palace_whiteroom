@@ -66,9 +66,12 @@ Shape contract (bunsen-style, named axes):
 
 - `space` — `FiniteElementSpace[N]` — the trial/test finite-element space; `N = space.GetTrueVSize()`
   is the global true-dof count (the operator's square dimension). Read-only.
-- `terms` — `[WeakFormTerm]` — an immutable, finite list of weak-form contributions. **`WeakFormTerm`
-  is an opaque rough-in input here** (see *Dependencies*): `fe_assemble` quantifies over the term
-  list without cracking open a term's `(coefficient, differential-operator)` internals.
+- `terms` — `[WeakFormTerm]` — an immutable, finite list of weak-form contributions. Each element is a firm
+  [`weak_form_term`](./weak_form_term.md) — a `(coefficient, differential-operator)` pair (firm cycle-061).
+  `fe_assemble` quantifies over the term list **opaquely**: the fold's structure and laws never crack open a
+  term's `(coefficient, differential-operator)` internals (see *Dependencies*), so the term's firmness does not
+  alter `fe_assemble`'s definition — it replaces an undefined placeholder with a defined-but-still-opaquely-folded
+  input.
 - result — `LinearOperator[N, N]` — a fresh global linear operator over the space's true-dof axis `N`.
 
 `A(space, ·)` is the **opaque per-term assembly map**: it takes one weak-form term to its
@@ -155,15 +158,15 @@ Laws that explicitly **do not** hold:
 concatenation, sum-of-operators, empty identity) uses no other firm L1 operator. It quantifies over
 two rough-in inputs it does NOT define:
 
-- `WeakFormTerm` (type) — opaque rough-in input; the `(coefficient, differential-operator)` pair
-  that is the element type of the term list. This is the genuinely-NEW FE vocabulary the sub-spine
-  introduces; the witnessed differential-operator cohort so far is ∇ (diffusion), identity (mass),
-  curl (curl-curl), div (div-div) (`palace/fem/integrator.hpp:39-130`). **`fe_assemble` does not
-  crack open the term** — it folds over the list opaquely — so the type's formalization is deferred
-  without gating this entry (the clean-gate call, see §Status). The term-cohort enumeration is
-  follow-on work tracked at the
-  [`fe-operator-assemble-mutation-rotation`](../L1-L0/fe-operator-assemble-mutation-rotation.md)
-  theme.
+- [`weak_form_term`](./weak_form_term.md) (type) — **firm** (cycle-061); the `(coefficient,
+  differential-operator)` pair that is the element type of the term list. This is the genuinely-NEW FE
+  vocabulary the sub-spine introduces; the **differential-operator** is the variant axis — grounded by two
+  in-scope solver-K witnesses, ∇/Gradient (electrostatic diffusion, `palace/models/laplaceoperator.cpp:191-192`)
+  and ∇×/Curl (magnetostatic curl-curl, `palace/models/curlcurloperator.cpp:179-181`) — with identity/mass and
+  div-div named as pending-pull sibling variants (`palace/fem/integrator.hpp:39-130`). **`fe_assemble` does not
+  crack open the term** — it folds over the list opaquely — so although the term is now firm, the fold's
+  structure and laws are unchanged: the term remains an opaquely-folded input (the clean-gate call, see
+  §Status). The per-term assembly map `A(space, ·)` that *realizes* a term is the libCEED-owned leaf below.
 - `A(space, ·)` — the opaque per-term element-local→global assembly map (libCEED restriction +
   basis-apply + quadrature contraction). Cited at the Palace call boundary
   (`integ->Assemble(...)` building one `CeedOperator` sub-operator,
