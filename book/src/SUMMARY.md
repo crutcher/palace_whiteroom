@@ -6,6 +6,7 @@
 - [Goal & Flow](./methodology/goal-flow.md)
 # L4 — Graph-Evaluation Calculus
 - [Overview](./L4/index.md)
+- [assemble_frequency_operator](./L4/assemble_frequency_operator.md)
 - [krylov-step](./L4/krylov-step.md)
 - [inner_product](./L4/inner_product.md)
 - [iterate-while](./L4/iterate-while.md)
@@ -13,6 +14,8 @@
 - [chebyshev](./L4/chebyshev.md)
 - [ksp_solve](./L4/ksp_solve.md)
 - [linear_combination](./L4/linear_combination.md)
+- [dot](./L4/dot.md)
+- [nrm2](./L4/nrm2.md)
 - [eigsolve](./L4/eigsolve.md)
 - [fe_assemble](./L4/fe_assemble.md)
 - [solve_family](./L4/solve_family.md)

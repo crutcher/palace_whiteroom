@@ -131,7 +131,7 @@ deliberate.
 
 3. **Single-term reduction**: `fe_assemble(space, [t]) = A(space, t)`. A one-term assembly is just
    that term's contribution — the witness electrostatic case `fe_assemble(h1_space, [diffusion(ε)])`
-   = the permittivity-weighted diffusion operator (`palace/models/laplaceoperator.cpp:191-192`).
+   = the permittivity-weighted diffusion operator (`palace/models/laplaceoperator.cpp:193-196`).
 
 4. **Term-position commutativity (order independence)**: `fe_assemble(space, terms)` is invariant
    under any permutation of `terms`, because operator addition is commutative and associative —
@@ -163,8 +163,8 @@ two rough-in inputs it does NOT define:
 - [`weak_form_term`](./weak_form_term.md) (type) — **firm** (cycle-061); the `(coefficient,
   differential-operator)` pair that is the element type of the term list. This is the genuinely-NEW FE
   vocabulary the sub-spine introduces; the **differential-operator** is the variant axis — grounded by two
-  in-scope solver-K witnesses, ∇/Gradient (electrostatic diffusion, `palace/models/laplaceoperator.cpp:191-192`)
-  and ∇×/Curl (magnetostatic curl-curl, `palace/models/curlcurloperator.cpp:179-181`) — with identity/mass and
+  in-scope solver-K witnesses, ∇/Gradient (electrostatic diffusion, `palace/models/laplaceoperator.cpp:193-196`)
+  and ∇×/Curl (magnetostatic curl-curl, `palace/models/curlcurloperator.cpp:180-181`) — with identity/mass and
   div-div named as pending-pull sibling variants (`palace/fem/integrator.hpp:39-130`). **`fe_assemble` does not
   crack open the term** — it folds over the list opaquely — so although the term is now firm, the fold's
   structure and laws are unchanged: the term remains an opaquely-folded input (the clean-gate call, see
@@ -256,8 +256,8 @@ faithfulness, but not needed for `fe_assemble`'s fold laws.)
   `AddBoundaryIntegrator` append surface (`:53-63`) + the single-space ctor delegating trial = test
   (`:48`).
 - `palace/models/laplaceoperator.cpp:184-223` — `LaplaceOperator::GetStiffnessMatrix`: the
-  electrostatic witness. `BilinearForm k(GetH1Space())` (`:191`) +
-  `k.AddDomainIntegrator<DiffusionIntegrator>(epsilon_func)` (`:192`) + `k.Assemble(...)` (`:194`) —
+  electrostatic witness. `BilinearForm k(GetH1Space())` (`:193`) +
+  `k.AddDomainIntegrator<DiffusionIntegrator>(epsilon_func)` (`:194`) + `k.Assemble(...)` (`:196`) —
   the single-term assembly `fe_assemble(h1_space, [diffusion(ε)])` — then per-level `ParOperator`
   wrap with `SetEssentialTrueDofs` (`:216-217`, the separable `eliminate_essential_bc` post-comp).
 - `palace/fem/integrator.hpp:39-130` — `BilinearFormIntegrator` interface + concrete weak-form

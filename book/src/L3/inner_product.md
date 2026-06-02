@@ -5,7 +5,7 @@ firmness: firm
 lowers_to:
   - book/src/L2/inner_product.md (identity-in-form on the body — value-thread-isomorphic to the L2 reduction; no L3-L2 theme, in-line §"Downward to L2"; the home the degenerate dot-body-identity theme was demoted into at cycle-051)
 lifts_from:
-  - (none) — no L4 inner_product (folds/leaves are not first-class L4 vocabulary per the cycle-010 audit verdict; the combinator appears inside L4 composed entries like krylov-step §Semantics as a let-binding)
+  - book/src/L4/inner_product.md (firm cycle-068; identity-in-form on the body — the L4 calculus combinator is value-thread-isomorphic to this L3 reduction, NO dedicated L4>L3 theme file, the eigsolve/chebyshev in-line-marker route — there is no monadic state-threading / Solve-monad / convergence predicate to dissolve across the L4>L3 edge; the cycle-010 audit "no L4" verdict is superseded by the c068 landing + the 2026-06-01 vocabulary-shift redirect)
 variant_axes:
   - conjugation-convention (hermitian / unconjugated `tdot` — complex element-type only; the family's namesake unification axis)
   - element-type (real / complex)
@@ -68,14 +68,21 @@ those are authoritative at [`L2/inner_product`](../L2/inner_product.md) (firm cy
 inverted cycle-049); the laws hold uniformly across L1 / L2 / L3 because the body is
 identity-in-form across the chain (§"Downward to L2").
 
-This is an L3 field reduction, not an L4 combinator: it is a pure value-producing
-reduction over the length axis with no control-flow, no monadic state threading, and no
-convergence predicate. It is data-parallel (the per-element kernel is embarrassingly
-parallel; only the final sum communicates), not iteration-structural (contrast L4
-`iterate_while`, which threads state through a stopping predicate). No `L4/inner_product`
-exists — folds/leaves are not first-class L4 vocabulary (cycle-010 audit); the combinator
-appears inside L4 composed entries (e.g. `book/src/L4/krylov-step.md` §Semantics) as a
-let-binding.
+This L3 field reduction is data-parallel, not iteration-structural: it is a pure
+value-producing reduction over the length axis with no control-flow, no monadic state
+threading, and no convergence predicate (the per-element kernel is embarrassingly
+parallel; only the final sum communicates — contrast L4 `iterate_while`, which threads
+state through a stopping predicate). It lifts to [`L4/inner_product`](../L4/inner_product.md)
+(firm cycle-068) **identity-in-form on the body** — the L4 calculus combinator is
+value-thread-isomorphic to this L3 reduction, with no dedicated L4>L3 theme file (the
+eigsolve/chebyshev in-line-marker route), precisely because there is no monadic
+state-threading or convergence predicate to dissolve across the edge. (Earlier revisions
+asserted "No `L4/inner_product` exists — folds/leaves are not first-class L4 vocabulary
+(cycle-010 audit)"; that admission is **superseded** by the c068 `L4/inner_product`
+landing and the 2026-06-01 vocabulary-shift redirect, under which the combinator IS
+first-class L4 vocabulary that rises to the feature surface as a named verb.) The
+combinator also appears inside other L4 composed entries (e.g.
+`book/src/L4/krylov-step.md` §Semantics) as a let-binding.
 
 ## Signature
 
