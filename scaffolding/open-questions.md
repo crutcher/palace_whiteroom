@@ -834,3 +834,33 @@ opened_by: harvester
 status: open (deferred / contingent — layer-intro-author domain)
 
 The `book/src/L1/index.md` §"Firm (FE-assembly sub-spine — 3; opened cycle-053, completed cycle-055)" subsection-header **count prose** reads "3" members (`fe_assemble` + `eliminate_essential_bc` + `eliminate_rhs`); `weak_form_term` (firm c061 D1) is a **4th** sub-spine member (the term abstraction the fold quantifies over). Likewise the §Vocabulary-cohort header **grand-total tally** ("29 firm grand total incl. the FE-assembly sub-spine" / "bringing the L1 firm grand total to **29**") should refresh **29→30**. The c061 D1 harvester registered its own dep-map row + its own cohort bullet (the per-operator dual-registration it owns) but flagged the **consolidated subsection-header count prose** ("FE-assembly sub-spine — 3" → "4") + the **§Vocabulary-cohort grand-total** ("29" → "30") for the **layer-intro-author** — these live in the §Vocabulary-cohort header prose (layer-intro-author's domain), not the per-operator bullet the harvester owns. *Trigger:* a layer-intro-author L1-index refresh (co-schedulable / opportunistic — in-artifact count prose, low fan-out).
+
+### cycle-062 New-intake (append-only until the batch-19 meta-phase)
+
+#### driven-affine-frequency-operator-license-ENACTED-c062
+opened_at: cycle-062
+opened_by: integrator-per-report
+status: closed-RESOLVED-BY-LANDING
+
+The c061 D3 LICENSE-FUTURE candidate `driven-affine-frequency-operator-as-operator-valued-linear-combination` (above, c061 New-intake) is **ENACTED this cycle**: harvester:2026-06-02T083220Z (cycle-062 D3) landed `book/src/L1/assemble_frequency_operator.md` (firm) + `book/src/L1-L0/assemble-frequency-operator-rotation.md` (firm L1>L0) as the **operator-operand specialization of `linear_combination`** (the operand-category variant axis `tensor-operand | operator-operand` was extended onto `book/src/L2/linear_combination.md` + `book/src/L3/linear_combination.md` — replace-and-propagate, NOT a mirrored fold). The three caveats from the c061 license are settled as **stated facts in the firm entry, not open questions**: (a) **affine modulo A2** — recorded as the `parameter-dependent-operand` stationarity axis-point + the affine-as-a-whole non-law (A2 = ω-dependent operand carrying coeff 1); (b) **single-pipeline-by-design** — landed as a single-pipeline specialization with NO 2nd-pipeline discharge owed (the fold generality comes from the tensor-operand BLAS-1 cohort); (c) **coeff-type overload** — the driven `<ComplexOperator>` path resolves to the complex-coeff `BuildParSumOperator` overload (`rap.cpp:833`; declared `rap.hpp:238`; instantiations `rap.cpp:971-977`), noted in the Evidence list (both overloads share the identical fold shape, every structural/algebraic claim holds verbatim). The c061 intake item above may be marked resolved at the batch-19 meta-phase unify pass. *No re-open trigger* (landing complete).
+
+#### assemble-frequency-operator-map-solve-scope-boundary-cross-ref-refresh
+opened_at: cycle-062
+opened_by: integrator-per-report
+status: open (deferred / contingent — cross-layer-cross-cutter / layer-intro-author domain)
+
+The firm `book/src/L1/assemble_frequency_operator.md` (c062 D3) NAMES the driven `map_solve_over_(operator,rhs)_family` superset's per-element operator as an affine-in-ω operator-operand `linear_combination`. `book/src/L4/solve_family.md` already records the driven scope-out / `map_solve` scope boundary (`:65,90,163` per the c061 D3 finding) but does NOT yet cite `assemble_frequency_operator` by name as the per-element operator that rebuild produces. An in-place cross-reference refresh on `solve_family.md` (to cite `assemble_frequency_operator` as the named per-ω operator of the driven `map_solve` superset) would tighten the boundary narrative — explicitly flagged out-of-scope by the c062 D3 one-operator dispatch. *Trigger:* a future cross-layer-cross-cutter pass on the driven `solve_family` scope boundary, OR a layer-intro-author `solve_family` refresh (co-schedulable / opportunistic — in-artifact cross-ref, low fan-out).
+
+#### l1-index-fe-assembly-sub-spine-count-prose-refresh-3-to-4 — RESOLVED-BY-LANDING-c062-D2
+opened_at: cycle-061
+opened_by: integrator-per-report
+status: closed-RESOLVED-BY-LANDING
+
+Resolution of the c061 New-intake OQ `l1-index-fe-assembly-sub-spine-count-prose-refresh-3-to-4` (above). The cycle-062 D2 layer-intro-author count-owner dispatch (layer-intro-author:2026-06-02T083220Z) **landed both header-prose refreshes** on `book/src/L1/index.md`: (1) the §Vocabulary-cohort grand-total header (`26 main; 29 firm grand total` → `27 main; 31 firm grand total`, folding in c061's `weak_form_term` AND c062 D3's new firm `assemble_frequency_operator`), and (2) the §"Firm (FE-assembly sub-spine)" subsection header (`— 3` → `— 4`, adding the firm `weak_form_term` term-type as the 4th sub-spine member). The OQ's stated target (`29→30` for the c061 weak_form_term lag) is **subsumed** — the c062 refresh went directly to **31** because D3's `assemble_frequency_operator` landed the same cycle (29→30→31 collapsed into one refresh). Arithmetic independently re-verified by the c062 D2 critic via both routes (27 main + 4 FE-assembly = 31; 30 in-table dep-map firm rows after D3 + 1 off-table `fe_assemble` = 31). *No re-open trigger* (count-prose now current with the firm tally).
+
+#### l1-index-fe-assemble-needs-dep-map-row-for-self-summing-table
+opened_at: cycle-062
+opened_by: integrator-per-report
+status: open (deferred / contingent — layer-intro-author / harvester domain; clean future fix)
+
+Surfaced by the c062 D2 count-owner dispatch (carried as its §Open-questions caveat). `book/src/L1/fe_assemble.md` is **firm** but carries **no dep-map row** in `book/src/L1/index.md` — it is narrated only in the §"Firm (FE-assembly sub-spine)" subsection prose. Consequence: the in-table firm-row count (30 after c062 D3) does NOT self-sum to the §Vocabulary-cohort grand total (31); the +1 reconciliation (`30 dep-map firm rows + 1 off-table fe_assemble = 31`) is carried in the header prose narrative instead. The **clean fix** to make the dep-map table self-summing (table-firm-row-count == grand total) is to add a `fe_assemble` dep-map row — out of the c062 D2 count-owner scope (the count-owner refreshes the consolidated tally + cohort narrative prose, not the addition of a new table row). *Trigger:* a future layer-intro-author L1-index dep-map pass, OR a harvester touching `fe_assemble` (co-schedulable / opportunistic — in-artifact table hygiene, low fan-out; cosmetic, the grand total is already correct).

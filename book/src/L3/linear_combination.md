@@ -11,6 +11,7 @@ variant_axes:
   - output-aliasing (in-place vs out-of-place; orthogonal to arity; an L3>L2>L1 lowering concern, pure/out-of-place at L3)
   - element-type (real | complex)
   - scalar-promotion (sub-axis on the complex element-type; real ⊑ complex, inherited from concepts/scalar-promotion)
+  - operand-category (tensor-operand | operator-operand; the operator-operand corner witnessed by BuildParSumOperator, driven specialization assemble_frequency_operator c062 — replace-and-propagate, not a mirrored fold)
 ---
 
 # linear_combination
@@ -135,6 +136,7 @@ The **substantive** rotation in the downward chain is NOT this identity edge but
 
 1. **Output aliasing (in-place vs out-of-place)** — the in-place forms (`y ← α·x + β·y`, `z ← α·x + β·y + γ·z`) are the case where one term's tensor `tᵢ` **aliases the output buffer**. Orthogonal to arity: every arity ≥ 1 has both an aliasing form and a fresh-output form. At L3 the fold is pure / out-of-place; aliasing is an L3>L2>L1 lowering concern, NOT an arity axis.
 2. **Element-type** — `real | complex`, with the `real ⊑ complex` scalar-promotion sub-axis ([`scalar-promotion`](../concepts/scalar-promotion.md)). Inherited unchanged from the L2 combinator; promote all-or-none across the scalar list. Carries the open `scalar-promotion-typing-rule` upstream dependency unchanged.
+3. **Operand-category** — `tensor-operand | operator-operand`. The fold's operand monoid is parametric: the BLAS-1 cohort is the **tensor-operand** corner; the **operator-operand** corner is the same fold over `LinearOperator[N, N]` operands under operator-addition + scalar-operator-scaling, witnessed by Palace's `BuildParSumOperator` (`palace/linalg/rap.cpp:764-787`). The driven per-ω system-operator assembly `A(ω) = K + iω·C − ω²·M + A2(ω)` is the L1 operator-operand specialization [`assemble_frequency_operator`](../L1/assemble_frequency_operator.md) (cycle-062). The zero-coefficient term-drop law holds verbatim (the `coeff[i] != 0` guard is the operator-domain `γ==0` collapse). Replace-and-propagate extension (2026-06-01 anti-mirror discipline), NOT a mirrored fold.
 
 **Fusion order (an L0 implementation detail, NOT an L3 variant axis)**: single aligned pass vs multi-call split — transparent for value, load-bearing for bit-reproduction. This is the L2>L1>L0 realization of the fold's seed-and-accumulate; recorded in the L2>L1 fusion-selection theme, not as an L3 axis.
 

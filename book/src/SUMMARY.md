@@ -131,6 +131,7 @@
 - [elementwise_product](./L1/elementwise_product.md)
 - [floquet-correction](./L1/floquet-correction.md)
 - [eliminate_rhs](./L1/eliminate_rhs.md)
+- [assemble_frequency_operator](./L1/assemble_frequency_operator.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -150,6 +151,7 @@
 - [jacobi-smoother-mutation-rotation](./L1-L0/jacobi-smoother-mutation-rotation.md)
 - [reciprocal-elementwise-product-mutation-rotation](./L1-L0/reciprocal-elementwise-product-mutation-rotation.md)
 - [floquet-correction-mutation-rotation](./L1-L0/floquet-correction-mutation-rotation.md)
+- [assemble-frequency-operator-rotation](./L1-L0/assemble-frequency-operator-rotation.md)
 - [divfree-projector-mutation-rotation](./L1-L0/divfree-projector-mutation-rotation.md)
 - [dot-mutation-rotation](./L1-L0/dot-mutation-rotation.md)
 - [nleps-deflated-residual-mutation-rotation](./L1-L0/nleps-deflated-residual-mutation-rotation.md)

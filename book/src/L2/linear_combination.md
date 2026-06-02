@@ -260,6 +260,21 @@ remaining axes are orthogonal to it:
    tracked under OQ `scalar-promotion-typing-rule` and not yet committed
    (`concepts/scalar-promotion.md:49`); the inheritance here carries that dependency
    unchanged.
+3. **Operand-category** — `tensor-operand | operator-operand`. The fold's operand monoid
+   is parametric: the original cohort is the **tensor-operand** corner (the BLAS-1
+   `scal`/`axpy`/`axpby`/`axpbypcz` family, operand monoid = tensor-addition +
+   scalar-tensor-scaling). The **operator-operand** corner is the same fold over
+   `LinearOperator[N, N]` operands under operator-addition + scalar-operator-scaling —
+   witnessed by Palace's `BuildParSumOperator` (`palace/linalg/rap.cpp:764-787`,
+   `sum->AddOperator(ops[i]->LocalOperator(), coeff[i])` for `coeff[i] != 0`), the
+   operator-domain scalar-weighted sum. The driven pipeline's per-ω system-operator
+   assembly `A(ω) = K + iω·C − ω²·M + A2(ω)` is the L1 operator-operand specialization
+   [`assemble_frequency_operator`](../L1/assemble_frequency_operator.md) (cycle-062;
+   arity-4 instance, affine-in-ω scalar weights). The zero-coefficient term-drop law
+   (law 5) holds verbatim at this corner — `BuildParSumOperator`'s `coeff[i] != 0`
+   guard IS the operator-domain `γ==0` arity-collapse. This is the replace-and-propagate
+   extension (2026-06-01 anti-mirror discipline): the operand category is a variant of
+   the one fold, NOT a mirrored `operator_linear_combination` chapter.
 
 **Fusion order (an L0 implementation detail, NOT an L2 variant axis)**: single aligned
 pass (`add(α, x, β, y, z)`) vs multi-call split (`AXPBY(…); z.Add(…)`) — transparent for

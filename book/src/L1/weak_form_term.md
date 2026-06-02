@@ -178,17 +178,22 @@ terms. Two adjacent opaque objects it references but does NOT define:
   `palace/fem/integrator.hpp:68-69` / `VectorFEMassIntegrator` `:79-80`) | `Curl` (∇×, H(curl)/Nedelec —
   `CurlCurlIntegrator`, `palace/fem/integrator.hpp:111-112`) | `Divergence` (∇·, H(div)/Raviart-Thomas —
   `DivDivIntegrator`, `palace/fem/integrator.hpp:122-123`). **Grounded variant points (pulled by an in-scope
-  solver-K witness):**
+  solver-K/M witness — 3 of 4):**
   - `Gradient` — the **electrostatic** stiffness term `(ε, ∇)`, witnessed
     `palace/models/laplaceoperator.cpp:191-192` (`fe_assemble`'s single-term witness).
   - `Curl` — the **magnetostatic** stiffness term `(μ⁻¹, ∇×)`, witnessed
-    `palace/models/curlcurloperator.cpp:179-181` (this cycle's pull).
-  **Pending-pull sibling variant points (named axis points, NOT yet authored — await their own pipeline pull):**
-  - `Identity` (mass) — `Mass`/`VectorFEMass`-realized `(Q, I)` term. The **most-likely next pull**: mass terms
-    appear pervasively across the eigenmode/driven/transient pipelines (`VectorFEMassIntegrator` consumer sites
-    at `palace/models/spaceoperator.cpp:278`, `palace/models/modeeigensolver.cpp:62`,
-    `palace/models/domainpostoperator.cpp:38`, `palace/models/romoperator.cpp:424`). Awaits a pipeline pull that
-    NEEDS a mass-term solver-K/M witness (not speculatively authored here per the redirect's pull-only clean-gate).
+    `palace/models/curlcurloperator.cpp:179-181` (c061's pull).
+  - `Identity` — the **mass** term `(Q, I)` — the identity differential operator (`𝒟u = u`, **no derivative**),
+    realizing the L² pairing `a(u, v) = (Q u, v)`. Witnessed by `SpaceOperator::GetMassMatrix`
+    (`palace/models/spaceoperator.cpp:438`), whose `AddIntegrators` fold (`palace/models/spaceoperator.cpp:260`)
+    appends `a.AddDomainIntegrator<VectorFEMassIntegrator>(*f)` (`palace/models/spaceoperator.cpp:278`) with the
+    mass coefficient `*f`. This is the **SAME `BilinearForm`-fold** as the Gradient/Curl witnesses — an
+    integrator-slot-only difference (here `VectorFEMassIntegrator` over a vector-FE/Nedelec space; the
+    coefficient still rides the variant-invariant base-class slot `palace/fem/integrator.hpp:39-42`). The mass
+    term is heavily multi-witness (eigenmode/driven/transient/ROM/postprocess) — additional consumer sites at
+    `palace/models/modeeigensolver.cpp:62`, `palace/models/domainpostoperator.cpp:38`,
+    `palace/models/romoperator.cpp:424`. (Grounded c062.)
+  **Pending-pull sibling variant point (named axis point, NOT yet authored — awaits its own pipeline pull):**
   - `Divergence` (div-div) — `DivDivIntegrator`-realized `(Q, ∇·)` term. **No in-scope solver-K witness** in the
     pulled pipelines; the integrator wrapper exists (`palace/fem/integrator.hpp:122-123`) but no
     `AddDomainIntegrator<DivDivIntegrator>` instantiation appears among the model operator K-builds (codemap
@@ -226,7 +231,13 @@ magnetostatic pipeline concretely NEEDS a non-diffusion term, and the curl-curl 
 `BilinearForm`-fold differing only in the integrator). This is NOT speculative vocabulary expansion: it is the
 term abstraction that the firm `fe_assemble` fold already quantifies over, now firmed in its own L1 vocabulary
 because a second pipeline forced the `(coefficient, differential-operator)` factorization into view (one witness
-could be coincidence; two witnesses differing in EXACTLY the integrator slot establish the variant axis).
+could be coincidence; multiple witnesses differing in EXACTLY the integrator slot establish the variant axis).
+The differential-operator variant axis is now **3-of-4 grounded** by in-scope solver-K/M witnesses
+(`Gradient`/electrostatic, `Curl`/magnetostatic, `Identity`/mass — the last grounded c062 at
+`palace/models/spaceoperator.cpp:278`,`:438`); only `Divergence`/div-div remains a named pending-pull sibling
+(no in-scope witness). The grounding is an in-place specialization note under the term abstraction
+(combinator-primary per the 2026-06-01 redirect §1), not a new mirrored entry; the term-abstraction-level
+algebraic laws are witness-independent and unchanged.
 
 The term's KERNEL is the libCEED-owned opaque map `A` (the
 [`fe-assemble-libceed-boundary-obstruction`](../L1-L0/fe-assemble-libceed-boundary-obstruction.md) boundary,
@@ -261,9 +272,17 @@ for the term's realization `A`, but not needed for the term's pair-constructor l
   `const MaterialPropertyCoefficient *Q` coefficient slot, **uniform across every differential-operator
   variant** — the structural ground for factoring the coefficient out of the variant axis.
 - `palace/fem/integrator.hpp:68-69` — `MassIntegrator`: `a(u, v) = (Q u, v)` for H1 / vector-`(H1)ᵈ` — the
-  `Identity` differential-operator variant (pending-pull sibling).
+  `Identity` differential-operator variant (grounded c062; identity operator, no derivative).
 - `palace/fem/integrator.hpp:79-80` — `VectorFEMassIntegrator`: `a(u, v) = (Q u, v)` for vector finite elements
-  — the vector-FE realization of the `Identity` variant.
+  — the vector-FE realization of the `Identity` variant (the integrator the mass witness instantiates).
+- `palace/models/spaceoperator.cpp:434-460` — `SpaceOperator::GetMassMatrix`: the **mass witness** (c062's
+  grounding). Builds the mass coefficient `fr` (`AddRealMassCoefficients(1.0, fr)`) then assembles via
+  `AssembleOperator(GetNDSpace(), nullptr, &fr, ...)` (`:459`), which routes through `AddIntegrators`
+  (`palace/models/spaceoperator.cpp:260`) appending
+  `a.AddDomainIntegrator<VectorFEMassIntegrator>(*f)` (`palace/models/spaceoperator.cpp:278`) — the term `(Q, I)`,
+  the identity differential operator (`𝒟u = u`). The SAME `BilinearForm`-fold as the electrostatic/magnetostatic
+  witnesses, differing ONLY in the integrator slot. Grounds the `Identity` variant point — the differential-operator
+  variant axis is now **3 of 4 grounded** (only `Divergence`/div-div remains pending-pull).
 - `palace/fem/integrator.hpp:100-101` — `DiffusionIntegrator`: `a(u, v) = (Q grad u, grad v)` for H1 — the
   `Gradient` variant (grounded by the electrostatic witness).
 - `palace/fem/integrator.hpp:111-112` — `CurlCurlIntegrator`: `a(u, v) = (Q curl u, curl v)` for Nedelec — the
