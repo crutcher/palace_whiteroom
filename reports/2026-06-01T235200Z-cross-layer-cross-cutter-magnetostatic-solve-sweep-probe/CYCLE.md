@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T235200Z
 scope: L1↔L2 cross-cut — magnetostatic outer-solve-sweep probe (2nd witness for the solve-family combinator single-witness gate)
 status: pending
 integrated_at: 2026-06-02T010500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5e8e7a1
 integration_notes: "cycle-053 D1 — APPLIED clean (observation-only, NO book mutation). THE HEADLINE RESULT: the magnetostatic 2nd-pipeline probe DISCHARGES the cycle-052-D6 single-witness gate — the fixed-operator parametric solve-sweep is now 2-of-N witnessed (electrostatic electrostaticsolver.cpp:111-137 + magnetostatic magnetostaticsolver.cpp:110-152) => the fixed-operator solve-family combinator is MINEABLE, queued for the cycle-054 combinator-miner (highest-fan-out batch-16 frontier item). Scope caveat: driven BREAKS shared-operator-capture (drivensolver.cpp:176/:180 SetOperators-inside-loop) — combinator is fixed-operator-only, general map_solve_over_(operator,rhs)_family is the superset. 3 OQs promoted. Build exit 0 (no book change)."
 ---
 

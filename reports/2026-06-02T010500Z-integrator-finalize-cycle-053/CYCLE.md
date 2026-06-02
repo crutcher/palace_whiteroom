@@ -13,7 +13,7 @@ reports_deferred: 0
 reports_rejected: 0
 gate_hits_total: 0
 build_exit: 0
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5e8e7a1
 ---
 
 # CYCLE-053 — integrator-finalize batch report
@@ -48,7 +48,7 @@ All-probe-cycle shape: **3 observation-first dispatches → 2 small landings + 1
 - **retroactive-budget global**: 0 (sum across D1/D2/D3 = 0+0+0). Well under the ≥4 block threshold.
 - **build-breakage repair**: none needed — D3 proposed its own SUMMARY+index wiring in the same pass as the new theme file, so the 2 live links resolved at build; speculative operators correctly plain-text (no `linkcheck2` hazard).
 - **commit atomicity**: single commit (this finalize) bundles staging log + all per-report artifact changes + housekeeping + consumed-report frontmatter touches.
-- **consumed-report frontmatter integrity**: all 3 CYCLE.md marked `integrated_at: 2026-06-02T010500Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows) + `integration_notes`.
+- **consumed-report frontmatter integrity**: all 3 CYCLE.md marked `integrated_at: 2026-06-02T010500Z` + `integration_commit: 5e8e7a1` (two-phase SHA patch follows) + `integration_notes`.
 - **staging-log completeness cross-check**: 3 staging rows == 3 dispatched-ready reports. No gap; no reconciliation needed.
 
 ## Wave-conflict observations

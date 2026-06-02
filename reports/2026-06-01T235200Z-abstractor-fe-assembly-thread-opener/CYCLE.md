@@ -12,7 +12,7 @@ inputs:
   - book/src/L0/fem-bilinearform-file.md (firm L0 navigation for the assembly file — already names the integrator-fold insight)
   - book/src/L1/bilinear-form.md (the slug-collision: existing `bilinear-form` is the BLAS-2 reduction xᴴMy, NOT FE assembly)
 integrated_at: 2026-06-02T010500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5e8e7a1
 integration_notes: "cycle-053 D3 — APPLIED clean. Opened the MFEM-equivalent FE-assembly sub-spine thread: NEW book/src/L1-L0/fe-operator-assemble-mutation-rotation.md (rough-in BY DESIGN) + L1-L0/index dep-map row + L1/index FE-assembly-sub-spine cohort subsection (3 plain-text speculative-op bullets fe_assemble/eliminate_essential_bc/eliminate_rhs/weak_form_term + slug-collision note vs BLAS-2 bilinear-form) + SUMMARY entry. The BilinearForm-as-fold-over-integrators key insight (K=Sum_i A(term_i)) codemap-verified honest (bilinearform.cpp:28-107 accumulation :73-75, laplaceoperator.cpp:184). 2 live links into the new file resolve at build; speculative ops correctly plain-text (no linkcheck2 hazard). 4 OQs routed to batch-16 meta-phase + 1 RESOLVED-in-report (slug-collision). Build exit 0; new theme renders."
 ---
 

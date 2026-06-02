@@ -4,7 +4,7 @@ invoked_at: 2026-06-01T23:57:19Z
 scope: L2 cross-cut — solver capacitance/inductance reduction is a K-weighted variant of firm L2 `gram`
 status: pending
 integrated_at: 2026-06-02T010500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5e8e7a1
 integration_notes: "cycle-053 D2 — APPLIED clean. Landed 2 solver witnesses (capacitance electrostaticsolver.cpp:111-137 + inductance magnetostaticsolver.cpp:110-152) onto book/src/L2/gram.md B-weighted axis + relaxed the witness-less caveat + 3 Evidence rows; gram stays FIRM (coverage strengthening, NO count delta, NOT a new operator). Confirms the c052-D6 capacitance-reduction-may-be-gram-variant hypothesis. Witness anchors codemap-RESOLVED byte-exact. 3 OQs promoted incl. the deferred solver-postprocess-reduction-consumes-gram-distinct-dispatch. Build exit 0; gram.md edits in-place."
 ---
 
