@@ -15,7 +15,7 @@ reports_rejected: 0
 gate_hits_total: 0
 build_exit: 0
 build_repairs: 0
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 4d621d1
 ---
 
 # CYCLE-062 integrator-finalize — batch report-of-records
@@ -63,7 +63,7 @@ Scaffolding (per-report integrator writes, included in this commit):
 | retroactive-budget global | 0 (well under the ≥4 block threshold; no slice/global retro edits — the L2/L3 edits are surgical axis-point additions) |
 | build-breakage repair | none needed (build exit 0; no `linkcheck2` dead-link) |
 | commit atomicity | single commit (this finalize) |
-| consumed-report frontmatter integrity | 3/3 marked `integrated_at: 2026-06-02T103000Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch to follow) |
+| consumed-report frontmatter integrity | 3/3 marked `integrated_at: 2026-06-02T103000Z` + `integration_commit: 4d621d1` (two-phase SHA patch to follow) |
 | staging completeness (rows == dispatched-ready) | 3 == 3 — clean, no reconciliation needed |
 | per-report gate hits (fence-parity, citation-format, citecheck --scan, concept_writes, forward-edge, edge-label, H1, append-on-missing-slug, variant-axis, SUMMARY-registration, implied-component-stub, bookkeeping) | 0 across all 3 rows |
 

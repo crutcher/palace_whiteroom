@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T083220Z
 scope: L1 operator: assemble_frequency_operator + L1>L0 rotation assemble-frequency-operator-rotation; replace-and-propagate operand-category axis extension on L2/L3 linear_combination
 status: pending
 integrated_at: 2026-06-02T103000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 4d621d1
 integration_notes: "Applied clean by integrator-per-report (D3) at 2026-06-02T100200Z; finalized cycle-062. NEW firm L1/assemble_frequency_operator.md + NEW firm L1-L0/assemble-frequency-operator-rotation.md + linear_combination operand-category variant axis (tensor-operand | operator-operand) extended at L2+L3 (surgical, fold NOT re-derived) + L1/index dep-map row + cohort bullet + L1-L0/index row + SUMMARY x2. ENACTS the c061 D3 LICENSE-FUTURE candidate as the operator-operand specialization THROUGH linear_combination, NOT a mirrored fold (anti-mirror / replace-and-propagate, critic=pass). L1 firm 30->31; L1>L0 firm themes +1. Two anchor corrections at apply time (the L1-L0/index floquet-row old_string did not match disk, re-anchored as append-after; the L1/index anchors matched exactly). citecheck --scan 33 ok / 0 failing. Build clean (cargo make book exit 0; both new pages render)."
 inputs:
   - reports/2026-06-02T075145Z-cross-layer-cross-cutter-driven-transient-outer-machinery-probe/CYCLE.md (c061 D3 finding — Region 1, the LICENSE-FUTURE candidate)

@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T083220Z
 scope: L1/index.md §Vocabulary-cohort consolidated-count prose refresh (count-owner, cycle-062 D2)
 status: pending
 integrated_at: 2026-06-02T103000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 4d621d1
 integration_notes: "Applied clean by integrator-per-report (D2) at 2026-06-02T090421Z; finalized cycle-062. In-place x2 header-prose count refresh of L1/index.md: grand total 29->31 (27 main + 4 FE-assembly) + FE-assembly sub-spine subsection header 3->4 (firm weak_form_term as 4th member). SOLE count-owner this cycle, applying the consolidated tally D3 DEFERRED to D2. Both [old] anchors matched disk exactly (lines 31 + 71); anchor-distinct from D3's same-file dep-map row + cohort bullet (no collision). Arithmetic re-verified both routes (27+4=31; 30 in-table + 1 off-table fe_assemble = 31). Resolves the c061-carried count-prose-lag OQ by landing (direct to 31). citecheck --scan 5 ok / 0 failing. Build clean (cargo make book exit 0)."
 inputs:
   - book/src/L1/index.md (current §Vocabulary-cohort header prose + FE-assembly sub-spine subsection header + full dep-map table)

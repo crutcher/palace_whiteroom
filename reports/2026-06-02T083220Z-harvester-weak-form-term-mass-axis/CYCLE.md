@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T083220Z
 scope: L1 operator: weak_form_term (Identity/mass axis-point grounding, in-place)
 status: pending
 integrated_at: 2026-06-02T103000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 4d621d1
 integration_notes: "Applied clean by integrator-per-report (D1) at 2026-06-02T085600Z; finalized cycle-062. In-place x3 grounding of the Identity/mass variant-axis point 2-of-4 -> 3-of-4 (VectorFEMassIntegrator @ spaceoperator.cpp:278); NO count change, status stays firm. All 3 edit: anchors matched after a leading-whitespace correction. citecheck --scan 23 ok / 0 failing. Critic/repairer off-by-one finding repaired report-side pre-integration, never reached the artifact. Build clean (cargo make book exit 0)."
 inputs:
   - book/src/L1/weak_form_term.md (firm entry, c061 D1)
