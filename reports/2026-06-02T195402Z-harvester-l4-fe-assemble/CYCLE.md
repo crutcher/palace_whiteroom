@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T195402Z
 scope: L4 operator: fe_assemble
 status: integrated
 integrated_at: 2026-06-02T204500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE068
+integration_commit: b5dbb90f995d2c808e7f7a1bb8c1c36e66fd743f
 integration_notes: |
   Applied by integrator-per-report (staging row 1, applied_at 2026-06-02T200500Z); finalized by integrator-finalize cycle-068.
   fe_assemble PROMOTED FIRM L4 (the assemble-fold combinator, rank-1 FE-cohort->L4 lift opener). New book/src/L4/fe_assemble.md + own L4/index dep-map row+bullet + SUMMARY L4 alpha-insert (NOT the firm tally — D3 sole count-owner). L4 firm 7->10 (with D3's 2 combinators). Build-relevant: cargo make book exit 0; same-cycle forward-link to D2's fe-assemble-fold-dissolution resolves (D2 landed second). 1 OQ promoted. Zero gate hits.

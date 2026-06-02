@@ -71,4 +71,4 @@ The FE-cohort→L4 lift frontier (opened by the c067 D2 survey) **landed its ran
 
 ## Commit
 
-Single atomic commit + push (artifact + scaffolding + log + book HTML + staging log + consumed-report frontmatter), followed by the two-phase SHA-patch commit replacing `PLACEHOLDER_SHA_CYCLE068` in the 3 consumed reports + this finalize report. Written by `integrator-finalize` (split: integrator-per-report ×3 + finalize ×1).
+Single atomic commit + push (artifact + scaffolding + log + book HTML + staging log + consumed-report frontmatter), followed by the two-phase SHA-patch commit replacing `b5dbb90f995d2c808e7f7a1bb8c1c36e66fd743f` in the 3 consumed reports + this finalize report. Written by `integrator-finalize` (split: integrator-per-report ×3 + finalize ×1).

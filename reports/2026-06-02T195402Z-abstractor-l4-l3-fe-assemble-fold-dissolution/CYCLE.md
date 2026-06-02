@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T195402Z
 scope: L4>L3 theme sketch — fe-assemble-fold-dissolution
 status: integrated
 integrated_at: 2026-06-02T204500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE068
+integration_commit: b5dbb90f995d2c808e7f7a1bb8c1c36e66fd743f
 integration_notes: |
   Applied by integrator-per-report (staging row 2, applied_at 2026-06-02T201800Z); finalized by integrator-finalize cycle-068.
   fe-assemble-fold-dissolution LANDED FIRM L4>L3 (DISSOLUTION-HOME verdict — NO interposed L3/fe_assemble; the solve_family NO-ENTRY shape). New book/src/L4-L3/fe-assemble-fold-dissolution.md + L4-L3/index row+bullet+tally 8->9 (sole L4-L3-index toucher) + SUMMARY L4>L3 insert. LHS live-links D1's fe_assemble (resolves D1's forward-link). Build-relevant: cargo make book exit 0. 1 OQ promoted. citecheck 2 false-positives (prose-shorthand, full palace/fem/ paths resolve). Zero gate hits.

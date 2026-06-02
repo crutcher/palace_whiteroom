@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T195402Z
 scope: cycle-068 D3 — rise linear_combination + inner_product to L4; correct L4/index.md:66 to per-case; sole L4/index.md consolidated-count/tally/frontier-prose owner
 status: integrated
 integrated_at: 2026-06-02T204500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE068
+integration_commit: b5dbb90f995d2c808e7f7a1bb8c1c36e66fd743f
 integration_notes: |
   Applied by integrator-per-report (staging row 3, applied_at 2026-06-02T203100Z); finalized by integrator-finalize cycle-068.
   linear_combination + inner_product PROMOTED FIRM L4 (the two BLAS-1 data-algebra combinators rise as feature-surface verbs; directive-2 §"combinators rise regardless"). New book/src/L4/{linear_combination,inner_product}.md + SUMMARY L4 alpha-inserts. SOLE L4/index count-owner: :66 13-of-18 per-case correction + firm tally (7+4)->(10+4) + active-frontier prose + 2 rows/bullets. L4 firm 7->10. Build-relevant: cargo make book exit 0. 2 OQs promoted. Zero gate hits.
