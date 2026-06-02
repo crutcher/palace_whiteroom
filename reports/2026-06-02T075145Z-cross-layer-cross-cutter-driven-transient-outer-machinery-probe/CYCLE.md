@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T07:57:39Z
 scope: driven↔transient OUTER machinery — beyond-the-solve-loop spine-vocabulary probe (redirect solver-test-load item-3)
 status: pending
 integrated_at: 2026-06-02T082437Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 018eea5
 integration_notes: "Applied cycle-061 (D3; batch-19 position 1/3). Observation-only cross-layer-cross-cutter probe — NO book/ mutation (§Proposed-changes None for book/). Verdict: ONE batch-19 LICENSE-FUTURE candidate assemble_frequency_operator (the operator-domain image of the firm tensor-domain linear_combination; the driven per-ω A=(a0·K+a1·C+a2·M+A2) scalar-weighted sum of fixed operators, drivensolver.cpp:176-177 -> spaceoperator.cpp:522-528 BuildParSumOperator -> rap.cpp:780-786; single positive witness, driven-only, low-priority pull-gated; anti-mirror disposition = extend the EXISTING firm L3/linear_combination operand-category axis rather than mint a new slug, so no stub owed) + Regions 2/3/4 (transient coefficient setup, both pipelines' RHS/excitation eval, both pipelines' post-step field collection) RECORDED spine-complete-or-solver-specific. Both c061 D3 OQ-ledger intake entries (driven-affine-frequency-operator-as-operator-valued-linear-combination :821 with the map_solve scope-boundary sharpening + driven-transient-outer-machinery-spine-complete-except-affine-operator-assembly :822) pre-appended by the dispatch agent; verified present, NOT duplicated. citecheck --scan 26 ok/3 AMBIG (all fold_solve.md bare-basename in prose, resolve unambiguously to L4/fold_solve.md by context; observation-only, nothing ambiguous lands; non-blocking). No build change. Two-phase SHA patch to follow."
 ---
 

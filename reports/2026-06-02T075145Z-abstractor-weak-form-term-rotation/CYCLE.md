@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T075145Z
 scope: L1>L0 theme sketch — weak-form-term-rotation
 status: pending
 integrated_at: 2026-06-02T082437Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 018eea5
 integration_notes: "Applied cycle-061 (D2; batch-19 position 1/3). NEW book/src/L1-L0/weak-form-term-rotation.md FIRM L1>L0 — LHS L1 weak_form_term {coefficient,diff_op} pair -> RHS L0 AddDomainIntegrator<T>(Q) template-type + runtime-arg dispatch; identity-lowers/kernel-opaque split; 2 grounded cases Gradient/DiffusionIntegrator + Curl/CurlCurlIntegrator; mass/div-div pending-pull. L1-L0/index.md theme TABLE row + SUMMARY.md. The live forward-ref to L1/weak_form_term.md resolves (D1 created it in the prior per-report invocation this cycle; canonical serial-per-report-then-finalize ordering). New theme file's own citations citecheck --scan 13 ok/0 failing (the 3 report-narrative AMBIG/MISS are inside the reproduced unchanged c055 fe-assemble-libceed-boundary-obstruction index anchor-context row that round-trips, pre-existing NOT introduced). L1>L0 firm themes +1. 0 new OQs. Build clean, exit 0; the new page renders; no dead link. Two-phase SHA patch to follow."
 inputs:
   - cycle-061 dispatch D2 (wave 2)

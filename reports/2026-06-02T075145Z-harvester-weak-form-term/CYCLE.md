@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T075145Z
 scope: L1 operator: weak_form_term
 status: pending
 integrated_at: 2026-06-02T082437Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 018eea5
 integration_notes: "Applied cycle-061 (D1; batch-19 position 1/3). NEW book/src/L1/weak_form_term.md FIRM L1 — the (coefficient, differential-operator) pair naming one weak-form contribution a(u,v)=(Q·Du,Dv); the element type of fe_assemble's opaque term list; the genuinely-new FE differential-operator vocabulary, pull-driven by the magnetostatic curl-curl term (laplaceoperator.cpp:184-194 Gradient/DiffusionIntegrator/epsilon_func + curlcurloperator.cpp:170-181 Curl/CurlCurlIntegrator/muinv_func, repairer-corrected muinv_func pin :178-179 integrator-site :181 preserved). 2 opaque-WeakFormTerm rough-in notes in fe_assemble.md re-anchored to live ./weak_form_term.md links (reference-upgrades only — fold structure + laws unchanged, replace-and-propagate). L1/index.md dual-registration (dep-map TABLE row + cohort bullet, harvester-owned) + SUMMARY.md. citecheck --scan 29 ok/0 failing. L1 firm 29->30; FE-assembly sub-spine 3->4 firm L1 operators. No concept page (single consumer, below ≥2 bar; OQ weak-form-term-concept-page-reconsideration-on-second-consumer promoted). KNOWN-LAG: L1/index §Vocabulary-cohort header PROSE count lags (TABLE tally correct), OQ l1-index-fe-assembly-sub-spine-count-prose-refresh-3-to-4 for a layer-intro-author touch. Build clean, exit 0; both new pages render; no dead link, no stub. Two-phase SHA patch to follow."
 inputs:
   - cycle-061 dispatch D1 (LEAD)
