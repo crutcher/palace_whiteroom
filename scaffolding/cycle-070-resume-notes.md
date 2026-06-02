@@ -23,3 +23,13 @@ The batch-21 meta-phase (post-cycle-069 finalize) edited **4 `.claude/agents/` r
 - **#5 (deferred, primitive-gated):** `eliminate_*→L4`.
 
 The batch-22 meta-phase fires after cycle-072's finalize (cycles 070/071/072).
+
+## ⟢⟢ USER DIRECTIVE 2026-06-02 (NEW standing goal, recorded post-batch-21-meta) — FEATURE-SURFACE SPINE
+
+Palace's high-level **entry-point features** (what Palace is *written for*) get **dedicated feature-surface chapters** — a TOP-DOWN composition-root spine **parallel** to the bottom-up vocabulary spine. Full def: project memory `project_feature_surface_spine`; priorities.md batch-22 banner + active-head item #6.
+
+- **Feature set (all four):** (1) the 5 simulation drivers (electrostatic/magnetostatic/eigenmode/driven/transient); (2) the top-level lifecycle (`main`→`BaseSolver`: config→mesh→assemble→solve→postprocess→output); (3) output/postprocess products (S-params/capacitance/inductance/eigenfreq+Q/energy-fields); (4) wave-port/boundary-mode (`boundarymodesolver`).
+- **Levels:** L4 + L1 + L0 each (L2/L3 only where the decomposition reshapes).
+- **Priority:** run in PARALLEL (co-equal standing goal; interleave by fan-out — NOT a replacement frontier).
+- **Cycle-070+:** active-head item #6 `feature-surface-spine-seed` is the first parallel pick (recommended exemplar = the electrostatic feature column at L4+L1+L0). The cycle-planner carries the directive via per-dispatch prompts until the **batch-22 meta-phase codifies** it into role-specs (cycle-planner + layer-intro-author/harvester) + CLAUDE.md §"Extraction goal" + the directive-3 kind list (adds a "feature surfaces / entry points" kind). NO new agent (incremental refinement default-accepted; new-role stays High).
+- A feature chapter is a NEW chapter kind (composition-root): the critic's checks adapt (its "surface" IS the feature — evidenced by the L0 driver source range + the constituent-op links, not a single decomposed op).
