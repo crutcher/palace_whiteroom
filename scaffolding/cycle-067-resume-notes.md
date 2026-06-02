@@ -49,3 +49,14 @@ The black-box/accelerated split is **three-way, by judgment** — abstraction va
 3. decomposes AND solely-for-speed, no standalone abstraction value → **stopped-low** (combinator rises in its place); `axpy`-family is the per-case candidate.
 
 Correction to the earlier "(ii) axpy/axpby/axpbypcz/scal/dot/nrm2 chapters are over-risen" claim: that was an over-correction. `dot`/`nrm2` are KEEPS (rise, incl. to L4). The `axpy`-family is a per-case demote-vs-keep judgment weighing literature + downstream-simplification value. `linear_combination`/`inner_product` combinators rise to L4 regardless.
+
+## ⟢⟢ USER DIRECTIVE 2026-06-02 (integrate + meta cycles) — mdBook sub-chapter groupings + alphabetical API lists
+
+Full def: memory `feedback_mdbook_subchapter_grouping_and_alpha_api`; priorities.md batch-21 banner.
+
+1. **Group each layer Part's chapters into mdBook sub-chapter groupings BY KIND** (nested in SUMMARY.md, each with an intro page) — make the §Vocabulary-cohort prose groupings structural navigation.
+2. **Sort the list-of-API / dep-map tables ALPHABETICALLY** (alpha-within-each-kind-grouping).
+
+- `integrator-per-report`/`finalize`: new SUMMARY entries go INSIDE the right kind grouping; dep-map rows insert in ALPHA position (not append). `layer-intro-author`: authors/maintains group intros + alpha order. `meta-phase`: drives the one-time reorg pass (regroup existing flat SUMMARY + author group intros + alphabetize all dep-map tables) + codifies into role-specs (restart).
+- Active immediately via orchestrator per-dispatch prompts (cycle-067+) until role-spec-codified. The one-time reorg is heavy book/-structure work → its own dispatch wave, NOT bundled with a forward-frontier cycle.
+- Respects count-ownership/dual-registration (producer adds row in alpha position; count-owner owns tally).
