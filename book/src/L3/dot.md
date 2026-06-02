@@ -5,7 +5,7 @@ firmness: firm
 lowers_to:
   - book/src/L2/inner_product.md (dot is the Hermitian/symmetric specialization of the inner_product combinator; identity-in-form on the body — see §"Downward to L2 (through inner_product)")
 lifts_from:
-  - (none) — `dot` is a reduction specialization; no L4 entry exists (folds/leaves are not first-class L4 vocabulary per cycle-010 audit verdict; the combinator appears inside L4 composed entries like krylov-step §Semantics as a let-binding)
+  - book/src/L4/dot.md (firm cycle-069 D2 — the L4 Hermitian/symmetric inner-product verb `dot(p, Ap)`; the kept named abstraction risen to L4 alongside the `inner_product` combinator, `concepts/black-box-vs-accelerated-kernels.md` §2; identity-in-form on the body — value-thread-isomorphic, no dedicated L4>L3 theme, the in-line-marker route)
 variant_axes:
   - element-type (real / complex)
   - conjugation-convention (hermitian / unconjugated `tdot` — complex element-type only)
@@ -104,10 +104,29 @@ fold-specialization theme, not re-derived here.
 
 ## Lifts from
 
-`dot` has **no L4 entry** — leaf primitives are not first-class L4 vocabulary (per the cycle-010
-audit verdict). At L4, `dot` appears inside larger composed entries (e.g.,
-`book/src/L4/krylov-step.md` §Semantics) as a let-binding consuming the L3-native primitive
-surface.
+L3 `dot` lifts to the firm L4 [`dot`](../L4/dot.md) (firm cycle-069 D2) by **identity-in-form on
+the body** — the L4 form is the calculus-level named verb re-expressing the [`inner_product`](../L4/inner_product.md)
+combinator at `M = I` with the Hermitian/symmetric kernel; it is value-thread-isomorphic to this
+L3 specialization-stub (the same `Tensor[N] -> Tensor[N] -> Scalar` reduction at the plain-weight
+conjugation value), so there is **no dedicated L4>L3 theme** (the in-line-marker route, the
+`inner_product`/`eigsolve`/`chebyshev` shape — no monadic wrapper / `Solve` monad / convergence
+predicate to dissolve). `dot` is one of the **kept named abstractions** that rise to L4 as named
+verbs *alongside* the general combinator (the permitted dual per
+[`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerated-kernels.md) §2 — the
+literature-standard unit a CG/GMRES description spells `dot(p, Ap)` / `dot(r, z)` rather than an
+inlined application). At L4 `dot` also still appears *inside* larger composed entries (e.g.
+`book/src/L4/krylov-step.md` §Semantics) as a let-binding consuming the primitive surface.
+
+> **Superseded.** This entry formerly recorded `dot` as having **no L4 entry** — "leaf
+> primitives are not first-class L4 vocabulary (per the cycle-010 audit verdict); at L4 `dot`
+> appears only inside larger composed entries as a let-binding." That blanket "no-L4-by-design"
+> reading was **superseded cycle-069 D2** when `dot` rose to a firm L4 named verb. Under the
+> 2026-06-01 VOCABULARY-SHIFT REDIRECT (L4 is the outward backend-lowering target) the per-case
+> disposition of [`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerated-kernels.md)
+> §2 governs: the `inner_product` combinator rises regardless, and the **kept named abstractions
+> `dot` / `nrm2` rise alongside it as named verbs** (distinct from the *pure accelerated kernels*
+> `scal` / `axpy` / `axpby` / `axpbypcz`, which correctly stay low). The cycle-010 verdict was
+> right for accelerated-kernel leaves; `dot` is a kept named abstraction, not such a leaf.
 
 ## Evidence
 

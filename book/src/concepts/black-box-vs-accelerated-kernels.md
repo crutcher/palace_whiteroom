@@ -66,11 +66,11 @@ Sibling black-box kernels:
   construction-bound `KSP` value behind a clean per-call surface
   ([`L4/ksp_solve`](../L4/ksp_solve.md));
 - the **per-element libCEED quadrature leaf** `A(space, ·)` inside
-  [`fe_assemble`](../L1/fe_assemble.md) — the element-local→global
+  [`fe_assemble`](../L4/fe_assemble.md) — the element-local→global
   assembly map (restriction + basis-apply + quadrature contraction), an
   upstream-owned (libCEED) opaque kernel that the assemble fold folds over
   *without cracking open*; it rises as an opaque-surface **input** to the
-  assemble combinator;
+  risen assemble combinator;
 - [`fold_solve`](../L4/fold_solve.md)'s per-step `ode->Step` — the opaque
   transient time-step leaf folded by the outer time-marching combinator.
 
@@ -140,7 +140,7 @@ queued to rise to L4 — see the L3 entries.)
 - [`eigsolve`](./eigsolve.md) — canonical black-box kernel (case 1).
 - [`dot`](./dot.md), [`nrm2`](./nrm2.md) — kept named abstractions (case 2).
 - [`scal`](./scal.md) — accelerated-kernel-family candidate (case 3).
-- [`fe_assemble`](../L1/fe_assemble.md) — the assemble fold (combinator,
+- [`fe_assemble`](../L4/fe_assemble.md) — the assemble fold (combinator,
   rises) over the libCEED quadrature leaf (black-box kernel, rises as input).
 - [`sequential-obstruction`](./sequential-obstruction.md),
   [`scope-out-obstruction`](./scope-out-obstruction.md) — the negative filings

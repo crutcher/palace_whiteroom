@@ -5,7 +5,7 @@ firmness: firm
 lowers_to:
   - book/src/L1/nrm2.md (identity-in-form on the primitive's signature; no L3-L1 theme — see Lowers-to)
 lifts_from:
-  - (none) — `nrm2` is a leaf primitive; no L4 entry exists (leaf primitives don't get L4 rows per cycle-010 audit verdict)
+  - book/src/L4/nrm2.md (firm cycle-069 D2 — the L4 Euclidean-norm verb `nrm2(r)`; the kept named abstraction risen to L4 as a named CONSUMER verb of the `inner_product` combinator at the diagonal `y = x` (`√ ∘ abs ∘ inner_product`), NOT a fold member — the do-NOT-merge guard; `concepts/black-box-vs-accelerated-kernels.md` §2; identity-in-form on the body — value-thread-isomorphic, no dedicated L4>L3 theme, the in-line-marker route)
 variant_axes:
   - element-type (real / complex; collapsed to single operator at L3 — result is always real)
 ---
@@ -133,10 +133,32 @@ L3>L2 rotation identity-in-form. (Path relative to `reference/palace/`; full L0 
 
 ## Lifts from
 
-`nrm2` has **no L4 entry** — leaf primitives are not first-class L4 vocabulary (per the cycle-010
-audit verdict). At L4, `nrm2` appears inside larger composed entries (e.g.
-`book/src/L4/krylov-step.md` §Semantics body — `outputs.residual_norm`) as a let-binding consuming
-the L3-native primitive surface.
+L3 `nrm2` lifts to the firm L4 [`nrm2`](../L4/nrm2.md) (firm cycle-069 D2) by **identity-in-form
+on the body** — the L4 form is the calculus-level named verb re-expressing the diagonal consume of
+the [`inner_product`](../L4/inner_product.md) combinator under the `√ ∘ abs` scalar map; it is
+value-thread-isomorphic to this L3 consumer-stub (the same `Tensor[N] -> Scalar` `√(abs(inner_product
+x x))` skeleton), so there is **no dedicated L4>L3 theme** (the in-line-marker route — no monadic
+wrapper / `Solve` monad / convergence predicate to dissolve; the `abs` defensive guard is preserved
+as an explicit scalar-map detail at L4). `nrm2` is one of the **kept named abstractions** that rise
+to L4 as named verbs *alongside* the general combinator (the permitted dual per
+[`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerated-kernels.md) §2 — the
+literature-standard unit a Krylov / eigen solver description spells residual `nrm2(r)` / the Arnoldi
+sub-diagonal `H[j+1,j] = nrm2(w)`), but as a **CONSUMER** of `inner_product`, NOT a fold member (the
+do-NOT-merge over-unification guard — split-additivity is lost under `√`). At L4 `nrm2` also still
+appears *inside* larger composed entries (e.g. `book/src/L4/krylov-step.md` §Semantics body —
+`outputs.residual_norm`) as a let-binding consuming the primitive surface.
+
+> **Superseded.** This entry formerly recorded `nrm2` as having **no L4 entry** — "leaf primitives
+> are not first-class L4 vocabulary (per the cycle-010 audit verdict); at L4 `nrm2` appears only
+> inside larger composed entries as a let-binding." That blanket "no-L4-by-design" reading was
+> **superseded cycle-069 D2** when `nrm2` rose to a firm L4 named verb. Under the 2026-06-01
+> VOCABULARY-SHIFT REDIRECT (L4 is the outward backend-lowering target) the per-case disposition of
+> [`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerated-kernels.md) §2 governs:
+> the `inner_product` combinator rises regardless, and the **kept named abstractions `dot` / `nrm2`
+> rise alongside it as named verbs** (`nrm2` as a CONSUMER of the combinator, not a member; distinct
+> from the *pure accelerated kernels* `scal` / `axpy` / `axpby` / `axpbypcz`, which correctly stay
+> low). The cycle-010 verdict was right for accelerated-kernel leaves; `nrm2` is a kept named
+> abstraction, not such a leaf.
 
 ## Evidence
 

@@ -4,6 +4,11 @@
 # Methodology
 - [Overview](./methodology/overview.md)
 - [Goal & Flow](./methodology/goal-flow.md)
+# Feature surfaces — entry points
+- [Overview](./feature/index.md)
+- [electrostatic — L4 composition-root](./feature/electrostatic.L4.md)
+- [electrostatic — L1 composition-root](./feature/electrostatic.L1.md)
+- [electrostatic — L0 ground-truth surface](./feature/electrostatic.L0.md)
 # L4 — Graph-Evaluation Calculus
 - [Overview](./L4/index.md)
 - [assemble_frequency_operator](./L4/assemble_frequency_operator.md)
@@ -20,6 +25,7 @@
 - [fe_assemble](./L4/fe_assemble.md)
 - [solve_family](./L4/solve_family.md)
 - [fold_solve](./L4/fold_solve.md)
+- [frequency_sweep](./L4/frequency_sweep.md)
 
 # L4 > L3 — Lowering
 - [Overview](./L4-L3/index.md)
@@ -31,6 +37,7 @@
 - [ksp-solve-driver-dissolution](./L4-L3/ksp-solve-driver-dissolution.md)
 - [solve-family-map-dissolution](./L4-L3/solve-family-map-dissolution.md)
 - [fold-solve-time-step-dissolution](./L4-L3/fold-solve-time-step-dissolution.md)
+- [frequency-sweep-dissolution](./L4-L3/frequency-sweep-dissolution.md)
 - [fe-assemble-fold-dissolution](./L4-L3/fe-assemble-fold-dissolution.md)
 
 # L3 — Global Tensor-Field Operations
