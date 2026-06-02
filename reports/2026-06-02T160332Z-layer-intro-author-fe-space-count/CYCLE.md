@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T160332Z
 scope: L1/index.md FE-space sub-spine consolidated count refresh (count-owner, cycle-065 D4 wave-2)
 status: integrated
 integrated_at: 2026-06-02T190000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f9084dcc9677092da2fcbba34432d13422771d41
 integration_notes: "Applied cycle-065 (D4, wave-2 count-owner). book/src/L1/index.md x2: §Vocabulary-cohort grand-total 32->33 (27 main + 4 FE-assembly + 2 FE-space); FE-space sub-spine subsection header 1->2 (fe_collection folded into the sub-spine narrative as the upstream collection-order-schedule producer). Build-relevant; count-owner contingency on D2 landing fe_collection firm SATISFIED (verified on-disk). No gate hits; 0 new OQs."
 ---
 

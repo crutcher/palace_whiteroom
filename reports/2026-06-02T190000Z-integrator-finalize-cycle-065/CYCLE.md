@@ -16,7 +16,7 @@ reports_rejected: 0
 gate_hits_total: 0
 build_exit: 0
 build_repairs: 0
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f9084dcc9677092da2fcbba34432d13422771d41
 ---
 
 # CYCLE-065 — batch integration record (integrator-finalize)
@@ -51,7 +51,7 @@ Serial per-report application order: D2 → D3 → D1 → D4 (the staging log re
 - per-report gates (fence-parity / forward-edge-claim / citation-format / SUMMARY-registration / index-placeholder / variant-axis / edge-label / index-cell anti-drift): 0 hits across all 4 rows.
 - build-breakage repair: none needed (build exit 0; only pre-existing KaTeX false-positive WARNs in `design/l4_calculus.md`, 4 sites, unrelated to this cycle).
 - commit atomicity: single commit (this finalize) + a follow-up two-phase SHA-patch commit per the cycle-004/005 canonical pattern.
-- consumed-report frontmatter integrity: all 4 marked `integrated_at: 2026-06-02T190000Z` + `integration_commit: PLACEHOLDER_SHA` (patched post-commit).
+- consumed-report frontmatter integrity: all 4 marked `integrated_at: 2026-06-02T190000Z` + `integration_commit: f9084dcc9677092da2fcbba34432d13422771d41` (patched post-commit).
 
 ## Wave-conflict observations
 

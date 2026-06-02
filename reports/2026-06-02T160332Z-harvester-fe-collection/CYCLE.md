@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T160332Z
 scope: L1 operator: fe_collection
 status: integrated
 integrated_at: 2026-06-02T190000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f9084dcc9677092da2fcbba34432d13422771d41
 integration_notes: "Applied cycle-065 (D2). NEW firm book/src/L1/fe_collection.md (p-multigrid FE-collection order schedule; mat_lor: Bool param per repair) + L1/index.md dep-map row + FE-space sub-spine cohort bullet + SUMMARY chapter line. Build-relevant; cargo make book exit 0. L1 firm 32->33; FE-space sub-spine 1->2. 1 OQ promoted (multigrid-hpp-template-close-line-citation-hygiene). No gate hits."
 inputs:
   - reference/palace/palace/fem/multigrid.hpp:22-73 (ConstructFECollections — the order schedule)

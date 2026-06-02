@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T161500Z
 scope: L1>L0 theme sketch — fe-collection-construction-rotation
 status: integrated
 integrated_at: 2026-06-02T190000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f9084dcc9677092da2fcbba34432d13422771d41
 integration_notes: "Applied cycle-065 (D3). NEW firm book/src/L1-L0/fe-collection-construction-rotation.md (LHS L1 fe_collection schedule -> RHS L0 ConstructFECollections template body multigrid.hpp:22-73; 5-piece forward rewrite; 3 variant-axis rewrite cases; std::reverse load-bearing) + L1-L0/index.md theme row + SUMMARY chapter line. Build-relevant; the live link ../L1/fe_collection.md resolves (D2 landed earlier this cycle). L1>L0 firm themes +1. No gate hits; 0 new OQs."
 inputs:
   - reference/palace/palace/fem/multigrid.hpp:22-73 (ConstructFECollections — the order schedule; on-disk verified, body return :72, closing brace :73)

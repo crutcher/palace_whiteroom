@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T160332Z
 scope: L1 opaque-parameter re-anchor — 4 firm L1 entries → firm fe_space cross-ref (replace-and-propagate from c064 front-opening)
 status: integrated
 integrated_at: 2026-06-02T190000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f9084dcc9677092da2fcbba34432d13422771d41
 integration_notes: "Applied cycle-065 (D1). Opaque-parameter operator-surface re-anchor ENACTED: book/src/L1/{fe_assemble,weak_form_term,eliminate_essential_bc,eliminate_rhs}.md re-anchored to firm fe_space via live cross-refs over the true-dof axis N (fespace.hpp:96); all 4 stay firm (no status flip). Build-relevant; cargo make book exit 0. RESOLVES-BY-LANDING the c064 D1/D2 operator-surface re-anchor OQs; opened the NEW theme-layer follow-on OQ fe-space-opaque-param-l1-l0-theme-reanchor-to-firm-fe-space. No gate hits."
 inputs:
   - book/src/L1/fe_space.md (firm, cycle-064 — the re-anchor target)
