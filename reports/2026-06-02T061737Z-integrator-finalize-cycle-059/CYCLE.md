@@ -18,7 +18,7 @@ retroactive_budget_global: 0
 build_exit: 0
 build_repairs: 0
 implied_component_stubs_created: 0
-integration_commit: PLACEHOLDER_SHA
+integration_commit: d2d2c60
 ---
 
 # cycle-059 integrator-finalize — batch CYCLE.md (the report-of-record)
@@ -128,4 +128,4 @@ The two-combinator MAP/FOLD factoring now spans **L4 + L4>L3 + L3**, with the cl
 
 ---
 
-Written by `integrator-finalize` (consumed the cycle-059 staging log + 3 per-report integrator applications; rebuild + commit + cycle-end housekeeping). The `integration_commit: PLACEHOLDER_SHA` fields (this report + the 3 consumed reports' frontmatter) are patched to the actual SHA in a follow-up commit per the two-phase SHA pattern (cycle-004/005 canonical precedent).
+Written by `integrator-finalize` (consumed the cycle-059 staging log + 3 per-report integrator applications; rebuild + commit + cycle-end housekeeping). The `integration_commit: d2d2c60` fields (this report + the 3 consumed reports' frontmatter) are patched to the actual SHA in a follow-up commit per the two-phase SHA pattern (cycle-004/005 canonical precedent).

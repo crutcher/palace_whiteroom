@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T061737Z
 scope: L4 index prose refresh (fold_solve firmness-split + active-frontier re-state)
 status: pending
 integrated_at: 2026-06-02T061737Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: d2d2c60
 integration_notes: "cycle-059 D2. Applied clean (3 surgical prose edits, prose-only). book/src/L4/index.md cohort refresh firm: Vocabulary-cohort header count 6->7 firm + batch-17 MAP/FOLD framing; fold_solve firm bullet inserted before solve_family; Active-frontier fold_solve thread-opener re-stated firm with a live ../L3/fold_solve.md link (kept LIVE — D1 co-landed it this cycle). The 6->7 corrects the lingering '6' to match the authoritative Firm-at-L4=7 tally (firm-flip landed c058). Resolves OQ fold-solve-l4-index-vocabulary-cohort-firmness-split-refresh. citecheck --scan 9 ok / 4 AMBIG (ALL NON-BLOCKING, NOT landed — report-narrative bare-basename status-reads + intra-document self-refs; landed prose carries ZERO AMBIG citations). Build cargo make book exit 0; no build-repair needed."
 ---
 

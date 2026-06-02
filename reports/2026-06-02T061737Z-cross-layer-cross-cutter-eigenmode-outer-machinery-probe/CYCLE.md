@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T06:23:21Z
 scope: L3↔L4 cross-cut — eigenmode pipeline OUTER machinery probe (solver-test-load item-3)
 status: pending
 integrated_at: 2026-06-02T061737Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: d2d2c60
 integration_notes: "cycle-059 D3. Applied clean (1 surgical mid-paragraph clause replacement at L4/solve_family.md:146, prose-only). The eigenmode pipeline recorded SPINE-COMPLETE / NOT-A-WITNESS of either solve_family (map) or fold_solve (fold): one opaque eigen->Solve() (eigensolver.cpp:367), readout-only loop (:425-471), no operator/RHS family to MAP and no state-threaded solve-march to FOLD — the outer machinery adds NO new spine vocabulary. transient half re-pointed to the live ./fold_solve.md home (remaining unprobed AS a witness). 2 intake OQs verified present (eigenmode-outer-machinery-SPINE-COMPLETE-no-combinator-witness + eigenmode-hybrid-two-phase-refine-single-witness-refine_solve-candidate). citecheck --scan 19 ok / 0 failing. Build cargo make book exit 0; no build-repair needed."
 ---
 

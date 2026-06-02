@@ -14,7 +14,7 @@ inputs:
   - palace/models/timeoperator.cpp:312,410 (op-construct-once + opaque ode->Step per-step body)
   - palace/drivers/drivensolver.cpp:231-398 (SweepAdaptive state-generated fold-spine second witness)
 integrated_at: 2026-06-02T061737Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: d2d2c60
 integration_notes: "cycle-059 D1. Applied clean (12 proposed-changes blocks, 0 defers/rejects). NEW book/src/L3/fold_solve.md (partial-obstruction — the 4th L3 partial-obstruction, the L3 fold-image of the firm L4 fold_solve; carry-threading sequential-obstruction + opaque per-step ode->Step body both resist the rotation while the body lifts) + NEW book/src/L3-L2/fold-solve-time-step-body.md (firm — the 5th substantive L3>L2 theme; consolidated firm-theme count 5->6). L3/index single authoritative count tally 17 firm + 3 -> 17 firm + 4 partial-obstruction + obstruction-profile shape (f) added; L3-L2/index tally 5->6; SUMMARY.md x2; 3 coupled re-anchors resolved to live links. Resolves OQ fold-solve-l3-entry-vs-dissolution-home (verdict L3-ENTRY). citecheck --scan 29 ok / 0 failing. Build cargo make book exit 0; no build-repair needed."
 
 # CYCLE: L3>L2 theme sketch + L3 entry — fold_solve L3-image (partial-obstruction)
