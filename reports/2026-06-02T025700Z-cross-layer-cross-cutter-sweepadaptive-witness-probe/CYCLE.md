@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T03:03:38Z
 scope: L_n↔L_{n+1} cross-cut — SweepAdaptive fold-vs-map witness probe for the map_solve superset
 status: pending
 integrated_at: 2026-06-02T050000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 26c8b3c
 integration_notes: "Applied cycle-057 (D3). OBSERVATION-ONLY (no book mutation). SweepAdaptive is a reduced-order-model FOLD (double state-thread: sample-location via FindMaxError, sample-result via UpdatePROM Gram-Schmidt-append; online fast-sweep maps over the FROZEN ROM, NOT operator-varying) → NOT a 2nd map_solve witness → map_solve superset STAYS deferred at 1 witness (standard Sweep, c056 D1); SweepAdaptive + transient both in the FOLD family → confirms the two-combinator (MAP/FOLD) factoring. 1 OQ promoted (sweepadaptive-is-rom-fold-map-solve-stays-single-witness, cross-references c056 D1 + c057 D4)."
 ---
 

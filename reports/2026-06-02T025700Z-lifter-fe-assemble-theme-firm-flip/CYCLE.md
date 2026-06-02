@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T030406Z
 scope: L1>L0 theme re-anchor + firm-flip — fe-operator-assemble-mutation-rotation
 status: pending
 integrated_at: 2026-06-02T050000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 26c8b3c
 integration_notes: "Applied cycle-057 (D2). fe-operator-assemble-mutation-rotation PROMOTED rough-in→FIRM (all 3 LHS ops now firm): 2 BC-elimination-leg re-anchors to firm eliminate_essential_bc/eliminate_rhs live links + 3 citation drift fixes (:225-253→:225-252 / :236→:238 / new :247) + a stale-back-ref fix + libCEED-boundary OQ re-anchor to the settled obstruction annotation. Index-cell anti-drift guard applied (theme ## Status + frontmatter + L1-L0/index.md row all flipped firm in one report). The FE-assembly sub-spine L1>L0 edge is now COMPLETE. L1>L0 firm themes +1. 2 OQs promoted. Build clean (firm-flip of existing registered theme, no new/removed pages)."
 inputs:
   - book/src/L1-L0/fe-operator-assemble-mutation-rotation.md

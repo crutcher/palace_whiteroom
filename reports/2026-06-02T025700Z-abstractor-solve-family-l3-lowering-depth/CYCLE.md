@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T02:57:00Z
 scope: L3 lowering-depth warrant call — solve_family (does the L3 family-solve loop warrant a firm L3/solve_family entry + an L3>L2 hop?)
 status: pending
 integrated_at: 2026-06-02T050000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 26c8b3c
 integration_notes: "Applied cycle-057 (D1). NO-ENTRY warrant — no L3/solve_family entry; 5 forward-reference corrections re-point dangling promises of the absent slug onto the firm L4>L3 solve-family-map-dissolution theme as the authoritative L3-form home. No count change, no new file. WARRANT-FIRST anti-mirror discipline (the negative warrant is the recorded outcome). Build clean; no live link to the absent L3/solve_family.md created (stays code-span). OQ solve-family-l3-no-entry-warrant-record promoted."
 inputs:
   - book/src/L4/solve_family.md (rough-in test-coverage-bounded; the L4 fixed-operator map-over-RHS-family combinator)

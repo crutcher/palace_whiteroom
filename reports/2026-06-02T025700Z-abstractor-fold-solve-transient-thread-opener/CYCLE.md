@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T025700Z
 scope: L4 thread-opener (observation-first) — fold_solve / time_step_fold transient combinator
 status: pending
 integrated_at: 2026-06-02T050000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 26c8b3c
 integration_notes: "Applied cycle-057 (D4). 1 rough-in fold_solve/time_step_fold dep-map row + 1 frontier bullet in L4/index.md — the transient state-threaded FOLD outer-driver, the fold-counterpart of solve_family's independent MAP (both children of strawman §3.7 iterate_while). L4 rough-in +1 (L4 firm UNCHANGED 6). Slug plain-text/code-span (no fold_solve.md, no theme, no dangling link). Held rough-in (1 transient witness; opaque MFEM ODESolver per-step body). 3 OQs promoted. Build clean."
 inputs:
   - reference/palace/palace/drivers/transientsolver.cpp:24-114 (TransientSolver::Solve, the time-stepping driver loop)
