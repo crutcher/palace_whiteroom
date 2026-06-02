@@ -89,7 +89,9 @@ The term has two separable aspects, and they lower through **different** L1>L0 s
   read directly off the source. This is the content of THIS theme.
 - **The term's KERNEL stays OPAQUE (lowers elsewhere, as an obstruction).** *How* a term's integrand
   `(Q · 𝒟u, 𝒟v)` is evaluated — the element-local quadrature contraction + dof restriction performed by the
-  integrator's `Assemble` method — is the libCEED-owned opaque map. It is already classified as the
+  integrator's `Assemble` method — is the libCEED-owned opaque map `A(space, ·)` over the firm
+  [`fe_space`](../L1/fe_space.md) (the `space` argument is the de-opaqued FE-space value; only the
+  realization `A` stays library-owned). It is already classified as the
   `opaque-library-ownership` obstruction [`fe-assemble-libceed-boundary-obstruction`](./fe-assemble-libceed-boundary-obstruction.md)
   (c055), identical across all 5 solver pipelines. It does NOT lower through this theme; this theme stops at the
   registration call.

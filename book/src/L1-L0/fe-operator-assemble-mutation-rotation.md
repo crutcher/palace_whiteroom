@@ -51,7 +51,9 @@ form is read, not constructed.
 ## L1 form (LHS)
 
 The LHS is the now-firm L1 operator [`fe_assemble`](../L1/fe_assemble.md) (landed cycle-054). It
-consumes a finite-element space and an **immutable list of weak-form terms** (each term a
+consumes a finite-element space — the firm [`fe_space`](../L1/fe_space.md) value
+`fe_space(mesh, collection) :: FiniteElementSpace[N]` (the substrate that *defines* the true-dof axis
+`N`) — and an **immutable list of weak-form terms** (each term a
 `(coefficient, differential-operator)` pair naming a bilinear weak-form contribution `a_i(u, v)`),
 and produces a fresh global linear operator. Nothing is mutated; there is no container built up in
 place, no sub-operator accumulator, no finalize step.
@@ -224,5 +226,9 @@ opaquely, per §Status (c)):
   becomes a global-dof operator (the libCEED restriction + basis-apply). This is the libCEED
   boundary; whether it gets re-expressed as a tensor contraction or stays library-owned is the
   thread's central open decision.
-- The **FE space** itself (`FiniteElementSpace`) — the dof-numbering / mesh-topology object — is a
-  whole sub-thread (`book/src/L0/fespace-file.md` exists at L0; no L1 form yet).
+- The **FE space** itself (`FiniteElementSpace`) — the dof-numbering / mesh-topology object — now
+  has its firm L1 home [`fe_space`](../L1/fe_space.md) (firm c064; the `(mesh, collection) →
+  FiniteElementSpace[N]` construction that defines the true-dof axis `N` every `[N]`-indexed operand
+  shares), lowering to L0 via the `fe-space-construction-rotation` L1>L0 theme. The dof-numbering /
+  ordering / conformity internals stay MFEM-owned-read-as-given (see `fe_space` §"MFEM-owned");
+  `book/src/L0/fespace-file.md` is the L0 localization.

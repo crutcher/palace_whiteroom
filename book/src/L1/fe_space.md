@@ -81,7 +81,7 @@ are witnessed positively at the construction call sites:
 `:72-73`). The de-Rham complex H1 →∇ H(curl) →∇× H(div) →∇· L2 is the L0 framing at
 `book/src/L0/fespace-file.md:165-169`.
 
-The **collection order schedule** itself (`ConstructFECollections`, `palace/fem/multigrid.hpp:22-72`)
+The **collection order schedule** itself (`ConstructFECollections`, `palace/fem/multigrid.hpp:22-73`)
 — the p-multigrid order sequence, the `pmin` floor (1 for H1/ND, 0 for RT/L2,
 `multigrid.hpp:30-33`), the GaussLobatto/GaussLegendre/IntegratedGLL basis-type choice
 (`multigrid.hpp:34-38`), the LINEAR/LOGARITHMIC coarsening — is a *separate* construction that produces
@@ -179,7 +179,7 @@ This is the highest-fan-out entry of the FE-space-construction front: the **shar
 five solver pipelines** and the de-opaquing home for four firm L1 entries (the fan-out above).
 
 **Deferred follow-on siblings (named, NOT authored this cycle):** `fe_collection` (the
-`ConstructFECollections` order schedule — `multigrid.hpp:22-72`), `essential_dofs` (the
+`ConstructFECollections` order schedule — `multigrid.hpp:22-73`), `essential_dofs` (the
 boundary-attribute-marker → essential-true-dof-set extraction, `multigrid.hpp:97-99` — straddles the
 MFEM-owned boundary, likely a noted-property of `fe_space` unless `eliminate_*`'s `DofSet[N]` demands a
 self-standing home), and `fe_space_hierarchy` (the h/p-refinement multigrid stack,
@@ -200,7 +200,7 @@ self-standing home), and `fe_space_hierarchy` (the h/p-refinement multigrid stac
 - `palace/fem/multigrid.hpp:78-126` — `ConstructFiniteElementSpaceHierarchy`: the coarse-seed single
   `FiniteElementSpace` construction (`:89-90`), `mesh::AttrToMarker` (`:97-98`) + `GetEssentialTrueDofs`
   (`:98-99`), the h-refinement `AddLevel` (`:106`) and p-refinement `AddLevel` (`:117`).
-- `palace/fem/multigrid.hpp:22-72` — `ConstructFECollections` (the deferred order-schedule context):
+- `palace/fem/multigrid.hpp:22-73` — `ConstructFECollections` (the deferred order-schedule context):
   `pmin` floor (`:30-33`), basis-type choice (`:34-38`).
 - `book/src/L0/fespace-file.md` — the firm L0 localization: MFEM-as-given framing (`:18-25,150-158`),
   the de-Rham complex H1 →∇ H(curl) →∇× H(div) →∇· L2 (`:165-169`), the transparent libCEED-cache
