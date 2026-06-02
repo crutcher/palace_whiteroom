@@ -47,6 +47,7 @@
 - [divfree-projector](./L3/divfree-projector.md)
 - [normalize](./L3/normalize.md)
 - [orthogonalize](./L3/orthogonalize.md)
+- [fold_solve](./L3/fold_solve.md)
 
 # L3 > L2 — Lowering
 - [Overview](./L3-L2/index.md)
@@ -55,6 +56,7 @@
 - [orthogonalize-variant-split](./L3-L2/orthogonalize-variant-split.md)
 - [eigsolve-opaque-eigen-iteration](./L3-L2/eigsolve-opaque-eigen-iteration.md)
 - [chebyshev-nested-recurrence](./L3-L2/chebyshev-nested-recurrence.md)
+- [fold-solve-time-step-body](./L3-L2/fold-solve-time-step-body.md)
 
 # L2 — Algebraic Decompositions
 - [Overview](./L2/index.md)
