@@ -929,3 +929,67 @@ opened_by: cross-layer-cross-cutter
 
 Per the propagation argument in the partial-closure OQ above, the **`L1` and `L1-L0` index tables are the highest-value next-audit candidate** for the index-table-staleness drift class — they carry the most active in-place-promotion churn (the L1 / L1-L0 frontier work), so they are the tables most likely to have accumulated promotion-in-place desync (the only drift sub-class that escapes the dead-link build check). A sibling cross-layer-cross-cutter sweep of L1 / L1-L0 (then L4 / L3 / L2 / L0) would fully characterize the drift-class across the artifact. Surfacing as the next-audit candidate for the plan, not parking; batch-17 meta-phase input.
 
+
+### New intake — cycle-057 D1 (abstractor, L3 lowering-depth warrant call — solve_family)
+
+#### solve-family-l3-no-entry-warrant-record (cycle-057 D1 — NO-ENTRY verdict record, low-priority)
+opened_at: cycle-057
+opened_by: abstractor
+
+Records the cycle-057 D1 **NO-ENTRY** warrant verdict so a future planner does not re-propose an `L3/solve_family` backfill under a stale "Identity-lowerings still require both L levels" reading (that invariant is SUPERSEDED by the 2026-06-01 VOCABULARY-SHIFT REDIRECT; the anti-mirror principle governs). The L4 family-map loop carries **no `sequential-obstruction`** (the family members are independent — embarrassingly parallel, written sequentially), so L3's iteration-rotation content for the family shell is the *negative* finding "the loop lifts" — already stated, in L3 vocabulary, in `book/src/L4-L3/solve-family-map-dissolution.md` §"L3 form (RHS)" + §"What does NOT change" (explicitly contrasted against the obstruction-carrying `L3/ksp_solve`). A separate `L3/solve_family` chapter would mirror the dissolution theme's RHS (the §1d smell), and a `L3-L2/solve-family-step-fold-dissolution` theme would carry no substance (the four firm substantive L3>L2 themes each exist because an L3 obstruction shadows to an L2 non-law; the family shell has none). The authoritative L3-form home is the `solve-family-map-dissolution` theme itself; **no standalone L3 chapter, no `L3-L2/solve-family-step-fold-dissolution` theme.** Five forward-reference corrections landed cycle-057 (L4 cap frontmatter + §"Lowers to"; dissolution theme §does-NOT-cover + §Verified-against; `L4/index.md:80` dep-map L3-image cell).
+
+**Re-open trigger:** a witnessed fixed-operator family sweep whose family loop carries a genuine cross-member `sequential-obstruction` (none in the 2 fixed-operator pipelines — electrostatic / magnetostatic; would require a 3rd probe finding a stateful/fold family shape — but a fold family shape would NOT be `solve_family`, it would be the superset's sibling `fold_solve`, per `L4/solve_family.md` §"Sits above"). **Scope caveat:** this verdict is the FIXED-operator family (`solve_family`, 2-of-5 pipelines) ONLY. The per-element-operator superset `map_solve_over_(operator,rhs)_family` (driven, `drivensolver.cpp:176-180`) is a separate later warrant call (OQ `solve-family-general-operator-rhs-superset-probe`) that the NO-ENTRY does NOT prejudge — the per-ω operator rebuild interacts with frequency-sweep ROM/PROM machinery that could carry its own structure. Transient and eigenmode are unprobed for the family pattern entirely. The per-member solve `ksp.Mult` DOES have a firm L3 home (`L3/ksp_solve`, which carries its own per-solve outer-loop obstruction); the NO-ENTRY call is about the *family shell* only.
+
+---
+
+### New intake — cycle-057 D4 (abstractor, `fold_solve` transient combinator thread-opener)
+
+#### fold-solve-solve-family-share-iterate-while-parent (cycle-057 D4 — batch-17 meta-phase ratification input)
+opened_at: cycle-057
+opened_by: abstractor
+
+`solve_family` (map) and `fold_solve` (fold) are the **two strawman §3.7 `iterate_while`-family specializations**, distinguished solely by whether the step carries state (a map is a fold whose step ignores the accumulator: `foldl (\_ x -> f x) = map f`). **Recommended ratification:** the strawman §3.7 `iterate_while` family **IS the shared parent** — do NOT author a third combinator as a parent abstraction; both `solve_family` and `fold_solve` are §3.7-family entries, and the map-vs-fold distinction is the load-bearing axis between them. This resolves the dispatch-scope's "whether `fold_solve` and `solve_family` share a parent abstraction" question as "yes — §3.7 itself — no new parent needed." Routed to the batch-17 meta-phase to ratify, not decided by the thread-opener.
+
+#### fold-solve-second-witness-gate (cycle-057 D4 — carry-forward to batch-18)
+opened_at: cycle-057
+opened_by: abstractor
+
+`fold_solve` is a **1-of-1 witness** (transient only), below the `disciplined-cross-pipeline-combinator-mining-gate` ≥2-witness bar; this is why the c057 D4 thread-opener authored a `rough-in` dep-map row (`L4/index.md`) rather than a firm L4 entry / theme file. The **2nd-witness candidate** is `DrivenSolver::SweepAdaptive` (`drivensolver.cpp:231+`, the PROM/adaptive path), which may **fold a reduced-order-model state** rather than present a 2nd operator-varying map — and per cycle-057 D3 it is classified as a **fold-family member**, confirming the two-combinator (map vs. fold) factoring of the solver-driver coordination shell. A cheap batch-18 probe of `SweepAdaptive` could meet the gate and license the firm L4 `fold_solve` entry. (Ties the c056 D1 `open-questions.md:910` `SweepAdaptive`-fold note to `fold_solve` promotion specifically.)
+
+#### time-step-op-opaque-mfem-integrator-boundary (cycle-057 D4 — upstream-behavior flag)
+opened_at: cycle-057
+opened_by: abstractor
+
+The per-step `time_step_op` body bottoms out in `ode->Step(sol, t, dt)` (`timeoperator.cpp:410`) → an MFEM/SUNDIALS-owned `mfem::ODESolver` (`timeoperator.hpp:37`; GeneralizedAlpha / SDIRK23 / ARKODE / CVODE, `timeoperator.cpp:314-389`). Palace owns the **outer time sweep** + the `sol`-threading but NOT the single integration step. The eventual `fold_solve` lowering is therefore a **role-naming wrapper over an opaque-library obstruction marker** on the per-step body — the `eigsolve` opaque-library shape (`obstruction (opaque-library-ownership)` sub-kind), NOT a Palace-authored loop to render. If the firm L4 `fold_solve` entry needs the integrator's per-step semantics (e.g. the implicit solve inside SDIRK23), that is **upstream MFEM behavior** — log as an upstream OQ at that point; do not localize into Palace. Cite Palace's *call* (`timeoperator.cpp:410`), not MFEM's internals.
+
+---
+
+### New intake — cycle-057 D2 (lifter, `fe-operator-assemble-mutation-rotation` firm-flip)
+
+#### fe-assemble-weak-form-term-cohort-width-after-firm-flip (cycle-057 D2 — width follow-on, NOT a firmness gate)
+opened_at: cycle-057
+opened_by: lifter
+
+With `fe-operator-assemble-mutation-rotation` now **firm** (c057 D2 firm-flip), the one remaining deferred item is the `weak_form_term` `(coefficient, differential-operator)` type — the element type the assembly fold quantifies over **opaquely**. The electrostatic probe witnesses only the **diffusion** term `a(u,v)=(ε∇u,∇v)`; the full term cohort (mass / curl-curl / div-div / boundary integrators, `integrator.hpp:39-130`) across the 5 solver pipelines is unenumerated. Per the firm `fe_assemble` clean-gate (the fold never cracks open a term's internals), this is **follow-on width work, NOT a firmness gate** on the now-firm theme. **Continues / co-references** the still-deferred `fe-assemble-weak-form-term-cohort-enumeration` (c054 D2, ledger §Open—deferred/contingent line ~140) — same width concern, same trigger (a magnetostatic/eigenmode/driven/transient pull-up first needing a non-diffusion term). The meta-phase may unify the two on the next pass.
+
+#### eliminate-rhs-mutation-rotation-sibling-stub-candidate (cycle-057 D2 — stub-materialization watch)
+opened_at: cycle-057
+opened_by: lifter
+
+The now-firm theme `fe-operator-assemble-mutation-rotation` folds both BC-elimination legs' L0 narration **inline**. The firm `eliminate_rhs` entry (§Downward-to-L0) + the L1 index bullet already forward-reference a **not-yet-authored** dedicated sibling theme `eliminate-rhs-mutation-rotation` (in plain text per the missing-anchor convention; `eliminate_rhs.md` frontmatter even declares `lowers_to: L1-L0/eliminate-rhs-mutation-rotation`, per the critic's info-finding #3). Whether the two legs split into dedicated sibling themes (`eliminate-rhs-mutation-rotation` + `eliminate-essential-bc-mutation-rotation`, as the firm operators' §Downward-to-L0 anticipate) or stay folded into this theme is an **abstractor decision, out of lifter scope**. **Continues / co-references** the existing `eliminate-rhs-mutation-rotation-l1-l0-theme-unauthored` (c055 D3, ledger line ~801) + `eliminate-essential-bc-l1-l0-lowering-re-anchor` (c055 D4, line ~831). This is now a **stub-materialization candidate** (≥2 converging references: the `eliminate_rhs` §Downward forward-ref, the index bullet, AND the frontmatter `lowers_to:` slug) the planner/integrator should track if it recurs; the inline narration in the firm theme is fully cited, so no dead reference exists and the firm-flip is not blocked. Flagged for the planner; the meta-phase may unify with the c055 entries.
+
+---
+
+### New intake — cycle-057 D3 (cross-layer-cross-cutter, SweepAdaptive fold-vs-map witness probe)
+
+#### sweepadaptive-is-rom-fold-map-solve-stays-single-witness (cycle-057 D3 — RESOLVES the c056 D1 / c057 D4 SweepAdaptive candidate; batch-18 planner decision)
+opened_at: cycle-057
+opened_by: cross-layer-cross-cutter
+
+D3 probed `DrivenSolver::SweepAdaptive` (`drivensolver.cpp:231-479`) to decide whether it is a **2nd operator-varying-MAP witness** for the deferred `map_solve` superset (which would meet the ≥2-witness gate and license authoring `map_solve.md`) or a **reduced-order-model FOLD** (which would not). **Verdict: SweepAdaptive is a FOLD, not a map** (confirmed by the critic — 8/8 pass; no book mutation). The offline greedy-basis construction threads state **doubly**: (i) sample LOCATION is state-derived — `omega_star = prom_op.FindMaxError(excitation_idx)[0]` (`drivensolver.cpp:389`) is `argmin_z |Q(z)|` over the barycentric interpolant of the *already-sampled* points (`romoperator.cpp:236-244`, `MFEM_VERIFY(S >= 2, ...)`); (ii) sample RESULT is state-accumulated — `UpdatePROM` Gram-Schmidt-appends the solution into the growing basis `V` (`romoperator.cpp:596-693`, `OrthogonalizeColumn(... V, v, ... dim_V ...)`). Sample `n+1` cannot exist without samples `0..n`. The online fast-sweep (`:432-475`, `SolvePROM` at `:451`) IS an independent map but over the **FROZEN** ROM, NOT an operator-varying map over the full Palace operator family — counting it would be a step-2 scope-boundary violation.
+
+**Consequences (the batch-18 planner decision):**
+- The **`map_solve` operator-varying superset stays DEFERRED at 1 witness** (the standard `DrivenSolver::Sweep`, cycle-056 D1). SweepAdaptive does NOT meet the 2-witness gate. A genuine 2nd map witness must come from **another pipeline** (candidate: a magnetostatic/electrostatic multi-RHS/multi-operator sweep, if any exists — unprobed), **or `map_solve` is a permanent single-witness spine-coverage finding** (record `Sweep` as operator-varying but do not generalize). Batch-18 planner: weigh keep-probing vs. retire-as-single-witness.
+- SweepAdaptive + transient **both join the FOLD family** → confirms the two-combinator-family factoring (independent-MAP `solve_family` vs. sequential-FOLD `fold_solve`). SweepAdaptive is the *greedy / error-terminated* fold sub-shape (state-derived loop bound AND state-derived per-step input), strictly richer than transient's fixed-step march — a fold-family combinator must not assume transient's simpler `iterate_while`-with-fixed-schedule shape covers it.
+
+**RESOLVES** the c056 D1 SweepAdaptive-fold-candidate note (ledger `open-questions.md:910`) and the c057 D4 `fold_solve` 2nd-witness candidate (`fold-solve-second-witness-gate`, ledger ~line 957): SweepAdaptive is now CONFIRMED a fold (a 2nd `fold_solve`-family member), NOT a 2nd `map_solve` witness — so it advances `fold_solve` toward its own ≥2-witness gate (transient + SweepAdaptive) while leaving `map_solve` at 1. The meta-phase may unify these three entries on the next pass.

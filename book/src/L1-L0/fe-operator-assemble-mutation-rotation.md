@@ -1,34 +1,52 @@
 ---
 layer: L1-L0
 theme: fe-operator-assemble-mutation-rotation
-status: rough-in
-lowers: L1/fe_assemble (firm — landed cycle-054)
+status: firm
+lowers: L1/fe_assemble (firm c054), L1/eliminate_essential_bc (firm c055), L1/eliminate_rhs (firm c055)
 l0_anchor: palace/fem/bilinearform.{hpp,cpp}, palace/fem/libceed/operator.cpp, palace/models/laplaceoperator.cpp, palace/linalg/rap.cpp
 justification_kind: structural
 ---
 
 # fe-operator-assemble-mutation-rotation
 
-**THREAD-OPENER (cycle-053, abstractor D3).** Observation-first sketch of the finite-element
-assembly surface — the rewrite that takes a pure "assemble a global FE operator from a list of
-weak-form terms" form into Palace's build-up-then-assemble C++ machinery. This theme **maps the
-surface and names the speculative abstractions**; it is deliberately `rough-in`, not a firm
-landing. FE assembly is the MFEM-equivalent assembly sub-spine (in scope per CLAUDE.md mesh/FE);
-this theme opens it, a cohort of follow-on harvester/abstractor passes fills it.
+**FIRM (promoted cycle-057, lifter D2; opened cycle-053, abstractor D3).** The rewrite that
+takes a pure "assemble a global FE operator from a list of weak-form terms" form into Palace's
+build-up-then-assemble C++ machinery, plus the two separable BC-elimination post-compositions. FE
+assembly is the MFEM-equivalent assembly sub-spine (in scope per CLAUDE.md mesh/FE). Opened as a
+thread-opener mapping the surface; promoted to `firm` once all three LHS operators landed firm
+([`fe_assemble`](../L1/fe_assemble.md) c054, [`eliminate_essential_bc`](../L1/eliminate_essential_bc.md)
++ [`eliminate_rhs`](../L1/eliminate_rhs.md) c055) and the libCEED leaf-kernel boundary was settled as
+[`opaque-library-ownership`](./fe-assemble-libceed-boundary-obstruction.md) (c055).
 
 ## Status
 
-`rough-in` (thread-opener). The structural decomposition is recognized and L0-anchored, but the
-theme is **not promoted** because (a) its LHS operator [`fe_assemble`](../L1/fe_assemble.md) is now
-**firm** (landed cycle-054), but the remaining speculative L1 operators it lowers
-(`eliminate_essential_bc`, `eliminate_rhs`) are still rough-in placeholders awaiting harvester
-promotion, (b) the libCEED matrix-materialization step crosses an **upstream library boundary**
-(see §"libCEED boundary" — logged as OQ, not yet classified obstruction vs. transitive-firm), and
-(c) the integrator-term vocabulary (the set of weak-form terms — diffusion / mass / curl-curl /
-div-div / ...) is only partially witnessed by this single electrostatic probe. Promotion route: a
-harvester pass landing `fe_assemble` firm + an abstractor/lowering-verifier pass settling the
-libCEED-boundary classification + a sweep enumerating the integrator-term cohort across the 5
-solver pipelines.
+`firm`. **Clean-gate call: PROMOTE — clean.** The three gates that held this theme `rough-in` at
+authoring time are all closed:
+
+- **(a) all three LHS operators are firm** — [`fe_assemble`](../L1/fe_assemble.md) (c054, the
+  integrator-fold `K = Σ_i A(term_i)`), [`eliminate_essential_bc`](../L1/eliminate_essential_bc.md)
+  (c055, the operator-side essential-dof pin), and [`eliminate_rhs`](../L1/eliminate_rhs.md) (c055,
+  the inhomogeneous-Dirichlet RHS lift). The two elimination legs are no longer rough-in
+  placeholders; they are firm separable post-compositions.
+- **(b) the libCEED boundary is settled** — the per-term leaf `A(·)` is documented as
+  [`obstruction (opaque-library-ownership)`](./fe-assemble-libceed-boundary-obstruction.md) (c055).
+  The opaque leaf does **not** gate the theme's firmness: the firm `fe_assemble` fold quantifies
+  over `A(term_i)` opaquely, exactly as `ksp_solve` stays firm while its inner MINRES/BiCGStab
+  Krylov kernels are obstruction-documented (the same structural relationship — a firm
+  outer form over an obstruction-tier inner leaf; see §"libCEED boundary").
+- **(c) the term-cohort enumeration does not gate this theme** — the `weak_form_term` type stays a
+  deferred rough-in input the assembly fold quantifies over **opaquely** (the fold never cracks open
+  a term's `(coefficient, differential-operator)` internals; see `fe_assemble` §Status clean-gate).
+  Enumerating the full term cohort across the 5 solver pipelines is follow-on width work, not a
+  firmness gate on the rotation theme.
+
+The rewrite's structural decomposition (build-up-then-assemble object protocol → integrator-fold +
+PA/FA variant axis + separable BC-elimination post-compositions) is recognized and exhaustively
+L0-anchored; the rotation is fully cited (the accumulation `AddSubOperator`
+`palace/fem/bilinearform.cpp:77`/`:97` + `Finalize` `:104`, the BC legs
+`palace/linalg/rap.cpp:56-82` + `palace/models/laplaceoperator.cpp:216-217`/`:252`). This is the
+**firm-on-positive-structure** situation inherited from the three firm LHS operators: each leg's L0
+form is read, not constructed.
 
 ## L1 form (LHS)
 
@@ -49,18 +67,21 @@ per-term assembled contributions. For the electrostatic witness the single term 
 permittivity-weighted diffusion form `a(u, v) = (ε ∇u, ∇v)`; the L1 form is
 `fe_assemble(h1_space, [diffusion(ε)])`.
 
-The BC-elimination is a **separable post-composition**, not part of the assembly fold:
+The BC-elimination is a **separable post-composition**, not part of the assembly fold. Both
+legs are now firm L1 operators (signatures authoritative in their entries):
 
     K_bc = eliminate_essential_bc(K, dbc_dofs, DIAG_ONE)
         -- pin the rows/cols of the essential (Dirichlet) dofs; place 1 on the diagonal
 
-    (X, RHS) = eliminate_rhs(K, bc_values, dbc_dofs)
+    RHS = eliminate_rhs(K, x_bc, b, policy)
         -- lift the inhomogeneous Dirichlet data into the RHS:
-        --   RHS := -K·(BC-extended x), then restore the pinned entries
+        --   b' := b - K·(BC-extended x_bc), then pin the essential rows per policy
 
-Of these three pieces, [`fe_assemble`](../L1/fe_assemble.md) is now **firm** (landed cycle-054; its
-signature is authoritative there). `eliminate_essential_bc` and `eliminate_rhs` remain **rough-in
-placeholders** this thread proposes; their signatures are best-guess pending harvester promotion.
+All three pieces are **firm**: [`fe_assemble`](../L1/fe_assemble.md) (c054, the assembly fold),
+[`eliminate_essential_bc`](../L1/eliminate_essential_bc.md) (c055, the operator-side essential-dof
+pin), and [`eliminate_rhs`](../L1/eliminate_rhs.md) (c055, the inhomogeneous-Dirichlet RHS lift).
+Their signatures are authoritative there; this theme narrates how each lowers into Palace's L0
+imperative protocol.
 
 ## L0 form (RHS)
 
@@ -97,11 +118,12 @@ electrostatic witness (`palace/models/laplaceoperator.cpp:184-223`):
    `eliminate_essential_bc`.
 
 5. **BC-elimination into the RHS** (`GetExcitationVector`,
-   `palace/models/laplaceoperator.cpp:225-253`): project the Dirichlet boundary values into a
-   grid function (`x.ProjectBdrCoefficient(one, source_marker)`, `:236`), restrict to true dofs,
-   then `PtAP_K->EliminateRHS(X, RHS)` (`:253`). The elimination body
-   (`palace/linalg/rap.cpp:56-82`) computes `RHS := RHS − A·(prolongated BC-extended x)` then
-   restores the pinned dof entries — the L0 realization of `eliminate_rhs`.
+   `palace/models/laplaceoperator.cpp:225-252`): project the Dirichlet boundary values into a
+   grid function (`x.ProjectBdrCoefficient(one, source_marker)`, `:238`), restrict to true dofs
+   (`x.ParallelProject(X)`, `:247`), then `PtAP_K->EliminateRHS(X, RHS)` (`:252`). The elimination
+   body (`palace/linalg/rap.cpp:56-82`) computes `RHS := RHS − A·(prolongated BC-extended x)` then
+   restores the pinned dof entries — the L0 realization of the firm
+   [`eliminate_rhs`](../L1/eliminate_rhs.md).
 
 ## Applicability conditions
 
@@ -126,7 +148,9 @@ electrostatic witness (`palace/models/laplaceoperator.cpp:184-223`):
 **Structural** — the rewrite is shape-driven: it recognizes the build-up-then-assemble object
 protocol as a fold over an immutable term list plus separable BC post-compositions, and the
 matrix-materialization as the fold's action. (The libCEED boundary is the one non-structural seam;
-it is logged as OQ — see §"libCEED boundary".)
+it is settled as `obstruction (opaque-library-ownership)` — see
+[`fe-assemble-libceed-boundary-obstruction`](./fe-assemble-libceed-boundary-obstruction.md) and
+§"libCEED boundary".)
 
 ## libCEED boundary
 
@@ -136,29 +160,39 @@ the operator in COO format and converts to CSR. The **element-local quadrature k
 per-integrator `integ->Assemble(...)` that builds each `CeedOperator` sub-operator,
 `palace/fem/bilinearform.cpp:75-76`) bottom out in libCEED basis-apply + restriction operations.
 This is **upstream library behavior** (libCEED), cited at Palace's call boundary but not itself
-Palace source. **Logged as OQ** (see §Open questions): whether the FE-assembly thread treats the
-element-local quadrature kernel as (a) a transitive-firm leaf cited at the Palace boundary,
-(b) an `obstruction (opaque-library-ownership)` à la the HYPRE relax-type precedent, or
-(c) a spine primitive to be re-expressed in tensor-field vocabulary (basis-evaluation +
-quadrature-contraction as a tensor contraction). The choice gates how deep this thread goes; it is
-a finding for the batch-16 meta-phase, not resolved here.
+Palace source. The classification OQ logged by the thread-opener — (a) transitive-firm leaf,
+(b) `obstruction (opaque-library-ownership)`, or (c) tensor-contraction respine — was **settled as
+(b)** by the batch-16 meta-phase: see the sibling annotation
+[`fe-assemble-libceed-boundary-obstruction`](./fe-assemble-libceed-boundary-obstruction.md)
+(c055, opaque-library-ownership, deeper-boundary sibling of `triangular-solve-obstruction`). The
+opaque leaf sits **strictly below** the firm `fe_assemble` fold — the fold quantifies over
+`A(term_i)` opaquely — so the boundary does NOT downgrade the fold or gate this theme's firmness
+(the `ksp_solve` / inner-Krylov-kernel structural relationship).
 
-## Speculative L1 operators (need harvester promotion)
+## Vocabulary status (all LHS operators promoted)
 
-- ~~`fe_assemble`~~ — **PROMOTED firm cycle-054**, see [`L1/fe_assemble`](../L1/fe_assemble.md).
-- `eliminate_essential_bc` — pin essential (Dirichlet) dofs into the assembled operator.
-- `eliminate_rhs` — lift inhomogeneous Dirichlet data into the RHS vector.
+All three L1 operators this theme lowers are now **firm** — no speculative LHS remains:
+
+- [`fe_assemble`](../L1/fe_assemble.md) — **firm c054** (the assembly fold `K = Σ_i A(term_i)`).
+- [`eliminate_essential_bc`](../L1/eliminate_essential_bc.md) — **firm c055** (operator-side
+  essential-dof pin).
+- [`eliminate_rhs`](../L1/eliminate_rhs.md) — **firm c055** (inhomogeneous-Dirichlet RHS lift).
+
+One deferred rough-in **input** remains (it does NOT gate this theme — the fold quantifies over it
+opaquely, per §Status (c)):
+
 - `weak_form_term` (type) — the `(coefficient, differential-operator)` weak-form contribution; the
   element type of the term list `fe_assemble` folds over (diffusion / mass / curl-curl / div-div /
-  ... — the term cohort is only partially witnessed here).
+  ... — the term cohort is only partially witnessed by this electrostatic probe). Enumerating the
+  full cohort across the 5 solver pipelines is follow-on width work tracked in the OQ ledger.
 
 ## Verified-against
 
 - `palace/models/laplaceoperator.cpp:184-223` — `GetStiffnessMatrix`: the build-up-then-assemble
   witness (BilinearForm ctor + `AddDomainIntegrator<DiffusionIntegrator>` + `Assemble` + per-level
   `ParOperator` wrap with `SetEssentialTrueDofs`).
-- `palace/models/laplaceoperator.cpp:225-253` — `GetExcitationVector`: the BC-elimination witness
-  (`ProjectBdrCoefficient` + `ParallelProject` + `EliminateRHS`).
+- `palace/models/laplaceoperator.cpp:225-252` — `GetExcitationVector`: the BC-elimination witness
+  (`ProjectBdrCoefficient` `:238` + `ParallelProject` `:247` + `EliminateRHS` `:252`).
 - `palace/fem/bilinearform.hpp:25-91` — `class BilinearForm`: the integrator-list container + the
   templated `AddDomainIntegrator` / `AddBoundaryIntegrator` append surface (`:53-63`).
 - `palace/fem/bilinearform.cpp:28-107` — `PartialAssemble`: the integrator-fold core
