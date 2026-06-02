@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T191930Z
 scope: L1↔L4 cross-cut — fe-cohort-l4-lift-survey (the FE-assembly + FE-space cohort is stranded at L1; L4 must be complete over the in-scope feature set)
 status: pending
 integrated_at: 2026-06-02T193833Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 33a56f6
 integration_notes: "cycle-067 D2 — applied clean (observation-only — NO book/ write; fourth/last per-report integrator). OBSERVATION-ONLY FE-cohort→L4 lift survey; 4 OQs promoted (the c068 fan-out dispatch ranking: rank-1 fe_assemble L4 assemble-fold the frontier opener; rank-2 assemble_frequency_operator via linear_combination GATED on the L4/index.md:66 13-of-18 sub-finding; ranks 3-4 the Dirichlet-BC post-compositions). citecheck --scan 38 ok / 1 [MISS] = path-hygiene shorthand in observation prose (NON-BLOCKING; the file resolves at the full path). Scaffolding-only. Staging row: cycle-067-integrator-staging/STAGING.md."
 ---
 

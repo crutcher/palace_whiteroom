@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T191930Z
 scope: concepts/black-box-vs-accelerated-kernels (NEW concept page) + SUMMARY.md alpha-wire
 status: pending
 integrated_at: 2026-06-02T193833Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 33a56f6
 integration_notes: "cycle-067 D3 — applied clean. NEW concepts/black-box-vs-accelerated-kernels.md (directive-2 classification-vocabulary page) + SUMMARY.md concepts-list alpha-insert between axpy and dot (LOCAL alpha head-cluster — GLOBAL re-sort + by-kind grouping is the batch-21 meta-phase reorg). Applied the repairer-fixed body (both L4-is-the-backend-lowering-target refs plain-text per repair option-b). 3 OQs promoted. Build-relevant; cargo make book exit 0; page renders. Staging row: cycle-067-integrator-staging/STAGING.md."
 ---
 

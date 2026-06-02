@@ -89,6 +89,6 @@ The batch-21 meta-phase fires after cycle-069's finalize (aggregating 067/068/06
 - `scaffolding/cycle-record.jsonl` — appended cycle-067 integration record.
 - `log/cycle-067.md` — written (superseded a stale May-25 placeholder); `log/README.md` — index entry prepended.
 - `scaffolding/integrator-signals.md` — cycle-067 section prepended (all 6 subsections).
-- 4 consumed-report CYCLE.md frontmatter — `integrated_at` + `integration_commit` (PLACEHOLDER_SHA → patched two-phase) + `integration_notes`.
+- 4 consumed-report CYCLE.md frontmatter — `integrated_at` + `integration_commit` (33a56f6 → patched two-phase) + `integration_notes`.
 
 Written by `integrator-finalize` (split integrator-per-report ×4 + finalize ×1).

@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T191930Z
 scope: L1 FE-space sub-spine tail cleanup — fe-space-sub-spine-tail-cleanup (cycle-067 D1)
 status: pending
 integrated_at: 2026-06-02T193833Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 33a56f6
 integration_notes: "cycle-067 D1 — applied clean (first per-report integrator). FE-space sub-spine tail cleanup: eliminate_essential_bc.md prose shape-contract bullet now names [essential_dofs](./essential_dofs.md); fe_space.md:39,149 forward-refs upgraded to live links. All 3 entries stay firm, NO status flip, NO count change. Closed 2 OQs in-artifact. Build-relevant; cargo make book exit 0. Staging row: cycle-067-integrator-staging/STAGING.md."
 inputs:
   - book/src/L1/eliminate_essential_bc.md

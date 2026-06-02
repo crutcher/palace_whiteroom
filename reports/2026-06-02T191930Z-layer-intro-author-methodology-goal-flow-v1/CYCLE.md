@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T19:19:30Z
 scope: methodology GOAL+FLOW chapter v1 seed (book/src/methodology/goal-flow.md)
 status: pending
 integrated_at: 2026-06-02T193833Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 33a56f6
 integration_notes: "cycle-067 D4 — applied clean. NEW methodology/goal-flow.md (directive-4 v1 seed; NON-AUTHORITATIVE synthesized GOAL+FLOW mirror, mandatory 4-facet header present) + SUMMARY.md row under # Methodology after overview.md. 2 OQs promoted (ownership-transfer + single-chapter-vs-split). Ownership transfers to the meta-phase post-seed (restart-pending). citecheck no-op by design (no L0 citations). Build-relevant; cargo make book exit 0; page renders. Staging row: cycle-067-integrator-staging/STAGING.md."
 ---
 
