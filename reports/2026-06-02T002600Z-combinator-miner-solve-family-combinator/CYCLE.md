@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T002600Z
 scope: Pattern proposal — fixed-operator solve-family combinator (solve_family / map_solve)
 status: integrated
 integrated_at: 2026-06-02T011000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f3ee795953217dc3423b3601ce60af307ba8afa7
 integration_notes: |
   cycle-054 D1, applied clean by integrator-per-report (STAGING row 1), finalized by integrator-finalize.
   Mined `solve_family` — the fixed-operator map-over-RHS-family combinator at L4 outer-driver vocabulary

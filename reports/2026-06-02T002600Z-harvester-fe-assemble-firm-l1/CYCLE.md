@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T002600Z
 scope: L1 operator: fe_assemble (promote speculative rough-in → firm)
 status: integrated
 integrated_at: 2026-06-02T011000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f3ee795953217dc3423b3601ce60af307ba8afa7
 integration_notes: |
   cycle-054 D2, applied clean by integrator-per-report (STAGING row 2), finalized by integrator-finalize.
   Promoted `fe_assemble` to FIRM L1 (new:book/src/L1/fe_assemble.md) — the first firm FE-assembly operator,
