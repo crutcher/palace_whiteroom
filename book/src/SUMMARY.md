@@ -3,6 +3,7 @@
 [Introduction](./introduction.md)
 # Methodology
 - [Overview](./methodology/overview.md)
+- [Goal & Flow](./methodology/goal-flow.md)
 # L4 — Graph-Evaluation Calculus
 - [Overview](./L4/index.md)
 - [krylov-step](./L4/krylov-step.md)
@@ -219,6 +220,7 @@
   - [constructed operators — methodology concept](./concepts/constructed-operators.md)
   - [apply_linop](./concepts/apply_linop.md)
   - [axpy](./concepts/axpy.md)
+  - [black-box vs accelerated kernels — methodology concept](./concepts/black-box-vs-accelerated-kernels.md)
   - [dot](./concepts/dot.md)
   - [nrm2](./concepts/nrm2.md)
   - [scal](./concepts/scal.md)

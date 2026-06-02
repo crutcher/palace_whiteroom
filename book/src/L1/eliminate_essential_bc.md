@@ -66,7 +66,9 @@ Shape contract (bunsen-style, named axes):
   is defined only for `height == width` — the L0 guard `palace/linalg/rap.cpp:42-43`, and the
   rectangular-reject branch `palace/linalg/rap.cpp:145-148`).
 - `dofs` — `DofSet[N]` — the essential (Dirichlet) true-dof index set, a subset of `0..N` over the
-  true-dof axis [`fe_space`](./fe_space.md) defines. At L0 the `mfem::Array<int> dbc_tdof_list`
+  true-dof axis [`fe_space`](./fe_space.md) defines; the `DofSet[N]` constructed by
+  [`essential_dofs`](./essential_dofs.md) (the firm `(space, bdr_attrs, bdr_attr_max) → DofSet[N]`
+  boundary-attribute → essential-true-dof-set construction). At L0 the `mfem::Array<int> dbc_tdof_list`
   recorded by `SetEssentialTrueDofs` (`palace/linalg/rap.cpp:45-46`).
 - `policy` — `DiagPolicy` — `DIAG_ONE | DIAG_ZERO` (the diagonal-policy variant axis; see
   *Variant axes*). The only two admissible values (L0 guard `palace/linalg/rap.cpp:39-41`).

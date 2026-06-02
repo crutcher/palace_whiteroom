@@ -36,7 +36,7 @@ whose coarse seed is a single `std::make_unique<FiniteElementSpace>(*mesh[coarse
 
 This chapter is defined in L1 vocabulary (the typed `(mesh, collection) → space` construction). The
 forward rewrite into the L0 ctor + the `ConstructFiniteElementSpaceHierarchy` coarse-seed is the L1>L0
-theme `fe-space-construction-rotation` (authored cycle-064 D3; forward-reference until on disk).
+theme [`fe-space-construction-rotation`](../L1-L0/fe-space-construction-rotation.md) (authored cycle-064 D3).
 
 ## Signature
 
@@ -142,12 +142,12 @@ consumed-by relations, not dependencies.
 
 ## Downward (to L0)
 
-The L1>L0 rotation `fe-space-construction-rotation` (cycle-064 D3) narrates how the typed
+The L1>L0 rotation [`fe-space-construction-rotation`](../L1-L0/fe-space-construction-rotation.md)
+(cycle-064 D3) narrates how the typed
 `(mesh, collection) → FiniteElementSpace[N]` construction rewrites into the L0 variadic ctor
 (`fespace.hpp:67-75`) forwarding into `mfem::ParFiniteElementSpace`, and into the
 `ConstructFiniteElementSpaceHierarchy` coarse-seed (`multigrid.hpp:89-90`) + `GetEssentialTrueDofs`
-extraction (`multigrid.hpp:98-99`, via `mesh::AttrToMarker` `:97-98`). (Forward-reference until that
-theme is on disk.)
+extraction (`multigrid.hpp:98-99`, via `mesh::AttrToMarker` `:97-98`).
 
 **Opaque-parameter fan-out (replace-and-propagate forward-look — re-anchors NOT enacted this cycle).**
 Four firm L1 entries currently take the FE-space, its true-dof axis `N`, or its essential-dof set
