@@ -20,3 +20,14 @@ All six edits address friction-ledger `codemap-read-range-plus-one-drift-on-brac
 ## Open ask to the human (batch-21 frontier direction)
 
 The FE-space front is near its own plateau (3 firm members, consumer re-anchor complete). The batch-21+ direction is an inflection worth a steer — see the meta-phase report §Open ask items.
+
+## ⟢⟢ USER DIRECTIVE 2026-06-02 (post-batch-20-meta, before c067) — L4 IS THE FEATURE SURFACE / BACKEND-LOWERING TARGET
+
+The batch-20 meta-phase §5 strategic ASK is **ANSWERED by the user**: **L4 is the feature surface and the outward backend-lowering target** — its semantics were chosen to align with external GPU-tensor-accelerator + distributed backends, so L4 is ideal for lowering to other backends. **L4 must be COMPLETE over the in-scope feature set.**
+
+- The **assemble half** (FE-assembly + FE-space cohort: `fe_assemble`/`fe_space`/`fe_collection`/`essential_dofs`/`weak_form_term`/`eliminate_*`/`assemble_frequency_operator`) is **stranded at L1** — a hole in the deliverable. **Batch-21 lead (after the item-1 FE-space tail cleanup): LIFT THIS COHORT TO L4** (assemble-fold combinator + construction terms over opaque libCEED/MFEM leaves, the `fold_solve`/`eigsolve` opaque-leaf pattern). Target = L4, NOT L2/L3.
+- The NO-L2 warrants bar only L1→L2 *mirrors*; they do NOT close the upward-to-L4 question (intermediate L2/L3 may be identity — non-adjacent rotation; L4 is the destination).
+- Re-examine the "no-L4-by-design" calls (BLAS-1 etc.) per-case under this directive.
+- Recorded: project memory `project_l4_is_backend_lowering_target`; priorities.md batch-21 active-head banner (supersedes the meta-phase's "(b)→L2/L3" framing).
+
+This directive supersedes the meta-phase's default `(a)→(b)-per-entry-warrant-gated-to-L2/L3`. The c067 planner promotes the FE-cohort→**L4** lift to the batch-21 frontier.
