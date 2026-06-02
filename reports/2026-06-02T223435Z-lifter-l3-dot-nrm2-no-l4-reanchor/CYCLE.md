@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T223435Z
 scope: L3 dot / nrm2 — re-anchor stale "no L4 entry" lines to firm L4/dot, L4/nrm2 (cycle-069 D2 rise)
 status: integrated
 integrated_at: 2026-06-02T233500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 502171088810f0f4bbf849acba3bf2fc9ff51f09
 integration_notes: |
   Applied by integrator-per-report (staging row D4, applied_at 2026-06-02T231530Z); finalized by integrator-finalize cycle-070.
   L3/dot + L3/nrm2 LEAF stale-no-L4 → live-link re-anchor: lifts_from frontmatter + §"Lifts from" prose flipped from "no L4 entry exists" → firm live links ../L4/dot.md / ../L4/nrm2.md (identity-in-form / consumer-not-fold-member framing), each with a > Superseded blockquote preserving the cycle-010 "no-L4-by-design" rationale; L3/index.md:66 BLAS-1-cohort clause corrected in-line to the per-case black-box-vs-accelerated-kernels §2 disposition. Both L3 entries stay firm (no status flip, no index-cell touch). ENACTS+CLOSES OQ l3-dot-nrm2-stale-no-l4-entry-lines-need-reanchor (closed-ENACTED-c070-D4). Build-relevant: cargo make book exit 0; all link targets resolve. 0 OQs promoted; 1 OQ closed-in-artifact. Zero gate hits; retroactive-budget 0.

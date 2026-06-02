@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T223435Z
 scope: L4>L3 theme sketch — frequency-sweep-dissolution
 status: integrated
 integrated_at: 2026-06-02T233500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 502171088810f0f4bbf849acba3bf2fc9ff51f09
 integration_notes: |
   Applied by integrator-per-report (staging row D2, applied_at 2026-06-02T230145Z); finalized by integrator-finalize cycle-070.
   frequency-sweep-dissolution LANDED FIRM L4>L3 (the coupled L4>L3 lowering of the operator-varying sweep; operator-capture axis fixed|per-element load-bearing, exhaustively handled). LHS live-link ../L4/frequency_sweep.md resolves (D1 landed it earlier this cycle). New book/src/L4-L3/frequency-sweep-dissolution.md + L4-L3/index consolidated-tally FULL-PARAGRAPH REPLACE "8 → 9 / 9 firm" → "9 → 10 / 10 firm" (stale "D3 owns the L4 tally" corrected to "D1") + dep-map row + §Vocabulary-cohort bullet + SUMMARY L4-L3 insert. L4>L3 firm themes 9→10. Build-relevant: cargo make book exit 0; page renders. 0 OQs promoted. Zero gate hits; retroactive-budget 0.

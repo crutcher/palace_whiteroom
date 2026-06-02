@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T223435Z
 scope: concept-page cross-ref link-upgrade — black-box-vs-accelerated-kernels → L4/fe_assemble
 status: integrated
 integrated_at: 2026-06-02T233500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 502171088810f0f4bbf849acba3bf2fc9ff51f09
 integration_notes: |
   Applied by integrator-per-report (staging row D5, applied_at 2026-06-02T232140Z); finalized by integrator-finalize cycle-070.
   black-box-vs-accelerated-kernels concept page fe_assemble L1→L4 link upgrade: two fe_assemble references re-pointed ../L1/fe_assemble.md → ../L4/fe_assemble.md (:69 case-1 sibling list + :143 See-also) + the :69 prose tightening "the assemble combinator" → "the risen assemble combinator" (backed by firm L4/fe_assemble.md:169). The two were the COMPLETE set of ../L1/fe_assemble links on the page (post-edit grep confirms zero remain; the L1 cap stays the firm lower home via the lowering chain). ENACTS+CLOSES OQ l4-fe-assemble-absent-forward-ref-for-blackbox-kernel-page (closed-ENACTED-c070-D5). Build-relevant: cargo make book exit 0; both upgraded targets resolve. 0 OQs promoted; 1 OQ closed-in-artifact. Zero gate hits; retroactive-budget 0.

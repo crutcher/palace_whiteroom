@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T223435Z
 scope: L4 operator: frequency_sweep
 status: integrated
 integrated_at: 2026-06-02T233500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 502171088810f0f4bbf849acba3bf2fc9ff51f09
 integration_notes: |
   Applied by integrator-per-report (staging row D1, applied_at 2026-06-02T230022Z); finalized by integrator-finalize cycle-070.
   frequency_sweep PROMOTED FIRM L4 (the driven pipeline's solve-half single-witness L4 form — the operator-VARYING per-ω sweep re-solving through the firm L4/assemble_frequency_operator at each swept frequency; the batch-21-meta-phase-decided LIFT verdict (a), authoring the driven feature's OWN single-witness L4 form while the shared map_solve generalization stays BARRED at the ≥2-witness STOP). CLOSES THE LAST OPEN PIPELINE-HALF — the whole assemble+solve deliverable now reaches L4 across all 5 pipelines. New book/src/L4/frequency_sweep.md + own L4/index dep-map row + §Vocabulary-cohort bullet (alpha, between fold_solve/solve_family) + firm tally (13+4)→(14+4) + SUMMARY L4 insert. L4 firm 13→14. Build-relevant: cargo make book exit 0; page renders; D2's L4>L3 LHS link to this entry resolves (D1 landed first). 0 OQs promoted. Zero gate hits; retroactive-budget 0.

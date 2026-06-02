@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T223435Z
 scope: Feature surfaces Part seed — electrostatic exemplar feature column (L4 + L1 + L0)
 status: integrated
 integrated_at: 2026-06-02T233500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 502171088810f0f4bbf849acba3bf2fc9ff51f09
 integration_notes: |
   Applied by integrator-per-report (staging row D3, applied_at 2026-06-02T230907Z); finalized by integrator-finalize cycle-070.
   NEW FEATURE-SURFACE SPINE OPENED (directive-5): new top-level Part "# Feature surfaces — entry points" — book/src/feature/index.md (overview + feature×level matrix + chapter-kind status) + the electrostatic exemplar at L4/L1/L0 (book/src/feature/electrostatic.{L4,L1,L0}.md; the composition root config → fe_assemble → solve_family → capacitance reduction → capacitance-out). FIRST instance of the composition-root chapter kind (status: seed (exemplar)), authored ahead of role-spec codification. SUMMARY wires the new Part between Methodology and L4 (disjoint region from D1/D2 — no collision). All in-chapter code 4-space-indented (zero fences). Firmness floor (repair-corrected, on-disk verified): two-of-four composed L1 constituents firm (fe_assemble, ksp_solve); both capacitance-reduction primitives rough-in (matrix-weighted-norm test-coverage-bounded + bilinear-form) — correct for a seed. +1 feature-surface Part / +1 exemplar column. Build-relevant: cargo make book exit 0; all 4 feature/ HTML files render; all 10 distinct relative links resolve. 2 OQs promoted (standing batch-22-meta items, LEFT OPEN): feature-surface-kind-adapted-check-codification + feature-surface-part-path-layout-and-within-column-level-ordering-ratification. Zero gate hits; retroactive-budget 0.

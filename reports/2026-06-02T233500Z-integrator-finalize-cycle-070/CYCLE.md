@@ -15,7 +15,7 @@ gate_hits_total: 0
 build_exit: 0
 build_repairs: 0
 retroactive_budget_global: 0
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 502171088810f0f4bbf849acba3bf2fc9ff51f09
 ---
 
 # CYCLE-070 batch integration report (integrator-finalize)
