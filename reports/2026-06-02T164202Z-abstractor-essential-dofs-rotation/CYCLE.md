@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T17:05:00Z
 scope: L1>L0 theme sketch — essential-dofs-construction-rotation
 status: integrated
 integrated_at: 2026-06-02T194500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 062ae9e
 integration_notes: "cycle-066 D2. essential-dofs-construction-rotation LANDED FIRM L1>L0 (book/src/L1-L0/essential-dofs-construction-rotation.md — LHS L1 essential_dofs -> RHS L0 dbc block multigrid.hpp:92-101; construction-head-lowers / dof-resolution-tail-MFEM-owned split). Applied: L1-L0/index.md theme row + SUMMARY. Live link ../L1/essential_dofs.md RESOLVES (D1 landed first). citecheck --scan 23 ok / 0 failing. L1>L0 firm themes +1. Build clean; no build-repair."
 inputs:
   - cycle-066 dispatch D2 (wave 2) prompt

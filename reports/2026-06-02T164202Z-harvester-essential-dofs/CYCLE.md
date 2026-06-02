@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T16:48:22Z
 scope: L1 operator: essential_dofs
 status: integrated
 integrated_at: 2026-06-02T194500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 062ae9e
 integration_notes: "cycle-066 D1. essential_dofs PROMOTED FIRM L1 (book/src/L1/essential_dofs.md — boundary-condition true-dof-set member of the FE-space sub-spine; DAG fe_collection > fe_space > essential_dofs). Applied: L1/index.md dep-map TABLE row + deferred-sibling bullet FLIPPED to firm cohort bullet + SUMMARY. RESOLVES c064 straddle OQ toward self-standing entry (WARRANT=YES). citecheck --scan 32 ok / 0 failing. L1 firm 33->34; FE-space sub-spine 2->3. Build clean; no build-repair."
 inputs:
   - cycle-066 dispatch D1 (LEAD) prompt

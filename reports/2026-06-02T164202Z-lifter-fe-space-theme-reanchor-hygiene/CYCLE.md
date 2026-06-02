@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T16:48:30Z
 scope: L1>L0 theme-layer re-anchor to firm fe_space (2 themes) + fe_space.md citation hygiene
 status: integrated
 integrated_at: 2026-06-02T194500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 062ae9e
 integration_notes: "cycle-066 D3. fe_space-consumer THEME-LAYER re-anchor (fe-operator-assemble-mutation-rotation + weak-form-term-rotation -> live fe_space; completes replace-and-propagate begun at operator surface c065 D1) + multigrid.hpp:22-72->:22-73 close-brace hygiene at 3 fe_space.md loci (:84/:182/:203). All 3 targets stay firm (no status flip). CLOSED 2 OQs (theme-reanchor + multigrid-hpp-citation-hygiene); appended 1 follow-on OQ (forward-ref live-link upgrade). citecheck --scan 8 ok / 0 failing. No count change. Build clean; no build-repair."
 inputs:
   - book/src/L1-L0/fe-operator-assemble-mutation-rotation.md

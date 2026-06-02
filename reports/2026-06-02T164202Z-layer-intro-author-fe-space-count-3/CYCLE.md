@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T16:42:02Z
 scope: L1/index.md consolidated count refresh (FE-space sub-spine 2→3, L1 firm grand total 33→34) — cycle-066 D4, SOLE count-owner
 status: integrated
 integrated_at: 2026-06-02T194500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 062ae9e
 integration_notes: "cycle-066 D4 (SOLE count-owner). L1/index.md x2: grand-total :31 L1 firm 33->34 / FE-space sub-spine 2->3 / '34 firm rows on-table'; §'Firm (FE-space sub-spine)' header :78 '— 2'->'— 3' folding essential_dofs into the sub-spine narrative (DAG fe_collection > fe_space > essential_dofs). Arithmetic exact (27 main + 4 FE-assembly + 3 FE-space = 34). index-cell anti-drift guard n/a-clean (tally from chapter ## Status lines; D1 firm dep-map row co-landed so table [34] matches tally [34]). citecheck --scan 3 ok / 0 failing. Build clean; no build-repair."
 ---
 
