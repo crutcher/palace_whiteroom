@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T15:55:00Z
 scope: L1>L0 theme sketch — fe-space-construction-rotation
 status: integrated
 integrated_at: 2026-06-02T180000Z
-integration_commit: PLACEHOLDER_SHA_CYCLE_064
+integration_commit: 92759ca66e33bee3cc452a82a231dc9d3665062d
 integration_notes: |
   cycle-064 D3, applied clean by integrator-per-report (STAGING row 3), finalized by integrator-finalize.
   `fe-space-construction-rotation` LANDED FIRM L1>L0 (book/src/L1-L0/fe-space-construction-rotation.md —

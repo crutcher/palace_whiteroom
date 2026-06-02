@@ -54,7 +54,7 @@ status: integrated
 - `scaffolding/integrator-signals.md` (cycle-064 section, newest-prepended, all 6 subsections)
 - `log/cycle-064.md` (overwrote a stale May-25 slice-vertical-era placeholder; supersede note carried)
 - `log/README.md` (cycle-064 index entry prepended under "## Index (newest first)")
-- per-consumed-report frontmatter `integrated_at` + `integration_commit: PLACEHOLDER_SHA_CYCLE_064` + `integration_notes` (D1/D2/D3/D4)
+- per-consumed-report frontmatter `integrated_at` + `integration_commit: 92759ca66e33bee3cc452a82a231dc9d3665062d` + `integration_notes` (D1/D2/D3/D4)
 
 ## Count deltas
 
@@ -100,6 +100,6 @@ status: integrated
 
 ---
 
-Two-phase SHA patch per cycle-004/005 canonical pattern: this report + the 4 consumed-report frontmatters carry `PLACEHOLDER_SHA_CYCLE_064`, patched to the actual SHA in a follow-up commit after the cycle-064 integration commit.
+Two-phase SHA patch per cycle-004/005 canonical pattern: this report + the 4 consumed-report frontmatters carry `92759ca66e33bee3cc452a82a231dc9d3665062d`, patched to the actual SHA in a follow-up commit after the cycle-064 integration commit.
 
 Written by `integrator-finalize` (split integrator-per-report ×4 + finalize ×1).

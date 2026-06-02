@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T15:16:45Z
 scope: L1↔L0 cross-cut — FE-space/mesh-construction front-scoping survey (cycle-064 D1 LEAD, wave-1 GATE)
 status: integrated
 integrated_at: 2026-06-02T180000Z
-integration_commit: PLACEHOLDER_SHA_CYCLE_064
+integration_commit: 92759ca66e33bee3cc452a82a231dc9d3665062d
 integration_notes: |
   cycle-064 D1, applied clean by integrator-per-report (STAGING row 1), finalized by integrator-finalize.
   Observation-only FE-space front-scoping survey (no book change). Partitioned the Palace construction

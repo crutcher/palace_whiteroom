@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T15:20:43Z
 scope: L1 operator: fe_space
 status: integrated
 integrated_at: 2026-06-02T180000Z
-integration_commit: PLACEHOLDER_SHA_CYCLE_064
+integration_commit: 92759ca66e33bee3cc452a82a231dc9d3665062d
 integration_notes: |
   cycle-064 D2, applied clean by integrator-per-report (STAGING row 2), finalized by integrator-finalize.
   `fe_space` PROMOTED FIRM L1 (book/src/L1/fe_space.md — (mesh, collection) → FiniteElementSpace[N], the
