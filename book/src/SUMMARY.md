@@ -105,6 +105,7 @@
 - [eigsolve](./L1/eigsolve.md)
 - [matrix-weighted-norm](./L1/matrix-weighted-norm.md)
 - [bilinear-form](./L1/bilinear-form.md)
+- [fe_assemble](./L1/fe_assemble.md)
 - [orthogonalize](./L1/orthogonalize.md)
 - [chebyshev-smoother](./L1/chebyshev-smoother.md)
 - [divfree-projector](./L1/divfree-projector.md)

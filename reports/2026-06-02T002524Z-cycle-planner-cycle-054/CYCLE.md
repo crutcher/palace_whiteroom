@@ -1,0 +1,96 @@
+---
+agent: cycle-planner
+invoked_at: 2026-06-02T002524Z
+scope: cycle-054 dispatch plan
+status: pending
+---
+
+# Cycle 054 dispatch plan
+
+## Goals selected this cycle
+
+Cycle-054 is the THIRD/FINAL primary cycle of meta-batch-16 (052/053/054; the batch-16 meta-phase fires after this finalize). The c053 probes resolved cleanly: D1 DISCHARGED the single-witness gate (fixed-operator parametric solve-sweep CONFIRMED 2-of-N — electrostatic `electrostaticsolver.cpp:60-89` + magnetostatic `magnetostaticsolver.cpp:67-99`, against a shared once-assembled operator). The cycle leads with the **fixed-operator solve-family combinator-miner** (the highest-fan-out batch-16 frontier item, now unblocked, replace-and-propagate). The secondary slot continues the FE-assembly thread with the **first `fe_assemble` harvest** (D3-flagged cleanly-describable: the integrator-fold `K=Σ_i A(term_i)`). Both are open-by-construction (no on-disk deliverable; OQs OPEN) and non-overlapping (distinct layers/files). This is the headline batch-16 deliverable — land the combinator cleanly; the FE-assembly harvest rides only if it lands clean without forcing.
+
+## Deliverable-presence verification
+
+Per the MANDATORY pre-dispatch four-step check (paste-inline-evidence). Both dispatches are largely **open by construction** (the combinator slug has never existed; `L1/fe_assemble.md` has never existed) — but evidence is pasted regardless, plus the OQ-RESOLVED grep and the structural-block check.
+
+**D1 — `combinator-miner`, fixed-operator solve-family combinator (open by construction):**
+1. **File existence** — the combinator has no canonical slug yet (the miner picks + justifies the layer/slug). Verified NO existing solve-family/map-solve/solve-sweep/solve-loop combinator chapter at L4/L3/L2:
+   ```
+   $ ls book/src/L4/ book/src/L3/ book/src/L2/ | grep -iE "solve.?family|map.?solve|solve.?sweep|solve.?loop|parametric|family"
+   NONE found in L4/L3/L2
+   ```
+   (the existing `solve_loop` is the L4/index *inner-Krylov* outer-driver vocabulary row — the per-solve loop — NOT the outer parametric solve-FAMILY sweep this combinator mines; the combinator sits ABOVE `ksp_solve`, mapping it over a family.)
+2. **Maturity / already-discharged** — N/A (no file). The combinator-miner emits a NEW pattern. The vocabulary it builds on is firm: `book/src/L4/ksp_solve.md` (firm, the cap it maps), `book/src/L4/index.md` `solve_loop`/`restart_cycle`/`Outcome` rows (firm cycle-047), `book/src/L2/gram.md` (firm, the family-reduction analog). Confirmed on disk: `L4/ksp_solve.md` (35212 bytes), `L3/ksp_solve.md`, `L2/ksp_solve.md` all present.
+3. **OQ-RESOLVED grep:**
+   ```
+   $ grep -iE "solve-family-combinator-confirmed-2-of-n|fe-assembly-thread-scope" scaffolding/open-questions.md | grep -iE "RESOLVED|CLOSED"
+   no RESOLVED/CLOSED match (both OPEN)
+   ```
+   `solve-family-combinator-confirmed-2-of-n-mine-now` is OPEN and explicitly says "mine now" — this dispatch discharges it.
+4. **Structural-block check** — NO gate blocks. The single-witness gate (`electrostatic-solver-probe-findings-are-single-witness-generality-unverified`) was DISCHARGED by c053 D1 (2-of-N witnessed; critic-confirmed per `reports/2026-06-01T235200Z-cross-layer-cross-cutter-magnetostatic-solve-sweep-probe/CYCLE.md`). The ONE load-bearing scope constraint (NOT a block): the combinator is **fixed-operator-only** — driven breaks shared-operator-capture (`drivensolver.cpp:176`/`:180`, `SetOperators`-inside-loop) — so the miner mines the fixed-operator form and FLAGS the general `map_solve_over_(operator,rhs)_family` as the superset. NOT on the STOP-PROPOSING NEGATIVE LIST.
+
+Source-anchor verification (codemap + on-disk, paste-inline):
+   - electrostatic outer sweep `for (const auto &[idx,data] : laplace_op.GetSources())` at `electrostaticsolver.cpp:60`; `ksp.Mult(RHS, V[step])` at `:69`; reduction `PostprocessTerminals` `:95`/`:100`, `Cinv.Invert()` `:140` — confirmed via codemap `read_range :58-90` and `search_text`.
+   - magnetostatic operator-capture `K = curlcurl_op.GetStiffnessMatrix()` `:29`, `ksp.SetOperators(*K,*K)` `:35` — confirmed via codemap `read_range :26-45`; outer source loop `:67-99`, `ksp.Mult(RHS,A[step])` `:77`, reduction `:110-205` per c053 D1.
+
+**D2 — `harvester`, `fe_assemble` (open by construction):**
+1. **File existence:**
+   ```
+   $ ls book/src/L1/fe_assemble.md book/src/L1/eliminate_rhs.md
+   ls: cannot access 'book/src/L1/fe_assemble.md': No such file or directory
+   ls: cannot access 'book/src/L1/eliminate_rhs.md': No such file or directory
+   ```
+   Neither exists — open. The L1>L0 thread-opener theme DOES exist: `book/src/L1-L0/fe-operator-assemble-mutation-rotation.md` (status `rough-in`, by design, landed c053 D3).
+2. **Maturity / already-discharged** — the `fe_assemble` operator is a **speculative rough-in placeholder** (no anchor yet) in `book/src/L1/index.md:72` ("await harvester promotion"); the L1>L0 theme is `rough-in` (`status: rough-in` line 4, `## Status` line 19). The proposed dispatch (promote `fe_assemble` to a firm L1 operator with the integrator-fold semantics) is ABOVE the on-disk maturity (rough-in placeholder → firm operator entry). NOT a no-op.
+3. **OQ-RESOLVED grep** — `fe-assembly-thread-scope-and-sequencing` is OPEN (per the grep above, no RESOLVED/CLOSED). The libCEED-boundary-classification OQ stays meta-gated (batch-16) — NOT this dispatch's concern (the `fe_assemble` integrator-fold body is codemap-verified honest per D3, independent of the libCEED materialization classification).
+4. **Structural-block check** — NO gate blocks. D3 explicitly judged `fe_assemble` cleanly-describable in existing vocabulary (`bilinearform.cpp:28-107` accumulation `:73-75` = a fold `K=Σ_i A(term_i)`; `laplaceoperator.cpp:184`). The genuinely-NEW `weak_form_term` differential-operator cohort stays DEFERRED (NOT in this scope). NOT on the STOP-PROPOSING NEGATIVE LIST. **Clean-describability is the gate the redirect imposes on solver test-load** — D3 confirmed it; if the harvester finds it does NOT lift cleanly without forcing, it records the gap as a spine finding (does NOT force), per redirect item 3.
+
+## Dispatches
+
+**D1 — `combinator-miner` — fixed-operator solve-family combinator (THE LEAD; replace-and-propagate).**
+- **scope:** Mine the **fixed-operator parametric solve-sweep combinator** from the two confirmed witnesses (electrostatic `electrostaticsolver.cpp:60-89` terminals + magnetostatic `magnetostaticsolver.cpp:67-99` source-boundaries). The combinator shape: fix operator `K` (assembled once, outside the sweep), build `ksp` once against `K`, **map `ksp_solve(K, ·)` over an RHS/excitation family `[rhs_i]`**, **collect the solution family `[x_i]`** (e.g. `solve_family`/`map_solve` — the miner picks + justifies the canonical name + LAYER). **Decide and justify the layer:** the combinator coordinates `ksp_solve` over a family and sits structurally ABOVE the L4 `ksp_solve` cap (which is itself the outer-driver of ONE solve; this is the outer-driver of a FAMILY of solves) — likely **L4 outer-driver vocabulary** (a `map`-over-family combinator above `solve_loop`), but the miner evaluates L2/L3 if the shape argues for it. **replace-and-propagate, NOT mine-and-strand:** the combinator is the ENTRY; the electrostatic + magnetostatic outer sweeps are **specialization notes/leaves under it** (wire the combinator into BOTH driver descriptions — do not leave it stranded). **CRITICAL SCOPE GATE (load-bearing, from c053 D1 critic-confirmed):** the combinator is **fixed-operator-only**. The **driven** solver BREAKS shared-operator-capture (`drivensolver.cpp:176`/`:180` `GetSystemMatrix(1.0, iω, -ω²)` = `(K+iωC−ω²M)`, `SetOperators` INSIDE the frequency loop); transient may re-assemble. So **FLAG the general `map_solve_over_(operator,rhs)_family` as the SUPERSET** (fixed-operator as a specialization; driven/transient need the general operator-varying form) — do NOT fold driven in, do NOT claim cross-pipeline generality beyond the 2 fixed-operator witnesses. The leaf-content variant axes (curl-curl vs diffusion integrator; surface-current vs terminal excitation; `Mult` vs `AddMult` field recovery; inductance vs capacitance reduction) are ABSTRACTED OVER but must NOT flatten a load-bearing difference (per c053 D1's caveat — the field-recovery `Mult`/`AddMult` variant is OUTSIDE the sweep and must not be folded in). The `O(n²)` energy-product family-reduction (step 7 — capacitance/inductance Gram) is a SEPARATE downstream consumer (the c053 D2 gram-variant landing + the deferred gram-consuming postprocess reduction) — do NOT fold it into the solve-sweep combinator. If the combinator's specialization-propagation into both driver descriptions is too large for one invocation, LAND the combinator + author the two specialization NOTES (the propagation), and sequence any heavier driver-entry authoring to batch-17. Cite the firm `L4/ksp_solve.md` (the mapped cap), `L4/index.md` `solve_loop`/`restart_cycle`/`Outcome` rows, and the strawman conventions (`book/src/design/l4_calculus.md`) for any L4 notation.
+- **deps:** none.
+- **rationale:** the highest-fan-out batch-16 frontier item — a fixed-operator solve-family sweep recurs across pipelines as terminals/sources/ports (and, in the general superset form, frequencies/modes/time-steps). Serves OQ `solve-family-combinator-confirmed-2-of-n-mine-now` (the action half of `electrostatic-outer-terminal-sweep-needs-solve-family-combinator`); the headline batch-16 deliverable. Redirect item 2/3 (continued shared-spine abstraction surfacing from solver test-load material).
+
+**D2 — `harvester` — `fe_assemble` firm L1 operator (FE-assembly thread continuation; cleanly-describable).**
+- **scope:** Promote the speculative rough-in `fe_assemble` to a **firm L1 operator** `book/src/L1/fe_assemble.md`: the global FE operator assembled from a space + an immutable weak-form term list, the **integrator-fold `K = Σ_i A(term_i)`** (codemap-verified honest per c053 D3: `palace/fem/bilinearform.cpp:28-107`, accumulation `:73-75`; the electrostatic witness `palace/models/laplaceoperator.cpp:184-223` `GetStiffnessMatrix` — `BilinearForm k; k.AddDomainIntegrator<DiffusionIntegrator>; k.Assemble`). Describe in **existing shared vocabulary** (a fold; the per-term contribution is the element-local assembly; PA/FA is a variant axis absorbed at L1 per `book/src/L0/fem-bilinearform-file.md`). **CLEAN-DESCRIBABILITY IS THE GATE:** D3 judged `fe_assemble` cleanly-describable (fold) — if the harvester finds it does NOT lift cleanly in existing vocabulary without forcing/distorting, it records the gap as a **spine finding** (a missing combinator/vocabulary), does NOT force a firm landing, and leaves the rough-in in place (redirect item 3). **SCOPE BOUNDS:** harvest ONLY `fe_assemble` (the integrator-fold). The genuinely-NEW `weak_form_term` differential-operator cohort (diffusion/mass/curl-curl/div-div element types) stays DEFERRED — name it as the term-element type the fold ranges over, do NOT enumerate/harvest the cohort. `eliminate_essential_bc` / `eliminate_rhs` stay rough-in (separable BC-elimination post-compositions; `eliminate_rhs`'s body is `apply_linop`+`axpy` per D3 — a candidate for a LATER harvest, NOT this one unless trivially co-clean). **SLUG-COLLISION (load-bearing):** `fe_assemble` is the C++ `BilinearForm`-CLASS assembler — it is NOT the existing `book/src/L1/bilinear-form.md` (the BLAS-2 reduction `xᴴMy`); preserve the slug-collision note. On landing firm, update the `book/src/L1/index.md` FE-assembly cohort subsection (the `fe_assemble` bullet `:72` from "rough-in; no anchor yet" → firm, with the live link) and re-anchor the `book/src/L1-L0/fe-operator-assemble-mutation-rotation.md` `lowers:` reference / dep-map row to the now-firm `L1/fe_assemble` (the theme may stay rough-in by design — it is the thread-opener — but its forward-reference to `fe_assemble` upgrades to a live link to a firm operator). The harvester owns ALL writes to `L1/index.md` + the L1-L0 theme this cycle (D1 touches neither).
+- **deps:** none.
+- **rationale:** continues the FE-assembly sub-spine thread D3 opened (the assembly half of every pipeline). D3 flagged `fe_assemble` the cleanest of the rough-ins. Serves OQ `fe-assembly-thread-scope-and-sequencing`. Redirect item 3 (solver/FE-assembly test-load — advances a layer ONLY when cleanly describable; LOW priority, never preempts D1). Secondary — rides only if it lands clean.
+
+## Overlap analysis
+
+Two dispatches. Pairwise:
+
+- **D1 ↔ D2:** NON-overlapping. D1 (combinator-miner) works at L4 (or its chosen layer) — the new combinator chapter + `L4/index.md` (if L4) + the two driver-description specialization notes (which live in the combinator's own §specializations or as forward-references; the c053 driver probes were observation-only, the drivers have no spine chapters to edit). D2 (harvester) works at `book/src/L1/fe_assemble.md` + `book/src/L1/index.md` + `book/src/L1-L0/fe-operator-assemble-mutation-rotation.md`. **Verified zero file overlap:** `grep -c "L4" book/src/L1/index.md book/src/L1-L0/fe-operator-assemble-mutation-rotation.md` → `0`/`0` (the harvester's index targets contain no L4 references; the combinator-miner does not touch L1). No shared operator names (`solve_family`/`map_solve` vs `fe_assemble` are disjoint). No shared consolidated index tally (D1 → at most one L4/L3/L2 index, sole-owned by D1; D2 → L1/index, sole-owned by D2 — DIFFERENT indexes, no count-ownership partition needed). **PARALLEL.**
+
+No count-ownership / dual-registration partition is required this cycle: each dispatch is the SOLE writer of any index it touches, and the indexes are distinct. (Per the redirect, the rectangular-floor count-ownership machinery is retired as a target; it applies only where ≥2 dispatches genuinely co-write ONE index — not the case here.)
+
+No cross-report forward-reference slug coordination is required: D1's combinator does not reference a D2-authored slug and vice versa (the combinator maps the already-firm `ksp_solve`, not `fe_assemble`; `fe_assemble` does not reference the combinator). The combinator's canonical slug is the miner's to pick (no sibling forward-references it this cycle).
+
+## Sequencing schedule
+
+**Wave 1 (parallel):** D1, D2.
+
+Single wave — both dispatches are independent (deps: none/none), touch disjoint files, and neither forward-references the other's not-yet-existing slug. Per the conflict-tolerance philosophy (when in doubt, PARALLEL; false sequentialization is the worse error), these run together. After both reports land → critics → repairers → `integrator-per-report` ×2 (serial) → ONE `integrator-finalize` (rebuild + commit + push + batch-16-boundary housekeeping; the batch-16 meta-phase fires after this finalize).
+
+## What lands c054 vs what the batch-16 meta-phase / batch-17 picks up
+
+**Lands c054:**
+- D1: the fixed-operator solve-family combinator (firm entry at the miner's chosen layer) + its two specialization notes (electrostatic/magnetostatic propagation) + the `map_solve_over_(operator,rhs)_family` superset FLAG for driven/transient.
+- D2: `fe_assemble` firm L1 (IF cleanly-describable; else a spine finding + rough-in retained).
+
+**Deferred to batch-16 meta-phase / batch-17 (explicitly NOT this cycle):**
+- The **general operator-varying solve-sweep** (`map_solve_over_(operator,rhs)_family`) for driven (frequency-sweep, operator `(K+iωC−ω²M)` re-assembled per step) + transient (time-step) — flagged by D1 as the superset; a 3rd driven probe (`drivensolver.cpp`) establishes its scope (OQ `solve-sweep-shared-operator-capture-invariant-needs-driven-transient-check`). NOT a precondition for the fixed-operator combinator.
+- The **gram-consuming solver-postprocess reduction** — the deferred downstream `/Vᵢ²`+`/(IᵢIⱼ)` scaling, `Cm`/`Mm` sign-remix, in-place `Invert()` consumer surface (OQ `solver-postprocess-reduction-consumes-gram-distinct-dispatch`); a DISTINCT future dispatch, NOT folded into D1's solve-sweep combinator (the c053 D2 gram-variant absorption already landed the capacitance/inductance reductions onto `L2/gram.md`).
+- The **FE-assembly thread continuation** beyond `fe_assemble`: `eliminate_essential_bc` / `eliminate_rhs` harvests, the `weak_form_term` differential-operator cohort, and the **libCEED-boundary classification** (`fe-assembly-libceed-boundary-classification` — transitive-firm vs opaque-library-ownership vs tensor-contraction-respine; meta-gated, batch-16).
+- The **batch-16 meta-phase** (fires after c054's finalize, aggregating 052/053/054) assesses the solver-test-load arc (refactor-pass-complete → solve-family-combinator-mined → FE-assembly-thread-opened-and-first-harvest) + the reusable single-witness→2nd-pipeline-probe→discharge disciplined-mining gate as a methodology pattern.
+
+## Open questions / caveats
+
+- **D1 layer decision is the miner's, justified in-report.** I lean toward L4 outer-driver vocabulary (the combinator sits above the L4 `ksp_solve` cap — it is the outer-driver of a *family* of solves, where `ksp_solve` is the outer-driver of *one*), but the miner evaluates and justifies; do not pre-constrain. If the miner lands it at L4, it sole-owns `L4/index.md` this cycle.
+- **D1 may produce a combinator + 2 specialization notes that is itself large.** If the replace-and-propagate enactment (wiring into both driver descriptions) exceeds one invocation, the miner should LAND the combinator + the two specialization NOTES and sequence heavier driver-entry authoring to batch-17 (per the c053→c054 hand-off explicitly allowing "land the combinator + note the specializations"). This is the expected shape, not a failure.
+- **D2 is genuinely optional / clean-gated.** If the harvester finds `fe_assemble` does not lift cleanly in existing vocabulary without forcing, the correct outcome is a SPINE FINDING (recorded as a missing-combinator/vocabulary item feeding the spine), NOT a forced firm landing. This is the redirect's solver-test-load discipline; do not penalize a "did-not-land-clean → recorded-finding" outcome.
+- **Batch-cadence note:** this is the last primary cycle before the batch-16 meta-phase. The two-dispatch slate is intentionally focused (well under the 12 cap) — the lead combinator is the priority and the FE-harvest is clean-gated; padding the wave with marginal picks would risk diluting the headline deliverable on the cycle the meta-phase aggregates. If the human wants a 3rd slot, the cheapest no-regret candidate is a `same-layer-cross-cutter` observation-only audit confirming D1's combinator does not duplicate the `gram` family-reduction surface (a coherence check), but I did NOT schedule it — it is better folded into D1's own replace-and-propagate self-check, and the batch-16 meta-phase will review coherence regardless.
+- **Plan co-edit:** the c054 picks are already correctly seeded in `scaffolding/priorities.md` §"CYCLE-054 PICKS" (the integrator-finalize hand-off note, lines ~184-189) — picks 1 (combinator) + 2 (`fe_assemble` harvest) + 3 (deferred gram-consumer). No new plan candidate to append this cycle (the frontier is fully captured by the existing hand-off + OQ ledger). I mark D1/D2 as dispatched-this-cycle in the active head below.
