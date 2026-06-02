@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T071603Z
 scope: L3 index §Semantics-overlay obstruction-profile spectrum prose-sync (add shape (f) fold_solve)
 status: pending
 integrated_at: 2026-06-02T073705Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 4f55e95
 integration_notes: "Applied clean (cycle-060 D1, build-relevant). PROSE-only sync of book/src/L3/index.md:15 §Semantics-overlay spectrum prose to the already-authoritative :64 count tally — 'Five->Six non-trivial-obstruction shapes', 'three->four partial-obstruction', + the shape (f) fold_solve clause + the closing distinction sentence; the :64 count-owner cell NOT touched (c057-meta count-owner guard). Resolves OQ l3-index-sixth-obstruction-profile-shape-f (flagged for the batch-18 meta-phase to CLOSE). cargo make book exit 0; no count delta. See reports/cycle-060-integrator-staging/STAGING.md + reports/2026-06-02T073705Z-integrator-finalize-cycle-060/CYCLE.md."
 ---
 
