@@ -144,7 +144,7 @@ Laws that explicitly **do not** hold:
   precondition.
 - **BC-elimination is NOT part of the fold**: pinning essential (Dirichlet) dofs
   (`eliminate_essential_bc`, L0 `ParOperator::SetEssentialTrueDofs`,
-  `palace/models/laplaceoperator.cpp:215-217`) and lifting inhomogeneous Dirichlet data into the RHS
+  `palace/models/laplaceoperator.cpp:216-217`) and lifting inhomogeneous Dirichlet data into the RHS
   (`eliminate_rhs`, L0 `ParOperator::EliminateRHS`, `palace/linalg/rap.cpp:56-82`) are **separable
   post-compositions** on the assembled operator, valid independently of how it was assembled. They
   are sibling speculative-rough-in operators (deferred), not laws of `fe_assemble`.
@@ -254,7 +254,7 @@ faithfulness, but not needed for `fe_assemble`'s fold laws.)
   electrostatic witness. `BilinearForm k(GetH1Space())` (`:191`) +
   `k.AddDomainIntegrator<DiffusionIntegrator>(epsilon_func)` (`:192`) + `k.Assemble(...)` (`:194`) —
   the single-term assembly `fe_assemble(h1_space, [diffusion(ε)])` — then per-level `ParOperator`
-  wrap with `SetEssentialTrueDofs` (`:215-217`, the separable `eliminate_essential_bc` post-comp).
+  wrap with `SetEssentialTrueDofs` (`:216-217`, the separable `eliminate_essential_bc` post-comp).
 - `palace/fem/integrator.hpp:39-130` — `BilinearFormIntegrator` interface + concrete weak-form
   terms (`MassIntegrator`, `DiffusionIntegrator`, `CurlCurlIntegrator`, `DivDivIntegrator`, ...) —
   the `WeakFormTerm` cohort (opaque rough-in input here).

@@ -1,47 +1,35 @@
-## 2026-05-25 cycle-56 — forward cg [L3→L4] — pass
+## 2026-06-02 cycle-056 — 3 reports applied clean — fifty-first consecutive cycle under split integrator — SECOND PRIMARY CYCLE OF META-BATCH-17 — light hygiene/probe cycle: map_solve superset DEFERRED + L3-L2/L2-L1 index tables CONFIRM-CLEAN + fe_assemble.md citation residual fixed — pass
 
-- Synthesis: CG L3→L4 rotation_claims emitted retroactively against the on-disk slice (v0.3, L4 against calculus v0.3). Four claims cover: (1) step-body lifting to pure cg_step + iterate_while discharging the L3 sequentiality obstruction; (2) residual-norm logging resolved via L4 v0.3 demand-driven pruning (no Writer effect needed); (3) preconditioner axis absorbed via primary/variant pair with Identity-equivalence; (4) CheckDot guard rotated to an SPD precondition on the operator-instance contract. No new slice content; claims-only cycle. retroactive_claim_evidence below.
+**SECOND PRIMARY CYCLE OF META-BATCH-17** (3:1 cadence; cycles 055/056/057; the cycle counter does NOT reset across batch boundaries; the **batch-17 meta-phase fires AFTER cycle-057's finalize as a SEPARATE dispatch**). A **light hygiene/probe cycle** under the 2026-06-01 VOCABULARY-SHIFT REDIRECT (`METHODOLOGY-REDIRECT.md`; CLAUDE.md §Methodology invariants ⟢: "Solvers are pulled up as a LOW-PRIORITY test-load on the shared spine — advance a layer only when **cleanly describable**, NEVER at the cost of forcing the spine; what a solver can't cleanly say is a finding about the spine"). A clean opus-planner cycle.
 
-retroactive_claim_evidence:
-  - claim_index: 0
-    on_disk_path: book/src/spec/slices/cg.md
-    section: ## L4
-    quoted_lines: |
-      cg_step
-        :: LinOp<S> -> Scalar -> CgState<S>
-        -> { state: CgState<S>, residual_norm: Scalar }
-      cg_step opA eps s =
-        let p'    = if s.it == 0 then s.r
-                                 else axpby 1.0 s.r (s.beta / s.beta_prev) s.p in
-        let Ap    = apply opA p' in
-        let alpha = s.beta / (dot Ap p') in
-        ...
-        let { final_state, trajectory }
-              = iterate_while s0'
-                  (\s -> s.it < config.max_it && not s.converged)
-                  (\s -> cg_step opA eps s) in
-  - claim_index: 1
-    on_disk_path: book/src/spec/slices/cg.md
-    section: ## L4 (cg_solve return) + ## L3 ↔ L4 correspondence note 6
-    quoted_lines: |
-      { final_state, residual_history: trajectory.map(\t -> t.residual_norm) }
-      Read: cg_solve returns both the converged iterate and the per-iteration residual history. If the caller reads .final_state only, the residual history is pruned — cg_step's residual_norm output is eliminated and the iteration runs without computing per-step residuals.
-      6. Palace's print_opts.iterations-conditional residual logging corresponds to L4's residual_history consumption. Palace gates printing by a runtime flag; L4 gates *computation* by consumer demand.
-  - claim_index: 2
-    on_disk_path: book/src/spec/slices/cg.md
-    section: ## L4 Variant: preconditioned CG + Equivalence note
-    quoted_lines: |
-      pcg_step
-        :: LinOp<S> -> LinOp<S> -> Scalar -> PCgState<S>
-        -> { state: PCgState<S>, residual_norm: Scalar }
-      ...
-      Equivalence note. pcg_step opA Identity eps s (where Identity : LinOp<S> returns its argument unchanged) is observably equal to cg_step opA eps s' where s' is s with the z field projected out... Formally: define forget_z : PCgState<S> → CgState<S> as the projection that drops z; then pcg_step opA Identity eps ≡ cg_step opA eps ∘ forget_z modulo the z field's no-op write-back.
-  - claim_index: 3
-    on_disk_path: book/src/spec/slices/cg.md
-    section: ## L1 (check_dot note) + ## Working Notes (CheckDot modeling)
-    quoted_lines: |
-      check_dot (Palace's CheckDot, palace/linalg/iterative.cpp:244-250) is a partial-function guard at each new inner-product site: it aborts execution if the result is non-finite or, on real SPD systems, negative (signalling loss of positive-definiteness). L1 surfaces it as a check_dot β' assertion; at L4 the guard maps to the precondition β > 0 on cg_step's call-site, not a runtime branch in the pure-functional form.
-      CheckDot modeling. Palace's CheckDot... Modeled at L1 as check_dot β' partial-function guard; at L4 as a precondition on the SPD assumption (no runtime branch in the pure form).
-- Verdict: pass.
-- Friction: none.
-- Structural change: applied: 3 lesson(s); 4 rotation_claim(s).
+**Headline: the `map_solve` superset is DEFERRED (driven = operator-varying map [1 witness]; transient = state-threaded FOLD → a future `fold_solve`; eigenmode = opaque single solve; below the <2-witness authoring gate); the L3-L2/L2-L1 index tables are CONFIRM-CLEAN (16/16 — the cycle-055 L4-L3 in-place-promotion drift was CONTAINED, did not propagate to the deletion-swept tables); the `fe_assemble.md` citation residual is fixed.**
+
+**NO MEASURABLE COUNT DELTA this cycle** — D3 = citation hygiene; D1/D2 = observation findings.
+
+- **Staging completeness:** 3 of 3 dispatched-ready reports applied clean (3/3 staging rows == dispatched-ready — the cycle-018 staging-completeness gap did NOT recur for the THIRTY-SEVENTH consecutive cycle / FIFTY-FIRST consecutive clean split-integrator cycle); zero deferrals, zero rejections.
+
+### What landed
+
+- **D3 (lifter, build-relevant) — `fe_assemble.md` citation-hygiene fix.** The essential-BC pinpoint `laplaceoperator.cpp:215-217` → `:216-217`, corrected at TWO occurrences — line 147 (full-path form) + line 257 (abbreviated `:215-217` form). `:215` is a stray closing brace (on-disk `laplaceoperator.cpp:213-218`); `:216` = ParOperator construction, `:217` = SetEssentialTrueDofs — the corrected `:216-217` is the essential-BC site; on-disk re-read confirmed. The legitimate `:184-223` GetStiffnessMatrix broader span at line 253 was deliberately NOT touched (it cites the whole assembly span, not the BC site — the cycle-055 D7-repairer-flagged legitimate cite). No fence/body change — citation-hygiene pinpoint only. This closes the cycle-055 deferred `fe_assemble.md:147` citation-residual OQ.
+- **D1 (cross-layer-cross-cutter, OBSERVATION-ONLY, no book mutation) — the `map_solve` superset probe → do NOT author `map_solve.md`.** The three-way solver-family shape classification:
+  - **driven = operator-varying MAP** (1 witness — `drivensolver.cpp` uniform `Sweep` with `SetOperators`-inside-loop, which breaks the fixed-operator shared-operator-capture that the c054 `solve_family` requires).
+  - **transient = state-threaded FOLD** → a DISTINCT future `fold_solve`/`time_step_fold` combinator. Recorded as a SPINE FINDING (the spine will eventually need a fold combinator; NOT forced to land now) and explicitly **NOT counted as a 2nd map witness** — the fold-vs-map guard correctly refused to over-unify a fold into the map family.
+  - **eigenmode = opaque single solve** (no family iteration in Palace's driver).
+  With only **1 operator-varying-map witness**, the `map_solve` superset is **DEFERRED** below the **2-witness authoring gate** (`skills/disciplined-cross-pipeline-combinator-mining-gate`); the recorded `map_solve` Haskell candidate shape stays unpromoted. The `DrivenSolver::SweepAdaptive` PROM/adaptive path (`drivensolver.cpp:231+`) is the cheap **2nd-witness probe** (could meet the gate → license authoring `map_solve.md`, or fold a reduced-order-model state → close to the transient `fold_solve` shape) — a batch-18 candidate. 2 OQs promoted.
+- **D2 (cross-layer-cross-cutter, OBSERVATION-ONLY, no book mutation) — the L3-L2/L2-L1 index-table-staleness sweep → CONFIRM-CLEAN.** All **16/16** L3-L2 + L2-L1 index-table status cells MATCH their theme-file `## Status` lines (row/file reconciliation 5/5 + 11/11); **the cycle-055 L4-L3 in-place-promotion drift did NOT propagate to these deletion-swept tables** (the deletion-sweep authoring mechanism leaves no desync window, unlike L4-L3's in-place promotions). This **partially closes the cycle-055 D8 OQ** `index-table-status-cell-drifts-when-theme-file-promoted` for the L3-L2 + L2-L1 tables (D8 stays OPEN for the not-yet-audited L1/L1-L0/L4/L3/L2/L0 tables); the empirical finding is that a finalize-time re-sweep would flag 0/16 here, so the **lightweight promotion-time guard** ("when flipping a `## Status` line, update the matching index cell") is preferred over a heavyweight finalize-time re-sweep (batch-17 meta-phase input). L1/L1-L0 are the highest-in-place-promotion-churn next-audit candidate. 3 OQs promoted.
+
+### Counts
+
+- **NONE — all firm/rough-in counts UNCHANGED from cycle-055.** L1 firm 29, L4 firm 6 + 1 rough-in (`solve_family`), L4>L3 firm 7, L2 firm 21 + 1 partly-constructive, L2>L1 firm 17, L3 firm 17 + 3 partial-obstruction, L3>L2 firm 13, L1>L0 firm + the libCEED obstruction annotation, L0 chapters 22, Phase-1 removals 9/10.
+
+### Process
+
+- retroactive-budget global = 0; ZERO dispatch-phase leaks; 5 OQs opened (2 D1 + 3 D2), 0 closed in-artifact (the D2 partial-closure routes to the batch-17 meta-phase unify).
+- **Reusable signal — the disciplined-defer outcome worked END-TO-END.** `map_solve` was NOT authored from 1 witness, and the fold-vs-map guard correctly held the transient state-threaded fold distinct from the driven operator-varying map (it is NOT a 2nd map witness). The `disciplined-cross-pipeline-combinator-mining-gate` skill works at the <2-witness boundary — the solver test-load continues to generate spine findings without forcing the spine.
+- **Reusable signal — the CONFIRM-CLEAN staleness audit.** The index-table-drift class (cycle-055 D8) was CONTAINED to L4-L3's in-place promotions; the deletion-sweep authoring mechanism (L3-L2 / L2-L1) leaves no desync window. RECOMMENDATION for the batch-17 meta-phase: prefer a **lightweight promotion-time guard** (update the matching index cell when flipping a `## Status` line — a lifter/integrator-per-report spec clause) over a **heavyweight finalize-time re-sweep** (which this audit empirically found would flag 0/16 here).
+- **Reusable signal — the recurring tool-tag-leak hazard reminder.** Cycle-055 leaked tool-invocation closing tags from a harvester Write into `eliminate_essential_bc.md` (surgically repaired then). No leak this cycle (the leaked-tool-tags gate read 0 across all 3 rows), but the hazard persists — a producer-side Write-discipline reminder or a finalize-time leaked-tag scan is a candidate for the batch-17 meta-phase.
+- **Build:** clean 3-report serial application (all observation-only or citation-hygiene; no structural change); `cargo make book` exit 0 ~90s; `fe_assemble.html` renders with the corrected `:216-217` (2 occurrences, 0 stray `:215-217`); no dead links; the only build noise is the pre-existing KaTeX false-positives in `design/l4_calculus.md` + markdown-table HTML WARNs (ignored per task). No build-repair needed.
+- **The batch-17 arc continues:** after the c055 solve_family-propagation + FE-assembly advance, c056 is a disciplined hygiene/probe pause — the `map_solve` superset correctly NOT authored from 1 witness; the staleness class confirmed contained.
+- **NEXT: cycle-057** — the LAST primary cycle before the batch-17 meta-phase — picks up the deferred items: the `solve_family` `L3/solve_family` image + the L3>L2 hop (sequenced from c055); the `fe-operator-assemble-mutation-rotation` theme firm-flip (now that `fe_assemble` + `eliminate_*` are firm); the `DrivenSolver::SweepAdaptive` 2nd-map-witness probe (cheap; could meet the `map_solve` gate); a possible `fold_solve` transient combinator thread-opener. The batch-17 meta-phase fires after cycle-057's finalize.
+
+Written by `integrator-finalize` (split integrator-per-report ×3 + finalize ×1).
