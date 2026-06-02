@@ -1,0 +1,429 @@
+---
+agent: harvester
+invoked_at: 2026-06-02T010700Z
+scope: L1 operator: eliminate_essential_bc
+status: integrated
+integrated_at: 2026-06-02T034000Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: "D4 cycle-055. Applied clean — new book/src/L1/eliminate_essential_bc.md (firm L1, square-operator essential-Dirichlet pin: zero rows/cols + diagonal-policy DIAG_ONE/DIAG_ZERO; 4 laws + 3 non-laws; firm-on-positive-structure) + L1/index :73 bullet rough-in→firm (corrected :216-217) + dep-map row after D3's eliminate_rhs row + SUMMARY. With D3, all 3 FE-assembly operators now firm; L1 firm →29. FINALIZE BUILD-REPAIR: removed 2 leaked tool-invocation tags </content></invoke> from the chapter tail (a Write artifact; chapter content unaffected)."
+inputs:
+  - dispatch D4 cycle-055 (batch-17, VOCABULARY-SHIFT REDIRECT)
+  - rough-in bullet book/src/L1/index.md:73 (proposed-by abstractor:2026-06-01T235200Z-abstractor-fe-assembly-thread-opener)
+  - sibling firm entry book/src/L1/fe_assemble.md (cycle-054) — separable-post-composition framing
+  - L0: palace/linalg/rap.cpp:36-47 (SetEssentialTrueDofs), :141-143 (EliminateBC), :60-83 (EliminateRHS sibling), :18 (default policy)
+  - L0: palace/models/laplaceoperator.cpp:216-217 (witness SetEssentialTrueDofs site), :184-219 (GetStiffnessMatrix witness)
+  - L0: palace/models/modeeigensolver.cpp:571,574,608,611 (eigen-pipeline EliminateBC consumers)
+---
+
+# CYCLE: Formalize eliminate_essential_bc at L1
+
+## Summary
+
+`eliminate_essential_bc` pins the essential (Dirichlet) true dofs into an assembled square
+operator: it zeros the rows and columns of the operator at the essential-dof set and sets each
+eliminated diagonal entry per a **diagonal policy** (`DIAG_ONE` / `DIAG_ZERO`). It was a
+`rough-in (no anchor yet)` plain-text bullet at `book/src/L1/index.md:73`. This dispatch promotes it
+to a **firm** L1 operator. **CLEAN-GATE call: PROMOTE — clean.** The operation lifts cleanly in
+existing firm-spine vocabulary as a **separable post-composition** on the assembled operator
+(composes AFTER `fe_assemble`), parameterized by the diagonal-policy variant axis; its laws
+(idempotence, policy-determined diagonal, post-composition separability) are syntactic identities on
+positive Palace source (`mfem::HypreParMatrix::EliminateBC` at `rap.cpp:143`, dof-set + policy
+recorded by `ParOperator::SetEssentialTrueDofs` at `rap.cpp:36-47`, witness consumer
+`laplaceoperator.cpp:216-217`). No interaction with the assembled operator resists clean
+post-composition framing — the elimination is defined purely on the operator + dof-set + policy and
+is independent of how the operator was assembled.
+
+The codemap-supplied scope anchor `laplaceoperator.cpp:215-217` was **codemap-drifted**: on-disk
+(citecheck, source of truth) the `SetEssentialTrueDofs(... DIAG_ONE)` call is at line **217** and
+the `ParOperator` construction it operates on is at **216**. This entry cites the verified on-disk
+range `216-217`. (The sibling `book/src/L1/fe_assemble.md` carries the un-corrected `215-217` in two
+places — flagged in *Open questions* as a separate-scope citation drift; NOT corrected here.)
+
+## Proposed changes
+
+```new:book/src/L1/eliminate_essential_bc.md
+---
+layer: L1
+operator: eliminate_essential_bc
+firmness: firm
+lowers_to:
+  - L1-L0/fe-operator-assemble-mutation-rotation
+lifts_from: []
+depends_on: []
+variant_axes:
+  - diagonal-policy
+  - trial-test-coincidence
+---
+
+# eliminate_essential_bc
+
+Pin the essential (Dirichlet) true dofs into an assembled square operator: produce a fresh operator
+in which the rows and columns at the essential-dof set are zeroed and each eliminated diagonal entry
+is set per a **diagonal policy** (`DIAG_ONE` / `DIAG_ZERO`). A **separable post-composition** on the
+assembled operator — it composes AFTER [`fe_assemble`](./fe_assemble.md) and is NOT part of the
+assembly fold. The pure-functional lift of Palace's `ParOperator` essential-BC elimination
+(`SetEssentialTrueDofs` recording the dof-set + policy; `mfem::HypreParMatrix::EliminateBC` applying
+it on the assembled square matrix).
+
+## Context
+
+`eliminate_essential_bc` lifts the BC-elimination step that Palace applies to an assembled operator
+**after** the FE-assembly fold. In Palace the elimination is split across two L0 sites that together
+realize one L1 operation:
+
+- `ParOperator::SetEssentialTrueDofs(tdof_list, policy)` (`palace/linalg/rap.cpp:36-47`) records the
+  essential-true-dof list and the diagonal policy on the operator wrapper (it verifies the operator
+  is square — `height == width` — and that the policy is one of `DIAG_ONE` / `DIAG_ZERO`). It is a
+  *deferred* configuration: it stores the dof-set + policy but does not yet alter the matrix.
+- `RAP->EliminateBC(dbc_tdof_list, diag_policy)` (`palace/linalg/rap.cpp:141-143`) applies the
+  recorded elimination on the assembled (square) `HypreParMatrix` at parallel-assemble time: it
+  zeros the rows and columns at `dbc_tdof_list` and sets each eliminated diagonal per `diag_policy`.
+
+At L1 these two L0 sites collapse into a single pure operation `eliminate_essential_bc(K, dofs,
+policy)` that consumes the assembled operator and produces the eliminated operator value. The
+deferred-config / apply-at-assemble-time split, the `ParOperator` wrapper state, and the
+square-operator `MFEM_VERIFY` guards are L0 concerns reintroduced by the
+[`fe-operator-assemble-mutation-rotation`](../L1-L0/fe-operator-assemble-mutation-rotation.md)
+L1>L0 lowering theme, not by the L1 signature.
+
+The witness is the electrostatic stiffness build: `LaplaceOperator::GetStiffnessMatrix`
+(`palace/models/laplaceoperator.cpp:184-219`) assembles the diffusion operator via `fe_assemble`,
+wraps each multigrid level in a `ParOperator`, and calls
+`SetEssentialTrueDofs(dbc_tdof_lists[l], Operator::DiagonalPolicy::DIAG_ONE)`
+(`palace/models/laplaceoperator.cpp:216-217`) — the separable `eliminate_essential_bc` post-comp on
+the freshly-assembled `K`. The eigen pipeline applies the same elimination on its assembled real /
+imaginary stiffness and mass blocks (`palace/models/modeeigensolver.cpp:571,574,608,611`).
+
+## Signature
+
+```text
+eliminate_essential_bc :: (K: LinearOperator[N, N], dofs: DofSet[N], policy: DiagPolicy)
+                          -> LinearOperator[N, N]
+```
+
+Shape contract (bunsen-style, named axes):
+
+- `K` — `LinearOperator[N, N]` — an assembled **square** operator over the true-dof axis `N`
+  (`N = space.GetTrueVSize()`); the output of [`fe_assemble`](./fe_assemble.md). Read-only;
+  squareness is required (essential-BC elimination is defined only for `height == width` — the L0
+  guard `palace/linalg/rap.cpp:42-43`, and the rectangular-reject branch
+  `palace/linalg/rap.cpp:145-148`).
+- `dofs` — `DofSet[N]` — the essential (Dirichlet) true-dof index set, a subset of `0..N`. At L0 the
+  `mfem::Array<int> dbc_tdof_list` recorded by `SetEssentialTrueDofs`
+  (`palace/linalg/rap.cpp:45-46`).
+- `policy` — `DiagPolicy` — `DIAG_ONE | DIAG_ZERO` (the diagonal-policy variant axis; see
+  *Variant axes*). The only two admissible values (L0 guard `palace/linalg/rap.cpp:39-41`).
+- result — `LinearOperator[N, N]` — a fresh square operator equal to `K` with rows and columns at
+  `dofs` zeroed and the eliminated diagonal set per `policy`.
+
+The result operator's action decomposes block-wise on the free/essential dof partition. Writing
+`F = 0..N \ dofs` (free dofs) and `E = dofs` (essential dofs):
+
+```text
+eliminate_essential_bc(K, E, policy) =
+  [ K[F,F]   0      ]
+  [ 0        D       ]   where   D = I_E   (policy = DIAG_ONE)
+                                D = 0_E   (policy = DIAG_ZERO)
+```
+
+i.e. the off-diagonal coupling blocks `K[F,E]` and `K[E,F]` are zeroed, the free–free block `K[F,F]`
+is preserved, and the essential–essential block becomes the identity (`DIAG_ONE`) or zero
+(`DIAG_ZERO`) on `E`.
+
+## Semantics
+
+`eliminate_essential_bc(K, E, policy)` returns the operator obtained from `K` by **decoupling the
+essential dofs**: every matrix entry in an essential row or essential column is set to zero, then
+each essential diagonal entry `(i, i)` for `i ∈ E` is set to `1` (`DIAG_ONE`) or left `0`
+(`DIAG_ZERO`). Free–free entries `K[i,j]` with `i, j ∉ E` are unchanged.
+
+The operation is **separable from assembly**: it is defined purely on the operator value, the dof
+set, and the policy — it does not inspect how `K` was assembled (which weak-form terms, which
+representation). This is what makes it a **post-composition** rather than a fold step: for any
+assembled `K = fe_assemble(space, terms)`,
+
+```text
+eliminate_essential_bc(fe_assemble(space, terms), E, policy)
+```
+
+is a well-formed composition, and the elimination commutes with the assembly fold's term-additivity
+in the precise sense given by the *distribution-over-assembly* law below.
+
+The `DIAG_ONE` policy is the **solve-side** convention: it makes the eliminated operator
+non-singular on the essential block (the essential dofs become trivial `x_i = b_i` equations), so the
+operator can be inverted by `ksp_solve` with the essential values supplied through the RHS (the
+companion `eliminate_rhs` operator, sibling rough-in). The `DIAG_ZERO` policy is the
+**energy / mass-block** convention used where the essential block must contribute no spurious unit
+eigenvalues (e.g. assembling sub-blocks of a generalized eigenvalue problem — the eigen pipeline
+`palace/models/modeeigensolver.cpp:571-611` uses both policies across its `A`/`B` blocks).
+
+`eliminate_essential_bc` is **pure at L1**: there is no in-place mutation of the operator, no
+deferred-config wrapper, no apply-at-assemble-time staging. The L0 `SetEssentialTrueDofs`
+record-then-`EliminateBC`-apply split (`palace/linalg/rap.cpp:36-47` record;
+`palace/linalg/rap.cpp:141-143` apply) and the `ParOperator` mutable wrapper are L1>L0 lowering
+concerns.
+
+## Algebraic laws
+
+The laws below hold treating `K` as an opaque assembled square operator and `EliminateBC` as the
+zero-rows-cols-then-set-diagonal map it positively is (`palace/linalg/rap.cpp:143`). Absences are
+deliberate.
+
+1. **Idempotence**: `eliminate_essential_bc(eliminate_essential_bc(K, E, policy), E, policy) =
+   eliminate_essential_bc(K, E, policy)`. After elimination the essential rows/cols are already zero
+   and the diagonal already equals the policy value; re-eliminating the same `(E, policy)` is the
+   identity. The eliminated operator is a fixed point of the elimination with the same dof-set and
+   policy.
+
+2. **Free-block preservation**: the free–free sub-block is unchanged —
+   `eliminate_essential_bc(K, E, policy)[F, F] = K[F, F]` for `F = 0..N \ E`. The elimination
+   touches only essential rows and columns; the interior (free) physics is preserved exactly. This
+   is what licenses solving the reduced free-dof system.
+
+3. **Policy determines only the essential diagonal**:
+   `eliminate_essential_bc(K, E, DIAG_ONE)` and `eliminate_essential_bc(K, E, DIAG_ZERO)` differ
+   *only* on the essential–essential diagonal entries `(i, i), i ∈ E` (identity vs. zero on `E`);
+   all other entries (free–free, and the zeroed coupling/off-diagonal-essential entries) are
+   identical. The policy is a per-diagonal-entry choice on the eliminated block, nothing more.
+
+4. **Distribution over the assembly fold (separable post-composition)**:
+   `eliminate_essential_bc(K₁ + K₂, E, DIAG_ZERO) = eliminate_essential_bc(K₁, E, DIAG_ZERO) +
+   eliminate_essential_bc(K₂, E, DIAG_ZERO)`. With the `DIAG_ZERO` policy the elimination is a
+   **linear** map on operators (zeroing rows/cols + zero diagonal is the linear projection
+   `K ↦ P_F K P_F` onto the free block, with `P_F` the diagonal 0/1 free-dof projector), so it
+   distributes over operator addition — hence over the `fe_assemble` term-sum (law 2 of
+   [`fe_assemble`](./fe_assemble.md)). The `DIAG_ONE` policy is the same projection **plus** the
+   constant `I_E` on the essential block, an affine (not linear) map, so it distributes up to that
+   constant: `eliminate_essential_bc(K₁ + K₂, E, DIAG_ONE) = eliminate_essential_bc(K₁, E, DIAG_ONE)
+   + eliminate_essential_bc(K₂, E, DIAG_ZERO)` (the `I_E` is added once, not per-term). This is the
+   precise sense in which the elimination is *separable* from assembly: it factors through the
+   free-block projection regardless of the term decomposition.
+
+Laws that explicitly **do not** hold:
+
+- **Not the identity** (for non-empty `E`): elimination changes `K` whenever any essential row/col
+  has a nonzero entry. The empty-dof-set case is the only identity: `eliminate_essential_bc(K, ∅,
+  policy) = K`.
+- **No SPD / invertibility guarantee under `DIAG_ZERO`**: `DIAG_ZERO` leaves a zero block on `E`,
+  so the result is singular by construction (rank ≤ `|F|`). Only `DIAG_ONE` makes the essential
+  block non-singular. `eliminate_essential_bc` carries no SPD/invertibility postcondition; that is a
+  policy- and `K`-dependent property, not a law.
+- **Policy-commutativity does NOT hold**: `eliminate_essential_bc(·, E, DIAG_ONE)` and
+  `eliminate_essential_bc(·, E, DIAG_ZERO)` are distinct maps (law 3); there is no policy under
+  which they coincide for non-empty `E`.
+
+## Applicability
+
+`eliminate_essential_bc` is a **separable post-composition** on an assembled **square** operator: it
+composes AFTER [`fe_assemble`](./fe_assemble.md) on the assembly axis and BEFORE the linear/eigen
+solve. The standard electrostatic pipeline is
+`eliminate_essential_bc(fe_assemble(h1_space, [diffusion(ε)]), E, DIAG_ONE)` then `ksp_solve`
+(`palace/models/laplaceoperator.cpp:184-217`). It is defined only when:
+
+- `K` is **square** (`height == width`) — the L0 guards reject the rectangular case
+  (`palace/linalg/rap.cpp:42-43` set-time; `:145-148` assemble-time
+  `"Essential BC elimination is only available for square ParOperator!"`). The
+  `trial-test-coincidence` variant axis records this (the witnessed case is `square`).
+- `policy ∈ {DIAG_ONE, DIAG_ZERO}` — no other diagonal policy is admissible at this boundary
+  (`palace/linalg/rap.cpp:39-41`); MFEM's third policy `DIAG_KEEP` is explicitly excluded by the
+  `ParOperator` guard.
+
+It is **not** part of the `fe_assemble` fold (law 2 of `fe_assemble` explicitly excludes
+BC-elimination) and is independent of the assembly representation (PA/FA): the elimination acts on
+the assembled square matrix's true-dof structure, which both representations share. Its sibling
+post-composition is `eliminate_rhs` (lift inhomogeneous Dirichlet data into the RHS, L0
+`ParOperator::EliminateRHS` `palace/linalg/rap.cpp:60-83`) — a deferred rough-in operator (dispatch
+D3 this cycle); the two together realize the full Dirichlet-BC application on the operator+RHS pair.
+
+## Variant axes
+
+- **diagonal-policy**: `DIAG_ONE` (eliminated diagonal set to `1` — the solve-side convention,
+  makes the essential block trivially invertible) | `DIAG_ZERO` (eliminated diagonal left `0` — the
+  energy/mass-block convention, the linear free-block projection). The L0 selector is the
+  `diag_policy` member (`palace/linalg/rap.cpp:18` default `DIAG_ONE`; set by
+  `SetEssentialTrueDofs` `:46`; consumed at `:143`). Both policies share the row/col-zeroing
+  behavior; they differ only on the essential diagonal (law 3). The witnessed electrostatic case is
+  `DIAG_ONE` (`palace/models/laplaceoperator.cpp:217`); the eigen pipeline exercises both across its
+  `A`/`B` blocks (`palace/models/modeeigensolver.cpp:571-611`). MFEM's third policy `DIAG_KEEP` is
+  **out of axis** — the `ParOperator` boundary admits only the two above
+  (`palace/linalg/rap.cpp:39-41`).
+- **trial-test-coincidence**: `square` (trial = test space — the only admissible case;
+  `height == width` guard `palace/linalg/rap.cpp:42-43`) | `rectangular` (rejected —
+  `palace/linalg/rap.cpp:145-148` requires `dbc_tdof_list.Size() == 0` for non-square operators).
+  The signature above is the square case; the rectangular case is a hard reject at L0, not a
+  variant the L1 operator carries.
+
+## Status
+
+`firm`. **Clean-gate call: PROMOTE — clean.** The promotion is justified because the operator's
+definition, signature, and all four algebraic laws are stated entirely in **existing shared
+vocabulary** (operator block-decomposition on the free/essential dof partition; the free-block
+projection `K ↦ P_F K P_F`; operator addition) treating `K` as an **opaque assembled square
+operator** and the diagonal policy as a two-valued variant axis. The clean-gate test from the
+dispatch scope is met:
+
+> Does the `EliminateBC` diagonal-policy interact with the assembled operator in a way that resists
+> clean post-composition?
+
+**No.** The elimination is defined purely on `(K, dofs, policy)` and does not inspect how `K` was
+assembled; it factors through the free-block projection regardless of the term decomposition (law 4).
+The diagonal policy is a per-essential-diagonal choice (law 3) — it does not couple to the
+free-block physics and does not require cracking open `K`. Defining `eliminate_essential_bc`
+therefore does NOT require formalizing `fe_assemble`'s internals; the two compose as
+post-composition.
+
+This is the **firm-on-positive-structure** situation (the `apply_linop` / `fe_assemble` precedent):
+the four laws are syntactic identities on the positive `EliminateBC` zero-rows-cols-then-set-diagonal
+operation (`palace/linalg/rap.cpp:143`) + the recorded `(dofs, policy)`
+(`palace/linalg/rap.cpp:36-47`). No dedicated unit test exercises essential-BC elimination at this
+entry point (codemap search of `test/unit/**` for `EliminateBC` / `SetEssentialTrueDofs` returns no
+hits), but the missing test does not gate syntactic-identity laws on fully-specified positive source
+(the `eliminate`-as-block-projection structure is read, not constructed) — exactly the
+firm-on-positive-structure escape codified for `apply_linop` / `fe_assemble` /
+`bilinear-form`-cohort entries.
+
+## L1 vs L0 distinction
+
+- **L0**: a deferred-config-then-apply two-step on a mutable `ParOperator` wrapper.
+  `K_l->SetEssentialTrueDofs(dbc_tdof_lists[l], DIAG_ONE)` (`palace/models/laplaceoperator.cpp:217`)
+  records the dof-set + policy on the wrapper (`palace/linalg/rap.cpp:45-46`, mutating
+  `dbc_tdof_list` and `diag_policy`); later, at `ParallelAssemble` time,
+  `RAP->EliminateBC(dbc_tdof_list, diag_policy)` (`palace/linalg/rap.cpp:143`) mutates the assembled
+  `HypreParMatrix` in place (zero rows/cols + set diagonal). State is threaded through the mutable
+  `ParOperator` and the mutable assembled matrix.
+- **L1**: a pure post-composition. `K' = eliminate_essential_bc(K, dofs, policy)`. No deferred
+  config, no wrapper state, no in-place matrix mutation. The eliminated operator is the value
+  `P_F K P_F (+ I_E for DIAG_ONE)`. The deferred-config split, the wrapper mutation, the assemble-
+  time staging, and the square-operator guards are L1>L0 lowering concerns.
+
+## Evidence
+
+- `palace/linalg/rap.cpp:36-47` — `ParOperator::SetEssentialTrueDofs(tdof_list, policy)`: records
+  the essential-true-dof list (`dbc_tdof_list.MakeRef(tdof_list)`, `:45`) and the diagonal policy
+  (`diag_policy = policy`, `:46`); guards `policy ∈ {DIAG_ONE, DIAG_ZERO}` (`:39-41`) and squareness
+  (`height == width`, `:42-43`). The deferred-config half of the L0 operation.
+- `palace/linalg/rap.cpp:141-143` — `RAP->EliminateBC(dbc_tdof_list, diag_policy)`: applies the
+  elimination on the assembled square `HypreParMatrix` (zero rows/cols + set diagonal per policy) —
+  the apply half. Guarded by `&trial_fespace == &test_fespace` (square-only).
+- `palace/linalg/rap.cpp:145-148` — the rectangular-reject branch
+  (`MFEM_VERIFY(dbc_tdof_list.Size() == 0, "Essential BC elimination is only available for square
+  ParOperator!")`) — the `trial-test-coincidence` variant-axis L0 anchor.
+- `palace/linalg/rap.cpp:18` — `diag_policy(DiagonalPolicy::DIAG_ONE)` ctor default: the
+  diagonal-policy variant-axis default value.
+- `palace/linalg/rap.hpp:84` — `void SetEssentialTrueDofs(const mfem::Array<int> &tdof_list,
+  DiagonalPolicy policy)` declaration ("Set essential boundary condition true dofs for square
+  operators", `:82-84`).
+- `palace/models/laplaceoperator.cpp:216-217` — the electrostatic witness consumer:
+  `auto K_l = std::make_unique<ParOperator>(std::move(k_vec[l]), h1_fespace_l)` (`:216`) +
+  `K_l->SetEssentialTrueDofs(dbc_tdof_lists[l], Operator::DiagonalPolicy::DIAG_ONE)` (`:217`) — the
+  separable `eliminate_essential_bc(K, E, DIAG_ONE)` post-comp on each multigrid-level stiffness
+  operator. (NOTE: the codemap-supplied scope anchor `:215-217` is codemap-drifted; the on-disk
+  `SetEssentialTrueDofs` call is at `:217`, construction at `:216`, verified via citecheck.)
+- `palace/models/laplaceoperator.cpp:184-219` — `LaplaceOperator::GetStiffnessMatrix`: the full
+  witness — `fe_assemble` the diffusion operator, per-level `ParOperator` wrap, essential-BC
+  elimination. The `eliminate_essential_bc ∘ fe_assemble` pipeline.
+- `palace/models/modeeigensolver.cpp:571,574,608,611` — the eigen-pipeline consumers:
+  `Ar->EliminateBC` / `Ai->EliminateBC` (real/imag stiffness blocks) + `Br->EliminateBC` /
+  `Bi->EliminateBC` (real/imag mass blocks) — additional witnesses exercising both diagonal
+  policies across the generalized-EVP `A`/`B` blocks.
+- `book/src/L1/fe_assemble.md` — the sibling FIRM operator (cycle-054); §"Algebraic laws" law 5
+  explicitly names BC-elimination (`eliminate_essential_bc`) as a separable post-composition NOT
+  part of the assembly fold — the upstream framing this entry realizes.
+
+## Downward to L0
+
+The lowering is folded into the
+[`fe-operator-assemble-mutation-rotation`](../L1-L0/fe-operator-assemble-mutation-rotation.md)
+L1>L0 theme (currently `rough-in` thread-opener), which narrates the FE-assembly sub-spine's
+build-up-then-assemble protocol and the separable BC-elimination post-compositions. With
+`eliminate_essential_bc` now firm, the theme's treatment of the elimination step should be
+re-anchored to this firm operator (a lifter pass — see *Open questions*): the theme narrates how
+this L1 pure post-composition lowers into Palace's deferred-config-then-apply two-step (record
+`(dofs, policy)` on the `ParOperator` wrapper via `SetEssentialTrueDofs`, then mutate the assembled
+`HypreParMatrix` in place via `EliminateBC` at parallel-assemble time), plus the square-operator
+guards and the rectangular reject.
+```
+
+```edit:book/src/L1/index.md
+- `eliminate_essential_bc` *(rough-in; no anchor yet)* — pin essential (Dirichlet) dofs into the assembled operator (L0: `ParOperator::SetEssentialTrueDofs`, `palace/models/laplaceoperator.cpp:215-217`) (proposed-by: abstractor:2026-06-01T235200Z-abstractor-fe-assembly-thread-opener).
+```
+```edit:book/src/L1/index.md
+- **`eliminate_essential_bc` is now FIRM** (cycle-055) — see [`eliminate_essential_bc`](./eliminate_essential_bc.md). Pin essential (Dirichlet) true dofs into the assembled square operator: zero the rows/cols at the essential-dof set, set the eliminated diagonal per the **diagonal-policy** variant axis (`DIAG_ONE`/`DIAG_ZERO`); clean-gate PROMOTE (a separable post-composition that composes AFTER [`fe_assemble`](./fe_assemble.md), NOT part of the assembly fold). Laws: idempotence, free-block preservation, policy-determines-only-essential-diagonal, distribution-over-assembly (the free-block projection `K ↦ P_F K P_F`). L0: `ParOperator::SetEssentialTrueDofs`/`mfem::HypreParMatrix::EliminateBC` — `palace/linalg/rap.cpp:36-47,141-143`, witness `palace/models/laplaceoperator.cpp:216-217`.
+```
+
+```edit:book/src/L1/index.md
+| [`floquet-correction`](./floquet-correction.md) | `(F: FloquetCorrector[N_nd, N_rt], x: Field[N_nd, Complex]) → Field[N_rt, Complex]` (i.e. `F.M_RT⁻¹ · F.Cross · x`) | `ksp_solve` (direct, inner RT mass solve), `apply_linop` (direct, the `Cross · x` cross-product step); `jacobi-smoother` (inner CG preconditioner, closure-bound); `axpy` (the AddMult-as-axpy composition) | `firm` (constructed-operator gate; sixth at L1; third firm instance of nested-constructed-operator-gate; element-type scope-out: `<ComplexVector>` only; L0: `palace/linalg/floquetcorrection.cpp:20-86,88` + 4 AddMult consumer sites `palace/drivers/drivensolver.cpp:212,336,468` + `palace/drivers/eigensolver.cpp:454`; harvested cycle-036; firm-on-positive-structure; AddMult-as-axpy buffer-economy fusion with inner-ksp aliasing applicability) |
+| [`eliminate_essential_bc`](./eliminate_essential_bc.md) | `(K: LinearOperator[N, N], dofs: DofSet[N], policy: DiagPolicy) → LinearOperator[N, N]` (i.e. `P_F K P_F` for `DIAG_ZERO`; `+ I_E` for `DIAG_ONE`) | (leaf; separable post-composition on the assembled square operator; composes AFTER [`fe_assemble`](./fe_assemble.md), NOT a dependency, NOT part of the assembly fold) | `firm` (FE-assembly sub-spine separable post-composition; diagonal-policy variant axis `DIAG_ONE`/`DIAG_ZERO`; L0: `palace/linalg/rap.cpp:36-47,141-143` + witness `palace/models/laplaceoperator.cpp:216-217` + eigen-pipeline consumers `palace/models/modeeigensolver.cpp:571,574,608,611`; harvested cycle-055; firm-on-positive-structure, no-dedicated-test caveat non-gating; idempotence + free-block-preservation + distribution-over-assembly laws) |
+```
+
+```edit:book/src/SUMMARY.md
+- [fe_assemble](./L1/fe_assemble.md)
+- [eliminate_essential_bc](./L1/eliminate_essential_bc.md)
+```
+
+## Operator content
+
+(Full firm chapter body authored inside the `new:book/src/L1/eliminate_essential_bc.md` fenced block
+above.) Slug: `eliminate_essential_bc`. One-line: pin essential (Dirichlet) true dofs into an
+assembled square operator — zero rows/cols at the dof-set, set the eliminated diagonal per the
+diagonal policy; a separable post-composition on `fe_assemble`. Signature
+`(K: LinearOperator[N, N], dofs: DofSet[N], policy: DiagPolicy) -> LinearOperator[N, N]`. Status:
+`firm`. Variant axes: diagonal-policy (`DIAG_ONE`/`DIAG_ZERO`), trial-test-coincidence
+(`square`-only). Laws: idempotence; free-block preservation; policy-determines-only-essential-
+diagonal; distribution-over-assembly (the free-block projection `K ↦ P_F K P_F`).
+
+## Supporting evidence
+
+All anchors verified on-disk via `tools/citecheck/citecheck.py --anchor` (the citation source of
+truth; codemap used for localization only):
+
+- `palace/linalg/rap.cpp:18` (`DIAG_ONE` ctor default), `:36-47` (`SetEssentialTrueDofs` def),
+  `:141-143` (`EliminateBC` apply), `:84` (hpp decl) — all `[ok]`.
+- `palace/models/laplaceoperator.cpp:216-217` (`SetEssentialTrueDofs` witness call), `:184-219`
+  (`GetStiffnessMatrix`) — `[ok]`. **The codemap `read_range` showed `SetEssentialTrueDofs` at line
+  215; citecheck (on-disk truth) places it at 217** — the codemap +1/-2 brace-boundary drift the
+  methodology warns about; the corrected anchor `216-217` is used throughout.
+- `palace/models/modeeigensolver.cpp:571` (`EliminateBC` eigen consumer) — `[ok]`; `:574,608,611`
+  confirmed via `get_call_sites` (the four `Ar`/`Ai`/`Br`/`Bi` `EliminateBC` sites).
+- No `test/unit/**` hit for `EliminateBC` / `SetEssentialTrueDofs` (codemap `search_text`) — the
+  no-dedicated-test condition; non-gating per firm-on-positive-structure.
+
+## Open questions / caveats
+
+1. **Sibling-entry citation drift (separate scope — flagged, NOT corrected here).**
+   `book/src/L1/fe_assemble.md` cites `palace/models/laplaceoperator.cpp:215-217` for
+   `SetEssentialTrueDofs` in two places (§"Algebraic laws" law 5, line ~147; §"Evidence"
+   `GetStiffnessMatrix` bullet, line ~257). The on-disk truth is `216-217` (construction `:216`,
+   `SetEssentialTrueDofs` call `:217`). This is a pre-existing drift in a different chapter (the
+   abstractor's scope anchor propagated into `fe_assemble`); per the dispatch-phase write-authority
+   partition I do NOT edit it here — surfaced as a change for the integrator / a follow-on
+   citation-fix dispatch to propose. (My own entry uses the corrected `216-217` throughout.) Same
+   correction applies to the rough-in bullet I am replacing (it carried `:215-217`).
+
+2. **L1>L0 lowering re-anchor (lifter follow-on).** The
+   [`fe-operator-assemble-mutation-rotation`](../L1-L0/fe-operator-assemble-mutation-rotation.md)
+   L1>L0 theme is a `rough-in` thread-opener. With `fe_assemble` (cycle-054) and now
+   `eliminate_essential_bc` (cycle-055) both firm, the theme's BC-elimination step should be
+   re-anchored to this firm operator (the deferred-config-then-apply two-step lowering). A lifter
+   pass — out of harvester scope.
+
+3. **Sibling `eliminate_rhs` (dispatch D3 this cycle).** `eliminate_essential_bc` and `eliminate_rhs`
+   are the two halves of full Dirichlet-BC application (operator-side + RHS-side). My entry
+   cross-references `eliminate_rhs` as a sibling rough-in; if D3 lands it firm this cycle the
+   plain-text reference in my §Applicability can be upgraded to a live link by the integrator
+   (`upgrade-plain-text-ref-to-live-link-when-target-on-disk`). I left it plain-text per the
+   forward-reference convention (target not on-disk at my dispatch time).
+
+4. **Cohort-header count DEFERRED to D7.** The `book/src/L1/index.md:70` "Rough-in (FE-assembly
+   sub-spine — THREAD-OPENER cycle-053)" cohort header carries a running enumeration of the
+   sub-spine cohort's firm/rough-in split; this cycle promotes `eliminate_essential_bc` (and D3
+   promotes `eliminate_rhs`). Per the index-registration partition I registered my own dep-map row
+   + my own firmness-split bullet (the `**eliminate_essential_bc is now FIRM**` bullet replacing the
+   old rough-in bullet at `:73`), and DEFER the consolidated cohort-header tally to D7 (the named
+   count-owner this cycle). I did NOT touch the `:70` header.
+
+5. **`DofSet[N]` type.** I introduced `DofSet[N]` (an index subset of `0..N`) as the dof-set type in
+   the signature. This is a thin index-set type (the L0 `mfem::Array<int> dbc_tdof_list`); it is not
+   yet a named concept page. If it recurs (it will — `eliminate_rhs` and any future BC-application
+   operator take the same essential-dof set), it may warrant a `concepts/dof-set.md` page. Flagged,
+   not authored (concept pages are layer-intro-author scope).

@@ -11,6 +11,7 @@
 - [chebyshev](./L4/chebyshev.md)
 - [ksp_solve](./L4/ksp_solve.md)
 - [eigsolve](./L4/eigsolve.md)
+- [solve_family](./L4/solve_family.md)
 
 # L4 > L3 — Lowering
 - [Overview](./L4-L3/index.md)
@@ -20,6 +21,7 @@
 - [iterate-while-dissolution](./L4-L3/iterate-while-dissolution.md)
 - [iterate-while-with-prev-dissolution](./L4-L3/iterate-while-with-prev-dissolution.md)
 - [ksp-solve-driver-dissolution](./L4-L3/ksp-solve-driver-dissolution.md)
+- [solve-family-map-dissolution](./L4-L3/solve-family-map-dissolution.md)
 
 # L3 — Global Tensor-Field Operations
 - [Overview](./L3/index.md)
@@ -106,6 +108,7 @@
 - [matrix-weighted-norm](./L1/matrix-weighted-norm.md)
 - [bilinear-form](./L1/bilinear-form.md)
 - [fe_assemble](./L1/fe_assemble.md)
+- [eliminate_essential_bc](./L1/eliminate_essential_bc.md)
 - [orthogonalize](./L1/orthogonalize.md)
 - [chebyshev-smoother](./L1/chebyshev-smoother.md)
 - [divfree-projector](./L1/divfree-projector.md)
@@ -122,6 +125,7 @@
 - [reciprocal](./L1/reciprocal.md)
 - [elementwise_product](./L1/elementwise_product.md)
 - [floquet-correction](./L1/floquet-correction.md)
+- [eliminate_rhs](./L1/eliminate_rhs.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -135,6 +139,7 @@
 - [bicgstab-iteration](./L1-L0/bicgstab-iteration.md)
 - [minres-iteration](./L1-L0/minres-iteration.md)
 - [triangular-solve-obstruction](./L1-L0/triangular-solve-obstruction.md)
+- [fe-assemble-libceed-boundary-obstruction](./L1-L0/fe-assemble-libceed-boundary-obstruction.md)
 - [chebyshev-smoother-mutation-rotation](./L1-L0/chebyshev-smoother-mutation-rotation.md)
 - [jacobi-smoother-mutation-rotation](./L1-L0/jacobi-smoother-mutation-rotation.md)
 - [reciprocal-elementwise-product-mutation-rotation](./L1-L0/reciprocal-elementwise-product-mutation-rotation.md)

@@ -2,7 +2,7 @@
 layer: L1-L0
 theme: fe-operator-assemble-mutation-rotation
 status: rough-in
-lowers: L1/fe_assemble (speculative rough-in)
+lowers: L1/fe_assemble (firm — landed cycle-054)
 l0_anchor: palace/fem/bilinearform.{hpp,cpp}, palace/fem/libceed/operator.cpp, palace/models/laplaceoperator.cpp, palace/linalg/rap.cpp
 justification_kind: structural
 ---
@@ -19,8 +19,9 @@ this theme opens it, a cohort of follow-on harvester/abstractor passes fills it.
 ## Status
 
 `rough-in` (thread-opener). The structural decomposition is recognized and L0-anchored, but the
-theme is **not promoted** because (a) the speculative L1 operators it lowers (`fe_assemble`,
-`eliminate_essential_bc`, `eliminate_rhs`) are themselves rough-in placeholders awaiting harvester
+theme is **not promoted** because (a) its LHS operator [`fe_assemble`](../L1/fe_assemble.md) is now
+**firm** (landed cycle-054), but the remaining speculative L1 operators it lowers
+(`eliminate_essential_bc`, `eliminate_rhs`) are still rough-in placeholders awaiting harvester
 promotion, (b) the libCEED matrix-materialization step crosses an **upstream library boundary**
 (see §"libCEED boundary" — logged as OQ, not yet classified obstruction vs. transitive-firm), and
 (c) the integrator-term vocabulary (the set of weak-form terms — diffusion / mass / curl-curl /
@@ -31,10 +32,11 @@ solver pipelines.
 
 ## L1 form (LHS)
 
-The pure-functional FE-assembly form consumes a finite-element space and an **immutable list of
-weak-form terms** (each term a `(coefficient, differential-operator)` pair naming a bilinear
-weak-form contribution `a_i(u, v)`), and produces a fresh global linear operator. Nothing is
-mutated; there is no container built up in place, no sub-operator accumulator, no finalize step.
+The LHS is the now-firm L1 operator [`fe_assemble`](../L1/fe_assemble.md) (landed cycle-054). It
+consumes a finite-element space and an **immutable list of weak-form terms** (each term a
+`(coefficient, differential-operator)` pair naming a bilinear weak-form contribution `a_i(u, v)`),
+and produces a fresh global linear operator. Nothing is mutated; there is no container built up in
+place, no sub-operator accumulator, no finalize step.
 
     K = fe_assemble(space, [term_0, term_1, ...])
         -- K :: LinearOperator[N, N]   (N = space.GetTrueVSize())
@@ -56,8 +58,9 @@ The BC-elimination is a **separable post-composition**, not part of the assembly
         -- lift the inhomogeneous Dirichlet data into the RHS:
         --   RHS := -K·(BC-extended x), then restore the pinned entries
 
-These three pieces — `fe_assemble`, `eliminate_essential_bc`, `eliminate_rhs` — are the speculative
-L1 vocabulary this thread proposes. They are **rough-in placeholders**; signatures are best-guess.
+Of these three pieces, [`fe_assemble`](../L1/fe_assemble.md) is now **firm** (landed cycle-054; its
+signature is authoritative there). `eliminate_essential_bc` and `eliminate_rhs` remain **rough-in
+placeholders** this thread proposes; their signatures are best-guess pending harvester promotion.
 
 ## L0 form (RHS)
 
@@ -81,8 +84,8 @@ electrostatic witness (`palace/models/laplaceoperator.cpp:184-223`):
    (`palace/fem/bilinearform.cpp:28-107`) is the **integrator-fold**: over each mesh geometry, for
    each integrator in `domain_integs` (and `boundary_integs` at dimension−1), call
    `integ->Assemble(...)` to build a libCEED sub-operator and `op->AddSubOperator(sub_op)` to
-   accumulate it into the composite operator (`palace/fem/bilinearform.cpp:73-75` domain branch;
-   `:93-95` boundary branch), then `op->Finalize()` (`:104`). `FullAssemble`
+   accumulate it into the composite operator (`palace/fem/bilinearform.cpp:77` domain branch;
+   `:97` boundary branch), then `op->Finalize()` (`:104`). `FullAssemble`
    (`palace/fem/bilinearform.cpp:109-113`) forwards to `ceed::CeedOperatorFullAssemble`
    (`palace/fem/libceed/operator.cpp:455-490`), which assembles each sub-operator in COO format
    (`CeedOperatorAssembleCOO`) and converts to CSR — the **libCEED boundary**.
@@ -131,7 +134,7 @@ it is logged as OQ — see §"libCEED boundary".)
 (`palace/fem/libceed/operator.cpp:455-490`), which calls libCEED's `CeedOperatorAssembleCOO` to get
 the operator in COO format and converts to CSR. The **element-local quadrature kernels** (the
 per-integrator `integ->Assemble(...)` that builds each `CeedOperator` sub-operator,
-`palace/fem/bilinearform.cpp:73-75`) bottom out in libCEED basis-apply + restriction operations.
+`palace/fem/bilinearform.cpp:75-76`) bottom out in libCEED basis-apply + restriction operations.
 This is **upstream library behavior** (libCEED), cited at Palace's call boundary but not itself
 Palace source. **Logged as OQ** (see §Open questions): whether the FE-assembly thread treats the
 element-local quadrature kernel as (a) a transitive-firm leaf cited at the Palace boundary,
@@ -142,7 +145,7 @@ a finding for the batch-16 meta-phase, not resolved here.
 
 ## Speculative L1 operators (need harvester promotion)
 
-- `fe_assemble` — assemble a global FE operator from a space + immutable weak-form term list.
+- ~~`fe_assemble`~~ — **PROMOTED firm cycle-054**, see [`L1/fe_assemble`](../L1/fe_assemble.md).
 - `eliminate_essential_bc` — pin essential (Dirichlet) dofs into the assembled operator.
 - `eliminate_rhs` — lift inhomogeneous Dirichlet data into the RHS vector.
 - `weak_form_term` (type) — the `(coefficient, differential-operator)` weak-form contribution; the
@@ -159,7 +162,7 @@ a finding for the batch-16 meta-phase, not resolved here.
 - `palace/fem/bilinearform.hpp:25-91` — `class BilinearForm`: the integrator-list container + the
   templated `AddDomainIntegrator` / `AddBoundaryIntegrator` append surface (`:53-63`).
 - `palace/fem/bilinearform.cpp:28-107` — `PartialAssemble`: the integrator-fold core
-  (`AddSubOperator` accumulation at `:73-75` domain / `:93-95` boundary; `Finalize` at `:104`).
+  (`AddSubOperator` accumulation at `:77` domain / `:97` boundary; `Finalize` at `:104`).
 - `palace/fem/bilinearform.cpp:141-151` — `Assemble(bool)`: the PA/FA policy dispatch.
 - `palace/fem/integrator.hpp:39-130` — `BilinearFormIntegrator` interface + concrete weak-form
   terms (`MassIntegrator`, `DiffusionIntegrator`, `CurlCurlIntegrator`, `DivDivIntegrator`, ...).
