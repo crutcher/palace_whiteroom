@@ -146,6 +146,7 @@
 - [assemble-diagonal-mutation-rotation](./L1-L0/assemble-diagonal-mutation-rotation.md)
 - [matrix-weighted-norm-mutation-rotation](./L1-L0/matrix-weighted-norm-mutation-rotation.md)
 - [bilinear-form-mutation-rotation](./L1-L0/bilinear-form-mutation-rotation.md)
+- [fe-operator-assemble-mutation-rotation](./L1-L0/fe-operator-assemble-mutation-rotation.md)
 - [normalize-mutation-rotation](./L1-L0/normalize-mutation-rotation.md)
 - [back-solve-mutation-rotation](./L1-L0/back-solve-mutation-rotation.md)
 - [ls-update-column-mutation-rotation](./L1-L0/ls-update-column-mutation-rotation.md)

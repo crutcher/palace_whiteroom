@@ -199,7 +199,24 @@ Laws that explicitly **do not** hold:
    Hermitian hook gives `G = XᴴX`; the `B`-weighted hook (`inner_product_M`) gives the weighted
    Gram `G = XᴴBX` (the mass-matrix / SPD-weighted overlap used by Rayleigh-Ritz / Galerkin
    projection). NLEPS uses the canonical hook (`linalg::Dot`, `palace/linalg/nleps.cpp:529`).
-   Orthogonal to the others; conjugation lives entirely in the hook.
+   Orthogonal to the others; conjugation lives entirely in the hook. **The `B`-weighted member
+   has two concrete Palace witnesses** — the electrostatic capacitance and magnetostatic
+   inductance energy reductions, each an all-pairs weighted Gram `G[i,j] = Xⱼᴴ K Xᵢ` over a
+   small per-terminal field-solution set `X` with `K` an **assembled FE mass matrix** (the
+   SPD instance of the `B`-weight): the capacitance build
+   `C(i,j) = linalg::Dot(V[j], M_elec·V[i]) = V[j]ᴴ M_elec V[i]`
+   (`palace/drivers/electrostaticsolver.cpp:111-137`, `M_elec` = ε-weighted
+   `VectorFEMassIntegrator`, `palace/models/domainpostoperator.cpp:30-41`), and the inductance
+   build `M(i,j) = A[j]ᴴ M_mag A[i]` (`palace/drivers/magnetostaticsolver.cpp:110-152`,
+   `M_mag` = μ⁻¹-weighted mass integrator, `palace/models/domainpostoperator.cpp:43-66`). Both
+   are the **single-set `gram dot X`** form (axis 2) and **exploit Hermitian symmetry in the
+   lowering** (compute the upper triangle `j = i+1..`, copy the lower —
+   `electrostaticsolver.cpp:131-137`, `magnetostaticsolver.cpp:144-150`; the transparent
+   perf-trick non-axis below, here actually taken, unlike NLEPS's full-`k²` build at
+   `nleps.cpp:525-531`). The energy-formulation post-Gram cell scaling (`/Vᵢ²` with `Vᵢ≡1`;
+   `/(IᵢIⱼ)`) and the `Cm`/`Mm` capacitance/inductance sign-remix + final in-place invert are
+   **downstream consumers** of this weighted Gram, not part of the fold (the consumer-vs-
+   constituent split, as for `deflate`).
 
 2. **Single-set vs cross-Gram** — `gram dot X` (the `k×k` `XᴴX`) vs `gram2 dot X Y` (the `m×k`
    `YᴴX`). NLEPS uses only the single-set form (the deflation Gram is `XᴴX`,
@@ -275,7 +292,10 @@ does not gate identity-on-`inner_product` laws.
 > real-member value test `test/unit/test-vector.cpp:206-207` and the SPD-realness assertion
 > `palace/linalg/operator.cpp:615-616`), and (b) the single build site being read directly. The
 > single-algorithm concentration is the same posture as `inner_product`'s `tdot`-member coverage
-> caveat — recorded at the operator's coverage granularity, not a firmness gate. **Promotion of
+> caveat — recorded at the operator's coverage granularity, not a firmness gate. The caveat scopes
+> the **unweighted `XᴴX`** build (one site, `nleps.cpp:524-531`); the **`B`-weighted `XᴴKX`**
+> member by contrast now has **two** concrete witnesses (the capacitance/inductance energy
+> reductions, variant-axis 1 above), so the weighted axis is no longer witness-less. **Promotion of
 > the caveat to closed** would follow either a second Palace algorithm that builds an explicit
 > Gram, or a dedicated deflation unit test materializing — neither blocks the firm status of the
 > identity laws.
@@ -326,6 +346,21 @@ All ranges `read_range`-verified this invocation and bounds-checked via
   `Ar.fullPivHouseholderQr().solve(...)`: a *non-instance* — small-dense solve on a reduced
   operator `Ar`, NOT an explicit `XᴴX` Gram build (the coverage caveat's "no second Gram-build
   site" evidence). **Self-verified.**
+- `palace/drivers/electrostaticsolver.cpp:111-137` — **first `B`-weighted `gram` witness
+  (capacitance).** The double-loop `C(i,j) = linalg::Dot(V[j], D_gf)` with `D_gf = M_elec·V[i]`
+  pinned once per outer `i` (`:118`), inner sweep `:124-130`, symmetry copy `:131-137`. Cell
+  `C(i,j) = V[j]ᴴ M_elec V[i] = inner_product_M(V[j], M_elec, V[i])` — the single-set weighted
+  Gram. Palace's own comment names the shape: `// (Vⱼᵀ K Vᵢ)` (`:122`). Self-verified via
+  `read_range`.
+- `palace/drivers/magnetostaticsolver.cpp:110-152` — **second `B`-weighted `gram` witness
+  (inductance).** Structurally identical: `M(i,j) = linalg::Dot(A[j], H_gf)/(Iᵢ Iⱼ)` with
+  `H_gf = M_mag·A[i]` (`:129`), inner sweep `:135-141`, symmetry copy `:144-150`. Cell
+  `M(i,j) = A[j]ᴴ M_mag A[i]` (pre-`/(IᵢIⱼ)`) `= inner_product_M(A[j], M_mag, A[i])`. Palace
+  comment `// (Aⱼᵀ K Aᵢ)` (`:134`). Self-verified.
+- `palace/models/domainpostoperator.cpp:30-66` — the weight matrices' construction: `M_elec`
+  = `BilinearForm + VectorFEMassIntegrator(ε)` `PartialAssemble()` (`:38-39`); `M_mag` =
+  μ⁻¹-weighted mass integrator `PartialAssemble()` (`:53-64`). Establishes `K` is an assembled
+  SPD FE mass matrix — the concrete `B`-weight. Self-verified.
 - Artifact cross-references (read this invocation): `book/src/L2/inner_product.md` (the firm
   scalar fold `gram` lifts; the pinned arg-1-conjugated convention §"Conjugation convention
   (pinned)" `:46-102`; the Algebraic-laws §`:184-265`; the sibling-fold do-NOT-merge boundary

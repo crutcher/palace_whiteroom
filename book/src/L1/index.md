@@ -67,6 +67,12 @@ Shape contracts are declared at boundaries (per the bunsen `contracts::unpack_sh
 - `lanczos_step`, `three_term_recurrence_update`, `givens_apply_with_residual_min` — from [`minres-iteration`](../L1-L0/minres-iteration.md) theme.
 - `bicgstab_step`, `omega_update`, `stabilisation_update` — from [`bicgstab-iteration`](../L1-L0/bicgstab-iteration.md) theme.
 
+**Rough-in (FE-assembly sub-spine — THREAD-OPENER cycle-053)** — speculative L1 operators opening the finite-element assembly surface (the MFEM-equivalent assembly sub-spine, in scope per CLAUDE.md mesh/FE). Proposed by the [`fe-operator-assemble-mutation-rotation`](../L1-L0/fe-operator-assemble-mutation-rotation.md) L1>L0 thread-opener; await harvester promotion + integrator-term-cohort enumeration:
+
+- `fe_assemble` *(rough-in; no anchor yet)* — assemble a global FE operator from a space + immutable weak-form term list; the integrator-fold `K = Σ_i A(term_i)` (proposed-by: abstractor:2026-06-01T235200Z-abstractor-fe-assembly-thread-opener). **Slug-collision note**: NOT the existing [`bilinear-form`](./bilinear-form.md) (which is the BLAS-2 reduction `xᴴ M y`); `fe_assemble` is the C++ `BilinearForm`-*class* assembler.
+- `eliminate_essential_bc` *(rough-in; no anchor yet)* — pin essential (Dirichlet) dofs into the assembled operator (L0: `ParOperator::SetEssentialTrueDofs`, `palace/models/laplaceoperator.cpp:215-217`) (proposed-by: abstractor:2026-06-01T235200Z-abstractor-fe-assembly-thread-opener).
+- `eliminate_rhs` *(rough-in; no anchor yet)* — lift inhomogeneous Dirichlet data into the RHS (L0: `ParOperator::EliminateRHS`, `palace/linalg/rap.cpp:56-82`) (proposed-by: abstractor:2026-06-01T235200Z-abstractor-fe-assembly-thread-opener).
+
 **Queued (open questions)** — small primitives that bottom-out remaining L0 patterns referenced by the firm cohort:
 
 - (empty as of cycle-010) — the cycle-008 OQ `matrix-weighted-norm-and-bilinear-form-l1-rough-ins` is now `partially-answered`: both halves landed in cycle-010 wave-1 as rough-ins ([`matrix-weighted-norm`](./matrix-weighted-norm.md) and [`bilinear-form`](./bilinear-form.md)). The `SpectralNorm` (power-iteration) sibling and the L1>L0 lowering theme for both operators remain tracked under that OQ's residuals.
