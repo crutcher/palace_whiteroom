@@ -64,8 +64,10 @@ fe_assemble(space, terms) = foldr (\t acc -> A(space, t) + acc) zero terms
 
 Shape contract (bunsen-style, named axes):
 
-- `space` — `FiniteElementSpace[N]` — the trial/test finite-element space; `N = space.GetTrueVSize()`
-  is the global true-dof count (the operator's square dimension). Read-only.
+- `space` — `FiniteElementSpace[N]` — the trial/test finite-element space, constructed by
+  [`fe_space`](./fe_space.md) (the firm `(mesh, collection) → FiniteElementSpace[N]` construction);
+  `N = space.GetTrueVSize()` (`palace/fem/fespace.hpp:96`) is the global true-dof count (the
+  operator's square dimension) — the axis `fe_space` defines. Read-only.
 - `terms` — `[WeakFormTerm]` — an immutable, finite list of weak-form contributions. Each element is a firm
   [`weak_form_term`](./weak_form_term.md) — a `(coefficient, differential-operator)` pair (firm cycle-061).
   `fe_assemble` quantifies over the term list **opaquely**: the fold's structure and laws never crack open a

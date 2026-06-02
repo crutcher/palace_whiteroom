@@ -60,8 +60,10 @@ eliminate_rhs(K, x_bc, b, policy) =
 Shape contract (bunsen-style, named axes):
 
 - `K` — `LinearOperator[N, N]` — the assembled (square) global operator; `N` is the global true-dof
-  count. The **unconstrained** operator action is applied (`A->Mult`, the local matrix before
-  essential-row elimination — `reference/palace/palace/linalg/rap.cpp:69`). Read-only.
+  count `space.GetTrueVSize()` (`reference/palace/palace/fem/fespace.hpp:96`), the axis the
+  finite-element space [`fe_space`](./fe_space.md) constructs and defines (the same `N` the essential
+  `dbc_tdof_list` indexes). The **unconstrained** operator action is applied (`A->Mult`, the local
+  matrix before essential-row elimination — `reference/palace/palace/linalg/rap.cpp:69`). Read-only.
 - `x_bc` — `Tensor[N]` — the essential boundary data: a true-dof vector that is the prescribed
   Dirichlet value on essential dofs and arbitrary (masked out) on interior dofs. Only the essential
   entries are read (`SetSubVector(tx, dbc_tdof_list, x)` extracts them onto a zeroed true-dof

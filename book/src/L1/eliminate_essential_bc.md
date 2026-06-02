@@ -60,13 +60,14 @@ eliminate_essential_bc :: (K: LinearOperator[N, N], dofs: DofSet[N], policy: Dia
 Shape contract (bunsen-style, named axes):
 
 - `K` — `LinearOperator[N, N]` — an assembled **square** operator over the true-dof axis `N`
-  (`N = space.GetTrueVSize()`); the output of [`fe_assemble`](./fe_assemble.md). Read-only;
-  squareness is required (essential-BC elimination is defined only for `height == width` — the L0
-  guard `palace/linalg/rap.cpp:42-43`, and the rectangular-reject branch
-  `palace/linalg/rap.cpp:145-148`).
-- `dofs` — `DofSet[N]` — the essential (Dirichlet) true-dof index set, a subset of `0..N`. At L0 the
-  `mfem::Array<int> dbc_tdof_list` recorded by `SetEssentialTrueDofs`
-  (`palace/linalg/rap.cpp:45-46`).
+  (`N = space.GetTrueVSize()`, `palace/fem/fespace.hpp:96`); the output of
+  [`fe_assemble`](./fe_assemble.md). The axis `N` is defined by the finite-element space
+  [`fe_space`](./fe_space.md) constructs. Read-only; squareness is required (essential-BC elimination
+  is defined only for `height == width` — the L0 guard `palace/linalg/rap.cpp:42-43`, and the
+  rectangular-reject branch `palace/linalg/rap.cpp:145-148`).
+- `dofs` — `DofSet[N]` — the essential (Dirichlet) true-dof index set, a subset of `0..N` over the
+  true-dof axis [`fe_space`](./fe_space.md) defines. At L0 the `mfem::Array<int> dbc_tdof_list`
+  recorded by `SetEssentialTrueDofs` (`palace/linalg/rap.cpp:45-46`).
 - `policy` — `DiagPolicy` — `DIAG_ONE | DIAG_ZERO` (the diagonal-policy variant axis; see
   *Variant axes*). The only two admissible values (L0 guard `palace/linalg/rap.cpp:39-41`).
 - result — `LinearOperator[N, N]` — a fresh square operator equal to `K` with rows and columns at

@@ -24,7 +24,8 @@ vocabulary the FE-assembly sub-spine introduces, and the value [`fe_assemble`](.
 
 `weak_form_term` is the **per-term value** the [`fe_assemble`](./fe_assemble.md) fold quantifies over. It is NOT
 the assembled operator (that is `fe_assemble`'s result `K = Σ_i A(term_i)`), and it is NOT the per-term assembly
-**map** `A(space, ·)` (the element-local quadrature kernel + restriction, libCEED-owned — see *Dependencies*).
+**map** `A(space, ·)` (the element-local quadrature kernel + restriction over the finite-element space
+[`fe_space`](./fe_space.md) constructs, libCEED-owned — see *Dependencies*).
 The term is a **specification of WHICH contribution to assemble**, not the assembly itself: `fe_assemble`'s fold
 reads the term's `(Q, 𝒟)` identity to pick the per-term kernel, then `A` executes it. A `weak_form_term` carries
 the *identity* of a contribution; `A` carries its *realization*.
