@@ -60,3 +60,13 @@ Full def: memory `feedback_mdbook_subchapter_grouping_and_alpha_api`; priorities
 - `integrator-per-report`/`finalize`: new SUMMARY entries go INSIDE the right kind grouping; dep-map rows insert in ALPHA position (not append). `layer-intro-author`: authors/maintains group intros + alpha order. `meta-phase`: drives the one-time reorg pass (regroup existing flat SUMMARY + author group intros + alphabetize all dep-map tables) + codifies into role-specs (restart).
 - Active immediately via orchestrator per-dispatch prompts (cycle-067+) until role-spec-codified. The one-time reorg is heavy book/-structure work → its own dispatch wave, NOT bundled with a forward-frontier cycle.
 - Respects count-ownership/dual-registration (producer adds row in alpha position; count-owner owns tally).
+
+## ⟢⟢ USER DIRECTIVE 2026-06-02 (NEW meta-phase target) — book Methodology chapter: GOAL + FLOW
+
+Full def: memory `feedback_methodology_goal_flow_chapter`; priorities.md batch-21 banner.
+
+Maintain a reader-facing **Methodology chapter** in the book (likely `book/src/methodology/`, parallel to `meta-reviews/`) with a **GOAL** section (integrated view of the book's goals) + a **FLOW** section (how they are met).
+
+- **NON-AUTHORITATIVE** — a synthesized mirror of the emergent goal, NOT a directive source. Agents read CLAUDE.md/redirect/memory/priorities for directives, never this. Synthesized FROM those + the state; if it contradicts a source, the source wins + the chapter is corrected (drift signal). Explicit non-authoritative header required.
+- **Purpose:** self-feedback path (re-synthesis forces re-examination) + user review window (track the assistant's evolving goal-view).
+- **Owner: meta-phase** — refreshes each batch; build-checks + SUMMARY-wires when touching book/; codify into `.claude/agents/meta-phase.md` (restart). v1 may be seeded early in batch-21 (layer-intro-author, structural-reorg wave) for an earlier review window; meta-phase maintains thereafter. Distinct from the historical per-batch meta-phase REPORT — this is a LIVING always-current synthesis.
