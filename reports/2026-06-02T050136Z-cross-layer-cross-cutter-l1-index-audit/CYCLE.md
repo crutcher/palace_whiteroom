@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T050136Z
 scope: L1↔L1-L0 cross-cut — L1 + L1-L0 index-table status-cell staleness audit
 status: pending
 integrated_at: 2026-06-02T053505Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f270ba5c4cdec17a20138d66470c423c5c38e001
 integration_notes: |
   cycle-058 D4. OBSERVATION-ONLY (no book mutation; no proposed-changes block). Applied by integrator-per-report
   (staging row 4, last), housekept + committed by integrator-finalize. L1 + L1-L0 index-table status-cell staleness

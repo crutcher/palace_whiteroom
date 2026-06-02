@@ -11,7 +11,7 @@ inputs:
   - L0 fold witness (transient fixed-schedule march): palace/drivers/transientsolver.cpp:33,35,36,77,89,93,98,99 + palace/models/timeoperator.cpp:312,410 (all citecheck --anchor verified on-disk this dispatch; codemap read_range was -2 drift on timeoperator)
   - L0 fold witness (driven-PROM SweepAdaptive state-generated greedy): palace/drivers/drivensolver.cpp:73,231,384,389
 integrated_at: 2026-06-02T053505Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f270ba5c4cdec17a20138d66470c423c5c38e001
 integration_notes: |
   cycle-058 D2. Applied clean by integrator-per-report (staging row 2), housekept + committed by integrator-finalize.
   NEW book/src/L4-L3/fold-solve-time-step-dissolution.md firm L4>L3 theme (LHS = L4 fold_solve state-threaded fold shell,

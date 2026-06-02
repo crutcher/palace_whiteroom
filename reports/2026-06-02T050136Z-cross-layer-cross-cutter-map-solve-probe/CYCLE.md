@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T05:01:36Z
 scope: L4 cross-cut — map_solve 2nd-pipeline operator-varying-MAP probe (NON-driven)
 status: pending
 integrated_at: 2026-06-02T053505Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f270ba5c4cdec17a20138d66470c423c5c38e001
 integration_notes: |
   cycle-058 D3. OBSERVATION-ONLY (no book mutation; no proposed-changes block). Applied by integrator-per-report
   (staging row 3), housekept + committed by integrator-finalize. map_solve 2nd-pipeline probe → NON-DISCHARGE: the
