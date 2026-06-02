@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T205715Z
 scope: L4 operator: dot + nrm2 (paired named-verb cohort)
 status: integrated
 integrated_at: 2026-06-02T222500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE069
+integration_commit: 9d3d0676fa3820067e0cac7c3a00eb0b4ced3674
 integration_notes: |
   Applied by integrator-per-report (staging row D2, applied_at 2026-06-02T214500Z); finalized by integrator-finalize cycle-069.
   dot + nrm2 PROMOTED FIRM L4 (the two kept named abstractions rise as feature-surface verbs — dot = L4/inner_product at M=I; nrm2 = L4/inner_product-at-diagonal CONSUMER under √∘abs, NOT a fold member; black-box-vs-accelerated-kernels case 2; the c068 D3 next-pull verbs). New book/src/L4/dot.md + book/src/L4/nrm2.md. D2 SOLE L4/index count-owner: tally (10+4)→(13+4) unconditional (incorporating D1's assemble_frequency_operator) + §Active-frontier prose + 2 rows/bullets + SUMMARY inserts. Build-relevant: cargo make book exit 0; both pages render. 1 OQ promoted (l3-dot-nrm2-stale-no-l4-entry-lines-need-reanchor, c070+ follow-on). Zero gate hits.

@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T205715Z
 scope: L3 data-algebra combinators stale-no-L4 re-anchor — linear_combination + inner_product (cycle-069 D3)
 status: integrated
 integrated_at: 2026-06-02T222500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE069
+integration_commit: 9d3d0676fa3820067e0cac7c3a00eb0b4ced3674
 integration_notes: |
   Applied by integrator-per-report (staging row D3, applied_at 2026-06-02T220000Z); finalized by integrator-finalize cycle-069.
   PURE citation/pointer re-anchor (lifter pass): L3/linear_combination.md (3 loci) + L3/inner_product.md (2 loci) stale "no L4 entry" → live link to the c068 L4 caps (book/src/L4/linear_combination.md / book/src/L4/inner_product.md), identity-in-form framing; > Superseded admission blockquote preserves the cycle-010 reasoning. Both L3 entries stay firm (no status flip, no index-cell touch). ENACTS the c068 OQ l3-data-algebra-combinators-stale-no-l4-reanchor; closure note appended to the OQ ledger. Bounded 4→5 locus correction (critic-confirmed within-scope). Build-relevant: cargo make book exit 0; all 4 ../L4/… targets resolve. Zero gate hits; retroactive-budget 0 (no source-citation END moved).

@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T205715Z
 scope: L4 operator: assemble_frequency_operator
 status: integrated
 integrated_at: 2026-06-02T222500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE069
+integration_commit: 9d3d0676fa3820067e0cac7c3a00eb0b4ced3674
 integration_notes: |
   Applied by integrator-per-report (staging row D1, applied_at 2026-06-02T211730Z); finalized by integrator-finalize cycle-069.
   assemble_frequency_operator PROMOTED FIRM L4 (the driven per-ω system-operator weighted-sum assembly A(ω)=K+iωC−ω²M, the operator-operand specialization of L4/linear_combination; the rank-2 FE-cohort→L4 lift; opens the DRIVEN assemble-half at L4, directive-1). New book/src/L4/assemble_frequency_operator.md + own L4/index dep-map row+cohort bullet (alpha, before krylov-step) + SUMMARY L4 alpha-insert (NOT the firm tally — D2 sole count-owner). L4 firm 10→13 (with D2's dot+nrm2). Build-relevant: cargo make book exit 0; page renders; D2's tally link to this entry resolves (D1 landed first). 2 OQs promoted. Zero gate hits.

@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T205715Z
 scope: L1 cap citation re-anchor — fe_assemble weak-form-term witness line drift
 status: integrated
 integrated_at: 2026-06-02T222500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE069
+integration_commit: 9d3d0676fa3820067e0cac7c3a00eb0b4ced3674
 integration_notes: |
   Applied by integrator-per-report (staging row D4, applied_at 2026-06-02T212846Z); finalized by integrator-finalize cycle-069.
   PURE citation re-anchor (lifter pass): L1/fe_assemble.md (4 loci) witness-line-drift cite re-anchor (laplaceoperator.cpp:191-192→:193-196; curlcurloperator.cpp:179-181→:180-181; §Evidence pinpoints). ENACTS the c068 OQ fe-assemble-l1-cap-weak-form-term-witness-line-drift-reanchor — brings the firm L1 cap into agreement with the c068 D2 fe-operator-assemble-mutation-rotation theme; closure note appended to the OQ ledger. fe_assemble stays firm. Bounded 3→4 locus (critic-confirmed). The +2/+1 drift is the recurrence-6 codemap-read-range-plus-one-drift-on-brace-boundary boundary drift, mechanically corrected. Build-relevant: cargo make book exit 0; citecheck 13 ok/0 fail. Zero gate hits; retroactive-budget = 1 (the cycle's sole retroactive-cite draw, under the ≥4 threshold).

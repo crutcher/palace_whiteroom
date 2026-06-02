@@ -4,7 +4,7 @@ invoked_at: 2026-06-02T222500Z
 scope: cycle-069 finalize — rebuild + commit + cycle-end housekeeping (batch-21 position 3/3, the LAST primary cycle before the batch-21 meta-phase)
 status: integrated
 integrated_at: 2026-06-02T222500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE069
+integration_commit: 9d3d0676fa3820067e0cac7c3a00eb0b4ced3674
 meta_batch: batch-21
 meta_batch_position: 3
 inputs:
@@ -50,7 +50,7 @@ The rank-2 FE-cohort→L4 lift LANDED + the two kept named verbs ROSE + the L3/L
 - **retroactive-budget global = 1** (D4 only — 4 loci on one file, one OQ, one witness-line-drift class = 1 coherent draw; D1/D2 new firm entries, D3 a pointer re-anchor with no source-citation END moved). Well under the ≥4 block threshold. **PASS.**
 - **build-breakage repair:** NONE. `cargo make book` exit 0. **PASS.**
 - **commit atomicity:** single commit (artifact + scaffolding + log + book output + staging log + consumed-report frontmatter). **PASS.**
-- **consumed-report frontmatter integrity:** all 4 marked `status: integrated` + `integrated_at` + `integration_commit: PLACEHOLDER_SHA_CYCLE069` + `integration_notes`. **PASS** (placeholder patched in the two-phase follow-up commit).
+- **consumed-report frontmatter integrity:** all 4 marked `status: integrated` + `integrated_at` + `integration_commit: 9d3d0676fa3820067e0cac7c3a00eb0b4ced3674` + `integration_notes`. **PASS** (placeholder patched in the two-phase follow-up commit).
 
 ## Wave-conflict observations
 
