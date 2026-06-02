@@ -40,3 +40,12 @@ Two opposite dispositions at the bottom of the stack (full def: project memory `
 - **Accelerated (special-case) kernel → STOPPED LOW; combinator rises.** Exists solely to speed a decomposable common op (a perf-fused special case of a combinator). `axpy`/`axpby`/`axpbypcz`/`scal` → `linear_combination`; `dot`/`nrm2` → `inner_product`. Identify low, tie to combinator, prevent rising.
 - **Test:** clean decomposition? No→rises, Yes→stopped-low.
 - **Batch-21 consequences:** (i) `linear_combination`/`inner_product` (combinators) must RISE to L4 (currently stop at L3); (ii) the `axpy`/`scal`/`dot`/`nrm2` L2+L3 chapters are over-risen accelerated kernels (2026-06-01 leaf-collapse refactor incomplete — re-examine per-case); (iii) FE-cohort→L4 lift = assemble-fold combinator (rises) + FE quadrature leaf black-box kernel (rises as opaque input).
+
+### Refinement (USER 2026-06-02, same session): keep well-studied named abstractions even though they decompose
+
+The black-box/accelerated split is **three-way, by judgment** — abstraction value, not just "does it decompose":
+1. no decomposition + clean surface → **rises** (black-box kernel).
+2. decomposes BUT literature-standard + aids downstream-algorithm simplification + literature tie-back → **KEEP-and-RISE** as a named abstraction (kernel tied below; parent combinator rises too — a permitted dual). **Confirmed keeps: `dot`, `nrm2`.**
+3. decomposes AND solely-for-speed, no standalone abstraction value → **stopped-low** (combinator rises in its place); `axpy`-family is the per-case candidate.
+
+Correction to the earlier "(ii) axpy/axpby/axpbypcz/scal/dot/nrm2 chapters are over-risen" claim: that was an over-correction. `dot`/`nrm2` are KEEPS (rise, incl. to L4). The `axpy`-family is a per-case demote-vs-keep judgment weighing literature + downstream-simplification value. `linear_combination`/`inner_product` combinators rise to L4 regardless.
