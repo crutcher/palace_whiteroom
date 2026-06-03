@@ -58,6 +58,7 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 - `primitive` — base tensor/linear-algebra operations (axpy, dot, apply_linop, …).
 - `layer-pattern` — concepts naming how L1/L2/L3/L4 work (state-stratification, solve-monad, tensor-field-lift, …).
 - `auxiliary` — supporting concepts that don't fit the other categories.
+- `record` — data-shape definition pages: the fields / types / meaning / construction-vs-run-time stratum / L0 backing home of a record named across ≥2 chapters (the record-definition obligation, directive-2). Counterpart to the behavior-side Kinds; defines the *data shape*, not the operator algebra over it.
 
 | Concept | Kind |
 |---------|------|
@@ -69,6 +70,7 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [capability-typing](./capability-typing.md) | methodology |
 | [chebyshev-iteration](./chebyshev-iteration.md) | algorithm |
 | [complex-from-real-lift](./complex-from-real-lift.md) | primitive |
+| [config-record](./config-record.md) | record |
 | [constructed-operator-factory](./constructed-operator-factory.md) | layer-pattern |
 | [constructed-operators](./constructed-operators.md) | methodology |
 | [convergence-test](./convergence-test.md) | auxiliary |
@@ -86,21 +88,27 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [givens_generate](./givens_generate.md) | primitive |
 | [gmres](./gmres.md) | algorithm |
 | [incremental-least-squares](./incremental-least-squares.md) | algorithm |
+| [krylov](./krylov.md) | record |
 | [ksp_solve](./ksp_solve.md) | layer-pattern |
 | [negative-result-slice](./negative-result-slice.md) | methodology |
 | [nested-constructed-operator-gate](./nested-constructed-operator-gate.md) | layer-pattern |
 | [nrm2](./nrm2.md) | primitive |
+| [op-params](./op-params.md) | record |
 | [orthogonalization](./orthogonalization.md) | algorithm |
 | [plane-rotation-stream](./plane-rotation-stream.md) | layer-pattern |
+| [prev-carry](./prev-carry.md) | record |
 | [rotation](./rotation.md) | methodology |
 | [scal](./scal.md) | primitive |
 | [scalar-promotion](./scalar-promotion.md) | methodology |
 | [scope-out-obstruction](./scope-out-obstruction.md) | methodology |
 | [sequential-obstruction](./sequential-obstruction.md) | layer-pattern |
 | [set_subvector_zero](./set_subvector_zero.md) | primitive |
+| [sim-state](./sim-state.md) | record |
 | [solve-monad](./solve-monad.md) | layer-pattern |
+| [solve-result](./solve-result.md) | record |
 | [solver-as-operator](./solver-as-operator.md) | layer-pattern |
 | [state-stratification](./state-stratification.md) | layer-pattern |
+| [step-outputs](./step-outputs.md) | record |
 | [tensor-field-lift](./tensor-field-lift.md) | layer-pattern |
 | [trsv](./trsv.md) | primitive |
 | [two_operator_split](./two_operator_split.md) | methodology |
