@@ -2,7 +2,7 @@
 agent: lifter
 invoked_at: 2026-06-03T041103Z
 integrated_at: 2026-06-03T044543Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f5a405c
 integration_notes: "cycle-074 D1. Applied clean — pure in-place replace-and-propagate: electrostatic.L4 + magnetostatic.L4 stage-(3) reduction prose + §Constituent-down-links cell + composes: frontmatter + §Status reasoning re-anchored DOWN to the rough-in-track L4 gram_reduce (electrostatic w=1, magnetostatic w=1/(IiIj)); rough-in L1 matrix-weighted-norm/bilinear-form down-links kept as the fold's building blocks. The coupled replace-and-propagate is now complete (combinator-as-entry c073 + both columns linking DOWN c074). Discharges OQ gram-reduce-feature-chapter-reanchor-sequences-to-c074 (note appended). D5 boundary honored (mid-paragraph §Status edit disjoint from D5's head-token edit). citecheck 9 ok/0 fail. retroactive 0. cargo make book exit 0."
 scope: feature-surface re-anchor — electrostatic.L4 + magnetostatic.L4 reduction stage → L4 gram_reduce (the c073-deferred replace-and-propagate close)
 status: pending

@@ -2,7 +2,7 @@
 agent: layer-intro-author
 invoked_at: 2026-06-03T041103Z
 integrated_at: 2026-06-03T044543Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f5a405c
 integration_notes: "cycle-074 D2 (output-product cohort OWNER). Applied clean — 3 new chapter files (feature/capacitance.{L4,L1,L0}.md, status seed) composing L4 gram_reduce at w=1 voltage over the electrostatic driver column; SOLE-owned the feature/index.md matrix (+output-product cohort rows with *output products* sub-header) + the SUMMARY.md # Feature surfaces block (+6 rows capacitance+inductance, after the 5 leaf drivers, before lifecycle ROOT, within-column high->low). HAPPY-PATH: inductance.* on disk before apply -> all live links, no defang. citecheck 1 ok / 1 non-blocking AMBIG (bare-basename index.md:26 prose self-reference, not a load-bearing citation). retroactive 0. cargo make book exit 0, linkcheck2 clean."
 scope: capacitance output-product feature column (cycle-074 D2; output-product cohort OWNER)
 status: pending

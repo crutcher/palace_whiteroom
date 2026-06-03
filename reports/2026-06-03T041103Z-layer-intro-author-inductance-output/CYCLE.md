@@ -2,7 +2,7 @@
 agent: layer-intro-author
 invoked_at: 2026-06-03T041103Z
 integrated_at: 2026-06-03T044543Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f5a405c
 integration_notes: "cycle-074 D3 (FIRST per-report integrator; created STAGING.md). Applied clean — 3 new chapter files (feature/inductance.{L4,L1,L0}.md, status seed) composing L4 gram_reduce at w=1/(IiIj) over the magnetostatic driver column. Per cohort-ownership created only the 3 chapter files; index/SUMMARY rows deferred to D2 (cohort owner). DEAD-LINK WATCH (./capacitance.* not yet on disk) RESOLVED by D2 landing same-cycle. citecheck 12 ok/0 fail. retroactive 0. cargo make book exit 0, linkcheck2 clean."
 scope: INDUCTANCE output-product feature column (feature/inductance.{L4,L1,L0}.md)
 status: pending

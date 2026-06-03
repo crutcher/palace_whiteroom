@@ -2,7 +2,7 @@
 agent: cross-layer-cross-cutter
 invoked_at: 2026-06-03T041103Z
 integrated_at: 2026-06-03T044543Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f5a405c
 integration_notes: "cycle-074 D6 (LOW observation; OBSERVATION-ONLY cross-layer finding). Applied clean — single in-place §Specialization paragraph REPLACE in L4/gram_reduce.md recording the gram_reduce 3rd-witness probe CLOSED-NEGATIVE: eigenmode Q-factor (per-mode scalar-ratio map, wrong rank) + driven S-parameters (per-column port-mode linear projection with a decisive multi-pronged symmetry break) both NON-MATCH. gram_reduce stays the 2-pipeline energy-output-product reduction; future S-param/eigenfreq+Q output-product columns routed to author their OWN reduction verbs (sparameter_reduce port-projection map; eigenfreq/Q per-mode scalar-ratio map), NO gram_reduce broadening. Over-unification hazard cleared; subsume correctly REFUSED. No status change on gram_reduce. CLOSED-NEGATIVE discharge of OQ gram-reduce-third-witness-probe-eigenmode-driven-postprocess (note already on disk). citecheck 17 ok/0 fail. retroactive 0. cargo make book exit 0."
 scope: L4 cross-cut — gram_reduce 3rd-witness probe (eigenmode + driven postprocess) with over-unification hazard as load-bearing guard
 status: pending

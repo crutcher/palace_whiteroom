@@ -2,7 +2,7 @@
 agent: lifter
 invoked_at: 2026-06-03T041103Z
 integrated_at: 2026-06-03T044543Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f5a405c
 integration_notes: "cycle-074 D5 (LOW hygiene). Applied clean — status-token normalization: electrostatic.{L4,L1,L0} (seed (exemplar) -> seed) + lifecycle.{L4,L1,L0} (seed (composition-root) -> seed); the residual qualified columns normalized to the batch-22 uniform bare seed (frontmatter status: field + §Status leading backtick token; 6 files / 2 columns / 12 edits; descriptive prose naming exemplar/composition-root/meta-feature preserved). On-disk residual was 6 files / 2 columns (magnetostatic + c073 drivers + c074 output-product columns already bare). Discharges OQ feature-column-status-token-drift-exemplar-to-seed-sweep. D1/D4 boundaries honored (head-prefix anchors disjoint from co-cycle mid-paragraph edits). Left 4 stale CHILD-status cross-refs in lifecycle dep-maps (OQ feature-column-child-status-reference-drift-in-lifecycle-depmap, build-safe). citecheck 9 ok/0 fail. retroactive 0. cargo make book exit 0."
 scope: feature-column status-token normalization — electrostatic + lifecycle (6 files)
 status: pending

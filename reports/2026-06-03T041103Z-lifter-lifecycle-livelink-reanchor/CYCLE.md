@@ -2,7 +2,7 @@
 agent: lifter
 invoked_at: 2026-06-03T041103Z
 integrated_at: 2026-06-03T044543Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f5a405c
 integration_notes: "cycle-074 D4. Applied clean — pure plain-text->live-link re-anchor of lifecycle.L4 (:37 prose + :59 dep-map cell + :64 §Status clause): the 3 plain-text forward-refs (eigenmode/driven/transient, now on disk after c073) -> live [name.L4](./name.L4.md) links; 'forthcoming/not yet authored' qualifiers dropped; the spine ROOT's 5-branch dispatch (problem_type) navigation now fully live-linked. No source-range change (main.cpp switch citations byte-identical). D5 boundary honored (mid-paragraph trailing-clause edit disjoint from D5's head-token edit). citecheck 3 ok/0 fail. retroactive 0. cargo make book exit 0, all 5 driver live-links resolve."
 scope: feature-surface SPINE ROOT live-link re-anchor — lifecycle.L4 → driven/transient/eigenmode columns
 status: pending
