@@ -23,22 +23,23 @@ The spine is seeded with the **electrostatic** exemplar — the simplest/cleanes
 
 The **magnetostatic** column (cycle-072) is the second witness of this fixed-operator shape — structurally identical to electrostatic down to the `GetStiffnessMatrix()` / `SetOperators(*K,*K)`-outside-the-loop / `std::vector<Vector>`-collect shape, differing only in the absorbed family-index domain (surface-current vs terminal boundaries), the per-element field post-process (`B = ∇×A` vs `E = -∇V`), and the energy-form normalization (the inductance matrix is current-normalized `(Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)`; the capacitance matrix is voltage-formulated `Vⱼᵀ K Vᵢ`). The **lifecycle** column (cycle-072) is the top-level composition root — `main` → `BaseSolver` dispatch — that the per-feature columns hang under.
 
-The within-column level ordering is **high→low** (L4 → L1 → L0), NOT alphabetized; the Feature Part does not use by-kind nesting yet (small-Part guard).
+The Feature Part is nested by kind into **three sub-chapter groupings** (directive-1 codification, batch-23 meta-phase) — [Spine ROOT (lifecycle)](./spine-root.md), [Driver-leaf columns](./driver-leaf.md), and [Output-product columns](./output-product.md) — each with its own group-intro page; the spine-ROOT grouping nests first (the spine reads top-down: ROOT → drivers it dispatches → products those drivers feed). Columns sort **alpha-within-each-kind** in the matrix below and in `SUMMARY.md`. The deliberate FEATURE-SURFACE exception is preserved: the within-column level ordering stays **high→low** (L4 → L1 → L0), NOT alphabetized.
 
 | Feature | L4 (combinator composition) | L1 (pure-function composition) | L0 (cited driver source) |
 |---|---|---|---|
+| **[Spine ROOT (lifecycle)](./spine-root.md)** | | | |
+| [lifecycle](./lifecycle.L4.md) | [L4 root](./lifecycle.L4.md) | [L1 root](./lifecycle.L1.md) | [L0 surface](./lifecycle.L0.md) |
+| **[Driver-leaf columns](./driver-leaf.md)** | | | |
+| [driven](./driven.L4.md) | [L4 root](./driven.L4.md) | [L1 root](./driven.L1.md) | [L0 surface](./driven.L0.md) |
+| [eigenmode](./eigenmode.L4.md) | [L4 root](./eigenmode.L4.md) | [L1 root](./eigenmode.L1.md) | [L0 surface](./eigenmode.L0.md) |
 | [electrostatic](./electrostatic.L4.md) | [L4 root](./electrostatic.L4.md) | [L1 root](./electrostatic.L1.md) | [L0 surface](./electrostatic.L0.md) |
 | [magnetostatic](./magnetostatic.L4.md) | [L4 root](./magnetostatic.L4.md) | [L1 root](./magnetostatic.L1.md) | [L0 surface](./magnetostatic.L0.md) |
-| [driven](./driven.L4.md) | [L4 root](./driven.L4.md) | [L1 root](./driven.L1.md) | [L0 surface](./driven.L0.md) |
 | [transient](./transient.L4.md) | [L4 root](./transient.L4.md) | [L1 root](./transient.L1.md) | [L0 surface](./transient.L0.md) |
-| [eigenmode](./eigenmode.L4.md) | [L4 root](./eigenmode.L4.md) | [L1 root](./eigenmode.L1.md) | [L0 surface](./eigenmode.L0.md) |
-| *output products* | | | |
+| **[Output-product columns](./output-product.md)** | | | |
 | [capacitance](./capacitance.L4.md) | [L4 root](./capacitance.L4.md) | [L1 root](./capacitance.L1.md) | [L0 surface](./capacitance.L0.md) |
 | [eigenfrequency-qfactor](./eigenfrequency-qfactor.L4.md) | [L4 root](./eigenfrequency-qfactor.L4.md) | [L1 root](./eigenfrequency-qfactor.L1.md) | [L0 surface](./eigenfrequency-qfactor.L0.md) |
 | [inductance](./inductance.L4.md) | [L4 root](./inductance.L4.md) | [L1 root](./inductance.L1.md) | [L0 surface](./inductance.L0.md) |
 | [sparameters](./sparameters.L4.md) | [L4 root](./sparameters.L4.md) | [L1 root](./sparameters.L1.md) | [L0 surface](./sparameters.L0.md) |
-| *spine ROOT* | | | |
-| [lifecycle](./lifecycle.L4.md) | [L4 root](./lifecycle.L4.md) | [L1 root](./lifecycle.L1.md) | [L0 surface](./lifecycle.L0.md) |
 
 The **driven**, **transient**, and **eigenmode** driver columns (cycle-073) complete the 5-driver leaf-column set: with electrostatic + magnetostatic (the fixed-operator pair) these three add the **operator-VARYING** corner (driven — the per-ω rebuild + `SetOperators`-inside-the-loop [`frequency_sweep`](../L4/frequency_sweep.md) map), the **state-threaded sequential-fold** corner (transient — the [`fold_solve`](../L4/fold_solve.md) time-step march), and the **opaque-library black-box** corner (eigenmode — the SLEPc eigen-iteration). The driven column is the first whose three L4 composition stages all compose FIRM combinators (the assemble basis, the per-ω operand verb, and the operator-varying solve map are each firm).
 
