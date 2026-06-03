@@ -125,7 +125,7 @@ This shape is load-bearing, and it follows three principles:
 > across the assemble+solve target — a milestone, not completion (the feature-surface
 > spine and the remaining solver/output breadth continue).
 
-> **The feature-surface spine (opened batch-22, scaled batch-23).** Parallel to the bottom-up L4→L0
+> **The feature-surface spine (opened batch-22, scaled batch-23, column build-out COMPLETE batch-24).** Parallel to the bottom-up L4→L0
 > vocabulary, a **top-down feature-surface spine** presents Palace's entry-point features
 > (the 5 simulation drivers, the top-level lifecycle ROOT, the output/postprocess
 > products, wave-port/boundary-mode) as **composition-root chapters** at L4+L1+L0 under a
@@ -133,20 +133,30 @@ This shape is load-bearing, and it follows three principles:
 > product out, and its body is the *composition of the already-firm decomposed vocabulary*
 > at that level, linking DOWN to the constituents — it composes the vocabulary, it does
 > not replace it. The L4 feature surfaces ARE the outward backend-lowering entry points.
-> As of **batch-23 the spine stands at ten columns**: the 5 driver-leaf columns
-> (electrostatic / magnetostatic / driven / transient / eigenmode), the lifecycle
-> meta-feature ROOT, and **4 of the 5 output-product columns** (capacitance / inductance /
-> sparameters / eigenfrequency-qfactor; only energy-fields remains). The output-product
-> cohort surfaced that **the L4 algebra-of-folds has three distinct reduce-shapes** —
-> bilinear symmetric-Gram (`gram_reduce`, electrostatic capacitance + magnetostatic
-> inductance), per-column linear-projection (`sparameter_reduce`, driven S-parameters), and
-> per-mode scalar-table (`eigenfreq_qfactor_reduce`, eigenmode frequency+Q) — a case where
-> *refusing* an over-unification (the eigenmode-Q and S-params are NOT symmetric-Gram) was
-> itself the load-bearing finding: each output product authors its OWN reduction verb. The
-> spine scales by fan-out alongside the bottom-up frontier; the directive-3 by-kind
-> sub-chapter grouping (spine-ROOT / driver-leaf / output-product) applies to this Part as
-> it does to the layer Parts, with the within-column high→low ordering preserved as the
-> deliberate exception.
+> As of **batch-24 the spine's column build-out is COMPLETE — thirteen columns, all at
+> `seed`**: the 6 driver-leaf columns (electrostatic / magnetostatic / driven / transient /
+> eigenmode / boundary-mode), the lifecycle meta-feature ROOT, and all 5 output-product
+> columns (capacitance / inductance / sparameters / eigenfrequency-qfactor / energy-fields),
+> nested into the directive-3 by-kind groupings (spine-ROOT / driver-leaf / output-product),
+> each grouping with an intro page, the matrix alpha-within-kind, the within-column high→low
+> ordering preserved as the deliberate exception. The output-product cohort surfaced that
+> **the L4 algebra-of-folds has four distinct reduce-shapes** — bilinear symmetric-Gram
+> (`gram_reduce`, capacitance + inductance), per-port linear-projection (`sparameter_reduce`,
+> driven S-parameters), per-mode scalar-table (`eigenfreq_qfactor_reduce`, eigenmode
+> frequency+Q), and per-domain scalar-table (`domain_energy_reduce`, the driver-agnostic
+> energy-fields product) — a case where *refusing* an over-unification (the eigenmode-Q and
+> S-params are NOT symmetric-Gram) was itself the load-bearing finding: each output product
+> authors its OWN reduction verb. A second convention-shaping finding: **`energy-fields` is
+> driver-AGNOSTIC** — the same per-domain field-energy reduction applies to *any*
+> field-bearing driver's solution, so it is the explicit exception to the otherwise-1:1
+> output-product↔driver cross-link convention (no single producing driver; a generic
+> cross-link to the field-bearing driver set; no per-driver up-link). Records/structs named
+> in signatures now get a definition home in themselves (the record-definition obligation) —
+> a new `record` concepts Kind, ratified batch-24, carries the data-shape pages. With the
+> columns complete-at-`seed`, the frontier turns to **firming the seed surface** —
+> discharging the reduce-verb test-gates by citing the existing Palace postprocess unit
+> tests (L0-equivalent semantic documentation), authoring the un-authored reduce-verb files,
+> and the standing 5-driver→L4 backend-lowering completeness picture.
 
 ## FLOW — how the goal is met
 
