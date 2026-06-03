@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: lifecycle
 level: L1
-status: seed (composition-root)
+status: seed
 composes:
   - book/src/feature/electrostatic.L1.md (the electrostatic driver — one ProblemType specialization)
   - book/src/feature/magnetostatic.L1.md (the magnetostatic driver — one ProblemType specialization)
@@ -60,4 +60,4 @@ The L1→L0 direction (how the mesh-refine + driver solves lower to the in-place
 
 ## Status
 
-`seed (composition-root)` — the L1 pure-function composition root for the lifecycle meta-feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). The composition is sound: the mesh-build + estimate-mark-refine fold are driver-agnostic scaffold (the fold is the firm [`fold_solve`](../L4/fold_solve.md) state-generated shape at L4); the per-driver dispatch composes the per-column pure functions (2 on disk — [`electrostatic.L1`](./electrostatic.L1.md), [`magnetostatic.L1`](./magnetostatic.L1.md); 3 forthcoming). This chapter carries the compositional claim only (lifecycle = dispatch-over-driver-columns under the adaptive fold), not the per-column algebraic claims (those live in the per-driver columns) nor the per-op claims (those live in the vocabulary chapters). Evidence: the L0 driver-agnostic range `palace/main.cpp:158-328` + `palace/drivers/basesolver.cpp:153-276` realizing the composition, plus the per-driver column down-links.
+`seed` — the L1 pure-function composition root for the lifecycle meta-feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). The composition is sound: the mesh-build + estimate-mark-refine fold are driver-agnostic scaffold (the fold is the firm [`fold_solve`](../L4/fold_solve.md) state-generated shape at L4); the per-driver dispatch composes the per-column pure functions (2 on disk — [`electrostatic.L1`](./electrostatic.L1.md), [`magnetostatic.L1`](./magnetostatic.L1.md); 3 forthcoming). This chapter carries the compositional claim only (lifecycle = dispatch-over-driver-columns under the adaptive fold), not the per-column algebraic claims (those live in the per-driver columns) nor the per-op claims (those live in the vocabulary chapters). Evidence: the L0 driver-agnostic range `palace/main.cpp:158-328` + `palace/drivers/basesolver.cpp:153-276` realizing the composition, plus the per-driver column down-links.

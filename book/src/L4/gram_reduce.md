@@ -175,11 +175,18 @@ reductions re-express THROUGH it:
   (`:129-131`), off-diagonal `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)` (`:138`), symmetric mirror,
   then `gram_inverse` → `Minv` (`:151-152`). Weight `w = 1/(Iᵢ Iⱼ)` (current-normalized).
 
-Candidate 3rd+ witnesses (NOT authored — a stronger future mine): eigenmode Q-factor /
-eigenfrequency energy post-processing (likely a per-mode map, would introduce the
-complex element-type axis) and driven S-parameter post-processing (port-pair map,
-possibly a *different* reduction — S-parameters are not symmetric Gram in general, an
-over-unification hazard to probe before subsuming). See the L4 index Open questions.
+Candidate 3rd+ witnesses — PROBED c074 D6, both NON-MATCH (the symmetric-Gram subsume
+is correctly REFUSED): (i) eigenmode Q-factor / energy post-processing is a per-mode
+SCALAR-RATIO map (`Q_mj = ω_m/κ_mj`, `κ_mj = ½R_jI_mj²/E_m`,
+`eigensolver.cpp:424-471` + `postoperator.cpp:1174-1217`) — no family-PAIR grid, the
+wrong rank for a Gram reduction; (ii) driven S-parameters are a per-column port-mode
+LINEAR PROJECTION (`Sᵢⱼ = sᵢ·E`, `lumpedportoperator.cpp:283-294`) assembled one
+drive-column per solve with an inhomogeneous diagonal self-term (`-1`), directional
+generalized-S scaling, and per-endpoint de-embedding (`postoperator.cpp:1246-1308`) —
+NOT symmetric-Gram (no `symmetric_from_upper`; S-symmetry is reciprocity physics, not a
+construction). `gram_reduce` stays the 2-pipeline energy-output-product reduction; the
+eigenfreq/Q and S-parameter output-product columns author their OWN reduction verbs.
+See OQ `gram-reduce-third-witness-probe-eigenmode-driven-postprocess` (CLOSED-NEGATIVE).
 
 ## Dependencies
 

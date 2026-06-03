@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: electrostatic
 level: L1
-status: seed (exemplar)
+status: seed
 composes:
   - book/src/L1/fe_assemble.md (firm — assemble K once)
   - book/src/L1/ksp_solve.md (firm — per-terminal solve)
@@ -62,4 +62,4 @@ The L1→L0 direction (how each pure operator lowers to the in-place driver writ
 
 ## Status
 
-`seed (exemplar)` — the L1 pure-function composition root for the electrostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Two of the four composed L1 operators are firm ([`fe_assemble`](../L1/fe_assemble.md), [`ksp_solve`](../L1/ksp_solve.md)); BOTH capacitance-reduction primitives are rough-in — the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) is `rough-in (test-coverage-bounded)` (no dedicated test exercises the SPD-weighted overload) and the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) is rough-in (its `α = xᴴ M y` signature covers the cross-pairing, so the down-link is correct). The entire stage-3 reduction therefore rests on rough-in L1 primitives — consistent with the column being a `seed (exemplar)`, not a firm composition. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 driver range `electrostaticsolver.cpp:21-98` + `:100-138` realizing the composition, plus the firm L1 constituent down-links.
+`seed` — the L1 pure-function composition root for the electrostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Two of the four composed L1 operators are firm ([`fe_assemble`](../L1/fe_assemble.md), [`ksp_solve`](../L1/ksp_solve.md)); BOTH capacitance-reduction primitives are rough-in — the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) is `rough-in (test-coverage-bounded)` (no dedicated test exercises the SPD-weighted overload) and the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) is rough-in (its `α = xᴴ M y` signature covers the cross-pairing, so the down-link is correct). The entire stage-3 reduction therefore rests on rough-in L1 primitives — consistent with the column being a `seed (exemplar)`, not a firm composition. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 driver range `electrostaticsolver.cpp:21-98` + `:100-138` realizing the composition, plus the firm L1 constituent down-links.

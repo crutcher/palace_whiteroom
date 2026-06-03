@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: lifecycle
 level: L0
-status: seed (composition-root)
+status: seed
 l0_ground_truth:
   - palace/main.cpp:158-328 (main — the top-level lifecycle: parse, configure, dispatch driver, build mesh, run, finalize)
   - palace/drivers/basesolver.cpp:153-276 (BaseSolver::SolveEstimateMarkRefine — the solve-estimate-mark-refine adaptive outer loop)
@@ -50,4 +50,4 @@ This L0 lifecycle surface lifts to the L1 pure-function lifecycle root [`lifecyc
 
 ## Status
 
-`seed (composition-root)` — the L0 ground-truth surface for the top-level lifecycle meta-feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Every stage is a cited range into `palace/main.cpp` + `palace/drivers/basesolver.cpp` / `.hpp`, confirmed on-disk via palace-codemap `read_range` this dispatch (`palace/main.cpp:140-328`, `palace/drivers/basesolver.cpp:153-276`, `palace/drivers/basesolver.hpp:31-67`). This is a NOVEL feature sub-kind — a **meta-feature whose constituents include other feature columns** (the per-driver specializations) rather than only vocabulary ops; the surface-or-evidence evidence is the driver-agnostic source range + the specialization-seam site map + the per-driver column down-links. Rotation / variant-axis claims no-op (no rotation, no variant-axis catalogue — the chapter carries only the compositional claim).
+`seed` — the L0 ground-truth surface for the top-level lifecycle meta-feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Every stage is a cited range into `palace/main.cpp` + `palace/drivers/basesolver.cpp` / `.hpp`, confirmed on-disk via palace-codemap `read_range` this dispatch (`palace/main.cpp:140-328`, `palace/drivers/basesolver.cpp:153-276`, `palace/drivers/basesolver.hpp:31-67`). This is a NOVEL feature sub-kind — a **meta-feature whose constituents include other feature columns** (the per-driver specializations) rather than only vocabulary ops; the surface-or-evidence evidence is the driver-agnostic source range + the specialization-seam site map + the per-driver column down-links. Rotation / variant-axis claims no-op (no rotation, no variant-axis catalogue — the chapter carries only the compositional claim).

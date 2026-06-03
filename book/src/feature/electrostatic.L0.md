@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: electrostatic
 level: L0
-status: seed (exemplar)
+status: seed
 l0_ground_truth:
   - palace/drivers/electrostaticsolver.cpp:21-98 (ElectrostaticSolver::Solve)
   - palace/drivers/electrostaticsolver.cpp:100-160 (ElectrostaticSolver::PostprocessTerminals)
@@ -44,4 +44,4 @@ This L0 surface lifts to the L1 pure-function composition root [`electrostatic.L
 
 ## Status
 
-`seed (exemplar)` — the L0 ground-truth surface for the electrostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Every stage is a cited range into `palace/drivers/electrostaticsolver.cpp`, confirmed on-disk via palace-codemap `read_range` this dispatch. The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).
+`seed` — the L0 ground-truth surface for the electrostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Every stage is a cited range into `palace/drivers/electrostaticsolver.cpp`, confirmed on-disk via palace-codemap `read_range` this dispatch. The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).
