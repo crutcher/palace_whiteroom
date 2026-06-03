@@ -9,6 +9,12 @@
 - [electrostatic — L4 composition-root](./feature/electrostatic.L4.md)
 - [electrostatic — L1 composition-root](./feature/electrostatic.L1.md)
 - [electrostatic — L0 ground-truth surface](./feature/electrostatic.L0.md)
+- [magnetostatic — L4 composition-root](./feature/magnetostatic.L4.md)
+- [magnetostatic — L1 composition-root](./feature/magnetostatic.L1.md)
+- [magnetostatic — L0 ground-truth surface](./feature/magnetostatic.L0.md)
+- [lifecycle — L4 composition-root](./feature/lifecycle.L4.md)
+- [lifecycle — L1 composition-root](./feature/lifecycle.L1.md)
+- [lifecycle — L0 ground-truth surface](./feature/lifecycle.L0.md)
 # L4 — Graph-Evaluation Calculus
 - [Overview](./L4/index.md)
 - [Iteration & step combinators](./L4/iteration-combinators-intro.md)

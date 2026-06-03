@@ -15,18 +15,24 @@ It **composes** the vocabulary; it does **not** replace it. Even as a feature de
 
 The vocabulary spine answers *"what are the reusable pieces, and how do they lower?"* The feature spine answers *"what are the deliverable features, and how are they assembled from those pieces?"* The two are duals: the vocabulary spine is mined *inward* (decompose for reuse + conciseness); the feature spine is composed *outward* (recompose for the backend-lowering target). The L4 feature chapter in particular is the **outward backend-lowering entry point** — it presents a whole simulation as a single composition of L4 combinators, which is the form an external GPU-tensor / distributed backend wants to consume (the feature surface, not the unfolded driver loop).
 
-## Feature × level matrix (seed)
+## Feature × level matrix
 
 The spine is seeded with the **electrostatic** exemplar — the simplest/cleanest entry point: a **fixed-operator** solve (assemble the stiffness operator `K` once, then a per-terminal-source RHS-varying map) producing a **capacitance matrix**. The composition root at every level is:
 
-> **config → `fe_assemble` (assemble `K` once) → `solve_family` (fixed-operator per-terminal map) → capacitance-matrix reduction (`Vⱼᵀ K Vᵢ`) → capacitance-out.**
+> **config → `fe_assemble` (assemble `K` once) → `solve_family` (fixed-operator per-source map) → energy-form reduction (`Xⱼᵀ K Xᵢ`) → physical-product-out.**
+
+The **magnetostatic** column (cycle-072) is the second witness of this fixed-operator shape — structurally identical to electrostatic down to the `GetStiffnessMatrix()` / `SetOperators(*K,*K)`-outside-the-loop / `std::vector<Vector>`-collect shape, differing only in the absorbed family-index domain (surface-current vs terminal boundaries), the per-element field post-process (`B = ∇×A` vs `E = -∇V`), and the energy-form normalization (the inductance matrix is current-normalized `(Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)`; the capacitance matrix is voltage-formulated `Vⱼᵀ K Vᵢ`). The **lifecycle** column (cycle-072) is the top-level composition root — `main` → `BaseSolver` dispatch — that the per-feature columns hang under.
+
+The within-column level ordering is **high→low** (L4 → L1 → L0), NOT alphabetized; the Feature Part does not use by-kind nesting yet (small-Part guard).
 
 | Feature | L4 (combinator composition) | L1 (pure-function composition) | L0 (cited driver source) |
 |---|---|---|---|
 | [electrostatic](./electrostatic.L4.md) | [L4 root](./electrostatic.L4.md) | [L1 root](./electrostatic.L1.md) | [L0 surface](./electrostatic.L0.md) |
+| [magnetostatic](./magnetostatic.L4.md) | [L4 root](./magnetostatic.L4.md) | [L1 root](./magnetostatic.L1.md) | [L0 surface](./magnetostatic.L0.md) |
+| [lifecycle](./lifecycle.L4.md) | [L4 root](./lifecycle.L4.md) | [L1 root](./lifecycle.L1.md) | [L0 surface](./lifecycle.L0.md) |
 
-Planned (per the FEATURE-SURFACE SPINE directive scope; not yet authored): the other 4 sim drivers (magnetostatic, eigenmode, driven, transient), the top-level lifecycle (`main` → `BaseSolver`), the output products (S-params / capacitance / inductance / eigenfreq + Q / fields), and wave-port / boundary-mode. Each lands as a feature column when its constituent vocabulary is firm enough to compose cleanly (a feature that cannot yet be cleanly composed is a *finding about the spine*, surfaced as an open question — the same low-priority test-load discipline the solvers carry on the vocabulary spine).
+Planned (per the FEATURE-SURFACE SPINE directive scope; not yet authored): the remaining sim drivers (eigenmode, driven, transient), the output products (S-params / capacitance / inductance / eigenfreq + Q / fields), and wave-port / boundary-mode. Each lands as a feature column when its constituent vocabulary is firm enough to compose cleanly (a feature that cannot yet be cleanly composed is a *finding about the spine*, surfaced as an open question — the same low-priority test-load discipline the solvers carry on the vocabulary spine).
 
 ## Chapter-kind status
 
-`seed (exemplar)` — the electrostatic column is the first exemplar of the feature-surface kind, authored under the FEATURE-SURFACE SPINE user directive (2026-06-02) ahead of role-spec codification (the batch-22 meta-phase codifies the kind into the role-specs + groups it under the forthcoming directive-3 by-kind grouping). The critic's surface-or-evidence check is adapted for this kind: a feature chapter's evidence is the L0 driver-source range + the constituent-op down-links, not a single decomposed op's source site.
+`seed` — the electrostatic column is the first exemplar of the feature-surface kind, authored under the FEATURE-SURFACE SPINE user directive (2026-06-02) ahead of role-spec codification; the magnetostatic + lifecycle columns (cycle-072) are the second-wave instances confirming the kind scales (the batch-22 meta-phase codifies the kind into the role-specs + groups it under the forthcoming directive-3 by-kind grouping). The critic's surface-or-evidence check is adapted for this kind: a feature chapter's evidence is the L0 driver-source range + the constituent-op down-links, not a single decomposed op's source site; the rotation-quality + variant-axis-coverage checks no-op (a composition root introduces no new rotation or variant axis — it composes existing firm vocabulary).

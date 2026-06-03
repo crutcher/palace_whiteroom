@@ -927,7 +927,7 @@ The cycle-070 D3 seed made three structural choices the batch-22 meta-phase shou
 
 opened_at: cycle-071
 opened_by: layer-intro-author (D6 reorg; promoted by integrator-per-report)
-status: Open
+status: RESOLVED cycle-072 (D3 `layer-intro-author-concepts-index-2row-reconciliation`, applied by integrator-per-report). Both missing rows added to `book/src/concepts/index.md` `## Index` table in correct global-alpha-by-slug position: `black-box-vs-accelerated-kernels` (kind `methodology`, between `axpy` and `build-time-vs-run-time-stratification`) and `nested-constructed-operator-gate` (kind `layer-pattern`, between `negative-result-slice` and `nrm2`). Table now 44 content rows ⟷ SUMMARY `# Concepts` 44 content entries. 44 ⟷ 44 confirmed. Both `[old]` anchors matched disk verbatim; both target pages on disk + SUMMARY-registered; citecheck `--scan` clean.
 
 **Pre-existing hand-maintained-derived-surface drift surfaced by the cycle-071 D6 Concepts reorg (NOT created or widened by it — the reorg is set-preserving, `set(old)==set(new)`).** The `# Concepts` `SUMMARY.md` block carries **44** content concept entries (all 44 exist on disk under `book/src/concepts/`); the `book/src/concepts/index.md` API table carries only **42** data rows. SUMMARY (44) is a strict **superset** of the index table (42). Exactly **two** slugs are present in SUMMARY + on disk but **absent from the index table**:
 - `nested-constructed-operator-gate` (`book/src/concepts/nested-constructed-operator-gate.md`)
@@ -936,4 +936,83 @@ status: Open
 (`eigsolve` and `erasure-scope` ARE in the index table — they are NOT part of the drift; the report's first-pass characterization was repair-corrected to name BOTH genuine omissions.) D6 deliberately did NOT reconcile the table (scope was reorder-only, no add/drop).
 
 **Routed follow-up — batch-22 meta-phase OR a cycle-072 hygiene dispatch:** re-derive the `concepts/index.md` table rows from the on-disk `concepts/*.md` file set + SUMMARY links, **add both missing rows** (`nested-constructed-operator-gate`, `black-box-vs-accelerated-kernels`) in their correct alpha-by-slug positions with their `Kind`/description cells, and confirm 1:1 (44 ⟷ 44). Same drift-class as the `index-table-status-cell-drifts-when-theme-file-promoted` friction (hand-maintained derived surface drifting from its source).
+
+---
+
+## solve-family-md-specialization-note-plus-one-anchor-drift
+
+opened_at: cycle-072
+opened_by: layer-intro-author (D1 magnetostatic feature column; promoted by integrator-per-report)
+status: open — routed to a lifter/repairer re-anchor pass (finding about ANOTHER file; this report's own citations are on-disk-correct)
+
+**Pre-existing +1 anchor drift in `book/src/L4/solve_family.md` §Specializations.** The magnetostatic specialization note cites `op = K ... GetStiffnessMatrix() (:30)`, `KspSolver ksp(...) (:35)`, `ksp.SetOperators(*K,*K) (:36)`. On-disk (codemap `read_range`, cycle-072 D1 dispatch) those sites are `:29`, `:34`, `:35` respectively (the **electrostatic** note in the same file shares the off-by-one — e.g. it cites magnetostatic `:36` for `SetOperators`). The `:47`/`:66`/`:76`/`:77`/`:99` loop-region anchors in that note are correct.
+
+The cycle-072 D1 magnetostatic feature chapters cite the on-disk-confirmed numbers (`:29/:34/:35`), so the drift is NOT in this cycle's new surface. **Routed follow-up:** a lifter/repairer re-anchor pass should re-anchor BOTH the electrostatic and magnetostatic §Specializations notes in `solve_family.md` to the on-disk `:29/:34/:35`. Same drift-class as `index-table-status-cell-drifts-when-theme-file-promoted` (a derived/copied reference drifting from its source). Critic concurred this is a well-routed finding about another file, not a defect to repair in the D1 report.
+
+---
+
+## shared-l4-energy-form-reduction-combinator-gram-reduce-two-witness-mine
+
+opened_at: cycle-072
+opened_by: layer-intro-author (D1 magnetostatic feature column; promoted by integrator-per-report)
+status: open — routed to combinator-miner / cycle-planner (≥2-witness mining gate now MET)
+
+**Forward combinator-mine: a shared L4 `energy_reduce` / `gram_reduce` combinator.** Both the electrostatic (capacitance) and magnetostatic (inductance) stage-3 reductions are the SAME `map`-then-`reduce` over solution-family pairs of an operator-weighted bilinear form `Xⱼᵀ K Xᵢ`, differing only in the scalar per-entry normalization (voltage-formulated `Vⱼᵀ K Vᵢ` vs current-normalized `(Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)`). This is now a **two-witness** pattern — it meets the **≥2-witness combinator-miner gate**.
+
+A dedicated L4 `energy_reduce` / `gram_reduce` combinator (folding the rough-in `matrix-weighted-norm` diagonal + `bilinear-form` off-diagonal over the family-pair grid, parameterized by the per-entry normalization weight) would let BOTH feature L4 chapters link DOWN to a firm reduction combinator instead of two rough-in L1 primitives. **Routed to combinator-miner / cycle-planner; NOT a blocker** (the reduction is a plain fold of evaluations, so the feature columns compose cleanly without it). The eigenmode/driven Q-factor + S-param post-processing may add further witnesses (a stronger mine if 3+ pipelines share the shape). Per the §Methodology VOCABULARY-SHIFT REDIRECT, the combinator-miner mandate is **replace-and-propagate, not mine-and-strand** — if mined, propagate it into both feature L4 chapters' down-links.
+
+---
+
+## feature-surface-kind-batch-22-codification-and-seed-promotion-question
+
+opened_at: cycle-072
+opened_by: layer-intro-author (D1 magnetostatic feature column; promoted by integrator-per-report)
+status: open — routed to batch-22 meta-phase (role-spec codification + status-aggregation question)
+
+**The 2nd feature-surface instance (magnetostatic) confirms the kind's structure scales** — authorable by near-mechanical mirroring of the cycle-070 electrostatic exemplar (same constituent set, same fixed-operator `solve_family` corner, same 3-stage shape), with the only genuine differences (absorbed family-domain / RHS-construction / field-post-process / normalization-weight) sitting BELOW the composition-root claim and carried by the linked constituent chapters, not restated. Recommended **batch-22 meta-phase role-spec codifications:**
+- **(a)** the feature-surface chapter kind (inputs=config / outputs=physical-product / body=composition-of-firm-vocabulary / links-DOWN), with the high→low within-column level ordering (L4→L1→L0) and the `feature/<name>.{L4,L1,L0}.md` path convention.
+- **(b)** the adapted critic surface-or-evidence check (evidence = L0 driver range + constituent down-links; rotation-quality + variant-axis-coverage checks no-op).
+- **(c)** the single-index-owner convention when ≥2 feature columns land in one cycle (the cycle-072 D1 dispatch sole-owned `feature/index.md` + the SUMMARY block for BOTH columns, D2's lifecycle rows deferred to D1 — the same parallel-blind-shared-index guard the layer indexes carry).
+- **(d) Status-aggregation question:** should a feature column whose constituents are ALL firm itself promote past `seed`? Both the electrostatic and magnetostatic columns carry rough-in stage-3 primitives (`matrix-weighted-norm` / `bilinear-form`), so neither is a clean test of "all-firm constituents → firm feature". The eigenmode column, if it composes only firm ops, would be the first test.
+
+**Sub-item — status-token uniformity (`seed` vs `seed (exemplar)`):** the electrostatic exemplar carried `status: seed (exemplar)`; the cycle-072 D1 magnetostatic chapters use plain `status: seed` (no longer THE exemplar — a second instance). The integrator applied the index `seed (exemplar)` → `seed` normalization the D1 report proposed (the matrix/chapter-kind-status now reads `seed` uniformly). **Routed to batch-22 meta-phase** to ratify the uniform `seed` token across all feature columns (or define a distinct exemplar-marking convention) — flagged rather than left silently divergent.
+
+---
+
+## feature-surface-meta-feature-root-sub-kind-and-summary-nesting
+
+opened_at: cycle-072
+opened_by: layer-intro-author (D2 lifecycle-root feature column; promoted by integrator-per-report)
+status: open — routed to batch-22 meta-phase (extends `feature-surface-kind-batch-22-codification-and-seed-promotion-question`)
+
+**The lifecycle root is the FIRST feature chapter whose stage-(2) constituents are OTHER feature columns (the per-driver specializations), not vocabulary ops — a NOVEL feature sub-kind.** Extends the existing batch-22 codification OQ (`feature-surface-kind-batch-22-codification-and-seed-promotion-question`) with the lifecycle-ROOT-specific dimensions:
+
+- **Name the sub-kind split.** The lifecycle root is a **composition-root spine ROOT / meta-feature** (constituents = other feature columns + the driver-agnostic firm `fold_solve`); the per-driver columns (electrostatic, magnetostatic, …) are **leaf feature columns** (constituents = vocabulary ops). Suggest naming both in the batch-22 feature-surface-kind codification.
+- **Status token.** D2's lifecycle chapters carry `status: seed (composition-root)` (distinct from the per-driver `seed (exemplar)`/`seed`). Folds into the existing status-token-uniformity sub-item — if meta-phase ratifies a uniform `seed`, this becomes a trivial rename; if a sub-kind marker is wanted, `(composition-root)` vs `(exemplar)` is the candidate vocabulary.
+- **SUMMARY by-kind nesting (directive-3).** The by-kind grouping should likely nest the meta-feature ROOT *above* the per-driver leaf columns in the Feature Part's SUMMARY ordering (ROOT-then-specializations), not the current flat column ordering. Flagged for the index owner (a future D1-equivalent) + the directive-3 one-time by-kind reorg.
+- **The surface-or-evidence critic check ADAPTED cleanly** for this sub-kind (constituents = feature columns + the driver-agnostic firm fold) — the codification should record that adaptation as the canonical evidence shape for the meta-feature sub-kind.
+
+The critic verified the meta-feature characterization is faithful (not a defect, a genuine codification finding). The 3 lifecycle chapters landed this cycle (`feature/lifecycle.{L4,L1,L0}.md`).
+
+---
+
+## fold-solve-state-generated-schedule-source-second-witness-amr-loop
+
+opened_at: cycle-072
+opened_by: layer-intro-author (D2 lifecycle-root feature column; promoted by integrator-per-report)
+status: open — routed to meta-phase / a future `fold_solve` lifter (strengthens `fold-solve-greedy-schedule-source-generalization`)
+
+**The `fold_solve` state-generated `schedule-source` axis value now has a SECOND, driver-agnostic witness.** Before this cycle the state-generated form was witnessed only by driven-PROM SweepAdaptive (`palace/drivers/drivensolver.cpp:231-398`). The AMR `BaseSolver::SolveEstimateMarkRefine` `while` loop (`palace/drivers/basesolver.cpp:153-276`, the `while` at `:190`) is a **second** state-generated-fold witness: the carry `{mesh, indicators, ntdof, err, it}` GENERATES both the next iterate (mark `:221-232` → refine `:235-244` → re-solve `:266-267`) AND the loop bound (`!ExhaustedResources && err >= refinement.tol`) from accumulated state. The critic independently verified this against `book/src/L4/fold_solve.md` §schedule-source and confirmed it is exactly the state-generated form (NOT the fixed-list transient form, NOT a `solve_family` map).
+
+This strengthens `fold_solve`'s state-generated axis from **1 to 2 witnesses** and adds evidence to the standing OQ `fold-solve-greedy-schedule-source-generalization` (whether the state-generated form warrants its own dedicated combinator). **D2 did NOT edit `fold_solve.md`** (read-only down-link; out of the one-chapter-column scope) — routed for a future `fold_solve` lifter to fold in the 2nd witness + the meta-phase to weigh the dedicated-combinator question.
+
+---
+
+## boundarymode-is-sixth-problemtype-branch-reconcile-five-drivers-framing
+
+opened_at: cycle-072
+opened_by: layer-intro-author (D2 lifecycle-root feature column; promoted by integrator-per-report)
+status: open — routed to batch-22 meta-phase (FEATURE-SURFACE SPINE scope reconciliation)
+
+**`BoundaryModeSolver` is a 6th `ProblemType` dispatch branch** (`palace/main.cpp:276`, `case ProblemType::BOUNDARYMODE`, verified verbatim by the critic) beyond the "5 sim drivers" framing. The FEATURE-SURFACE SPINE directive (2026-06-02) names scope as "5 sim drivers + wave-port/boundary-mode" *separately*, but `BOUNDARYMODE` dispatches through the **same** `switch (iodata.problem.type)` (`main.cpp:257-280`) as the other five — so the lifecycle root composes it identically (a 6th specialization branch, currently plain-text forward-referenced alongside eigenmode/driven/transient). **Reconcile** when the boundary-mode column lands: is it a co-equal driver column (6 columns under the ROOT) or a distinct wave-port/boundary-mode sub-kind? The `main.cpp` dispatch structure says co-equal-branch; the directive scope says separate. Routed to batch-22 meta-phase to ratify the column taxonomy under the lifecycle ROOT.
 

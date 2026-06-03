@@ -64,6 +64,7 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [apply_BA](./apply_BA.md) | primitive |
 | [apply_linop](./apply_linop.md) | primitive |
 | [axpy](./axpy.md) | primitive |
+| [black-box-vs-accelerated-kernels](./black-box-vs-accelerated-kernels.md) | methodology |
 | [build-time-vs-run-time-stratification](./build-time-vs-run-time-stratification.md) | layer-pattern |
 | [capability-typing](./capability-typing.md) | methodology |
 | [chebyshev-iteration](./chebyshev-iteration.md) | algorithm |
@@ -87,6 +88,7 @@ Auto-maintained by the orchestrator: every `concept_writes mode=create` adds a r
 | [incremental-least-squares](./incremental-least-squares.md) | algorithm |
 | [ksp_solve](./ksp_solve.md) | layer-pattern |
 | [negative-result-slice](./negative-result-slice.md) | methodology |
+| [nested-constructed-operator-gate](./nested-constructed-operator-gate.md) | layer-pattern |
 | [nrm2](./nrm2.md) | primitive |
 | [orthogonalization](./orthogonalization.md) | algorithm |
 | [plane-rotation-stream](./plane-rotation-stream.md) | layer-pattern |
