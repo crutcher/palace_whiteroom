@@ -179,33 +179,88 @@ records the rotation direction in-line per high→low discipline; it does not au
 
 ## Status
 
-`rough-in`. **Reasoning (warrant-first):** the combinator's **structure** is read directly
-off the two positive readout sites — the eigenvalue→ω un-transform (`eigensolver.cpp:424-439`)
-and the Q-factor body (`postoperator.cpp:1188-1203`) — and the map laws (§Algebraic laws)
-are syntactic identities on that per-mode map. So the *structure* approaches the
-firm-on-positive-structure escape. But two factors gate it to `rough-in`:
-1. the per-mode building blocks it folds — the κ participation ratio (`½R|I|²/E`) and the
-   eigenvalue un-transform — are **not yet firm L1 entries** (no `L1/eigenfreq_qfactor_reduce`
-   or κ-participation primitive exists; the reduction is distilled directly from the driver
-   + postoperator bodies), so the entry cannot inherit firm primitive maturity;
-2. there is **no dedicated Palace unit test** for the eigenmode postprocess Q-factor /
-   eigenfrequency readout (the `MeasureLumpedPortsEig` body + the readout loop are
-   integration-level, exercised only through the full eigenmode `Solve(mesh)` driver), so
-   the reduction-level laws are test-unconfirmed.
+`rough-in (test-coverage-bounded)`. **Reasoning (warrant-first):** the combinator's
+**structure** is read directly off the two positive readout sites — the eigenvalue→ω un-transform
+(`eigensolver.cpp:424-439`) and the Q-factor body (`postoperator.cpp:1185-1203`) — and the map
+laws (§Algebraic laws) are syntactic identities on that per-mode map, clearing the
+firm-on-positive-structure bar. The existing PostOperator postprocess unit test
+(`test/unit/test-postoperator.cpp`, the `[idempotent]` round-trip) **partially discharges the
+test-gate**: it CHECK-asserts the reduction-OUTPUT cache fields the verb folds — the κ loss rate
+`mode_port_kappa` (`:216`, `:259`) and the participation-ratio sibling `participation_ratio`
+(`:160-188`) — as real, unit-coherent, round-trip-invariant `Measurement` fields, documenting the
+`(f, Q)`/κ scalar-table output semantics as L0-equivalent. This moves the entry off bare
+`rough-in` to the **test-coverage-bounded** qualifier (structure fully L0-anchored; output/laws
+test-supported to the extent an output-invariance test can support them). It is NOT promoted to
+`firm` because:
+1. one of the per-mode building blocks it folds — the **eigenvalue un-transform** — is **not yet a
+   firm L1 entry** (no `L1/eigenfreq_qfactor_reduce` or eigenvalue-un-transform primitive exists;
+   that half of the reduction is distilled directly from the driver body), so the entry cannot
+   fully inherit firm primitive maturity (a residual STRUCTURE-firmness gate, not a test gate). The
+   κ-participation half of this primitive-maturity gate is **already discharged**: firm L1
+   [`participation_ratio`](../L1/participation_ratio.md) (c077) covers the resistive κ loss-rate
+   ratio (`½R|I|²/E`) the verb folds, citing the verb's own κ site (`postoperator.cpp:1188-1203`)
+   as a positive witness; and
+2. the test asserts reduction-OUTPUT invariance over the randomly-populated `Measurement` cache,
+   NOT the eigenpair→`(f,Q)` **assembly map** — the `(f, Q)` output scalars `cache.freq` /
+   `cache.eigenmode_Q` / the lumped-port `quality_factor` are populated-but-not-CHECK-asserted in
+   the idempotency test (the asserted `quality_factor` at `:335-342` is `interface_eps_i`
+   dielectric Q, a different output product), so the assembly-level laws are still test-unconfirmed.
 
-Promotion route: (a) firm up the folded per-mode primitives (a κ-participation L1 entry +
-the eigenvalue-un-transform primitive), AND (b) a dedicated eigenmode-postprocess test OR a
-lowering-verifier pass raising the map-law confidence to `inner_product`-equivalent.
-(Contrast the rank-2 sibling [`gram_reduce`](./gram_reduce.md), also `rough-in
-(test-coverage-bounded)` for the same primitive-maturity + no-test reasons.)
+Promotion route (to `firm`): (a) firm up the residual folded per-mode primitive — the
+eigenvalue-un-transform primitive (the κ-participation primitive is already firm L1
+[`participation_ratio`](../L1/participation_ratio.md), c077), AND (b) a dedicated
+eigenmode-postprocess assembly test (exercising the un-transform + κ-from-`E`/`I` computation, not
+just output-cache round-trip) OR a lowering-verifier pass raising the assembly-map confidence to
+`inner_product`-equivalent. (Contrast the rank-2 sibling [`gram_reduce`](./gram_reduce.md),
+`rough-in (test-coverage-bounded)` for the same primitive-maturity + output-only-test reasons; and
+the driven-pipeline sibling [`sparameter_reduce`](./sparameter_reduce.md), the same
+output-invariance-test discharge shape.)
 
 **Scope: 1-of-1 — the eigenmode pipeline's output product.** This is the eigenmode driver's
 OWN output-product reduction; it is not a cross-pipeline shared verb (the other four
 pipelines have different output products: capacitance/inductance via
-[`gram_reduce`](./gram_reduce.md), driven S-parameters via their own per-column projection,
+[`gram_reduce`](./gram_reduce.md), driven S-parameters via [`sparameter_reduce`](./sparameter_reduce.md),
 transient via the field/energy time-history). The disciplined-cross-pipeline-mining-gate
 does not apply — this is a single-pipeline output-product verb by design (like
 [`frequency_sweep`](./frequency_sweep.md)'s single-witness-driven-by-design scope).
+
+verified_against:
+
+```yaml
+verified_against:
+  - citation: palace/test/unit/test-postoperator.cpp:145-150
+    verdict: supports
+    audited_at: 2026-06-03T165837Z
+    note: TEST_CASE PostOperator [idempotent] establishes Nondimensionalize/Dimensionalize round-trip over the Measurement cache; the harness that asserts reduction-OUTPUT invariance (not the eigenpair-to-(f,Q) assembly map) — same shape as the sparameter_reduce output-invariance discharge.
+  - citation: palace/test/unit/test-postoperator.cpp:52-53
+    verdict: partially-supports
+    audited_at: 2026-06-03T165837Z
+    note: cache.freq + cache.eigenmode_Q (the per-mode f and Q output scalars) populated as Measurement reduction-output fields, documenting the (f,Q) scalar-table output EXISTS at L0; populated-but-not-CHECK-asserted in this idempotency round-trip.
+  - citation: palace/test/unit/test-postoperator.cpp:160-188
+    verdict: supports
+    audited_at: 2026-06-03T165837Z
+    note: participation_ratio (the dimensionless domain-energy participation, the kappa closure's sibling ratio) CHECK-asserted invariant over the round-trip (lines 167-186), confirming the per-mode energy-participation reduction-output semantics.
+  - citation: palace/test/unit/test-postoperator.cpp:216-216
+    verdict: supports
+    audited_at: 2026-06-03T165837Z
+    note: mode_port_kappa (the resistive-lumped-port loss rate the verb's kappa closure folds, kappa = 1/2 R|I|^2/E) CHECK-asserted invariant under nondimensionalization — the strongest direct documentation of the kappa reduction-output field.
+  - citation: palace/test/unit/test-postoperator.cpp:259-259
+    verdict: supports
+    audited_at: 2026-06-03T165837Z
+    note: mode_port_kappa dimensional-vs-nondimensional CHECK (!WithinRel) confirms it carries a real unit class, the expected behavior of an energy/loss ratio output field.
+  - citation: palace/test/unit/test-postoperator.cpp:335-342
+    verdict: partially-supports
+    audited_at: 2026-06-03T165837Z
+    note: quality_factor IS CHECK-asserted invariant, but on interface_eps_i (interface dielectric Q), NOT the eigenmode/mode-port Q; the lumped-port quality_factor (line 110) and eigenmode_Q are populated but not CHECK-asserted, so the (f,Q) Q-half is only indirectly covered (via kappa, which IS checked).
+  - citation: palace/palace/drivers/eigensolver.cpp:424-439
+    verdict: supports
+    audited_at: 2026-06-03T165837Z
+    note: positive site 1 re-verified on-disk via citecheck --anchor; readout loop start :424, sqrt-untransform at :433 (linear EVP), lambda/i untransform at :438 (quadratic EVP).
+  - citation: palace/palace/models/postoperator.cpp:1185-1203
+    verdict: supports
+    audited_at: 2026-06-03T165837Z
+    note: positive site 2 re-verified on-disk; kappa_mj = 1/2 R|I|^2/E at :1198-1200, Q_mj = freq_re/|kappa| with the kappa==0 ? mfem::infinity() guard at :1200-1202, formula comment :1186-1191.
+```
 
 ## Evidence
 

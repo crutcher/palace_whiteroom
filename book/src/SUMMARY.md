@@ -54,6 +54,7 @@
   - [krylov-step](./L4/krylov-step.md)
 - [Data-algebra combinators & named verbs](./L4/data-algebra-combinators-intro.md)
   - [assemble_frequency_operator](./L4/assemble_frequency_operator.md)
+  - [domain_energy_reduce](./L4/domain_energy_reduce.md)
   - [dot](./L4/dot.md)
   - [eigenfreq_qfactor_reduce](./L4/eigenfreq_qfactor_reduce.md)
   - [fe_assemble](./L4/fe_assemble.md)

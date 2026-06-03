@@ -5,7 +5,7 @@ level: L1
 status: seed
 composes:
   - book/src/feature/driven.L1.md (the producing driver column — supplies the per-ω solution family [Eᵢ])
-  - book/src/L1/bilinear-form.md (rough-in — the port-mode projection ⟨sₖ, E⟩ = the linear-functional / inner-product against the port covector)
+  - book/src/L1/port_projection.md (firm — the port-mode projection ⟨s, E⟩, the dual-pairing/linear-functional primitive the reduction folds; the FIRM L1 home as of cycle-077, replacing the earlier bilinear-form approximation)
 l0_ground_truth:
   - palace/models/postoperator.cpp:1246-1307 (PostOperator::MeasureSParameter — the S-matrix post-process)
   - palace/models/lumpedportoperator.cpp:283-294 (LumpedPortData::GetSParameter — lumped port-mode projection)

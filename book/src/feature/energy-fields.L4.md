@@ -59,8 +59,8 @@ One composed reduction stage, fed by a field-bearing driver column's solution fi
    standalone output-product column rather than a per-driver stage-3. L0: the field is whichever of
    `V`/`E`/`A`/`B` the solver populated (`postoperator.cpp:1032, 1057`).
 
-2. **The per-domain energy-table reduction** — `domain_energy_reduce`
-   (**rough-in**, minted cycle-078). The L4 per-domain energy-table reduction combinator
+2. **The per-domain energy-table reduction** — [`domain_energy_reduce`](../L4/domain_energy_reduce.md)
+   (**rough-in**, authored cycle-079). The L4 per-domain energy-table reduction combinator
    `domain_energy_reduce doms field e_total` maps each configured domain attribute `idx` to its
    `DomainData` row: the **per-domain energy** `energyᵢ = ½⟨field, M_idx field⟩` (the
    domain-restricted SPD energy form — the [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
@@ -131,7 +131,7 @@ products:
 - The upstream is a **single solution field**, not a solution family — there is no family-PAIR
   `xⱼᵀ K xᵢ` bilinear, no `symmetric_from_upper` (the load-bearing distinction from `gram_reduce`;
   the c074 D6 do-NOT-over-unify guard, honored).
-- The reduction is `domain_energy_reduce`, a **per-domain scalar
+- The reduction is [`domain_energy_reduce`](../L4/domain_energy_reduce.md), a **per-domain scalar
   map** folding two scalar projections per domain: the domain-restricted energy form
   (`matrix-weighted-norm`-squared, rough-in) and the participation ratio (firm
   [`participation_ratio`](../L1/participation_ratio.md)).
@@ -153,7 +153,7 @@ half is necessary but not sufficient).
 | Stage | L4 constituent | Status | L0 site |
 |---|---|---|---|
 | producing field (any field-bearing driver) | [`electrostatic.L4`](./electrostatic.L4.md) / [`magnetostatic.L4`](./magnetostatic.L4.md) / … | seed | `postoperator.cpp:1032, 1057` |
-| per-domain energy-table reduction | domain_energy_reduce *(rough-in; no anchor yet)* | rough-in | `postoperator.cpp:1036-1042, 1061-1066` |
+| per-domain energy-table reduction | [`domain_energy_reduce`](../L4/domain_energy_reduce.md) *(rough-in)* | rough-in | `postoperator.cpp:1036-1042, 1061-1066` |
 | per-domain energy form (folded) | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared (domain-restricted `M_i`) | rough-in (test-coverage-bounded) | `domainpostoperator.cpp:255-275, 277-298` |
 | participation ratio (folded) | [`participation_ratio`](../L1/participation_ratio.md) | firm | `postoperator.cpp:1039, 1064` |
 

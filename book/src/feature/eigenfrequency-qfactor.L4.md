@@ -59,10 +59,20 @@ The whole output product therefore lowers cleanly outward to the L4 backend surf
 | Stage | L4 constituent | Status | L0 site |
 |---|---|---|---|
 | producing driver column | [`eigenmode.L4`](./eigenmode.L4.md) (driver feature column) | seed | `eigensolver.cpp:32-477` |
-| per-mode scalar-ratio reduction | [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) | rough-in | `eigensolver.cpp:424-439`, `postoperator.cpp:1171-1203` |
+| per-mode scalar-ratio reduction | [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) | rough-in (test-coverage-bounded) | `eigensolver.cpp:424-439`, `postoperator.cpp:1171-1203`, `test/unit/test-postoperator.cpp:216,259,160-188` (reduction-output cache round-trip: mode_port_kappa, participation_ratio) |
 | eigenfrequency un-transform (folded) | [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) §Semantics | rough-in | `eigensolver.cpp:430-439` |
 | Q-factor κ participation (folded) | [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) §Semantics | rough-in | `postoperator.cpp:1188-1203` |
 
 ## Status
 
 `seed` — an output-product **leaf feature column** authored under the FEATURE-SURFACE SPINE directive (2026-06-02), the rank-1 per-mode-table sibling of the rank-2 Gram output products [capacitance](./capacitance.L4.md) / [inductance](./inductance.L4.md). The composition is sound: stage (1) consumes the [`eigenmode.L4`](./eigenmode.L4.md) driver column's converged eigenpair family; stage (2) composes the [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) per-mode scalar-ratio reduction at the problem-type un-transform + resistive-lumped-port κ. The column stays `seed` (does not promote) because [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) is `rough-in` — its folded per-mode primitives (the κ participation ratio, the eigenvalue un-transform) are not yet firm L1 entries and no dedicated eigenmode-postprocess test exists. This chapter carries the *compositional* claim (the `(f, Q)` table = the per-mode scalar-ratio reduction over the eigenmode driver's eigenpair family), not the constituents' per-op algebraic claims (those live in [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) and the [`eigenmode.L4`](./eigenmode.L4.md) driver column). The defining structural fact: a rank-1 per-mode scalar-ratio table, NOT a `gram_reduce` family-PAIR grid (c074 D6 closed-negative). Evidence: the L0 readout / Q-factor ranges `eigensolver.cpp:424-439` (the eigenvalue un-transform) + `postoperator.cpp:1171-1203` (`MeasureLumpedPortsEig`, the Q-factor) realizing the reduction, all anchors confirmed on-disk via palace-codemap `read_range` this dispatch, plus the constituent down-links.
+
+The verb [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) was raised to `rough-in
+(test-coverage-bounded)` (cycle-079 lowering-verifier audit: the PostOperator `[idempotent]`
+postprocess test `test/unit/test-postoperator.cpp` CHECK-asserts the κ loss-rate `mode_port_kappa`
+and the participation-ratio output fields as round-trip-invariant L0-equivalent semantics). The
+column nonetheless stays `seed`: the verb is still not `firm` (its residual folded per-mode
+primitive — the eigenvalue un-transform — has no firm L1 entry, and the test asserts
+reduction-OUTPUT invariance not the eigenpair→`(f,Q)` assembly; the κ-participation half is already
+firm L1 `participation_ratio`), and a feature column may promote past `seed` only once ALL its
+composed constituents are firm.
