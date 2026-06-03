@@ -111,7 +111,7 @@ This shape is load-bearing, and it follows three principles:
   is expressed this way end-to-end. The shared inner-kernel spine being substantially
   built is a *milestone*, not completion.
 
-> **Where the L4 surface stands (as of 2026-06-03, batch-22).** **Both halves of the
+> **Where the L4 surface stands (as of 2026-06-03, batch-23).** **Both halves of the
 > assemble+solve deliverable now reach L4 across all five pipelines.** The assemble half
 > arrived in batch-21 (the `fe_assemble` assemble-fold combinator, the driven
 > `assemble_frequency_operator`, the BLAS-1 data-algebra combinators `linear_combination`
@@ -125,7 +125,7 @@ This shape is load-bearing, and it follows three principles:
 > across the assemble+solve target — a milestone, not completion (the feature-surface
 > spine and the remaining solver/output breadth continue).
 
-> **The feature-surface spine (opened batch-22).** Parallel to the bottom-up L4→L0
+> **The feature-surface spine (opened batch-22, scaled batch-23).** Parallel to the bottom-up L4→L0
 > vocabulary, a **top-down feature-surface spine** presents Palace's entry-point features
 > (the 5 simulation drivers, the top-level lifecycle ROOT, the output/postprocess
 > products, wave-port/boundary-mode) as **composition-root chapters** at L4+L1+L0 under a
@@ -133,9 +133,20 @@ This shape is load-bearing, and it follows three principles:
 > product out, and its body is the *composition of the already-firm decomposed vocabulary*
 > at that level, linking DOWN to the constituents — it composes the vocabulary, it does
 > not replace it. The L4 feature surfaces ARE the outward backend-lowering entry points.
-> As of batch-22 the spine stands at three columns (electrostatic + magnetostatic leaf
-> driver columns + the lifecycle meta-feature ROOT); it scales by fan-out alongside the
-> bottom-up frontier.
+> As of **batch-23 the spine stands at ten columns**: the 5 driver-leaf columns
+> (electrostatic / magnetostatic / driven / transient / eigenmode), the lifecycle
+> meta-feature ROOT, and **4 of the 5 output-product columns** (capacitance / inductance /
+> sparameters / eigenfrequency-qfactor; only energy-fields remains). The output-product
+> cohort surfaced that **the L4 algebra-of-folds has three distinct reduce-shapes** —
+> bilinear symmetric-Gram (`gram_reduce`, electrostatic capacitance + magnetostatic
+> inductance), per-column linear-projection (`sparameter_reduce`, driven S-parameters), and
+> per-mode scalar-table (`eigenfreq_qfactor_reduce`, eigenmode frequency+Q) — a case where
+> *refusing* an over-unification (the eigenmode-Q and S-params are NOT symmetric-Gram) was
+> itself the load-bearing finding: each output product authors its OWN reduction verb. The
+> spine scales by fan-out alongside the bottom-up frontier; the directive-3 by-kind
+> sub-chapter grouping (spine-ROOT / driver-leaf / output-product) applies to this Part as
+> it does to the layer Parts, with the within-column high→low ordering preserved as the
+> deliberate exception.
 
 ## FLOW — how the goal is met
 

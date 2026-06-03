@@ -85,6 +85,8 @@ You also apply edits to `reports/<id>/REPORT.md` or supporting docs in the same 
 
 ## Setting `overall_status`
 
+**The canonical token set is exactly `ready | needs-revision | reject` — NOTHING ELSE** (batch-23 meta-phase, cycle-075; friction-ledger `overall-status-non-canonical-token-and-clean-report-gap`). The `integrator-per-report` Process step 1 hard-gates on `overall_status: ready` and returns-without-applying on anything else. **Do NOT write `integrate`, `apply`, `done`, `ok`, or any other synonym** — those are non-canonical and force a manual backfill / a blocked apply. Across batch-23 (c073/c074/c075) repairers recurringly set `overall_status: integrate` (a non-canonical token); always use the literal `ready`.
+
 - All findings either `pass` (from critic), `repaired`, or `not-needed` → **`ready`**.
 - At least one `unrepairable` finding the integrator should defer → **`needs-revision`**, name `follow_up_agent` (e.g., `harvester` if missing operator content; `abstractor` if missing theme; or null with explanation).
 - Report is structurally wrong in a way revision can't fix → **`reject`** (rare).
