@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: lifecycle
 level: L1
-status: seed
+status: firm
 composes:
   - book/src/feature/electrostatic.L1.md (the electrostatic driver — one ProblemType specialization)
   - book/src/feature/magnetostatic.L1.md (the magnetostatic driver — one ProblemType specialization)
@@ -60,4 +60,8 @@ The L1→L0 direction (how the mesh-refine + driver solves lower to the in-place
 
 ## Status
 
-`seed` — the L1 pure-function composition root for the lifecycle meta-feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). The composition is sound: the mesh-build + estimate-mark-refine fold are driver-agnostic scaffold (the fold is the firm [`fold_solve`](../L4/fold_solve.md) state-generated shape at L4); the per-driver dispatch composes the per-column pure functions (2 on disk — [`electrostatic.L1`](./electrostatic.L1.md), [`magnetostatic.L1`](./magnetostatic.L1.md); 3 forthcoming). This chapter carries the compositional claim only (lifecycle = dispatch-over-driver-columns under the adaptive fold), not the per-column algebraic claims (those live in the per-driver columns) nor the per-op claims (those live in the vocabulary chapters). Evidence: the L0 driver-agnostic range `palace/main.cpp:158-328` + `palace/drivers/basesolver.cpp:153-276` realizing the composition, plus the per-driver column down-links.
+`firm` — the L1 pure-function composition root for the lifecycle meta-feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02).
+
+**Promotion under the OWN-COMPOSITION rule** (USER DIRECTIVE 2026-06-03; CLAUDE.md §Extraction-goal FEATURE-SURFACE SPINE). This column promotes off `seed` because its **OWN driver-agnostic composition + its directly-owned constituents** are firm; the per-driver dispatch is over **sibling feature columns** = **references, NOT blocking constituents** (the spine-ROOT sub-kind). The directly-owned driver-agnostic constituents are: the mesh-build L0 scaffold + the firm [`fe_assemble`](../L1/fe_assemble.md) (driver-agnostic mesh→operator assemble) + the firm [`ksp_solve`](../L1/ksp_solve.md) (the solve cap every driver's per-step body bottoms out in) + the firm [`fold_solve`](../L4/fold_solve.md) state-generated estimate-mark-refine fold (at L4) — all verified firm from their on-disk `## Status` lines this dispatch (`fe_assemble.md:200` `firm`; `ksp_solve.md` `firm`; `fold_solve.md` `firmness: firm`). The per-driver columns ([`electrostatic.L1`](./electrostatic.L1.md), [`magnetostatic.L1`](./magnetostatic.L1.md), and the eigenmode / driven / transient columns) are the specializations this ROOT dispatches over; their own `status:` does not gate the ROOT's. This supersedes the earlier "promote only once all driver columns are firm" gating that created the `seed` deadlock the directive breaks.
+
+This chapter carries the compositional claim only (lifecycle = dispatch-over-driver-columns under the adaptive fold), not the per-column algebraic claims (those live in the per-driver columns) nor the per-op claims (those live in the vocabulary chapters). Evidence: the L0 driver-agnostic range `palace/main.cpp:158-328` + `palace/drivers/basesolver.cpp:153-276` realizing the composition, plus the per-driver column down-links.

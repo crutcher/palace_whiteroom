@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: lifecycle
 level: L0
-status: seed
+status: firm
 l0_ground_truth:
   - palace/main.cpp:158-328 (main — the top-level lifecycle: parse, configure, dispatch driver, build mesh, run, finalize)
   - palace/drivers/basesolver.cpp:153-276 (BaseSolver::SolveEstimateMarkRefine — the solve-estimate-mark-refine adaptive outer loop)
@@ -50,4 +50,6 @@ This L0 lifecycle surface lifts to the L1 pure-function lifecycle root [`lifecyc
 
 ## Status
 
-`seed` — the L0 ground-truth surface for the top-level lifecycle meta-feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Every stage is a cited range into `palace/main.cpp` + `palace/drivers/basesolver.cpp` / `.hpp`, confirmed on-disk via palace-codemap `read_range` this dispatch (`palace/main.cpp:140-328`, `palace/drivers/basesolver.cpp:153-276`, `palace/drivers/basesolver.hpp:31-67`). This is a NOVEL feature sub-kind — a **meta-feature whose constituents include other feature columns** (the per-driver specializations) rather than only vocabulary ops; the surface-or-evidence evidence is the driver-agnostic source range + the specialization-seam site map + the per-driver column down-links. Rotation / variant-axis claims no-op (no rotation, no variant-axis catalogue — the chapter carries only the compositional claim).
+`firm` — the L0 ground-truth surface for the top-level lifecycle meta-feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02).
+
+**Promotion under the OWN-COMPOSITION rule** (USER DIRECTIVE 2026-06-03; CLAUDE.md §Extraction-goal FEATURE-SURFACE SPINE). This column promotes off `seed` because its **OWN composition** — the driver-agnostic lifecycle source surface — is fully cited and firm; the per-driver dispatch at the `switch (iodata.problem.type)` specialization seam is over **sibling feature columns** = **references, NOT blocking constituents** (the spine-ROOT sub-kind). Every stage is a cited range into `palace/main.cpp` + `palace/drivers/basesolver.cpp` / `.hpp`, confirmed on-disk via palace-codemap `read_range` (`palace/main.cpp:140-328`, `palace/drivers/basesolver.cpp:153-276`, `palace/drivers/basesolver.hpp:31-67`); there are no firm-gated vocabulary constituents at L0 (the surface IS the ground truth). The per-driver column down-links ([`electrostatic.L0`](./electrostatic.L0.md), [`magnetostatic.L0`](./magnetostatic.L0.md), and the eigenmode / driven / transient columns) are the specializations this seam selects; their own `status:` does not gate this ROOT's. This is a NOVEL feature sub-kind — a **meta-feature whose constituents include other feature columns** (the per-driver specializations) rather than only vocabulary ops; the surface-or-evidence evidence is the driver-agnostic source range + the specialization-seam site map + the per-driver column down-links. Rotation / variant-axis claims no-op (no rotation, no variant-axis catalogue — the chapter carries only the compositional claim).

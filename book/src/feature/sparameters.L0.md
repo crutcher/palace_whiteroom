@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: sparameters
 level: L0
-status: seed
+status: firm
 l0_ground_truth:
   - palace/models/postoperator.cpp:1246-1307 (PostOperator::MeasureSParameter — the S-matrix post-process)
   - palace/models/postoperator.cpp:1141 (the lumped per-port S projection: vi.S = data.GetSParameter(*E), in MeasureLumpedPorts)
@@ -47,4 +47,4 @@ This L0 surface lifts to the L1 pure-function composition root [`sparameters.L1`
 
 ## Status
 
-`seed` — the L0 ground-truth surface for the scattering-matrix output product (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Every stage is a cited range into the Palace `models/` sources, confirmed on-disk via palace-codemap `read_range` this dispatch (`postoperator.cpp:1246-1307` `MeasureSParameter` body + def `:1246-1309`; the per-port projection cache `:1141` lumped / `:1239` wave; the self-reflection `:1275`/`:1297`; the lumped generalized-S `:1278-1281`; the wave de-embed `:1299-1302`; the lumped projection verb `lumpedportoperator.cpp:283-294`; the wave projection verb `waveportoperator.cpp:780-793`). The chapter's evidence IS the source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).
+`firm` — the L0 ground-truth surface for the scattering-matrix output product (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive (2026-06-02). **The column promotes off `seed` to `firm` under the OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03):** its sole directly-owned constituent reduction verb [`sparameter_reduce`](../L4/sparameter_reduce.md) is `firm` (c083); the producing [`driven`](./driven.L0.md) driver column is a sibling reference, not a blocker. Every stage is a cited range into the Palace `models/` sources, confirmed on-disk via palace-codemap `read_range` (`postoperator.cpp:1246-1307` `MeasureSParameter` body + def `:1246-1309`; the per-port projection cache `:1141` lumped / `:1239` wave; the self-reflection `:1275`/`:1297`; the lumped generalized-S `:1278-1281`; the wave de-embed `:1299-1302`; the lumped projection verb `lumpedportoperator.cpp:283-294`; the wave projection verb `waveportoperator.cpp:780-793`). The chapter's evidence IS the source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).

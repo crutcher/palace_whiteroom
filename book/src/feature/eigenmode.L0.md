@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: eigenmode
 level: L0
-status: seed
+status: firm
 l0_ground_truth:
   - palace/drivers/eigensolver.cpp:32-477 (EigenSolver::Solve)
   - palace/drivers/eigensolver.hpp:20-28 (class declaration)
@@ -41,4 +41,4 @@ This L0 surface lifts to the L1 pure-function composition root [`eigenmode.L1`](
 
 ## Status
 
-`seed` — the L0 ground-truth surface for the eigenmode feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the [magnetostatic.L0](./magnetostatic.L0.md) / [electrostatic.L0](./electrostatic.L0.md) exemplars. Every stage is a cited range into `palace/drivers/eigensolver.cpp`, confirmed on-disk via palace-codemap `read_range` this dispatch (the `EigenSolver::Solve` decl `:32-33`, K/C/M assembly `:40-42`, `SetOperators` pencil setup `:172-196`, the single `eigen->Solve()` `:367`, the readout loop `:424-471`). The load-bearing structural fact at L0: a single opaque `eigen->Solve()` with NO surrounding Palace-authored loop and NO per-source RHS family — the driver's only loop is the post-processing eigenpair readout (the `solve_family`/`fold_solve` non-membership recorded at `book/src/L4/solve_family.md:146`). The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).
+`firm` — the L0 ground-truth surface for the eigenmode feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the [magnetostatic.L0](./magnetostatic.L0.md) / [electrostatic.L0](./electrostatic.L0.md) exemplars. **Promoted `seed → firm` cycle-085** with the column (the L0 surface tracks the column maturity under the OWN-COMPOSITION promotion rule; the eigenmode column's directly-owned constituents — `fe_assemble`, `eigsolve` — are firm, and the `eigenfrequency-qfactor` reduction is a sibling cross-link, not a blocker). Every stage is a cited range into `palace/drivers/eigensolver.cpp`, confirmed on-disk via palace-codemap `read_range` (the `EigenSolver::Solve` decl `:32-33`, K/C/M assembly `:40-42`, `SetOperators` pencil setup `:172-196`, the single `eigen->Solve()` `:367`, the readout loop `:424-471`). The load-bearing structural fact at L0: a single opaque `eigen->Solve()` with NO surrounding Palace-authored loop and NO per-source RHS family — the driver's only loop is the post-processing eigenpair readout (the `solve_family`/`fold_solve` non-membership recorded at `book/src/L4/solve_family.md:146`). The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).

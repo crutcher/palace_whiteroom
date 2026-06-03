@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: driven
 level: L0
-status: seed
+status: firm
 l0_ground_truth:
   - palace/drivers/drivensolver.cpp:37-75 (DrivenSolver::Solve — dispatch to SweepUniform/SweepAdaptive)
   - palace/drivers/drivensolver.cpp:77-229 (DrivenSolver::SweepUniform — the uniform frequency sweep)
@@ -136,13 +136,18 @@ uniform-sweep column.
 
 ## Status
 
-`seed` — the L0 ground-truth surface for the driven feature, a **leaf feature
+`firm` — the L0 ground-truth surface for the driven feature, a **leaf feature
 column** authored under the FEATURE-SURFACE SPINE directive (2026-06-02), mirroring
 the [electrostatic.L0](./electrostatic.L0.md) / [magnetostatic.L0](./magnetostatic.L0.md)
 exemplars but at the operator-VARYING corner (the `SetOperators`-inside-the-loop
-witness). Every stage is a cited range into `palace/drivers/drivensolver.cpp`,
-confirmed on-disk via palace-codemap `read_range` + direct on-disk `Read` (close-brace
-discipline on the loop / function END lines) this dispatch. The chapter's evidence IS
-the driver-source range + the per-stage site map to the constituent ops (the adapted
-surface-or-evidence form for the feature-surface kind). The S-parameter reduction
-(stage 5) is the driven output-product surface, forward-ref'd to its own column.
+witness). **Promoted `seed → firm` cycle-085** with the column (the L0 surface tracks
+the column maturity under the OWN-COMPOSITION promotion rule; the driven column's
+directly-owned constituents — `fe_assemble`, `assemble_frequency_operator`,
+`frequency_sweep`, `ksp_solve` — are all firm, and the S-parameter reduction is a
+sibling cross-link, not a blocker). Every stage is a cited range into
+`palace/drivers/drivensolver.cpp`, confirmed on-disk via palace-codemap `read_range` +
+direct on-disk `Read` (close-brace discipline on the loop / function END lines). The
+chapter's evidence IS the driver-source range + the per-stage site map to the
+constituent ops (the adapted surface-or-evidence form for the feature-surface kind).
+The S-parameter reduction (stage 5) is the driven output-product surface, presented as
+its own [`sparameters`](./sparameters.L0.md) column (a sibling cross-link).

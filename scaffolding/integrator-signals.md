@@ -30,6 +30,37 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-085 — 2026-06-03T225500Z — POSITION 1/3 OF META-BATCH-27 (the FIRST primary cycle after the batch-26 meta-phase, post-SESSION-RESTART; the batch-27 meta-phase fires AFTER cycle-087) — the batch-27 LEAD: the all-12-column FEATURE-SURFACE SPINE re-evaluation under the new OWN-COMPOSITION column-promotion rule — 6 feature columns PROMOTED `seed` → `firm`, the FIRST feature columns EVER off the terminal `seed` state; the `eigenmode`↔`eigenfrequency-qfactor` mutual-blocking deadlock is BROKEN (the batch-27 meta-phase fires AFTER cycle-087's finalize, aggregating 085/086/087; this finalize does NOT run meta-phase housekeeping)
+
+> **READER NOTE:** cycle-085 is the downstream authoring payload of the batch-26 meta-phase's enactment of the USER DIRECTIVE `feature-column-promotion-break-the-seed-deadlock`. The OWN-COMPOSITION rule (a column promotes on its OWN composition + directly-owned constituents; cross-linked SIBLING columns are references, NOT blockers) was applied across all 12 feature columns × 3 levels. 6 PROMOTED `seed`→`firm` (the FIRST EVER off `seed`): `eigenmode`/`driven`/`transient` (driver-leaf) + `eigenfrequency-qfactor`/`sparameters` (output-product) + `lifecycle` (spine-ROOT). 6 STAY `seed` on genuine OWN-constituent gates. The `eigenmode`↔`eigenfrequency-qfactor` deadlock is broken. ALL layer-vocabulary counts UNCHANGED (status-flip + prose cycle, no new files, no SUMMARY change).
+
+### Unblocked
+- The 6 promoted columns (`eigenmode`/`driven`/`transient`/`eigenfrequency-qfactor`/`sparameters`/`lifecycle`) are now FIRM — downstream readers can treat them as authoritative composition-roots — landings c085 D1/D2/D3.
+- `solve-family-list-homomorphism-law-confidence-pass` is now the unblocking lever for `electrostatic`+`magnetostatic` (their sole non-firm own constituent is `solve_family` rough-in) — planner-appended candidate, `scaffolding/priorities.md`.
+- `boundary-mode` promotion is gated ONLY on a waveguide-mode output-product column (its readout has no home) — OQ `waveguide-mode-output-product-column-would-promote-boundary-mode`.
+
+### New dependencies
+- The 5 per-driver columns are now `lifecycle`'s sibling REFERENCES (not blocking constituents) — the spine-ROOT promotion rests on its own driver-agnostic composition (mesh-build + firm `fold_solve`) — c085 D3, `feature/lifecycle.{L4,L1,L0}.md`.
+- `eigenfrequency-qfactor` / `sparameters` dep-map driver-rows relabeled "(sibling reference, not a blocker)" — the output-product↔driver cross-link is a reference relationship, not a firmness dependency — c085 D2.
+
+### Resolution implications
+- `feature-column-firm-token-choice-batch-27-meta-phase` — needs-more — whether `firm` is the right promoted token for a composition-root or a feature-specific token; flagged by ALL 3 dispatches; a batch-27 meta-phase decision.
+- `output-product-stay-seed-columns-gated-on-reduce-verb-firming` — partially-answered — capacitance/inductance gate on `gram_reduce` firming; energy-fields gates on `domain_energy_reduce` + `matrix-weighted-norm`; producing drivers are sibling references, not the gate.
+- `electrostatic-magnetostatic-stay-seed-overrides-priorities-1-expectation` — answered — the priorities-1 expectation (electrostatic/magnetostatic would promote) was correctly overridden by the OWN-constituent gate (`solve_family` + `gram_reduce` rough-in); a reconcile note for the planner.
+
+### Suggested next dispatches
+- (`lowering-verifier`, `solve_family` list-homomorphism law-confidence pass) — would firm `solve_family`, unblocking the electrostatic+magnetostatic column promotions (the highest-fan-out next column-promotion lever).
+- (`lowering-verifier` / `harvester`, `gram_reduce` firming route) — `gram_reduce` rough-in jointly blocks capacitance+inductance (and electrostatic/magnetostatic's reduce side); but it is `rough-in (test-coverage-bounded)` — a law-confidence pass per the c082/c083 escape may apply IFF its folded primitives are all firm (check vs the `matrix-weighted-norm` gate).
+- (planner/meta-phase) — the `matrix-weighted-norm` √-entry-point cascade (NO-GO-HELD) is the convergent foundation blocker for the `domain_energy_reduce` reduce-verb tail → energy-fields; a batch-27 meta-phase re-weigh.
+
+### Wave-conflict observations
+- NO wave conflict. D1 SOLE-owns `feature/index.md`; D2/D3 cross-report-REFERENCE its 6-firm/6-seed narrative but do not write it (clean partition). Byte-disjoint across the 12 column files. Cross-report consistency VERIFIED on-disk by finalize (grep `^status:` over all 12 column.L4.md = 6 FIRM + 6 SEED, exactly matching the index enumeration — NO drift across the combined D1+D2+D3 landing). The per-report integrators correctly sequenced the index narrative ahead of D2/D3's column flips (the index was internally backed by on-disk constituent evidence regardless).
+
+### Integration-tooling friction
+- NONE this cycle. 3/3 staging rows == dispatched-ready (no staging-completeness gap; 66th consecutive clean staging / 80th consecutive clean split-integrator cycle). The staging log was complete and authoritative; no reconciliation-from-working-tree recovery needed. Build clean (exit 0), no build-repair, no implied-component stubs. The only standing item is the **firm-token-choice question** flagged by all 3 dispatches (whether a composition-root should wear `firm` or a feature-specific promoted token) — a batch-27 meta-phase decision, surfaced LOUDLY here and in the batch CYCLE.md.
+
+---
+
 ## cycle-084 — 2026-06-03T214250Z — POSITION 3/3 OF META-BATCH-26 (the LAST primary cycle of batch-26; the batch-26 meta-phase fires NEXT) — land-clean discipline: a SINGLE `lifter` hygiene dispatch corrected two stale `eigenfreq_qfactor_reduce` maturity references in `book/src/L4/domain_energy_reduce.md` (now firm c082) — ZERO firm-count / status change (the batch-26 meta-phase fires AFTER this cycle-084 finalize, aggregating 082/083/084; this finalize does NOT run meta-phase housekeeping)
 
 > **READER NOTE for the batch-26 META-PHASE (fires NEXT):** cycle-084 is the LAST primary cycle of batch-26. The carry-forwards below are **meta-phase items**, NOT cycle-085 plan items. The HIGHEST-PRIORITY one — the USER DIRECTIVE `feature-column-promotion-break-the-seed-deadlock` — is surfaced LOUDLY here AND in the batch CYCLE.md §Integration-tooling friction so the meta-phase cannot miss it. Two firm reduce verbs (`eigenfreq_qfactor_reduce` c082, `sparameter_reduce` c083) whose feature columns are STILL `seed` only because of the current sibling-blocks-promotion rule now CONCRETELY demonstrate the deadlock the directive names. The `.claude/agents/` + CLAUDE.md edits the directive requires ⇒ **SESSION RESTART after the meta-phase.**

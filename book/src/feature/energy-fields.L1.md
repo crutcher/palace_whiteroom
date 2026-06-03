@@ -114,11 +114,14 @@ composition (high→low discipline).
 (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive
 (2026-06-02), the L1 counterpart of the [energy-fields.L4](./energy-fields.L4.md) composition root.
 It consumes a field-bearing driver column's solution field, then maps each configured domain to its
-`(energyᵢ, pᵢ)` row (the domain-restricted energy form + the participation ratio). The reduction's
-L4 home `domain_energy_reduce` is `rough-in` and its domain energy
-form is the `matrix-weighted-norm` `rough-in (test-coverage-bounded)` primitive (only the
-[`participation_ratio`](../L1/participation_ratio.md) half is firm) — consistent with the column
-being `seed`, not a firm composition. The chapter carries the compositional claim only; per-op
+`(energyᵢ, pᵢ)` row (the domain-restricted energy form + the participation ratio). **Under the
+OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03) a column promotes off `seed` when its OWN
+directly-owned constituents are firm; this column STAYS `seed`** because its OWN reduce verb's L4 home
+`domain_energy_reduce` is `rough-in` and its OWN folded domain energy form is the `matrix-weighted-norm`
+`rough-in (test-coverage-bounded)` primitive (only the [`participation_ratio`](../L1/participation_ratio.md)
+half is firm). These are OWN-constituent gates, NOT cross-linked-sibling blockers — the field-bearing
+driver columns are SIBLING references (a driver-agnostic shared postprocess), not the gate. The
+chapter carries the compositional claim only; per-op
 algebraic claims live in the linked chapters. The defining structural fact carried from L4: a
 rank-1 per-domain scalar table, NOT a `gram_reduce` family-PAIR grid (c074 D6). Evidence: the L0
 energy-table ranges `postoperator.cpp:1021-1077` + the energy form `domainpostoperator.cpp:255-298`,

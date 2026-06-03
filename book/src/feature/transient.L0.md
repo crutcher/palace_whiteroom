@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: transient
 level: L0
-status: seed
+status: firm
 l0_ground_truth:
   - palace/drivers/transientsolver.cpp:24-116 (TransientSolver::Solve)
   - palace/drivers/transientsolver.cpp:118-175 (TransientSolver::GetTimeExcitation — the J(t) / dJ/dt pulse)
@@ -43,4 +43,4 @@ This L0 surface lifts to the L1 pure-function composition root [`transient.L1`](
 
 ## Status
 
-`seed` — the L0 ground-truth surface for the transient feature (the spine's first **fold-pipeline** witness), authored under the FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the [electrostatic.L0](./electrostatic.L0.md) / [magnetostatic.L0](./magnetostatic.L0.md) exemplars. Every stage is a cited range into `palace/drivers/transientsolver.cpp` + `palace/models/timeoperator.cpp`, confirmed on-disk via palace-codemap `read_range` this dispatch (close-brace discipline: `Solve` spans `:24-116`, the loop `:77-109`, the `Step` method `:407-413`). The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).
+`firm` — the L0 ground-truth surface for the transient feature (the spine's first **fold-pipeline** witness), authored under the FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the [electrostatic.L0](./electrostatic.L0.md) / [magnetostatic.L0](./magnetostatic.L0.md) exemplars. **Promoted `seed → firm` cycle-085** with the column (the L0 surface tracks the column maturity under the OWN-COMPOSITION promotion rule; the transient column's directly-owned constituents — `fe_assemble`, `fold_solve` — are firm, and it owns no output-product sibling cross-link). Every stage is a cited range into `palace/drivers/transientsolver.cpp` + `palace/models/timeoperator.cpp`, confirmed on-disk via palace-codemap `read_range` (close-brace discipline: `Solve` spans `:24-116`, the loop `:77-109`, the `Step` method `:407-413`). The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).

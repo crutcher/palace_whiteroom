@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: driven
 level: L4
-status: seed
+status: firm
 composes:
   - book/src/L4/fe_assemble.md (firm — assemble the fixed operator basis {K, C, M} once: the assemble-fold combinator)
   - book/src/L4/assemble_frequency_operator.md (firm — the per-ω operand A(ω) = K + iωC − ω²M + A2(ω); the operator-operand linear_combination specialization, rebuilt per member)
@@ -161,26 +161,30 @@ constituent `frequency_sweep` / `assemble_frequency_operator` vocabulary is firm
 
 ## Status
 
-`seed` — the driven feature-surface composition-root, a **leaf feature column**
+`firm` — the driven feature-surface composition-root, a **leaf feature column**
 (per-driver; stage-2 constituents are vocabulary ops) authored under the
 FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the
 [electrostatic](./electrostatic.L4.md) / [magnetostatic](./magnetostatic.L4.md)
-exemplars but at the operator-VARYING corner. The composition is sound: stage (1) is
-three firm [`fe_assemble`](../L4/fe_assemble.md) folds (the fixed basis captured
-once); stage (2) is the firm [`frequency_sweep`](../L4/frequency_sweep.md) map
-composing the firm per-ω operand verb
-[`assemble_frequency_operator`](../L4/assemble_frequency_operator.md) with the firm
-per-member [`ksp_solve`](../L4/ksp_solve.md) (the operator-varying corner,
-`SetOperators` inside the loop); stage (3) is the driven S-parameter output-product
-surface, forward-ref'd to its own column (a fold of per-ω measurements, not authored
-here). All three composition-stage L4 combinators are **firm** — the cleanest
-operator-varying composition the spine carries — but the column remains uniform
-`status: seed` because the stage-3 S-parameter reduction's own output-product column
-[`sparameters`](./sparameters.L4.md) is itself `seed` (its [`sparameter_reduce`](../L4/sparameter_reduce.md)
-verb is `rough-in`) — a feature column promotes past `seed` only once ALL composed
-constituents are firm. This chapter carries the *compositional* claim
-(driven = this composition of these constituent pieces), not the constituents' per-op
-algebraic claims (those live in the linked chapters). Evidence: the L0 driver range
-`drivensolver.cpp:37-75` (`Solve` dispatch) + `:77-229` (`SweepUniform`) realizing
-the composition, plus the firm constituent down-links (all line ranges self-verified
-on-disk via palace-codemap this dispatch).
+exemplars but at the operator-VARYING corner. **Promoted `seed → firm` cycle-085**
+under the OWN-COMPOSITION promotion rule (CLAUDE.md §Extraction-goal FEATURE-SURFACE
+SPINE; memory `project_feature_column_promotion_rule`): a column promotes off `seed`
+when its OWN composition + directly-owned constituents are firm; cross-linked sibling
+columns are references, NOT blockers. The composition is sound and every
+directly-owned constituent is firm: stage (1) is three firm
+[`fe_assemble`](../L4/fe_assemble.md) folds (the fixed basis captured once); stage (2)
+is the firm [`frequency_sweep`](../L4/frequency_sweep.md) map composing the firm per-ω
+operand verb [`assemble_frequency_operator`](../L4/assemble_frequency_operator.md) with
+the firm per-member [`ksp_solve`](../L4/ksp_solve.md) (the operator-varying corner,
+`SetOperators` inside the loop). All three directly-owned composition-stage L4
+combinators are **firm** — the cleanest operator-varying composition the spine
+carries. Stage (3), the S-parameter reduction, is presented as the dedicated
+output-product feature column [`sparameters`](./sparameters.L4.md): that is a
+**sibling cross-link (a reference / drift-guard), NOT a directly-owned constituent**,
+so it does NOT gate this driver column's promotion (the `sparameters` column itself
+promotes independently on its own firm reduce verb
+[`sparameter_reduce`](../L4/sparameter_reduce.md), firm cycle-083). This chapter
+carries the *compositional* claim (driven = this composition of these constituent
+pieces), not the constituents' per-op algebraic claims (those live in the linked
+chapters). Evidence: the L0 driver range `drivensolver.cpp:37-75` (`Solve` dispatch) +
+`:77-229` (`SweepUniform`) realizing the composition, plus the firm constituent
+down-links (all line ranges self-verified on-disk via palace-codemap).

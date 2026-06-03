@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: driven
 level: L1
-status: seed
+status: firm
 composes:
   - book/src/L1/fe_assemble.md (firm — assemble the fixed operator basis {K, C, M} once)
   - book/src/L1/assemble_frequency_operator.md (firm — the per-ω operator rebuild A(ω) = K + iωC − ω²M + A2(ω))
@@ -131,19 +131,22 @@ this composition root records only the L1 composition (high→low discipline).
 
 ## Status
 
-`seed` — the L1 pure-function composition root for the driven feature, a **leaf
+`firm` — the L1 pure-function composition root for the driven feature, a **leaf
 feature column** authored under the FEATURE-SURFACE SPINE directive (2026-06-02),
 mirroring the [electrostatic.L1](./electrostatic.L1.md) /
 [magnetostatic.L1](./magnetostatic.L1.md) exemplars but at the operator-VARYING
-corner. All three composed L1 operators are firm
-([`fe_assemble`](../L1/fe_assemble.md),
+corner. **Promoted `seed → firm` cycle-085** under the OWN-COMPOSITION promotion rule
+(a column promotes off `seed` when its OWN composition + directly-owned constituents
+are firm; cross-linked sibling columns are references, NOT blockers). All three
+directly-composed L1 operators are firm ([`fe_assemble`](../L1/fe_assemble.md),
 [`assemble_frequency_operator`](../L1/assemble_frequency_operator.md),
 [`ksp_solve`](../L1/ksp_solve.md)) — the driven L1 vocabulary is fully firm, unlike
 the fixed-operator columns whose stage-3 inductance/capacitance bilinear-form
-primitives are rough-in. The column remains uniform `status: seed` because the
-stage-3 S-parameter reduction is the driven output-product surface, forward-ref'd to
-its own column (not yet authored as a firm constituent). The chapter carries the
-compositional claim only; per-op algebraic claims live in the linked chapters.
-Evidence: the L0 driver range `drivensolver.cpp:77-229` (`SweepUniform`) realizing
-the composition, plus the firm L1 constituent down-links (line ranges self-verified
-on-disk this dispatch).
+primitives are rough-in. The stage-3 S-parameter reduction is the driven
+output-product surface, presented as its own [`sparameters`](./sparameters.L1.md)
+column — a **sibling cross-link (a reference)**, NOT a directly-owned constituent, so
+it does not gate promotion (the `sparameters` column promotes independently on its own
+firm reduce verb). The chapter carries the compositional claim only; per-op algebraic
+claims live in the linked chapters. Evidence: the L0 driver range
+`drivensolver.cpp:77-229` (`SweepUniform`) realizing the composition, plus the firm L1
+constituent down-links (line ranges self-verified on-disk).

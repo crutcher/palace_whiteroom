@@ -141,12 +141,15 @@ products:
 
 The whole output product therefore lowers cleanly outward to the L4 backend surface:
 `energy_fields = domain_energy_reduce (doms, e_total) ∘ driver_field` — a one-reduction tail on a
-field-bearing driver column. The column is `seed` (not promoted past it) because
-`domain_energy_reduce` is `rough-in` (newly minted) and its
+field-bearing driver column. Under the **OWN-COMPOSITION rule** (USER DIRECTIVE 2026-06-03;
+CLAUDE.md §Extraction-goal) a column promotes off `seed` when its OWN directly-owned constituents
+are firm; this column STAYS `seed` because its OWN reduce verb
+[`domain_energy_reduce`](../L4/domain_energy_reduce.md) is `rough-in` and its OWN folded
 domain-restricted energy form is the [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
-`rough-in (test-coverage-bounded)` primitive — a feature column may promote past `seed` only once
-ALL its composed constituents are firm (the firm [`participation_ratio`](../L1/participation_ratio.md)
-half is necessary but not sufficient).
+`rough-in (test-coverage-bounded)` primitive (the firm [`participation_ratio`](../L1/participation_ratio.md)
+half is necessary but not sufficient). These are genuine OWN-constituent gates, NOT cross-linked-sibling
+blockers — energy-fields is driver-agnostic (a shared postprocess all field-bearing drivers point at),
+so the field-bearing driver columns are SIBLING references, not the gate.
 
 ## Constituent down-links
 
@@ -167,10 +170,14 @@ products [capacitance](./capacitance.L4.md) / [inductance](./inductance.L4.md) /
 supplies the solution field; the `domain_energy_reduce` reduction
 maps each configured domain to its `(energyᵢ, pᵢ)` row, folding the domain-restricted energy form
 ([`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared) and the firm
-[`participation_ratio`](../L1/participation_ratio.md). The column stays `seed` because
-`domain_energy_reduce` is `rough-in` (newly minted) and its domain-restricted energy form is the
-`matrix-weighted-norm` `rough-in (test-coverage-bounded)` primitive — a feature column may promote
-past `seed` only once ALL composed constituents are firm. This chapter carries the *compositional*
+[`participation_ratio`](../L1/participation_ratio.md). **Under the OWN-COMPOSITION rule
+(USER DIRECTIVE 2026-06-03; codified batch-26 meta-phase; memory `project_feature_column_promotion_rule`)
+a column promotes off `seed` when its OWN composition + directly-owned constituents are firm; this column
+STAYS `seed`** because its OWN reduce verb `domain_energy_reduce` is `rough-in` and its OWN folded
+domain-restricted energy form is the `matrix-weighted-norm` `rough-in (test-coverage-bounded)` primitive
+(the firm `participation_ratio` half is necessary but not sufficient). These are genuine OWN-constituent
+gates, NOT cross-linked-sibling blockers — the field-bearing driver columns are SIBLING references
+(this is a driver-agnostic shared postprocess), not the gate. This chapter carries the *compositional*
 claim (the domain energy table = the per-domain energy reduction over a field-bearing driver's
 field), NOT the constituents' per-op algebraic claims (those live in the linked chapters). The
 defining structural fact: a rank-1 per-domain scalar table, NOT a `gram_reduce` family-PAIR grid

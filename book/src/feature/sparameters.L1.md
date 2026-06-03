@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: sparameters
 level: L1
-status: seed
+status: firm
 composes:
   - book/src/feature/driven.L1.md (the producing driver column — supplies the per-ω solution family [Eᵢ])
   - book/src/L1/port_projection.md (firm — the port-mode projection ⟨s, E⟩, the dual-pairing/linear-functional primitive the reduction folds; the FIRM L1 home as of cycle-077, replacing the earlier bilinear-form approximation)
@@ -55,10 +55,10 @@ The L1→L0 direction (how the projection pure functions lower to the in-place `
 
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
-| producing driver column | [`driven.L1`](./driven.L1.md) (driver feature column) | seed | `drivensolver.cpp:37-229` |
+| producing driver column (sibling reference, not a blocker) | [`driven.L1`](./driven.L1.md) (driver feature column) | seed | `drivensolver.cpp:37-229` |
 | port-mode projection ⟨sₖ, E⟩ | [`port_projection`](../L1/port_projection.md) | firm | `lumpedportoperator.cpp:287-290`, `waveportoperator.cpp:789-790` |
 | self-reflection + port-kind closing | (port-kind arithmetic; absorbed by [`sparameter_reduce`](../L4/sparameter_reduce.md) at L4) | rough-in | `postoperator.cpp:1275-1302` |
 
 ## Status
 
-`seed` — the L1 pure-function composition root for the scattering-matrix output product (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive (2026-06-02). It consumes the [`driven.L1`](./driven.L1.md) driver column's per-ω solution family, then folds the firm L1 port-mode projection ([`port_projection`](../L1/port_projection.md), firm as of cycle-077) over the (port, frequency) grid with the self-reflection + port-kind closing. The per-mode projection primitive is firm; as of cycle-083 the whole-grid reduction it composes — [`sparameter_reduce`](../L4/sparameter_reduce.md) at L4 — is **also `firm`** (the lowering-verifier firm-on-positive-structure promotion). The column nonetheless stays `seed` pending the batch-26 meta-phase: the promotion rule (a feature column promotes past `seed` only once ALL its composed constituents are firm) and the column status are held for the pending column-promotion-rule user directive (out of scope for c083). The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 reduction range `postoperator.cpp:1246-1307` + the port-projection verbs (`lumpedportoperator.cpp:283-294`, `waveportoperator.cpp:780-793`), self-verified on-disk this dispatch, plus the constituent down-links.
+`firm` — the L1 pure-function composition root for the scattering-matrix output product (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive (2026-06-02). It consumes the [`driven.L1`](./driven.L1.md) driver column's per-ω solution family, then folds the firm L1 port-mode projection ([`port_projection`](../L1/port_projection.md), firm as of cycle-077) over the (port, frequency) grid with the self-reflection + port-kind closing. The per-mode projection primitive is firm; as of cycle-083 the whole-grid reduction it composes — [`sparameter_reduce`](../L4/sparameter_reduce.md) at L4 — is **also `firm`** (the lowering-verifier firm-on-positive-structure promotion). **The column promotes off `seed` to `firm` under the OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03):** its sole directly-owned constituent — the reduction's L4 home [`sparameter_reduce`](../L4/sparameter_reduce.md) — is firm (c083). The batch-26 meta-phase the c083 prose deferred to has now fired and enacted the OWN-COMPOSITION rule; the cross-link to the [`driven.L1`](./driven.L1.md) driver column (its own `status: seed`) is a **SIBLING reference, NOT a blocker** — the reciprocal drift-guard, not a constituent-firmness dependency. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 reduction range `postoperator.cpp:1246-1307` + the port-projection verbs (`lumpedportoperator.cpp:283-294`, `waveportoperator.cpp:780-793`), self-verified on-disk this dispatch, plus the constituent down-links.
