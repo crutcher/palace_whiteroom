@@ -1,94 +1,45 @@
-## 2026-05-25 cycle-71 — forward gmres [L1→L2] — pass
+## 2026-06-03 cycle-071 — 6 reports applied clean — sixty-sixth consecutive cycle under split integrator — **POSITION 2/3 OF META-BATCH-22** — the **directive-3 mdBook STRUCTURAL-REORG wave — COMPLETE** (by-kind sub-chapter grouping + global alpha re-sort across ALL layer Parts; **26 group-intro pages**) — **PURE STRUCTURAL: zero operator/theme/concept count changes, zero status flips, zero dropped chapters** — pass
 
-- Synthesis: Retroactive L1→L2 rotation_claims for the gmres slice. The L2 section was section-appended in cycle 21; this cycle backfills six rotation_claims (one per L1 building block: initial_residual, apply_BA, orthogonalize, ls_update_column, back_solve, apply_correction) per the meta-12 same-cycle emission discipline applied retroactively. The load-bearing claim is ls_update_column (state-hiding rotation exposing givens_generate / givens_apply); the others are carry-through unfoldings into the support-operator vocabulary. retroactive_claim_evidence quotes the on-disk L2 sub-sections.
+> **Note:** this file supersedes a stale May-25 slice-vertical-era `cycle-71` placeholder (forward gmres L1→L2 retroactive rotation-claim backfill; pre-structural-redirect numbering collision). The prior content is preserved in git history.
 
-retroactive_claim_evidence:
-  - claim_index: 0
-    on_disk_path: book/src/spec/slices/gmres.md
-    section: ## L2 — primitive composition / **`initial_residual(op, b, x)`.**
-    quoted_lines: |
-      **`initial_residual(op, b, x)`.** Unfolds into one `apply_linop` (and one conditional `apply_linop` for `M`):
-      ```
-      if not op.initial_guess: x ← 0; r ← b
-      else: apply_linop(op.A, x, Ax); r ← b; axpy(-1, Ax, r)        // r = b − A·x
-      if op.pc_side == LEFT: apply_linop(op.M, r, Mr); r ← Mr        // r = M·(b − A·x)
-      return (r, x)
-      ```
-      The `pc_side == RIGHT` branch leaves `r` as the true residual.
-  - claim_index: 1
-    on_disk_path: book/src/spec/slices/gmres.md
-    section: ## L2 — primitive composition / **`apply_BA(op, v)`.**
-    quoted_lines: |
-      **`apply_BA(op, v)`.** Unfolds into one or two `apply_linop` calls:
-      ```
-      if op.pc_side == RIGHT:                    // FGMRES always lands here
-        apply_linop(op.M, v, z); apply_linop(op.A, z, w)             // z = M·v; w = A·z
-      elif op.pc_side == LEFT:
-        apply_linop(op.A, v, Av); apply_linop(op.M, Av, w); z = ⊥    // w = M·A·v
-      else: apply_linop(op.A, v, w); z = ⊥                           // w = A·v
-      return (w, z)
-      ```
-  - claim_index: 2
-    on_disk_path: book/src/spec/slices/gmres.md
-    section: ## L2 — primitive composition / **`orthogonalize(gs_orthog, V[0..j], w)`.**
-    quoted_lines: |
-      **`orthogonalize(gs_orthog, V[0..j], w)`.** Unfolds into a `dot`/`axpy` sequence whose shape is fixed by `gs_orthog` but whose primitives are uniform — `dot` to project, `axpy` to subtract. ...
-      ```
-      for k in 0..=j:
-        h[k] = dot(V[k], w)                       // (CGS / MGS / CGS2 differ in batching & repeats)
-        axpy(-h[k], V[k], w)
-      h[j+1] = nrm2(w); scal(1/h[j+1], w)
-      return (w, h)
-      ```
-      MGS performs `dot`+`axpy` in sequence per `k`; CGS batches all `dot`s then all `axpy`s; CGS2 repeats once. The L2 primitive set is the same; the L3 form (orthog slice) will pin the batching.
-  - claim_index: 3
-    on_disk_path: book/src/spec/slices/gmres.md
-    section: ## L2 — primitive composition / **`ls_update_column(K, j, h_new)`.**
-    quoted_lines: |
-      **`ls_update_column(K, j, h_new)`.** This is the load-bearing L1→L2 unfolding — the incremental-LS role is realised by stored Givens rotations plus one new rotation:
-      ```
-      // (1) Replay stored rotations on the new column h_new[0..j+1].
-      for k in 0..j:
-        (h_new[k], h_new[k+1]) = givens_apply((K.cs[k], K.sn[k]), (h_new[k], h_new[k+1]))
-      // (2) Generate a new rotation to zero h_new[j+1] against h_new[j].
-      (K.cs[j], K.sn[j]) = givens_generate(h_new[j], h_new[j+1])
-      // (3) Apply the new rotation to the column tail and to the RHS s.
-      (h_new[j], h_new[j+1]) = givens_apply((K.cs[j], K.sn[j]), (h_new[j], h_new[j+1]))   // h_new[j+1] = 0
-      (K.s[j], K.s[j+1])     = givens_apply((K.cs[j], K.sn[j]), (K.s[j], 0))              // s[j+1] = −sn[j]·s[j]
-      K.H[:, j] = h_new
-      K.beta = |K.s[j+1]|
-      return K
-      ```
-      The LS-residual proxy `K.beta` updates in O(1) per step; no explicit LS solve runs inside the inner loop.
-  - claim_index: 4
-    on_disk_path: book/src/spec/slices/gmres.md
-    section: ## L2 — primitive composition / **`back_solve(K, j)`.**
-    quoted_lines: |
-      **`back_solve(K, j)`.** Standard back-substitution against the now-triangular `K.H[0..=j, 0..=j]`:
-      ```
-      y[j] = K.s[j] / K.H[j, j]
-      for k in (j-1)..0:
-        y[k] = K.s[k]
-        for i in (k+1)..=j: y[k] -= K.H[k, i] · y[i]
-        y[k] /= K.H[k, k]
-      return y
-      ```
-      No per-element primitive substitution; this is a small dense O(j²) kernel on the LS state, not on field state.
-  - claim_index: 5
-    on_disk_path: book/src/spec/slices/gmres.md
-    section: ## L2 — primitive composition / **`apply_correction(op, K, y, j, x)`.**
-    quoted_lines: |
-      **`apply_correction(op, K, y, j, x)`.** Unfolds into `axpy`s, with one optional terminal `apply_linop`:
-      ```
-      if op.flexible:                              // FGMRES
-        for k in 0..=j: axpy(y[k], K.Z[k], x)      // x += Σ y[k]·Z[k]
-      elif op.pc_side == RIGHT:                    // fixed-M GMRES, right
-        t ← 0; for k in 0..=j: axpy(y[k], K.V[k], t)
-        apply_linop(op.M, t, Mt); axpy(1, Mt, x)   // x += M·(Σ y[k]·V[k])
-      else:                                        // LEFT or no-preconditioner
-        for k in 0..=j: axpy(y[k], K.V[k], x)      // x += Σ y[k]·V[k]
-      return x
-      ```
-- Verdict: pass.
-- Friction: none.
-- Structural change: applied: 2 lesson(s); 6 rotation_claim(s).
+**POSITION 2/3 OF META-BATCH-22** (3:1 cadence; cycles 070/071/072; the cycle counter does NOT reset across batch boundaries; **the batch-22 meta-phase fires AFTER cycle-072's finalize as a SEPARATE dispatch** — not this cycle; this finalize does NOT run meta-phase housekeeping). Under the 2026-06-01 VOCABULARY-SHIFT REDIRECT (`METHODOLOGY-REDIRECT.md`) + the FIVE 2026-06-02 user directives: directive-1 *L4 is the backend-lowering target*; directive-2 *black-box vs accelerated kernels*; directive-3 *mdBook sub-chapter grouping + alphabetical API lists*; directive-4 *reader-facing Methodology GOAL+FLOW chapter*; directive-5 *FEATURE-SURFACE SPINE*.
+
+**Headline: this cycle was the DEDICATED directive-3 mdBook STRUCTURAL-REORG wave — the one-time by-kind sub-chapter grouping + global alpha re-sort the batch-21 meta-phase sequenced as its own structural wave landed across ALL layer Parts.** 6 parallel `layer-intro-author` dispatches (D1–D6), each over a disjoint Part region, nested every layer Part's `SUMMARY.md` chapters into **by-kind sub-chapter groupings** (each with an authored group-intro page) and alpha-sorted the dep-map / API-list / theme-list tables within each kind grouping. **26 new group-intro pages.** Pure structural — **NO operator/theme/concept count changes, NO `## Status` flips, NO new claims, NO dropped chapters.** The alpha-insert convention (`integrator-per-report` / `integrator-finalize`) now operates over a fully-sorted base. The directive-3 + FEATURE-SURFACE-SPINE role-spec codifications are the **batch-22 meta-phase's** job after cycle-072 (NOT this cycle).
+
+- **Staging completeness:** 6 of 6 dispatched-ready reports applied clean (6/6 staging rows == dispatched-ready — the cycle-018 staging-completeness gap did NOT recur for the FIFTY-SECOND consecutive clean staging / SIXTY-SIXTH consecutive clean split-integrator cycle); zero deferrals, zero rejections, zero gate-hits, zero build-repairs.
+
+### What landed (all 6 dispatches are `layer-intro-author`, all build-relevant, all pure structural reorg)
+
+- **D1 — L4 + L4>L3.** `# L4` nested into **3 by-kind groupings** (iteration-combinators / data-algebra-combinators / outer-driver-combinators; 4 + 6 + 5 chapter members) with 3 new `book/src/L4/*-intro.md` group-intro pages; `L4/index.md` Operator dep-map regrouped into 3 kind sub-tables (alpha within each; 19/19 rows preserved verbatim, incl. the 4 non-chapter outer-driver anchors). `# L4 > L3` kept FLAT alpha (10/10 themes, single dissolution kind — small-Part guard); `L4-L3/index.md` theme-list + §Vocabulary-cohort bullets alpha re-sorted. `citecheck --scan`: 26 ok / 1 AMBIG (the pre-existing `integrator.hpp:58-61` bare-basename, cycle-068 landing, verbatim-moved — NOT introduced here; path-hygiene lint, non-blocking). (First per-report integrator — created the staging dir.)
+- **D2 — L3 + L3>L2.** `# L3` nested into **5 groupings** (blas1 / elementwise / operator-apply / smoother / solver-caps; 8 + 3 + 2 + 3 + 5 = 21 members) with 5 new `book/src/L3/*-intro.md` pages; `L3/index.md` dep-map regrouped into 5 kind sub-tables (21/21 rows preserved via disk-slice splice; on-disk row wording preserved byte-for-byte) + §Vocabulary-cohort section. `# L3 > L2` flat alpha (6/6 themes). `citecheck --scan`: 14 ok / 2 AMBIG — both intra-book prose cross-refs to the sibling `L3/index.md` (`index.md:12-15`/`:49-52`), NOT source citations (--scan heuristic false-positives), non-blocking.
+- **D3 — L2 + L2>L1.** `# L2` nested into **5 groupings** (step-kernels / folds / fold-family-stubs / named-compositions / elementwise-gate-floors; 2 + 3 + 6 + 5 + 6 = 22 members) with 5 new `book/src/L2/*-intro.md` pages; `L2/index.md` dep-map regrouped into 5 kind sub-tables (22/22 rows byte-identical, the report's `[old]→[new]` anchored cleanly). `# L2 > L1` flat alpha (11/11 themes; the 10-vs-1 composition-vs-standalone-gate split has no natural ≥2-kind partition — flat-alpha is the over-structuring-guard call). `citecheck --scan`: 22 ok / 0 fail (clean).
+- **D4 (THE HEAVIEST) — L1 + L1>L0.** The two largest Parts (36 + 37 chapters), 10 new intro pages. `# L1` nested into **7 groupings** (blas1-elementwise 11 / operator-application 3 / constructed-operator-gates 6 / krylov-least-squares 3 / nep-interior 6 / fe-assembly 4 / fe-space 3 = 36) with 7 new `book/src/L1/*-intro.md` pages; `# L1 > L0` nested into **3 theme-kind groupings** (mutation-rotation 28 / construction-rotation 5 / obstruction 4 = 37) with 3 new `book/src/L1-L0/*-intro.md` pages. Both index tables regrouped via full-table disk-slice splice (42 L1 rows = 36 main + 6 obstruction; 37 L1>L0 rows — all byte-preserved, only order + sub-header rows differ). **SLUG-SET DROP-RISK (the cycle's biggest): NO DROP — git-HEAD pre/post-edit slug sets all IDENTICAL** across four independent diffs per Part (SUMMARY 36+37, dep-map 42+37, cross-checked SUMMARY-members == dep-map-rows). `citecheck --scan`: 1 ok / 0 fail (clean).
+- **D5 — L0 + Phase-1 corpus.** `# L0` nested into **3 source-area groupings** (conventions 6 / file-overviews 11 / overload-sets-and-classes 5 = 22) with 3 new `book/src/L0/*-intro.md` pages; `# Phase 1 corpus` flat alpha re-sort of the 9 slice sub-entries (raw-material reference list, NOT a vocabulary layer — correctly not kind-grouped). `L0/index.md` is prose-only (no dep-map table — no in-index re-sort in scope). All 31 chapter links + 3 intro-parent links resolve. `citecheck --scan`: 0 citations (pure structural, clean). (On-disk: 22 L0 chapters + 9 Phase-1 slices — the planner-awk "10 Phase-1" was wrong; 9 is correct, critic-confirmed.)
+- **D6 (LAST per-report integration) — Concepts + small Parts.** `# Concepts` flat alpha re-sort: 44 content slugs C-locale sorted by file slug (the 2 nav rows `Index`/`Dependency map` kept at top; flat shared-library reference list, NOT nested). **`set(old) == set(new)`** — 44↔44 content slugs preserved, empty symmetric difference. **CRITICAL GUARD HONORED:** `# Feature surfaces` left UNTOUCHED — verified the within-column level ordering is still `electrostatic.L4 → .L1 → .L0` (high→low, NOT alphabetized; the standing batch-22-meta ordering OQ is intact). The other 4 small/reference Parts (Meta-Reviews chronological, Methodology, Feature surfaces, Design) left as-is. **1 OQ promoted:** `concepts-index-table-vs-summary-membership-drift-two-missing-rows` (pre-existing `concepts/index.md` table missing 2 rows that exist in SUMMARY + on disk — NOT a dropped concept, the index table is the lagging derived surface; routed to batch-22 meta / cycle-072 hygiene).
+
+### Counts
+
+- **ZERO operator/theme/concept count changes — this was a pure structural reorg.** All layer counts UNCHANGED from cycle-070: L4 firm 14, L4 outer-driver rows 4, L4 rough-in 1 (`solve_family`); L4>L3 firm 10; L3 firm 17 + 4 partial-obstruction; L3>L2 firm 6; L2 firm 21 + 1 partly-constructive; L2>L1 firm 11; L1 firm 34 (incl. FE-assembly sub-spine 4, FE-space sub-spine 3); L1>L0 37 (28 mutation + 5 construction + 4 obstruction); L0 chapters 22; Phase-1 slices 9; concepts pages 44 (SUMMARY); methodology chapters 2; feature-surface Part 1 (electrostatic exemplar column).
+- **+26 group-intro pages** (3 L4 + 5 L3 + 5 L2 + 7 L1 + 3 L1>L0 + 3 L0) — the only net-new files. Real authored orientation pages, not stubs.
+
+### Process
+
+- retroactive-budget global = **0** (pure structural reorg — no source-citation ENDs moved; all transported index/theme rows preserve their embedded citations byte-for-byte). **Staging cross-check: 6 rows == 6 dispatched-ready reports — no completeness gap, no reconciliation needed** (the artifact + staging log agreed).
+- **6 disjoint-Part dispatches partitioned cleanly with ZERO file overlap** — each touched only its own `# Part` blocks of `SUMMARY.md` + that Part's `index.md` + its own new intro pages. Serial apply order D1→D2→D3→D4→D5→D6 (per staging applied_at). The two `index.md` table regroups per Part were applied as disk-slice splices where the report's piecemeal anchors were structurally incomplete (D2/D4) or as the report's clean `[old]→[new]` edit where it anchored verbatim (D3); both verified byte-for-byte row preservation post-apply.
+- **Build (THE critical validation for the reorg):** `mdbook build` (mdbook 0.5.1 + linkcheck2 0.12.0) exit **0**. The 26 new nested SUMMARY groupings + intro-page parent links **all resolve under `linkcheck2` — zero dead links**; all 26 intro pages rendered to HTML (verified `book/book/html/**/*-intro.html` count = 26). No malformed mdBook nesting, no missing intro page, no dropped chapter. **No build-repair needed.** The only build noise is the pre-existing benign KaTeX "Potential incomplete link" render WARNs (97 — bracket-prose in `$$...$$` math display, NOT dead links; predate this reorg).
+- **OQ ledger:** 1 OQ opened (D6 `concepts-index-table-vs-summary-membership-drift-two-missing-rows`, LEFT OPEN, routed to batch-22 meta / cycle-072). The directive-3-completion OQs (`concepts-list-global-alpha-resort-vs-local-cluster-insert` + the `l4-summary-and-index-insert-position-alpha-vs-chronological-pending-reorg` family) are CLOSED-SEQUENCED-by this wave (D5 noted both already closed-SEQUENCED to this batch-22 reorg).
+
+### Non-blocking carry-over lints (pre-existing, flagged by per-report integrators; for a future targeted pass)
+
+- **`L4-L3/index.md` AMBIG citation `integrator.hpp:58-61`** — bare basename matching 2 files (`fem/integrator.hpp` + `fem/libceed/integrator.hpp`); a cycle-068 landing verbatim-moved by the reorg, NOT introduced here. Path-hygiene lint, not a build break. Future targeted fix on the `fe-assemble-fold-dissolution` row.
+- **D2-L3 intra-book prose cross-ref AMBIGs** (`index.md:12-15` etc.) — intra-book references, not source citations; --scan heuristic false-positives.
+- **`concepts/index.md` table missing 2 rows** (`nested-constructed-operator-gate`, `black-box-vs-accelerated-kernels`) vs SUMMARY — OQ-promoted (D6), routed to batch-22 meta / cycle-072. NOT a dropped concept (both are in SUMMARY + on disk; the table is the lagging derived surface).
+
+### Queued for batch-22 (cycle-072 + the batch-22 meta-phase; LEFT OPEN this cycle)
+
+- **(i) cycle-072 — the feature-spine scaling cycle** (magnetostatic column / lifecycle root — the parallel FEATURE-SURFACE frontier continues).
+- **(ii) directive-3 role-spec codification** — codify the by-kind-group authoring + alpha-insert-over-fully-sorted-base conventions into the layer-intro-author / integrator role-specs (the batch-22 meta-phase, after cycle-072; restart-pending).
+- **(iii) FEATURE-SURFACE SPINE role-spec codification** — codify directive-5 into cycle-planner + layer-intro-author/harvester role-specs + CLAUDE.md §"Extraction goal" (the batch-22 meta-phase).
+- **(iv) hygiene** — the `concepts/index.md` 2-missing-row membership drift + the `L4-L3/index.md` `integrator.hpp` AMBIG path-hygiene lint.
+
+Written by `integrator-finalize` (split integrator-per-report ×6 + finalize ×1).

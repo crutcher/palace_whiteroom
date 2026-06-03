@@ -921,3 +921,19 @@ The cycle-070 D3 seed made three structural choices the batch-22 meta-phase shou
 2. **Path layout** — flat `book/src/feature/electrostatic.<level>.md` (one file per level in a single `feature/` directory), NOT nested `feature/electrostatic/<level>.md`. Rationale: keeps the 1-column Part visually contiguous and avoids over-structuring a Part with too few chapters (the directive-3 guard). The directory-nesting decision should be settled once a 2nd feature column lands — with 5+ planned feature columns × ~3 levels (~15+ chapters), the flat naming will crowd the Part list and per-feature nesting (each a directive-3 by-kind sub-grouping with its own intro page) is the likely end state.
 3. **Within-column level ordering** — levels ordered L4→L1→L0 (high→low reading order, matching the spine's top-down read), DELIBERATELY NOT alpha-by-filename. This is an exception to the alpha-within-cohort rule (directive-3 / [[feedback_mdbook_subchapter_grouping_and_alpha_api]]) that the by-kind reorg should ratify or correct. (Integrator applied the high→low ordering as the report specified; did NOT impose alpha-ordering on the within-column level sequence.)
 
+---
+
+## concepts-index-table-vs-summary-membership-drift-two-missing-rows
+
+opened_at: cycle-071
+opened_by: layer-intro-author (D6 reorg; promoted by integrator-per-report)
+status: Open
+
+**Pre-existing hand-maintained-derived-surface drift surfaced by the cycle-071 D6 Concepts reorg (NOT created or widened by it — the reorg is set-preserving, `set(old)==set(new)`).** The `# Concepts` `SUMMARY.md` block carries **44** content concept entries (all 44 exist on disk under `book/src/concepts/`); the `book/src/concepts/index.md` API table carries only **42** data rows. SUMMARY (44) is a strict **superset** of the index table (42). Exactly **two** slugs are present in SUMMARY + on disk but **absent from the index table**:
+- `nested-constructed-operator-gate` (`book/src/concepts/nested-constructed-operator-gate.md`)
+- `black-box-vs-accelerated-kernels` (`book/src/concepts/black-box-vs-accelerated-kernels.md`)
+
+(`eigsolve` and `erasure-scope` ARE in the index table — they are NOT part of the drift; the report's first-pass characterization was repair-corrected to name BOTH genuine omissions.) D6 deliberately did NOT reconcile the table (scope was reorder-only, no add/drop).
+
+**Routed follow-up — batch-22 meta-phase OR a cycle-072 hygiene dispatch:** re-derive the `concepts/index.md` table rows from the on-disk `concepts/*.md` file set + SUMMARY links, **add both missing rows** (`nested-constructed-operator-gate`, `black-box-vs-accelerated-kernels`) in their correct alpha-by-slug positions with their `Kind`/description cells, and confirm 1:1 (44 ⟷ 44). Same drift-class as the `index-table-status-cell-drifts-when-theme-file-promoted` friction (hand-maintained derived surface drifting from its source).
+

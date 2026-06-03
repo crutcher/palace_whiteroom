@@ -1,0 +1,9 @@
+# L4 — Data-algebra combinators & named verbs
+
+The value-producing (non-iteration-structural) vocabulary at L4: the BLAS-1 data-algebra combinators the iteration-structural kernels consume in their step bodies, the kept named verbs that ride them, and the assemble-folds that build operators. None of these carries a `Solve` monad / carry / predicate — they are pure value-producing folds and reductions risen to L4 as feature-surface verbs the backend wants (directive: L4 is the outward backend-lowering target).
+
+- **General combinators** — [`linear_combination`](./linear_combination.md) (the scalar-weighted-tensor-sum fold `Σᵢ aᵢ·tᵢ`) and [`inner_product`](./inner_product.md) (the reduce-to-scalar inner-product `⟨x, y⟩`) rise to L4 regardless per `concepts/black-box-vs-accelerated-kernels.md` §"The combinators rise regardless". They are the tensor-producing and scalar-producing halves of the L4 algebra of folds (the do-NOT-merge over-unification guard keeps them distinct).
+- **Kept named verbs** — [`dot`](./dot.md) (the Hermitian/symmetric inner-product verb, a *specialization* of `inner_product` at `M = I`) and [`nrm2`](./nrm2.md) (the Euclidean-norm verb, a *consumer* `√∘abs∘inner_product` at the diagonal, NOT a fold member) rise alongside the combinators as the permitted dual — the literature-standard units a solver description spells `dot(p, Ap)` / `nrm2(r)`.
+- **Assemble-folds** — [`fe_assemble`](./fe_assemble.md) (the FE-space assemble-fold, the concatenation-homomorphism `foldr` producing a sum over weak-form terms) and [`assemble_frequency_operator`](./assemble_frequency_operator.md) (the driven per-ω system-operator assembly verb, the operator-operand specialization of `linear_combination`) are the assemble half of the deliverable's L4 surface — the operator-construction verbs every solver pipeline calls before the outer-driver shells drive them.
+
+Chapters are alphabetical within this group.
