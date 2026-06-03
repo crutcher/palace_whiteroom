@@ -111,18 +111,31 @@ This shape is load-bearing, and it follows three principles:
   is expressed this way end-to-end. The shared inner-kernel spine being substantially
   built is a *milestone*, not completion.
 
-> **Where the L4 surface stands (as of 2026-06-02, batch-21).** The **assemble half**
-> of the deliverable now reaches L4 across all five pipelines — the `fe_assemble`
-> assemble-fold combinator, the driven `assemble_frequency_operator`, and the BLAS-1
-> data-algebra combinators (`linear_combination`, `inner_product`) with their kept named
-> verbs (`dot`, `nrm2`). The **solve half** reaches L4 for four of five pipelines
-> (`ksp_solve` / `eigsolve` / `solve_family` / `fold_solve`); the **driven pipeline's
-> solve half** — a per-ω frequency sweep that rebuilds the operator each step — is the
-> lone remaining solve-half gap. Because L4 must be *complete over every in-scope
-> feature* (a backend cannot lower a feature the spec strands below L4), the driven
-> sweep is targeted for its own single-witness L4 form: this is a feature reaching L4,
-> distinct from mining a *shared generalized* combinator (which still needs ≥2 witnesses
-> — a single in-scope feature getting its own L4 form does not over-unify).
+> **Where the L4 surface stands (as of 2026-06-03, batch-22).** **Both halves of the
+> assemble+solve deliverable now reach L4 across all five pipelines.** The assemble half
+> arrived in batch-21 (the `fe_assemble` assemble-fold combinator, the driven
+> `assemble_frequency_operator`, the BLAS-1 data-algebra combinators `linear_combination`
+> / `inner_product` with their kept named verbs `dot` / `nrm2`); the solve half closed in
+> batch-22 with the driven pipeline's last gap — the per-ω frequency sweep that rebuilds
+> the operator each step landed as its own single-witness L4 form (`frequency_sweep`),
+> joining `ksp_solve` / `eigsolve` / `solve_family` / `fold_solve`. This was a *feature
+> reaching L4*, distinct from mining a *shared generalized* combinator (which still needs
+> ≥2 witnesses): a single in-scope feature getting its own L4 form does not over-unify.
+> The shared inner-kernel + solver-driver + FE-assembly spine is now substantially built
+> across the assemble+solve target — a milestone, not completion (the feature-surface
+> spine and the remaining solver/output breadth continue).
+
+> **The feature-surface spine (opened batch-22).** Parallel to the bottom-up L4→L0
+> vocabulary, a **top-down feature-surface spine** presents Palace's entry-point features
+> (the 5 simulation drivers, the top-level lifecycle ROOT, the output/postprocess
+> products, wave-port/boundary-mode) as **composition-root chapters** at L4+L1+L0 under a
+> `# Feature surfaces` Part. A feature chapter takes config in, produces the physical
+> product out, and its body is the *composition of the already-firm decomposed vocabulary*
+> at that level, linking DOWN to the constituents — it composes the vocabulary, it does
+> not replace it. The L4 feature surfaces ARE the outward backend-lowering entry points.
+> As of batch-22 the spine stands at three columns (electrostatic + magnetostatic leaf
+> driver columns + the lifecycle meta-feature ROOT); it scales by fan-out alongside the
+> bottom-up frontier.
 
 ## FLOW — how the goal is met
 

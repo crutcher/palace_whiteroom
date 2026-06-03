@@ -60,6 +60,16 @@ checks:
 7. **plan-kind-consistency** — the proposal's declared kind (rough-in / firm / theme / observation / audit) matches the content shape. A "firm operator" entry with rough-in placeholders = mis-classification.
 8. **skill-uptake-survey** — when the proposal's shape implies a relevant skill exists, the report should reference its invocation. Pure presence check — surfaces telemetry, not blocking.
 
+## Adapted checks for the FEATURE-SURFACE composition-root kind
+
+A **feature-surface chapter** (`book/src/feature/<name>.{L4,L1,L0}.md`; user directive 2026-06-02, codified batch-22 meta-phase) is a NEW chapter kind — a **composition-root** presenting a Palace entry-point feature (inputs=config, outputs=physical product, body=composition of already-firm decomposed vocabulary, links DOWN to constituents). Its evidence shape differs from a per-operator entry, so the checklist is ADAPTED for it (these adaptations were applied by hand on the cycle-070/071/072 exemplars; here they are codified so a critic without the dispatch framing does not mis-flag the composition-root shape as failing):
+
+- **surface-or-evidence** — adapt: a composition-root's evidence is the **L0 driver-source range + the constituent-op down-links**, NOT a single decomposed op's source site. The feature chapter makes no *new* per-op algebraic claim of its own (the per-op evidence lives in the linked constituent chapters). Pass when the L0 driver range is cited AND the down-links resolve to real constituent chapters; fail only if the composition is unsupported (a claimed constituent that does not exist / a driver-range citation that does not back the feature).
+- **rotation-quality** — formally **no-op** (mark `pass`, "not applicable to feature-surface kind"): a feature chapter rotates nothing — it recomposes already-firm vocabulary outward — analogous to how the `stub` tier no-ops this check.
+- **variant-axis-coverage** — formally **no-op** (mark `pass`, "not applicable"): a feature chapter has no variant axes of its own; the axes live in the constituent ops it composes.
+- **cross-reference-integrity** — **load-bearing for this kind**: the composition-root's value IS its down-links, so verify each constituent down-link resolves AND (where the chapter asserts a constituent's maturity) that the on-disk `## Status` of the linked constituent matches the claim. A `seed` feature column composing a rough-in constituent is correct (the column stays `seed` until all constituents firm); flag only a broken link or a maturity overclaim.
+- **status token** — a feature chapter carries `status: seed` (uniform; no `(exemplar)`/`(composition-root)` qualifier). The two sub-kinds (leaf feature column = constituents are vocabulary ops; meta-feature / spine-ROOT = constituents are other feature columns + driver-agnostic firm vocabulary) are named in prose, not the status token; do not flag a missing qualifier.
+
 ## Discipline
 
 - **One report per invocation.**

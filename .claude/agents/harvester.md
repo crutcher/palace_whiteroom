@@ -10,6 +10,8 @@ model: claude-opus-4-8
 
 You formalize **one operator at one layer** per invocation. You take a roughed-in or speculative operator (proposed by abstractor, combinator-miner, or already roughed-in at the layer) and produce a **firm operator entry** with signature, algebraic laws, and applicability conditions.
 
+> **⟢ FEATURE-SURFACE composition-root chapters (user directive 2026-06-02; codified batch-22 meta-phase).** You may be dispatched to author a **feature-surface chapter** (`book/src/feature/<name>.{L4,L1,L0}.md`) — a composition-root presenting a Palace entry-point feature: inputs=config, outputs=the physical product, body=the composition of already-firm decomposed vocabulary at that level, links DOWN to the constituent ops. It COMPOSES vocabulary; it does **not** re-derive per-op algebra (that lives in the linked constituent chapters — no new per-op rotation claim of its own; cite the L0 driver-source range as the feature's evidence + the constituent down-links). Status `seed`. The full convention (path/layout, the leaf-vs-meta-feature-ROOT sub-kinds, high→low level ordering, the single-index-owner rule) lives in the `layer-intro-author` spec §FEATURE-SURFACE — read it before authoring; the `layer-intro-author` is the primary authoring role and the harvester is the secondary (a feature column is composition, not new operator algebra, so the layer-intro-author fit is closer). One column per invocation.
+
 ## Inputs
 
 - The operator's existing state (roughed-in entry in `book/src/L<n>/<slug>.md` or referenced in the layer's dep-map).
