@@ -2,7 +2,7 @@
 agent: combinator-miner
 invoked_at: 2026-06-03T045739Z
 integrated_at: 2026-06-03T055824Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 497cb76
 integration_notes: "cycle-075 D3. Applied clean — NEW L4 reduction-verb chapter book/src/L4/eigenfreq_qfactor_reduce.md (status rough-in): the eigenmode per-mode (f,Q) scalar-ratio reduce-to-scalar-TABLE, the THIRD L4 reduce-shape (distinct from rank-2 gram_reduce + per-column sparameter_reduce; the c074 D6 closed-negative non-subsume honored) + L4/index.md dep-map row (alpha between dot and fe_assemble) + SUMMARY.md entry (same slot). Two repairer-corrected pinpoints (postoperator.cpp:1198-1199 / :1200-1202) landed in Evidence. No collision with D1's sparameter_reduce (different alpha slot). citecheck 29 ok / 0 fail. retroactive 0. cargo make book exit 0, linkcheck2 clean."
 scope: Mine + author new L4 reduction verb — eigenfreq_qfactor_reduce (eigenmode per-mode scalar-ratio postprocess)
 status: pending

@@ -2,7 +2,7 @@
 agent: layer-intro-author
 invoked_at: 2026-06-03T045739Z
 integrated_at: 2026-06-03T055824Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 497cb76
 integration_notes: "cycle-075 D4. Applied clean — 3 new chapter files book/src/feature/eigenfrequency-qfactor.{L4,L1,L0}.md (status seed): the output-product leaf feature column composition-root, down-linking to the eigenmode driver column + the eigenfreq_qfactor_reduce per-mode scalar-table reduction (D3, on disk earlier this cycle). Chapter files only; feature/index.md matrix row + SUMMARY.md rows DEFERRED to cohort-owner D2 (orphan-row guard) — discharged by D2 landing same-cycle. citecheck 21 ok / 0 fail. retroactive 0. cargo make book exit 0, linkcheck2 clean."
 scope: author the eigenfrequency-qfactor output-product feature column (L4 + L1 + L0)
 status: pending

@@ -2,7 +2,7 @@
 agent: lifter
 invoked_at: 2026-06-03T045739Z
 integrated_at: 2026-06-03T055824Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 497cb76
 integration_notes: "cycle-075 D5 (LOW hygiene). Applied clean — pure mechanical token re-anchor: 6 stale CHILD-status cross-refs seed (exemplar) -> bare seed in feature/lifecycle.L4.md (2 composes:-list descriptors :7,:8 + 2 dep-map cells :57,:58) + lifecycle.L1.md (2 dep-map cells :56,:57), mirroring the children's authoritative bare status: seed. Descriptive prose preserved; the lifecycle file's own bare seed token untouched. DISCHARGES OQ feature-column-child-status-reference-drift-in-lifecycle-depmap; opens NEW LOW OQ feature-column-self-status-qualifier-drift-in-prose (electrostatic.L1.md:65 self-qualifier, distinct sub-kind, out of scope). Build-safe (status-cell text not link-checked). citecheck 9 ok / 0 fail. retroactive 0. cargo make book exit 0, linkcheck2 clean."
 scope: lifecycle ROOT feature column — child-status token micro-sweep (re-anchor stale `seed (exemplar)` child cross-refs → bare `seed`)
 status: pending

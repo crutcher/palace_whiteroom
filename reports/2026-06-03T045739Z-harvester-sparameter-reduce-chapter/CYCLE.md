@@ -2,7 +2,7 @@
 agent: harvester
 invoked_at: 2026-06-03T045739Z
 integrated_at: 2026-06-03T055824Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 497cb76
 integration_notes: "cycle-075 D6. Applied clean — NEW L4 reduction-verb chapter book/src/L4/sparameter_reduce.md (status rough-in): the driven per-port port-projection -> S-matrix reduce-to-matrix LINEAR-projection, the linear-projection sibling of gram_reduce (same Matrix[p,p] shape, different fold). Chapter file only; SUMMARY.md entry + L4/index.md dep-map row partitioned to coupled D1 (deliberate registration partition) — discharged by D1 landing same-cycle. citecheck 22 ok / 0 fail. retroactive 0. cargo make book exit 0, linkcheck2 clean (coupled-pair sequencing held: chapter on disk before D1's inbound row + D2's live links)."
 scope: L4 operator: sparameter_reduce
 status: pending

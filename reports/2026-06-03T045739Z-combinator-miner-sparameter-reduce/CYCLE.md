@@ -2,7 +2,7 @@
 agent: combinator-miner
 invoked_at: 2026-06-03T045739Z
 integrated_at: 2026-06-03T055824Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 497cb76
 integration_notes: "cycle-075 D1. Applied clean — the coupled registration for D6's sparameter_reduce chapter: L4/index.md dep-map row (Data-algebra sub-group, alpha-within-kind after nrm2) + the reduce-to-matrix cohort note (gram_reduce bilinear-Gram vs sparameter_reduce linear-projection, same shape / different fold) + SUMMARY.md entry (alpha after nrm2). Coupled pair COMPLETE — D6's chapter on disk before this inbound live link. No new OQ slug (report OQs already filed by prior in-cycle integration). citecheck 26 ok / 0 fail. retroactive 0. cargo make book exit 0, linkcheck2 clean."
 scope: New L4 reduction verb — sparameter_reduce (driven per-port port-projection reduction)
 status: pending

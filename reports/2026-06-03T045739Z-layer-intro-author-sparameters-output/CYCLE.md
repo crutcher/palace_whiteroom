@@ -2,7 +2,7 @@
 agent: layer-intro-author
 invoked_at: 2026-06-03T05:10:06Z
 integrated_at: 2026-06-03T055824Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 497cb76
 integration_notes: "cycle-075 D2 (output-product cohort OWNER). Applied clean — 3 new chapter files book/src/feature/sparameters.{L4,L1,L0}.md (status seed): the port-projection output-product column composition-root down-linking to the driven driver + the sparameter_reduce reduction. SOLE-owned the consolidated feature/index.md matrix rows for BOTH new columns (alpha-within cohort: capacitance < eigenfrequency-qfactor < inductance < sparameters) + REWROTE the index output-product cohort prose to the 3-reduction-shape taxonomy + the SUMMARY.md # Feature surfaces block (+6 rows, within-column high->low). HAPPY-PATH: D6 sparameter_reduce.md + D4 eigenfrequency-qfactor.* on disk before apply -> all live links + SUMMARY rows resolve, no fallback; the D4 orphan-row guard + D6 SUMMARY-registration-partition both DISCHARGED. citecheck 5 ok / 0 fail. retroactive 0. cargo make book exit 0, linkcheck2 clean."
 scope: sparameters output-product feature column (3 chapters) + consolidated feature/index.md matrix + SUMMARY.md block for BOTH new output-product columns (sparameters + eigenfrequency-qfactor); cohort OWNER (cycle-075 D2, Wave 2)
 status: pending
