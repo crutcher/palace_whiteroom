@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T15:09:23Z
 scope: L1 operator: port_projection
 status: pending
 integrated_at: 2026-06-03T154500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8e54d0f4a22185f0fa1aed38cb930fdb19f8aaea
 integration_notes: "Applied clean from the report's `new:` block (staging row 5/5, LAST). Firm L1 port_projection (per-port linear functional <s,E>; OWN-verb verdict — NOT a bilinear-form specialization (s is a covector) and NOT a dot (unconjugated dual contraction); port-kind THE load-bearing variant axis; firm-on-positive-structure on 2 positive sites + unit-tested kernel; in-chapter ## Record definition for single-consumer Covector[N]). Firms sparameter_reduce gate-b (reduce verb STAYS rough-in, 2nd gate = dedicated reduction test). CLOSED the count-coordination 28->29 main / 35->36 grand (cycle-final L1 tally; .cpp->.hpp citation-extension fix + nested-fence->indented-code + SUMMARY 8->2-space repairs all held). Build clean."
 inputs:
   - dispatch D5 cycle-077 (this dispatch)

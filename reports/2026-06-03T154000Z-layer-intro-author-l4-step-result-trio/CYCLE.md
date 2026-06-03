@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T154000Z
 scope: record-definition cohort #2(a) — per-step result-side L4 records (StepOutputs, PrevCarry, Solve{...} return record)
 status: pending
 integrated_at: 2026-06-03T154500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8e54d0f4a22185f0fa1aed38cb930fdb19f8aaea
 integration_notes: "Applied clean (staging row 2/5). 3 record-definition concept pages (step-outputs/prev-carry/solve-result) + 3 alpha-position index/SUMMARY entries (REUSED D1's `record` legend). solve-result cross-links the Solve EFFECT to solve-monad.md, defines only the record FIELDS. record-definition data-shape pages (claim checks no-op). Build clean."
 ---
 

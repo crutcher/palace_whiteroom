@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T154000Z
 scope: Harvest/mine — participation_ratio L1 primitive (firms eigenfreq_qfactor_reduce gate-a)
 status: pending
 integrated_at: 2026-06-03T154500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8e54d0f4a22185f0fa1aed38cb930fdb19f8aaea
 integration_notes: "Applied clean from the report's `new:` block (staging row 4/5). Firm L1 participation_ratio (energy-participation-ratio scalar-quotient; firm-on-positive-structure; numerator-energy-source + signed-vs-unsigned variant axes; NO L2 by warrant). Firms eigenfreq_qfactor_reduce gate-a (reduce verb STAYS rough-in, 2nd gate = dedicated reduction test). L1 count bumped 27->28 main / 34->35 grand (D5 closed to 29/36). DISPATCH-PHASE WRITE-PARTITION LEAK: combinator-miner authored book/ directly during dispatch; repairer reverted + repackaged the body verbatim into the `new:` block, applied byte-matched (revert-dispatch-phase-book-mutation skill); recovered clean, no content lost; friction data-point for batch-24 meta-phase. Build clean."
 ---
 

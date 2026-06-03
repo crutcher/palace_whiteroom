@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T154000Z
 scope: concepts/ record-definition cohort #2(a) — input/state-side L4 solve records (op-params, sim-state, krylov)
 status: pending
 integrated_at: 2026-06-03T154500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8e54d0f4a22185f0fa1aed38cb930fdb19f8aaea
 integration_notes: "Applied clean (staging row 1/5, FIRST per-report integrator). 3 record-definition concept pages (op-params/sim-state/krylov) + the one-time D1-exclusive `record` Kind-legend line in concepts/index.md + 3 alpha-position index/SUMMARY entries. record-definition data-shape pages (claim checks no-op); record-Kind awaits batch-24 meta ratification (OQ concepts-record-kind-needs-meta-ratification). Build clean."
 ---
 

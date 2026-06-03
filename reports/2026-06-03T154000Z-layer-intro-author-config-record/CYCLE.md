@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T154000Z
 scope: concepts/config-record.md — cross-cutting record-definition page (record-definition cohort #2(b))
 status: pending
 integrated_at: 2026-06-03T154500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8e54d0f4a22185f0fa1aed38cb930fdb19f8aaea
 integration_notes: "Applied clean (staging row 3/5). 1 record-definition concept page (config-record, the IoData config data shape) + 1 alpha-position index/SUMMARY entry (REUSED D1's `record` legend). >=2-consumer bar met by 5 driver columns + lifecycle ROOT. record-definition data-shape page (claim checks no-op); citecheck main.cpp AMBIG was a --scan basename-collision artifact (full paths resolve, critic passed). Build clean."
 ---
 
