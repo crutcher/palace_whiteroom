@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T030410Z
 scope: transient simulation feature-surface column (book/src/feature/transient.{L4,L1,L0}.md)
 status: pending
 integrated_at: 2026-06-03T214500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 03d43ae
 integration_notes: "cycle-073 D3. Applied clean — new feature/transient.{L4,L1,L0}.md (status seed); the FOLD-pipeline second-order-in-time wave system, single fe_assemble down-link stands for a thrice-applied K/C/M assemble-fold. index/SUMMARY rows deferred-to-D2 (cohort owner, resolved same-cycle). Build exit 0, linkcheck2 clean."
 ---
 

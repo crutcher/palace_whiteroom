@@ -7,7 +7,7 @@ inputs:
   - book/src/L4/fold_solve.md
   - reference/palace/palace/drivers/basesolver.cpp:153-276 (BaseSolver::SolveEstimateMarkRefine)
 integrated_at: 2026-06-03T214500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 03d43ae
 integration_notes: "cycle-073 D6 (LOW observation). Applied clean — x4 additive AMR 2nd-state-generated-witness fold-in to firm L4/fold_solve.md (BaseSolver::SolveEstimateMarkRefine basesolver.cpp:153-276 folded onto the state-generated schedule-source value; witness 1->2). Entry stays firm; no status/signature/law change; '2-of-5 pipelines' Scope deliberately NOT incremented (AMR is a driver-agnostic wrapper). OQ datapoint discharges the c072-D2 pre-positioned fold-solve-state-generated-schedule-source-second-witness-amr-loop. Build exit 0, linkcheck2 clean."
 ---
 

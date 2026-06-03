@@ -11,7 +11,7 @@ inputs:
   - reference/palace/palace/fem/integrator.hpp
   - reference/palace/palace/fem/libceed/integrator.hpp
 integrated_at: 2026-06-03T214500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 03d43ae
 integration_notes: "cycle-073 D5 (LOW hygiene). Applied clean — item-(b) only: L4-L3/index.md bare-basename citation lint integrator.hpp:58-61 -> palace/fem/integrator.hpp:58-61 (the fem/ BilinearFormIntegrator::Assemble pure-virtual). Item-(a) solve_family §Specializations re-anchor a CONFIRMED NO-OP (all 16 anchors hand-verified correct). Resolves the c068-landing AMBIG verbatim-moved by the c071 reorg. Build exit 0, linkcheck2 clean."
 ---
 

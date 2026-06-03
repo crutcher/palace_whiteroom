@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T030410Z
 scope: driven feature-surface column (L4/L1/L0) + sole index/SUMMARY owner for the driven+transient+eigenmode driver-column cohort
 status: pending
 integrated_at: 2026-06-03T214500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 03d43ae
 integration_notes: "cycle-073 D2 (COHORT OWNER). Applied clean — new feature/driven.{L4,L1,L0}.md (status seed) + SOLE-owned feature/index.md (matrix +3 driver rows) + SUMMARY '# Feature surfaces' rows for all 3 new columns (within-column high->low). HAPPY-PATH: D3/D4 files on disk first -> every cell a LIVE link. Completes the 5-driver leaf-column set (2->5). Build exit 0, linkcheck2 clean."
 ---
 

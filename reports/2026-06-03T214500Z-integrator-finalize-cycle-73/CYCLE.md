@@ -13,7 +13,7 @@ gate_hits_total: 0
 build_exit: 0
 build_repairs: 0
 retroactive_budget_global: 0
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 03d43ae
 ---
 
 # cycle-073 integrator-finalize — batch CYCLE.md (the report-of-record)

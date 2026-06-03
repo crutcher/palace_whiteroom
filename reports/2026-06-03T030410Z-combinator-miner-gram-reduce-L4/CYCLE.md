@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T030410Z
 scope: Pattern proposal — gram_reduce (shared L4 operator-weighted symmetric-Gram reduction)
 status: pending
 integrated_at: 2026-06-03T214500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 03d43ae
 integration_notes: "cycle-073 D1. Applied clean — new L4/gram_reduce.md (rough-in (test-coverage-bounded)) + L4/index.md dep-map row (alpha fe_assemble<gram_reduce<inner_product) + SUMMARY Data-algebra alpha-insert. DISCHARGES the c072 2-witness mine shared-l4-energy-form-reduction-combinator-gram-reduce-two-witness-mine. Feature-chapter §reduction re-anchors deferred to c074 (OQ). L4 rough-in 1->2. Build exit 0, linkcheck2 clean."
 ---
 

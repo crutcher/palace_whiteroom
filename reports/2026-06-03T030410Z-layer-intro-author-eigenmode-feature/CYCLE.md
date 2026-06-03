@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T03:04:10Z
 scope: eigenmode feature-surface column (book/src/feature/eigenmode.{L4,L1,L0}.md)
 status: pending
 integrated_at: 2026-06-03T214500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 03d43ae
 integration_notes: "cycle-073 D4. Applied clean — new feature/eigenmode.{L4,L1,L0}.md (status seed); the minimal assemble x3 |> eigsolve |> readout-map (single-black-box-kernel shape, no solve_family/fold_solve); eigenfrequency-qfactor output-product down-link stays plain-text (keeps column seed; both solve-side constituents firm). index/SUMMARY rows deferred-to-D2 (resolved same-cycle). Build exit 0, linkcheck2 clean."
 ---
 
