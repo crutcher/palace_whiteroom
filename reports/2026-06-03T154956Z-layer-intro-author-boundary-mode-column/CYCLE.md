@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T16:01:06Z
 scope: boundary-mode driver-leaf feature column (6th driver; status seed) — feature/boundary-mode.{L4,L1,L0}.md + driver-leaf.md own-bullet
 status: pending
 integrated_at: 2026-06-03T160000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: dcfb41e
 integration_notes: |
   Applied cycle-078 (batch-24 position 3/3, THIRD/FINAL). The 6th driver-leaf feature column
   boundary-mode (driver cohort 5->6, status seed, alpha-FIRST in the driver-leaf grouping) at

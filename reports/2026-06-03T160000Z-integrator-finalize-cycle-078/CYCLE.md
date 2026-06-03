@@ -7,7 +7,7 @@ meta_batch_position: 3
 meta_batch_size: 3
 meta_phase_fires_after_this_cycle: true
 status: integrated
-integration_commit: PLACEHOLDER_SHA
+integration_commit: dcfb41e
 ---
 
 # CYCLE-078 batch integration record (integrator-finalize)

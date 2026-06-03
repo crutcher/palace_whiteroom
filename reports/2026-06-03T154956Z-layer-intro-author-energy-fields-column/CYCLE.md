@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T154956Z
 scope: energy-fields output-product feature column (5th-of-5) + shared feature/index + SUMMARY cohort-owner for energy-fields + boundary-mode
 status: pending
 integrated_at: 2026-06-03T160000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: dcfb41e
 integration_notes: |
   Applied cycle-078 (batch-24 position 3/3, THIRD/FINAL). The FINAL output-product feature
   column energy-fields (output-product cohort 4->5, status seed, alpha-within-kind between

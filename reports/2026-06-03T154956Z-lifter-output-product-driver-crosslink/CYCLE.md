@@ -14,7 +14,7 @@ inputs:
   - book/src/feature/inductance.L4.md (reciprocal down-link reference)
   - scaffolding/priorities.md (active-head #7 + ratified convention, batch-23 decision #3)
 integrated_at: 2026-06-03T160000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: dcfb41e
 integration_notes: |
   Applied cycle-078 (batch-24 position 3/3, THIRD/FINAL). Output-product<->driver reciprocal
   cross-link wiring pass across the 4 existing driver .L4.md chapters (driven x3, eigenmode x5,
