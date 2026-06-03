@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T02:02:07Z
 scope: lifecycle-root feature column (feature/lifecycle.{L4,L1,L0}.md) — the composition-root spine ROOT
 status: pending
 integrated_at: 2026-06-03T024500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE_072_FINALIZE
+integration_commit: 7f211f9
 integration_notes: |
   Applied clean cycle-072 (D2; staging row 2/3). Created feature/lifecycle.{L4,L1,L0}.md (status seed (composition-root)) ONLY (D1 sole-owns index/SUMMARY; D1 wired the lifecycle SUMMARY rows by canonical slug, now resolving live to these files). The spine ROOT all 5 per-driver columns hang off (first meta-feature; constituents are other feature columns); the AMR estimate-mark-refine outer fold as fold_solve's state-generated schedule-source form (2nd state-generated fold_solve witness). Composes DOWN to electrostatic+magnetostatic (live links) + eigenmode/driven/transient (plain-text). NOTE: the per-report integrator repaired citation OOB/AMBIG in the LANDED files (main.cpp:158-330->:158-328 + bare-basename main.cpp:->palace/main.cpp: qualifications) -- the book surface is clean; this frozen report CYCLE.md (append-only after integration) still shows the original forms, so a --scan of THIS report will report ~13 'failing' that are fully resolved at the artifact level. 3 OQs promoted (feature-surface-meta-feature-root-sub-kind-and-summary-nesting; fold-solve-state-generated-schedule-source-second-witness-amr-loop; boundarymode-is-sixth-problemtype-branch-reconcile-five-drivers-framing). cargo make book exit 0; all lifecycle live-links resolve; linkcheck2 clean. retroactive-budget global 0; no gate hits.
 ---

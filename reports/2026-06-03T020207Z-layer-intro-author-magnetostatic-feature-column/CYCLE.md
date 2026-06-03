@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T020207Z
 scope: magnetostatic feature column (L4 + L1 + L0) + feature/index.md matrix + SUMMARY block (both this-cycle columns)
 status: pending
 integrated_at: 2026-06-03T024500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE_072_FINALIZE
+integration_commit: 7f211f9
 integration_notes: |
   Applied clean cycle-072 (D1; staging row 1/3). Created feature/magnetostatic.{L4,L1,L0}.md (status seed) + SOLE-edited feature/index.md (matrix +2 columns, seed (exemplar)->seed) + SUMMARY.md '# Feature surfaces' block (+6 rows for BOTH magnetostatic + lifecycle columns; D1 sole-owns the feature index/SUMMARY, applied D2's deferred lifecycle rows by canonical slug). 2nd per-driver composition-root exemplar; 2nd solve_family witness (fixed-operator corner); operator-weighted-Gram inductance reduction. 3 OQs promoted incl. the gram_reduce 2-witness combinator-mine candidate. cargo make book exit 0, linkcheck2 clean, all 3 new chapters render. retroactive-budget global 0; no gate hits. Feature-surface spine 1->3 columns this cycle; zero layer-vocabulary count change.
 ---

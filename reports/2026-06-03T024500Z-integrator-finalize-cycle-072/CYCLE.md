@@ -42,7 +42,7 @@ All 3 are `layer-intro-author` dispatches, all build-relevant. Serial apply D1�
 - **retroactive-budget global = 0** — well under the ≥4 block threshold. D1/D2 are NEW feature-surface seed columns (new-authoring composing existing firm vocabulary); D3 is index-table reconciliation (no source-citation END moved). The D2 per-report integrator OOB/AMBIG tighten (`main.cpp:158-330`→`:158-328` + bare-basename qualifications) is a citation REPAIR on D2's own write-authority landed files, NOT a retroactive evidence-draw. PASS.
 - **build-breakage repair:** none needed (build clean — see Build-status).
 - **commit atomicity:** single commit per cycle (see Commit).
-- **consumed-report frontmatter integrity:** all 3 marked `integrated_at: 2026-06-03T024500Z` + `integration_commit: PLACEHOLDER_SHA_CYCLE_072_FINALIZE` (two-phase SHA patch follows the commit) + `integration_notes`.
+- **consumed-report frontmatter integrity:** all 3 marked `integrated_at: 2026-06-03T024500Z` + `integration_commit: 7f211f9` (two-phase SHA patch follows the commit) + `integration_notes`.
 - Per-report gate hits (aggregated from staging rows): all zero (retroactive per-slice 0; concept_writes 0; forward-edge-without-surface 0; edge-label/prose-mismatch 0; H1-reuse 0; append-on-missing-slug 0; variant-axis-missing no-op; fence-parity pass; implied-component-stub 0; SUMMARY-registration auto-fix not-needed).
 
 ## Wave-conflict observations
@@ -88,4 +88,4 @@ All 3 are `layer-intro-author` dispatches, all build-relevant. Serial apply D1�
 
 ## Commit
 
-Single atomic commit (artifact + scaffolding + log + book output + staging log + consumed-report frontmatter) then `git push origin main`. Two-phase SHA patch follows (replace `PLACEHOLDER_SHA_CYCLE_072_FINALIZE` with the actual SHA, second commit + push).
+Single atomic commit (artifact + scaffolding + log + book output + staging log + consumed-report frontmatter) then `git push origin main`. Two-phase SHA patch follows (replace `7f211f9` with the actual SHA, second commit + push).

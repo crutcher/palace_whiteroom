@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T02:02:07Z
 scope: concepts/index.md API/dep-map table — 2-row membership reconciliation
 status: pending
 integrated_at: 2026-06-03T024500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE_072_FINALIZE
+integration_commit: 7f211f9
 integration_notes: |
   Applied clean cycle-072 (D3; staging row 3/3). Edited concepts/index.md (+2 rows in alpha position: black-box-vs-accelerated-kernels [methodology], nested-constructed-operator-gate [layer-pattern]) -> 44 content rows == SUMMARY '# Concepts' 44. CLOSED the inbound OQ concepts-index-table-vs-summary-membership-drift-two-missing-rows in-line in open-questions.md (the c071 D6 hand-maintained-derived-surface drift). Disjoint from D1/D2 (no file contention). Both target pages verified on disk + SUMMARY-registered. cargo make book exit 0; links resolve; linkcheck2 clean. retroactive-budget global 0; no gate hits.
 ---
