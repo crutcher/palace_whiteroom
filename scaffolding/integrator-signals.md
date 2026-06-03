@@ -30,6 +30,35 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-081 — 2026-06-03T194359Z — POSITION 3/3 OF META-BATCH-25 (the LAST primary cycle of batch-25) — a SINGLE clean hygiene dispatch (land-clean discipline): a `lifter` staleness-clear of the c080 D3 clause in the `eigenfrequency-qfactor` feature column — **ZERO firm-count / status change** (the batch-25 meta-phase fires AFTER this finalize, aggregating 079/080/081; this finalize does NOT run meta-phase housekeeping)
+
+> **READER NOTE:** the next dispatch is the **batch-25 META-PHASE**, NOT a cycle-082 planner. The carry-forwards below are routed to the meta-phase (they are meta-phase questions, not yet cycle-082 plan items). They are repeated in §Suggested next dispatches as meta-phase inputs.
+
+### Unblocked
+- (none new this cycle) — the staleness-clear was the closeout of an already-identified low-fan-out follow-up (the c080 D3-staleness carry-forward); it did not unblock new work. OQ-1016 (`eigenfrequency-qfactor-L4-column-promotion-coupled-to-D2-untransform-firming`) is now CLOSED-RESOLVED.
+
+### New dependencies
+- (none) — pure-rewriting hygiene pass; no new cross-references or edges landed. The one re-anchor (`eigenfrequency-qfactor.{L4,L1}.md` → live-link the firm L1 `eigenvalue-untransform`, c080) repoints an already-existing on-disk dependency from plain-text/stale to a live link; the dep edge itself was already implied by c080.
+
+### Resolution implications
+- `eigenfrequency-qfactor-L4-column-promotion-coupled-to-D2-untransform-firming` (OQ-1016) — **answered/CLOSED-RESOLVED** — the c080 D3-staleness clause is cleared; the column's stale "no firm L1 entry" claim now reads as the firm L1 `eigenvalue-untransform` (c080), and the column's `seed`-rationale is re-anchored onto the sole remaining gate-(b).
+- `eigenfreq-qfactor-reduce-firm-needs-assembly-test` (OQ-1013) — **needs-more / out-of-write-scope** — the residual gate-(b) (the eigenpair→(f,Q) assembly test) is the SOLE remaining `firm`-blocker for `eigenfreq_qfactor_reduce`; the c081 planner established it CANNOT be discharged via cite-existing-tests (no positive assembly test in the corpus). Routed to the meta-phase as the seed-surface firming-ceiling question.
+
+### Suggested next dispatches
+- **(`meta-phase`, batch-25 aggregation 079/080/081)** — the next dispatch is the meta-phase, not a planner. Meta-phase inputs (carry-forwards):
+  - **Seed-surface firming ceiling** — the eigenpair→(f,Q) assembly test (gate-(b)) CANNOT be discharged via cite-existing-tests (only round-trip-invariance tests exist); this recurs across all three reduce verbs' assembly gates. Assess whether the seed surface is at its in-scope firming ceiling (remaining gates need out-of-write-scope new tests) — a spine finding about how far the feature-surface columns can be firmed without authoring tests.
+  - **`matrix-weighted-norm` √-entry-point full firm** — would cascade a ~30-file re-anchor sweep; weigh "dedicate a cascade cycle" vs "stay bounded / leave at sharpened rough-in".
+  - **`domain-field-energy-participation-guard-inconsistency`** — source-observation (electric numerator-guard vs magnetic denominator-guard asymmetry in `MeasureDomainFieldEnergy`, c079 D3 intake), now flagged by two planners; decide if it crosses the `problems/` bar given the aggregated 079/080/081 view.
+  - **`cycle-record.jsonl:209` blank line** — pre-existing (predates batch-25; all rows otherwise parse); possible meta-phase cleanup.
+
+### Wave-conflict observations
+- (none) — single dispatch this cycle; no wave-mates, no integration conflicts. Serial per-report integration with 1 row == 1 dispatched-ready (staging-completeness gap did NOT recur; 62nd consecutive clean staging cycle).
+
+### Integration-tooling friction
+- (none new) — staging log was authoritative (1 row matched 1 dispatched-ready report); build clean (`cargo make book` exit 0); no build-repair. The only standing tooling note is the pre-existing `cycle-record.jsonl:209` blank line (routed to meta-phase above) and the recurring KaTeX-HTML linkcheck false-positives in `design/l4_calculus.md` (4 "Potential incomplete link" warnings, NOT real dead links, NOT from this cycle's files — a known linkcheck-vs-KaTeX-markup parse artifact, non-blocking).
+
+---
+
 ## cycle-080 — 2026-06-03T192132Z — POSITION 2/3 OF META-BATCH-25 — the SECOND primary cycle after the batch-24 meta-phase — a NEW firm L1 `eigenvalue-untransform` DISCHARGES `eigenfreq_qfactor_reduce` gate-(a) + a `matrix-weighted-norm` 2nd-gate warrant-sharpening + prose hygiene — **the frontier is FIRMING the seed surface** (the batch-25 meta-phase fires AFTER cycle-081's finalize aggregating 079/080/081; the cycle counter does NOT reset across batch boundaries)
 
 Under the 2026-06-01 VOCABULARY-SHIFT REDIRECT (`METHODOLOGY-REDIRECT.md`) + the 2026-06-02/2026-06-03 user directives + the **batch-24 meta-phase enactments** (the `record` Kind RATIFIED; `domain_energy_reduce` verb MIGRATED to the plan; the output-product↔driver 1:1 cross-link convention AMENDED for driver-agnostic energy-fields; the reduce-verb 2nd-gate dischargeability SHARPENED; the batch-25 active head reshaped to FIRM-the-seed-surface) — 3 dispatches (D2 harvester the NEW firm L1 `eigenvalue-untransform`; D1 lowering-verifier `matrix-weighted-norm` 2nd-gate; D3 lifter c079-deferred prose cleanup), all build-relevant, all applied clean — HEADLINE: **a NEW firm L1 primitive `eigenvalue-untransform` LANDED, DISCHARGING gate-(a) of the L4 verb `eigenfreq_qfactor_reduce` (both folded per-mode scalar maps — `participation_ratio` c077 + `eigenvalue-untransform` c080 — now firm L1); L1 firm 29→30 main / 36→37 grand.** 3/3 staging rows == dispatched-ready (61st consecutive clean staging / 75th consecutive clean split-integrator cycle); zero deferrals/rejections/gate-hits/build-repairs; retroactive-budget global = 0; zero dispatch-phase leaks.
