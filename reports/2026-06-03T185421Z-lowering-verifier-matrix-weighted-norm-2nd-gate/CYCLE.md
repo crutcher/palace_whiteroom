@@ -10,7 +10,7 @@ inputs:
   - palace/linalg/operator.cpp:599-619 (the Norml2(comm,x,B,Bx) √-overload — the named entry point)
   - book/src/L4/domain_energy_reduce.md (coupled critical-path consumer re-anchor)
 integrated_at: 2026-06-03T192132Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7edbd3d
 integration_notes: "Applied clean (D1, staging row 2). matrix-weighted-norm 2nd-gate audit → warrant SHARPENED, +0 firm: the SPD radicand ⟨E,M E⟩+½ is now positively test-covered (test-domainpostoperator.cpp), but the outer √ at linalg::Norml2 is NOT (firm-on-positive-structure escape RULED OUT); token STAYS rough-in (test-coverage-bounded). §Status bullet sharpened, Evidence line rewritten, 3-entry verified_against: block appended. Coupled re-anchor of L4 domain_energy_reduce (energy-form radicand now test-covered; gate-(a) PARTIALLY advanced, not discharged). Build exit 0, linkcheck2 clean. retroactive-budget 0, gate hits 0. PARTIALLY-ADVANCES OQs matrix-weighted-norm-...-c028 + domain_energy_reduce-promotion-double-gated. D1 landed +0 firm so D2's conditional index fold-note no-ops (30/37 tally correct)."
 ---
 

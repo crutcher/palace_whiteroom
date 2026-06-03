@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T185421Z
 scope: cycle-080 dispatch plan
 status: pending
 integrated_at: 2026-06-03T192132Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7edbd3d
 integration_notes: "Planner report consumed per convention. Planned 3 dispatches (D2 harvester eigenvalue-untransform; D1 lowering-verifier matrix-weighted-norm 2nd-gate; D3 lifter c079-deferred prose cleanup); 3 dispatched-ready, 3 applied clean."
 ---
 

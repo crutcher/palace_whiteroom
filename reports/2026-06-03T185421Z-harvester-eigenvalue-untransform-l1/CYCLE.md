@@ -11,7 +11,7 @@ inputs:
   - record home: book/src/concepts/config-record.md:61-77 (ProblemType already defined — cross-cutting, cross-referenced not redefined)
   - OQs resolved: eigenvalue-untransform-l1-primitive, eigenfreq-qfactor-reduce-firm-needs-l1-eigenvalue-untransform-primitive
 integrated_at: 2026-06-03T192132Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7edbd3d
 integration_notes: "Applied clean (D2, COUNT OWNER, staging row 1). NEW firm L1 eigenvalue-untransform created; L1 firm 29→30 main / 36→37 grand (+1). Coupled re-anchor of L4 eigenfreq_qfactor_reduce marks gate-(a) DISCHARGED (both folded per-mode scalar maps now firm L1); verb STAYS rough-in (test-coverage-bounded), NOT promoted. Owns L1/index.md tally + SUMMARY.md alpha-insert. Build exit 0, linkcheck2 clean. retroactive-budget 0, gate hits 0. Closes OQs eigenvalue-untransform-l1-primitive + eigenfreq-qfactor-reduce-firm-needs-l1-eigenvalue-untransform-primitive; opens successor eigenfreq-qfactor-reduce-firm-needs-assembly-test (gate-(b))."
 ---
 

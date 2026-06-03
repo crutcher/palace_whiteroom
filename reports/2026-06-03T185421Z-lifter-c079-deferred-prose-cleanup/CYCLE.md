@@ -10,7 +10,7 @@ inputs:
   - book/src/L1/participation_ratio.md (firm as of c077 — the κ-half)
   - scaffolding/integrator-signals.md (cycle-079 §Suggested-next-dispatches — the routing)
 integrated_at: 2026-06-03T192132Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7edbd3d
 integration_notes: "Applied clean (D3, staging row 3, LAST). Prose hygiene, +0 firm: sparameters.L1.md (×6) stale bilinear-form down-link refs repointed to firm L1 port_projection (§Constituent-down-links dep-map cell rough-in→firm; column STAYS seed); eigenfrequency-qfactor.L4.md (×2) two internally-contradictory stale Status paragraphs reconciled (column STAYS seed). Discharges the c079 companion prose cleanup + the deferred sparameters.L1.md PROSE down-link repoint. Build exit 0, linkcheck2 clean. retroactive-budget 0, gate hits 0. Opens 2 coupled-column promotion-gate follow-up OQs. NOTE the D3-staleness clause in eigenfrequency-qfactor.L4.md (reconciled prose written before D2's same-cycle firm eigenvalue-untransform landed) — applied AS-PROPOSED, partial-staleness logged in OQ eigenfrequency-qfactor-L4-column-promotion-coupled-to-D2-untransform-firming; finalize left the substantive seed-gate re-narration for the cycle-081 planner (not a build error; verb STAYS rough-in so column correctly STAYS seed)."
 ---
 
