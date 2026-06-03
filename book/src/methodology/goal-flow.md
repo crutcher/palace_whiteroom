@@ -154,27 +154,51 @@ This shape is load-bearing, and it follows three principles:
 > in signatures now get a definition home in themselves (the record-definition obligation) —
 > a new `record` concepts Kind, ratified batch-24, carries the data-shape pages.
 
-> **Seed-firming reached its in-scope ceiling (batch-25).** With the columns
-> complete-at-`seed`, batch-25 turned to **firming the seed surface**, and largely played
-> that lead out. The reduce verbs' *first* (test-coverage) gate is dischargeable in
-> write-scope by citing the existing Palace postprocess unit tests as L0-equivalent
-> documentation — both `sparameter_reduce` and `eigenfreq_qfactor_reduce` advanced to
-> `rough-in (test-coverage-bounded)` this way, and a fourth reduce verb
-> (`domain_energy_reduce`, the per-domain energy-table fold) was authored. A new firm L1
-> primitive `eigenvalue-untransform` (the per-mode eigenvalue→ω map) discharged the
-> *structure*-side gate of `eigenfreq_qfactor_reduce`. But the verbs' *second* gate — full
-> `firm` — needs a **positive eigenpair→(f,Q) (or S-matrix, or per-domain energy) assembly
-> test**, and the Palace corpus contains **no such positive assembly test** (only
-> round-trip-invariance tests over the reduction *output*). This recurs across all reduce
-> verbs' assembly gates: the existing-test-citation route cannot discharge it, and authoring
-> new tests is out of project write-scope. So the seed-firming frontier has a **ceiling** —
-> the feature-surface columns stay `seed` (a constituent verb is not fully `firm`) until
-> either a new assembly test or a confidence-raising lowering-verifier pass lands. This is a
-> *finding about the spine*, not a defect: it tells us how far the top-down surface can firm
-> on the existing corpus alone. The frontier therefore returns to the **bottom-up vocabulary
-> + the standing 5-driver→L4 backend-lowering completeness picture** as the highest-fan-out
-> work, with seed-firming continuing opportunistically (a lowering-verifier law-confidence
-> pass on a now-both-primitives-firm verb is the one remaining in-scope promotion route).
+> **The seed-firming "ceiling" proved CONDITIONAL (batch-25→26).** With the columns
+> complete-at-`seed`, batch-25 turned to **firming the seed surface**. The reduce verbs'
+> *first* (test-coverage) gate is dischargeable in write-scope by citing the existing Palace
+> postprocess unit tests as L0-equivalent documentation — both `sparameter_reduce` and
+> `eigenfreq_qfactor_reduce` advanced to `rough-in (test-coverage-bounded)` this way, and a
+> fourth reduce verb (`domain_energy_reduce`, the per-domain energy-table fold) was authored;
+> a new firm L1 primitive `eigenvalue-untransform` (the per-mode eigenvalue→ω map) discharged
+> the *structure*-side gate of `eigenfreq_qfactor_reduce`. The batch-25 reading was that the
+> verbs' *second* gate (full `firm`) needs a **positive assembly test** absent from the Palace
+> corpus, so the surface was at an in-scope ceiling. **Batch-26 showed that ceiling is
+> conditional, not absolute.** A `lowering-verifier` *law-confidence* pass — the in-scope
+> route — promoted BOTH `eigenfreq_qfactor_reduce` (c082) and `sparameter_reduce` (c083) to
+> full `firm` via the **firm-on-positive-structure / syntactic-identity escape**: when a reduce
+> verb's folded L1 primitives are *all* firm AND its assembly is bare scalar arithmetic with no
+> law that smuggles in an unverified mathematical property, the laws are syntactic identities
+> over firm structure and the missing assembly test does not gate them (the same escape that
+> firms `apply_linop` / `participation_ratio`). The two-condition rule is sharp: it applies iff
+> (i) all folded primitives are firm and (ii) the assembly is axiom-free arithmetic. It does
+> NOT yet apply to `gram_reduce` / `domain_energy_reduce` — their folded `matrix-weighted-norm`
+> energy/Gram forms are still rough-in (a reduction is as firm as its least-firm primitive),
+> gated behind the `matrix-weighted-norm` √-entry-point cascade whose norm-axiom laws genuinely
+> ARE theorems the source only numerically asserts (the escape was ruled inapplicable there).
+> So the in-scope law-confidence route is now exhausted for the two all-primitives-firm verbs;
+> the remaining reduce-verb tail is foundation-gated on that one cascade.
+
+> **The column-promotion deadlock was broken (batch-26, user directive).** A subtler obstacle
+> than the firming ceiling: even with two reduce verbs now firm, *no feature column could
+> promote off `seed`*. The emergent per-column rule was "promote only once ALL constituents are
+> firm" — and because the output-product↔driver reciprocal cross-linking counted a sibling
+> *column* as a constituent, it created a **mutual-blocking deadlock** (`eigenmode` driver stays
+> seed because it reduces into `eigenfrequency-qfactor`; that output-product column stays seed
+> because its `eigenmode` constituent column is seed — each names the other as the blocker),
+> making `seed` a permanent terminal state. The user directive redefines column promotion: a
+> column promotes off `seed` when its **OWN composition + directly-owned constituents** are
+> firm; **cross-linked sibling columns are references, not blocking constituents.** A driver
+> column promotes on its own firm solve/assemble combinators + readout; an output-product column
+> on its own firm reduce verb — independent of the column it cross-links. The columns are
+> composition-roots over already-firm vocabulary, so the drive on the *constituent vocabulary*
+> was always real and correct; the inter-column rule was the over-constraint. Under the new
+> rule the first columns lift off `seed` (the all-13-column re-evaluation is the next lead): the
+> driver columns with firm assemble+solve constituents (`eigenmode` composes firm `fe_assemble`
+> + firm `eigsolve`), and the output-product columns whose reduce verb is now firm
+> (`eigenfrequency-qfactor`, `sparameters`). The frontier otherwise returns to the **bottom-up
+> vocabulary + the standing 5-driver→L4 backend-lowering completeness picture** as the
+> highest-fan-out work.
 
 ## FLOW — how the goal is met
 
