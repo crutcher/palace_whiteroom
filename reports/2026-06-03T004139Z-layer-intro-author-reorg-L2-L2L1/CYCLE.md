@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T004139Z
 scope: directive-3 mdBook structural reorg — L2 + L2>L1 Parts (by-kind grouping + global alpha re-sort)
 status: integrated
 integrated_at: 2026-06-03T021500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e0fae18eddb2b5c842d260d5e2a79258d43a6a70
 integration_notes: |
   cycle-071 D3, applied clean by integrator-per-report (STAGING row 3), finalized by integrator-finalize.
   PURE STRUCTURAL directive-3 reorg of the L2 + L2>L1 Parts. L2 SUMMARY nested into 5 by-kind groupings

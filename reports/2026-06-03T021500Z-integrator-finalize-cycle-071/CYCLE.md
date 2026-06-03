@@ -3,7 +3,7 @@ agent: integrator-finalize
 cycle: cycle-071
 batch: meta-batch-22 (cycles 070/071/072; SECOND/POSITION-2 primary cycle; batch-22 meta-phase fires AFTER cycle-072's finalize as a SEPARATE dispatch — NOT this cycle)
 finalized_at: 2026-06-03T021500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e0fae18eddb2b5c842d260d5e2a79258d43a6a70
 reports_consumed: 6
 status: complete
 ---

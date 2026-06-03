@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T004139Z
 scope: cycle-071 D5 — directive-3 mdBook reorg of L0 + Phase-1-corpus Parts
 status: integrated
 integrated_at: 2026-06-03T021500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e0fae18eddb2b5c842d260d5e2a79258d43a6a70
 integration_notes: |
   cycle-071 D5, applied clean by integrator-per-report (STAGING row 5), finalized by integrator-finalize.
   PURE STRUCTURAL directive-3 reorg of the L0 + Phase-1-corpus Parts. L0 SUMMARY nested into 3 source-area

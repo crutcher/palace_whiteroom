@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T004139Z
 scope: cycle-071 D6 — directive-3 mdBook reorg of Concepts + Meta-Reviews + Methodology + Feature + Design Parts
 status: integrated
 integrated_at: 2026-06-03T021500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e0fae18eddb2b5c842d260d5e2a79258d43a6a70
 integration_notes: |
   cycle-071 D6 (LAST per-report integration), applied clean by integrator-per-report (STAGING row 6), finalized
   by integrator-finalize. PURE STRUCTURAL directive-3 reorg — exactly ONE of the 5 owned Parts changed:
