@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T20:11:22Z
 scope: full-stack ↔ feature-spine cross-cut — batch-26 spine-completeness survey (the LEAD, D1)
 status: pending
 integrated_at: 2026-06-03T203730Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0136fd6
 integration_notes: "Applied via integrator-per-report (staging row 2, cycle-082). OBSERVATION-ONLY — NO book/ mutation. CONFIRMED 5-driver→L4 completeness (all 5 drivers + boundary-mode + lifecycle reach L4 on both assemble + solve halves; columns sit at seed ONLY because stage-3 output-product reductions are rough-in/seed). Appended 5 survey-conclusion OQs into the cycle-082 resolution-marker subsection (incl. spine-completeness-survey-5-driver-l4-confirmed-batch-26 AFFIRMED-CLOSED + two (D) stale-pointer findings routed to the batch-26 meta-phase). retroactive-budget 0."
 ---
 

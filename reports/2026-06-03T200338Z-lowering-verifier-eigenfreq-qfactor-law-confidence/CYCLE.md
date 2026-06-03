@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T200338Z
 scope: L4 verb law-confidence audit — eigenfreq_qfactor_reduce (the firm-on-positive-structure escape probe; gate-(b) law-confidence pass)
 status: pending
 integrated_at: 2026-06-03T203730Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0136fd6
 integration_notes: "Applied via integrator-per-report (staging row 1, cycle-082). PROMOTED L4 verb eigenfreq_qfactor_reduce rough-in (test-coverage-bounded) → firm via the firm-on-positive-structure / syntactic-identity escape; L4 firm 14→15 main / 18→19 grand, L4 rough-in 2→1 (+1 test-coverage-bounded); coupled eigenfrequency-qfactor.{L4,L1} constituent-matrix refresh (column STAYS seed on the eigenmode.L4 driver-column gate); .L0 needed no edit. OQ eigenfreq-qfactor-reduce-firm-needs-assembly-test RESOLVED-BY-AUDIT; opened successor eigenmode-driver-column-seed-promotion-blocks-eigenfrequency-qfactor-column. retroactive-budget 0; cargo make book exit 0, zero build-repair."
 inputs:
   - book/src/L4/eigenfreq_qfactor_reduce.md (the verb under audit — rough-in (test-coverage-bounded))
