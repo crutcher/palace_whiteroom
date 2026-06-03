@@ -46,4 +46,4 @@ These are explicitly meta-phase items — surfaced LOUDLY; the meta-phase fires 
 
 L1 firm 30 main / 37 grand · L2 firm 21 (+1 partly-constructive) · L2>L1 firm 11 · L3 firm 17 (+4 partial-obstruction) · L3>L2 firm 6 · **L4 firm 16** · L4 rough-in 1 (+1 test-coverage-bounded) · L4>L3 firm 10 · L0 chapters 22 · concepts 33 (+ `record` Kind RATIFIED) · methodology chapters 2 · FEATURE-SURFACE SPINE 13 columns (6 driver-leaf + 5 output-product + 1 spine-ROOT), all by-kind-grouped, all `seed` · L4 reduce-family 4 verbs (`eigenfreq_qfactor_reduce` FIRM c082 / `sparameter_reduce` FIRM c083 / `gram_reduce` `rough-in (test-coverage-bounded)` / `domain_energy_reduce` `rough-in`).
 
-Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit).
+Commit: `9b9d27d` (patched in the follow-up two-phase SHA commit).

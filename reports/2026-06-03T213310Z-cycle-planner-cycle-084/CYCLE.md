@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T21:33:10Z
 scope: cycle-084 dispatch plan (batch-26 position 3/3 — the LAST primary cycle before the batch-26 meta-phase)
 status: pending
 integrated_at: 2026-06-03T214250Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 9b9d27d
 integration_notes: |
   cycle-084 dispatch plan (the planner report). Consumed at finalize. The plan scheduled ONE small
   lifter hygiene dispatch (land-clean discipline for the last pre-meta cycle); the co-owned

@@ -9,7 +9,7 @@ inputs:
   - book/src/L4/sparameter_reduce.md (firm c083 — sibling; verified no stale maturity ref)
   - book/src/L4/gram_reduce.md (rough-in (test-coverage-bounded) — sibling; refs verified accurate, untouched)
 integrated_at: 2026-06-03T214250Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 9b9d27d
 integration_notes: |
   Applied clean by integrator-per-report (1 staging row, status applied). 2 surgical prose edits to
   book/src/L4/domain_energy_reduce.md — sibling-verb maturity-reference correction (eigenfreq_qfactor_reduce
