@@ -1,0 +1,283 @@
+---
+layer: L4
+operator: gram_reduce
+firmness: rough-in (test-coverage-bounded)
+consumes:
+  - book/src/L1/matrix-weighted-norm.md (rough-in — the diagonal self-bilinear xᵢᵀ K xᵢ; the diagonal CONSUMER, the xⱼ=xᵢ specialization of the off-diagonal bilinear)
+  - book/src/L1/bilinear-form.md (rough-in — the off-diagonal cross-bilinear xⱼᵀ K xᵢ; the fold element)
+  - book/src/L4/solve_family.md (rough-in (test-coverage-bounded) — produces the solution family [xᵢ] this combinator reduces over; the upstream stage in the composition root)
+lowers_to:
+  - book/src/L1/matrix-weighted-norm.md (the diagonal entry; identity-in-form on the body — the reduction is a fold of L1 bilinear-form evaluations, no dedicated L4>L3 theme; in-line §"Downward")
+  - book/src/L1/bilinear-form.md (the off-diagonal entry; identity-in-form on the body)
+variant_axes:
+  - normalization-weight (unit | current-normalized — THE load-bearing axis; absorbed into the w closure)
+  - operator-source (mass-energy — absorbed into K)
+  - element-type (real — pinned for the two witnessed pipelines)
+  - family-index-domain (terminal-boundary | surface-current — absorbed into [Tensor] / w)
+---
+
+# gram_reduce
+
+The L4 **operator-weighted symmetric-Gram reduction combinator**: reduce a collected
+solution family `[xᵢ]` against an operator weight `K` into the symmetric Gram matrix
+`Gᵢⱼ = w(i,j) · (xⱼᵀ K xᵢ)`, parameterized by the per-entry normalization weight
+`w(i,j)`. It is the **output-product reduction** shared by the electrostatic
+capacitance matrix (`Cᵢⱼ = Vⱼᵀ K Vᵢ`, `w = 1`) and the magnetostatic inductance
+matrix (`Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)`, `w = 1/(Iᵢ Iⱼ)`) — ONE symmetric-Gram reduction
+across the two output products; the **weight is the only difference**.
+
+`gram_reduce` is a **pure value-producing reduction** (no `Solve` monad, no carry, no
+convergence predicate) — the **reduce-to-matrix** member of the L4 algebra-of-folds
+family, the sibling of the reduce-to-scalar [`inner_product`](./inner_product.md) and
+the reduce-to-tensor [`linear_combination`](./linear_combination.md). It rises to L4
+as a **feature-surface verb the backend wants**
+([`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerated-kernels.md)
+§"The combinators rise regardless"; directive-1: L4 is the outward backend-lowering
+target) — the output-product half of the electrostatic + magnetostatic composition
+roots reaches the L4 surface through it.
+
+Per replace-and-propagate (CLAUDE.md §Methodology invariants VOCABULARY-SHIFT
+redirect), `gram_reduce` is the **entry**; the electrostatic capacitance reduction and
+the magnetostatic inductance reduction are **specialization notes re-expressing
+THROUGH it** (§Specialization), NOT two rectangular leaf chapters. The two feature
+columns ([`electrostatic`](../feature/electrostatic.L4.md),
+[`magnetostatic`](../feature/magnetostatic.L4.md)) down-link to this combinator.
+
+## Context
+
+L4 is **vocabulary** (`L4/index.md:7-13`). `gram_reduce` names the symmetric-Gram
+reduction shape both energy-formulated output products share. It consumes the
+collected solution family that [`solve_family`](./solve_family.md) produces (the
+fixed-operator map's `[SimState.x]` output), folding each family-pair through the
+operator-weighted bilinear primitives:
+
+- the diagonal entry `xᵢᵀ K xᵢ` is the rough-in L1
+  [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (`√` dropped — `gram_reduce`
+  reduces to the *squared* energy `xᵢᵀ K xᵢ = 2Uₑ/ₘ(xᵢ)`, the matrix-weighted-norm's
+  radicand);
+- the off-diagonal entry `xⱼᵀ K xᵢ` is the rough-in L1
+  [`bilinear-form`](../L1/bilinear-form.md) (`xᴴ M y` at `M = K`).
+
+The diagonal is the `xⱼ = xᵢ` specialization of the off-diagonal bilinear
+(`matrix_weighted_norm x K = bilinear_form x K x` modulo the `√`), so
+`matrix-weighted-norm` is the diagonal **consumer**, not a second fold — the do-NOT-merge
+over-unification guard (the `nrm2`-consumes-`inner_product` pattern,
+`concepts/black-box-vs-accelerated-kernels.md` §2).
+
+The combinator is defined **in L4 vocabulary** (high→low discipline): its semantics,
+signature, and laws are stated in terms of the L1 bilinear primitives it folds and the
+[`solve_family`](./solve_family.md) family it consumes — NOT in terms of the L0 C++
+double loop. It is a methodology-level combinator distilled from the two PostprocessTerminals
+bodies; Palace's C++ writes the explicit double loop, not the L4 reduction form.
+
+## Signature
+
+    -- the operator-weighted symmetric-Gram reduction over a solution family-pair grid,
+    -- parameterized by the per-entry normalization weight w(i,j):
+    gram_reduce :: LinearOperator[N, N]        -- the operator weight K (the domain energy operator)
+                -> [Tensor[N]]                  -- the solution family xs = [x_0 .. x_{m-1}]
+                -> (Int -> Int -> Scalar)       -- the per-entry normalization weight w(i,j)
+                -> Matrix[m, m]                 -- the symmetric Gram matrix G, Gᵢⱼ = w(i,j) · (xⱼᵀ K xᵢ)
+    gram_reduce k xs w =
+      symmetric_from_upper                                  -- mirror lower triangle from upper (G symmetric)
+        [ [ w i j * entry k xs i j | j <- [i .. m-1] ]      -- map over upper-triangle pairs
+          | i <- [0 .. m-1] ]
+      where
+        m              = length xs
+        entry k xs i j
+          | i == j     = matrix_weighted_norm (xs!!i) k     -- diagonal: xᵢᵀ K xᵢ   (L1 matrix-weighted-norm radicand)
+          | otherwise  = bilinear_form (xs!!j) k (xs!!i)    -- off-diag: xⱼᵀ K xᵢ   (L1 bilinear-form)
+
+    -- the alternate Maxwell form is the inverse (a CONSUMER, not part of the reduction):
+    gram_inverse :: Matrix[m, m] -> Matrix[m, m]            -- = inv (LAPACK); the Cinv / Minv tail
+
+Shape contract (bunsen-style; named axes):
+
+- `K : LinearOperator[N, N]` — read-only; the **domain energy operator** (`M_elec`
+  diffusion-energy at `electrostaticsolver.cpp:118`, `M_mag` curl-curl-energy at
+  `magnetostaticsolver.cpp:129`; the feature chapters call it `K`). Symmetric/SPD —
+  the load-bearing precondition for `G`-symmetry.
+- `xs : [Tensor[N]]` — the collected solution family ([`solve_family`](./solve_family.md)'s
+  `[SimState.x]`): electrostatic `[Vᵢ]` (per-terminal), magnetostatic `[Aᵢ]`
+  (per-surface-current). Read-only.
+- `w : Int -> Int -> Scalar` — the per-entry normalization weight closure: electrostatic
+  `w i j = 1` (voltage-formulated, unit excitation); magnetostatic `w i j = 1/(I!!i * I!!j)`
+  (current-normalized, `I : [Scalar]` the excitation currents absorbed into the closure).
+  Symmetric (`w i j = w j i`) for both witnesses — required for `G`-symmetry.
+- result `Matrix[m, m]` — the symmetric Gram matrix (`m = length xs`).
+
+The shape contract makes structural what is conventional in the C++ double loop:
+
+1. **Each grid entry is independent (the upper-triangle `map` is a list homomorphism
+   over pairs).** No state threads between entries; the reduction collects.
+2. **`G` is symmetric by construction** (compute upper, mirror lower) — the C++
+   lower-triangle-copy loops are the L4 `symmetric_from_upper`.
+
+## Semantics
+
+`gram_reduce K xs w` evaluates the operator-weighted bilinear form at each
+upper-triangle family-pair, scales by the per-entry weight, and mirrors to a symmetric
+matrix. The diagonal uses the self-bilinear ([`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
+radicand `xᵢᵀ K xᵢ`); the off-diagonal uses the cross-bilinear
+([`bilinear-form`](../L1/bilinear-form.md) `xⱼᵀ K xᵢ`). It is a `map`-then-`reduce`
+with no `Solve` effect — a pure function `(K, xs, w) -> Matrix[m, m]`.
+
+The combinator's structural payoff: the electrostatic capacitance reduction and the
+magnetostatic inductance reduction are the **same** reduction, differing **only** in
+the `w` weight closure (`w ≡ 1` voltage vs `w = 1/(IᵢIⱼ)` current). The operator
+(`M_elec`/`M_mag`) and the family (`[Vᵢ]`/`[Aᵢ]`) are leaf-content absorbed into the
+`K` and `xs` arguments.
+
+## Algebraic laws
+
+Every law is a **syntactic identity on the fold structure**, read off the two positive
+PostprocessTerminals loops.
+
+1. **Symmetry** (load-bearing). `Gⱼᵢ = Gᵢⱼ` because `K` is symmetric/SPD and `w i j =
+   w j i`. Licenses the compute-upper-triangle-then-mirror realization
+   (`electrostaticsolver.cpp` lower-triangle copy; `magnetostaticsolver.cpp` likewise).
+   The underlying identity: `bilinear_form xⱼ K xᵢ = bilinear_form xᵢ K xⱼ` for
+   symmetric `K`.
+2. **Diagonal-is-self-bilinear** (the do-NOT-merge structural identity). `entry K xs i
+   i = matrix_weighted_norm (xs!!i) K = bilinear_form (xs!!i) K (xs!!i)` (modulo the
+   `√` the norm takes and `gram_reduce` does not) — the diagonal is the `xⱼ = xᵢ`
+   specialization of the off-diagonal, so `matrix-weighted-norm` is the diagonal
+   *consumer*, NOT a separate fold.
+3. **Weight factoring / bilinearity.** `w(i,j)` factors out of each entry; `xⱼᵀ K xᵢ`
+   is bilinear in `(xᵢ, xⱼ)`. The voltage form `w ≡ 1` is the multiplicative-identity
+   specialization on the weight axis.
+4. **Grid-map independence.** Each entry depends only on `(K, xs!!i, xs!!j, w i j)`;
+   the upper-triangle map carries no state — embarrassingly parallel over pairs.
+
+Laws that explicitly **do not** hold:
+
+- **The inverse is NOT part of the reduction.** `Cinv`/`Minv` (LAPACK `Invert()`,
+  `electrostaticsolver.cpp:140` / `magnetostaticsolver.cpp:152`) is a downstream matrix
+  map on the produced `G` (the `gram_inverse` consumer), kept OUT of the combinator —
+  the `nrm2`-style consumer split.
+- **No cross-output-product fusion.** Electrostatic and magnetostatic each call
+  `gram_reduce` with their own `(K, xs, w)`; the combinator does not fuse the two
+  output products (they are distinct simulations).
+
+## Specialization
+
+Per replace-and-propagate, `gram_reduce` is the **entry**; the two output-product
+reductions re-express THROUGH it:
+
+- **Electrostatic capacitance** (`electrostaticsolver.cpp:100-140`,
+  `ElectrostaticSolver::PostprocessTerminals`). `gram_reduce M_elec V (\i j -> 1)` —
+  the voltage-formulated unit-weight specialization. Diagonal `Cᵢᵢ = Vᵢᵀ K Vᵢ`
+  (`:118-119`), off-diagonal `Cᵢⱼ = Vⱼᵀ K Vᵢ` (`:126`), symmetric mirror, then
+  `gram_inverse` → `Cinv` (`:139-140`). Weight `w = 1` (unit voltage excitation: `/Vᵢ² ≡ ×1`).
+- **Magnetostatic inductance** (`magnetostaticsolver.cpp:110-152`,
+  `MagnetostaticSolver::PostprocessTerminals`). `gram_reduce M_mag A (\i j -> 1/(I!!i * I!!j))`
+  — the current-normalized specialization. Diagonal `Mᵢᵢ = (Aᵢᵀ K Aᵢ)/Iᵢ²`
+  (`:129-131`), off-diagonal `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)` (`:138`), symmetric mirror,
+  then `gram_inverse` → `Minv` (`:151-152`). Weight `w = 1/(Iᵢ Iⱼ)` (current-normalized).
+
+Candidate 3rd+ witnesses (NOT authored — a stronger future mine): eigenmode Q-factor /
+eigenfrequency energy post-processing (likely a per-mode map, would introduce the
+complex element-type axis) and driven S-parameter post-processing (port-pair map,
+possibly a *different* reduction — S-parameters are not symmetric Gram in general, an
+over-unification hazard to probe before subsuming). See the L4 index Open questions.
+
+## Dependencies
+
+L1 rows this combinator folds:
+
+- [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (rough-in) — the diagonal
+  self-bilinear (radicand); the diagonal consumer.
+- [`bilinear-form`](../L1/bilinear-form.md) (rough-in) — the off-diagonal cross-bilinear;
+  the fold element.
+
+L4 rows:
+
+- [`solve_family`](./solve_family.md) (rough-in (test-coverage-bounded)) — produces the
+  solution family `[xᵢ]` this combinator reduces over (the upstream composition-root stage).
+
+Sibling data-algebra combinators (the L4 algebra-of-folds family):
+
+- [`inner_product`](./inner_product.md) (reduce-to-scalar) — `gram_reduce`'s off-diagonal
+  entry `xⱼᵀ K xᵢ` is an `inner_product_M`-shaped weighted bilinear at the single-pair
+  level; `gram_reduce` is the *grid* reduction over the family-pair matrix of them.
+- [`linear_combination`](./linear_combination.md) (reduce-to-tensor) — the tensor-producing
+  fold sibling.
+
+## Lowers to
+
+`gram_reduce` lowers by **identity-in-form on the body** to the L1 bilinear-form
+evaluations it folds (the reduction is a plain fold of `matrix-weighted-norm` /
+`bilinear-form` over the family-pair grid — there is no intervening L3/L2 absorption
+that reshapes the fold). No dedicated L4>L3 theme file — the in-line-marker route (the
+[`inner_product`](./inner_product.md) / [`linear_combination`](./linear_combination.md)
+pattern); the substantive downward content (the C++ double loop, the symmetric mirror,
+the workspace `D_gf`/`H_gf`, the LAPACK inverse) lives in the L1 primitives' own
+L1>L0 mutation rotations. This entry records the rotation direction in-line per
+high→low discipline; it does not author a theme.
+
+## Status
+
+`rough-in (test-coverage-bounded)`. **Reasoning (warrant-first):** the combinator's
+**structure** is firm-on-positive-structure — the symmetric-Gram skeleton
+(map-over-upper-triangle-pairs, diagonal/off-diagonal split, weight factoring,
+symmetric mirror, inverse-as-consumer) is read directly off the two skeleton-identical
+positive PostprocessTerminals loops (electrostatic `:100-140` + magnetostatic
+`:110-152`), and every law (§Algebraic laws) is a syntactic identity on that fold. So
+the *structure* would satisfy the firm-on-positive-structure escape. BUT two factors
+gate it to `rough-in (test-coverage-bounded)`:
+1. the per-entry building blocks it folds — [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
+   and [`bilinear-form`](../L1/bilinear-form.md) — are themselves **rough-in** (their
+   laws are stated-but-test-unconfirmed), so the entry inherits their reduced maturity;
+2. there is **no dedicated Palace unit test** for the Gram reduction (the
+   PostprocessTerminals bodies are integration-level, exercised only through the full
+   `Solve(mesh)` driver), so the reduction-level laws are test-unconfirmed.
+
+Promotion route: (a) the L1 [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) +
+[`bilinear-form`](../L1/bilinear-form.md) primitives firm up, AND (b) a dedicated
+family-pair Gram-reduction test OR a lowering-verifier pass raising the fold-law
+confidence to `inner_product`-equivalent. (Contrast the firm-on-positive-structure
+`frequency_sweep` / `fe_assemble`, whose folded primitives are themselves firm —
+`gram_reduce`'s primitives are rough-in, which is the firm-vs-rough-in distinction
+here.)
+
+**Scope: 2-of-N pipelines** — electrostatic + magnetostatic output products (the two
+energy-formulated symmetric-Gram reductions); eigenmode + driven post-processing are
+candidate 3rd+ witnesses for a stronger future mine (§Specialization), not in scope
+now. The disciplined-cross-pipeline-combinator-mining-gate is 2-of-N met (2 positive
+witnesses, no break-witness — the normalization weight is a variant axis).
+
+## Evidence
+
+All L0 citations self-verified on-disk this dispatch via the codemap
+(`mcp__palace-codemap__read_range` + `search_text` line pinpoints against
+`reference/palace/palace/drivers/{electrostatic,magnetostatic}solver.cpp`).
+
+- **Electrostatic capacitance Gram (positive witness 1):**
+  `palace/drivers/electrostaticsolver.cpp:95` (the `PostprocessTerminals(post_op,
+  laplace_op.GetSources(), V)` call), `:100` (`void
+  ElectrostaticSolver::PostprocessTerminals(...)` def), `:118`
+  (`M_elec->Mult(V_gf, D_gf)` — the `K·Vᵢ` apply), `:119` (`linalg::Dot<Vector>(comm,
+  V_gf, D_gf)` — diagonal `Vᵢᵀ K Vᵢ`), `:126` (off-diagonal `Vⱼᵀ K Vᵢ`), `:139-140`
+  (`mfem::DenseMatrix Cinv(C); Cinv.Invert()` — the `gram_inverse` consumer).
+- **Magnetostatic inductance Gram (positive witness 2):**
+  `palace/drivers/magnetostaticsolver.cpp:105` (the `PostprocessTerminals(post_op,
+  curlcurl_op.GetSurfaceCurrentOp(), A, I_inc)` call), `:110` (`void
+  MagnetostaticSolver::PostprocessTerminals(...)` def), `:129`
+  (`M_mag->Mult(A_gf, H_gf)` — the `K·Aᵢ` apply), `:131` (`linalg::Dot<Vector>(...) /
+  (I_inc[i] * I_inc[i])` — diagonal `(Aᵢᵀ K Aᵢ)/Iᵢ²`), `:138` (off-diagonal
+  `(Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)`), `:151-152` (`mfem::DenseMatrix Minv(M); Minv.Invert()`).
+- **Feature-chapter witnesses (the §reduction stages that flagged the mine):**
+  `book/src/feature/electrostatic.L4.md:40`, `book/src/feature/magnetostatic.L4.md:40`.
+- **Firm vocabulary grounding:** `book/src/L4/inner_product.md` (the reduce-to-scalar
+  sibling), `book/src/L4/linear_combination.md` (the reduce-to-tensor sibling),
+  `book/src/concepts/black-box-vs-accelerated-kernels.md` §"The combinators rise
+  regardless" (the L4-feature-surface-verb warrant).
+- **No dedicated test** exercises the Gram reduction (the PostprocessTerminals bodies
+  are integration-level under `Solve(mesh)`, not unit-tested under
+  `reference/palace/test/unit/`) — the test-coverage-bounded gate.
+- **Provenance:** harvested cycle-073 D1 (LEAD) from the feature-chapter forward-mine
+  flags (`electrostatic.L4.md:40` + `magnetostatic.L4.md:40`); the
+  disciplined-cross-pipeline-combinator-mining-gate 2-of-N met. WARRANT verdict:
+  genuine L4 entry (the shared output-product reduction verb; ONE symmetric-Gram
+  reduction across two output products, the weight the only difference — a navigable
+  L4 home as the reduce-to-matrix data-algebra combinator, NOT a stranded mine).
