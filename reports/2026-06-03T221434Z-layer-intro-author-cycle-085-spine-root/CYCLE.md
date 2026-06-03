@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T221434Z
 scope: cycle-085 batch-27 LEAD — FEATURE-SURFACE SPINE all-13-column re-evaluation; D3 = SPINE-ROOT lifecycle column (lifecycle.{L4,L1,L0})
 status: integrated
 integrated_at: 2026-06-03T225500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7e5ab2d
 integration_notes: "Applied clean as D3 (staging row 3, byte-disjoint; does NOT touch feature/index.md — D1 sole-owns). 3 lifecycle frontmatter flips seed→firm (lifecycle.{L4,L1,L0}) + §Status OWN-COMPOSITION re-authoring (promotes on own driver-agnostic composition: mesh-build + firm fold_solve adaptive fold; the 5 per-driver columns are sibling references, NOT blocking constituents). All 6 [old] anchors matched verbatim, no transcription drift. Retroactive-budget 0. Build exit 0. Deduped feature-column-firm-token-choice OQ (promoted by D1). Part of cycle-085 batch-27 LEAD (broke the eigenmode↔eigenfrequency-qfactor mutual-blocking deadlock; spine-ROOT promotion mechanism validated)."
 ---
 

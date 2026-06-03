@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T221501Z
 scope: cycle-085 D2 — FEATURE-SURFACE output-product cohort re-evaluation under the OWN-COMPOSITION column-promotion rule
 status: integrated
 integrated_at: 2026-06-03T225500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7e5ab2d
 integration_notes: "Applied clean as D2 (staging row 2, byte-disjoint; does NOT touch feature/index.md — D1 sole-owns). 6 output-product frontmatter flips seed→firm (eigenfrequency-qfactor + sparameters × 3 levels) + sibling-relabel dep-map rows + mutual-blocking deadlock-clause retirement; capacitance/inductance/energy-fields STAY seed (own reduce-verb gate prose: gram_reduce rough-in / domain_energy_reduce + matrix-weighted-norm rough-in); the 3 STAY-seed .L0 files deliberately untouched. Retroactive-budget 0. Build exit 0. 1 OQ promoted (output-product-stay-seed-columns-gated-on-reduce-verb-firming); deduped feature-column-firm-token-choice OQ (promoted by D1). Part of cycle-085 batch-27 LEAD."
 ---
 

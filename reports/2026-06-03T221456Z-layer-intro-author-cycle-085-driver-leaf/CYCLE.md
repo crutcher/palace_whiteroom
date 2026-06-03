@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T221456Z
 scope: cycle-085 D1 — FEATURE-SURFACE SPINE driver-leaf cohort re-evaluation under OWN-COMPOSITION rule + sole owner of feature/index.md
 status: integrated
 integrated_at: 2026-06-03T225500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7e5ab2d
 integration_notes: "Applied clean as D1 (staging row 1, byte-disjoint, SOLE-owner feature/index.md). 9 driver-leaf frontmatter flips seed→firm (eigenmode/driven/transient × 3 levels) + electrostatic/magnetostatic/boundary-mode STAY seed (own-constituent gate prose) + feature/index.md 6-firm/6-seed re-narration. Retroactive-budget 0. Build exit 0, no build-repair, no new files, no SUMMARY change. 3 OQs promoted (feature-column-firm-token-choice-batch-27-meta-phase + waveguide-mode-output-product-column-would-promote-boundary-mode + electrostatic-magnetostatic-stay-seed-overrides-priorities-1-expectation). Part of cycle-085 batch-27 LEAD (the all-12-column FEATURE-SURFACE SPINE re-eval under the OWN-COMPOSITION rule; first feature columns ever off terminal seed)."
 ---
 

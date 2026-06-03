@@ -65,4 +65,4 @@ Per-report citecheck `--scan` reported, across the three reports: D1 9 ok / 1 no
 
 ALL layer-vocabulary counts UNCHANGED from c084 (status-token-flip + prose-re-authoring cycle, no new files, no `SUMMARY.md` change): L1 firm 30 main / 37 grand · L2 firm 21 (+1 partly-constructive) · L2>L1 firm 11 · L3 firm 17 (+4 partial-obstruction) · L3>L2 firm 6 · **L4 firm 16 main / 20 grand** · L4 rough-in 1 (+1 test-coverage-bounded) · L4>L3 firm 10 · L0 chapters 22 · concepts 33 (+ `record` Kind RATIFIED) · methodology chapters 2 · FEATURE-SURFACE SPINE 12 columns by-kind-grouped (6 firm / 6 seed) · L4 reduce-family 4 verbs (`eigenfreq_qfactor_reduce` FIRM c082 / `sparameter_reduce` FIRM c083 / `gram_reduce` `rough-in (test-coverage-bounded)` / `domain_energy_reduce` `rough-in`).
 
-Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit).
+Commit: `7e5ab2d` (patched in the follow-up two-phase SHA commit).

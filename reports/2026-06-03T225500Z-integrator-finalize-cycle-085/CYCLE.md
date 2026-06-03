@@ -78,4 +78,4 @@ Status counts: **applied 3 / partially-applied 0 / deferred 0 / rejected 0.**
 
 ## Provenance
 
-Written by `integrator-finalize` (split `integrator-per-report` ×3 + `finalize` ×1). Staging log: `reports/cycle-085-integrator-staging/STAGING.md` (3 rows, all `applied`). Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit per the cycle-004/cycle-005 precedent).
+Written by `integrator-finalize` (split `integrator-per-report` ×3 + `finalize` ×1). Staging log: `reports/cycle-085-integrator-staging/STAGING.md` (3 rows, all `applied`). Commit: `7e5ab2d` (patched in the follow-up two-phase SHA commit per the cycle-004/cycle-005 precedent).
