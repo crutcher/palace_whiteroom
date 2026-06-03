@@ -30,6 +30,32 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-084 — 2026-06-03T214250Z — POSITION 3/3 OF META-BATCH-26 (the LAST primary cycle of batch-26; the batch-26 meta-phase fires NEXT) — land-clean discipline: a SINGLE `lifter` hygiene dispatch corrected two stale `eigenfreq_qfactor_reduce` maturity references in `book/src/L4/domain_energy_reduce.md` (now firm c082) — ZERO firm-count / status change (the batch-26 meta-phase fires AFTER this cycle-084 finalize, aggregating 082/083/084; this finalize does NOT run meta-phase housekeeping)
+
+> **READER NOTE for the batch-26 META-PHASE (fires NEXT):** cycle-084 is the LAST primary cycle of batch-26. The carry-forwards below are **meta-phase items**, NOT cycle-085 plan items. The HIGHEST-PRIORITY one — the USER DIRECTIVE `feature-column-promotion-break-the-seed-deadlock` — is surfaced LOUDLY here AND in the batch CYCLE.md §Integration-tooling friction so the meta-phase cannot miss it. Two firm reduce verbs (`eigenfreq_qfactor_reduce` c082, `sparameter_reduce` c083) whose feature columns are STILL `seed` only because of the current sibling-blocks-promotion rule now CONCRETELY demonstrate the deadlock the directive names. The `.claude/agents/` + CLAUDE.md edits the directive requires ⇒ **SESSION RESTART after the meta-phase.**
+
+### Unblocked
+- (none newly unblocked this cycle — pure hygiene closeout). The standing unblocked items from c082/c083 persist: the in-scope law-confidence route is EXHAUSTED for the two all-primitives-firm reduce verbs (A1 `sparameter_reduce` c083, A2 `eigenfreq_qfactor_reduce` c082, both firm). — citation: OQ `output-product-reduce-verb-test-coverage-bounded-promotion-route` (A3/A4 remain, both foundation-gated).
+
+### New dependencies
+- (none — no new edge landed; the single edit corrected a STALE maturity reference in `book/src/L4/domain_energy_reduce.md` to the SIBLING verb `eigenfreq_qfactor_reduce` (now firm c082), and re-narrated the §Status gating-logic so `domain_energy_reduce`'s OWN rough-in is correctly attributed to its OWN folded `matrix-weighted-norm` energy form). — citation: report `2026-06-03T213310Z-lifter-domain-energy-reduce-stale-sibling-refs`.
+
+### Resolution implications
+- `feature-column-promotion-break-the-seed-deadlock` (USER DIRECTIVE 2026-06-03) — **needs-more (META-PHASE enactment, HIGHEST PRIORITY; fires NEXT)** — UNCHANGED by this hygiene cycle but now even more sharply demonstrated: two firm output-product reduce verbs with feature columns STILL `seed` solely because of the current sibling-column-blocks-promotion rule. The batch-26 meta-phase MUST (1) amend the column-promotion convention in CLAUDE.md §Extraction-goal + the `layer-intro-author` role-spec §FEATURE-SURFACE; (2) queue the all-13-column re-evaluation as the batch-27 lead; (3) fix the now-stale `eigenmode.L4:55` clause if still present.
+- `output-product-reduce-verb-test-coverage-bounded-promotion-route` — **partially-answered (A1+A2 firm; A3/A4 foundation-gated)** — UNCHANGED by this hygiene cycle. The remaining A3 `gram_reduce` + A4 `domain_energy_reduce` are gated on the `matrix-weighted-norm` √-entry-point ~30-file cascade (batch-25 NO-GO) — now the CONVERGENT blocker for the whole remaining reduce-verb tail; a meta-phase weigh of "dedicate a cascade cycle" vs "stay bounded."
+- the two **(D) orthogonalize-family stale-pointer** ledger-unification items — **needs-more (META-PHASE unify-pass)** — still pending.
+
+### Suggested next dispatches
+- **NONE for cycle-085 yet — the batch-26 META-PHASE fires NEXT** and re-plans the active head. The meta-phase's own outputs (the column-promotion-rule amendment + the all-13-column re-evaluation queued as the batch-27 lead) will reshape `scaffolding/priorities.md`; the cycle-085 planner reads the post-meta plan. (If the meta-phase declines the `matrix-weighted-norm` cascade, the next opportunistic seed-firming front is gated — the bottom-up vocabulary frontier resumes as the lead.)
+
+### Wave-conflict observations
+- (none — single-dispatch cycle; no wave-mates, no parallel-blind shared-index coordination, no file collision possible).
+
+### Integration-tooling friction
+- (none this cycle — a clean single-report hygiene apply; staging row count == dispatched-ready count (1 == 1), so NO staging-completeness reconciliation was needed; build clean, no repair). **LOUD META-PHASE FLAG (not tooling friction, routed here for visibility):** the USER DIRECTIVE `feature-column-promotion-break-the-seed-deadlock` is the HIGHEST-PRIORITY batch-26 meta-phase enactment — see the READER NOTE + Resolution implications above. Two firm verbs now demonstrate the deadlock; the meta-phase must amend CLAUDE.md §Extraction-goal + the `layer-intro-author` role-spec and SESSION-RESTART after.
+
+---
+
 ## cycle-083 — 2026-06-03T212210Z — POSITION 2/3 OF META-BATCH-26 (the cycle BEFORE the batch-26 meta-phase) — the SECOND reduce-verb FIRM PROMOTION: `sparameter_reduce` rough-in (test-coverage-bounded) → **firm** via the SAME firm-on-positive-structure / syntactic-identity escape as c082; L4 firm 15→16 main / 19→20 grand, L4 rough-in UNCHANGED (1 + 1 test-coverage-bounded) + a `lifter` hygiene sync of the stale `eigenmode.L4` rough-in clause (the batch-26 meta-phase fires AFTER cycle-084's finalize, aggregating 082/083/084; this finalize does NOT run meta-phase housekeeping)
 
 > **READER NOTE for the cycle-084 planner:** the next cycle (084) is the LAST primary cycle of batch-26; the batch-26 META-PHASE fires AFTER cycle-084's finalize. The HIGHEST-PRIORITY carry-forward below — the USER DIRECTIVE `feature-column-promotion-break-the-seed-deadlock` — is a **meta-phase** enactment, NOT a cycle-084 plan item; it is surfaced here so the meta-phase cannot miss it.

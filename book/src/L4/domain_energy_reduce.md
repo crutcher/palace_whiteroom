@@ -209,10 +209,12 @@ report's Open questions for a possible `problems/` drive-by).
 
 Sibling data-algebra reduction combinators (the L4 algebra-of-folds family):
 
-- [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md) (rough-in) — the per-MODE scalar-table
+- [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md) (firm, c082) — the per-MODE scalar-table
   reduction; `domain_energy_reduce` is the per-DOMAIN sibling (same rank-1 scalar-table shape, different
   family index: mode vs domain). Together they are the two rank-1 scalar-table members of the
-  algebra-of-folds.
+  algebra-of-folds. (The sibling reached `firm` because BOTH its folded primitives have firm L1 homes —
+  `eigenvalue-untransform` c080 + `participation_ratio` c077 — so the firm-on-positive-structure escape
+  applies to it; `domain_energy_reduce` does NOT yet share that property, see §Status.)
 - [`gram_reduce`](./gram_reduce.md) (reduce-to-matrix) — the rank-2 family-PAIR Gram reduction; the
   do-NOT-merge over-unification guard (single field, not a family; rank-1 table, not a rank-2 grid).
 - [`inner_product`](./inner_product.md) (reduce-to-scalar) — the single-tensor reduction; the per-domain
@@ -287,8 +289,15 @@ energy form, AND (b) a dedicated per-domain energy-participation test OR a lower
 the map-law confidence to `inner_product`-equivalent (the batch-24 meta-phase ruled the 2nd gate is
 dischargeable in write-scope by a `find-tests-for-region` pass CITING the existing
 `test-domainpostoperator.cpp` postprocess coverage). (Contrast the per-mode sibling
-[`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md), also `rough-in` for the same
-primitive-maturity + no-dedicated-test reasons.)
+[`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md), now `firm` (c082): it cleared the
+firm-on-positive-structure escape precisely because BOTH its folded primitives have firm L1 homes —
+[`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (c080) and the firm
+[`participation_ratio`](../L1/participation_ratio.md) (c077). `domain_energy_reduce` stays `rough-in`
+because its OWN per-domain numerator — the folded domain-restricted
+[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) energy form — is itself `rough-in
+(test-coverage-bounded)` at the √-overload entry point (gate (a) above), so the same escape does NOT yet
+apply here; the firm sibling is the contrast that shows what clearing gate (a) would buy, NOT a peer at
+the same maturity.)
 
 **Scope: 1-of-1 — the field-energy output product, driver-AGNOSTIC.** This is the field-energy
 postprocess's reduction; it is driver-agnostic (the SAME per-domain reduction reduces any field-bearing
