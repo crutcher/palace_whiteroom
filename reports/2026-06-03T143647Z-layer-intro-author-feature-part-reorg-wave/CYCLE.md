@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T143647Z
 scope: Feature-Part by-kind reorg wave (PURE STRUCTURAL)
 status: pending
 integrated_at: 2026-06-03T153000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: d11bd2f
 integration_notes: |
   cycle-076 (batch-24 position 1/3, LEAD). Applied clean as D1 by integrator-per-report;
   finalized + committed by integrator-finalize. PURE-STRUCTURAL Feature-Part by-kind reorg:

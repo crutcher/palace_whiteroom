@@ -9,7 +9,7 @@ inputs:
   - book/src/L4/sparameter_reduce.md (on-disk target, 22733 bytes)
   - skills/upgrade-plain-text-ref-to-live-link-when-target-on-disk/SKILL.md
 integrated_at: 2026-06-03T153000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: d11bd2f
 integration_notes: |
   cycle-076 (batch-24 position 1/3, LEAD). Applied clean as D2 by integrator-per-report;
   finalized + committed by integrator-finalize. LOW/hygiene micro-pass: ONE load-bearing edit
