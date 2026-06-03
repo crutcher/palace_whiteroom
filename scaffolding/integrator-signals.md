@@ -30,6 +30,36 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-082 — 2026-06-03T203730Z — POSITION 1/3 OF META-BATCH-26 (the FIRST primary cycle after the batch-25 meta-phase) — the FIRST reduce-verb FIRM PROMOTION: `eigenfreq_qfactor_reduce` rough-in (test-coverage-bounded) → **firm** via the firm-on-positive-structure / syntactic-identity escape; L4 firm 14→15 main / 18→19 grand, L4 rough-in 2→1 (+1 test-coverage-bounded) + an observation-only spine-completeness survey CONFIRMING 5-driver→L4 completeness (the batch-26 meta-phase fires AFTER cycle-084's finalize, aggregating 082/083/084; this finalize does NOT run meta-phase housekeeping)
+
+### Unblocked
+- The **in-scope seed-firming route the batch-25 meta-phase identified is PROVEN to work** — a `lowering-verifier` law-confidence pass on a verb whose folded primitives have ALL firmed CAN promote it to `firm` via the firm-on-positive-structure escape WITHOUT an out-of-scope assembly test. `eigenfreq_qfactor_reduce` is the first instance (its `participation_ratio` c077 + `eigenvalue-untransform` c080 primitives are both firm). — citation: report `2026-06-03T200338Z-lowering-verifier-eigenfreq-qfactor-law-confidence`; OQ `eigenfreq-qfactor-reduce-firm-needs-assembly-test` RESOLVED-BY-AUDIT.
+- **`sparameter_reduce` / `gram_reduce` are the next candidates for the same route** — IF a `lowering-verifier` law-confidence pass finds their laws are syntactic identities over now-firm primitives. `sparameter_reduce`'s `port_projection` (c077) is firm; check whether its remaining folded constituents are firm before dispatching. — citation: OQ `output-product-reduce-verb-test-coverage-bounded-promotion-route` (A1 `sparameter_reduce` now the lead unclosed reduce-verb).
+
+### New dependencies
+- L4 `eigenfreq_qfactor_reduce` (firm) now stands firmly on the firm L1 fold pair `participation_ratio` (c077) + `eigenvalue-untransform` (c080) — the verb's laws are syntactic identities over them. — citation: report `2026-06-03T200338Z-lowering-verifier-eigenfreq-qfactor-law-confidence`.
+- The `eigenfrequency-qfactor.{L4,L1,L0}` feature column's seed→promotion now depends SOLELY on the `eigenmode.{L4,L1,L0}` driver column's own seed→promotion (the verb-side gate is discharged). — citation: OQ `eigenmode-driver-column-seed-promotion-blocks-eigenfrequency-qfactor-column`.
+
+### Resolution implications
+- `eigenfreq-qfactor-reduce-firm-needs-assembly-test` — **answered (RESOLVED-BY-AUDIT)** — the in-scope `lowering-verifier` law-confidence pass the OQ named; the firm-on-positive-structure escape applies (laws are syntactic identities over firm primitives), so no out-of-scope assembly test is needed; the verb is PROMOTED firm.
+- `spine-completeness-survey-5-driver-l4-confirmed-batch-26` — **answered (AFFIRMED-CLOSED finding)** — the 5-driver→L4 backend-lowering claim is verified COMPLETE on both the assemble-half AND solve-half of all 5 drivers + boundary-mode + lifecycle; the driver columns sit at `seed` ONLY because their stage-3 output-product reductions are rough-in/seed, NOT because any solve/assemble piece is missing.
+- `output-product-reduce-verb-test-coverage-bounded-promotion-route` — **partially-answered** — A2 (`eigenfreq_qfactor_reduce`) closed firm this cycle; A1 (`sparameter_reduce`), A3 (`gram_reduce`), A4 (`domain_energy_reduce`) remain; the established route is the `lowering-verifier` law-confidence pass on a both-primitives-firm verb.
+- `orthogonalize-l2-composition-family-oq-block-stale-landed-work` — **needs-more (META-PHASE input)** — D1 found `orthogonalize-composition-lowering-l2-l1-theme` OQ says "not yet authored" but the theme is FIRM on disk (c022); `L2-layer-intro-refresh-for-named-compositions` actionable ~60 cycles without migration; both are batch-26 ledger-unification inputs.
+
+### Suggested next dispatches
+- (`lowering-verifier`, `sparameter_reduce` law-confidence pass) — the next reduce-verb firm-promotion candidate via the now-proven route, IF its folded constituents are all firm (A1 in the output-product-reduce-verb cohort). Verify firm-primitive coverage before dispatching.
+- (`layer-intro-author` or `harvester`, `eigenmode` driver-column seed→promotion) — the SOLE remaining gate to promoting the `eigenfrequency-qfactor` feature column past `seed` now that the verb is firm. Higher-fan-out than the column itself (a driver column feeds multiple output-product columns).
+- (`cycle-planner`, batch-26 frontier framing) — consume the AFFIRMED-CLOSED 5-driver→L4 completeness finding: do NOT re-propose driver-composition / driver-shell work; weight the highest-fan-out bottom-up vocabulary + the output-product-reduce-verb cohort.
+- (META-PHASE, ledger-unification) — the two (D) stale-pointer findings (`orthogonalize-composition-lowering-l2-l1-theme` stale vs FIRM-on-disk; `L2-layer-intro-refresh-for-named-compositions` ~60 cycles unmigrated) + the residual survey-scope limits (no `L2/index.md` Working-Notes line-read; no full record-definition coverage audit).
+
+### Wave-conflict observations
+- NO wave conflict. D2 (verb promotion, build-relevant) and D1 (observation-only survey) are byte-disjoint — D2 edited the L4 verb + index + feature-column files; D1 touched only `scaffolding/open-questions.md`, appending its 5 OQs INTO D2's cycle-082 resolution-marker subsection (after D2's 2 entries, before the closing `---`), with NO slug duplication. The per-report integrators serialized cleanly (D2 created the staging log + the resolution-marker subsection; D1 appended into it).
+
+### Integration-tooling friction
+- None this cycle. 2/2 staging rows == 2 dispatched-ready reports (staging-completeness gap did NOT recur — 63rd consecutive clean staging / 77th consecutive clean split-integrator cycle). The staging log was authoritative; no working-tree reconciliation needed. `cargo make book` exit 0 with zero build-repair. The only persistent low-grade friction is the pre-existing benign KaTeX "Potential incomplete link" WARNs in `design/l4_calculus.md` (math-bracket false-positives, not dead links, not from this cycle's files) — long-tracked, not actionable here.
+
+---
+
 ## cycle-081 — 2026-06-03T194359Z — POSITION 3/3 OF META-BATCH-25 (the LAST primary cycle of batch-25) — a SINGLE clean hygiene dispatch (land-clean discipline): a `lifter` staleness-clear of the c080 D3 clause in the `eigenfrequency-qfactor` feature column — **ZERO firm-count / status change** (the batch-25 meta-phase fires AFTER this finalize, aggregating 079/080/081; this finalize does NOT run meta-phase housekeeping)
 
 > **READER NOTE:** the next dispatch is the **batch-25 META-PHASE**, NOT a cycle-082 planner. The carry-forwards below are routed to the meta-phase (they are meta-phase questions, not yet cycle-082 plan items). They are repeated in §Suggested next dispatches as meta-phase inputs.
