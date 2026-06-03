@@ -903,13 +903,14 @@ addressed_by: cycle-009 meta-phase (CLAUDE.md §Repository status + §Methodolog
 ---
 slug: specialized-agent-direct-write-to-book-during-dispatch
 first_observed: cycle-008
-last_observed: cycle-049
+last_observed: cycle-077
 recurrence_count: 5
 status: addressed
-last_observed: cycle-077
 addressed_by: cycle-018 meta-phase (dispatch-phase write-guard Discipline bullet enacted across ALL 8 specialized specs — harvester / abstractor / lifter / lowering-verifier / combinator-miner / same-layer-cross-cutter / cross-layer-cross-cutter + the pre-existing layer-intro-author) + skill `revert-dispatch-phase-book-mutation` (repairer safety-net, cycle-012); cycle-051 meta-phase (batch-15) re-weighed the recurrence-4 watch trigger → held the clean-tree gate NO-GO (net caught + repaired cleanly; 1 leak in 41 dispatches across cycles 018–051; the structural gate's cost exceeds its marginal value over the working detect+repair net); batch-24 meta-phase (cycle-078) recurrence 4→5, clean-tree gate HELD NO-GO again — the re-weighted watch trigger was NOT met (only ONE leak in the batch, caught by the critic + repaired clean via `revert-dispatch-phase-book-mutation`, ZERO escaped to commit; re-escalate only on TWO leaks in one batch OR a leak reaching a commit)
 ---
 ```
+
+**Batch-25 meta-phase update (cycle-081) — NO RECURRENCE; count HELD at 5.** Batch-25 (cycles 079/080/081, ~8 specialized dispatches) had **zero dispatch-phase write-partition leaks**. The c079 D4 `combinator-miner` (the `domain_energy_reduce` distinct-verb confirm-probe) was **observation-only by design** and stayed clean — it proposed NO `book/` change, which is notable because the combinator-miner is the 2-of-5 repeat offender (c049 + c077) and an observation-only probe is exactly the deliverable shape where the "inverting/firm-harvest feels like editing" leak previously fired; this time it correctly emitted no mutation. c080/c081 carried no combinator-miner dispatch. The batch-24 watch (a 3rd combinator-miner leak → weigh a combinator-miner-SPECIFIC prompt sharpening before re-escalating the structural gate) is NOT triggered. Count held at 5; status stays `addressed`.
 
 **Pattern (generalized; supersedes the agent-specific cycle-008 entry `abstractor-direct-write-to-book-during-dispatch`).** A specialized dispatch agent writes directly to `book/` during the **dispatch phase** (Phase 2) rather than emitting proposed-changes blocks via its CYCLE.md channel for integrator-per-report to apply in Phase 5. This violates the CLAUDE.md write-authority partition (specialized agents write to `reports/<id>/CYCLE.md` only) and the no-artifact-mutation-in-dispatch invariant.
 
@@ -1936,3 +1937,41 @@ addressed_by: cycle-075 meta-phase (batch-23) — annotated `.claude/agents/inte
 ```
 
 **Pattern (the staging-log `applied_at` timestamps were observed out of serial-dispatch order across c073/c074/c075).** The per-report integrators are dispatched serially, but the `applied_at` timestamps they stamp do not reliably reflect the apply order (a benign artifact — byte-disjoint anchoring + the finalize build-validate make any ordering harmless; the c074 finalize record explicitly noted the divergence). The risk is only that a future finalize might TRUST `applied_at` as the apply-record when the authoritative record is the append-position row order. **Why a clarifying annotation (Low-cascade).** No mechanism is broken — this is a documentation/expectation clarification so finalize never treats `applied_at` as the order-of-truth. The role-spec already said "re-read the staging log fresh"; this makes explicit that *row order*, not *timestamps*, is the apply record. **Watch.** Benign unless a finalize reconciliation is ever driven off `applied_at` ordering and produces a wrong apply-order conclusion (recurrence-2 with actual harm) → then a deterministic monotonic-sequence field (not a wall-clock timestamp) in the staging row would be warranted (a small format change, ask-class).
+
+---
+
+```yaml
+---
+slug: seed-surface-firming-ceiling-needs-out-of-scope-assembly-tests
+first_observed: cycle-079
+last_observed: cycle-081
+recurrence_count: 3
+status: addressed
+addressed_by: batch-25 meta-phase (cycle-081) — recorded as a spine FINDING + the batch-26 frontier reshaped away from seed-firming toward bottom-up vocabulary / 5-driver→L4 completeness (priorities.md); the in-scope promotion route (a lowering-verifier law-confidence pass on a both-primitives-firm verb) migrated to the plan backlog
+---
+```
+
+**Pattern (the FEATURE-SURFACE SPINE seed columns hit an in-scope firming ceiling).** The reduce-verb double-gate has two tiers. The **first** (test-coverage) gate is dischargeable in write-scope by CITING the existing Palace postprocess unit tests as L0-equivalent documentation (batch-24 decision (e)) — this advanced `sparameter_reduce` + `eigenfreq_qfactor_reduce` to `rough-in (test-coverage-bounded)` (c079) and is the routine route. The **second** gate — full `firm` — requires a **positive ASSEMBLY test** that exercises the eigenpair→(f,Q) / S-matrix / per-domain-energy assembly path itself, not just the reduction OUTPUT. The c081 planner verified the Palace corpus contains **no such positive assembly test** for any of the three reduce verbs (only round-trip-invariance tests over the output cache, using `RandomMeasurement()` rather than calling the real `Measure*` assembly). So the existing-test-citation route **cannot** discharge the 2nd gate, and authoring new tests is out of project write-scope. The feature-surface columns consequently stay `seed` (a constituent verb is not fully `firm`) until either an out-of-scope assembly test or an in-scope confidence-raising lowering-verifier pass lands.
+
+**Observed 3× this batch** — once per reduce verb (`sparameter_reduce` c079, `eigenfreq_qfactor_reduce` c079/c080, `domain_energy_reduce` c079). The structure-side gates DID firm in-scope where a positive source site exists (c080 `eigenvalue-untransform` firm L1 discharged `eigenfreq_qfactor_reduce` gate-(a)); the ceiling is specifically the **assembly-confidence** gate.
+
+**Why this is a finding, not a defect.** It is a true statement about how far the top-down feature surface can firm on the existing corpus alone — exactly the kind of friction the stack exists to expose. The corrective work-item is NOT "force the gate" but to **return the frontier to the highest-fan-out bottom-up vocabulary + 5-driver→L4 completeness** (migrated into the plan, batch-26 active head), with seed-firming continuing opportunistically. The one remaining in-scope promotion route — a `lowering-verifier` law-confidence pass on a verb whose folded primitives are ALL firm (the `eigenfreq_qfactor_reduce` situation post-c080) raising the assembly-map confidence to `inner_product`-equivalent — is migrated to the plan backlog (trigger-gated).
+
+**Watch.** If a future cycle finds a positive assembly test does exist (a corpus re-survey), or a downstream burn-component consumer pulls one of these columns and forces the firm question, re-open. Until then, the columns are correctly bounded at `seed`; do not churn them.
+
+---
+
+```yaml
+---
+slug: matrix-weighted-norm-full-firm-cascades-thirty-file-reanchor-sweep
+first_observed: cycle-080
+last_observed: cycle-080
+recurrence_count: 1
+status: addressed
+addressed_by: batch-25 meta-phase (cycle-081) — NO-GO on triggering the cascade this batch; migrated to the plan backlog as a trigger-gated structural-wave item (the cycle-071 dedicated-reorg-cycle precedent), gated on (a) a √-overload-entry-point test OR a law-confidence pass discharging the √ gate, AND (b) a downstream consumer needing the full-firm promotion
+---
+```
+
+**Pattern (a `matrix-weighted-norm` full-firm promotion would cascade a ~30-file re-anchor sweep).** The c080 D1 lowering-verifier audit positively test-covered the SPD radicand `⟨x,Bx⟩` + `½` (via `test-domainpostoperator.cpp`) but ruled the firm-on-positive-structure escape INAPPLICABLE — the outer `√` at the named entry point `linalg::Norml2(comm,x,B,Bx)` (`operator.cpp:606`) is the untested step, and the norm-axiom laws (triangle / Cauchy–Schwarz / parallelogram) carry inner-product-structure content the L0 source does not verify. So the entry correctly stays `rough-in (test-coverage-bounded)`. A full `firm` promotion is doubly blocked: it needs the √-entry-point gate discharged AND it would cascade a ~30-file re-anchor sweep (the operator is widely consumed).
+
+**Why NO-GO this batch.** (1) The √-entry-point gate is not discharged (a genuine test/law-confidence gap), so a promotion would be premature regardless of the cascade. (2) Even once the gate clears, the ~30-file sweep is a heavy structural wave best run as its OWN dedicated cycle (the cycle-071 reorg-wave precedent), not bundled with forward-frontier work. (3) No downstream consumer currently needs the full-firm promotion — the sharpened `rough-in (test-coverage-bounded)` correctly bounds the two verbs that fold it (`domain_energy_reduce` energy-form, capacitance/inductance via gram_reduce). Migrated to the plan backlog as a trigger-gated cascade-wave item.

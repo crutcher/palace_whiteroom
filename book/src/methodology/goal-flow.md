@@ -152,11 +152,29 @@ This shape is load-bearing, and it follows three principles:
 > output-product↔driver cross-link convention (no single producing driver; a generic
 > cross-link to the field-bearing driver set; no per-driver up-link). Records/structs named
 > in signatures now get a definition home in themselves (the record-definition obligation) —
-> a new `record` concepts Kind, ratified batch-24, carries the data-shape pages. With the
-> columns complete-at-`seed`, the frontier turns to **firming the seed surface** —
-> discharging the reduce-verb test-gates by citing the existing Palace postprocess unit
-> tests (L0-equivalent semantic documentation), authoring the un-authored reduce-verb files,
-> and the standing 5-driver→L4 backend-lowering completeness picture.
+> a new `record` concepts Kind, ratified batch-24, carries the data-shape pages.
+
+> **Seed-firming reached its in-scope ceiling (batch-25).** With the columns
+> complete-at-`seed`, batch-25 turned to **firming the seed surface**, and largely played
+> that lead out. The reduce verbs' *first* (test-coverage) gate is dischargeable in
+> write-scope by citing the existing Palace postprocess unit tests as L0-equivalent
+> documentation — both `sparameter_reduce` and `eigenfreq_qfactor_reduce` advanced to
+> `rough-in (test-coverage-bounded)` this way, and a fourth reduce verb
+> (`domain_energy_reduce`, the per-domain energy-table fold) was authored. A new firm L1
+> primitive `eigenvalue-untransform` (the per-mode eigenvalue→ω map) discharged the
+> *structure*-side gate of `eigenfreq_qfactor_reduce`. But the verbs' *second* gate — full
+> `firm` — needs a **positive eigenpair→(f,Q) (or S-matrix, or per-domain energy) assembly
+> test**, and the Palace corpus contains **no such positive assembly test** (only
+> round-trip-invariance tests over the reduction *output*). This recurs across all reduce
+> verbs' assembly gates: the existing-test-citation route cannot discharge it, and authoring
+> new tests is out of project write-scope. So the seed-firming frontier has a **ceiling** —
+> the feature-surface columns stay `seed` (a constituent verb is not fully `firm`) until
+> either a new assembly test or a confidence-raising lowering-verifier pass lands. This is a
+> *finding about the spine*, not a defect: it tells us how far the top-down surface can firm
+> on the existing corpus alone. The frontier therefore returns to the **bottom-up vocabulary
+> + the standing 5-driver→L4 backend-lowering completeness picture** as the highest-fan-out
+> work, with seed-firming continuing opportunistically (a lowering-verifier law-confidence
+> pass on a now-both-primitives-firm verb is the one remaining in-scope promotion route).
 
 ## FLOW — how the goal is met
 
