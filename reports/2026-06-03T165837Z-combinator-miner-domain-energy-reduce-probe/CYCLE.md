@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T165837Z
 scope: Distinct-verb-vs-inline confirm probe for domain_energy_reduce (D4; observation-only)
 status: integrated
 integrated_at: 2026-06-03T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: bdaf851
 integration_notes: "Applied cycle-079 (batch-25 position 1). Observation-only confirm-probe; verdict DISTINCT-VERB-WARRANTED (the per-domain numerator is itself a domain-restricted SPD energy reduction, so domain_energy_reduce does NOT collapse into a participation_ratio fold-inline / gram_reduce). NO book/ mutation. Verdict already consumed by D3 (which authored the verb file). Closes OQ domain_energy_reduce-distinct-verb-vs-inline-confirm-probe (verdict-provenance marker only)."
 ---
 

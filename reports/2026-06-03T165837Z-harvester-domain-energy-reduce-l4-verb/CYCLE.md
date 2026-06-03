@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T165837Z
 scope: L4 operator: domain_energy_reduce
 status: integrated
 integrated_at: 2026-06-03T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: bdaf851
 integration_notes: "Applied cycle-079 (batch-25 position 1). NEW L4 verb book/src/L4/domain_energy_reduce.md authored at rough-in (the per-domain (energy_i, p_i) energy-table reduction, per-DOMAIN sibling of eigenfreq_qfactor_reduce; folds matrix-weighted-norm-squared energy + firm participation_ratio; in-chapter ## Record definition for single-consumer DomainOpMap). L4/index dep-map row alpha-inserted before dot + rough-in tally (1)->(2) + cohort bullet; SUMMARY.md alpha-registered; energy-fields.L4.md forward-refs (:62,:134,:156) upgraded plain-text->live-link. L4 rough-in 1->2; reduce-family now 4 authored verbs; firm UNCHANGED. Honors the D4 DISTINCT-VERB-WARRANTED verdict. Closes OQ domain_energy_reduce-l4-verb-needs-authoring; opens domain_energy_reduce-promotion-double-gated + record-DomainOpMap-promote-watch + possible problems/ drive-by domain-field-energy-participation-guard-inconsistency."
 inputs:
   - dispatch D3 (cycle-079 Wave 2); Wave-1 confirm-probe D4 verdict DISTINCT-VERB-WARRANTED

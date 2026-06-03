@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T16:58:37Z
 scope: cycle-079 dispatch plan
 status: consumed
 integrated_at: 2026-06-03T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: bdaf851
 integration_notes: "cycle-079 dispatch plan; all 4 planned dispatches (D1 sparameter_reduce 2nd-gate + D2 eigenfreq_qfactor_reduce 2nd-gate + D3 domain_energy_reduce L4 verb + D4 confirm-probe) ran and applied clean. Consumed at cycle-079 finalize."
 ---
 

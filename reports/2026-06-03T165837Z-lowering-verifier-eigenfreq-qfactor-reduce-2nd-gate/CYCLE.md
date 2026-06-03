@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T165837Z
 scope: L4 verb audit — eigenfreq_qfactor_reduce (2nd / test-coverage gate via existing postprocess unit test)
 status: integrated
 integrated_at: 2026-06-03T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: bdaf851
 integration_notes: "Applied cycle-079 (batch-25 position 1). eigenfreq_qfactor_reduce ## Status rough-in -> rough-in (test-coverage-bounded) via existing-test citation (test-postoperator.cpp [idempotent] round-trip over mode_port_kappa :216/:259 + participation_ratio :160-188; batch-24 decision (e)); gate-a (kappa-participation) already firm via participation_ratio (c077), NOT re-opened; 8-entry verified_against: top-level fenced yaml block landed; L4/index status cell refreshed; a paragraph appended to the column ## Status. The coupled eigenfrequency-qfactor column STAYS seed. Successor OQ eigenfreq-qfactor-reduce-firm-needs-l1-eigenvalue-untransform-primitive opened. NOTE the column's ~L68 Status-opening-paragraph staleness flagged for a next-cycle prose cleanup. NO firm-count change."
 inputs:
   - book/src/L4/eigenfreq_qfactor_reduce.md

@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T16:58:37Z
 scope: L4 verb audit — sparameter_reduce 2nd (test-coverage) gate discharge via existing Palace postprocess unit tests
 status: integrated
 integrated_at: 2026-06-03T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: bdaf851
 integration_notes: "Applied cycle-079 (batch-25 position 1). sparameter_reduce ## Status rough-in -> rough-in (test-coverage-bounded) via existing-test citation (test-postoperator.cpp check_port_data dimensionless-S round-trip; batch-24 decision (e)); gate-b recorded already-discharged via firm port_projection (c077); verified_against: block landed; L4/index status cell + sparameters.L1.md composes: frontmatter refreshed. The coupled sparameters column STAYS seed. The sparameters.L1.md PROSE down-link repoint (:39,60,64) DEFERRED to a next-cycle layer-intro-author/lifter follow-up. NO firm-count change."
 inputs:
   - book/src/L4/sparameter_reduce.md (the verb under audit; currently rough-in, no prior verified_against block)
