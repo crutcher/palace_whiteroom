@@ -53,8 +53,8 @@ The L1→L0 direction (how the mesh-refine + driver solves lower to the in-place
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
 | build mesh | `mesh::Load`/`Partition`/`RefineMesh` (driver-agnostic mesh scaffold) | — (L0 scaffold) | `palace/main.cpp:287-302` |
-| per-driver dispatch (electrostatic) | [`electrostatic.L1`](./electrostatic.L1.md) | seed (exemplar) | `palace/main.cpp:267` |
-| per-driver dispatch (magnetostatic) | [`magnetostatic.L1`](./magnetostatic.L1.md) | seed (exemplar) | `palace/main.cpp:270` |
+| per-driver dispatch (electrostatic) | [`electrostatic.L1`](./electrostatic.L1.md) | seed | `palace/main.cpp:267` |
+| per-driver dispatch (magnetostatic) | [`magnetostatic.L1`](./magnetostatic.L1.md) | seed | `palace/main.cpp:270` |
 | per-driver dispatch (eigenmode / driven / transient) | eigenmode.L1 / driven.L1 / transient.L1 *(forthcoming — not yet authored)* | not yet authored | `palace/main.cpp:264, 261, 273` |
 | adaptive estimate-mark-refine fold | the `fold_solve` state-generated carry (see L4) | firm (L4) | `palace/drivers/basesolver.cpp:153-276` |
 

@@ -4,8 +4,8 @@ feature: lifecycle
 level: L4
 status: seed
 composes:
-  - book/src/feature/electrostatic.L4.md (seed (exemplar) — the ELECTROSTATIC ProblemType specialization)
-  - book/src/feature/magnetostatic.L4.md (seed (exemplar) — the MAGNETOSTATIC ProblemType specialization)
+  - book/src/feature/electrostatic.L4.md (seed — the ELECTROSTATIC ProblemType specialization)
+  - book/src/feature/magnetostatic.L4.md (seed — the MAGNETOSTATIC ProblemType specialization)
   - book/src/L4/fold_solve.md (firm — the state-generated adaptive estimate-mark-refine outer fold)
 l0_ground_truth:
   - palace/main.cpp:158-328 (main — the top-level lifecycle)
@@ -54,8 +54,8 @@ The whole run therefore lowers cleanly outward to the L4 backend surface as `lif
 | Stage | L4 constituent | Status | L0 site |
 |---|---|---|---|
 | build mesh | driver-agnostic mesh scaffold (`mesh::Load`/`Partition`/`RefineMesh`) | — (L0 scaffold) | `palace/main.cpp:287-302` |
-| dispatch → electrostatic column | [`electrostatic.L4`](./electrostatic.L4.md) | seed (exemplar) | `palace/main.cpp:267` |
-| dispatch → magnetostatic column | [`magnetostatic.L4`](./magnetostatic.L4.md) | seed (exemplar) | `palace/main.cpp:270` |
+| dispatch → electrostatic column | [`electrostatic.L4`](./electrostatic.L4.md) | seed | `palace/main.cpp:267` |
+| dispatch → magnetostatic column | [`magnetostatic.L4`](./magnetostatic.L4.md) | seed | `palace/main.cpp:270` |
 | dispatch → eigenmode / driven / transient columns | [eigenmode.L4](./eigenmode.L4.md) / [driven.L4](./driven.L4.md) / [transient.L4](./transient.L4.md) | on disk | `palace/main.cpp:264, 261, 273` |
 | adaptive estimate-mark-refine fold | [`fold_solve`](../L4/fold_solve.md) (state-generated `schedule-source`) | firm | `palace/drivers/basesolver.cpp:153-276` |
 
