@@ -93,14 +93,17 @@ Three composed stages, each a link DOWN to firm L4 vocabulary:
    half of the composition root; it is the per-ω post-process measurement
    `MeasureAndPrintAll(...)` (`drivensolver.cpp:216`) plus the B-field recovery `B =
    −1/(iω) ∇×E` (`:205-207`). There is no *new* L4 combinator authored here — the
-   driven S-parameter reduction is the **driven output-product surface**, which lands
-   its own dedicated column in a later cycle (named plain-text forward-reference here;
-   `sparameter_reduce` is NOT authored in this chapter, mirroring how the
-   electrostatic/magnetostatic columns forward-ref their capacitance/inductance
-   reductions to the output-product spine). The shared operator-weighted-Gram
-   energy-form reduction combinator (a ≥2-witness mine across the
-   capacitance/inductance/S-param reductions) is a forward mine, not a blocker (see
-   Open questions).
+   driven S-parameter reduction is the **driven output-product surface**, authored as
+   its own dedicated output-product feature column [`sparameters`](./sparameters.L4.md)
+   (the scattering-matrix `S` column, which links back DOWN to this driver as its
+   producing column; its stage-(2) verb [`sparameter_reduce`](../L4/sparameter_reduce.md)
+   *(rough-in)* is the port-projection reduction). This mirrors how the
+   electrostatic/magnetostatic drivers feed their [`capacitance`](./capacitance.L4.md) /
+   [`inductance`](./inductance.L4.md) output-product columns. The shared
+   operator-weighted-Gram energy-form reduction combinator
+   ([`gram_reduce`](../L4/gram_reduce.md), the capacitance/inductance reductions) does
+   NOT subsume the S-parameter reduction (it is a port-projection, not a Gram-weight
+   specialization — the c074 D6 / c075 closed-negative distinction); see Open questions.
 
 ## Inputs / outputs (the feature surface)
 
@@ -154,7 +157,7 @@ constituent `frequency_sweep` / `assemble_frequency_operator` vocabulary is firm
 | per-ω operator rebuild A(ω) | [`assemble_frequency_operator`](../L4/assemble_frequency_operator.md) | firm | `drivensolver.cpp:175-177` |
 | operator-varying per-ω solve map | [`frequency_sweep`](../L4/frequency_sweep.md) | firm | `drivensolver.cpp:168-196` |
 | per-ω solve cap | [`ksp_solve`](../L4/ksp_solve.md) | firm | `drivensolver.cpp:196` |
-| S-parameter reduction (output product) | `sparameter_reduce` *(output-product column; not authored here)* | forward-ref | `drivensolver.cpp:205-216` |
+| S-parameter reduction (output product) | [`sparameters`](./sparameters.L4.md) output-product column (verb [`sparameter_reduce`](../L4/sparameter_reduce.md), *rough-in*) | seed (column) | `drivensolver.cpp:205-216` |
 
 ## Status
 
@@ -172,9 +175,10 @@ per-member [`ksp_solve`](../L4/ksp_solve.md) (the operator-varying corner,
 surface, forward-ref'd to its own column (a fold of per-ω measurements, not authored
 here). All three composition-stage L4 combinators are **firm** — the cleanest
 operator-varying composition the spine carries — but the column remains uniform
-`status: seed` because the stage-3 S-parameter reduction is not yet authored as a
-firm output-product column (a feature column promotes past `seed` only once ALL
-composed constituents are firm). This chapter carries the *compositional* claim
+`status: seed` because the stage-3 S-parameter reduction's own output-product column
+[`sparameters`](./sparameters.L4.md) is itself `seed` (its [`sparameter_reduce`](../L4/sparameter_reduce.md)
+verb is `rough-in`) — a feature column promotes past `seed` only once ALL composed
+constituents are firm. This chapter carries the *compositional* claim
 (driven = this composition of these constituent pieces), not the constituents' per-op
 algebraic claims (those live in the linked chapters). Evidence: the L0 driver range
 `drivensolver.cpp:37-75` (`Solve` dispatch) + `:77-229` (`SweepUniform`) realizing

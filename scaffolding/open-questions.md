@@ -993,3 +993,98 @@ The verbose c073 (D1/D2/D4/D6) + c074 (D1/D2/D5/D6) + c075 (D1/D2/D3/D5) per-rep
 - `sparameter-reduce-status-promotion-double-gated` (NEW, c077 D5; coupled re-check) — `sparameter_reduce` (L4, rough-in) stays rough-in: gate-b (firm L1 port-projection home) is NOW discharged by `port_projection`, but the combinator is double-gated — it ALSO needs (a) a dedicated S-matrix-assembly reduction test OR a lowering-verifier law-confidence pass on the `MeasureSParameter` reduction-level assembly (the self-term + port-kind scaling). A later coupled pass should (i) repoint `sparameter_reduce.md:197-202,255-259` to a live down-link `[port_projection](../L1/port_projection.md)`, (ii) re-evaluate whether closing gate-b alone refines `rough-in` → `rough-in (test-coverage-bounded)`, (iii) check the sparameters feature-column down-links. NOT done c077 (double-gated coupled-column pass, per dispatch scope; folds into the `gram-reduce-status-promotion-double-gated` / `eigenfreq-qfactor-reduce-status-promotion-double-gated` standing-gate family).
 - `port-projection-l1-l0-rotation-home` (NEW, c077 D5) — the `port_projection` L1>L0 lowering theme is not authored (out of harvester scope). The S-parameter projection rotation — lazy covector assembly (`InitializeLinearForms`), complex-from-real-pairings expansion (lumped two-pairing / wave four-pairing 2×2), wave field transfer onto the port space, `Mpi::GlobalSum` collective — wants either a dedicated `L1-L0` theme or an in-line note on an S-parameter rotation. Low priority — the kernel laws are syntactic and the lowering is mechanical. *Trigger:* the sparameters coupled-column rotation pass, or an L1-L0 theme-completion sweep.
 - `assembled-fe-covector-record-definition-home` (NEW, c077 D5; watch) — `Covector[N]` is defined in-chapter in `port_projection.md` (single consumer, per the directive-2 record-definition obligation). If a second consumer of an assembled FE covector surfaces — e.g. a future `port_voltage`/`port_current` verb folding the sibling lumped `(*v)·E` (the `v` linear form at `lumpedportoperator.cpp:51`; `GetVoltage`/`GetCurrent` use the identical dual-pairing shape) — promote to `concepts/covector.md`. *Trigger:* a second assembled-covector dual-pairing verb (the ≥2-consumer bar).
+
+**New intake (cycle-078 D3 — lifter, output-product↔driver reciprocal cross-link wiring):**
+- `driver-stage3-output-product-column-uplink-convention-grade` (NEW, c078 D3; watch) — the ratified convention (`priorities.md:24,42`) says each driver stage-3 "cross-links UP to its output-product column." Audit found side-(a) (output-product→driver) complete for all 4 pairs, but side-(b) (driver→output-product **column** link) was ABSENT in all 4 drivers before this pass — `driven`/`eigenmode` additionally carried now-stale "lands later/not-authored" markers (the columns landed c075). D3 repaired all 4: driven→sparameters + eigenmode→eigenfrequency-qfactor (unambiguous — stale markers de-staled), and the lighter electrostatic→capacitance / magnetostatic→inductance column up-links (these 2 had no stale markers and already NAMED their output product; the column link was added for uniform convention satisfaction). **Open grade question:** is the convention satisfied by a *named* output-product reference, or does it require a *markdown link to the column file*? D3 read it as the latter (a "link"). If the critic/integrator reads it as the former, edits #3/#4 (electrostatic/magnetostatic) are droppable; #1/#2 (driven/eigenmode) should land regardless. *Trigger:* critic verdict on this report, or the next feature-surface convention-codification meta-phase pass.
+
+**New intake (cycle-078 D2 — layer-intro-author, boundary-mode driver-leaf feature column):**
+- `boundary-mode-2d-submesh-extraction-preface-vocabulary-home` (NEW, c078 D2) — the boundary-mode driver's distinguishing stage (0) is the 3D-boundary → 2D-submesh extraction (`ExtractBoundary2DSubmesh` `boundarymodesolver.cpp:42-55`: `CreateFromBoundary` → 3D→2D projection → attribute/edge remap), authored in the feature column as a *driver-local preface* with no standalone L4/L1 combinator. If a 2nd consumer of a boundary-extracted-submesh shape surfaces (a wave-port submesh extraction elsewhere; an FE-assembly submesh op), this preface wants a real vocabulary op (an `extract_boundary_2d_submesh` / `submesh_from_boundary` op + an L1>L0 mutation-rotation theme for the in-place `SubMesh` pipeline). Currently below the bar (single consumer). *Trigger:* a 2nd submesh-extraction consumer, or an FE-assembly submesh-construction harvester pass.
+- `boundary-mode-waveguide-output-product-column-needs-home` (NEW, c078 D2) — the boundary-mode stage-(3) readout (`kn`, `n_eff = kn/ω`, `(Et, En)`, `Bz`, impedance/Poynting-power postprocessing via `post_op.MeasureAndPrintAll` `boundarymodesolver.cpp:314`) reduces into a user-facing waveguide-mode product (propagation constants / effective indices / characteristic impedances) that has NO dedicated output-product feature column yet — the forward-ref keeping the boundary-mode column at `seed`. Sibling to the eigenmode→`eigenfrequency-qfactor` pairing (which DID land c075). Candidate output-product column slug: `waveguide-mode` / `propagation-modes`. *Trigger:* the output-product cohort completion pass, or a 2nd consumer of the propagation-mode reduction.
+- `modeeigensolver-readrange-minus-one-drift-witness` (NEW, c078 D2; friction witness) — palace-codemap `read_range` reported `int num_conv = eigen->Solve()` at `modeeigensolver.cpp:476`; on-disk (`grep`/`citecheck`) it is `:477` (a -1 codemap drift on `boundarymodesolver.cpp` too: the `eigen->Solve()` window). Confirms the standing `codemap-read-range-plus-one-drift-on-brace-boundary` friction extends to the FE/eigensolver-models sources; all D2 emitted citations were re-anchored against on-disk via `citecheck --anchor` + direct `sed` END-line reads. *Trigger:* informational — already covered by the role-spec on-disk-confirm discipline.
+
+## OQ (cycle-078 D1, energy-fields output-product column)
+
+- **`record-DomainData-needs-definition-home`** — `Measurement::DomainData`
+  (`{ int idx; double energy; double participation_ratio; }`,
+  `palace/models/postoperatorcsv.hpp:74-79`) is currently defined in-chapter as a single-consumer
+  record (the `## Record definition` section of `book/src/feature/energy-fields.L4.md`), since the
+  energy-fields output-product column is its only firm-artifact consumer this cycle. BUT the struct
+  lives in `postoperatorcsv.hpp` (the CSV-writer surface) and is also consumed by the CSV
+  measurement-output path (`postoperatorcsv` writes the per-domain energy table from these rows).
+  If/when a `postoperatorcsv` output-surface chapter (or a `lifecycle` postprocess-output stage) is
+  authored as a 2nd consumer, `DomainData` clears the ≥2-consumer bar → promote it to a
+  cross-cutting `book/src/concepts/DomainData.md` record-definition page (move the schema there;
+  the energy-fields chapter then links to it). Flag for a cross-cutter / record-definition
+  dispatch. (record-definition obligation, user directive-2 2026-06-03.)
+  opened_at: cycle-078
+  opened_by: layer-intro-author
+
+- **`domain_energy_reduce-l4-verb-needs-authoring`** — the energy-fields column composes a newly
+  minted L4 reduction verb `domain_energy_reduce` (`rough-in`, no anchor file yet — referenced
+  plain-text per the rough-in-no-anchor convention). It is the per-DOMAIN scalar-table sibling of
+  `eigenfreq_qfactor_reduce` (per-MODE): a per-domain `(energyᵢ, pᵢ)` map folding the
+  domain-restricted energy form (`matrix-weighted-norm`-squared, rough-in) and the firm
+  `participation_ratio`. A harvester/combinator-miner dispatch should author
+  `book/src/L4/domain_energy_reduce.md` (rough-in → its gates: a firm domain-restricted energy-form
+  L1 primitive, and the `matrix-weighted-norm` test-coverage gate). It joins the L4 reduce-family
+  (now 4 reduce-shapes: `gram_reduce`, `sparameter_reduce`, `eigenfreq_qfactor_reduce`,
+  `domain_energy_reduce`). NOTE: confirm with a combinator-miner that the per-domain restriction +
+  ratio genuinely warrants a distinct verb vs. a `participation_ratio`-fold inlined into the column
+  (this dispatch's author-judgment was: distinct verb, for the rank-1-table cohort symmetry + the
+  named per-domain-restriction shift — but a 2nd witness or a miner pass should confirm it does not
+  collapse into an existing reduce-shape).
+  opened_at: cycle-078
+  opened_by: layer-intro-author
+
+- **`energy-fields-driver-agnostic-not-per-driver-stage3`** — the domain energy table is a
+  driver-AGNOSTIC output product (the SAME `MeasureDomainFieldEnergy` reduces any field-bearing
+  driver's solution field, unlike capacitance/inductance/sparameters/eigenfrequency-qfactor which
+  each reduce ONE specific driver's family). This breaks the output-product↔driver-column
+  stage-3 cross-linking convention's 1:1 assumption (there is no single producing driver to
+  reciprocal-link). The column links to `electrostatic`/`magnetostatic`/… generically rather than
+  to one driver's stage-3. Flag whether the cross-link convention needs an "N-driver output
+  product" amendment (the reciprocal up-link from each field-bearing driver's stage-3 to
+  energy-fields), or whether energy-fields is correctly treated as a shared postprocess all drivers
+  point at. (Observation routed as OQ, not an in-column edit to the driver columns — the read-only
+  down-link discipline.)
+  opened_at: cycle-078
+  opened_by: layer-intro-author
+
+## OQ (cycle-078 D2, boundary-mode driver-leaf feature column)
+
+- **`boundary-mode-2d-submesh-extraction-preface-vocabulary-home`** — the boundary-mode driver's
+  distinguishing stage (0) is the 3D-boundary → 2D-submesh extraction (`ExtractBoundary2DSubmesh`
+  `palace/drivers/boundarymodesolver.cpp:42-55`: `CreateFromBoundary` → 3D→2D projection →
+  attribute/edge remap), authored in the feature column as a *driver-local preface* with no
+  standalone L4/L1 combinator. If a 2nd consumer of a boundary-extracted-submesh shape surfaces (a
+  wave-port submesh extraction elsewhere; an FE-assembly submesh op), this preface wants a real
+  vocabulary op (an `extract_boundary_2d_submesh` / `submesh_from_boundary` op + an L1>L0
+  mutation-rotation theme for the in-place `SubMesh` pipeline). Currently below the ≥2-consumer bar
+  (single consumer). *Trigger:* a 2nd submesh-extraction consumer, or an FE-assembly
+  submesh-construction harvester pass.
+  opened_at: cycle-078
+  opened_by: layer-intro-author
+
+- **`boundary-mode-waveguide-output-product-column-needs-home`** — the boundary-mode stage-(3)
+  readout (`kn`, `n_eff = kn/ω`, `(Et, En)`, `Bz`, impedance/Poynting-power postprocessing via
+  `post_op.MeasureAndPrintAll` `palace/drivers/boundarymodesolver.cpp:314`) reduces into a
+  user-facing waveguide-mode product (propagation constants / effective indices / characteristic
+  impedances) that has NO dedicated output-product feature column yet — the forward-ref keeping the
+  boundary-mode column at `seed`. Sibling to the eigenmode→`eigenfrequency-qfactor` pairing (which
+  DID land c075). Candidate output-product column slug: `waveguide-mode` / `propagation-modes`.
+  *Trigger:* the output-product cohort completion pass, or a 2nd consumer of the propagation-mode
+  reduction.
+  opened_at: cycle-078
+  opened_by: layer-intro-author
+
+- **`modeeigensolver-readrange-minus-one-drift-witness`** — palace-codemap `read_range` reported
+  `int num_conv = eigen->Solve()` at `modeeigensolver.cpp:476`; on-disk (`grep`/`citecheck`) it is
+  `:477` (a -1 codemap drift; the `boundarymodesolver.cpp` `eigen->Solve()` window too). Confirms
+  the standing `codemap-read-range-plus-one-drift-on-brace-boundary` friction extends to the
+  FE/eigensolver-models sources; all D2 emitted citations were re-anchored against on-disk via
+  `citecheck --anchor` + direct END-line reads. INFORMATIONAL ONLY — the critic could NOT reproduce
+  the -1 drift from its seat (META Issue #2); do not treat the drift claim as a settled finding.
+  The emitted `:477` citation is correct on-disk either way. *Trigger:* informational — already
+  covered by the role-spec on-disk-confirm discipline.
+  opened_at: cycle-078
+  opened_by: layer-intro-author
