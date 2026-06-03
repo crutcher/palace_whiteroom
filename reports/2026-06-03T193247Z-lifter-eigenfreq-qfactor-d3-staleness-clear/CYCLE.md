@@ -11,7 +11,7 @@ inputs:
   - book/src/L4/eigenfreq_qfactor_reduce.md (rough-in (test-coverage-bounded); §Status already re-anchored c080)
   - scaffolding/open-questions.md:1011-1016 (OQ-1016 + the resolved gate-(a) chain)
 integrated_at: 2026-06-03T194359Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e926d61
 integration_notes: "cycle-081 batch-25 position 3/3 (LAST primary cycle of batch-25; the batch-25 meta-phase fires AFTER this finalize). Applied clean via the proposed-changes channel — 7 edits across eigenfrequency-qfactor.{L4,L1}.md (the D3-staleness clear: dropped the stale 'no firm L1 entry' claim, live-linked firm L1 eigenvalue-untransform, flipped two dep-map cells rough-in->firm, re-anchored the seed-rationale onto gate-(b)). ZERO firm-count/status change (both columns stay seed; verb eigenfreq_qfactor_reduce stays rough-in (test-coverage-bounded)). Closed OQ-1016; residual gate-(b) lives at OQ-1013 (open, out of write-scope). cargo make book exit 0, zero build-repair. Single staging row == 1 dispatched-ready (no completeness gap)."
 ---
 

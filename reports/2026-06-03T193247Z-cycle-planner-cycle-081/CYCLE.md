@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T193247Z
 scope: cycle-081 dispatch plan
 status: pending
 integrated_at: 2026-06-03T194359Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e926d61
 integration_notes: "cycle-081 planner report marked consumed per convention (no artifact mutation — planning-phase only). Planned the single land-clean hygiene dispatch (lifter D3-staleness clear) for the LAST pre-meta cycle of batch-25; routed the seed-surface firming-ceiling finding + 3 other carry-forwards to the batch-25 meta-phase."
 ---
 

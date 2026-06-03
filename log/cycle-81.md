@@ -47,4 +47,4 @@ These are explicitly meta-phase questions:
 
 L1 firm 30 main / 37 grand · L2 firm 21 (+1 partly-constructive) · L2>L1 firm 11 · L3 firm 17 (+4 partial-obstruction) · L3>L2 firm 6 · L4 firm 14 · L4 rough-in 5 · L4>L3 firm 10 · L0 chapters 22 · concepts 33 (+ `record` Kind RATIFIED) · methodology chapters 2 · FEATURE-SURFACE SPINE 13 columns (6 driver-leaf + 5 output-product + 1 spine-ROOT), all by-kind-grouped, all `seed` · L4 reduce-family 4 verbs (`gram_reduce` / `sparameter_reduce` / `eigenfreq_qfactor_reduce` all `rough-in (test-coverage-bounded)` + `domain_energy_reduce` `rough-in`).
 
-Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit).
+Commit: `e926d61` (patched in the follow-up two-phase SHA commit).
