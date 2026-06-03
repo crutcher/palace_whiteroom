@@ -1,7 +1,7 @@
 ---
 layer: L4
 operator: sparameter_reduce
-firmness: rough-in
+firmness: firm
 consumes:
   - book/src/L4/frequency_sweep.md (firm — the driven solve-half map producing the per-ω solution family [E_ω] this reduction reduces over; the upstream composition-root stage)
 lowers_to:
@@ -196,10 +196,12 @@ L4 rows this combinator consumes:
 
 The per-port projection kernel this folds — the port-mode **linear functional** `sᵢ·E`
 (lumped `(*s)·E` `lumpedportoperator.cpp:283-294`; wave `(E×H⋆)·n`
-`waveportoperator.cpp:780-793`) — does **not yet have a firm L1 home** (see OQ
-`sparameter-reduce-l1-port-projection-home`); the reduction folds it directly off the two
-`GetSParameter` bodies, which is one of the two reasons the entry is `rough-in` rather than
-firm.
+`waveportoperator.cpp:780-793`) — has a **firm L1 home**:
+[`port_projection`](../L1/port_projection.md) (c077; OQ
+`sparameter-reduce-l1-port-projection-home` resolved). The reduction folds that firm
+primitive, and the cycle-083 lowering-verifier law-confidence pass found the assembly fold to
+be bare scalar arithmetic over it (the firm-on-positive-structure escape), promoting the entry
+to firm.
 
 Sibling data-algebra reduction combinators (the L4 algebra-of-folds family):
 
@@ -237,64 +239,75 @@ per-port reduction at a single ω and lets the sweep own the ω map — the clea
 
 ## Status
 
-`rough-in (test-coverage-bounded)`. **Reasoning (warrant-first):** the combinator's
-**structure** is firm-on-positive-structure — the per-column linear-projection skeleton
-(project `sᵢ·E`, subtract the drive-port self-term `−1`, apply the port-kind scaling, no
-symmetric mirror) is read directly off the single positive `MeasureSParameter` body
-(`postoperator.cpp:1246-1309`) with its two structurally-identical port-kind loops, and
-every algebraic claim (§Algebraic laws) is a syntactic read-off of that body + the two
-`GetSParameter` kernels. The `test-coverage-bounded` qualifier records the one remaining
-gate:
+`firm`. **Reasoning (firm-on-positive-structure / syntactic-identity escape):** the
+combinator's **structure** is read directly off the single positive `MeasureSParameter` body
+(`postoperator.cpp:1246-1309`, def + close-brace) with its two structurally-identical
+port-kind loops, and **every** law (§Algebraic laws) is a **syntactic identity** / closed-form
+arithmetic read-off — NO law smuggles in an unverified mathematical-property axiom:
 
-- The **reduction-level assembly** (the self-term + port-kind scaling stitched onto the
-  projection in `MeasureSParameter`) is **test-bounded at the assembly level**. The driven
-  postprocess test `test/unit/test-postoperator.cpp` (`TEST_CASE("PostOperator",
-  "[idempotent]")`, the `check_port_data` lambda `:189`, run over BOTH `lumped_port_vi`
-  `:266` and `wave_port_vi` `:271`) asserts the reduction **OUTPUT** field `c.S` is
-  **dimensionless** — `|S|` / `arg(S)` invariant under a `Dimensionalize`/`Nondimensionalize`
-  round-trip (`:195-196` non-dim, `:228-230` dim "Scattering always non-dim / Phase unchanged
-  by normalization"). This **directly witnesses law-3's output consequence** (the S-entry is
-  a dimensionless scattering ratio; the source-side basis is `postoperatorcsv.cpp:213`
-  `dim[k].S = data.S; // NONE`) across the lumped/wave variant axis. But the test uses
-  `RandomMeasurement()` and does **NOT** call `MeasureSParameter`, so the **assembly fold**
-  (the projection + the `−1` self-term + the `√(R_src/R_dst)` / `exp(ikₙd)` scaling) is not
-  directly exercised; the projection *kernel* `GetSParameter` is unit-tested
-  (`test/unit/test-lumpedportintegration.cpp:367,720`, `test/unit/test-romoperator.cpp:603`)
-  but the *assembly* is integration-tested only (the full driven `Solve(mesh)`). The
-  assembly-level laws are therefore output-witnessed but not assembly-witnessed — the
-  `test-coverage-bounded` bound.
+- law 1 (linearity in the field) inherits the firm L1 [`port_projection`](../L1/port_projection.md)
+  (c077) dual-pairing's established linearity `⟨s, E⟩ = Σ sᵢ Eᵢ` — a firm-primitive property,
+  not a numerically-asserted axiom;
+- law 2 (no symmetry-by-construction) + do-not-hold 1 (not a symmetric-Gram) are NEGATIVE
+  structural read-offs of the independent-entry assembly (no `symmetric_from_upper`, no
+  family-PAIR bilinear; `:1267-1307`);
+- law 3 (inhomogeneous `−1` diagonal) is the literal `vi.S.real(vi.S.real() - 1.0)`
+  (`:1275` lumped / `:1297` wave) — the L4 law claims the FOLD STRUCTURE (an affine `−1` at the
+  diagonal), not the physical correctness of the scattering value;
+- law 4 (directional scaling) reads the literal `√(R_src/R_dst)` (`:1280`, guarded `:1278`) and
+  the wave de-embed `exp(ikₙd)` (`:1301-1302`) — arithmetic properties of `sqrt`-of-ratio and
+  the symmetric exponential product, no inner-product/positivity axiom;
+- law 5 (grid-map independence) + do-not-hold 2 (scale-axis identity) are read off the
+  no-inter-entry-accumulator loops and the `|R| > 0` / `d_offset = 0` guards.
 
-The **per-port projection L1 home is now FIRM** — `book/src/L1/port_projection.md` (landed
-cycle-077; `firmness: firm`, firm-on-positive-structure) is the dual-pairing `⟨s, E⟩`
-projection kernel this reduction folds, and it explicitly satisfies this verb's former
-gate-b (`port_projection.md:61-64,219-221,343-345`). The OQ
-`sparameter-reduce-l1-port-projection-home` is **resolved** by that entry. The verb no
-longer inherits reduced maturity from an absent constituent home — only the assembly-level
-test bound remains, which is exactly the `rough-in (test-coverage-bounded)` situation
-(structure firm-on-positive-structure; laws test-gated, per the `eigsolve` /
-`matrix-weighted-norm` precedent).
+The reduction-level **assembly** — the self-term + port-kind scaling stitched onto the cached
+projection in `MeasureSParameter` — is **bare scalar arithmetic over a firm primitive**: the
+cache write `vi.S = data.GetSParameter(*E)` (`:1141` lumped / `:1239` wave) holds the firm
+[`port_projection`](../L1/port_projection.md) output **verbatim with no intervening transform**,
+and `MeasureSParameter` reads that cached value and applies the literal `-1.0` and `*= scale`.
+The "cached projection crossing" is therefore an **evaluation-strategy / data-flow** detail the
+L4 reduction form correctly abstracts over (eager-vs-cached), NOT an algebraic axiom — it does
+not gate the syntactic-identity laws. This is the same escape that landed the SIBLING
+[`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md) firm (c082 — bare scalar arithmetic
+`quality_factor = freq_re / |κ|` over two firm halves), and the same escape that landed
+[`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (c080),
+[`assemble_frequency_operator`](./assemble_frequency_operator.md), and
+[`frequency_sweep`](./frequency_sweep.md) firm. The contrast is the c080 SIBLING
+[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) audit, which RULED OUT the escape
+precisely because its norm-axiom laws (triangle / Cauchy–Schwarz / parallelogram) are theorems
+conditional on an inner-product structure (SPD/Hermitian `B`) the L0 source only *numerically
+asserts* — **no such theorem-needing-proof exists in this verb's assembly** (the self-term `−1`,
+the `√(R_src/R_dst)` scale, the `exp(ikₙd)` de-embed are all literal scalar maps).
 
-Promotion route to `firm`: a dedicated S-matrix-**assembly** test exercising
-`MeasureSParameter` at the reduction entry point (the self-term + port-kind scaling applied
-to a known projection), OR a lowering-verifier pass raising the assembly-level law confidence
-to `frequency_sweep`-equivalent. (Note the firm-on-positive-structure escape would apply if
-the assembly laws were purely syntactic identities on fully-specified positive source — they
-are read off `MeasureSParameter`, but the self-term + scaling stitching crosses the cached
-projection from the per-port measure pass, so the assembly is treated as integration-level
-until the assembly test or a confidence-raising audit lands. The current audit raised
-confidence on the OUTPUT invariant + discharged gate-b but did not exercise the assembly,
-hence `rough-in (test-coverage-bounded)`, not `firm`.)
+**Both structure-side gates were already discharged before this promotion:** gate-b — the
+per-port projection L1 home — is FIRM via [`port_projection`](../L1/port_projection.md) (c077;
+`:61-64` state it satisfies this verb's gate-b); the self-term/scale are literal scalar maps,
+not primitives needing a home. The earlier `rough-in (test-coverage-bounded)` qualifier was held
+only on the absence of a dedicated S-matrix-**assembly** test. The driven postprocess test
+`test/unit/test-postoperator.cpp` (`TEST_CASE("PostOperator", "[idempotent]")`, `check_port_data`
+`:189` over lumped `:266` + wave `:271`) witnesses the reduction-**OUTPUT** invariant (`c.S`
+dimensionless: `|S|`/`arg(S)` invariant under a `Dimensionalize` round-trip `:195-196`/`:227-230`,
+source basis `postoperatorcsv.cpp:213` `// NONE`) but uses `RandomMeasurement()` (`:147`) and
+**never calls `MeasureSParameter`**, so it does not exercise the assembly fold — it is
+output-invariance documentation, NOT the firming basis. The cycle-083 lowering-verifier
+law-confidence pass IS the promotion route the OQ
+`output-product-reduce-verb-test-coverage-bounded-promotion-route` named: the audit finds the
+assembly-level laws are syntactic identities over the firm projection + positive source,
+carrying no residual untested semantic claim, so the firm-on-positive-structure escape
+discharges the assembly-test gate (the SAME route as the c082 A2 promotion). The projection
+*kernel* `GetSParameter` is additionally unit-tested
+(`test/unit/test-lumpedportintegration.cpp:367,720`, `test/unit/test-romoperator.cpp:603`).
 
 **Scope: single-pipeline (driven) BY DESIGN** — S-parameters are a driven-solver output
 product; there is no cross-pipeline generalization (the
 `disciplined-cross-pipeline-combinator-mining-gate` single-witness probe resolves to
 "within-pipeline output-product reduction with a port-kind variant axis", NOT a deferred
-cross-pipeline mine). The **lumped-vs-wave split is a variant axis** (two assembly variants
-of the SAME driven postprocess), NOT a 2nd pipeline. This is the driven member of the L4
+cross-pipeline mine). The **lumped-vs-wave split is a variant axis** (two assembly variants of
+the SAME driven postprocess), NOT a 2nd pipeline. This is the driven member of the L4
 output-product reduction cohort alongside `gram_reduce` (electrostatic/magnetostatic
-capacitance/inductance) and `eigenfreq_qfactor_reduce` (eigenmode `(f,Q)`); the S-parameter
-linear projection was probed as a `gram_reduce` 3rd-witness and CORRECTLY refused (different
-fold) — this chapter authors it as its own verb per that closed-negative finding.
+capacitance/inductance) and the firm `eigenfreq_qfactor_reduce` (eigenmode `(f,Q)`); the
+S-parameter linear projection was probed as a `gram_reduce` 3rd-witness and CORRECTLY refused
+(different fold) — this chapter authors it as its own verb per that closed-negative finding.
 
 verified_against:
 
@@ -302,32 +315,36 @@ verified_against:
 verified_against:
   - citation: palace/models/postoperator.cpp:1246-1309
     verdict: supports
-    audited_at: 2026-06-03T16:58:37Z
-    note: MeasureSParameter def+body+close-brace; on-disk close-brace at :1309. Self-term :1275 (lumped) / :1297 (wave); generalized-S scale :1280 guarded |R|>0 at :1278; wave de-embed :1301-1302. Every Algebraic-laws claim is a syntactic read-off of this single positive body.
+    audited_at: 2026-06-03T205952Z
+    note: MeasureSParameter def+body+close-brace re-verified on-disk via citecheck --anchor (def :1246, close-brace :1309). The assembly fold reads the CACHED projection vi.S then applies bare scalar arithmetic - self-term vi.S.real(vi.S.real()-1.0) at :1275 (lumped) / :1297 (wave); generalized-S scale vi.S *= sqrt(src_data.R/data.R) at :1280 guarded |R|>0 at :1278; wave de-embed vi.S *= exp(1i*kn0*d_offset) at :1301-1302. Every Algebraic-laws claim is a syntactic read-off; the cache-crossing is an evaluation-strategy detail, not an axiom.
   - citation: palace/models/lumpedportoperator.cpp:283-294
     verdict: supports
-    audited_at: 2026-06-03T16:58:37Z
-    note: LumpedPortData::GetSParameter, the lumped (*s)E linear functional folded by the reduction; dot construction :287-291, close :294. Its L1 port_projection home is now firm (cycle-077).
+    audited_at: 2026-06-03T205952Z
+    note: LumpedPortData::GetSParameter (def :283, close-brace :294) returns the PURE projection dot((*s)*E.Real(), (*s)*E.Imag()) at :287-290 - NO self-term, NO scale. This is exactly the firm L1 port_projection dual pairing; the assembly's arithmetic composes this firm primitive.
   - citation: palace/models/waveportoperator.cpp:780-793
     verdict: supports
-    audited_at: 2026-06-03T16:58:37Z
-    note: WavePortData::GetSParameter, the wave (E x H_inc*)n projection folded by the reduction; 2x2 real recombination :789-790, close :793.
-  - citation: test/unit/test-postoperator.cpp:188-271
-    verdict: partially-supports
-    audited_at: 2026-06-03T16:58:37Z
-    note: TEST_CASE PostOperator [idempotent] check_port_data lambda (:189), run over BOTH lumped_port_vi (:266) and wave_port_vi (:271). Asserts the reduction-OUTPUT field c.S is dimensionless (|S| :195 non-dim / :228 dim, arg(S) :196/:230 phase-unchanged) under Dimensionalize round-trip. Witnesses law-3 OUTPUT invariant only; uses RandomMeasurement() and does NOT call MeasureSParameter, so the assembly fold is NOT exercised. Gate-a stays test-coverage-bounded.
-  - citation: palace/models/postoperatorcsv.cpp:213
+    audited_at: 2026-06-03T205952Z
+    note: WavePortData::GetSParameter (def :780, close-brace :793) returns the PURE (E x H_inc*)n projection, complex recombination :789-790 - NO self-term, NO scale. Folded by the reduction as the wave port-kind projection variant.
+  - citation: palace/models/postoperator.cpp:1141
     verdict: supports
-    audited_at: 2026-06-03T16:58:37Z
-    note: dim[k].S = data.S; // NONE in Measurement::Nondimensionalize port-data loop (:200-226) - the source-side basis for the dimensionless-S test invariant; S carries no unit scale factor.
+    audited_at: 2026-06-03T205952Z
+    note: vi.S = data.GetSParameter(*E) - the lumped per-port projection cache write in MeasureLumpedPorts. The cached value is the firm primitive output verbatim, with NO intervening transform before MeasureSParameter reads it; this is why the cache-crossing carries no untested semantic content (the c082 A2 bare-arithmetic-over-firm-halves parallel).
+  - citation: palace/models/postoperator.cpp:1239
+    verdict: supports
+    audited_at: 2026-06-03T205952Z
+    note: vi.S = data.GetSParameter(*E) - the wave per-port projection cache write in MeasureWavePorts. Same as lumped - the cached value is the firm primitive output verbatim.
   - citation: book/src/L1/port_projection.md:1-354
     verdict: supports
-    audited_at: 2026-06-03T16:58:37Z
-    note: firm L1 port_projection entry (cycle-077) discharges gate-b - the per-port projection now HAS a firm L1 home (:61-64, :219-221, :343-345 state it satisfies this verb's gate-b). The former Status gate-2 is resolved.
-  - citation: test/unit/test-postoperatorcsv.cpp:22-138
-    verdict: does-not-support
-    audited_at: 2026-06-03T16:58:37Z
-    note: PostOperatorCSV<DRIVEN> fixture exercises port-V.csv (port_V/port_I, row_i, nr_expected_measurement_rows, InitializePortVI restart plumbing), NOT port-S.csv S-reduction output. The S-reduction-table coverage is out-of-range here; nearest port-S.csv content is a synthetic literal in test-basesolver.cpp:40.
+    audited_at: 2026-06-03T205952Z
+    note: firm L1 port_projection (cycle-077, firmness firm) is the dual-pairing projection the reduction folds; :61-64 explicitly state it satisfies this verb's gate-b. The verb's ONE folded primitive is firm L1 - the structure-side gate is fully discharged, exactly the A2 precondition.
+  - citation: test/unit/test-postoperator.cpp:188-271
+    verdict: partially-supports
+    audited_at: 2026-06-03T205952Z
+    note: TEST_CASE PostOperator [idempotent] check_port_data lambda (:189), run over lumped_port_vi (:266) + wave_port_vi (:271). Asserts the reduction-OUTPUT field c.S is dimensionless (|S| :195/:227, arg(S) :196/:229, comments Scattering always non-dim / Phase unchanged) under Dimensionalize round-trip. Uses RandomMeasurement() (:147) and does NOT call MeasureSParameter - so the assembly fold is NOT exercised. Output-witness only; NOT the firming basis (the syntactic-identity escape is), the same disposition as the A2 [idempotent] test.
+  - citation: palace/models/postoperatorcsv.cpp:213
+    verdict: supports
+    audited_at: 2026-06-03T205952Z
+    note: dim[k].S = data.S; // NONE in the Nondimensionalize port-data loop - the source-side basis for the dimensionless-S output invariant; S carries no unit scale factor. Supporting evidence for the output-witness, not the firming basis.
 ```
 
 ## Evidence
