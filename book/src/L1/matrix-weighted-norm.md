@@ -110,7 +110,7 @@ Promotion-to-firm gate: the second variant axis (output-arg vs return-value) is 
 `rough-in (test-coverage-bounded)` — signature and algebraic laws are well-anchored by the L0 source (the closed-form `√(xᴴ B x)`, the SPD precondition, the assertion-based numerical-Hermiticity check, the dense and consistent eigensolver-backend callsite cohort), but no dedicated Palace test exercises the SPD-weighted overload at this exact entry point (`test/unit/test-vector.cpp:209-211` exercises only the unweighted `Vector::Norml2()` method form; no `test/unit/test-eigen*.cpp` or `test/unit/test-operator*.cpp` directly tests `linalg::Norml2(comm, x, B, Bx)`). Per `CLAUDE.md` "Tests as semantic supplement" and the cycle-009 meta-phase precedent (eigsolve rough-in pending test-coverage), the entry stays at rough-in.
 
 **Promotion-to-firm gates** (any of):
-- **(a) Direct test coverage**: a Palace unit test that exercises `linalg::Norml2(comm, x, B, Bx)` on a known-SPD `B` (e.g. identity, diagonal positive, or a known mass matrix) and verifies the closed-form `√(xᴴ B x)` against a hand-computed value. Currently absent.
+- **(a) Direct test coverage of the √-overload entry point** (STILL OPEN): a Palace unit test that exercises `linalg::Norml2(comm, x, B, Bx)` on a known-SPD `B` and verifies the closed-form `√(xᴴ B x)` against a hand-computed value. **Partially advanced (cycle-080):** `test/unit/test-domainpostoperator.cpp:75-93` ("DomainPostOperator - Electric Energy Units") now positively covers the SPD-weighted **radicand** `⟨E, M_elec E⟩` (the squared self-bilinear of law 8) plus the `½` energy scaling — it calls `GetElectricFieldEnergy(*E_field)` (`palace/models/domainpostoperator.cpp:219-231`: `M_elec->Mult(E.Real(), D); dot = linalg::LocalDot(E.Real(), D); ... return 0.5 * dot;`) and asserts against the closed-form `0.5·ε₀·E₀²·sx·sy·sz` via `WithinRel(..., 0.01)`. This discharges the **radicand-constituent** half of gate (a). It does **NOT** discharge the gate: the energy form returns `0.5 * dot` with no `√` and never routes through `Norml2`, so the outer `√` of `matrix-weighted-norm = √(xᴴ B x)` at its named entry point `linalg::Norml2(comm, x, B, Bx)` (`palace/linalg/operator.cpp:606` `return std::sqrt(dot)`) remains the untested entry point. Full discharge still needs a test at the `Norml2(comm,x,B,Bx)` entry point itself (or a literature-anchor pass raising law-4/6/7 confidence to `ksp_solve`-equivalent).
 - **(b) Indirect test coverage via eigensolver tests**: the unweighted `Norml2` is firmed up partly through call-site evidence in CG / GMRES tests (`palace/linalg/iterative.cpp:408, 568, ...`) where `nrm2(r)` produces a residual norm that, if it didn't match the algebra, would derail the iteration. The B-weighted form has analogous indirect coverage via eigensolver backends — if `GetEigenvectorNorm` returned a value not satisfying laws 1, 2, 8, the M-orthonormalisation in ARPACK / SLEPc / NLEPS would propagate visible errors. A retroactive sweep of eigenvalue-test outputs would constitute *plausible* indirect coverage but not direct algebraic-law verification.
 - **(c) Algebraic-law completeness verification**: confirm laws 1-12 hold uniformly across the two L0 specializations, including the load-bearing SPD precondition. Some laws (3, 9, 12) follow trivially from dependencies; others (4, 6, 7) require the inner-product structure on `B`, which the L0 source does not directly verify.
 
@@ -140,4 +140,20 @@ The cycle-008 OQ `matrix-weighted-norm-and-bilinear-form-l1-rough-ins` is **part
 - `scaffolding/open-questions.md` slug `matrix-weighted-norm-and-bilinear-form-l1-rough-ins` (cycle-008) — the motivating OQ.
 - `scaffolding/priorities.md` priority #17 "lower-layer-shared-vocabulary-priority" (cycle-009 meta-phase) — the prioritisation directive scheduling this work for cycle-010.
 
-**No direct test evidence** — promotion-to-firm gate. Indirect coverage via the three eigensolver backends is consistent across all three (ARPACK, SLEPc, NLEPS) but does not constitute algebraic-law verification.
+**Radicand-constituent test evidence (cycle-080), √-overload entry point still uncovered** — `test/unit/test-domainpostoperator.cpp:75-93` positively exercises the SPD-weighted radicand `⟨E, M_elec E⟩` + `½` scaling (the energy-form constituent that `domain_energy_reduce` folds) and asserts it against a closed form to 1% relative tolerance. This advances gate (a) from "no direct test evidence" to "radicand positively covered, √-overload named entry point (`linalg::Norml2(comm, x, B, Bx)`) still untested". The norm-axiom laws (4 triangle, 6 Cauchy–Schwarz, 7 parallelogram) carry genuine inner-product-structure content that the L0 source does not verify, so the firm-on-positive-structure escape does not apply and the entry stays `rough-in (test-coverage-bounded)`. Indirect coverage via the three eigensolver backends (ARPACK, SLEPc, NLEPS) is consistent but does not constitute algebraic-law verification.
+
+~~~yaml
+verified_against:
+  - citation: test/unit/test-domainpostoperator.cpp:75-93
+    verdict: partially-supports
+    audited_at: 2026-06-03T185421Z
+    note: GetElectricFieldEnergy energy-units test positively covers the SPD-weighted radicand ⟨E, M_elec E⟩ + ½ scaling (law-8 self-bilinear constituent) via WithinRel against the closed-form ½·ε₀·E₀²·V; does NOT cover the outer √ nor the named entry point linalg::Norml2(comm,x,B,Bx)
+  - citation: palace/models/domainpostoperator.cpp:219-231
+    verdict: partially-supports
+    audited_at: 2026-06-03T185421Z
+    note: GetElectricFieldEnergy body — M_elec->Mult(E.Real(),D); dot = LocalDot(E.Real(),D); return 0.5*dot — is the radicand ⟨x,B x⟩ + ½, NOT the √-overload; open-codes the form without routing through Norml2
+  - citation: palace/linalg/operator.cpp:599-619
+    verdict: supports
+    audited_at: 2026-06-03T185421Z
+    note: the named √-overload entry point linalg::Norml2(comm,x,B,Bx); :606 return std::sqrt(dot) (real), :618 return std::sqrt(dot.real()) (complex) — confirms the entry point and the outer √ that the energy-form test path omits; gate (a) stays open at this entry point
+~~~

@@ -26,17 +26,17 @@ At L1 the scattering-matrix product is a pure function `config → scattering ma
       let es      = driven_family cfg                 -- (1) the driven driver column → per-ω solution family [Eᵢ]
           ports   = port_modes cfg                    -- the port-mode covectors [sₖ] (lumped: sₖ; wave: the (−n×H_inc⋆) covector)
           drive   = drive_port_idx cfg
-          s i j   = let raw = bilinear_form (ports!!i) (e_at es j)   -- projection ⟨sᵢ, Eⱼ⟩
+          s i j   = let raw = port_projection (ports!!i) (e_at es j) -- projection ⟨sᵢ, Eⱼ⟩
                     in  port_close i j drive raw       -- self-reflection (i==drive ⇒ −1) + lumped generalized-S / wave de-embed
       in  matrix s                                     -- (2) per-(port,frequency) projection grid → scattering matrix S
 
 1. **The producing driver column** — [`driven.L1`](./driven.L1.md). The driven driver assembles the fixed basis `{K, C, M}` once and maps the per-ω pure solve over the swept frequency family (the operator-VARYING rebuild + per-member [`ksp_solve`](../L1/ksp_solve.md)), collecting the per-ω solution family `[Eᵢ]`. The S-parameter output product consumes that family; it does not re-derive the solve. L0: the per-ω solve loop `drivensolver.cpp:168-196`.
 
 2. **Scattering-matrix reduction** — the per-(port, frequency) grid `Sᵢⱼ = ⟨sᵢ, Eⱼ⟩`, built from L1 port-mode projections over the solution family, with the driving-port self-reflection and the per-port-kind closing:
-   - the projection `⟨sₖ, E⟩` — the port-mode inner product, the rough-in [`bilinear-form`](../L1/bilinear-form.md) `α = xᴴ M y` instantiated as the linear functional against the port covector `sₖ` (L0 lumped: `(*s) * E.Real()` + imaginary part, `lumpedportoperator.cpp:287-290`; L0 wave: the `(E × H_inc⋆)·n` surface-integral form `waveportoperator.cpp:789-790`).
+   - the projection `⟨sₖ, E⟩` — the port-mode linear-functional projection, the firm [`port_projection`](../L1/port_projection.md) `α = ⟨s, E⟩` dual-pairing of the field against the fixed pre-assembled port-mode covector `sₖ` (L0 lumped: `(*s) * E.Real()` + imaginary part, `lumpedportoperator.cpp:287-290`; L0 wave: the `(E × H_inc⋆)·n` surface-integral form `waveportoperator.cpp:789-790`).
    - the **self-reflection** — the driving-port diagonal subtracts the incident wave: `S_{drive,drive} ← S_{drive,drive} − 1` (L0 `postoperator.cpp:1275` lumped / `:1297` wave).
    - the **port-kind closing** — lumped ports apply the generalized-S impedance normalization `S *= sqrt(R_src / R)` when resistive (L0 `:1278-1281`); wave ports apply phase de-embedding `S *= exp(i kₙ d)` for source + measured port (L0 `:1299-1302`).
-   The result is the per-ω complex scattering matrix `S`. This stage is a pure fold of port-mode projections over the (port, frequency) grid — no L1 operator is *new* here; the reduction composes [`bilinear-form`](../L1/bilinear-form.md) (rough-in) with the port-kind closing. At L4 this exact fold is named the [`sparameter_reduce`](../L4/sparameter_reduce.md) *(rough-in)* combinator (the port-projection sibling of `gram_reduce`); L1 sees the unfolded projection grid.
+   The result is the per-ω complex scattering matrix `S`. This stage is a pure fold of port-mode projections over the (port, frequency) grid — no L1 operator is *new* here; the reduction composes the firm [`port_projection`](../L1/port_projection.md) with the port-kind closing. At L4 this exact fold is named the [`sparameter_reduce`](../L4/sparameter_reduce.md) *(rough-in)* combinator (the port-projection sibling of `gram_reduce`); L1 sees the unfolded projection grid.
 
 ## Inputs / outputs (the feature surface)
 
@@ -46,7 +46,7 @@ At L1 the scattering-matrix product is a pure function `config → scattering ma
 ## L1 vs L4
 
 The L1 and L4 composition roots express the **same output product**; they differ in vocabulary:
-- **L1** (this chapter): the reduction is an explicit per-(port, frequency) grid of port-mode inner-product projections ([`bilinear-form`](../L1/bilinear-form.md)) plus the explicit self-reflection + port-kind closing arithmetic.
+- **L1** (this chapter): the reduction is an explicit per-(port, frequency) grid of port-mode linear-functional projections ([`port_projection`](../L1/port_projection.md)) plus the explicit self-reflection + port-kind closing arithmetic.
 - **L4** ([`sparameters.L4`](./sparameters.L4.md)): the whole reduction is the [`sparameter_reduce`](../L4/sparameter_reduce.md) *(rough-in)* combinator (the projection grid + self-reflection + port-kind closing made *structural*). The L4 form is the one the outward backend consumes; the L1 form is the pure-function decomposition the L4 combinator names.
 
 The L1→L0 direction (how the projection pure functions lower to the in-place `GlobalSum` accumulation + `vi.S *=` post-process writes) is the per-operator L1>L0 mutation-rotation themes of the constituent ops; this composition root records only the L1 composition (high→low discipline).
@@ -56,9 +56,9 @@ The L1→L0 direction (how the projection pure functions lower to the in-place `
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
 | producing driver column | [`driven.L1`](./driven.L1.md) (driver feature column) | seed | `drivensolver.cpp:37-229` |
-| port-mode projection ⟨sₖ, E⟩ | [`bilinear-form`](../L1/bilinear-form.md) | rough-in | `lumpedportoperator.cpp:287-290`, `waveportoperator.cpp:789-790` |
+| port-mode projection ⟨sₖ, E⟩ | [`port_projection`](../L1/port_projection.md) | firm | `lumpedportoperator.cpp:287-290`, `waveportoperator.cpp:789-790` |
 | self-reflection + port-kind closing | (port-kind arithmetic; absorbed by [`sparameter_reduce`](../L4/sparameter_reduce.md) at L4) | rough-in | `postoperator.cpp:1275-1302` |
 
 ## Status
 
-`seed` — the L1 pure-function composition root for the scattering-matrix output product (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive (2026-06-02). It consumes the [`driven.L1`](./driven.L1.md) driver column's per-ω solution family, then folds the rough-in L1 port-mode projection ([`bilinear-form`](../L1/bilinear-form.md)) over the (port, frequency) grid with the self-reflection + port-kind closing. The reduction therefore rests on a rough-in L1 primitive — consistent with the column being `seed`, not a firm composition. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 reduction range `postoperator.cpp:1246-1307` + the port-projection verbs (`lumpedportoperator.cpp:283-294`, `waveportoperator.cpp:780-793`), self-verified on-disk this dispatch, plus the constituent down-links.
+`seed` — the L1 pure-function composition root for the scattering-matrix output product (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive (2026-06-02). It consumes the [`driven.L1`](./driven.L1.md) driver column's per-ω solution family, then folds the firm L1 port-mode projection ([`port_projection`](../L1/port_projection.md), firm as of cycle-077) over the (port, frequency) grid with the self-reflection + port-kind closing. The per-mode projection primitive is therefore firm; the column nonetheless stays `seed` because the whole-grid reduction it composes — [`sparameter_reduce`](../L4/sparameter_reduce.md) at L4, the projection grid + self-reflection + port-kind closing made structural — is still `rough-in`, and a feature column promotes past `seed` only once ALL its composed constituents are firm. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 reduction range `postoperator.cpp:1246-1307` + the port-projection verbs (`lumpedportoperator.cpp:283-294`, `waveportoperator.cpp:780-793`), self-verified on-disk this dispatch, plus the constituent down-links.

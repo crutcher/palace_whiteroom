@@ -4,7 +4,7 @@ operator: domain_energy_reduce
 firmness: rough-in
 consumes:
   - book/src/L1/participation_ratio.md (firm — the energyᵢ/e_total per-domain ratio this reduction folds, the second of the two folded primitives)
-  - book/src/L1/matrix-weighted-norm.md (rough-in (test-coverage-bounded) — the ½⟨field, M_i field⟩ domain-restricted SPD energy form, the first folded primitive; the verb's rough-in maturity is inherited from it)
+  - book/src/L1/matrix-weighted-norm.md (rough-in (test-coverage-bounded) — the ½⟨field, M_i field⟩ domain-restricted SPD energy form, the first folded primitive; the verb's rough-in maturity is inherited from it. Cycle-080 lowering-verifier audit: its radicand constituent ⟨field, M_i field⟩ + ½ is now positively test-covered by test-domainpostoperator.cpp:75-93, but its √-overload named entry point linalg::Norml2(comm,x,B,Bx) stays test-uncovered, so the token is unchanged)
 lowers_to:
   - the per-domain scalar maps (the domain-restricted energy form ½⟨field, M_i field⟩ + the participation quotient energyᵢ/e_total); identity-in-form on the body, no dedicated L4>L3 theme — in-line §"Lowers to"
 variant_axes:

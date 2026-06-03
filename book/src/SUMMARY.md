@@ -173,6 +173,7 @@
   - [axpy](./L1/axpy.md)
   - [bilinear-form](./L1/bilinear-form.md)
   - [dot](./L1/dot.md)
+  - [eigenvalue-untransform](./L1/eigenvalue-untransform.md)
   - [elementwise_product](./L1/elementwise_product.md)
   - [matrix-weighted-norm](./L1/matrix-weighted-norm.md)
   - [normalize](./L1/normalize.md)

@@ -5,7 +5,7 @@ firmness: rough-in
 consumes:
   - book/src/L4/eigsolve.md (firm — the opaque eigen-solve cap producing the converged eigenpair family this reduction maps over; the upstream composition-root stage)
 lowers_to:
-  - the per-mode scalar maps (eigenvalue un-transform + κ participation ratio + f/κ quotient); identity-in-form on the body, no dedicated L4>L3 theme — in-line §"Lowers to"
+  - the per-mode scalar maps (eigenvalue un-transform + κ participation ratio + f/κ quotient); identity-in-form on the body, no dedicated L4>L3 theme — in-line §"Lowers to". The two scalar-map halves now have firm L1 homes: the eigenvalue un-transform → book/src/L1/eigenvalue-untransform.md (firm, c080); the κ participation ratio → book/src/L1/participation_ratio.md (firm, c077)
 variant_axes:
   - problem-type (linear-EVP | quadratic-EVP | nonlinear-EVP — THE load-bearing axis; selects the eigenvalue→ω un-transform; absorbed into the untransform dispatch)
   - loss-source (resistive-lumped-port witnessed; inductive-EPR the participation sibling — absorbed into the κ closure)
@@ -174,7 +174,10 @@ L4>L3 theme file — the in-line-marker route (the
 [`inner_product`](./inner_product.md) / [`gram_reduce`](./gram_reduce.md) pattern); the
 substantive downward content (the C++ readout loop, the problem-type un-transform branch
 `eigensolver.cpp:430-439`, the κ computation `postoperator.cpp:1188-1203`) lives in the
-eigenmode driver / postoperator L0 and the (rough-in) L1 scalar-map primitives. This entry
+eigenmode driver / postoperator L0 and the firm L1 scalar-map primitives. **Both scalar-map
+halves now have firm L1 homes:** the eigenvalue un-transform `√μ`/`λ/i` →
+[`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (firm, c080); the κ participation
+ratio `½R|I|²/E` → [`participation_ratio`](../L1/participation_ratio.md) (firm, c077). This entry
 records the rotation direction in-line per high→low discipline; it does not author a theme.
 
 ## Status
@@ -192,26 +195,27 @@ test-gate**: it CHECK-asserts the reduction-OUTPUT cache fields the verb folds �
 `rough-in` to the **test-coverage-bounded** qualifier (structure fully L0-anchored; output/laws
 test-supported to the extent an output-invariance test can support them). It is NOT promoted to
 `firm` because:
-1. one of the per-mode building blocks it folds — the **eigenvalue un-transform** — is **not yet a
-   firm L1 entry** (no `L1/eigenfreq_qfactor_reduce` or eigenvalue-un-transform primitive exists;
-   that half of the reduction is distilled directly from the driver body), so the entry cannot
-   fully inherit firm primitive maturity (a residual STRUCTURE-firmness gate, not a test gate). The
-   κ-participation half of this primitive-maturity gate is **already discharged**: firm L1
-   [`participation_ratio`](../L1/participation_ratio.md) (c077) covers the resistive κ loss-rate
-   ratio (`½R|I|²/E`) the verb folds, citing the verb's own κ site (`postoperator.cpp:1188-1203`)
-   as a positive witness; and
-2. the test asserts reduction-OUTPUT invariance over the randomly-populated `Measurement` cache,
-   NOT the eigenpair→`(f,Q)` **assembly map** — the `(f, Q)` output scalars `cache.freq` /
-   `cache.eigenmode_Q` / the lumped-port `quality_factor` are populated-but-not-CHECK-asserted in
-   the idempotency test (the asserted `quality_factor` at `:335-342` is `interface_eps_i`
-   dielectric Q, a different output product), so the assembly-level laws are still test-unconfirmed.
+1. **(gate-(a) — DISCHARGED, c080).** Both per-mode building blocks the verb folds now have firm L1
+   homes: the **eigenvalue un-transform** is firm L1
+   [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (c080 — the `√μ`/`λ/i` per-mode scalar
+   branch keyed on EVP-degree, citing the verb's own un-transform site `eigensolver.cpp:430-439`),
+   and the **κ-participation** half is firm L1
+   [`participation_ratio`](../L1/participation_ratio.md) (c077 — the resistive κ loss-rate ratio
+   `½R|I|²/E`, citing the verb's own κ site `postoperator.cpp:1188-1203`). The structure-firmness
+   primitive-maturity gate is now fully discharged on both folded scalar maps; and
+2. **(gate-(b) — STILL OPEN, out of write-scope).** the test asserts reduction-OUTPUT invariance over
+   the randomly-populated `Measurement` cache, NOT the eigenpair→`(f,Q)` **assembly map** — the
+   `(f, Q)` output scalars `cache.freq` / `cache.eigenmode_Q` / the lumped-port `quality_factor` are
+   populated-but-not-CHECK-asserted in the idempotency test (the asserted `quality_factor` at
+   `:335-342` is `interface_eps_i` dielectric Q, a different output product), so the assembly-level
+   laws are still test-unconfirmed.
 
-Promotion route (to `firm`): (a) firm up the residual folded per-mode primitive — the
-eigenvalue-un-transform primitive (the κ-participation primitive is already firm L1
-[`participation_ratio`](../L1/participation_ratio.md), c077), AND (b) a dedicated
-eigenmode-postprocess assembly test (exercising the un-transform + κ-from-`E`/`I` computation, not
-just output-cache round-trip) OR a lowering-verifier pass raising the assembly-map confidence to
-`inner_product`-equivalent. (Contrast the rank-2 sibling [`gram_reduce`](./gram_reduce.md),
+Promotion route (to `firm`): gate-(a) is **discharged** (both folded per-mode primitives are now firm
+L1 — the eigenvalue un-transform [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) c080 + the
+κ-participation [`participation_ratio`](../L1/participation_ratio.md) c077); the SOLE remaining gate is
+**(b)** a dedicated eigenmode-postprocess assembly test (exercising the un-transform + κ-from-`E`/`I`
+computation, not just output-cache round-trip) OR a lowering-verifier pass raising the assembly-map
+confidence to `inner_product`-equivalent. (Contrast the rank-2 sibling [`gram_reduce`](./gram_reduce.md),
 `rough-in (test-coverage-bounded)` for the same primitive-maturity + output-only-test reasons; and
 the driven-pipeline sibling [`sparameter_reduce`](./sparameter_reduce.md), the same
 output-invariance-test discharge shape.)
@@ -273,7 +277,8 @@ All L0 citations self-verified on-disk this dispatch via the codemap
   (`std::complex<double> omega = eigen->GetEigenvalue(i)`), `:430-434` (`omega =
   std::sqrt(omega)` — linear EVP `μ = -λ² = ω²`), `:435-439` (`omega /= 1i` — quadratic EVP
   `λ = iω`), `:458` (`post_op.MeasureAndPrintAll(i, E, B, omega, …)` — the per-mode
-  measure+record), `:471` (loop close), `:472-475` (`MFEM_VERIFY(num_conv >= …n)`).
+  measure+record), `:471` (loop close), `:472-475` (`MFEM_VERIFY(num_conv >= …n)`). Firm L1 home:
+  [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (c080).
 - **Quality-factor body (positive site 2):** `palace/models/postoperator.cpp:1171-1172`
   (`void PostOperator<solver_t>::MeasureLumpedPortsEig() const` def), `:1177` (`auto freq_re
   = measurement_cache.freq.real()` — `f = Re ω`), `:1188-1191` (the `κ_mj = ½R_j I_mj²/E_m`
