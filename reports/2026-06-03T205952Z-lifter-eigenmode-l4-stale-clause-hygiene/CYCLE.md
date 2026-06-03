@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T205952Z
 scope: feature/eigenmode.L4 stale-maturity-clause hygiene — eigenfreq_qfactor_reduce rough-in→firm sync
 status: pending
 integrated_at: 2026-06-03T212210Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 16e2dc8
 integration_notes: "cycle-083 (batch-26 pos 2/3). Applied clean (D2, HYGIENE). eigenmode.L4.md 2 prose edits syncing the stale (its eigenfreq_qfactor_reduce verb is rough-in) clause to firm (c082) + an editorial-precision §Status touch; ZERO status/count change, column stays seed; no new OQ (folds into the c082-opened eigenmode-driver-column-seed-promotion-blocks-eigenfrequency-qfactor-column); no promotion-rule re-authoring (pending batch-26 meta-phase). retroactive-budget 0; build exit 0."
 inputs:
   - book/src/feature/eigenmode.L4.md

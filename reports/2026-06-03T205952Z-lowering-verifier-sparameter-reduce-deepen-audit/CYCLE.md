@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T205952Z
 scope: L4 verb law-confidence deepen-audit — sparameter_reduce (A1, output-product-reduce-verb cohort lead)
 status: pending
 integrated_at: 2026-06-03T212210Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 16e2dc8
 integration_notes: "cycle-083 (batch-26 pos 2/3). Applied clean (D1, COUNT OWNER). sparameter_reduce PROMOTED rough-in (test-coverage-bounded) → firm via the firm-on-positive-structure / syntactic-identity escape (laws syntactic identities / closed-form arithmetic over firm port_projection c077 + positive MeasureSParameter assembly source); L4 firm 15→16 main / 19→20 grand; coupled sparameters.{L4,L1,L0} verb-token refresh + sparameters.L0.md:28 bilinear-form→port_projection citation correction; column STAYS seed (promotion-rule prose held for the batch-26 feature-column-promotion-break-the-seed-deadlock directive). A1 half of output-product-reduce-verb-test-coverage-bounded-promotion-route RESOLVED-BY-AUDIT. retroactive-budget 0; build exit 0."
 inputs:
   - book/src/L4/sparameter_reduce.md (the verb under audit; status rough-in (test-coverage-bounded))

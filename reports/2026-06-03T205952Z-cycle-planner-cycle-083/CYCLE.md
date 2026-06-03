@@ -4,7 +4,7 @@ invoked_at: 2026-06-03T205952Z
 scope: cycle-083 dispatch plan
 status: pending
 integrated_at: 2026-06-03T212210Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 16e2dc8
 integration_notes: "cycle-083 (batch-26 pos 2/3) dispatch plan. 2 dispatches planned, 2 ran, 2 applied clean (D1 sparameter_reduce lowering-verifier promotion + D2 eigenmode.L4 lifter hygiene). Plan executed as written; scaffolding/priorities.md co-owned plan write committed atomically."
 ---
 
