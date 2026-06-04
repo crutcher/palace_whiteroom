@@ -58,6 +58,6 @@ ALL counts UNCHANGED from c089 (zero book mutation, zero count/maturity/column m
 
 Feature spine firm columns: `driven`, `eigenmode`, `transient`, `eigenfrequency-qfactor`, `sparameters`, `lifecycle`. Seed: `boundary-mode`, `capacitance`, `electrostatic`, `energy-fields`, `inductance`, `magnetostatic`.
 
-Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit).
+Commit: `8a66de5` (patched in the follow-up two-phase SHA commit).
 
 Written by `integrator-finalize` (split integrator-per-report ×1 + finalize ×1). **The batch-28 meta-phase fires NEXT** as a separate dispatch, aggregating cycles 088/089/090.

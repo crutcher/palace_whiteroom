@@ -4,7 +4,7 @@ cycle: cycle-090
 meta_batch: batch-28
 meta_batch_position: "3/3 (LAST primary cycle; the batch-28 meta-phase fires NEXT)"
 finalized_at: 2026-06-04T033000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8a66de5
 reports_consumed: 1
 reports_applied: 1
 reports_deferred: 0
@@ -39,7 +39,7 @@ The tree was already self-consistent: the actual c088 + c089 diff was 3 files, a
 - **`scaffolding/roadmap.md`:** UNCHANGED (zero count/maturity/column movement; counts left as-is).
 - **`scaffolding/priorities.md`:** modified by the cycle-090 planner (co-owned plan write, committed atomically — NOT touched by the dispatch or by finalize content-wise).
 - **`log/cycle-90.md`:** written; **`log/README.md`:** index entry prepended.
-- **Consumed report frontmatter:** `integrated_at: 2026-06-04T033000Z` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes:` on the one consumed report.
+- **Consumed report frontmatter:** `integrated_at: 2026-06-04T033000Z` + `integration_commit: 8a66de5` + `integration_notes:` on the one consumed report.
 
 ## Safety-net gate results (aggregated)
 
