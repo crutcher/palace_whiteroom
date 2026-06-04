@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T195500Z
 scope: P0-A — the canonical machine-readable graded-stack node-status + typed-edge scheme (book/src/methodology/graded-stack-scheme.md)
 status: pending
 integrated_at: 2026-06-04T211500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE_094
+integration_commit: caa1d390d4163534901b3a72b5c657a92936d304
 integration_notes: "Applied clean (D1, cycle-094 batch-30 position 1/3). Created book/src/methodology/graded-stack-scheme.md (P0-A, the canonical machine-readable rank+typed-edge scheme) + SUMMARY row under # Methodology after Goal & Flow. Outside the subject DAG per METHODOLOGY-GRADED-STACK.md §2d. retroactive-budget 0; build exit 0; no build-repair. 4 OQs promoted."
 ---
 

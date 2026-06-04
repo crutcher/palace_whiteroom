@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T195500Z
 scope: P3 — book methodology page book/src/methodology/resolution-ladder.md (reader-facing mirror of the graded-stack two-axis health model)
 status: pending
 integrated_at: 2026-06-04T211500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE_094
+integration_commit: caa1d390d4163534901b3a72b5c657a92936d304
 integration_notes: "Applied clean (D3, cycle-094 batch-30 position 1/3). Created book/src/methodology/resolution-ladder.md (P3, the reader-facing NON-AUTHORITATIVE two-axis mirror) + SUMMARY row inserted BETWEEN Goal & Flow and Graded-stack scheme (named final order). Forward-link ./graded-stack-scheme.md resolves under linkcheck2. Outside the subject DAG per §2d. retroactive-budget 0; build exit 0; no build-repair. 2 OQs promoted."
 ---
 

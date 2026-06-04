@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T200500Z
 scope: P0-B — the two graded-stack linters (rank check + reachability GC) under tools/
 status: pending
 integrated_at: 2026-06-04T211500Z
-integration_commit: PLACEHOLDER_SHA_CYCLE_094
+integration_commit: caa1d390d4163534901b3a72b5c657a92936d304
 integration_notes: "Applied clean (D2, cycle-094 batch-30 position 1/3). Created tools/graded-stack-lint/ (graded_stack_lint.py rank check + reachability GC + README + requirements + fixture). ZERO book/ edits (tooling deliverable). Finalize ran --json as a BASELINE record only (NOT a gate, the linters just landed): rank_violations=22 (the known hand-tracked firm-rests-on-rough-in cascade, priorities item-1) + detritus=136 + roots=36 + typed=207. retroactive-budget 0; build exit 0; no build-repair. 4 OQs promoted (incl. graded-stack-finalize-json-wiring-role-spec)."
 ---
 
