@@ -321,17 +321,58 @@ Collapsed (absorbed) axes:
 ## Status
 
 `rough-in (lower-layer-shared-vocabulary, cycle-010-wave-1)` — the structural
-signature is anchored at L0 (`palace/linalg/operator.hpp:386-394`,
+signature is anchored at L0 (`palace/linalg/operator.hpp:385-394`,
 `palace/linalg/operator.cpp:621-639`), and the laws are inherited cleanly
-from the firm L1 dependencies `dot` and `apply_linop`. Promotion to **firm**
-is gated on resolving the one open question below:
+from the firm L1 dependencies `dot` and `apply_linop`.
 
-1. Narrow variant-axis coverage from Palace's two surfaced use sites
-   (Poynting-power and NLEPS Newton denominator) — neither exercises the
-   real-`M`-real-`y` shape that the dispatch description names as the
-   simplest case, and both happen to be complex-`x`-complex-`y`. The
-   M-symmetry-property axis has two witnesses (one Hermitian, one not) but
-   Cauchy–Schwarz at `y = x` is unexercised.
+**Firmability discharged (cycle-092 dischargeability probe; `verified_against:`
+block below).** A scoped `lowering-verifier` probe (the c088/c089
+`matrix-weighted-norm` pattern) judged that the **firm-on-positive-structure
+escape** (CLAUDE.md §Methodology invariants, the `rough-in
+(test-coverage-bounded)` bullet) APPLIES to this operator:
+
+1. **Laws 1-6 (`:182-201`) are syntactic read-offs over firm constituents.**
+   They are pure linearity / annihilation / identity-specialisation —
+   `bilinear_form(x, M, y) = dot(x, apply_linop(M, y))` is a syntactic
+   composition of the firm `dot` (`book/src/L1/dot.md:100` firm) and firm
+   `apply_linop` (`book/src/L1/apply_linop.md:87` firm) laws, with **NO
+   inner-product-norm theorem content**. This is materially cleaner than
+   `matrix-weighted-norm` was (whose gating laws WERE norm-axiom theorems
+   — triangle / Cauchy–Schwarz / parallelogram — needing two probes c088+c089);
+   `bilinear-form` has none. The escape promotes laws that are
+   syntactic-identity content on fully-specified positive source even with no
+   surrounding test (the `apply_linop` / `solve_family` c086 /
+   `eigenfreq_qfactor_reduce` c082 / `sparameter_reduce` c083 /
+   `matrix-weighted-norm` c091 precedents).
+2. **Laws 7-8 (`:205-220`) are M-symmetry-CONDITIONAL with both witnesses
+   on-disk.** Law 7 (Hermitian symmetry under `Mᴴ = M`) and law 8 (PSD at
+   `y = x` for SPD `M`) are premise-guarded conditional identities; both
+   branches are positively witnessed — Hermitian `Bttr`
+   (`palace/models/boundarymodeoperator.cpp:85`, a `y = x` form) and
+   non-Hermitian `Atn` (`palace/models/boundarymodeoperator.cpp:90`). Law 8's
+   sole positivity content is the SPD-diagonal `xᴴ B x ≥ 0`, which the firm
+   `matrix-weighted-norm` sibling (c091) already discharged via its
+   structure-side probe c088 — it is inherited, not an independent gate.
+3. **The narrow-variant-axis-coverage gate is REDUNDANT under the escape.**
+   The two surfaced use sites are the only matrix-weighted `Dot` call sites in
+   the whole tree (`grep` confirms exactly 2: `boundarymodeoperator.cpp:85`/`:90`),
+   and no `test/unit/*` exercises the 4-arg overload (the direct-test route is
+   genuinely absent — the same situation as `matrix-weighted-norm`'s gate (a),
+   which the batch-28 meta-phase judged REDUNDANT). The one shape the coverage
+   gate names — real-`M`-real-`y` `xᵀ M y` — is **not surfaced by Palace at
+   all** (`:85-89`); a test of it cannot exist and would only confirm a
+   hypothetical extension. Cauchy–Schwarz at `y = x` is a floating-point
+   strictness **non-law** (`:229-234`) already inherited from `dot` +
+   `apply_linop`; a test would only re-confirm an already-anchored property.
+
+**The maturity token stays `rough-in` in THIS dispatch by design** (the
+c088/c089 discipline): the probe is the gate-TEST, and the firm flip + the
+coupled `gram_reduce` firm re-judgment + the 4-column
+(capacitance/inductance/electrostatic/magnetostatic) unblock + the ~30-file
+cross-reference re-anchor is a **separate gated wave**
+(`bilinear-form-firm-flip-and-cascade-wave`, a c093/batch-30 candidate). What
+this probe establishes: the verb IS firmable via the escape; nothing
+structural blocks it; the residual coverage gate is redundant.
 
 *(Repair note — cycle-010 critic pass: an earlier draft listed a second
 gating reason (an alleged L0 comment-vs-implementation conjugation
@@ -428,3 +469,43 @@ firm-promotion-eligible.)*
   motivates this harvest.
 - `scaffolding/priorities.md` #17 `lower-layer-shared-vocabulary-priority`
   (cycle-009 meta-phase) — the priority that schedules this dispatch.
+
+```yaml
+verified_against:
+  - citation: palace/linalg/operator.cpp:621-639
+    verdict: supports
+    audited_at: 2026-06-04T065200Z
+    note: both matrix-weighted Dot overload bodies (real-A split real/imag + Dot(comm,Ax,y); complex-A direct A.Mult + Dot(comm,Ax,y)) confirmed verbatim on disk; the closed-form xᴴ M y = dot(x, apply_linop(M, y)) is a syntactic composition of firm dot + firm apply_linop
+  - citation: palace/linalg/operator.hpp:385-394
+    verdict: supports
+    audited_at: 2026-06-04T065200Z
+    note: two decls + the yᴴ A x comment (line 386) confirmed verbatim; matches the impl, no comment-vs-impl conjugation ambiguity
+  - citation: palace/models/boundarymodeoperator.cpp:85
+    verdict: supports
+    audited_at: 2026-06-04T065200Z
+    note: Hermitian-M y=x witness Dot(comm, et, *Bttr, et) confirmed on disk; anchors law 7 Hermitian branch + law 8 PSD-at-y=x diagonal case
+  - citation: palace/models/boundarymodeoperator.cpp:90
+    verdict: supports
+    audited_at: 2026-06-04T065200Z
+    note: non-Hermitian-M witness Dot(comm, en, Atn, et) with Atn a ComplexWrapperOperator over a non-symmetric HypreParMatrix confirmed on disk; anchors law 7 non-Hermitian branch (the general-M-asymmetry non-law)
+  - citation: book/src/L1/dot.md:65-66
+    verdict: supports
+    audited_at: 2026-06-04T065200Z
+    note: dot firm Hermitian-symmetry (law 6) + conjugate-linearity-left (law 7) are the inherited sources for bilinear-form laws 1 and 7; dot Status firm confirmed at dot.md:100
+  - citation: book/src/L1/apply_linop.md:50-55
+    verdict: supports
+    audited_at: 2026-06-04T065200Z
+    note: apply_linop firm linearity (law 1) + operator-side linearity (laws 5,6) are the inherited sources for bilinear-form laws 2 and 3; apply_linop Status firm confirmed at apply_linop.md:87
+  - citation: book/src/L1/matrix-weighted-norm.md:108-115
+    verdict: supports
+    audited_at: 2026-06-04T065200Z
+    note: matrix-weighted-norm firm c091 is the SPD diagonal sibling bilinear_form(x,B,x); its discharge of the same 4-arg-overload no-test gate (a) as REDUNDANT under the firm-on-positive-structure escape is the directly-applicable prior for law 8 PSD content
+  - citation: book/src/L1/bilinear-form.md:182-201
+    verdict: supports
+    audited_at: 2026-06-04T065200Z
+    note: laws 1-6 are pure linearity/annihilation/identity-specialisation - syntactic read-offs over firm dot + apply_linop with NO norm-axiom theorem content; the firm-on-positive-structure escape applies directly
+  - citation: book/src/L1/bilinear-form.md:205-220
+    verdict: partially-supports
+    audited_at: 2026-06-04T065200Z
+    note: laws 7,8 are M-symmetry-CONDITIONAL with both witnesses on-disk (Bttr Hermitian, Atn non-Hermitian); law 8 positivity content is the SPD diagonal already discharged by the firm matrix-weighted-norm sibling - conditional, not an independent gate
+```

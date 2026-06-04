@@ -1159,3 +1159,25 @@ Stale references flagged (from the D2 report's reproduced grep, on disk at repor
 Refresh trigger: the c091 firm flip + the D2 cascade outcome (and D3's reduce-verb verdict) IS the refresh trigger. The chapter is a synthesized non-authoritative mirror; when it contradicts the now-firm on-disk maturity, the on-disk source wins until the meta-phase regenerates it. Couple this refresh with the standing batch-28→29 `goal-flow` refresh cadence and read D3's on-disk verdict before re-narrating the `gram_reduce` / `domain_energy_reduce` lines.
 
 ---
+
+## bilinear-form-firm-flip-and-cascade-wave
+
+opened_at: cycle-092
+opened_by: integrator-per-report (promoted from the cycle-092 LEAD lowering-verifier dischargeability-probe report's §Open-questions RECOMMENDATION)
+
+The cycle-092 scoped dischargeability probe on `book/src/L1/bilinear-form.md` (the c088/c089 `matrix-weighted-norm` pattern) returned verdict **DISCHARGE**: the **firm-on-positive-structure escape** APPLIES to the `bilinear-form` operator. Per the c088/c089 discipline the probe did NOT flip the maturity token and did NOT trigger the cascade — it landed a 9-entry `verified_against:` block (8 supports + 1 partially-supports) + a §Status narrowing recording the discharge; the frontmatter `firmness:` STAYS `rough-in`. The firm flip + the coupled cascade is a **separate gated wave** (exactly as c091 was the gated wave for `matrix-weighted-norm`). Queue as a **c093 / batch-30 candidate** so the c093 planner + batch-29 meta-phase schedule it.
+
+Why the escape applies (from the probe):
+- Laws 1-6 (`book/src/L1/bilinear-form.md:182-201`) are pure linearity / annihilation / identity-specialisation — syntactic read-offs over the firm `dot` (`dot.md:100`) + firm `apply_linop` (`apply_linop.md:87`) laws, with NO inner-product-norm theorem content (materially cleaner than `matrix-weighted-norm`, whose gating laws WERE norm-axiom theorems needing two probes).
+- Laws 7-8 (`:205-220`) are M-symmetry-CONDITIONAL with both branches witnessed on-disk — Hermitian `Bttr` (`palace/models/boundarymodeoperator.cpp:85`, a `y=x` form) + non-Hermitian `Atn` (`:90`); law 8's sole positivity content is the SPD diagonal `xᴴBx≥0`, already discharged by the firm `matrix-weighted-norm` sibling (c091) — inherited, not an independent gate.
+- The narrow-variant-axis-coverage gate is REDUNDANT: the 2 surfaced use sites are the only matrix-weighted `Dot` call sites in the tree (`grep` → exactly `boundarymodeoperator.cpp:85`/`:90`), no `test/unit/*` exercises the 4-arg overload (direct-test route genuinely absent), the real-`M`-real-`y` shape the gate names is not surfaced by Palace at all, and Cauchy–Schwarz at `y=x` is an inherited FP-strictness non-law.
+
+The gated cascade wave (for the c093 lifter / batch-29 meta-phase to schedule):
+- (i) flip `bilinear-form` frontmatter `firmness: rough-in` → `firm` + drop the rough-in token in §Status;
+- (ii) the coupled `gram_reduce` firm re-judgment (its SOLE residual gate clears — the escape applies as it did for its reduce-verb siblings `domain_energy_reduce` c091 / `eigenfreq_qfactor_reduce` c082 / `sparameter_reduce` c083);
+- (iii) the 4-column re-evaluation — capacitance / inductance / electrostatic / magnetostatic flip seed→firm under the OWN-COMPOSITION rule once `gram_reduce` firms;
+- (iv) the whole-book cross-reference re-anchor (firm-promotion-coupled-re-anchor guard).
+
+Stale consumer cluster the probe enumerated (NOT touched this dispatch — for the cascade-wave lifter to judge own-maturity-assertions vs correct still-rough-in-consumer mentions): `feature/capacitance.L1.md:33,35` (calls `bilinear-form` "rough-in") + the other 3 feature `*.L1.md`/`*.L0.md`/`*.L4.md` column files; `L4/gram_reduce.md`; `L4/domain_energy_reduce.md`; `L2/gram.md`; `L2/inner_product.md`; `L2-L1/gram-fold-specialization.md`; `L2-L1/inner-product-fold-specialization.md`; `L1/index.md` (dep-map + count headers); `L1-L0/bilinear-form-mutation-rotation.md` (the firm L1>L0 theme — verify it does not assert the OPERATOR rough-in). Also: the `book/src/L1/bilinear-form.md:251-257` self-note ("the `bilinear-form` half remains open" in the Dependencies §) should be updated by the cascade lifter on the firm flip. The whole-book `goal-flow.md` refresh is separately owned by the meta-phase (see `goal-flow-mwn-firm-flip-cascade-refresh-stale-rough-in-refs`).
+
+---
