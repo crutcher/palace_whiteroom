@@ -227,6 +227,31 @@ This shape is load-bearing, and it follows three principles:
 > the source only numerically asserts, not syntactic identities); the next probe is a scoped
 > literature-anchor pass on those norm axioms — the cheap test of whether that one gate is
 > dischargeable at all, before any heavy ~30-file cascade wave.
+>
+> **Both norm-axiom law-sides discharged — the firm flip is now LICENSED (batch-28).** The two
+> scoped dischargeability probes the prior batch queued BOTH discharged the `matrix-weighted-norm`
+> norm-axiom law confidence. The **structure-side** (c088) showed the three inner-product-structure
+> laws (triangle / Cauchy–Schwarz / parallelogram) are inner-product-space THEOREMS that hold for
+> any inner-product-induced norm, with their SPD premise satisfied **provably-by-construction** at
+> the usage sites (`B = KM` is the real SPD part of the FE mass matrix — a positive L0 home for the
+> premise) — exact-arithmetic theorems, not a numerically-asserted claim, so no √-entry-point test
+> gates them. The **FP-side** (c089) showed the floating-point sub-claims inherit verbatim/additively
+> from the firm constituents `dot` + `apply_linop` through a deterministic IEEE-754 outer √ over
+> disjoint accumulators — exactly the `nrm2` firmness precedent (itself firm) extended by one firm
+> constituent, with no composition-specific FP property arising. With **both** sides discharged, the
+> verb's `rough-in (test-coverage-bounded)` rested on a *single* remaining gate: the missing direct
+> test of the 4-arg SPD-weighted `Norml2(comm,x,B,Bx)` √-entry-point. The batch-28 meta-phase judged
+> that gate **REDUNDANT** — it would only re-confirm properties already anchored by structure +
+> constituent-inheritance, and no law is left for which it is the only evidence. This is materially
+> the same situation as the four prior firm-on-positive-structure escape promotions (`apply_linop`,
+> `eigenfreq_qfactor_reduce`, `sparameter_reduce`, `solve_family`). **The escape applies → the firm
+> flip is GO.** The full `firm` flip plus its ~30-file cross-reference cascade is the next batch's
+> LEAD; firming `matrix-weighted-norm` is the convergent foundation-unblock for the downstream
+> `gram_reduce` / `domain_energy_reduce` reduce verbs and, through them, 5 of the 6 stay-`seed`
+> feature columns (`electrostatic` / `magnetostatic` / `capacitance` / `inductance` / `energy-fields`).
+> The arc illustrates the FLOW's load-bearing pattern: a heavy cascade wave is *gated on cheap
+> dischargeability probes first* — the probes converted a NO-GO-held-by-inertia blocker into a
+> GO-by-explicit-derivation flip, without ever forcing the gate.
 
 ## FLOW — how the goal is met
 
