@@ -1,12 +1,15 @@
 ---
 layer: L1
 operator: bilinear-form
-firmness: rough-in
-lowers_to: []
-lifts_from: []
-depends_on:
-  - L1/apply_linop
-  - L1/dot
+firmness: firm
+rank: firm
+edges:
+  depends-on:
+    - L1/dot
+    - L1/apply_linop
+    - L1/matrix-weighted-norm
+  reference:
+    - L1-L0/bilinear-form-mutation-rotation
 variant_axes:
   - precision-mode
   - output-arg-pattern
@@ -42,15 +45,19 @@ allocation is the Category 4 ("synthetic workspace") instance of
 chapter classification. At L1 the workspace disappears (pure functional
 threading); the L1>L0 lowering theme reintroduces it.
 
-`bilinear-form` is a **rough-in** rather than firm — see *Status* and *Open
-questions* below. The structural signature is well-anchored, but narrow
-variant-axis coverage in Palace's two surfaced use sites (Poynting-power
-boundary integral; NLEPS Newton denominator) holds the entry below
-firm-promotion threshold. *(An earlier draft listed a second gating reason
-— an alleged L0 comment-vs-implementation conjugation disagreement — that
-was based on a misreading of the L0 free-function `linalg::LocalDot`
-convention. The L0 source is self-consistent: see Status and the
-`bilinear-form-conjugation-convention-anchor` OQ for the verification.)*
+`bilinear-form` is **firm** (promoted from `rough-in` cycle-095, the
+bilinear-form-firm-flip-and-cascade-wave; firmability DISCHARGED by the
+cycle-092 `lowering-verifier` probe — see *Status* below). The structural
+signature is well-anchored at L0 and the algebraic laws are inherited cleanly
+from the firm L1 dependencies `dot`, `apply_linop`, and `matrix-weighted-norm`;
+the formerly-cited narrow-variant-axis-coverage gate was judged REDUNDANT under
+the firm-on-positive-structure escape (the two surfaced use sites are the only
+matrix-weighted `Dot` call sites in the tree, and the one unexercised shape —
+real-`M`-real-`y` `xᵀ M y` — is not surfaced by Palace at all). *(An earlier
+draft listed a second gating reason — an alleged L0 comment-vs-implementation
+conjugation disagreement — that was based on a misreading of the L0 free-function
+`linalg::LocalDot` convention. The L0 source is self-consistent: see Status and
+the `bilinear-form-conjugation-convention-anchor` OQ for the verification.)*
 
 A cross-cutting prose treatment is not yet authored at `concepts/`; if/when
 the operator's use pattern becomes thick enough, a concept page following the
@@ -250,9 +257,10 @@ is the operator-applied intermediate `Ax`.
 
 Future `nrm2_B`-weighted operator (cycle-010 wave-1 sibling dispatch #5,
 addressing cycle-008 OQ `nrm2-B-weighted-energy-norm-harvest` and the
-sibling OQ `matrix-weighted-norm-and-bilinear-form-l1-rough-ins` — whose
-`matrix-weighted-norm` half is now resolved (the verb promoted to `firm` at
-cycle-091); the `bilinear-form` half remains open) will likely
+sibling OQ `matrix-weighted-norm-and-bilinear-form-l1-rough-ins` — BOTH
+halves of which are now resolved: the `matrix-weighted-norm` half promoted to
+`firm` at cycle-091, and the `bilinear-form` half promoted to `firm` at
+cycle-095 (this dispatch, the firm-flip-and-cascade wave)) will likely
 depend on `bilinear-form` via `nrm2_B(x, B) = √bilinear_form(x, B, x)` when
 `B` is SPD (law 8). That is the L1 statement of the energy norm.
 
@@ -320,16 +328,22 @@ Collapsed (absorbed) axes:
 
 ## Status
 
-`rough-in (lower-layer-shared-vocabulary, cycle-010-wave-1)` — the structural
-signature is anchored at L0 (`palace/linalg/operator.hpp:385-394`,
-`palace/linalg/operator.cpp:621-639`), and the laws are inherited cleanly
-from the firm L1 dependencies `dot` and `apply_linop`.
+`firm` (promoted from `rough-in (lower-layer-shared-vocabulary,
+cycle-010-wave-1)` at **cycle-095**, the `bilinear-form-firm-flip-and-cascade-wave`,
+on the **firm-on-positive-structure escape** — DISCHARGE established by the
+cycle-092 `lowering-verifier` probe, `verified_against:` block below). The
+structural signature is anchored at L0 (`palace/linalg/operator.hpp:385-394`,
+`palace/linalg/operator.cpp:621-639`), and the laws are inherited cleanly from
+the firm L1 dependencies `dot` (`book/src/L1/dot.md:100`), `apply_linop`
+(`book/src/L1/apply_linop.md:87`), and `matrix-weighted-norm`
+(`book/src/L1/matrix-weighted-norm.md:110`, firm c091).
 
-**Firmability discharged (cycle-092 dischargeability probe; `verified_against:`
-block below).** A scoped `lowering-verifier` probe (the c088/c089
-`matrix-weighted-norm` pattern) judged that the **firm-on-positive-structure
-escape** (CLAUDE.md §Methodology invariants, the `rough-in
-(test-coverage-bounded)` bullet) APPLIES to this operator:
+**Firmability DISCHARGED (cycle-092 dischargeability probe; `verified_against:`
+block below) and ENACTED (cycle-095, this dispatch).** A scoped
+`lowering-verifier` probe (the c088/c089 `matrix-weighted-norm` pattern) judged
+that the **firm-on-positive-structure escape** (CLAUDE.md §Methodology
+invariants, the `rough-in (test-coverage-bounded)` bullet) APPLIES to this
+operator; cycle-095 enacts the flip:
 
 1. **Laws 1-6 (`:182-201`) are syntactic read-offs over firm constituents.**
    They are pure linearity / annihilation / identity-specialisation —
@@ -365,14 +379,14 @@ escape** (CLAUDE.md §Methodology invariants, the `rough-in
    strictness **non-law** (`:229-234`) already inherited from `dot` +
    `apply_linop`; a test would only re-confirm an already-anchored property.
 
-**The maturity token stays `rough-in` in THIS dispatch by design** (the
-c088/c089 discipline): the probe is the gate-TEST, and the firm flip + the
-coupled `gram_reduce` firm re-judgment + the 4-column
-(capacitance/inductance/electrostatic/magnetostatic) unblock + the ~30-file
-cross-reference re-anchor is a **separate gated wave**
-(`bilinear-form-firm-flip-and-cascade-wave`, a c093/batch-30 candidate). What
-this probe establishes: the verb IS firmable via the escape; nothing
-structural blocks it; the residual coverage gate is redundant.
+**The flip is ENACTED in cycle-095** (the `bilinear-form-firm-flip-and-cascade-wave`):
+the c092 probe was the gate-TEST (per the c088/c089 discipline — the probe
+establishes firmability, the flip is a separate gated wave), and cycle-095 lands
+the firm flip together with the coupled `gram_reduce` firm re-judgment (D3), the
+4-column (capacitance/inductance/electrostatic/magnetostatic) unblock (D4), and
+the whole-book cross-reference re-anchor (D2). What the probe established and this
+dispatch enacts: the verb IS firm via the escape; nothing structural blocks it;
+the residual coverage gate is redundant.
 
 *(Repair note — cycle-010 critic pass: an earlier draft listed a second
 gating reason (an alleged L0 comment-vs-implementation conjugation
@@ -381,10 +395,10 @@ disagreement). That claim was based on a misreading of the L0 free-function
 that the free-function conjugates the second argument, yielding `yᴴ x`;
 this is already documented at `book/src/L1/dot.md:43, 104-105`. The L0
 source `linalg::Dot(comm, A·x, y) = yᴴ A x` matches the L0 comment at
-`palace/linalg/operator.hpp:386`. The false gating reason has been removed;
-the integrator may consider whether the remaining single gating reason
-holds firm-promotion below firm or whether the rough-in is now
-firm-promotion-eligible.)*
+`palace/linalg/operator.hpp:386`. The false gating reason was removed; the
+single remaining gating reason (narrow variant-axis coverage) was then judged
+REDUNDANT under the firm-on-positive-structure escape (cycle-092 probe), and
+the verb was promoted to firm at cycle-095.)*
 
 ## L1 vs L0 distinction
 

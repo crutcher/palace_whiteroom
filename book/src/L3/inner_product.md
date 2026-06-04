@@ -1,11 +1,15 @@
 ---
 layer: L3
 operator: inner_product
-firmness: firm
-lowers_to:
-  - book/src/L2/inner_product.md (identity-in-form on the body — value-thread-isomorphic to the L2 reduction; no L3-L2 theme, in-line §"Downward to L2"; the home the degenerate dot-body-identity theme was demoted into at cycle-051)
-lifts_from:
-  - book/src/L4/inner_product.md (firm cycle-068; identity-in-form on the body — the L4 calculus combinator is value-thread-isomorphic to this L3 reduction, NO dedicated L4>L3 theme file, the eigsolve/chebyshev in-line-marker route — there is no monadic state-threading / Solve-monad / convergence predicate to dissolve across the L4>L3 edge; the cycle-010 audit "no L4" verdict is superseded by the c068 landing + the 2026-06-01 vocabulary-shift redirect)
+rank: firm
+edges:
+  depends-on:
+    - L2/inner_product
+    - L3/apply_linop
+  reference:
+    - L4/inner_product
+    - L2-L1/inner-product-fold-specialization
+    - concepts/dot
 variant_axes:
   - conjugation-convention (hermitian / unconjugated `tdot` — complex element-type only; the family's namesake unification axis)
   - element-type (real / complex)
@@ -163,8 +167,9 @@ bilinear_form(x, M, y) = inner_product_M x M y                      -- M-weighte
   from the L2 combinator §"tdot".
 - **`bilinear_form`** — the weight axis at value *general / SPD `M`* (`inner_product_M`),
   realized as the pre-application `inner_product (apply_linop M x) y`. It has no standalone
-  L3 chapter (its L1 leaf `bilinear-form` is rough-in, L1-promotion-gated at L3 per the
-  cycle-036 D2 audit (A) L1-promotion-gated list, `book/src/L3/index.md:48`); at L3 it is
+  L3 chapter (its L1 leaf `bilinear-form` is firm, promoted cycle-095 — formerly the cycle-036
+  D2 audit (A) L1-promotion-gated member, now an identity-in-form L3 backfill candidate like
+  its `matrix-weighted-norm` cohort-sibling; see `book/src/L3/index.md`); at L3 it is
   this weighted-member note.
 
 The L3 entry differs from the L3 `dot`/`nrm2` leaves in **role**: the leaves mirror one

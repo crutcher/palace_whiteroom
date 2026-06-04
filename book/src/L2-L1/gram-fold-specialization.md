@@ -294,7 +294,7 @@ reduction-tree split is the load-bearing residue recorded in §"Per-cell summati
 - LHS [`gram`](../L2/gram.md) is **firm** (cycle-022; all-pairs `inner_product` syntactic-identity
   laws on the positive Gram-build site `palace/linalg/nleps.cpp:524-531`).
 - RHS leaves are the sibling scalar theme's leaves: [`dot`](../L1/dot.md) (firm; co-defines `dot`
-  + `tdot`) and [`bilinear-form`](../L1/bilinear-form.md) (rough-in; the B-weighted hook member).
+  + `tdot`) and [`bilinear-form`](../L1/bilinear-form.md) (firm, promoted cycle-095; the B-weighted hook member).
 
 This theme proposes no new operators — it is the matrix-lift lowering edge between existing
 vocabulary on both sides, built by lifting the sibling scalar theme's dispatch over the two basis
@@ -309,8 +309,8 @@ theme — the *dispatch structure* is firm):
   but behaviorally unexercised. The theme's behavioral weight is on the `dot` (Hermitian — the
   NLEPS deflation Gram) arm.
 
-- **`bilinear-form` is rough-in at L1** (narrow variant-axis coverage). The B-weighted-hook Gram
-  arm (`G = XᴴBX`) does not depend on its promotion: the arm's structure is firm (each cell is the
+- **`bilinear-form` is firm at L1** (promoted cycle-095). The B-weighted-hook Gram
+  arm (`G = XᴴBX`) was always firm independent of the leaf's promotion: the arm's structure is firm (each cell is the
   composition `inner_product (apply_linop B X[i]) X[j]` lowering to `Dot(comm, B·X[i], X[j])`,
   directly verified at the scalar level). NLEPS uses the canonical hook only; the B-weighted Gram
   is the SLEPc/ROM Rayleigh–Ritz overlap, not exercised at the NLEPS site. The leaf's rough-in
@@ -379,14 +379,14 @@ L2 / L1 anchors (read this invocation):
   theme is one instance of that theme.
 - `book/src/L1/dot.md` — the firm Hermitian / unconjugated per-cell leaf (RHS): `dot`/`tdot`
   (`:33-35`), the arg-1-conjugated convention (`:43`), the self-dot trick (`:49`).
-- `book/src/L1/bilinear-form.md` — the rough-in B-weighted per-cell leaf (RHS): `xᴴ M y` (`:63`).
+- `book/src/L1/bilinear-form.md` — the firm B-weighted per-cell leaf (RHS): `xᴴ M y` (`:63`).
 - `book/src/L2/inner_product.md` — the scalar parent (`L2/gram` lifts it): the pinned conjugation
   convention §"Conjugation convention (pinned)" (`:46-102`).
 
 ## Status
 
 `firm` — the L2 LHS [`gram`](../L2/gram.md) is firm (cycle-022), the RHS leaves are existing
-vocabulary (`dot`/`tdot` firm; `bilinear-form` rough-in but its B-weighted-hook dispatch arm is
+vocabulary (`dot`/`tdot` firm; `bilinear-form` firm (cycle-095) and its B-weighted-hook dispatch arm is
 firm), and the dispatch rule IS the `gram` all-pairs definition law (`L2/gram` law 1) read as a
 lowering, composed pointwise with the **already-firm** sibling scalar theme
 [`inner-product-fold-specialization`](./inner-product-fold-specialization.md). The matrix-specific

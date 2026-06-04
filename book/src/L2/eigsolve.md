@@ -1,11 +1,19 @@
 ---
 layer: L2
 operator: eigsolve
-firmness: firm
-lifts_to:
-  - book/src/L1/eigsolve.md (the opaque construction-bound eigensolver-as-operator collapse; this L2 entry opens that collapse into the named shift-invert spectral-transform composition while keeping the eigen-iteration loop view erased — NON-identity rotation, the un-collapse of L1 opacity)
-lowers_to:
-  - book/src/L3/eigsolve.md (the L3 iteration-rotation view, predicted partial-obstruction; the eigen-iteration loop is opaque-library-owned with no Palace-authored kernel/driver pair analogous to krylov-step, so the L3 backfill is predicted partial-obstruction — the per-step body lifts, the loop does not; theme L3-L2/eigsolve-* pending)
+rank: firm
+edges:
+  depends-on:
+    - L2/ksp_solve
+    - L1/apply_linop
+  reference:
+    - L1/eigsolve
+    - L3/eigsolve
+    - concepts/constructed-operators
+    - concepts/solver-as-operator
+    - concepts/variant-absorption
+    - concepts/sequential-obstruction
+    - concepts/solve-monad
 variant_axes:
   - spectral-transformation (none = M⁻¹ action / shift-invert = (K − σM)⁻¹M action / shift-invert-precond = STPRECOND approximate inverse — selects which operator the inner ksp_solve inverts and what apply_linop feeds it)
   - problem-type (linear = (K, M) EPS / quadratic = (K, C, M) PEP linearization / nonlinear = NEP — selects the operand-assembly the inner solve inverts, e.g. the PEP block (L₀ − σL₁))

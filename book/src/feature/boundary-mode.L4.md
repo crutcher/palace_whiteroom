@@ -2,13 +2,20 @@
 kind: feature-surface
 feature: boundary-mode
 level: L4
-status: seed
-composes:
-  - book/src/L4/fe_assemble.md (firm — assemble the 2D-submesh GEP block operators A(ω,σ) / B: the assemble-fold combinator)
-  - book/src/L4/eigsolve.md (firm — the opaque black-box eigen-solve cap: one library call, no Palace-authored loop — the SAME corner as the eigenmode driver)
-l0_ground_truth:
-  - palace/drivers/boundarymodesolver.cpp:201-341 (BoundaryModeSolver::Solve)
-  - palace/main.cpp:276-278 (ProblemType::BOUNDARYMODE dispatch)
+feature_root: seed
+rank: rough-in
+edges:
+  depends-on:
+    - target: L4/fe_assemble
+      kind: composes
+    - target: L4/eigsolve
+      kind: composes
+    - target: palace/drivers/boundarymodesolver.cpp:201-341
+      kind: cites-evidence
+    - target: palace/main.cpp:276-278
+      kind: cites-evidence
+  reference:
+    - feature/eigenmode.L4
 ---
 
 # boundary-mode — L4 composition-root

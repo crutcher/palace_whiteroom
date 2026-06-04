@@ -1,13 +1,13 @@
 ---
 layer: L2
 operator: nrm2
-firmness: firm
-lowers_to:
-  - book/src/L1/nrm2.md (identity-in-form on the primitive's signature; the L2>L1 rotation is a degenerate identity-in-named-terms lowering recorded in-line at §"Lowers to" / §"Downward to L1" — no theme file per the 2026-06-01 vocabulary-shift redirect)
-lifts_from:
-  - book/src/L3/nrm2.md (identity-in-form; L3 is the iteration-rotation view of the same reduction — see Lifts-from)
-consumes:
-  - book/src/L2/inner_product.md (nrm2 = √ ∘ inner_product at y=x — CONSUMER, not a fold member; do-NOT-merge per L2 §"Fold-cohort boundary")
+rank: firm
+edges:
+  depends-on:
+    - L2/inner_product
+  reference:
+    - L1/nrm2
+    - L3/nrm2
 variant_axes:
   - element-type (real / complex; collapsed to single operator at L2 — result is always real)
 ---

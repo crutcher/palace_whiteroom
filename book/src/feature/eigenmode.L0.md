@@ -2,12 +2,16 @@
 kind: feature-surface
 feature: eigenmode
 level: L0
-status: firm
-l0_ground_truth:
-  - palace/drivers/eigensolver.cpp:32-477 (EigenSolver::Solve)
-  - palace/drivers/eigensolver.hpp:20-28 (class declaration)
-lifts_to:
-  - book/src/feature/eigenmode.L1.md (the L1 pure-function composition root)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: palace/drivers/eigensolver.cpp:32-477
+      kind: cites-evidence
+    - target: palace/drivers/eigensolver.hpp:20-28
+      kind: cites-evidence
+  reference:
+    - feature/eigenmode.L1
 ---
 
 # eigenmode — L0 ground-truth surface

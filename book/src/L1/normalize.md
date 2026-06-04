@@ -1,3 +1,16 @@
+---
+layer: L1
+operator: normalize
+rank: firm
+edges:
+  depends-on:
+    - L1/nrm2
+    - L1/scal
+  reference:
+    - L1-L0/normalize-mutation-rotation
+    - L1/orthogonalize
+---
+
 # normalize
 
 Mutation-lifted fused vector normalisation: compute `β = ‖x‖₂`, rescale `x ← x/β`, and **return both** `β` and the unit vector. The L1 lift of Palace's `linalg::Normalize` free function — the fused `nrm2` + `scal(1/nrm2, ·)` construct whose **returned norm** is load-bearing (Arnoldi Hessenberg sub-diagonal entry, spectral-radius eigenvalue estimate, deflation companion-vector scale).

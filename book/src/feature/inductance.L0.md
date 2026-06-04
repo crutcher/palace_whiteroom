@@ -2,12 +2,16 @@
 kind: feature-surface
 feature: inductance
 level: L0
-status: seed
-l0_ground_truth:
-  - palace/drivers/magnetostaticsolver.cpp:110-152 (MagnetostaticSolver::PostprocessTerminals — the inductance reduction)
-  - palace/drivers/magnetostaticsolver.cpp:105 (the PostprocessTerminals call)
-lifts_to:
-  - book/src/feature/inductance.L1.md (the L1 pure-function composition root)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: palace/drivers/magnetostaticsolver.cpp:110-152
+      kind: cites-evidence
+    - target: palace/drivers/magnetostaticsolver.cpp:105
+      kind: cites-evidence
+  reference:
+    - feature/inductance.L1
 ---
 
 # inductance — L0 ground-truth surface (output product)
@@ -26,7 +30,7 @@ The body computes the symmetric inductance matrix `M` via the COMSOL magnetic-en
 
 3. **Diagonal — the current-normalized self-energy.** Inside the `i`-loop (`:123`): `auto &A_gf = post_op.GetAGridFunction().Real()` + `auto &H_gf = post_op.GetDomainPostOp().H` (`:126-127`) grab the workspace grid functions; `A_gf.SetFromTrueDofs(A[i])` (`:128`) loads `Aᵢ`; `post_op.GetDomainPostOp().M_mag->Mult(A_gf, H_gf)` (`:129`) applies the magnetic-energy operator `K = M_mag` (`H_gf = K·Aᵢ`); `M(i, i) = Mm(i, i) = linalg::Dot<Vector>(post_op.GetComm(), A_gf, H_gf) / (I_inc[i] * I_inc[i])` (`:130-131`) forms the diagonal `Mᵢᵢ = (Aᵢᵀ K Aᵢ)/Iᵢ²`. This is the L0 site the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (squared, current-normalized) lifts.
 
-4. **Off-diagonal — the current-normalized cross-energy.** The inner `j`-loop (`:135`, `for (int j = i + 1; ...)`): `A_gf.SetFromTrueDofs(A[j])` (`:137`) loads `Aⱼ` (`H_gf` still holds `K·Aᵢ` from the diagonal apply); `M(i, j) = linalg::Dot<Vector>(post_op.GetComm(), A_gf, H_gf) / (I_inc[i] * I_inc[j])` (`:138`) forms the off-diagonal `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)` — the operator-weighted cross-pairing normalized by the current product; the mutual-inductance bookkeeping `Mm(i, j) = -M(i, j); Mm(i, i) -= Mm(i, j)` (`:139-140`) builds the `Mm` variant. This is the L0 site the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) lifts. The whole diagonal+off-diagonal energy-form computation spans `:129-138`.
+4. **Off-diagonal — the current-normalized cross-energy.** The inner `j`-loop (`:135`, `for (int j = i + 1; ...)`): `A_gf.SetFromTrueDofs(A[j])` (`:137`) loads `Aⱼ` (`H_gf` still holds `K·Aᵢ` from the diagonal apply); `M(i, j) = linalg::Dot<Vector>(post_op.GetComm(), A_gf, H_gf) / (I_inc[i] * I_inc[j])` (`:138`) forms the off-diagonal `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)` — the operator-weighted cross-pairing normalized by the current product; the mutual-inductance bookkeeping `Mm(i, j) = -M(i, j); Mm(i, i) -= Mm(i, j)` (`:139-140`) builds the `Mm` variant. This is the L0 site the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) (firm c095) lifts. The whole diagonal+off-diagonal energy-form computation spans `:129-138`.
 
 5. **Symmetric mirror.** The lower-triangle copy loop `for (int j = 0; j < i; j++) { M(i, j) = M(j, i); Mm(i, j) = Mm(j, i); ... }` (`:143-149`) mirrors the already-computed upper triangle — `M` is symmetric by construction (the L4 `symmetric_from_upper`).
 
@@ -43,4 +47,4 @@ This L0 surface lifts to the L1 pure-function output-product composition root [`
 
 ## Status
 
-`seed` — the L0 ground-truth surface for the inductance output product, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), the sibling of the [capacitance.L0](./capacitance.L0.md) output-product surface. Every stage is a cited range into `palace/drivers/magnetostaticsolver.cpp`, confirmed on-disk via palace-codemap `search_text` + `read_range` this dispatch (call `:105`, def `:110`, `M(A.size())` `:122`, diagonal apply `:129` / Dot `:131`, off-diagonal Dot `:138`, inverse `:151-152`). The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).
+`firm` (promoted `seed`→`firm` at cycle-095 alongside its L1/L4 levels, the `bilinear-form-firm-flip-and-cascade-wave`) — the L0 ground-truth surface for the inductance output product, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), the sibling of the [capacitance.L0](./capacitance.L0.md) output-product surface. Every stage is a cited range into `palace/drivers/magnetostaticsolver.cpp`, confirmed on-disk via palace-codemap `search_text` + `read_range` this dispatch (call `:105`, def `:110`, `M(A.size())` `:122`, diagonal apply `:129` / Dot `:131`, off-diagonal Dot `:138`, inverse `:151-152`). The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind); as a cited ground-truth surface its rank is firm.

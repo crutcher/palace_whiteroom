@@ -1,3 +1,16 @@
+---
+layer: L1
+operator: eigsolve
+rank: firm
+edges:
+  depends-on:
+    - L1/ksp_solve
+    - L1/apply_linop
+  reference:
+    - concepts/constructed-operator-factory
+    - concepts/variant-absorption
+---
+
 # eigsolve
 
 Mutation-lifted eigenmode solve: `result = eigsolve(E, control)` where `E` is a construction-bound eigensolver value carrying its operator(s), inner linear solver, B-matrix, scaling, tolerances, and iteration cap; `control` is the per-call configuration (initial subspace, spectrum target, shift). The L1 sibling of [`ksp_solve`](./ksp_solve.md) — both realise the *constructed-operator absorption* motif against a stateful solve loop, but `eigsolve` ranges over a larger variant landscape (problem type × orchestration × spectrum target × deflation policy) and consequently carries weaker algebraic-law confidence pending test-coverage expansion.

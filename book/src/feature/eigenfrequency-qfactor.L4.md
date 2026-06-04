@@ -2,13 +2,18 @@
 kind: feature-surface
 feature: eigenfrequency-qfactor
 level: L4
-status: firm
-composes:
-  - book/src/feature/eigenmode.L4.md (firm — the producing driver column: supplies the converged eigenpair family)
-  - book/src/L4/eigenfreq_qfactor_reduce.md (firm — the per-mode scalar-ratio reduction combinator; promoted firm cycle-082, firm-on-positive-structure escape)
-l0_ground_truth:
-  - palace/drivers/eigensolver.cpp:424-439 (the eigenvalue→ω un-transform in the readout loop)
-  - palace/models/postoperator.cpp:1171-1203 (MeasureLumpedPortsEig — the Q-factor computation)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L4/eigenfreq_qfactor_reduce
+      kind: folds
+    - target: palace/drivers/eigensolver.cpp:424-439
+      kind: cites-evidence
+    - target: palace/models/postoperator.cpp:1171-1203
+      kind: cites-evidence
+  reference:
+    - feature/eigenmode.L4
 ---
 
 # eigenfrequency-qfactor — L4 composition-root (output product)
@@ -58,11 +63,11 @@ The whole output product therefore lowers cleanly outward to the L4 backend surf
 
 | Stage | L4 constituent | Status | L0 site |
 |---|---|---|---|
-| producing driver column (sibling reference, not a blocker) | [`eigenmode.L4`](./eigenmode.L4.md) (driver feature column) | seed | `eigensolver.cpp:32-477` |
+| producing driver column (sibling reference, not a blocker) | [`eigenmode.L4`](./eigenmode.L4.md) (driver feature column) | firm | `eigensolver.cpp:32-477` |
 | per-mode scalar-ratio reduction | [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) | firm | `eigensolver.cpp:424-439`, `postoperator.cpp:1171-1203` (the positive structure); `palace/test/unit/test-postoperator.cpp:216,259,160-188` (output-invariance documentation: mode_port_kappa, participation_ratio) |
 | eigenfrequency un-transform (folded) | [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (firm L1; folded by [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md)) | firm | `eigensolver.cpp:430-439` |
 | Q-factor κ participation (folded) | [`participation_ratio`](../L1/participation_ratio.md) (firm L1; folded by [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md)) | firm | `postoperator.cpp:1188-1203` |
 
 ## Status
 
-`firm` — an output-product **leaf feature column** authored under the FEATURE-SURFACE SPINE directive (2026-06-02), the rank-1 per-mode-table sibling of the rank-2 Gram output products [capacitance](./capacitance.L4.md) / [inductance](./inductance.L4.md). The composition is sound: stage (1) consumes the [`eigenmode.L4`](./eigenmode.L4.md) driver column's converged eigenpair family; stage (2) composes the [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) per-mode scalar-ratio reduction at the problem-type un-transform + resistive-lumped-port κ. **The column promotes off `seed` to `firm` under the OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03; codified batch-26 meta-phase; memory `project_feature_column_promotion_rule`):** a column promotes when its OWN composition + directly-owned constituents are firm. This column's sole directly-owned constituent — the [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) reduce verb — is **`firm`** (cycle-082 lowering-verifier law-confidence pass; firm-on-positive-structure escape — both folded per-mode primitives firm L1, the κ-participation-ratio half via [`participation_ratio`](../L1/participation_ratio.md) (cycle-077) and the eigenvalue-un-transform half via [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (cycle-080), and the eigenpair→`(f, Q)` assembly is bare scalar arithmetic over two firm halves carrying no inner-product-axiom content). The cross-link to the [`eigenmode.L4`](./eigenmode.L4.md) driver column (its own `status: seed`) is a **SIBLING reference, NOT a blocker** — it is the reciprocal drift-guard, not a constituent-firmness dependency. This retires the earlier mutual-blocking deadlock (the prior text held this column at `seed` because `eigenmode` was seed, while `eigenmode` was symmetrically held seed for reducing into this column — the exact reciprocal deadlock the directive breaks). This chapter carries the *compositional* claim (the `(f, Q)` table = the per-mode scalar-ratio reduction over the eigenmode driver's eigenpair family), not the constituents' per-op algebraic claims (those live in [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) and the [`eigenmode.L4`](./eigenmode.L4.md) driver column). The defining structural fact: a rank-1 per-mode scalar-ratio table, NOT a `gram_reduce` family-PAIR grid (c074 D6 closed-negative). Evidence: the L0 readout / Q-factor ranges `eigensolver.cpp:424-439` (the eigenvalue un-transform) + `postoperator.cpp:1171-1203` (`MeasureLumpedPortsEig`, the Q-factor) realizing the reduction, all anchors confirmed on-disk via palace-codemap `read_range` + citecheck `--anchor` this dispatch, plus the constituent down-links.
+`firm` — an output-product **leaf feature column** authored under the FEATURE-SURFACE SPINE directive (2026-06-02), the rank-1 per-mode-table sibling of the rank-2 Gram output products [capacitance](./capacitance.L4.md) / [inductance](./inductance.L4.md). The composition is sound: stage (1) consumes the [`eigenmode.L4`](./eigenmode.L4.md) driver column's converged eigenpair family; stage (2) composes the [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) per-mode scalar-ratio reduction at the problem-type un-transform + resistive-lumped-port κ. **The column promotes off `seed` to `firm` under the OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03; codified batch-26 meta-phase; memory `project_feature_column_promotion_rule`):** a column promotes when its OWN composition + directly-owned constituents are firm. This column's sole directly-owned constituent — the [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) reduce verb — is **`firm`** (cycle-082 lowering-verifier law-confidence pass; firm-on-positive-structure escape — both folded per-mode primitives firm L1, the κ-participation-ratio half via [`participation_ratio`](../L1/participation_ratio.md) (cycle-077) and the eigenvalue-un-transform half via [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (cycle-080), and the eigenpair→`(f, Q)` assembly is bare scalar arithmetic over two firm halves carrying no inner-product-axiom content). The cross-link to the [`eigenmode.L4`](./eigenmode.L4.md) driver column (which is itself `firm` — its `feature_root: seed` is the permanent root marker, not a maturity, under the scheme §3 split) is a **SIBLING reference, NOT a blocker** — it is the reciprocal drift-guard, not a constituent-firmness dependency. This retires the earlier mutual-blocking deadlock (the prior text held this column at `seed` because `eigenmode` was seed, while `eigenmode` was symmetrically held seed for reducing into this column — the exact reciprocal deadlock the directive breaks). This chapter carries the *compositional* claim (the `(f, Q)` table = the per-mode scalar-ratio reduction over the eigenmode driver's eigenpair family), not the constituents' per-op algebraic claims (those live in [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) and the [`eigenmode.L4`](./eigenmode.L4.md) driver column). The defining structural fact: a rank-1 per-mode scalar-ratio table, NOT a `gram_reduce` family-PAIR grid (c074 D6 closed-negative). Evidence: the L0 readout / Q-factor ranges `eigensolver.cpp:424-439` (the eigenvalue un-transform) + `postoperator.cpp:1171-1203` (`MeasureLumpedPortsEig`, the Q-factor) realizing the reduction, all anchors confirmed on-disk via palace-codemap `read_range` + citecheck `--anchor` this dispatch, plus the constituent down-links.

@@ -1,12 +1,15 @@
 ---
 layer: L4
 operator: domain_energy_reduce
-firmness: firm
-consumes:
-  - book/src/L1/participation_ratio.md (firm — the energyᵢ/e_total per-domain ratio this reduction folds, the second of the two folded primitives)
-  - book/src/L1/matrix-weighted-norm.md (firm c091 — the ½⟨field, M_i field⟩ domain-restricted SPD energy form, the first folded primitive; promoted rough-in (test-coverage-bounded)→firm by the batch-29 firm-flip-and-cascade wave on the firm-on-positive-structure escape, so this verb's former inherited-rough-in gate is now DISCHARGED. The radicand constituent ⟨field, M_i field⟩ + ½ is positively test-covered by test-domainpostoperator.cpp:83-93 at the whole-domain instance; the √-overload entry point's missing test is judged redundant under the escape per the batch-28 meta-phase)
-lowers_to:
-  - the per-domain scalar maps (the domain-restricted energy form ½⟨field, M_i field⟩ + the participation quotient energyᵢ/e_total); identity-in-form on the body, no dedicated L4>L3 theme — in-line §"Lowers to"
+rank: firm
+edges:
+  depends-on:
+    - L1/participation_ratio
+    - L1/matrix-weighted-norm
+  reference:
+    - L4/eigenfreq_qfactor_reduce
+    - L4/gram_reduce
+    - L4/inner_product
 variant_axes:
   - field-kind (electric ½⟨E, M_i E⟩ | magnetic ½⟨B, M_i B⟩ — THE load-bearing axis; selects which domain-restricted operator family M_i and which field; the reduction runs twice, once per kind, producing two tables; absorbed into the (M_i, field) pair)
   - element-type (the field may be complex; the energy form sums the real + imaginary radicand contributions, so energyᵢ is a real ≥ 0 reduction of a possibly-complex field; the table is real)

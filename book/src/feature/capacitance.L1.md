@@ -2,13 +2,18 @@
 kind: feature-surface
 feature: capacitance
 level: L1
-status: seed
-composes:
-  - book/src/feature/electrostatic.L1.md (the producing driver column — supplies the per-terminal solution family [Vᵢ])
-  - book/src/L1/matrix-weighted-norm.md (firm c091 — diagonal Vᵢᵀ K Vᵢ; promoted to firm by the batch-29 firm-flip-and-cascade wave)
-  - book/src/L1/bilinear-form.md (rough-in — off-diagonal Vⱼᵀ K Vᵢ = xᴴ M y)
-l0_ground_truth:
-  - palace/drivers/electrostaticsolver.cpp:100-140 (ElectrostaticSolver::PostprocessTerminals — the capacitance reduction)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L1/matrix-weighted-norm
+      kind: folds
+    - target: L1/bilinear-form
+      kind: folds
+    - target: palace/drivers/electrostaticsolver.cpp:100-140
+      kind: cites-evidence
+  reference:
+    - feature/electrostatic.L1
 ---
 
 # capacitance — L1 composition-root
@@ -30,10 +35,10 @@ At L1 the capacitance product is a pure function `config → capacitance matrix`
 
 1. **The producing driver column** — [`electrostatic.L1`](./electrostatic.L1.md). The electrostatic driver assembles `K` once (the [`fe_assemble`](../L1/fe_assemble.md) fold) and maps the per-terminal pure solve [`ksp_solve`](../L1/ksp_solve.md) over the terminal-source family, collecting the solution family `[Vᵢ]`. The capacitance output product consumes that `(K, [Vᵢ])`; it does not re-derive the solve. L0: the per-terminal loop `electrostaticsolver.cpp:59-89`.
 
-2. **Capacitance-matrix reduction** — the symmetric matrix `Cᵢⱼ = Vⱼᵀ K Vᵢ`, built from L1 bilinear-form evaluations over the solution-family pair grid (rough-in diagonal + rough-in off-diagonal):
+2. **Capacitance-matrix reduction** — the symmetric matrix `Cᵢⱼ = Vⱼᵀ K Vᵢ`, built from L1 bilinear-form evaluations over the solution-family pair grid (firm diagonal + firm off-diagonal):
    - diagonal `Cᵢᵢ = Vᵢᵀ K Vᵢ` — the operator-weighted self-form, the now-firm [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) squared (`matrix_weighted_norm(Vᵢ, K)² = Vᵢᵀ K Vᵢ`; L0 builds it as `M_elec->Mult(V_gf, D_gf)` then `linalg::Dot(V_gf, D_gf)`, `:118-119`).
-   - off-diagonal `Cᵢⱼ = Vⱼᵀ K Vᵢ` — the operator-weighted cross-pairing, the rough-in [`bilinear-form`](../L1/bilinear-form.md) `α = xᴴ M y` instantiated `⟨Vⱼ, K Vᵢ⟩` (L0 `:122-127`, the same energy-form `Mult`/`Dot` with the `j` grid function, `:126`).
-   The result is the symmetric `C` (and its LAPACK inverse `Cinv`, `:139-140`). This stage is a pure fold of bilinear-form evaluations over the family-pair grid — no L1 operator is *new* here; the reduction composes [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091) + [`bilinear-form`](../L1/bilinear-form.md) (rough-in). At L4 this exact fold is named the [`gram_reduce`](../L4/gram_reduce.md) combinator (voltage `w = 1` specialization); L1 sees the unfolded grid.
+   - off-diagonal `Cᵢⱼ = Vⱼᵀ K Vᵢ` — the operator-weighted cross-pairing, the firm [`bilinear-form`](../L1/bilinear-form.md) `α = xᴴ M y` instantiated `⟨Vⱼ, K Vᵢ⟩` (L0 `:122-127`, the same energy-form `Mult`/`Dot` with the `j` grid function, `:126`).
+   The result is the symmetric `C` (and its LAPACK inverse `Cinv`, `:139-140`). This stage is a pure fold of bilinear-form evaluations over the family-pair grid — no L1 operator is *new* here; the reduction composes [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091) + [`bilinear-form`](../L1/bilinear-form.md) (firm c095). At L4 this exact fold is named the [`gram_reduce`](../L4/gram_reduce.md) combinator (voltage `w = 1` specialization); L1 sees the unfolded grid.
 
 ## Inputs / outputs (the feature surface)
 
@@ -52,10 +57,10 @@ The L1→L0 direction (how the bilinear-form pure functions lower to the in-plac
 
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
-| producing driver column | [`electrostatic.L1`](./electrostatic.L1.md) (driver feature column) | seed | `electrostaticsolver.cpp:21-98` |
+| producing driver column | [`electrostatic.L1`](./electrostatic.L1.md) (driver feature column; sibling reference) | firm | `electrostaticsolver.cpp:21-98` |
 | diagonal Vᵢᵀ K Vᵢ | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) | firm c091 | `electrostaticsolver.cpp:118-119` |
-| off-diagonal Vⱼᵀ K Vᵢ | [`bilinear-form`](../L1/bilinear-form.md) | rough-in | `electrostaticsolver.cpp:122-127` |
+| off-diagonal Vⱼᵀ K Vᵢ | [`bilinear-form`](../L1/bilinear-form.md) | firm c095 | `electrostaticsolver.cpp:122-127` |
 
 ## Status
 
-`seed` — the L1 pure-function composition root for the capacitance output product (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive (2026-06-02). It consumes the [`electrostatic.L1`](./electrostatic.L1.md) driver column's solution family, then folds two L1 bilinear primitives over the family-pair grid — the now-firm diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091, the batch-29 firm-flip-and-cascade wave) and the still-rough-in off-diagonal [`bilinear-form`](../L1/bilinear-form.md). **Under the OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03) a column promotes off `seed` when its OWN directly-owned constituents are firm; this column STAYS `seed` because its OWN reduce verb is still rough-in** — the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) is rough-in (the sole RESIDUAL gate; `matrix-weighted-norm` discharged c091), so the L4 home `gram_reduce` STAYS `rough-in (test-coverage-bounded)` on that residual (D3 cycle-091 re-judgment). This is an OWN-constituent gate, NOT a cross-linked-sibling blocker: the [`electrostatic.L1`](./electrostatic.L1.md) producing driver column is a SIBLING reference, not the gate. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 reduction range `electrostaticsolver.cpp:100-140` realizing the composition, plus the constituent down-links.
+`firm` (promoted `seed`→`firm` at cycle-095, the `bilinear-form-firm-flip-and-cascade-wave`) — the L1 pure-function composition root for the capacitance output product (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive (2026-06-02). It consumes the [`electrostatic.L1`](./electrostatic.L1.md) driver column's solution family, then folds two firm L1 bilinear primitives over the family-pair grid — the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091) and the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) (firm c095, the cascade-wave). **Under the OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03) a column promotes off `seed` when its OWN directly-owned constituents are firm; this column is firm because both its directly-owned reduction primitives are firm** (the off-diagonal `bilinear-form` firmed this cycle, so the L4 home `gram_reduce` firmed via D3). The [`electrostatic.L1`](./electrostatic.L1.md) producing driver column is a SIBLING reference, not a constituent. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 reduction range `electrostaticsolver.cpp:100-140` realizing the composition, plus the constituent down-links.

@@ -2,13 +2,18 @@
 kind: feature-surface
 feature: boundary-mode
 level: L0
-status: seed
-l0_ground_truth:
-  - palace/drivers/boundarymodesolver.cpp:201-341 (BoundaryModeSolver::Solve)
-  - palace/drivers/boundarymodesolver.hpp:15-28 (class declaration)
-  - palace/main.cpp:276-278 (ProblemType::BOUNDARYMODE dispatch)
-lifts_to:
-  - book/src/feature/boundary-mode.L1.md (the L1 pure-function composition root)
+feature_root: seed
+rank: rough-in
+edges:
+  depends-on:
+    - target: palace/drivers/boundarymodesolver.cpp:201-341
+      kind: cites-evidence
+    - target: palace/drivers/boundarymodesolver.hpp:15-28
+      kind: cites-evidence
+    - target: palace/main.cpp:276-278
+      kind: cites-evidence
+  reference:
+    - feature/boundary-mode.L1
 ---
 
 # boundary-mode — L0 ground-truth surface

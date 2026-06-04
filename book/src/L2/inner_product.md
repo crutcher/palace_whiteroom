@@ -1,3 +1,18 @@
+---
+layer: L2
+operator: inner_product
+rank: firm
+edges:
+  depends-on:
+    - L1/dot
+    - L1/bilinear-form
+    - L1/apply_linop
+  reference:
+    - L2/linear_combination
+    - concepts/dot
+    - L2-L1/inner-product-fold-specialization
+---
+
 # inner_product
 
 **`inner_product` is the L2 entry for the reduce-to-scalar inner-product family**
@@ -177,7 +192,7 @@ bilinear_form(x, M, y) = inner_product_M x M y                      -- M-weighte
   defined with `dot` at L1; carried here with the type-API-surface-only caveat (§"tdot").
 - **`bilinear_form`** — the weight axis at value *general / SPD `M`* (`inner_product_M`),
   realized as the pre-application `inner_product (apply_linop M x) y`. Its L1 leaf is
-  [`bilinear-form`](../L1/bilinear-form.md) (rough-in).
+  [`bilinear-form`](../L1/bilinear-form.md) (firm, promoted cycle-095).
 
 The L2 entry differs from the L1 leaves in **resolution**, along the
 conjugation-convention / weight-presence axes: L1 sees `dot`/`tdot` (the conjugation

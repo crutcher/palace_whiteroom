@@ -2,15 +2,27 @@
 kind: feature-surface
 feature: lifecycle
 level: L1
-status: firm
-composes:
-  - book/src/feature/electrostatic.L1.md (the electrostatic driver — one ProblemType specialization)
-  - book/src/feature/magnetostatic.L1.md (the magnetostatic driver — one ProblemType specialization)
-  - book/src/L1/fe_assemble.md (firm — driver-agnostic mesh→operator assemble, used by every driver)
-  - book/src/L1/ksp_solve.md (firm — the solve cap every driver's per-step body bottoms out in)
-l0_ground_truth:
-  - palace/main.cpp:158-328 (main — the top-level lifecycle)
-  - palace/drivers/basesolver.cpp:153-276 (BaseSolver::SolveEstimateMarkRefine)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L1/fe_assemble
+      kind: composes
+    - target: L1/ksp_solve
+      kind: composes
+    - target: L4/fold_solve
+      kind: composes
+    - target: palace/main.cpp:158-328
+      kind: cites-evidence
+    - target: palace/drivers/basesolver.cpp:153-276
+      kind: cites-evidence
+  reference:
+    - feature/electrostatic.L1
+    - feature/magnetostatic.L1
+    - feature/eigenmode.L1
+    - feature/driven.L1
+    - feature/transient.L1
+    - feature/boundary-mode.L1
 ---
 
 # lifecycle — L1 composition-root
@@ -31,7 +43,7 @@ At L1 the lifecycle is a pure function with the mutation already lifted (the L0 
 
 1. **Build the mesh** — a driver-agnostic pure `build_mesh :: Config -> Mesh` (load → preprocess → partition → a-priori-refine). Pure: consumes config, produces the initial mesh sequence. L0: `mesh::Load` / `Preprocess` / `Partition` / `RefineMesh` (`palace/main.cpp:287-302`).
 
-2. **Dispatch the per-driver specialization** — `dispatch :: ProblemType -> (Config -> Mesh -> Product)` selects ONE per-driver feature column by `problem_type cfg`. Each branch is a per-driver feature column's L1 root: [`electrostatic.L1`](./electrostatic.L1.md), [`magnetostatic.L1`](./magnetostatic.L1.md) on disk; eigenmode / driven / transient forthcoming (not yet authored). The selected driver `Solve` is the **specialization** of this spine — the lifecycle composes the *column*, not the column's internal ops (those are the column's own down-links). L0: the `switch (iodata.problem.type)` (`palace/main.cpp:257-280`).
+2. **Dispatch the per-driver specialization** — `dispatch :: ProblemType -> (Config -> Mesh -> Product)` selects ONE per-driver feature column by `problem_type cfg`. Each branch is a per-driver feature column's L1 root: [`electrostatic.L1`](./electrostatic.L1.md), [`magnetostatic.L1`](./magnetostatic.L1.md), [`eigenmode.L1`](./eigenmode.L1.md), [`driven.L1`](./driven.L1.md), [`transient.L1`](./transient.L1.md), [`boundary-mode.L1`](./boundary-mode.L1.md) — all on disk. The selected driver `Solve` is the **specialization** of this spine — the lifecycle composes the *column*, not the column's internal ops (those are the column's own down-links). L0: the `switch (iodata.problem.type)` (`palace/main.cpp:257-280`).
 
 3. **Adaptive estimate-mark-refine fold** — `estimate_mark_refine_fold :: (Mesh -> (Indicators, Product)) -> Mesh -> Product`: thread the mesh forward, at each iterate running the selected driver `Solve` (→ error indicators + the current product), then **mark** the high-error elements + **refine** + (optional) **rebalance** → the next mesh, terminating when the error indicator norm falls below tolerance OR resources are exhausted. The carry `{mesh, indicators, product}` is **state-generated** (the carry both produces the next mesh AND determines termination), so each iterate's input is the prior iterate's output — a **fold, not a map** (no commuting family). When AMR is disabled the fold is the single initial `Solve` (the electrostatic exemplar's degenerate case). L0: `BaseSolver::SolveEstimateMarkRefine` (`palace/drivers/basesolver.cpp:153-276`): initial solve `:174`, the `while` `:190`, mark `:221-232`, refine `:235-244`, re-solve `:266`.
 
@@ -53,9 +65,9 @@ The L1→L0 direction (how the mesh-refine + driver solves lower to the in-place
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
 | build mesh | `mesh::Load`/`Partition`/`RefineMesh` (driver-agnostic mesh scaffold) | — (L0 scaffold) | `palace/main.cpp:287-302` |
-| per-driver dispatch (electrostatic) | [`electrostatic.L1`](./electrostatic.L1.md) | seed | `palace/main.cpp:267` |
-| per-driver dispatch (magnetostatic) | [`magnetostatic.L1`](./magnetostatic.L1.md) | seed | `palace/main.cpp:270` |
-| per-driver dispatch (eigenmode / driven / transient) | eigenmode.L1 / driven.L1 / transient.L1 *(forthcoming — not yet authored)* | not yet authored | `palace/main.cpp:264, 261, 273` |
+| per-driver dispatch (electrostatic) | [`electrostatic.L1`](./electrostatic.L1.md) (sibling reference) | firm | `palace/main.cpp:267` |
+| per-driver dispatch (magnetostatic) | [`magnetostatic.L1`](./magnetostatic.L1.md) (sibling reference) | firm | `palace/main.cpp:270` |
+| per-driver dispatch (eigenmode / driven / transient / boundary-mode) | [eigenmode.L1](./eigenmode.L1.md) / [driven.L1](./driven.L1.md) / [transient.L1](./transient.L1.md) / [boundary-mode.L1](./boundary-mode.L1.md) (sibling references) | firm / firm / firm / rough-in | `palace/main.cpp:264, 261, 273, 276` |
 | adaptive estimate-mark-refine fold | the `fold_solve` state-generated carry (see L4) | firm (L4) | `palace/drivers/basesolver.cpp:153-276` |
 
 ## Status

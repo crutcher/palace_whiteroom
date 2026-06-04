@@ -2,15 +2,24 @@
 kind: feature-surface
 feature: driven
 level: L4
-status: firm
-composes:
-  - book/src/L4/fe_assemble.md (firm — assemble the fixed operator basis {K, C, M} once: the assemble-fold combinator)
-  - book/src/L4/assemble_frequency_operator.md (firm — the per-ω operand A(ω) = K + iωC − ω²M + A2(ω); the operator-operand linear_combination specialization, rebuilt per member)
-  - book/src/L4/frequency_sweep.md (firm — the operator-VARYING per-ω solve map; SetOperators INSIDE the loop)
-  - book/src/L4/ksp_solve.md (firm — the per-ω solve cap frequency_sweep maps)
-l0_ground_truth:
-  - palace/drivers/drivensolver.cpp:37-75 (DrivenSolver::Solve — dispatch to SweepUniform/SweepAdaptive)
-  - palace/drivers/drivensolver.cpp:77-229 (DrivenSolver::SweepUniform — the uniform frequency sweep)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L4/fe_assemble
+      kind: composes
+    - target: L4/assemble_frequency_operator
+      kind: composes
+    - target: L4/frequency_sweep
+      kind: composes
+    - target: L4/ksp_solve
+      kind: composes
+    - target: palace/drivers/drivensolver.cpp:37-75
+      kind: cites-evidence
+    - target: palace/drivers/drivensolver.cpp:77-229
+      kind: cites-evidence
+  reference:
+    - feature/sparameters.L4
 ---
 
 # driven — L4 composition-root
@@ -157,7 +166,7 @@ constituent `frequency_sweep` / `assemble_frequency_operator` vocabulary is firm
 | per-ω operator rebuild A(ω) | [`assemble_frequency_operator`](../L4/assemble_frequency_operator.md) | firm | `drivensolver.cpp:175-177` |
 | operator-varying per-ω solve map | [`frequency_sweep`](../L4/frequency_sweep.md) | firm | `drivensolver.cpp:168-196` |
 | per-ω solve cap | [`ksp_solve`](../L4/ksp_solve.md) | firm | `drivensolver.cpp:196` |
-| S-parameter reduction (output product) | [`sparameters`](./sparameters.L4.md) output-product column (verb [`sparameter_reduce`](../L4/sparameter_reduce.md), *rough-in*) | seed (column) | `drivensolver.cpp:205-216` |
+| S-parameter reduction (output product) | [`sparameters`](./sparameters.L4.md) output-product column (verb [`sparameter_reduce`](../L4/sparameter_reduce.md), firm c083; sibling reference) | firm | `drivensolver.cpp:205-216` |
 
 ## Status
 

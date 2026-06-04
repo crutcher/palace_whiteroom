@@ -2,13 +2,20 @@
 kind: feature-surface
 feature: transient
 level: L4
-status: firm
-composes:
-  - book/src/L4/fe_assemble.md (firm — assemble the time-domain operators K/C/M once: the assemble-fold combinator)
-  - book/src/L4/fold_solve.md (firm — the state-threaded time-march FOLD; transient is its default/primary witness)
-l0_ground_truth:
-  - palace/drivers/transientsolver.cpp:24-116 (TransientSolver::Solve)
-  - palace/models/timeoperator.cpp:65-67 (K/C/M assembled once), :407-413 (TimeOperator::Step → ode->Step)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L4/fe_assemble
+      kind: composes
+    - target: L4/fold_solve
+      kind: composes
+    - target: palace/drivers/transientsolver.cpp:24-116
+      kind: cites-evidence
+    - target: palace/models/timeoperator.cpp:65-67
+      kind: cites-evidence
+    - target: palace/models/timeoperator.cpp:407-413
+      kind: cites-evidence
 ---
 
 # transient — L4 composition-root

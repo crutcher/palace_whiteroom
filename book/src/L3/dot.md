@@ -1,11 +1,12 @@
 ---
 layer: L3
 operator: dot
-firmness: firm
-lowers_to:
-  - book/src/L2/inner_product.md (dot is the Hermitian/symmetric specialization of the inner_product combinator; identity-in-form on the body — see §"Downward to L2 (through inner_product)")
-lifts_from:
-  - book/src/L4/dot.md (firm cycle-069 D2 — the L4 Hermitian/symmetric inner-product verb `dot(p, Ap)`; the kept named abstraction risen to L4 alongside the `inner_product` combinator, `concepts/black-box-vs-accelerated-kernels.md` §2; identity-in-form on the body — value-thread-isomorphic, no dedicated L4>L3 theme, the in-line-marker route)
+rank: firm
+edges:
+  depends-on:
+    - L2/inner_product
+  reference:
+    - L4/dot
 variant_axes:
   - element-type (real / complex)
   - conjugation-convention (hermitian / unconjugated `tdot` — complex element-type only)

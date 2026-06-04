@@ -1,3 +1,13 @@
+---
+layer: L1
+operator: apply_linop
+rank: firm
+edges:
+  reference:
+    - L1-L0/apply-linop-mutation-rotation
+    - concepts/apply_linop
+---
+
 # apply_linop
 
 Mutation-lifted linear-operator application: `y = A · x` for an abstract linear operator `A`. The opaque-operator primitive at L1; the unit of operator-cost accounting for iterative solvers and the gate to the L2 `krylov-step` vocabulary.

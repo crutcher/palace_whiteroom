@@ -2,12 +2,18 @@
 kind: feature-surface
 feature: eigenmode
 level: L1
-status: firm
-composes:
-  - book/src/L1/fe_assemble.md (firm — assemble the K/C/M operator pencil)
-  - book/src/L1/eigsolve.md (firm — the eigensolver-as-operator collapse: one opaque solve → EigResult)
-l0_ground_truth:
-  - palace/drivers/eigensolver.cpp:32-477 (EigenSolver::Solve)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L1/fe_assemble
+      kind: composes
+    - target: L1/eigsolve
+      kind: composes
+    - target: palace/drivers/eigensolver.cpp:32-477
+      kind: cites-evidence
+  reference:
+    - feature/eigenfrequency-qfactor.L1
 ---
 
 # eigenmode — L1 composition-root
@@ -54,7 +60,7 @@ The defining structural fact at both levels: **no `solve_family` map and no `fol
 |---|---|---|---|
 | assemble K/C/M pencil once | [`fe_assemble`](../L1/fe_assemble.md) | firm | `eigensolver.cpp:40-42` |
 | opaque eigensolver-as-operator (once) | [`eigsolve`](../L1/eigsolve.md) | firm | `eigensolver.cpp:172-196, 367` |
-| per-mode readout (ω, Q, B=-1/(iω)∇×E) | `eigenfrequency-qfactor` *(output-product column; forward-ref — not authored here)* | (forward-ref) | `eigensolver.cpp:424-458` |
+| per-mode readout (ω, Q, B=-1/(iω)∇×E) | [`eigenfrequency-qfactor.L1`](./eigenfrequency-qfactor.L1.md) output-product column (sibling reference) | firm | `eigensolver.cpp:424-458` |
 
 ## Status
 

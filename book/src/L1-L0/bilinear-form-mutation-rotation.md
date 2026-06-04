@@ -1,8 +1,8 @@
 # bilinear-form-mutation-rotation
 
 The mutation rotation for the operator-weighted (bilinear-form) inner product. Lowers the pure L1
-form `bilinear_form(x, M, y) = xᴴ M y` ([`L1/bilinear-form`](../L1/bilinear-form.md), rough-in
-test-coverage-bounded) into Palace's L0 `linalg::Dot(comm, x, A, y)` three-step composition
+form `bilinear_form(x, M, y) = xᴴ M y` ([`L1/bilinear-form`](../L1/bilinear-form.md), firm
+cycle-095) into Palace's L0 `linalg::Dot(comm, x, A, y)` three-step composition
 `ComplexVector Ax(A.Height()); A.Mult(x, Ax); return Dot(comm, Ax, y)`
 (`palace/linalg/operator.cpp:621-639`). It is the **off-diagonal sibling** of
 [`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md): where the
@@ -28,7 +28,7 @@ L1 form `xᴴ M y` with `x ↔ y` argument-order swap).
 
 The pure-functional matrix-weighted bilinear-form inner product consumes three read-only inputs
 and produces a fresh scalar; nothing is mutated, and there is no workspace in the signature. The
-LHS shape (rough-in test-coverage-bounded; see [`L1/bilinear-form`](../L1/bilinear-form.md)):
+LHS shape (the firm L1 operator, promoted cycle-095; see [`L1/bilinear-form`](../L1/bilinear-form.md)):
 
     alpha = bilinear_form(x, M, y)    -- alpha = xᴴ M y, scalar
                                       -- (complex x, real M, complex y    -> complex)
@@ -566,17 +566,18 @@ declarations at `palace/linalg/operator.hpp:386, :391`) and the inherited sub-th
 reconstruction, no literature inference, no speculative operator** — so `firm` rather than
 `partly-constructive`.
 
-**Note on the upstream L1 gate.** The L1 operator [`bilinear-form`](../L1/bilinear-form.md) is
-`rough-in (test-coverage-bounded)` (its variant-axis coverage and algebraic-law confidence are
-narrow). A firm lowering of a rough-in L1 operator is consistent: the lowering's structural
-fidelity (does the L1 form expand into this L0 source?) is independent of the L1 entry's
-promotion gates (test coverage + the real-`x`/real-`M`/real-`y` variant). Precedent:
+**Note on the upstream L1 leaf.** The L1 operator [`bilinear-form`](../L1/bilinear-form.md) is
+now `firm` (promoted cycle-095 under the firm-on-positive-structure escape; DISCHARGE c092). This
+theme was already `firm` while the L1 leaf was `rough-in (test-coverage-bounded)`, which is the
+consistent case: the lowering's structural fidelity (does the L1 form expand into this L0 source?)
+is independent of the L1 entry's own promotion gates. The L1 promotion only **strengthens** the
+LHS this theme lowers — it does not change the theme's firm status. Precedent for the firm-theme-
+over-then-rough-in-leaf pattern:
 [`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md) was firm
-over `L1/matrix-weighted-norm` while the latter was rough-in (it has since promoted to firm at
-cycle-091, which did not change the theme's firm status — it only strengthened the LHS the theme
-lowers); [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md) remains firm over the
-still-rough-in `L1/eigsolve`. Promoting an L1 operator to firm (its own gate) does not change a
-lowering theme's status; it would only strengthen the LHS the theme already lowers.
+over `L1/matrix-weighted-norm` while the latter was rough-in (it promoted to firm at cycle-091,
+which did not change the theme's firm status); [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md)
+remains firm over the still-rough-in `L1/eigsolve`. Promoting an L1 operator to firm (its own
+gate) does not change a lowering theme's status; it only strengthens the LHS the theme already lowers.
 
 A `lowering-verifier` audit attaching the `verified_against:` block (per the sibling-theme
 convention) confirming the surface-form recognition is exhaustive (no un-cited `Dot(comm, x, A,

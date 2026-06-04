@@ -1,14 +1,16 @@
 ---
 layer: L4
 operator: gram_reduce
-firmness: rough-in (test-coverage-bounded)
-consumes:
-  - book/src/L1/matrix-weighted-norm.md (firm c091 — the diagonal self-bilinear xᵢᵀ K xᵢ; the diagonal CONSUMER, the xⱼ=xᵢ specialization of the off-diagonal bilinear)
-  - book/src/L1/bilinear-form.md (rough-in — the off-diagonal cross-bilinear xⱼᵀ K xᵢ; the fold element)
-  - book/src/L4/solve_family.md (firm — produces the solution family [xᵢ] this combinator reduces over; the upstream stage in the composition root)
-lowers_to:
-  - book/src/L1/matrix-weighted-norm.md (the diagonal entry; identity-in-form on the body — the reduction is a fold of L1 bilinear-form evaluations, no dedicated L4>L3 theme; in-line §"Downward")
-  - book/src/L1/bilinear-form.md (the off-diagonal entry; identity-in-form on the body)
+firmness: firm
+rank: firm
+edges:
+  depends-on:
+    - L1/matrix-weighted-norm
+    - L1/bilinear-form
+    - L4/solve_family
+  reference:
+    - L4/inner_product
+    - L4/linear_combination
 variant_axes:
   - normalization-weight (unit | current-normalized — THE load-bearing axis; absorbed into the w closure)
   - operator-source (mass-energy — absorbed into K)
@@ -55,9 +57,10 @@ operator-weighted bilinear primitives:
   [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (`√` dropped — `gram_reduce`
   reduces to the *squared* energy `xᵢᵀ K xᵢ = 2Uₑ/ₘ(xᵢ)`, the matrix-weighted-norm's
   radicand);
-- the off-diagonal entry `xⱼᵀ K xᵢ` is the still-rough-in L1
-  [`bilinear-form`](../L1/bilinear-form.md) (`xᴴ M y` at `M = K`) — the sole remaining
-  rough-in folded primitive, the residual gate (see §Status).
+- the off-diagonal entry `xⱼᵀ K xᵢ` is the now-**firm** (c095) L1
+  [`bilinear-form`](../L1/bilinear-form.md) (`xᴴ M y` at `M = K`) — the last
+  remaining folded gate, discharged by the cycle-095 firm-flip-and-cascade wave
+  (see §Status).
 
 The diagonal is the `xⱼ = xᵢ` specialization of the off-diagonal bilinear
 (`matrix_weighted_norm x K = bilinear_form x K x` modulo the `√`), so
@@ -195,8 +198,8 @@ L1 rows this combinator folds:
 
 - [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091) — the diagonal
   self-bilinear (radicand); the diagonal consumer.
-- [`bilinear-form`](../L1/bilinear-form.md) (rough-in) — the off-diagonal cross-bilinear;
-  the fold element. **The sole remaining rough-in folded primitive — the residual gate.**
+- [`bilinear-form`](../L1/bilinear-form.md) (firm c095) — the off-diagonal cross-bilinear;
+  the fold element. **Promoted rough-in→firm by the cycle-095 firm-flip-and-cascade wave (the last folded gate discharged).**
 
 L4 rows:
 
@@ -225,50 +228,49 @@ high→low discipline; it does not author a theme.
 
 ## Status
 
-`rough-in (test-coverage-bounded)`. **Reasoning (warrant-first):** the combinator's
-**structure** is firm-on-positive-structure — the symmetric-Gram skeleton
+`firm` (promoted from `rough-in (test-coverage-bounded)` at **cycle-095**, the
+`bilinear-form-firm-flip-and-cascade-wave` D3, on the **firm-on-positive-structure
+escape**). **Reasoning (warrant-first):** the combinator's **structure** is
+firm-on-positive-structure — the symmetric-Gram skeleton
 (map-over-upper-triangle-pairs, diagonal/off-diagonal split, weight factoring,
 symmetric mirror, inverse-as-consumer) is read directly off the two skeleton-identical
 positive PostprocessTerminals loops (electrostatic `:100-140` + magnetostatic
-`:110-152`), and every law (§Algebraic laws) is a syntactic identity on that fold. So
-the *structure* would satisfy the firm-on-positive-structure escape. BUT the entry
-inherits the maturity of its least-firm folded primitive — and after the cycle-091
-matrix-weighted-norm firm flip, **one of the two folded gates is discharged and one
-remains**:
+`:110-152`), and every law (§Algebraic laws) is a syntactic identity on that fold.
+After the cycle-091 + cycle-095 cascade, **both** folded gates are now discharged:
+
 1. the diagonal building block [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
-   is now **firm** (c091, the batch-29 firm-flip-and-cascade wave — both norm-axiom
+   is **firm** (c091, the batch-29 firm-flip-and-cascade wave — both norm-axiom
    law-sides discharged on the firm-on-positive-structure escape) — **gate discharged**;
-2. the off-diagonal building block [`bilinear-form`](../L1/bilinear-form.md) is still
-   **rough-in** (its own `rough-in (lower-layer-shared-vocabulary, cycle-010-wave-1)`
-   status, gated on a narrow-variant-axis-coverage question — confirmed on disk
-   `bilinear-form.md:4,:321` this cycle) — **the sole RESIDUAL gate**, so the entry
-   stays at its maturity;
-3. there is additionally **no dedicated Palace unit test** for the Gram reduction (the
+2. the off-diagonal building block [`bilinear-form`](../L1/bilinear-form.md) is now
+   **firm** (c095, this cascade wave's D1 — promoted on the firm-on-positive-structure
+   escape, firmability DISCHARGED by the cycle-092 `lowering-verifier` probe) — **the
+   last residual gate, now discharged**;
+3. the absence of a dedicated Palace unit test for the Gram reduction (the
    PostprocessTerminals bodies are integration-level, exercised only through the full
-   `Solve(mesh)` driver), so the reduction-level laws are test-unconfirmed.
+   `Solve(mesh)` driver) is **REDUNDANT** under the firm-on-positive-structure escape:
+   every reduction-level law is a syntactic identity on the fold over two now-firm
+   primitives (no theorem-needing-proof; the assembly is bare grid-fold arithmetic over
+   firm halves with no inner-product-axiom content) — there is NO law for which that
+   absent test is the only evidence.
 
-A reduction is as firm as its least-firm folded primitive, so `gram_reduce` STAYS
-`rough-in (test-coverage-bounded)` — NOT a forcing: the bilinear-form off-diagonal is
-genuinely rough-in on disk (this is the honest partial outcome of the cascade, one of
-two folded gates cleared).
-
-Narrowed promotion route (cycle-091): the matrix-weighted-norm diagonal gate is
-DISCHARGED (firm c091); the remaining gates are (a) the off-diagonal
-[`bilinear-form`](../L1/bilinear-form.md) primitive firms up (its own
-`lower-layer-shared-vocabulary` / variant-axis-coverage gate — a separate
-dischargeability question, NOT in this cycle's scope), AND (b) a dedicated family-pair
-Gram-reduction test OR a lowering-verifier pass raising the fold-law confidence to
-`inner_product`-equivalent. (Contrast the per-DOMAIN sibling
-[`domain_energy_reduce`](./domain_energy_reduce.md), which firmed this same cycle
-because BOTH its folded primitives are now firm — matrix-weighted-norm c091 +
-participation_ratio c077; `gram_reduce`'s off-diagonal bilinear-form is the one folded
-primitive still rough-in, which is the firm-vs-rough-in distinction here.)
+A reduction is as firm as its least-firm folded primitive, and after the cascade BOTH
+folded primitives are firm, so `gram_reduce` promotes to **firm** — the materially
+identical disposition to its four reduce-verb siblings on the same escape: the
+per-DOMAIN [`domain_energy_reduce`](./domain_energy_reduce.md) (firmed cycle-091 in
+this same cascade family, because BOTH its primitives — matrix-weighted-norm c091 +
+participation_ratio c077 — firmed), [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md)
+(c082), [`sparameter_reduce`](./sparameter_reduce.md) (c083), and
+[`solve_family`](./solve_family.md) (c086). This is NOT a forcing: the structure was
+already firm-on-positive-structure on disk, and the only thing that held the verb at
+`rough-in (test-coverage-bounded)` was the least-firm-folded-primitive inheritance
+rule — which the c095 bilinear-form flip clears.
 
 **Scope: 2-of-N pipelines** — electrostatic + magnetostatic output products (the two
 energy-formulated symmetric-Gram reductions); eigenmode + driven post-processing are
 candidate 3rd+ witnesses for a stronger future mine (§Specialization), not in scope
 now. The disciplined-cross-pipeline-combinator-mining-gate is 2-of-N met (2 positive
-witnesses, no break-witness — the normalization weight is a variant axis).
+witnesses, no break-witness — the normalization weight is a variant axis). The firm
+flip is a law-confidence judgment, NOT a witness-count change: scope is unchanged.
 
 ## Evidence
 
@@ -305,3 +307,35 @@ All L0 citations self-verified on-disk this dispatch via the codemap
   genuine L4 entry (the shared output-product reduction verb; ONE symmetric-Gram
   reduction across two output products, the weight the only difference — a navigable
   L4 home as the reduce-to-matrix data-algebra combinator, NOT a stranded mine).
+
+```yaml
+verified_against:
+  - citation: book/src/L1/matrix-weighted-norm.md:110
+    verdict: supports
+    audited_at: 2026-06-04T205500Z
+    note: diagonal folded primitive firm c091; the rank-invariant diagonal input
+  - citation: book/src/L1/bilinear-form.md
+    verdict: supports
+    audited_at: 2026-06-04T205500Z
+    note: off-diagonal folded primitive firmed c095 (D1, this cascade); the last residual gate discharged
+  - citation: book/src/L4/solve_family.md:4
+    verdict: supports
+    audited_at: 2026-06-04T205500Z
+    note: consumed composition-root family-producer firm c086; the depends-on input
+  - citation: reference/palace/palace/drivers/electrostaticsolver.cpp:118-119
+    verdict: supports
+    audited_at: 2026-06-04T205500Z
+    note: M_elec apply + diagonal Dot — capacitance Gram witness 1; citecheck --anchor ok
+  - citation: reference/palace/palace/drivers/electrostaticsolver.cpp:139-140
+    verdict: supports
+    audited_at: 2026-06-04T205500Z
+    note: Cinv Invert — the gram_inverse consumer split; citecheck --anchor ok
+  - citation: reference/palace/palace/drivers/magnetostaticsolver.cpp:129-131
+    verdict: supports
+    audited_at: 2026-06-04T205500Z
+    note: M_mag apply + diagonal Dot — inductance Gram witness 2; citecheck --anchor ok
+  - citation: reference/palace/palace/drivers/magnetostaticsolver.cpp:151-152
+    verdict: supports
+    audited_at: 2026-06-04T205500Z
+    note: Minv Invert — the gram_inverse consumer split; citecheck --anchor ok
+```

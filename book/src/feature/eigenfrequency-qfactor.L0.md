@@ -2,12 +2,16 @@
 kind: feature-surface
 feature: eigenfrequency-qfactor
 level: L0
-status: firm
-l0_ground_truth:
-  - palace/drivers/eigensolver.cpp:424-475 (the per-mode readout loop — eigenvalue→ω un-transform + measure)
-  - palace/models/postoperator.cpp:1171-1203 (PostOperator::MeasureLumpedPortsEig — the Q-factor computation)
-lifts_to:
-  - book/src/feature/eigenfrequency-qfactor.L1.md (the L1 pure-function composition root)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: palace/drivers/eigensolver.cpp:424-475
+      kind: cites-evidence
+    - target: palace/models/postoperator.cpp:1171-1203
+      kind: cites-evidence
+  reference:
+    - feature/eigenfrequency-qfactor.L1
 ---
 
 # eigenfrequency-qfactor — L0 ground-truth surface

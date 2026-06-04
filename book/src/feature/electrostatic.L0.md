@@ -2,13 +2,18 @@
 kind: feature-surface
 feature: electrostatic
 level: L0
-status: seed
-l0_ground_truth:
-  - palace/drivers/electrostaticsolver.cpp:21-98 (ElectrostaticSolver::Solve)
-  - palace/drivers/electrostaticsolver.cpp:100-160 (ElectrostaticSolver::PostprocessTerminals)
-  - palace/drivers/electrostaticsolver.hpp:34-44 (class declaration)
-lifts_to:
-  - book/src/feature/electrostatic.L1.md (the L1 pure-function composition root)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: palace/drivers/electrostaticsolver.cpp:21-98
+      kind: cites-evidence
+    - target: palace/drivers/electrostaticsolver.cpp:100-160
+      kind: cites-evidence
+    - target: palace/drivers/electrostaticsolver.hpp:34-44
+      kind: cites-evidence
+  reference:
+    - feature/electrostatic.L1
 ---
 
 # electrostatic — L0 ground-truth surface
@@ -44,4 +49,4 @@ This L0 surface lifts to the L1 pure-function composition root [`electrostatic.L
 
 ## Status
 
-`seed` — the L0 ground-truth surface for the electrostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Every stage is a cited range into `palace/drivers/electrostaticsolver.cpp`, confirmed on-disk via palace-codemap `read_range` this dispatch. The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).
+`firm` (promoted `seed`→`firm` at cycle-095 alongside its L1/L4 levels, the `bilinear-form-firm-flip-and-cascade-wave`) — the L0 ground-truth surface for the electrostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Every stage is a cited range into `palace/drivers/electrostaticsolver.cpp`, confirmed on-disk via palace-codemap `read_range` this dispatch. The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind); as a cited ground-truth surface its rank is firm.

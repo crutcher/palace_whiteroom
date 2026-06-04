@@ -1,3 +1,13 @@
+---
+layer: L1
+operator: dot
+rank: firm
+edges:
+  reference:
+    - L1-L0/dot-mutation-rotation
+    - concepts/dot
+---
+
 # dot
 
 Mutation-free vector inner-product reduction: `α = ⟨x, y⟩`. The canonical BLAS-1 reduction primitive at L1; the workhorse of Krylov coefficient computation and orthogonalisation.

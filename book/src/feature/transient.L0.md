@@ -2,14 +2,24 @@
 kind: feature-surface
 feature: transient
 level: L0
-status: firm
-l0_ground_truth:
-  - palace/drivers/transientsolver.cpp:24-116 (TransientSolver::Solve)
-  - palace/drivers/transientsolver.cpp:118-175 (TransientSolver::GetTimeExcitation — the J(t) / dJ/dt pulse)
-  - palace/drivers/transientsolver.hpp:21-30 (class declaration)
-  - palace/models/timeoperator.cpp:65-67 (K/C/M assembled once), :311-373 (ODE operator + integrator constructed once), :407-413 (TimeOperator::Step → ode->Step)
-lifts_to:
-  - book/src/feature/transient.L1.md (the L1 pure-function composition root)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: palace/drivers/transientsolver.cpp:24-116
+      kind: cites-evidence
+    - target: palace/drivers/transientsolver.cpp:118-175
+      kind: cites-evidence
+    - target: palace/drivers/transientsolver.hpp:21-30
+      kind: cites-evidence
+    - target: palace/models/timeoperator.cpp:65-67
+      kind: cites-evidence
+    - target: palace/models/timeoperator.cpp:311-373
+      kind: cites-evidence
+    - target: palace/models/timeoperator.cpp:407-413
+      kind: cites-evidence
+  reference:
+    - feature/transient.L1
 ---
 
 # transient — L0 ground-truth surface

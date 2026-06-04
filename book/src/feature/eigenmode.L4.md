@@ -2,12 +2,18 @@
 kind: feature-surface
 feature: eigenmode
 level: L4
-status: firm
-composes:
-  - book/src/L4/fe_assemble.md (firm — assemble the K/C/M operator pencil: the assemble-fold combinator, applied three times)
-  - book/src/L4/eigsolve.md (firm — the opaque black-box eigen-solve cap: one library call, no Palace-authored loop)
-l0_ground_truth:
-  - palace/drivers/eigensolver.cpp:32-477 (EigenSolver::Solve)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L4/fe_assemble
+      kind: composes
+    - target: L4/eigsolve
+      kind: composes
+    - target: palace/drivers/eigensolver.cpp:32-477
+      kind: cites-evidence
+  reference:
+    - feature/eigenfrequency-qfactor.L4
 ---
 
 # eigenmode — L4 composition-root
@@ -67,7 +73,7 @@ Two axes shape the eigenmode composition; both are absorbed into the pencil-cons
 |---|---|---|---|
 | assemble K/C/M pencil once | [`fe_assemble`](../L4/fe_assemble.md) | firm | `eigensolver.cpp:40-42` |
 | opaque eigen-solve (once) | [`eigsolve`](../L4/eigsolve.md) | firm | `eigensolver.cpp:172-196, 367` |
-| per-mode readout (ω, Q, B=-1/(iω)∇×E) | [`eigenfrequency-qfactor`](./eigenfrequency-qfactor.L4.md) output-product column | seed (column) | `eigensolver.cpp:424-458` |
+| per-mode readout (ω, Q, B=-1/(iω)∇×E) | [`eigenfrequency-qfactor`](./eigenfrequency-qfactor.L4.md) output-product column (sibling reference) | firm | `eigensolver.cpp:424-458` |
 
 ## Status
 

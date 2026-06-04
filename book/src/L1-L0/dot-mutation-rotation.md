@@ -302,7 +302,7 @@ reduction-tree split is the load-bearing residue recorded above.
 co-defines `dot` + `tdot`); it proposes no new L1 vocabulary. The M-weighted relative
 `linalg::Dot(comm, x, A, y) = yᴴ A x` (`palace/linalg/operator.cpp:621-638`) shares the L0
 symbol via overloading but is a **different operator** with a different L1 referent
-(`bilinear-form`, rough-in) — it requires the operator-application primitive and a workspace
+(`bilinear-form`, firm cycle-095) — it requires the operator-application primitive and a workspace
 `Ax`, and is the subject of a separate forthcoming theme. It is named here only to mark the
 boundary; it is **not** part of this theme.
 

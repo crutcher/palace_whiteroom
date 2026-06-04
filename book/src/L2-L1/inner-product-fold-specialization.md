@@ -363,7 +363,7 @@ residue recorded in §"Summation-order recording".
 
 **None.** All three RHS leaves are existing vocabulary:
 [`dot`](../L1/dot.md) (firm; co-defines `dot` + `tdot`) and
-[`bilinear-form`](../L1/bilinear-form.md) (rough-in; the M-weighted member). The LHS
+[`bilinear-form`](../L1/bilinear-form.md) (firm, promoted cycle-095; the M-weighted member). The LHS
 `L2/inner_product` is firm (harvested this cycle, dispatch #1). This theme proposes no new
 operators — it is the lowering edge between existing vocabulary on both sides.
 
@@ -379,11 +379,11 @@ theme — the *dispatch structure* is firm):
   (Hermitian — CG / orthogonalization / NLEPS sites) and `bilinear-form` (Poynting +
   cross-coupling sites) arms, both exercised. Mirrors `L2/inner_product` §"tdot".
 
-- **`bilinear-form` is rough-in at L1** (narrow variant-axis coverage — its two surfaced
-  use sites are both complex-`x`-complex-`y`). The M-weighted dispatch arm does not depend
-  on its promotion: the arm's structure is firm (the composition
-  `inner_product (apply_linop M x) y` lowering to `Dot(comm, A·x, y)` is clean and
-  directly verified). The leaf's rough-in status lives at L1; it does not gate this theme.
+- **`bilinear-form` is firm at L1** (promoted cycle-095 under the firm-on-positive-structure
+  escape; its two surfaced use sites are both complex-`x`-complex-`y`). The M-weighted dispatch
+  arm was always firm independent of the leaf's promotion: the arm's structure is firm (the
+  composition `inner_product (apply_linop M x) y` lowering to `Dot(comm, A·x, y)` is clean and
+  directly verified). The leaf is now firm at L1, strengthening — not gating — this theme.
 
 ## Verified-against
 
@@ -448,13 +448,13 @@ L2 / L1 anchors:
 - `book/src/L1/dot.md` — the firm Hermitian / unconjugated leaf (RHS): `dot` (`:33-34`),
   `tdot` (`:35`), the arg-1-conjugated L1 convention (`:43-44`), the self-dot trick
   (`:49`).
-- `book/src/L1/bilinear-form.md` — the rough-in M-weighted leaf (RHS): `xᴴ M y` (`:63`),
+- `book/src/L1/bilinear-form.md` — the firm M-weighted leaf (RHS): `xᴴ M y` (`:63`),
   the conjugation-asymmetry reconciliation (`:119-145`), the workspace `Ax` (`:39-43`).
 
 ## Status
 
 `firm` — the L2 LHS is firm (harvested this cycle, dispatch #1), the L1 RHS leaves are
-existing vocabulary (`dot`/`tdot` firm; `bilinear-form` rough-in but its M-weighted-member
+existing vocabulary (`dot`/`tdot` firm; `bilinear-form` firm (cycle-095) and its M-weighted-member
 dispatch arm is firm), and the dispatch rule IS the L2 entry's already-firm laws (law 7
 weight specialization + the conjugation/element-type kernel keys) read as a lowering. The
 **conjugate-pair re-order** (`xᴴ y = conj(yᴴ x)`) and the per-call reduction trees are read

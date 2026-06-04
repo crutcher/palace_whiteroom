@@ -2,14 +2,23 @@
 kind: feature-surface
 feature: lifecycle
 level: L4
-status: firm
-composes:
-  - book/src/feature/electrostatic.L4.md (seed — the ELECTROSTATIC ProblemType specialization)
-  - book/src/feature/magnetostatic.L4.md (seed — the MAGNETOSTATIC ProblemType specialization)
-  - book/src/L4/fold_solve.md (firm — the state-generated adaptive estimate-mark-refine outer fold)
-l0_ground_truth:
-  - palace/main.cpp:158-328 (main — the top-level lifecycle)
-  - palace/drivers/basesolver.cpp:153-276 (BaseSolver::SolveEstimateMarkRefine)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L4/fold_solve
+      kind: composes
+    - target: palace/main.cpp:158-328
+      kind: cites-evidence
+    - target: palace/drivers/basesolver.cpp:153-276
+      kind: cites-evidence
+  reference:
+    - feature/electrostatic.L4
+    - feature/magnetostatic.L4
+    - feature/eigenmode.L4
+    - feature/driven.L4
+    - feature/transient.L4
+    - feature/boundary-mode.L4
 ---
 
 # lifecycle — L4 composition-root
@@ -54,9 +63,9 @@ The whole run therefore lowers cleanly outward to the L4 backend surface as `lif
 | Stage | L4 constituent | Status | L0 site |
 |---|---|---|---|
 | build mesh | driver-agnostic mesh scaffold (`mesh::Load`/`Partition`/`RefineMesh`) | — (L0 scaffold) | `palace/main.cpp:287-302` |
-| dispatch → electrostatic column | [`electrostatic.L4`](./electrostatic.L4.md) | seed | `palace/main.cpp:267` |
-| dispatch → magnetostatic column | [`magnetostatic.L4`](./magnetostatic.L4.md) | seed | `palace/main.cpp:270` |
-| dispatch → eigenmode / driven / transient columns | [eigenmode.L4](./eigenmode.L4.md) / [driven.L4](./driven.L4.md) / [transient.L4](./transient.L4.md) | on disk | `palace/main.cpp:264, 261, 273` |
+| dispatch → electrostatic column | [`electrostatic.L4`](./electrostatic.L4.md) (sibling reference) | firm | `palace/main.cpp:267` |
+| dispatch → magnetostatic column | [`magnetostatic.L4`](./magnetostatic.L4.md) (sibling reference) | firm | `palace/main.cpp:270` |
+| dispatch → eigenmode / driven / transient / boundary-mode columns | [eigenmode.L4](./eigenmode.L4.md) / [driven.L4](./driven.L4.md) / [transient.L4](./transient.L4.md) / [boundary-mode.L4](./boundary-mode.L4.md) (sibling references) | firm / firm / firm / rough-in | `palace/main.cpp:264, 261, 273, 276` |
 | adaptive estimate-mark-refine fold | [`fold_solve`](../L4/fold_solve.md) (state-generated `schedule-source`) | firm | `palace/drivers/basesolver.cpp:153-276` |
 
 ## Status

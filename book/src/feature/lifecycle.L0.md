@@ -2,16 +2,20 @@
 kind: feature-surface
 feature: lifecycle
 level: L0
-status: firm
-l0_ground_truth:
-  - palace/main.cpp:158-328 (main — the top-level lifecycle: parse, configure, dispatch driver, build mesh, run, finalize)
-  - palace/drivers/basesolver.cpp:153-276 (BaseSolver::SolveEstimateMarkRefine — the solve-estimate-mark-refine adaptive outer loop)
-  - palace/drivers/basesolver.hpp:31-67 (class BaseSolver — the pure-virtual driver dispatch + the AMR wrapper)
-lifts_to:
-  - book/src/feature/lifecycle.L1.md (the L1 pure-function lifecycle root)
-specializes_to:
-  - book/src/feature/electrostatic.L0.md (the electrostatic driver — one ProblemType specialization)
-  - book/src/feature/magnetostatic.L0.md (the magnetostatic driver — one ProblemType specialization)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: palace/main.cpp:158-328
+      kind: cites-evidence
+    - target: palace/drivers/basesolver.cpp:153-276
+      kind: cites-evidence
+    - target: palace/drivers/basesolver.hpp:31-67
+      kind: cites-evidence
+  reference:
+    - feature/lifecycle.L1
+    - feature/electrostatic.L0
+    - feature/magnetostatic.L0
 ---
 
 # lifecycle — L0 ground-truth surface

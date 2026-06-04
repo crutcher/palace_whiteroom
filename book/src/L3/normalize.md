@@ -1,11 +1,15 @@
 ---
 layer: L3
 operator: normalize
-firmness: firm
-lowers_to:
-  - book/src/L2/normalize.md (present adjacent L2 floor, cycle-043 D10; identity-in-form on the operator's signature — degenerate identity-in-named-terms, recorded as an in-line §"Downward to L2" note rather than a dedicated theme; fused composite, fork-INDEPENDENT, no fold-parent) → book/src/L1/normalize.md (transitive L3>L1 identity in-line, L3>L2 ∘ L2>L1)
-lifts_from:
-  - book/src/L1/normalize.md (value-thread-isomorphic; same signature shape; fused nrm2+scal composite, whole-tensor by construction — no L4 entry, fused leaf composite)
+rank: firm
+edges:
+  depends-on:
+    - L3/nrm2
+    - L3/scal
+  reference:
+    - L2/normalize
+    - L1/normalize
+    - L1/orthogonalize
 variant_axes:
   - element-type (real | complex; collapsed to a single parameterised operator — norm output always real)
 ---

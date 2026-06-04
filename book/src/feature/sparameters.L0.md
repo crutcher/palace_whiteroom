@@ -2,15 +2,22 @@
 kind: feature-surface
 feature: sparameters
 level: L0
-status: firm
-l0_ground_truth:
-  - palace/models/postoperator.cpp:1246-1307 (PostOperator::MeasureSParameter — the S-matrix post-process)
-  - palace/models/postoperator.cpp:1141 (the lumped per-port S projection: vi.S = data.GetSParameter(*E), in MeasureLumpedPorts)
-  - palace/models/postoperator.cpp:1239 (the wave per-port S projection: vi.S = data.GetSParameter(*E), in MeasureWavePorts)
-  - palace/models/lumpedportoperator.cpp:283-294 (LumpedPortData::GetSParameter — lumped port-mode projection)
-  - palace/models/waveportoperator.cpp:780-793 (WavePortData::GetSParameter — wave port-mode projection)
-lifts_to:
-  - book/src/feature/sparameters.L1.md (the L1 pure-function composition root)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: palace/models/postoperator.cpp:1246-1307
+      kind: cites-evidence
+    - target: palace/models/postoperator.cpp:1141
+      kind: cites-evidence
+    - target: palace/models/postoperator.cpp:1239
+      kind: cites-evidence
+    - target: palace/models/lumpedportoperator.cpp:283-294
+      kind: cites-evidence
+    - target: palace/models/waveportoperator.cpp:780-793
+      kind: cites-evidence
+  reference:
+    - feature/sparameters.L1
 ---
 
 # sparameters — L0 ground-truth surface

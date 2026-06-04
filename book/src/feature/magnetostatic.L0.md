@@ -2,13 +2,18 @@
 kind: feature-surface
 feature: magnetostatic
 level: L0
-status: seed
-l0_ground_truth:
-  - palace/drivers/magnetostaticsolver.cpp:22-108 (MagnetostaticSolver::Solve)
-  - palace/drivers/magnetostaticsolver.cpp:110-204 (MagnetostaticSolver::PostprocessTerminals)
-  - palace/drivers/magnetostaticsolver.hpp:24-39 (class declaration)
-lifts_to:
-  - book/src/feature/magnetostatic.L1.md (the L1 pure-function composition root)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: palace/drivers/magnetostaticsolver.cpp:22-108
+      kind: cites-evidence
+    - target: palace/drivers/magnetostaticsolver.cpp:110-204
+      kind: cites-evidence
+    - target: palace/drivers/magnetostaticsolver.hpp:24-39
+      kind: cites-evidence
+  reference:
+    - feature/magnetostatic.L1
 ---
 
 # magnetostatic — L0 ground-truth surface
@@ -44,4 +49,4 @@ This L0 surface lifts to the L1 pure-function composition root [`magnetostatic.L
 
 ## Status
 
-`seed` — the L0 ground-truth surface for the magnetostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the [electrostatic.L0](./electrostatic.L0.md) exemplar. Every stage is a cited range into `palace/drivers/magnetostaticsolver.cpp`, confirmed on-disk via palace-codemap `read_range` this dispatch. The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).
+`firm` (promoted `seed`→`firm` at cycle-095 alongside its L1/L4 levels, the `bilinear-form-firm-flip-and-cascade-wave`) — the L0 ground-truth surface for the magnetostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the [electrostatic.L0](./electrostatic.L0.md) exemplar. Every stage is a cited range into `palace/drivers/magnetostaticsolver.cpp`, confirmed on-disk via palace-codemap `read_range` this dispatch. The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind); as a cited ground-truth surface its rank is firm.

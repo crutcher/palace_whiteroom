@@ -2,12 +2,18 @@
 kind: feature-surface
 feature: boundary-mode
 level: L1
-status: seed
-composes:
-  - book/src/L1/fe_assemble.md (firm — assemble the 2D-submesh GEP block operators)
-  - book/src/L1/eigsolve.md (firm — the eigensolver-as-operator collapse: one opaque solve → EigResult — the SAME corner as eigenmode)
-l0_ground_truth:
-  - palace/drivers/boundarymodesolver.cpp:201-341 (BoundaryModeSolver::Solve)
+feature_root: seed
+rank: rough-in
+edges:
+  depends-on:
+    - target: L1/fe_assemble
+      kind: composes
+    - target: L1/eigsolve
+      kind: composes
+    - target: palace/drivers/boundarymodesolver.cpp:201-341
+      kind: cites-evidence
+  reference:
+    - feature/eigenmode.L1
 ---
 
 # boundary-mode — L1 composition-root

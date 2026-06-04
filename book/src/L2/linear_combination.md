@@ -1,3 +1,19 @@
+---
+layer: L2
+operator: linear_combination
+rank: firm
+edges:
+  depends-on:
+    - L1/scal
+    - L1/axpy
+    - L1/axpby
+    - L1/axpbypcz
+  reference:
+    - concepts/scalar-promotion
+    - L2/inner_product
+    - L2-L1/linear-combination-fold-specialization
+---
+
 # linear_combination
 
 The arity-family unification of the BLAS-1 scalar-weighted-vector-sum cohort:

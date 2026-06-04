@@ -1,3 +1,13 @@
+---
+layer: L1
+operator: scal
+rank: firm
+edges:
+  reference:
+    - L1/axpby
+    - L1-L0/scal-mutation-rotation
+---
+
 # scal
 
 Mutation-lifted vector-scalar multiplication: `x_new = α · x_old`. The BLAS-1 `dscal` / `zscal` primitive at L1, and the last of the four core BLAS-1 floor primitives (`axpy`, `dot`, `nrm2`, `scal`).

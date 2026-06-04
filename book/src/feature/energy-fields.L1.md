@@ -2,14 +2,20 @@
 kind: feature-surface
 feature: energy-fields
 level: L1
-status: firm
-composes:
-  - book/src/feature/electrostatic.L1.md (seed — a producing driver column: supplies the solution field the energy table reduces)
-  - book/src/L1/participation_ratio.md (firm — the energy_i/E_total per-domain ratio)
-  - book/src/L1/matrix-weighted-norm.md (firm c091 — the ½⟨field,M_i field⟩ per-domain energy form; promoted to firm by the batch-29 firm-flip-and-cascade wave)
-l0_ground_truth:
-  - palace/models/postoperator.cpp:1021-1077 (PostOperator::MeasureDomainFieldEnergy — the per-domain energy + participation table)
-  - palace/models/domainpostoperator.cpp:255-298 (GetDomainElectricFieldEnergy / GetDomainMagneticFieldEnergy — the ½⟨field,M_i field⟩ energy form)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L1/participation_ratio
+      kind: folds
+    - target: L1/matrix-weighted-norm
+      kind: folds
+    - target: palace/models/postoperator.cpp:1021-1077
+      kind: cites-evidence
+    - target: palace/models/domainpostoperator.cpp:255-298
+      kind: cites-evidence
+  reference:
+    - feature/electrostatic.L1
 ---
 
 # energy-fields — L1 composition-root (output product)
@@ -40,7 +46,7 @@ lifted to a value-returning per-domain map per the L1>L0 mutation rotation).
           | idx <- domain_indices doms ]                                                      -- map over configured domains (no inter-domain state)
 
 1. **A field-bearing driver column supplies the solution field** —
-   [`electrostatic.L1`](./electrostatic.L1.md) (**seed**, the potential `V` → `E`), or any driver
+   [`electrostatic.L1`](./electrostatic.L1.md) (**firm**, the potential `V` → `E`), or any driver
    yielding a field grid function. This output-product column **consumes** the field; it does not
    re-derive the solve. The reduction is driver-agnostic (the SAME per-domain readout regardless of
    producer). L0: the field selection `auto &field = V ? *V : *E` (`postoperator.cpp:1032`) for the
@@ -104,7 +110,7 @@ composition (high→low discipline).
 
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
-| producing field (field-bearing driver) | [`electrostatic.L1`](./electrostatic.L1.md) (driver feature column) | seed | `postoperator.cpp:1032, 1057` |
+| producing field (field-bearing driver) | [`electrostatic.L1`](./electrostatic.L1.md) (driver feature column) | firm | `postoperator.cpp:1032, 1057` |
 | per-domain energy form | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared (domain-restricted `M_i`) | firm c091 | `domainpostoperator.cpp:255-275, 277-298` |
 | participation ratio | [`participation_ratio`](../L1/participation_ratio.md) | firm | `postoperator.cpp:1039, 1064` |
 

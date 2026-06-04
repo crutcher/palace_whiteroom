@@ -1,3 +1,14 @@
+---
+layer: L1
+operator: nrm2
+rank: firm
+edges:
+  depends-on:
+    - L1/dot
+  reference:
+    - L1-L0/nrm2-mutation-rotation
+---
+
 # nrm2
 
 Mutation-free vector Euclidean-norm reduction: `α = ‖x‖₂ = √⟨x, x⟩`. The canonical BLAS-1 norm primitive at L1; the workhorse of residual-norm convergence tests, basis-vector normalisation, and Arnoldi sub-diagonal coefficients.

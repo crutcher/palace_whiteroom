@@ -2,12 +2,16 @@
 kind: feature-surface
 feature: energy-fields
 level: L0
-status: firm
-l0_ground_truth:
-  - palace/models/postoperator.cpp:1021-1077 (PostOperator::MeasureDomainFieldEnergy — the per-domain energy + participation table)
-  - palace/models/domainpostoperator.cpp:255-298 (GetDomainElectricFieldEnergy / GetDomainMagneticFieldEnergy — the ½⟨field,M_i field⟩ energy form)
-lifts_to:
-  - book/src/feature/energy-fields.L1.md (the L1 pure-function composition root)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: palace/models/postoperator.cpp:1021-1077
+      kind: cites-evidence
+    - target: palace/models/domainpostoperator.cpp:255-298
+      kind: cites-evidence
+  reference:
+    - feature/energy-fields.L1
 ---
 
 # energy-fields — L0 ground-truth surface

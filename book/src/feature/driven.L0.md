@@ -2,14 +2,20 @@
 kind: feature-surface
 feature: driven
 level: L0
-status: firm
-l0_ground_truth:
-  - palace/drivers/drivensolver.cpp:37-75 (DrivenSolver::Solve — dispatch to SweepUniform/SweepAdaptive)
-  - palace/drivers/drivensolver.cpp:77-229 (DrivenSolver::SweepUniform — the uniform frequency sweep)
-  - palace/drivers/drivensolver.cpp:231 (DrivenSolver::SweepAdaptive — the adaptive PROM sweep, the fold sibling)
-  - palace/drivers/drivensolver.hpp:22-34 (class declaration)
-lifts_to:
-  - book/src/feature/driven.L1.md (the L1 pure-function composition root)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: palace/drivers/drivensolver.cpp:37-75
+      kind: cites-evidence
+    - target: palace/drivers/drivensolver.cpp:77-229
+      kind: cites-evidence
+    - target: palace/drivers/drivensolver.cpp:231
+      kind: cites-evidence
+    - target: palace/drivers/drivensolver.hpp:22-34
+      kind: cites-evidence
+  reference:
+    - feature/driven.L1
 ---
 
 # driven — L0 ground-truth surface

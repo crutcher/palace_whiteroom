@@ -2,15 +2,22 @@
 kind: feature-surface
 feature: energy-fields
 level: L4
-status: firm
-composes:
-  - book/src/feature/electrostatic.L4.md (seed — a producing driver column: supplies the field family the energy table reduces; any field-bearing driver feeds it)
-  - book/src/L4/domain_energy_reduce.md (firm c091 — the per-domain energy-table reduction verb, minted cycle-078; promoted rough-in→firm by the batch-29 firm-flip-and-cascade wave once both its folded primitives firmed)
-  - book/src/L1/participation_ratio.md (firm — the energy_i/E_total per-domain ratio the reduction folds)
-  - book/src/L1/matrix-weighted-norm.md (firm c091 — the ½⟨field,M_i field⟩ per-domain energy form, squared radicand restricted to one domain attribute; promoted to firm by the batch-29 firm-flip-and-cascade wave on the firm-on-positive-structure escape)
-l0_ground_truth:
-  - palace/models/postoperator.cpp:1021-1077 (PostOperator::MeasureDomainFieldEnergy — the per-domain energy + participation table)
-  - palace/models/domainpostoperator.cpp:255-298 (GetDomainElectricFieldEnergy / GetDomainMagneticFieldEnergy — the ½⟨field,M_i field⟩ energy form)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L4/domain_energy_reduce
+      kind: folds
+    - target: L1/participation_ratio
+      kind: folds
+    - target: L1/matrix-weighted-norm
+      kind: folds
+    - target: palace/models/postoperator.cpp:1021-1077
+      kind: cites-evidence
+    - target: palace/models/domainpostoperator.cpp:255-298
+      kind: cites-evidence
+  reference:
+    - feature/electrostatic.L4
 ---
 
 # energy-fields — L4 composition-root (output product)
@@ -157,7 +164,7 @@ at), and a sibling reference never gated the promotion.
 
 | Stage | L4 constituent | Status | L0 site |
 |---|---|---|---|
-| producing field (any field-bearing driver) | [`electrostatic.L4`](./electrostatic.L4.md) / [`magnetostatic.L4`](./magnetostatic.L4.md) / … | seed | `postoperator.cpp:1032, 1057` |
+| producing field (any field-bearing driver) | [`electrostatic.L4`](./electrostatic.L4.md) / [`magnetostatic.L4`](./magnetostatic.L4.md) / … | firm | `postoperator.cpp:1032, 1057` |
 | per-domain energy-table reduction | [`domain_energy_reduce`](../L4/domain_energy_reduce.md) *(firm c091)* | firm | `postoperator.cpp:1036-1042, 1061-1066` |
 | per-domain energy form (folded) | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared (domain-restricted `M_i`) | firm c091 | `domainpostoperator.cpp:255-275, 277-298` |
 | participation ratio (folded) | [`participation_ratio`](../L1/participation_ratio.md) | firm | `postoperator.cpp:1039, 1064` |

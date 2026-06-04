@@ -2,13 +2,20 @@
 kind: feature-surface
 feature: driven
 level: L1
-status: firm
-composes:
-  - book/src/L1/fe_assemble.md (firm — assemble the fixed operator basis {K, C, M} once)
-  - book/src/L1/assemble_frequency_operator.md (firm — the per-ω operator rebuild A(ω) = K + iωC − ω²M + A2(ω))
-  - book/src/L1/ksp_solve.md (firm — per-ω solve)
-l0_ground_truth:
-  - palace/drivers/drivensolver.cpp:77-229 (DrivenSolver::SweepUniform)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L1/fe_assemble
+      kind: composes
+    - target: L1/assemble_frequency_operator
+      kind: composes
+    - target: L1/ksp_solve
+      kind: composes
+    - target: palace/drivers/drivensolver.cpp:77-229
+      kind: cites-evidence
+  reference:
+    - feature/sparameters.L1
 ---
 
 # driven — L1 composition-root
@@ -140,9 +147,9 @@ corner. **Promoted `seed → firm` cycle-085** under the OWN-COMPOSITION promoti
 are firm; cross-linked sibling columns are references, NOT blockers). All three
 directly-composed L1 operators are firm ([`fe_assemble`](../L1/fe_assemble.md),
 [`assemble_frequency_operator`](../L1/assemble_frequency_operator.md),
-[`ksp_solve`](../L1/ksp_solve.md)) — the driven L1 vocabulary is fully firm, unlike
-the fixed-operator columns whose stage-3 inductance/capacitance bilinear-form
-primitives are rough-in. The stage-3 S-parameter reduction is the driven
+[`ksp_solve`](../L1/ksp_solve.md)) — the driven L1 vocabulary is fully firm (as are
+the fixed-operator columns' stage-3 inductance/capacitance bilinear-form primitives,
+firm since c091/c095). The stage-3 S-parameter reduction is the driven
 output-product surface, presented as its own [`sparameters`](./sparameters.L1.md)
 column — a **sibling cross-link (a reference)**, NOT a directly-owned constituent, so
 it does not gate promotion (the `sparameters` column promotes independently on its own

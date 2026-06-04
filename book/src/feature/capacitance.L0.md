@@ -2,13 +2,18 @@
 kind: feature-surface
 feature: capacitance
 level: L0
-status: seed
-l0_ground_truth:
-  - palace/drivers/electrostaticsolver.cpp:100-140 (ElectrostaticSolver::PostprocessTerminals — the capacitance reduction)
-  - palace/drivers/electrostaticsolver.cpp:95 (the PostprocessTerminals call site, after the terminal loop)
-  - palace/drivers/electrostaticsolver.hpp:34-44 (class declaration)
-lifts_to:
-  - book/src/feature/capacitance.L1.md (the L1 pure-function composition root)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: palace/drivers/electrostaticsolver.cpp:100-140
+      kind: cites-evidence
+    - target: palace/drivers/electrostaticsolver.cpp:95
+      kind: cites-evidence
+    - target: palace/drivers/electrostaticsolver.hpp:34-44
+      kind: cites-evidence
+  reference:
+    - feature/capacitance.L1
 ---
 
 # capacitance — L0 ground-truth surface
@@ -27,7 +32,7 @@ The capacitance reduction is a symmetric-Gram fold over the solution family, mir
 
 3. **Diagonal — the operator-weighted self-energy.** For each `i` (`:112`), the diagonal entry is `Cᵢᵢ = Vᵢᵀ K Vᵢ` via `post_op.GetDomainPostOp().M_elec->Mult(V_gf, D_gf)` (`:118`, the `K·Vᵢ` apply on the energy operator `M_elec`) then `C(i,i) = Cm(i,i) = linalg::Dot<Vector>(post_op.GetComm(), V_gf, D_gf)` (`:119`, the `Vᵢ·(K Vᵢ)` reduction). With unit-voltage excitation (`∀i, Vᵢ = 1`) the `/Vᵢ²` normalization is the identity — the `w = 1` weight. This is the L0 site the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (and the L4 [`gram_reduce`](../L4/gram_reduce.md) diagonal entry) lift.
 
-4. **Off-diagonal — the operator-weighted cross-pairing.** The inner loop `for (int j = i + 1; j < C.Width(); j++)` (`:123`) computes the upper-triangle off-diagonals `Cᵢⱼ = Vⱼᵀ K Vᵢ` via `V_gf.SetFromTrueDofs(V[j])` (`:125`) then `C(i,j) = linalg::Dot<Vector>(post_op.GetComm(), V_gf, D_gf)` (`:126`, the same energy-form pairing with the `j` grid function reusing the `D_gf = K·Vᵢ` apply). This is the L0 site the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) (and the L4 [`gram_reduce`](../L4/gram_reduce.md) off-diagonal entry) lift.
+4. **Off-diagonal — the operator-weighted cross-pairing.** The inner loop `for (int j = i + 1; j < C.Width(); j++)` (`:123`) computes the upper-triangle off-diagonals `Cᵢⱼ = Vⱼᵀ K Vᵢ` via `V_gf.SetFromTrueDofs(V[j])` (`:125`) then `C(i,j) = linalg::Dot<Vector>(post_op.GetComm(), V_gf, D_gf)` (`:126`, the same energy-form pairing with the `j` grid function reusing the `D_gf = K·Vᵢ` apply). This is the L0 site the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) (firm c095) (and the L4 [`gram_reduce`](../L4/gram_reduce.md) off-diagonal entry) lift.
 
 5. **Symmetric mirror + inverse → the physical product.** The lower-triangle copy `for (int j = 0; j < i; j++) C(i,j) = C(j,i)` (`:132-134`) mirrors the upper triangle (the L4 `symmetric_from_upper`). After the loops, `mfem::DenseMatrix Cinv(C); Cinv.Invert()` (`:139-140`, in-place LAPACK) produces the alternate Maxwell form. These are the L0 sites the symmetric-Gram mirror + the `gram_inverse` consumer lift.
 
@@ -42,4 +47,4 @@ This L0 surface lifts to the L1 pure-function composition root [`capacitance.L1`
 
 ## Status
 
-`seed` — the L0 ground-truth surface for the capacitance output product (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Every stage is a cited range into `palace/drivers/electrostaticsolver.cpp`, confirmed on-disk via palace-codemap `read_range` this dispatch (`:95` call site, `:100` def, `:111` allocation, `:118-119` diagonal, `:124-126` off-diagonal, `:130-135` mirror, `:139-140` inverse). The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind).
+`firm` (promoted `seed`→`firm` at cycle-095 alongside its L1/L4 levels, the `bilinear-form-firm-flip-and-cascade-wave`) — the L0 ground-truth surface for the capacitance output product (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive (2026-06-02). Every stage is a cited range into `palace/drivers/electrostaticsolver.cpp`, confirmed on-disk via palace-codemap `read_range` this dispatch (`:95` call site, `:100` def, `:111` allocation, `:118-119` diagonal, `:124-126` off-diagonal, `:130-135` mirror, `:139-140` inverse). The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind); as a cited ground-truth surface its rank is firm.

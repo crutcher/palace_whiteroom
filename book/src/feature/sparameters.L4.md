@@ -2,14 +2,20 @@
 kind: feature-surface
 feature: sparameters
 level: L4
-status: firm
-composes:
-  - book/src/feature/driven.L4.md (the producing driver column — supplies the per-ω solution family [Eᵢ])
-  - book/src/L4/sparameter_reduce.md (firm as of cycle-083 — the port-projection reduction; projects each per-ω field onto the port modes → the scattering matrix S)
-l0_ground_truth:
-  - palace/models/postoperator.cpp:1246-1307 (PostOperator::MeasureSParameter — the S-matrix post-process)
-  - palace/models/lumpedportoperator.cpp:283-294 (LumpedPortData::GetSParameter — lumped port-mode projection)
-  - palace/models/waveportoperator.cpp:780-793 (WavePortData::GetSParameter — wave port-mode projection)
+feature_root: seed
+rank: firm
+edges:
+  depends-on:
+    - target: L4/sparameter_reduce
+      kind: folds
+    - target: palace/models/postoperator.cpp:1246-1307
+      kind: cites-evidence
+    - target: palace/models/lumpedportoperator.cpp:283-294
+      kind: cites-evidence
+    - target: palace/models/waveportoperator.cpp:780-793
+      kind: cites-evidence
+  reference:
+    - feature/driven.L4
 ---
 
 # sparameters — L4 composition-root
@@ -57,11 +63,11 @@ The whole output product therefore lowers cleanly outward to the L4 backend surf
 
 | Stage | L4 constituent | Status | L0 site |
 |---|---|---|---|
-| producing driver column (sibling reference, not a blocker) | [`driven.L4`](./driven.L4.md) (driver feature column) | seed | `drivensolver.cpp:37-229` |
+| producing driver column (sibling reference, not a blocker) | [`driven.L4`](./driven.L4.md) (driver feature column) | firm | `drivensolver.cpp:37-229` |
 | port-projection reduction | [`sparameter_reduce`](../L4/sparameter_reduce.md) | firm (c083) | `postoperator.cpp:1246-1307` |
 | lumped port-mode projection | `lumpedportoperator.cpp:283-294` (`GetSParameter`) | (L0 site) | `postoperator.cpp:1141` |
 | wave port-mode projection | `waveportoperator.cpp:780-793` (`GetSParameter`) | (L0 site) | `postoperator.cpp:1239` |
 
 ## Status
 
-`firm` — an output-product **leaf feature column** authored under the FEATURE-SURFACE SPINE directive (2026-06-02). The composition is sound: stage (1) consumes the [`driven.L4`](./driven.L4.md) driver column's per-ω solution family; stage (2) composes the [`sparameter_reduce`](../L4/sparameter_reduce.md) *(firm, c083)* port-projection reduction (the port-projection sibling of the c074 energy-Gram reductions, NOT a `gram_reduce` weight specialization). **The column promotes off `seed` to `firm` under the OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03; codified batch-26 meta-phase; memory `project_feature_column_promotion_rule`):** a column promotes when its OWN composition + directly-owned constituents are firm. This column's sole directly-owned constituent — [`sparameter_reduce`](../L4/sparameter_reduce.md) — is `firm` (c083 lowering-verifier firm-on-positive-structure promotion). The batch-26 meta-phase the c083 prose deferred to has now fired and enacted the OWN-COMPOSITION rule, so the earlier "held pending the batch-26 meta-phase" clause is retired; the cross-link to the [`driven.L4`](./driven.L4.md) driver column (its own `status: seed`) is a **SIBLING reference, NOT a blocker** — the reciprocal drift-guard, not a constituent-firmness dependency. This chapter carries the *compositional* claim (S-parameters = the port-projection reduction over the driven driver's per-ω solution family), not the constituents' per-op algebraic claims (those live in `sparameter_reduce` and the L0 projection sites). Evidence: the L0 reduction range `postoperator.cpp:1246-1307` (`MeasureSParameter`) + the port-projection verbs (`lumpedportoperator.cpp:283-294`, `waveportoperator.cpp:780-793`), all self-verified on-disk via palace-codemap this dispatch, plus the constituent down-links.
+`firm` — an output-product **leaf feature column** authored under the FEATURE-SURFACE SPINE directive (2026-06-02). The composition is sound: stage (1) consumes the [`driven.L4`](./driven.L4.md) driver column's per-ω solution family; stage (2) composes the [`sparameter_reduce`](../L4/sparameter_reduce.md) *(firm, c083)* port-projection reduction (the port-projection sibling of the c074 energy-Gram reductions, NOT a `gram_reduce` weight specialization). **The column promotes off `seed` to `firm` under the OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03; codified batch-26 meta-phase; memory `project_feature_column_promotion_rule`):** a column promotes when its OWN composition + directly-owned constituents are firm. This column's sole directly-owned constituent — [`sparameter_reduce`](../L4/sparameter_reduce.md) — is `firm` (c083 lowering-verifier firm-on-positive-structure promotion). The batch-26 meta-phase the c083 prose deferred to has now fired and enacted the OWN-COMPOSITION rule, so the earlier "held pending the batch-26 meta-phase" clause is retired; the cross-link to the [`driven.L4`](./driven.L4.md) driver column (which is itself `firm`; its `feature_root: seed` is the permanent root marker, not a maturity, under the scheme §3 split) is a **SIBLING reference, NOT a blocker** — the reciprocal drift-guard, not a constituent-firmness dependency. This chapter carries the *compositional* claim (S-parameters = the port-projection reduction over the driven driver's per-ω solution family), not the constituents' per-op algebraic claims (those live in `sparameter_reduce` and the L0 projection sites). Evidence: the L0 reduction range `postoperator.cpp:1246-1307` (`MeasureSParameter`) + the port-projection verbs (`lumpedportoperator.cpp:283-294`, `waveportoperator.cpp:780-793`), all self-verified on-disk via palace-codemap this dispatch, plus the constituent down-links.
