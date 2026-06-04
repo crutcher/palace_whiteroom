@@ -23,7 +23,7 @@ the outer `std::sqrt`, and the **`MFEM_ASSERT(dot > 0.0)` SPD run-time guard** (
 
 The pure-functional energy norm consumes a read-only vector and a read-only SPD operator and
 produces a fresh non-negative real scalar; nothing is mutated, and there is no workspace in the
-signature. The LHS shape (rough-in; see [`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md)):
+signature. The LHS shape (firm; see [`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md)):
 
     alpha = matrix_weighted_norm(x, B)     -- alpha = √(xᴴ B x), always real, non-negative
                                            -- (real x:    √(xᵀ B x) = √Σ x[i]·(B·x)[i])
@@ -409,8 +409,8 @@ cohort, all anchors land on the asserted lines):
 
 L1 / cross-theme anchors:
 
-- `book/src/L1/matrix-weighted-norm.md` — the L1 operator this theme lowers (rough-in,
-  test-coverage-bounded): closed form `√(xᴴ B x)` (`:18-19`), law 8 self-bilinear identity (`:58`),
+- `book/src/L1/matrix-weighted-norm.md` — the L1 operator this theme lowers (firm, promoted
+  cycle-091): closed form `√(xᴴ B x)` (`:18-19`), law 8 self-bilinear identity (`:58`),
   SPD applicability conditions (`:72-79`), the workspace-ownership deferral (`:11`, `:99`,
   `:122`), the real-`B`-on-complex-`x` variant-gate question (`:106`).
 - `book/src/L1-L0/apply-linop-mutation-rotation.md` — Sub-pattern A (bare `B.Mult(x, Bx)` forward
@@ -444,13 +444,15 @@ non-syntactic ingredient — `xᴴ B x ∈ ℝ_{≥0}` for SPD `B` — is positi
 source's own comment (`:612`) and assertion (`:616-617`); **no negative-anchor reconstruction, no
 literature inference, no speculative operator** — so `firm` rather than `partly-constructive`.
 
-**Note on the upstream L1 gate.** The L1 operator [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
-is `rough-in (test-coverage-bounded)` (its algebraic-law confidence is test-gated). A firm lowering
-of a rough-in L1 operator is consistent: the lowering's structural fidelity (does the L1 form
-expand into this L0 source?) is independent of the L1 law-confidence gate (are the L1 laws
-test-confirmed?). Precedent: [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md) is firm
-over the rough-in `L1/eigsolve`. Promoting the L1 operator to firm (its own gate) does not change
-this theme's status; it would only strengthen the LHS the theme already lowers.
+**Note on the upstream L1 gate (now discharged).** The L1 operator [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
+promoted to `firm` at cycle-091 (both norm-axiom law-sides discharged c088/c089 under the
+firm-on-positive-structure escape). This theme was already `firm` while the L1 operator was still
+rough-in — a firm lowering of a rough-in L1 operator is consistent, since the lowering's structural
+fidelity (does the L1 form expand into this L0 source?) is independent of the L1 law-confidence gate
+(are the L1 laws test-confirmed?). The L1 promotion did not change this theme's status; it only
+strengthened the LHS the theme already lowers. The standing precedent for the firm-theme-over-
+rough-in-L1 pattern is now [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md), firm
+over the still-rough-in `L1/eigsolve`.
 
 A `lowering-verifier` audit attaching the `verified_against:` block (per the sibling-theme
 convention) confirming the surface-form recognition is exhaustive (no un-cited `Norml2` overload,

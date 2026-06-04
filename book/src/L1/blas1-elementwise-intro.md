@@ -4,6 +4,6 @@ The element-local and reduction primitives of L1: pure-functional lifts of Palac
 
 Subsumption is captured as algebraic law, not dep-map edge: `axpy ≺ axpby ≺ axpbypcz`, `scal = axpby(β=0)`, and `scal(α,x) = elementwise_product(broadcast(α,N), x)` — the subsumed and subsuming operators stay as siblings in the table.
 
-The two matrix-weighted reductions (`matrix-weighted-norm` `‖x‖_B = √(xᴴBx)`, `bilinear-form` `xᴴMy`) are the `M`-weighted generalisations of `nrm2` / `dot`; both are `rough-in (test-coverage-bounded)` pending dedicated coverage of the `linalg::` weighted overloads.
+The two matrix-weighted reductions (`matrix-weighted-norm` `‖x‖_B = √(xᴴBx)`, `bilinear-form` `xᴴMy`) are the `M`-weighted generalisations of `nrm2` / `dot`. `matrix-weighted-norm` is `firm` (promoted cycle-091 under the firm-on-positive-structure escape — both norm-axiom law-sides discharged c088/c089); `bilinear-form` remains `rough-in (test-coverage-bounded)` pending dedicated coverage of its `linalg::` weighted overload.
 
 Chapters are listed alphabetically.

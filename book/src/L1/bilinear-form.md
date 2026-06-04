@@ -250,7 +250,9 @@ is the operator-applied intermediate `Ax`.
 
 Future `nrm2_B`-weighted operator (cycle-010 wave-1 sibling dispatch #5,
 addressing cycle-008 OQ `nrm2-B-weighted-energy-norm-harvest` and the
-sibling OQ `matrix-weighted-norm-and-bilinear-form-l1-rough-ins`) will likely
+sibling OQ `matrix-weighted-norm-and-bilinear-form-l1-rough-ins` — whose
+`matrix-weighted-norm` half is now resolved (the verb promoted to `firm` at
+cycle-091); the `bilinear-form` half remains open) will likely
 depend on `bilinear-form` via `nrm2_B(x, B) = √bilinear_form(x, B, x)` when
 `B` is SPD (law 8). That is the L1 statement of the energy norm.
 

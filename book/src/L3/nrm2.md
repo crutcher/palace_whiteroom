@@ -65,7 +65,7 @@ implicit at L3 (subsumed by the non-negativity claim) and preserved as an explic
 at L2; the full classification lives at
 [`L1-L0/nrm2-mutation-rotation`](../L1-L0/nrm2-mutation-rotation.md) §"The `std::abs` defensive
 guard — classification". The B-weighted overload `linalg::Norml2(comm, x, B, Bx)` is **not** part of
-this operator (tracked as rough-in [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) at L1).
+this operator (tracked as firm [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) at L1, promoted cycle-091).
 
 ## Status
 

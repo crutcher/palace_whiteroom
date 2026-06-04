@@ -301,9 +301,11 @@ NOT a speculative operator of this theme, for the reasons the L1 entry gives
   *is* this very `palace/linalg/operator.hpp:377-384` fused overload — but it is recorded there as
   the *definition* of the B-weighted fused shape, not a callsite. So `normalize_B`
   has **no live consumer in the tree**: definition exists, callsite does not.
-- **Inherited test-coverage bound.** `normalize_B`'s norm constituent
-  [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) is `rough-in (test-coverage-bounded)`;
-  a fused `normalize_B` cannot be firmer than its constituent.
+- **No remaining constituent-maturity gate.** `normalize_B`'s norm constituent
+  [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) is now `firm` (promoted cycle-091),
+  so the earlier inherited test-coverage bound is discharged. `normalize_B` nonetheless stays a
+  rough-in note on the **no-live-consumer** ground above (the fused B-Normalize is defined-but-dead),
+  not on any constituent-maturity ground.
 
 If/when a positive *callsite* of the fused B-Normalize surfaces — either a direct
 4-arg `Normalize(comm, v, B, Bv)` invocation OR an inline B-weighted-rescale shape
@@ -410,8 +412,9 @@ companion-scale `nleps.cpp:610-611,617`), each consuming the norm *after* the re
 non-syntactic ingredient — the partiality at `x = 0` — is positively anchored to the L0
 `MFEM_ASSERT(norm > 0.0)` (`vector.hpp:267`); **no negative-anchor reconstruction, no literature
 inference, no speculative operator** — so `firm` rather than `partly-constructive`. The B-weighted
-sibling `normalize_B` is an in-chapter rough-in note (no fused Palace site + inherited
-`matrix-weighted-norm` test-coverage bound), not part of the firm claim.
+sibling `normalize_B` is an in-chapter rough-in note (no live consumer of the fused Palace site;
+the `matrix-weighted-norm` test-coverage bound it formerly inherited is discharged at cycle-091),
+not part of the firm claim.
 
 A `lowering-verifier` audit attaching the `verified_against:` block (per the sibling-theme
 convention) confirming the surface-form recognition is exhaustive (the `linalg::Normalize`

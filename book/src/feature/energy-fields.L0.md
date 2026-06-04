@@ -2,7 +2,7 @@
 kind: feature-surface
 feature: energy-fields
 level: L0
-status: seed
+status: firm
 l0_ground_truth:
   - palace/models/postoperator.cpp:1021-1077 (PostOperator::MeasureDomainFieldEnergy — the per-domain energy + participation table)
   - palace/models/domainpostoperator.cpp:255-298 (GetDomainElectricFieldEnergy / GetDomainMagneticFieldEnergy — the ½⟨field,M_i field⟩ energy form)
@@ -91,10 +91,13 @@ the readout carries the per-write lifts; this feature surface records the output
 
 ## Status
 
-`seed` — the L0 ground-truth surface for the domain field-energy table output product (the
+`firm` — the L0 ground-truth surface for the domain field-energy table output product (the
 output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive
 (2026-06-02), mirroring the [eigenfrequency-qfactor.L0](./eigenfrequency-qfactor.L0.md) /
-[capacitance.L0](./capacitance.L0.md) output-product exemplars. Every stage is a cited range into
+[capacitance.L0](./capacitance.L0.md) output-product exemplars. Promoted `seed`→`firm` cycle-091
+by the batch-29 firm-flip-and-cascade wave (the column's OWN composition became all-firm — own
+reduce verb `domain_energy_reduce` firm c091, own folded `matrix-weighted-norm` firm c091,
+`participation_ratio` firm c077; the L0 surface follows its L1/L4 siblings off `seed`). Every stage is a cited range into
 `palace/models/postoperator.cpp` (the per-domain table) + `palace/models/domainpostoperator.cpp`
 (the energy form), confirmed on-disk via palace-codemap `read_range`/`search_text` this dispatch
 (the def `postoperator.cpp:1021`, the electric map `:1030-1053`, the magnetic map `:1055-1078`, the

@@ -2,11 +2,11 @@
 kind: feature-surface
 feature: energy-fields
 level: L1
-status: seed
+status: firm
 composes:
   - book/src/feature/electrostatic.L1.md (seed — a producing driver column: supplies the solution field the energy table reduces)
   - book/src/L1/participation_ratio.md (firm — the energy_i/E_total per-domain ratio)
-  - book/src/L1/matrix-weighted-norm.md (rough-in (test-coverage-bounded) — the ½⟨field,M_i field⟩ per-domain energy form)
+  - book/src/L1/matrix-weighted-norm.md (firm c091 — the ½⟨field,M_i field⟩ per-domain energy form; promoted to firm by the batch-29 firm-flip-and-cascade wave)
 l0_ground_truth:
   - palace/models/postoperator.cpp:1021-1077 (PostOperator::MeasureDomainFieldEnergy — the per-domain energy + participation table)
   - palace/models/domainpostoperator.cpp:255-298 (GetDomainElectricFieldEnergy / GetDomainMagneticFieldEnergy — the ½⟨field,M_i field⟩ energy form)
@@ -105,22 +105,24 @@ composition (high→low discipline).
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
 | producing field (field-bearing driver) | [`electrostatic.L1`](./electrostatic.L1.md) (driver feature column) | seed | `postoperator.cpp:1032, 1057` |
-| per-domain energy form | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared (domain-restricted `M_i`) | rough-in (test-coverage-bounded) | `domainpostoperator.cpp:255-275, 277-298` |
+| per-domain energy form | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared (domain-restricted `M_i`) | firm c091 | `domainpostoperator.cpp:255-275, 277-298` |
 | participation ratio | [`participation_ratio`](../L1/participation_ratio.md) | firm | `postoperator.cpp:1039, 1064` |
 
 ## Status
 
-`seed` — the L1 pure-function composition root for the domain field-energy table output product
+`firm` — the L1 pure-function composition root for the domain field-energy table output product
 (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive
 (2026-06-02), the L1 counterpart of the [energy-fields.L4](./energy-fields.L4.md) composition root.
 It consumes a field-bearing driver column's solution field, then maps each configured domain to its
 `(energyᵢ, pᵢ)` row (the domain-restricted energy form + the participation ratio). **Under the
 OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03) a column promotes off `seed` when its OWN
-directly-owned constituents are firm; this column STAYS `seed`** because its OWN reduce verb's L4 home
-`domain_energy_reduce` is `rough-in` and its OWN folded domain energy form is the `matrix-weighted-norm`
-`rough-in (test-coverage-bounded)` primitive (only the [`participation_ratio`](../L1/participation_ratio.md)
-half is firm). These are OWN-constituent gates, NOT cross-linked-sibling blockers — the field-bearing
-driver columns are SIBLING references (a driver-agnostic shared postprocess), not the gate. The
+directly-owned constituents are firm; this column was promoted `seed`→`firm` cycle-091** by the
+batch-29 firm-flip-and-cascade wave, once its OWN composition became all-firm: its OWN reduce verb's
+L4 home `domain_energy_reduce` firmed (firm c091) and its OWN folded domain energy form is the now-firm
+`matrix-weighted-norm` (firm c091, the batch-29 firm flip), with the
+[`participation_ratio`](../L1/participation_ratio.md) half already firm — all three directly-owned
+constituents firm. The field-bearing driver columns are SIBLING references (a driver-agnostic shared
+postprocess), NOT blockers — a sibling reference never gated the promotion. The
 chapter carries the compositional claim only; per-op
 algebraic claims live in the linked chapters. The defining structural fact carried from L4: a
 rank-1 per-domain scalar table, NOT a `gram_reduce` family-PAIR grid (c074 D6). Evidence: the L0

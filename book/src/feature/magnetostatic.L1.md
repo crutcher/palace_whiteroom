@@ -6,7 +6,7 @@ status: seed
 composes:
   - book/src/L1/fe_assemble.md (firm — assemble curl-curl K once)
   - book/src/L1/ksp_solve.md (firm — per-source solve)
-  - book/src/L1/matrix-weighted-norm.md (rough-in (test-coverage-bounded) — diagonal Aᵢᵀ K Aᵢ)
+  - book/src/L1/matrix-weighted-norm.md (firm c091 — diagonal Aᵢᵀ K Aᵢ; promoted to firm by the batch-29 firm-flip-and-cascade wave)
   - book/src/L1/bilinear-form.md (rough-in — off-diagonal Aⱼᵀ K Aᵢ = xᴴ M y)
 l0_ground_truth:
   - palace/drivers/magnetostaticsolver.cpp:22-108 (MagnetostaticSolver::Solve)
@@ -34,9 +34,9 @@ At L1 the magnetostatic feature is a pure function `config → inductance matrix
 2. **Per-source pure solve** — [`ksp_solve`](../L1/ksp_solve.md) (**firm**), applied once per surface-current source. Each call is the mutation-lifted pure solve `aᵢ = ksp_solve(K, rhsᵢ)` — the L1 form of the L0 `ksp.Mult(RHS, A[step])` (the destination-buffer write lifted to a value-returning solve). The per-source RHS `rhsᵢ` is the excitation vector for surface-current source `idx` (L0 `curlcurl_op.GetExcitationVector(idx, RHS)`, `:76`). The fixed-operator reuse (the same `K` across all sources) is explicit in the composition: `K` is bound once in the `let` and read by every `ksp_solve`. L0: the loop `:66`, the per-element solve `:77`.
 
 3. **Inductance-matrix reduction** — the symmetric matrix `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)`, built from L1 bilinear-form evaluations (rough-in diagonal + rough-in off-diagonal), each normalized by the excitation currents:
-   - diagonal `Mᵢᵢ = (Aᵢᵀ K Aᵢ)/Iᵢ²` — the operator-weighted self-form normalized by the squared current, the rough-in [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) squared (`matrix_weighted_norm(Aᵢ, K)² = Aᵢᵀ K Aᵢ`; the L0 source builds it directly as `M_mag->Mult(A_gf, H_gf)` then `linalg::Dot(A_gf, H_gf)`, then `/ (I_inc[i]*I_inc[i])`, `:129-131`).
+   - diagonal `Mᵢᵢ = (Aᵢᵀ K Aᵢ)/Iᵢ²` — the operator-weighted self-form normalized by the squared current, the now-firm [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) squared (`matrix_weighted_norm(Aᵢ, K)² = Aᵢᵀ K Aᵢ`; the L0 source builds it directly as `M_mag->Mult(A_gf, H_gf)` then `linalg::Dot(A_gf, H_gf)`, then `/ (I_inc[i]*I_inc[i])`, `:129-131`).
    - off-diagonal `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)` — the operator-weighted cross-pairing normalized by the current product, the (rough-in) [`bilinear-form`](../L1/bilinear-form.md) `α = xᴴ M y` instantiated `⟨Aⱼ, K Aᵢ⟩` (L0 `:135-138`, the same `Mult`/`Dot` with the `j` grid function, then `/ (I_inc[i]*I_inc[j])`).
-   The result is the symmetric `M` (and its LAPACK inverse `Minv`, `:151-152`). This stage is a pure fold of current-normalized bilinear-form evaluations over the solution-family pair grid — no L1 operator is *new* here; the reduction composes [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (rough-in) + [`bilinear-form`](../L1/bilinear-form.md) (rough-in), with the current normalization a scalar weight on each entry.
+   The result is the symmetric `M` (and its LAPACK inverse `Minv`, `:151-152`). This stage is a pure fold of current-normalized bilinear-form evaluations over the solution-family pair grid — no L1 operator is *new* here; the reduction composes [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091) + [`bilinear-form`](../L1/bilinear-form.md) (rough-in), with the current normalization a scalar weight on each entry.
 
 ## Inputs / outputs (the feature surface)
 
@@ -57,9 +57,9 @@ The L1→L0 direction (how each pure operator lowers to the in-place driver writ
 |---|---|---|---|
 | assemble K once | [`fe_assemble`](../L1/fe_assemble.md) | firm | `magnetostaticsolver.cpp:29` |
 | per-source solve | [`ksp_solve`](../L1/ksp_solve.md) | firm | `magnetostaticsolver.cpp:66, 76-77` |
-| diagonal Aᵢᵀ K Aᵢ / Iᵢ² | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) | rough-in (test-coverage-bounded) | `magnetostaticsolver.cpp:129-131` |
+| diagonal Aᵢᵀ K Aᵢ / Iᵢ² | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) | firm c091 | `magnetostaticsolver.cpp:129-131` |
 | off-diagonal Aⱼᵀ K Aᵢ / Iᵢ Iⱼ | [`bilinear-form`](../L1/bilinear-form.md) | rough-in | `magnetostaticsolver.cpp:135-138` |
 
 ## Status
 
-`seed` — the L1 pure-function composition root for the magnetostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the [electrostatic.L1](./electrostatic.L1.md) exemplar. Two of the four composed L1 operators are firm ([`fe_assemble`](../L1/fe_assemble.md), [`ksp_solve`](../L1/ksp_solve.md)); BOTH inductance-reduction primitives are rough-in — the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) is `rough-in (test-coverage-bounded)` (no dedicated test exercises the SPD-weighted overload) and the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) is rough-in (its `α = xᴴ M y` signature covers the cross-pairing, so the down-link is correct). The entire stage-3 reduction therefore rests on rough-in L1 primitives — consistent with the column being a `seed`, not a firm composition. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 driver range `magnetostaticsolver.cpp:22-108` + `:110-204` realizing the composition, plus the firm L1 constituent down-links.
+`seed` — the L1 pure-function composition root for the magnetostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the [electrostatic.L1](./electrostatic.L1.md) exemplar. Two of the four composed L1 operators are firm ([`fe_assemble`](../L1/fe_assemble.md), [`ksp_solve`](../L1/ksp_solve.md)); of the two inductance-reduction primitives the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) is now **firm** (firm c091, the batch-29 firm-flip-and-cascade wave) but the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) is still rough-in (its `α = xᴴ M y` signature covers the cross-pairing, so the down-link is correct; the sole RESIDUAL gate after this cycle). The stage-3 reduction therefore still rests on the rough-in off-diagonal `bilinear-form` (whose L4 home `gram_reduce` STAYS `rough-in (test-coverage-bounded)` on that residual, D3 cycle-091) — consistent with the column being a `seed`, not a firm composition. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 driver range `magnetostaticsolver.cpp:22-108` + `:110-204` realizing the composition, plus the firm L1 constituent down-links.

@@ -1143,3 +1143,19 @@ The verbose per-report intake blocks (c088 D1 structure-side-discharge + c088 D2
 - `cycle-090-land-clean-clean-tree-confirmation` (c090) → CLOSED-RESOLVED (observation-only clean-tree verdict; ZERO `book/` mutation; whole-book-grep disciplines HELD). Closed index.
 
 ---
+
+## goal-flow-mwn-firm-flip-cascade-refresh-stale-rough-in-refs
+
+opened_at: cycle-091
+opened_by: integrator-per-report (promoted from the cycle-091 D2 lifter report's §Open-questions OQ-intake flag)
+
+`book/src/methodology/goal-flow.md` is meta-phase-owned (NON-AUTHORITATIVE synthesized mirror — NOT edited by per-cycle agents or per-report integrators; write-authority partition reserves it for the meta-phase batch-refresh). The cycle-091 LEAD `matrix-weighted-norm` firm-flip + the D2 consumer re-anchor cascade make several `matrix-weighted-norm` rough-in references in goal-flow.md stale. D2 deliberately did NOT edit them (respecting the partition) and routed them here as OQ-intake for the **batch-29 meta-phase** to refresh when it regenerates the goal-flow chapter from the authoritative sources.
+
+Stale references flagged (from the D2 report's reproduced grep, on disk at report time):
+- `:175-177` — the "cascade NOT yet discharged" framing for `gram_reduce` / `domain_energy_reduce` (their folded `matrix-weighted-norm` constituent). Now the verb IS firm; refresh should read **D3's verdict** on `gram_reduce` / `domain_energy_reduce` (predicted: `gram_reduce` STAYS rough-in on the residual `bilinear-form` gate; `domain_energy_reduce` is a D3 JUDGE) rather than re-anchor piecewise.
+- `:218` — "`domain_energy_reduce` + `matrix-weighted-norm` rough-in".
+- `:223` / `:232` / `:249` — the "single convergent foundation-blocker: the `matrix-weighted-norm` √-entry-point cascade" / "firming `matrix-weighted-norm` is the convergent foundation-unblock" framing, now **ENACTED this cycle** rather than queued.
+
+Refresh trigger: the c091 firm flip + the D2 cascade outcome (and D3's reduce-verb verdict) IS the refresh trigger. The chapter is a synthesized non-authoritative mirror; when it contradicts the now-firm on-disk maturity, the on-disk source wins until the meta-phase regenerates it. Couple this refresh with the standing batch-28→29 `goal-flow` refresh cadence and read D3's on-disk verdict before re-narrating the `gram_reduce` / `domain_energy_reduce` lines.
+
+---

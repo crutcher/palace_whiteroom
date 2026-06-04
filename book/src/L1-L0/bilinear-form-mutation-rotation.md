@@ -571,10 +571,12 @@ reconstruction, no literature inference, no speculative operator** — so `firm`
 narrow). A firm lowering of a rough-in L1 operator is consistent: the lowering's structural
 fidelity (does the L1 form expand into this L0 source?) is independent of the L1 entry's
 promotion gates (test coverage + the real-`x`/real-`M`/real-`y` variant). Precedent:
-[`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md) is firm
-over the rough-in `L1/matrix-weighted-norm`; [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md)
-is firm over `L1/eigsolve`. Promoting the L1 operator to firm (its own gate) does not change this
-theme's status; it would only strengthen the LHS the theme already lowers.
+[`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md) was firm
+over `L1/matrix-weighted-norm` while the latter was rough-in (it has since promoted to firm at
+cycle-091, which did not change the theme's firm status — it only strengthened the LHS the theme
+lowers); [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md) remains firm over the
+still-rough-in `L1/eigsolve`. Promoting an L1 operator to firm (its own gate) does not change a
+lowering theme's status; it would only strengthen the LHS the theme already lowers.
 
 A `lowering-verifier` audit attaching the `verified_against:` block (per the sibling-theme
 convention) confirming the surface-form recognition is exhaustive (no un-cited `Dot(comm, x, A,
