@@ -65,7 +65,7 @@ The feature-surface kind was established by the electrostatic column (the first 
   - output-product: [`eigenfrequency-qfactor`](./eigenfrequency-qfactor.L4.md) (own verb `eigenfreq_qfactor_reduce` firm c082; `eigenmode` is a sibling cross-link), [`sparameters`](./sparameters.L4.md) (own verb `sparameter_reduce` firm c083; `driven` is a sibling cross-link).
   - spine-ROOT: [`lifecycle`](./lifecycle.L4.md) (own driver-agnostic composition — mesh-build + the firm `fold_solve` adaptive fold — firm; the per-driver dispatch is over sibling feature columns, references not blockers).
 - **`seed` (6 columns)** — held on a genuine **own-constituent gate** (a directly-owned constituent is rough-in or unhomed), NOT a sibling-column blocker:
-  - [`electrostatic`](./electrostatic.L4.md) + [`magnetostatic`](./magnetostatic.L4.md) — own `solve_family` + own `gram_reduce` are `rough-in (test-coverage-bounded)`.
+  - [`electrostatic`](./electrostatic.L4.md) + [`magnetostatic`](./magnetostatic.L4.md) — own `gram_reduce` is `rough-in (test-coverage-bounded)` (own `solve_family` firmed c086; the own-constituent gate has narrowed to `gram_reduce` alone).
   - [`capacitance`](./capacitance.L4.md) + [`inductance`](./inductance.L4.md) — own reduce verb `gram_reduce` is `rough-in`.
   - [`energy-fields`](./energy-fields.L4.md) — own reduce verb `domain_energy_reduce` + own folded `matrix-weighted-norm` are `rough-in`.
   - [`boundary-mode`](./boundary-mode.L4.md) — own stage-(3) readout reduces into a waveguide-mode output product with no firm home (own-readout gate; the waveguide-mode product column is demand-gated).

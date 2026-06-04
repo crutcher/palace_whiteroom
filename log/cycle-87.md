@@ -1,0 +1,58 @@
+## 2026-06-04 cycle-087 — 1 report applied clean — eighty-second consecutive cycle under split integrator — POSITION 3/3 OF META-BATCH-27 (the LAST primary cycle; the batch-27 meta-phase fires NEXT) — THE LAND-CLEAN CYCLE: a PURE maturity re-anchor cleaned the 5-file stale-reference residue the c086 `solve_family` firm-promotion left behind, incl. a load-bearing `L4/index.md` internal inconsistency (`solve_family` had been listed in BOTH the firm AND the rough-in cohorts) — ZERO status/count change — pass
+
+**Position 3/3 of meta-batch-27 — the LAST primary cycle of batch-27, post-SESSION-RESTART** (3:1 cadence; cycles 085/086/087; the cycle counter does NOT reset across batch boundaries). **The batch-27 meta-phase fires AFTER this cycle-087 finalize as a SEPARATE dispatch** aggregating 085/086/087 — this finalize does NOT run meta-phase housekeeping. This is the **land-clean cycle** before the meta-phase: it leaves the tree clean and internally consistent for the aggregating meta-phase to inherit.
+
+Under the 2026-06-01 VOCABULARY-SHIFT REDIRECT (`METHODOLOGY-REDIRECT.md`) + the 2026-06-02/2026-06-03 user directives, with the FEATURE-SURFACE SPINE codified into the role-specs + CLAUDE.md (batch-22) + the batch-23 record-definition obligation + by-kind grouping + the batch-24 enactments (`record` Kind RATIFIED) + the batch-25 enactments (SEED-SURFACE FIRMING CEILING CONDITIONAL) + the batch-26 meta-phase enactments (the USER DIRECTIVE `feature-column-promotion-break-the-seed-deadlock` ENACTED — the OWN-COMPOSITION column-promotion rule; the `matrix-weighted-norm` √-cascade NO-GO HELD; SESSION RESTART before c085) — with c085 (the batch-27 LEAD) having promoted 6 feature columns off the terminal `seed` state and c086 having firmed `solve_family` (the 3rd firm-on-positive-structure promotion).
+
+1 of 1 dispatched-ready report applied clean (1/1 staging row == dispatched-ready — the cycle-018 staging-completeness gap did NOT recur for the EIGHTY-SECOND consecutive clean split-integrator cycle / SIXTY-EIGHTH consecutive clean staging). Zero deferrals, zero rejections, zero gate-hits, zero build-repairs.
+
+### Headline — a PURE maturity re-anchor (land-clean hygiene): the 5-file stale-reference residue of the c086 `solve_family` firm-promotion is cleaned
+
+The c086 firm-promotion of `solve_family` (`rough-in (test-coverage-bounded)` → `firm`) had reconciled the operator's own frontmatter + `## Status` body + the count-owner `L4/index.md` count tally + 4 consumer files — but its grep-sweep **missed 5 files** carrying stale `rough-in (test-coverage-bounded)` references to `solve_family`. A single `lifter` pass (12 edits / 7 sites across 5 files) re-anchored those stale references → `firm`:
+
+- **`book/src/L4/index.md`** — the load-bearing fix. On-disk, `solve_family` had been listed in **BOTH** the "Firm at L4" cohort AND the "Rough-in at L4" cohort (a duplicate bullet), and the firm-cohort entry body asserted `Status rough-in (test-coverage-bounded)` two lines below the §Vocabulary-cohort header that narrated the c086 firm promotion — a genuine **internal contradiction in the SAME file**. The re-anchor collapsed the rough-in-cohort header `(1 + 1 test-coverage-bounded)` → `(1)`, dropped the duplicate `solve_family` rough-in bullet (so it sits in the firm cohort ONLY), re-anchored the firm-cohort entry status clause → `firm`, and re-anchored the dep-map status cell → `firm`. The cohort headers now reconcile to on-disk **L4 firm 17 / L4 rough-in (test-coverage-bounded) 0** (`domain_energy_reduce` plain-rough-in remains the only L4 rough-in).
+- **`book/src/L4/frequency_sweep.md`** — two contrast-prose re-narrations (the firm-vs-rough-in maturity contrast dropped, the operator-capture / fresh-vs-reused axis preserved; both entries firm).
+- **`book/src/L4-L3/solve-family-map-dissolution.md`** — the LHS §Status `firm since c086`, the §Verified-against bullet, and the "(former) inherited LHS test-coverage caveat" paragraph re-narrated to "cap firmed c086 exactly as anticipated" (the theme's firm-on-structure reasoning preserved; theme STAYS firm).
+- **`book/src/feature/index.md`** — the electrostatic/magnetostatic own-constituent gate narrowed to `gram_reduce` alone ("own `solve_family` firmed c086"); columns STAY seed.
+- **`book/src/L4/fe_assemble.md`** — contrast-prose re-narrated (`solve_family`'s independence claim also discharged on positive structure c086, two combinators now equal maturity; `fe_assemble` STAYS firm).
+
+### ZERO status/count change — this firms the stale REFERENCES, not a new promotion
+
+This is **not** a new firm-promotion. The maturity was already `firm` (landed c086 D1); this cycle firms the stale **references** to it that the c086 sweep missed. **ALL counts UNCHANGED from c086**: L4 firm 17 main / 21 grand; L4 rough-in (test-coverage-bounded) 0; L4 rough-in 1 (`domain_energy_reduce`); feature columns **6 FIRM / 6 seed** (electrostatic + magnetostatic STAY seed — `gram_reduce` still gates them, convergently blocked on the `matrix-weighted-norm` √-cascade NO-GO-HELD). No feature-column flip.
+
+### Build
+
+`cargo make book` (mdbook + linkcheck2) exit 0 (Build Done in ~92s). The edited `book/src/L4/{index,frequency_sweep,fe_assemble}.md` + `book/src/L4-L3/solve-family-map-dissolution.md` + `book/src/feature/index.md` render + resolve. No new files, no `SUMMARY.md` change (pure prose maturity re-anchor, no new chapter). `linkcheck2` clean — zero dead links, zero build-repair. Only the 4 pre-existing benign KaTeX "Potential incomplete link" WARNs in `design/l4_calculus.md` (katex-display math at `:104`/`:108`/`:122`/`:142`, the `:`-in-math false-positives) — predate this cycle, NOT dead links, NOT from this cycle's files. **Zero build-repair.**
+
+### Process
+
+- **Retroactive-budget global = 0** — the single row is a PURE maturity re-anchor (stale references → firm, propagating the already-landed c086 promotion); no claim authored, no retroactive draw, no new slice. Well under the ≥4 block threshold. PASS.
+- **Zero dispatch-phase write-partition leaks** — the report applied via the proposed-changes channel; the per-report integrator reported 0 dispatch-phase `book/` mutation; all 5 book/src files touched are the report's named targets.
+- **0 implied-component stubs** — no dead-link build-repair needed; all 5 edited files pre-existed on disk.
+- **Staging-completeness gap did NOT recur** — 1 row == 1 dispatched-ready report; 68th consecutive clean staging / 82nd consecutive clean split-integrator cycle.
+- **DO-NOT-TOUCH-list divergence APPLIED (correct)** — the plan listed `L4/index.md:47` as "correctly-firm → KEEP" on the on-disk-FALSE assumption the firm-cohort entry body already read firm; on-disk it still asserted `rough-in (test-coverage-bounded)`. Applying the `:47` re-anchor was the correct land-clean disposition (declining it would leave a surviving firm-cohort entry asserting rough-in); the critic confirmed it a legitimate stale-correction, NOT an out-of-scope leak.
+- **Serial apply per staging-row ORDER** (newest-LAST authoritative; `applied_at` advisory): D1 (lifter, created the staging log). `scaffolding/priorities.md` also modified (the cycle-087 planner's co-owned plan write, committed atomically — NOT touched by D1 per the write-authority partition).
+
+### Open questions
+
+- **PROMOTED (D1, DISCHARGEABLE-AT-NEXT-META):** `solve-family-map-dissolution-firm-on-structure-vs-lhs-test-coverage` (+ its parent fold `solve-family-firm-on-structure-vs-test-coverage`) — both sub-questions now resolved (`solve_family` firmed c086; the theme's firm-on-structure reasoning held). Fully dischargeable; NOT closed here, flagged for the batch-27 meta-phase unify-close.
+- **PROMOTED (D1, NEW drift-pattern signal for the batch-27 meta-phase):** `firm-promotion-coupled-re-anchor-needs-whole-book-cross-reference-grep` — the c086 sweep missed 5 files (incl. sites in the SAME file `index.md` it partially corrected); suggests a MANDATORY whole-book cross-reference grep coupled to firm-promotion dispatches (the FIRM-analog of `floor-landing-implies-same-cycle-adjacent-entry-reanchor`). Routed ALSO as an integrator-signal.
+- **OUT-OF-SCOPE drive-by (D1, NOT a durable OQ slug, NOT corrected this cycle):** `feature/eigenfrequency-qfactor.L4.md:38` still labels `eigenfreq_qfactor_reduce` `rough-in (test-coverage-bounded)` despite firm c082 — the SAME drift class as the `solve_family` residue; out-of-scope for this `solve_family`-only report (no scope creep); reinforces the firm-promotion-whole-book-grep drift signal.
+
+### Carry-forwards for the batch-27 META-PHASE (this is the LAST primary cycle of the batch)
+
+1. **The firm-token-choice question** (carried from c085/c086, still OPEN; OQ `feature-column-firm-token-choice-batch-27-meta-phase`) — whether `firm` is the right promoted token for a composition-root or a feature-specific token; flagged by all 3 c085 dispatches; a batch-27 meta-phase decision.
+2. **The 1-of-2-gates / convergent `matrix-weighted-norm` √-cascade blocker re-weigh** (OQ `solve-family-firmed-discharges-one-of-two-electrostatic-magnetostatic-column-gates`) — `solve_family` firm narrowed electrostatic/magnetostatic to a SINGLE own-constituent gate (`gram_reduce`); the convergent blocker is the `matrix-weighted-norm` √-entry-point cascade (NO-GO-HELD batch-26) which now gates `gram_reduce` (→ electrostatic/magnetostatic/capacitance/inductance) AND `domain_energy_reduce` (→ energy-fields) = **5 of 6 stay-seed columns converge on it**; the meta-phase should re-weigh under its sharpened re-weigh trigger whether accumulated downstream demand now justifies the dedicated √-cascade own-cycle wave.
+3. **The firm-promotion-whole-book-grep drift signal** (NEW c087 D1; OQ `firm-promotion-coupled-re-anchor-needs-whole-book-cross-reference-grep`) — a mandatory whole-book cross-reference grep coupled to firm-promotion dispatches; a batch-27 meta-phase consideration.
+4. **The `eigenfrequency-qfactor.L4:38` residual drift** (out-of-scope drive-by) — same drift class, a small clean-up candidate that reinforces the drift signal.
+5. **Dischargeable-at-next-meta:** the `solve-family-map-dissolution-firm-on-structure-vs-lhs-test-coverage` fold (both sub-questions resolved; flagged for unify-close).
+
+### Counts after cycle-087
+
+**ALL counts UNCHANGED from c086** (this is a pure maturity re-anchor of the stale REFERENCES to the already-firm `solve_family`): **L4 firm 17 main / 21 grand** · **L4 rough-in (test-coverage-bounded) 0** · **L4 rough-in 1** (`domain_energy_reduce`). **Feature spine columns UNCHANGED at 6 FIRM / 6 seed** (NO column flip this cycle; the `L4/index.md` cohort headers now reconcile internally to these on-disk counts). Firm columns: `driven`, `eigenmode`, `transient`, `eigenfrequency-qfactor`, `sparameters`, `lifecycle`. Seed: `boundary-mode`, `capacitance`, `electrostatic`, `energy-fields`, `inductance`, `magnetostatic`.
+
+ALL other layer-vocabulary counts UNCHANGED from c086: L1 firm 30 main / 37 grand · L2 firm 21 (+1 partly-constructive) · L2>L1 firm 11 · L3 firm 17 (+4 partial-obstruction) · L3>L2 firm 6 · L4>L3 firm 10 · L0 chapters 22 · concepts 33 (+ `record` Kind RATIFIED) · methodology chapters 2 · FEATURE-SURFACE SPINE 12 columns by-kind-grouped (6 firm / 6 seed) · L4 reduce-family 4 verbs (`eigenfreq_qfactor_reduce` FIRM c082 / `sparameter_reduce` FIRM c083 / `gram_reduce` `rough-in (test-coverage-bounded)` / `domain_energy_reduce` `rough-in`).
+
+**The batch-27 meta-phase fires NEXT** as a separate dispatch aggregating cycles 085/086/087.
+
+Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit).

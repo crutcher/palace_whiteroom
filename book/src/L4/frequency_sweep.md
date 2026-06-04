@@ -66,7 +66,7 @@ solution family). The combinator differs from [`solve_family`](./solve_family.md
 on exactly one axis — the **operator-capture** axis (§Variant axes): `solve_family`
 is `fixed` (op captured once, hoisted), `frequency_sweep` is `per-element` (op
 rebuilt per member, inside the map). This is the named `per-element` value that the
-`solve_family` `rough-in (test-coverage-bounded)` entry records as out-of-scope and
+firm [`solve_family`](./solve_family.md) entry records as out-of-scope and
 batch-17-gated (`L4/solve_family.md:137,146,163`). It reuses the firm
 [`iterate-while`](./iterate-while.md) family rather than introducing a new iteration
 primitive — the same route [`chebyshev`](./chebyshev.md) and
@@ -502,13 +502,16 @@ the firm [`assemble_frequency_operator`](./assemble_frequency_operator.md) opera
 cycle-069 D1) + the firm [`ksp_solve`](./ksp_solve.md) cap (firm cycle-048) — NOT
 test-gated convergence-semantics claims (the [`eigsolve`](./eigsolve.md) distinction) —
 so the absence of a dedicated driven-sweep unit test does NOT gate them, and the entry is
-`firm` rather than `rough-in (test-coverage-bounded)`. (Contrast
-[`solve_family`](./solve_family.md), which is `rough-in (test-coverage-bounded)` because
-its load-bearing claim — that the `KspSolver` *reuse* across members carries no hidden
-cross-member state — is test-unconfirmed; `frequency_sweep` rebuilds a *fresh* operator
-and re-captures it per member, so the no-cross-member-state property is read directly off
-the per-member `SetOperators(*A, *P)` rebuild, not assumed of a reused solver — the
-firm-vs-rough-in distinction is in the operator-capture axis itself.)
+`firm`. (Contrast the **operator-capture axis** against [`solve_family`](./solve_family.md),
+also `firm` (c086): `solve_family`'s load-bearing independence claim — that the `KspSolver`
+*reuse* across members carries no hidden cross-member state — was ultimately discharged on
+positive structure (read off the const `BaseKspSolver::Mult` body, `palace/linalg/ksp.cpp:297-310`,
+whose only cross-call state is two monotone telemetry counters); `frequency_sweep` instead
+rebuilds a *fresh* operator and re-captures it per member, so its no-cross-member-state
+property is read directly off the per-member `SetOperators(*A, *P)` rebuild rather than off a
+reused solver. The two entries are now equal in maturity (both firm); the load-bearing
+distinction is the **fixed-shared-capture vs. fresh-per-member-rebuild** axis itself, not a
+firm-vs-rough-in maturity gap.)
 
 **Scope (load-bearing) — single-witness-driven BY DESIGN**: `frequency_sweep`
 (operator-varying frequency sweep) is witnessed by the **driven uniform sweep ONLY**
