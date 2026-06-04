@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T024500Z
 scope: feature-column composes-frontmatter hygiene re-anchor — eigenfreq-qfactor-column-composes-frontmatter-seed-hygiene
 status: integrated
 integrated_at: 2026-06-04T030135Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c05b298
 integration_notes: "Applied cycle-089 D2 (LOW/hygiene). 2 stale seed→firm flips in the composes: frontmatter parenthetical of book/src/feature/eigenfrequency-qfactor.{L4,L1}.md (the eigenmode constituent; referent eigenmode.{L4,L1}.md is status: firm on disk c085). The column's OWN status: firm (line 5) is UNTOUCHED; the flip is an inline-parenthetical word only, so YAML structure round-trips unchanged. ZERO status-token / count / SUMMARY / dep-map change; no cascade. RESOLVES the c088-opened OQ eigenfrequency-qfactor-column-composes-frontmatter-stale-seed-label. Build clean (cargo make book + linkcheck2 exit 0; the changed text is inside composes: YAML annotation labels linkcheck2 does not read). Zero gate hits."
 inputs:
   - book/src/feature/eigenfrequency-qfactor.L4.md

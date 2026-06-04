@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T024701Z
 scope: L1 verb FP-residue law-confidence probe — matrix-weighted-norm (FP-side analog of cycle-088 structure-side norm-axiom discharge)
 status: integrated
 integrated_at: 2026-06-04T030135Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: c05b298
 integration_notes: "Applied cycle-089 D1 (LEAD). FP-residue DISCHARGE: the two FP sub-claims at book/src/L1/matrix-weighted-norm.md:69-70 inherit cleanly from firm constituents dot+apply_linop through a deterministic IEEE-754 outer √ over disjoint accumulators (the nrm2 precedent) — NO composition-specific FP property. §Status gate-(c) narrowed; a SECOND verified_against: YAML block appended (file now carries TWO blocks, both parse, 12 entries total). With BOTH math sides now discharged (structure-side c088 + FP-side c089), the SOLE remaining law-confidence driver is gate (a): the untested 4-arg SPD-weighted overload Norml2(comm,x,B,Bx) √-entry-point test. The verb DELIBERATELY STAYS rough-in (test-coverage-bounded); the firm flip + its ~30-file cascade is a separately-gated future wave. Touched book/src/L1/matrix-weighted-norm.md only. matrix-weighted-norm-firm-flip-and-cascade-wave queued as a RECOMMENDED batch-29 LEAD candidate (OQ). Repair FIRED on this report: a false 'zero Norml2 references' phrasing was caught + narrowed to 'SPD-weighted 4-arg overload' before landing (a citation-precision catch); complex-branch Dot :615 pinpoint added. Build clean (cargo make book + linkcheck2 exit 0, ~94s). Zero gate hits."
 inputs:
   - book/src/L1/matrix-weighted-norm.md (the verb under probe; FP sub-claims at :69-70)
