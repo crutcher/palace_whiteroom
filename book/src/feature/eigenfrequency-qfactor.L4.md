@@ -4,7 +4,7 @@ feature: eigenfrequency-qfactor
 level: L4
 status: firm
 composes:
-  - book/src/feature/eigenmode.L4.md (seed — the producing driver column: supplies the converged eigenpair family)
+  - book/src/feature/eigenmode.L4.md (firm — the producing driver column: supplies the converged eigenpair family)
   - book/src/L4/eigenfreq_qfactor_reduce.md (firm — the per-mode scalar-ratio reduction combinator; promoted firm cycle-082, firm-on-positive-structure escape)
 l0_ground_truth:
   - palace/drivers/eigensolver.cpp:424-439 (the eigenvalue→ω un-transform in the readout loop)

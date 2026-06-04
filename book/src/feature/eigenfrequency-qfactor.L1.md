@@ -4,7 +4,7 @@ feature: eigenfrequency-qfactor
 level: L1
 status: firm
 composes:
-  - book/src/feature/eigenmode.L1.md (seed — the producing driver column: supplies the converged EigResult)
+  - book/src/feature/eigenmode.L1.md (firm — the producing driver column: supplies the converged EigResult)
   - book/src/L4/eigenfreq_qfactor_reduce.md (firm — the per-mode scalar-ratio reduction; L1 sees the unfolded per-mode map; promoted firm cycle-082, firm-on-positive-structure escape; both folded per-mode scalar maps firm L1: eigenvalue-untransform c080 + participation_ratio c077)
 l0_ground_truth:
   - palace/drivers/eigensolver.cpp:424-439 (the eigenvalue→ω un-transform in the readout loop)
