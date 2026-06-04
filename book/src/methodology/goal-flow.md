@@ -219,10 +219,11 @@ This shape is load-bearing, and it follows three principles:
 > readout unhomed). A third firm-on-positive-structure promotion this arc (`solve_family`, c086 —
 > element-independence read off the `const BaseKspSolver::Mult` body, the escape now reaching the
 > solve-family combinator) narrowed `electrostatic`/`magnetostatic` from a two-constituent to a
-> single-constituent (`gram_reduce`) gate — but did not flip them. **The remaining lever is now a
-> single convergent foundation-blocker: the `matrix-weighted-norm` √-entry-point cascade**, which
-> gates `gram_reduce` (→ four columns) AND `domain_energy_reduce` (→ energy-fields) — 5 of the 6
-> stay-seed columns converge on it. The in-scope law-confidence route is exhausted for the
+> single-constituent (`gram_reduce`) gate — but did not flip them. **The remaining lever at this
+> point in the arc was a single convergent foundation-blocker: the `matrix-weighted-norm`
+> √-entry-point cascade** (since discharged-and-landed batch-29, see below), which
+> gated `gram_reduce` (→ four columns) AND `domain_energy_reduce` (→ energy-fields) — 5 of the 6
+> stay-seed columns converged on it. The in-scope law-confidence route is exhausted for the
 > all-primitives-firm cohort (the norm-axiom laws may genuinely be inner-product-structure theorems
 > the source only numerically asserts, not syntactic identities); the next probe is a scoped
 > literature-anchor pass on those norm axioms — the cheap test of whether that one gate is
@@ -245,13 +246,38 @@ This shape is load-bearing, and it follows three principles:
 > constituent-inheritance, and no law is left for which it is the only evidence. This is materially
 > the same situation as the four prior firm-on-positive-structure escape promotions (`apply_linop`,
 > `eigenfreq_qfactor_reduce`, `sparameter_reduce`, `solve_family`). **The escape applies → the firm
-> flip is GO.** The full `firm` flip plus its ~30-file cross-reference cascade is the next batch's
-> LEAD; firming `matrix-weighted-norm` is the convergent foundation-unblock for the downstream
+> flip is GO.** The full `firm` flip plus its ~30-file cross-reference cascade became the batch-29
+> LEAD (LANDED CLEAN c091, see below); firming `matrix-weighted-norm` was the convergent foundation-unblock for the downstream
 > `gram_reduce` / `domain_energy_reduce` reduce verbs and, through them, 5 of the 6 stay-`seed`
 > feature columns (`electrostatic` / `magnetostatic` / `capacitance` / `inductance` / `energy-fields`).
 > The arc illustrates the FLOW's load-bearing pattern: a heavy cascade wave is *gated on cheap
 > dischargeability probes first* — the probes converted a NO-GO-held-by-inertia blocker into a
 > GO-by-explicit-derivation flip, without ever forcing the gate.
+
+> **The √-cascade LANDED; the foundation-blocker tail is being worked off systematically
+> (batch-29).** The GO firm flip + cascade LANDED CLEAN (c091): a single 4-dispatch structural
+> wave flipped `matrix-weighted-norm` to `firm` and propagated the cascade across ~30 files,
+> yielding **three** firm promotions — the planned `matrix-weighted-norm` (L1) PLUS two bonus
+> cascade-yield promotions (`domain_energy_reduce`, the per-domain energy-table fold, to firm L4;
+> the `energy-fields` feature column to firm) — with the honest residual gates preserved
+> (`gram_reduce` and `bilinear-form` stay `rough-in`; four columns stay `seed`). The long-held
+> √-foundation-blocker is discharged. With the diagonal `matrix-weighted-norm` now firm, the
+> convergent foundation-blocker collapsed onto the SINGLE remaining primitive **`bilinear-form`**
+> (the off-diagonal operator-weighted form, the sole residual gate on `gram_reduce`). The same
+> cheap-probe pattern was applied immediately (c092): a scoped dischargeability probe on
+> `bilinear-form` returned **DISCHARGE** — and materially CLEANER than `matrix-weighted-norm`
+> (laws 1-6 are pure-linearity syntactic read-offs over the firm `dot` + `apply_linop` +
+> `matrix-weighted-norm` constituents, with NO inner-product-norm theorem content needing a
+> structure-side probe; laws 7-8 are M-symmetry-conditional with both on-disk witnesses). So the
+> `bilinear-form` firm flip + its cascade (firming `gram_reduce` → unblocking the four stay-`seed`
+> columns `capacitance` / `inductance` / `electrostatic` / `magnetostatic` under the
+> OWN-COMPOSITION rule) is now the NEXT gated wave — a BIGGER fan-out than the `matrix-weighted-norm`
+> cascade (four columns flip, not one). The probe-then-wave playbook (now a named procedure,
+> skill `foundation-blocker-dischargeability-probe`) is being run down the foundation tail one
+> convergent blocker at a time: `matrix-weighted-norm` discharged-and-landed, `bilinear-form`
+> discharged-and-queued. This supersedes the prior batches' "single convergent blocker is the
+> `matrix-weighted-norm` √-cascade" framing — that blocker is discharged; the lever is now
+> `bilinear-form`.
 
 ## FLOW — how the goal is met
 
