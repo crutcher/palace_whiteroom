@@ -53,6 +53,6 @@ ALL counts UNCHANGED from c087 (a partial structure-side law-confidence discharg
 
 Feature spine firm columns: `driven`, `eigenmode`, `transient`, `eigenfrequency-qfactor`, `sparameters`, `lifecycle`. Seed: `boundary-mode`, `capacitance`, `electrostatic`, `energy-fields`, `inductance`, `magnetostatic`.
 
-Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit).
+Commit: `4134934` (patched in the follow-up two-phase SHA commit).
 
 Written by `integrator-finalize` (split integrator-per-report ×2 + finalize ×1).

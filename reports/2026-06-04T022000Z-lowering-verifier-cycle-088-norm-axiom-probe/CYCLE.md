@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T022000Z
 scope: L1 verb law-confidence probe — matrix-weighted-norm-norm-axiom-law-confidence-probe
 status: integrated
 integrated_at: 2026-06-04T023456Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 4134934
 integration_notes: "Applied cycle-088 D1 (LEAD). DISCHARGE (partial — structure-side): §Status gate-(c) bullet rewritten to record the structure-side discharge of laws 4/6/7 via standard inner-product-space theorems on the provably-SPD B = KM; 3 new verified_against: entries spliced into the existing YAML block. Verb STAYS rough-in (test-coverage-bounded) (FP sub-claims + √-entry-point test remain open). Touched book/src/L1/matrix-weighted-norm.md only. DISCHARGE outcome-(a) trigger fired → matrix-weighted-norm-full-firm-cascade-wave queued as a recommended c089 candidate (OQ). Build clean (cargo make book + linkcheck2 exit 0). Zero gate hits."
 inputs:
   - book/src/L1/matrix-weighted-norm.md (laws 4 :54, 6 :56, 7 :57; §Status :108-117)

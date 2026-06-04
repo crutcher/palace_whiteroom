@@ -8,7 +8,7 @@ meta_batch_size: 3
 meta_phase_fires_after_cycle: cycle-090
 batch_cycle_ids: [cycle-088]
 status: integrated
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 4134934
 ---
 
 # CYCLE-088 batch report (integrator-finalize)

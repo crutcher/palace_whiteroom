@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T022000Z
 scope: feature>eigenfrequency-qfactor column — stale maturity cross-ref land-clean
 status: integrated
 integrated_at: 2026-06-04T023456Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 4134934
 integration_notes: "Applied cycle-088 D2 (LOW/hygiene). 3 stale prose maturity labels flipped in book/src/feature/eigenfrequency-qfactor.{L4,L1}.md (eigenmode.L4/L1 seed→firm, eigenfreq_qfactor_reduce rough-in(test-coverage-bounded)→firm). ZERO status/count/SUMMARY/dep-map change — only parenthetical prose tokens + 1 OQ append (eigenfrequency-qfactor-column-composes-frontmatter-stale-seed-label, the out-of-scope composes: frontmatter seed residue flagged-not-fixed). Build clean. Zero gate hits."
 inputs:
   - book/src/feature/eigenfrequency-qfactor.L4.md
