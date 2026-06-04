@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T004404Z
 scope: L4 maturity re-anchor — solve_family rough-in (test-coverage-bounded) → firm residue sweep (the c086 firm-promotion left-behind references in the 5 files c086 did NOT touch)
 status: integrated
 integrated_at: 2026-06-04T005727Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 4ea98af
 integration_notes: "cycle-087 (batch-27 position 3/3, the LAST primary cycle; the batch-27 meta-phase fires NEXT). Applied clean — a PURE maturity re-anchor (12 edits / 7 sites / 5 files) firming the stale solve_family `rough-in (test-coverage-bounded)` references the c086 firm-promotion sweep MISSED, incl. the load-bearing book/src/L4/index.md internal contradiction (solve_family in BOTH the firm AND rough-in cohort headers; firm-cohort entry body still asserting rough-in). ZERO operator status/count change (the maturity was already firm c086 D1), ZERO feature-column flip (electrostatic/magnetostatic STAY seed). cargo make book exit 0, zero build-repair, zero dead links. retroactive-budget global = 0. The DO-NOT-TOUCH-list divergence at index.md:47 was correctly APPLIED (critic-confirmed legitimate stale-correction). Promoted 1 dischargeable-at-next-meta flag + 1 NEW drift-pattern signal (firm-promotion-coupled-re-anchor-needs-whole-book-cross-reference-grep, routed ALSO as an integrator-signal) + 1 out-of-scope drive-by (feature/eigenfrequency-qfactor.L4.md:38 same drift class). counts_after UNCHANGED from c086: L4 firm 17 main / 21 grand, rough-in-test-coverage-bounded 0, feature columns 6 firm / 6 seed."
 inputs:
   - book/src/L4/solve_family.md (the re-anchor SUBJECT — firmness: firm on disk, promoted c086 D1)

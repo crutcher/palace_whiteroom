@@ -15,7 +15,7 @@ gate_hits_total: 0
 build_exit: 0
 build_repairs: 0
 counts_changed: false
-commit: PLACEHOLDER_SHA
+commit: 4ea98af
 ---
 
 # CYCLE-087 — batch CYCLE.md (integrator-finalize) — BATCH-27 POSITION 3/3 (the LAST primary cycle; the batch-27 meta-phase fires NEXT)

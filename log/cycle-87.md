@@ -55,4 +55,4 @@ ALL other layer-vocabulary counts UNCHANGED from c086: L1 firm 30 main / 37 gran
 
 **The batch-27 meta-phase fires NEXT** as a separate dispatch aggregating cycles 085/086/087.
 
-Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit).
+Commit: `4ea98af` (patched in the follow-up two-phase SHA commit).
