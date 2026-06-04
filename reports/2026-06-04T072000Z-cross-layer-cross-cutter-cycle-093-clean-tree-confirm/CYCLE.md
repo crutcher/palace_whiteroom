@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T07:23:16Z
 scope: L1↔L4↔feature cross-cut — cycle-093 batch-29 LAND-CLEAN clean-tree confirmation of the c091/c092 landings
 status: pending
 integrated_at: 2026-06-04T082000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a768a7a
 integration_notes: >-
   Observation-only (cycle-093, batch-29 position 3/3). ZERO book/ mutation — no
   proposed-changes block, no edit: fence. Recorded the repairer-corrected verdict:

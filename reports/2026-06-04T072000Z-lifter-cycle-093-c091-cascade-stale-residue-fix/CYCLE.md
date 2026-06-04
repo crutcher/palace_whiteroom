@@ -7,7 +7,7 @@ inputs:
   - book/src/L1/matrix-weighted-norm.md
   - book/src/L1/index.md
 integrated_at: 2026-06-04T082000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: a768a7a
 integration_notes: >-
   LAND-CLEAN (cycle-093, batch-29 position 3/3). Applied all 4 within-file
   stale-prose re-anchors: matrix-weighted-norm.md :150 Evidence-section
