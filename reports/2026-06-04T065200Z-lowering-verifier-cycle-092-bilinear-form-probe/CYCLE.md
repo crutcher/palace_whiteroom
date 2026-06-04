@@ -13,7 +13,7 @@ inputs:
   - book/src/L1/apply_linop.md (firm constituent)
   - book/src/L1/matrix-weighted-norm.md (firm c091 SPD-diagonal sibling)
 integrated_at: 2026-06-04T080000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7604c43dbd46e9dc645d458e45173a484a488364
 integration_notes: |
   cycle-092 (batch-29 position 2/3). Applied clean by integrator-per-report; verdict DISCHARGE.
   §Status of book/src/L1/bilinear-form.md narrowed to record the cycle-092 firm-on-positive-structure

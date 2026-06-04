@@ -6,7 +6,7 @@ cycle_id: cycle-092
 meta_batch: batch-29
 meta_batch_position: 2
 reports_consumed: 1
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7604c43dbd46e9dc645d458e45173a484a488364
 ---
 
 # CYCLE-092 — integrator-finalize batch report
