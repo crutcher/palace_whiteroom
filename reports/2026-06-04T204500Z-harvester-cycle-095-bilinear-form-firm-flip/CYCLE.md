@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T204500Z
 scope: L1 operator: bilinear-form (firm-flip + HARD-gate-new typed frontmatter + within-file re-anchor + L1/index count-owner)
 status: integrated
 integrated_at: 2026-06-04T231500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efe6872
 integration_notes: "cycle-095 D1 (staging position 1/7). bilinear-form rough-in->firm + the campaign's FIRST HARD-gate-new typed edges: block (rank-gate PASS firm-over-firm: dot/apply_linop/matrix-weighted-norm) + L1/index count-owner (firm 31->32 main / 38->39 grand). Applied clean, all 9 proposed-change blocks verbatim; retroactive-budget 0. Part of the bilinear-form firm-flip cascade contributing to the 22->1 rank-violation drop."
 inputs:
   - reports/2026-06-04T204023Z-cycle-planner-cycle-095/CYCLE.md (D1 scope)

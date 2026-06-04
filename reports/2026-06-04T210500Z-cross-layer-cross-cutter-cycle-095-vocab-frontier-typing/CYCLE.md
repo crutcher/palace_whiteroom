@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T210552Z
 scope: L1↔L2↔L3↔L4 cross-cut — P1 high-fan-out vocabulary-frontier edge-typing + stale-edge audit finding (D6, Wave 3, cycle-095 GRADED-STACK P1)
 status: integrated
 integrated_at: 2026-06-04T231500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efe6872
 integration_notes: "cycle-095 D6 (staging position 6/7). The P1 high-fan-out vocab-frontier edge-typing: 17 files — ~15 ops got NEW rank: firm + typed edges: (ad-hoc lowers_to/lifts_from blocks replaced; cross-layer identity-view edges -> reference) + L4/index.md (count 18->19) + L4/solve_family.md:154 re-anchor (3 stale c080-NO-GO-HELD claims overturned — DISCHARGES the D3-promoted OQ in-artifact). RAN THE LINTER POST-APPLY: rank violations 22->1. Applied clean; retroactive-budget 0. Promoted the headline OQ graded-stack-lint-read-status-line-token-priority-bug."
 inputs:
   - reports/2026-06-04T204023Z-cycle-planner-cycle-095/CYCLE.md (D6 scope; the stale-edge "Key on-disk finding")

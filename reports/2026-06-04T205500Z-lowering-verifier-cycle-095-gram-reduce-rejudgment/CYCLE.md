@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T205500Z
 scope: L4 verb firm re-judgment — gram_reduce (coupled to the bilinear-form firm-flip cascade, D3 Wave 2)
 status: integrated
 integrated_at: 2026-06-04T231500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efe6872
 integration_notes: "cycle-095 D3 (staging position 3/7). gram_reduce DISCHARGE->firm (both folded gates discharged: matrix-weighted-norm c091 + bilinear-form c095) + typed edges: [direct-dep set] + first verified_against: block (7 entries); L4 firm 18->19 main / 22->23 grand, L4 rough-in (tcb) cohort 1->0 EMPTY. Rank-gate PASS firm-over-firm (re-read deps on disk in-invocation). Applied clean, all 4 blocks verbatim; retroactive-budget 0. Promoted OQ solve-family-154... (DISCHARGED in-artifact by D6's K edit same cycle)."
 inputs:
   - book/src/L4/gram_reduce.md (the verb being re-judged)

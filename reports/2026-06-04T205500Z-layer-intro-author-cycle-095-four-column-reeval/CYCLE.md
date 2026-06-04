@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T205500Z
 scope: cycle-095 D4 (Wave 2) — the 4-column (capacitance/inductance/electrostatic/magnetostatic) seed→firm re-evaluation under the OWN-COMPOSITION rule + feature/index.md SOLE-owner + HARD-gate-new typed frontmatter + bilinear-form rough-in re-anchor
 status: integrated
 integrated_at: 2026-06-04T231500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efe6872
 integration_notes: "cycle-095 D4 (staging position 4/7). 15 files: the 4 columns capacitance/inductance/electrostatic/magnetostatic x {L4,L1,L0} seed->firm under OWN-COMPOSITION (the planner's outcome-(a) forward-ref MATERIALIZED — gram_reduce firm on disk, no (b)-revert) + feature/index.md SOLE-owner chapter-kind split -> 11 firm / 1 seed + 2 group-intros. Feature spine 7->11 FIRM / 5->1 seed. Rank-gate PASS all 12 columns x 3 levels. Applied clean (+2 discretionary within-file self-consistency re-anchors); retroactive-budget 0. Promoted shared OQ cites-evidence-l0-edge-linter-slug-resolution-exemption."
 inputs:
   - reports/2026-06-04T204023Z-cycle-planner-cycle-095/CYCLE.md (D4 scope; the cascade-discharges-10 partition; the OWN-COMPOSITION gate logic)

@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T204500Z
 scope: L1 bilinear-form firm-flip — whole-book cross-reference re-anchor of stale rough-in co-mentions
 status: integrated
 integrated_at: 2026-06-04T231500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efe6872
 integration_notes: "cycle-095 D2 (staging position 2/7). Whole-book bilinear-form firm-flip cross-ref re-anchor: 14 sites / 11 files, all stale 'bilinear-form rough-in' narration ->firm c095; theme files' OWN ## Status VERDICTs untouched (HARD constraint satisfied, verified on disk). Applied clean, all 13 blocks verbatim; retroactive-budget 0. Promoted 2 OQs (the meta-owned stale-narration + the mwn-mutation-rotation within-theme residue)."
 inputs:
   - reports/2026-06-04T204023Z-cycle-planner-cycle-095/CYCLE.md

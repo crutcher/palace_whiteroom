@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T211500Z
 scope: L-cross baseline-exception ledger — GRADED-STACK P1 tracked rank-violation exception set (D7, Wave 3, cycle-095)
 status: integrated
 integrated_at: 2026-06-04T231500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efe6872
 integration_notes: "cycle-095 D7 (staging position 7/7). Observation/ledger-only: authored scaffolding/graded-stack-baseline-exceptions.md directly (same-layer-cross-cutter scaffolding/ write authority; 14676 bytes). NO book/ mutation. The ledger's predicted end-state (22 baseline -> 21 discharged c095 -> 1 residual O1) is REALIZED on disk; D7 ran the LANDED-state linter and confirmed exactly 1 rank violation == O1 (solve_family->solve-family-map-dissolution). No NEW OQs (headline read_status_line bug + cites-evidence exemption already promoted by D6/D4). Build-relevant: no."
 inputs:
   - reports/2026-06-04T204023Z-cycle-planner-cycle-095/CYCLE.md (D7 scope; the 22-violation partition; the "~8 stale + small genuine residual" estimate)

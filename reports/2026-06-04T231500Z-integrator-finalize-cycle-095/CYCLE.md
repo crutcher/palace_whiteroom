@@ -13,7 +13,7 @@ reports_rejected: 0
 gate_hits_total: 0
 build_status: "cargo make book + linkcheck2 exit 0 (~92s); NO finalize build-repair"
 graded_stack_rank_violations: "22 -> 1 (residual O1 = solve_family -> solve-family-map-dissolution; c096 lazy-tail typing item)"
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efe6872
 ---
 
 # CYCLE-095 — batch CYCLE.md (integrator-finalize)
@@ -51,7 +51,7 @@ The `bilinear-form` firm-flip cascade (the batch-30 LEAD, priorities item-1) and
 - **Per-report safety-net gates all PASS / N/A.** The campaign's FIRST HARD-gate-new typed-frontmatter rank-gates (D1, D3, D4, D5, D6) all PASSED firm-over-firm — each per-report integrator re-read its `depends-on` deps on disk in-invocation, so every typed promotion was rank-valid at apply time with NO transient violation. D7 is observation/ledger-only (no `book/` writes; all book-write gates N/A).
 - **Build-breakage repair (finalize-owned): none needed.** `cargo make book` exit 0 first build.
 - **Commit atomicity (finalize-owned):** all artifact changes + 2 new scaffolding files + housekeeping + the 7 consumed-report frontmatter touches + the staging log go in one commit.
-- **Consumed-report frontmatter integrity (finalize-owned):** all 7 reports' `status: pending` → `integrated` + `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes:` set; SHA patched in the two-phase follow-up commit.
+- **Consumed-report frontmatter integrity (finalize-owned):** all 7 reports' `status: pending` → `integrated` + `integrated_at` + `integration_commit: efe6872` + `integration_notes:` set; SHA patched in the two-phase follow-up commit.
 
 ## Graded-stack linter — the 22 → 1 drop (BASELINE RECORD, not gated)
 

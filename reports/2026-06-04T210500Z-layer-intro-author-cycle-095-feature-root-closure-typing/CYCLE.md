@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T210500Z
 scope: cycle-095 D5 (Wave 3) — P1 feature-root closure typing — author the typed `edges:` + `feature_root: seed` + `rank:` SPLIT frontmatter on the NON-cascade feature-spine columns (driven / eigenmode / transient / eigenfrequency-qfactor / sparameters / energy-fields / boundary-mode × {L4,L1,L0}) + the lifecycle spine-ROOT × {L4,L1,L0} + the spine-root group intro, per scheme §4(c) composes:→edges: migration; plus the 5 D4-handed stale `(seed)` down-link re-anchors
 status: integrated
 integrated_at: 2026-06-04T231500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: efe6872
 integration_notes: "cycle-095 D5 (staging position 5/7). The P1 feature-root closure typing: 25 files — the 7 NON-cascade feature columns + the spine-ROOT got the scheme §3 feature_root: seed + rank: SPLIT + typed edges: migration; lifecycle ROOT firm under OWN-COMPOSITION; boundary-mode honestly typed rank: rough-in; THE GC ROOT SET IS NOW FULLY TYPED. Rank-gate PASS (7 firm columns rest on firm vocab; boundary-mode rough-in <= firm deps). Applied clean (+5 discretionary within-partition sibling-status re-anchors); retroactive-budget 0. No NEW OQs (shared cites-evidence OQ already promoted by D4)."
 inputs:
   - reports/2026-06-04T204023Z-cycle-planner-cycle-095/CYCLE.md (D5 scope; the partition; the stale-edge false-positive thesis)
