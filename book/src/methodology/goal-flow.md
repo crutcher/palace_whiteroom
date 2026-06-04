@@ -259,25 +259,69 @@ This shape is load-bearing, and it follows three principles:
 > wave flipped `matrix-weighted-norm` to `firm` and propagated the cascade across ~30 files,
 > yielding **three** firm promotions — the planned `matrix-weighted-norm` (L1) PLUS two bonus
 > cascade-yield promotions (`domain_energy_reduce`, the per-domain energy-table fold, to firm L4;
-> the `energy-fields` feature column to firm) — with the honest residual gates preserved
-> (`gram_reduce` and `bilinear-form` stay `rough-in`; four columns stay `seed`). The long-held
-> √-foundation-blocker is discharged. With the diagonal `matrix-weighted-norm` now firm, the
-> convergent foundation-blocker collapsed onto the SINGLE remaining primitive **`bilinear-form`**
+> the `energy-fields` feature column to firm) — with the honest residual gates preserved at that
+> point (`gram_reduce` and `bilinear-form` were still `rough-in`; four columns still `seed`). The
+> long-held √-foundation-blocker is discharged. With the diagonal `matrix-weighted-norm` now firm,
+> the convergent foundation-blocker collapsed onto the SINGLE remaining primitive **`bilinear-form`**
 > (the off-diagonal operator-weighted form, the sole residual gate on `gram_reduce`). The same
 > cheap-probe pattern was applied immediately (c092): a scoped dischargeability probe on
 > `bilinear-form` returned **DISCHARGE** — and materially CLEANER than `matrix-weighted-norm`
 > (laws 1-6 are pure-linearity syntactic read-offs over the firm `dot` + `apply_linop` +
 > `matrix-weighted-norm` constituents, with NO inner-product-norm theorem content needing a
-> structure-side probe; laws 7-8 are M-symmetry-conditional with both on-disk witnesses). So the
-> `bilinear-form` firm flip + its cascade (firming `gram_reduce` → unblocking the four stay-`seed`
-> columns `capacitance` / `inductance` / `electrostatic` / `magnetostatic` under the
-> OWN-COMPOSITION rule) is now the NEXT gated wave — a BIGGER fan-out than the `matrix-weighted-norm`
-> cascade (four columns flip, not one). The probe-then-wave playbook (now a named procedure,
-> skill `foundation-blocker-dischargeability-probe`) is being run down the foundation tail one
-> convergent blocker at a time: `matrix-weighted-norm` discharged-and-landed, `bilinear-form`
-> discharged-and-queued. This supersedes the prior batches' "single convergent blocker is the
-> `matrix-weighted-norm` √-cascade" framing — that blocker is discharged; the lever is now
-> `bilinear-form`.
+> structure-side probe; laws 7-8 are M-symmetry-conditional with both on-disk witnesses). The
+> `bilinear-form` firm flip + its cascade — a BIGGER fan-out than the `matrix-weighted-norm`
+> cascade (four columns flip, not one) — was queued as the next gated wave, and **LANDED CLEAN at
+> cycle-095 (batch-30, see below).** The probe-then-wave playbook (now a named procedure, skill
+> `foundation-blocker-dischargeability-probe`) was run down the foundation tail one convergent
+> blocker at a time: `matrix-weighted-norm` discharged-and-landed (c091), `bilinear-form`
+> discharged-and-landed (c095). With the `bilinear-form` cascade landed, the convergent
+> foundation-blocker tail of the reduce-verb cohort is **worked off**; this supersedes the prior
+> batches' "single convergent blocker is the `matrix-weighted-norm` √-cascade" framing entirely.
+
+> **The `bilinear-form` cascade LANDED + the artifact gained two mechanically-checkable health
+> axes (batch-30 — the GRADED-STACK campaign).** Two arcs composed across cycles 094/095/096.
+> **(1) The `bilinear-form` cascade (c095).** The queued wave landed in a single 7-dispatch cycle:
+> `bilinear-form` (L1) → `firm` (the firm-on-positive-structure escape), clearing `gram_reduce`'s
+> sole residual gate so `gram_reduce` (L4) → `firm`, propagating under the OWN-COMPOSITION rule to
+> **four output-product/driver feature columns** (`capacitance` / `inductance` / `electrostatic` /
+> `magnetostatic`) flipping `seed` → `firm` — the feature spine reaching 11-firm / 1-seed (only
+> `boundary-mode` stays `seed`, its waveguide-mode readout unhomed). The reduce-verb foundation tail
+> is now worked off. **(2) The two-axis artifact-health model.** Following the 2026-06-04 user
+> directive (full spec `METHODOLOGY-GRADED-STACK.md`), the artifact gained **two orthogonal,
+> mechanically-checkable health axes**, replacing eyeball maturity-tracking and the frozen Phase-1
+> corpus with typed, linted invariants:
+> - **Axis 1 — resolution + well-foundedness.** The maturity ladder is a total order with a rank
+>   (`roadmap_goal = 0 < stub = 1 < rough-in = 2 < firm = 3`; `partly-constructive` /
+>   `rough-in (test-coverage-bounded)` are sub-rank ≈2.5; `obstruction` a separate rankable kind),
+>   and the **well-foundedness invariant** holds for every blocking `depends-on` edge `u → v`:
+>   `rank(u) ≤ rank(v)` — *an entry is at most as resolved as its least-resolved dependency*
+>   (`firm` rests only on `firm`). This subsumes the lived "as firm as its least-firm folded
+>   primitive" rule (the `k=3` case) and the feature OWN-COMPOSITION rule, now mechanical. The new
+>   **rank-0 `roadmap_goal` chapter** is the in-discipline replacement for the retired
+>   `annotated-and-retained` slice: a real, claim-free book chapter carrying intent + pulled-by
+>   provenance + declared deps, so *intent* has a native home (links resolve) and never has to be
+>   parked in a frozen slice.
+> - **Axis 2 — reachability / liveness.** The **feature-surface spine columns are the GC root set**
+>   (`seed` is a root marker, NOT a ladder rung); reachability from the roots over `depends-on` edges
+>   is liveness, and an unreachable node is **garbage** — the detritus hunt and the orphaned-intent
+>   hunt are one mark-sweep from the roots.
+>
+>   The **shared substrate** is one typed dependency graph: each edge is `depends-on` (blocking —
+>   constrains rank AND carries liveness) or `reference` (navigational — free; an edge to a *root*
+>   is `reference`, which is exactly where OWN-COMPOSITION comes from). **Two linters under `tools/`**
+>   check the two axes (the rank check + the reachability GC); `integrator-finalize` runs them every
+>   cycle and the rank invariant is a **hard gate for new work** (no new violation admitted). The
+>   campaign typed the feature-root closure + the high-fan-out frontier first (incremental, lazy
+>   tail), opened a **bounded baseline-exception ledger** for the pre-existing rank violations, and
+>   burned it down: the rank linter independently rediscovered the hand-tracked firm-rests-on-rough-in
+>   cascade as **22 violations at the c094 baseline → 1 (c095, after the `bilinear-form` cascade
+>   cleared ~10 genuine gaps and the typed-frontmatter retyping cleared ~11 prose-parse false
+>   positives) → 0 (c096)** — the typed subset is now well-founded with zero rank gaps. The first
+>   `roadmap_goal`-adjacent vocabulary gap, the firm L4 `preconditioning-framework`, was authored;
+>   the Phase-1 slice corpus depopulation (now safe and mechanical — the slices sit in the
+>   reachability-GC detritus mass, deletable once their load-bearing citations are repointed to
+>   non-slice homes) is the next batch's lead. The two axes together *define* artifact health: every
+>   node reachable from a root, and the rank invariant holding everywhere.
 
 ## FLOW — how the goal is met
 
