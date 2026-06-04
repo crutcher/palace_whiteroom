@@ -4,6 +4,8 @@
 # Methodology
 - [Overview](./methodology/overview.md)
 - [Goal & Flow](./methodology/goal-flow.md)
+- [Resolution ladder & reachability](./methodology/resolution-ladder.md)
+- [Graded-stack scheme (node-status + typed edges)](./methodology/graded-stack-scheme.md)
 # Feature surfaces — entry points
 - [Overview](./feature/index.md)
 - [Spine ROOT (lifecycle)](./feature/spine-root.md)

@@ -1226,3 +1226,106 @@ Resolution: a `lifter` (or `layer-intro-author`) Evidence-section refresh on `bo
 **CLOSED cycle-093** (integrator-per-report, applying `reports/2026-06-04T072000Z-lifter-cycle-093-c091-cascade-stale-residue-fix/`). The cycle-093 lifter land-clean dispatch landed; the repairer extended its coverage from the single brief-pinned `:150` site to the file's complete same-class residue, so this OQ's residue accounting is now complete across FOUR sites: **Residue 1** (`:150` Evidence-section conclusion) reframed the "escape does not apply / stays rough-in" reading as superseded-by-c088/c089-discharges and concludes the escape DID apply, firm c091; **Residue 3** (`:122` gate-(c)) fixed the header/body "still open" vs "now discharged" contradiction and re-anchored the "sole remaining driver is gate (a)" verdict to past tense (gate (a) judged redundant, firm c091); **Residue 4** (`:180-184` FP-residue paragraph) re-anchored the "verb stays rough-in pending gate (a)" closing sentence. Post-apply same-file grep confirms NO live "stays rough-in" / "escape does not apply" / "sole remaining driver" conclusion remains outside the frozen `verified_against:` YAML audit notes (`:177` and the `:186-212` block, legitimately-preserved point-in-time verdicts, left untouched). `matrix-weighted-norm.md` is internally self-consistent with the firm §Status `:110`. ZERO status/count change. Resolved.
 
 ---
+
+## graded-stack-edge-home-fork-p1-cost
+
+opened_at: cycle-094
+opened_by: layer-intro-author (cycle-094 D1 — `book/src/methodology/graded-stack-scheme.md` P0-A authoring)
+
+**DECISION POINT for the batch-30 meta-phase / human.** The graded-stack typing campaign's P1 (the artifact-wide typed-edge pass) has a three-way design fork over *where edge types live*, and the choice materially sets P1's entire cost. The fork (full detail in `book/src/methodology/graded-stack-scheme.md` §4):
+
+- **(a) per-chapter `edges:` frontmatter everywhere** — heavy but clean. Hand-classify an `edges:` block on every real DAG node (~250+ of the 357 files). Highest up-front cost; deterministic, complete, the ONLY option that covers themes + concepts (which appear in NO index dep-map table) and can type the lowering edges.
+- **(b) parse the index dep-map tables** — lighter but lossy. Cheaper but the tables are inconsistent free text, and themes/concepts/feature-columns are not rows in any layer dep-map table — structurally misses a large fraction of the DAG and cannot type lowering edges at all.
+- **(c) hybrid** — frontmatter for leaf entries + table-parse for index aggregates. Splits the difference but creates two edge-of-truth surfaces that drift (the exact failure mode the index-status-cell drift already demonstrates).
+
+D1's recommendation is **(a)**, because it is the only deterministically-parseable, theme/concept/feature-column-covering, single-source-of-truth option — but it raises P1's cost to a hand-classification pass over ~250 nodes (vs a parse of ~15 index tables). The cheaper bounded compromise is **(a)-incremental**: type the feature-root `depends-on` closure + the high-fan-out frontier first (the nodes the reachability GC and the bilinear-form rank-validation actually need), and let the long tail acquire `edges:` lazily as next-touched — the linters warn-not-fail on untyped frontmatter, so an incrementally-typed artifact is runnable throughout.
+
+This is the highest-leverage call in the graded-stack campaign and sets the entire P1 cost. *Trigger:* batch-30 meta-phase intake / human decision.
+
+---
+
+## graded-stack-index-and-concept-node-status
+
+opened_at: cycle-094
+opened_by: layer-intro-author (cycle-094 D1 — `book/src/methodology/graded-stack-scheme.md` P0-A authoring; explicitly carved out of the P0-A pass per the planner's allowance)
+
+A P1 sub-task: **whether `L_n/index.md` pages are themselves DAG nodes** (and if so with what `rank:`), and **which `concepts/` pages are in-DAG vs outside-DAG**, is NOT cleanly resolvable in the single P0-A scheme-authoring pass and was carved out (not forced).
+
+- **Index pages** are navigational overviews whose dep-map *table* is a derived view (`graded-stack-scheme.md` §4(b)); whether the index page is itself a DAG node interacts with the table-vs-frontmatter fork (`graded-stack-edge-home-fork-p1-cost`) and with the group-intro pages.
+- **Concept pages** split into two sub-cases (`graded-stack-scheme.md` §5): a *meta page about the construction* (narrative pointer to an L_n operator, e.g. `concepts/dot.md`, `concepts/solver-as-operator.md`) sits OUTSIDE the subject DAG (`METHODOLOGY-GRADED-STACK.md` §2d, no `rank:` — like the scheme page itself); a *record-definition* page (e.g. `concepts/config-record.md`) defines a data shape signatures rest on and IS a DAG node (rank = the resolution of that shape, typically `firm` once its L0 backing struct is cited). The distinguishing criterion is the `record` Kind, but the per-page boundary needs the P1 author's judgment.
+
+Resolution: the P1 typing author makes the per-page node-vs-not-a-node call as part of the classification pass, against the §2d boundary. *Trigger:* batch-30 meta-phase intake / the P1 typing pass.
+
+---
+
+## graded-stack-feature-root-frontmatter-split
+
+opened_at: cycle-094
+opened_by: layer-intro-author (cycle-094 D1 — `book/src/methodology/graded-stack-scheme.md` P0-A authoring; transitional-period note for the D2 reachability-GC linter)
+
+The graded-stack scheme (`graded-stack-scheme.md` §3) splits the historical feature-column `status: seed` token into two independent properties: **`feature_root: seed`** (permanent root-set membership, a parallel axis NOT a ladder rung) + **`rank:`** (the column's OWN composition-maturity, which climbs — `seed→firm` flips of cycles 085/091 were maturity events on `rank:`, on nodes whose root-role never changed). The 24 feature-column files currently encode BOTH in one `status:` token.
+
+P1 must split them. **Until then, D2's reachability GC linter should accept the transitional dual form**: read `status: seed` as the root marker (back-compat) AND read `status: firm`/etc. as the `rank:`. This is the transitional dual-form the D2 linter already had to accommodate. Not a blocker — a transitional-period note so the linter and the eventual P1 split stay coordinated. *Trigger:* the P1 feature-column frontmatter split; the D2 linter's transitional dual-form acceptance.
+
+---
+
+## graded-stack-obstruction-resolution-encoding-parser-coordination
+
+opened_at: cycle-094
+opened_by: layer-intro-author (cycle-094 D1 — `book/src/methodology/graded-stack-scheme.md` P0-A authoring; parser-coordination note)
+
+`METHODOLOGY-GRADED-STACK.md` §1f asserts the *concept* "obstruction is a *kind* that is itself rankable" but does NOT fix a concrete frontmatter spelling. D1's scheme page (`graded-stack-scheme.md` §1) chose the concrete encoding **`rank: obstruction`** (the kind) + **`obstruction_kind:`** (`opaque-library-ownership` / `enum-only-stub`, per CLAUDE.md §obstruction sub-kinds) + **`obstruction_resolution:`** (the constructive-resolution rank of the negative result itself — a `firm` obstruction being a well-founded, exhaustively-cited negative result that is a valid `depends-on` target on a live path). This is a scheme addition beyond the letter of the spec — faithful (it concretizes §1f, does not contradict it) and correctly framed as the authoring contract's prerogative.
+
+If the batch-30 meta-phase or the D2 linter prefers a different spelling, `graded-stack-scheme.md` is the place to fix it (it is the authoring contract). Flagged so D2's parser and the scheme page stay in sync on the obstruction encoding. *Trigger:* the D2 rank-check linter's obstruction-node parsing; batch-30 meta-phase review of the encoding.
+
+---
+
+## goal-flow-refresh-two-health-invariants-and-typing-audit-campaign
+
+opened_at: cycle-094
+opened_by: layer-intro-author (cycle-094 D3 — `book/src/methodology/resolution-ladder.md` P3 authoring; OQ-intake for the batch-30 meta-phase)
+
+`METHODOLOGY-GRADED-STACK.md` §9 + §8 specify that the reader-facing `goal-flow.md` chapter should be refreshed to fold in the two-axis graded-stack health model now that its sibling mirror (`resolution-ladder.md`, D3 this cycle) and the authoritative scheme page (`graded-stack-scheme.md`, D1 this cycle) are on disk:
+
+- the **GOAL** section should gain the **two checkable health invariants** — well-foundedness (`rank(u) ≤ min over depends-on deps of rank(v)`) and reachability (every node reachable from the feature-surface root set);
+- the **FLOW** section should gain the **typed-edge-and-audit campaign** (the P1 whole-artifact edge-typing pass + the two `tools/` linters) and the **`roadmap_goal` (rank-0) tier** as the in-discipline replacement for the retired `annotated-and-retained` slice.
+
+`goal-flow.md` is **meta-phase-owned** (the seed transferred ownership), so D3 does NOT touch it — this is intake for the batch-30 meta-phase's goal-flow refresh. NOTE: the older `goal-flow-mwn-firm-flip-cascade-refresh-stale-rough-in-refs` OQ (line ~1156) was already CLOSED/DONE by the batch-29 meta-phase; this is the distinct *forward* refresh for the graded-stack two-axis model, not a re-open of that one. *Trigger:* batch-30 meta-phase goal-flow GOAL/FLOW refresh; cross-link the new `resolution-ladder.md` + `graded-stack-scheme.md` pages.
+
+---
+
+## roadmap-goal-unbuilt-frontier-SUMMARY-grouping-deferred
+
+opened_at: cycle-094
+opened_by: layer-intro-author (cycle-094 D3 — `book/src/methodology/resolution-ladder.md` P3 authoring; deferred-by-scope SUMMARY grouping)
+
+The `## Roadmap goals — unbuilt frontier` SUMMARY grouping (and the unmissable per-chapter `status: roadmap_goal` banner) is NOT added this cycle: no `roadmap_goal` chapter exists on disk yet (`grep -r "status: roadmap_goal" book/src/` returns none). `resolution-ladder.md`'s prose describes the grouping/banner convention so readers understand it before any such chapter exists, but the SUMMARY wiring is deferred to **when P2 mints the first `roadmap_goal` chapter** (the graded-stack §6 migration surfacing e.g. the un-authored `orthogonalize-mutation-rotation` L1>L0 theme). *Trigger:* P2 (or any agent) creates the first `book/src/**/<slug>.md` with `status: roadmap_goal` frontmatter — at that point the integrator/author adds the `## Roadmap goals — unbuilt frontier` SUMMARY grouping and registers the chapter under it (alpha-position within the grouping per the directive-3 alpha-insert convention).
+
+---
+
+## graded-stack-finalize-json-wiring-role-spec
+
+opened_at: cycle-094
+opened_by: layer-intro-author (cycle-094 D2 — `tools/graded-stack-lint/` P0-B authoring; integrator-finalize wiring note for the batch-30 meta-phase)
+
+`METHODOLOGY-GRADED-STACK.md` §8 says integrator-finalize should run the graded-stack linters at cycle-end (once the book is built) and record the machine summary. The two linters + the `--json` machine-summary contract are now **delivered on disk** (`tools/graded-stack-lint/graded_stack_lint.py`, D2 this cycle; `python3 tools/graded-stack-lint/graded_stack_lint.py --json` emits a `totals` block — `files / typed / untyped / roots / rank_violations / unresolved_depends_on_targets / promotion_frontier / reachable / detritus{...} / expected_unreachable`). What is NOT done is the **role-spec edit** that makes finalize actually run it and record the `totals` block each cycle — that touches `.claude/agents/integrator-finalize.md`, which is **meta-phase write-authority** (`.claude/agents/` is not integrator territory). Flagged as batch-30 meta-phase intake: add the §8 bullet to `integrator-finalize`'s run so finalize starts capturing the `totals` trend (the rank-violation count is a one-number cycle-over-cycle health signal — e.g. the bilinear-form cascade wave should drive `rank_violations` down from 22). *Trigger:* batch-30 meta-phase enacts the `integrator-finalize.md` role-spec addition.
+
+---
+
+## graded-stack-linter-categorical-root-rule-p1-sync
+
+opened_at: cycle-094
+opened_by: layer-intro-author (cycle-094 D2 — `tools/graded-stack-lint/` P0-B authoring; D1↔D2 / P1 reconciliation note)
+
+D2's reachability-GC linter resolved D1's `graded-stack-feature-root-frontmatter-split` transitional-dual-form concern by making **root membership permanent + categorical via THREE signals**: explicit `feature_root: seed`, OR legacy `status: seed`, OR being a `kind: feature-surface` **column** (excluding the `driver-leaf`/`output-product`/`spine-root`/`index` group-intro pages) **regardless of its `status:`**. This was forced by the empirical dry run: 21 of the 36 feature-column files have already promoted off `seed` to `status: firm` (e.g. `feature/eigenmode.L4`, `feature/driven.L4`), so a naive "root = has `seed`" rule dropped them and collapsed the GC to only 6 reachable. The categorical rule is correct under the transitional dual form AND after P1 splits the marker. **Sync note for P1:** once P1 writes `feature_root: seed` on every column (per D1's scheme §3), the `kind: feature-surface` inference fallback becomes redundant but harmless — it should be kept (or the scheme page should explicitly bless permanent-categorical root membership) so the GC never silently loses a root on a future promotion. This is the implemented divergence from D1's status-based seed framing, surfaced so the scheme page + P1 split + the linter stay in agreement. *Trigger:* P1 feature-column frontmatter split; batch-30 meta-phase / scheme-page review of the categorical-root rule.
+
+---
+
+## graded-stack-unresolved-target-prose-as-slug-p1-reclassify
+
+opened_at: cycle-094
+opened_by: layer-intro-author (cycle-094 D2 — `tools/graded-stack-lint/` P0-B authoring; P1 typing-audit input)
+
+D2's rank linter reported **11 unresolved `depends-on` targets** on the real tree. Several are **not genuine missing-node errors** but **migration-mapping false positives**: free-text prose that the migration reader parsed out of legacy `lowers_to:`/`consumes:` list items as if it were a slug — e.g. `L3/apply_linop → "(no L4 entry; apply_linop appears inside …)"`, and several L3 ops whose `"(no L4 entry …)"` prose became a fake target. These are prose explanations of a *non-dependency*, not slugs. They are correctly surfaced as **WARNINGs** (not failures — `--strict` is off by default), and D2 deliberately did **not** heuristically suppress them: surfacing them is the right pre-P1 behavior, since fixing them IS the "the typing pass IS the audit" step (scheme §4(b)). **P1 action:** during the hand-classification typing pass, reclassify each prose-as-list-item entry to `reference:` (navigational) or drop it; do not leave it as a `depends-on` slug. *Trigger:* P1 whole-artifact edge-typing/audit pass.
+
+---

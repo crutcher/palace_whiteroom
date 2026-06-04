@@ -1,0 +1,10 @@
+# graded-stack-lint has NO third-party dependencies — Python 3.10+ standard
+# library only (argparse, json, re, dataclasses, pathlib). No venv is required
+# to run it (see README.md). This file documents that the reproducible
+# environment is "stock Python 3.10+", per the tools/ convention of tracking a
+# requirements manifest for each Python tool (mirrors tools/citecheck).
+#
+# A hand-rolled minimal frontmatter reader is used DELIBERATELY in place of
+# PyYAML: it covers exactly the scheme grammar (graded-stack-scheme.md) + the
+# three legacy frontmatter representations and nothing else, keeping the tool
+# stdlib-only and dependency-free like citecheck.
