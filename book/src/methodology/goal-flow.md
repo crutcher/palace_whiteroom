@@ -200,6 +200,34 @@ This shape is load-bearing, and it follows three principles:
 > vocabulary + the standing 5-driver→L4 backend-lowering completeness picture** as the
 > highest-fan-out work.
 
+> **The deadlock-break LANDED — six columns lifted off `seed` (batch-27).** The all-12-column
+> re-evaluation under the OWN-COMPOSITION rule landed (c085): **six feature columns promoted
+> `seed`→`firm` — the first feature columns ever off the terminal `seed` state.** The three
+> driver-leaf columns whose own solve+assemble combinators are firm (`eigenmode`, `driven`,
+> `transient`), the two output-product columns whose own reduce verb is firm
+> (`eigenfrequency-qfactor` via `eigenfreq_qfactor_reduce`, `sparameters` via `sparameter_reduce`),
+> and the spine-ROOT `lifecycle` (its own driver-agnostic `fold_solve` composition firm; the five
+> per-driver columns are sibling references). The `eigenmode`↔`eigenfrequency-qfactor`
+> mutual-blocking deadlock is broken. **The seed-firming ceiling is again CONDITIONAL, not absolute**
+> — the columns were never truly stuck; the inter-column rule was the over-constraint, and the
+> spine-promotion mechanism is now validated end-to-end. On-disk verification OVERRODE the plan's
+> expectation that `electrostatic`/`magnetostatic` would flip: their own composition includes
+> `gram_reduce` (rough-in), so they correctly STAY `seed` on a genuine own-constituent gate, not a
+> sibling blocker. Six columns stay `seed` on real own-constituent gates: `electrostatic` /
+> `magnetostatic` / `capacitance` / `inductance` (own `gram_reduce` rough-in), `energy-fields` (own
+> `domain_energy_reduce` + `matrix-weighted-norm` rough-in), `boundary-mode` (own waveguide-mode
+> readout unhomed). A third firm-on-positive-structure promotion this arc (`solve_family`, c086 —
+> element-independence read off the `const BaseKspSolver::Mult` body, the escape now reaching the
+> solve-family combinator) narrowed `electrostatic`/`magnetostatic` from a two-constituent to a
+> single-constituent (`gram_reduce`) gate — but did not flip them. **The remaining lever is now a
+> single convergent foundation-blocker: the `matrix-weighted-norm` √-entry-point cascade**, which
+> gates `gram_reduce` (→ four columns) AND `domain_energy_reduce` (→ energy-fields) — 5 of the 6
+> stay-seed columns converge on it. The in-scope law-confidence route is exhausted for the
+> all-primitives-firm cohort (the norm-axiom laws may genuinely be inner-product-structure theorems
+> the source only numerically asserts, not syntactic identities); the next probe is a scoped
+> literature-anchor pass on those norm axioms — the cheap test of whether that one gate is
+> dischargeable at all, before any heavy ~30-file cascade wave.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
