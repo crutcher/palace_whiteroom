@@ -23,7 +23,7 @@ The brand `__cap` is phantom: there is no run-time field, no allocation, no disp
 
 Reach for capability typing when a layer state-bundle has two-or-more fields of the same underlying type playing distinct roles, AND the cost of confusing them is non-trivial (incorrect convergence, silent miscompute, security-equivalent error). Concretely, in the Palace L4 calculus:
 
-- **`(op, pc_op)` in `BaseKspSolver`** — both are `Op<E>`; confusing them produces a wrong preconditioned Krylov iteration that may still converge to a wrong answer. See [`cg_preconditioning_framework`](../spec/slices/cg_preconditioning_framework.md) L4 v0.2.
+- **`(op, pc_op)` in `BaseKspSolver`** — both are `Op<E>`; confusing them produces a wrong preconditioned Krylov iteration that may still converge to a wrong answer. See [`preconditioning-framework`](../L4/preconditioning-framework.md) §"Capability typing".
 - **(planned) `(coarse, fine)` operator pairs in geometric multigrid** — both are `Op<E>`; confusing them inverts the V-cycle direction.
 - **(planned) `(primal, dual)` in saddle-point solvers** — both are `Vec<E>`; confusing them produces a wrong block-system solve.
 
@@ -52,4 +52,4 @@ The L4 calculus uses capability types in their *type-checking-only* form: the br
 - [`state-stratification`](./state-stratification.md) — stratifies state by lifetime; capability typing distinguishes roles within a stratum.
 - [`variant-absorption`](./variant-absorption.md) — hides variant axes; capability typing surfaces role axes.
 - [`solve-monad`](./solve-monad.md) — the L4 monad in whose state-bundles capability types appear.
-- [`cg_preconditioning_framework`](../spec/slices/cg_preconditioning_framework.md) L4 v0.2 — the canonical first use site (TrueOp / PcAssemblyOp brands on the KSP binding).
+- [`preconditioning-framework`](../L4/preconditioning-framework.md) §"Capability typing" — the canonical L4 use site (TrueOp / PcAssemblyOp brands on the KSP binding).

@@ -30,6 +30,37 @@ Append-only running ledger. The integrator appends a section at the **top** afte
 
 ---
 
+## cycle-096 — 2026-06-05T001500Z — POSITION 3/3 OF META-BATCH-30 (the LAST / BATCH-CLOSING primary cycle; cycles 094/095/096; the batch-30 meta-phase fires AFTER this finalize as a SEPARATE dispatch aggregating 094/095/096 — this finalize does NOT run meta-phase housekeeping) — THE GRADED-STACK CAMPAIGN'S MECHANICAL COMPLETION for the typed frontier: **rank violations 22 (c094) → 1 (c095) → 0 (c096)** — the residual O1 discharged two ways at once (D3 typed `solve-family-map-dissolution` `rank: firm`; D4's `read_status_line` `tools/` parse fix retired the prose-fallback FALSE-POSITIVE class, making the histogram ACCURATE) + the P2 first tranche landed (D1 the NEW firm L4 chapter `preconditioning-framework.md`)
+
+### Unblocked
+- **`rank_violations: 0` — the graded-stack rank-invariant criterion is MET for the WHOLE typed subset** (was 1 at c095, 22 at c094). The typed frontier (vocabulary + feature-root + the now-typed O1 lowering theme) has ZERO genuine rank gaps. This unblocks the **finalize-runs-linters build-gate wiring** (`graded-stack-finalize-json-wiring-role-spec`) — the exit-code gate is now cheap to enforce (a clean `rank_violations: 0` baseline means turning on the gate won't block the next cycle). — priorities item-0 (graded-stack campaign).
+- **The batch-31 P2 slice-deletion tranche is now the dominant remaining campaign work** — the 9 Phase-1 slices under `book/src/spec/slices/` + their `spec/index.md` rows + SUMMARY entries + the ~30 slice-line-anchor repoints; completion criterion = the reachability GC shows `spec/slices/*` unreachable (they sit in the pre-P1 detritus mass now, `detritus_no_typed_edges_pre_p1_artifact=110`). A clean batch-31 LEAD candidate. — priorities item-0 P2.
+- **The `preconditioning-framework` L4 vocabulary gap is filled (firm)** — the P2 genuine-gap author landed; `capability-typing.md`'s two slice references now resolve to the new chapter (one of the slice-dependency unwindings the P2 deletion tranche needs). — OQ `l4-preconditioning-framework-promotion` (CLOSEABLE).
+
+### New dependencies
+- `L4-L3/solve-family-map-dissolution` now carries typed `edges: depends-on [L4/solve_family, L4/ksp_solve, L4-L3/ksp-solve-driver-dissolution, L3/ksp_solve]` + 6 `reference` edges (D3) — the lowering-theme edge-typing pattern (a theme's edges are `depends-on` on both endpoints) now has a worked instance for the broader L4-L3 theme-typing sub-campaign (batch-31 deferred tranche).
+- `L4/preconditioning-framework` (NEW node) `depends-on L4/ksp_solve (caps-the-binding)` + `cites-evidence reference/palace/.../ksp.cpp:276-293`; concept refs as `reference` (D1) — a new firm composition-root in the Outer-driver cap cohort.
+
+### Resolution implications
+- `graded-stack-lint-read-status-line-token-priority-bug` — **answered / CLOSEABLE** (D4) — the blob-scan is replaced by the leading-inline-code-token rule + a regression fixture; rank_violations=0 on the real tree; the histogram is now accurate. The recommended batch-30-meta `tools/` fix is IMPLEMENTED in-cycle (D4 was dispatched to do it). The OQ can be marked resolved at the meta unify.
+- `matrix-weighted-norm-mutation-rotation-within-theme-stale-rough-in-residue` — **answered / CLOSEABLE** (D5) — both stale sites (:5, :317) re-anchored.
+- `bilinear-form-firm-flip-stale-narration-in-meta-owned-methodology-pages` — **PARTIALLY-answered** (D2) — the `resolution-ladder.md` half is CLOSED (worked example re-told as the completed cascade); the `goal-flow.md:260-266` half stays OPEN (meta-phase write-territory, batch-30 refresh). Do NOT close the whole OQ at the unify.
+- `l4-preconditioning-framework-promotion` — **answered / CLOSEABLE** (D1) — the chapter is authored firm; the promotion half resolves; the slice deletion stays deferred to batch-31.
+
+### Suggested next dispatches
+- (`meta-phase`, batch-30) — fires after THIS finalize aggregating 094/095/096; mark the closeable OQs, decide the **batch-31 LEAD** (the P2 slice-deletion tranche), refresh the `goal-flow.md` stale worked-example half, decide the **finalize-runs-linters build-gate wiring** (`graded-stack-finalize-json-wiring-role-spec` — now cheap with rank_violations=0), and the carried `cites-evidence-l0-edge-linter-slug-resolution-exemption` convention + the c094 P1 edge-home fork.
+- (`lifter` or `layer-intro-author`, batch-31 land-clean) — `book/src/L4/domain_energy_reduce.md:377` — the one CLEAN cross-file stale `(rough-in (test-coverage-bounded))` operator-maturity assertion D5's grep-guard surfaced (falsified by the c091 matrix-weighted-norm firm-flip); a fast prose re-anchor. — OQ `domain_energy_reduce-377-mwn-stale-rough-in-residue`.
+- (`layer-intro-author`, batch-31 / P2) — the Phase-1 slice-deletion tranche (the deferred P2 work; reachability-GC-verified `spec/slices/*` unreachable as completion criterion).
+
+### Wave-conflict observations
+- **No wave conflicts.** All 5 reports were byte-disjoint (D1: preconditioning-framework.md / capability-typing.md / SUMMARY.md / L4/index.md; D2: methodology/resolution-ladder.md; D3: L4-L3/solve-family-map-dissolution.md; D4: tools/-only; D5: L1-L0/matrix-weighted-norm-mutation-rotation.md). The D3↔D4 interaction on the O1 edge was parallel-safe and over-determined: D3's typed `rank: firm` token clears O1 by construction independent of D4's parse fix, and D4's fix clears it from the prose-fallback side independently — either ordering drives rank_violations→0; with both landed, 0 confirmed on the landed tree.
+
+### Integration-tooling friction
+- **None new this cycle — the cycle's primary product WAS a tooling fix.** D4 closed the most significant standing integration-tooling friction (the `read_status_line` prose-fallback false-positive class that inflated the c094 rank-violation baseline by ~12 and the maturity-histogram by ~20). One residual campaign parse-tail observed (NOT blocking): the linter lists the new `preconditioning-framework` node's dict-form edge (`- target: L4/ksp_solve`) under `unresolved_depends_on_targets` — a dict-vs-bare-string edge-syntax parse note, not a dangling edge (the target exists and the rank-gate read it correctly). Worth folding into the P1 edge-syntax-normalization tail if the meta-phase touches the linter; minor.
+- The §8 / step-5b **finalize-runs-linters build-gate is still NOT formally wired as an exit-code gate** (finalize RAN the linter and recorded totals per the dispatch, but the gate enforcement is OQ `graded-stack-finalize-json-wiring-role-spec`). With rank_violations=0 now established, this is the cheapest moment to enact it (the meta-phase should). Until wired, the linter run remains a finalize baseline-record step, not a hard gate.
+
+---
+
 ## cycle-095 — 2026-06-04T231500Z — POSITION 2/3 OF META-BATCH-30 (the SECOND primary cycle; cycles 094/095/096; the batch-30 meta-phase fires AFTER cycle-096's finalize as a SEPARATE dispatch aggregating 094/095/096 — this finalize does NOT run meta-phase housekeeping) — THE `bilinear-form` FIRM-FLIP CASCADE (the batch-30 LEAD, priorities item-1) + P1 FRONTIER-FIRST EDGE-TYPING (graded-stack campaign, priorities item-0) composed in ONE 7-dispatch cycle — the rank linter's FIRST live validation: **rank violations 22 → 1** on the landed state — the convergent foundation-blocker tail (`matrix-weighted-norm` c091 → `bilinear-form` c095) is now worked off
 
 ### Unblocked

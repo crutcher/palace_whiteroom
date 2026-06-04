@@ -2,7 +2,7 @@
 
 The mutation rotation for the operator-weighted (energy) norm. Lowers the pure L1 form
 `matrix_weighted_norm(x, B) = √(xᴴ B x)` ([`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md),
-rough-in) into Palace's L0 `linalg::Norml2(comm, x, B, Bx)` three-step composition
+firm) into Palace's L0 `linalg::Norml2(comm, x, B, Bx)` three-step composition
 `B.Mult(x, Bx); dot = Dot(comm, Bx, x); return std::sqrt(dot)` (`palace/linalg/operator.cpp:599-619`). It is the
 **weighted relative** of [`nrm2-mutation-rotation`](./nrm2-mutation-rotation.md): where `nrm2`
 lowers `√⟨x, x⟩` to `std::sqrt(std::abs(Dot(comm, x, x)))`, this theme lowers `√(xᴴ B x)` to the
@@ -314,7 +314,7 @@ reconstruction, no literature inference, no speculative operator), hence `firm` 
 ## Speculative L1 operators
 
 **None.** This theme lowers the existing L1 [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
-operator (rough-in, test-coverage-bounded) into existing firm L1 vocabulary — `apply_linop` for the
+operator (firm, promoted cycle-091) into existing firm L1 vocabulary — `apply_linop` for the
 `B·x` step, `dot` for the inner reduction, `scal` for the `Normalize` consumer. It proposes no new
 L1 vocabulary. The sibling **bilinear-form** `linalg::Dot(comm, x, A, y) = yᴴ A x`
 (`palace/linalg/operator.hpp:386-389`, `palace/linalg/operator.cpp:621-639`) shares the L0 file block and the same two L1

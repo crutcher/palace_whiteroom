@@ -43,6 +43,25 @@ prose `## Status` line. `seed` is the **root marker**, never a rank.
 An `obstruction` / `partial-obstruction` is a separate *kind*; its constructive
 rank is read from `obstruction_resolution:` (scheme §1f).
 
+**Prose `## Status` parse rule — the leading inline-code token.** When the
+fallback reaches the prose `## Status` line, it reads the **first non-empty line
+after the heading** and matches ONLY its **leading** maturity token — the
+project convention that the maturity word is the leading inline-code
+(`` `firm` ``) or bold (`**firm**`) token of the status line. The qualified
+sub-rank spellings (`` `rough-in (test-coverage-bounded)` ``, `` `firm
+(structural)` ``, `` `obstruction (opaque-library-ownership)` ``) are matched
+ahead of their bare ladder word, so a sub-rank reads as 2.5, not bare rough-in.
+This is **not** a multi-line blob scan: a firm `## Status` paragraph routinely
+*mentions* "rough-in"/"stub" downstream in a provenance phrase ("promoted from
+rough-in", "previously the rough-in (…) caveat"), and a blob-scan in
+priority-order (rough-in/stub before firm) mis-read such firm nodes as
+rough-in/stub (the c095 token-priority bug — 12 ledger instances incl. the lone
+residual O1 rank violation, all untyped-tail nodes). Anchoring on the leading
+token is immune to that downstream-mention drift; typed `rank:` nodes never
+reach this path. The `fixture/book/src/L1/prose_firm_provenance.md` case
+regression-guards it (a firm node whose `## Status` mentions "rough-in" and
+"stub" in provenance phrases).
+
 **Edges** are read from the going-forward `edges:` block when present:
 
 ```yaml
@@ -131,14 +150,17 @@ bullet).
 
 `fixture/book/src/` is a small hand-authored typed graph that exercises a KNOWN
 rank violation + a KNOWN unreachable node + the transitional dual-form + the
-migration mapping (see `fixture/README.md` for the expected outcomes):
+migration mapping + the prose-`## Status` leading-token rule (see
+`fixture/README.md` for the expected outcomes):
 
 ```bash
 python3 tools/graded-stack-lint/graded_stack_lint.py \
     --book-src tools/graded-stack-lint/fixture/book/src --show-inbound
 # Expect: 2 rank violations (widget.L4→weak_op, widget-lowering→weak_op),
 #         detritus L1/orphan (firm but unreachable), 1 untyped concept page,
-#         exit code 1.
+#         L1/prose_firm_provenance read as FIRM via its prose ## Status line
+#         (despite the body mentioning "rough-in"/"stub" — the token-priority
+#         bug guard), exit code 1.
 ```
 
 ## Adoption note

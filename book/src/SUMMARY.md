@@ -70,6 +70,7 @@
   - [fold_solve](./L4/fold_solve.md)
   - [frequency_sweep](./L4/frequency_sweep.md)
   - [ksp_solve](./L4/ksp_solve.md)
+  - [preconditioning-framework](./L4/preconditioning-framework.md)
   - [solve_family](./L4/solve_family.md)
 
 # L4 > L3 — Lowering

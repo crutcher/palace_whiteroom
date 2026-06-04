@@ -307,21 +307,67 @@ class Node:
     notes: list[str] = field(default_factory=list)
 
 
+# The maturity token always LEADS the first non-empty line after `## Status`,
+# as the leading inline-code (`` `firm` ``) or bold (`**firm**`) token — the
+# project convention. It may carry a parenthetical qualifier INSIDE the
+# decoration (`` `rough-in (test-coverage-bounded)` ``, `` `firm (structural)` ``,
+# `` `obstruction (opaque-library-ownership)` ``). We match the leading word,
+# preferring the qualified sub-rank spellings over the bare ladder word so that
+# `rough-in (test-coverage-bounded)` reads as the 2.5 sub-rank, not bare
+# `rough-in`. Tokens are ordered LONGEST-/most-qualified-FIRST for that reason.
+_STATUS_TOKENS = (
+    "rough-in (test-coverage-bounded)",
+    "partly-constructive",
+    "partial-obstruction",
+    "roadmap_goal",
+    "obstruction",
+    "rough-in",
+    "stub",
+    "firm",
+    "seed",
+)
+
+
 def read_status_line(text: str) -> str | None:
-    """Find the prose `## Status` maturity word (the authoritative survey source
-    when frontmatter lacks an explicit rank, per the project rule). Reads the
-    first non-empty line after a `## Status` heading and the inline-code/first
-    word that names a ladder/obstruction token."""
+    """Find the prose `## Status` maturity token.
+
+    Reads the FIRST non-empty line after a `## Status` heading and matches ONLY
+    the **leading** maturity token (the project convention: the maturity word is
+    the leading inline-code `` `token` `` — or bold `**token**` — of the status
+    line). This is deliberately NOT a multi-line blob scan: a firm `## Status`
+    paragraph frequently MENTIONS "rough-in"/"stub" in a downstream provenance
+    phrase ("promoted from rough-in", "previously the rough-in (…) caveat …"),
+    and a blob-scan-in-priority-order mis-reads such a firm node as rough-in/stub
+    (the c095 token-priority bug, 12 ledger instances). Anchoring on the LEADING
+    token of the first line is exactly the project convention and immune to that
+    downstream-mention drift.
+
+    Returns a known ladder/obstruction token (the qualified sub-rank spelling
+    when present, e.g. `rough-in (test-coverage-bounded)`), or None.
+    """
     lines = text.splitlines()
     for i, ln in enumerate(lines):
         if re.match(r"^#{2,3}\s+Status\b", ln.strip()):
-            # scan the next few non-empty lines for a known token
-            blob = " ".join(lines[i + 1 : i + 6]).lower()
-            for tok in ("partly-constructive", "rough-in (test-coverage-bounded)",
-                        "rough-in", "roadmap_goal", "obstruction",
-                        "partial-obstruction", "stub", "firm"):
-                if tok in blob:
+            # the first non-empty line after the heading
+            first = None
+            for j in range(i + 1, len(lines)):
+                if lines[j].strip():
+                    first = lines[j].strip()
+                    break
+            if first is None:
+                return None
+            # strip a leading blockquote/list marker, then a single leading
+            # decoration char (`` ` `` inline-code or `*` bold) so we can read
+            # the token whether it is `` `firm` `` or `**firm**` (and tolerate an
+            # inline-code span that is left UNTERMINATED on the first line, e.g.
+            # a long parenthetical that wraps — the leading word still leads).
+            head = first.lstrip("> ").lstrip()
+            head = head.lstrip("`*").lower()
+            # longest/most-qualified token that PREFIXES the leading text wins.
+            for tok in _STATUS_TOKENS:
+                if head.startswith(tok):
                     return tok
+            return None
     return None
 
 

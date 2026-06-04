@@ -1,6 +1,9 @@
 # GRADED-STACK baseline rank-violation exception set
 
 **Opened:** cycle-095 (batch-30; GRADED-STACK campaign P1), 2026-06-04, by `same-layer-cross-cutter` (D7, Wave 3).
+
+> **⟢ BURN-DOWN COMPLETE — TRACKED-OPEN-1 (O1) DISCHARGED by cycle-096-D3 (annotated by `integrator-finalize` at the cycle-096 finalize, 2026-06-05).** The one residual tracked exception, **O1 = `L4/solve_family → L4-L3/solve-family-map-dissolution`**, is discharged: cycle-096 D3 (lifter) typed `book/src/L4-L3/solve-family-map-dissolution.md` with `rank: firm` + a typed `edges: depends-on [L4/solve_family, L4/ksp_solve, L4-L3/ksp-solve-driver-dissolution, L3/ksp_solve]` block — exactly O1's promotion condition. All four `depends-on` endpoints read firm on disk, so the invariant `rank(theme=3) ≤ min(deps=3)` holds. **The `integrator-finalize` LANDED-state linter run confirms `rank_violations: 0`** (was the expected 1 at c095; cycle-096 cleared it). Additionally, cycle-096 D4 fixed the `read_status_line` prose-fallback parse bug (the root cause of the false-positive class documented below), so even as-yet-untyped tail nodes no longer generate these false positives. **The bounded exception set has burned down to 0 tracked.** This ledger is now a CLOSED historical record of the c094→c096 burn-down; no open tracked exceptions remain. (Per the append-only OQ-ledger discipline, the per-report close-notes in `scaffolding/open-questions.md` are left for the meta-phase to unify; this banner is the finalize cycle-end housekeeping touch.)
+
 **Authority:** the 2026-06-04 user decision `scaffolding/decisions/2026-06-04-graded-stack-p1-edge-home.md` + `METHODOLOGY-GRADED-STACK.md` §5 step-3/4 — "Genuinely-large remediations: enumerate as an **explicit, tracked baseline-exception set with promotion conditions** (the same first-class-transient-gate pattern as `partly-constructive`) — **not** open-ended fix-forward." The rank invariant is a HARD gate for NEW work as of c095; pre-existing violations live HERE with promotion conditions and burn down.
 
 **What this ledger is.** A discharge-path record for the rank-linter (`tools/graded-stack-lint/graded_stack_lint.py`) violations that existed at the c094-finalize baseline (22 of them). It distinguishes three categories so it reads as a burn-down, not a violation dump:
@@ -97,11 +100,11 @@ These are NOT real rank gaps. Each `dep` reads `firm` in its own `## Status`; th
 | category | count | status |
 |---|---|---|
 | CLEARED-BY-CASCADE | 10 | discharged this cycle (D1–D4) |
-| CLEARED-BY-RETYPING | 11 | discharged this cycle (D5+D6 typed frontmatter) |
-| TRACKED-OPEN | 1 | O1 — deferred-typing artifact; promotion = type the theme `rank: firm` (next lazy-tail pass) |
-| **baseline total** | **22** | **21 discharged c095; 1 tracked (mechanical, low-cost)** |
+| CLEARED-BY-RETYPING | 11 | discharged c095 (D5+D6 typed frontmatter) |
+| TRACKED-OPEN | 1 | O1 — **DISCHARGED c096-D3** (typed `solve-family-map-dissolution` `rank: firm`); was a deferred-typing artifact |
+| **baseline total** | **22** | **21 discharged c095; 1 discharged c096; 0 tracked remaining — BURN-DOWN COMPLETE** |
 
-**Expected `integrator-finalize` LANDED-state linter result:** exactly 1 rank violation (`L4/solve_family → L4-L3/solve-family-map-dissolution`), matching O1. If finalize reports MORE than O1, the extra(s) indicate a D1–D6 proposed-change did not land (re-check the per-report integration); if it reports FEWER, O1 was typed by an unanticipated dispatch (close O1). Either way the finalize run is the mechanical confirmation gate.
+**`integrator-finalize` LANDED-state linter result (c095 → c096):** at c095 finalize the run reported exactly 1 rank violation (O1), matching the prediction. At **c096 finalize the run reports `rank_violations: 0`** — O1 was typed by c096-D3 (the anticipated lazy-tail typing dispatch), so the residual closed exactly as the c095 ledger's "if it reports FEWER, O1 was typed by an unanticipated/next dispatch (close O1)" branch predicted. The c094→c096 burn-down (22 → 21 → 0) is complete; the typed subset is clean.
 
 **Open dependencies for next batch (meta-phase intake):**
 - `graded-stack-lint-read-status-line-token-priority-bug` — fix the blob-scan (leading-token-only). Retires the false-positive class for the untyped tail during the incremental rollout. (D6-flagged; this ledger is corroborating evidence — 12 of 22 baseline "violations" were this bug, incl. O1.)

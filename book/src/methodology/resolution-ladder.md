@@ -88,7 +88,7 @@ two duals:
   are. Promotion propagates **upward** through the dependency DAG; the **frontier** is
   the rank-discontinuity surface where the resolved region meets the unbuilt region.
 
-### Worked example — rank propagating upward (the cycles 088–091 cascade)
+### Worked example — rank propagating upward (the cycles 088–095 cascade, completed)
 
 The `matrix-weighted-norm` cascade is exactly a wave of rank propagating upward under
 the invariant. The relevant fragment of the DAG (`depends-on` edges, leaf at the
@@ -100,11 +100,12 @@ bottom):
                           |                                      domain_energy_reduce)
                           v                                          v
                     gram_reduce (L4)                        domain_energy_reduce (L4)
-                          |                                          |
-                          +--------------- depends-on ---------------+
-                                            |
-                                            v
-                            matrix-weighted-norm (L1)  ── the leaf that firmed
+                       |        |                                    |
+            depends-on |        | depends-on             depends-on  |
+                       v        v                                    v
+       bilinear-form (L1)   matrix-weighted-norm (L1) <--------------+
+       ── off-diagonal      ── diagonal leaf
+          leaf (firmed c095)    (firmed c091)
 ```
 
 Before cycle-091, `matrix-weighted-norm` sat at `rough-in (test-coverage-bounded)`: its
@@ -115,25 +116,37 @@ were each capped at `rough-in`, and every feature column depending on them was c
 `seed`. The cap was a *consequence* of the leaf's rank, not an independent decision at each
 node.
 
-Cycles 088–089 discharged both law-sides of the leaf (the structure-side laws are
-inner-product-space theorems whose SPD premise holds provably-by-construction at the usage
-sites; the floating-point sub-claims inherit additively from the firm constituents `dot`
-and `apply_linop` through a deterministic IEEE-754 outer `√`). The batch-28 meta-phase then
-judged the lone remaining test gate **redundant**, and cycle-091 flipped
-`matrix-weighted-norm` to **`firm` (rank 3)**.
+The cap lifted in **two waves**, one per leaf — and the whole chain is now `firm`, so this
+example is a completed rank-propagation *discharge*, not a standing block.
 
-Once the leaf firmed, the cap lifted and rank **propagated upward**:
-`domain_energy_reduce` — all of whose `depends-on` deps were now firm — promoted to `firm`
-in the same cascade wave, and through it the `energy-fields` feature column promoted to
-`firm`.
+**Wave 1 (cycle-091) — the diagonal leaf.** Cycles 088–089 discharged both law-sides of
+`matrix-weighted-norm` (the structure-side laws are inner-product-space theorems whose SPD premise
+holds provably-by-construction at the usage sites; the floating-point sub-claims inherit additively
+from the firm constituents `dot` and `apply_linop` through a deterministic IEEE-754 outer `√`). The
+batch-28 meta-phase judged the lone remaining test gate **redundant**, and cycle-091 flipped
+`matrix-weighted-norm` to **`firm` (rank 3)**. Rank then propagated up its branch:
+`domain_energy_reduce` — which folds *only* `matrix-weighted-norm`, so all of its `depends-on` deps
+were now firm — promoted to `firm` in the same wave, and through it the `energy-fields` feature column
+reached **`rank: firm`**.
 
-The cascade is also an honest illustration of the invariant **holding things back where a
-support is still soft**: `gram_reduce` did **not** promote, because it folds the
-*off-diagonal* `bilinear-form` primitive, which is still `rough-in`. So `gram_reduce` stays
-`rough-in`, and the four columns over it — `capacitance`, `inductance`, `electrostatic`,
-`magnetostatic` — correctly stay `seed`. The next leaf to firm (`bilinear-form`, probe
-discharged cycle-092) is the convergent blocker whose flip will let that rank wave continue
-upward to those four columns. The promotion frontier *is* this rank-discontinuity surface.
+**Wave 2 (cycle-095) — the off-diagonal leaf.** `gram_reduce` could *not* promote in wave 1, because
+it folds a **second** leaf: the *off-diagonal* `bilinear-form` primitive, still `rough-in` after c091.
+By the invariant, `gram_reduce` was correctly held at `rough-in` (and the four columns over it at
+`seed`-resolution) until that last support firmed — a faithful illustration of the invariant *holding
+a node back while one support is still soft*. Cycle-095 (the `bilinear-form-firm-flip-and-cascade-wave`)
+discharged it: D1 flipped `bilinear-form` to **`firm`** on the firm-on-positive-structure escape,
+clearing `gram_reduce`'s sole residual gate, so D3 flipped `gram_reduce` to **`firm`** (both folded
+leaves — diagonal `matrix-weighted-norm` from c091, off-diagonal `bilinear-form` from c095 — now firm).
+With its own reduce verb firm, the rank wave continued upward: the four output-product / driver columns
+over `gram_reduce` — `capacitance`, `inductance`, `electrostatic`, `magnetostatic` — each reached
+**`rank: firm`** at cycle-095 under the OWN-COMPOSITION rule (their cross-linked sibling columns are
+`reference`s, not blockers; see Axis 2 below).
+
+The two waves together close the cascade: every node in this DAG fragment is now `firm`. Note the
+two-axis separation the columns demonstrate — each promoted to `rank: firm` *resolution* while its
+`feature_root: seed` root-set membership is unchanged (the `seed` marker is the permanent Axis-2 root
+role, never a ladder rung). The promotion frontier — the rank-discontinuity surface — has moved past
+this fragment entirely; it now lives wherever the next still-soft support sits.
 
 ### The `roadmap_goal` chapter (rank 0)
 

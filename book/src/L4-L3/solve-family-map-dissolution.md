@@ -1,3 +1,22 @@
+---
+layer: L4-L3
+theme: solve-family-map-dissolution
+rank: firm
+edges:
+  depends-on:
+    - L4/solve_family
+    - L4/ksp_solve
+    - L4-L3/ksp-solve-driver-dissolution
+    - L3/ksp_solve
+  reference:
+    - L4/iterate-while
+    - L4-L3/iterate-while-dissolution
+    - L4-L3/krylov-step-typed-wrapper-dissolution
+    - concepts/state-stratification
+    - concepts/variant-absorption
+    - concepts/sequential-obstruction
+---
+
 # solve-family-map-dissolution
 
 The L4>L3 lowering theme for the [`solve_family`](../L4/solve_family.md) **outer map-shell** — the L4 fixed-operator map-over-RHS-family combinator `solve_family op rhss = map (\inp -> ksp_solve op inp) rhss` that captures the system operator once, builds the solver once, and maps the [`ksp_solve`](../L4/ksp_solve.md) cap over a family of right-hand sides. The theme dissolves the L4 `map` combinator (the once-captured `readonly` `op` stratum, the pure-map-over-an-independent-family shape, the order-preserving trajectory collection) into the L3 **explicit positional accumulating outer loop**: a `for` over the family-index set, the operator construction hoisted by hand outside the loop, each iteration writing one solution into a pre-sized `std::vector<Vector>` collection slot. It is the **outer-shell** companion to the inner per-solve [`ksp-solve-driver-dissolution`](./ksp-solve-driver-dissolution.md): that theme dissolves *one* `ksp_solve op inp` per-member solve into the L3 value-threaded driver; this theme dissolves the *map shell around the family of solves*. It **composes strictly above** the per-solve driver dissolution.
