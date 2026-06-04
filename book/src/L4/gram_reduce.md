@@ -5,7 +5,7 @@ firmness: rough-in (test-coverage-bounded)
 consumes:
   - book/src/L1/matrix-weighted-norm.md (rough-in — the diagonal self-bilinear xᵢᵀ K xᵢ; the diagonal CONSUMER, the xⱼ=xᵢ specialization of the off-diagonal bilinear)
   - book/src/L1/bilinear-form.md (rough-in — the off-diagonal cross-bilinear xⱼᵀ K xᵢ; the fold element)
-  - book/src/L4/solve_family.md (rough-in (test-coverage-bounded) — produces the solution family [xᵢ] this combinator reduces over; the upstream stage in the composition root)
+  - book/src/L4/solve_family.md (firm — produces the solution family [xᵢ] this combinator reduces over; the upstream stage in the composition root)
 lowers_to:
   - book/src/L1/matrix-weighted-norm.md (the diagonal entry; identity-in-form on the body — the reduction is a fold of L1 bilinear-form evaluations, no dedicated L4>L3 theme; in-line §"Downward")
   - book/src/L1/bilinear-form.md (the off-diagonal entry; identity-in-form on the body)
@@ -199,7 +199,7 @@ L1 rows this combinator folds:
 
 L4 rows:
 
-- [`solve_family`](./solve_family.md) (rough-in (test-coverage-bounded)) — produces the
+- [`solve_family`](./solve_family.md) (firm) — produces the
   solution family `[xᵢ]` this combinator reduces over (the upstream composition-root stage).
 
 Sibling data-algebra combinators (the L4 algebra-of-folds family):
