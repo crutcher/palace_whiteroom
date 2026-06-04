@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T013000Z
 scope: L4 combinator law-confidence audit — solve_family (firm-on-positive-structure / list-homomorphism promotion pass)
 status: integrated
 integrated_at: 2026-06-04T015500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7784b49
 integration_notes: "Applied clean as D1 (cycle-086, batch-27 position 2/3). PROMOTED book/src/L4/solve_family.md rough-in (test-coverage-bounded) → firm via the firm-on-positive-structure / syntactic-identity escape (the c082/c083 route; element-independence read off const BaseKspSolver::Mult body ksp.cpp:297-310) + COUNT-OWNER L4/index.md per-operator cell + firm tally 16→17 (20→21 grand). L4 rough-in (test-coverage-bounded) 1→0 (solve_family was the sole entry). NO feature column flipped (electrostatic/magnetostatic stay seed on the remaining gram_reduce gate). Promoted durable OQ solve-family-firmed-discharges-one-of-two-electrostatic-magnetostatic-column-gates + the now-closed stale-evidence hygiene OQ. Build clean (cargo make book exit 0; no SUMMARY/dead-link change)."
 inputs:
   - book/src/L4/solve_family.md (rough-in (test-coverage-bounded); 0 verified_against blocks)

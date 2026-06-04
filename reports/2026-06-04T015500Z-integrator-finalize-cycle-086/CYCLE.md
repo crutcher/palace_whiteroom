@@ -46,7 +46,7 @@ NO new files, NO `SUMMARY.md` change, NO concept-page change, NO L0 citation re-
 - **retroactive-budget global = 0** (D1 0 + D2 0; the firm-on-positive-structure promotion rests on positive const-source structure, D2 is a maturity-word re-anchor + gate-narrowing + stale-line cleanup — no claim authored). Well under the ≥4 block threshold. **PASS.**
 - **build-breakage repair = 0** (`cargo make book` exit 0; no dead links — see Build-status).
 - **commit atomicity** — single commit: book (5 files) + scaffolding (roadmap, cycle-record, integrator-signals, open-questions, priorities) + log (cycle-86.md, README.md) + reports (2 consumed + staging + planner + this finalize CYCLE.md) + consumed-report frontmatter touches. Push immediately. Two-phase SHA patch follows.
-- **consumed-report frontmatter integrity** — both reports `status: pending`; finalize sets `integrated_at` + `integration_commit` + `integration_notes` (two-step: PLACEHOLDER_SHA → real SHA post-commit).
+- **consumed-report frontmatter integrity** — both reports `status: pending`; finalize sets `integrated_at` + `integration_commit` + `integration_notes` (two-step: 7784b49 → real SHA post-commit).
 - **staging-row count cross-check** — 2 rows == 2 dispatched-ready reports (the cycle-086 planner dispatched D1 + D2). No mismatch; no reconciliation-from-working-tree needed.
 - **per-report gates** (D1/D2 own; recorded clean in staging): exact-match 0, dispatch-phase-book-leak 0, column-status-flip-guard 0 (both columns verified `status: seed` post-edit), gram_reduce-own-firmness-guard 0, D1-D2-double-edit-overlap 0, stale-solve-family-self-label-residual 0; citecheck OOB hits on both rows correctly classified NON-load-bearing (reading-extent ranges / bare-basename prose tokens), not applied to book/, no deferral.
 
@@ -89,4 +89,4 @@ NONE. D1 (lowering-verifier, COUNT OWNER) and D2 (lifter, consumer re-anchor) we
 | methodology chapters | 2 | 2 |
 | L4 reduce-family verbs | 4 | 4 |
 
-Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit).
+Commit: `7784b49` (patched in the follow-up two-phase SHA commit).

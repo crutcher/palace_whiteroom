@@ -48,4 +48,4 @@ Firming `solve_family` discharges the FIRST of the two own-constituent gates on 
 
 ALL other layer-vocabulary counts UNCHANGED from c085: L1 firm 30 main / 37 grand · L2 firm 21 (+1 partly-constructive) · L2>L1 firm 11 · L3 firm 17 (+4 partial-obstruction) · L3>L2 firm 6 · L4>L3 firm 10 · L0 chapters 22 · concepts 33 (+ `record` Kind RATIFIED) · methodology chapters 2 · FEATURE-SURFACE SPINE 12 columns by-kind-grouped (6 firm / 6 seed) · L4 reduce-family 4 verbs (`eigenfreq_qfactor_reduce` FIRM c082 / `sparameter_reduce` FIRM c083 / `gram_reduce` `rough-in (test-coverage-bounded)` / `domain_energy_reduce` `rough-in`).
 
-Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit).
+Commit: `7784b49` (patched in the follow-up two-phase SHA commit).

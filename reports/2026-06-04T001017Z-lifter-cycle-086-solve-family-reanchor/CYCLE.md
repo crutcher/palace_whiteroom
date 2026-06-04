@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T001017Z
 scope: L4 consumer re-anchor — solve_family rough-in (test-coverage-bounded) → firm (D1-conditional, D1 FIRMED)
 status: integrated
 integrated_at: 2026-06-04T015500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7784b49
 integration_notes: "Applied clean as D2 (cycle-086, batch-27 position 2/3). Consumer re-anchor of solve_family maturity word rough-in (test-coverage-bounded) → firm across gram_reduce.md (consumes-row + dep-map) + electrostatic.L4 + magnetostatic.L4 + solve_family.md §Evidence/§Provenance; NARROWED the electrostatic/magnetostatic §Status own-constituent gate from 2 (solve_family + gram_reduce) to 1 (gram_reduce only) WITHOUT flipping status: seed (the honest 1-of-2-gates non-flip; both columns verified seed post-edit). gram_reduce's OWN firmness DELIBERATELY UNCHANGED. RESOLVED OQ solve-family-md-stale-evidence-provenance-lines-after-firm-promotion (the §Evidence/§Provenance stale lines, re-located to :213/:214 after D1's §Status body replacement, cleaned). Byte-disjoint from D1. Build clean."
 inputs:
   - reports/2026-06-04T013000Z-lowering-verifier-cycle-086-solve-family/CYCLE.md (D1 — promoted solve_family → firm; 1-of-2-gates finding, NO column flip)
