@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T053300Z
 scope: cycle-091 D4 — feature-column re-evaluation under the OWN-COMPOSITION rule, coupled to the matrix-weighted-norm firm flip (D1) + the domain_energy_reduce/gram_reduce reduce-verb verdicts (D3); SOLE owner of book/src/feature/index.md
 status: pending
 integrated_at: 2026-06-04T080000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 948247a
 integration_notes: "cycle-091 D4 (batch-29 LEAD cascade, LAST report). energy-fields output-product column seed → firm ×3 levels (own composition all-firm — domain_energy_reduce c091 + participation_ratio c077); feature spine 6→7 firm / 6→5 seed. 4 columns capacitance/inductance/electrostatic/magnetostatic STAY seed on gram_reduce→bilinear-form residual gate. D4 applied a discretionary magnetostatic.L4:56 stale-NO-GO-HELD symmetry fix; finalize caught the residual line-41 symmetric twin D4 omitted (the friction signal). Applied clean by integrator-per-report; build clean (cargo make book exit 0, 1 finalize build-repair)."
 inputs:
   - reports/2026-06-04T053300Z-cycle-planner-cycle-091/CYCLE.md (the plan — D4 scope)

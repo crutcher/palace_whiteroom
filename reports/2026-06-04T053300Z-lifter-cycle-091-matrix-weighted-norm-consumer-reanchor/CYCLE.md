@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T053300Z
 scope: L1>L0 + vocabulary-spine consumer maturity re-anchor — matrix-weighted-norm firm-flip cascade (cycle-091 D2)
 status: pending
 integrated_at: 2026-06-04T080000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 948247a
 integration_notes: "cycle-091 D2 (batch-29 LEAD cascade). 12-file / 21-block consumer re-anchor of stale matrix-weighted-norm VERB labels → firm across the vocabulary-spine / L0 / L1-L0 themes; bilinear-form PRESERVED at rough-in everywhere (maturity-preservation invariant held on disk). Promoted OQ goal-flow-mwn-firm-flip-cascade-refresh-stale-rough-in-refs. Applied clean by integrator-per-report; build clean (cargo make book exit 0)."
 inputs:
   - reports/2026-06-04T053300Z-cycle-planner-cycle-091/CYCLE.md

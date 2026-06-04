@@ -45,7 +45,7 @@ The planned payload was a single `matrix-weighted-norm` firm flip; the cascade y
 - **retroactive-budget global = 0** — all 4 rows are status flips / re-anchors on existing entries; zero retroactive edits. Well under the ≥4 block threshold. **PASS.**
 - **build-breakage repair** — one surgical repair (`magnetostatic.L4.md:41`, below); otherwise clean.
 - **commit atomicity** — single commit (book + scaffolding + log + reports + finalize build-repair) + the canonical two-phase SHA patch-commit.
-- **consumed-report frontmatter integrity** — all 4 reports' `integrated_at` + `integration_commit` (PLACEHOLDER_SHA → patched) + `integration_notes` set.
+- **consumed-report frontmatter integrity** — all 4 reports' `integrated_at` + `integration_commit` (948247a → patched) + `integration_notes` set.
 - **per-report gates (from staging)** — all PASS: no MISS/OOB on any landed citation (D1's 4 AMBIG hits fell on narrative-recap prose, not the landed full-path proposed-change blocks); `verified_against:` YAML round-trips (D1 2 blocks/12 entries, D3 1 block/5 entries); L1/L4/feature firm-count arithmetic confirmed on disk; D1↔D3 `:98` same-line non-collision PASS; bilinear-form-maturity-preservation PASS; index-cell-drift guard PASS.
 - **staging-completeness** — 4 rows == 4 dispatched-ready reports. The cycle-018 gap did NOT recur (72nd consecutive clean staging / 86th consecutive clean split-integrator cycle).
 - **aggregate maturity-consistency cross-check (finalize-owned)** — spot-checked the whole book: no file falsely claims `matrix-weighted-norm`/`domain_energy_reduce` rough-in (except the repaired magnetostatic.L4:41 twin); no file falsely flips `gram_reduce`/`bilinear-form`/the 4 seed columns; on-disk tallies (L1 38 firm cells, L4 firm 18 / rough-in 0, feature 7 firm / 5 seed) all reconcile.
@@ -82,6 +82,6 @@ No OQs closed or opened by finalize.
 
 Feature spine firm columns (7): `driven`, `eigenmode`, `transient`, `eigenfrequency-qfactor`, `sparameters`, `lifecycle`, `energy-fields`. Seed (5): `boundary-mode`, `capacitance`, `electrostatic`, `inductance`, `magnetostatic`.
 
-Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit).
+Commit: `948247a` (patched in the follow-up two-phase SHA commit).
 
 Written by `integrator-finalize` (split integrator-per-report ×4 + finalize ×1). **The batch-29 meta-phase fires after cycle-093** as a separate dispatch, aggregating cycles 091/092/093.

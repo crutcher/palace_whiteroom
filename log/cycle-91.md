@@ -56,6 +56,6 @@ The cheap-probe→GO arc (NO-GO-HELD for the heavy whole-cascade wave through ba
 
 Feature spine firm columns (7): `driven`, `eigenmode`, `transient`, `eigenfrequency-qfactor`, `sparameters`, `lifecycle`, `energy-fields`. Seed (5): `boundary-mode`, `capacitance`, `electrostatic`, `inductance`, `magnetostatic`.
 
-Commit: `PLACEHOLDER_SHA` (patched in the follow-up two-phase SHA commit).
+Commit: `948247a` (patched in the follow-up two-phase SHA commit).
 
 Written by `integrator-finalize` (split integrator-per-report ×4 + finalize ×1). **The batch-29 meta-phase fires after cycle-093** as a separate dispatch, aggregating cycles 091/092/093.

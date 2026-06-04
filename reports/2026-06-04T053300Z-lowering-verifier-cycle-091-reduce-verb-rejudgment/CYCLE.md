@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T053300Z
 scope: L4 reduce-verb re-judgment — gram_reduce + domain_energy_reduce, coupled to the matrix-weighted-norm firm flip (cycle-091 D3, batch-29 cascade wave-2)
 status: pending
 integrated_at: 2026-06-04T080000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 948247a
 integration_notes: "cycle-091 D3 (batch-29 LEAD cascade). domain_energy_reduce rough-in → firm (per-DOMAIN realization of the per-MODE eigenfreq_qfactor_reduce c082 disposition; both folded primitives now firm L1 — matrix-weighted-norm c091 + participation_ratio c077; firm-on-positive-structure escape); L4 firm 17→18 main / 21→22 grand, L4 rough-in 1→0 (cohort empty). gram_reduce STAYS rough-in (test-coverage-bounded) on its sole residual off-diagonal bilinear-form gate. Applied clean by integrator-per-report; build clean (cargo make book exit 0)."
 inputs:
   - reports/2026-06-04T053300Z-cycle-planner-cycle-091/CYCLE.md (the cycle-091 plan; D3 scope)

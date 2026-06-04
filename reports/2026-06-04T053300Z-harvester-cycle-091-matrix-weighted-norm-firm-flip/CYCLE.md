@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T053300Z
 scope: L1 operator: matrix-weighted-norm (firm-flip + L1/index + L4/index count-owner) — cycle-091 D1 (batch-29 LEAD wave-1)
 status: pending
 integrated_at: 2026-06-04T080000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 948247a
 integration_notes: "cycle-091 D1 (batch-29 LEAD). matrix-weighted-norm §Status rough-in (test-coverage-bounded) → firm; L1/index counts 30→31 main / 37→38 grand (c080 reconciliation note discharged); L4/index :98 Folds-cell mwn label → firm c091. Applied clean by integrator-per-report; build clean (cargo make book exit 0, finalize applied one symmetric stale-label repair on magnetostatic.L4:41 — a D4 coverage gap, not on D1's files)."
 inputs:
   - reports/2026-06-04T053300Z-cycle-planner-cycle-091/CYCLE.md (the cycle-091 plan; D1 scope)
