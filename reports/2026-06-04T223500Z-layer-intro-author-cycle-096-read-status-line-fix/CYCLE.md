@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T223500Z
 scope: tools/ only — fix read_status_line token-priority parse bug in graded_stack_lint.py (D4)
 status: integrated
 integrated_at: 2026-06-05T001500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2b8cb55b1fe4d011c4fd384b0b6f6459097804ba
 integration_notes: |
   Applied clean (D4, cycle-096 batch-30 position 3/3). tools/-ONLY deliverable (no book/ edits — artifact-mutation step a confirmation no-op). read_status_line rewritten to the leading-inline-code-token rule (blob-scan removed; _STATUS_TOKENS longest-/most-qualified-first; derive_rank frontmatter-precedence preserved) + NEW regression fixture (fixture/.../prose_firm_provenance.md + widget.L4.md wiring) + README parse-rule paragraph. py_compile clean. Retires the prose-fallback FALSE-POSITIVE class (~20 untyped-node maturity mis-reads). Landed-tree linter: rank_violations 0, histogram now ACCURATE {firm:192, rough-in:7, partly-constructive:3, obstruction:2, partial-obstruction:4}. NOT build-relevant (no book rebuild needed for D4). citecheck 1 "MISS" is a benign tools/-self-reference (graded_stack_lint.py:319-324), not a real artifact-citation defect. OQ graded-stack-lint-read-status-line-token-priority-bug CLOSEABLE at meta unify.
 ---

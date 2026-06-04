@@ -6,7 +6,7 @@ cycle_id: cycle-096
 meta_batch: batch-30
 meta_batch_position: 3
 status: integrated
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2b8cb55b1fe4d011c4fd384b0b6f6459097804ba
 ---
 
 # CYCLE-096 batch finalize — the graded-stack campaign's mechanical completion for the typed frontier (rank_violations 0)

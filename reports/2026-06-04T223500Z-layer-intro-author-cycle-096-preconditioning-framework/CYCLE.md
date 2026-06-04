@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T223500Z
 scope: P2 genuine-gap author — L4/preconditioning-framework.md (NEW, firm-on-first-authoring) + capability-typing.md repoint + L4 index/SUMMARY rows
 status: integrated
 integrated_at: 2026-06-05T001500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2b8cb55b1fe4d011c4fd384b0b6f6459097804ba
 integration_notes: |
   Applied clean (D1, cycle-096 batch-30 position 3/3). NEW firm L4 chapter book/src/L4/preconditioning-framework.md (rank: firm; typed edges depends-on [L4/ksp_solve caps-the-binding, ksp.cpp:276-293 cites-evidence]; 8 concept reference refs) + capability-typing.md two-slice-ref repoint (:26/:55) + alpha-positioned SUMMARY row + L4/index dep-map row. L4 firm 19->20 main / 23->24 grand. rank-gate PASS (firm over firm ksp_solve). citecheck 11 ok / 0 failing. Build clean (preconditioning-framework.html built, all internal links resolve under linkcheck2). Slice cg_preconditioning_framework.md NOT deleted (deferred batch-31 P2 slice-deletion tranche). OQ l4-preconditioning-framework-promotion CLOSEABLE at meta unify.
 ---

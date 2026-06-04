@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T22:35:00Z
 scope: methodology/resolution-ladder.md worked-example repair (c095-cascade falsification)
 status: integrated
 integrated_at: 2026-06-05T001500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2b8cb55b1fe4d011c4fd384b0b6f6459097804ba
 integration_notes: |
   Applied clean (D2, cycle-096 batch-30 position 3/3). methodology/resolution-ladder.md worked-example repair (x3): the c094 FALSIFIED forward-prediction re-told as the COMPLETED c091/c095 two-wave cascade discharge (heading "cycles 088-095 cascade, completed"; DAG surfaces gram_reduce's second off-diagonal bilinear-form leaf). Non-authoritative methodology page; all typed-edge gates no-op. citecheck 7 ok / 0 failing. Build clean. Resolves the resolution-ladder.md half of OQ bilinear-form-firm-flip-stale-narration-in-meta-owned-methodology-pages (goal-flow.md half stays OPEN, meta-owned).
 ---

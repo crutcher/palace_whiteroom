@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T22:35:00Z
 scope: L4>L3 theme re-anchor — solve-family-map-dissolution (O1 lazy-tail edge-typing)
 status: integrated
 integrated_at: 2026-06-05T001500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2b8cb55b1fe4d011c4fd384b0b6f6459097804ba
 integration_notes: |
   Applied clean (D3, cycle-096 batch-30 position 3/3). Typed book/src/L4-L3/solve-family-map-dissolution.md (had NO frontmatter) with rank: firm + typed edges depends-on [L4/solve_family, L4/ksp_solve, L4-L3/ksp-solve-driver-dissolution, L3/ksp_solve] + 6 reference edges. Pure edge-typing, no body/maturity change. rank-gate PASS (all 4 depends-on endpoints firm on disk). citecheck 9 ok / 0 failing. DISCHARGES O1 (baseline-exceptions TRACKED-OPEN-1) by construction -> rank_violations 1->0 on the landed state. Build clean.
 inputs:

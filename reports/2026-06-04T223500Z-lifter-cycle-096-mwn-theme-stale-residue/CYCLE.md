@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T22:35:00Z
 scope: L1>L0 theme within-file stale-residue re-anchor — matrix-weighted-norm-mutation-rotation
 status: integrated
 integrated_at: 2026-06-05T001500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 2b8cb55b1fe4d011c4fd384b0b6f6459097804ba
 integration_notes: |
   Applied clean (D5, cycle-096 batch-30 position 3/3, the LAST staged report). book/src/L1-L0/matrix-weighted-norm-mutation-rotation.md within-theme stale-residue fix (x2: :5 opening prose + :317 Speculative-L1 clause, both rough-in -> firm; theme's own ## Status untouched). Prose maturity-word swap only. rank-gate not-triggered (no node status flip). citecheck 9 ok / 0 failing. Build clean. OQ matrix-weighted-norm-mutation-rotation-within-theme-stale-rough-in-residue CLOSEABLE at meta unify. NEW OQ domain_energy_reduce-377-mwn-stale-rough-in-residue (cross-file grep-guard surfaced book/src/L4/domain_energy_reduce.md:377, FLAGGED-not-fixed, batch-31 land-clean).
 inputs:
