@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T23:37:38Z
 scope: L-spec cross-cut — absorb-and-delete plane_rotation_stream slice + close OQ plane-rotation-givens-l0-citation-range-reconcile
 status: integrated
 integrated_at: 2026-06-04T232852Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8c3b94baa1ff30bb724c108631c394bf7a471a41
 integration_notes: "Applied clean by integrator-per-report (D4); repairer fired pre-integration (citation line-numbers + ls-update-column firm-home-placeholder token inlined). plane_rotation_stream slice DELETED + L3 worked example absorbed into concepts/sequential-obstruction.md re-anchored to L0 iterative.cpp:634-640 + 5 concept repoints. Batch finalize cycle-097: cargo make book EXIT 0, step-5b rank_violations=0 (GATE PASS), no newly-orphaned node. retroactive-budget global 0. OQ plane-rotation-givens-l0-citation-range-reconcile recommended-CLOSE (resolved-by-deletion) for the batch-31 meta unify; a distinct end-bound citation-divergence sub-note appended under it stays open."
 ---
 

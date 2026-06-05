@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T232852Z
 scope: cycle-097 D5 (Wave 2) — shared-index row removal for the 4 deleted slices (SUMMARY.md + spec/index.md + concepts/dependency-map.md mermaid GC)
 status: integrated
 integrated_at: 2026-06-04T232852Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8c3b94baa1ff30bb724c108631c394bf7a471a41
 integration_notes: "Applied clean by integrator-per-report (D5, the cycle's final dispatch); repairer fired pre-integration (softened green-build claim to cycle-scope + corrected 44->61 mermaid-edge tally). Removed the 4 deleted-slice rows from SUMMARY.md + spec/index.md + the snake_case mermaid edges from concepts/dependency-map.md (Edit x10) -> the 4 deleted slices FULLY unreachable. 5 survivor rows left intact for c098/c099. Batch finalize cycle-097: cargo make book EXIT 0 (the co-landing constraint held), step-5b rank_violations=0 (GATE PASS), no newly-orphaned node. OQ dependency-map-cg-precond-stale-mermaid-edges (D1-opened) resolved this cycle by this report; closeable at the batch-31 meta unify."
 ---
 

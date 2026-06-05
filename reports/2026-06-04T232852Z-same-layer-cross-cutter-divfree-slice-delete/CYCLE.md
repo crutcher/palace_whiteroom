@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T232852Z
 scope: L1 cross-cut — absorb-and-delete spec/slices/divfree.md (graded-stack P2 slice-deletion, batch-31 tranche-1, dispatch D2)
 status: integrated
 integrated_at: 2026-06-04T232852Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8c3b94baa1ff30bb724c108631c394bf7a471a41
 integration_notes: "Applied clean by integrator-per-report (D2); divfree slice DELETED + 3 L1/ re-anchors (ksp_solve:131 + Evidence bullet -> divfree-projector.md; no-op absorb, firm homes already carried divfree.cpp:175). Batch finalize cycle-097: cargo make book EXIT 0, step-5b rank_violations=0 (GATE PASS), no newly-orphaned node. retroactive-budget global 0."
 ---
 

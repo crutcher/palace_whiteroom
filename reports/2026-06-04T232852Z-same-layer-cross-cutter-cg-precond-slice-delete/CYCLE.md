@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T232852Z
 scope: L4 cross-cut — absorb-and-delete the cg_preconditioning_framework slice (graded-stack P2 slice-deletion, tranche 1, D1)
 status: integrated
 integrated_at: 2026-06-04T232852Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8c3b94baa1ff30bb724c108631c394bf7a471a41
 integration_notes: "Applied clean by integrator-per-report (D1); cg_preconditioning_framework slice DELETED + 7 concept-page links repointed onto firm L4/preconditioning-framework.md. Batch finalize cycle-097: cargo make book EXIT 0, step-5b rank_violations=0 (GATE PASS), no newly-orphaned node. retroactive-budget global 0. OQ l4-preconditioning-framework-promotion recommended-CLOSE for the batch-31 meta unify."
 ---
 

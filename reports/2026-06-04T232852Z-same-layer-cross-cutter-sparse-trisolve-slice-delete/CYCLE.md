@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T232852Z
 scope: L1-L0 cross-cut — absorb-and-delete the sparse_triangular_solve negative-result slice
 status: integrated
 integrated_at: 2026-06-04T232852Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8c3b94baa1ff30bb724c108631c394bf7a471a41
 integration_notes: "Applied clean by integrator-per-report (D3); sparse_triangular_solve slice DELETED + L0 findings absorbed into L1-L0/triangular-solve-obstruction.md §(d) + 7 anchors appended + 3 concept repoints + self-link collapse + annotated-and-retained framing retired. Batch finalize cycle-097: cargo make book EXIT 0, step-5b rank_violations=0 (GATE PASS), no newly-orphaned node. retroactive-budget global 0. OQs sparse-trisolve-rename-to-sparse-direct-solver-wrapper + sparse-trisolve-mfem-superlu-factor-allgatherv-family recommended-CLOSE for the batch-31 meta unify."
 ---
 

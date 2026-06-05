@@ -4,7 +4,7 @@ invoked_at: 2026-06-04T233724Z
 scope: L4 within-file maturity re-anchor — domain_energy_reduce (matrix-weighted-norm c091 firm-flip residue)
 status: integrated
 integrated_at: 2026-06-04T232852Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8c3b94baa1ff30bb724c108631c394bf7a471a41
 integration_notes: "Applied clean by integrator-per-report (D6); 3 within-file mwn maturity re-anchors (:377/:268/:374 rough-in (test-coverage-bounded) -> firm, firm-on-positive-structure escape; participation_ratio c077 + matrix-weighted-norm c091 both firm). NO node status flip (rank: firm already on disk). Batch finalize cycle-097: cargo make book EXIT 0, step-5b rank_violations=0 (GATE PASS), no newly-orphaned node. retroactive-budget global 0. OQ domain_energy_reduce-377-mwn-stale-rough-in-residue recommended-CLOSE; NEW follow-up domain_energy_reduce-313-gram_reduce-bilinear-form-c095-stale-rough-in-narration logged."
 inputs:
   - book/src/L4/domain_energy_reduce.md
