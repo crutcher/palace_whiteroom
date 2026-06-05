@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T04:52:01Z
 scope: cycle-100 D4 — batch-31 class-B deleted-slice plaintext-residue cleanup (priorities #2)
 status: pending
 integrated_at: 2026-06-05T051726Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8cb576ec1f4fcad7752ebba5bf23b16076a0cf28
 integration_notes: "Applied cycle-100 (staging row 4/4). Class-B slice-residue cleanup, 8 files: 2 repointed (L4/krylov-step.md GMRES inner_loop + arnoldiStep → absorbed-into-Form-A + live L0 + loop-migration home; arnoldi L0 range repairer-widened orthog.hpp:41-74 → :41-88), 6 struck (chebyshev cohort L1/L2/L3/L4 + L2/index.md:133 + L3/index.md:53,:99), 1 normalized (L1/orthogonalize.md). Left untouched the 2 triangular-solve-obstruction.md historical pointers + the out-of-scope CG Form-B cg.md:27-141 pointer (recorded in OQ concepts-index-and-depmap-orchestrator-era-framing-refresh). Build EXIT 0 (no live dead-slice markdown links remain); step-5b NO newly-orphaned node, rank_violations 0."
 ---
 

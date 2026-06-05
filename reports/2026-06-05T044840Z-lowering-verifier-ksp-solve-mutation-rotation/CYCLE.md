@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T04:48:40Z
 scope: L1>L0 theme audit — ksp-solve-mutation-rotation (cycle-100 dispatch D2; discharge deferred firm-promotion gate)
 status: pending
 integrated_at: 2026-06-05T051726Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8cb576ec1f4fcad7752ebba5bf23b16076a0cf28
 integration_notes: "Applied cycle-100 (staging row 2/4). Driver lowering floor `rough-in` → firm (4 sub-patterns; CG axpby/dot/converged + GMRES Arnoldi/Givens); +10 per-step verified_against rows + L1-L0/index.md:36 cell flip. Two safety-net YAML fixes (single-quoted two pre-existing unquoted-mid-string-colon notes, one NOT report-flagged). Repairer REMOVED a producer false-positive :42→:41 drift flag (correct citation preserved — friction producer-citation-drift recurrence). Rank holds firm/firm. Build EXIT 0; step-5b rank_violations 0."
 inputs:
   - book/src/L1-L0/ksp-solve-mutation-rotation.md

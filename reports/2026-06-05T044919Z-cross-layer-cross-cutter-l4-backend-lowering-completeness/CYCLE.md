@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T044919Z
 scope: L1↔L4 cross-cut — L4 backend-lowering completeness matrix for the in-scope feature set
 status: pending
 integrated_at: 2026-06-05T051726Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8cb576ec1f4fcad7752ebba5bf23b16076a0cf28
 integration_notes: "Applied cycle-100 (staging row 3/4). Observational evidence artifact; only book change a 2-site mechanical essential_dofs mis-attribution repoint at L4/index.md:48,:100. OQ bc-elimination-cohort-l4-disposition promoted. Survey CONFIRMED all 5 solver pipelines + 5 output-products reach firm L4 and REFUTED the stale memory project_l4_is_backend_lowering_target 'FE-assembly stranded at L1' (assemble-half closed c068). FLAGGED for batch-32 meta-phase: re-scope that memory's named hole to BC-elimination cohort. Build EXIT 0; step-5b rank_violations 0."
 ---
 

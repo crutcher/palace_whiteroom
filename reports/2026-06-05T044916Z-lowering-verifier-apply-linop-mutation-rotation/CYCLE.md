@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T04:49:16Z
 scope: L1>L0 theme audit — apply-linop-mutation-rotation
 status: pending
 integrated_at: 2026-06-05T051726Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8cb576ec1f4fcad7752ebba5bf23b16076a0cf28
 integration_notes: "Applied cycle-100 (staging row 1/4). Matvec lowering floor `rough-in` → firm (firm-on-positive-structure / syntactic-identity escape, 5 sub-patterns); Status flip + L1-L0/index.md:21 cell + L3/apply_linop.md:169 token + 23-row corrected verified_against. Repairer fixed one internal-line off-by-one. Rank stays 0 (both deps firm). Build EXIT 0; step-5b rank_violations 0."
 inputs:
   - book/src/L1-L0/apply-linop-mutation-rotation.md
