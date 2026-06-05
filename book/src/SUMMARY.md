@@ -59,6 +59,7 @@
   - [domain_energy_reduce](./L4/domain_energy_reduce.md)
   - [dot](./L4/dot.md)
   - [eigenfreq_qfactor_reduce](./L4/eigenfreq_qfactor_reduce.md)
+  - [eliminate_bc](./L4/eliminate_bc.md)
   - [fe_assemble](./L4/fe_assemble.md)
   - [gram_reduce](./L4/gram_reduce.md)
   - [inner_product](./L4/inner_product.md)
@@ -75,6 +76,7 @@
 
 # L4 > L3 — Lowering
 - [Overview](./L4-L3/index.md)
+- [bc-elimination-post-composition-dissolution](./L4-L3/bc-elimination-post-composition-dissolution.md)
 - [fe-assemble-fold-dissolution](./L4-L3/fe-assemble-fold-dissolution.md)
 - [fgmres-inner-loop-iterate-while-migration](./L4-L3/fgmres-inner-loop-iterate-while-migration.md)
 - [fold-solve-time-step-dissolution](./L4-L3/fold-solve-time-step-dissolution.md)
