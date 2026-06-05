@@ -1,8 +1,10 @@
 ---
 name: cluster-friction-patterns
 description: At meta-review time, scan accumulated friction signals (episodic.jsonl, lessons.md, problems/) since the last meta-review; cluster by topic/layer/role; categorize by cascade (LOW/MEDIUM/HIGH); produce refinement-plan inputs. Invoke at the start of each Meta-Critic session.
-status: active
+status: retired
 ---
+
+> **RETIRED (batch-32 meta-phase, 2026-06-05).** Pre-redirect orchestrator-era skill: it scans `episodic.jsonl` / `lessons.md` for the old Meta-Critic role. Those ledgers + the prompted Meta-Critic role were deleted (batch-31 non-book orphan-review); this skill is read by NO live `.claude/agents/*` definition. The meta-phase's intake→plan migration (this role-spec, §Intake→plan) is the live replacement. Kept under `_retired/` as historical record (recoverable from git).
 
 # cluster-friction-patterns
 

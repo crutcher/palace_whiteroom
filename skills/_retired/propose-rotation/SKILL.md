@@ -1,8 +1,10 @@
 ---
 name: propose-rotation
 description: Produce a well-formed rotation_claim JSON for an Li→Li+1 rotation, including from_form, to_form, justification_kind selection, and substantive justification. Invoke whenever the Synthesizer produces a per-edge claim.
-status: active
+status: retired
 ---
+
+> **RETIRED (batch-32 meta-phase, 2026-06-05).** Pre-redirect orchestrator-era skill: it produces a `rotation_claim` JSON for the old Synthesizer role — a JSON-claim shape that no longer exists (the redirect replaced per-edge rotation_claims with the layered CYCLE.md proposed-changes flow + lowering-theme chapters). Read by NO live `.claude/agents/*` definition. The live replacement is the harvester/abstractor/lifter authoring layered entries + lowering themes directly. Kept under `_retired/` as historical record (recoverable from git).
 
 # propose-rotation
 

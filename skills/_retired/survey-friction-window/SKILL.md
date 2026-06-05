@@ -1,8 +1,10 @@
 ---
 name: survey-friction-window
 description: Scan recent cycles' episodic.jsonl and lessons.md to identify unresolved push-back signals, friction clusters, and unification opportunities; output candidate pushes for the next cycle. Invoke at the start of each Planner cycle.
-status: active
+status: retired
 ---
+
+> **RETIRED (batch-32 meta-phase, 2026-06-05).** Pre-redirect orchestrator-era skill: it scans `episodic.jsonl` / `lessons.md` for the old Planner role. Those ledgers + the prompted Planner role were deleted (batch-31 non-book orphan-review); this skill is read by NO live `.claude/agents/*` definition. The live replacement is `cycle-planner` reading `friction-ledger.md` + `integrator-signals.md` + the plan. Kept under `_retired/` as historical record (recoverable from git).
 
 # survey-friction-window
 

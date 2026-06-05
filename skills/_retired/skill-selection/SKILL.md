@@ -1,8 +1,10 @@
 ---
 name: skill-selection
 description: Meta-skill applied at the start of every cycle (Synthesizer pre-emission and Critic pre-verdict) — given the cycle's content shape, identify which skills' trigger conditions hold, consult those skills and cite them in output (log_synthesis for Synthesizer; skill_uptake field for Critic), and explain non-applicability when no triggers fire. Codifies the procedural step the per-cycle agents must take to make skill uptake observable in episodic.
-status: active
+status: retired
 ---
+
+> **RETIRED (batch-32 meta-phase, 2026-06-05).** Pre-redirect orchestrator-era meta-skill: it codifies the per-cycle Synthesizer/Critic skill-uptake-logging step against `episodic.jsonl` (`log_synthesis` / `skill_uptake` fields) — channels + roles that no longer exist. Read by NO live `.claude/agents/*` definition. The live skill-uptake mechanism is the critic's `skill-uptake-survey` check (8th check) reading the report directly. Kept under `_retired/` as historical record (recoverable from git).
 
 # skill-selection
 

@@ -344,6 +344,30 @@ This shape is load-bearing, and it follows three principles:
 > the graded-stack campaign discharged, the lead returns to the standing forward frontier: bottom-up
 > vocabulary + the 5-driver→L4 backend-lowering completeness picture + the last `seed` feature column.
 
+> **The standing forward frontier is substantially EXHAUSTED — the in-scope stack is L4-complete for
+> backend-lowering; the lead pivots to the typed-edge campaign (batch-32).** Across cycles 100/101/102
+> the standing forward frontier was worked to its clean-gated floor. The two highest-fan-out L1>L0
+> mutation-rotation lowering floors firmed (`apply-linop-mutation-rotation`, every matvec;
+> `ksp-solve-mutation-rotation`, all five driver pipelines — both via the firm-on-positive-structure /
+> syntactic-identity escape), and the *one* genuine remaining FE-cohort L4 hole the c100 completeness
+> survey had narrowed to — **boundary-condition elimination** — closed at c101: `eliminate_bc` rose to
+> a firm L4 post-assembly combinator (the OWN-COMPOSITION reading, a separable verb that consumes the
+> already-assembled operator) with a firm `bc-elimination-post-composition-dissolution` L4>L3 theme.
+> With that, **every in-scope feature surface — all 5 solver drivers + FE-assembly + 5 output-products
+> + BC-elimination — reaches firm L4**, the outward backend-lowering entry surface. The linter's
+> `promotion_frontier` is now entirely **obstruction-/demand-gated** (the `bicgstab`/`minres` enum-only
+> stubs Palace never implements; the opaque-library `eigsolve` convergence-reason map; the demand-gated
+> `deflate` Galerkin-core and `boundary-mode` column) — there is no clean-gated bottom-up pick left,
+> and the redirect forbids manufacturing a rectangular pull-up. So the lead **pivots** to the
+> meta-phase-owned work that the now-thin content frontier makes highest-leverage: the **authoritative
+> artifact-wide typed-edge campaign** (graded-stack P1). The two health axes were *defined* batch-30
+> and the rank invariant held at 0 throughout batch-32, but the edges themselves are still largely
+> *untyped* (142 of 352 files), so the reachability GC reads most of the artifact as "detritus" only
+> because it cannot traverse absent typed edges. Typing each edge `depends-on` (rank-constraining +
+> live) vs `reference` (navigational + free) — the pass that *is* the audit — converts the artifact
+> into a fully mechanically-checkable typed DAG, reclassifies the prose-as-slug false-positive targets,
+> and lets the GC distinguish genuine garbage from untyped-but-live. This is the batch-33 lead.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction

@@ -1,8 +1,10 @@
 ---
 name: verify-rotation-citation
 description: Verify a rotation_claim end-to-end — citation chain, mutation/ownership accuracy, test consistency, missing cases, load-bearing-trick classification. Produces a critic_verdict. Invoke per claim during the Critic cycle.
-status: active
+status: retired
 ---
+
+> **RETIRED (batch-32 meta-phase, 2026-06-05).** Pre-redirect orchestrator-era skill: it verifies a `rotation_claim` JSON for the old Critic role — a JSON-claim shape that no longer exists (the redirect replaced rotation_claims with CYCLE.md proposed-changes blocks). Read by NO live `.claude/agents/*` definition. The live citation-verification replacements are `verify-citation-range` + the `tools/citecheck/` mechanical checker (wired into the live producer/critic/lowering-verifier specs). Kept under `_retired/` as historical record (recoverable from git).
 
 # verify-rotation-citation
 
