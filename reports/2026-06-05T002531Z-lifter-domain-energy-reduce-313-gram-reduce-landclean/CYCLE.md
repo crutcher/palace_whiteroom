@@ -8,7 +8,7 @@ inputs:
   - book/src/L4/gram_reduce.md
   - book/src/L1/bilinear-form.md
 integrated_at: 2026-06-05T002531Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e03368a
 integration_notes: "Applied clean by integrator-per-report (D3, staging row 3); no repair needed (critic clean). L4/domain_energy_reduce.md:313-316 §Status re-anchored — dropped the post-c095 falsified gram_reduce/bilinear-form rough-in assertion (both rank: firm on disk since c095), recast as the permanent rank-1-vs-rank-2 SHAPE distinction; no frontmatter/rank flip. cargo make book EXIT 0; step-5b rank_violations=0 GATE PASSES; no newly-orphaned node. OQ domain_energy_reduce-313-gram_reduce-bilinear-form-c095-stale-rough-in-narration recommended-CLOSE at batch-31 meta unify."
 ---
 

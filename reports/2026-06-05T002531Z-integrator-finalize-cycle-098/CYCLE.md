@@ -91,7 +91,7 @@ permanent rank-1-vs-rank-2 / single-field-vs-family-PAIR SHAPE distinction. Both
 - **build-breakage repair:** none needed — `cargo make book` EXIT 0 on the first build.
 - **commit atomicity:** single commit per cycle (below).
 - **consumed-report frontmatter integrity:** 3 reports marked `integrated_at` + `integration_commit:
-  PLACEHOLDER_SHA` (two-phase SHA patch follows the commit).
+  e03368a` (two-phase SHA patch follows the commit).
 - **Per-report gates** (retroactive per-slice, concept_writes, edge-label, H1, append-on-missing-slug,
   variant-axis, bookkeeping, SUMMARY-chapter-registration, rank-gate): all PASS/N/A per the staging rows.
 

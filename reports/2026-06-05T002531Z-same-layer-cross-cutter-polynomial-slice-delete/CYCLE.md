@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T002531Z
 scope: L1 cross-cut — polynomial_recurrence_step slice absorb-verify-and-delete + dual-slice (orthog + polynomial) SUMMARY/spec-index row removal
 status: pending
 integrated_at: 2026-06-05T002531Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e03368a
 integration_notes: "Applied clean by integrator-per-report (D2, staging row 2); repair fired pre-integration (R9 L3-site anchor repoint added). polynomial_recurrence_step slice DELETED (verified-no-op absorb) + surgical L2/krylov-step.md:7 polynomial-clause drop (cg/gmres/chebyshev/arnoldi preserved) + R2/R3/R9 anchor repoints + R4 mermaid + R5 delink + R7/R8 dual-slice SUMMARY+spec/index orphaned-row removal (both orthog + polynomial). cargo make book EXIT 0; step-5b rank_violations=0 GATE PASSES; no newly-orphaned node. Slice corpus 5→3. OQ polynomial-recurrence-step-slice-absorb-verified-no-op-and-campaign-state-5to3-slices recommended-CLOSE at batch-31 meta unify."
 ---
 

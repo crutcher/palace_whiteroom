@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T002531Z
 scope: L-spec slice corpus reduction — absorb-verify-and-delete slices/orthog.md (graded-stack P2 slice-deletion, batch-31 tranche-2, dispatch D1)
 status: pending
 integrated_at: 2026-06-05T002531Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e03368a
 integration_notes: "Applied clean by integrator-per-report (D1, staging row 1); repair fired pre-integration (critic caught 8 MISSED inbound orthog links, repairer added PC-4 a–f). orthog slice DELETED (verified-no-op absorb) + 10 inbound links repointed to firm homes. cargo make book EXIT 0; step-5b rank_violations=0 GATE PASSES; no newly-orphaned node. Slice corpus 5→3 (with D2). OQ orthog-slice-substantive-absorb-framing-was-a-verified-no-op recommended-CLOSE at batch-31 meta unify."
 ---
 
