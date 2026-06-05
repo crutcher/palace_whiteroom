@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T091955Z
 scope: energy-fields output-product column — config-record uses-record edge (closes OQ energy-fields-config-and-domaindata-records-need-concept-pages)
 status: integrated
 integrated_at: 2026-06-05T100000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7417836
 integration_notes: |
   Applied clean (cycle-105 D1, batch-33 position 3/3, BATCH-CLOSING). FOLD decision — no new concept page. Added the 12th-and-final `depends-on (kind: uses-record)` edge from `feature/energy-fields.L4` → `concepts/config-record` (PostprocessConfig is a read-only IoData sub-record projection) + reciprocal `reference` back-ref + a §Per-driver-specializations paragraph in config-record.md. ALL 12 config-input feature columns now carry the edge. Closes OQ `energy-fields-config-and-domaindata-records-need-concept-pages`. The output `Measurement::DomainData` record stays homed in-chapter under the single-consumer bar (OQ `record-DomainData-needs-definition-home` unchanged/orthogonal). Build EXIT 0; rank firm≤firm holds; citecheck energy-fields.L4 14 ok / config-record 31 ok.
 ---

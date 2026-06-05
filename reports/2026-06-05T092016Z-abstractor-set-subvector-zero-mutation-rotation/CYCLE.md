@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T092016Z
 scope: L1>L0 theme sketch — set-subvector-zero-mutation-rotation (c105 D4 content tail)
 status: integrated
 integrated_at: 2026-06-05T100000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7417836
 integration_notes: |
   Applied clean (cycle-105 D4, batch-33 position 3/3, BATCH-CLOSING). CREATED `book/src/L1-L0/set-subvector-zero-mutation-rotation.md` — firm L1>L0 lowering theme (`Z_idx = I − P_idx` → in-place `SetSubVector(x,rows,0.0)`; A real vector.cpp:461-474 / B complex :476-492 + use-site cohort C; typed-from-start edges: depends-on {L1/set_subvector_zero kind:lowers-to, 3 L0 cites-evidence}, reference {scal/reciprocal-elementwise-product/divfree-projector}; rank: firm). SUMMARY + L1-L0/index.md dep-map row alpha-after `scal-mutation-rotation`. COUPLED de-stale: the c104 L1/set_subvector_zero.md entry's 4 (forthcoming) forward-refs repointed to live links (a `reference`, NOT `depends-on`, correctly avoiding the rank-direction error). Resolves OQ `set-subvector-zero-mutation-rotation-theme-forthcoming`. Build EXIT 0; rank well-foundedness 0 violations; citecheck theme 16 ok / set_subvector_zero 28 ok. The new L1>L0 theme = the L1>L0 tally +1.
 inputs:

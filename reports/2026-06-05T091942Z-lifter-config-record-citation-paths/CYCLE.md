@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T09:19:42Z
 scope: concepts/config-record citation-path basename hygiene — disambiguate bare `main.cpp` citations
 status: integrated
 integrated_at: 2026-06-05T100000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7417836
 integration_notes: |
   Applied clean (cycle-105 D3, batch-33 position 3/3, BATCH-CLOSING). Disambiguated 4 bare `main.cpp:NNN` citations to `palace/main.cpp:NNN` across 3 edit blocks in concepts/config-record.md (§driver-selector :257-281, §Signatures :231 + :259, *Solver ctor :262-280). Pure citation-path firm-up; no claim/structure/edge/frontmatter change; the citations sit in prose/inline-code spans (not markdown links) so build-safe. Resolves the c103/c104-carried config-record main.cpp AMBIG residue — citecheck now 31 ok / 0 failing on the file. RE-READ off disk first (D1 had edited a different region — frontmatter back-ref + §Per-driver paragraph); no overlap. Build EXIT 0.
 inputs:

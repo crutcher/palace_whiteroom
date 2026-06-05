@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T092003Z
 scope: concepts/op-params + concepts/sim-state — prose-body iterative.hpp citation re-anchor (citation hygiene)
 status: integrated
 integrated_at: 2026-06-05T100000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7417836
 integration_notes: |
   Applied as a NO-OP artifact apply + OQ resolved (cycle-105 D2, batch-33 position 3/3, BATCH-CLOSING). NO book edit. The c104 critic's reported ±1 prose-citation drift on concepts/op-params.md + concepts/sim-state.md (iterative.hpp:42→41/:45→44/:49-50→48-49/:53-55→52-54) was itself a CODEMAP read_range +1 FALSE POSITIVE on the `// Relative and absolute tolerances.` comment/declaration boundary (the documented codemap-read-range-plus-one-drift-on-brace-boundary failure mode). The harvester verified every prose citation exact against on-disk iterative.hpp (direct Read + grep); the c105 critic independently re-confirmed via direct Read; both agree the prose was ALWAYS correct. Resolved OQ `record-concept-prose-citation-pm1-drift` as a false-positive in open-questions.md (original c104 text retained for provenance). 2nd codemap-read-range-drift event this batch — recorded for the friction-ledger.
 inputs:
