@@ -1,3 +1,25 @@
+---
+rank: firm
+kind: record
+edges:
+  depends-on:
+    - target: palace/linalg/iterative.hpp:119-150
+      kind: cites-evidence            # CgSolver class + `mutable VecType r, z, p;` workspace (:144)
+    - target: palace/linalg/iterative.hpp:155-217
+      kind: cites-evidence            # GmresSolver class + V/r/H/s,sn/cs workspace (:190-194) + Initialize/Update (:197-198)
+    - target: palace/linalg/iterative.hpp:222-275
+      kind: cites-evidence            # FgmresSolver class + `mutable std::vector<VecType> Z;` (:256)
+  reference:
+    - L4/krylov-step
+    - concepts/solve-monad
+    - concepts/convergence-test
+    - concepts/state-stratification
+    - concepts/op-params
+    - concepts/sim-state
+    - concepts/first-iteration-unrolling
+    - concepts/prev-carry
+---
+
 # Krylov
 
 > **Kind: `record`.** This page defines the *data shape* of the L4 `Krylov` record — its (slice-specific) field schemas, their types and meaning, the construction-vs-run-time stratum of each, and the L0 source home it mirrors. The *behaviour* over `Krylov` (how `krylov-step` reads and updates it) lives in the operator chapters that consume it — this page does not restate that algebra.

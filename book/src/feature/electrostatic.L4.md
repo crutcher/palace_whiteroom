@@ -16,6 +16,8 @@ edges:
       kind: composes
     - target: palace/drivers/electrostaticsolver.cpp:21-98
       kind: cites-evidence
+    - target: concepts/config-record
+      kind: uses-record               # input signature: electrostatic :: ElectrostaticConfig -> CapacitanceMatrix (the IoData surface)
   reference:
     - feature/capacitance.L4
 ---

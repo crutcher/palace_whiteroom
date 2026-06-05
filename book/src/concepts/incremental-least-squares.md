@@ -40,5 +40,5 @@ Multiple iterative methods will reuse this pattern: GMRES, FGMRES, and (with a d
 
 ## Dependencies
 
-- L2 realisation depends on `givens-rotation` (the scalar kernel pair: generate + apply).
+- L2 realisation depends on [`givens`](./givens.md) (the scalar kernel pair: generate + apply).
 - Closely coupled with `orthogonalization` (which produces the input column `h_new`) but neither concept subsumes the other.

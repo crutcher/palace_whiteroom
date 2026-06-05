@@ -1,3 +1,24 @@
+---
+rank: firm
+kind: record
+edges:
+  depends-on:
+    - target: palace/linalg/iterative.hpp:26-115
+      kind: cites-evidence            # IterativeSolver base: rel_tol/abs_tol (:41), max_it (:44), A/B (:48-49)
+    - target: palace/linalg/iterative.hpp:155-217
+      kind: cites-evidence            # GmresSolver variant selectors: max_dim (:180), gs_orthog (:184), pc_side (:187)
+  reference:
+    - L4/krylov-step
+    - concepts/solve-monad
+    - concepts/state-stratification
+    - concepts/sim-state
+    - concepts/krylov
+    - concepts/variant-absorption
+    - concepts/constructed-operators
+    - concepts/constructed-operator-factory
+    - concepts/convergence-test
+---
+
 # OpParams
 
 > **Kind: `record`.** This page defines the *data shape* of the L4 `OpParams` record — its fields, their types and meaning, the construction-vs-run-time stratum of each, and the L0 source home it mirrors. The *behaviour* over `OpParams` (how `krylov-step` reads it through closed-over surfaces) lives in the operator chapters that consume it — this page does not restate that algebra.

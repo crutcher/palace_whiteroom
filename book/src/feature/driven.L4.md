@@ -18,6 +18,8 @@ edges:
       kind: cites-evidence
     - target: palace/drivers/drivensolver.cpp:77-229
       kind: cites-evidence
+    - target: concepts/config-record
+      kind: uses-record               # input signature: driven :: DrivenConfig -> FrequencyResponse (the IoData surface)
   reference:
     - feature/sparameters.L4
 ---

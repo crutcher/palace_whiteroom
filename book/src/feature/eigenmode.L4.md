@@ -12,6 +12,8 @@ edges:
       kind: composes
     - target: palace/drivers/eigensolver.cpp:32-477
       kind: cites-evidence
+    - target: concepts/config-record
+      kind: uses-record               # input signature: eigenmode :: EigenmodeConfig -> EigenmodeResult (the IoData surface)
   reference:
     - feature/eigenfrequency-qfactor.L4
 ---

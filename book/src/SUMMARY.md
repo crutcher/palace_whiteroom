@@ -186,6 +186,7 @@
   - [participation_ratio](./L1/participation_ratio.md)
   - [reciprocal](./L1/reciprocal.md)
   - [scal](./L1/scal.md)
+  - [set_subvector_zero](./L1/set_subvector_zero.md)
 - [Operator application & assembly](./L1/operator-application-intro.md)
   - [apply_linop](./L1/apply_linop.md)
   - [assemble-diagonal](./L1/assemble-diagonal.md)

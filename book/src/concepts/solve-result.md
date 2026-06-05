@@ -1,3 +1,26 @@
+---
+rank: firm
+kind: record
+edges:
+  depends-on:
+    - target: palace/linalg/iterative.hpp:26-115
+      kind: cites-evidence            # `sim` backing: mutable solve-statistics fields (:52-54) mutated in place on the solver instance
+    - target: palace/linalg/iterative.cpp:393-397
+      kind: cites-evidence            # `outputs` backing: per-step derived readouts computed inline (residual proxy)
+    - target: palace/linalg/iterative.cpp:640-644
+      kind: cites-evidence            # `outputs` backing: GMRES LS-residual readout
+    - target: palace/linalg/iterative.cpp:21-31
+      kind: cites-evidence            # `outputs` backing: CheckDot guard
+  reference:
+    - concepts/solve-monad
+    - L4/krylov-step
+    - concepts/step-outputs
+    - concepts/prev-carry
+    - concepts/state-stratification
+    - concepts/sim-state
+    - concepts/krylov
+---
+
 # solve-result
 
 `Solve { sim, krylov, outputs[, carry] }` is the **return-record shape** of the L4 [`krylov-step`](../L4/krylov-step.md) kernel — the record of values one step hands back. This page defines that *record's fields* — the data shape. It is **distinct from the `Solve` monad effect**: the `Solve` monad (the `StateT SimState Identity` *effect* that threads `SimState`) is defined by [`solve-monad`](./solve-monad.md); this page defines the *fields the monadic action returns as its value*, not the threading discipline. The two share the name `Solve` because the L4 narrative writes the kernel result as `Solve { ... }` — the wrapping monad plus the record of returned values — but they answer different questions: `solve-monad` answers *how state is threaded*; `solve-result` answers *what record a step yields*.

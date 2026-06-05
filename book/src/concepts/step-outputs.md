@@ -1,3 +1,26 @@
+---
+rank: firm
+kind: record
+edges:
+  depends-on:
+    - target: palace/linalg/iterative.cpp:393-397
+      kind: cites-evidence            # PCG residual proxy: beta = (Br,r) (:395), CheckDot (:396), res = sqrt|beta| (:397)
+    - target: palace/linalg/iterative.cpp:640-644
+      kind: cites-evidence            # GMRES LS-residual estimate: beta = |s[j+1]| (:642), CheckDot (:643), converged test (:644)
+    - target: palace/linalg/iterative.cpp:21-31
+      kind: cites-evidence            # CheckDot guard backing the breakdown_token slot
+    - target: palace/linalg/iterative.hpp:26-115
+      kind: cites-evidence            # persistent home of the readouts: mutable final_res statistic (:54)
+  reference:
+    - L4/krylov-step
+    - concepts/derived-view-hoisting
+    - concepts/solve-monad
+    - concepts/state-stratification
+    - concepts/solve-result
+    - concepts/sim-state
+    - concepts/krylov
+---
+
 # step-outputs
 
 `StepOutputs` is the **demand-prunable per-step readout bundle** returned by the L4 [`krylov-step`](../L4/krylov-step.md) kernel alongside the next `SimState` and `Krylov` values. It is a *record definition*: this page defines the data shape — its fields, their types, their meaning, and the L0 source the fields mirror — not the algebra of the operator that produces it (that lives in [`krylov-step`](../L4/krylov-step.md) and its [`derived-view-hoisting`](./derived-view-hoisting.md) demand-pruning law).

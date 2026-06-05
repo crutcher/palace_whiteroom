@@ -17,6 +17,10 @@ edges:
     - feature/transient.L4
     - feature/eigenmode.L4
     - feature/boundary-mode.L4
+    - feature/capacitance.L4
+    - feature/inductance.L4
+    - feature/sparameters.L4
+    - feature/eigenfrequency-qfactor.L4
 ---
 
 # config-record

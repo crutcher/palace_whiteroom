@@ -1,3 +1,23 @@
+---
+rank: firm
+kind: record
+edges:
+  depends-on:
+    - target: palace/linalg/iterative.hpp:26-115
+      kind: cites-evidence            # IterativeSolver base: mutable converged/initial_res,final_res/final_it (:52-54); accessor surface (:97-108)
+    - target: palace/linalg/iterative.hpp:140-150
+      kind: cites-evidence            # CgSolver::Mult iterate output arg `x` (:149)
+    - target: palace/linalg/iterative.hpp:214-217
+      kind: cites-evidence            # GmresSolver::Mult iterate output arg `x` (:216)
+  reference:
+    - L4/krylov-step
+    - concepts/solve-monad
+    - concepts/state-stratification
+    - concepts/convergence-test
+    - concepts/op-params
+    - concepts/krylov
+---
+
 # SimState
 
 > **Kind: `record`.** This page defines the *data shape* of the L4 `SimState` record — its fields, their types and meaning, the construction-vs-run-time stratum of each, and the L0 source home it mirrors. The *behaviour* over `SimState` (how `krylov-step` threads it through the `Solve` monad) lives in the operator chapters that consume it — this page does not restate that algebra.

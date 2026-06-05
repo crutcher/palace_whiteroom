@@ -10,6 +10,8 @@ edges:
       kind: folds
     - target: palace/drivers/electrostaticsolver.cpp:100-140
       kind: cites-evidence
+    - target: concepts/config-record
+      kind: uses-record               # input signature: capacitance :: ElectrostaticConfig -> CapacitanceMatrix (the IoData surface)
   reference:
     - feature/electrostatic.L4
 ---

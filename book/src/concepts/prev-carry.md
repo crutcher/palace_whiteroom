@@ -1,3 +1,21 @@
+---
+rank: firm
+kind: record
+edges:
+  depends-on:
+    - target: palace/linalg/iterative.cpp:393-397
+      kind: cites-evidence            # CG beta_prev backing: beta = (Br,r) recurrence value (:395-396)
+    - target: palace/linalg/iterative.cpp:636-644
+      kind: cites-evidence            # GMRES H_prev backing: sub-diagonal Hessenberg entry in the Arnoldi/plane-rotation sequence
+  reference:
+    - concepts/first-iteration-unrolling
+    - L4/krylov-step
+    - concepts/state-stratification
+    - concepts/solve-result
+    - concepts/krylov
+    - concepts/step-outputs
+---
+
 # prev-carry
 
 `PrevCarry` is the **closure-threaded recurrence carry** that the [`first-iteration-unrolling`](./first-iteration-unrolling.md) rotation moves *out of* the steady-state iteration schema and threads through the loop driver as a closure argument. It appears only in **Form B** (first-iteration-unrolled) of the L4 [`krylov-step`](../L4/krylov-step.md) kernel. This page defines the data shape — what the carry holds, its type, its stratum, and its L0 backing — not the rotation that produces it (that is [`first-iteration-unrolling`](./first-iteration-unrolling.md)).

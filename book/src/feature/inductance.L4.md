@@ -10,6 +10,8 @@ edges:
       kind: folds
     - target: palace/drivers/magnetostaticsolver.cpp:110-152
       kind: cites-evidence
+    - target: concepts/config-record
+      kind: uses-record               # input signature: inductance :: MagnetostaticConfig -> InductanceMatrix (the IoData surface)
   reference:
     - feature/magnetostatic.L4
 ---

@@ -14,6 +14,8 @@ edges:
       kind: cites-evidence
     - target: palace/main.cpp:276-278
       kind: cites-evidence
+    - target: concepts/config-record
+      kind: uses-record               # input signature: boundary_mode :: BoundaryModeConfig -> BoundaryModeResult (the IoData surface)
   reference:
     - feature/eigenmode.L4
 ---

@@ -12,6 +12,8 @@ edges:
       kind: cites-evidence
     - target: palace/drivers/basesolver.cpp:153-276
       kind: cites-evidence
+    - target: concepts/config-record
+      kind: uses-record               # input signature: lifecycle :: Config -> Product (the IoData surface)
   reference:
     - feature/electrostatic.L4
     - feature/magnetostatic.L4

@@ -14,6 +14,8 @@ edges:
       kind: cites-evidence
     - target: palace/models/waveportoperator.cpp:780-793
       kind: cites-evidence
+    - target: concepts/config-record
+      kind: uses-record               # input signature: sparameters :: DrivenConfig -> ScatteringMatrix (the IoData surface)
   reference:
     - feature/driven.L4
 ---

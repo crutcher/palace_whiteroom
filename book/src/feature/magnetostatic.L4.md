@@ -16,6 +16,8 @@ edges:
       kind: composes
     - target: palace/drivers/magnetostaticsolver.cpp:22-108
       kind: cites-evidence
+    - target: concepts/config-record
+      kind: uses-record               # input signature: magnetostatic :: MagnetostaticConfig -> InductanceMatrix (the IoData surface)
   reference:
     - feature/inductance.L4
 ---
