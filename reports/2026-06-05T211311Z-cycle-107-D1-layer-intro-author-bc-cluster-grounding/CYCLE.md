@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T211311Z
 scope: cycle-107 D1 — WAVE-3 reachability follow-up; GROUND the firm-but-absorbed BC-elimination + divfree clusters from the feature-spine roots (the dofset / set_subvector_zero rescue)
 status: pending
 integrated_at: 2026-06-05T223500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 24c3e71
 integration_notes: "Applied clean (staging row D1). 3 honestly-typed, citation-grounded (critic-verified faithful) grounding depends-on edges landed per the NEW 2026-06-05 grounding directive — fe_assemble->absorbed-post-composition->eliminate_bc; eigenmode.L4->constrains-eigvec->L3/divfree-projector; L3/divfree-projector->uses->{L1/set_subvector_zero, concepts/set_subvector_zero}; all pre-existing reference: entries preserved. reachable 88->95 (+7 nodes rescued), 0 regressions, rank_violations HELD 0, build EXIT 0. Resolved OQs bc-driver-column-eliminate-bc-edge-gap-blocks-dofset-rescue + set-subvector-zero-cluster-reachability-not-rescued-by-reference-backlink grounded-and-rescued; the WAVE-3 record-rescue tranche is COMPLETE. The L1/divfree-projector enumeration discrepancy (did NOT flip — pre-scheme L2/divfree-projector dead-ends the L2->L1 mark-sweep) routed to batch-34 OQ lowering-chain-liveness-not-propagated-to-l1-ops; L4-L3/bc-elimination-post-composition-dissolution flipped in its place so the headline +7/-7 is exactly correct. No finalize build-repair."
 ---
 

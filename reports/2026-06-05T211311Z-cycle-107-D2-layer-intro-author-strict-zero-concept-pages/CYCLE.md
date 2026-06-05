@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T211311Z
 scope: cycle-107 D2 — strict-zero concept pages get ratified non-node reference-only edges blocks (item-3c lazy tail)
 status: pending
 integrated_at: 2026-06-05T223500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 24c3e71
 integration_notes: "Applied clean (staging row D2). 15 of the 16 strict-zero non-node concept pages got the batch-33-ratified reference-only edges: block (NO rank:); untyped 76->61 (-15), typed 279->294, reachable HELD 95, rank_violations HELD 0, unresolved_depends_on_targets HELD 0, build EXIT 0. The 16th page concepts/counter-update DELIBERATELY DEFERRED (a node needing rank:, not a non-node) — captured by promoted OQ concepts-counter-update-needs-node-rank-and-depends-on-edges, routed to batch-34; no live rank/liveness impact. The detritus rise 149->163 (+14) is the untyped->typed-non-node reclassification (the 14 newly-typed pages carry no liveness), NOT a regression — 0 nodes lost reachability (verified by git-stash set-diff). No finalize build-repair."
 ---
 
