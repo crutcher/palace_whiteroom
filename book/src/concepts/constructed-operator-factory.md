@@ -31,7 +31,7 @@ This is the *single point* property required by variant-absorption level (b). If
 
 ## Used by
 
-- [`cg_preconditioning_framework`](../spec/slices/cg_preconditioning_framework.md) L1/L2 — both `build_ksp_solver` calls are factory instances.
+- [`preconditioning-framework`](../L4/preconditioning-framework.md) — `buildKspSolver`'s two `constructedOperatorFactory` calls (`KrylovRole`, `PrecondRole`) are factory instances; the variant axes absorb inside the factories (§Signature).
 - Future per-method slices' L2 forms that need to refer to the krylov-builder by name.
 
 ## See also

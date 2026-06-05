@@ -27,7 +27,7 @@ Contrast with renaming: if `Solver<OperType>` were merely a typedef for `OperTyp
 
 ## Used by
 
-- [`cg_preconditioning_framework`](../spec/slices/cg_preconditioning_framework.md) L1/L2 — establishes the pattern for Palace's KSP composition.
+- [`preconditioning-framework`](../L4/preconditioning-framework.md) — the framework that binds a constructed `Pc<E>` (itself an `Op<E>`) into `BaseKspSolver`; establishes Palace's KSP composition pattern.
 - The per-method Krylov slices (`cg`, `gmres`, `fgmres`) at L2 — treat `apply_preconditioner(solver, r, z)` as `apply_linop(solver.pc, r)`.
 
 ## See also

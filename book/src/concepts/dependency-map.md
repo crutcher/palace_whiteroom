@@ -150,9 +150,6 @@ graph BT
   orthog --> apply_linop
   orthog --> constructed-operators
   orthog --> variant-absorption
-  divfree --> ksp_solve
-  divfree --> apply_linop
-  divfree --> axpy
   chebyshev --> apply_linop
   chebyshev --> axpy
   chebyshev --> elementwise-product
@@ -162,15 +159,8 @@ graph BT
   arnoldi_step --> scal
   arnoldi_step --> constructed-operators
   arnoldi_step --> variant-absorption
-  plane_rotation_stream --> givens
   cg --> state-stratification
   gmres --> state-stratification
-  cg_preconditioning_framework --> solver-as-operator
-  cg_preconditioning_framework --> two_operator_split
-  cg_preconditioning_framework --> complex-from-real-lift
-  cg_preconditioning_framework --> constructed-operators
-  cg_preconditioning_framework --> variant-absorption
-  cg_preconditioning_framework --> apply_linop
   solver-as-operator --> apply_linop
   two_operator_split --> constructed-operators
   two_operator_split --> solver-as-operator
@@ -179,10 +169,6 @@ graph BT
   polynomial_recurrence_step --> negative-result-slice
   polynomial_recurrence_step --> elementwise-product
   polynomial_recurrence_step --> givens
-  divfree --> set_subvector_zero
-  divfree --> constructed-operators
-  divfree --> variant-absorption
-  divfree --> state-stratification
   plane-rotation-stream --> givens_generate
   plane-rotation-stream --> givens_apply
   cg --> nrm2
@@ -214,11 +200,6 @@ graph BT
   gmres --> constructed-operators
   gmres --> variant-absorption
   ksp_solve --> apply_linop
-  divfree --> apply_linop
-  divfree --> set_subvector_zero
-  divfree --> ksp_solve
-  divfree --> axpy
-  divfree --> copy
   chebyshev --> copy
   chebyshev --> zero
   chebyshev --> axpy
@@ -242,9 +223,6 @@ graph BT
   cg --> axpy
   cg --> axpby
   cg --> dot
-  divfree --> constructed-operators
-  divfree --> variant-absorption
-  plane_rotation_stream --> givens
   solver-as-operator --> apply_linop
   solver-as-operator --> rotation
   constructed-operator-factory --> constructed-operators
@@ -255,12 +233,6 @@ graph BT
   complex-from-real-lift --> constructed-operators
   finest-level-unwrap --> constructed-operator-factory
   counter-update --> state-stratification
-  cg_preconditioning_framework --> apply_linop
-  cg_preconditioning_framework --> solver-as-operator
-  cg_preconditioning_framework --> constructed-operator-factory
-  cg_preconditioning_framework --> complex-from-real-lift
-  cg_preconditioning_framework --> finest-level-unwrap
-  cg_preconditioning_framework --> counter-update
 ```
 
 Composition of base algebraic primitives, with HPC/SIMD tricks unfolded.
@@ -278,12 +250,6 @@ graph BT
   tensor-field-lift --> apply_linop
   gmres-L3 --> tensor-field-lift
   gmres-L3 --> sequential-obstruction
-  divfree --> apply_linop
-  divfree --> set_subvector_zero
-  divfree --> ksp_solve
-  divfree --> axpy
-  divfree --> tensor-field-lift
-  divfree --> sequential-obstruction
   orthog --> sequential-obstruction
   orthog --> tensor-field-lift
   orthog --> gemv_basis
@@ -306,15 +272,6 @@ graph BT
   arnoldi_step --> tensor-field-lift
   arnoldi_step --> sequential-obstruction
   cg --> iterate_while
-  cg_preconditioning_framework --> apply_linop
-  cg_preconditioning_framework --> solver-as-operator
-  cg_preconditioning_framework --> complex-from-real-lift
-  cg_preconditioning_framework --> build-time-vs-run-time-stratification
-  cg_preconditioning_framework --> sequential-obstruction
-  plane_rotation_stream --> sequential-obstruction
-  plane_rotation_stream --> givens
-  plane_rotation_stream --> tensor-field-lift
-  plane_rotation_stream --> trsv
 ```
 
 Whole-tensor operations replacing per-element iteration; or `obstruction` results documenting genuine sequentiality.
@@ -350,12 +307,6 @@ graph BT
   orthog --> solve-monad
   orthog --> constructed-operators
   orthog --> sequential-obstruction
-  divfree --> solve-monad
-  divfree --> state-stratification
-  divfree --> constructed-operators
-  divfree --> apply_linop
-  divfree --> set_subvector_zero
-  divfree --> ksp_solve
   chebyshev --> solve-monad
   chebyshev --> state-stratification
   chebyshev --> constructed-operators
@@ -374,21 +325,9 @@ graph BT
   arnoldi_step --> orthogonalization
   arnoldi_step --> nrm2
   arnoldi_step --> scal
-  divfree --> axpy
   cg --> first-iteration-unrolling
   gmres --> derived-view-hoisting
-  cg_preconditioning_framework --> solve-monad
-  cg_preconditioning_framework --> state-stratification
-  cg_preconditioning_framework --> constructed-operators
-  cg_preconditioning_framework --> variant-absorption
-  cg_preconditioning_framework --> apply_linop
-  cg_preconditioning_framework --> solver-as-operator
-  cg_preconditioning_framework --> complex-from-real-lift
-  cg_preconditioning_framework --> finest-level-unwrap
-  cg_preconditioning_framework --> capability-typing
-  cg_preconditioning_framework --> derived-view-hoisting
   chebyshev --> derived-view-hoisting
-  divfree --> derived-view-hoisting
 ```
 
 The L4 calculus has its own design artifact at [`book/src/design/l4_calculus.md`](../design/l4_calculus.md). L4 concepts (grammar productions, reduction rules, ownership categories) are not currently tracked here — the calculus is a single document with its own internal structure. If L4 grows to need cross-cycle concept tracking, add a section here at that time.

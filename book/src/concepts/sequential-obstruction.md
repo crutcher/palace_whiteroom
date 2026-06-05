@@ -50,7 +50,8 @@ See the [orthog slice](../spec/slices/orthog.md) L3 section for the detailed tre
 ## Sub-kind: out-of-scope-obstruction
 
 A structurally distinct sub-kind of obstruction surfaced in the
-[sparse_triangular_solve slice](../spec/slices/sparse_triangular_solve.md):
+[triangular-solve-obstruction theme](../L1-L0/triangular-solve-obstruction.md) (the firm L1>L0 home
+for the absorbed `sparse_triangular_solve` negative result):
 **the algorithm exists in the literature and is invoked by Palace, but
 lives entirely below the Palace boundary** (inside a third-party
 library reached through a thin wrapper). The L0→L1 rotation is
@@ -80,29 +81,62 @@ out-of-scope sub-kind typically yields a follow-up rename suggestion
 `sparse_direct_solver_wrapper`) rather than a layer-by-layer rotation
 chain.
 
-## Worked example: Givens-stream replay-prefix (plane_rotation_stream)
+## Worked example: Givens-stream replay-prefix (GMRES least-squares update)
 
-The [plane_rotation_stream](../spec/slices/plane_rotation_stream.md)
-slice's L2→L3 cycle is a clean class-(a) obstruction. The L2 form is
-an explicit loop:
+The GMRES least-squares column update ([`ls-update-column`](../L1/ls-update-column.md))
+replays a stream of stored Givens rotations on each new Hessenberg
+column — a clean class-(a) obstruction. The L0 site is the GMRES inner
+loop (`palace/linalg/iterative.cpp:634-637` replay-prefix; `:638-640`
+the per-step extend triple):
 
 ```
-for k in 0..j-1:
-    (Hj[k], Hj[k+1]) = givens_apply(Hj[k], Hj[k+1], cs[k], sn[k])
+for (int k = 0; k < j; k++)            // iterative.cpp:634-637
+{
+  ApplyPlaneRotation(Hj[k], Hj[k+1], cs[k], sn[k]);
+}
+GeneratePlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]);   // :638
+ApplyPlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]);      // :639
+ApplyPlaneRotation(s[j], s[j+1], cs[j], sn[j]);        // :640
 ```
 
-Adjacent iterations share boundary slot `Hj[k+1]`: iteration `k`
-writes it, iteration `k+1` reads it. This is the canonical small-N
-read-after-write that prevents a single elementwise / gather-scatter
-global tensor-field expression on `Hj`.
+**The replay-prefix obstruction.** In the loop, adjacent iterations
+share boundary slot `Hj[k+1]`: iteration `k` writes it, iteration
+`k+1` reads it. This is the canonical small-N read-after-write that
+prevents a single elementwise / gather-scatter global tensor-field
+expression on `Hj`. The algebraic shape: the stream represents a
+product of `j` Givens factors `G_{j-1} · … · G_0`. Materializing the
+product as a dense `j × j` unitary would be tensor-field-shaped (a
+matvec `Hj ← Q · Hj`) but destroys the `O(j)` storage / `O(j·m)` flop
+savings that motivate the factored representation — a quadratic-vs-
+linear blowup that defeats incremental QR. The obstruction is
+**representational**: the tensor-field form exists in principle, but
+only in a representation the algorithm was designed to avoid.
 
-The algebraic shape: the stream represents a product of `j` Givens
-factors `G_{j-1} · … · G_0`. Materializing the product as a dense
-`j × j` unitary would be tensor-field-shaped (a matvec `Hj ← Q · Hj`)
-but destroys the `O(j)` storage / flop savings that motivate the
-factored representation. The obstruction is **representational**: the
-tensor-field form exists in principle, but only in a representation
-the algorithm was designed to avoid.
+**Local triviality at extend.** The per-step *extend* triple
+(`:638-640`: one `GeneratePlaneRotation` + one `ApplyPlaneRotation` on
+`Hj` + one on `s`) is a fixed three-primitive sequence with no loop. It
+lifts unchanged — there is no iteration structure to globalize, so the
+rotation is the identity. The obstruction is specific to the
+replay-prefix *loop*, not the extend step.
+
+**Cross-target reuse is per-step, not a batch dimension.** The two
+`ApplyPlaneRotation` calls at `:639` / `:640` use the SAME `(cs[j],
+sn[j])` pair but on **disjoint targets** (`Hj` column vs. `s` RHS).
+This is not a tensor-field broadcast: each is one 2×2 rotation on one
+2-tuple, with exactly two hard-coded call sites — there is no batch
+dimension to `vmap` over. Even across the two targets the replays are
+structurally non-fusible: replay-prefix touches only `Hj`, while the
+`s`-pair rotation only ever happens at the same step index `j`, never
+as a replay.
+
+**Sibling-representation boundary (Householder-WY).** Removing the
+obstruction requires changing the *factored representation*, not the
+spec: Givens-stream stores `j` scalar pairs and replays a chain;
+Householder-block QR with the WY representation stores a block
+reflector `(V, T)` and applies it via two `gemv`/`gemm` calls — the
+latter HAS an L3 global form, but at a different L0 and a different
+per-step flop profile. That is a different algorithm, not a back-
+correction of this one.
 
 This pattern recurs across incremental-factorization streams
 (Householder QR, modified Gram-Schmidt with reorthogonalization,

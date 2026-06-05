@@ -128,7 +128,7 @@ Out of scope for this operator (deliberate exclusions):
 - `palace/linalg/iterative.hpp:221-275` — `FgmresSolver<OperType>` declaration extending `GmresSolver` with additional workspace `Z` (line 256), default-right preconditioning (line 265).
 - `palace/linalg/iterative.cpp:361-486` — `CgSolver<OperType>::Mult` definition: full per-step CG body. Direct evidence of the per-method workspace allocation (`r.SetSize`, `z.SetSize`, `p.SetSize` at lines 369-371), the initial-guess threading (lines 377-386), the residual-proxy convergence test (line 417-419 short-circuit at zero residual), and the per-step `apply_linop` / `dot` / `axpy` use.
 - `palace/linalg/iterative.cpp:544-705` — `GmresSolver<OperType>::Mult` definition: full per-step GMRES body with Arnoldi orthogonalisation, restart logic, and Hessenberg-update / Givens-rotation least-squares residual proxy.
-- `palace/linalg/divfree.cpp:175` — `ksp->Mult(rhs, psi)` call site inside `DivFreeSolver<VecType>::Mult` — direct L0 evidence of the use pattern; the L2 form lifts this to `psi = ksp_solve(self.ksp, rhs)` (per [`spec/slices/divfree`](../spec/slices/divfree.md) §L2 step 3).
+- `palace/linalg/divfree.cpp:175` — `ksp->Mult(rhs, psi)` call site inside `DivFreeSolver<VecType>::Mult` — direct L0 evidence of the use pattern; the L2 form lifts this to `psi = ksp_solve(self.ksp, rhs)` (the projected H1 solve, step 3 of [`divfree-projector`](./divfree-projector.md)).
 - `palace/drivers/electrostaticsolver.cpp:69` — `ksp.Mult(RHS, V[step])` call site inside the per-terminal loop. Direct L0 evidence of the driver-side use pattern.
 - `palace/drivers/magnetostaticsolver.cpp:77` — `ksp.Mult(RHS, A[step])` call site (analogous).
 - `palace/drivers/drivensolver.cpp:196` — `ksp.Mult(RHS, E)` call site (analogous, complex path).
@@ -140,4 +140,4 @@ Out of scope for this operator (deliberate exclusions):
 - `book/src/concepts/solver-as-operator.md` — the type-level rotation underwriting the L1 form's treatment of `K` as substitutable for an `apply_linop`-style primitive.
 - `book/src/concepts/constructed-operators.md`, `concepts/variant-absorption.md`, `concepts/constructed-operator-factory.md` — the three methodology concepts the L1 entry's variant-axis collapse and opaque-type treatment rest on.
 - `book/src/L2/krylov-step.md` — the upstream L2 layer that unfolds the per-method body the L1 `ksp_solve` opaquely wraps.
-- `book/src/spec/slices/divfree.md` — the slice-corpus precedent for the L1 / L2 `ksp_solve` use pattern.
+- `book/src/L1/divfree-projector.md` — the firm L1 consumer of `ksp_solve`: the projected H1 solve `M·ψ = rhs` (`palace/linalg/divfree.cpp:175`) is its constructed-operator inner solve.

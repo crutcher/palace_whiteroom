@@ -30,7 +30,7 @@ At L3, the slice's prose should:
 
 ## Worked example
 
-In [`cg_preconditioning_framework`](../spec/slices/cg_preconditioning_framework.md)'s L3:
+In [`preconditioning-framework`](../L4/preconditioning-framework.md) (§Context rotation 1; §Algebraic laws 2, 4):
 
 - Build-time: `constructed-operator-factory` (called once at session start to build `ksp` and `pc`), `bind_preconditioner` (one-shot pointer install), `finest-level-unwrap` (executed at `set_operators`).
 - Run-time: `apply_linop(ksp, b)` (delegates to the per-method iteration), `apply_linop(pc, r)` (per-iteration preconditioner application), `complex-from-real-lift` (expansion of `apply_linop` for complex pc), `counter-update` (post-solve bookkeeping).

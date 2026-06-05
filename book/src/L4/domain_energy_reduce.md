@@ -265,7 +265,7 @@ route (the [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md) /
 downward content — the C++ per-domain readout loop (`postoperator.cpp:1036-1042` electric,
 `:1061-1066` magnetic), the domain-restricted energy form
 (`domainpostoperator.cpp:255-275` / `:277-297`), and the whole-domain total construction
-(`postoperator.cpp:1033, 1058`) — lives in the field-energy postoperator L0 and the (firm / rough-in) L1
+(`postoperator.cpp:1033, 1058`) — lives in the field-energy postoperator L0 and the (both firm) L1
 folded primitives' own L1>L0 rotations. This entry records the rotation direction in-line per high→low
 discipline; it does not author a theme.
 
@@ -371,11 +371,13 @@ are the citecheck-confirmed on-disk numbers.
   `:87-91` (the SI-energy assertion `U = ½·ε₀·E₀²·sx·sy·sz`) — a positive unit-test witness for the
   energy-FORM (the `½⟨field, M field⟩` shape, whole-domain instance), supporting the folded numerator
   primitive's correctness. It does NOT exercise the per-domain restriction or the participation assembly
-  (the rough-in test-gate, §Status point 2).
+  (the per-domain test-gate that §Status point 2 holds REDUNDANT under the firm-on-positive-structure
+  escape, the verb being firm).
 - **Folded L1 primitives:** [`participation_ratio`](../L1/participation_ratio.md) (firm c077 — the
   `energyᵢ/e_total` quotient half; :188-191 disclaims the numerator-energy reduction as "named not authored"
-  = THIS verb), [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (rough-in (test-coverage-bounded) —
-  the `½⟨field, M field⟩` energy-form half).
+  = THIS verb), [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091 — the
+  `½⟨field, M field⟩` energy-form half; promoted by the batch-29 firm-flip-and-cascade wave on the
+  firm-on-positive-structure escape).
 - **Sibling-combinator grounding:** [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md) (the
   per-MODE rank-1 scalar-table sibling), [`gram_reduce`](./gram_reduce.md) (the rank-2 over-unification
   guard), [`inner_product`](./inner_product.md) (the reduce-to-scalar base of the per-domain energy);

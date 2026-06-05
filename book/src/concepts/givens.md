@@ -37,8 +37,8 @@ In the GMRES inner step (`palace/linalg/iterative.cpp:634-640`), the `ls_update_
 
 In primitive composition (L2), the two `givens` primitives compose
 as an **incremental QR stream** — see
-[plane_rotation_stream slice](../spec/slices/plane_rotation_stream.md)
-for the canonical use site. The stream pattern is:
+[`incremental-least-squares`](../L2/incremental-least-squares.md)
+for the canonical firm use site. The stream pattern is:
 
 - `gen` produces one new rotation scalar pair `(c[j], s[j])` per
   outer step.

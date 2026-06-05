@@ -1457,3 +1457,68 @@ opened_by: lifter (cycle-096 D5 — matrix-weighted-norm within-theme stale-resi
 While running the `.claude/agents/lifter.md` cross-file whole-book maturity-token grep guard for the D5 within-theme re-anchor, D5 surfaced ONE clean cross-file genuinely-stale operator-maturity assertion OUTSIDE the `matrix-weighted-norm-mutation-rotation.md` theme: **`book/src/L4/domain_energy_reduce.md:377`** reads `[matrix-weighted-norm](../L1/matrix-weighted-norm.md) (rough-in (test-coverage-bounded) — the ½⟨field, M field⟩ energy-form half)`. This asserts the OPERATOR `matrix-weighted-norm`'s OWN maturity at the pre-c091 token and is falsified by the c091 firm-flip (`book/src/L1/matrix-weighted-norm.md:4` `rank: firm`). It is the same `firm-flip-leaves-within-file-stale-narration` cross-file class — a consumer chapter the c091 cross-file sweep did not fully re-anchor. D5 is scoped to ONE theme per the lifter one-theme-per-invocation discipline, so it correctly FLAGGED rather than silently edited this site. The critic independently verified this is a genuinely-stale assertion (not a defect introduced by D5). *Recommended re-anchor (a batch-31 land-clean lifter, or a co-scheduled `domain_energy_reduce` follow-up):* restate `:377` `(rough-in (test-coverage-bounded) — ...)` → `(firm, promoted cycle-091 — the ½⟨field, M field⟩ energy-form half)`. *Trigger:* batch-31 land-clean lifter pass (out of D5's one-theme scope). *Note:* two further out-of-scope residues D5 noted are NOT logged as separate OQs here because they are already routed elsewhere: `book/src/methodology/goal-flow.md:218` (the planner explicitly partitioned `goal-flow.md` to the batch-30 meta-phase, same stale-cascade narration as the resolution-ladder.md worked example) and the `book/src/L2/index.md:112,121` `normalize_B`-gate phrasing (D5 judged it asserts `normalize_B`'s no-live-consumer gate, NOT mwn's maturity — mildly stale-in-framing only, a separate normalize-cohort follow-up).
 
 ---
+
+## l4-preconditioning-framework-promotion — RESOLVED-by-c096-D1 (confirm-close at batch-31 unify)
+
+opened_at: cycle-097
+opened_by: integrator-per-report (cycle-097 D1 — same-layer-cross-cutter cg_preconditioning_framework slice-delete)
+
+CLOSE-NOTE (append-only; the original OQ opened earlier is NOT edited here — meta-phase holds unify/close authority). Cycle-097 D1 (same-layer-cross-cutter, graded-stack P2 slice-deletion tranche 1) confirms this OQ is already RESOLVED: the slice `cg_preconditioning_framework`'s reduction banner cited `l4-preconditioning-framework-promotion` as the GATE for full removal, and the firm L4 chapter `book/src/L4/preconditioning-framework.md` §Status (line ~326) states the framework was harvested c096-D1 *from* that OQ (status `firm`, re-citing L0 directly). The firm home now covers every retained-unique slice section (§L4 / §L4-v0.2 / §L4-v0.3 → §Record-definition / §Capability-typing / §Derived-view-hoisting), so the promotion gate is satisfied. D1 verified this firm-home coverage section-by-section and the integrator landed the absorb-and-delete (7 concept-page repoints onto the firm chapter + slice file deletion) this cycle. RECOMMEND the meta-phase mark `l4-preconditioning-framework-promotion` CLOSED at the batch-31 §Intake→plan unify. Not a per-report-integrator write target (OQ close is meta-phase authority); surfaced here per intake-channel discipline.
+
+---
+
+## dependency-map-cg-precond-stale-mermaid-edges
+
+opened_at: cycle-097
+opened_by: integrator-per-report (cycle-097 D1 — same-layer-cross-cutter cg_preconditioning_framework slice-delete)
+
+`book/src/concepts/dependency-map.md` (lines ~168–389, across the L1/L2/L3/L4 sub-maps) carries ~22 aggregate Mermaid edges keyed off the now-deleted `cg_preconditioning_framework` slice node. These are an aggregate/generated Mermaid edge listing (node labels), NOT in-body navigational markdown links, so they are OUTSIDE D1's repoint scope and do NOT block the slice deletion (a dangling Mermaid node label is not a `linkcheck2` hard error the way a dead markdown link is). The slice file was deleted this cycle, so these node references now dangle in the aggregate map. CROSS-REFERENCE: cycle-097 **D5** is scoped to handle the dependency-map cleanup this cycle (D5 owns the `SUMMARY.md` / `spec/index.md` rows AND the dependency-map regeneration per the cycle-097 plan); if D5's pass does not fully re-home/remove these edges, route a follow-up to the layer-intro-author / dependency-map maintainer (or the typed-edge GC linter) to regenerate the dependency-map with the slice node removed and its still-meaningful edges re-homed onto `L4/preconditioning-framework`. *Trigger:* verify after cycle-097 D5 lands; if residual, batch-31 dependency-map regeneration follow-up.
+
+---
+
+## sparse-trisolve-rename-to-sparse-direct-solver-wrapper — RECOMMEND CLOSE (resolved-by-obstruction)
+
+opened_at: cycle-097
+opened_by: integrator-per-report (cycle-097 D3 — same-layer-cross-cutter sparse_triangular_solve slice-delete)
+
+CLOSE-NOTE (append-only; OQ close authority is meta-phase). The now-deleted Phase-1 slice `spec/slices/sparse_triangular_solve.md` carried (slice `:199-209`) a live follow-up OQ: rename the slice to `sparse_direct_solver_wrapper` and re-push it to L1 as a positive operator. Under the graded-stack vocabulary-shift redirect this is **resolved-by-obstruction, not migrated**: the finding is wholly negative — there is no Palace-side triangular-solve primitive to push to L1 (the whole theme `book/src/L1-L0/triangular-solve-obstruction.md` is an `obstruction`). The wrapper-as-opaque-`ksp_solve`-preconditioner rotation the rename was reaching for is ALREADY captured by `apply_linop` / `ksp_solve` absorption (cited in the now-absorbed §(d3): `ksp.cpp:155/:165/:187` install the wrappers as `pc`, the outer Krylov owns the residual). The three unique L0 findings the rename would have carried are now in the firm theme §(d) (cycle-097 D3 absorb-and-delete). RECOMMEND the meta-phase mark this OQ **CLOSED — resolved-by-obstruction** at the batch-31 §Intake→plan unify. (D3 surfaced rather than self-closed per OQ-ledger authority partition.)
+
+---
+
+## sparse-trisolve-mfem-superlu-factor-allgatherv-family — RECOMMEND CLOSE (out-of-scope)
+
+opened_at: cycle-097
+opened_by: integrator-per-report (cycle-097 D3 — same-layer-cross-cutter sparse_triangular_solve slice-delete)
+
+CLOSE-NOTE (append-only; OQ close authority is meta-phase). The deleted slice's second live OQ asked whether an MFEM/SuperLU-level slice family should own the factor-Allgatherv / residual framing the original scope question raised. Under CLAUDE.md §Target system ("cite Palace source, not vendored upstream") this is **out of scope, not migrated**: the factor-Allgatherv traffic lives inside SuperLU_DIST / STRUMPACK / MUMPS, beyond the Palace boundary (cycle-097 §(d3) verified the sole Palace `Mpi::Allgatherv` site, `geodata.cpp:1538-1539`, is a mesh edge-attribute gather, NOT a factor move; out of scope per the MPI-internals rule). There is no Palace-side referent to harvest. RECOMMEND the meta-phase mark this OQ **CLOSED — out-of-scope (upstream-library-internal)** at the batch-31 §Intake→plan unify. (D3 surfaced rather than self-closed per OQ-ledger authority partition.)
+
+---
+
+## plane-rotation-givens-l0-citation-range-reconcile — RECOMMEND CLOSE (resolved-by-deletion)
+
+opened_at: cycle-097
+opened_by: integrator-per-report (cycle-097 D4 — same-layer-cross-cutter plane_rotation_stream slice-delete)
+
+CLOSE-NOTE (append-only; OQ close authority is meta-phase). The long-open `:72-108` vs `:73-108` `GeneratePlaneRotation` L0-citation off-by-one is **resolved-by-deletion**, not migrated. Direct source read (`reference/palace/palace/linalg/iterative.cpp:70-73`, verified this invocation by the per-report integrator + independently by the critic via codemap `read_range`) confirms `:70`=`}`, `:71`=blank, `:72`=`template <typename T>`, `:73`=the `GeneratePlaneRotation` signature — so the canonical kernel range is `:73-108`. That canonical range is carried UNIFORMLY across 5 firm chapters (`concepts/givens.md:33`, `L1/ls-update-column.md:572`, `L2/incremental-least-squares.md:429`, `L2-L1/incremental-least-squares-composition-lowering.md:337`, `L1-L0/ls-update-column-mutation-rotation.md:219`); the divergent `:72-108` existed ONLY inside the now-deleted Phase-1 slice `spec/slices/plane_rotation_stream.md` (`:7`, `:43`) and is excised with the slice (cycle-097 D4 Change 6). No firm-chapter edit was required; no krylov-trio anchor was implicated (the planner's codemap finding that this was an in-slice L0 off-by-one, NOT a slice-anchor repoint blocking the krylov trio, is confirmed). RECOMMEND the meta-phase mark this OQ **CLOSED — resolved-by-deletion** at the batch-31 §Intake→plan unify. (D4 surfaced rather than self-closed per OQ-ledger authority partition.)
+
+NOTE (end-bound divergence, separate still-open inconsistency — surfaced by the cycle-097 D4 critic, Issue 3): sibling chapters carry END-bound variances of the same `GeneratePlaneRotation` kernel — `:73-109` (`arnoldi_step.md:35`), `:73-120` (`polynomial_recurrence_step.md:57`), `:73-118` (`L2-L1/incremental-least-squares-composition-lowering.md:112`). These are a DISTINCT inconsistency from the `:72`-vs-`:73` start-line OQ resolved here (which concerned only the dying slice). The firm `L2-L1` composition-lowering chapter itself carries the divergent `:73-118` end-bound. Recommend a downstream `same-layer-cross-cutter`/`verify-citation-range` pass reconcile the end-bound across the firm corpus. (Logged for visibility; not a defect in the D4 report.)
+
+---
+
+## domain_energy_reduce-377-mwn-stale-rough-in-residue — RECOMMEND CLOSE (resolved-by-re-anchor)
+
+opened_at: cycle-097
+opened_by: integrator-per-report (cycle-097 D6 — lifter domain_energy_reduce matrix-weighted-norm c091 firm-flip residue land-clean)
+
+CLOSE-NOTE (append-only; OQ close authority is meta-phase). The cycle-091 cascade (`matrix-weighted-norm-firm-flip-and-cascade-wave`) flipped `domain_energy_reduce.md`'s frontmatter `rank: firm`, `## Status`, and `## Dependencies` to firm but left three within-file CONCLUSION narrations still asserting the OLD `matrix-weighted-norm` `rough-in (test-coverage-bounded)` verdict (the batch-29 `firm-flip-leaves-within-file-stale-narration` class). The cycle-097 D6 land-clean re-anchored all three to match the file's own authoritative firm Status/Dependencies: `:377` `(rough-in (test-coverage-bounded))` → `(firm c091)`; `:268` `(firm / rough-in)` → `(both firm)`; `:374` `(the rough-in test-gate, §Status point 2)` → the per-domain test-gate held REDUNDANT under the firm-on-positive-structure escape. The c091 firm-flip is real on disk (`L1/matrix-weighted-norm.md:4` `rank: firm`); no frontmatter rank flip was needed (rank invariant `rank(u)=firm ≤ min(firm participation_ratio, firm matrix-weighted-norm)` already held). RECOMMEND the meta-phase mark this OQ **CLOSED — resolved-by-re-anchor** at the batch-31 §Intake→plan unify. (D6 surfaced rather than self-closed per OQ-ledger authority partition.)
+
+---
+
+## domain_energy_reduce-313-gram_reduce-bilinear-form-c095-stale-rough-in-narration — new (gram_reduce-cohort land-clean follow-up)
+
+opened_at: cycle-097
+opened_by: integrator-per-report (cycle-097 D6 — lifter domain_energy_reduce land-clean, drive-by flag)
+
+The cycle-097 D6 matrix-weighted-norm residue land-clean deliberately scoped OUT `domain_energy_reduce.md:313-316`, the `gram_reduce` "STAYS rough-in" narration (one-residue-cohort-per-dispatch boundary). That narration is gated on `gram_reduce`'s off-diagonal `bilinear-form` primitive — which itself flipped `firm` in cycle-095 (`L1/bilinear-form.md:5` `rank: firm`, promoted c095; independently confirmed by the D6 critic). So the `:313-316` gram_reduce maturity narration may now itself be stale (a `bilinear-form`-c095-firm-flip-leaves-within-file-stale-narration residue), but it concerns a DIFFERENT verb (`gram_reduce`, not the matrix-weighted-norm residue D6 owned) and belongs to a separate gram_reduce-cohort land-clean. A downstream lifter/same-layer-cross-cutter pass should re-anchor the `gram_reduce`/`bilinear-form` maturity narration in `domain_energy_reduce.md` (and grep the whole-book for the same `bilinear-form` c095 firm-flip residue class). Surfaced for the batch-31 §Intake→plan migration; NOT resolved here.
+
+---

@@ -22,13 +22,13 @@ The two `apply_linop` calls are independent and could run concurrently; the L2 f
 
 ## Where this primitive sits in the framework
 
-[`cg_preconditioning_framework`](../spec/slices/cg_preconditioning_framework.md) names this primitive as the L2 unfolding of `MfemWrapperSolver::Mult` on the `ComplexOperator` template specialisation. The real-solver specialisation is a passthrough (`apply_linop(M_real, r)` directly) and does NOT instantiate this primitive.
+[`preconditioning-framework`](../L4/preconditioning-framework.md) names this primitive as the unfolding of `applyPreconditioner` on the `ComplexOperator` specialisation (`Pc<Complex>`). The real-solver specialisation is a passthrough (`applyLinop pc r` directly) and does NOT instantiate this primitive.
 
 The lift is one of the operand-scalar-field absorption mechanisms (variant axis 4 in the framework slice's L1 form). The other mechanism is the compile-time `OperType` template parameter; the lift is the run-time half.
 
 ## Used by
 
-- [`cg_preconditioning_framework`](../spec/slices/cg_preconditioning_framework.md) L2.
+- [`preconditioning-framework`](../L4/preconditioning-framework.md) — §Signature `applyPreconditioner` body (complex pc) and §Variant axes (scalar-field).
 - Future per-method slices when they describe how their L2 `apply_preconditioner` call expands on complex operands.
 
 ## See also

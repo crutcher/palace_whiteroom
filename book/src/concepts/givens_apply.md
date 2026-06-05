@@ -24,4 +24,4 @@ The "apply" half of the Givens rotation pair. Used both to apply a freshly-gener
 
 ## Used in
 
-- [`plane_rotation_stream` slice](../spec/slices/plane_rotation_stream.md) — applied repeatedly per Arnoldi step: $k$ times to the new Hessenberg column (replay of stored rotations), once to the same column (new rotation), once to the $\bar{g}$ vector pair.
+- [`ls-update-column`](../L1/ls-update-column.md) — applied repeatedly per Arnoldi step: $k$ times to the new Hessenberg column (replay of stored rotations), once to the same column (new rotation), once to the $\bar{g}$ vector pair.

@@ -17,7 +17,7 @@ Counters tracked by `counter_update` belong to the **observability / diagnostic*
 
 ## Used by
 
-- [`cg_preconditioning_framework`](../spec/slices/cg_preconditioning_framework.md) L2 — `solve` updates `counters.mult` and `counters.mult_it` after the delegated iteration.
+- [`preconditioning-framework`](../L4/preconditioning-framework.md) — `solve` threads `counters.mult` / `counters.mult_it` via `modifyCounters` after the delegated iteration (§Signature body phase; Law 5 counter-monotonicity).
 - Per-method slices wherever they track inner-iteration counts at L2.
 
 ## See also

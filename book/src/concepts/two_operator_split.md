@@ -23,7 +23,7 @@ The iteration's stopping test depends only on `r = b − op · x`. Convergence *
 
 ## Used by
 
-- [`cg_preconditioning_framework`](../spec/slices/cg_preconditioning_framework.md) (introducing slice).
+- [`preconditioning-framework`](../L4/preconditioning-framework.md) — the firm L4 home of the `(op, pc_op)` two-operator binding; capability-typed `TrueOp<E>` / `PcAssemblyOp<E>` (§Capability typing).
 - Future slices on `SpaceOperator` assembly and on the eigensolver.
 
 ## See also

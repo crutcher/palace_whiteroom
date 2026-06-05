@@ -65,7 +65,8 @@ path.
 
 ## Canonical instance
 
-[sparse_triangular_solve](../spec/slices/sparse_triangular_solve.md):
+[triangular-solve-obstruction](../L1-L0/triangular-solve-obstruction.md) (the firm L1>L0 home;
+the absorbed §(d) holds the wrapper-surface L0 evidence):
 the scope question targeted sparse triangular solves with
 factor-Allgatherv and residual checks. Palace forwards sparse-direct
 solves through `mfem::superlu::SuperLUSolver` /

@@ -24,4 +24,4 @@ Classical Givens rotation (Golub & Van Loan 2013, §5.1.8). The naive formula $r
 
 ## Used in
 
-- [`plane_rotation_stream` slice](../spec/slices/plane_rotation_stream.md) — once per Arnoldi step, to generate the rotation that zeros the sub-diagonal of the new Hessenberg column.
+- [`ls-update-column`](../L1/ls-update-column.md) — once per Arnoldi step, to generate the rotation that zeros the sub-diagonal of the new Hessenberg column.

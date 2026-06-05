@@ -19,7 +19,7 @@ Naming it as a primitive lets downstream slices that compose preconditioners ref
 
 ## Used by
 
-- [`cg_preconditioning_framework`](../spec/slices/cg_preconditioning_framework.md) L2 — invoked from `set_operators` when the operator-type matrix is asymmetric.
+- [`preconditioning-framework`](../L4/preconditioning-framework.md) — `finestLevelUnwrap` is the structural adapter inside the `pcBoundOp` derived view, fired when a multigrid `pc_op` meets a non-multigrid `pc` (§Derived-view hoisting).
 
 ## See also
 

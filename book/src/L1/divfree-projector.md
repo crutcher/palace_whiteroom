@@ -322,6 +322,9 @@ sign-contingent sub-law is now positively anchored. Supporting test evidence: th
   cross-validated against `mfem::MixedVectorWeakDivergenceIntegrator` (L0-equivalent
   test evidence that the sign behavior is exercised).
 
-Slice-corpus precedent (cycle-001-era, cycle-012-reduced; this firm entry
-supersedes its L1 content): `book/src/spec/slices/divfree.md:24-100` (L1 form),
-`:142-216` (L2 primitive composition).
+Provenance: this firm entry superseded the cycle-001-era `divfree` slice (its L1
+form at slice §L1, L2 primitive composition at slice §L2). The slice was deleted
+in the batch-31 graded-stack slice-deletion campaign once this entry and the
+`L2`/`L3`/`L4` divfree chapters + the `L1-L0/divfree-projector-mutation-rotation`
+theme carried all of its content with positive L0 anchoring; git history is the
+record.

@@ -198,6 +198,68 @@ obstruction (it should not be conflated with a triangular-solve primitive)
 and is documented here as a non-example so a future search for "triangular"
 in Palace does not falsely conclude the obstruction is filled by it.
 
+### (d) The direct-solver wrappers are pure opaque forwarders — no factor, no MPI, no residual at the Palace level
+
+(Absorbed cycle-097 from the retired Phase-1 `sparse_triangular_solve` negative-result slice; these
+are the slice's three unique L0 findings, re-verified against source. The wrapper *class declarations*
+are already anchored in §(b3); the additional facts here are that the wrapper **bodies** are literal
+forwards, that the one residual-bearing operation is disabled, and that no Palace MPI / residual
+machinery surrounds the factor.)
+
+**(d1) The wrapper method bodies are literal forwards; iterative refinement is DISABLED.** The
+`SuperLUSolver` wrapper's four apply methods forward verbatim into the MFEM solver, contributing no
+factor data structure, no `L`/`U` storage, no permutation, and no residual:
+
+    // superlu.hpp:43-58
+    void Mult(const Vector &x, Vector &y) const override { solver.Mult(x, y); }
+    void ArrayMult(...) const override { solver.ArrayMult(X, Y); }
+    void MultTranspose(const Vector &x, Vector &y) const override { solver.MultTranspose(x, y); }
+    void ArrayMultTranspose(...) const override { solver.ArrayMultTranspose(X, Y); }
+
+Critically, the one operation that would be a true factor-solve-then-residual loop — iterative
+refinement — is **explicitly turned off** at construction:
+
+    // superlu.cpp:78
+    solver.SetIterativeRefine(mfem::superlu::NOREFINE);
+
+Factor reuse across `SetOperator` calls is the only solver-state knob Palace touches, gated on
+`reorder_reuse` (`superlu.cpp:88`: `solver.SetFact(mfem::superlu::SamePattern_SameRowPerm)`) — and
+even that is MFEM-enforced, not a Palace-authored factor operation. The substitution interior stays
+opaque-library-owned (cf. §(b3)).
+
+**(d2) The `*2` scratch-residual interface is multigrid-smoother workspace, NOT triangular-solve
+workspace.** The `Solver<OperType>` base exposes a four-method surface; the `Mult2` / `MultTranspose2`
+variants accept a preallocated scratch residual `r` and exist for **multigrid smoothers** (Chebyshev,
+Jacobi) that thread a residual buffer across recursive calls — not for sparse-direct triangular-solve
+workspace, and the direct-solver wrappers do not override them:
+
+    // solver.hpp:43        virtual void SetOperator(const OperType &op) = 0;
+    // solver.hpp:45-49     void MultTranspose(...) const override { MFEM_ABORT(...); }
+    // solver.hpp:52-56     virtual void Mult2(const VecType &x, VecType &y, VecType &r) const   // base aborts
+    // solver.hpp:59-63     virtual void MultTranspose2(const VecType &x, VecType &y, VecType &r) const   // base aborts
+
+This forecloses a reading in which the scratch-`r` parameter is the residual-workspace a sparse
+triangular solve would carry: the `r` buffer belongs to the polynomial/Jacobi smoother recursion
+(cf. [`chebyshev`](../L3/chebyshev.md)), not to any factor substitution.
+
+**(d3) No Palace MPI moves a factor, and the residual is the outer Krylov's responsibility.** The
+scope-question framing (factor-Allgatherv + residual-of-triangular-solve) has no Palace-side referent:
+
+- `Mpi::Allgatherv` (`communication.hpp:337-344`) is invoked at exactly **one** Palace call site,
+  `geodata.cpp:1538-1539`, to gather per-rank **edge-attribute counts during mesh setup**
+  (`all_edge_attrs`) — never a factor (`L`, `U`, `P`, `Q`). Any factor-Allgatherv traffic lives
+  inside SuperLU_DIST / STRUMPACK / MUMPS, beyond the Palace boundary (out of scope per the
+  MPI-internals rule, CLAUDE.md §Scope).
+- The wrappers install as the **preconditioner** of an outer iterative method
+  (`ksp.cpp:155` / `:165` / `:187`: `pc = MakeWrapperSolver<OperType, {SuperLU,Strumpack,Mumps}Solver>(...)`,
+  function declared `ksp.cpp:104`). The outer Krylov tracks its own residual; the sparse-direct apply
+  is one opaque preconditioner step. Combined with the NOREFINE disable in (d1), there is no
+  residual-of-triangular-solve check anywhere at the Palace level.
+
+Together (d1)–(d3) close the original scope question (forward/transpose pair, in-place vs.
+out-of-place workspace, factor-Allgatherv, residual check) entirely on the *negative* side: each named
+primitive resolves to either an MFEM/third-party-internal mechanism or a deliberately-disabled path.
+
 ## Applicability conditions
 
 This is an obstruction theme; the "applicability" question is the *boundary
@@ -272,40 +334,26 @@ operator on the basis of this theme.
 
 ## Related
 
-The same negative result (the absence of a Palace-authored general
-triangular-solve primitive) is **also** recorded by the Phase 1 slice
-[`sparse_triangular_solve`](../spec/slices/sparse_triangular_solve.md)
-(registered at `book/src/SUMMARY.md:146`), which the cycle-013+ corpus-
-reduction policy classifies as an **annotated-and-retained negative-result
-slice** (a "the slice IS the artifact" case, per its reduction-status
-header). That slice is the **canonical instance** of two concept pages:
+This theme is the **sole** home for the negative result that Palace authors no general
+triangular-solve primitive. (Through cycle-096 a Phase-1 duplicate,
+`spec/slices/sparse_triangular_solve.md`, co-recorded this finding under the now-retired
+`annotated-and-retained` carve-out; per the graded-stack §6 retirement that slice was absorbed
+into this theme — its three unique L0 findings are §(d) above — and deleted in cycle-097. git
+history retains the slice.)
 
-- [`scope-out-obstruction`](../concepts/scope-out-obstruction.md) §"Canonical
-  instance" (`:68`) — the L0→L1 scope-out obstruction (Palace forwards
-  sparse-direct solves into MFEM / SuperLU_DIST / STRUMPACK / MUMPS opaquely;
-  no Palace-level triangular-solve form to lift).
+The two concept pages that previously named the slice as their §"Canonical instance" now point here:
+
+- [`scope-out-obstruction`](../concepts/scope-out-obstruction.md) §"Canonical instance" — the L0→L1
+  scope-out obstruction (Palace forwards sparse-direct solves into MFEM / SuperLU_DIST / STRUMPACK /
+  MUMPS opaquely; no Palace-level triangular-solve form to lift). This theme is the L0-evidence home.
 - [`sequential-obstruction`](../concepts/sequential-obstruction.md) §"Sub-kind:
-  out-of-scope-obstruction" (`:53`) — the out-of-scope sub-kind distinguished
-  from genuine L2→L3 sequential obstruction.
+  out-of-scope-obstruction" — the out-of-scope sub-kind distinguished from genuine L2→L3 sequential
+  obstruction; this theme holds the L0 wrapper-surface evidence.
 
-This L1>L0 theme and the Phase 1 slice carry **overlapping L0 anchors**
-(four shared sites — `superlu.hpp`, `strumpack.hpp`, `mumps.hpp`,
-`blockprecond.hpp` red-herring); the relationship is:
-
-- The **slice** is the Phase-1-era canonical-instance record (the original
-  dissection that produced the negative result, plus the wrapper-level
-  carry-through into `apply_linop` / `ksp_solve`).
-- This **L1>L0 theme** is the layered-artifact home for the negative result
-  in the post-structural-redirect cohort, sitting alongside
-  [`minres-iteration`](./minres-iteration.md) and
-  [`bicgstab-iteration`](./bicgstab-iteration.md) as the third obstruction-
-  flavoured L1>L0 theme. It additionally records the engineered-absence
-  evidence (Adams-2003 + GPU GS→Jacobi flip) that postdates the slice.
-
-The two records cross-link rather than supersede; the slice's reduction
-status remains **annotated-and-retained** and is not closed by this theme.
-See the §"Open questions / caveats" entry on Phase-1-slice-reduction
-candidacy below for the follow-up.
+This L1>L0 theme sits alongside [`minres-iteration`](./minres-iteration.md) and
+[`bicgstab-iteration`](./bicgstab-iteration.md) as the third obstruction-flavoured L1>L0 theme. It
+additionally records the engineered-absence evidence (Adams-2003 polynomial-over-GS,
+GPU GS→Jacobi flip) — see §(b2) — that the obstruction is deliberate.
 
 ## Verified-against
 
@@ -357,6 +405,24 @@ is by design for an obstruction theme):
   P z = r): z0 = P0^{-1} r0; z1 = P1^{-1} (r1 - L10 z0)` — the red-herring
   non-example: a 2×2 BLOCK forward solve applying sub-solvers to whole blocks,
   NOT a scalar triangular substitution.
+- `palace/linalg/superlu.hpp:43-58` — the four `SuperLUSolver` apply bodies (`Mult` / `ArrayMult` /
+  `MultTranspose` / `ArrayMultTranspose`), each a literal one-line forward into `mfem::SuperLUSolver`;
+  the wrapper contributes no factor / residual machinery. (Absorbed from the retired slice, §(d1).)
+- `palace/linalg/superlu.cpp:78` — `solver.SetIterativeRefine(mfem::superlu::NOREFINE);` — iterative
+  refinement (the one factor-solve-then-residual loop) is explicitly DISABLED. (Absorbed, §(d1).)
+- `palace/linalg/superlu.cpp:88` — `solver.SetFact(mfem::superlu::SamePattern_SameRowPerm);` — the
+  sole factor-reuse knob, gated on `reorder_reuse`; MFEM-enforced, not a Palace factor op. (Absorbed, §(d1).)
+- `palace/linalg/solver.hpp:43-63` — the `Solver<OperType>` base interface: `SetOperator` (`:43`),
+  `MultTranspose` (`:45-49`), `Mult2` (`:52-56`), `MultTranspose2` (`:59-63`); the `*2` scratch-residual
+  variants are multigrid-smoother workspace (base-class `MFEM_ABORT`), not triangular-solve workspace,
+  and the direct-solver wrappers do not override them. (Absorbed, §(d2).)
+- `palace/utils/communication.hpp:337-344` — the `Mpi::Allgatherv` variable-count wrapper definition.
+  (Absorbed, §(d3).)
+- `palace/utils/geodata.cpp:1538-1539` — the sole Palace `Mpi::Allgatherv` call site: gathers per-rank
+  edge-attribute counts during mesh setup (`all_edge_attrs`), NOT a factor. (Absorbed, §(d3).)
+- `palace/linalg/ksp.cpp:155` / `:165` / `:187` — the SuperLU / STRUMPACK / MUMPS wrappers are
+  constructed via `MakeWrapperSolver<OperType, ...>` (declared `ksp.cpp:104`) and installed as the
+  preconditioner `pc` of an outer iterative method; the outer Krylov owns the residual. (Absorbed, §(d3).)
 
 Two exhaustive whole-tree zero-hit codemap text searches (cycle-028
 harvester, critic-reproduced):
@@ -461,10 +527,10 @@ concrete, NOT to anchor this obstruction):
         verdict: positive-cross-reference
         audited_at: 2026-05-29T234506Z
         note: cycle-004 obstruction-theme precedent (MFEM_ABORT-anchored, with verified_against negative-anchor YAML); YAML shape followed.
-      - citation: book/src/spec/slices/sparse_triangular_solve.md
-        verdict: positive-cross-reference
-        audited_at: 2026-05-29T234506Z
-        note: Phase 1 negative-result slice covering the same triangular-solve absence (canonical-instance home for `scope-out-obstruction` and `sequential-obstruction` out-of-scope sub-kind); registered at `book/src/SUMMARY.md:146`; overlapping L0 anchors (superlu / strumpack / mumps / blockprecond red-herring). Annotated-and-retained per cycle-013+ corpus-reduction policy; cross-linked, not superseded, by this L1>L0 theme.
+      - citation: book/src/L1-L0/triangular-solve-obstruction.md
+        verdict: absorbed-and-deleted
+        audited_at: 2026-06-04T232852Z
+        note: "Phase-1 negative-result slice `spec/slices/sparse_triangular_solve.md` absorbed into this theme (§(d) — opaque-forwarding catalog + NOREFINE, the `*2` smoother-workspace distinction, no-factor-MPI / outer-residual) and DELETED cycle-097 per graded-stack §6 (annotated-and-retained carve-out retired). git history retains the slice. The two concept pages it was the canonical instance of (scope-out-obstruction, sequential-obstruction) now point to this theme."
       - citation: book/src/concepts/scope-out-obstruction.md:68
         verdict: positive-cross-reference
         audited_at: 2026-05-29T234506Z
