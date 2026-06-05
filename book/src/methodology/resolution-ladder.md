@@ -217,6 +217,25 @@ A vocabulary node exists *because* some feature surface transitively depends on 
 So **orphaned-intent GC and detritus GC are the same sweep**, run uniformly over built and
 intended nodes.
 
+Two refinements the typed-edge rollout (batch-33) made concrete:
+
+- **Not every page is a DAG node.** Navigational containers (layer/group/feature index pages,
+  group-intro pages, the concept dependency-map) carry `kind: navigational-container`, only
+  `reference` edges, and no rank — they are *expected-unreachable*, never garbage. Likewise a
+  narrative-concept page (a pointer to an L_n operator, a literature-background note) is a
+  non-node: `reference`-only, no rank. Only **record-definition** concept pages and the
+  operator/theme/feature chapters are DAG nodes. (The authoring contract is
+  `graded-stack-scheme.md` §5/§6.)
+- **A record consumed only inside an operator reaches the roots *through* that operator.** An
+  internal record shape (a solver's `Krylov` / `SimState` / step-output carriers) is named in
+  no feature-column signature; its live path is `column →(composes) op →(uses-record) record`,
+  so the `uses-record` blocking edge belongs on the **op chapter**, not the column. Until that
+  edge is typed, the record reads as (correctly) unreachable — a tracked baseline-exception, not
+  a false alarm. This is the kind of edge the reachability GC can only honor once the linter
+  actually traverses the edge form the producers write; making the GC *read* the typed edges and
+  *typing* them are the same project (the batch-33 block-mapping-parser fix closed that gap, and
+  reachability over the live tree jumped from the bare root set to its true transitive closure).
+
 ### The OWN-COMPOSITION rule falls out of the root marker
 
 A feature column's edges to *vocabulary* are blocking `depends-on` edges (they constrain

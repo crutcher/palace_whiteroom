@@ -234,22 +234,53 @@ entries, all concept pages. How each acquires a `rank:`:
   block (the two endpoints + any concept references) and a `rank:` consistent with the §1b
   invariant; the rank linter then validates `rank(theme) ≤ min(endpoints)` for free.
 
-- **Index pages** — methodology/orientation surfaces. An `L_n/index.md` is a navigational
-  overview, not a DAG leaf node carrying claims; its dep-map *table* is a derived view (§4(b)).
-  **Whether an index page is itself a DAG node** (and if so, with what `rank:`) is NOT cleanly
-  resolvable in this single P0-A pass — it interacts with the table-vs-frontmatter fork (§4)
-  and with the group-intro pages. This is carved out as a **P1 sub-task + an OQ** (below), not
-  forced here.
+- **Index pages + group-intro pages + the dependency-map page → `kind: navigational-container`
+  (RATIFIED batch-33 meta-phase, post-cycle-105).** An `L_n/index.md`, a `*-intro` group page,
+  `feature/index.md` + the three feature group pages, and `concepts/dependency-map.md` are all
+  **navigational containers, NOT DAG nodes.** A container carries:
+  - **NO `rank:`** — it makes no resolution claim and is not in the total order;
+  - **`edges: reference:` ONLY** (its links point at the chapters it indexes; a `reference`
+    edge constrains no rank and carries no liveness, so an index cannot keep dead vocabulary
+    alive — exactly the property we need, since a container must not mark its members live);
+  - **`kind: navigational-container`** — the explicit self-identification both linters key off
+    (the reachability GC's `is_likely_outside_dag` treats any `kind: navigational-container`
+    page as expected-unreachable, so it never reads as detritus). A free-text parenthetical
+    sub-kind is permitted and ignored by the linter (`navigational-container (layer index)`,
+    `… (group intro)`, `… (feature Part index)`, `… (concept dependency-map; derived view)`);
+    the linter matches the **leading token** before the ` (`.
+
+  This is the fully scheme-aligned reading of §4 ("an `L_n/index.md` is a navigational
+  overview, not a DAG leaf node carrying claims; its dep-map table is a derived view") + §5.
+  It closes the former carve-out OQ `graded-stack-index-and-concept-node-status` and the linter
+  gaps `dependency-map-not-recognized-outside-dag-by-linter` /
+  `linter-outside-dag-misses-group-intro-container-pages` (the batch-33 linter fix honors the
+  `kind:` tag for exactly this set).
 
 - **Concept pages (`concepts/`)** — two sub-cases. A concept page that is a *meta page about
   the construction* (narrative pointer to an L_n operator, e.g. `concepts/dot.md`,
   `concepts/solver-as-operator.md`) sits **outside the subject DAG** (`METHODOLOGY-GRADED-STACK.md`
-  §2d) — no `rank:`, like this scheme page. A concept page that is a **record-definition** page
-  (e.g. `concepts/config-record.md`) defines a *data shape* that signatures rest on — it **is** a
-  DAG node and its rank is the resolution of that shape (typically `firm` once its L0 backing
-  struct is cited). Distinguishing the two per-page is mechanical-ish (the record-definition
-  pages are the `record` Kind) but the boundary needs the P1 author's judgment; carved out with
-  the index-page node-status as the same OQ.
+  §2d). A concept page that is a **record-definition** page (e.g. `concepts/config-record.md`)
+  defines a *data shape* that signatures rest on — it **is** a DAG node and its rank is the
+  resolution of that shape (typically `firm` once its L0 backing struct is cited). The
+  record-definition pages are the `record` Kind; the boundary needs the P1 author's judgment.
+
+  **Non-node concept-page encoding — UNIFIED (RATIFIED batch-33 meta-phase, post-cycle-105):**
+  a non-node (narrative-pointer / methodology / literature-background) concept page carries
+  **NO `rank:`** and an **`edges: reference:`-only block** (its see-also links to the L_n home
+  + sibling concepts, all `reference` since a non-node asserts no blocking dependency). This
+  resolves the D1/D3/D5 (`reference`-only block) vs D2 (strict zero-frontmatter) divergence in
+  favor of the **`reference`-only block** — the navigational see-also graph is then
+  machine-readable for the reachability-GC author and uniform with the navigational-container
+  convention above, at zero linter-invariance cost (a non-node contributes only `reference`
+  edges → no rank/liveness claim either way). It closes OQs
+  `concept-non-node-frontmatter-encoding-reference-only-vs-empty` /
+  `graded-stack-concept-node-status-convention` / `graded-stack-concept-nonnode-edges-block-d1d3-vs-d2`.
+  The c103 D2 cluster-B pages that were written strict-zero acquire a `reference`-only block as
+  they are next touched (lazy convergence; the linter is invariant meanwhile). The two D2
+  borderline calls reconcile: `counter-update` (sole-definition site of an L2 primitive a real
+  node `depends-on`) **flips to a record/definition NODE** under the "sole-definition-site
+  primitive is a node" reading; `chebyshev-iteration` (pre-redirect literature-background page
+  with no authoritative L_n forward) stays a **non-node**.
 
 ## 6. Authoring checklist (the contract, condensed)
 
@@ -264,7 +295,11 @@ When you author or touch a DAG-node chapter:
    `depends-on` on both endpoints.
 3. If the chapter is a feature column, carry **`feature_root: seed`** (permanent) separately
    from `rank:` (§3).
-4. A methodology / process / narrative-concept page carries **no** `rank:`/`edges:` (§2d).
+4. A **methodology / process** page carries **no** `rank:`/`edges:` (§2d, like this page). A
+   **narrative-concept / non-node concept page** carries no `rank:` but **does** carry an
+   `edges: reference:`-only block (the unified non-node encoding, §5). A **navigational
+   container** (index / group-intro / dependency-map) carries no `rank:`, an `edges:
+   reference:`-only block, AND `kind: navigational-container` (§5).
 5. The rank invariant is a HARD gate for new work (`METHODOLOGY-GRADED-STACK.md` §5 step 4):
    do not promote a node above the rank of its least-resolved `depends-on` dependency.
 

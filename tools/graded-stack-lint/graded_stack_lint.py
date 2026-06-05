@@ -142,7 +142,18 @@ def parse_frontmatter(text: str) -> dict:
     """Parse the scheme/legacy frontmatter subset into a dict.
 
     Scalars -> str. Simple `- item` lists -> list[str]. Nested two-level blocks
-    (edges:) -> dict[str, list]. Inline `{target:, kind:}` list items -> dict.
+    (edges:) -> dict[str, list]. Typed edge list items in BOTH forms ->  dict:
+      - the inline-flow form `- {target: X, kind: Y}`, and
+      - the multi-line BLOCK-MAPPING form (the shape producers actually author):
+            - target: X
+              kind: Y
+        where the `- target:` line opens a mapping item and subsequent
+        more-indented `key: value` lines (`kind:`, etc.) belong to THAT item,
+        not to the surrounding block. (Before the batch-33 fix this form was
+        mis-read: `- target: X` stored as the bare string `"target: X"` and the
+        indented `kind:` line was attached as a stray sub-key of `edges`, so the
+        reachability GC never traversed block-mapping `depends-on`/`uses-record`
+        edges. See the batch-33 meta-phase report.)
     Indentation drives nesting; we track the indent of the current key/sub-key.
     """
     raw = extract_frontmatter_block(text)
@@ -152,6 +163,14 @@ def parse_frontmatter(text: str) -> dict:
     cur_key: str | None = None          # top-level key collecting a list/block
     cur_subkey: str | None = None       # second-level key inside a block
     cur_key_indent = 0
+    # When the most recent list item is a BLOCK-MAPPING item (`- target: X`
+    # followed by indented `kind: Y` continuation lines), we hold it here so the
+    # continuation `key: value` lines fold INTO this dict rather than being
+    # mistaken for a deeper block sub-key. `cur_item_indent` is the indent of the
+    # `- ` marker; a continuation line is any non-list line indented STRICTLY
+    # deeper than that marker.
+    cur_item_dict: dict | None = None
+    cur_item_indent = -1
 
     def indent_of(line: str) -> int:
         return len(line) - len(line.lstrip(" "))
@@ -163,12 +182,40 @@ def parse_frontmatter(text: str) -> dict:
         ind = indent_of(line)
         stripped = line.strip()
 
+        # A continuation line of an open block-mapping list item: a `key: value`
+        # line indented strictly deeper than the `- ` marker, while we hold an
+        # open mapping item. Fold it into that item's dict.
+        if (cur_item_dict is not None and not stripped.startswith("- ")
+                and ind > cur_item_indent):
+            mc = re.match(r"^(\S[^:]*):\s*(.*)$", stripped)
+            if mc:
+                ck, cv = mc.group(1).strip(), mc.group(2).strip()
+                cur_item_dict[ck] = _unquote(cv)
+                continue
+            # not a key:value continuation -> fall through (close the item)
+        # Any line that is NOT a deeper continuation closes the open mapping item.
+        if cur_item_dict is not None and not (
+                not stripped.startswith("- ") and ind > cur_item_indent):
+            cur_item_dict = None
+            cur_item_indent = -1
+
         # List item.
         if stripped.startswith("- "):
             item = stripped[2:].strip()
             parsed_item = _parse_list_item(item)
             if cur_key is None:
                 continue  # malformed; ignore
+            # If the list item is itself a `key: value` (block-mapping item, e.g.
+            # `- target: X`), open it as a dict so trailing indented `kind:` etc.
+            # continuation lines fold in.
+            bm = re.match(r"^(\S[^:]*):\s*(.+)$", item)
+            if bm and not item.startswith("{"):
+                parsed_item = {bm.group(1).strip(): _unquote(bm.group(2).strip())}
+                cur_item_dict = parsed_item
+                cur_item_indent = ind
+            else:
+                cur_item_dict = None
+                cur_item_indent = -1
             # Promote a still-pending top-level opener to a concrete list.
             if isinstance(out.get(cur_key), _Pending):
                 out[cur_key] = []
@@ -301,6 +348,7 @@ class Node:
     obstruction_kind: str | None = None
     is_feature: bool = False
     is_lowering_theme: bool = False
+    kind: str | None = None            # frontmatter `kind:` (documentation token)
     depends_on: list[str] = field(default_factory=list)   # slugs
     references: list[str] = field(default_factory=list)    # slugs
     untyped: bool = True               # no rank AND no edges read
@@ -416,6 +464,7 @@ def build_graph(book_src: Path, verbose: bool = False) -> dict[str, Node]:
         node = Node(slug=slug, path=p)
 
         kind = fm.get("kind")
+        node.kind = kind
         node.is_feature = (kind == "feature-surface") or slug.startswith("feature/")
         # lowering theme: directory like L4-L3, L3-L2, ... L1-L0
         node.is_lowering_theme = bool(re.match(r"^L\d-L\d/", slug))
@@ -632,6 +681,14 @@ OUTSIDE_DAG_SUFFIXES = ("/index", "index")  # index.md pages
 # group-intro feature pages (not columns): driver-leaf, output-product, spine-root
 FEATURE_NON_COLUMN = {"feature/driver-leaf", "feature/output-product",
                       "feature/spine-root", "feature/index"}
+# navigational-container kinds (scheme §6, batch-33-ratified): layer/group/feature
+# index + group-intro + dependency-map pages. Reference-only, no rank, not DAG
+# nodes — expected-unreachable, never detritus. We accept the canonical token
+# plus the descriptive synonyms producers may write.
+NAVIGATIONAL_CONTAINER_KINDS = {
+    "navigational-container", "navigation-container",
+    "group-intro", "index", "dependency-map",
+}
 
 
 def is_likely_outside_dag(slug: str, node: Node) -> bool:
@@ -641,6 +698,19 @@ def is_likely_outside_dag(slug: str, node: Node) -> bool:
         return True
     if slug in FEATURE_NON_COLUMN:
         return True
+    # navigational containers (layer-index / group-intro / dependency-map pages):
+    # the batch-33-ratified `kind: navigational-container` convention (scheme §6).
+    # They emit reference-only edges, carry no rank, and are NOT DAG nodes — so
+    # they are expected-unreachable, never detritus. This is the explicit author
+    # signal that replaces the heuristic guessing (the 23 group-intro pages +
+    # concepts/dependency-map that previously read as detritus_with_typed_edges
+    # noise). Recognized regardless of how the navigation links are typed.
+    if node.kind is not None:
+        # the kind may carry a free-text parenthetical qualifier, e.g.
+        # `navigational-container (feature group intro)` — match the leading token.
+        kind_head = node.kind.split(" (")[0].strip()
+        if kind_head in NAVIGATIONAL_CONTAINER_KINDS:
+            return True
     # narrative concept pages are outside-DAG per scheme §5; we can't always tell
     # them from record-definition pages without the `kind`, so we DON'T blanket
     # them here — they show up as unreachable and are flagged for P1 judgment.

@@ -368,6 +368,26 @@ This shape is load-bearing, and it follows three principles:
 > into a fully mechanically-checkable typed DAG, reclassifies the prose-as-slug false-positive targets,
 > and lets the GC distinguish genuine garbage from untyped-but-live. This is the batch-33 lead.
 
+> **The typed-edge campaign rolled out and the reachability axis became MEASURABLE (batch-33).** Across
+> cycles 103/104/105 the P1 typed-edge campaign LED every cycle: c103 typed the concepts substrate +
+> every navigational container (`untyped` 142→78) and created the first record-home `dofset`; c104 typed
+> the six internal record-concept pages firm and added the feature-column `uses-record` edges that the
+> consuming columns genuinely rest on; c105 landed the content tail (all twelve config-input columns now
+> carry the `uses-record` edge to `config-record`). The rank invariant HELD at 0 throughout. But the
+> campaign surfaced — and the batch-33 meta-phase fixed — the tooling gap that had made the whole
+> reachability axis *invisible*: the linter's hand-rolled frontmatter reader parsed only the inline-flow
+> edge form, not the multi-line **block-mapping** form the producers actually author, so the
+> `uses-record` rescue edges (correct on disk) were never GC-traversed. With the parser fixed (and
+> `kind: navigational-container` now honored), the linter reads the TRUE picture for the first time:
+> reachability climbed from 36 (just the roots) to 81, `config-record` correctly shows all twelve inbound
+> edges, and the residual "detritus" dropped from 229 to 163 as the navigational containers were
+> reclassified out of the garbage bucket. The six internal solve/BC record shapes remain (correctly)
+> unreachable — they are named in no feature-column signature; they reach the roots only via op-chapter
+> `uses-record` edges (`column →(composes) op →(uses-record) record`), the **WAVE-3** tranche that is the
+> batch-34 lead. The lesson the arc records: the two health axes were *defined* batch-30, but an axis is
+> only as real as the linter's ability to read the edges that carry it — typing the artifact and making
+> the GC actually traverse those types are the same project, and batch-33 closed the gap between them.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
