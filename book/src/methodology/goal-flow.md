@@ -387,6 +387,25 @@ This shape is load-bearing, and it follows three principles:
 > batch-34 lead. The lesson the arc records: the two health axes were *defined* batch-30, but an axis is
 > only as real as the linter's ability to read the edges that carry it — typing the artifact and making
 > the GC actually traverse those types are the same project, and batch-33 closed the gap between them.
+>
+> **The reachability axis was GROUNDED across the live spine, and a new GC disposition emerged (batch-34).**
+> With the linter now reading the true picture, cycles 106/107/108 drove reachability from 81 to **102** with
+> the rank invariant HELD at 0 and `unresolved_depends_on_targets` driven to 0: c106 landed the WAVE-3
+> op-chapter `uses-record` typing (the solve-kernel pair + `solve_family`/`fold_solve`/`eliminate_bc`),
+> rescuing five of the six internal solve records and making `krylov-step` root-reachable; c107 grounded the
+> firm-but-absorbed BC-elimination + divfree clusters from the feature-spine roots; c108 ran a systematic
+> `lowers-to` grounding pass down the BC + divfree lowering chains so the L1/L0 lowering homes became
+> reachable. The arc's load-bearing lesson is a **new disposition for the GC sweep** (a 2026-06-05 user
+> directive, now codified): *when an unreachable node is a genuine future or absorbed dependency of a
+> reachable goal node, **ground** it — type the faithful, honestly-classified `depends-on` edge into the
+> reachable chain — rather than removing it or filing it as detritus.* The priority is ground → route-as-
+> detritus → delete, and grounding is always faithful-edge-or-finding (c108 correctly *declined* a would-be
+> over-edge: the BC theme does not `lowers-to` `essential_dofs`, which reaches root via its own construction
+> theme). Grounding is the reachability-axis analogue of the `roadmap_goal` chapter on the resolution axis:
+> both keep a genuinely-wanted node legally in the artifact instead of dropping it. The residual is a bounded
+> ~10-theme L2-L1 lowering cohort that stays garbage for one structural reason (the L2/L3 `lowers-to`
+> convention points operator→operator, never operator→theme) — the natural batch-35 lead, a one-edge-per-theme
+> grounding pass.
 
 ## FLOW — how the goal is met
 

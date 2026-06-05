@@ -233,6 +233,16 @@ entries, all concept pages. How each acquires a `rank:`:
   derived from (and rank-checked against) its two endpoints. P1 writes the theme's `edges:`
   block (the two endpoints + any concept references) and a `rank:` consistent with the §1b
   invariant; the rank linter then validates `rank(theme) ≤ min(endpoints)` for free.
+  - **Reachability ≠ well-foundedness for a lowering theme (clarification, batch-34).** The
+    rule above makes a theme *well-founded* (rank ≤ min endpoints), but does **not** by itself
+    make it *reachable*. A lowering theme is reachable **iff its UPPER-endpoint operator carries
+    a `lowers-to` `depends-on` edge AT the theme** (so a reachable node `depends-on` it). The
+    established convention is asymmetric: an **L1 op**'s `lowers_to:` points operator → its
+    **L1-L0 theme** (so typing the L1 op rescues its theme automatically), but an **L2/L3 op**'s
+    `lowers-to` points operator → the next **operator**, never at the theme — so the L2-L1 theme
+    is only ever a `reference` target and stays off the `depends-on` spine. The bounded fix per
+    affected theme is one edge: add `L2/<op> lowers-to L2-L1/<op>-theme` to the upper-endpoint op
+    that already carries scheme frontmatter (mirroring the cycle-108 `L2/divfree-projector` edit).
 
 - **Index pages + group-intro pages + the dependency-map page → `kind: navigational-container`
   (RATIFIED batch-33 meta-phase, post-cycle-105).** An `L_n/index.md`, a `*-intro` group page,

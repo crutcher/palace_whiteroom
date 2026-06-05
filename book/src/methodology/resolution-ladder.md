@@ -236,6 +236,24 @@ Two refinements the typed-edge rollout (batch-33) made concrete:
   *typing* them are the same project (the batch-33 block-mapping-parser fix closed that gap, and
   reachability over the live tree jumped from the bare root set to its true transitive closure).
 
+One refinement the typed-edge campaign (batch-34) added:
+
+- **An unreachable node is not automatically detritus — GROUND it if it is a genuine
+  future/absorbed dependency.** When the GC marks a node garbage, the first question is *not*
+  "delete?" but "is this a real dependency of a reachable goal node whose only defect is a
+  missing or un-typed `depends-on` edge?" If so, **ground** it: type the *faithful,
+  honestly-classified* edge into the reachable chain so liveness propagates down the real
+  dependency. The disposition is a priority order — **(1) ground via a faithful edge → (2) route
+  as genuine detritus (no plausible goal-dependency) → (3) delete / tracked baseline-exception
+  (last resort)** — and grounding is **faithful-edge-or-finding**, never a forced edge that
+  misclassifies the relationship (a *lowering* is not a constituent-use; an *absorbed
+  post-composition* is not a column fold-member). This is the reachability-axis analogue of the
+  `roadmap_goal` chapter on the resolution axis: both keep a genuinely-wanted node legally in the
+  artifact rather than dropping it. Across batch-34 it rescued the BC-elimination + divfree
+  clusters and their L1/L0 lowering homes from spurious garbage, lifting reachability over the
+  live tree from 36 (the bare root set, pre-traversal) to 102. (Full spec:
+  `METHODOLOGY-GRADED-STACK.md` §2f.)
+
 ### The OWN-COMPOSITION rule falls out of the root marker
 
 A feature column's edges to *vocabulary* are blocking `depends-on` edges (they constrain

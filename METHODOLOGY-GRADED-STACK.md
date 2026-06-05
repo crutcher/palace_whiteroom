@@ -74,6 +74,13 @@ The `roadmap_goal → stub` promotion **is** the invariant firing: "all my suppo
 
 **2e — Fan-out is reachability weight.** The existing fan-out impact model (`|concepts| × |downstream-reuse| × 1/cost`) is approximately the count of root-to-leaf paths through a node. High-fan-out vocabulary is vocabulary many roots depend on. The planner's "dispatch highest-fan-out first" is unchanged; it is now understood as "promote the most-reachable frontier nodes first."
 
+**2f — When the GC sweep surfaces an unreachable node: GROUND, don't remove, a genuine future/absorbed dependency (user directive 2026-06-05; thrice-applied cycles 107/108).** A node the reachability GC marks garbage is *not* automatically detritus to delete. Before removing or filing it as detritus, **examine whether it is a genuine future or absorbed dependency of a reachable goal node** — i.e. a node the live spine really does (or will) depend on, whose only defect is a *missing or un-typed `depends-on` edge*, not a missing justification. If so, **GROUND it**: sketch the honestly-typed `depends-on` edge into the reachable goal node (or type the missing `edges:` on the intervening pre-scheme chapter) so liveness propagates down the real chain. The disposition is a strict **priority order**, NOT a free choice:
+- **(1) GROUND** — the preferred disposition. The node is a real (current/future/absorbed) dependency of a reachable node; type the **faithful, honestly-classified `depends-on` edge** (citation-grounded, critic-verifiable) into the reachable chain so the node is rescued by genuine liveness. This is what rescued the BC-elimination + divfree clusters (c107: `fe_assemble →absorbed-post-composition→ eliminate_bc`; `eigenmode.L4 →constrains-eigvec→ divfree-projector`) and the L1/L0 lowering homes (c108: typing the missing `edges:` down the BC + divfree lowering chains). **Forbidden as a grounding edge:** a *false* edge that misclassifies the relationship (e.g. forcing `column →depends-on→ internal-op` when the op is an absorbed post-composition, or `eliminate_bc →depends-on→ L1-op` when the real relationship is a *lowering* not a *constituent-use*). Grounding is **faithful-edge-or-finding**, never force-an-edge-to-flip-a-number.
+- **(2) ROUTE as a genuine-detritus finding** — only when **no plausible goal-dependency exists** (the node serves no reachable consumer and names no future intent the spine will pull). Then it is real garbage; route it as a detritus finding.
+- **(3) DELETE / baseline-exception** — the last resort. Deletion (frozen slices, kickoff-dead scaffolding) or a tracked baseline-exception (a known-firm-but-absorbed node that genuinely cannot yet carry a faithful edge, enumerated with a promotion condition per §5) applies only after (1) is ruled out as unfaithful.
+
+The grounding disposition is the reachability-axis analogue of `roadmap_goal` on the resolution axis: both are in-discipline ways to keep a genuinely-wanted-but-not-yet-wired node legally in the artifact rather than dropping it. The role that owns the typed-edge campaign (`layer-intro-author`) carries this disposition; the reachability-GC reviewer (`cross-layer-cross-cutter`, the meta-phase GC sweep) applies it before filing any node as detritus.
+
 ---
 
 ## 3. The shared substrate — typed dependency edges
@@ -143,7 +150,8 @@ Per the slice audit (2026-06-04), the disposition is: **exactly one genuine gap*
 - **lowering-verifier** — a lowering theme is at most as resolved as its endpoints (the lowering edge is `depends-on` on both); a rank check is part of the audit.
 - **critic** — checklist gains a **rank-invariant check** and a **reachability check** (does this entry's claim rest only on ≥-rank deps; is it reachable from a root).
 - **cycle-planner** — fan-out = reachability weight; sequences the typing+audit campaign; dispatches the most-reachable frontier nodes first.
-- **meta-phase** — runs/commissions the **GC sweep** (detritus + orphaned-intent uniformly) each batch; maintains the **baseline-exception set**; refreshes the **book methodology** page (it already owns `goal-flow.md`).
+- **layer-intro-author / cross-layer-cross-cutter** — apply the §2f **GROUND-don't-remove** disposition (priority: ground via faithful edge → route as detritus → delete/baseline-exception) before any node is filed as garbage; the typed-edge campaign rescues absorbed/future deps by typing the honest `depends-on` edge, never a forced one.
+- **meta-phase** — runs/commissions the **GC sweep** (detritus + orphaned-intent uniformly) each batch, applying the §2f grounding priority; maintains the **baseline-exception set**; refreshes the **book methodology** page (it already owns `goal-flow.md`).
 
 ---
 
