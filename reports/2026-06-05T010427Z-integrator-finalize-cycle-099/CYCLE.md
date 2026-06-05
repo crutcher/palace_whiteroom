@@ -49,7 +49,7 @@ cycle-099 is the BATCH-CLOSING cycle of meta-batch-31 (cycles 097/098/099; the b
 - **retroactive-budget global (cross-report aggregation):** 0 (< 4 threshold) — no block.
 - **build-breakage repair:** none needed — `cargo make book` EXIT 0.
 - **commit atomicity:** single commit (this finalize) — see Commit below.
-- **consumed-report frontmatter integrity:** all 3 marked `integrated_at: 2026-06-05T010427Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows) + `integration_notes`.
+- **consumed-report frontmatter integrity:** all 3 marked `integrated_at: 2026-06-05T010427Z` + `integration_commit: cdbd8d851e1108ba48b1b54fff9d011968f462d2` (two-phase SHA patch follows) + `integration_notes`.
 - **Per-report gates (from staging rows):** all PASS / N/A on each of the 3 rows (rank-gate 0 on each; D1's new firm subsection has no `depends-on` edge to a rough-in node; D2 is pure detritus-GC + citation-rehoming + deletion; D3 no artifact change).
 
 ## Build-status
@@ -102,6 +102,6 @@ Per-report integrators have no OQ-close authority; finalize RECORDS the recommen
 
 ## Commit
 
-Single atomic commit (this finalize) staging the 33 book modifications + 4 deletions + the staging log + the housekeeping writes (roadmap, cycle-record, log, integrator-signals, batch CYCLE.md) + the 3 consumed-report frontmatter touches + the planner/per-report scaffolding touches. `integration_commit: PLACEHOLDER_SHA` patched to the real SHA in a two-phase follow-up commit per the canonical pattern.
+Single atomic commit (this finalize) staging the 33 book modifications + 4 deletions + the staging log + the housekeeping writes (roadmap, cycle-record, log, integrator-signals, batch CYCLE.md) + the 3 consumed-report frontmatter touches + the planner/per-report scaffolding touches. `integration_commit: cdbd8d851e1108ba48b1b54fff9d011968f462d2` patched to the real SHA in a two-phase follow-up commit per the canonical pattern.
 
 — written by `integrator-finalize` (split integrator-per-report ×3 + finalize ×1)

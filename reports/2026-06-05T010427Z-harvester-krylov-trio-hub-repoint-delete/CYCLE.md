@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T010427Z
 scope: graded-stack P2 slice-deletion campaign COMPLETION — krylov trio hub-repoint + delete {cg,gmres,arnoldi_step}
 status: integrated
 integrated_at: 2026-06-05T010427Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: cdbd8d851e1108ba48b1b54fff9d011968f462d2
 integration_notes: "Applied clean by integrator-per-report (cycle-099 staging row 2/3), batch-31 P2 slice-deletion campaign COMPLETION. D2: repointed ALL 31 inbound Class-A markdown links + Class-B plain-text hub mentions, reconciled the arnoldi end-bound (iterative.cpp:73-118 → :73-109), DELETED the 3 slice files cg/gmres/arnoldi_step, removed the SUMMARY '# Phase 1 corpus' section + the introduction.md:23 inbound link, DELETED book/src/spec/index.md (corpus empty). Both inbound-link sweeps confirmed ZERO on the applied tree. Slice corpus 3→0; spec/slices/ EMPTY. cargo make book EXIT 0; step-5b rank_violations 0 GATE PASSES; no newly-orphaned node; slice-node count now ZERO. Recommended-CLOSE OQs: krylov-trio-slice-corpus-3to0-campaign-complete-retire-carveout-and-skill (the CAMPAIGN-COMPLETE trigger), krylov-trio-class-B-plaintext-mention-residue-batch31-cleanup (for batch-31 meta unify/enact)."
 inputs:
   - cycle-099 D2 dispatch (coordinated owner, deps D1; D1 absorbs cg.md:27-141 into L4/krylov-step.md Form B + re-anchors that file's cg.md pointers §Semantics:82/§Status:152/§Evidence:171)

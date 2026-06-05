@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T010427Z
 scope: L4 operator: krylov-step (absorb cg.md:27-141 CG-concrete v0.5 worked datum into Form B)
 status: integrated
 integrated_at: 2026-06-05T010427Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: cdbd8d851e1108ba48b1b54fff9d011968f462d2
 integration_notes: "Applied clean by integrator-per-report (cycle-099 staging row 1/3), batch-31 P2 slice-deletion campaign COMPLETION. D1: absorbed the cg.md:27-141 v0.5 first-iteration-unrolling worked datum into book/src/L4/krylov-step.md as a NEW firm '### Worked example — CG Form B' subsection + re-anchored the dangling cg.md:* pointers (§Semantics:82/§Status:152/§Evidence:171). Rank stays 0 (firm-on-positive-structure; L0 ground is a rank-exempt cites-evidence edge). cargo make book EXIT 0; step-5b rank_violations 0 GATE PASSES; no newly-orphaned node. Recommended-CLOSE OQ: cg-slice-27to141-fully-homed-clear-to-delete-and-evidence-pointer-residue-class-B (for batch-31 meta unify)."
 inputs:
   - book/src/spec/slices/cg.md:27-141 (the genuinely-unlifted CG-concrete v0.5 first-iteration-unrolling worked instance)

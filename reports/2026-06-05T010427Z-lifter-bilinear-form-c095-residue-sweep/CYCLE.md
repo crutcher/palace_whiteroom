@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T01:13:35Z
 scope: bilinear-form-c095 stale-narration residue sweep (whole-book, EXCLUDING the D2-owned krylov hub + the c098-D3-fixed domain_energy_reduce.md:313)
 status: integrated
 integrated_at: 2026-06-05T010427Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: cdbd8d851e1108ba48b1b54fff9d011968f462d2
 integration_notes: "Applied clean by integrator-per-report (cycle-099 staging row 3/3) as a VERIFIED CLEAN NO-OP. D3: whole-book bilinear-form-c095 firm-flip residue sweep found ZERO genuinely-stale instances outside the krylov hub; L2/index.md:89 re-confirmed NON-stale on disk; bookkeeping-only, no artifact edit. Build-relevant: no. Recommended-CLOSE OQ: bilinear-form-c095-residue-sweep-clean-noop-and-L2-index-89-confirmed-non-stale (for batch-31 meta unify)."
 inputs:
   - book/src/L4/gram_reduce.md
