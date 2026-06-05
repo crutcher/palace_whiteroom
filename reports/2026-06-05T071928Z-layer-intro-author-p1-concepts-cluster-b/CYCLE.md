@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T071928Z
 scope: P1 graded-stack typed-edge campaign — concepts/ cluster B (solver / iteration / calculus-typing vocabulary, 17 pages)
 status: pending
 integrated_at: 2026-06-05T085500Z
-integration_commit: INTEGRATION_SHA_PLACEHOLDER
+integration_commit: e9e6556d1fe709b77124731573eafa7a638c7497
 integration_notes: >
   Applied clean (cycle-103 D2, staging row 3 — P1 typed-edge campaign concepts cluster B).
   The ONE node of the 17-page set, config-record, typed rank: firm + 3 cites-evidence L0

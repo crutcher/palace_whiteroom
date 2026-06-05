@@ -11,7 +11,7 @@ inputs:
   - OQ eliminate-rhs-mutation-rotation-l1-l0-half-forthcoming-vs-already-folded
     (== fe-bc-elimination-l1-l0-theme-split-vs-fold viewed from L4)
 integrated_at: 2026-06-05T085500Z
-integration_commit: INTEGRATION_SHA_PLACEHOLDER
+integration_commit: e9e6556d1fe709b77124731573eafa7a638c7497
 integration_notes: >
   Applied clean (cycle-103 D6, staging row 7 — the eliminate_rhs L1>L0 leg FOLD disposition).
   FOLD verdict: a new anchored §"The eliminate_rhs leg (folded here)" appended to the firm

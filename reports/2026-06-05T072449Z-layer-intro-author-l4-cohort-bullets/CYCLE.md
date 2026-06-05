@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T072449Z
 scope: L4 index §Vocabulary-cohort — 2 missing firm bullets (preconditioning-framework, eliminate_bc)
 status: pending
 integrated_at: 2026-06-05T085500Z
-integration_commit: INTEGRATION_SHA_PLACEHOLDER
+integration_commit: e9e6556d1fe709b77124731573eafa7a638c7497
 integration_notes: >
   Applied clean (cycle-103 D8, staging row 8 — the FINAL per-report, staging COMPLETE).
   2 §Vocabulary-cohort prose bullets inserted into L4/index.md (eliminate_bc before fe_assemble;

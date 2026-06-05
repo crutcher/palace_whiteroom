@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T072504Z
 scope: P1 graded-stack typed-edge campaign — type + reconcile the concepts/ infra pair (concepts/index.md + concepts/dependency-map.md); cycle-103 D4, WAVE 2
 status: pending
 integrated_at: 2026-06-05T085500Z
-integration_commit: INTEGRATION_SHA_PLACEHOLDER
+integration_commit: e9e6556d1fe709b77124731573eafa7a638c7497
 integration_notes: >
   Applied clean (cycle-103 D4, staging row 5 — P1 typed-edge campaign concepts infra reconcile).
   concepts/index.md + concepts/dependency-map.md typed kind: navigational-container (no rank,

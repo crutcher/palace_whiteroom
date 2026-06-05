@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T071904Z
 scope: concepts/dofset.md — DofSet[N] record-definition home (cycle-103 D7, item 2b)
 status: pending
 integrated_at: 2026-06-05T085500Z
-integration_commit: INTEGRATION_SHA_PLACEHOLDER
+integration_commit: e9e6556d1fe709b77124731573eafa7a638c7497
 integration_notes: >
   Applied clean (cycle-103 D7, staging row 1 — dispatched FIRST so D4 could reference
   concepts/dofset.md on disk). CREATED book/src/concepts/dofset.md (the DofSet[N]

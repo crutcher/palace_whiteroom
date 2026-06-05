@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T07:18:38Z
 scope: graded-stack typed-edge campaign P1 tranche D1 — concepts/ cluster A (BLAS-1 / reduction / operator-application substrate), 16 pages
 status: pending
 integrated_at: 2026-06-05T085500Z
-integration_commit: INTEGRATION_SHA_PLACEHOLDER
+integration_commit: e9e6556d1fe709b77124731573eafa7a638c7497
 integration_notes: >
   Applied clean (cycle-103 D1, staging row 2 — P1 typed-edge campaign concepts cluster A).
   16 concept pages got reference-only typed edges: frontmatter prepended (blas1/reduction/

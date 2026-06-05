@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T071837Z
 scope: graded-stack typed-edge campaign P1 first tranche — concepts/ cluster C (krylov-internals + obstruction/disposition vocabulary)
 status: pending
 integrated_at: 2026-06-05T085500Z
-integration_commit: INTEGRATION_SHA_PLACEHOLDER
+integration_commit: e9e6556d1fe709b77124731573eafa7a638c7497
 integration_notes: >
   Applied clean (cycle-103 D3, staging row 4 — P1 typed-edge campaign concepts cluster C).
   12 concept pages got reference-only typed edges: frontmatter (gmres/givens/obstruction-

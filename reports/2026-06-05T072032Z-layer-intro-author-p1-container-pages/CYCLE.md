@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T072032Z
 scope: P1 typed-edge campaign — type the navigational container pages (layer/lowering indexes + group-intros + feature group pages) + DECIDE the index/intro node-status convention
 status: pending
 integrated_at: 2026-06-05T085500Z
-integration_commit: INTEGRATION_SHA_PLACEHOLDER
+integration_commit: e9e6556d1fe709b77124731573eafa7a638c7497
 integration_notes: >
   Applied clean (cycle-103 D5, staging row 6 — P1 typed-edge campaign container pages).
   35 container pages typed kind: navigational-container (no rank, reference-only): all 8 layer
