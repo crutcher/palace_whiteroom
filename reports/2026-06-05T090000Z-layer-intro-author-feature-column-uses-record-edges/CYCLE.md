@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T09:00:00Z
 scope: graded-stack typed-edge campaign P1 — add depends-on (kind: uses-record) edges from GC-root feature columns to the record-concept pages
 status: pending
 integrated_at: 2026-06-05T093000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 36d717defa83a7e3c4f3b11d90137cf15d72b4c9
 integration_notes: "cycle-104 D2, applied clean (staging row 4/4, FINAL). 12 depends-on (kind: uses-record) edges (11 feature columns -> concepts/config-record + transient.L4 -> concepts/op-params) + 4 reciprocal reference back-refs in config-record.md. config-record + op-params become root-reachable (2 of 8 graded-stack records rescued; other 6 await WAVE-3 op-chapter edges). energy-fields.L4 deliberately NOT linked (no PostprocessConfig/DomainData concept pages, 0 danglers). Opened HIGH OQ solve-record-reachability-needs-op-chapter-uses-record-edges + MEDIUM OQ energy-fields-config-and-domaindata-records-need-concept-pages. NOTE: the linter's hand-rolled parse_frontmatter does not parse block-mapping edges, so the reachability rescue is correct on disk but does not show in the GC (pre-existing uniform parser gap, routed to meta/tools). rank_violations held 0; build EXIT 0."
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T08:23:35Z
 scope: graded-stack typed-edge campaign P1 — type the 6 untyped RECORD concept pages
 status: pending
 integrated_at: 2026-06-05T093000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 36d717defa83a7e3c4f3b11d90137cf15d72b4c9
 integration_notes: "cycle-104 D1, applied clean (staging row 1/4). 6 record-concept pages (krylov/op-params/sim-state/step-outputs/prev-carry/solve-result) typed rank:firm kind:record with cites-evidence depends-on to L0 iterative.{hpp,cpp}. Closes c103 carry-forward OQ graded-stack-six-record-concept-pages-need-frontmatter. rank_violations held 0; build EXIT 0."
 ---
 

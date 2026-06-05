@@ -12,7 +12,7 @@ inputs:
   - book/src/L2/linear_combination.md (the variadic scalar-weighted-vector-sum fold)
   - palace/linalg/vector.{hpp,cpp} (SetSubVector family), orthog.hpp (CGS/MGS), divfree.cpp / gmg.cpp / distrelaxation.cpp (use-sites)
 integrated_at: 2026-06-05T093000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 36d717defa83a7e3c4f3b11d90137cf15d72b4c9
 integration_notes: "cycle-104 D3, applied clean post-repair (staging row 3/4). NEW firm L1 entry book/src/L1/set_subvector_zero.md (the s=0.0 SetSubVector index-set vector-zeroing primitive, diagonal 0/1 projector Z_idx=I-P_idx; 3 cites-evidence depends-on -> vector.cpp:461-474/:476-492/vector.hpp:220-221; firm-on-positive-structure). Repairer had repaired 2 build-critical warnings pre-integration (dangling depends-on to forthcoming L1>L0 theme retyped to L0 cites; dangling reference to speculative L3 seed removed). SUMMARY + L1-index dep-map alpha-after scal; trsv + gemv_basis repointed. Resolves all 3 legs of OQ concept-primitive-without-L1-home-trsv-set_subvector_zero-gemv_basis. finalize updated the L1 firm-count narration 32 main/39 grand -> 33 main/40 grand (count-owner, D3 deferred it). rank_violations held 0; build EXIT 0."
 ---
 

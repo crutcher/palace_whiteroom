@@ -9,7 +9,7 @@ inputs:
   - book/src/concepts/incremental-least-squares.md
   - book/src/concepts/givens.md
 integrated_at: 2026-06-05T093000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 36d717defa83a7e3c4f3b11d90137cf15d72b4c9
 integration_notes: "cycle-104 D4, applied clean (staging row 2/4). 2 prose-drift fixes: de-staled the eliminate_rhs cohort bullet in L1/index.md (re-anchored to the live firm theme fe-operator-assemble-mutation-rotation), slug-fixed incremental-least-squares (givens-rotation -> live givens). Resolves 2 pre-existing c103 LOW OQs (eliminate-rhs-l1-index-bullet-stale-forthcoming-prose + incremental-least-squares-prose-names-nonexistent-givens-rotation-slug). No claim/status change; build EXIT 0."
 ---
 
