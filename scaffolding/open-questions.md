@@ -1469,3 +1469,63 @@ The verbose per-report intake blocks (the c097 D1/D3/D4/D6 + c098 D1/D2/D3 + c09
 - `non-book-artifact-orphan-review` (USER DIRECTIVE 2026-06-04) — CLOSED-ENACTED (GO+ask). Per-item live-reader grep + disposition table (full table in the batch-31 meta-phase report). DELETED 7 clear pre-redirect orphans (`README.md`, `lessons.md`, `questions.md`, `episodic.jsonl.README.md`, `orchestrator/`, `prompts/`, `schemas/`); KEPT-LIVE `config.toml`/`mcp/`/`Makefile.toml`/`.mcp.json`/`.env`; ASK on 2 borderline keep-as-historical calls (`BOOTSTRAP.md`+`MIGRATION.md` retain-vs-compact-to-history; `.env.example` retain-vs-delete).
 
 ---
+
+## apply-linop-mutation-rotation-corpus-census-optional-not-a-gate
+
+opened_at: cycle-100
+opened_by: integrator-per-report (cycle-100 report 1/4)
+
+The `apply-linop-mutation-rotation` theme was promoted `rough-in → firm` cycle-100 via the firm-on-positive-structure / syntactic-identity escape (each of the five sub-pattern recognition rules is a name-match identity over a fully-specified positive `Mult`-family method body, so the absence of a dedicated unit test does not gate the laws). The firm verdict rests on the **recognition rule being sound** (each sub-pattern holds for ANY conforming `Operator` subclass), NOT on indexing every concrete subclass. The theme cites representative realisations (`SumOperator`, `BaseProductOperator`, `BaseDiagonalOperator`, `ParOperator`, `ProductOperatorHelper`); the §coverage note estimates ~30-40 total `Mult`-virtual implementations (preconditioners under `palace/linalg/{amg,ams,jacobi,chebyshev,distrelaxation,blockprecond,gmg,hcurl}`, FE assembly closures, Jacobian-action operators in transient/nleps drivers) which is NOT independently re-verified.
+
+**OPTIONAL, NOT A PROMOTION GATE.** If a future cycle wants a literal corpus census it can run a `search_text 'void .*::Mult'` sweep to enumerate every subclass and confirm none deviates from the recognition rules; this would harden the illustrative-corpus estimate but is not required for the firm status (a name-match rule does not need per-subclass enumeration). Low priority; surfaced for the planner only so the deferred-but-not-blocking census is on the record.
+
+---
+
+## ksp-solve-firm-rests-on-apply-linop-per-step-reference-edge
+
+opened_at: cycle-100
+opened_by: integrator-per-report (cycle-100 report 2/4)
+
+The `ksp-solve-mutation-rotation` L1>L0 theme was promoted `rough-in → firm` cycle-100 (this report) via the firm-on-positive-structure / syntactic-identity escape. Its per-step CG/GMRES decomposition includes the per-step `A->Mult(p, z)` invocation (`palace/linalg/iterative.cpp:443`), which the audit recognized via the `apply-linop-mutation-rotation` sub-pattern A. The lowering-verifier judged this a `reference`/recognition delegation (a one-line syntactic identity on fully-specified positive source — `A->Mult` on a `LinearOperator`), NOT a blocking `depends-on` rank edge, so the apply-linop sister theme's then-`rough-in` status did not block this theme's firm promotion under the graded-stack §1b reading.
+
+**WATCH-ITEM (not a blocker).** If a future graded-stack rank-linter run treats the per-step apply-linop delegation as a blocking `depends-on` edge rather than a `reference` edge, this theme's firm status would need re-examination against apply-linop's own rank. **De-risking note:** the cycle-100 staging log records `apply-linop-mutation-rotation` itself being promoted `rough-in → firm` this same cycle (report 1/4, prior staging row), so under either edge-typing reading the well-foundedness invariant `rank(ksp-solve) ≤ rank(apply-linop)` now holds with both at `firm`. Surfaced for the planner only — confirm the edge-typing decision (reference vs depends-on) is recorded when the type-the-edges-and-audit graded-stack campaign reaches the L1>L0 mutation-rotation cohort. *Trigger:* the rank-linter campaign types the L1>L0 edges, or apply-linop is ever downgraded.
+
+---
+
+## bc-elimination-cohort-l4-disposition
+
+opened_at: cycle-100
+opened_by: cross-layer-cross-cutter (cycle-100 report 3/4; promoted by integrator-per-report)
+
+Does the firm-L1 **boundary-condition elimination cohort** — `eliminate_essential_bc` + `eliminate_rhs`, fed by their `DofSet[N]` producer `essential_dofs` (`L1/eliminate_essential_bc.md`, `L1/eliminate_rhs.md`, `L1/essential_dofs.md`, all firm) — rise to L4 as a small **post-assembly combinator** (an operator→operator BC-pin verb + an RHS-lift verb, the separable post-composition law `L1/eliminate_rhs.md:142-144`: it consumes the *already-assembled* operator `K` independent of HOW `K` was assembled), OR carry an explicit **no-L4-by-design** (setup/construction-stratum) verdict, absorbed into the driver feature columns' assemble preface the way `fe_space`/`fe_collection` are absorbed into `fe_assemble`?
+
+This is the **BC-half analog of the assemble-half** closed at cycle-068 (`L4/fe_assemble.md` firm, plan-tag `fe-cohort-l4-lift`). The cohort is firm at L1, is an explicit **separable post-composition that runs AFTER the `fe_assemble` fold** (so it is NOT absorbed by the assemble combinator — `L1/eliminate_essential_bc.md:19-22`, `L1/eliminate_rhs.md:23-24`), reaches **no L2/L3/L4 entry and no driver feature-column body**, and carries **no no-L4-by-design verdict**. The on-disk separable-post-composition law makes route (a) — a clean small combinator — a strong candidate. Every solver pipeline performs essential-BC elimination on the assembled operator + RHS lift before the solve, so the fan-out is the 5 driver columns.
+
+**PROVENANCE — this is NOT a brand-new question; it PROMOTES the existing c069 sibling-deferral into the tracked plan.** The rise-vs-no-L4 decision was already recorded as *deferred* (not *decided*) on disk:
+- `L4/fe_assemble.md:119`: the BC ops "are sibling deferred operators (the rank-3/4 c069 candidates, gated on primitive-L4-presence per the planner OQ)."
+- `L4-L3/fe-assemble-fold-dissolution.md:127`: "They are sibling speculative operators (the planner's ranks 3-4, deferred to c069), NOT part of this assemble-fold dissolution."
+
+A deferral-to-a-future-candidate is **not** a no-L4-by-design verdict, so the hole (unreached + decision-unmade) is real — but it is *deferred-pending-c069*, not wholly undispositioned. Filing this OQ moves the deferral into the live fan-out-ranked plan. Resolution route: dispatch a harvester/abstractor (the BC-half of the `fe-cohort-l4-lift` plan-tag) to make the rise-vs-no-L4 decision.
+
+**Recurring mis-attribution-site note (mechanical, for whoever resolves this OQ).** The `essential_dofs` mis-attribution corrected at `L4/index.md:48` + `:100` this cycle (cycle-100 report 3/4) **also recurs in the `L4/fe_assemble.md` chapter body** at `:69` (the shape-contract bullet), `:147` (the `state-stratification` concept-reference bullet), and `:175` (the `## Status` variant-axis paragraph) — each carries the identical `(fe_space / fe_collection / essential_dofs)` absorbed-list parenthetical, attributing `essential_dofs` to `fe_assemble`'s `readonly` construction stratum when on disk it produces the `DofSet[N]` the *post-assembly* BC cohort consumes (`L1/essential_dofs.md:22-23,72`; `L1/fe_assemble.md:60` signature `(space: FiniteElementSpace[N], terms: [WeakFormTerm]) -> LinearOperator[N, N]` carries no `essential_dofs` parameter). These three body sites were deliberately NOT auto-corrected this cycle (they sit inside chapter-body combinator-as-entry prose, not a flat disposition list; repointing them is best made TOGETHER with this OQ's BC-disposition decision, when the cohort's L4 home is settled, rather than as standalone parenthetical surgery). Widen the correction to these three sites when this OQ is resolved.
+
+## dependency-map-cg-precond-stale-mermaid-edges-RESCOPE-CORRECTION
+opened_at: cycle-100
+opened_by: integrator-per-report (promoting same-layer-cross-cutter D4 finding)
+
+**Re-scope + premise correction of the existing OQ `dependency-map-cg-precond-stale-mermaid-edges`** (ledger line ~1457; append-only — that entry is left intact for the meta-phase to unify/edit, this section supersedes its PREMISE by reference). The migrated OQ describes "~22 stale Mermaid edges keyed off the deleted `cg_preconditioning_framework` node." That literal premise is **inaccurate**, verified by the cycle-100 D4 (`same-layer-cross-cutter`) class-B residue sweep + the critic:
+
+- There is **no `cg_preconditioning_framework` Mermaid node** anywhere in `book/src` (the string survives ONLY as accurate prose provenance in three firm chapters — `concepts/rotation.md:136`, `L4/index.md:119`, `L4/preconditioning-framework.md:336` — naming the c096-absorbed slice; those are correct provenance, NOT residue).
+- The actual stale edges in `book/src/concepts/dependency-map.md` are keyed on the deleted **krylov-trio slice-slugs** (`gmres`, `orthog`, `arnoldi_step`, `cg`, `gmres-L3`, `gmres-L4`, `plane-rotation-stream`) — **~40 edges** across the L1/L2/L3/L4 sub-graphs (not ~22; not a single node).
+
+**Re-scoped statement:** "`concepts/dependency-map.md` carries ~40 stale Mermaid edges keyed on deleted krylov-trio + chebyshev-cohort slice-slug nodes; the node SET must be re-derived against the live firm-chapter graph." Build-safe (Mermaid node-labels, not markdown links). Resolution route: the `concepts/`-dep-map-refresh OQ below (a `layer-intro-author` pass, NOT a residue micro-sweep), naturally paired with the graded-stack typed-edge campaign (priorities #0). Flag for cycle-planner/meta-phase to fold the re-scoped premise into the plan item.
+
+## concepts-index-and-depmap-orchestrator-era-framing-refresh
+opened_at: cycle-100
+opened_by: integrator-per-report (promoting same-layer-cross-cutter D4 finding)
+
+`book/src/concepts/index.md` + `book/src/concepts/dependency-map.md` carry **whole-file pre-redirect orchestrator/slice-era framing** — not a few dead pointers but structural staleness: decommissioned `prompts/*` references, `concept_writes mode=create` recipes, `spec/slices/*` grep recipes, and (in `dependency-map.md`) ~40 Mermaid edges keyed on deleted slice-slug nodes (see the re-scope OQ above). The cycle-100 D4 class-B residue sweep treated these two files as **out of micro-sweep scope** (a careful dep-map refresh, not a drive-by string-swap; `dependency-map.md` is wired into `SUMMARY.md:292` with an inbound citation from `L1-L0/minres-iteration.md:115`).
+
+**Recommendation:** dispatch a dedicated `layer-intro-author` dep-map/concepts refresh next cycle (batch-32 plan candidate) — re-derive the node set against the live firm-chapter graph, strip the orchestrator/slice-era recipes. **Natural pairing** with the graded-stack typed-edge campaign (priorities #0): the dep-map node/edge re-derivation IS the place the typed-edge (`depends-on` vs `reference`) annotation work would land.
+
+**Adjacent residue note (mechanical, for the same refresh):** the CG Form B provenance line at `book/src/L4/krylov-step.md:254` carries a deliberately-LEFT historical pointer `spec/slices/cg.md:27-141` / `cg.md:393-425` (the CG sibling ABOVE the two GMRES/arnoldi pointers D4 repointed this cycle). It is narratively framed ("previously retained live in the reduced slice ... absorbed here in cycle-099 so the slice is clear-to-delete") and carries its own live link + L0 ground, so D4 left it out of the bare-pointer repoint scope — but it is the same class of post-deletion residue and should be normalized to the git-history phrasing when this refresh runs.

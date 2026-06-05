@@ -130,7 +130,7 @@ line: 21 firm + 1 `partly-constructive` (`deflate`).
   - **Pattern instances** (five, well clear of ≥3 soft bar):
     - CG step bodies — firm `book/src/L4/krylov-step.md` Form B + L0 Sub-pattern B (`iterative.cpp:360-486`)
     - GMRES `inner_loop` — firm L0 Sub-pattern C (`iterative.cpp:543-705`)
-    - `book/src/L4/chebyshev.md` §Semantics `innerStep` (firm cycle-015; absorbed the former `spec/slices/chebyshev.md:354-362`)
+    - `book/src/L4/chebyshev.md` §Semantics `innerStep` (firm cycle-015; absorbed the former Phase-1 chebyshev §L4 innerStep, deleted cycle-099; git history is the record)
     - Arnoldi step — firm L0 Sub-pattern C inner Arnoldi loop (within `iterative.cpp:563-683`)
     - `concepts/negative-result-slice.md` §Partial-positive sub-pattern (catalog of three polynomial-recurrence instances; Chebyshev-pair firm home `book/src/L4/chebyshev.md` §Semantics `innerStep`)
 - **Cycle-004 obstruction-theme guidance**: the MINRES and BiCGStab L1>L0 themes (`book/src/L1-L0/minres-iteration.md`, `book/src/L1-L0/bicgstab-iteration.md`) sketch five speculative L1 operators (`lanczos_step`, `three_term_recurrence_update`, `givens_apply_with_residual_min`, `bicgstab_step`, `omega_update`, `stabilisation_update`). The cycle-005 harvester decision is to **not** promote any to firm L1: each is a *step-body specialisation* of `krylov-step` rather than an orthogonal axis that would simplify `krylov-step`'s L2 semantics. The decision is recorded at `scaffolding/decisions/2026-05-27-krylov-step-speculative-l1-promotion.md` (proposed for integrator wiring).

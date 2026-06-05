@@ -296,9 +296,9 @@ BLAS-1 floor operators (`dot`, `nrm2`, `axpy`, `scal`).
 
 ## Supporting evidence
 
-- **Provenance.** This firm L1 entry was the lift target of the (now-deleted) Phase-1 slice
-  `spec/slices/orthog.md` (cycle-011 partial reduction → fully reduced and removed cycle-098,
-  graded-stack P2 slice-deletion campaign). With this entry, the L2/L3/L4 dissections it
+- **Provenance.** This firm L1 entry was the lift target of the Phase-1 `orthog` slice
+  (cycle-011 partial reduction → fully reduced and deleted cycle-098, graded-stack P2
+  slice-deletion campaign; git history is the record). With this entry, the L2/L3/L4 dissections it
   retained (per-pass primitive sequences + transparent-vs-load-bearing classification; CGS/CGS2
   projector form + MGS sequential-obstruction; Solve-monad state stratification) are firm at
   `L2/orthogonalize.md`, `L3/orthogonalize.md`, and `concepts/orthogonalization.md`; its L0

@@ -338,10 +338,9 @@ absence of a dedicated test does not reduce confidence to rough-in (contrast
   (1st) per `cheby_4th_kind`.
 - `palace/linalg/distrelaxation.cpp:21-36` — consumer: distributive-relaxation
   smoother constructs the same; `B_G->SetInitialGuess(false)` (law 2 use site).
-- Provenance: the cycle-001-era §L1 slice content this entry promotes lived at
-  the now-removed `book/src/spec/slices/chebyshev.md` §L1 (439-line form,
-  `:34-116`); the slice was reduced and removed cycle-015 once its material became
-  authoritative here, with the `rho_0` correction noted above (git history is the
-  record per CLAUDE.md §Methodology invariants "Phase 1 corpus reduces as material
-  is lifted").
+- Provenance: the cycle-001-era L1 content this entry promotes was lifted from the
+  Phase-1 chebyshev §L1 (439-line form), reduced cycle-015 once its material became
+  authoritative here (with the `rho_0` correction noted above) and deleted cycle-099
+  (graded-stack P2; git history is the record per CLAUDE.md §Methodology invariants
+  "Phase 1 corpus was lifted and deleted").
 - `book/src/concepts/chebyshev-iteration.md` — cross-cutting prose treatment.

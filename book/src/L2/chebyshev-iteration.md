@@ -265,8 +265,8 @@ same justification as the L1 entry.
 - `book/src/L2/krylov-step.md:7` — catalogs `book/src/L4/chebyshev.md`
   §Semantics `innerStep` as one of the five polynomial-recurrence pattern
   instances `krylov-step` factors.
-- Provenance: the cycle-001-era §L2 slice content this entry promotes lived at
-  the now-removed `book/src/spec/slices/chebyshev.md` §L2 (439-line form,
-  `:122-228`); the slice was reduced and removed cycle-015 once its material
-  became authoritative here (git history is the record per CLAUDE.md §Methodology
-  invariants "Phase 1 corpus reduces as material is lifted").
+- Provenance: the cycle-001-era L2 content this entry promotes was lifted from the
+  Phase-1 chebyshev §L2 (439-line form), reduced cycle-015 once its material became
+  authoritative here and deleted cycle-099 (graded-stack P2; git history is the
+  record per CLAUDE.md §Methodology invariants "Phase 1 corpus was lifted and
+  deleted").

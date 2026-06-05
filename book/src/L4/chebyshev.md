@@ -576,10 +576,9 @@ entries.
 - Provenance: the cycle-001-era §L4 "calculus form" this entry promotes (the
   `ChebOp`/`ChebSim` types, the `apply` monadic action, the `setup` action, the
   capability-typed sim-state, the initial-guess branch-vs-derived-view discussion)
-  lived at the now-removed `book/src/spec/slices/chebyshev.md` §L4 (439-line form,
-  `:287-439`); the slice was reduced and removed cycle-015 once its material became
-  authoritative here (git history is the record per CLAUDE.md §Methodology
-  invariants "Phase 1 corpus reduces as material is lifted"). The slice's `forM_`/`foldM` rendering of
+  was lifted from the cycle-001-era Phase-1 chebyshev §L4 (439-line form), reduced
+  cycle-015 once its material became authoritative here and deleted cycle-099
+  (graded-stack P2; git history is the record). The former §L4's `forM_`/`foldM` rendering of
   the two obstructions is **superseded** here by the `iterate_while_pure` +
   step-count-predicate re-anchor (cycle-014 combinator-miner route (i), enacted
   cycle-015) — the slice predates the firm `iterate-while` family (cycle-007).
