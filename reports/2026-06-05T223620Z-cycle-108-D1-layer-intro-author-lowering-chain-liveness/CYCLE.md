@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T223620Z
 scope: cycle-108 D1 — lowering-chain-liveness grounding pass (BC + divfree chains)
 status: pending
 integrated_at: 2026-06-05T230500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: fd5fabd175ffc45a4e75dbf9907b4a53a42093e5
 integration_notes: "Applied clean (staging row D1, cycle-108 batch-34 position 3/3, the BATCH-CLOSING cycle). 8 pre-scheme lowering-chain chapters typed with edges: blocks (4 authored from scratch, 4 legacy→scheme), grounding the L1/L0 BC+divfree lowering homes from their already-reachable L4/L3 sources. reachable 95→102 (+7 nodes rescued), 0 regression, rank_violations HELD 0. Faithful — caught the essential_dofs would-be over-edge. cargo make book EXIT 0; no finalize build-repair. Resolved OQ lowering-chain-liveness-not-propagated-to-l1-ops grounded-and-rescued; routed l2-l1-theme-cohort-reachability-gap + lowering-theme-reachability-vs-well-foundedness-scheme-clarification to the batch-34 meta-phase. All per-report safety-net gates PASS/N/A; global retroactive-budget 0."
 ---
 

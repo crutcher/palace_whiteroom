@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T223620Z
 scope: type concepts/counter-update.md as a graded-stack NODE (rank + typed edges); resolve OQ concepts-counter-update-needs-node-rank-and-depends-on-edges
 status: pending
 integrated_at: 2026-06-05T230500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: fd5fabd175ffc45a4e75dbf9907b4a53a42093e5
 integration_notes: "Applied clean (staging row D2, cycle-108 batch-34 position 3/3). Typed concepts/counter-update.md as a firm NODE (rank: firm, kind: primitive, depends-on: [], reference: [state-stratification, preconditioning-framework, krylov-step]); body prose unchanged. The state-stratification depends-on candidate down-typed to reference per well-foundedness (non-node). untyped 61→60. Honestly NOT forced reachable (reference-only edges, no consumer depends-on it — the expected critic-reproduced outcome; no depends-on manufactured to chase reachability). detritus +1 (typed-but-unreached node). cargo make book EXIT 0; no finalize build-repair. Resolved OQ concepts-counter-update-needs-node-rank-and-depends-on-edges. All per-report safety-net gates PASS/N/A (rank gate vacuous on depends-on: []); global retroactive-budget 0."
 ---
 
