@@ -1522,3 +1522,32 @@ opened_by: integrator-per-report (cycle-097 D6 — lifter domain_energy_reduce l
 The cycle-097 D6 matrix-weighted-norm residue land-clean deliberately scoped OUT `domain_energy_reduce.md:313-316`, the `gram_reduce` "STAYS rough-in" narration (one-residue-cohort-per-dispatch boundary). That narration is gated on `gram_reduce`'s off-diagonal `bilinear-form` primitive — which itself flipped `firm` in cycle-095 (`L1/bilinear-form.md:5` `rank: firm`, promoted c095; independently confirmed by the D6 critic). So the `:313-316` gram_reduce maturity narration may now itself be stale (a `bilinear-form`-c095-firm-flip-leaves-within-file-stale-narration residue), but it concerns a DIFFERENT verb (`gram_reduce`, not the matrix-weighted-norm residue D6 owned) and belongs to a separate gram_reduce-cohort land-clean. A downstream lifter/same-layer-cross-cutter pass should re-anchor the `gram_reduce`/`bilinear-form` maturity narration in `domain_energy_reduce.md` (and grep the whole-book for the same `bilinear-form` c095 firm-flip residue class). Surfaced for the batch-31 §Intake→plan migration; NOT resolved here.
 
 ---
+
+## non-book-artifact-orphan-review — USER DIRECTIVE (routes to meta-phase; batch-31 meta-phase task)
+
+opened_at: cycle-097 (post-finalize)
+opened_by: parent orchestrator (relaying a direct user directive, 2026-06-04)
+
+**USER DIRECTIVE (2026-06-04, verbatim intent):** "I believe the README.md is orphaned by the current processes; as are a number of artifacts in base dir, and possibly in support dirs. For instance, the orchestrator/; lessons.md, questions.md, etc. At the next meta phase, do a review of artifacts outside the book/, and identify orphan artifacts which are candidates for removal."
+
+**TASK FOR THE BATCH-31 META-PHASE (fires after cycle-099):** conduct a review of artifacts OUTSIDE `book/` and identify orphans that are candidates for removal. This is a methodology/housekeeping review the meta-phase is positioned to do (it has the cross-batch view to judge load-bearing vs. historical-detritus). The meta-phase should produce a candidate-removal list with a per-item disposition (DELETE / KEEP-AS-HISTORICAL / MIGRATE-then-delete / ASK-USER), and — for the clearly-orphaned ones — either enact the removal (if within its authority and low-risk) or surface an `ask` for the borderline calls. Note this dovetails with the graded-stack reachability-GC philosophy (mark-sweep from the roots) but extended to the NON-book repo surface, which the book linters do not cover.
+
+**Concrete starting inventory (gathered by the parent at cycle-097; last-git-touch dates noted; the meta-phase verifies + judges — do NOT treat this as the verdict):**
+
+*Repo-root files — user-named + same-class suspects:*
+- `README.md` (root, 8.5KB, last touched 2026-05-25 commit `0a4069b` "meta-review #21: cycles 104–115") — its content references the OLD slice-vertical/meta-review era (pre the 2026-05-26 structural redirect); almost certainly an orphan describing a decommissioned process. **User explicitly named.**
+- `lessons.md` (138KB, last touched 2026-05-26) — CLAUDE.md §Layout calls it "legacy cross-run lessons (historical; superseded by friction-ledger)". **User explicitly named.**
+- `questions.md` (7KB, last touched 2026-05-23) — CLAUDE.md calls it "legacy question ledger (historical; superseded by open-questions)". **User explicitly named.**
+- `BOOTSTRAP.md` (53KB, last touched 2026-05-26) — CLAUDE.md calls it "original phased build spec (superseded; historical)"; the memory `project_bootstrap_claudemd_divergence` flags it. Same historical class; meta-phase should judge.
+- `episodic.jsonl.README.md` (576B, 2026-05-26) — a README for an `episodic.jsonl` file that does not appear to exist in the tree; likely orphan-of-an-orphan.
+- `config.toml`, `.env`, `.env.example`, `Makefile.toml`, `.mcp.json`, `.gitignore` — operational/build config; presumed live (the orchestrator-decommission may have stranded some of `config.toml`/`.env` if they only fed the Python orchestrator — meta-phase verifies).
+- `MIGRATION.md` (71KB) — the structural-redirect spec; CLAUDE.md treats it as the canonical redirect record (likely KEEP, but it is large and may be compactable to history once fully internalized — meta-phase judges).
+
+*Repo-root directories:*
+- `orchestrator/` (last touched 2026-05-26 `c2c0eee`) — CLAUDE.md calls it "decommissioned Python orchestrator (kept as historical reference)". **User explicitly named** as a removal candidate; the "kept as historical reference" framing is exactly what the user is now questioning.
+- `prompts/`, `mcp/`, `schemas/` — "possibly in support dirs" per the user; the meta-phase should check whether these fed only the decommissioned orchestrator (orphan) or are still consumed by the live `.claude/agents/` + MCP path (live). `mcp/` likely backs `palace-codemap` (live); `prompts/`/`schemas/` may be orchestrator-era.
+- `book/`, `log/`, `problems/`, `reference/`, `reports/`, `scaffolding/`, `skills/`, `tools/` — live (the 6-phase pipeline's working surface); not in scope for removal.
+
+**Disposition:** routes to meta-phase / possible human `ask` for the borderline keep-as-historical calls. Recommend the batch-31 meta-phase open its review with this inventory, run a "is anything in the live process still reading this?" check per item (grep the `.claude/agents/`, `skills/`, `tools/`, `Makefile.toml`, `.mcp.json` surface for references), and stage the clear orphans (`README.md`, `lessons.md`, `questions.md`, `episodic.jsonl.README.md`, and — pending the live-reader check — `orchestrator/` + any orchestrator-only support dir) for removal under git history (the corpus-shrinks-monotonically-and-git-is-the-record discipline, same as the slice corpus). Surface BOOTSTRAP.md/MIGRATION.md/config-files as the judgment calls.
+
+---
