@@ -19,9 +19,12 @@ edges:
     - L1/eliminate_rhs
     - L1/divfree-projector
     - concepts/set_subvector_zero
-# The L1>L0 lowering theme `set-subvector-zero-mutation-rotation` is forthcoming (not yet
-# authored); it is a plain-text "(forthcoming)" note in §Downward, NOT a blocking depends-on
-# edge to a missing file (would be a linkcheck2 hard error + rank-invariant violation).
+    - L1-L0/set-subvector-zero-mutation-rotation   # the L1>L0 lowering theme (authored c105); downward navigational pointer, NOT a rank-blocking dependency (the theme depends-on THIS entry, not vice versa)
+# The L1>L0 lowering theme `set-subvector-zero-mutation-rotation` is AUTHORED (c105); it is a
+# `reference` edge above (downward navigational pointer) + live-link forward-refs in §Semantics /
+# §Downward, NOT a blocking depends-on edge (the firmness grounds on the positive L0 read below;
+# the theme depends-on this entry, so a depends-on from here to the theme would be a rank-direction
+# error as well as redundant).
 # The speculative L3 form `set-subvector-zero-mask-multiply` is a plain-text future-form note
 # in §Downward, NOT a live reference edge (the seed does not exist).
 ---
@@ -137,8 +140,8 @@ buffer. The L0 source overwrites `x` in place (the destination *is* the input ar
 in the complex case threads the real and imaginary device buffers separately
 (`XR`/`XI`, `:483-484`). The in-place overwrite, the device-vs-host `use_dev` dispatch, the
 `rows.Read(use_dev)` index gather, and the `mfem::forall_switch` kernel are **L1>L0 lowering
-concerns** (the `set-subvector-zero-mutation-rotation` theme, forthcoming — plain-text forward
-reference, not yet authored), not part of the L1 signature.
+concerns** (the [`set-subvector-zero-mutation-rotation`](../L1-L0/set-subvector-zero-mutation-rotation.md)
+theme, authored c105), not part of the L1 signature.
 
 The per-index writes are **independent** — each `X[id]` write reads no other entry — so there is
 no sequential dependency across the `i ∈ idx` updates and **no reduction**. This is what makes
@@ -263,7 +266,8 @@ the sole `depends-on` through the not-yet-authored L1>L0 theme `set-subvector-ze
 which is both a dangling live link and a firm-resting-on-missing-dep rank violation; the firmness
 in fact grounds on the positive L0 read, exactly as for the BLAS-1 leaves `reciprocal` /
 `elementwise_product`, whose firmness does not block on their L1>L0 themes.) The L1>L0 lowering
-theme is a downward narration (forthcoming, plain-text), not an upward rank-blocking dependency.
+theme [`set-subvector-zero-mutation-rotation`](../L1-L0/set-subvector-zero-mutation-rotation.md)
+(authored c105) is a downward narration, not an upward rank-blocking dependency.
 
 Resolves the `set_subvector_zero` leg of OQ
 `concept-primitive-without-L1-home-trsv-set_subvector_zero-gemv_basis` (the vector-zeroing
@@ -277,9 +281,10 @@ indices); this entry references it, it does not redefine it.
 
 ## Downward to L0
 
-The lowering is the forthcoming `set-subvector-zero-mutation-rotation` L1>L0 theme (not yet
-authored — plain-text forward reference; this entry's firmness rests on the positive L0 read,
-cited as `cites-evidence` deps, not on a blocking edge to a missing file): it narrates how this
+The lowering is the [`set-subvector-zero-mutation-rotation`](../L1-L0/set-subvector-zero-mutation-rotation.md)
+L1>L0 theme (authored c105; this entry's firmness rests on the positive L0 read,
+cited as `cites-evidence` deps, with the theme as a downward `reference` pointer, not a blocking
+edge): it narrates how this
 pure projector lowers into Palace's in-place index-set overwrite —
 the `x.ReadWrite(use_dev)` destination-is-input idiom (`vector.cpp:467` / `:483-484`), the
 `rows.Read(use_dev)` index gather (`:466` / `:482`), the `mfem::forall_switch` device-vs-host

@@ -251,6 +251,7 @@
   - [orthogonalize-mutation-rotation](./L1-L0/orthogonalize-mutation-rotation.md)
   - [reciprocal-elementwise-product-mutation-rotation](./L1-L0/reciprocal-elementwise-product-mutation-rotation.md)
   - [scal-mutation-rotation](./L1-L0/scal-mutation-rotation.md)
+  - [set-subvector-zero-mutation-rotation](./L1-L0/set-subvector-zero-mutation-rotation.md)
 - [Construction-rotation themes](./L1-L0/construction-rotation-intro.md)
   - [essential-dofs-construction-rotation](./L1-L0/essential-dofs-construction-rotation.md)
   - [fe-collection-construction-rotation](./L1-L0/fe-collection-construction-rotation.md)

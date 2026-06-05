@@ -21,6 +21,7 @@ edges:
     - feature/inductance.L4
     - feature/sparameters.L4
     - feature/eigenfrequency-qfactor.L4
+    - feature/energy-fields.L4
 ---
 
 # config-record
@@ -94,7 +95,7 @@ switch (iodata.problem.type) { DRIVEN | EIGENMODE | ELECTROSTATIC
 ```
 
 `palace/main.cpp:259` (the 6-branch dispatch; the lambda constructing the
-`BaseSolver` spans `main.cpp:257-281`). The enum is
+`BaseSolver` spans `palace/main.cpp:257-281`). The enum is
 `enum class ProblemType : char` (`palace/utils/labels.hpp:18-26`) with the six
 values `DRIVEN`, `EIGENMODE`, `ELECTROSTATIC`, `MAGNETOSTATIC`, `TRANSIENT`,
 `BOUNDARYMODE`. The default is `ProblemType::DRIVEN` (`configfile.hpp:57-61`).
@@ -125,16 +126,33 @@ fields once to build its operator, then the run-time iteration never touches
 — config-record parsing + the per-driver factory reads are build-time
 primitives; nothing in the config record is a run-time field.
 
+The **postprocess sub-records are projections of the same `IoData` tree**, not
+separate config records. The output-product feature columns (capacitance /
+inductance / sparameters / eigenfrequency-qfactor / energy-fields) name a config
+input in their signatures — e.g. the `energy-fields` column's `PostprocessConfig`
+is the **energy-postprocess domain-attribute set** `IoData.domains.postpro.energy`
+(backed by `config::DomainPostData`, `palace/utils/configfile.hpp:283-295`, a
+`std::map<int, DomainEnergyData> energy` at `:290`, each `DomainEnergyData`
+`:263-270` carrying its per-index `attributes` list). These are readonly
+construction-stratum sub-records of `domains.postpro` (`config::DomainData.postpro`,
+`configfile.hpp:322`), the same `IoData` umbrella this page defines — so an
+output-product column's `uses-record` edge resolves here, to the umbrella, rather
+than to a per-postprocess-record page. (NOTE the name collision: the config-side
+`config::DomainData` — `configfile.hpp:313-326`, the domains record this page's
+schema lists — is unrelated to the run-time `Measurement::DomainData` result row
+`postoperatorcsv.hpp:74-79` that the `energy-fields` column's output `[DomainData]`
+names; the latter is a measurement-stratum result row, homed in-chapter, not here.)
+
 ## Signatures that name this record
 
 Every feature column and operator factory whose signature names the config
 record (the ≥2-consumer evidence for the standalone page):
 
 - the spine-ROOT lifecycle column — `IoData iodata(argv[1], false)`
-  (`main.cpp:231`) and the `problem.type` dispatch (`main.cpp:259`).
+  (`palace/main.cpp:231`) and the `problem.type` dispatch (`palace/main.cpp:259`).
 - the 5 driver-leaf feature columns — each `*Operator(iodata, mesh)` capture
   site above.
-- `BaseSolver` and every `*Solver` ctor take `iodata` (`main.cpp:262-280`).
+- `BaseSolver` and every `*Solver` ctor take `iodata` (`palace/main.cpp:262-280`).
 - model-operator factory ctors (`LaplaceOperator`, `CurlCurlOperator`,
   `SpaceOperator`) — each forward-declares `class IoData`
   (e.g. `palace/models/laplaceoperator.hpp:19`,

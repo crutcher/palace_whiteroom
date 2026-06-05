@@ -16,6 +16,8 @@ edges:
       kind: cites-evidence
     - target: palace/models/domainpostoperator.cpp:255-298
       kind: cites-evidence
+    - target: concepts/config-record
+      kind: uses-record               # input signature: energy_fields :: PostprocessConfig -> Field -> [DomainData]; PostprocessConfig = the energy-postprocess domain set IoData.domains.postpro.energy (config::DomainPostData, configfile.hpp:283-295), a sub-record of the IoData config umbrella
   reference:
     - feature/electrostatic.L4
 ---
@@ -117,7 +119,12 @@ type).
 - **Input — config (the energy-postprocess domain set) + a solution field.** `PostprocessConfig`:
   the configured domain-attribute set that defines which domains get their own energy row (→ the
   `M_i` domain-restricted operators, the reduction's index domain), inherited from the simulation
-  config. The **field** is supplied by the producing driver column (`V`/`E` for electric energy,
+  config. `PostprocessConfig` is **not a distinct data shape** — it is the energy-postprocess
+  sub-record of the [`config-record`](../concepts/config-record.md) `IoData` umbrella
+  (`IoData.domains.postpro.energy`, backed by `config::DomainPostData`,
+  `palace/utils/configfile.hpp:283-295`, holding `std::map<int, DomainEnergyData> energy` at
+  `:290`); see that page for the data-shape definition (this column defines only the *behaviour*
+  over it). The **field** is supplied by the producing driver column (`V`/`E` for electric energy,
   `A`/`B` for magnetic). All `readonly` to this reduction. L0 home: the domain map `dom_post_op.M_i`
   (`postoperator.cpp:1028-1029`), the field selection `V ? *V : *E` (`:1032`) / `A ? *A : *B`
   (`:1057`).
