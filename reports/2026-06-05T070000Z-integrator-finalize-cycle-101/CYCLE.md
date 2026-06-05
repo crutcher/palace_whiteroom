@@ -8,7 +8,7 @@ meta_batch_size: 3
 meta_phase_fires_after_cycle: cycle-102
 reports_consumed: 2
 status: integrated
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f7f6e58
 ---
 
 # CYCLE-101 — integrator-finalize batch report
@@ -51,7 +51,7 @@ Scaffolding (per-report intake, committed atomically): `scaffolding/open-questio
 - **per-report gates** (aggregated from staging) — rank-invariant PASS on both; concept_writes-on-existing-slug 0; forward-edge-without-surface 0; edge-label/prose-mismatch 0; H1-reuse 0; append-on-missing-slug 0; variant-axis-missing 0; SUMMARY-registration both new chapters registered (alpha-corrected). All PASS/N/A.
 - **build-breakage repair** — none required (EXIT 0).
 - **commit atomicity** — single commit (below).
-- **consumed-report frontmatter integrity** — both marked `integrated_at: 2026-06-05T070000Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows).
+- **consumed-report frontmatter integrity** — both marked `integrated_at: 2026-06-05T070000Z` + `integration_commit: f7f6e58` (two-phase SHA patch follows).
 
 ## Build status
 

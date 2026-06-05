@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T054115Z
 scope: concepts/index.md + concepts/dependency-map.md orchestrator/slice-era framing strip + dep-map re-derivation
 status: integrated
 integrated_at: 2026-06-05T070000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f7f6e58
 integration_notes: "Applied clean (staging row 2, cycle-101). concepts/index.md + concepts/dependency-map.md REFRESHED to current artifact state: pre-redirect orchestrator + slice-era framing stripped (Synthesizer/Meta-Critic/Planner provenance, ../spec/slices/X.md format-example links, orchestrator-grep recipe), re-derived to the 14-agent pipeline + layered L4->L0 + feature spine; the dep-map's ~115-edge stale slice-slug Mermaid block replaced with two re-derived sub-graphs anchored to the 51 on-disk concept pages; a dangling reciprocal node + a duplicate Methodology heading repaired. cargo make book EXIT 0, both files render + linkcheck-clean. The opportunistic depends-on/reference edge-typing was LIGHT (in-prose-consistent), NOT the meta-phase-owned full graded-stack edge-typing campaign. Resolves OQs concepts-index-and-depmap-orchestrator-era-framing-refresh + dependency-map-cg-precond-stale-mermaid-edges-RESCOPE-CORRECTION (recommended-close for the batch-32 meta unify)."
 ---
 

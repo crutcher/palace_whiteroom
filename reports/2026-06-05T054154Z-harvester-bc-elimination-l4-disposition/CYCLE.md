@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T054154Z
 scope: L4 operator: eliminate_bc (BC-elimination cohort L4 disposition)
 status: integrated
 integrated_at: 2026-06-05T070000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f7f6e58
 integration_notes: "Applied clean (staging row 1, cycle-101). eliminate_bc PROMOTED FIRM L4 + bc-elimination-post-composition-dissolution LANDED FIRM L4>L3 (tally 10->11); essential_dofs mis-attribution at L4/fe_assemble.md:69/status/147/175 corrected; c069 BC-deferral re-anchored to the firm cap; 2 SUMMARY entries + 4 discretionary alpha-position-insert corrections (append-after-sibling -> alpha-within-cohort per directive-3) + a tally full-paragraph replace. Step-5b rank_violations 0 (both new firm nodes rest on firm deps); cargo make book EXIT 0; citecheck on touched files clean except 2 PRE-EXISTING out-of-scope basename flags on untouched lines. 2 OQs opened (record-DofSet-needs-definition-home, eliminate-rhs-mutation-rotation L1>L0 leg). Closes the BC-elimination cohort L4 hole; the in-scope stack is now substantially L4-complete for backend-lowering."
 inputs:
   - book/src/L1/eliminate_essential_bc.md (firm L1; the operator-side BC pin)
