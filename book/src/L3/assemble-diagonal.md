@@ -2,10 +2,10 @@
 layer: L3
 operator: assemble-diagonal
 firmness: firm
-lowers_to:
-  - book/src/L2/assemble-diagonal.md (identity-in-form on the primitive's signature; the L3>L2 edge is a degenerate identity-in-named-terms lowering recorded as an in-line note here — see Lowers-to — not a dedicated theme, per the 2026-06-01 vocabulary-shift redirect)
-lifts_from:
-  - (none) — `assemble_diagonal` is a leaf primitive; no L4 entry exists (leaf primitives don't get L4 rows per cycle-010 audit verdict; the operator-to-data sibling of `apply_linop`, which is likewise L4-row-free)
+edges:
+  depends-on:
+    - target: L2/assemble-diagonal
+      kind: lowers-to
 variant_axes:
   - element-type (real | complex; collapsed to a single parameterised operator)
   - operator-representation (sparse-CSR | matrix-free | parallel-wrapped | complex-wrapped; absorbed into the opaque LinearOperator type)

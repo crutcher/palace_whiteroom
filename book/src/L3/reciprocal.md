@@ -2,10 +2,12 @@
 layer: L3
 operator: reciprocal
 firmness: firm
-lowers_to:
-  - book/src/L2/reciprocal.md (identity-in-form on the primitive's signature; lowers to the present adjacent L2 floor — the degenerate L3>L2 identity is recorded in-line at §"Downward to L2" / §"Lowers to", no dedicated theme file: the vocabulary does not shift across this edge)
-lifts_from:
-  - book/src/L1/reciprocal.md (value-thread-isomorphic; same signature shape; whole-tensor by construction — no L4 entry, leaf elementwise primitive)
+edges:
+  depends-on:
+    - target: L2/reciprocal
+      kind: lowers-to
+    - target: L1/reciprocal
+      kind: lifts-from
 variant_axes:
   - element-type (real | complex; collapsed to a single parameterised operator)
 ---

@@ -2,12 +2,24 @@
 layer: L4
 operator: solve_family
 firmness: firm
-consumes:
-  - book/src/L4/ksp_solve.md (the firm outer-driver cap mapped over the family — the per-element solve)
-  - book/src/L4/iterate-while.md (the pure-map degenerate of the strawman §3.7 iterate_while family)
-  - book/src/concepts/state-stratification.md (op is the shared readonly operator stratum captured once; each element's SimState independent)
-lowers_to:
-  - book/src/L4-L3/solve-family-map-dissolution.md (the L4>L3 dissolution to the L3 explicit std::vector<Vector>-accumulating outer sweep — the authoritative L3-form home; NO standalone L3/solve_family entry, per the cycle-057 D1 NO-ENTRY warrant: the family loop carries no sequential-obstruction, so the L3 form is fully + concisely expressed by the dissolution theme's §"L3 form (RHS)" — a separate L3 chapter would mirror it)
+rank: firm
+edges:
+  depends-on:
+    - target: L4/ksp_solve
+      kind: folds                     # the firm outer-driver cap mapped over the family — the per-element solve
+    - target: L4/iterate-while
+      kind: folds                     # the pure-map degenerate of the strawman §3.7 iterate_while family
+    - target: concepts/op-params
+      kind: uses-record               # signature: solve_family :: OpParams -> [Inputs] -> [SimState] — op captured once, readonly
+    - target: concepts/sim-state
+      kind: uses-record               # [SimState] = collected solution family; each element one ksp_solve terminal SimState
+    - target: L4-L3/solve-family-map-dissolution
+      kind: lowers-to                 # the L4>L3 dissolution to the L3 explicit std::vector<Vector>-accumulating outer sweep (authoritative L3-form home; NO standalone L3/solve_family entry — cycle-057 D1 NO-ENTRY warrant)
+  reference:
+    - concepts/state-stratification   # op is the shared readonly operator stratum captured once; each element's SimState independent
+    - concepts/solve-monad            # the Solve = StateT SimState Identity effect each per-element ksp_solve discharges
+    - concepts/derived-view-hoisting  # the §3.8 demand-pruning governing per-element materialization
+    - concepts/variant-absorption     # the operator-capture axis + family-index/element-type absorption
 variant_axes:
   - operator-capture (fixed: this combinator, op captured once / SetOperators hoisted outside the map | per-element: the batch-17 superset map_solve_over_(operator,rhs)_family, op rebuilt per family-element / SetOperators inside the map — driven)
   - family-index-domain (terminal-boundary / surface-current-boundary / frequency — absorbed into [Inputs]; does not shape the combinator)

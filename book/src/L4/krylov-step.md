@@ -1,3 +1,35 @@
+---
+layer: L4
+operator: krylov-step
+firmness: firm
+rank: firm
+edges:
+  depends-on:
+    - target: L2/krylov-step
+      kind: lowers-to                 # the firm L2 primitive-composition row this L4 typed-wrapper lowers to (via the L4>L3>L2 chain); lowering edge = depends-on on both endpoints (scheme §5)
+    - target: concepts/op-params
+      kind: uses-record               # OpParams readonly operator-internal config record in the kernel signature (krylov-step :: OpParams -> Krylov -> (SimState -> Solve {...})); see §Signature shape contract
+    - target: concepts/krylov
+      kind: uses-record               # Krylov the solve-local ephemeral bundle threaded as a plain value through the kernel; born at restart entry, discarded at restart exit; §Signature
+    - target: concepts/sim-state
+      kind: uses-record               # SimState the Solve = StateT SimState Identity persistent-state record; the kernel's sole monadic effect is the SimState.it counter increment; §Signature
+    - target: concepts/step-outputs
+      kind: uses-record               # StepOutputs the demand-prunable per-step readout record (residual norm / LS residual / breakdown token) returned as the monadic action's value; §Signature result record
+    - target: concepts/prev-carry
+      kind: uses-record               # PrevCarry the Form-B closure-threaded recurrence carry the first-iteration-unrolling rotation moves out of the steady-state schema; §Signature (Form B only)
+    - target: concepts/solve-result
+      kind: uses-record               # SolveResult the terminal solve-readout record shape the kernel's per-step SimState transition accumulates toward (the four-field readout the outer driver discharges); §Signature
+  reference:
+    - L2/krylov-step                  # the L2 companion entry naming the underlying primitive composition (sibling cross-link; the depends-on lowers-to edge above is the blocking dependency)
+    - concepts/state-stratification   # the three-stratum SimState / OpParams / Krylov typing
+    - concepts/solve-monad            # the Solve = StateT SimState Identity outer driver that consumes this kernel as its fold body
+    - concepts/first-iteration-unrolling # the rotation supplying Form B's (first_step, steady_step) split
+    - concepts/derived-view-hoisting  # the demand-pruning algebra underwriting Law 1
+    - concepts/convergence-test       # the stopping-predicate surface consumed by the outer iterate_while driver (referenced for the placement discipline)
+    - concepts/variant-absorption     # the absorption discipline making the six variant axes structural via the OpParams readonly typing
+    - concepts/sequential-obstruction # the L3-edge classification recording why the L3>L2 step lowering is plausibly identity-in-form
+---
+
 # krylov-step
 
 Typed-wrapper step kernel for iterative Krylov-shaped solvers, expressed in the L4 state-stratification idiom. The body of the `solve-monad`'s `iterate_while`-style inner driver — `krylov-step` is what gets folded; the monadic coordination is around it, not inside it. Companion to the L2 entry [`krylov-step`](../L2/krylov-step.md), which names the underlying primitive composition.

@@ -2,10 +2,10 @@
 layer: L3
 operator: jacobi-smoother
 firmness: firm
-lowers_to:
-  - book/src/L1/jacobi-smoother.md (identity-in-form on the constructed-operator-gate apply; no L3-L2 theme — the apply is a single elementwise-product whose L1 form is L3-native by signature shape; the substantive leaf-mutation rotation lives at L1>L0 reciprocal-elementwise-product-mutation-rotation)
-lifts_from:
-  - (no L4 entry; jacobi-smoother carries no monadic effect / state-stratification typing / outer-driver structure at L4 — the apply is one elementwise product, a leaf-shaped constructed-operator gate; same confirmed-not-needed L4 verdict as the firm apply_linop / ksp_solve constructed-operator gates)
+edges:
+  depends-on:
+    - target: L1/jacobi-smoother
+      kind: lowers-to
 variant_axes:
   orthogonal:
     - element-type (real | complex; collapsed into the opaque JacobiSmoother closure)

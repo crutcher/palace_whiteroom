@@ -2,13 +2,13 @@
 layer: L4
 operator: nrm2
 firmness: firm
-consumes:
-  - book/src/L4/inner_product.md (the firm L4 reduce-to-scalar inner-product combinator nrm2 CONSUMES at the diagonal y = x; nrm2 = √ ∘ abs ∘ inner_product — a CONSUMER of the fold's output, NOT a fold member, the do-NOT-merge over-unification guard)
-  - book/src/concepts/black-box-vs-accelerated-kernels.md (§2 "Kept named abstraction — rises": nrm2 is a confirmed keep — the 2-norm, the named unit downstream algorithms reference by name as residual nrm2(r), rising to L4 as a named verb)
-  - book/src/L3/nrm2.md (the firm L3 named abstraction below; the value-thread-isomorphic image — identity-in-form on the body)
-  - book/src/concepts/nrm2.md (the BLAS-1-heritage cross-cutting framing)
-lowers_to:
-  - book/src/L3/nrm2.md (identity-in-form on the body — the L4 named verb is value-thread-isomorphic to the firm L3 consumer-stub; NO dedicated L4>L3 theme file, in-line §"Downward to L3", the inner_product/eigsolve/chebyshev in-line-marker route — there is no monadic wrapper / Solve-monad / convergence predicate to dissolve)
+edges:
+  depends-on:
+    - L4/inner_product
+    - L3/nrm2
+  reference:
+    - concepts/black-box-vs-accelerated-kernels
+    - concepts/nrm2
 variant_axes:
   - element-type (real / complex; collapsed to a single operator — result is always real-valued and non-negative)
 ---

@@ -1283,3 +1283,63 @@ The c103/c104/c105 per-report integrator OQ appends (append-only between meta-ph
 - `graded-stack-feature-root-frontmatter-split` / `graded-stack-obstruction-resolution-encoding-parser-coordination` / `graded-stack-linter-categorical-root-rule-p1-sync` / `graded-stack-unresolved-target-prose-as-slug-p1-reclassify` / `cites-evidence-l0-edge-linter-slug-resolution-exemption` / `graded-stack-edge-home-fork-p1-cost` — the P1 sync/coordination items migrated to the plan at batch-32; the campaign continues under the batch-34 WAVE-3 LEAD. `unresolved_depends_on_targets` is now 21 (was 36) post-linter-fix — the remaining are the prose-as-slug + lazy-tail false-positives the typing pass reclassifies. *Trigger:* the WAVE-3 + lazy-tail typing tranches.
 - `roadmap-goal-unbuilt-frontier-SUMMARY-grouping-deferred` — add the `## Roadmap goals — unbuilt frontier` SUMMARY grouping. *Trigger:* the first `status: roadmap_goal` chapter is minted (none yet).
 - `record-OpBinding-may-need-concept-page` — `OpBinding`/`BaseKspSolver` single-consumer in `preconditioning-framework.md`. *Trigger:* a 2nd chapter names them in its own signatures.
+
+## krylov-step-pair-wave3-deferred-edges (cycle-106 D1)
+
+opened_at: cycle-106
+opened_by: layer-intro-author (integrator-per-report promotion)
+
+WAVE-3 op-chapter typed-edge migration for the coupled solve-kernel pair `L4/ksp_solve` + `L4/krylov-step` landed three trigger-gated follow-ups:
+
+- **`concepts/dofset` remains GC-garbage — correctly, OUT OF this pair's scope.** `dofset` is reached only via `L4/eliminate_bc`'s `uses-record` edge (`L4/eliminate_bc → dofset`, per §(f)), a *different* WAVE-3 op chapter. *Trigger:* the `eliminate_bc` / `solve_family` / `fold_solve` WAVE-3 tranche typing pass rescues it. (Confirmed still garbage after D1's edits, as expected.)
+- **`L4/iterate-while` and `L2/krylov-step` are `firm`-per-`## Status` but carry no `rank:` frontmatter (untyped).** D1's `depends-on` edges to them are scheme-conformant (rank-check treats an untyped dep as warn-not-fail; reachability still traverses — which is why `L4/iterate-while` was rescued from detritus as a bonus). *Trigger:* typing those two chapters is a separate WAVE / lazy-convergence item.
+- **The 8 non-node concept pages D1 `reference`s (`solve-monad`, `state-stratification`, `convergence-test`, `derived-view-hoisting`, `variant-absorption`, `sequential-obstruction`, `constructed-operators`, `first-iteration-unrolling`) carry no `edges: reference:`-only frontmatter yet.** They acquire the unified non-node encoding (scheme §5) as next-touched (lazy convergence; the linter is invariant meanwhile). *Trigger:* a layer-intro-author/cross-cutter touch on each page.
+
+## record-TimeState-needs-definition-home
+opened_at: cycle-106
+opened_by: layer-intro-author (integrator-per-report promotion)
+
+`L4/fold_solve`'s signature `fold_solve :: OpParams -> TimeState -> [Time] -> TimeState` names `TimeState` (the persistent field-state carry — the `(E, B)` bundle), and its prose names `time_step_op` as a speculative rough-in sub-component, but there is **no `concepts/time-state.md` definition home** — `TimeState` is defined only by how the fold threads it (the record-definition obligation, CLAUDE.md §Methodology invariants). It is named by `fold_solve` alone among firm chapters today (single-consumer → an in-chapter `## Record definition` section is the appropriate home, NOT a standalone ≥2-consumer concept page), so the WAVE-3 D2 migration correctly did NOT force it into a `uses-record` edge (the only WAVE-3 record edge `fold_solve` carries is `concepts/op-params`). *Trigger:* if a transient feature-column or a future per-step consumer also names `TimeState`, the ≥2-consumer bar trips and it needs a `concepts/time-state.md` page; otherwise the harvester/layer-intro-author touching `fold_solve` next adds the in-chapter `## Record definition` section. Flagged so the WAVE-3 record set is not silently read as complete — `TimeState` is NOT one of the six rescued record pages and has no page to point at.
+
+## fold_solve-sibling-reference-carries-no-liveness
+opened_at: cycle-106
+opened_by: layer-intro-author (integrator-per-report promotion)
+
+`L4/fold_solve`'s edge to `L4/solve_family` is classified `reference` (NOT `depends-on`) — the chapter's §Dependencies is explicit that `solve_family` is the contrast-sibling "not consumed, referenced for the map/fold distinction"; a `depends-on` here would wrongly couple the two combinators' ranks. The deliberate consequence: the map/fold sibling relationship carries no liveness. This is fine — both `fold_solve` and `solve_family` are independently root-reachable (verified at apply time: `L4/fold_solve ← L3/fold_solve, feature/lifecycle.{L1,L4}, feature/transient.{L1,L4}`; `L4/solve_family ← L4-L3/solve-family-map-dissolution, L4/gram_reduce, feature/{electrostatic,magnetostatic}.L4`). Recorded for visibility of the deliberate non-blocking sibling edge; no action needed unless a future restructuring makes one genuinely consume the other.
+
+## bc-driver-column-eliminate-bc-edge-gap-blocks-dofset-rescue
+
+opened_at: cycle-106
+opened_by: layer-intro-author (integrator-per-report promotion)
+
+FINDING (routed, not forced) from the cycle-106 D3 WAVE-3 typed-edge migration of `L4/eliminate_bc`. `concepts/dofset` is named in NO feature-column signature; it is the internal record shape of the L4 BC-application operator `eliminate_bc`. The faithful reachability path is `column →(composes) eliminate_bc →(uses-record) dofset` — the WAVE-3 `column → op → record` shape. D3 installed the **second half** (`eliminate_bc →(uses-record) dofset`, now GC-traversed; confirmed inbound `concepts/dofset ← L4/eliminate_bc` at apply time). The **first half** (`column →(composes) eliminate_bc`) does NOT exist: `eliminate_bc` is `[GARBAGE*]` (no feature column links to it), so `dofset` is NOT rescued and stays `[garbage?]`. Per §(f), D3 did NOT force an unfaithful `column→eliminate_bc` edge.
+
+Plausibly-faithful candidates: the electrostatic + magnetostatic driver columns (and eigenmode where applicable). The eigenmode witness `modeeigensolver.cpp:571,574,608,611` and the electrostatic witness `laplaceoperator.cpp:217,252` are exactly `eliminate_bc`'s two cited specialization call-sites; these conforming-FE driver columns eliminate-then-solve (`eliminate_rhs (eliminate_essential_bc (fe_assemble …) …) …` then `ksp_solve`, law 8). A `feature/{electrostatic,magnetostatic,eigenmode}.L4 →(composes/depends-on) L4/eliminate_bc` edge is therefore plausibly faithful and would simultaneously rescue `eliminate_bc`, `dofset`, and (transitively) the firm L1 `eliminate_essential_bc` / `eliminate_rhs` / `essential_dofs` (all currently `[GARBAGE*]`).
+
+But whether `eliminate_bc` belongs in those columns' stage-(2) `composes:`/`edges:` lists (vs. being absorbed into the assemble/solve stage as an implementation detail) is a producer/meta column-authoring judgment, and the down-link is read-only from a feature chapter's side. RECOMMEND: dispatch a WAVE-3-followup that adds the `feature/{electrostatic,magnetostatic,eigenmode}.L4 →(composes) L4/eliminate_bc` edges (the driver columns already carry sibling `→ fe_assemble` depends-on edges, so this is the same-shape completion). That followup would make the rescue MEASURABLE.
+
+## set-subvector-zero-cluster-reachability-not-rescued-by-reference-backlink
+
+opened_at: cycle-106
+opened_by: lifter (integrator-per-report promotion)
+
+CAVEAT (routed, not assumed-closed) from the cycle-106 D4 frontmatter back-link de-stale of `concepts/set_subvector_zero`. The D4 fix corrected the doubly-stale `reference: []` (false "L1/set_subvector_zero does not exist" comment) into a bare-slug `reference` block (`L1/set_subvector_zero`, `concepts/dofset`) and completed the reciprocal `concepts/dofset` back-link. This **types** the page (untyped: it leaves the untyped-warning set) but **does NOT rescue it from detritus** — reachability is computed over `depends-on`, and `reference` edges to/among already-unreachable nodes add no liveness. The whole `concepts/set_subvector_zero` / `L1/set_subvector_zero` / `concepts/dofset` neighborhood remains `[garbage?]` post-fix (confirmed on the live tree this invocation: `RESULT: 0 rank violation(s), 156 detritus, 76 untyped`). The `+1` detritus count (vs the report's c105-baseline 163→164 measure) is benign: the now-typed page joins the *counted* DAG the GC walks (it was already unreachable, formerly skipped as edgeless), no node became newly-unreachable.
+
+The substantive rescue is the `depends-on`-edge question already routed this cycle by D3 in **`bc-driver-column-eliminate-bc-edge-gap-blocks-dofset-rescue`** (the `column →(composes) eliminate_bc →(uses-record) dofset` path) — which would rescue `concepts/dofset` and the BC-cohort. `L1/set_subvector_zero` itself is a distinct node NOT in D3's enumerated cohort: it is the in-place zeroing primitive consumed by the divfree / BC-mask use-sites; its rescue needs a `depends-on` edge from a firm consumer (or a feature column that reaches it transitively). RECOMMEND folding the `L1/set_subvector_zero` reachability sub-question into the same WAVE-3-followup reachability sweep D3 recommends, so the back-link fix is not silently assumed to have closed the liveness question.
+
+## graded-stack-lint-block-mapping-misparse-on-legacy-edge-prose-colon
+
+opened_at: cycle-106
+opened_by: layer-intro-author (integrator-per-report promotion)
+
+LINTER-READER-BUG FINDING (routed, not a frontmatter edit — D5 authors frontmatter, not `tools/` code) from the cycle-106 D5 unresolved-target reclassification. The graded-stack linter's `--strict` `unresolved_depends_on_targets` count was inflated by a **mis-parse**, not by genuine missing targets: when a *legacy* edge item (`depends_on:`/`lowers_to:`/`lifts_from:`/`lifts_to:`/`lowers_from:`/`consumes:`) is written as `- book/src/<slug>.md (… prose qualifier with a ':' in it …)`, the embedded `:` trips the linter's block-mapping branch (`graded_stack_lint.py:208-218`, the `bm` regex at `:211` `^(\S[^:]*):\s*(.+)$`), so the whole string is read as a `{target: …}` dict and stringified into the unresolved list as `{'book/src/<slug>` — even though the slug is legitimate and the file EXISTS. D5's migration of all 18 host files to typed `edges:` blocks **removed the trigger for these files** (the `edges:`-only surface form has no prose qualifiers; verified `unresolved 20 → 0` on the live tree after applying), but **any remaining un-migrated file with a `:`-bearing legacy-edge qualifier will reproduce the artifact** as the P1 typed-edge campaign proceeds.
+
+Two non-blocking options for a future tool pass (D5's recommendation): (i) have the legacy-key reader strip the trailing ` (…)` qualifier BEFORE the block-mapping test (mirror `normalize_target`'s paren-strip at `:317`), or (ii) skip the block-mapping branch for items under the legacy keys (block-mapping is a scheme-`edges:`-only surface form). RECOMMEND folding this into the P1 typed-edge campaign's decision on whether to fix the reader or rely on migration-eliminates-the-trigger. Not actioned by D5 (out of frontmatter scope). *Integrator note (cycle-106):* the live `--strict` exit code is now 0 and `unresolved_depends_on_targets` is 0 after D5's 18 edits + D2's `solve_family` migration cleared all 21; the reader-bug is latent (no current trigger) but will resurface on the next un-migrated `:`-bearing legacy item.
+
+## solve_family-last-unresolved-target-handed-to-d3
+
+opened_at: cycle-106
+opened_by: layer-intro-author (integrator-per-report promotion)
+
+RESOLVED-THIS-CYCLE (recorded for the record). D5's scope excluded the 5 WAVE-3 chapters; `L4/solve_family`'s single residual unresolved target (`L4-L3/solve-family-map-dissolution`, the same `:`-in-qualifier mis-parse class) was handed to its owning WAVE-3 dispatch with a suggested `edges:` block (`depends-on: [L4/ksp_solve, L4/iterate-while, L4-L3/solve-family-map-dissolution]` + `uses-record` → `op-params`,`sim-state`; `reference: [concepts/state-stratification]`). *Resolution:* the cycle-106 D2 WAVE-3 dispatch landed `L4/solve_family`'s typed edges (staging row D2, this cycle), clearing that residual; the integrator confirmed on the live tree that no `[UNRESOLVED] L4/solve_family ->` row remains and the cycle-wide `unresolved_depends_on_targets` reached 0. No further action — the cross-dispatch hand-off completed within the cycle.
+

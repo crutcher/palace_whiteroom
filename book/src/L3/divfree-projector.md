@@ -2,10 +2,12 @@
 layer: L3
 operator: divfree-projector
 firmness: firm
-lowers_to:
-  - book/src/L2/divfree-projector.md (identity-in-form on the constructed-operator-gate apply; lowers through the present adjacent L2 floor — the L3>L2 rotation is a degenerate identity-in-named-terms lowering annotated in-line in §"Lowers to" as of cycle-051 demotion, no dedicated L3>L2 theme file; the four-step apply WeakDiv→Z→ksp_solve→Grad is a fixed straight-line composition whose L2 floor form is value-thread-isomorphic by signature shape. The ONE genuine fusion rotation in the chain lives on the L2>L1 edge: the step-4 Grad->AddMult re-fusion, captured by the KEPT firm theme book/src/L2-L1/divfree-projector-leaf-identity.md — reachable onward from the L2 floor, not orphaned. The substantive leaf-mutation rotation lives at L1>L0 divfree-projector-mutation-rotation; the inner-solve obstruction is carried BY REFERENCE through the firm-L3 ksp_solve dependency, never introduced or erased here)
-lifts_from:
-  - (no L4 entry; divfree-projector carries no monadic effect / state-stratification typing / outer-driver structure at L4 of its own — the apply is a fixed four-step composition delegating its only iteration to the inner ksp_solve gate; same confirmed-not-needed L4 verdict as the firm apply_linop / ksp_solve / jacobi-smoother constructed-operator gates)
+edges:
+  depends-on:
+    - target: L2/divfree-projector
+      kind: lowers-to
+  reference:
+    - L2-L1/divfree-projector-leaf-identity
 variant_axes:
   orthogonal:
     - element-type (Vector real | ComplexVector complex; collapsed into the opaque DivFreeProjector closure; the complex apply is the same real-valued operators applied component-wise to Re/Im)

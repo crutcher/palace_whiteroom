@@ -2,10 +2,10 @@
 layer: L3
 operator: apply_linop
 firmness: firm
-lowers_to:
-  - book/src/L1/apply_linop.md (directly; identity-in-form on the primitive's signature; no L3-L2 theme — apply_linop is a leaf primitive whose L1 form is L3-native by signature shape, and L2 hosts no standalone apply_linop entry)
-lifts_from:
-  - (no L4 entry; apply_linop appears inside book/src/L4/krylov-step.md as a let-binding per book/src/L4/krylov-step.md §Semantics body; the L4 candidate was confirmed-not-needed by cycle-010 cross-layer-cross-cutter audit — leaf primitives carry no L4 calculus content)
+edges:
+  depends-on:
+    - target: L1/apply_linop
+      kind: lowers-to
 variant_axes:
   orthogonal:
     - element-type (real | complex; collapsed to a single parameterised operator)

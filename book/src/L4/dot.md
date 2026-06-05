@@ -2,13 +2,14 @@
 layer: L4
 operator: dot
 firmness: firm
-consumes:
-  - book/src/L4/inner_product.md (the firm L4 reduce-to-scalar inner-product combinator this named verb re-expresses THROUGH; dot IS inner_product at M = I with the Hermitian/symmetric kernel — replace-and-propagate, NOT a re-derived fold)
-  - book/src/concepts/black-box-vs-accelerated-kernels.md (§2 "Kept named abstraction — rises": dot is a confirmed keep — the literature-standard named unit downstream algorithms reference by name, rising to L4 as a named verb alongside the general combinator, a permitted dual)
-  - book/src/L3/dot.md (the firm L3 named abstraction below; the value-thread-isomorphic image — identity-in-form on the body)
-  - book/src/concepts/dot.md (the BLAS-1-heritage / element-type cross-cutting framing)
-lowers_to:
-  - book/src/L3/dot.md (identity-in-form on the body — the L4 named verb is value-thread-isomorphic to the firm L3 specialization-stub; NO dedicated L4>L3 theme file, in-line §"Downward to L3", the inner_product/eigsolve/chebyshev in-line-marker route — there is no monadic wrapper / Solve-monad / convergence predicate to dissolve)
+edges:
+  depends-on:
+    - target: L4/inner_product
+      kind: specializes
+    - L3/dot
+  reference:
+    - concepts/black-box-vs-accelerated-kernels
+    - concepts/dot
 variant_axes:
   - conjugation-convention (hermitian dot / unconjugated tdot — complex element-type only; value-bearing for complex vectors)
   - element-type (real / complex)

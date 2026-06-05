@@ -2,12 +2,20 @@
 layer: L4
 operator: fold_solve
 firmness: firm
-consumes:
-  - book/src/L4/iterate-while.md (the strawman §3.7 family whose carry-threading non-degenerate form fold_solve IS — the shared parent of solve_family's map + this fold; NO third parent abstraction)
-  - book/src/concepts/state-stratification.md (op captured once at TimeOperator construction / readonly; TimeState the persistent per-step-threaded carry stratum)
-  - book/src/concepts/sequential-obstruction.md (the fold spine cannot reorder — each step's input is the prior step's output; AND the per-step body is an opaque library step)
-lowers_to:
-  - book/src/L4-L3/fold-solve-time-step-dissolution.md (the L4>L3 dissolution to the L3 explicit for-loop threading the field-state in place, with the per-step body a role-naming wrapper over the opaque MFEM ODESolver step — authored by cycle-058 D2 abstractor this same cycle; canonical slug fold-solve-time-step-dissolution)
+rank: firm
+edges:
+  depends-on:
+    - target: L4/iterate-while
+      kind: folds                     # the strawman §3.7 family whose carry-threading non-degenerate form fold_solve IS — the shared parent of solve_family's map + this fold; NO third parent abstraction
+    - target: concepts/op-params
+      kind: uses-record               # signature: fold_solve :: OpParams -> TimeState -> [Time] -> TimeState — op captured once at TimeOperator construction, readonly
+    - target: L4-L3/fold-solve-time-step-dissolution
+      kind: lowers-to                 # the L4>L3 dissolution to the L3 explicit for-loop threading the field-state in place, the per-step body a role-naming wrapper over the opaque MFEM ODESolver step (canonical slug fold-solve-time-step-dissolution)
+  reference:
+    - L4/solve_family                 # the independent-MAP contrast-sibling (NOT consumed; referenced for the map/fold distinction)
+    - concepts/state-stratification   # op captured once at TimeOperator construction / readonly; TimeState the persistent per-step-threaded carry stratum
+    - concepts/sequential-obstruction # the fold spine cannot reorder — each step's input is the prior step's output; AND the per-step body is an opaque library step
+    - concepts/derived-view-hoisting  # the §3.8 demand-pruning governing whether the intermediate-state trajectory materializes
 variant_axes:
   - schedule-source (fixed-list: the carry consumes a precomputed [Time] schedule, foldl over a uniform list — transient | state-generated: the carry GENERATES the next input + the loop bound from accumulated state, an error-terminated march — TWO witnesses: driven-PROM SweepAdaptive (greedy frequency-sampling) + the AMR Solve→Estimate→Mark→Refine loop (basesolver.cpp:190, error-indicator-terminated). THE load-bearing axis; the fixed-list form is the default surface, the state-generated form the recorded generalization, now twice-witnessed)
   - per-step-operator (opaque-library: the step bottoms out in a library integrator/sampler the L4 entry quantifies over — MFEM ODESolver for transient, RomOperator greedy sampler for SweepAdaptive; absorbed into the op : OpParams stratum)

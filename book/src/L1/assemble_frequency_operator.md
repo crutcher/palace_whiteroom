@@ -2,11 +2,13 @@
 layer: L1
 operator: assemble_frequency_operator
 firmness: firm
-depends_on:
-  - book/src/L2/linear_combination.md (the firm scalar-weighted-sum fold this operator is the operator-operand specialization of — re-expressed THROUGH it via the operand-category variant axis; NOT a new mirrored fold)
-  - book/src/L1/apply_linop.md (the opaque-operator gate — the fixed-basis operators {K, C, M, A2} are apply_linop-shaped opaque LinearOperator values; the assembled A is itself apply_linop-applicable)
-lowers_to:
-  - book/src/L1-L0/assemble-frequency-operator-rotation.md (the L1>L0 mutation rotation: the pure affine-operator-family value → the BuildParSumOperator / GetSystemMatrix imperative SumOperator assembly)
+edges:
+  depends-on:
+    - target: L2/linear_combination
+      kind: folds
+    - L1/apply_linop
+    - target: L1-L0/assemble-frequency-operator-rotation
+      kind: lowers-to
 variant_axes:
   - operand-category (tensor-operand | operator-operand) — THIS operator is the operator-operand specialization of linear_combination; the axis itself is carried on the L2/L3 linear_combination entries (replace-and-propagate)
   - weight-schedule (constant | affine-in-parameter) — the driven case is affine-in-ω over a fixed scalar basis {1, iω, −ω²}

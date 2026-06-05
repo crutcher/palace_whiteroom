@@ -2,12 +2,13 @@
 layer: L4
 operator: assemble_frequency_operator
 firmness: firm
-consumes:
-  - book/src/L4/linear_combination.md (the firm L4 scalar-weighted-sum combinator this entry is the OPERATOR-OPERAND specialization of — re-expressed THROUGH its operand-category variant axis at the operator-operand corner; NOT a mirrored operator_linear_combination fold; replace-and-propagate)
-  - book/src/concepts/black-box-vs-accelerated-kernels.md (§"The combinators rise regardless" — linear_combination rises to L4 regardless as a feature-surface verb; this driven specialization rides that rise)
-  - book/src/L1/assemble_frequency_operator.md (the firm L1 source — the warrant + the affine-modulo-A2 + single-pipeline-by-design caveats + the positive L0 structure are read off it; this is the upward in-layer rendering of that firm cap)
-lowers_to:
-  - book/src/L1/assemble_frequency_operator.md (DOWNWARD: identity-in-form on the body — the L4 operator-operand linear_combination specialization is value-thread-isomorphic to the firm L1 affine-operator-family form; NO dedicated L4>L3 / L4>L1 theme file, in-line §"Downward to L1" — the transitive consequence of L4/linear_combination's in-line L4>L3 identity composed with the L1 cap's L1>L0 rotation; the non-adjacent-identity in-line-marker convention)
+edges:
+  depends-on:
+    - target: L4/linear_combination
+      kind: specializes
+    - L1/assemble_frequency_operator
+  reference:
+    - concepts/black-box-vs-accelerated-kernels
 variant_axes:
   - operand-category (operator-operand corner — this entry IS the operator-operand specialization of linear_combination; the axis is carried on linear_combination, not re-declared here)
   - weight-schedule (affine-in-parameter — the {1, iω, −ω²} schedule over the swept ω; the constant single-shot operator sum would be the other corner)

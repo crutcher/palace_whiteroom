@@ -2,10 +2,12 @@
 layer: L2
 operator: ksp_solve
 firmness: firm
-lifts_to:
-  - book/src/L3/ksp_solve.md (the L3 iteration-rotation un-erasure: L2's outer-driver-by-role wrap becomes the explicit iterate_while_L3 fold; theme L3-L2/ksp-solve-outer-driver pending — NOT identity-in-form)
-lowers_from:
-  - book/src/L1/ksp_solve.md (the opaque solver-as-operator collapse; this L2 entry opens that collapse into the kernel-fold composition while keeping the iteration view erased)
+edges:
+  depends-on:
+    - target: L3/ksp_solve
+      kind: lifts-to
+    - target: L1/ksp_solve
+      kind: lowers-from
 variant_axes:
   - solver-method (CG single-fold / GMRES restart-nested-fold / FGMRES restart-nested-fold — selects the fold nesting + the result-residual proxy, not the kernel body)
   - element-type (real / complex)

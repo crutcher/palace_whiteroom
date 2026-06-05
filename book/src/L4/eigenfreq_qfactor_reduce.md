@@ -2,10 +2,12 @@
 layer: L4
 operator: eigenfreq_qfactor_reduce
 firmness: firm
-consumes:
-  - book/src/L4/eigsolve.md (firm — the opaque eigen-solve cap producing the converged eigenpair family this reduction maps over; the upstream composition-root stage)
-lowers_to:
-  - the per-mode scalar maps (eigenvalue un-transform + κ participation ratio + f/κ quotient); identity-in-form on the body, no dedicated L4>L3 theme — in-line §"Lowers to". The two scalar-map halves now have firm L1 homes: the eigenvalue un-transform → book/src/L1/eigenvalue-untransform.md (firm, c080); the κ participation ratio → book/src/L1/participation_ratio.md (firm, c077)
+edges:
+  depends-on:
+    - L4/eigsolve
+  reference:
+    - L1/eigenvalue-untransform
+    - L1/participation_ratio
 variant_axes:
   - problem-type (linear-EVP | quadratic-EVP | nonlinear-EVP — THE load-bearing axis; selects the eigenvalue→ω un-transform; absorbed into the untransform dispatch)
   - loss-source (resistive-lumped-port witnessed; inductive-EPR the participation sibling — absorbed into the κ closure)

@@ -2,12 +2,12 @@
 layer: L4
 operator: inner_product
 firmness: firm
-consumes:
-  - book/src/L3/inner_product.md (the firm L3 whole-tensor reduce-to-scalar combinator this L4 entry re-expresses THROUGH; the L4 form is the calculus-level combinator, the L3 reduction the value-thread-isomorphic image — replace-and-propagate, NOT a rectangular mirror)
-  - book/src/concepts/black-box-vs-accelerated-kernels.md (the three-way disposition: inner_product is the general combinator that RISES to L4 regardless — case 2 + §"The combinators rise regardless"; the kept named abstractions dot/nrm2 rise ALONGSIDE it as named verbs, a permitted dual)
-  - book/src/concepts/dot.md (the BLAS-1-heritage / element-type cross-cutting framing for the inner-product reduction)
-lowers_to:
-  - book/src/L3/inner_product.md (identity-in-form on the body — the L4 calculus combinator is value-thread-isomorphic to the firm L3 reduction; NO dedicated L4>L3 theme file, in-line §"Downward to L3", the eigsolve/chebyshev in-line-marker precedent — there is no monadic wrapper / Solve-monad / convergence predicate to dissolve)
+edges:
+  depends-on:
+    - L3/inner_product
+  reference:
+    - concepts/black-box-vs-accelerated-kernels
+    - concepts/dot
 variant_axes:
   - conjugation-convention (hermitian dot / unconjugated tdot — complex element-type only; the family's namesake unification axis)
   - element-type (real / complex)

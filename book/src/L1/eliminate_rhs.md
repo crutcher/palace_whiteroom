@@ -2,12 +2,12 @@
 layer: L1
 operator: eliminate_rhs
 firmness: firm
-lowers_to:
-  - L1-L0/fe-operator-assemble-mutation-rotation
-lifts_from: []
-depends_on:
-  - apply_linop
-  - axpy
+edges:
+  depends-on:
+    - L1/apply_linop
+    - L1/axpy
+    - target: L1-L0/fe-operator-assemble-mutation-rotation
+      kind: lowers-to
 variant_axes:
   - diagonal-policy
   - bc-data-homogeneity

@@ -1,8 +1,8 @@
 ---
 edges:
-  reference: []                    # no book home: L1/set_subvector_zero does not exist; the
-                                   # divfree use-site and the L3 mask-multiply lift are described
-                                   # in-page. Non-node pointer page; no outbound book edges.
+  reference:
+    - L1/set_subvector_zero        # authoritative L1 operator entry (landed c104/c105; firm)
+    - concepts/dofset              # reciprocal back-link (dofset.md references this page)
 ---
 
 # set_subvector_zero

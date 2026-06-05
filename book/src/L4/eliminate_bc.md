@@ -2,16 +2,23 @@
 layer: L4
 operator: eliminate_bc
 firmness: firm
-consumes:
-  - book/src/L4/fe_assemble.md (the assemble-fold combinator this post-composes AFTER)
-  - book/src/L4/linear_combination.md (the RHS-side b − K·x_bc data-algebra verb)
-  - book/src/concepts/state-stratification.md (DofSet[N] / DiagPolicy the readonly BC stratum)
-  - book/src/concepts/black-box-vs-accelerated-kernels.md (the post-composition verb-pair rises regardless)
-lowers_to:
-  - book/src/L4-L3/bc-elimination-post-composition-dissolution.md
-depends_on:
-  - book/src/L4/fe_assemble.md (reference — post-composes after; an edge to the assemble combinator it sits beside, not a blocking fold dependency)
-  - book/src/L4/linear_combination.md (depends-on — the RHS-side b − K·x_bc is one linear_combination)
+rank: firm
+edges:
+  depends-on:
+    - target: L4/linear_combination
+      kind: folds                 # the RHS-side b − K·x_bc is one linear_combination [(1,b),(-1,y)] (firm c068)
+    - target: L1/apply_linop
+      kind: folds                 # the operator action K·x_bc = apply_linop K (restrict_essential x_bc) in the RHS lift
+    - target: concepts/dofset
+      kind: uses-record           # the DofSet[N] essential-true-dof index set the verb-pair consumes (the readonly BC stratum)
+    - target: L4-L3/bc-elimination-post-composition-dissolution
+      kind: lowers-to             # the substantive L4>L3 dissolution theme this surface lowers through
+  reference:
+    - L4/fe_assemble              # post-composes AFTER the assemble fold (pipeline-position see-also), NOT a blocking fold dependency — separability law 8
+    - L1/essential_dofs           # cross-ref: the producer of the DofSet[N] operand (post-assembly cohort feeder, NOT a construction input)
+    - concepts/state-stratification              # the (DofSet[N], DiagPolicy) readonly BC stratum
+    - concepts/black-box-vs-accelerated-kernels  # the BC-application verb-pair rises as a feature-surface verb regardless
+    - concepts/constructed-operators             # the eliminated K is a constructed operator
 variant_axes:
   - diagonal-policy
   - trial-test-coincidence
@@ -122,10 +129,11 @@ masking projections over `DofSet[N]`, not separate spine verbs.
 consumers** (`eliminate_essential_bc`, `eliminate_rhs`, and the upstream firm-L1
 [`essential_dofs`](../L1/essential_dofs.md) producer) and so is a **cross-cutting record**: its
 definition home is NOT this chapter (per the record-definition obligation, ≥2 consumers ⇒ a
-`concepts/<record>.md` page, not an in-chapter section). `DofSet[N]` is currently described only by use
-across the three L1/L4 entries; the concept page `book/src/concepts/DofSet.md` does **not yet exist**.
-Flagged for dispatch as `record-DofSet-needs-definition-home` (see §Open questions in the dispatch
-report). Pending that page, the working description: `DofSet[N]` is an immutable index set over the
+`concepts/<record>.md` page, not an in-chapter section). That cross-cutting home is the concept page
+[`DofSet`](../concepts/dofset.md) (`book/src/concepts/dofset.md`, `rank: firm`), which defines the
+record schema — the `indices : Set<TrueDofIndex>` field, its construction-time readonly stratum, and
+its L0 backing. See that page for the full record definition; the working description here:
+`DofSet[N]` is an immutable index set over the
 true-dof axis `N` of a finite-element [`fe_space`](../L1/fe_space.md), a subset of `0..N`; its L0
 backing is the `mfem::Array<int> dbc_tdof_list` recorded by `SetEssentialTrueDofs`
 (`palace/linalg/rap.cpp:45-46`) and built by `essential_dofs` (`palace/fem/multigrid.hpp:99-100`).

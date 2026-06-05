@@ -2,10 +2,9 @@
 layer: L4
 operator: sparameter_reduce
 firmness: firm
-consumes:
-  - book/src/L4/frequency_sweep.md (firm — the driven solve-half map producing the per-ω solution family [E_ω] this reduction reduces over; the upstream composition-root stage)
-lowers_to:
-  - the per-port port-mode linear functional sᵢ·E (lumped (*s)·E / wave (E×H⋆)·n) by identity-in-form on the body; the per-entry self-term/scale is a scalar map. No dedicated L4>L3 theme — the in-line-marker route (the gram_reduce / inner_product / linear_combination pattern); in-line §"Lowers to"
+edges:
+  depends-on:
+    - L4/frequency_sweep
 variant_axes:
   - port-kind (lumped | wave — THE load-bearing axis; absorbed into the PortMode + scale closure; whole-model XOR, not per-port — Palace forbids mixing)
   - scaling-presence (generalized-S present/absent via |R| > 0 resistive guard; de-embed present/absent via d_offset ≠ 0 — absorbed into the scale closure; absent = the scale-axis identity)

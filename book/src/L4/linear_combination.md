@@ -2,12 +2,12 @@
 layer: L4
 operator: linear_combination
 firmness: firm
-consumes:
-  - book/src/L3/linear_combination.md (the firm L3 whole-tensor variadic-fold combinator this L4 entry re-expresses THROUGH; the L4 form is the calculus-level combinator, the L3 fold the value-thread-isomorphic image — replace-and-propagate, NOT a rectangular mirror)
-  - book/src/concepts/black-box-vs-accelerated-kernels.md (the three-way disposition: linear_combination is the general combinator that RISES to L4 regardless — case 3 "the combinators rise regardless"; the scal/axpy/axpby/axpbypcz fused leaves are stopped-low accelerated-kernel candidates, the combinator rises in their place)
-  - book/src/concepts/scalar-promotion.md (the real ⊑ complex element-type lattice on the scalar list; carried up unchanged)
-lowers_to:
-  - book/src/L3/linear_combination.md (identity-in-form on the body — the L4 calculus combinator is value-thread-isomorphic to the firm L3 fold; NO dedicated L4>L3 theme file, in-line §"Downward to L3", the eigsolve/chebyshev in-line-marker precedent — there is no monadic wrapper / Solve-monad / convergence predicate to dissolve)
+edges:
+  depends-on:
+    - L3/linear_combination
+  reference:
+    - concepts/black-box-vs-accelerated-kernels
+    - concepts/scalar-promotion
 variant_axes:
   - arity (the UNIFICATION axis — not a remaining variant; recovered as term-list length; the scal/axpy/axpby/axpbypcz accelerated-kernel leaves are the bounded-arity readout labels, stopped low)
   - output-aliasing (in-place vs out-of-place; orthogonal to arity; pure/out-of-place at L4 as at L3; a below-L3 lowering concern)

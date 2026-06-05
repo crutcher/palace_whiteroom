@@ -2,11 +2,28 @@
 layer: L4
 operator: ksp_solve
 firmness: firm
-consumes:
-  - book/src/L4/index.md (solve_loop / restart_cycle / Outcome — the firm c047 outer-driver vocabulary rows)
-  - book/src/concepts/solve-monad.md (Solve = StateT SimState Identity; §Shape, §"Termination as a sum type")
-lowers_to:
-  - book/src/L3/ksp_solve.md (the value-threaded outer-driver fold; theme L4-L3/ksp-solve-driver-dissolution pending — D3's job, NOT this entry's)
+rank: firm
+edges:
+  depends-on:
+    - target: L4/krylov-step
+      kind: folds                     # the inner per-step fold body restart_cycle runs (18 body refs); the canonical L4 kernel/driver pair. Load-bearing: this depends-on edge makes krylov-step root-reachable via the root-reachable ksp_solve.
+    - target: L4/iterate-while
+      kind: folds                     # the inner kernel-fold combinator restart_cycle invokes (and solve_loop's outer tail-recursion degenerates to per Law 2)
+    - target: L3/ksp_solve
+      kind: lowers-to                 # the firm L3 value-threaded outer-driver fold this cap lowers to (lowering edge = depends-on on both endpoints, scheme §5)
+    - target: concepts/op-params
+      kind: uses-record               # OpParams readonly operator-internal config record named in the signature (ksp_solve :: OpParams -> Inputs -> SimState); see §Signature shape contract
+    - target: concepts/sim-state
+      kind: uses-record               # SimState the Solve = StateT SimState Identity persistent-state record discharged by execState; the cap's net effect is the SimState transition; see §Signature
+  reference:
+    - L4/index                        # navigational container: the L4 Part overview anchoring the firm c047 solve_loop / restart_cycle / Outcome outer-driver vocabulary rows (was a consumes: entry; an index is a navigational container → reference, scheme §2)
+    - concepts/solve-monad            # the Solve = StateT SimState Identity outer-driver pattern this cap realises (non-node narrative-pointer concept page → reference)
+    - concepts/state-stratification   # the three-stratum SimState / OpParams / Krylov typing
+    - concepts/convergence-test       # the stopping-predicate surface the Outcome classification reads
+    - concepts/derived-view-hoisting  # §3.8 demand-pruning governing the trajectory-vs-classifier demand split
+    - concepts/variant-absorption     # the body-variant absorption + readonly OpParams typing
+    - concepts/sequential-obstruction # the outer-loop obstruction the cap carries at the coordination layer
+    - concepts/constructed-operators  # the preconditioner-side absorption into op.T
 variant_axes:
   - outcome-classification (Done True converged / Done False exhausted-max_it / Continue restart-warranted — the 3-arm Outcome sum)
   - restart-shape (non-restarted: solve_loop recurses one_cycle / restarted: solve_loop recurses restart_cycle — selects the per-cycle driver, not the loop algebra)

@@ -2,12 +2,14 @@
 layer: L4
 operator: fe_assemble
 firmness: firm
-consumes:
-  - book/src/L4/index.md (the OpParams / readonly state-stratification rows — the construction-input absorption home, L4/index.md:24)
-  - book/src/concepts/black-box-vs-accelerated-kernels.md (the assemble-fold = combinator-rises / libCEED-leaf = black-box-kernel-rises-as-input disposition, case 1)
-  - book/src/concepts/state-stratification.md (OpParams readonly captured once; the family/term-list the per-call input)
-lowers_to:
-  - book/src/L4-L3/fe-assemble-fold-dissolution.md (the substantive L4>L3 dissolution to the L3 global tensor-field assembly view; D2 of this cycle authors it)
+edges:
+  depends-on:
+    - target: L4-L3/fe-assemble-fold-dissolution
+      kind: lowers-to
+  reference:
+    - L4/index
+    - concepts/black-box-vs-accelerated-kernels
+    - concepts/state-stratification
 variant_axes:
   - assembly-representation (partial matrix-free ceed::Operator / full materialized HypreCSRMatrix — absorbed into OpParams; both compute the same operator action)
   - term-position (domain volume integrators / boundary surface integrators — one concatenated L1 term list; absorbed into the [WeakFormTerm] element list)

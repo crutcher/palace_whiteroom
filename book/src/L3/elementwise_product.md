@@ -2,10 +2,10 @@
 layer: L3
 operator: elementwise_product
 firmness: firm
-lowers_to:
-  - book/src/L2/elementwise_product.md (identity-in-form on the primitive's signature; degenerate identity-in-named-terms edge — recorded in-line at "Lowers to" per the 2026-06-01 vocabulary-shift redirect, no dedicated L3>L2 theme; substantive rotation deferred to the L1>L0 `reciprocal-elementwise-product-mutation-rotation` sub-pattern B)
-lifts_from:
-  - (none) — `elementwise_product` is a leaf binary field operation; no L4 entry exists (leaf primitives don't get L4 rows per the cycle-010 audit verdict; the Hadamard sibling of the BLAS-1 / `scal` leaf cohort, which is likewise L4-row-free)
+edges:
+  depends-on:
+    - target: L2/elementwise_product
+      kind: lowers-to
 variant_axes:
   - element-type (real | complex; collapsed to a single parameterised operator)
   - conjugation (sub-axis on the complex element-type: straight `a ⊙ b` | conjugate-first-operand `ā ⊙ b`)

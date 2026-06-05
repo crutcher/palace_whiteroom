@@ -2,13 +2,15 @@
 layer: L4
 operator: frequency_sweep
 firmness: firm
-consumes:
-  - book/src/L4/assemble_frequency_operator.md (the per-ω operand A(ω)=K+iωC−ω²M+A2(ω) each member rebuilds before solving — the operator-VARYING map's per-element operator; the driven assemble half this solve half maps over)
-  - book/src/L4/ksp_solve.md (the per-member solve cap mapped — one (rebuilt op_ω, rhs_ω) → one SimState)
-  - book/src/L4/iterate-while.md (the strawman §3.7 family whose pure-map degenerate this map IS — each member independent, no carry; the trajectory IS the collected solution family; the solve_family / chebyshev route)
-  - book/src/concepts/state-stratification.md (the operator stratum is REBUILT per member — the load-bearing contrast with solve_family's captured-once readonly op; each member's SimState independent)
-lowers_to:
-  - book/src/L4-L3/frequency-sweep-dissolution.md (DOWNWARD, substantive: the map collapses to the L3 explicit per-ω for-loop with the operator REBUILD + SetOperators INSIDE the loop body; authored by cycle-070 D2 abstractor this same cycle — canonical slug frequency-sweep-dissolution; NOT authored here)
+edges:
+  depends-on:
+    - L4/assemble_frequency_operator
+    - L4/ksp_solve
+    - L4/iterate-while
+    - target: L4-L3/frequency-sweep-dissolution
+      kind: lowers-to
+  reference:
+    - concepts/state-stratification
 variant_axes:
   - operator-capture (per-element — THE load-bearing axis value that distinguishes this from solve_family's `fixed`; the operator is rebuilt per family-member, SetOperators inside the map; drivensolver.cpp:176,180)
   - operand-source (affine-in-ω rebuild via assemble_frequency_operator — the per-member operator is not arbitrary but the fixed-basis affine combination A(ω); a single-pipeline specializer, NOT a free per-element operator)
