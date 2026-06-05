@@ -2,11 +2,11 @@
 
 Operational guide for Claude Code working in this repository. The project is a multi-agent pipeline that dissects AWS Labs **Palace** (C++ electromagnetic simulator) into a **layered, citation-grounded specification** organized as an incremental impedance-matching stack L4→L0.
 
-This file replaces the original CLAUDE.md (slice-vertical era, cycles 1–172) after the **structural redirect of 2026-05-26**. The redirect is fully specified in `MIGRATION.md`; this CLAUDE.md is its operational distillation. The previous `BOOTSTRAP.md` is superseded and kept only as historical record.
+This file replaces the original CLAUDE.md (slice-vertical era, cycles 1–172) after the **structural redirect of 2026-05-26**. This CLAUDE.md is the redirect's operational distillation. The original redirect spec (`MIGRATION.md`) and the original phased build spec (`BOOTSTRAP.md`) are now **compacted history-stubs** (2026-06-05, batch-31 — full text in git history); the redirect they describe is fully internalized here.
 
 ## Repository status
 
-- **Current flow**: 6-phase agent cycle (plan → dispatch → critique → repair → integrate → meta). See *Cycle structure* below and `MIGRATION.md` §2.
+- **Current flow**: 6-phase agent cycle (plan → dispatch → critique → repair → integrate → meta). See *Cycle structure* below (the original `MIGRATION.md` §2 derivation is now a history-stub — full text in git history).
 - **Artifact in progress**: layered specification under `book/src/L4/`–`book/src/L0/` + 4 lowering Parts + the FEATURE-SURFACE SPINE Part. The Phase 1 slice corpus under `book/src/spec/slices/` was raw material for the layered artifact (not the deliverable); **it is now fully lifted and DELETED — the corpus shrank 9→0 across cycles 097/098/099 (the graded-stack P2 slice-deletion campaign, COMPLETE), and `book/src/spec/slices/` + `book/src/spec/index.md` no longer exist** (git history is the record; see §Methodology invariants "Phase 1 corpus was lifted and deleted").
 - **First pilot cycle landed**: `pilot-1` (commit `a058f07`) — `axpy` at L1 via the new flow. See `log/pilot-1.md` and `reports/2026-05-26T223039Z-harvester-axpy-L1/`.
 - **Decommissioned + DELETED** (batch-31 meta-phase non-book-orphan-review, post-cycle-099): the pre-redirect Python orchestrator (`orchestrator/`), its 6 prompted-role files (`prompts/`), its JSON schemas (`schemas/`), and the legacy ledgers (`lessons.md`, `questions.md`, the stale root `README.md`, `episodic.jsonl.README.md`) were removed (recoverable from git history). The 6 prompted roles (Planner/Explorer/Synthesizer/Critic + Meta-Critic + README Builder) had already been replaced by the 14 Claude Code subagents under `.claude/agents/`.
@@ -144,8 +144,8 @@ tools/                     # purpose-built evaluation tooling
 log/                       # per-cycle human-readable summaries + README index
 reference/                 # local clones of palace, bunsen, burn (gitignored)
 mcp/codemap/               # the palace-codemap MCP server (Rust; backs MCP-first localization)
-MIGRATION.md               # full structural-redirect spec (Phase A artifact; historical record)
-BOOTSTRAP.md               # original phased build spec (superseded; historical record)
+MIGRATION.md               # structural-redirect spec — compacted history-stub (full text in git history)
+BOOTSTRAP.md               # original phased build spec — compacted history-stub (full text in git history)
 # (batch-31 meta-phase non-book-orphan-review DELETED the decommissioned pre-redirect artifacts:
 #  orchestrator/ + prompts/ + schemas/ + lessons.md + questions.md + README.md + episodic.jsonl.README.md.
 #  All are recoverable from git history; CLAUDE.md is now the live operational guide.)

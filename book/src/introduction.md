@@ -4,7 +4,7 @@ The **Palace Whiteroom** is the research-artifact home for an *incremental imped
 
 The work is part of a broader methodology being developed in the **bunsen** project for lifting traditional C/Fortran tensor-field simulators into representations that fit immutable-tensor, monadic, graph-evaluated host environments. **No port is produced as part of this work.** A separate downstream effort will use the spec to incrementally build burn components; that effort is out of scope here.
 
-This book is the public-facing rendering of the spec. Operational guidance for agents working on the spec lives in `CLAUDE.md` at the repository root. The original phased build spec for the agent system lives in `BOOTSTRAP.md`.
+This book is the public-facing rendering of the spec. Operational guidance for agents working on the spec lives in `CLAUDE.md` at the repository root. The original phased build spec for the agent system (`BOOTSTRAP.md`) is now a compacted history-stub, with its full text preserved in git history.
 
 ## How to read the stack
 
