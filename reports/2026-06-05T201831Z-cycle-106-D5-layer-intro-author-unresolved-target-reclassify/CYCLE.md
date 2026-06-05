@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T201831Z
 scope: cycle-106 D5 — graded-stack lazy-tail typing; reclassify the 21 unresolved depends-on targets (item-2 sub-target `graded-stack-lazy-tail-typing`)
 status: integrated
 integrated_at: 2026-06-05T223000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7592988
 integration_notes: "cycle-106 D5, applied clean. 18-host lazy-tail legacy frontmatter reclassified into typed edges: blocks → unresolved_depends_on_targets 21→0 (with D2's solve_family clearing the 21st), --strict EXIT 0; all 21 false-positives from un-migrated legacy frontmatter (36 distinct targets all on-disk). WAVE-3 exclusion honored. Build EXIT 0; rank_violations 0. OQs graded-stack-lint-block-mapping-misparse-on-legacy-edge-prose-colon (latent linter-reader bug) + solve_family-last-unresolved-target-handed-to-d3 (recorded resolved) promoted. Non-blocking report-narration MISS citecheck on graded_stack_lint.py tool line-refs (outside citecheck roots, critic-verified) recorded, not an artifact defect."
 ---
 

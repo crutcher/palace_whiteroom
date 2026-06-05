@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T201831Z
 scope: WAVE-3 op-chapter typed-edge migration — the coupled solve-kernel pair L4/ksp_solve + L4/krylov-step
 status: integrated
 integrated_at: 2026-06-05T223000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7592988
 integration_notes: "cycle-106 D1 (THE LEAD), applied clean. L4/ksp_solve migrated to typed edges + L4/krylov-step edges authored from scratch → krylov-step root-reachable, 5 records rescued (sim-state/krylov/step-outputs/prev-carry/solve-result), detritus 163→156. Build EXIT 0; rank_violations 0; reachable 36→88 (with D2-D5). OQ krylov-step-pair-wave3-deferred-edges promoted. Pre-existing ksp_solve variant_axes mid-scalar-colon strict-YAML artifact retained verbatim (not introduced this cycle, non-blocking)."
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T20:22:44Z
 scope: concepts/set_subvector_zero frontmatter — doubly-stale reference-edge de-stale + reciprocal back-link (item-3a set-subvector-zero-references-dofset)
 status: integrated
 integrated_at: 2026-06-05T223000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7592988
 integration_notes: "cycle-106 D4 (LOW), applied clean. concepts/set_subvector_zero reference back-link de-staled to [L1/set_subvector_zero, concepts/dofset] (doubly-stale reference:[] + false comment removed; edge now bidirectional). EXPECTED-NOT-DEFECT: a reference creates no reachability (cluster stays detritus; page becomes typed, untyped −1). Build EXIT 0; rank_violations 0. OQ set-subvector-zero-cluster-reachability-not-rescued-by-reference-backlink promoted (routes into the dofset/eliminate_bc follow-up)."
 inputs:
   - book/src/concepts/set_subvector_zero.md

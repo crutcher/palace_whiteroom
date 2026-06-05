@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T20:18:31Z
 scope: cycle-106 D3 — WAVE-3 op-chapter typed-edge migration (eliminate_bc) + item-3b stale-prose fix (same file)
 status: integrated
 integrated_at: 2026-06-05T223000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7592988
 integration_notes: "cycle-106 D3, applied clean. L4/eliminate_bc migrated to typed edges + DofSet record-home prose retargeted concepts/DofSet.md→concepts/dofset.md (stale record-DofSet-needs-definition-home flag dropped). FAITHFUL-PATH-OR-FINDING: dofset STAYS unreachable (no feature column links to eliminate_bc); D3 declined to force an unfaithful column→eliminate_bc edge, routed OQ bc-driver-column-eliminate-bc-edge-gap-blocks-dofset-rescue (THE ONE CARRIED FOLLOW-UP). Build EXIT 0; rank_violations 0; full frontmatter parses clean under strict YAML (no variant_axes colon artifact)."
 ---
 

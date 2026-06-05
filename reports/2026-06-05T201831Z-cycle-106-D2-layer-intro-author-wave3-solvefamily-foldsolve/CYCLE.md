@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T201831Z
 scope: cycle-106 D2 — WAVE-3 op-chapter typed-edge migration (solve_family + fold_solve)
 status: integrated
 integrated_at: 2026-06-05T223000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 7592988
 integration_notes: "cycle-106 D2, applied clean. L4/solve_family + L4/fold_solve migrated to typed edges → sim-state rescued, op-params inbound climbed (5 sources); fold_solve→solve_family a deliberate reference contrast-sibling (no liveness). Cleared the residual unresolved_depends_on_targets entry (the 21st, the rest by D5). Build EXIT 0; rank_violations 0. OQs record-TimeState-needs-definition-home + fold_solve-sibling-reference-carries-no-liveness promoted. Pre-existing variant_axes mid-scalar-colon strict-YAML artifact retained verbatim (non-blocking). Non-blocking report-narration AMBIG citecheck (fold_solve.md:161 bare basename) recorded, not an artifact defect."
 ---
 

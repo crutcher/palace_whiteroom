@@ -29,7 +29,7 @@ Batch-34 opener (position 1/3; cycles 106/107/108; the batch-34 meta-phase fires
 | D4 — set_subvector_zero reference back-link (LOW) | lifter | applied | yes | OQ set-subvector-zero-cluster-reachability-not-rescued-by-reference-backlink (routes into the dofset follow-up) |
 | D5 — 18-host lazy-tail unresolved-target reclassify | layer-intro-author | applied | yes | OQ graded-stack-lint-block-mapping-misparse-on-legacy-edge-prose-colon (latent linter-reader bug, meta/tools) |
 
-All 5: `status: deferred`/`rejected` = 0. Each marked `integrated_at: 2026-06-05T223000Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows the cycle commit).
+All 5: `status: deferred`/`rejected` = 0. Each marked `integrated_at: 2026-06-05T223000Z` + `integration_commit: 7592988` (two-phase SHA patch follows the cycle commit).
 
 ## Artifact changes (aggregate, from staging Files-touched columns)
 
