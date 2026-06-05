@@ -4,7 +4,7 @@ invoked_at: 2026-06-05T062850Z
 scope: L4 index §Vocabulary-cohort firm-count + narration refresh (cycle-102 D1)
 status: pending
 integrated_at: 2026-06-05T070500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 45b7d854bb1f9b9bbfe4bdf93fe8d3b69a089f95
 integration_notes: >
   Applied clean (cycle-102 D1, staging row 1). L4/index.md §Vocabulary-cohort firm-count
   corrected (19+4 → 21+4 outer-driver, two-landings stale: preconditioning-framework c096 +

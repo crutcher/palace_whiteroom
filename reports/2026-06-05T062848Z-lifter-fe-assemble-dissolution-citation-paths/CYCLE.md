@@ -8,7 +8,7 @@ inputs:
   - palace/fem/integrator.hpp:58-61
   - palace/fem/libceed/operator.cpp:455
 integrated_at: 2026-06-05T070500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 45b7d854bb1f9b9bbfe4bdf93fe8d3b69a089f95
 integration_notes: >
   Applied clean (cycle-102 D2, staging row 2). 5 inline-prose citations in
   L4-L3/fe-assemble-fold-dissolution.md full-path-disambiguated (integrator.hpp:58-61 AMBIG →
