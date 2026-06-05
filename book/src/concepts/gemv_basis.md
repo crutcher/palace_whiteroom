@@ -18,7 +18,7 @@ Where the m updates are *not* independent — as in MGS, where each axpy mutates
 
 ## Use sites
 
-- **CGS / CGS2 orthogonalization** (`slices/orthog.md`): after the batched reduction yields the full coefficient vector `H[0..m-1]`, the basis correction `w − V H` is one `gemv_basis` call. The MGS variant cannot use `gemv_basis` for the reasons above.
+- **CGS / CGS2 orthogonalization** ([`orthogonalization`](./orthogonalization.md)): after the batched reduction yields the full coefficient vector `H[0..m-1]`, the basis correction `w − V H` is one `gemv_basis` call. The MGS variant cannot use `gemv_basis` for the reasons above.
 - **GMRES basis combination** (anticipated): forming `x_m = x_0 + V_m y_m` after the small least-squares solve is the same primitive shape (with `alpha = +1`).
 - **Projection / restriction operators on stored bases** (anticipated for eigensolver and FE slices).
 

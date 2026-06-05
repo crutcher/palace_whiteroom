@@ -64,7 +64,7 @@ The L0 four-line kernel decomposition (`ApplyBA → OrthogonalizeIteration → N
       T · V[j]  =  Σ_{i=0}^{j+1} H[i,j] · V[i]
 
   with `H[i,j] = ⟨T·V[j], V[i]⟩` for `i ≤ j` (under exact arithmetic) and `H[j+1,j] = ‖(I − P_{V[0..j]}) T·V[j]‖₂`.
-- **Output postcondition.** `V[j+1]` is unit-norm and orthogonal to `V[0..j]` (under exact arithmetic; under finite precision, to the level afforded by the chosen `gs_orthog` variant — see [orthog](./orthog.md)).
+- **Output postcondition.** `V[j+1]` is unit-norm and orthogonal to `V[0..j]` (under exact arithmetic; under finite precision, to the level afforded by the chosen `gs_orthog` variant — see [orthogonalization](../../concepts/orthogonalization.md)).
 - **Breakdown.** `H[j+1,j] = 0` signals lucky breakdown: `V[j] ∈ span{V[0..j-1], T·v_0}` is `T`-invariant; the caller terminates the restart with the exact-arithmetic Krylov subspace.
 
 ### Procedure
@@ -92,7 +92,7 @@ The `gs_orthog` axis carries a [sequential-obstruction](../../concepts/sequentia
 
 ## L2 — primitive composition
 
-The L1 procedure unfolds into four named primitive invocations. Three are field-side (MPI-collective vectors over the global DoF space); one is dispatch over the [orthog](./orthog.md) variant, itself a small composition of field-side primitives plus a residual choice.
+The L1 procedure unfolds into four named primitive invocations. Three are field-side (MPI-collective vectors over the global DoF space); one is dispatch over the [orthogonalization](../../concepts/orthogonalization.md) variant, itself a small composition of field-side primitives plus a residual choice.
 
 ```
 arnoldi_step_L2(V, j, T, gs_orthog) -> (V[j+1], H[:,j]):
@@ -112,7 +112,7 @@ FGMRES additionally retains the per-step preconditioned column `Z[j]` from this 
 
 ### orthogonalize
 
-The projection `H[0..j] ← project(w, V[0..j]; gs_orthog)` with in-place subtraction `w ← w − Σ H[i,j]·V[i]` unfolds into the [orthog](./orthog.md) slice, which is itself a composition of [dot](../../concepts/dot.md) and [axpy](../../concepts/axpy.md) (plus a batched [gemv_basis](../../concepts/gemv_basis.md) call for CGS/CGS2 to amortise the MPI allreduce). The residual variant axis `gs_orthog ∈ {MGS, CGS, CGS2}` is bound at solve setup and dispatched here exactly once; the L2 composition for the Arnoldi step itself is variant-independent — only the unfolding of `orthogonalize` into its inner primitive chain differs. See [orthog](./orthog.md) §L2 for the inner unfolding and [variant-absorption](../../concepts/variant-absorption.md) level (b) for the dispatch-once discipline.
+The projection `H[0..j] ← project(w, V[0..j]; gs_orthog)` with in-place subtraction `w ← w − Σ H[i,j]·V[i]` unfolds into [orthogonalization](../../concepts/orthogonalization.md), which is itself a composition of [dot](../../concepts/dot.md) and [axpy](../../concepts/axpy.md) (plus a batched [gemv_basis](../../concepts/gemv_basis.md) call for CGS/CGS2 to amortise the MPI allreduce). The residual variant axis `gs_orthog ∈ {MGS, CGS, CGS2}` is bound at solve setup and dispatched here exactly once; the L2 composition for the Arnoldi step itself is variant-independent — only the unfolding of `orthogonalize` into its inner primitive chain differs. See [orthogonalization](../../concepts/orthogonalization.md) for the inner unfolding and [variant-absorption](../../concepts/variant-absorption.md) level (b) for the dispatch-once discipline.
 
 The procedure both reads `V[0..j]` and writes the j-th column of `H` (an accumulator-style write into the small-dense Hessenberg buffer) and mutates `w` in place. The Hessenberg write `H[0..j]` is a small-dense scalar accumulation; the global-vector mutation `w` is the load-bearing field-side work.
 
@@ -141,7 +141,7 @@ The small-dense Hessenberg-column triangularisation (replay Givens 1..j, generat
 
 Per mutation-pseudocode discipline, the in-place writes are visible in the primitive names:
 
-- `orthogonalize(..., w)` — `w` is the accumulator-mutation argument (signature of [orthog](./orthog.md) makes this explicit).
+- `orthogonalize(..., w)` — `w` is the accumulator-mutation argument (signature of [orthogonalization](../../concepts/orthogonalization.md) makes this explicit).
 - `scal(α, w)` — in-place by definition of [scal](../../concepts/scal.md).
 - `apply_linop(T, V[j])` — pure functional form returning a fresh `w` (the buffer pre-allocation is an L0 storage detail, invisible at L2).
 

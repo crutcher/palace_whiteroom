@@ -296,12 +296,13 @@ BLAS-1 floor operators (`dot`, `nrm2`, `axpy`, `scal`).
 
 ## Supporting evidence
 
-- Slice `book/src/spec/slices/orthog.md` (cycle-011 partial reduction) retains the L2 (per-pass
-  primitive sequences, transparent-vs-load-bearing classification), L3 (CGS/CGS2 projector form;
-  MGS obstruction), and L4 (Solve-monad state stratification) sections. This firm L1 entry is the
-  "Pending lift to firm `L1/orthogonalize`" target named at `orthog.md:18`; with it landed, the
-  slice's L1 row reduces to a pointer to this chapter (a follow-on phase-1-corpus-reduction-audit
-  dispatch, not this one).
+- **Provenance.** This firm L1 entry was the lift target of the (now-deleted) Phase-1 slice
+  `spec/slices/orthog.md` (cycle-011 partial reduction → fully reduced and removed cycle-098,
+  graded-stack P2 slice-deletion campaign). With this entry, the L2/L3/L4 dissections it
+  retained (per-pass primitive sequences + transparent-vs-load-bearing classification; CGS/CGS2
+  projector form + MGS sequential-obstruction; Solve-monad state stratification) are firm at
+  `L2/orthogonalize.md`, `L3/orthogonalize.md`, and `concepts/orthogonalization.md`; its L0
+  ground truth is cited directly there (`palace/linalg/orthog.hpp:18-90`).
 - Slice `book/src/spec/slices/arnoldi_step.md:5` names "a firm `L1/orthogonalize` (or
   `L1/orthogonalize-column`)" as a pending-lift prerequisite; this entry satisfies it. The
   `arnoldi_step` L1 procedure's `project(w, V[0..j]; gs_orthog)` step is now `orthogonalize(w,

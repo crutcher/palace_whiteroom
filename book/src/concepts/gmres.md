@@ -20,4 +20,4 @@ GMRES sits one level above the Arnoldi process: GMRES = Arnoldi (to build an ort
 - **Preconditioner side.** Left ($M^{-1}A$), right ($AM^{-1}$), or none. Resolved at solve start via a [constructed operator](./constructed-operators.md) so the inner loop is variant-uniform.
 - **Restart length.** Full GMRES ($m$ grows unboundedly) vs. restarted GMRES($k$) (restart every $k$ steps). Trades convergence quality for bounded memory.
 - **Flexibility.** Fixed $M$ vs. per-step $M_j$ (FGMRES). Allows the preconditioner to itself be a nonlinear or iterative process.
-- **Orthogonalization.** The Arnoldi-internal choice; see the [orthogonalization](./orthogonalization.md) concept and the [orthog](../spec/slices/orthog.md) slice.
+- **Orthogonalization.** The Arnoldi-internal choice; see the [orthogonalization](./orthogonalization.md) concept.

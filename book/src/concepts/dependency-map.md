@@ -166,9 +166,6 @@ graph BT
   two_operator_split --> solver-as-operator
   complex-from-real-lift --> solver-as-operator
   complex-from-real-lift --> variant-absorption
-  polynomial_recurrence_step --> negative-result-slice
-  polynomial_recurrence_step --> elementwise-product
-  polynomial_recurrence_step --> givens
   plane-rotation-stream --> givens_generate
   plane-rotation-stream --> givens_apply
   cg --> nrm2

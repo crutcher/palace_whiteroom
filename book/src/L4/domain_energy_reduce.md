@@ -310,10 +310,14 @@ halves (the matrix-weighted-norm-squared energy form + the participation quotien
 inner-product-axiom content of its own. The earlier contrast (the firm sibling shows "what clearing gate
 (a) would buy") is now realized: gate (a) is cleared, and the escape applies here as it did there.
 
-(The off-diagonal contrast is [`gram_reduce`](./gram_reduce.md), which STAYS rough-in this same cycle
-because its off-diagonal folded primitive [`bilinear-form`](../L1/bilinear-form.md) is still rough-in —
-the firm-vs-rough-in distinction is which folded primitives are firm: `domain_energy_reduce`'s two are
-both firm, `gram_reduce`'s off-diagonal bilinear-form is not.)
+(The structural contrast is the rank-2 family-PAIR [`gram_reduce`](./gram_reduce.md), now also firm
+— its off-diagonal folded primitive [`bilinear-form`](../L1/bilinear-form.md) firmed and `gram_reduce`
+flipped to firm in the cycle-095 firm-flip-and-cascade wave, so BOTH reductions now rest entirely on firm
+folded primitives. The standing distinction between them is therefore NOT maturity but SHAPE:
+`domain_energy_reduce` folds two scalar primitives per row over a single field (rank-1 per-domain table),
+whereas `gram_reduce` folds an off-diagonal `bilinear-form` `xⱼᵀ K xᵢ` over a family-PAIR grid (rank-2,
+with the `symmetric_from_upper` mirror) — the c074 D6 do-NOT-over-unify guard, which is a permanent
+shape distinction independent of either verb's firmness.)
 
 **Scope: 1-of-1 — the field-energy output product, driver-AGNOSTIC.** This is the field-energy
 postprocess's reduction; it is driver-agnostic (the SAME per-domain reduction reduces any field-bearing

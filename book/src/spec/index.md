@@ -14,9 +14,7 @@ This index was maintained by the Synthesizer after every push under the old loop
 |-------|---------------|--------------|--------------|
 | [CG](./slices/cg.md) | L1 | 2026-05-26 | L0 cited to palace/linalg/iterative.cpp::CgSolver::Mult; L1 form names CgState bundle and the standard preconditioned CG recurrence; all three variant axes (scalar field, preconditioner present/absent, initial guess) absorbed parametrically. |
 | [GMRES](./slices/gmres.md) | L4 v0.6 | 2026-05-26 | L0/L1/L2/L3/L4 with v0.6 stop-witness extraction: `PostKrylov` carries a `StopReason` constructor field, eliminating the `error` arm in `classify`; `check_stop` becomes the sole budget-axis dispatch site. |
-| [Orthogonalization (plane-rotation stream)](./slices/orthog.md) | L4 (Gram-Schmidt) + L1 (plane-rotation) | 2026-05-26 | Gram-Schmidt stream at L4 (state-stratified, Solve-monadic, sequential-obstruction at L4). Plane-rotation stream lifted to L1 in same slice; uses `givens` and `trsv` primitives. Open question: split into orthog/gram_schmidt and orthog/plane_rotation once both reach L4. |
 | [arnoldi step](./slices/arnoldi_step.md) | L4 | 2026-05-26 | Tightening refinement: clarified scope-separation rationale for the small-dense Givens obstruction vs. field-side MGS obstruction in Open questions. Substantive: the two obstructions live on disjoint state (DoF-space `w`-mediated vs. small-dense `H[:,j]`-mediated) and have different variant-dependency profiles. |
-| [polynomial recurrence step](./slices/polynomial_recurrence_step.md) | L1 (self-tightened) | 2026-05-26 | Negative-result catalog at cross-family scope (Chebyshev / GMRES / eigentracking do not unify); within-Chebyshev partial-positive promoted from Open Question 2 to a structurally-documented L1↔L1 self-tightening section with its own falsification surface. |
 
 ## Slice conventions
 

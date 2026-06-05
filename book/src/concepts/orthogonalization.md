@@ -74,7 +74,8 @@ are unchanged (the orthogonality contract becomes `⟨w', V[i]⟩_B = 0`).
   caller's `nrm2`/`scal` — is shared across variants; the variant axis affects only the
   *sequence and batching*. The MGS branch carries a sequential-obstruction that surfaces at
   L3 (CGS/CGS2 lift to a clean batched/global form; MGS does not). See
-  [`spec/slices/orthog`](../spec/slices/orthog.md) for the retained L2/L3/L4 unfolding.
+  [`L2/orthogonalize`](../L2/orthogonalize.md) and [`L3/orthogonalize`](../L3/orthogonalize.md)
+  for the firm L2/L3 unfolding.
 
 ## Citations
 

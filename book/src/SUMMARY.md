@@ -292,8 +292,6 @@
   - [Arnoldi step](./spec/slices/arnoldi_step.md)
   - [CG — Preconditioned Conjugate Gradient](./spec/slices/cg.md)
   - [GMRES](./spec/slices/gmres.md)
-  - [Orthogonalisation (MGS / CGS / CGS2)](./spec/slices/orthog.md)
-  - [Polynomial recurrence step](./spec/slices/polynomial_recurrence_step.md)
 # Concepts (shared library)
 - [Index](./concepts/index.md)
   - [Dependency map](./concepts/dependency-map.md)

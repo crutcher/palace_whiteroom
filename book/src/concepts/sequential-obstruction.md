@@ -45,7 +45,7 @@ MGS therefore has no global tensor-field form: any rewrite that touches all colu
 
 A *parallel-by-blocks* variant exists (block-MGS: CGS within block, MGS across blocks); this trades stability against parallelism but does not eliminate the within-vs.-across distinction. Block-MGS is itself a hybrid, not a global lift of plain MGS.
 
-See the [orthog slice](../spec/slices/orthog.md) L3 section for the detailed treatment in the GMRES-orthogonalization context.
+See [`L3/orthogonalize`](../L3/orthogonalize.md) for the detailed treatment of the MGS sequential-obstruction in the GMRES-orthogonalization context.
 
 ## Sub-kind: out-of-scope-obstruction
 

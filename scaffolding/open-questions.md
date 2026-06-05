@@ -1551,3 +1551,35 @@ opened_by: parent orchestrator (relaying a direct user directive, 2026-06-04)
 **Disposition:** routes to meta-phase / possible human `ask` for the borderline keep-as-historical calls. Recommend the batch-31 meta-phase open its review with this inventory, run a "is anything in the live process still reading this?" check per item (grep the `.claude/agents/`, `skills/`, `tools/`, `Makefile.toml`, `.mcp.json` surface for references), and stage the clear orphans (`README.md`, `lessons.md`, `questions.md`, `episodic.jsonl.README.md`, and — pending the live-reader check — `orchestrator/` + any orchestrator-only support dir) for removal under git history (the corpus-shrinks-monotonically-and-git-is-the-record discipline, same as the slice corpus). Surface BOOTSTRAP.md/MIGRATION.md/config-files as the judgment calls.
 
 ---
+
+## orthog-slice-substantive-absorb-framing-was-a-verified-no-op — record (c099 planner / batch-31 meta-phase)
+
+opened_at: cycle-098
+opened_by: integrator-per-report (cycle-098 D1 — orthog slice absorb-verify-and-delete land-clean)
+
+The batch-31 P2 slice-deletion tranche described the `spec/slices/orthog.md` reduction as a **"substantive MPI-collective-shape absorb"** — implying content-lift work remained. On disk (verified by the D1 producer + critic before deletion) that absorb was **already complete**: the three collective shapes (MGS m×1 / CGS 1×m / CGS2 2×m), the read-only-`V` / mutated-`w` / written-`H` L1 invariant, and the inspected-once variant binding are all firm at `concepts/orthogonalization.md:42-58`, mirrored at `L1/orthogonalize.md:100-104` / `L2/orthogonalize.md:19,150,347` / `L3/orthogonalize.md:481`. D1 was therefore a **verified no-op absorb + repoint + delete** (reachability-GC of detritus), NOT a content-lift.
+
+**Action for the c099 planner / batch-31 meta-phase:** do NOT carry the "substantive absorb" label forward into later tranches as if work remained for this slice — the slice is now deleted and its data is firm-homed. If other tranche entries (e.g. the krylov-trio `cg`/`gmres`/`arnoldi_step` c099 sub-campaign) carry the same "substantive absorb" framing, re-verify whether they too are no-op absorbs before scoping content-lift dispatches. The verification recipe the producer used: for each L1-invariant / collective-shape sentence in the slice, grep for a firm mirror in `concepts/` + `L*/`; if every sentence has a firm home, it is a no-op absorb (repoint + delete only).
+
+---
+
+## polynomial-recurrence-step-slice-absorb-verified-no-op-and-campaign-state-5to3-slices
+
+opened_at: cycle-098
+opened_by: integrator-per-report (promoting same-layer-cross-cutter D2 Open questions)
+
+The `polynomial_recurrence_step` Phase-1 slice (graded-stack P2 reachability-GC, batch-31 tranche-2, Wave 2 / D2) was deleted cycle-098 as a **VERIFIED no-op absorb** (parallel to D1's orthog deletion): its full catalog content — the five-axis difference table, the 4-site distinction catalog (Chebyshev-4th / Chebyshev-1st / GMRES-Givens-stream / eigentracking-out-of-scope), the dual falsification surfaces (cross-family + within-Chebyshev), and the within-Chebyshev partial-positive (`ChebyshevSmootherBase<ScalarGenerator>` refactor) — was already fully firm-homed in `concepts/negative-result-slice.md` (§Partial-positive sub-pattern `:55-73`, five-axis table `:61,66`, dual falsification `:62,66,75-84`, 4-site catalog `:46`). The Chebyshev-pair firm home is `book/src/L4/chebyshev.md` §Semantics `innerStep`. No content claim was added or altered — repoint (R1 surgical clause-drop + R2/R3/R9 anchor repoints + R4 mermaid-edge removal + R5 live-link delink) and delete (R6) only; dual-slice SUMMARY/spec-index row removal (R7/R8) for BOTH orthog (D1's file) and polynomial. The Phase-1-slice-reduction-audit canonical-instance carve-out FAILS for this slice (named by one page, but its L0 navigation is fully absorbed → "unique L0 navigation not covered elsewhere" condition not met), so deletion is correct.
+
+**Campaign state: 5 → 3 slices after c098.** The Phase-1 slice corpus drops from 5 (`cg`, `gmres`, `arnoldi_step`, `orthog`, `polynomial_recurrence_step`) to 3 (`cg`, `gmres`, `arnoldi_step`). The **krylov trio (`cg`/`gmres`/`arnoldi_step`) remains for c099** — those three carry live L4-v0.5 unrolled renderings / L4 monadic forms still referenced as evidence by `L2/krylov-step.md` §Evidence (`cg.md:27-141` first-iteration-unrolled, `gmres.md:459-471`, `arnoldi_step.md:99-105,:285-298`); their absorb-and-delete is the c099 krylov-trio sub-campaign and was explicitly out of D2's scope. Action for the c099 planner: before scoping the krylov-trio deletions as content-lift, re-verify each is a no-op absorb (the producer's recipe: grep every L1-invariant / unrolled-form sentence for a firm mirror; if every sentence has a firm home, it is repoint+delete only).
+
+---
+
+## domain_energy_reduce-313-gram_reduce-bilinear-form-c095-stale-rough-in-narration — RESOLVED (re-anchored cycle-098 D3)
+
+opened_at: cycle-097
+resolved_at: cycle-098
+resolved_by: integrator-per-report (cycle-098 D3 — lifter domain_energy_reduce :313-316 within-file land-clean)
+
+RESOLVED-BY-RE-ANCHOR. The stale `:313-316` parenthetical (which asserted `gram_reduce` "STAYS rough-in this same cycle because its off-diagonal folded primitive `bilinear-form` is still rough-in") was re-anchored cycle-098 (D3, report `2026-06-05T002531Z-lifter-domain-energy-reduce-313-gram-reduce-landclean`) to the post-c095 reality verified on disk this invocation: `book/src/L4/gram_reduce.md:4-5` is `firmness: firm` / `rank: firm` AND `book/src/L1/bilinear-form.md:4-5` is `firmness: firm` / `rank: firm` (the cycle-095 firm-flip-and-cascade wave). Both reductions now rest entirely on firm folded primitives; the falsified maturity assertion is dropped and the legitimate `domain_energy_reduce`-vs-`gram_reduce` distinction is preserved, recast as the permanent rank-1-vs-rank-2 / single-field-vs-family-PAIR SHAPE distinction (the c074 D6 do-NOT-over-unify guard), consistent with the file's existing `:133-139` / `:181-183` / `:222-223`. No `rank:`/`edges:` frontmatter flip needed (`domain_energy_reduce` already `rank: firm` resting on two firm `depends-on` deps; rank invariant holds unchanged). Whole-file grep confirmed `:313-316` was the ONLY stale gram_reduce/bilinear-form maturity assertion. The whole-book `bilinear-form`-c095-firm-flip residue-class sweep flagged in the original OQ remains a separate cross-file land-clean for the c095 gram_reduce flip's own lineage (NOT in this within-file dispatch's scope) — noted for the batch-31 \xC2\xA7Intake\xE2\x86\x92plan migration. Record for the meta-phase close.
+
+---

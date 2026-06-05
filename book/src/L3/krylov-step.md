@@ -197,7 +197,7 @@ Five Phase-1 slice instances (per combinator-miner cycle-002; inherited via the 
 - `book/src/spec/slices/gmres.md:459-471` (GMRES L4 `inner_loop` body).
 - `book/src/L4/chebyshev.md` §Semantics `innerStep` (firm cycle-015, absorbing the former `chebyshev.md:354-362` slice §L4).
 - `book/src/spec/slices/arnoldi_step.md:99-105`, `:285-298` (L1 Arnoldi step + L4 monadic form).
-- `book/src/spec/slices/polynomial_recurrence_step.md:119-160` (catalog of three polynomial-recurrence sites; the L3 form is the value-thread-isomorphic image of each).
+- `book/src/concepts/negative-result-slice.md` §Partial-positive sub-pattern + §Falsification criterion (catalog of three polynomial-recurrence sites — Chebyshev-4th, Chebyshev-1st, GMRES-Givens-stream; the L3 form is the value-thread-isomorphic image of each; Chebyshev-pair firm home `book/src/L4/chebyshev.md` §Semantics `innerStep`).
 
 Outer-driver consumer sites at L3 (the tail-recursive `iterate_while_L3` invocations that fold `krylov-step`):
 
