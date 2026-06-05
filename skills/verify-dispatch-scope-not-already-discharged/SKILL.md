@@ -47,7 +47,7 @@ If the file EXISTS, read its `## Status` line: `firm` / `partly-constructive` / 
 
 - **Operator/theme-authoring dispatch (harvester / abstractor):** if the on-disk maturity is at-or-above the proposed deliverable (e.g. `firm` and the dispatch is "harvest L1 operator X"), the dispatch is a no-op — do NOT recruit.
 - **Audit dispatch (lowering-verifier):** `grep -c '^verified_against:' book/src/<layer>/<slug>.md`. If ≥1 block already exists at the timestamp class the audit would emit (recent-enough that the audit's scope is already discharged — typically same-batch or immediately-prior-batch), the audit is a no-op. Exception: a per-row repair audit (e.g. F1 row-refresh) is its own scope; check the OQ ledger for the specific row scope before deciding.
-- **Slice-reduction audit (same-layer-cross-cutter on `book/src/spec/slices/<slice>.md`):** check the slice's `## Status` for an `annotated-and-retained` / `reduced-to-stub` / `removed` marker; check the OQ ledger for a RESOLVED disposition in the last ~3 cycles.
+- **(RETIRED — slice-reduction audit):** the Phase-1 slice corpus (`book/src/spec/slices/`) was fully lifted and DELETED (9→0, cycles 097/098/099); there are no slices left to audit and the directory no longer exists. Do NOT recruit a slice-reduction-audit dispatch. (Historical: this step checked the slice `## Status` for `annotated-and-retained`/`reduced-to-stub`/`removed`. The general inbound-link-sweep-before-delete discipline lives in the active skill `deleted-slug-inbound-live-link-sweep`.)
 - **Stub→firm refinement:** the on-disk file is a `stub`, the dispatch is to refine to `rough-in` or `firm` — this is genuinely-open (proceed).
 
 ### 3. OQ-ledger RESOLVED-grep

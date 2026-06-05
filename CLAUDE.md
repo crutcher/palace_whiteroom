@@ -7,9 +7,9 @@ This file replaces the original CLAUDE.md (slice-vertical era, cycles 1–172) a
 ## Repository status
 
 - **Current flow**: 6-phase agent cycle (plan → dispatch → critique → repair → integrate → meta). See *Cycle structure* below and `MIGRATION.md` §2.
-- **Artifact in progress**: layered specification under `book/src/L4/`–`book/src/L0/` + 4 lowering Parts. The Phase 1 slice corpus under `book/src/spec/slices/` is raw material for the layered artifact (not the deliverable) — slices reduce to stubs and eventually delete as their material is lifted into firm layered entries (user directive 2026-05-27, mid-cycle-009; see §Methodology invariants "Phase 1 corpus reduces as material is lifted").
+- **Artifact in progress**: layered specification under `book/src/L4/`–`book/src/L0/` + 4 lowering Parts + the FEATURE-SURFACE SPINE Part. The Phase 1 slice corpus under `book/src/spec/slices/` was raw material for the layered artifact (not the deliverable); **it is now fully lifted and DELETED — the corpus shrank 9→0 across cycles 097/098/099 (the graded-stack P2 slice-deletion campaign, COMPLETE), and `book/src/spec/slices/` + `book/src/spec/index.md` no longer exist** (git history is the record; see §Methodology invariants "Phase 1 corpus was lifted and deleted").
 - **First pilot cycle landed**: `pilot-1` (commit `a058f07`) — `axpy` at L1 via the new flow. See `log/pilot-1.md` and `reports/2026-05-26T223039Z-harvester-axpy-L1/`.
-- **Decommissioned**: the Python orchestrator under `orchestrator/` (kept as historical reference). The 6 prompted roles (Planner/Explorer/Synthesizer/Critic + Meta-Critic + README Builder) are replaced by 13 Claude Code subagents under `.claude/agents/`.
+- **Decommissioned + DELETED** (batch-31 meta-phase non-book-orphan-review, post-cycle-099): the pre-redirect Python orchestrator (`orchestrator/`), its 6 prompted-role files (`prompts/`), its JSON schemas (`schemas/`), and the legacy ledgers (`lessons.md`, `questions.md`, the stale root `README.md`, `episodic.jsonl.README.md`) were removed (recoverable from git history). The 6 prompted roles (Planner/Explorer/Synthesizer/Critic + Meta-Critic + README Builder) had already been replaced by the 14 Claude Code subagents under `.claude/agents/`.
 
 ## What this system is
 
@@ -117,7 +117,7 @@ book/src/                  # the mdBook artifact
     index.md
     <theme>.md
   L3/, L3-L2/, ..., L0/    # one Part per layer + lowering layer
-  spec/                    # Phase 1 corpus (slice-vertical, frozen)
+  feature/                 # Part: FEATURE-SURFACE SPINE (entry-point composition roots)
   concepts/                # shared concept library (kept)
   design/                  # L4 calculus strawman (seeds L4 layer)
   meta-reviews/            # historical meta-review records (cycles 1–172)
@@ -143,11 +143,12 @@ skills/                    # agent-invocable procedures (verbs; meta-phase promo
 tools/                     # purpose-built evaluation tooling
 log/                       # per-cycle human-readable summaries + README index
 reference/                 # local clones of palace, bunsen, burn (gitignored)
-orchestrator/              # decommissioned Python orchestrator (historical reference)
-lessons.md                 # legacy cross-run lessons (historical; superseded by friction-ledger)
-questions.md               # legacy question ledger (historical; superseded by open-questions)
-MIGRATION.md               # full structural-redirect spec (Phase A artifact)
-BOOTSTRAP.md               # original phased build spec (superseded; historical)
+mcp/codemap/               # the palace-codemap MCP server (Rust; backs MCP-first localization)
+MIGRATION.md               # full structural-redirect spec (Phase A artifact; historical record)
+BOOTSTRAP.md               # original phased build spec (superseded; historical record)
+# (batch-31 meta-phase non-book-orphan-review DELETED the decommissioned pre-redirect artifacts:
+#  orchestrator/ + prompts/ + schemas/ + lessons.md + questions.md + README.md + episodic.jsonl.README.md.
+#  All are recoverable from git history; CLAUDE.md is now the live operational guide.)
 ```
 
 ## Write-authority partition
@@ -189,7 +190,7 @@ These are load-bearing — do not "improve" them away.
 - **Lower-level shared vocabulary takes priority** (user directive 2026-05-27). When choosing between (a) expanding higher-layer vocabulary further and (b) populating lower-layer shared utility, **prefer (b)**. Reusable lower-level vocabulary makes other components cheaper and simpler to describe, enables unification of seemingly-distinct higher-layer patterns, and reduces duplication explosion in adjacent layers. (A cycle-006/010-era concrete snapshot that illustrated this is archived in `METHODOLOGY-CHANGELOG.md`.)
 - **Uniform pull-up L0→L4; foundation-solidity is a ranking weight** (user directive 2026-05-31) — **SUPERSEDED by the VOCABULARY-SHIFT REDIRECT** (the "rectangular" success metric was the bug; the `foundation_solidity` / count-ownership / dual-registration rectangular-floor machinery is retired). Full text in `METHODOLOGY-CHANGELOG.md`. The surviving principle is "Lower-level shared vocabulary takes priority" (above), which the redirect keeps.
 - **Identity-lowerings still require both L levels** (user directive 2026-05-27) — **SUPERSEDED by the VOCABULARY-SHIFT REDIRECT** (a degenerate identity-in-named-terms lowering is now a *smell*, not a mirrored entry). Full retired text in `METHODOLOGY-CHANGELOG.md`. The live convention for genuine non-adjacent identity relationships is the "Identity rotations across non-adjacent layers are annotated in-line" bullet below.
-- **Phase 1 corpus reduces as material is lifted** (user directive 2026-05-27; canonical-instance carve-out codified cycle-033). `book/src/spec/slices/` is **raw material for the layered artifact**, not the deliverable. As a slice's material is lifted into firm layered entries and the lifted form becomes authoritative, **the slice is reduced** (compacted to a stub pointing at its firm homes) **and eventually removed** — the corpus shrinks monotonically; git history is the record. The audit is per-cycle `same-layer-cross-cutter` work, NOT a meta-phase enactment. **Canonical-instance carve-out:** the firm-layered-home check is necessary but not sufficient — a slice MAY be retained-by-design (status `annotated-and-retained`) when **(a)** it is named as the §Canonical-instance referent of **≥2 concept pages** AND **(b)** it carries unique L0 navigation not covered elsewhere. Procedure + precedents: skill `phase-1-slice-reduction-audit` (concept-page-grep before recommending reduction).
+- **Phase 1 corpus was lifted and deleted** (user directive 2026-05-27; campaign COMPLETE cycles 097/098/099, batch-31 graded-stack P2). `book/src/spec/slices/` was **raw material for the layered artifact**, not the deliverable. Every slice's material has now been lifted into firm layered entries (or homed in a `roadmap_goal` chapter), the lifted form is authoritative, and **the corpus has been fully deleted — 9→0; `book/src/spec/` no longer exists** (the corpus shrank monotonically; git history is the record). **The `annotated-and-retained` canonical-instance carve-out is RETIRED** (corpus-complete moot) and the skill `phase-1-slice-reduction-audit` is **archived under `skills/_retired/`** — both were transient mechanisms for the now-finished campaign. The in-discipline replacement for "a real-but-undissected referent that needs a live home" is the graded-stack **rank-0 `roadmap_goal` chapter** (§GRADED RESOLUTION LADDER below), not a retained slice. (Full retired text of the reduction-audit invariant + carve-out: `METHODOLOGY-CHANGELOG.md`.)
 
 - **Theme/operator status `partly-constructive` is first-class** (cycle-012). Alongside `firm` / `rough-in` / `obstruction`: firm in structural decomposition (the rewrite is recognized and exhaustively cited) but carrying a named, citation-backed caveat on one or more **constructive sub-parts** — a status value / result field / error condition materialized from negative anchors / literature rather than read from a positive Palace site. The entry MUST state (i) which sub-part is constructive, (ii) its negative-anchor citations, (iii) an explicit **promotion condition**. Do NOT mark it `firm` (the sub-part isn't) and do NOT downgrade to `rough-in` (the structure IS firm). These negative anchors are evidence FOR a faithful reconstruction; they do NOT license a positive claim without a positive site. A transient gate, not a permanent escape hatch. Promotion checklist: skill `partly-constructive-promotion-checklist`.
 

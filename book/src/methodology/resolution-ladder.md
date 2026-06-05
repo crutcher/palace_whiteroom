@@ -205,8 +205,11 @@ A vocabulary node exists *because* some feature surface transitively depends on 
 
 - **The detritus / orphan hunt is a mark-sweep from the root set.** "Is this read or
   referenced by anything live?" ≡ "is this reachable from a root?" Orphaned artifacts
-  (frozen Phase-1 slices, kickoff-dead scaffolding, dead `priorities.md` active-heads) are
-  precisely the *unreachable* nodes.
+  (kickoff-dead scaffolding, dead `priorities.md` active-heads) are precisely the
+  *unreachable* nodes. The canonical worked instance was the **frozen Phase-1 slice corpus**
+  — a detritus mass unreachable from any feature root, fully collected across cycles
+  097/098/099 (the corpus went 9 → 0; `book/src/spec/` deleted), which is exactly the
+  mark-sweep this axis formalizes.
 - **The `roadmap_goal` proliferation guard *is* the reachability requirement.** A
   roadmap_goal is justified only if its pull-chain terminates at a feature root. No path to
   a root ⇒ speculation-noise ⇒ collected.

@@ -1,4 +1,13 @@
 ---
+RETIRED: cycle-099 (batch-31 meta-phase). Reason: the Phase-1 slice corpus
+(`book/src/spec/slices/`) was fully lifted and DELETED — 9→0 across cycles
+097/098/099 (the graded-stack P2 slice-deletion campaign). There are no slices
+left to audit; the corpus directory no longer exists. The `annotated-and-retained`
+canonical-instance carve-out this skill enforced is also retired (corpus-complete
+moot); the rank-0 `roadmap_goal` chapter is its in-discipline replacement. Kept as
+historical record; the inbound-link-sweep-before-delete discipline generalized into
+the still-active skill `deleted-slug-inbound-live-link-sweep`. Do NOT invoke.
+---
 name: phase-1-slice-reduction-audit
 description: Audit a Phase 1 corpus slice (`book/src/spec/slices/<slice>.md`) for redundancy against firm layered-artifact entries and propose its reduction (stub-and-pointer) or removal. Codifies the four-part template (Section-anchor table / Supersession map / Residual gaps / Proposed changes) established cycle-010 and the START+END boundary-verification + unique-text-anchor refinement that the recurrence-3 line-map defects (cycles 010/011/012) made necessary. Audience: `same-layer-cross-cutter`.
 status: active

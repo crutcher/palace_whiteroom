@@ -318,10 +318,31 @@ This shape is load-bearing, and it follows three principles:
 >   cleared ~10 genuine gaps and the typed-frontmatter retyping cleared ~11 prose-parse false
 >   positives) → 0 (c096)** — the typed subset is now well-founded with zero rank gaps. The first
 >   `roadmap_goal`-adjacent vocabulary gap, the firm L4 `preconditioning-framework`, was authored;
->   the Phase-1 slice corpus depopulation (now safe and mechanical — the slices sit in the
->   reachability-GC detritus mass, deletable once their load-bearing citations are repointed to
->   non-slice homes) is the next batch's lead. The two axes together *define* artifact health: every
->   node reachable from a root, and the rank invariant holding everywhere.
+>   the Phase-1 slice corpus depopulation (safe and mechanical — the slices sat in the
+>   reachability-GC detritus mass, deletable once their load-bearing citations were repointed to
+>   non-slice homes) was queued as the next batch's lead **and is now COMPLETE (batch-31, below)**.
+>   The two axes together *define* artifact health: every node reachable from a root, and the rank
+>   invariant holding everywhere.
+
+> **The Phase-1 slice corpus is fully lifted and DELETED — the graded-stack health campaign is
+> discharged (batch-31).** The campaign's last open phase, P2 corpus depopulation, completed across
+> cycles 097/098/099: the 9 Phase-1 slices were absorbed (each slice's load-bearing claims repointed
+> to firm non-slice homes citing L0 directly, the one genuinely-unlifted datum — the CG v0.5 worked
+> example — absorbed firm into `L4/krylov-step.md`) and **DELETED — the corpus went 9 → 0 and
+> `book/src/spec/` no longer exists**. This eliminates the *frozen second source of truth* the
+> graded-stack model was built to dissolve: a slice was a representation NOT beholden to
+> combinator-refactoring or fusion, a brake on the very vocabulary-shift freedom the redirect grants
+> the layers. Throughout the deletion `rank_violations` stayed **0** (the typed subset is well-founded)
+> and every `cargo make book` was green. Two transient mechanisms of the now-finished campaign were
+> retired: the `annotated-and-retained` carve-out (which had made permanent slice-retention the
+> standard landing state — superseded by the rank-0 `roadmap_goal` chapter, which gives intent a
+> *refactorable* home that climbs instead of freezing) and the `phase-1-slice-reduction-audit` skill
+> (archived; no slices remain to audit). The same batch ran a non-book-artifact orphan review,
+> removing the decommissioned pre-redirect process scaffolding (`orchestrator/`, `prompts/`,
+> `schemas/`, the legacy `lessons.md` / `questions.md` ledgers, the stale root `README.md`) — the
+> "corpus shrinks monotonically; git history is the record" discipline applied beyond `book/`. With
+> the graded-stack campaign discharged, the lead returns to the standing forward frontier: bottom-up
+> vocabulary + the 5-driver→L4 backend-lowering completeness picture + the last `seed` feature column.
 
 ## FLOW — how the goal is met
 
