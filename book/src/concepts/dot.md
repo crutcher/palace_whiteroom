@@ -71,9 +71,9 @@ projection is caller-side, not built into `dot`.
 
 ## Slices that use this primitive
 
-- [cg](../spec/slices/cg.md) — `⟨r, z⟩` (β numerator) and `⟨p, A p⟩` (α
+- [`krylov-step` (CG instance)](../L2/krylov-step.md) — `⟨r, z⟩` (β numerator) and `⟨p, A p⟩` (α
   denominator).
-- [gmres](../spec/slices/gmres.md) — orthogonalization coefficients
+- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — orthogonalization coefficients
   `⟨v_i, w⟩` (CGS/MGS), at the L2 unfolding of `orthogonalize`.
 
 ## See also

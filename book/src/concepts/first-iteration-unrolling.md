@@ -6,7 +6,7 @@ An L4-level structural rotation that hoists a step-internal `if it == 0 then bas
 
 Many iterative numerical methods carry a step-local control branch whose sole purpose is to handle the iteration-zero special case — a recurrence that needs `state_{k-1}` to fire, plus a base case for `k = 0` where `state_{-1}` doesn't exist (or exists trivially). Concretely:
 
-- **CG / PCG**: `p_k = r_k + (β_k/β_{k-1})·p_{k-1}` for `k ≥ 1`, with `p_0 = r_0` (no `β_{-1}`). See [`cg slice`](../spec/slices/cg.md) §L4 v0.5.
+- **CG / PCG**: `p_k = r_k + (β_k/β_{k-1})·p_{k-1}` for `k ≥ 1`, with `p_0 = r_0` (no `β_{-1}`). See the firm [`krylov-step` (CG instance)](../L2/krylov-step.md) + [`L4/krylov-step`](../L4/krylov-step.md) Form B.
 - **GMRES**: the first Arnoldi step has no `v_{k-1}`. (Less acute because the orthogonalization loop handles `k = 0` naturally as a zero-length loop, but the same shape recurs in the Hessenberg column update.)
 - **LOBPCG**: no prior eigenvalue estimate to subtract on the first Rayleigh-Ritz.
 - **Chebyshev iteration**: no `x_{k-1}` for the two-step recurrence's first half-step.
@@ -74,5 +74,5 @@ The more general pattern — splitting a recurrence into a base case and a stead
 
 ## Slices that use this pattern
 
-- [`cg`](../spec/slices/cg.md) §L4 v0.5 — first slice to adopt.
+- [`krylov-step` (CG instance)](../L2/krylov-step.md) — CG L4 v0.5 (firm-homed at [`L4/krylov-step`](../L4/krylov-step.md) Form B) was the first form to adopt the unrolling.
 - (Forward markers) Future Krylov slices (GMRES, MINRES, BiCGStab, LOBPCG, Chebyshev) will pattern-match against this concept when they reach L4 presentation choices.

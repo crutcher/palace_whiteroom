@@ -141,9 +141,9 @@ implements a `MinresSolver`-shaped class.
 
 Structural sibling (affirmative L1 evidence the rewrite would parallel):
 
-- `book/src/spec/slices/arnoldi_step.md` — the four-line Arnoldi
-  inner-body kernel (`apply → orthog → norm → scal`) is the structural
-  parent of the Lanczos three-term recurrence; one-line variant axis
+- The Arnoldi inner-body kernel (`apply → orthog → norm → scal`; firm L0 home
+  `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C inner Arnoldi loop)
+  is the structural parent of the Lanczos three-term recurrence; one-line variant axis
   (`gs_orthog` → fixed-to-symmetric) collapses Arnoldi to Lanczos.
 - `book/src/concepts/incremental-least-squares.md` — the running-QR
   pattern; MINRES is the band-3 specialisation.

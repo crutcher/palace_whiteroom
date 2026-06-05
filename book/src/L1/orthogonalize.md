@@ -303,7 +303,7 @@ BLAS-1 floor operators (`dot`, `nrm2`, `axpy`, `scal`).
   projector form + MGS sequential-obstruction; Solve-monad state stratification) are firm at
   `L2/orthogonalize.md`, `L3/orthogonalize.md`, and `concepts/orthogonalization.md`; its L0
   ground truth is cited directly there (`palace/linalg/orthog.hpp:18-90`).
-- Slice `book/src/spec/slices/arnoldi_step.md:5` names "a firm `L1/orthogonalize` (or
+- The (now-deleted) `arnoldi_step` slice named "a firm `L1/orthogonalize` (or
   `L1/orthogonalize-column`)" as a pending-lift prerequisite; this entry satisfies it. The
   `arnoldi_step` L1 procedure's `project(w, V[0..j]; gs_orthog)` step is now `orthogonalize(w,
   V[0..j], gs_orthog)`.

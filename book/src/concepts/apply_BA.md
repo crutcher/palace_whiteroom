@@ -36,5 +36,5 @@ apply_BA.apply(v) → (w, z?)        // z present when flexible or side=RIGHT
 
 ## Slices that use this primitive
 
-- [gmres](../spec/slices/gmres.md) — the per-Arnoldi-step operator;
+- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — the per-Arnoldi-step operator;
   absorbs the `side` and `flexible` variant axes.

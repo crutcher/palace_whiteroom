@@ -117,7 +117,7 @@ The rewrite is valid when all four of the following hold (inherited from `krylov
 
 1. **The L4 `Solve` monad's effect domain is exactly `SimState`.** The only `modify` in the body is the `it` counter increment (or whatever single `SimState` field the slice threads); no carry field is monad-touched. This lets the monad dissolve to a single positional `sim` argument (`iterate-while.md:103`, `solve-monad.md` §"What stays out of the monad").
 
-2. **The predicate is pure on the carry** (`p :: α -> Bool`, `iterate-while.md:102`). No reads of `SimState`, `OpParams`, or the per-step extras. This is what lets the L3 branch test `not (p carry)` read only the positional `carry` argument. Slices whose termination needs `SimState.it` fold `it` into the carry (`book/src/spec/slices/cg.md:101` — the v0.5 predicate `\(s, _) -> s.it < config.max_it && not s.converged`).
+2. **The predicate is pure on the carry** (`p :: α -> Bool`, `iterate-while.md:102`). No reads of `SimState`, `OpParams`, or the per-step extras. This is what lets the L3 branch test `not (p carry)` read only the positional `carry` argument. Consumers whose termination needs `SimState.it` fold `it` into the carry (the CG v0.5 predicate `\(s, _) -> s.it < config.max_it && not s.converged`, firm-homed at `book/src/L4/krylov-step.md` Form B).
 
 3. **The body's primitive sequence is L3-native or carries its own L3 classification.** Each step-body primitive is either a whole-tensor global op (L3-native by signature) or carries a documented body-level obstruction (e.g. MGS orthogonalization). The wrapper dissolution does not change the body's L3 classification — it survives in form.
 
@@ -152,7 +152,7 @@ L3 source (the RHS of this rewrite; extracted from the firm sub-component):
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:188-198` — the L3-side collapse rule (extracted verbatim).
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:202-213` — the §"Audit of cycle-002 identity-in-form claim" verdict that establishes the body-identity licensing the Law-1 transport.
 - `book/src/L3/krylov-step.md` — the firm L3 entry holding the lifted CG non-lift catalogue (the `sequential-obstruction` evidence home post cycle-009 corpus reduction).
-- `book/src/spec/slices/arnoldi_step.md:194-213` — the live `sequential-obstruction` anchor for the outer loop surviving at L3.
+- [`concepts/sequential-obstruction`](../concepts/sequential-obstruction.md) §"MGS as sequential-obstruction" — the firm `sequential-obstruction` anchor for the outer loop surviving at L3.
 
 L0 consumer-surface evidence (selects the pruned form for Palace's KSP case, Condition 4):
 

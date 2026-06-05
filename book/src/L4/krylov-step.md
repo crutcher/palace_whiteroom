@@ -79,7 +79,90 @@ krylov-step op K = \s -> do
 
 The body composes the same five primitive groups as the L2 entry, in the same dataflow-forced order. What the L4 typing adds is **placement discipline**: every primitive call sits in a pure `let`-binding on `Krylov`-bundle fields; the only `modify` is the `SimState.it` increment; the `SimState.x` is **not** touched per step (it is updated by the outer `restart_cycle` after `back_solve` produces the correction — see `concepts/solve-monad.md` §"Worked example — GMRES"). This placement is exactly the L4 calculus's effect-localisation discipline: the monad's effect domain is `SimState`; the kernel touches `SimState` exactly where it must (the counter), nowhere else.
 
-Form B (first-iteration-unrolled) splits the body into two named functions per [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md) §"The rotation". `first_step` produces the initial `PrevCarry` from a base-case computation; `steady_step` consumes `PrevCarry` (the prior iteration's recurrence variable, e.g., `β_prev`) as a closure argument rather than reading it from `Krylov`. The `Krylov` schema in Form B is one slot lighter (no `β_prev` field); the branch-free `steady_step` is the body folded by `iterate_while_with_prev` (the CG v0.5 `cg_first_step` / `cg_steady_step` derivation is the canonical evidence for `concepts/first-iteration-unrolling.md`, retained live in the reduced slice at `cg.md:27-141` — `cg_first_step` at `cg.md:52`, `cg_steady_step` at `cg.md:69`; this is the unique material the cycle-009 reduction kept in the stub, formerly cited as `cg.md:393-425`). Both forms are valid L4 renderings of the same L2 `krylov-step`; the choice is the `first-iteration-unrolled` variant axis (inherited unchanged from L2).
+Form B (first-iteration-unrolled) splits the body into two named functions per [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md) §"The rotation". `first_step` produces the initial `PrevCarry` from a base-case computation; `steady_step` consumes `PrevCarry` (the prior iteration's recurrence variable, e.g., `β_prev`) as a closure argument rather than reading it from `Krylov`. The `Krylov` schema in Form B is one slot lighter (no `β_prev` field); the branch-free `steady_step` is the body folded by `iterate_while_with_prev`. Both forms are valid L4 renderings of the same L2 `krylov-step`; the choice is the `first-iteration-unrolled` variant axis (inherited unchanged from L2). The CG instantiation of Form B is worked below; the abstract `(first_step, steady_step)` rotation it specialises lives in [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md) §"The rotation" and is not restated here.
+
+### Worked example — CG Form B (v0.5 first-iteration-unrolling)
+
+This is the canonical CG instantiation of Form B: the `Krylov` bundle is `CgState<S>`, the `PrevCarry` is `β_prev`, and the rotation drops `β_prev` from the steady-state schema by threading it as a closure argument of the loop driver. It is the worked datum that grounds Form B and the `first-iteration-unrolling` concept; the abstract `(first_step, steady_step)` signatures it specialises are in [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md) §"The rotation" (not restated here).
+
+The v0.5 `CgState<S>` schema is one scalar lighter than the Form-A (v0.4) schema — `beta_prev` is gone:
+
+    type CgState<S> = {
+      x:         Tensor[S],
+      r:         Tensor[S],
+      p:         Tensor[S],
+      beta:      Scalar,        // (r, r); always nonzero on entry to a steady step
+      it:        Int,
+      converged: Bool,
+    }
+    -- `beta_prev` is gone. The steady step uses (s.beta / beta_prev) where
+    -- beta_prev is supplied as a closure-captured scalar from the prior step,
+    -- not a state field.
+
+The first iteration is unrolled (precondition `s.it == 0`, so `p ← r` unconditionally — the Form-A `if it == 0` branch is hoisted out); the steady step is branch-free (precondition `s.it >= 1, beta_prev > 0`):
+
+    cg_first_step
+      :: LinOp<S> -> Scalar -> CgState<S>
+      -> { state: CgState<S>, residual_norm: Scalar }
+    cg_first_step opA eps s =
+      let p'    = s.r in                         -- s.it == 0 ⇒ p ← r
+      let Ap    = apply opA p' in
+      let alpha = s.beta / (dot Ap p') in
+      let x'    = axpy alpha p' s.x in
+      let r'    = axpy (negate alpha) Ap s.r in
+      let beta' = dot r' r' in
+      let res'  = sqrt (abs beta') in
+      { state: { x: x', r: r', p: p',
+                 beta: beta',
+                 it: 1, converged: res' < eps },
+        residual_norm: res' }
+
+    cg_steady_step
+      :: LinOp<S> -> Scalar -> Scalar -> CgState<S>
+      -> { state: CgState<S>, residual_norm: Scalar }
+    cg_steady_step opA eps beta_prev s =
+      let p'    = axpby 1.0 s.r (s.beta / beta_prev) s.p in
+      let Ap    = apply opA p' in
+      let alpha = s.beta / (dot Ap p') in
+      let x'    = axpy alpha p' s.x in
+      let r'    = axpy (negate alpha) Ap s.r in
+      let beta' = dot r' r' in
+      let res'  = sqrt (abs beta') in
+      { state: { x: x', r: r', p: p',
+                 beta: beta',
+                 it: s.it + 1, converged: res' < eps },
+        residual_norm: res' }
+
+The driver runs the first step, then folds `cg_steady_step` with `iterate_while_with_prev` — `iterate_while` over the pair `(state, beta_prev)`, threading the prior step's `beta` as the next step's `beta_prev` without storing it in `CgState`. This is a closure over the loop carry, not new calculus machinery:
+
+    cg_solve
+      :: !CgConfig -> LinOp<S> -> Tensor[S] -> Tensor[S] -> Bool
+      -> { final_state: CgState<S>, residual_history: [Scalar] }
+    cg_solve config opA b x_initial initial_guess =
+      let { state: s0, initial_res } = cg_init opA b x_initial initial_guess in
+      let eps = max (config.rel_tol * initial_res) config.abs_tol in
+      if sqrt (abs s0.beta) < eps then
+        { final_state: { ...s0, converged: True }, residual_history: [] }
+      else
+        let { state: s1, residual_norm: res1 } = cg_first_step opA eps s0 in
+        if s1.converged || s1.it >= config.max_it then
+          { final_state: s1, residual_history: [res1] }
+        else
+          let { final_state, trajectory } =
+            iterate_while_with_prev s1 s0.beta
+              (\(s, _) -> s.it < config.max_it && not s.converged)
+              (\(s, beta_prev) ->
+                let r = cg_steady_step opA eps beta_prev s in
+                (r, s.beta)) in
+          { final_state, residual_history: [res1] ++ trajectory.map(\t -> t.residual_norm) }
+
+**What this CG rotation hides.** (a) The `beta_prev` state field is gone — the steady-state schema is one scalar lighter, and a reader of `CgState<S>` sees only fields with a non-trivial role at *every* step. (b) The `if s.it == 0` branch is gone from the step body — both `cg_first_step` and `cg_steady_step` are straight-line, each named primitive firing exactly once per call. (c) The `0/0`-avoidance precondition moves from a runtime branch to a static call-site obligation: `cg_steady_step` requires `beta_prev > 0`, automatically satisfied by construction (only ever called with `s.beta` from a strictly-preceding step, and `beta > 0` is the `CheckDot` precondition on SPD systems).
+
+**Equivalence to Form A (v0.4↔v0.5).** The two CG forms are observationally identical for any input `(opA, b, x_initial, initial_guess, config)`: (1) both test `sqrt|beta_0| < eps` before any work — v0.5 as an outer `if`, v0.4 folded into the first `cg_step` via the `converged` field; (2) the first iteration runs `p' = s.r` in both (v0.4 via the `if` branch, v0.5 directly), with identical remaining body; (3) subsequent iterations run the same `axpby` (v0.4 reading `s.beta_prev` from state, v0.5 receiving `beta_prev` as a closure parameter), with identical `Ap`, `alpha`, `x'`, `r'`, `beta'`, `res'`; (4) `residual_history` is element-for-element identical. The projection `forget_beta_prev : CgState_v04<S> → CgState_v05<S>` that drops `beta_prev` makes the equivalence formal — `cg_step` and the v0.5 split commute through it (modulo the closure-vs-field choice of where `beta_prev` lives). This is the CG witness of the L4 non-law catalogued in §"Algebraic laws" (form-equivalence-under-monad-laws): Form A and Form B are trajectory-identical but NOT related by a monad-law β-reduction — the rotation drops a `Krylov` field and threads a closure argument.
+
+**Variant: pcg under v0.5.** The preconditioned variant rotates symmetrically. `pcg_first_step` uses `p' = s.z` (since `s.z = B·s.r = B·b` on iteration 0); `pcg_steady_step` is branch-free. The `forget_z : PCgState → CgState` equivalence composes with `forget_beta_prev` to give the four-way equivalence between `pcg_*` Identity-instantiated and `cg_*` un-`z`'d.
+
+**L0 ground.** Both CG forms render the *same* Palace CG body — the v0.5 unrolling is a purely L4-level rearrangement and does not change the L0/L1/L2/L3 forms (Palace's source keeps the `if (!it)` branch inside the loop). The terminal L0 home is [`ksp-solve-mutation-rotation`](../L1-L0/ksp-solve-mutation-rotation.md) §"Sub-pattern B — inner CG body" (`CgSolver<OperType>::Mult`, `palace/linalg/iterative.cpp:360-486`): the per-step for-loop at `iterative.cpp:427-464` carries the Form-A first-iteration branch `if (!it) { p = z; } else { AXPBY(1.0, z, beta/beta_prev, p); }` (`iterative.cpp:434-441`) that v0.5 hoists out, the operator apply `A->Mult(p, z)` (`iterative.cpp:443`), the `alpha`/`x.Add`/`r.Add` updates (`iterative.cpp:446-449`), the `beta_prev = beta` carry that v0.5 moves into the closure (`iterative.cpp:451`), and the `beta`/`res` readout (`iterative.cpp:460-462`).
 
 Three placements are made structural by the L4 typing that are merely conventional at L2:
 
@@ -149,7 +232,7 @@ The variant-axis count of six matches the L2 entry exactly. No new axes are intr
 
 ## Status
 
-`firm` — typed-wrapper signature is the canonical fold-body shape for the `solve-monad`'s inner driver; algebraic laws are inherited from the L2 entry (with state-stratum independence sharpened by the typing) and reduced to one non-trivial property (the demand-pruning law) plus two structural invariants; non-laws are catalogued explicitly, including the form-equivalence non-law for Form A vs Form B; variant-axis profile is closed at six, inherited unchanged from L2. The pattern is well-attested at the L4 level across four slices' explicit L4 sections (CG L4 Form A `cg_step` and L4-v0.5 Form B `cg_first_step`/`cg_steady_step` — lifted into the firm `book/src/L2/krylov-step.md` §Evidence registry, line 138, per the cycle-009 corpus reduction; the Form B v0.5 derivation remains live in the reduced slice at cg.md:27-141; gmres.md:459-471; arnoldi_step.md:285-298), and the slot is the consumed-by surface for the L4 concepts `solve-monad`, `state-stratification`, and `first-iteration-unrolling`, which previously referenced "step" without a vocabulary anchor.
+`firm` — typed-wrapper signature is the canonical fold-body shape for the `solve-monad`'s inner driver; algebraic laws are inherited from the L2 entry (with state-stratum independence sharpened by the typing) and reduced to one non-trivial property (the demand-pruning law) plus two structural invariants; non-laws are catalogued explicitly, including the form-equivalence non-law for Form A vs Form B; variant-axis profile is closed at six, inherited unchanged from L2. The pattern is well-attested at the L4 level across four slices' explicit L4 sections (CG L4 Form A `cg_step` and L4-v0.5 Form B `cg_first_step`/`cg_steady_step` — lifted into the firm `book/src/L2/krylov-step.md` §Evidence registry, line 138, per the cycle-009 corpus reduction, with the CG-concrete Form B v0.5 bodies now worked inline in §Semantics §"Worked example — CG Form B"; gmres.md:459-471; arnoldi_step.md:285-298), and the slot is the consumed-by surface for the L4 concepts `solve-monad`, `state-stratification`, and `first-iteration-unrolling`, which previously referenced "step" without a vocabulary anchor.
 
 ## L4 vs L2 distinction
 
@@ -168,7 +251,7 @@ The two layers' entries share variant-axis count, primitive-call count, and the 
 - `book/src/concepts/convergence-test.md:7-26` — the `Convergence` value and its `build_convergence(op, b, β, prior_initial_res) -> Convergence` constructor; placement discipline (convergence-test lives in the outer driver, not the kernel) cited from here.
 - Four explicit L4 slice sections in the corpus (cited transitively via the L2 entry, not re-anchored here):
   - CG L4 `cg_step` (Form A) — lifted into firm `book/src/L2/krylov-step.md` §Evidence (line 138, the narrative registry carrying the CG L4 Form A step-body instance) per the cycle-009 corpus reduction; the firm `book/src/L4/krylov-step.md` Form A typing (this entry) is the L4 supersessor named in the reduced slice's stub header. (Original pre-reduction range: `cg.md:172-188`.)
-  - CG L4 v0.5 `cg_first_step` / `cg_steady_step` split (Form B) — the unique material RETAINED live in the reduced slice at `book/src/spec/slices/cg.md:27-141` (`cg_first_step` at `cg.md:52`, `cg_steady_step` at `cg.md:69`, the `iterate_while_with_prev` driver at `cg.md:95-108`); the canonical evidence for `concepts/first-iteration-unrolling.md`, also registered in firm `book/src/L2/krylov-step.md` §Evidence (line 138). (Original pre-reduction range: `cg.md:393-425`.)
+  - CG L4 v0.5 `cg_first_step` / `cg_steady_step` split (Form B) — worked inline in this chapter's §Semantics §"Worked example — CG Form B (v0.5 first-iteration-unrolling)"; the canonical CG instantiation of the abstract rotation in `concepts/first-iteration-unrolling.md`, also registered in firm `book/src/L2/krylov-step.md` §Evidence (line 138). The L0 ground is the same CG body as Form A: [`ksp-solve-mutation-rotation`](../L1-L0/ksp-solve-mutation-rotation.md) §"Sub-pattern B" (`palace/linalg/iterative.cpp:360-486`; per-step for-loop `:427-464`; first-iteration branch `:434-441`). (This material was previously retained live in the reduced slice at `book/src/spec/slices/cg.md:27-141`, absorbed here in cycle-099 so the slice is clear-to-delete; original pre-reduction range was `cg.md:393-425`.)
   - `book/src/spec/slices/gmres.md:459-471` — GMRES L4 `inner_loop` body (Form A; Arnoldi-step + LS-update + counter-increment + convergence-test).
   - `book/src/spec/slices/arnoldi_step.md:285-298` — L4 `arnoldiStep` monadic form (Form A).
 - Cross-cutter motivating report: `reports/2026-05-27T025354Z-cross-layer-cross-cutter-krylov-step-placement/CYCLE.md` — the dual-placement recommendation this entry implements.

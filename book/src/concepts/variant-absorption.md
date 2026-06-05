@@ -199,7 +199,7 @@ check #9 flags this.
 
 ## Slices that use this methodology
 
-- [cg](../spec/slices/cg.md) — three axes all absorbed parametrically.
-- [gmres](../spec/slices/gmres.md) — six axes; side absorbed via
+- [`krylov-step` (CG instance)](../L2/krylov-step.md) — three axes all absorbed parametrically.
+- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — six axes; side absorbed via
   constructed-operator, others parametric or via primitive-contract
   (orthogonalization variant).

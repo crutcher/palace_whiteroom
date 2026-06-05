@@ -1583,3 +1583,67 @@ resolved_by: integrator-per-report (cycle-098 D3 — lifter domain_energy_reduce
 RESOLVED-BY-RE-ANCHOR. The stale `:313-316` parenthetical (which asserted `gram_reduce` "STAYS rough-in this same cycle because its off-diagonal folded primitive `bilinear-form` is still rough-in") was re-anchored cycle-098 (D3, report `2026-06-05T002531Z-lifter-domain-energy-reduce-313-gram-reduce-landclean`) to the post-c095 reality verified on disk this invocation: `book/src/L4/gram_reduce.md:4-5` is `firmness: firm` / `rank: firm` AND `book/src/L1/bilinear-form.md:4-5` is `firmness: firm` / `rank: firm` (the cycle-095 firm-flip-and-cascade wave). Both reductions now rest entirely on firm folded primitives; the falsified maturity assertion is dropped and the legitimate `domain_energy_reduce`-vs-`gram_reduce` distinction is preserved, recast as the permanent rank-1-vs-rank-2 / single-field-vs-family-PAIR SHAPE distinction (the c074 D6 do-NOT-over-unify guard), consistent with the file's existing `:133-139` / `:181-183` / `:222-223`. No `rank:`/`edges:` frontmatter flip needed (`domain_energy_reduce` already `rank: firm` resting on two firm `depends-on` deps; rank invariant holds unchanged). Whole-file grep confirmed `:313-316` was the ONLY stale gram_reduce/bilinear-form maturity assertion. The whole-book `bilinear-form`-c095-firm-flip residue-class sweep flagged in the original OQ remains a separate cross-file land-clean for the c095 gram_reduce flip's own lineage (NOT in this within-file dispatch's scope) — noted for the batch-31 \xC2\xA7Intake\xE2\x86\x92plan migration. Record for the meta-phase close.
 
 ---
+
+## cg-slice-27to141-fully-homed-clear-to-delete-and-evidence-pointer-residue-class-B
+
+opened_at: cycle-099
+opened_by: integrator-per-report (promoting cycle-099 D1 harvester Open questions)
+
+The `cg` Phase-1 slice's one genuinely-unlifted live datum — `book/src/spec/slices/cg.md:27-141`, the CG-concrete v0.5 first-iteration-unrolling worked instance (`cg_first_step` / `cg_steady_step` typed bodies, the `iterate_while_with_prev` driver, the `forget_beta_prev` projection, the v0.4↔v0.5 four-clause observational equivalence, and the `pcg`-variant) — is **absorbed inline** into `book/src/L4/krylov-step.md` §Semantics §"Worked example — CG Form B (v0.5 first-iteration-unrolling)" by cycle-099 D1 (this dispatch). Status `firm` under the firm-on-positive-structure escape (syntactic L4-self-rotation identities on the fully-specified `CgSolver::Mult` read closure, `iterative.cpp:360-486`; no convergence-semantics claim gated). The three former dangling `cg.md:*` slice-pointers (§Semantics line 82, §Status line 152, §Evidence line 171) are re-anchored to the inline worked-example home + the L0 terminal home `book/src/L1-L0/ksp-solve-mutation-rotation.md` §"Sub-pattern B" (on-disk status `rough-in`; the link is a navigational `reference`-class edge, the L0 ground is the rank-exempt `cites-evidence` edge to `iterative.cpp:360-486`, so the chapter's rank stays 0 / firm).
+
+**`book/src/spec/slices/cg.md:27-141` is now FULLY HOMED and clear-to-delete — consumed by D2 this same cycle (cycle-099).** D2 owns the slice delete + the SUMMARY/spec-index repoint. The remaining slice content above `:27` is the cycle-009 stub header plus four still-pending working-note OQs at `cg.md:18-23` (initial-residual quirk, CheckDot per-call-site, unpreconditioned-as-primary modeling, unit-test coverage gap) — scaffolding-OQ targets, NOT book-chapter content, so they do not block deletion; they should be migrated here by D2/the integrator before the slice file is removed.
+
+**Class-B plain-text-mention residue (batch-31 meta-phase tracked).** After D2 deletes `cg.md` this cycle, the §Evidence plain-text pointers in `book/src/L4/krylov-step.md` to the *other two* krylov-trio slices — `gmres.md:459-471` (line 172) and `arnoldi_step.md:285-298` (line 173) — remain valid on disk today but are themselves on the P2 deletion campaign's path; they will become stale-but-harmless plain-text provenance after their own deletions land. These are plain-text `file:line` mentions (NOT live `[link]`s, so `linkcheck2` does not error on them) — the known Class-B plain-text-mention residue of the krylov-trio sub-campaign, recorded for the batch-31 §Intake→plan migration, not a blocker. Likewise the historical `cg.md:393-425` OOB provenance parenthetical (a deliberate pre-reduction breadcrumb; git history is the record) points at the to-be-deleted file but is a plain-text note, not a live cross-reference.
+
+---
+## krylov-trio-slice-corpus-3to0-campaign-complete-retire-carveout-and-skill
+
+opened_at: cycle-099
+opened_by: integrator-per-report (promoting cycle-099 D2 harvester Open questions)
+
+**Campaign COMPLETE — Phase-1 slice corpus 3→0.** Cycle-099 D2 (report `2026-06-05T010427Z-harvester-krylov-trio-hub-repoint-delete`) landed the krylov-trio completion of the graded-stack P2 slice-deletion campaign: deleted the last three slice files `book/src/spec/slices/{cg,gmres,arnoldi_step}.md`, repointed all 25 Class-A inbound markdown links to the firm `L2/krylov-step.md` (+ `L0/ksp-factory-file.md` to the firm L2/L1 homes), dropped the Class-B slice-range evidence parentheticals across the firm krylov hub + the 5 `L4-L3/*` dissolution themes + `L3-L2/krylov-step-body-identity.md` + `L1/orthogonalize.md` + `L1-L0/minres-iteration.md` + `L3/apply_linop.md` + `L4/iterate-while*.md` + `L2/index.md`, reconciled the arnoldi plane-rotation end-bound (`iterative.cpp:73-118 → :73-109`, closing OQ `plane-rotation-givens-l0-citation-range-reconcile` end-bound residue), and removed the `# Phase 1 corpus` SUMMARY Part + `spec/index.md` (option-(a) full removal; `introduction.md:23` inbound link also removed). On-disk verified post-apply: BOTH inbound-link sweeps (`]\(..slices/(cg|gmres|arnoldi_step)\.md` and `]\(..spec/index\.md\)`) return ZERO; `spec/` now holds only empty dirs; graded-stack-lint reports **0 rank violations** (the slices were reachability-GC-unreachable, no `depends-on` inbound edge; rank invariant holds with zero slice nodes). The campaign's BUILD-CRITICAL / mechanical-completion criterion is MET (corpus 3→0).
+
+**Enactment requested of the batch-31 meta-phase:** (a) **retire the `annotated-and-retained` canonical-instance carve-out** (CLAUDE.md §Methodology invariants "Phase 1 corpus reduces as material is lifted") — the graded-stack rank-0 `roadmap_goal` chapter is now the in-discipline replacement; (b) **retire skill `phase-1-slice-reduction-audit`** (no corpus left to audit). These are `.claude/agents/` / CLAUDE.md / skills-dir edits owned by the meta-phase (restart after).
+
+---
+
+## krylov-trio-class-B-plaintext-mention-residue-batch31-cleanup
+
+opened_at: cycle-099
+opened_by: integrator-per-report (promoting cycle-099 D2 harvester Open questions; repairer-added tracked follow-up)
+
+**Build-critical completion is FULL; one residue tracked (NON-build-breaking).** D2's mechanical-completion criterion (the 25 Class-A inbound markdown links + 6 corpus rows repointed/removed, 3 slices deleted, SUMMARY/spec-index removed, rank invariant holds) is met. The earlier report phrasing "all Class-B mentions repointed / FULL completion / no partial" OVERSTATED the Class-B coverage (repairer softened it cycle-099): this dispatch repointed only a SUBSET of the plain-text (non-link) slice-range mentions. **~50 plain-text slice-range evidence-provenance mentions remain** across firm chapters as stale-but-harmless pointers to the now-deleted slices — e.g. 8+ in `L2/krylov-step.md` (`:7`, `:58`, `:69`, `:79`, `:81`, `:86`, `:117`, `:120`, `:121`, `:172`-area), plus `L4/krylov-step.md:105/152/170/171`, `L2-L1/krylov-step-kernel-defusion.md`, and others. Census: `grep -rnE '(cg|gmres|arnoldi_step)\.md:[0-9]' book/src --include='*.md' | grep -vE '\]\('`. Many are deliberate frozen "Original pre-reduction slice ranges" historical narration (same KIND as the `meta-reviews/*` historical-mention convention). **None break the build** — plain text resolves to nothing on deletion; `linkcheck2` does not error on them (verified: both inbound `]\(..)` link sweeps return zero post-apply). The batch-31 meta-phase §Intake→plan migration should MIGRATE this and decide: **(a)** a dedicated Class-B plain-text-mention cleanup pass into batch-32 (repoint each to its firm home), or **(b)** accept-as-historical-provenance (the `meta-reviews/*` frozen-historical-mention convention), possibly per-mention. Either way the build stays green; does NOT gate cycle-099 completion.
+
+---
+
+## bilinear-form-c095-residue-sweep-clean-noop-and-L2-index-89-confirmed-non-stale
+opened_at: cycle-099
+opened_by: lifter
+
+The cycle-099 D3 whole-book residue sweep for the cycle-095 `bilinear-form` firm-flip
+cascade (hunting any remaining "`gram_reduce`/`bilinear-form` stays rough-in" narration in
+NON-krylov-hub files) found **ZERO genuinely-stale instances** — a verified clean no-op,
+landed with no artifact edits. All 32 surviving `gram_reduce`/`bilinear-form` ⨯ `rough-in`
+co-mentions (across 12 files) are correct post-cascade narration: promotion/discharge
+provenance, deliberately-historical worked-example/arc-record in the methodology chapters
+(`resolution-ladder.md`, `goal-flow.md` — history-bearing by design), immutable OQ-slug
+identifiers (`...-l1-rough-ins`), the FE-assembly `bilinear-form` slug-collision, or a
+`rough-in` about a different operator. **The c098-D3 `domain_energy_reduce.md:313` fix
+appears to have been the last genuinely-stale instance.**
+
+**`book/src/L2/index.md:89` — RESOLVED as NON-stale (no action needed).** D3 was
+byte-disjoint-barred from inspecting this line (D2 owned `L2/index.md` this cycle) and
+flagged it for hub-owner verification. The critic confirmed out-of-band, and the
+per-report integrator re-confirmed on disk this invocation: line 89 reads
+"`bilinear-form` (M-weighted member, **firm** — promoted cycle-095)" — correct
+post-cascade narration of the now-firm `L1/bilinear-form` as the M-weighted leaf of the
+L2 `inner_product` fold. D2's apply this cycle did NOT touch :89 (D2 edited rows :129 +
+:131-134); the line was already correct. **No stale maturity assertion exists; no edit
+needed.** Recorded for the batch-31 meta-phase so the resolution is visible and the line
+is not re-flagged by a future residue-sweep.
+
+**For the meta-phase:** the c095 firm-flip cascade's cross-file prose residue is now
+fully discharged book-wide — this OQ records the closure (informational; no remaining
+action).
+
+---

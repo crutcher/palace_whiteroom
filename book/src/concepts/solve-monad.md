@@ -36,7 +36,7 @@ The rule of thumb: if the action reads or writes `SimState`, it's in the monad; 
 
 ## Used by
 
-- [slice: gmres §L4](../spec/slices/gmres.md) — restarted GMRES / FGMRES coordination over `SimState`, with `Krylov` threaded as a `let`-bound bundle inside each `restart_cycle`.
+- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — restarted GMRES / FGMRES coordination over `SimState`, with `Krylov` threaded as a `let`-bound bundle inside each `restart_cycle`.
 
 ## See also
 

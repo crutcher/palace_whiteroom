@@ -183,10 +183,10 @@ The L3 form is value-thread-isomorphic to the L1 form on the primitive's signatu
 
 Phase-1 slice instances where `apply_linop` appears as the per-step matvec (transitive via L1; instantiations of the L3 form's consumption pattern):
 
-- `book/src/spec/slices/cg.md:58, :75` — CG L4 v0.5 step bodies (`cg_first_step` and `cg_steady_step`); each has `let Ap = apply opA p'` as the per-step matvec call. (Note: cg.md is the post-cycle-010-reduction stub form (165 lines); the L1/L2/L3/L4 v0.1-v0.4 content was lifted to firm entries per CLAUDE.md §Methodology invariants "Phase 1 corpus reduces as material is lifted"; the v0.5 first-iteration-unrolling rotation is the unique material retained.)
-- `book/src/spec/slices/gmres.md:459-471` — GMRES L4 `inner_loop` body; `apply_linop` at the Arnoldi-step matvec.
+- CG L4 v0.5 step bodies (`cg_first_step` and `cg_steady_step`; firm-homed at `book/src/L4/krylov-step.md` Form B, cycle-099); each has `let Ap = apply opA p'` as the per-step matvec call. The L0 matvec home is `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern B (`iterative.cpp:360-486`).
+- GMRES `inner_loop` body; `apply_linop` at the Arnoldi-step matvec — firm L0 home `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C (`iterative.cpp:543-705`).
 - `book/src/L4/chebyshev.md` §Semantics `innerStep` — `apply_linop` (`applyLinop op.A d`) in the polynomial-recurrence body (firm cycle-015, absorbing the former `chebyshev.md:354-362` slice §L4).
-- `book/src/spec/slices/arnoldi_step.md:99-109, :146, :158, :197` — Arnoldi step procedure (line 99 `apply_BA : w ← apply_linop(T, V[j])`; line 146 `apply_linop(T, V[j]) — pure functional form`; line 158 cross-cutting prose; line 197 L3-form rendering `w ← apply_linop(T, V[j]) -- field-side, global`); `apply_linop` at the Krylov-basis extension matvec.
+- Arnoldi step procedure — `apply_BA : w ← apply_linop(T, V[j])`, the pure-functional form, and the L3-form rendering `w ← apply_linop(T, V[j])` (field-side, global); `apply_linop` at the Krylov-basis extension matvec. Firm L0 home `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C inner Arnoldi loop (within `iterative.cpp:563-683`).
 
 ## L3 vs L4 distinction
 

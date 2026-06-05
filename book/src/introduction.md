@@ -20,7 +20,6 @@ The stack is a **research artifact**, not a target. It is built per-slice, depth
 
 ## How to navigate
 
-- [Specification → Slice Status](./spec/index.md) — the table of slices and how far each has been pushed up the stack.
 - [Concepts](./concepts/index.md) — shared primitives and abstract concepts referenced across multiple slices.
 - [Design Artifacts](./design/index.md) — methodology drafts that are not the spec itself but inform it. The **L4 calculus strawman** lives here.
 - [Meta-Reviews](./meta-reviews/index.md) — records of out-of-cycle friction-integration passes.

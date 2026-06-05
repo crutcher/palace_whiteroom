@@ -34,7 +34,7 @@ nrm2(x) → ℝ
 
 ## Slices that use this primitive
 
-- [cg](../spec/slices/cg.md) — residual norm `‖r‖` per iteration.
-- [gmres](../spec/slices/gmres.md) — initial residual norm `β`, Arnoldi
+- [`krylov-step` (CG instance)](../L2/krylov-step.md) — residual norm `‖r‖` per iteration.
+- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — initial residual norm `β`, Arnoldi
   sub-diagonal `H[j+1, j] = ‖w‖`, and the incremental `|s[j+1]|`
   residual norm.

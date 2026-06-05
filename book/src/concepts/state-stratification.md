@@ -25,7 +25,7 @@ The split makes two things structural that are merely conventional at L1–L3:
 
 ## Used by
 
-- [slice: gmres §L4](../spec/slices/gmres.md) — `SimState` / `OpParams` / `Krylov` for restarted GMRES and FGMRES.
+- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — `SimState` / `OpParams` / `Krylov` for restarted GMRES and FGMRES.
 - (Pending) other Krylov slices (CG, BiCGStab) will share this template.
 
 ## See also

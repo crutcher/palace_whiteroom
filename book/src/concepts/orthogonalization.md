@@ -91,7 +91,7 @@ are unchanged (the orthogonality contract becomes `⟨w', V[i]⟩_B = 0`).
 
 ## Consumers
 
-- [gmres](../spec/slices/gmres.md) — orthogonalising the new Arnoldi vector against the
+- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — orthogonalising the new Arnoldi vector against the
   existing basis; the variant axis is absorbed at this primitive's contract.
 - The ROM basis-extension path (`romoperator.cpp`).
 - The L2 [`krylov-step`](../L2/krylov-step.md) composition references `orthogonalization` as

@@ -111,8 +111,8 @@ Palace's C++ form is `A.Mult(x, y)` (mutating, overwrites `y`).
 
 ## Slices that use this primitive
 
-- [cg](../spec/slices/cg.md) — single application per inner iteration
+- [`krylov-step` (CG instance)](../L2/krylov-step.md) — single application per inner iteration
   (`A p`).
-- [gmres](../spec/slices/gmres.md) — single application per Arnoldi
+- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — single application per Arnoldi
   step (`A v_j` or `M⁻¹ A v_j` via the constructed-operator
   `apply_BA`).

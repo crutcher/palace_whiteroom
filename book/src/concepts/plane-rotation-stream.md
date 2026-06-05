@@ -35,4 +35,4 @@ This invariance is what makes the stream a candidate shared concept across GMRES
 ## Used in
 
 - [`incremental-least-squares`](../L2/incremental-least-squares.md) — primary (canonical) firm dissection of the stream as it appears in GMRES/FGMRES.
-- [`gmres` slice](../spec/slices/gmres.md) — consumer (per-step driver and back-solve).
+- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — consumer (per-step driver and back-solve).

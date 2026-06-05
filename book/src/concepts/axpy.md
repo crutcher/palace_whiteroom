@@ -35,8 +35,8 @@ axpy(α, x, y)        // y ← α x + y; y mutated
 
 ## Slices that use this primitive
 
-- [cg](../spec/slices/cg.md) — `x ← x + α p` (`x.Add(α, p)`), `r ← r − α A p`
+- [`krylov-step` (CG instance)](../L2/krylov-step.md) — `x ← x + α p` (`x.Add(α, p)`), `r ← r − α A p`
   (`r.Add(-α, Ap)`).
-- [gmres](../spec/slices/gmres.md) — basis-correction sum `x ← x + Σ y_k
+- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — basis-correction sum `x ← x + Σ y_k
   v_k` unfolds at L2 to a sequence of `axpy` calls (or one `gemv`-shaped
   primitive; canonical pinning deferred to L2).

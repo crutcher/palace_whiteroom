@@ -109,7 +109,7 @@ The four per-column sub-steps spelled out in the firm scalar Givens kernel pair
 
 Face 2 is the de-fusion of Face 1's leaf body into the explicit scalar-kernel sequence — exactly what
 the L2 composition surfaces as first-class structure. The scalar kernels' own L0 surfaces
-(`GeneratePlaneRotation` `iterative.cpp:73-118`, `ApplyPlaneRotation` `iterative.cpp:227-241`) are
+(`GeneratePlaneRotation` `iterative.cpp:73-109`, `ApplyPlaneRotation` `iterative.cpp:227-241`) are
 **element-local, no reduction** — their L1>L0 realisation is the leaf-internal in-place 2-vector
 update, deferred to the firm `ls_update_column` L1>L0 theme; **this theme cites the kernel
 pair, it does not re-derive the kernels' LAPACK-style scaling** (the load-bearing finite-precision

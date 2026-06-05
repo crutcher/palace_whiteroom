@@ -1,6 +1,6 @@
 # GMRES (concept)
 
-Generalized Minimum Residual method. See [the gmres slice](../spec/slices/gmres.md) for the L1 mathematical statement and the slice's progression up the layer stack.
+Generalized Minimum Residual method. See the firm [`krylov-step` (GMRES instance)](../L2/krylov-step.md) for the GMRES kernel decomposition and [`ksp_solve`](../L2/ksp_solve.md) for the outer-driver composition; the L0 ground truth is `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C (`GmresSolver<OperType>::Mult`, `iterative.cpp:543-705`).
 
 ## What GMRES is
 

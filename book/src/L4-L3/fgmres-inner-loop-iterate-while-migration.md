@@ -163,7 +163,7 @@ L0 evidence (the FGMRES inner-loop pattern this theme abstracts):
 
 L4 source (the LHS of this rewrite):
 
-- `book/src/spec/slices/gmres.md:594-606` (v0.6 `inner_loop`), `:587-592` (v0.6 `check_stop`), `:551-554` (the `StopReason` sum type), and the appended §L4 v0.7 self-rotation section (`gmres.md:673-747`) — the v0.6 inline tail-recursive `Solve`-monad form that the cycle-020 wave-1 lifter migration re-rendered to the migrated v0.7 form, plus the authored v0.7 form itself. The FGMRES specialisation applies the variant-axis collapses to that migrated form. The LHS is no longer speculative — it is the firm migrated form shared with the now-firm gmres sibling.
+- GMRES v0.6 `inner_loop` / `check_stop` / `StopReason` sum type + the migrated v0.7 form — firm L0 home `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C (`GmresSolver<OperType>::Mult` `iterative.cpp:543-705`; inner Arnoldi loop within `iterative.cpp:563-683`). The FGMRES specialisation applies the variant-axis collapses to that migrated form. The LHS is no longer speculative — it is the firm migrated form shared with the gmres sibling.
 - `book/src/L4/iterate-while.md` §Signature, §Semantics, §"Predicate-on-extras anti-pattern", §Algebraic laws Law 1 — the firm L4 row this theme's LHS invokes. Same usage as the sibling theme.
 - `book/src/L4-L3/gmres-inner-loop-iterate-while-migration.md` (firm, cycle-020 wave-1) — the sibling theme. This dispatch inherits the (now-firm) wrapper-dissolution rotation, the body-identity-in-form claim, the applicability conditions 1–5, and the speculative-helper invocation. The FGMRES specialisation adds applicability condition 6 and the two variant-axis collapses.
 

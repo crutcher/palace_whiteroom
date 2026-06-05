@@ -228,9 +228,9 @@ L4 source (the input form of this lowering):
 
 L3 evidence (the target form of this lowering, including the identity-in-form audit):
 
-- `book/src/L3-L2/krylov-step-body-identity.md` §Verified-against (line 125; lifted from the original `book/src/spec/slices/cg.md:341-362` per the cycle-009 corpus reduction) — the combinator-miner cycle-002 evidence for L2>L3 body identity. Claim 2 ("step body lifts as identity") is the cited support, preserved there with the verbatim claim quote. Re-read for the cycle-006 audit; assertion confirmed.
-- `book/src/spec/slices/arnoldi_step.md:178-213` — L2>L3 lift for arnoldi step. Three uncontested primitives plus the variant-dependent `op.orthog` obstruction (which is localised below the step body, not at the body level). Confirms the audit.
-- `book/src/L3/krylov-step.md` §Algebraic-laws non-lift catalogue (lifted from the original `book/src/spec/slices/cg.md:347-350` Claim 1 per the cycle-009 corpus reduction; `arnoldi_step.md:194-213` remains the valid live anchor) — the negative L3 result for the *outer* loop. Cited for completeness; the outer-loop obstruction is independent of the step-body rotation handled by this theme.
+- `book/src/L3-L2/krylov-step-body-identity.md` §Verified-against (line 125; the terminal firm home of the cycle-002 Claim-2 verbatim quote, lifted there per the cycle-009 corpus reduction) — the combinator-miner cycle-002 evidence for L2>L3 body identity. Claim 2 ("step body lifts as identity") is the cited support, preserved there with the verbatim claim quote. Re-read for the cycle-006 audit; assertion confirmed.
+- Arnoldi step L2>L3 lift — three uncontested primitives plus the variant-dependent `op.orthog` obstruction (localised below the step body, not at the body level). Firm L0 home `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C inner Arnoldi loop; the MGS obstruction firm at [`concepts/sequential-obstruction`](../concepts/sequential-obstruction.md). Confirms the audit.
+- `book/src/L3/krylov-step.md` §Algebraic-laws non-lift catalogue (the cycle-002 Claim-1 negative result, lifted there + into [`concepts/sequential-obstruction`](../concepts/sequential-obstruction.md) per the cycle-009 corpus reduction) — the negative L3 result for the *outer* loop. Cited for completeness; the outer-loop obstruction is independent of the step-body rotation handled by this theme.
 
 L2 sink (the eventual target after L3>L2):
 

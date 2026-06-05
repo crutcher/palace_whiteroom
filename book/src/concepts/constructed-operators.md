@@ -217,8 +217,8 @@ every Arnoldi step, every residual computation, and every correction.
 The [`apply_BA`](./apply_BA.md) constructed operator absorbs the
 three-way choice at solve start; the per-step procedure invokes
 `apply_BA.apply(v_j)` once, getting back `(w, z?)`, and never
-re-inspects `side`. See [gmres slice](../spec/slices/gmres.md).
+re-inspects `side`. See the firm [`krylov-step` (GMRES instance)](../L2/krylov-step.md).
 
 ## Slices that use this methodology
 
-- [gmres](../spec/slices/gmres.md) — preconditioner side via `apply_BA`.
+- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — preconditioner side via `apply_BA`.
