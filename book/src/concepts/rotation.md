@@ -1,3 +1,10 @@
+---
+edges:
+  reference:
+    - concepts/constructed-operators
+    - concepts/variant-absorption
+    - concepts/apply_BA
+---
 # rotation
 
 ## Context

@@ -1,3 +1,10 @@
+---
+edges:
+  reference:
+    - concepts/variant-absorption
+    - concepts/constructed-operators
+    - concepts/solve-monad
+---
 # convergence-test
 
 A *convergence test* in an iterative solver is the predicate that decides, at each step, whether the iterate is good enough to stop. The naive realisation interleaves the predicate's parameters (relative tolerance, absolute tolerance, initial-residual scaling, side-specific rescaling) into the inner loop's control flow — every iteration re-derives `ε` from `op.rel_tol`, `op.abs_tol`, `state.initial_res` and reads `pc_side` to choose what `initial_res` was computed from.

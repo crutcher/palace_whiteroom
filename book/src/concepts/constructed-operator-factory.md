@@ -1,3 +1,13 @@
+---
+edges:
+  reference:
+    - concepts/apply_linop
+    - concepts/constructed-operators
+    - concepts/variant-absorption
+    - concepts/solver-as-operator
+    - concepts/rotation
+    - L4/preconditioning-framework
+---
 # constructed-operator-factory
 
 The L2 primitive that consumes a config record (plus contextual data like FE-space hierarchies) and returns a typed operator that internalises one or more variant axes. The factory call is the **single point** at which the variant is consumed; downstream code sees a uniformly-typed operator and invokes it through [`apply_linop`](./apply_linop.md).

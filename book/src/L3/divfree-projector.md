@@ -6,6 +6,10 @@ edges:
   depends-on:
     - target: L2/divfree-projector
       kind: lowers-to
+    - target: L1/set_subvector_zero
+      kind: uses                        # GROUNDING edge (c107): step-2 essential-BC zeroing `Z_{bdr_eff}(rhs)` IS the set_subvector_zero primitive (divfree.cpp:171-174; §Semantics step 2). The firm L1 operator is the authoritative home; this depends-on gives the firm-but-absorbed set_subvector_zero cluster root-reachability via this (now-grounded) projector.
+    - target: concepts/set_subvector_zero
+      kind: uses                        # the cross-cutting concept page for the same step-2 primitive (the §Dependencies prose pointer, now a typed liveness edge).
   reference:
     - L2-L1/divfree-projector-leaf-identity
 variant_axes:

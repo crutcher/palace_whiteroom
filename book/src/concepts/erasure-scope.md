@@ -1,3 +1,21 @@
+---
+edges:
+  reference:
+    - concepts/sequential-obstruction
+    - concepts/tensor-field-lift
+    - L3-L2/ksp-solve-outer-driver
+    - L3/ksp_solve
+    - L2/ksp_solve
+    - L3-L2/orthogonalize-variant-split
+    - L3/orthogonalize
+    - L2/orthogonalize
+    - L3-L2/chebyshev-nested-recurrence
+    - L3/chebyshev
+    - L2/chebyshev-iteration
+    - L3-L2/eigsolve-opaque-eigen-iteration
+    - L3/eigsolve
+    - L2/eigsolve
+---
 # Concept: erasure-scope
 
 The **erasure scope** of a substantive L3>L2 lowering is *how much* of an operator's iteration view the L3>L2 hop erases. It is the classifying axis of the **substantive / non-identity** L3>L2 themes — the themes where the rotation carries real content because the L3 form names a first-class [`sequential-obstruction`](sequential-obstruction.md) (and, where Palace authors the loop, renders an explicit `iterate_while`-family tail recursion), and the L3>L2 hop **erases the iteration view** so the obstruction survives only as L2-vocabulary non-laws.

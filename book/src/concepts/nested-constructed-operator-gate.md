@@ -1,3 +1,19 @@
+---
+edges:
+  reference:
+    - concepts/constructed-operators
+    - concepts/constructed-operator-factory
+    - concepts/solver-as-operator
+    - concepts/ksp_solve
+    - concepts/variant-absorption
+    - L1/eigsolve
+    - L1/divfree-projector
+    - L1/floquet-correction
+    - L1/jacobi-smoother
+    - L1/chebyshev-smoother
+    - L1/ksp_solve
+    - L1-L0/eigsolve-mutation-rotation
+---
 # nested-constructed-operator-gate
 
 A layer-pattern concept naming the structural shape in which a

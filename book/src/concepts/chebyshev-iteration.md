@@ -1,3 +1,12 @@
+---
+edges:
+  reference:
+    - concepts/apply_linop
+    - concepts/axpy
+    - concepts/scal
+    - concepts/nrm2
+    - concepts/dot
+---
 # Chebyshev iteration
 
 A polynomial iteration for the linear system $A x = b$ (and the closely related polynomial smoother / polynomial preconditioner setting) that, given a containing interval $[\lambda_{\min}, \lambda_{\max}] \supseteq \mathrm{spec}(A)$ for a symmetric positive-definite operator $A$, applies a sequence of three-term recurrence updates such that after $k$ steps the residual polynomial $p_k(A) r_0$ achieves the minimax error reduction over $[\lambda_{\min}, \lambda_{\max}]$.

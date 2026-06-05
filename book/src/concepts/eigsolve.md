@@ -1,3 +1,25 @@
+---
+edges:
+  reference:
+    - L1/eigsolve
+    - L2/eigsolve
+    - L3/eigsolve
+    - L0/eigensolver-wrapper
+    - concepts/ksp_solve
+    - concepts/solver-as-operator
+    - concepts/sequential-obstruction
+    - concepts/constructed-operators
+    - concepts/variant-absorption
+    - concepts/solve-monad
+    - concepts/apply_linop
+    - L1/apply_nonlinear_pencil
+    - L1/nleps_jacobian_action
+    - L1/nleps_eigenvalue_correction
+    - L1/nleps_deflated_residual
+    - L1/nleps_deflated_solve
+    - L1-L0/eigsolve-mutation-rotation
+    - L1-L0/eigsolve-convergence-reason-mapping
+---
 # eigsolve
 
 Cross-cutting concept page for the **generalized-eigenproblem solve** and its

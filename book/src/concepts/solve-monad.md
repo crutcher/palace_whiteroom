@@ -1,3 +1,11 @@
+---
+edges:
+  reference:
+    - concepts/state-stratification
+    - concepts/constructed-operators
+    - concepts/sequential-obstruction
+    - L2/krylov-step
+---
 # solve-monad
 
 At L4, iterative-solve coordination is expressed as a state monad over the [state-stratified](./state-stratification.md) tuple. The monad threads `SimState` through outer / inner loops; ephemeral state (Krylov bundles, preconditioner workspaces) lives *within* a single restart cycle and is passed as plain function arguments / return values inside the monadic action.

@@ -1,3 +1,13 @@
+---
+edges:
+  reference:
+    - concepts/apply_linop
+    - concepts/constructed-operators
+    - concepts/constructed-operator-factory
+    - concepts/variant-absorption
+    - concepts/rotation
+    - L4/preconditioning-framework
+---
 # solver-as-operator
 
 A layer-pattern concept naming the type-level rotation in which an approximate inverse (a *solver*) is declared to inherit from the operator type it inverts. In Palace, `Solver<OperType>` derives from `OperType`, so any `pc : Solver<OperType>` can be substituted wherever an `OperType` is expected.

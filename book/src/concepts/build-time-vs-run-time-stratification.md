@@ -1,3 +1,17 @@
+---
+edges:
+  reference:
+    - concepts/constructed-operator-factory
+    - concepts/finest-level-unwrap
+    - concepts/apply_linop
+    - concepts/axpy
+    - concepts/dot
+    - concepts/solve-monad
+    - concepts/constructed-operators
+    - concepts/variant-absorption
+    - concepts/sequential-obstruction
+    - L4/preconditioning-framework
+---
 # build-time-vs-run-time-stratification
 
 ## Summary

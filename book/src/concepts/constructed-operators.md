@@ -1,3 +1,11 @@
+---
+edges:
+  reference:
+    - concepts/rotation
+    - concepts/variant-absorption
+    - concepts/apply_BA
+    - L2/krylov-step
+---
 # constructed operators
 
 ## Context

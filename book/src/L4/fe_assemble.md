@@ -6,6 +6,8 @@ edges:
   depends-on:
     - target: L4-L3/fe-assemble-fold-dissolution
       kind: lowers-to
+    - target: L4/eliminate_bc
+      kind: absorbed-post-composition   # GROUNDING edge (c107): the models/-level operator construction `fe_assemble` stands in for INTERLEAVES the BC-elimination post-composition into the assembled operator (laplaceoperator.cpp:216-217,252; modeeigensolver.cpp:571,574,608,611). NOT a fold step (separability law 8 stands — eliminate_bc is post-composition, not part of the term fold); this edge records the genuine pipeline-altitude dependency (every driver column reaching fe_assemble's construction also reaches the absorbed BC-elimination), giving the firm-but-absorbed eliminate_bc/dofset cluster root-reachability.
   reference:
     - L4/index
     - concepts/black-box-vs-accelerated-kernels

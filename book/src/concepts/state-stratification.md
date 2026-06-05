@@ -1,3 +1,11 @@
+---
+edges:
+  reference:
+    - concepts/solve-monad
+    - concepts/constructed-operators
+    - concepts/sequential-obstruction
+    - L2/krylov-step
+---
 # state-stratification
 
 At L4, the calculus distinguishes three kinds of state in an iterative solve and types them separately. This stratification is what lets a slice's L4 form be code-like-but-not-runnable while remaining unambiguous about lifetimes, mutability, and dispatch sites.

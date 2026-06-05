@@ -1,3 +1,12 @@
+---
+edges:
+  reference:
+    - L2/krylov-step
+    - concepts/variant-absorption
+    - concepts/rotation
+    - concepts/tensor-field-lift
+    - concepts/sequential-obstruction
+---
 # Derived-view hoisting
 
 *A state-hiding rotation pattern for L4 forms.*

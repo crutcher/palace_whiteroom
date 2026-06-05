@@ -1,3 +1,11 @@
+---
+edges:
+  reference:
+    - concepts/state-stratification
+    - concepts/variant-absorption
+    - concepts/solve-monad
+    - L4/preconditioning-framework
+---
 # capability-typing
 
 ## Summary

@@ -1,3 +1,10 @@
+---
+edges:
+  reference:
+    - L1/ksp_solve
+    - concepts/apply_linop
+    - concepts/constructed-operators
+---
 # ksp_solve
 
 The primitive for **invoking a preconditioned Krylov solver** that was
