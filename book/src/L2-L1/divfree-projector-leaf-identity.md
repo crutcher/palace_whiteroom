@@ -1,3 +1,19 @@
+---
+# Lowering theme (L2>L1). Per graded-stack scheme §5: rank = min(endpoint ranks). Both
+# endpoints (L2 + L1 divfree-projector) are firm (rank 3); so the theme is firm and
+# rank(theme) <= min(endpoints) holds for free.
+rank: firm
+edges:
+  depends-on:
+    - target: L2/divfree-projector
+      kind: lifts-from            # the L2 fusion-rotation floor (LHS)
+    - target: L1/divfree-projector
+      kind: lowers-to             # the L1 mutation-rotation gate (RHS)
+  reference:
+    - L2/ksp_solve                # the inner-solve obstruction carried by reference
+    - L1-L0/divfree-projector-mutation-rotation  # the L1>L0 sibling leg
+---
+
 # divfree-projector-leaf-identity
 
 The L2>L1 lowering theme for the `divfree-projector` constructed-operator gate. The rewrite is

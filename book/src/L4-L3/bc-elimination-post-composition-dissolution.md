@@ -2,11 +2,26 @@
 layer: L4-L3
 theme: bc-elimination-post-composition-dissolution
 firmness: firm
-lhs: book/src/L4/eliminate_bc.md
-rhs:
-  - book/src/L1-L0/fe-operator-assemble-mutation-rotation.md (operator-side deferred-config-then-apply)
-  - book/src/L1/eliminate_rhs.md (RHS-side in-place pooled-scratch loop)
 justification_kind: structural
+# Graded-stack scheme: lowering theme. This theme dissolves the L4 eliminate_bc
+# verb-pair DIRECTLY to its two L1 sources (no interposed L3/eliminate_bc entry —
+# warranted on-disk at :105,:114-121). rank = min(endpoints); both endpoints firm
+# (rank 3) and the L4 source is firm, so the theme is firm. rank(theme) <= min holds.
+rank: firm
+edges:
+  depends-on:
+    - target: L4/eliminate_bc
+      kind: lifts-from            # the L4 source verb-pair this theme lowers (the LHS)
+    - target: L1/eliminate_essential_bc
+      kind: lowers-to             # operator-side: deferred-config-then-apply (:35)
+    - target: L1/eliminate_rhs
+      kind: lowers-to             # RHS-side: in-place pooled-scratch loop (:59-61)
+    - target: L1-L0/fe-operator-assemble-mutation-rotation
+      kind: lowers-to             # the operator-pin L1>L0 half this L4>L3 half composes with
+  reference:
+    - L4/eliminate_bc
+    - L1/essential_dofs           # the DofSet[N] consumed as a given operand (:99-101; own construction theme)
+    - L4-L3/fe-assemble-fold-dissolution   # the assemble-fold sibling theme
 ---
 
 # bc-elimination-post-composition-dissolution

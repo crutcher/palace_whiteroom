@@ -2,10 +2,16 @@
 layer: L1
 operator: eliminate_essential_bc
 firmness: firm
-lowers_to:
-  - L1-L0/fe-operator-assemble-mutation-rotation
-lifts_from: []
-depends_on: []
+rank: firm
+edges:
+  depends-on:
+    - target: L1/essential_dofs
+      kind: uses                  # consumes the DofSet[N] essential_dofs constructs (:70-72)
+    - target: L1-L0/fe-operator-assemble-mutation-rotation
+      kind: lowers-to             # the L1>L0 mutation-rotation home
+  reference:
+    - L1/fe_assemble              # composes AFTER fe_assemble (separable post-composition)
+    - L1/eliminate_rhs            # sibling BC verb (the RHS-lift half of the pair)
 variant_axes:
   - diagonal-policy
   - trial-test-coincidence

@@ -1,3 +1,13 @@
+---
+rank: firm
+kind: primitive
+edges:
+  depends-on: []
+  reference:
+    - concepts/state-stratification
+    - L4/preconditioning-framework
+    - L3/krylov-step
+---
 # counter-update
 
 A small bookkeeping primitive denoting in-place increment of an integer counter held inside a solver-state bundle. Naming it as a distinct L2 primitive separates *iteration counters* (observability) from *iterates* (the mathematical state) so that the L4 monadic state schema can classify the counter cleanly as ephemeral observability rather than algorithmic state.

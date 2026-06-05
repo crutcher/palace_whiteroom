@@ -1,3 +1,23 @@
+---
+# Lowering theme. Per graded-stack scheme §5: rank = min(endpoint ranks). The L1
+# endpoint (essential_dofs) is firm (rank 3); the L0 endpoint is rank-terminal ground
+# truth. So the theme is firm and rank(theme) <= min(endpoints) holds for free.
+rank: firm
+edges:
+  depends-on:
+    - target: L1/essential_dofs
+      kind: lowers-to             # the L1 source construction this theme lowers
+    - target: palace/fem/multigrid.hpp:92-101
+      kind: cites-evidence        # the dbc block in ConstructFiniteElementSpaceHierarchy
+    - target: palace/utils/geodata.hpp:75-96
+      kind: cites-evidence        # mesh::AttrToMarker (Palace-authored marker constructor)
+    - target: palace/fem/multigrid.hpp:99-100
+      kind: cites-evidence        # GetEssentialTrueDofs (MFEM-owned-read-as-given tail)
+  reference:
+    - L1-L0/fe-space-construction-rotation        # sibling construction-lowers/bookkeeping-MFEM-owned split
+    - L1-L0/fe-operator-assemble-mutation-rotation # the BC-elimination consumer theme
+---
+
 # essential-dofs-construction-rotation
 
 **Slug:** `essential-dofs-construction-rotation`

@@ -1,3 +1,26 @@
+---
+layer: L1
+operator: divfree-projector
+firmness: firm
+# Graded-stack scheme: this L1 mutation-rotation gate lowers to its L1>L0 mutation-rotation
+# theme (lowers-to depends-on). Its inner gate is the firm L1 ksp_solve (depends-on). The
+# step constituents (apply_linop, axpy) are depends-on. All firm (rank 3); this node firm
+# (rank 3); well-foundedness holds.
+rank: firm
+edges:
+  depends-on:
+    - target: L1-L0/divfree-projector-mutation-rotation
+      kind: lowers-to             # the L1>L0 mutation-rotation home
+    - L1/ksp_solve                # the inner projected-H1 solve (step 3)
+    - L1/apply_linop              # step-1 WeakDiv apply + step-4 Grad apply
+    - L1/axpy                     # step-4 additive gradient correction
+  reference:
+    - L2/divfree-projector        # the L2 fusion-rotation floor above
+    - concepts/set_subvector_zero # the Z_{bdr_eff} essential-BC zeroing (step 2)
+    - concepts/nested-constructed-operator-gate
+    - concepts/constructed-operators
+---
+
 # divfree-projector
 
 Mutation-lifted divergence-free projector: a pure-functional linear projection

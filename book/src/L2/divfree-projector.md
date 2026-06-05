@@ -1,3 +1,29 @@
+---
+layer: L2
+operator: divfree-projector
+firmness: firm
+# Graded-stack scheme: this L2 fusion-rotation floor lowers to the L1 divfree-projector
+# gate (lowers-to depends-on) AND through the L2>L1 lowering theme (mirrors how L1 ops reach
+# their L1>L0 theme). Its inner gate is the firm L2 ksp_solve (depends-on). Edges to the L3
+# consumer + L1 step-anchors + concepts are navigational references. All depends-on targets
+# firm (rank 3); this node firm (rank 3); well-foundedness holds.
+rank: firm
+edges:
+  depends-on:
+    - target: L1/divfree-projector
+      kind: lowers-to             # the L1 mutation-rotation gate this L2 floor lowers to
+    - target: L2-L1/divfree-projector-leaf-identity
+      kind: lowers-to             # the L2>L1 lowering theme this floor lowers through (mirrors how L1 ops reach their L1>L0 theme)
+    - L2/ksp_solve                # the inner projected-H1 solve (step 3); nested-gate inner gate
+  reference:
+    - L3/divfree-projector        # the L3 consumer this floor parents
+    - L1/apply_linop              # step-1 / step-4 apply (L1 anchor; no L2 chapter)
+    - L1/axpy                     # step-4 accumulate (L1 anchor; no L2 chapter)
+    - concepts/set_subvector_zero
+    - concepts/nested-constructed-operator-gate
+    - concepts/sequential-obstruction
+---
+
 # divfree-projector
 
 The divergence-free Helmholtz-projection **constructed-operator gate** at the fusion-rotation

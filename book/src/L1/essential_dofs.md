@@ -5,10 +5,15 @@ cycle: cycle-066
 layer: L1
 operator: essential_dofs
 firmness: firm
-lowers_to:
-  - L1-L0/essential-dofs-construction-rotation
-lifts_from: []
-depends_on: []
+rank: firm
+edges:
+  depends-on:
+    - target: L1-L0/essential-dofs-construction-rotation
+      kind: lowers-to             # the L1>L0 construction-rotation home
+  reference:
+    - L1/fe_space                 # the FiniteElementSpace[N] the DofSet is built over
+    - L1/eliminate_essential_bc   # consumer of the DofSet[N]
+    - L1/eliminate_rhs            # consumer of the DofSet[N]
 variant_axes:
   - attribute-wildcard
   - per-level-hierarchy-application

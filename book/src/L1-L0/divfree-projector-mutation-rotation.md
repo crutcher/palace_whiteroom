@@ -1,3 +1,23 @@
+---
+# Lowering theme (L1>L0). Per graded-stack scheme §5: rank = min(endpoint ranks). The L1
+# endpoint (divfree-projector) is firm (rank 3); the L0 endpoint is rank-terminal ground
+# truth. So the theme is firm and rank(theme) <= min(endpoints) holds for free.
+rank: firm
+edges:
+  depends-on:
+    - target: L1/divfree-projector
+      kind: lowers-to             # the L1 source gate this theme lowers
+    - target: palace/linalg/divfree.cpp:155-187
+      kind: cites-evidence        # DivFreeSolver<VecType>::Mult — the in-place four-step apply
+    - target: palace/linalg/divfree.cpp:43-152
+      kind: cites-evidence        # the constructor materialising the L1 closure fields
+    - target: palace/linalg/divfree.hpp:55
+      kind: cites-evidence        # `mutable VecType psi, rhs;` — the construction-bound scratch
+  reference:
+    - L1-L0/set-subvector-zero-mutation-rotation  # the step-2 zeroing leaf
+    - L2-L1/divfree-projector-leaf-identity       # the L2>L1 sibling leg
+---
+
 # divfree-projector-mutation-rotation
 
 The mutation rotation for the divergence-free projector apply. Lowers the pure
