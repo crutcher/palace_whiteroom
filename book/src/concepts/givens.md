@@ -1,3 +1,9 @@
+---
+edges:
+  reference:
+    - L2/incremental-least-squares
+---
+
 # givens
 
 Base primitive family for plane (Givens) rotations: a 2×2 unitary applied to a coordinate pair. Used in GMRES to triangularise the Hessenberg matrix one column at a time.

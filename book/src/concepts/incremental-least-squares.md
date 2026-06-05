@@ -1,3 +1,11 @@
+---
+edges:
+  reference:
+    - L1/ls-update-column
+    - concepts/givens
+    - concepts/orthogonalization
+---
+
 # Incremental least-squares update
 
 GMRES (and its flexible / restarted cousins) reduces to a sequence of least-squares problems

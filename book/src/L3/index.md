@@ -1,3 +1,17 @@
+---
+kind: navigational-container (layer index)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L3/blas1-intro
+    - L3/elementwise-intro
+    - L3/operator-apply-intro
+    - L3/smoother-intro
+    - L3/solver-caps-intro
+---
+
 # L3 — Global tensor-field operations
 
 L2 algebraic decompositions re-expressed as global tensor-field / convolution-over-space operations: whole-tensor ops, no element loops. The **iteration rotation** layer.

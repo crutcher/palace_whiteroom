@@ -1,3 +1,15 @@
+---
+edges:
+  reference:
+    - L2/krylov-step
+    - L2/ksp_solve
+    - L1-L0/ksp-solve-mutation-rotation
+    - concepts/orthogonalization
+    - concepts/apply_linop
+    - concepts/variant-absorption
+    - concepts/constructed-operators
+---
+
 # GMRES (concept)
 
 Generalized Minimum Residual method. See the firm [`krylov-step` (GMRES instance)](../L2/krylov-step.md) for the GMRES kernel decomposition and [`ksp_solve`](../L2/ksp_solve.md) for the outer-driver composition; the L0 ground truth is `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C (`GmresSolver<OperType>::Mult`, `iterative.cpp:543-705`).

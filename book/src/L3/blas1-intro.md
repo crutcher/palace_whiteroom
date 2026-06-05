@@ -1,3 +1,20 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L3/axpby
+    - L3/axpbypcz
+    - L3/axpy
+    - L3/dot
+    - L3/inner_product
+    - L3/linear_combination
+    - L3/nrm2
+    - L3/scal
+---
+
 # BLAS-1 vocabulary (L3)
 
 The closed BLAS-1 cohort at L3: whole-tensor linear-update and reduction primitives, all element-local or parallel-clean in the field axis `N` — the **obstruction-free end** of the L3 obstruction-profile spectrum (`index.md` §Semantics).

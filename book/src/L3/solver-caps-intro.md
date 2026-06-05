@@ -1,3 +1,17 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L3/eigsolve
+    - L3/fold_solve
+    - L3/krylov-step
+    - L3/ksp_solve
+    - L3/orthogonalize
+---
+
 # Solver capabilities & field transitions (L3)
 
 The step-kernel / driver-fold cohort — **field transitions** expressed as `state' = f(state, params)` over a single algorithmic step, plus the outer-driver folds that thread them. This cohort carries the richest part of the L3 obstruction-profile spectrum (`index.md` §Semantics): the four `partial-obstruction` operators and the obstruction-authoring drivers live here.

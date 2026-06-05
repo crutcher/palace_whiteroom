@@ -1,3 +1,10 @@
+---
+edges:
+  reference:
+    - L1/scal                      # authoritative operator entry (definition)
+    - L2/krylov-step               # use-site cross-link (basis normalization / search-dir rescale)
+---
+
 # scal
 
 Base primitive: `x ← α · x` — scalar multiplication of a vector in place.

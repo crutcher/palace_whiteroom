@@ -1,3 +1,9 @@
+---
+edges:
+  reference:
+    - concepts/orthogonalization   # primary use-site (CGS/CGS2 basis correction)
+---
+
 # gemv_basis
 
 **Primitive.** `gemv_basis(w, alpha, V[0..m-1], H[0..m-1]) → w'`

@@ -1,3 +1,9 @@
+---
+edges:
+  reference:
+    - L1/elementwise_product       # authoritative operator entry (definition)
+---
+
 # elementwise_product
 
 Base primitive: `y ← x ⊙ z` where `⊙` denotes elementwise (Hadamard) product of two vectors of the same length. The result is the vector `[x_0·z_0, x_1·z_1, …, x_{n-1}·z_{n-1}]`.

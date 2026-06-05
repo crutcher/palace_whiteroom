@@ -1,3 +1,17 @@
+---
+kind: navigational-container (layer index)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L2/step-kernels-intro
+    - L2/folds-intro
+    - L2/fold-family-stubs-intro
+    - L2/named-compositions-intro
+    - L2/elementwise-gate-floors-intro
+---
+
 # L2 — Algebraic decompositions
 
 The canonical algebraic decomposition: each operation written as composition of base tensor / operator / quadrature primitives, with HPC/SIMD optimization tricks **unfolded back into the base algebras**. The **fusion rotation** layer.

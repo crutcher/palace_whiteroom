@@ -1,3 +1,10 @@
+---
+edges:
+  reference:
+    - concepts/constructed-operators  # parent concept (apply_BA IS a constructed operator)
+    - L2/krylov-step               # use-site (per-Arnoldi-step operator, absorbs side/flexible)
+---
+
 # Concept: `apply_BA` (preconditioner-side constructed operator)
 
 The per-Arnoldi-step constructed operator for preconditioned Krylov

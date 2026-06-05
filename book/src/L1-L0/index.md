@@ -1,3 +1,15 @@
+---
+kind: navigational-container (lowering index)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L1-L0/mutation-rotation-intro
+    - L1-L0/construction-rotation-intro
+    - L1-L0/obstruction-intro
+---
+
 # L1 > L0 — Lowering layer
 
 The transformation from L1 (mutation-lifted forms) to L0 (cited Palace source ranges). Batched by **themes**.

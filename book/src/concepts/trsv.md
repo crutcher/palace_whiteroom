@@ -1,3 +1,10 @@
+---
+edges:
+  reference: []                    # no book home: L1/trsv does not exist; the back-solve loop
+                                   # (iterative.cpp:669-706) is an L0 source citation, not a book node.
+                                   # Non-node pointer page; no outbound book edges.
+---
+
 # trsv
 
 Base primitive: triangular solve `T · y = b` for a triangular matrix `T` and conforming vectors `b`, `y`. The BLAS-2 routine `?trsv`.

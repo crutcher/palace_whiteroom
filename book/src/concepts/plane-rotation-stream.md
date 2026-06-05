@@ -1,3 +1,13 @@
+---
+edges:
+  reference:
+    - concepts/givens_apply
+    - concepts/givens_generate
+    - concepts/sequential-obstruction
+    - L2/incremental-least-squares
+    - L2/krylov-step
+---
+
 # Plane-rotation stream
 
 A **plane-rotation stream** is the sequential per-step generation and application of Givens rotations against an incrementally-arriving upper-Hessenberg (or upper-bidiagonal) column, with the rotation stream itself stored as paired $(c, s)$ arrays rather than as an explicit unitary factor.

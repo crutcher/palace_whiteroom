@@ -1,3 +1,18 @@
+---
+kind: navigational-container (lowering index)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L3-L2/chebyshev-nested-recurrence
+    - L3-L2/eigsolve-opaque-eigen-iteration
+    - L3-L2/fold-solve-time-step-body
+    - L3-L2/krylov-step-body-identity
+    - L3-L2/ksp-solve-outer-driver
+    - L3-L2/orthogonalize-variant-split
+---
+
 # L3 > L2 — Lowering layer
 
 The transformation from L3 (global tensor-field operations) to L2 (algebraic decompositions). Batched by **themes**.

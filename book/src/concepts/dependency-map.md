@@ -1,3 +1,15 @@
+---
+kind: navigational-container (concept dependency-map; derived view)
+# Navigational container / meta-page about the construction, NOT a DAG node:
+# no `rank:`. This page is a DERIVED human-readable mirror of the per-chapter
+# `edges:` frontmatter (scheme §4(b)) — the authoritative typed edges live on the
+# concept pages themselves; this map may lag, the per-page blocks win on drift.
+# Its own `edges:` are `reference`-only to the concept pages it visualizes.
+edges:
+  reference:
+    - concepts/index
+---
+
 # Concept dependency map
 
 Dependency map of the concept pages in `book/src/concepts/`. Maintained by the integrator when a `layer-intro-author`
@@ -12,12 +24,25 @@ The map serves two purposes:
   `constructed-operators`, `sequential-obstruction`) accumulate from cross-cycle friction integration. Reading the map
   answers "what methodology tools does the pipeline have for handling cross-cutting concerns?"
 
-**Edge convention** (light typing; the meta-phase-owned graded-stack full typing pass is authoritative):
+**Edge convention** (graded-stack typed — re-derived cycle-103 P1 against the per-page `edges:` frontmatter,
+reconciling the c101 LIGHT in-prose typing pass; the **per-chapter `edges:` blocks are authoritative**, this map is the
+derived mirror, scheme §2/§4(b)):
 
-- A solid edge `A --> B` is a **`depends-on`** edge — concept `A` is *defined in terms of* concept `B` (B is the
-  more-primitive dependency). Every node is an on-disk page (`book/src/concepts/<name>.md` exists).
-- An edge annotated `-.->|ref|` is a **`reference`** (navigational see-also) edge — `A` mentions `B` for orientation but
-  is not defined in terms of it.
+- A dashed edge `A -.->|ref| B` is a **`reference`** (navigational see-also) edge — `A` mentions/points-at `B` for
+  orientation, but does not *rest on* it in the well-foundedness sense (constrains no rank, carries no liveness).
+- A solid edge `A --> B` is a **`depends-on`** edge — blocking: `A`'s rank is bounded by `B`'s, and `B` is kept live by
+  `A`'s reachability.
+
+**The load-bearing typing fact (re-derived this pass).** Per the WAVE-1 typed-edge campaign (D1/D2/D3): a concept page
+that is a **narrative-pointer / methodology / layer-pattern** page sits **outside the subject DAG** (scheme §2d, §5) —
+it is NOT a ranked node, and **every edge it emits is `reference`** (it points the reader at the firm L_n home; the
+blocking rank flows the OTHER way, carried by that L_n entry's own `depends-on` block, not by the concept page). So the
+overwhelming majority of edges below are `-.->|ref|`. The **only** concept pages that are DAG nodes are the
+**`record` Kind** pages (`config-record`, `dofset`, `krylov`, `op-params`, `sim-state`, `step-outputs`, `prev-carry`,
+`solve-result`); a record page is a leaf whose only **`depends-on`** edges are `kind: cites-evidence` edges to its raw
+L0 backing struct (`palace/...:lines`) — those targets are OFF this concept-graph (L0 source, not concept pages), so a
+record node appears here as a **leaf** that layer-pattern pages `-.->|ref|` into. (The c101 map drew these relations as
+solid `-->`; that over-asserted blocking dependence among non-node pages — the reconciliation re-types them `ref`.)
 
 Every node below corresponds to an on-disk concept page. The forward-projection `:::planned` machinery (roadmap-slice
 markers) was retired with the Phase-1 slice corpus (deleted cycles 097/098/099); planned/speculative vocabulary now
@@ -29,38 +54,42 @@ concepts not yet stable enough for the book.
 
 Methodology primitives applicable across all layers. Extracted from cross-cycle friction during meta-reviews.
 
+All edges below are `reference` (`-.->|ref|`): every node is a methodology /
+layer-pattern concept page — outside the subject DAG (scheme §2d/§5), so it
+points-at its peers/primitives but does not `depends-on` them.
+
 ```mermaid
 graph BT
-  variant-absorption --> rotation
-  constructed-operators --> rotation
-  constructed-operators --> variant-absorption
-  sequential-obstruction --> rotation
-  sequential-obstruction --> tensor-field-lift
-  state-stratification --> variant-absorption
-  state-stratification --> constructed-operators
-  state-stratification --> sequential-obstruction
-  solve-monad --> state-stratification
-  solve-monad --> sequential-obstruction
-  solve-monad --> constructed-operators
-  solve-monad --> variant-absorption
-  derived-view-hoisting --> rotation
-  derived-view-hoisting --> solve-monad
-  negative-result-slice --> sequential-obstruction
-  negative-result-slice --> variant-absorption
-  build-time-vs-run-time-stratification --> constructed-operators
-  build-time-vs-run-time-stratification --> variant-absorption
-  build-time-vs-run-time-stratification --> solve-monad
-  build-time-vs-run-time-stratification --> sequential-obstruction
-  first-iteration-unrolling --> rotation
-  first-iteration-unrolling --> derived-view-hoisting
-  apply_BA --> constructed-operators
-  capability-typing --> state-stratification
-  capability-typing --> variant-absorption
-  scope-out-obstruction --> variant-absorption
-  scope-out-obstruction --> sequential-obstruction
-  scope-out-obstruction --> rotation
-  scope-out-obstruction --> apply_linop
-  scope-out-obstruction --> ksp_solve
+  variant-absorption -.->|ref| rotation
+  constructed-operators -.->|ref| rotation
+  constructed-operators -.->|ref| variant-absorption
+  sequential-obstruction -.->|ref| rotation
+  sequential-obstruction -.->|ref| tensor-field-lift
+  state-stratification -.->|ref| variant-absorption
+  state-stratification -.->|ref| constructed-operators
+  state-stratification -.->|ref| sequential-obstruction
+  solve-monad -.->|ref| state-stratification
+  solve-monad -.->|ref| sequential-obstruction
+  solve-monad -.->|ref| constructed-operators
+  solve-monad -.->|ref| variant-absorption
+  derived-view-hoisting -.->|ref| rotation
+  derived-view-hoisting -.->|ref| solve-monad
+  negative-result-slice -.->|ref| sequential-obstruction
+  negative-result-slice -.->|ref| variant-absorption
+  build-time-vs-run-time-stratification -.->|ref| constructed-operators
+  build-time-vs-run-time-stratification -.->|ref| variant-absorption
+  build-time-vs-run-time-stratification -.->|ref| solve-monad
+  build-time-vs-run-time-stratification -.->|ref| sequential-obstruction
+  first-iteration-unrolling -.->|ref| rotation
+  first-iteration-unrolling -.->|ref| derived-view-hoisting
+  apply_BA -.->|ref| constructed-operators
+  capability-typing -.->|ref| state-stratification
+  capability-typing -.->|ref| variant-absorption
+  scope-out-obstruction -.->|ref| variant-absorption
+  scope-out-obstruction -.->|ref| sequential-obstruction
+  scope-out-obstruction -.->|ref| rotation
+  scope-out-obstruction -.->|ref| apply_linop
+  scope-out-obstruction -.->|ref| ksp_solve
 ```
 
 - [`rotation`](./rotation.md) — root methodology concept. Defines what counts as a genuine rotation (state hiding / coarser substitution / threaded-state compression) vs. a renaming. Codified meta-review #1; expanded with carry-through clause meta-review #2.
@@ -72,28 +101,34 @@ graph BT
 Leaf tensor/linear-algebra primitives and the algorithm-tier concepts built directly on them. Each node is an on-disk
 concept page; the more-primitive dependency sits at the arrow head (`graph BT`, bottom = most primitive).
 
+All edges below are `reference` (`-.->|ref|`): these are narrative-pointer
+primitive/algorithm concept pages (each points at its authoritative L_n operator
+entry; the blocking rank lives on that L_n entry, not on the concept page). A
+`concepts/nrm2` page does not `depends-on` `concepts/dot` — it *references* it;
+`L1/nrm2`'s own `edges:` block carries any real blocking dependence.
+
 ```mermaid
 graph BT
-  nrm2 --> dot
-  gemv_basis --> axpy
-  apply_BA --> apply_linop
-  givens_apply --> givens
-  givens_generate --> givens
-  orthogonalization --> dot
-  orthogonalization --> axpy
-  orthogonalization --> nrm2
-  incremental-least-squares --> orthogonalization
-  incremental-least-squares --> givens
-  plane-rotation-stream --> givens_generate
-  plane-rotation-stream --> givens_apply
-  plane-rotation-stream --> incremental-least-squares
-  plane-rotation-stream --> trsv
-  chebyshev-iteration --> apply_linop
-  chebyshev-iteration --> axpy
-  chebyshev-iteration --> elementwise-product
-  chebyshev-iteration --> scal
-  finest-level-unwrap --> constructed-operator-factory
-  counter-update --> state-stratification
+  nrm2 -.->|ref| dot
+  gemv_basis -.->|ref| axpy
+  apply_BA -.->|ref| apply_linop
+  givens_apply -.->|ref| givens
+  givens_generate -.->|ref| givens
+  orthogonalization -.->|ref| dot
+  orthogonalization -.->|ref| axpy
+  orthogonalization -.->|ref| nrm2
+  incremental-least-squares -.->|ref| orthogonalization
+  incremental-least-squares -.->|ref| givens
+  plane-rotation-stream -.->|ref| givens_generate
+  plane-rotation-stream -.->|ref| givens_apply
+  plane-rotation-stream -.->|ref| incremental-least-squares
+  plane-rotation-stream -.->|ref| trsv
+  chebyshev-iteration -.->|ref| apply_linop
+  chebyshev-iteration -.->|ref| axpy
+  chebyshev-iteration -.->|ref| elementwise-product
+  chebyshev-iteration -.->|ref| scal
+  finest-level-unwrap -.->|ref| constructed-operator-factory
+  counter-update -.->|ref| state-stratification
 ```
 
 Leaf primitives with no concept-level dependency (referenced widely across the L_n Parts) appear as bare nodes:
@@ -106,41 +141,63 @@ How the layers' rotations are organized (`layer-pattern` Kind) and the record da
 The record pages are leaves here (data-shape definitions); the layer patterns that consume them carry `reference` edges
 to them.
 
+All edges below are `reference` (`-.->|ref|`). The layer-pattern pages point at
+the primitives/peers they organize and at the **record** Kind pages they thread;
+none is a blocking `depends-on` from a concept page (the blocking edges live on
+the operator/feature chapters, scheme §2d/§5). The `record` nodes (`krylov`,
+`op-params`, `sim-state`, `step-outputs`, `prev-carry`, `solve-result`,
+`config-record`, `dofset`) are DAG-node **leaves** here — their only `depends-on`
+edges are `kind: cites-evidence` to raw L0 source (off this concept-graph).
+
 ```mermaid
 graph BT
-  ksp_solve --> apply_linop
-  ksp_solve --> constructed-operators
-  ksp_solve --> solve-monad
-  solver-as-operator --> apply_linop
-  solver-as-operator --> rotation
-  constructed-operator-factory --> constructed-operators
-  constructed-operator-factory --> variant-absorption
-  constructed-operator-factory --> solver-as-operator
-  nested-constructed-operator-gate --> constructed-operator-factory
-  complex-from-real-lift --> solver-as-operator
-  complex-from-real-lift --> variant-absorption
-  eigsolve --> solver-as-operator
-  two_operator_split --> constructed-operators
-  two_operator_split --> solver-as-operator
-  erasure-scope --> constructed-operators
-  derived-view-hoisting --> rotation
-  derived-view-hoisting --> solve-monad
-  first-iteration-unrolling --> rotation
-  first-iteration-unrolling --> derived-view-hoisting
-  tensor-field-lift --> apply_linop
+  ksp_solve -.->|ref| apply_linop
+  ksp_solve -.->|ref| constructed-operators
+  ksp_solve -.->|ref| solve-monad
+  solver-as-operator -.->|ref| apply_linop
+  solver-as-operator -.->|ref| rotation
+  constructed-operator-factory -.->|ref| constructed-operators
+  constructed-operator-factory -.->|ref| variant-absorption
+  constructed-operator-factory -.->|ref| solver-as-operator
+  nested-constructed-operator-gate -.->|ref| constructed-operator-factory
+  complex-from-real-lift -.->|ref| solver-as-operator
+  complex-from-real-lift -.->|ref| variant-absorption
+  eigsolve -.->|ref| solver-as-operator
+  two_operator_split -.->|ref| constructed-operators
+  two_operator_split -.->|ref| solver-as-operator
+  erasure-scope -.->|ref| constructed-operators
+  derived-view-hoisting -.->|ref| rotation
+  derived-view-hoisting -.->|ref| solve-monad
+  first-iteration-unrolling -.->|ref| rotation
+  first-iteration-unrolling -.->|ref| derived-view-hoisting
+  tensor-field-lift -.->|ref| apply_linop
   solve-monad -.->|ref| krylov
   solve-monad -.->|ref| op-params
   solve-monad -.->|ref| sim-state
   ksp_solve -.->|ref| solve-result
   state-stratification -.->|ref| op-params
   state-stratification -.->|ref| sim-state
+  state-stratification -.->|ref| dofset
+  build-time-vs-run-time-stratification -.->|ref| config-record
+  build-time-vs-run-time-stratification -.->|ref| dofset
   first-iteration-unrolling -.->|ref| prev-carry
   krylov-step-record -.->|ref| step-outputs
+  eliminate-bc-consumers -.->|ref| dofset
 ```
 
 The `record` Kind pages (`krylov`, `op-params`, `sim-state`, `step-outputs`, `prev-carry`, `solve-result`,
-`config-record`) are data-shape definitions — they sit at the leaves (a record is *defined by* its fields, it does not
-depend on the operators that thread it). The layer patterns above reference them with `-.->|ref|` edges. The
+`config-record`, `dofset`) are data-shape definitions — they sit at the leaves (a record is *defined by* its fields, it
+does not depend on the operators that thread it). **They are the only concept pages that are graded-stack DAG nodes**
+(scheme §5): each carries `rank:` (typically `firm` once its L0 backing struct is cited) and a `depends-on (kind:
+cites-evidence)` edge to that raw L0 struct — those L0 targets are OFF this concept-graph (they are `palace/...:lines`
+source ranges, not concept pages), so a record node shows here as a leaf the layer-pattern pages `-.->|ref|` into. As of
+cycle-103 only `config-record` (WAVE-1 D2) and `dofset` (WAVE-1 D7) carry the on-disk `rank:`+`edges:` frontmatter; the
+other six record pages are flagged for a follow-on record-page typing tranche (OQ below) — their node-status is settled
+(record ⇒ DAG node), only the on-disk frontmatter is pending. The newest record `dofset` (`DofSet[N]`, the essential-dof
+index set produced by `essential_dofs` and consumed by the `eliminate_bc` verb-pair; see
+[`dofset`](./dofset.md)) is referenced by `state-stratification` (it is part of the readonly BC stratum) and
+`build-time-vs-run-time-stratification` (it sits on the build-time side); `eliminate-bc-consumers` in the graph above is
+the alias for the L1/L4 BC verb-pair that names it (the consumers live in the L_n Parts, not as a concept page). The
 `krylov-step-record` node above is the `state-stratification` worked example's record bundle; it is the on-disk
 `krylov` page (alias kept readable for the edge).
 

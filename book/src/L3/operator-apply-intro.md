@@ -1,3 +1,14 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L3/apply_linop
+    - L3/assemble-diagonal
+---
+
 # Operator application & introspection (L3)
 
 The two opaque-operator-gate primitives at L3 — the matvec gate and its operator-to-data sibling. Both are leaf primitives whose L1 form is L3-native by signature shape (identity-in-form across the L3↔L1 edge); both sit at the **obstruction-free end** of the spectrum (apply / introspect is a single field op, no loop of any kind).

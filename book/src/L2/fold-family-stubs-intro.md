@@ -1,3 +1,18 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L2/axpby
+    - L2/axpbypcz
+    - L2/axpy
+    - L2/dot
+    - L2/nrm2
+    - L2/scal
+---
+
 # L2 fold-family specialization / consumer stubs
 
 The once-standalone same-named BLAS-1 leaves, **reduced to thin specialization / consumer

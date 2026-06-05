@@ -1,3 +1,15 @@
+---
+kind: navigational-container (feature group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - feature/lifecycle.L4
+    - feature/lifecycle.L1
+    - feature/lifecycle.L0
+---
+
 # Feature surfaces — spine ROOT (lifecycle)
 
 The **spine-ROOT** grouping holds the single top-level composition root of the feature spine: the **lifecycle** column. It is a **meta-feature** — the sub-kind whose stage-(2) constituents are *other feature columns* plus driver-agnostic firm vocabulary, NOT vocabulary ops directly. Where a leaf feature column (a driver or an output product) composes firm L4/L1 ops into one user-facing feature, the lifecycle column composes the *leaf columns themselves* — it is the `main` → `BaseSolver` dispatch root under which every per-feature column hangs.

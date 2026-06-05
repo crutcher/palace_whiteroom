@@ -1,3 +1,10 @@
+---
+edges:
+  reference:
+    - L1/nrm2                      # authoritative operator entry (definition)
+    - L2/krylov-step               # use-site cross-link (residual norm / Arnoldi sub-diagonal)
+---
+
 # nrm2
 
 Base primitive: `α ← ‖x‖₂ = √⟨x, x⟩`. The Euclidean norm of a vector.

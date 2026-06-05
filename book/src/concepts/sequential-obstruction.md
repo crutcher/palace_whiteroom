@@ -1,3 +1,15 @@
+---
+edges:
+  reference:
+    - concepts/tensor-field-lift
+    - concepts/rotation
+    - L3/orthogonalize
+    - L1-L0/triangular-solve-obstruction
+    - L1/ls-update-column
+    - concepts/apply_linop
+    - concepts/ksp_solve
+---
+
 # Concept: sequential-obstruction
 
 A *sequential obstruction* is a structural failure of the L2→L3 lift: a sub-procedure whose loop-carried dependency cannot be hidden behind a global tensor-field statement. Recording the obstruction as a first-class L3 result is preferred over forcing a contrived global form.

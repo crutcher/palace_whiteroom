@@ -1,3 +1,27 @@
+---
+kind: navigational-container (feature group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - feature/capacitance.L4
+    - feature/capacitance.L1
+    - feature/capacitance.L0
+    - feature/eigenfrequency-qfactor.L4
+    - feature/eigenfrequency-qfactor.L1
+    - feature/eigenfrequency-qfactor.L0
+    - feature/energy-fields.L4
+    - feature/energy-fields.L1
+    - feature/energy-fields.L0
+    - feature/inductance.L4
+    - feature/inductance.L1
+    - feature/inductance.L0
+    - feature/sparameters.L4
+    - feature/sparameters.L1
+    - feature/sparameters.L0
+---
+
 # Feature surfaces — output-product columns
 
 The **output-product** grouping holds the family-reduction feature columns — the **leaf feature column** sub-kind whose stage-(2) constituents are *vocabulary ops* (the L4 reduction verbs). An output-product column is a distinct shape from a driver column: a driver column *produces* a solution family; an output-product column *consumes* a driver's solution family and *reduces* it to the user-facing physical product. Each column down-links to its reduction verb and cross-links to its producing driver column (the reduction's authoritative home is the verb chapter + this column; the driver column's stage-3 is a thin up-pointer).

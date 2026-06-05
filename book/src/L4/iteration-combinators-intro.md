@@ -1,3 +1,16 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L4/chebyshev
+    - L4/iterate-while
+    - L4/iterate-while-with-prev
+    - L4/krylov-step
+---
+
 # L4 — Iteration & step combinators
 
 The iteration-structural vocabulary at L4: the value-threaded loop combinators and the typed-wrapper step kernels that fold inside them. Every iterative algorithm at L4 reduces to one or more of these folds.

@@ -1,3 +1,10 @@
+---
+edges:
+  reference:
+    - L1/axpy                      # authoritative operator entry (definition)
+    - L2/krylov-step               # use-site cross-link (Krylov update axpy chains)
+---
+
 # axpy
 
 Base primitive: `y ← α·x + y` for a scalar `α` and conforming vectors `x`, `y`. The BLAS-1 staple. In-place on `y`.

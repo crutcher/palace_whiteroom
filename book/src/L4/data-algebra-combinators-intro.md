@@ -1,3 +1,23 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L4/assemble_frequency_operator
+    - L4/domain_energy_reduce
+    - L4/dot
+    - L4/eigenfreq_qfactor_reduce
+    - L4/eliminate_bc
+    - L4/fe_assemble
+    - L4/gram_reduce
+    - L4/inner_product
+    - L4/linear_combination
+    - L4/nrm2
+    - L4/sparameter_reduce
+---
+
 # L4 — Data-algebra combinators & named verbs
 
 The value-producing (non-iteration-structural) vocabulary at L4: the BLAS-1 data-algebra combinators the iteration-structural kernels consume in their step bodies, the kept named verbs that ride them, and the assemble-folds that build operators. None of these carries a `Solve` monad / carry / predicate — they are pure value-producing folds and reductions risen to L4 as feature-surface verbs the backend wants (directive: L4 is the outward backend-lowering target).

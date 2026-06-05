@@ -1,3 +1,17 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L2/deflate
+    - L2/eigsolve
+    - L2/incremental-least-squares
+    - L2/ksp_solve
+    - L2/orthogonalize
+---
+
 # L2 named compositions
 
 A single Palace runtime-dispatched entry point unfolds into a **canonical pipeline** of

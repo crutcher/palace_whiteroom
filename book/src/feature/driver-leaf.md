@@ -1,3 +1,30 @@
+---
+kind: navigational-container (feature group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - feature/boundary-mode.L4
+    - feature/boundary-mode.L1
+    - feature/boundary-mode.L0
+    - feature/driven.L4
+    - feature/driven.L1
+    - feature/driven.L0
+    - feature/eigenmode.L4
+    - feature/eigenmode.L1
+    - feature/eigenmode.L0
+    - feature/electrostatic.L4
+    - feature/electrostatic.L1
+    - feature/electrostatic.L0
+    - feature/magnetostatic.L4
+    - feature/magnetostatic.L1
+    - feature/magnetostatic.L0
+    - feature/transient.L4
+    - feature/transient.L1
+    - feature/transient.L0
+---
+
 # Feature surfaces — driver-leaf columns
 
 The **driver-leaf** grouping holds the per-simulation-driver feature columns — the **leaf feature column** sub-kind whose stage-(2) constituents are *vocabulary ops* (firm L4 combinators / L1 pure functions / cited L0 driver source). Each column is a composition root for one `ProblemType` branch the lifecycle ROOT dispatches into: inputs = the driver's config surface; output = the driver's *solution family*; body = the composition of the firm assemble / solve vocabulary at that level.

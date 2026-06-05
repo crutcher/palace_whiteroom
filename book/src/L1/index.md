@@ -1,3 +1,19 @@
+---
+kind: navigational-container (layer index)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L1/blas1-elementwise-intro
+    - L1/operator-application-intro
+    - L1/constructed-operator-gates-intro
+    - L1/krylov-least-squares-intro
+    - L1/nep-interior-intro
+    - L1/fe-assembly-intro
+    - L1/fe-space-intro
+---
+
 # L1 — Mutation-lifted forms
 
 Source operations re-expressed as pure functions: explicit input set, output set; in-place mutation and aliasing patterns either erased (workspace/scratch buffers) or made explicit (semantically-meaningful aliasing). The **mutation rotation** layer.

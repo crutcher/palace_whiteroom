@@ -1,3 +1,15 @@
+---
+edges:
+  reference:
+    - concepts/axpy                  # L2 form being lifted
+    - concepts/dot                   # L2 form being lifted
+    - concepts/nrm2                  # L2 form being lifted
+    - concepts/scal                  # L2 form being lifted
+    - concepts/apply_linop           # L2 form being lifted
+    - concepts/sequential-obstruction  # when the lift fails
+    - concepts/rotation              # underlying rotation methodology
+---
+
 # Concept: tensor-field-lift
 
 The L2→L3 lift for the support-operator family (`axpy`, `dot`, `nrm2`, `scal`, `apply_linop`). At L2 these primitives are defined per-DoF / per-element; at L3 they are statements about global tensor fields over the discretised mesh, with no surviving per-element loop in the spec form.

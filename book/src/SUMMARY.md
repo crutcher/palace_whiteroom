@@ -306,6 +306,7 @@
   - [convergence-test](./concepts/convergence-test.md)
   - [counter-update](./concepts/counter-update.md)
   - [derived-view-hoisting](./concepts/derived-view-hoisting.md)
+  - [DofSet — record definition](./concepts/dofset.md)
   - [dot](./concepts/dot.md)
   - [eigsolve](./concepts/eigsolve.md)
   - [elementwise-product](./concepts/elementwise-product.md)

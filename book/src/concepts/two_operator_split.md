@@ -1,3 +1,12 @@
+---
+edges:
+  reference:
+    - L4/preconditioning-framework   # firm L4 home of the (op, pc_op) binding
+    - concepts/complex-from-real-lift  # the real-pc-on-complex-operand path
+    - concepts/constructed-operators   # variant-absorption-behind-uniform-interface pattern
+    - concepts/solver-as-operator      # type-level statement making the split uniform
+---
+
 # two_operator_split
 
 The convention by which a preconditioned Krylov solver in Palace iterates against one operator `op` (typically a matrix-free, exact, possibly complex operator) while constructing its preconditioner against a *different* operator `pc_op` (typically a real-valued, coarsened, or assembled approximation).

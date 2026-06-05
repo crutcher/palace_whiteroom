@@ -308,9 +308,10 @@ parallel-assemble time — `palace/linalg/rap.cpp:36-47` record, `:139-148` appl
 pooled true-dof vector → prolong → local apply → restrict → in-place `b.Add(-1.0, ·)` → in-place
 essential-row `SetSubVector` pin — `palace/linalg/rap.cpp:56-83`), with the prolongation/restriction
 round-trip realizing the single `apply_linop`. This entry records the rotation *direction* in-line per
-high→low discipline; it does **not** author the theme. The two L1>L0 mutation rotations
-(`fe-operator-assemble-mutation-rotation` for the operator pin, `eliminate-rhs-mutation-rotation` for
-the RHS lift — the latter forthcoming per `L1/eliminate_rhs.md` §"Downward to L0") carry the L1→L0 half;
+high→low discipline; it does **not** author the theme. The L1>L0 mutation rotation
+(`fe-operator-assemble-mutation-rotation` for the operator pin, and the `eliminate_rhs` leg folded
+into that same theme — §"The `eliminate_rhs` leg (folded here)" — for the RHS lift; there is no
+separate `eliminate-rhs-mutation-rotation` theme, disposition FOLD c103) carries the L1→L0 half;
 the L4>L3 theme carries the L4→L3 post-composition-to-imperative-staging half.
 
 ## Variant axes

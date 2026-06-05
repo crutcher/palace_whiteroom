@@ -1,3 +1,11 @@
+---
+edges:
+  reference:
+    - concepts/sequential-obstruction
+    - L1-L0/triangular-solve-obstruction
+    - L4/chebyshev
+---
+
 # Negative-result slice
 
 A slice whose primary output is a structured **non-existence** finding: a scope question is asked, the source is examined, and the answer is "the abstraction the question presupposes does not exist as a shared kernel." The slice's value is in the *catalog* of what the source DOES carry instead, with explicit non-unification recorded.

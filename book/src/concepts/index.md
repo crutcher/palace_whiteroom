@@ -1,3 +1,70 @@
+---
+kind: navigational-container (concepts library index)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the concept pages
+# it indexes (carry no liveness, constrain no rank — scheme §4/§5; SAME
+# convention WAVE-1 D5 fixed for the layer/lowering indexes). The record-
+# definition concept pages it lists (config-record / dofset / krylov / op-params
+# / sim-state / step-outputs / prev-carry / solve-result) ARE DAG nodes — but a
+# member being a node does not make the index a node (an index references its
+# members; it does not depend-on them).
+edges:
+  reference:
+    - concepts/dependency-map
+    - concepts/apply_BA
+    - concepts/apply_linop
+    - concepts/axpy
+    - concepts/black-box-vs-accelerated-kernels
+    - concepts/build-time-vs-run-time-stratification
+    - concepts/capability-typing
+    - concepts/chebyshev-iteration
+    - concepts/complex-from-real-lift
+    - concepts/config-record
+    - concepts/constructed-operator-factory
+    - concepts/constructed-operators
+    - concepts/convergence-test
+    - concepts/counter-update
+    - concepts/derived-view-hoisting
+    - concepts/dofset
+    - concepts/dot
+    - concepts/eigsolve
+    - concepts/elementwise-product
+    - concepts/erasure-scope
+    - concepts/finest-level-unwrap
+    - concepts/first-iteration-unrolling
+    - concepts/gemv_basis
+    - concepts/givens
+    - concepts/givens_apply
+    - concepts/givens_generate
+    - concepts/gmres
+    - concepts/incremental-least-squares
+    - concepts/krylov
+    - concepts/ksp_solve
+    - concepts/negative-result-slice
+    - concepts/nested-constructed-operator-gate
+    - concepts/nrm2
+    - concepts/op-params
+    - concepts/orthogonalization
+    - concepts/plane-rotation-stream
+    - concepts/prev-carry
+    - concepts/rotation
+    - concepts/scal
+    - concepts/scalar-promotion
+    - concepts/scope-out-obstruction
+    - concepts/sequential-obstruction
+    - concepts/set_subvector_zero
+    - concepts/sim-state
+    - concepts/solve-monad
+    - concepts/solve-result
+    - concepts/solver-as-operator
+    - concepts/state-stratification
+    - concepts/step-outputs
+    - concepts/tensor-field-lift
+    - concepts/trsv
+    - concepts/two_operator_split
+    - concepts/variant-absorption
+---
+
 # Concepts — Shared Library
 
 A look-aside library of **cross-cutting concept pages**: shared primitives, abstract concepts, layer patterns, and
@@ -96,6 +163,7 @@ Maintained by the integrator: a new `concepts/<name>.md` page lands as an alpha-
 | [convergence-test](./convergence-test.md) | auxiliary |
 | [counter-update](./counter-update.md) | primitive |
 | [derived-view-hoisting](./derived-view-hoisting.md) | layer-pattern |
+| [dofset](./dofset.md) | record |
 | [dot](./dot.md) | primitive |
 | [eigsolve](./eigsolve.md) | layer-pattern |
 | [elementwise-product](./elementwise-product.md) | primitive |

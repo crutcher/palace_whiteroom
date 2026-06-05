@@ -1,3 +1,15 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L2/gram
+    - L2/inner_product
+    - L2/linear_combination
+---
+
 # L2 fold combinators
 
 The variadic-reduction **fold combinators** — each a `foldl` skeleton with a distinct

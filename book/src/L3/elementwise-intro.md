@@ -1,3 +1,15 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L3/elementwise_product
+    - L3/normalize
+    - L3/reciprocal
+---
+
 # Elementwise field operations (L3)
 
 Whole-tensor element-local self-maps and the one fused composite — all at the **obstruction-free end** of the L3 obstruction-profile spectrum (`index.md` §Semantics): embarrassingly parallel, no loop-recurrence introduced at L3.

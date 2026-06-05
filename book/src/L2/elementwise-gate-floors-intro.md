@@ -1,3 +1,18 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L2/assemble-diagonal
+    - L2/divfree-projector
+    - L2/elementwise_product
+    - L2/jacobi-smoother
+    - L2/normalize
+    - L2/reciprocal
+---
+
 # L2 elementwise & gate floors
 
 Standalone same-named L2 entries under firm L3 entries with **NO fold combinator** to defer

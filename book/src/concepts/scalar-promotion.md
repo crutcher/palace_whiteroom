@@ -1,3 +1,13 @@
+---
+edges:
+  reference:
+    - L1/axpy                      # operator where the rule applies
+    - L1/axpby                     # operator where the rule applies
+    - L1/axpbypcz                  # operator where the rule applies
+    - L1/scal                      # operator where the rule applies (internal imag==0 branch)
+    - concepts/complex-from-real-lift  # the distinct operator-level real->complex lift
+---
+
 # scalar-promotion
 
 The implicit-coercion typing rule that lets a real-typed scalar argument enter a Palace L1 vector operator whose vector operands are complex-typed. Concretely: where a complex-vector operator nominally requires complex scalars, Palace's L0 surface also exposes a sibling overload taking real scalars against the same complex vectors, with the scalars promoted to complex (zero imaginary part) before the per-element kernel runs. At L1 this is a single operator, parameterised over scalar-vs-vector element types via the promotion lattice `real ⊑ complex` on scalars; no per-operator semantic branch.

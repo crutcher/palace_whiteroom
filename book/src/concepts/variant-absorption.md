@@ -1,3 +1,11 @@
+---
+edges:
+  reference:
+    - concepts/rotation              # peer methodology concept
+    - concepts/constructed-operators # canonical full-absorption route
+    - L2/krylov-step                 # worked example slices (CG / GMRES variant axes)
+---
+
 # variant absorption
 
 ## Context

@@ -48,6 +48,17 @@ L0-anchored; the rotation is fully cited (the accumulation `AddSubOperator`
 **firm-on-positive-structure** situation inherited from the three firm LHS operators: each leg's L0
 form is read, not constructed.
 
+**Theme-split disposition (cycle-103 D6, abstractor): the `eliminate_rhs` L1>L0 leg FOLDS here — no
+dedicated `eliminate-rhs-mutation-rotation` sibling theme.** The RHS-side BC-elimination rotation is
+the same FE-BC-elimination rotation as its operator-side partner `eliminate_essential_bc`, on the
+same L0 witness (`GetExcitationVector`/`GetStiffnessMatrix`) and the same L0 file
+(`palace/linalg/rap.cpp`); it is narrated as **step 5** of the L0-form protocol below and is folded
+here exactly as the operator-side leg is. A dedicated sibling theme would be a degenerate
+identity-in-named-terms split (anti-mirror smell, CLAUDE.md §VOCABULARY-SHIFT REDIRECT). This closes
+OQ `eliminate-rhs-mutation-rotation-l1-l0-half-forthcoming-vs-already-folded` (== the L4-side
+`fe-bc-elimination-l1-l0-theme-split-vs-fold`): the answer is **already-folded**, not forthcoming.
+The anchor for cross-references is §"The `eliminate_rhs` leg (folded here)" below.
+
 ## L1 form (LHS)
 
 The LHS is the now-firm L1 operator [`fe_assemble`](../L1/fe_assemble.md) (landed cycle-054). It
@@ -232,3 +243,49 @@ opaquely, per §Status (c)):
   shares), lowering to L0 via the `fe-space-construction-rotation` L1>L0 theme. The dof-numbering /
   ordering / conformity internals stay MFEM-owned-read-as-given (see `fe_space` §"MFEM-owned");
   `book/src/L0/fespace-file.md` is the L0 localization.
+
+## The `eliminate_rhs` leg (folded here)
+
+This section is the explicit home of the `eliminate_rhs` L1>L0 lowering (the target of the
+cross-references from [`eliminate_rhs`](../L1/eliminate_rhs.md), [`eliminate_bc`](../L4/eliminate_bc.md),
+and [`bc-elimination-post-composition-dissolution`](../L4-L3/bc-elimination-post-composition-dissolution.md)).
+There is **no** separate `eliminate-rhs-mutation-rotation.md` theme — the rotation lives here.
+
+**L1 form (LHS).** [`eliminate_rhs`](../L1/eliminate_rhs.md) `(K, x_bc, b, policy)` — the
+mutation-free inhomogeneous-Dirichlet lift `b' = b − K·x_bc` with essential rows pinned per diagonal
+policy; a separable post-composition on the assembled `K` (signature authoritative in the L1 entry).
+
+**L0 form (RHS).** `ParOperator::EliminateRHS` (`palace/linalg/rap.cpp:56-82`), reached from the
+electrostatic witness `LaplaceOperator::GetExcitationVector` at `:252`
+(`palace/models/laplaceoperator.cpp:252`). The in-place RHS-mutation protocol the L1 form lowers
+into, line-by-line:
+
+- **Gather the essential boundary values onto pooled true-dof scratch** — `tx = 0.0` then
+  `linalg::SetSubVector(tx, dbc_tdof_list, x)` (`palace/linalg/rap.cpp:62-63`): scatter the Dirichlet
+  data `x` (= `x_bc`) into a zeroed true-dof vector.
+- **Prolong to the local (l-)vector** — `trial_fespace.GetProlongationMatrix()->Mult(tx, lx)`
+  (`palace/linalg/rap.cpp:64`): the true→local prolongation `P·x_bc`.
+- **Apply the unconstrained local operator** — `A->Mult(lx, ly)` (`palace/linalg/rap.cpp:69`): the
+  local-matrix action `A·(P·x_bc)` (the single `apply_linop` of the L1 form, realized as the
+  prolong/local-apply/restrict round-trip).
+- **Restrict back to true dofs** — `RestrictionMatrixMult(ly, ty)` (`palace/linalg/rap.cpp:72`):
+  `ty = Rᵀ·(A·P·x_bc)`, i.e. the assembled `K·x_bc` in true-dof space.
+- **In-place RHS subtraction** — `b.Add(-1.0, ty)` (`palace/linalg/rap.cpp:73`): the in-place
+  realization of `b' = b − K·x_bc` (the L1 `axpy`).
+- **In-place essential-row pin per diagonal policy** — `DIAG_ONE` →
+  `linalg::SetSubVector(b, dbc_tdof_list, x)` (`palace/linalg/rap.cpp:76`, pin essential rows to the
+  boundary data); `DIAG_ZERO` → `linalg::SetSubVector(b, dbc_tdof_list, 0.0)`
+  (`palace/linalg/rap.cpp:80`, pin to zero). This is the `policy`-selected essential-row overwrite of
+  the L1 form (the non-law that makes `eliminate_rhs` not linear-in-`b`-as-a-whole).
+
+**The mutation rotation.** The L0 form mutates the caller's `b` in place (`b.Add`, `SetSubVector`
+both write `b`) using a pooled-scratch round-trip (`tx`/`lx`/`ly`/`ty` are reused per-solver buffers,
+not fresh allocations — the transparent pooling trick). The L1 `eliminate_rhs` is the pure-function
+rotation: it consumes `(K, x_bc, b, policy)` and returns a fresh `b'`, with the
+prolong/apply/restrict round-trip absorbed into the single `K·x_bc` operator action and the in-place
+`b.Add` + `SetSubVector` absorbed into the value-returning `b − K·x_bc` + pin. This is the same
+in-place-vector → pure-function rotation as the operator-side leg, on the same witness — hence the
+fold.
+
+**Justification:** structural (shape-driven, the same as the parent theme) — read directly off the
+positive `EliminateRHS` body, not constructed.

@@ -1,3 +1,11 @@
+---
+edges:
+  reference:
+    - L1/apply_linop               # authoritative operator entry (definition)
+    - concepts/constructed-operators  # sibling concept (constructed-operator unfolding)
+    - L2/krylov-step               # use-site cross-link (matvec count / per-step apply)
+---
+
 # apply_linop
 
 Base primitive: `y ← L · x` for an abstract linear operator `L` and vectors `x`, `y`. The interface is operator-shaped, not matrix-shaped: `L` may be a sparse matrix, a matrix-free operator (e.g., FE assembly closure), a composition of operators (`L = A · B`), or a preconditioner. The caller never inspects `L`'s representation.

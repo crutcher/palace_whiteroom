@@ -75,10 +75,10 @@ Substantive: the pure value-returning post-composition → an in-place `b` mutat
 pooled MFEM vectors, the single logical `apply_linop` → the prolongation→local-apply→restriction
 round-trip (the assembled operator's galerkin true-dof action realized on the fly), the
 `linear_combination` → the in-place `b.Add`, the essential-row pin → an in-place `SetSubVector`. The
-RHS-side L1→L0 half is carried by the (forthcoming) `eliminate-rhs-mutation-rotation` theme (referenced
-in plain text per the missing-anchor convention — no
-`book/src/L1-L0/eliminate-rhs-mutation-rotation.md` exists yet; see `L1/eliminate_rhs.md` §"Downward to
-L0").
+RHS-side L1→L0 half is folded into the firm
+[`fe-operator-assemble-mutation-rotation`](../L1-L0/fe-operator-assemble-mutation-rotation.md) theme
+(§"The `eliminate_rhs` leg (folded here)") — there is no separate `eliminate-rhs-mutation-rotation`
+theme (disposition FOLD, cycle-103 D6); see `L1/eliminate_rhs.md` §"Downward to L0".
 
 ## What does NOT change in the rotation
 

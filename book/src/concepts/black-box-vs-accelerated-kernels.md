@@ -1,3 +1,22 @@
+---
+edges:
+  reference:
+    - concepts/eigsolve
+    - concepts/dot
+    - concepts/nrm2
+    - concepts/scal
+    - concepts/ksp_solve
+    - concepts/apply_linop
+    - L4/eigsolve
+    - L4/ksp_solve
+    - L4/fe_assemble
+    - L4/fold_solve
+    - L3/inner_product
+    - L3/linear_combination
+    - concepts/sequential-obstruction
+    - concepts/scope-out-obstruction
+---
+
 # black-box vs accelerated kernels
 
 Cross-cutting **classification-vocabulary** concept page. It names the test the

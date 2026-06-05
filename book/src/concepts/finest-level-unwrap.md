@@ -1,3 +1,10 @@
+---
+edges:
+  reference:
+    - L4/preconditioning-framework      # firm L4 home (structural adapter in pcBoundOp)
+    - concepts/constructed-operator-factory  # the factory creating the unwrap condition
+---
+
 # finest-level-unwrap
 
 A small structural-adapter primitive that extracts the finest-level operator from a multigrid-wrapped operator, used to reconcile a multigrid-typed `pc_op` (provided by the model layer) with a non-multigrid-typed `pc` (selected by the linear-solver config) at solver-bind time.

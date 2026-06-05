@@ -1,3 +1,15 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L3/chebyshev
+    - L3/divfree-projector
+    - L3/jacobi-smoother
+---
+
 # Smoothers & projector gates (L3)
 
 The constructed-operator-gate / polynomial-smoother cohort. These span the obstruction-profile spectrum from obstruction-free, through obstruction-carrying-by-reference, to partial-obstruction (`index.md` §Semantics):

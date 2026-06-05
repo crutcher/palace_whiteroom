@@ -1,3 +1,9 @@
+---
+edges:
+  reference:
+    - L1/ls-update-column
+---
+
 # `givens_apply`
 
 Apply a stored plane rotation $(c, s)$ to a 2-vector $(dx, dy)$ in place.

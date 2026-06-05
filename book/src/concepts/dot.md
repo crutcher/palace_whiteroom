@@ -1,3 +1,10 @@
+---
+edges:
+  reference:
+    - L1/dot                       # authoritative operator entry (definition); pointer-to, not blocking
+    - L2/krylov-step               # use-site cross-link (CG/GMRES inner-product role)
+---
+
 # dot
 
 Cross-cutting concept page for the inner-product reduction primitive. The

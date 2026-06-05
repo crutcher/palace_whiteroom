@@ -1,3 +1,14 @@
+---
+edges:
+  reference:
+    - concepts/sequential-obstruction
+    - concepts/apply_linop
+    - concepts/ksp_solve
+    - concepts/variant-absorption
+    - concepts/constructed-operators
+    - L1-L0/triangular-solve-obstruction
+---
+
 # scope-out-obstruction
 
 The **L0→L1 negative-result pattern**: when a scope question targets

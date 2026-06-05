@@ -1,3 +1,14 @@
+---
+edges:
+  reference:
+    - L2/krylov-step
+    - L4/krylov-step
+    - concepts/rotation
+    - concepts/derived-view-hoisting
+    - concepts/variant-absorption
+    - concepts/sequential-obstruction
+---
+
 # First-iteration unrolling
 
 An L4-level structural rotation that hoists a step-internal `if it == 0 then base_case else recurrence` branch out of the steady-state iteration body by unrolling the first step explicitly.

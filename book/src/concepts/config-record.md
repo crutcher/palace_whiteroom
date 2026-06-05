@@ -1,3 +1,24 @@
+---
+rank: firm
+edges:
+  depends-on:
+    - target: palace/utils/iodata.hpp:31-60
+      kind: cites-evidence            # the IoData aggregate (backing struct)
+    - target: palace/utils/configfile.hpp:57-1026
+      kind: cites-evidence            # the config:: sub-record structs
+    - target: palace/utils/labels.hpp:18-26
+      kind: cites-evidence            # the ProblemType driver-selector enum
+  reference:
+    - concepts/build-time-vs-run-time-stratification
+    - feature/lifecycle.L4
+    - feature/electrostatic.L4
+    - feature/magnetostatic.L4
+    - feature/driven.L4
+    - feature/transient.L4
+    - feature/eigenmode.L4
+    - feature/boundary-mode.L4
+---
+
 # config-record
 
 Cross-cutting **record-definition** page for Palace's configuration record —

@@ -3,7 +3,7 @@ layer: L1
 operator: eliminate_rhs
 firmness: firm
 lowers_to:
-  - L1-L0/eliminate-rhs-mutation-rotation
+  - L1-L0/fe-operator-assemble-mutation-rotation
 lifts_from: []
 depends_on:
   - apply_linop
@@ -43,7 +43,9 @@ onto the terminal boundary (`ProjectBdrCoefficient`, `:238`), restricted to true
 [`apply_linop`](./apply_linop.md), and the RHS subtraction is an [`axpy`](./axpy.md). The L0
 imperative details (the local/true-dof scatter-gather around the operator apply, the in-place
 `b.Add`, the diagonal-policy row-pin) are L0 concerns reintroduced by the
-`eliminate-rhs-mutation-rotation` L1>L0 lowering theme (forthcoming; see *Downward to L0*).
+[`fe-operator-assemble-mutation-rotation`](../L1-L0/fe-operator-assemble-mutation-rotation.md)
+L1>L0 lowering theme (the `eliminate_rhs` leg is folded there — see its §"The `eliminate_rhs` leg
+(folded here)"; see *Downward to L0*).
 
 ## Signature
 
@@ -268,12 +270,16 @@ Reusing it as the essential-dof pin introduces no new vocabulary. The clean-gate
 
 ## Downward to L0
 
-The lowering is the (forthcoming) `eliminate-rhs-mutation-rotation` L1>L0 theme — NOT yet authored
-(no `book/src/L1-L0/eliminate-rhs-mutation-rotation.md` exists; referenced here in plain text per the
-missing-anchor convention). It will narrate how this L1 post-composition lowers into Palace's
-in-place RHS-mutation protocol: gather essential values onto pooled scratch → prolong → apply local
-matrix → restrict → in-place `b.Add(-1.0, ·)` → in-place essential-row `SetSubVector` pin, with the
-prolongation/restriction round-trip realizing the single `apply_linop`. It is a **sibling theme** to
-the `eliminate-essential-bc-mutation-rotation` lowering (the operator-side BC pin) — both lower the
-separable BC-treatment post-compositions that `fe-operator-assemble-mutation-rotation` references but
-does not contain.
+The lowering is **folded into**
+[`fe-operator-assemble-mutation-rotation`](../L1-L0/fe-operator-assemble-mutation-rotation.md) — the
+firm L1>L0 theme that lowers the whole FE-operator construction surface (the `fe_assemble` fold +
+both separable BC-elimination legs). The `eliminate_rhs` leg is its own named sub-section there,
+§"The `eliminate_rhs` leg (folded here)", which narrates how this L1 post-composition lowers into
+Palace's in-place RHS-mutation protocol: gather essential values onto pooled scratch
+(`rap.cpp:62-63`) → prolong (`:64`) → apply local matrix (`A->Mult`, `:69`) → restrict (`:72`) →
+in-place `b.Add(-1.0, ·)` (`:73`) → in-place essential-row `SetSubVector` pin (`:76`/`:80`), with the
+prolongation/restriction round-trip realizing the single `apply_linop`. It shares that theme with the
+operator-side leg `eliminate_essential_bc` — both BC-treatment post-compositions lower in one theme
+on the shared `GetExcitationVector`/`GetStiffnessMatrix` witness. There is **no** dedicated
+`eliminate-rhs-mutation-rotation` sibling theme (disposition: FOLD, cycle-103 D6 — a degenerate split
+would be an anti-mirror smell).

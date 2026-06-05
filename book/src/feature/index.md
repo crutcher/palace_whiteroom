@@ -1,3 +1,15 @@
+---
+kind: navigational-container (feature Part index)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - feature/spine-root
+    - feature/driver-leaf
+    - feature/output-product
+---
+
 # Feature surfaces — entry points
 
 This Part is the **top-down composition-root spine** — a presentation of Palace's high-level **entry-point features** (what Palace is *written for*) that runs *parallel* to the bottom-up vocabulary spine (L4→L0 + lowerings). Where the vocabulary Parts climb from cited source (L0) to calculus combinators (L4) by *decomposing* operations into reusable algebra, the feature Parts run the other direction: each chapter is a **composition root** that *recomposes* the already-firm decomposed vocabulary back into the user-facing feature.

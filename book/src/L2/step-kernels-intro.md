@@ -1,3 +1,14 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L2/chebyshev-iteration
+    - L2/krylov-step
+---
+
 # L2 step kernels
 
 The recurring **iteration-step kernels** of the L2 surface: the *kernel half* of the

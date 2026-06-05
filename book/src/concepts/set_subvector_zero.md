@@ -1,3 +1,10 @@
+---
+edges:
+  reference: []                    # no book home: L1/set_subvector_zero does not exist; the
+                                   # divfree use-site and the L3 mask-multiply lift are described
+                                   # in-page. Non-node pointer page; no outbound book edges.
+---
+
 # set_subvector_zero
 
 In-place primitive that zeros entries of a vector at a specified index set.

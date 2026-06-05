@@ -1,3 +1,23 @@
+---
+kind: navigational-container (lowering index)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L2-L1/chebyshev-iteration-fusion
+    - L2-L1/deflate-composition-lowering
+    - L2-L1/divfree-projector-leaf-identity
+    - L2-L1/eigsolve-spectral-transform-composition
+    - L2-L1/gram-fold-specialization
+    - L2-L1/incremental-least-squares-composition-lowering
+    - L2-L1/inner-product-fold-specialization
+    - L2-L1/krylov-step-kernel-defusion
+    - L2-L1/ksp-solve-outer-driver-unfold
+    - L2-L1/linear-combination-fold-specialization
+    - L2-L1/orthogonalize-composition-lowering
+---
+
 # L2 > L1 — Lowering layer
 
 The transformation from L2 (algebraic decompositions) to L1 (mutation-lifted forms). Batched by **themes**.

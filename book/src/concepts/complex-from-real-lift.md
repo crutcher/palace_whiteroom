@@ -1,3 +1,12 @@
+---
+edges:
+  reference:
+    - L4/preconditioning-framework   # names this primitive as the complex-pc unfolding
+    - concepts/apply_linop           # the wrapped primitive
+    - concepts/scal                  # the in-place sign-flip primitive
+    - concepts/constructed-operators # the lift as a constructed-operator route
+---
+
 # complex-from-real-lift
 
 The L2 primitive expressing the action of a *real* preconditioner solver on a *complex* operand vector. Concretely: given a real solver `M_real : Vec → Vec` and a complex residual `r = r_re + i·r_im`, the lift returns `z = z_re + i·z_im` where `z_re = M_real(r_re)` and `z_im = -M_real(r_im)` (the conjugate-aware sign flip on the imaginary part).

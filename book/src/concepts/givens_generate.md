@@ -1,3 +1,9 @@
+---
+edges:
+  reference:
+    - L1/ls-update-column
+---
+
 # `givens_generate`
 
 Generate a plane (Givens) rotation $(c, s)$ that zeros the second component of a 2-vector $(dx, dy)$.

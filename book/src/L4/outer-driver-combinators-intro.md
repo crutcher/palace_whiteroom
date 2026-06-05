@@ -1,3 +1,18 @@
+---
+kind: navigational-container (group intro)
+# Navigational container, not a DAG node: no `rank:` (makes no resolution
+# claim, not in the total order), only `reference` edges to the chapters it
+# indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
+edges:
+  reference:
+    - L4/eigsolve
+    - L4/fold_solve
+    - L4/frequency_sweep
+    - L4/ksp_solve
+    - L4/preconditioning-framework
+    - L4/solve_family
+---
+
 # L4 — Outer-driver caps & coordination combinators
 
 The outer-coordination vocabulary at L4: the `Solve = StateT SimState Identity` outer-driver caps that wrap a single solve, and the map/fold coordination combinators that sit one shell further out and drive a *family* of solves. These compose strictly above the iteration-structural kernels (the `iterate-while` family) — the kernels fold per-step; these caps and shells coordinate the restart / convergence structure and the family iteration around them.

@@ -1,3 +1,17 @@
+---
+edges:
+  reference:
+    - L1/orthogonalize
+    - L1-L0/orthogonalize-mutation-rotation
+    - L1/dot
+    - L1/axpy
+    - L2/orthogonalize
+    - L3/orthogonalize
+    - L2/krylov-step
+    - concepts/sequential-obstruction
+    - concepts/variant-absorption
+---
+
 # concept: orthogonalization
 
 The Arnoldi orthogonalisation step in Krylov-subspace (and ROM basis-extension) methods:
