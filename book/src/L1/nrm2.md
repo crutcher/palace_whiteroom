@@ -5,8 +5,11 @@ rank: firm
 edges:
   depends-on:
     - L1/dot
-  reference:
-    - L1-L0/nrm2-mutation-rotation
+    # Per the c108 §5 L1-op→theme grounding convention, a firm L1 operator's L1>L0 lowering
+    # theme is a blocking depends-on (kind: lowers-to), routing liveness DOWN to the theme.
+    # The theme `nrm2-mutation-rotation` is firm (rank 3), so rank(op=3) ≤ rank(theme=3) holds.
+    - kind: lowers-to
+      target: L1-L0/nrm2-mutation-rotation
 ---
 
 # nrm2

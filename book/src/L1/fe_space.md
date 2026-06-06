@@ -1,7 +1,31 @@
 ---
-status: firm
+layer: L1
+operator: fe_space
 harvested_by: harvester:2026-06-02T151056Z-harvester-fe-space
 cycle: cycle-064
+# Graded-stack scheme (edges authored from scratch, batch-36 c114; chapter previously carried only
+# `status: firm`, NO edges). This firm L1 construction composes its one firm L1 input — the
+# `collection: FECollection`, produced by `fe_collection` — and rests on its positive L0 ctor source
+# (cites-evidence, rank-terminal ground truth) + lowers through its L1>L0 construction-rotation theme.
+# The `composes` edge to `fe_collection` flips it reachable (firm-but-currently-garbage); `fe_space`
+# itself flips reachable transitively via `fe_assemble`'s c114 `composes` edge (sibling D1 migration).
+# Well-foundedness rank(u) <= rank(v): this node firm (rank 3); `fe_collection` carries `rank: firm`
+# (status: firm, cycle-065); the cites-evidence target is rank-terminal L0 ground truth; the lowering
+# theme `fe-space-construction-rotation` is `status: firm` (rank 3 <= 3).
+rank: firm
+edges:
+  depends-on:
+    - target: L1/fe_collection
+      kind: composes              # the `collection: FECollection` input, produced by fe_collection (sig :9/:43; §Variant-axis :89)
+    - target: palace/fem/fespace.hpp:67-75
+      kind: cites-evidence        # the variadic `FiniteElementSpace(Mesh&, T&&...)` ctor — the (mesh,collection) pairing (Evidence :191-193)
+    - target: L1-L0/fe-space-construction-rotation
+      kind: lowers-to             # the L1>L0 construction-rotation theme (cycle-064 D3; §Downward :145)
+  reference:
+    - L1/fe_assemble               # the primary consumer of the constructed space
+    - L1/weak_form_term
+    - L1/eliminate_essential_bc
+    - L1/eliminate_rhs
 ---
 
 # `fe_space` — finite-element space construction

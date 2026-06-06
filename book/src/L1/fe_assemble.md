@@ -1,15 +1,28 @@
 ---
 layer: L1
 operator: fe_assemble
-firmness: firm
-lowers_to:
-  - L1-L0/fe-operator-assemble-mutation-rotation
-lifts_from: []
-depends_on: []
-variant_axes:
-  - assembly-representation
-  - term-position
-  - trial-test-coincidence
+# Graded-stack scheme (migrated batch-36 c114 off legacy firmness/lowers_to/depends_on frontmatter).
+# This firm L1 assembly FOLD composes its two firm L1 inputs — the term-list element type
+# `weak_form_term` and the FE-space input `fe_space` — and lowers through its L1>L0 mutation-rotation
+# theme (lowers-to depends-on; the c108 §5 L1-op→theme grounding convention, mirroring set_subvector_zero).
+# The two `composes` edges flip `weak_form_term` + `fe_space` reachable (both firm-but-currently-garbage);
+# `fe_assemble` itself is reachable (inbound from 7 feature columns). Well-foundedness rank(u) <= rank(v):
+# this node is firm (rank 3) and both composed inputs carry `rank: firm`. The `lowers_to` edge is preserved
+# exactly as the pre-scheme `lowers_to` (the theme `fe-operator-assemble-mutation-rotation` is `status: firm`,
+# so rank(op=3) <= rank(theme=3) holds). The variant_axes (assembly-representation / term-position /
+# trial-test-coincidence) are documented in the chapter body §Variant axes (the scheme drops the frontmatter
+# list; the prose is the home).
+rank: firm
+edges:
+  depends-on:
+    - target: L1/weak_form_term
+      kind: composes              # the `terms: [WeakFormTerm]` fold element-type (sig :60, :71-72; §Dependencies :163)
+    - target: L1/fe_space
+      kind: composes              # the `space: FiniteElementSpace[N]` input (sig :60, :68-70)
+    - target: L1-L0/fe-operator-assemble-mutation-rotation
+      kind: lowers-to             # the L1>L0 mutation-rotation theme (preserved from pre-scheme `lowers_to`)
+  reference:
+    - L1/bilinear-form             # slug-collision sibling (a DIFFERENT object; do NOT conflate — §Slug-collision)
 ---
 
 # fe_assemble

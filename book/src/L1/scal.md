@@ -3,9 +3,14 @@ layer: L1
 operator: scal
 rank: firm
 edges:
+  depends-on:
+    # Per the c108 §5 L1-op→theme grounding convention, a firm L1 operator's L1>L0 lowering
+    # theme is a blocking depends-on (kind: lowers-to), routing liveness DOWN to the theme.
+    # The theme `scal-mutation-rotation` is firm (rank 3), so rank(op=3) ≤ rank(theme=3) holds.
+    - kind: lowers-to
+      target: L1-L0/scal-mutation-rotation
   reference:
     - L1/axpby
-    - L1-L0/scal-mutation-rotation
 ---
 
 # scal

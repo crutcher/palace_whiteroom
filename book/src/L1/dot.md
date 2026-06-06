@@ -3,8 +3,13 @@ layer: L1
 operator: dot
 rank: firm
 edges:
+  depends-on:
+    # Per the c108 §5 L1-op→theme grounding convention, a firm L1 operator's L1>L0 lowering
+    # theme is a blocking depends-on (kind: lowers-to), routing liveness DOWN to the theme.
+    # The theme `dot-mutation-rotation` is firm (rank 3), so rank(op=3) ≤ rank(theme=3) holds.
+    - kind: lowers-to
+      target: L1-L0/dot-mutation-rotation
   reference:
-    - L1-L0/dot-mutation-rotation
     - concepts/dot
 ---
 
