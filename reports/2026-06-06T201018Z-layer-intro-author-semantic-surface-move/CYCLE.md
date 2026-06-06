@@ -6,7 +6,7 @@ cycle: cycle-116
 dispatch: D1 (WAVE-1) of semantic-consolidation-campaign LEAD
 status: pending
 integrated_at: 2026-06-06T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 00a8f78e9db176cab377a5e60bcb21b3674ca925
 integration_notes: |
   cycle-116 finalize. VERIFY-NOT-REDO — the dispatch applied all edits directly in book/src;
   the per-report integrator verified the on-disk state. Physical git mv of design/l4_calculus.md

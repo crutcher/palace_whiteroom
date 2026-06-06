@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T201018Z
 scope: cycle-116 D2 (WAVE-2) — semantic-consolidation restatement-cohort relocation sweep (Tier B + Tier C) + L4 bare-basename prose-ref cleanup
 status: pending
 integrated_at: 2026-06-06T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 00a8f78e9db176cab377a5e60bcb21b3674ca925
 integration_notes: |
   cycle-116 finalize. VERIFY-NOT-REDO — the dispatch applied all edits directly in book/src;
   the per-report integrator verified the on-disk state. 24-file restatement-cohort relocation
