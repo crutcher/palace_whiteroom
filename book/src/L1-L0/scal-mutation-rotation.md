@@ -1,3 +1,22 @@
+---
+# Lowering theme (L1>L0), cycle-115 D2 hygiene: previously NO frontmatter (rank prose-inferred
+# from `## Status` `firm`). Per graded-stack scheme §5, theme rank = min(endpoint ranks); the L1
+# endpoint (`L1/scal`) is firm (rank 3), L0 endpoint rank-terminal, so the theme is firm. The
+# op->theme edge (`L1/scal →lowers-to→ this theme`, c114) lives on the op side and is NOT
+# re-added. This theme carries its OWN outbound `cites-evidence` edges to the L0 in-place
+# receiver-mutating member overloads it lowers to (the complex `ComplexVector::operator*=`
+# definition + its declaration). The real path is `mfem::Vector::operator*=(double)` — upstream
+# MFEM, not Palace source — so it is named in prose, not cited as a Palace L0 edge.
+# All ranges self-verified on disk via citecheck --anchor + direct Read of the close brace.
+rank: firm
+edges:
+  depends-on:
+    - target: palace/linalg/vector.cpp:203-227
+      kind: cites-evidence        # ComplexVector::operator*= definition; si==0.0 two-real-call branch (:207-211) + general complex forall_switch kernel (:212-225); close brace verified on disk at :227
+    - target: palace/linalg/vector.hpp:98-99
+      kind: cites-evidence        # ComplexVector &operator*=(std::complex<double> s); decl + `// Scale all entries by s.` comment
+---
+
 # scal-mutation-rotation
 
 The mutation rotation for the BLAS-1 vector-scalar rescale. Lowers the pure L1

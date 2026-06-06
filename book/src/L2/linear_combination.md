@@ -80,10 +80,11 @@ Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l
   Order is the fold's evaluation order (see § "Algebraic laws", permutation
   law/non-law pair).
 - each `tᵢ` — `Tensor[(S: ...)]` — **shape precondition**: all terms are *congruent*,
-  sharing one shape group `S` of arbitrary (unknown) rank — NOT rank-1; the combination
-  is element-local at every position of `S`. The name `S` carries the same-shape contract,
-  and is also the aligned-fusion-kernels precondition — every term shares the shape the
-  single aligned pass strides over.
+  sharing one shape group `S` of arbitrary (unknown) rank; the combination
+  is element-local at every position of `S`. This congruence is also the
+  aligned-fusion-kernels precondition — every term shares the shape the
+  single aligned pass strides over. (The general named-shape-group convention is in
+  [`l4_calculus`](../design/l4_calculus.md) §1.2.1, linked above.)
 - each `aᵢ` — `Scalar` — element type one shared `T ∈ {real, complex}` across all
   scalars and all terms, with the `real ⊑ complex` scalar-promotion lattice inherited
   unchanged from [`concepts/scalar-promotion`](../concepts/scalar-promotion.md)

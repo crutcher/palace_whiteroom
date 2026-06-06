@@ -1,3 +1,30 @@
+---
+# Lowering theme (L1>L0), cycle-115 D2 hygiene: this file previously had NO frontmatter at
+# all — its rank was prose-inferred from the `## Status` `firm` token. Per graded-stack
+# scheme §5 a theme's rank = min(endpoint ranks); the L1 endpoint (`L1/dot`) is firm (rank 3)
+# and the L0 endpoints are rank-terminal ground truth, so the theme is firm. Per the D2
+# dispatch constraint the op->theme edge (`L1/dot →lowers-to→ this theme`) lives on the L1
+# op side (landed c114) and is NOT re-added here; this theme carries only its OWN outbound
+# `cites-evidence` edges to the L0 reduction surface it lowers to (the `Dot` template, the
+# real/complex `LocalDot` leaves, and the `Mpi::GlobalSum`/`GlobalOp` collective). All ranges
+# self-verified on disk via citecheck --anchor this invocation.
+rank: firm
+edges:
+  depends-on:
+    - target: palace/linalg/vector.hpp:246-253
+      kind: cites-evidence        # the `Dot(comm,x,y)` template = LocalDot + Mpi::GlobalSum two-step (Sub-pattern A)
+    - target: palace/linalg/vector.cpp:263-267
+      kind: cites-evidence        # ComplexVector::Dot body = x·conj(y) = yᴴ x, this==&y self-dot fast path (Sub-pattern B; the conjugate-pair source)
+    - target: palace/linalg/vector.cpp:665-672
+      kind: cites-evidence        # real LocalDot(Vector,Vector) via hypre_SeqVectorInnerProd (Sub-pattern C)
+    - target: palace/linalg/vector.cpp:674-685
+      kind: cites-evidence        # complex LocalDot four-real-dot lift, Im = LocalDot(xi,yr)−LocalDot(xr,yi)
+    - target: palace/utils/communication.hpp:266-270
+      kind: cites-evidence        # Mpi::GlobalSum(len,buff,comm) → GlobalOp(...,MPI_SUM,...)
+    - target: palace/utils/communication.hpp:246-249
+      kind: cites-evidence        # GlobalOp body = MPI_Allreduce(MPI_IN_PLACE,...) — the collective
+---
+
 # dot-mutation-rotation
 
 The mutation rotation for the BLAS-1 inner-product reduction. Lowers the pure L1 form

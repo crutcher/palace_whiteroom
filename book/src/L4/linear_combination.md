@@ -95,11 +95,11 @@ to it, §"Downward to L3"):
   list order is the fold's canonical evaluation order (the IEEE summation-order
   residue is a below-L3 lowering concern, not an L4 law — see §"Algebraic laws").
 - each `tᵢ` — `Tensor[(S: ...)]` — **shape precondition**: all terms are *congruent*,
-  sharing one shape group `S` of arbitrary, unknown rank (the name `S` carries the
-  same-shape contract; `S` is **not** pinned to rank-1 — the combination is
-  element-local at every position of `S`, see §"Algebraic laws"). The earlier
-  `Tensor[N]` rendering accidentally read as a single length axis; `(S: ...)` states
-  the congruence-of-unknown-rank intent directly.
+  sharing one shape group `S` of arbitrary, unknown rank; the combination is
+  element-local at every position of `S` (see §"Algebraic laws"). (The named-shape-group
+  convention — binding `(S: ...)` vs use `$S`, and why a group beats a bare `Tensor[N]`
+  — is the general calculus rule in [`l4_calculus`](../design/l4_calculus.md) §1.2.1,
+  linked above.)
 - each `aᵢ` — `Scalar` — one shared element type `T ∈ {real, complex}` across all
   scalars and terms, with the `real ⊑ complex` promotion lattice from
   [`scalar-promotion`](../concepts/scalar-promotion.md) (promote all-or-none).

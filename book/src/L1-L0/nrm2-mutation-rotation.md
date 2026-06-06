@@ -1,3 +1,25 @@
+---
+# Lowering theme (L1>L0), cycle-115 D2 hygiene: previously NO frontmatter (rank prose-inferred
+# from `## Status` `firm`). Per graded-stack scheme §5, theme rank = min(endpoint ranks); the L1
+# endpoint (`L1/nrm2`) is firm (rank 3), L0 endpoint rank-terminal, so the theme is firm. The
+# op->theme edge (`L1/nrm2 →lowers-to→ this theme`, c114) lives on the op side and is NOT re-added.
+# This theme carries its OWN outbound `cites-evidence` edges to the L0 `Norml2` one-line
+# composition it lowers to (and the `Dot` leaf + collective the chain bottoms out in — the
+# inherited dot sub-theme, recorded here as the cited evidence of nrm2's own L0 surface).
+# All ranges self-verified on disk via citecheck --anchor this invocation.
+rank: firm
+edges:
+  depends-on:
+    - target: palace/linalg/vector.hpp:254-259
+      kind: cites-evidence        # Norml2(comm,x) template body = std::sqrt(std::abs(Dot(comm,x,x))) (Sub-pattern A; the load-bearing line)
+    - target: palace/linalg/vector.hpp:246-253
+      kind: cites-evidence        # the Dot leaf = LocalDot + Mpi::GlobalSum the chain bottoms out in (inherited dot sub-theme)
+    - target: palace/utils/communication.hpp:266-270
+      kind: cites-evidence        # Mpi::GlobalSum(len,buff,comm) → GlobalOp(...,MPI_SUM,...)
+    - target: palace/utils/communication.hpp:246-249
+      kind: cites-evidence        # GlobalOp body = MPI_Allreduce(MPI_IN_PLACE,...) — the collective
+---
+
 # nrm2-mutation-rotation
 
 The mutation rotation for the BLAS-1 Euclidean-norm reduction. Lowers the pure L1 form

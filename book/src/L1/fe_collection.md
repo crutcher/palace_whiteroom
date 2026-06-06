@@ -2,6 +2,26 @@
 status: firm
 harvested_by: harvester:2026-06-02T160332Z-harvester-fe-collection
 cycle: cycle-065
+# Graded-stack scheme (cycle-115 D2 hygiene; chapter previously carried only `status: firm`,
+# NO typed edges — the rank was prose-inferred from `## Status`). This firm L1 schedule operator
+# is a leaf in L1 vocabulary (a pure enumeration producing a `[FECollection]` list; no L1 op is
+# invoked — §Dependencies), so it carries no `composes` edge. It rests on its positive L0 source
+# (the whole `ConstructFECollections` template body, cites-evidence, rank-terminal ground truth)
+# and lowers through its L1>L0 construction-rotation theme. The producer->consumer relation to
+# `fe_space` (which consumes one of the produced collections) is navigational, NOT a dependency
+# (§Dependencies: "a consumed-by relation ... not a dependency") -> `reference`.
+# Well-foundedness rank(u) <= rank(v): this node firm (rank 3); the cites-evidence target is
+# rank-terminal L0 ground truth; the lowering theme `fe-collection-construction-rotation` is
+# typed `rank: firm` (this cycle, D2) so 3 <= 3 holds.
+rank: firm
+edges:
+  depends-on:
+    - target: palace/fem/multigrid.hpp:22-73
+      kind: cites-evidence        # ConstructFECollections<FECollection> whole template body; close brace verified on disk at :73 (return fecs; at :72, } at :73)
+    - target: L1-L0/fe-collection-construction-rotation
+      kind: lowers-to             # the L1>L0 construction-rotation theme (cycle-065 D3; §Downward :175-180)
+  reference:
+    - L1/fe_space                  # producer->consumer: each produced FECollection is a per-level fe_space input (§Dependencies; NOT a depends-on)
 ---
 
 # `fe_collection` — FE-collection p-multigrid order schedule
