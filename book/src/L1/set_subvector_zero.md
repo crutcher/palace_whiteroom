@@ -4,27 +4,34 @@ operator: set_subvector_zero
 rank: firm
 edges:
   depends-on:
-    # A firm L1 operator's blocking dependency is its POSITIVE L0 SOURCE (rank-terminal
-    # ground truth), not the not-yet-authored L1>L0 lowering theme. Repaired cycle-104
-    # (repairer): the `firm` rank rests on the read-in-full L0 bodies + decl below, so the
-    # well-foundedness invariant rank(u) ≤ rank(v) holds against rank-terminal evidence.
+    # A firm L1 operator's blocking dependencies are (a) its POSITIVE L0 SOURCE (rank-terminal
+    # ground truth) via cites-evidence, and (b) its L1>L0 lowering theme via `lowers-to` (the
+    # c108 §5 L1-op→theme grounding convention). The `firm` rank rests on the read-in-full L0
+    # bodies + decl below; the well-foundedness invariant rank(u) ≤ rank(v) holds against the
+    # rank-terminal evidence AND against the firm theme (rank(op=3) ≤ rank(theme=3)).
     - kind: cites-evidence
       target: palace/linalg/vector.cpp:461-474   # real SetSubVector body (X[id]=sr at :472)
     - kind: cites-evidence
       target: palace/linalg/vector.cpp:476-492   # complex body (XR[id]=sr :489, XI[id]=0.0 :490)
     - kind: cites-evidence
       target: palace/linalg/vector.hpp:220-221   # the `double s` SetSubVector declaration
+    - kind: lowers-to
+      target: L1-L0/set-subvector-zero-mutation-rotation   # the L1>L0 lowering theme (authored c105); per the c108 §5 L1-op→theme convention this is a blocking depends-on (kind: lowers-to), which routes liveness DOWN to the theme (flips it reachable)
   reference:
     - L1/eliminate_essential_bc
     - L1/eliminate_rhs
     - L1/divfree-projector
     - concepts/set_subvector_zero
-    - L1-L0/set-subvector-zero-mutation-rotation   # the L1>L0 lowering theme (authored c105); downward navigational pointer, NOT a rank-blocking dependency (the theme depends-on THIS entry, not vice versa)
-# The L1>L0 lowering theme `set-subvector-zero-mutation-rotation` is AUTHORED (c105); it is a
-# `reference` edge above (downward navigational pointer) + live-link forward-refs in §Semantics /
-# §Downward, NOT a blocking depends-on edge (the firmness grounds on the positive L0 read below;
-# the theme depends-on this entry, so a depends-on from here to the theme would be a rank-direction
-# error as well as redundant).
+# The L1>L0 lowering theme `set-subvector-zero-mutation-rotation` is AUTHORED (c105) and now
+# carried as a `depends-on (kind: lowers-to)` edge above, NOT a `reference`. This applies the
+# c108-codified §5 L1-op→theme asymmetric grounding convention (`book/src/methodology/graded-stack-scheme.md`
+# §5; precedent: the `bc-elimination-post-composition-dissolution` / `divfree-projector-mutation-rotation`
+# chain grounding, which established the L1-op→theme `lowers-to depends-on` edge that routes liveness
+# DOWN to the theme). The edge is rank-clean — both this op and the theme are `rank: firm`
+# (rank(op=3) ≤ rank(theme=3)), so it is NOT a rank-direction error (the earlier pre-c108 comment
+# here asserting a "rank-direction error" predated the §5 convention and was WRONG). The firmness
+# still grounds on the positive L0 read below; this edge additionally gives the theme its inbound
+# liveness (the theme was reachable-dead with only an inbound `reference`).
 # The speculative L3 form `set-subvector-zero-mask-multiply` is a plain-text future-form note
 # in §Downward, NOT a live reference edge (the seed does not exist).
 ---
@@ -258,16 +265,21 @@ the `eigsolve`-convergence situation): the projector laws do not depend on itera
 convergence, so the absent test does not reduce law-confidence. Hence `firm`, not `rough-in
 (test-coverage-bounded)`.
 
-Well-foundedness: the `depends-on` edges are `cites-evidence` edges to the **positive L0 source**
-(real `vector.cpp:461-474`, complex `:476-492`, decl `vector.hpp:220-221`), which is rank-terminal
-ground truth — so the `firm` (rank 3) operator rests only on rank-terminal evidence and the
-graded-stack invariant `rank(u) ≤ rank(v)` holds. (Repaired cycle-104: the earlier draft routed
-the sole `depends-on` through the not-yet-authored L1>L0 theme `set-subvector-zero-mutation-rotation`,
-which is both a dangling live link and a firm-resting-on-missing-dep rank violation; the firmness
-in fact grounds on the positive L0 read, exactly as for the BLAS-1 leaves `reciprocal` /
-`elementwise_product`, whose firmness does not block on their L1>L0 themes.) The L1>L0 lowering
-theme [`set-subvector-zero-mutation-rotation`](../L1-L0/set-subvector-zero-mutation-rotation.md)
-(authored c105) is a downward narration, not an upward rank-blocking dependency.
+Well-foundedness: the `depends-on` edges are (a) `cites-evidence` edges to the **positive L0
+source** (real `vector.cpp:461-474`, complex `:476-492`, decl `vector.hpp:220-221`), which is
+rank-terminal ground truth, and (b) a `lowers-to` edge to the firm L1>L0 lowering theme
+[`set-subvector-zero-mutation-rotation`](../L1-L0/set-subvector-zero-mutation-rotation.md) (also
+`rank: firm`). So the `firm` (rank 3) operator rests on rank-terminal evidence AND on a firm
+theme, and the graded-stack invariant `rank(u) ≤ rank(v)` holds for both (`rank(op=3) ≤
+rank(theme=3)`). The firmness *grounds* on the positive L0 read (exactly as for the BLAS-1 leaves
+`reciprocal` / `elementwise_product`); the `lowers-to` theme edge applies the **c108 §5 L1-op→theme
+asymmetric grounding convention** (`book/src/methodology/graded-stack-scheme.md` §5; precedent: the
+`bc-elimination-post-composition-dissolution` / `divfree-projector-mutation-rotation` chain
+grounding), routing liveness DOWN to the theme (which was reachable-dead with only an inbound
+`reference`). (Note: an **earlier** c104 comment here asserted that a `depends-on` from this op to
+the theme would be a "rank-direction error" — that predated the §5 convention and was WRONG; both
+endpoints are firm, so the edge is rank-clean and is the deliberate liveness route, not a redundant
+back-edge.)
 
 Resolves the `set_subvector_zero` leg of OQ
 `concept-primitive-without-L1-home-trsv-set_subvector_zero-gemv_basis` (the vector-zeroing
@@ -283,8 +295,9 @@ indices); this entry references it, it does not redefine it.
 
 The lowering is the [`set-subvector-zero-mutation-rotation`](../L1-L0/set-subvector-zero-mutation-rotation.md)
 L1>L0 theme (authored c105; this entry's firmness rests on the positive L0 read,
-cited as `cites-evidence` deps, with the theme as a downward `reference` pointer, not a blocking
-edge): it narrates how this
+cited as `cites-evidence` deps, with the theme carried as a `lowers-to` `depends-on` edge per the
+c108 §5 L1-op→theme convention — the edge that routes liveness down to the theme): it narrates how
+this
 pure projector lowers into Palace's in-place index-set overwrite —
 the `x.ReadWrite(use_dev)` destination-is-input idiom (`vector.cpp:467` / `:483-484`), the
 `rows.Read(use_dev)` index gather (`:466` / `:482`), the `mfem::forall_switch` device-vs-host
