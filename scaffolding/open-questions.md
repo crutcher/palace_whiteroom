@@ -1366,3 +1366,127 @@ The c103/c104/c105 per-report integrator OQ appends (append-only between meta-ph
   and are excluded by design, not omitted.
 - **opened_at:** cycle-109
 - **opened_by:** layer-intro-author
+
+## OQ: reduce-to-scalar-chain-grounded-via-krylov-step-body-composes-edges
+
+- **status:** RESOLVED-PARTIAL — cycle-110 (batch-35 D1, the reduce/orthogonalize/chebyshev cohort
+  grounding pass; advances OQ `l2-reduce-orthogonalize-cohort-itself-unreachable-blocks-theme-grounding`).
+- **resolution.** The reduce-to-scalar cohort (`L4/dot`/`L4/nrm2`/`L4/inner_product` + their L3/L2 chain)
+  was GROUNDED §(g)-style by adding three `composes` `depends-on` edges from the reachable consumer
+  `L4/krylov-step` into the reduce/orthogonalize verbs its body genuinely calls
+  (`L4/dot`, `L4/nrm2`, `L2/orthogonalize`). One host edit cascades the whole chain: reachable 107→117
+  (+10, D1 in isolation; the cumulative count after D2 also lands must be re-measured by the integrator,
+  not summed — D1/D2 rescue disjoint sets, combined ≈ 119), STRONGER GARBAGE SIGNAL 34→26 (−8),
+  rank_violations HELD 0. The c109-pre-laid
+  `L2-L1/inner-product-fold-specialization` theme flipped reachable as its host `L2/inner_product`
+  grounded — closing the c109 routed expectation for that one theme.
+- **altitude precedent established.** An L4-chapter body-composition edge points at the **L4 reduce verb**
+  (the L4 chapter's body is written in L4 vocabulary calling `dot`/`nrm2`), mirroring
+  `L4/ksp_solve → L4/krylov-step`/`L4/iterate-while`. Where no L4-level op exists (orthogonalize), the
+  body edge crosses to the L2 named composition the kernel folds (`L2/orthogonalize`). This answers the
+  c109-flagged "altitude convention for body-composition edges" sub-question for the krylov-step body.
+- **residual (the still-blocked Group-B themes).** 4 of the 5 Group-B themes remain `[garbage?]` for
+  distinct, now-precisely-diagnosed reasons (see the chebyshev/jacobi + gram/ils findings below):
+  `orthogonalize-composition-lowering` (host `L2/orthogonalize` now reachable but UNTYPED — needs an
+  `edges:` block); `chebyshev-iteration-fusion` (host reached only via `L3/chebyshev`/the preconditioner
+  leg, itself garbage — baseline-exception candidate); `gram-fold-specialization` (host `L2/gram`
+  consumed only by `deflate`, STOP-PROPOSING); `incremental-least-squares-composition-lowering` (host
+  absorbed into the krylov-step body, no separable L4-altitude op-edge).
+- **opened_at:** cycle-110
+- **opened_by:** layer-intro-author
+
+## OQ: chebyshev-jacobi-preconditioner-leg-absorbed-below-column-baseline-exception
+
+- **status:** OPEN (route to batch-35 meta-phase) — filed cycle-110 (batch-35 D1).
+- **observation.** `L4/chebyshev`, `L3/chebyshev`, `L2/chebyshev-iteration`, `L2/jacobi-smoother`, and
+  `L4/preconditioning-framework` remain unreachable after the reduce-chain grounding. They form the
+  **preconditioner/smoother leg**, distinct from the reduce-to-scalar cohort grounded this cycle.
+- **why NO faithful column→preconditioner edge exists (the c107 absorbed-below-column pattern).** The
+  preconditioner is **absorbed into `op.T`** as a constructed operator (`L4/ksp_solve.md:26`
+  `concepts/constructed-operators` "the preconditioner-side absorption into op.T"; `L2/krylov-step.md:57`
+  `op.T = constructed apply_BA = A·M⁻¹`). The kernel folds `apply_linop op.T` — it never names a concrete
+  chebyshev/jacobi preconditioner as a separable composed verb. Moreover the dependency DIRECTION is
+  reversed from a constituent: `L4/preconditioning-framework` *consumes* `L4/ksp_solve`
+  (`L4/ksp_solve ← L4/preconditioning-framework` in `--show-inbound`), it is not a constituent of it. So
+  there is NO reachable solve column that genuinely `depends-on` a concrete chebyshev/jacobi
+  preconditioner via a faithful path. Forcing `ksp_solve → preconditioning-framework` (the planner's
+  higher-leverage candidate to assess) would INVERT the real consumer→producer direction — an unfaithful
+  over-edge, declined per §(g) (faithful-edge-or-finding, the c108 catch pattern).
+- **recommendation.** Track this leg as a **baseline-exception** (the c107 BC/divfree absorbed-below-column
+  precedent): the chebyshev/jacobi smoother cohort is genuine firm vocabulary that is *absorbed into the
+  constructed `op.T`* rather than reached as a named constituent — correctly off the reachability spine,
+  not garbage to delete. The meta-phase ratifies the baseline-exception ledger entry. Do NOT force a
+  column→preconditioner edge.
+- **opened_at:** cycle-110
+- **opened_by:** layer-intro-author
+
+## OQ: gram-reduce-inner-product-is-sibling-not-composes-edge-declined
+
+- **status:** OPEN (route to batch-35 meta-phase) — filed cycle-110 (batch-35 D1).
+- **observation (the declined over-edge).** The planner's high-confidence pick `gram_reduce → L4/inner_product`
+  (flip `reference`→`depends-on`) was RE-READ and DECLINED as a sibling-misclassified-as-composes
+  over-edge. `gram_reduce` is *"the reduce-to-matrix member of the L4 algebra-of-folds family, the
+  **sibling** of the reduce-to-scalar `inner_product`"* (`L4/gram_reduce.md:33,209-214`); its body folds
+  `L1/matrix-weighted-norm` (diagonal) + `L1/bilinear-form` (off-diagonal) — both already `depends-on`
+  (`L4/gram_reduce.md:7-9,91-93`) — NOT `L4/inner_product`. The off-diagonal "is an `inner_product_M`-shaped
+  weighted bilinear" but is realized via `L1/bilinear-form` (which IS the weighted member of
+  inner_product), so the genuine composition is the L1 leaf gram_reduce already names. Typing
+  `gram_reduce →depends-on→ L4/inner_product` would force a sibling into a constituent role — unfaithful.
+  Declined per §(g) faithful-edge-or-finding (the c108 BC-theme decline exemplar). **It is also unneeded:**
+  the reduce-to-scalar chain grounds via the krylov-step body edges regardless. The existing
+  `reference: L4/inner_product` (sibling cross-link) stays.
+- **`L2/gram` routed (NLEPS, not gram_reduce).** `L2/gram` (the all-pairs `XᴴX` over a basis) is consumed
+  by `deflate` (`L2/gram.md:25-26` "consumed by the sibling oblique-projection combinator `deflate` … the
+  Gram matrix `gram` builds is exactly what `deflate` LU-solves"), which is on the STOP-PROPOSING
+  demand-gated FRONTIER list. It is a DIFFERENT op from the L4 `gram_reduce` (operator-weighted
+  symmetric-Gram over a solution family). `L2/gram` reaches root only via `deflate`; correctly stays
+  garbage until deflate is demand-gated on. NOT grounded.
+- **`L2/incremental-least-squares` routed (absorbed, no L4-altitude op-edge).** The GMRES running-QR /
+  Givens stream IS a genuine GMRES constituent — `L2/incremental-least-squares.md:16-19` names it as the
+  composition `ksp_solve §Semantics materialise_iterate` consumes and the krylov-step LS-residual proxy
+  (`gmres.md:471-489`). But at the L4 chapter altitude it is **absorbed into the krylov-step body**
+  (the LS-residual is a `StepOutputs` derived view, `L4/krylov-step.md:104`) and the
+  `ksp_solve materialise_iterate` tail — there is no separable L4-level `incremental-least-squares` op to
+  point a `composes` edge at (no `L4/incremental-least-squares` chapter). Grounding it faithfully would
+  require either an L4 op (over-structure for an absorbed derived view) or a non-L4-altitude
+  `L4/krylov-step → L2/incremental-least-squares` edge (altitude-inconsistent with the reduce verbs, and
+  the relationship is a derived-view byproduct, not a folded constituent). ROUTED for the meta-phase to
+  judge: absorbed-below-column baseline-exception (like the preconditioner leg) vs. a future L2-altitude
+  grounding when the GMRES variant is exercised. NOT forced this cycle.
+- **opened_at:** cycle-110
+- **opened_by:** layer-intro-author
+
+## OQ: l3-l2-reduce-orthogonalize-midnodes-lack-typed-edges-blocks
+
+- **status:** OPEN (lazy-tail typing; route to plan `graded-stack-lazy-tail-typing`) — filed cycle-110 (batch-35 D1).
+- **observation.** The reduce/orthogonalize grounding surfaced three firm mid-nodes that carry only
+  LEGACY frontmatter (`lifts_from`/`lowers_to` lists, no typed `edges:` block), so they neither cascade
+  their own downward edges nor flip their themes:
+  - `L2/orthogonalize` — NO frontmatter at all (begins `# orthogonalize`). Now reachable (grounded this
+    cycle) but carries no typed `lowers-to` to `L2-L1/orthogonalize-composition-lowering`, so that theme
+    stays `[garbage?]`. A from-scratch `edges:` block (mirroring the c109 `L2/krylov-step` authoring:
+    `depends-on L1/orthogonalize` + `lowers-to L2-L1/orthogonalize-composition-lowering` + `lowers-from
+    L3/orthogonalize`) would flip the theme.
+  - `L3/orthogonalize` — only `lifts_from`/`lowers_to`, no typed `edges:`. Did not flip (no typed inbound
+    from a reachable node). A typed block (`depends-on L2/orthogonalize lowers-to` + the variant-split
+    theme) would ground it once L2/orthogonalize is reachable (now true).
+  - `L3/nrm2` — consumer-stub with only `lifts_from`/`lowers_to`. Reachable (inbound from `L4/nrm2`) but
+    carries no typed downward `depends-on` (its genuine target is `L2/inner_product` at the diagonal,
+    already reachable; `lowers-to L1/nrm2`). Typing it completes the nrm2 node's edges.
+  These are mechanical from-scratch `edges:` authoring (the c109 `L2/krylov-step` / c108
+  `L2/divfree-projector` template), faithful and low-risk — the next lazy-tail tranche. NOT done this
+  cycle (the grounding-pass scope was the reachable-consumer body edges, and adding the L2/orthogonalize
+  theme edge would expand into authoring an untyped chapter's full edges block). Note: `L2/nrm2` is a
+  SEPARATE cohort (the normalize/scal/elementwise tail), off the reduce-to-scalar scope — `L2/nrm2 ←
+  L2/normalize` only, both off-spine; not a reduce-chain residual.
+- **opened_at:** cycle-110
+- **opened_by:** layer-intro-author
+
+## OQ: l1-l0-axpy-family-themes-need-scheme-frontmatter
+
+- **status:** OPEN — filed cycle-110 (batch-35, D2 axpy-family L1-leaf typing). Routed to plan item `graded-stack-lazy-tail-typing` (priorities.md item 2), as a follow-on tranche.
+- **observation.** The two L1>L0 lowering themes `book/src/L1-L0/axpby-mutation-rotation.md` and `book/src/L1-L0/axpbypcz-mutation-rotation.md` — now the `lowers-to` targets of the freshly-typed `L1/{axpy,axpby,axpbypcz}` leaves — are themselves still **pre-scheme**: `firm`-in-prose with no `rank:`/`edges:` frontmatter (the linter classes them `typed-no-rank`). D2's leaf-edges *rescued these two themes from detritus* (reachable 117→119), so they are now LIVE, but they carry no own typed rank or outbound edges.
+- **consequence.** The `lowers-to` `depends-on` edges from the axpy-family leaves INTO these two themes hold the `rank(u) <= rank(v)` invariant only **vacuously** (a `typed-no-rank` target registers no rank violation; the linter `continue`s, warn-not-fail). The themes are reachable but not yet verified firm→firm rests from the leaf side.
+- **recommended resolution.** In the lazy-tail typing campaign, give the two themes `rank: firm` + an `edges:` block following the lowering-edge rule (graded-stack scheme §5: a lowering theme `depends-on` both its L1 form and its L0 source). Until then the leaf `lowers-to` edges into them are warn-not-fail.
+- **opened_at:** cycle-110
+- **opened_by:** layer-intro-author (via integrator-per-report, D2)

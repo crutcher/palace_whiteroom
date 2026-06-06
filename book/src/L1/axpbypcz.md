@@ -1,3 +1,33 @@
+---
+layer: L1
+operator: axpbypcz
+rank: firm
+# Graded-stack scheme (cycle-110, D2): firm-in-prose fused BLAS-1-extended leaf — matches
+# three Palace L0 entry points exactly, syntactic-identity laws (firm-on-positive-structure).
+# Blocking depends-on = rank-terminal POSITIVE L0 SOURCE (cites-evidence) → well-founds
+# the `firm` rank. The lowers-to edge points at the axpbypcz-mutation-rotation theme.
+edges:
+  depends-on:
+    - target: palace/linalg/vector.cpp:745-758
+      kind: cites-evidence        # AXPBYPCZ(double,...) real-real with γ==0 branch
+    - target: palace/linalg/vector.cpp:760-765
+      kind: cites-evidence        # AXPBYPCZ(complex,...) → member form
+    - target: palace/linalg/vector.cpp:767-772
+      kind: cites-evidence        # AXPBYPCZ(double,ComplexVector,...) real-scalar-on-complex
+    - target: palace/linalg/vector.hpp:133-136
+      kind: cites-evidence        # ComplexVector::AXPBYPCZ member decl
+    - target: palace/linalg/vector.hpp:313-316
+      kind: cites-evidence        # free-function template AXPBYPCZ decl
+    - target: L1-L0/axpbypcz-mutation-rotation
+      kind: lowers-to             # the L1>L0 lowering theme this leaf lowers to
+  reference:
+    - L1/axpy
+    - L1/axpby
+    - L1/scal
+    - L2/linear_combination
+    - concepts/scalar-promotion
+---
+
 # axpbypcz
 
 Mutation-lifted fused three-scalar three-vector update: `z_new = α·x + β·y + γ·z_old`. The fused BLAS-1-extended primitive that subsumes `axpby` (γ=0), `axpy` (β=1, γ=0), and pure-scaling (α=0, β=0). At L1, the fused form is a leaf primitive; the decision against decomposing it as a composition of `axpby` + `axpy` (or chained `axpby` calls) mirrors the cycle-003 fused-primitive choice for `axpby` recorded in [`scaffolding/decisions/axpby-as-primitive.md`](../../../scaffolding/decisions/axpby-as-primitive.md) (§ "Knock-on effects").

@@ -7,6 +7,12 @@ edges:
   depends-on:
     - target: L2/krylov-step
       kind: lowers-to                 # the firm L2 primitive-composition row this L4 typed-wrapper lowers to (via the L4>L3>L2 chain); lowering edge = depends-on on both endpoints (scheme §5)
+    - target: L4/dot
+      kind: composes                  # the body's scalar-stratum reduce verb: `dot Ap p'` / `dot r' r'` (§Semantics Form-B :142,:145,:158,:161); the CG α/β coefficients are L4 dot let-bindings (L4/inner_product.md:44-47)
+    - target: L4/nrm2
+      kind: composes                  # the body's residual-norm readout `res' = sqrt (abs beta')` = nrm2 of the residual (§Semantics :104 derived_views residual_norm; Form-B :146,:162); the Euclidean-norm verb the step's output readout computes
+    - target: L2/orthogonalize
+      kind: composes                  # the optional auxiliary orthogonalize stage `op.orthog (V_prefix, w)` GMRES/Arnoldi fold (§Semantics :94); no L4 orthogonalize op exists, so the body edge crosses to the L2 named composition the kernel folds (L2/orthogonalize.md:11 "the op.orthog surface krylov-step folds")
     - target: concepts/op-params
       kind: uses-record               # OpParams readonly operator-internal config record in the kernel signature (krylov-step :: OpParams -> Krylov -> (SimState -> Solve {...})); see §Signature shape contract
     - target: concepts/krylov

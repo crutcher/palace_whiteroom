@@ -1,3 +1,33 @@
+---
+layer: L1
+operator: axpby
+rank: firm
+# Graded-stack scheme (cycle-110, D2): firm-in-prose fused BLAS-1 leaf — matches three
+# Palace L0 entry points exactly, syntactic-identity laws (firm-on-positive-structure).
+# Blocking depends-on = rank-terminal POSITIVE L0 SOURCE (cites-evidence) → well-founds
+# the `firm` rank. The lowers-to edge points at the axpby-mutation-rotation theme.
+edges:
+  depends-on:
+    - target: palace/linalg/vector.cpp:726-730
+      kind: cites-evidence        # AXPBY(double,Vector,double,Vector) → MFEM add(...)
+    - target: palace/linalg/vector.cpp:732-737
+      kind: cites-evidence        # AXPBY(complex,...) → member form
+    - target: palace/linalg/vector.cpp:739-743
+      kind: cites-evidence        # AXPBY(double,ComplexVector,...) real-scalar-on-complex
+    - target: palace/linalg/vector.hpp:130-131
+      kind: cites-evidence        # ComplexVector::AXPBY member decl
+    - target: palace/linalg/vector.hpp:309-311
+      kind: cites-evidence        # free-function template AXPBY decl
+    - target: L1-L0/axpby-mutation-rotation
+      kind: lowers-to             # the L1>L0 lowering theme this leaf lowers to
+  reference:
+    - L1/axpy
+    - L1/axpbypcz
+    - L1/scal
+    - L2/linear_combination
+    - concepts/scalar-promotion
+---
+
 # axpby
 
 Mutation-lifted fused two-scalar two-vector update: `y_new = α·x + β·y_old`. The fused BLAS-1 primitive that subsumes both `axpy` (β=1) and pure-scaling (α=0). At L1, the fused form is a leaf primitive; the decision against decomposing it as `axpy ∘ scal` is recorded in [`scaffolding/decisions/axpby-as-primitive.md`](../../../scaffolding/decisions/axpby-as-primitive.md).

@@ -1,3 +1,34 @@
+---
+layer: L1
+operator: axpy
+rank: firm
+# Graded-stack scheme (cycle-110, D2): firm-in-prose BLAS-1 leaf — fully-specified
+# positive L0 source + syntactic-identity laws (the firm-on-positive-structure escape).
+# The blocking depends-on is the rank-terminal POSITIVE L0 SOURCE (cites-evidence),
+# which is what makes the `firm` rank well-founded (the set_subvector_zero precedent).
+# The lowers-to edge points at the axpby-mutation-rotation theme, which covers axpy's
+# sub-patterns as the β=1 specialisation (there is NO standalone axpy-mutation-rotation).
+edges:
+  depends-on:
+    - target: palace/linalg/vector.cpp:702-712
+      kind: cites-evidence        # free-function AXPY(double,Vector,Vector) + α==1.0 fast-path
+    - target: palace/linalg/vector.cpp:715-723
+      kind: cites-evidence        # AXPY(complex,ComplexVector,ComplexVector) overload
+    - target: palace/linalg/vector.hpp:115-118
+      kind: cites-evidence        # ComplexVector::AXPY / Add member decl
+    - target: palace/linalg/vector.hpp:305-307
+      kind: cites-evidence        # free-function template AXPY decl
+    - target: L1-L0/axpby-mutation-rotation
+      kind: lowers-to             # axpy's lowering = β=1 specialisation in the axpby theme
+  reference:
+    - L1/axpby
+    - L1/axpbypcz
+    - L1/scal
+    - L2/linear_combination
+    - concepts/axpy
+    - concepts/scalar-promotion
+---
+
 # axpy
 
 Mutation-lifted vector-scalar fused update: `y_new = α·x + y_old`. The canonical BLAS-1 primitive at L1.
