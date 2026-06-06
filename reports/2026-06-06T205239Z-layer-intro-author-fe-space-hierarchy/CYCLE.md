@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T210749Z
 scope: L1/fe_space_hierarchy operator (cycle-117 D4, WAVE-1, open-all-feature-fronts front (iii)-a)
 status: integrated
 integrated_at: 2026-06-06T214845Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ad3a65db89bec3cb0af734d5fab52bfee9db7455
 integration_notes: "cycle-117 D4 (apply-order 3/5). New firm L1 op fe_space_hierarchy (AddLevel-fold p-multigrid combinator composing firm fe_space+fe_collection, well-foundedness firm/firm) + 3 fe_space.md re-anchors + fe-space-intro 3->4 + OWNS the consolidated L1 firm count 40->43 (FE-space sub-spine 4->5). All per-report gates PASS; rank firm/firm (no violation). fe_space_hierarchy lands in STRONGER detritus pending an inbound consumer (GC-ground-don't-remove; NEW node, not a block). Finalize CONFIRMED D5 landed interpolator firm at the FE-space sub-spine -> grand total stays 43 (count-owner reconciliation OQ RESOLVED). 4 OQs promoted."
 ---
 

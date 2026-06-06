@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T205239Z
 scope: L1 operator: interpolator
 status: integrated
 integrated_at: 2026-06-06T214845Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ad3a65db89bec3cb0af734d5fab52bfee9db7455
 integration_notes: "cycle-117 D5 (apply-order 4/5). New firm L1 op interpolator (de-Rham discrete grid-transfer; firm on the discrete piece + a GSLIB opaque-library-ownership obstruction sibling note kept separate). LOAD-BEARING linter-cleanliness fix VERIFIED by finalize: carries NO depends-on edge (the forthcoming L1-L0/interpolator-construction-rotation theme sits under reference, demoted from lowers-to per the repairer) -> unresolved_depends_on_targets HELD 0. Confirms D4's count: landed firm at the FE-space sub-spine. interpolator lands as detritus pending an inbound consumer (GC-ground-don't-remove; NEW node, not a block). All per-report gates PASS. 3 OQs promoted."
 inputs:
   - cycle-117 D5 (WAVE-1) dispatch — open-all-feature-fronts directive B front (iii)-b (de-Rham discrete interpolator)

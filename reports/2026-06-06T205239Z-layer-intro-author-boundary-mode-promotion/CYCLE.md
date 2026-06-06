@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T205239Z
 scope: feature/boundary-mode column promotion off seed (cycle-117 D2, WAVE-2)
 status: integrated
 integrated_at: 2026-06-06T214845Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ad3a65db89bec3cb0af734d5fab52bfee9db7455
 integration_notes: "cycle-117 D2 (apply-order 5/5, LAST). boundary-mode driver-leaf column rank rough-in->FIRM across 3 chapter bodies (feature_root: seed KEPT as the permanent GC-root marker, matching the eigenmode.L4 precedent) + live waveguide-mode sibling cross-links. Both-land coupling with D1 RESOLVED (D1's firm index-cell + D2's chapter-body flip now match -- no index-cell drift). All per-report gates PASS; rank firm rests on firm fe_assemble+eigsolve (no violation); the waveguide-mode reference edges are sibling references not blockers (OWN-COMPOSITION). 0 new OQs. Non-blocking citecheck: 3 MISS were cross-report ...-elided provenance prose, not landed citations."
 ---
 

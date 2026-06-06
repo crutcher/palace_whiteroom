@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T205239Z
 scope: feature/waveguide-mode output-product column (cycle-117 D1, WAVE-1, open-all-feature-fronts front (i))
 status: integrated
 integrated_at: 2026-06-06T214845Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ad3a65db89bec3cb0af734d5fab52bfee9db7455
 integration_notes: "cycle-117 D1 (apply-order 1/5). New 6th output-product feature column feature/waveguide-mode.{L4,L1,L0}.md (seed/rough-in) + sole-owned feature/index.md + output-product.md + SUMMARY.md (incl boundary-mode firm index-cell on D2's behalf). All per-report gates PASS; rank/reachability re-measured clean by finalize (waveguide-mode chapters reachable as feature-surface roots, roots 36->39). 3 OQs promoted."
 ---
 

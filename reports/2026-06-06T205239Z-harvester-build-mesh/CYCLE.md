@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T205239Z
 scope: L1 operator: build_mesh
 status: integrated
 integrated_at: 2026-06-06T214845Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ad3a65db89bec3cb0af734d5fab52bfee9db7455
 integration_notes: "cycle-117 D3 (apply-order 2/5). New firm L1 op build_mesh :: Config -> Mesh (firm-on-positive-structure; in-chapter Mesh record definition) + new 'Mesh & FE-space construction' kind-grouping in L1/index.md + SUMMARY.md. All per-report gates PASS; rank firm rests on rank-terminal L0 (no violation). build_mesh lands as detritus pending an inbound feature/higher depends-on consumer (GC-ground-don't-remove; NEW node, not a block). NOTE: D3's deferred group-intro authoring caused a duplicate-file build error at finalize, repaired by creating book/src/L1/mesh-construction-intro.md group-intro stub + repointing the SUMMARY link. 4 OQs promoted."
 inputs:
   - cycle-117 D3 (WAVE-1) dispatch, open-all-feature-fronts directive B front (iv) — mesh-wrapper vocabulary
