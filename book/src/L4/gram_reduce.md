@@ -78,8 +78,8 @@ bodies; Palace's C++ writes the explicit double loop, not the L4 reduction form.
 
     -- the operator-weighted symmetric-Gram reduction over a solution family-pair grid,
     -- parameterized by the per-entry normalization weight w(i,j):
-    gram_reduce :: LinearOperator[N, N]        -- the operator weight K (the domain energy operator)
-                -> [Tensor[N]]                  -- the solution family xs = [x_0 .. x_{m-1}]
+    gram_reduce :: LinOp[(S: ...), (S: ...)]   -- the operator weight K (square SPD domain energy operator)
+                -> [Tensor[(S: ...)]]           -- the solution family xs = [x_0 .. x_{m-1}] (congruent to K's domain S)
                 -> (Int -> Int -> Scalar)       -- the per-entry normalization weight w(i,j)
                 -> Matrix[m, m]                 -- the symmetric Gram matrix G, Gᵢⱼ = w(i,j) · (xⱼᵀ K xᵢ)
     gram_reduce k xs w =
@@ -95,13 +95,15 @@ bodies; Palace's C++ writes the explicit double loop, not the L4 reduction form.
     -- the alternate Maxwell form is the inverse (a CONSUMER, not part of the reduction):
     gram_inverse :: Matrix[m, m] -> Matrix[m, m]            -- = inv (LAPACK); the Cinv / Minv tail
 
-Shape contract (bunsen-style; named axes):
+Shape contract (bunsen-style; named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1):
 
-- `K : LinearOperator[N, N]` — read-only; the **domain energy operator** (`M_elec`
+- `K : LinOp[(S: ...), (S: ...)]` — read-only; the **domain energy operator** (`M_elec`
   diffusion-energy at `electrostaticsolver.cpp:118`, `M_mag` curl-curl-energy at
   `magnetostaticsolver.cpp:129`; the feature chapters call it `K`). Symmetric/SPD —
   the load-bearing precondition for `G`-symmetry.
-- `xs : [Tensor[N]]` — the collected solution family ([`solve_family`](./solve_family.md)'s
+- `xs : [Tensor[(S: ...)]]` — the collected solution family (each congruent to `K`'s
+  domain group `S` of arbitrary unknown rank; [`solve_family`](./solve_family.md)'s
   `[SimState.x]`): electrostatic `[Vᵢ]` (per-terminal), magnetostatic `[Aᵢ]`
   (per-surface-current). Read-only.
 - `w : Int -> Int -> Scalar` — the per-entry normalization weight closure: electrostatic

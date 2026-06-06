@@ -17,7 +17,7 @@ variant_axes:
 # inner_product
 
 The L4 **reduce-to-scalar inner-product combinator**: a whole-tensor reduction
-`α = ⟨x, y⟩` over the length axis `N`, lifted to the top of the stack as a
+`α = ⟨x, y⟩` over the shape group `S` (arbitrary unknown rank, NOT rank-1), lifted to the top of the stack as a
 **feature-surface verb the backend wants**. This is the BLAS-1 *combinator* (the
 general reduce-to-scalar fold parameterized by the conjugation / element-type /
 weight axes) that **rises to L4 regardless**, per the
@@ -50,7 +50,7 @@ CG `α`/`β` coefficients and GMRES orthogonalization coefficients inside
 [`iterate-while`](./iterate-while.md) / [`solve_family`](./solve_family.md) /
 [`fold_solve`](./fold_solve.md). Those thread a `SimState` carry through a stopping
 predicate or schedule; `inner_product` is a **pure value-producing data-parallel
-reduction** over the length axis `N` — no control-flow, no monadic `Solve` effect,
+reduction** over the shape group `S` — no control-flow, no monadic `Solve` effect,
 no convergence predicate, no carry. (The per-element kernel is embarrassingly
 parallel; only the final sum communicates — and the MPI collective is out of scope
 per CLAUDE.md §Scope, ranks read as single-rank equivalents.)
@@ -72,7 +72,7 @@ not edited this cycle, out of dispatch scope).
 
 The L4 calculus is specified in the strawman
 [`../design/l4_calculus.md`](../design/l4_calculus.md). `inner_product` is a pure
-length-axis reduction; its L4 rendering uses the strawman's term/type BNF (§1) with
+whole-tensor reduction over the shape group `S`; its L4 rendering uses the strawman's term/type BNF (§1) with
 no reduction-rule extension (a `reduce`/`zipWith` fold in the existing vocabulary).
 Pseudo-language is Haskell `::` signatures inside a `text` fence per the L4/L3
 notation invariant.
@@ -80,32 +80,35 @@ notation invariant.
 ## Signature
 
     -- entry point: the reduce-to-scalar inner-product combinator
-    -- a pure reduction over the length axis N; no Solve monad, no carry
-    inner_product   :: Tensor[N] -> Tensor[N] -> Scalar
-    inner_product_M :: Tensor[N] -> LinearOperator[N, N] -> Tensor[N] -> Scalar
+    -- a pure reduction over the shape group S; no Solve monad, no carry
+    inner_product   :: Tensor[(S: ...)] -> Tensor[S] -> Scalar
+    inner_product_M :: Tensor[(S: ...)] -> LinOp[(S: ...), (S: ...)] -> Tensor[S] -> Scalar
 
     inner_product   x y   = reduce (+) zero (zipWith kernel x y)   -- kernel from the table below
     inner_product_M x M y = inner_product (apply_linop M x) y      -- weighted ≡ pre-apply M to arg-1, then plain
     inner_product   x y   = inner_product_M x I y                  -- plain ≡ M = I
 
-Shape contract (bunsen-style; named axes; identical to the firm L3 signature — the
+Shape contract (bunsen-style; named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1; identical to the firm L3 signature — the
 L4 form is value-thread-isomorphic to it, §"Downward to L3"):
 
-- `x` — `Tensor[N]` — read-only; the **conjugated** (arg-1) operand in `xᴴ y`.
-- `y` — `Tensor[N]` — read-only; the **linear** (arg-2) operand.
-- `M` (weighted member) — `LinearOperator[N, N]` — read-only matrix-weight,
-  pre-applied to `x` via the opaque [`apply_linop`](../L3/apply_linop.md) gate.
-- result — `Scalar` — element type per the kernel table; `zero` on the empty axis.
-- `x` and `y` share one length axis `N` and one element type `T ∈ {real, complex}`.
+- `x` — `Tensor[(S: ...)]` — read-only; the **conjugated** (arg-1) operand in `xᴴ y`.
+- `y` — `Tensor[S]` — read-only; the **linear** (arg-2) operand.
+- `M` (weighted member) — `LinOp[(S: ...), (S: ...)]` — read-only matrix-weight (a
+  square / endomorphic operator, domain ≡ range = `S`, §1.2.2), pre-applied to `x`
+  via the opaque [`apply_linop`](../L3/apply_linop.md) gate.
+- result — `Scalar` — element type per the kernel table; `zero` on the empty tensor.
+- `x` and `y` share one shape group `S` (arbitrary unknown rank, NOT rank-1) and one
+  element type `T ∈ {real, complex}`.
 
 Per-element kernel (the conjugation × element-type axes; inherited unchanged from
 the firm L3 reduction):
 
-| element type | operator | per-element `kernel(x[i], y[i])` | form |
+| element type | operator | per-element `kernel(x[idx], y[idx])` | form |
 |---|---|---|---|
-| `real`    | `inner_product` | `x[i] · y[i]`       | bilinear symmetric (conjugation a no-op) |
-| `complex` | `inner_product` | `conj(x[i]) · y[i]` | Hermitian sesquilinear (arg-1 conjugated) |
-| `complex` | `tdot`          | `x[i] · y[i]`       | unconjugated bilinear (specialization note) |
+| `real`    | `inner_product` | `x[idx] · y[idx]`       | bilinear symmetric (conjugation a no-op) |
+| `complex` | `inner_product` | `conj(x[idx]) · y[idx]` | Hermitian sesquilinear (arg-1 conjugated) |
+| `complex` | `tdot`          | `x[idx] · y[idx]`       | unconjugated bilinear (specialization note) |
 
 The convention is **conjugate-linear in arg-1, linear in arg-2** (the standard
 Hermitian inner product `⟨x, y⟩ = xᴴ y`), inherited unchanged from the firm L3 /
@@ -143,14 +146,14 @@ Carried up **unchanged** from the firm L3 [`inner_product`](../L3/inner_product.
 (laws are statements about the value; the L4 form is value-thread-isomorphic to the
 L3 reduction — §"Downward to L3"). Reproduced for L4 layer-coherence:
 
-1. **Empty-axis identity (reduction seed).** `inner_product` over a zero-length
-   axis is `zero`.
+1. **Empty-tensor identity (reduction seed).** `inner_product` over an empty
+   tensor is `zero`.
 
-2. **Split-additivity / length-concatenation-homomorphism (the defining law).**
+2. **Split-additivity / shape-concatenation-homomorphism (the defining law).**
    `inner_product (x₁ ++ x₂) (y₁ ++ y₂) = inner_product x₁ y₁ + inner_product x₂ y₂`
-   (`++` concatenates along the length axis, `+` scalar addition). A monoid
-   homomorphism from `(length-concatenated tensors, ++)` to `(Scalar, +)` —
-   collapsing the length axis; this is what licenses parallel/blocked evaluation.
+   (`++` concatenates the shape group `S`, `+` scalar addition). A monoid
+   homomorphism from `(shape-concatenated tensors, ++)` to `(Scalar, +)` —
+   collapsing the shape group `S`; this is what licenses parallel/blocked evaluation.
 
 3. **Conjugate-linearity in arg-1, linearity in arg-2** (complex Hermitian member);
    the real member is bilinear (conjugation a no-op).
@@ -186,7 +189,7 @@ because the rotation is identity-in-form and laws about the value are unchanged.
 
 ## Variant axes
 
-1. **Conjugation convention** — `conj(x[i])·y[i]` (Hermitian `dot`) vs `x[i]·y[i]`
+1. **Conjugation convention** — `conj(x[idx])·y[idx]` (Hermitian `dot`) vs `x[idx]·y[idx]`
    (unconjugated `tdot`). The family's **namesake unification axis** (NOT a
    remaining variant); `tdot` is its second value (type-API-surface-only caveat).
 2. **Element-type** — `real | complex`; the complex reduction is the real reduction
@@ -210,7 +213,7 @@ variant axis** (the IEEE non-law); the backend owns it.
 
 The `√ ∘ abs` post-step is a downstream scalar map; the norm is not a reduction and
 does not enter this entry's signature. Merging `nrm2` into `inner_product` would be
-a category error (length-axis homomorphism producing `⟨x, x⟩` vs the scalar map
+a category error (shape-group `S` homomorphism producing `⟨x, x⟩` vs the scalar map
 `α ↦ √|α|` on that output). `nrm2` IS one of the **kept named abstractions** that
 rises to L4 as a named verb (§"Specializations", case 2) — but as a *consumer*
 verb, not a fold member; its do-NOT-merge boundary is the **over-unification
@@ -260,10 +263,10 @@ not edited this dispatch.
 
 The scalar-weighted-tensor-sum [`linear_combination`](./linear_combination.md)
 (this cycle's sibling L4 entry) is a **different** fold — scalar-weighted **tensor**
-sum producing `Tensor[N]`, NOT a reduce-to-scalar. Its concatenation-homomorphism
-is over the *term list* to `(Tensor[N], +)`; this combinator's is over the *length
-axis* to `(Scalar, +)`. Its combining step is scale-and-accumulate-over-the-term-
-list; this combinator's is zip-and-reduce-over-`N`. The two are the small **algebra
+sum producing `Tensor[S]`, NOT a reduce-to-scalar. Its concatenation-homomorphism
+is over the *term list* to `(Tensor[S], +)`; this combinator's is over the *shape
+group `S`* to `(Scalar, +)`. Its combining step is scale-and-accumulate-over-the-term-
+list; this combinator's is zip-and-reduce-over-`S`. The two are the small **algebra
 of folds** at L4 — one tensor-producing, one scalar-producing — deliberately **NOT
 merged** (the over-unification guard, symmetric in both entries; carried identically
 at L2/L3/L4).
@@ -273,7 +276,7 @@ at L2/L3/L4).
 `firm` — the L4 form is the calculus-level rendering of the firm L3
 [`inner_product`](../L3/inner_product.md) combinator (firm cycle-051, propagated
 from the firm L2 entry cycle-019 / inverted-to-entry cycle-049 D2): the same
-reduce-to-scalar `Tensor[N] -> Tensor[N] -> Scalar` reduction,
+reduce-to-scalar `Tensor[(S: ...)] -> Tensor[S] -> Scalar` reduction,
 value-thread-isomorphic across the L4>L3 edge (identity-in-form on the body; no
 monadic wrapper to dissolve — §"Downward to L3"). The seven algebraic laws are
 carried up unchanged (each a syntactic identity or a standard inner-product fact);

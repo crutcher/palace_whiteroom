@@ -119,25 +119,25 @@ iteration-rotation form; the concept pages are the narrative.
 
     orthogonalize :: (op, w, V) -> { residual, coeffs }
 
-Shape contract (positional values; L3 has no `readonly` annotation and no monadic effect):
+Shape contract (positional values; L3 has no `readonly` annotation and no monadic effect; the candidate vector shape group `S` follows the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1; the basis `Basis[N, m]` is a genuine 2-D `m`-column basis whose columns `V[j]` are length-`N` dof-vectors congruent to `S`, and `coeffs : Tensor[m]` is genuinely 1-D — both KEEP their concrete length axes):
 
 - **`op`** — orthogonalization-parameters value, closure-captured by the body (a positional
   argument never present in the return position). The body reads:
   - `op.variant : GSVariant ∈ {MGS, CGS, CGS2}` — the orthogonalization variant; **inspected
     exactly once at dispatch**, never re-branched per column. This is the axis along which the
     L3 lift verdict splits (MGS non-lifting / CGS, CGS2 lifting).
-  - `op.dot : (Tensor[N], Tensor[N]) -> Scalar` — the inner-product hook; the canonical
+  - `op.dot : (Tensor[(S: ...)], Tensor[S]) -> Scalar` — the inner-product hook; the canonical
     [`dot`](./dot.md) (conjugate-linear in the first argument) by default, the SLEPc/ROM paths
     substitute a `B`-weighted dot. A parametric axis: the lift verdict is invariant under the
     hook (the body shape and the MGS/CGS structural split are unchanged).
-- **`w`** — `Tensor[N]` — read-only; the (un-normalised) candidate vector to orthogonalize.
-- **`V`** — `Basis[N, m]` — read-only; `m` columns each of length axis `N`, the **precondition**
+- **`w`** — `Tensor[(S: ...)]` — read-only; the (un-normalised) candidate vector to orthogonalize.
+- **`V`** — `Basis[N, m]` — read-only; `m` columns each a length-`N` dof-vector (congruent to `S`), the **precondition**
   being orthonormal (`⟨V[i], V[j]⟩ = δ_ij`) under `op.dot`. The operator does not enforce the
   precondition (inherited from the L1 leaf, whose L0 header states it, `orthog.hpp:18-23`).
 - **result `{ residual, coeffs }`** — a record with two whole-tensor fields:
-  - `residual : Tensor[N]` — the orthogonal residual `w − Σ_j coeffs[j]·V[j]`, **not
+  - `residual : Tensor[S]` — the orthogonal residual `w − Σ_j coeffs[j]·V[j]`, **not
     normalised** (the L0 header's load-bearing no-output-normalisation contract,
-    `orthog.hpp:22`). Same length axis `N`.
+    `orthog.hpp:22`). Same shape group `S` as `w`.
   - `coeffs : Tensor[m]` — the projection coefficients (the leading `m` entries of the
     Hessenberg column). Element type matches `w` / `V`.
 
@@ -170,7 +170,7 @@ operation lifts to a global tensor-field form.
 ### Tensor-field body (one inner step `j`)
 
 Fix the inner-step body that runs once for each basis column `j ∈ {0, …, m−1}`. With the basis
-column `V[j] : Tensor[N]` and the candidate `w_eff(j) : Tensor[N]`, the body is
+column `V[j] : Tensor[N]` (a basis column) and the candidate `w_eff(j) : Tensor[S]`, the body is
 
 $$
 \begin{aligned}

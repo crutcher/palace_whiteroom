@@ -29,7 +29,7 @@ prefix `V`, parameterised by the orthogonalisation variant and the inner-product
 ([`orthogonalize`](../L2/orthogonalize.md) §Signature, §Semantics):
 
 ```text
-orthogonalize :: (op: OrthogOp, w: Tensor[N], V: Basis[N, m]) -> { residual: Tensor[N], coeffs: Tensor[m] }
+orthogonalize :: (op: OrthogOp, w: Tensor[(S: ...)], V: Basis[N, m]) -> { residual: Tensor[S], coeffs: Tensor[m] }
 
 orthogonalize op w V =
   let coeffs   = project  op.variant op.dot w V    -- the per-variant batched inner products
@@ -50,7 +50,12 @@ precondition is `V` orthonormal under `op.dot` (caller's contract; L2 entry §Si
 
 The L1 form is two co-extensive faces of the same value, both firm. **Which face the lowering
 targets is a resolution choice, not a value choice** — they compute the same
-`{ residual, coeffs }`.
+`{ residual, coeffs }`. At this RHS the candidate `w`/`w'` and the basis columns are the
+**concrete Palace `Vector`s** — genuinely flat rank-1 dof-vectors of length `N` — so the
+`Tensor[N]` rendering on both faces is the literal L0/L1 call shape, NOT the shape-generic
+`(S: ...)` of the L2 composition above (the rank-1-ness is real at the lowered call). The
+coefficient vector `coeffs`/`H : Tensor[m]` is a genuinely 1-D length-`m` projection-coefficient
+vector and the basis is the 2-D `Basis[N, m]` — both kept as written.
 
 ### Face 1 — the opaque parameterised leaf (the fused face)
 

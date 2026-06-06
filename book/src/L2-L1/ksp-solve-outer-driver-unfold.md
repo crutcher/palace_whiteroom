@@ -25,7 +25,7 @@ The L2 entry's §"Lowers from" narrates the **open** (L1-opacity → L2-composit
 
 The L2 form is reproduced from [`L2/ksp_solve`](../L2/ksp_solve.md) §Signature — the outer-driver composition (the convergence-test fold of the visible kernel):
 
-    ksp_solve :: (K: Solver[A: LinearOperator[N, N]], b: Tensor[N]) -> SolveResult[N]
+    ksp_solve :: (K: Solver[A: LinOp[(S: ...), (S: ...)]], b: Tensor[(S: ...)]) -> SolveResult[S]
     ksp_solve K b =
       let (op, s_0)     = setup K b                          -- bind kernel op-surface; seed state (iterate, eps, counters)
       let s_init        = init_convergence op s_0            -- residual proxy + eps + pre-loop converged flag
@@ -35,6 +35,14 @@ The L2 form is reproduced from [`L2/ksp_solve`](../L2/ksp_solve.md) §Signature 
                             (\s -> not s.converged && s.it < op.max_it)  -- convergence predicate
       let s_final       = materialise_iterate op s_n          -- fold restart-cycle correction into s.x (identity for CG)
       in extract_result s_final                               -- the four-field SolveResult readout
+
+The L2 upper side is **shape-generic**: the RHS `b` and the system operator `A` are congruent over
+one square shape group `S` of unknown rank (`Tensor[(S: ...)]`, square `LinOp[(S: ...), (S: ...)]`;
+named shape groups + two-group operator form per [`l4_calculus`](../design/l4_calculus.md)
+§1.2.1–§1.2.2), and the `SolveResult[S]` carries the same group. At the lowered L1/L0 opaque
+operator the operands are flat rank-1 Palace `Vector`s, so the L1 form below keeps the concrete
+`Tensor[N]` / `LinearOperator[N, N]` rank-1 framing (the boundary record's field content is
+byte-identical across the edge; only the rank-agnostic spelling differs by layer).
 
 At L2 the L1 opacity is **opened**: `K` is destructured by `setup` into the kernel op-surface `op` (which [`krylov-step`](../L2/krylov-step.md) consumes per-step) plus the loop-shaping fields the driver fold reads; the [`krylov-step`](../L2/krylov-step.md) kernel and the convergence-test fold that wraps it are **visible** as the body of an explicit composition. The L2 form carries the **solver-method** loop-shaping axis (CG single-fold / GMRES restart-nested-fold / FGMRES restart-nested-fold — selects the fold nesting + the result-residual proxy), which is the re-exposure of the L1-absorbed `krylov-method` axis (per `book/src/L2/ksp_solve.md:142`, the `KrylovSolver` factory cases `reference/palace/palace/linalg/ksp.cpp:34-58`).
 

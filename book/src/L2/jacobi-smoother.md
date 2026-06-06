@@ -92,41 +92,44 @@ floor. This dispatch floors `jacobi-smoother`.
 
 ## Signature
 
-    jacobi_smoother :: (op: JacobiSmoother[N], x: Tensor[N]) -> Tensor[N]
+    jacobi_smoother :: (op: JacobiSmoother[S], x: Tensor[(S: ...)]) -> Tensor[S]
     jacobi_smoother op x = op.dinv ⊙ x
                          = (ω · diag(A)⁻¹) ⊙ x
 
-Shape contract (bunsen-style named axes; positional values, no monadic effect,
-no destination buffer):
+Shape contract (bunsen-style named axes; the field shape group `S` follows the
+named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1;
+positional values, no monadic effect, no destination buffer):
 
-- **`op`** — `JacobiSmoother[N]` — the constructed smoother closure, an opaque
+- **`op`** — `JacobiSmoother[S]` — the constructed smoother closure, an opaque
   value bound once at setup and immutable across calls. Carries
-  `op.dinv : Tensor[N]` (the damped inverse diagonal `ω · diag(A)⁻¹`, same
+  `op.dinv : Tensor[S]` (the damped inverse diagonal `ω · diag(A)⁻¹`, congruent
+  to the field shape group `S`, same
   element-type as the operator), `op.omega : Real` (the damping factor, already
   absorbed into `dinv` at apply time), and `op.sf_max : Real` (the spectral-bound
   scaling factor, consumed only by the estimated-damping setup). The
   constructed-operator type is **opaque at L2** — the element-type variant and
   the operator-representation axis are absorbed; the L2 contract sees only the
   smoother-action interface.
-- **`x`** — `Tensor[N]` — the input vector (residual / RHS to smooth). Read-only
+- **`x`** — `Tensor[S]` — the input vector (residual / RHS to smooth). Read-only
   at L2 (the L2 form is pure / out-of-place; the L0 in-place output-arg mutation
   is reintroduced only at the L1>L0 lowering).
-- **result** — `Tensor[N]` — the post-smoothing output, a fresh value produced by
+- **result** — `Tensor[S]` — the post-smoothing output, a fresh value produced by
   the elementwise product; no L0 destination buffer is mentioned at L2 (the
-  destination-binding rotation is an L1>L0 concern). Same length axis `N`.
+  destination-binding rotation is an L1>L0 concern). Same shape group `S`.
 
-`JacobiSmoother[N]` is an **opaque constructed type** at L2: its internal
+`JacobiSmoother[S]` is an **opaque constructed type** at L2: its internal
 representation (real vs. complex `dinv`; the underlying operator `A`, already
 forgotten once `dinv` is committed) is not part of the L2 signature. The setup
-that builds `JacobiSmoother[N]` from `(A, omega, sf_max)` — the
+that builds `JacobiSmoother[S]` from `(A, omega, sf_max)` — the
 `assemble_diagonal → reciprocal → ω-fold` chain, plus the opaque
 `spectrum_estimate(A, dinv)` sub-action on the `ω = 0` path — is a separate setup
 action (mirroring the L0 `SetOperator` / `Mult` split). It is authoritative at
 the L1 entry (`book/src/L1/jacobi-smoother.md` §Signature) and is not re-derived
 here; the L2 entry reads the apply, not the setup.
 
-The L2 signature is **identical to the L1 and L3 signatures** modulo notation;
-the rotation is identity-in-form on the gate's apply.
+The L2 signature is **identical to the L3 signature** modulo notation, and
+identity-in-form to the L1 floor's concrete rank-1 `Tensor[N]` spelling of the
+same gate; the rotation is identity-in-form on the gate's apply.
 
 ## Semantics
 
@@ -134,7 +137,7 @@ the rotation is identity-in-form on the gate's apply.
 inverse diagonal `op.dinv = ω · D⁻¹`. The result is determined entirely by `op`
 and `x` — no hidden state, no per-call side effects, no in-place mutation at the
 L2 surface. The L2 form is **pure / out-of-place** (the same `op` applied to the
-same `x` returns the same `Tensor[N]` value); the L0 receiver-mutating idiom
+same `x` returns the same `Tensor[S]` value); the L0 receiver-mutating idiom
 (`Mult(x, y)` writes through `y`) is an L1>L0 lowering concern, not L2 algebra.
 
 The apply is **inner-product-free, iteration-free, and reduction-free**: it is a
@@ -211,7 +214,7 @@ authoritative on every factual claim about the Palace surface.
    consumes a whole tensor and returns its image under the linear map
    `M = diag(dinv)`).
 
-2. **Zero-vector annihilation.** `jacobi_smoother op 0_N = 0_N`. Follows from law
+2. **Zero-vector annihilation.** `jacobi_smoother op 0_S = 0_S`. Follows from law
    1 with `α = β = 0`.
 
 3. **Diagonal-operator round-trip with `assemble_diagonal`.** For the
@@ -323,7 +326,7 @@ gate, which has no fold-parent on either codomain.
 
 - [`constructed-operators`](../concepts/constructed-operators.md) — the
   level-(c) variant absorption of operator-representation; the
-  `JacobiSmoother[N]` closure is the canonical thinnest instance (it carries
+  `JacobiSmoother[S]` closure is the canonical thinnest instance (it carries
   only the inverse diagonal, having forgotten `A`).
 - [`variant-absorption`](../concepts/variant-absorption.md) — the level-(b)/(c)
   absorption discipline; the element-type and damping-mode axes are absorbed into
@@ -360,7 +363,7 @@ apply's positional signature.
 Two orthogonal axes:
 
 1. **element-type** (`real` | `complex`) — collapsed into the opaque
-   `JacobiSmoother[N]` closure. The L0 source instantiates both (`template class
+   `JacobiSmoother[S]` closure. The L0 source instantiates both (`template class
    JacobiSmoother<Operator>;` and `<ComplexOperator>`,
    `palace/linalg/jacobi.cpp:106-107`); the apply is identical in form (one
    elementwise product) and the per-element kernel dispatches on element type
@@ -452,8 +455,9 @@ cycle-041 leaf-vs-fold design fork.
 
 L2 `jacobi-smoother` lowers to L1 [`jacobi-smoother`](../L1/jacobi-smoother.md)
 via a **degenerate identity-in-named-terms** rotation, annotated in-line here
-rather than as a dedicated L2>L1 theme file: both layers see `jacobi_smoother ::
-(op: JacobiSmoother[N], x: Tensor[N]) -> Tensor[N]` with the same shape contract,
+rather than as a dedicated L2>L1 theme file: the L2 form sees `jacobi_smoother ::
+(op: JacobiSmoother[S], x: Tensor[(S: ...)]) -> Tensor[S]` and the L1 floor the
+concrete rank-1 `Tensor[N]` spelling of the same gate, with the same shape contract,
 the same six algebraic laws, the same non-law set, and the same
 two-orthogonal-plus-one-absorbed variant profile. There is **no kernel fusion to
 unfold** — the apply is a single elementwise product (the negative fusion

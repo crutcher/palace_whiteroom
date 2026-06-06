@@ -33,12 +33,15 @@ load-bearing one-to-one L0-symbol shape for the L1>L0 mutation rotation
 
 ## Signature
 
-    scal :: Scalar -> Tensor[N] -> Tensor[N]
+    scal :: Scalar -> Tensor[(S: ...)] -> Tensor[S]
     scal α x = α·x = linear_combination [(α, x)]
 
 Arity-1 instance of the combinator's
-`linear_combination :: [(Scalar, Tensor[N])] -> Tensor[N]`
-(`linear_combination.md` §Signature). The element-type / scalar-promotion sub-axis is
+`linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[S]`
+(`linear_combination.md` §Signature). Named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1: `S` is the shared shape group of
+arbitrary, unknown rank (NOT rank-1) — `scal` is element-local at every position of `S`,
+and the result is congruent to `x`. The element-type / scalar-promotion sub-axis is
 inherited unchanged from the combinator.
 
 ## Variant axes

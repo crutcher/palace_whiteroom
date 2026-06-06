@@ -73,7 +73,7 @@ explicit per-port loop (project-then-postscale, two phases), not the L4 reductio
     -- each receiver port mode, subtract the drive-port self-term, apply the port-kind
     -- impedance/de-embed scaling. One drive-COLUMN per solved family member.
     sparameter_reduce :: [PortMode]                 -- the receiver port modes [sᵢ] (lumped s; wave port_sr + i·port_si)
-                      -> [(Int, Tensor[N])]         -- the driven family: (drive_port_idx j, Eⱼ) per solved column
+                      -> [(Int, Tensor[(S: ...)])]  -- the driven family: (drive_port_idx j, Eⱼ) per solved column
                       -> Matrix[p, p]               -- the scattering matrix S (p = #ports), per column over the family
     sparameter_reduce ports family =
       matrix_from_columns
@@ -86,7 +86,8 @@ explicit per-port loop (project-then-postscale, two phases), not the L4 reductio
         selfterm i j   = if i == j then 1 else 0       -- the inhomogeneous diagonal −1 self-term (drive-port subtract)
         scale ports i j = port_scale (ports!!i) (ports!!j)  -- lumped: √(R_src/R_dst) (|R|>0); wave: exp(ikₙᵢdᵢ)·exp(ikₙⱼdⱼ)
 
-Shape contract (bunsen-style; named axes):
+Shape contract (bunsen-style; named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1):
 
 - `ports : [PortMode]` — read-only; the per-port mode functionals (lumped `s`; wave
   `port_sr + i·port_si`) + the per-port impedance/de-embed parameters (`R`, `kn0`,
@@ -94,8 +95,9 @@ Shape contract (bunsen-style; named axes):
   ports are whole-model one kind — all-lumped XOR all-wave (Palace forbids mixing for
   S-parameters, `postoperator.cpp:1256-1259`), so `port-kind` is a model-level axis, not a
   per-entry branch.
-- `family : [(Int, Tensor[N])]` — the driven solution family ([`frequency_sweep`](./frequency_sweep.md)'s
-  per-ω output): per solved column, the drive-port index `j` + the per-ω complex field `E`.
+- `family : [(Int, Tensor[(S: ...)])]` — the driven solution family ([`frequency_sweep`](./frequency_sweep.md)'s
+  per-ω output): per solved column, the drive-port index `j` + the per-ω complex field `E`
+  (shape group `S` of arbitrary unknown rank, NOT rank-1).
   Read-only. The whole reduction is applied **once per swept frequency**; the ω index rides
   as the outer family axis (factored out — the driven composition root owns the ω map, so
   `sparameter_reduce` is the per-port reduction at a single ω; see §Lowers to caveat).

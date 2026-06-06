@@ -41,11 +41,13 @@ require both L levels**).
 
 ## Signature
 
-    dot   :: Tensor[N] -> Tensor[N] -> Scalar
-    tdot  :: Tensor[N] -> Tensor[N] -> Scalar     -- complex-only variant
+    dot   :: Tensor[(S: ...)] -> Tensor[S] -> Scalar
+    tdot  :: Tensor[(S: ...)] -> Tensor[S] -> Scalar     -- complex-only variant
 
-The combinator's signature read at the plain (`M = I`) conjugation value; identical to the L1
-signature. Full shape contract: [`inner_product`](./inner_product.md) §Signature.
+The combinator's signature read at the plain (`M = I`) conjugation value (named shape groups
+per [`l4_calculus`](../design/l4_calculus.md) §1.2.1 — both operands congruent over one shape
+group `S` of arbitrary unknown rank, NOT rank-1). Full shape contract:
+[`inner_product`](./inner_product.md) §Signature.
 
 ## Conjugation variant-axis (the leaf-level fact, value-bearing for complex vectors)
 
@@ -56,9 +58,9 @@ per-element kernel by element-type:
 
 | element type | `dot(x, y)` returns | per-element kernel |
 |---|---|---|
-| `real`    | `real`    | `x[i] * y[i]` |
-| `complex` | `complex` | `conj(x[i]) * y[i]` *(Hermitian, conjugate-linear in first arg)* |
-| `complex` (via `tdot`) | `complex` | `x[i] * y[i]` *(unconjugated bilinear)* |
+| `real`    | `real`    | `x[idx] * y[idx]` |
+| `complex` | `complex` | `conj(x[idx]) * y[idx]` *(Hermitian, conjugate-linear in first arg)* |
+| `complex` (via `tdot`) | `complex` | `x[idx] * y[idx]` *(unconjugated bilinear)* |
 
 `dot` and `tdot` are distinct operators because their laws differ — `dot` is PSD-at-diagonal
 (`dot(x, x) ≥ 0`), `tdot` is the indefinite form (`tdot(x, x) = 0` does not imply `x = 0`). The
@@ -108,7 +110,7 @@ fold-specialization theme, not re-derived here.
 L3 `dot` lifts to the firm L4 [`dot`](../L4/dot.md) (firm cycle-069 D2) by **identity-in-form on
 the body** — the L4 form is the calculus-level named verb re-expressing the [`inner_product`](../L4/inner_product.md)
 combinator at `M = I` with the Hermitian/symmetric kernel; it is value-thread-isomorphic to this
-L3 specialization-stub (the same `Tensor[N] -> Tensor[N] -> Scalar` reduction at the plain-weight
+L3 specialization-stub (the same `Tensor[(S: ...)] -> Tensor[S] -> Scalar` reduction at the plain-weight
 conjugation value), so there is **no dedicated L4>L3 theme** (the in-line-marker route, the
 `inner_product`/`eigsolve`/`chebyshev` shape — no monadic wrapper / `Solve` monad / convergence
 predicate to dissolve). `dot` is one of the **kept named abstractions** that rise to L4 as named

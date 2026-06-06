@@ -36,8 +36,8 @@ The L2 form is the all-pairs reduce-to-matrix fold over a `k`-column basis (`L2/
 `book/src/L2/gram.md:42-50`), with an optional matrix weight carried in the `dot` hook:
 
 ```text
-gram  :: (dot: (Tensor[N], Tensor[N]) -> Scalar, X: Basis[N, k])                  -> Matrix[k, k]
-gram2 :: (dot,                                   X: Basis[N, k], Y: Basis[N, m]) -> Matrix[m, k]
+gram  :: (dot: (Tensor[(S: ...)], Tensor[S]) -> Scalar, X: Basis[N, k])                  -> Matrix[k, k]
+gram2 :: (dot,                                          X: Basis[N, k], Y: Basis[N, m]) -> Matrix[m, k]
 
 gram  dot X   = Matrix (\i j -> dot X[j] X[i])   -- entry (i,j) = ⟨X[j], X[i]⟩ = X[j]ᴴ X[i]
 gram2 dot X Y = Matrix (\i j -> dot Y[i] X[j])   -- entry (i,j) = ⟨Y[i], X[j]⟩ = Y[i]ᴴ X[j]
@@ -65,7 +65,11 @@ non-orthonormal-basis consumer `deflate` (`L2/gram` §Signature, `book/src/L2/gr
 
 The L1 form is a **`k×k` grid of per-cell leaves**, each cell one of the same three leaves the
 sibling scalar theme dispatches over (the conjugation axis at [`dot`](../L1/dot.md), which
-co-defines `dot`/`tdot`; the M-weighted member at [`bilinear-form`](../L1/bilinear-form.md)):
+co-defines `dot`/`tdot`; the M-weighted member at [`bilinear-form`](../L1/bilinear-form.md)). At
+this RHS the per-cell operands are the **concrete Palace `Vector`s** — genuinely flat rank-1
+dof-vectors of length `N` (and `M` for `bilinear_form`'s domain) — so the `Tensor[N]` /
+`LinearOperator[M, N]` rendering here is the literal L0/L1 call shape, NOT the shape-generic
+`(S: ...)` of the L2 `dot` hook above (the rank-1-ness is real at the lowered per-cell call):
 
 ```text
 dot           :: (x: Tensor[N], y: Tensor[N])                          -> Scalar

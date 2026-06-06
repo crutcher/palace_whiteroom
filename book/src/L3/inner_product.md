@@ -24,9 +24,9 @@ whole-tensor reduce-to-scalar field reduction `α = ⟨x, y⟩`. The conjugation
 element-type / weight specializations Palace exposes — the Hermitian `dot`, the
 unconjugated bilinear `tdot`, the matrix-weighted `xᴴ M y` (`inner_product_M`) — are
 **specialization notes under this entry** (§"Specializations"), not separate co-equal
-L3 chapters: they are this one reduce-to-scalar field reduction over the length axis
+L3 chapters: they are this one reduce-to-scalar field reduction over the shape group `S`
 read at fixed axis-values. **There is no sequential obstruction** — the reduction over
-independent length-axis indices is a parallel operation in exact arithmetic; the pinned
+all independent positions of the shape group `S` is a parallel operation in exact arithmetic; the pinned
 L0 reduction tree is a floating-point implementation choice (a recorded non-law),
 deferred to the L2>L1 [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md)
 theme, not an algebraic obstruction at L3.
@@ -50,8 +50,8 @@ L3 is the **iteration-rotation** layer (`book/src/L3/index.md` §Semantics): glo
 tensor-field operations expressed as `state' = f(state, params)`, with sequential
 obstructions named explicitly per [`sequential-obstruction`](../concepts/sequential-obstruction.md).
 `inner_product` at L3 is a whole-tensor reduction — its signature
-`Tensor[N] -> Tensor[N] -> Scalar` exposes no element loop; the reduction over the
-length axis `N` is a single semantic step at L3, just as the L2 fold is a single
+`Tensor[(S: ...)] -> Tensor[S] -> Scalar` exposes no element loop; the reduction over the
+shape group `S` is a single semantic step at L3, just as the L2 fold is a single
 algebraic step at the fusion-rotation layer.
 
 **At L3, `inner_product` is the entry** — it does not stand beside same-named L3 leaf
@@ -73,7 +73,7 @@ inverted cycle-049); the laws hold uniformly across L1 / L2 / L3 because the bod
 identity-in-form across the chain (§"Downward to L2").
 
 This L3 field reduction is data-parallel, not iteration-structural: it is a pure
-value-producing reduction over the length axis with no control-flow, no monadic state
+value-producing reduction over the shape group `S` with no control-flow, no monadic state
 threading, and no convergence predicate (the per-element kernel is embarrassingly
 parallel; only the final sum communicates — contrast L4 `iterate_while`, which threads
 state through a stopping predicate). It lifts to [`L4/inner_product`](../L4/inner_product.md)
@@ -91,36 +91,38 @@ combinator also appears inside other L4 composed entries (e.g.
 ## Signature
 
 ```text
-inner_product   :: Tensor[N] -> Tensor[N] -> Scalar
-inner_product_M :: Tensor[N] -> LinearOperator[N, N] -> Tensor[N] -> Scalar
+inner_product   :: Tensor[(S: ...)] -> Tensor[S] -> Scalar
+inner_product_M :: Tensor[(S: ...)] -> LinOp[(S: ...), (S: ...)] -> Tensor[S] -> Scalar
 
 inner_product   x y   = reduce (+) zero (zipWith kernel x y)   -- kernel from the table below
 inner_product_M x M y = inner_product (apply_linop M x) y      -- weighted ≡ pre-apply M to arg-1, then plain
 inner_product   x y   = inner_product_M x I y                  -- plain ≡ M = I
 ```
 
-Shape contract (bunsen-style; named axes; no element loop exposed at L3):
+Shape contract (bunsen-style; named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1; no element loop exposed at L3):
 
-- **`x`** — `Tensor[N]` — read-only whole-tensor argument; the **conjugated** (arg-1)
+- **`x`** — `Tensor[(S: ...)]` — read-only whole-tensor argument; the **conjugated** (arg-1)
   operand in the Hermitian inner product `xᴴ y` (see §"Conjugation convention").
-- **`y`** — `Tensor[N]` — read-only whole-tensor argument; the **linear** (arg-2) operand.
-- **`M`** (weighted member) — `LinearOperator[N, N]` — read-only; the matrix-weight,
+- **`y`** — `Tensor[S]` — read-only whole-tensor argument; the **linear** (arg-2) operand.
+- **`M`** (weighted member) — `LinOp[(S: ...), (S: ...)]` — read-only; the matrix-weight (a
+  square / endomorphic operator, domain ≡ range = `S`, §1.2.2),
   pre-applied to `x` via the opaque [`apply_linop`](./apply_linop.md) gate. The diagonal
   (`y = x`, SPD `M`) is the M-weighted norm-squared consumed downstream.
 - **result** — `Scalar` — element type per the rule below; `zero` (the additive identity
-  of the scalar field) on the empty length axis.
-- `x` and `y` share one length axis `N` and one element type `T ∈ {real, complex}`.
+  of the scalar field) on the empty tensor.
+- `x` and `y` share one shape group `S` (arbitrary unknown rank, NOT rank-1) and one element type `T ∈ {real, complex}`.
 
 Per-element kernel (the conjugation × element-type axes; inherited from the L2 combinator,
 reproduced for L3-reader coherence):
 
-| element type | operator | per-element `kernel(x[i], y[i])` | form |
+| element type | operator | per-element `kernel(x[idx], y[idx])` | form |
 |---|---|---|---|
-| `real`    | `inner_product` | `x[i] · y[i]`        | bilinear symmetric (conjugation is a no-op) |
-| `complex` | `inner_product` | `conj(x[i]) · y[i]`  | Hermitian sesquilinear (arg-1 conjugated) |
-| `complex` | `tdot`          | `x[i] · y[i]`        | unconjugated bilinear (see §"Specializations") |
+| `real`    | `inner_product` | `x[idx] · y[idx]`        | bilinear symmetric (conjugation is a no-op) |
+| `complex` | `inner_product` | `conj(x[idx]) · y[idx]`  | Hermitian sesquilinear (arg-1 conjugated) |
+| `complex` | `tdot`          | `x[idx] · y[idx]`        | unconjugated bilinear (see §"Specializations") |
 
-No element loop is exposed at L3 — the reduction over `i ∈ [0, N)` is a single semantic
+No element loop is exposed at L3 — the reduction over every position `idx` of `S` is a single semantic
 step in the L3 calculus. This is what makes `inner_product` L3-native by signature shape
 (the same property that makes `dot`/`nrm2` L3-native, per
 `book/src/L3-L2/krylov-step-body-identity.md:97`).
@@ -128,7 +130,7 @@ step in the L3 calculus. This is what makes `inner_product` L3-native by signatu
 ## Conjugation convention (pinned)
 
 `inner_product` is **conjugate-linear in arg-1, linear in arg-2** (the standard
-mathematical Hermitian inner product `⟨x, y⟩ = xᴴ y = Σᵢ conj(xᵢ)·yᵢ`), and the
+mathematical Hermitian inner product `⟨x, y⟩ = xᴴ y = Σ_idx conj(x[idx])·y[idx]`), and the
 M-weighted member conjugates the arg-1 (M-applied) operand: `inner_product_M(x, M, y) =
 xᴴ M y`. This is inherited unchanged from the upward reference
 [`L2/inner_product`](../L2/inner_product.md) §"Conjugation convention (pinned)" (which
@@ -180,7 +182,7 @@ leaves' (inherited, not re-derived).
 ## Semantics
 
 `inner_product` reduces the two tensors to a scalar: `inner_product(x, y) =
-Σ_{i ∈ [0, N)} kernel(x[i], y[i])`, with the per-element kernel from the table above.
+Σ_idx kernel(x[idx], y[idx])` over every position `idx` of the shape group `S`, with the per-element kernel from the table above.
 At L3 this is rendered as a single semantic step — the reduction is **one node in the
 iteration-rotation calculus**, not a loop.
 
@@ -197,11 +199,11 @@ composition `inner_product (apply_linop M x) y`.
 ### Iteration-rotation marker
 
 L3 is the iteration-rotation layer, and `inner_product`'s iteration view is the reduction
-over the length axis `N`. **The reduction lifts as a whole-tensor operation** — the
-signature `Tensor[N] -> Tensor[N] -> Scalar` exposes no element loop, and the
+over the shape group `S`. **The reduction lifts as a whole-tensor operation** — the
+signature `Tensor[(S: ...)] -> Tensor[S] -> Scalar` exposes no element loop, and the
 reduction-tree shape is opaque at L3 (the bit-level non-associativity is a recorded
 non-law, not a structural element of the L3 form). **There is NO sequential obstruction**
-for `inner_product` — the reduction over independent length-axis indices is a parallel
+for `inner_product` — the reduction over all independent positions of the shape group `S` is a parallel
 operation in exact arithmetic; the load-bearing pinned tree at L0 is a floating-point
 implementation choice, not an algebraic obstruction at L3. This places `inner_product` at
 the **obstruction-free end** of the L3 obstruction-profile spectrum
@@ -224,14 +226,14 @@ so the L3 reader does not have to reach up to L2; [`L2/inner_product`](../L2/inn
 
 **Defining reduction law (this is what makes the cohort one family):**
 
-1. **Empty-axis identity (the reduction's seed).** `inner_product` over a zero-length
-   axis is `zero` (the additive identity of the scalar field).
+1. **Empty-tensor identity (the reduction's seed).** `inner_product` over an empty
+   tensor is `zero` (the additive identity of the scalar field).
 
-2. **Split-additivity / length-concatenation-homomorphism (the defining law).**
+2. **Split-additivity / shape-concatenation-homomorphism (the defining law).**
    `inner_product (x₁ ++ x₂) (y₁ ++ y₂) = inner_product x₁ y₁ + inner_product x₂ y₂`,
-   where `++` concatenates along the length axis and `+` is scalar addition. The reduction
-   is a **monoid homomorphism from `(length-concatenated tensors, ++)` to `(Scalar, +)`** —
-   it collapses the length axis. This is what licenses parallel/blocked evaluation of the
+   where `++` concatenates the shape group `S` and `+` is scalar addition. The reduction
+   is a **monoid homomorphism from `(shape-concatenated tensors, ++)` to `(Scalar, +)`** —
+   it collapses the shape group `S`. This is what licenses parallel/blocked evaluation of the
    reduction (the property underlying the no-obstruction verdict). The weighted member
    inherits it at whole-vector granularity (per-block only when `M` is block-diagonal
    w.r.t. the split).
@@ -286,7 +288,7 @@ Laws that explicitly **do not** hold:
 - **Same-layer (L3)** — for the weighted member only: [`apply_linop`](./apply_linop.md)
   (the opaque `M`-apply gate pre-applied to arg-1: `inner_product_M x M y =
   inner_product (apply_linop M x) y`). The plain/Hermitian/unconjugated members have no
-  same-layer L3 dependency (the per-element kernel and the length-axis reduction are at or
+  same-layer L3 dependency (the per-element kernel and the shape-group `S` reduction are at or
   below the L3 layer's resolution).
 - **Consumers (L3)**: [`krylov-step`](./krylov-step.md) (CG/GMRES coefficients). The
   do-NOT-merge consumers [`nrm2`](./nrm2.md) / `matrix-weighted-norm` are
@@ -309,8 +311,8 @@ Laws that explicitly **do not** hold:
 this combinator unifies (NOT a remaining variant — it is the unification axis), inherited
 unchanged from the L2 combinator §"Variant axes":
 
-1. **Conjugation convention** — `kernel = conj(x[i])·y[i]` (Hermitian `dot`) vs
-   `kernel = x[i]·y[i]` (unconjugated `tdot`). The family's namesake unification axis;
+1. **Conjugation convention** — `kernel = conj(x[idx])·y[idx]` (Hermitian `dot`) vs
+   `kernel = x[idx]·y[idx]` (unconjugated `tdot`). The family's namesake unification axis;
    `tdot` is its second value (type-API-surface-only caveat).
 2. **Element-type** — `real | complex`. At L3 one reduction parameterized by element type;
    the complex reduction is the real reduction lifted componentwise. (Concept-page-carried
@@ -340,7 +342,7 @@ matrix-weighted-norm(x, B) = √ (inner_product_M x B x)        -- SPD B
 
 The `√ ∘ abs` post-step is a downstream scalar map; the norm is not a reduction and does
 not enter this entry's signature. Merging `nrm2` into `inner_product` would be a category
-error — `inner_product` is the length-axis homomorphism producing `⟨x, x⟩`; `nrm2` is the
+error — `inner_product` is the shape-group `S` homomorphism producing `⟨x, x⟩`; `nrm2` is the
 scalar map `α ↦ √|α|` applied to that output. The firm L3 [`nrm2`](./nrm2.md) leaf stays a
 standalone **consumer** entry (do-NOT-merge boundary, cycle-049 D2 (b.2) DECIDED +
 cycle-051 carve-out); its consumer-of-this-combinator note lands when its leaf is slimmed
@@ -352,8 +354,8 @@ subsumption.
 
 `firm` — the L3 form is the iteration-rotation rendering of the firm L2 `inner_product`
 combinator (firm cycle-019, inverted to combinator-as-entry cycle-049 D2): a whole-tensor
-reduce-to-scalar field reduction `Tensor[N] -> Tensor[N] -> Scalar` with **no sequential
-obstruction** (the length-axis reduction is parallel-clean in exact arithmetic; the pinned
+reduce-to-scalar field reduction `Tensor[(S: ...)] -> Tensor[S] -> Scalar` with **no sequential
+obstruction** (the shape-group `S` reduction is parallel-clean in exact arithmetic; the pinned
 L0 tree is a deferred non-law). The L3 form is **value-thread-isomorphic to the L2
 reduction** (identity-in-form across the L3>L2 edge — §"Downward to L2"); algebraic laws
 and variant-axis profile are inherited unchanged. The conjugation / element-type / weight
@@ -438,7 +440,7 @@ to this L3 entry:
 
 ## L3 vs L2 distinction
 
-- **L2**: one fusion-rotation fold `inner_product` over `(Tensor[N], Tensor[N])` with an
+- **L2**: one fusion-rotation fold `inner_product` over `(Tensor[(S: ...)], Tensor[S])` with an
   optional pre-`apply_linop M`; the family of fused reduction kernels (a kernel-fusion
   choice) is unfolded into the canonical `foldl (+) zero (zipWith kernel x y)`; the pinned
   reduction tree is de-fused into the fold's seed-and-accumulate. The combinator IS the L2

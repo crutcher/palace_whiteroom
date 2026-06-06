@@ -65,17 +65,21 @@ The L4 signature is the typed-wrapper shape. Setup constructs the `ChebOp`
 closure; `apply` is the `Solve`-monad action.
 
 ```text
-ChebOp :: { A: LinOp[E], dinv: Tensor[E, N], order: Int, pc_it: Int
+ChebOp :: { A: LinOp[E], dinv: Tensor[E, (V: ...)], order: Int, pc_it: Int
           , scalarInit: S
           , scalars: (Int, S) -> { α₀?: E, sd?: E, sr?: E, st: S } }
 
-ChebSim :: { x: Read[Tensor[E, N]], y: ReadWrite[Tensor[E, N]] }
+ChebSim :: { x: Read[Tensor[E, V]], y: ReadWrite[Tensor[E, V]] }
 
 setup  :: LinOp[E] -> SetupParams -> Variant -> Solve s (ChebOp E S)
 apply  :: ChebOp E S -> Bool -> Solve (ChebSim E) ()
 ```
 
-Shape contract (bunsen-style; named records and axes):
+Shape contract (bunsen-style; named records and axes; the field shape group `V`
+follows the named-shape-group convention of
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1 — named `V` here to avoid
+colliding with the scalar-recurrence state type parameter `S`; `E` is the element
+type, not an axis):
 
 - `ChebOp E S` — operator-internal configuration, captured once at setup;
   `readonly` per [`state-stratification`](../concepts/state-stratification.md).
@@ -85,8 +89,8 @@ Shape contract (bunsen-style; named records and axes):
   not a single union — there is no runtime variant tag at apply-time, only a
   closure dispatch through `scalars`. Fields:
   - `A: LinOp[E]` — the captured SPD operator (residual + direction-image).
-  - `dinv: Tensor[E, N]` — `1/diag(A)` (the `D⁻¹` action); real-valued even for
-    complex `A`.
+  - `dinv: Tensor[E, V]` — `1/diag(A)` (the `D⁻¹` action), congruent to the
+    field shape group `V`; real-valued even for complex `A`.
   - `order: Int` — polynomial degree (`> 0`); the inner `iterate_while_pure`
     step-count-predicate bound (`c.k <= order - 1`).
   - `pc_it: Int` — Richardson-sweep count; the outer `iterate_while_pure`
@@ -98,8 +102,9 @@ Shape contract (bunsen-style; named records and axes):
     absorbed into the closure type per [`variant-absorption`](../concepts/variant-absorption.md)
     level (c).
 - `ChebSim E` — the capability-typed sim-state record threaded by the `Solve`
-  monad: `x: Read[Tensor[E, N]]` (the rhs; read-only) and `y: ReadWrite[Tensor[E,
-  N]]` (the accumulator; the only field written). The `Read`/`ReadWrite` split
+  monad: `x: Read[Tensor[E, V]]` (the rhs; read-only) and `y: ReadWrite[Tensor[E,
+  V]]` (the accumulator; the only field written), both congruent to the field
+  shape group `V`. The `Read`/`ReadWrite` split
   encodes the L4 mutation discipline at the type surface (per
   [`solve-monad`](../concepts/solve-monad.md)): `apply` may read `x` but not
   write it, and read/write `y`.

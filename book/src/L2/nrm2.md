@@ -25,7 +25,7 @@ variant_axes:
 > `std::abs` defensive-guard claim and the `vector.hpp:255-260` `Norml2` L0 anchor.
 
 Euclidean-norm reduction at L2 (the fusion-rotation layer): `α = ‖x‖₂ = √⟨x, x⟩`, written as the
-algebraic composition `√ ∘ abs ∘ inner_product` over the length axis. Palace's `linalg::Norml2`
+algebraic composition `√ ∘ abs ∘ inner_product` over the shape group `S`. Palace's `linalg::Norml2`
 is already the one-line unfolded form (`std::sqrt(std::abs(Dot(comm, x, x)))`,
 `palace/linalg/vector.hpp:259`), so the L2 fusion rotation has no fused kernel to unfold; the
 entry exists primarily as a **layer-coherence floor** — present so the firm L3
@@ -38,7 +38,7 @@ entry exists primarily as a **layer-coherence floor** — present so the firm L3
 `nrm2` post-composes the scalar square-root (and the defensive `abs`) onto the
 [`inner_product`](./inner_product.md) fold at the diagonal `y = x`; **it does not itself fold and
 is NOT a member of the fold cohort**. Merging `nrm2` into `inner_product` would be a category
-error — `inner_product` is the length-axis homomorphism producing `dot(x, x)`; `nrm2` is the
+error — `inner_product` is the shape-group `S` homomorphism producing `dot(x, x)`; `nrm2` is the
 scalar map `α ↦ √|α|` applied to that fold's output. The do-NOT-merge boundary is carried in the
 [`inner_product`](./inner_product.md) §"Consumer (NOT an instance)" and in [`L2/index`](./index.md)
 §"Fold-cohort boundary"; this entry lists `inner_product` under `consumes`, never as a fold it
@@ -68,12 +68,14 @@ four-stage `Dot → MPI_Allreduce → std::abs → std::sqrt` chain.
 
 ## Signature
 
-    nrm2 :: Tensor[N] -> Scalar
+    nrm2 :: Tensor[(S: ...)] -> Scalar
     nrm2(x) = √⟨x, x⟩ = √ (abs (inner_product(x, x)))
 
 Result is **always real-valued** and non-negative (`nrm2(x) ≥ 0`), regardless of `x`'s element
 type — the element-type axis collapses to a single operator (the post-composed `abs` projects the
-complex self-inner-product onto its real magnitude before `√`). Full shape contract +
+complex self-inner-product onto its real magnitude before `√`). The operand is one shape group
+`S` of arbitrary unknown rank (NOT rank-1; named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1). Full shape contract +
 algebraic-law listing: the combinator [`inner_product`](./inner_product.md) + the firm L1 leaf
 [`L1/nrm2`](../L1/nrm2.md).
 
@@ -100,7 +102,7 @@ already the one-line unfolded composition), and **no destination-buffer concern*
 returned scalar). The hop does two value-preserving surface adjustments:
 
 1. **The `inner_product` fold at `y = x` re-fuses to the `dot` leaf at the diagonal.** L2 names the
-   inner reduction as the length-axis `inner_product` fold (firm cycle-019); at L1 the same
+   inner reduction as the shape-group `S` `inner_product` fold (firm cycle-019); at L1 the same
    diagonal self-inner-product is the `dot(x, x)` leaf (the defining identity `nrm2(x) = √dot(x, x)`,
    L1 algebraic law 8, `book/src/L1/nrm2.md:53`). This is the **consumer's** view of the edge
    [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md) §"The

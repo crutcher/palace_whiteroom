@@ -17,8 +17,8 @@ variant_axes:
 
 Whole-tensor **Hadamard (elementwise) binary product** as a base tensor-algebra
 primitive at L2 — the **fusion-rotation** rendering of `result = a ⊙ b`, defined by
-`result[i] = a[i] · b[i]` for `i ∈ [0, N)`. Consumes two equally-shaped tensors `a` and
-`b`; produces a fresh tensor of the same length axis whose every element is the per-element
+`result[idx] = a[idx] · b[idx]` for every multi-index `idx` of `S`. Consumes two congruent tensors `a` and
+`b`; produces a fresh tensor of the same shape whose every element is the per-element
 product of the corresponding input elements. `elementwise_product` is a **standalone
 binary field operation** at L2 — the diagonal-operator-apply primitive and the per-call
 kernel of the diagonally-scaled-preconditioner cohort (`jacobi-smoother`, Chebyshev
@@ -38,7 +38,7 @@ L2 is the fusion-rotation layer (`book/src/L2/index.md`): "Kernel fusion across 
 algebraic operations is unfolded into composition… Batched specialized BLAS calls are
 written as compositions of base primitives." `elementwise_product` at L2 is the base
 Hadamard-binary-multiply primitive in that vocabulary — a single binary field operation
-acting pointwise over the shared length axis `N`. It is the L2 rendering of the same
+acting pointwise over the shared shape group `S` (arbitrary, unknown rank — NOT rank-1). It is the L2 rendering of the same
 operation the concept page [`elementwise-product`](../concepts/elementwise-product.md)
 names "the diagonal-operator apply primitive at L2": applying a diagonal operator `D` to a
 vector `x` is `elementwise_product(diag(D), x)`.
@@ -51,15 +51,15 @@ is *not* on the batch-12 meta-phase leaf-vs-fold design fork. The two L2 fold co
 - [`inner_product`](./inner_product.md) — folds the **length axis** to a `Scalar`
   (`foldl (+) zero (zipWith kernel x y)`); the `dot` / `tdot` / `bilinear-form` family.
 - [`linear_combination`](./linear_combination.md) — folds the **term axis**, keeping
-  `Tensor[N]` (`foldl (\acc (a,t) -> acc + a·t) zeros pairs`); the
+  `Tensor[S]` (`foldl (\acc (a,t) -> acc + a·t) zeros pairs`); the
   `scal` / `axpy` / `axpby` / `axpbypcz` arity family.
 
 `elementwise_product` is **neither**: it is a binary field operation
-`(Tensor[N], Tensor[N]) -> Tensor[N]` that consumes two full-length operands and produces a
-full-length result, with no fold skeleton (no reduction to a scalar, no variadic term list
+`(Tensor[(S: ...)], Tensor[S]) -> Tensor[S]` that consumes two congruent operands and produces a
+congruent result, with no fold skeleton (no reduction to a scalar, no variadic term list
 to accumulate). It does not fuse *up* into either cohort, and neither cohort subsumes it.
 The closest relationship is the **inverse** subsumption with `scal`:
-`scal(α, x) = elementwise_product(broadcast(α, N), x)` — `elementwise_product` strictly
+`scal(α, x) = elementwise_product(broadcast(α, S), x)` — `elementwise_product` strictly
 *generalises* `scal`'s scalar-multiplication action to a vector-multiplication action (the
 broadcast specialisation; see Algebraic laws law 7). That is a sibling-subsumption identity,
 not a fold membership. So `elementwise_product` stands alone as a standalone L2 leaf — there
@@ -86,32 +86,33 @@ fusion-rotation layer; the concept page is the narrative.
 
 ## Signature
 
-    elementwise_product :: (a: Tensor[N], b: Tensor[N]) -> Tensor[N]
+    elementwise_product :: (a: Tensor[(S: ...)], b: Tensor[S]) -> Tensor[S]
     elementwise_product(a, b) = a ⊙ b
 
-Shape contract (bunsen-style, named axes; positional values, no monadic effect, no
-destination buffer):
+Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md)
+§1.2.1; positional values, no monadic effect, no destination buffer):
 
-- **`a`** — `Tensor[N]` — read-only at L2 (the L2 form is pure / out-of-place; the L0
-  in-place mutation is reintroduced only at the L1>L0 lowering).
-- **`b`** — `Tensor[N]` — read-only, sharing the length axis `N` and element type with `a`.
-- **result** — `Tensor[N]` — same axis `N` as the inputs; `result[i]` is the per-element
-  product `a[i] · b[i]`. A fresh value (no L0 destination buffer mentioned at L2).
+- **`a`** — `Tensor[(S: ...)]` — read-only at L2 (the L2 form is pure / out-of-place; the L0
+  in-place mutation is reintroduced only at the L1>L0 lowering). Its whole shape is the group
+  `S` (arbitrary, unknown rank — NOT rank-1).
+- **`b`** — `Tensor[S]` — read-only, congruent to `a` (same shape group `S`) and sharing its element type.
+- **result** — `Tensor[S]` — congruent to the inputs; `result[idx]` is the per-element
+  product `a[idx] · b[idx]`. A fresh value (no L0 destination buffer mentioned at L2).
 
-`a` and `b` must share the same length axis `N` and the same element type (both real or
+`a` and `b` must be congruent (same shape group `S`) and share the same element type (both real or
 both complex). The element-type axis (real or complex) is parameterised; the L2 signature
 is uniform across it. The **conjugate variant** (complex element-type only) takes one
 operand to its conjugate before multiplying:
 
-    elementwise_product_conj :: (a: ComplexTensor[N], b: ComplexTensor[N]) -> ComplexTensor[N]
+    elementwise_product_conj :: (a: ComplexTensor[(S: ...)], b: ComplexTensor[S]) -> ComplexTensor[S]
     elementwise_product_conj(a, b) = ā ⊙ b
 
 — modeled here, as at L1 and L3, as the same operator with a **conjugation variant axis**
 (see Variant axes) rather than as a separate primitive.
 
-The L2 signature is **identical to the L1 signature** modulo notation; the rotation is
+The L2 signature is **congruent to the L1 signature** modulo notation (L1 spells the flat dof-vector as `Tensor[N]`; L2 states the rank-generic congruence as the group `S`); the rotation is
 identity-in-form. `elementwise_product` is a leaf binary field operation, not a fold
-member: there is no `[(Scalar, Tensor[N])]` term-list argument (contrast
+member: there is no `[(Scalar, Tensor[S])]` term-list argument (contrast
 `linear_combination`) and no reduction to a `Scalar` (contrast `inner_product`). The
 operator-action recovery `apply_linop(DiagonalOperator(d), x) = elementwise_product(d, x)`
 (law 9) is a derived identity, not a decomposition.
@@ -119,11 +120,11 @@ operator-action recovery `apply_linop(DiagonalOperator(d), x) = elementwise_prod
 ## Semantics
 
 `elementwise_product` at L2 is a single base tensor-algebra binary field operation: a
-value-threaded transformation `(a, b) -> result` where `result[i] = a[i] · b[i]` for every
-element index `i ∈ [0, N)`. The operator is **element-local** (every output element depends
+value-threaded transformation `(a, b) -> result` where `result[idx] = a[idx] · b[idx]` for every
+multi-index `idx` of `S`. The operator is **element-local** (every output element depends
 on exactly one input element from each of `a` and `b`), **reduction-free** (no cross-element
-communication — the structural opposite of `dot` / `inner_product`, which reduce over `N`),
-and **rank-local** (no MPI collective at any layer; ranks own disjoint slices of `N` and
+communication — the structural opposite of `dot` / `inner_product`, which reduce over `S`),
+and **rank-local** (no MPI collective at any layer; ranks own disjoint slices of `S` and
 apply the multiplication independently — contrast `dot` / `nrm2`, which reduce over `N` and
 do carry an MPI collective).
 
@@ -183,9 +184,9 @@ have to reach to L1.
    `elementwise_product(a, elementwise_product(b, c)) = elementwise_product(elementwise_product(a, b), c)`.
    Inherited from per-element associativity.
 3. **Identity (all-ones)**: `elementwise_product(𝟙, x) = x` where `𝟙` is the all-ones
-   vector of axis `N`. The neutral element of pointwise multiplication.
+   tensor of shape group `S`. The neutral element of pointwise multiplication.
 4. **Absorption (all-zeros)**: `elementwise_product(𝟘, x) = 𝟘` for any `x`, where `𝟘` is
-   the zero vector of axis `N`. Element-wise `0 · x[i] = 0`.
+   the zero tensor of shape group `S`. Element-wise `0 · x[idx] = 0`.
 5. **Distributivity over vector addition**:
    `elementwise_product(a, b + c) = elementwise_product(a, b) + elementwise_product(a, c)`.
    Linearity in the second argument; by commutativity (law 1) also in the first.
@@ -193,14 +194,14 @@ have to reach to L1.
    `elementwise_product(scal(α, a), b) = scal(α, elementwise_product(a, b)) = elementwise_product(a, scal(α, b))`
    for any scalar `α`. The scalar passes freely between either operand and the outside.
 7. **Subsumption of `scal` (broadcast specialisation; the inverse-fork relationship)**:
-   `scal(α, x) = elementwise_product(broadcast(α, N), x)`, where `broadcast(α, N)` is the
-   all-`α` vector of length `N`. Stated as an algebraic identity, not a dep-map edge or a
+   `scal(α, x) = elementwise_product(broadcast(α, S), x)`, where `broadcast(α, S)` is the
+   all-`α` tensor of shape group `S`. Stated as an algebraic identity, not a dep-map edge or a
    fold-membership — `elementwise_product` strictly *generalises* `scal`, the inverse of
    `scal`'s membership in `linear_combination`. Both stay as L2 siblings.
 8. **Negation**: `elementwise_product(−𝟙, x) = −x`. (Special case of laws 3 + 5 + 6 with
    `α = −1`.)
-9. **Diagonal-operator action (operator/data identity)**: for any vector
-   `d ∈ Tensor[N]`, `apply_linop(DiagonalOperator(d), x) = elementwise_product(d, x)`. The
+9. **Diagonal-operator action (operator/data identity)**: for any tensor
+   `d ∈ Tensor[(S: ...)]`, `apply_linop(DiagonalOperator(d), x) = elementwise_product(d, x)`. The
    **defining identity** of the operator-class realization — applying the diagonal-operator
    wrapped from `d` IS the elementwise product against `d`. This makes `elementwise_product`
    the operator/data sibling of the L1 [`apply_linop`](../L1/apply_linop.md) on the
@@ -215,11 +216,11 @@ have to reach to L1.
 Laws that explicitly **do not** hold (inherited unchanged from L1):
 
 - **Idempotence**: `elementwise_product(a, a) ≠ a` in general — the result is the
-  elementwise square `a ⊙ a`, equal to `a` only when each `a[i]² = a[i]` (i.e.
-  `a[i] ∈ {0, 1}` per element, the same idempotent scalars in `ℝ` and `ℂ`).
+  elementwise square `a ⊙ a`, equal to `a` only when each `a[idx]² = a[idx]` (i.e.
+  `a[idx] ∈ {0, 1}` per position, the same idempotent scalars in `ℝ` and `ℂ`).
 - **Inverse (multiplicative)**: there is no general two-sided inverse —
-  `elementwise_product(a, b) = 𝟙` has the solution `b[i] = 1 / a[i]` only when **every**
-  `a[i] ≠ 0`. The partial inverse is realised by composing with `reciprocal` (the
+  `elementwise_product(a, b) = 𝟙` has the solution `b[idx] = 1 / a[idx]` only when **every**
+  `a[idx] ≠ 0`. The partial inverse is realised by composing with `reciprocal` (the
   elementwise-inverse sibling, firm L1/L3):
   `elementwise_product(a, reciprocal(a)) = 𝟙` when `a` has no zero entries. This is the
   algebraic shape of the `assemble_diagonal → reciprocal → elementwise_product`
@@ -255,7 +256,7 @@ in the L1>L0 lowering.
 
 **Fold-parent**: **none (fork-INDEPENDENT).** `elementwise_product` is **not** a member or
 leaf of either L2 fold cohort. It is not the term-axis fold `linear_combination` (which
-keeps `Tensor[N]` but accumulates a `[(Scalar, Tensor[N])]` term list — a different shape),
+keeps `Tensor[S]` but accumulates a `[(Scalar, Tensor[S])]` term list — a different shape),
 and it is not the length-axis fold `inner_product` (which reduces to a `Scalar`). There is
 no `do-NOT-merge` fold boundary for this entry because there is no fold to merge it into.
 This distinguishes it from the cycle-041 BLAS-1 floors (`dot` = conjugation-leaf of
@@ -264,7 +265,7 @@ reason `elementwise_product` is **not** on the batch-12 meta-phase leaf-vs-fold 
 
 **Sibling subsumption (not dependency)**:
 
-- `scal(α, x) = elementwise_product(broadcast(α, N), x)` — `elementwise_product` strictly
+- `scal(α, x) = elementwise_product(broadcast(α, S), x)` — `elementwise_product` strictly
   generalises [`scal`](./scal.md) (broadcast specialisation; law 7), the **inverse** of
   `scal`'s membership in the `linear_combination` fold. The L0 surfaces are distinct (`scal`
   is `Vector::operator*=(α)` on a scalar; `elementwise_product` is
@@ -389,8 +390,7 @@ about the BLAS-1 floors' relationship to the *fold* parents `inner_product` /
 
 L2 `elementwise_product` lowers to L1 [`elementwise_product`](../L1/elementwise_product.md)
 via a **degenerate identity-in-named-terms** rotation, recorded **in-line** (no dedicated theme) per
-the 2026-06-01 vocabulary-shift redirect: the signature `(Tensor[N], Tensor[N]) -> Tensor[N]` is
-textually identical at both layers, and the mapping is the total bijective identity on the leaf —
+the 2026-06-01 vocabulary-shift redirect: the signature is congruent at both layers (L2 `(Tensor[(S: ...)], Tensor[S]) -> Tensor[S]`; L1 the flat dof-vector spelling `(Tensor[N], Tensor[N]) -> Tensor[N]`), and the mapping is the total bijective identity on the leaf —
 every L2 binding (the `a ⊙ b` body, the ten algebraic laws, both variant axes: element-type +
 conjugation sub-axis) maps to the same L1 binding at the same position. There is no multi-operation
 kernel fusion to unfold — `elementwise_product` is a leaf binary field operation with **no fold-parent**
@@ -440,10 +440,10 @@ this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified vi
   no-interposed-L2-entry situation this dispatch now closes).
 - `book/src/L2/index.md` — the L2 Part overview; §"Fold cohorts" defines the two fold cohorts
   `elementwise_product` is **not** a member of (`inner_product` reduce-to-`Scalar`,
-  `linear_combination` reduce-to-`Tensor[N]`); §"Identity-in-form BLAS-1 floors" / the
+  `linear_combination` reduce-to-`Tensor[S]`); §"Identity-in-form BLAS-1 floors" / the
   cycle-041 floor-cohort note is the precedent framing this standalone floor extends.
 - `book/src/L2/scal.md` (firm cycle-041) — the floor-cohort template; `scal` is the
-  broadcast-scalar special case `scal(α, x) = elementwise_product(broadcast(α, N), x)` (law 7,
+  broadcast-scalar special case `scal(α, x) = elementwise_product(broadcast(α, S), x)` (law 7,
   the inverse-fork relationship). `book/src/L2/dot.md` (firm cycle-041) — the thin
   identity-in-form floor template (leaf, laws inherited unchanged from the L1 leaf, fusion note
   deferred).

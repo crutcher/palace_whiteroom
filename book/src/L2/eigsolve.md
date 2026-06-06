@@ -65,7 +65,7 @@ eigsolve E control =
 where the named per-step composition `apply_shift_invert` is the L2 content this entry firms:
 
 ```text
-apply_shift_invert :: (op: SpectralTransformOp, v: Tensor[N, complex]) -> Tensor[N, complex]
+apply_shift_invert :: (op: SpectralTransformOp, v: Tensor[(S: ...), complex]) -> Tensor[S, complex]
 
 -- spectral-transformation = none (no transform):        apply M⁻¹ K  (or M⁻¹ alone, per backend)
 -- spectral-transformation = shift-invert (linear):      (K − σM)⁻¹ M
@@ -77,12 +77,12 @@ apply_shift_invert op v =
   in scale_untransform op y                -- the per-backend γ / δ un-scale (informational coordinate bookkeeping)
 ```
 
-Shape contract (bunsen-style; named axes):
+Shape contract (bunsen-style; named axes; the operator-domain shape group `S` and the square operator form `LinOp[(S: ...), (S: ...)]` follow the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2 — `complex` is an element type, not an axis):
 
-- **`op.operand`** — `LinearOperator[N, N]` — the operator `apply_linop` is applied against *before* the inner solve. For the linear shift-invert case it is the bound mass operator `M` (`palace/linalg/arpack.cpp:579` `opM->Mult(x1, z1)`); for the no-transform case it is `K` (`palace/linalg/arpack.cpp:573` `opK->Mult(x1, z1)`); for the quadratic PEP case it is the linearization block `L₁` assembled from `(C, M)` (`palace/linalg/arpack.cpp:733-799`). The element type is `ComplexOperator` (the operator axis `N` matches the eigenproblem's square axis, inherited from L1).
+- **`op.operand`** — `LinOp[(S: ...), (S: ...)]` — the square operator `apply_linop` is applied against *before* the inner solve. For the linear shift-invert case it is the bound mass operator `M` (`palace/linalg/arpack.cpp:579` `opM->Mult(x1, z1)`); for the no-transform case it is `K` (`palace/linalg/arpack.cpp:573` `opK->Mult(x1, z1)`); for the quadratic PEP case it is the linearization block `L₁` assembled from `(C, M)` (`palace/linalg/arpack.cpp:733-799`). The element type is `ComplexOperator` (the operator's square shape group `S` matches the eigenproblem's domain, inherited from L1).
 - **`op.inv`** — `Solver[(K − σM)]` — the inner [`ksp_solve`](./ksp_solve.md) value inverting the *shifted* operator `(K − σM)` (linear) or `(L₀ − σL₁)` (quadratic). This is the L1 `E.linear` opened: `op.inv = E.linear`, the construction-bound `ComplexKspSolver` (`palace/linalg/slepc.cpp:364-367` `opInv = &ksp`, wired at `palace/models/modeeigensolver.cpp:1037, 1050`). The shift `σ` and the spectral-transform mode (STSINVERT / STPRECOND) are bound into `op.inv`'s operator at construction (`palace/linalg/slepc.cpp:379-394`); the inner solve sees an already-shifted system operator.
-- **`v`** — `Tensor[N, complex]` — the input Krylov basis vector the eigen-iteration hands to the per-step application (ARPACK: `x1.Set(px, n, false)` host-pointer convention, `palace/linalg/arpack.cpp:570`; SLEPc: `FromPetscVec(x, ctx->x1)`, `palace/linalg/slepc.cpp:1858`). Read-only.
-- **result of `apply_shift_invert`** — `Tensor[N, complex]` — the transformed vector `(K − σM)⁻¹ M v`, returned to the eigen-iteration to extend the Krylov basis (ARPACK: `y1.Get(py, n, false)`; SLEPc: `ToPetscVec(ctx->y1, y)`). When a divergence-free projector `E.projector` is bound, it is applied to the result (`opProj->Mult(y1)`, `palace/linalg/arpack.cpp:586` / `palace/linalg/slepc.cpp:1870`) — a per-step constraint enforcement that is part of the named composition's tail.
+- **`v`** — `Tensor[(S: ...), complex]` — the input Krylov basis vector (congruent to the operator domain shape group `S`; `complex` is the element type) the eigen-iteration hands to the per-step application (ARPACK: `x1.Set(px, n, false)` host-pointer convention, `palace/linalg/arpack.cpp:570`; SLEPc: `FromPetscVec(x, ctx->x1)`, `palace/linalg/slepc.cpp:1858`). Read-only.
+- **result of `apply_shift_invert`** — `Tensor[S, complex]` — the transformed vector `(K − σM)⁻¹ M v`, returned to the eigen-iteration to extend the Krylov basis (ARPACK: `y1.Get(py, n, false)`; SLEPc: `ToPetscVec(ctx->y1, y)`). When a divergence-free projector `E.projector` is bound, it is applied to the result (`opProj->Mult(y1)`, `palace/linalg/arpack.cpp:586` / `palace/linalg/slepc.cpp:1870`) — a per-step constraint enforcement that is part of the named composition's tail.
 
 The `eigen_iterate` fold and `extract_eigpairs` readout are **named by role, not opened** at L2 (the same role-reference discipline [`ksp_solve`](./ksp_solve.md) §Semantics applies to its fold — except here the fold body `apply_shift_invert` IS Palace-authored and opened, while the fold itself is library-owned and stays a role reference). `extract_eigpairs` is the firm L1 readout (normalize via `RescaleEigenvectors`, residual via `GetResidualNorm`, shift/scaling un-transform at `GetEigenvalue`, count→status); it is referenced here, not re-derived.
 

@@ -15,7 +15,7 @@ fold_parent: NONE (standalone elementwise leaf; NOT a member of inner_product or
 
 Elementwise **multiplicative-inverse** as a base tensor-algebra primitive at L2 — the
 **fusion-rotation** rendering of `y[i] = 1/x[i]`. Consumes a tensor `x`; produces a fresh
-tensor of the same length axis whose every element is the field-multiplicative-inverse of
+tensor of the same shape whose every element is the field-multiplicative-inverse of
 the corresponding input element. `reciprocal` is a **standalone elementwise leaf** at L2
 with **no fold-parent** — unlike [`dot`](./dot.md) (a leaf-of [`inner_product`](./inner_product.md))
 and [`scal`](./scal.md) (an arity-1 member-of [`linear_combination`](./linear_combination.md)),
@@ -35,7 +35,7 @@ L2 is the fusion-rotation layer (`book/src/L2/index.md`): "Kernel fusion across 
 algebraic operations is unfolded into composition… Batched specialized BLAS calls are
 written as compositions of base primitives." `reciprocal` at L2 is the base
 elementwise-multiplicative-inverse primitive in that vocabulary — a single field operation
-acting pointwise over the length axis `N`, with no control flow, no monadic state
+acting pointwise over the shape group `S` (arbitrary, unknown rank — NOT rank-1), with no control flow, no monadic state
 threading, no reduction, and no convergence predicate.
 
 This is a thin **floor presence** entry, authored under the 2026-05-31 foundation-first
@@ -66,11 +66,11 @@ structural distinction from its BLAS-1-floor cohort siblings [`dot`](./dot.md) a
 
 - [`dot`](./dot.md) is the conjugation-axis **leaf-of** the reduce-to-`Scalar` fold
   [`inner_product`](./inner_product.md) (it folds the length axis to a scalar).
-- [`scal`](./scal.md) is the arity-1 **member-of** the reduce-to-`Tensor[N]` fold
+- [`scal`](./scal.md) is the arity-1 **member-of** the reduce-to-`Tensor[S]` fold
   [`linear_combination`](./linear_combination.md) (it is the arity-1 scalar-weighted-sum
   term).
 - `reciprocal` (this entry) is **neither**. It is a *nonlinear* elementwise self-map
-  `Tensor[N] -> Tensor[N]` (`1/(a+b) ≠ 1/a + 1/b` — the defining non-linearity that
+  `Tensor[(S: ...)] -> Tensor[S]` (`1/(a+b) ≠ 1/a + 1/b` — the defining non-linearity that
   distinguishes it from the linear `linear_combination` leaves). It does not reduce over the
   length axis (so it is not an `inner_product` member) and it is not a scalar-weighted-sum
   term (so it is not a `linear_combination` member). No L2 fold subsumes it.
@@ -91,22 +91,24 @@ them but composes neither.
 
 ## Signature
 
-    reciprocal :: Tensor[N] -> Tensor[N]
-    reciprocal x = (\i -> 1 / x[i])   for i in [0, N)
+    reciprocal :: Tensor[(S: ...)] -> Tensor[S]
+    reciprocal x = (\idx -> 1 / x[idx])   for every multi-index idx of S
 
-Shape contract (bunsen-style, named axes; positional values, no monadic effect, no
+Shape contract (bunsen-style; named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1; positional values, no monadic effect, no
 destination buffer):
 
-- **`x`** — `Tensor[N]` — the input tensor with a single length axis `N`. Read-only at L2
+- **`x`** — `Tensor[(S: ...)]` — the input tensor whose whole shape is the group `S`
+  (arbitrary, unknown rank — NOT rank-1). Read-only at L2
   (the L2 form is pure / out-of-place; the L0 receiver self-overwrite is reintroduced only
   at the L1>L0 lowering).
-- **result** — `Tensor[N]` — same axis `N` as `x`; **same element type** as `x`. Every
+- **result** — `Tensor[S]` — congruent to `x` (same shape group `S`); **same element type** as `x`. Every
   output element equals the field-multiplicative-inverse of the corresponding input element.
   The result element type **tracks** the input element type (real `x` → real result; complex
   `x` → complex result) — unlike [`nrm2`](./nrm2.md), which collapses both to a real-valued
   result. `reciprocal` is a self-map on the vector type's element field.
 
-The L2 signature is **identical in shape to the L1 signature** modulo notation; the rotation
+The L2 signature is **congruent in shape to the L1 signature** modulo notation (L1 spells the flat dof-vector as `Tensor[N]`; L2 states the rank-generic congruence as the group `S`); the rotation
 L2 → L1 is identity-in-form on the primitive (there is no kernel fusion the L2 layer un-does
 beyond the transparent `s = 1/|z|²` intermediate factoring — see § "Fusion note").
 
@@ -125,10 +127,10 @@ no-zero-guard policy; it is **not** a variant axis.
 ## Semantics
 
 `reciprocal` at L2 is a single base tensor-algebra field operation: a value-threaded
-transformation `x -> y` where `y[i] = 1/x[i]` for every element index `i ∈ [0, N)`. The
+transformation `x -> y` where `y[idx] = 1/x[idx]` for every multi-index `idx` of `S`. The
 operator is **element-local** (every output element depends on exactly one input element),
 **reduction-free** (no cross-element communication), and **rank-local** (no MPI collective
-at any layer; ranks own disjoint slices of `N` and apply the reciprocation independently —
+at any layer; ranks own disjoint slices of `S` and apply the reciprocation independently —
 contrast `dot` / `nrm2`, which reduce over `N` and do carry an MPI collective).
 
 It is **pure / out-of-place** at L2: it consumes the prior value of `x` and produces a fresh
@@ -200,8 +202,8 @@ once (§ Signature) and not re-stated per law. Absences are deliberate and inher
 6. **Conjugate–reciprocal commutation (complex)**: `reciprocal(conj(x)) = conj(reciprocal(x))`
    for complex `x ≠ 0`. The complex conjugate commutes with the reciprocal:
    `1/conj(z) = conj(1/z)`. Pointwise consequence of law 5.
-7. **Identity on the all-ones input**: `reciprocal(𝟙) = 𝟙` where `𝟙` is the all-ones vector
-   of axis `N`. Pointwise `1/1 = 1`. The fixed point of the operator.
+7. **Identity on the all-ones input**: `reciprocal(𝟙) = 𝟙` where `𝟙` is the all-ones tensor
+   of shape group `S`. Pointwise `1/1 = 1`. The fixed point of the operator.
 8. **Negation factor**: `reciprocal(scal(−1, x)) = scal(−1, reciprocal(x))` for nonzero `x`.
    Pointwise `1/(−x[i]) = −(1/x[i])`. Special case of law 3 with `α = −1`.
 
@@ -351,7 +353,7 @@ axis (see § "No fold-parent").
 ## Downward to L1
 
 L2 `reciprocal` lowers to L1 [`reciprocal`](../L1/reciprocal.md) via an **identity-in-form**
-relationship: the signature `Tensor[N] -> Tensor[N]` is textually identical at both layers; the
+relationship: the signature is congruent at both layers (L2 `Tensor[(S: ...)] -> Tensor[S]`; L1 the flat dof-vector spelling `Tensor[N] -> Tensor[N]`); the
 body is the same elementwise multiplicative-inverse field operation; the eight algebraic laws,
 the non-law set (partiality, nonlinearity, IEEE-754 caveats), and the single-orthogonal-axis
 variant profile (element-type) all transport unchanged. The only fusion content is the

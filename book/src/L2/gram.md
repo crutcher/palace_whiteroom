@@ -40,7 +40,7 @@ L2 to L1 in [`L2-L1/gram-fold-specialization`](../L2-L1/gram-fold-specialization
 ## Signature
 
 ```text
-gram :: (dot: (Tensor[N], Tensor[N]) -> Scalar, X: Basis[N, k]) -> Matrix[k, k]
+gram :: (dot: (Tensor[(S: ...)], Tensor[S]) -> Scalar, X: Basis[N, k]) -> Matrix[k, k]
 gram dot X = Matrix (\i j -> dot X[j] X[i])      -- entry (i,j) = ⟨X[j], X[i]⟩ = X[j]ᴴ X[i]
 
 -- cross-Gram (two-set) member:
@@ -49,9 +49,12 @@ gram2 dot X Y = Matrix (\i j -> dot Y[i] X[j])   -- entry (i,j) = ⟨Y[i], X[j]�
 gram dot X = gram2 dot X X                        -- single-set ≡ cross-Gram of X with itself
 ```
 
-Shape contract (bunsen-style; named axes):
+Shape contract (bunsen-style; named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1):
 
-- `dot` — `(Tensor[N], Tensor[N]) -> Scalar` — the inner-product hook, the **same hook axis**
+- `dot` — `(Tensor[(S: ...)], Tensor[S]) -> Scalar` — the inner-product hook (shape-generic
+  over a congruent shape group `S`, NOT rank-1-pinned — the hook reduces whole congruent
+  tensors), the **same hook axis**
   the sibling [`orthogonalize`](./orthogonalize.md) carries (`orthogonalize.md`:67-71, the
   `op.dot` field). The canonical Hermitian [`inner_product`](./inner_product.md) /
   [`dot`](../L1/dot.md) (conjugate-linear in arg-1) by default; the SLEPc/ROM paths may

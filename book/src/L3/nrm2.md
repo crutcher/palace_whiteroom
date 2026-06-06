@@ -30,12 +30,13 @@ wrapper (the `krylov-step` body or the outer convergence-test consumer), not on 
 
 ## Signature
 
-    nrm2 :: Tensor[N] -> Scalar
+    nrm2 :: Tensor[(S: ...)] -> Scalar
     nrm2(x) = √⟨x, x⟩ = √dot(x, x)
 
 Result is **always real-valued** and non-negative (`nrm2(x) ≥ 0`), regardless of `x`'s element
-type. Identical to the L1 signature; full shape contract + algebraic-law listing at the firm L1
-leaf [`L1/nrm2`](../L1/nrm2.md).
+type. The operand is one shape group `S` of arbitrary unknown rank (NOT rank-1; named shape
+groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1); full shape contract +
+algebraic-law listing at the firm L1 leaf [`L1/nrm2`](../L1/nrm2.md).
 
 ## Consuming context (the leaf-level fact — RETAINED)
 
@@ -51,8 +52,8 @@ the surrounding form provides. It is **consumed inside** larger L3 forms in two 
    `palace/linalg/iterative.cpp:631, 810`, the Arnoldi loop's basis-vector normalization). Consumed
    inside the `op.orthog` closure.
 
-There is **no sequential obstruction** for `nrm2` — the reduction over independent length-axis
-indices is parallel in exact arithmetic; the load-bearing pinned reduction tree at L0 is a
+There is **no sequential obstruction** for `nrm2` — the reduction over all independent positions
+of the shape group `S` is parallel in exact arithmetic; the load-bearing pinned reduction tree at L0 is a
 floating-point implementation choice (a recorded non-law), not an algebraic obstruction at L3.
 
 ## The `std::abs` defensive guard (load-bearing leaf-level fact)
@@ -112,7 +113,7 @@ vocabulary-shift redirect it is recorded here in-line.
   diagonal `y = x`. These denote the same Hermitian self-inner-product value (`dot(x, x) =
   inner_product(x, x)` at `y = x` — the inner-product fold's diagonal degeneration,
   [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md) §"The diagonal
-  degeneration (`y = x`)"). The signature `Tensor[N] -> Scalar` is identical at both layers; no
+  degeneration (`y = x`)"). The signature `Tensor[(S: ...)] -> Scalar` is identical at both layers; no
   element loop is exposed at either, so the rotation is identity-in-form with **no wrapper to
   rotate** (`nrm2` is a leaf reduction). `nrm2` is L3-native / L2-native by signature shape per
   [`krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md) §"Applicability conditions"
@@ -136,7 +137,7 @@ L3>L2 rotation identity-in-form. (Path relative to `reference/palace/`; full L0 
 L3 `nrm2` lifts to the firm L4 [`nrm2`](../L4/nrm2.md) (firm cycle-069 D2) by **identity-in-form
 on the body** — the L4 form is the calculus-level named verb re-expressing the diagonal consume of
 the [`inner_product`](../L4/inner_product.md) combinator under the `√ ∘ abs` scalar map; it is
-value-thread-isomorphic to this L3 consumer-stub (the same `Tensor[N] -> Scalar` `√(abs(inner_product
+value-thread-isomorphic to this L3 consumer-stub (the same `Tensor[(S: ...)] -> Scalar` `√(abs(inner_product
 x x))` skeleton), so there is **no dedicated L4>L3 theme** (the in-line-marker route — no monadic
 wrapper / `Solve` monad / convergence predicate to dissolve; the `abs` defensive guard is preserved
 as an explicit scalar-map detail at L4). `nrm2` is one of the **kept named abstractions** that rise

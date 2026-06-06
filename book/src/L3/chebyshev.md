@@ -119,14 +119,17 @@ chebyshev :: (op, x, y, initial_guess) -> y'
 ```
 
 Shape contract (positional values; L3 has no `readonly` annotation and no
-monadic effect):
+monadic effect; the field shape group `S` and the square operator form
+`LinOp[(S: ...), (S: ...)]` follow the named-shape-group convention of
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2):
 
 - **`op`** — operator-parameters value. Closure-captured by the body via the
   convention that `op` is a positional argument never present in the return
   position. The body reads:
-  - `op.A : LinearOperator[N, N]` — the captured SPD operator (residual
-    `apply_linop op.A y` and direction-image `apply_linop op.A d`).
-  - `op.dinv : Tensor[N]` — the inverse diagonal `1/diag(A)` (the `D⁻¹` action
+  - `op.A : LinOp[(S: ...), (S: ...)]` — the captured SPD operator (square, on
+    the field shape group `S`; residual `apply_linop op.A y` and direction-image
+    `apply_linop op.A d`).
+  - `op.dinv : Tensor[S]` — the inverse diagonal `1/diag(A)` (the `D⁻¹` action
     `elementwise_product op.dinv r`); real-valued even for complex `A`.
   - `op.order : Int` — the polynomial degree (`> 0`); the inner `k`-loop bound.
   - `op.pc_it : Int` — the outer Richardson-sweep count.
@@ -137,14 +140,14 @@ monadic effect):
     inlined closure call (`op.scalars`).
   - `op.scalar_init` — the initial scalar-recurrence state (`()` for 4th-kind;
     `{ ρ_prev = δ/θ }` for 1st-kind).
-- **`x`** — `Tensor[N]` — the right-hand side (residual to smooth). Read-only.
-- **`y`** — `Tensor[N]` — the input accumulator / current iterate. Read.
+- **`x`** — `Tensor[(S: ...)]` — the right-hand side (residual to smooth). Read-only.
+- **`y`** — `Tensor[S]` — the input accumulator / current iterate. Read.
 - **`initial_guess`** — `Bool` — whether `y` carries a meaningful initial guess.
   When `false`, the first sweep uses `r = x` with `y := 0` (degenerate-case
   absorption — the `y = 0` instance of the uniform `r = x − A·y`). A per-call
   argument, not a field of `op`.
-- **result `y'`** — `Tensor[N]` — the post-smoothing accumulator
-  (value-threaded; no aliasing with the input `y`). Same length axis `N`.
+- **result `y'`** — `Tensor[S]` — the post-smoothing accumulator
+  (value-threaded; no aliasing with the input `y`). Same shape group `S`.
 
 There is **no `outputs` record** in the signature: `chebyshev` is
 inner-product-free and convergence-test-free, so no residual-norm / breakdown
@@ -180,7 +183,7 @@ recurrence carry `(r, d, y, st)`; the inner `k`-recurrence and the outer
 
 Fix the inner-step body that runs once for each `k ∈ {1, …, order−1}`. With the
 SPD operator `op.A`, the diagonal-inverse field `op.dinv`, and the three carried
-fields `r, d, y : Tensor[N]`, the body is the simultaneous global update
+fields `r, d, y : Tensor[S]`, the body is the simultaneous global update
 
 $$
 \begin{aligned}

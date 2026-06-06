@@ -28,13 +28,15 @@ combinator's — see [`inner_product`](./inner_product.md) §"Specializations".
 
 ## Signature
 
-    dot   :: (x: Tensor[N], y: Tensor[N]) -> Scalar
-    tdot  :: (x: Tensor[N], y: Tensor[N]) -> Scalar     -- complex-only variant
+    dot   :: (x: Tensor[(S: ...)], y: Tensor[S]) -> Scalar
+    tdot  :: (x: Tensor[(S: ...)], y: Tensor[S]) -> Scalar     -- complex-only variant
 
-Two operators in one chapter because they share the entire reduction skeleton (sum over `N`)
-and differ only by the per-element kernel. The signature is the combinator's, read at the
-plain (`M = I`) conjugation value. Full shape contract: [`inner_product`](./inner_product.md)
-§Signature.
+Two operators in one chapter because they share the entire reduction skeleton (sum over the
+shape group `S`) and differ only by the per-element kernel. The signature is the combinator's,
+read at the plain (`M = I`) conjugation value (named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1 — both operands congruent over one shape
+group `S` of arbitrary unknown rank, NOT rank-1). Full shape contract:
+[`inner_product`](./inner_product.md) §Signature.
 
 ## Conjugation variant-axis (the leaf-level fact, value-bearing for complex vectors)
 
@@ -44,9 +46,9 @@ carries beyond the combinator. The per-element kernel by element-type:
 
 | element type | operator | per-element kernel | form |
 |---|---|---|---|
-| `real`    | `dot`  | `x[i] · y[i]`        | bilinear symmetric (conjugation a no-op) |
-| `complex` | `dot`  | `conj(x[i]) · y[i]`  | Hermitian sesquilinear (arg-1 conjugated) |
-| `complex` | `tdot` | `x[i] · y[i]`        | unconjugated bilinear |
+| `real`    | `dot`  | `x[idx] · y[idx]`        | bilinear symmetric (conjugation a no-op) |
+| `complex` | `dot`  | `conj(x[idx]) · y[idx]`  | Hermitian sesquilinear (arg-1 conjugated) |
+| `complex` | `tdot` | `x[idx] · y[idx]`        | unconjugated bilinear |
 
 The two are distinct operators because the algebraic laws differ: `dot` is PSD-at-diagonal
 (`dot(x, x) ≥ 0`, confirmed by the in-source `&x==&y` imag=`0.0` elision at

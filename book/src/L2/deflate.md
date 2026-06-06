@@ -53,9 +53,9 @@ same source constituents, the cited line is authoritative.
 ## Signature
 
 ```text
-deflate :: (op: DeflateOp, X: Basis[N, k], v: Tensor[N]) -> Tensor[N]
+deflate :: (op: DeflateOp, X: Basis[N, k], v: Tensor[(S: ...)]) -> Tensor[S]
 
-type DeflateOp = { dot: (Tensor[N], Tensor[N]) -> Scalar     -- inner-product hook
+type DeflateOp = { dot: (Tensor[(S: ...)], Tensor[S]) -> Scalar     -- inner-product hook
                  , block: GramBlock[k]                        -- the coordinate-solve block (below)
                  }
 
@@ -65,10 +65,10 @@ type GramBlock[k] = Schur { S: Matrix[k, k] }    -- NLEPS form (positively sourc
 deflate op X v = v − linear_combination (zip (coords-solve op X v) X)   -- = v − X·(coordinate solve)
 ```
 
-Shape contract (bunsen-style; named axes):
+Shape contract (bunsen-style; named axes; the vector shape group `S` follows the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1; the deflation basis `Basis[N, k]` is a genuine 2-D `k`-column basis and the coordinate-solve `Matrix[k, k]` is genuinely 2-D — both KEEP their concrete axes):
 
 - `op` — `DeflateOp` — the closed-over projection surface, bound once at solve setup. A record:
-  - `op.dot : (Tensor[N], Tensor[N]) -> Scalar` — the inner-product hook (the canonical
+  - `op.dot : (Tensor[(S: ...)], Tensor[S]) -> Scalar` — the inner-product hook (the canonical
     [`dot`](../L1/dot.md), conjugate-linear in the first argument, by default; a `B`-weighted
     hook for the SLEPc/ROM Galerkin variant). Identical hook axis to `orthogonalize`'s
     `op.dot` and `gram`'s `dot` (inherited).
@@ -78,16 +78,16 @@ Shape contract (bunsen-style; named axes):
     literature-idealized Gram-only solve). This is the **central variant axis** (§ Variant
     axes); the Schur form is the positively-sourced one, the Galerkin core is its `S = I`
     degenerate case.
-- `X` — `Basis[N, k]` — read-only; `k` columns each of length axis `N`, the converged
+- `X` — `Basis[N, k]` — read-only; `k` columns each a length-`N` dof-vector (congruent to `S`), the converged
   invariant-pair / deflation basis. **Precondition: `X` full column rank** (so the Gram `XᴴX`
   is invertible). It is **NOT** assumed orthonormal — Palace stores raw normalized eigenvectors
   with no inter-column orthogonalization (`palace/linalg/nleps.cpp:606-619`,
   `book/src/L1/nleps_deflated_residual.md:60`); the non-orthonormality is exactly why the
   `(XᴴX)⁻¹` / Schur correction is load-bearing (§ Over-unification guard).
-- `v` — `Tensor[N]` — read-only; the vector to project against the deflation subspace.
-- result — `Tensor[N]` — the deflated vector `v − X·(coordinate solve)`, same length axis `N`.
+- `v` — `Tensor[(S: ...)]` — read-only; the vector to project against the deflation subspace.
+- result — `Tensor[S]` — the deflated vector `v − X·(coordinate solve)`, same shape group `S` as `v`.
 
-The axis `N` is uniform across `X` and `v`. The deflation-cardinality axis `k` is the
+The shape group `S` is uniform across `X`'s columns and `v`. The deflation-cardinality axis `k` is the
 **variadic-in-`k`** axis — `k` grows by one per converged eigenpair
 (`palace/linalg/nleps.cpp:614-619`), so `deflate` is parameterized by basis size, not a family
 of fixed-`k` specializations. Element type is **complex** at the Palace site (`Eigen::MatrixXcd`
@@ -420,7 +420,7 @@ the whole entry is the missing **positive Galerkin source site**, not the missin
   double-loop, the `S = λI − H` build, the three `fullPivLu().solve` calls, the `MatVecMult`,
   the in-place `AXPY`. State threading via the destination `x1`; the `A2`/`H`/`X` captured by
   reference.
-- **L2**: the *named composition* `deflate op X v → Tensor[N]` — the `coords ▷ schur-solve ▷
+- **L2**: the *named composition* `deflate op X v → Tensor[S]` — the `coords ▷ schur-solve ▷
   back-project` pipeline whose constituents (`dot`, `gram`, `lu_solve`, `linear_combination`)
   and projector laws are first-class. L2's role is to de-fuse the hand-written block into the
   canonical composition and surface the projector laws and the central `op.block`

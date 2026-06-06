@@ -79,9 +79,9 @@ The L2 form is the named `coords ▷ (schur-)solve ▷ back-project` composition
 ([`deflate`](../L2/deflate.md) §Signature, `book/src/L2/deflate.md:55-66`):
 
 ```text
-deflate :: (op: DeflateOp, X: Basis[N, k], v: Tensor[N]) -> Tensor[N]
+deflate :: (op: DeflateOp, X: Basis[N, k], v: Tensor[(S: ...)]) -> Tensor[S]
 
-type DeflateOp = { dot: (Tensor[N], Tensor[N]) -> Scalar     -- inner-product hook
+type DeflateOp = { dot: (Tensor[(S: ...)], Tensor[S]) -> Scalar  -- inner-product hook
                  , block: GramBlock[k] }                      -- coordinate-solve block
 
 type GramBlock[k] = Schur { S: Matrix[k, k] }    -- coords solved against −S⁻¹(XᴴX) then S⁻¹
@@ -113,7 +113,11 @@ which L1 `lu_solve` sequence each variant pins. The shape precondition is `X` **
 The L1 form is the fan-down of the L2 composition stages onto leaf calls, in the order the source
 block performs them (`palace/linalg/nleps.cpp:505-537`). Each stage names the firm leaf it lowers
 to. The element type is **complex** at the Palace site (`Eigen::MatrixXcd` / `ComplexVector`); the
-conjugation lives in the `dot` / `gram` leaves (§ Conjugation, below).
+conjugation lives in the `dot` / `gram` leaves (§ Conjugation, below). At this RHS the per-stage
+leaf operands (`X[j]`, `v`, the back-projection columns) are the **concrete Palace `Vector`s** —
+genuinely flat rank-1 dof-vectors — so the stage descriptions keep the flat L0/L1 call framing,
+NOT the shape-generic `(S: ...)` of the L2 composition above; `Basis[N, k]` is the 2-D basis and
+`Matrix[k, k]` the dense Gram/Schur block, both kept as written.
 
 ### Stage 0 — empty-basis short-circuit (`k = 0`)
 

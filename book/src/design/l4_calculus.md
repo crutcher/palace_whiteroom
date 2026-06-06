@@ -71,6 +71,16 @@ The rank-wildcard `...` matches zero or more axes; a group may mix pinned axes a
 
 **Why this exists — the `Tensor[N]`-as-same-shape anti-pattern.** A single shape *variable* `σ` already expresses "same whole shape, any rank" (`axpy :: Scalar → Tensor[σ] → Tensor[σ] → Tensor[σ]`). Use `σ` when the whole shape is shared. Named groups add two things `σ` cannot: (i) naming a *partial* run so the shared and the free parts of a shape are distinguished (`Tensor[(S: ...), k]` — congruent leading block `S`, free trailing `k`); and (ii) a same-shape assertion that is **visibly rank-agnostic**. Do **not** reach for a bare concrete axis like `Tensor[N]` to mean "same shape as the other operand" — `Tensor[N]` denotes a **rank-1 tensor of length `N`** and silently pins the operands to one dimension. When the intent is congruence-of-unknown-rank, write `Tensor[(S: ...)]` (or reuse `σ`); reserve `Tensor[N]` for genuinely rank-1 vectors (e.g. a flat dof-vector of length `N`).
 
+#### 1.2.2 Operator shapes — domain and range groups
+
+A linear operator whose **domain shape differs from its range shape** names *two* groups: a range group `R` and a domain group `D`. Written **range-first**, matching the matrix convention (an `M×N` matrix maps a length-`N` domain to a length-`M` range):
+
+- `LinOp[(R: ...), (D: ...)]` — an operator from domain shape `D` to range shape `R`, both of unknown rank.
+- Applied: `apply_linop :: LinOp[(R: ...), (D: ...)] -> Tensor[(D: ...)] -> Tensor[R]` — the operand must be congruent to the domain group `D`; the result is the range group `R`.
+- A square / endomorphic operator reuses one group: `LinOp[(S: ...), (S: ...)]` (e.g. a preconditioner or a symmetric system matrix, domain ≡ range).
+
+This generalizes the rank-1 spelling `LinearOperator[M, N]` (where `M`, `N` are genuine flat dof-vector lengths) to the rank-agnostic case. At **L1/L0**, Palace operators act on flat dof-vectors and the concrete `LinearOperator[M, N]` / `Tensor[N]` rank-1 spelling is faithful — keep it there; the `LinOp[(R: ...), (D: ...)]` form is the L4/L3/L2 calculus rendering.
+
 ### 1.3 Terms
 
 ```bnf

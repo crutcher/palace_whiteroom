@@ -6,17 +6,17 @@ edges:
 
 # elementwise_product
 
-Base primitive: `y ← x ⊙ z` where `⊙` denotes elementwise (Hadamard) product of two vectors of the same length. The result is the vector `[x_0·z_0, x_1·z_1, …, x_{n-1}·z_{n-1}]`.
+Base primitive: `y ← x ⊙ z` where `⊙` denotes elementwise (Hadamard) product of two congruent tensors (the same shape group `S`, arbitrary unknown rank — NOT rank-1). The result is the tensor whose value at every multi-index `idx` of `S` is `x[idx]·z[idx]`.
 
 ## Background
 
-Standard Hadamard / pointwise product. In BLAS-terms this is not a level-1 op (no scaling, no accumulation); in tensor-library terms it's `mul` or `*` on equally-shaped tensors. The operation is local (no cross-element coupling), embarrassingly parallel, and has the algebraic identities of pointwise multiplication: commutative, associative, distributive over addition, identity = `[1, 1, …]`.
+Standard Hadamard / pointwise product. In BLAS-terms this is not a level-1 op (no scaling, no accumulation); in tensor-library terms it's `mul` or `*` on congruent (equally-shaped) tensors. The operation is local (no cross-element coupling), embarrassingly parallel, and has the algebraic identities of pointwise multiplication: commutative, associative, distributive over addition, identity = the all-ones tensor of shape group `S`.
 
 ## Contract
 
 - Pure with respect to its operands (in-place output into one of the operands is acceptable as a workspace convention).
-- Shape: `x, z : V → ℝ` (or ℂ); `y ∈ V` with the same shape.
-- Both operand vectors and the output vector share the same shape.
+- Shape (named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1): operands and result share one shape group `S` (arbitrary, unknown rank — NOT rank-1); `x, z : Tensor[(S: ...)] → ℝ` (or ℂ); `y : Tensor[S]`.
+- Both operand tensors and the output tensor are congruent (the same shape group `S`).
 
 ## Role in higher-layer rotations
 

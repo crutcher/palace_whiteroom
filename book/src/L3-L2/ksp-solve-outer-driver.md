@@ -42,7 +42,7 @@ The L3 form is value-threaded (positional `(op, K, s)`; no `Solve` monad, no `re
 The L2 form is reproduced from [`L2/ksp_solve`](../L2/ksp_solve.md) §Signature — the outer-driver composition:
 
 ```text
-ksp_solve :: (K: Solver[A: LinearOperator[N, N]], b: Tensor[N]) -> SolveResult[N]
+ksp_solve :: (K: Solver[A: LinOp[(S: ...), (S: ...)]], b: Tensor[(S: ...)]) -> SolveResult[S]
 ksp_solve K b =
   let (op, s_0)     = setup K b                          -- bind kernel op-surface; seed state
   let s_init        = init_convergence op s_0            -- residual proxy + eps + pre-loop converged flag
@@ -77,7 +77,7 @@ The mapping at the fold's structural level:
 | `let (K_n, s_n, outputs_n) = iterate_while_L3 (krylov-step op) (K_0, s_init) predicate` | `let s_n = iterate_while (\s -> (krylov-step op s).state) s_init predicate` | **Substantive (non-identity).** The L3 EXPLICIT tail recursion over the `(K, s)` carry dissolves into the L2 NAMED-BY-ROLE fold over the unified `IterState`. The iteration view is erased: L3 renders the recursion, L2 references it by role. The predicate (`\s -> not s.converged && s.it < op.max_it`) is identical (L0 loop guard `iterative.cpp:427`; per-step `converged = (res < eps)` at `:463`). **This is the line where the iteration-rotation is erased — the heart of the hop.** |
 | (the `sequential-obstruction` named in §"Iteration-rotation marker") | (no surface statement; shadows to §"Algebraic laws" non-laws) | **Substantive (non-identity).** The L3 first-class obstruction is **erased** from the L2 surface (no explicit iteration to attach it to) and survives only as the L2 "fold-merge / associativity" and "identity / lift of the fold" non-laws. |
 | `let s_final = fold_iterate op K_n s_n` | `let s_final = materialise_iterate op s_n` | Identity (renamed). Same final-iterate materialisation: identity for non-restarted (CG/Chebyshev); folds the last partial restart-cycle correction `K.V · K.y` for restarted (GMRES/FGMRES). |
-| `let result = extract_result s_final outputs_n` + `in (s_final, result)` | `in extract_result s_final` | Identity (re-bundled). Same four-field readout (`converged`/`iterations`/`initial_res`/`final_res`) from the terminal carry; the L3 returns the pair `(s_final, result)` with `s_final.x` carrying the solution, the L2 folds `x` into the `SolveResult[N]` record. The `SolveResult` boundary content is the same (L0 result-write tails CG `:484-485`, GMRES `:703-704`; `GetConverged()` gate `iterative.hpp:98`). |
+| `let result = extract_result s_final outputs_n` + `in (s_final, result)` | `in extract_result s_final` | Identity (re-bundled). Same four-field readout (`converged`/`iterations`/`initial_res`/`final_res`) from the terminal carry; the L3 returns the pair `(s_final, result)` with `s_final.x` carrying the solution, the L2 folds `x` into the `SolveResult[S]` record. The `SolveResult` boundary content is the same (L0 result-write tails CG `:484-485`, GMRES `:703-704`; `GetConverged()` gate `iterative.hpp:98`). |
 
 The mapping is total on the fold's structure, but it is **not** the identity-in-form mapping of the kernel theme: the central line (the fold) carries a genuine rotation (explicit recursion → role reference), and the obstruction line carries a genuine erasure (named → non-law shadow). These two are the non-identity content; the surrounding lines (init / materialise / extract) are identity modulo the supporting `(op, K, s)` → `(K, b)`/`IterState` consolidation.
 

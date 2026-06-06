@@ -46,7 +46,7 @@ the opaque eigen-iteration consumes ([`eigsolve`](../L2/eigsolve.md) §Signature
 `book/src/L2/eigsolve.md:55-77`). It is the only Palace-authored, L2-opened half of the L1
 eigsolve opacity; the eigen-iteration fold itself is named by role, not opened:
 
-    apply_shift_invert :: (op: SpectralTransformOp, v: Tensor[N, complex]) -> Tensor[N, complex]
+    apply_shift_invert :: (op: SpectralTransformOp, v: Tensor[(S: ...), complex]) -> Tensor[(S: ...), complex]
 
     -- spectral-transformation = none (no transform):        apply M⁻¹ K   (or M⁻¹ alone, per backend)
     -- spectral-transformation = shift-invert (linear):      (K − σM)⁻¹ M
@@ -79,7 +79,11 @@ The L1 form is the two-stage pipeline spelled out in firm L1 primitives: an
 [`apply_linop`](../L1/apply_linop.md) feeding an inner [`ksp_solve`](../L1/ksp_solve.md), followed
 by the `scale_untransform` `scal` tail and the optional divergence-free-projector `apply_linop`
 tail ([`L1/apply_linop`](../L1/apply_linop.md) §Signature; [`L1/ksp_solve`](../L1/ksp_solve.md)
-§Signature):
+§Signature). At this RHS the operands are the **concrete Palace `Vector`s** — genuinely flat
+rank-1 dof-vectors of length `N`, and the operators flat square `LinearOperator[N, N]` — so the
+`Tensor[N]` / `LinearOperator[N, N]` rendering here is the literal L0/L1 leaf-call shape, NOT the
+shape-generic `(S: ...)` of the L2 composition above (the rank-1-ness is real at the lowered leaf
+call; the complex element-type axis lives at the L2 surface above and in the leaves' own overloads):
 
     apply_linop :: (A: LinearOperator[N, N], x: Tensor[N])      -> Tensor[N]     -- A · x
     ksp_solve   :: (K: Solver[A: LinearOperator[N, N]], b: Tensor[N]) -> SolveResult[N]

@@ -52,7 +52,8 @@ fold; `dot` is the literature-standard verb a downstream algorithm spells by nam
 
 `dot` carries **no first-class L4 calculus structure of its own** (no `Solve` monad,
 no iteration carry, no convergence predicate) — like its parent combinator it is a
-**pure value-producing data-parallel reduction** over the length axis `N`. It rises
+**pure value-producing data-parallel reduction** over the shape group `S`
+(arbitrary unknown rank, NOT rank-1). It rises
 as a **feature-surface verb the backend wants**, not because it carries iteration
 structure.
 
@@ -67,29 +68,31 @@ fixed `M = I` weight with the Hermitian/symmetric kernel. Pseudo-language is Has
 ## Signature
 
     -- the Hermitian/symmetric inner-product verb: inner_product at M = I
-    dot  :: Tensor[N] -> Tensor[N] -> Scalar
-    tdot :: Tensor[N] -> Tensor[N] -> Scalar     -- unconjugated complex-only co-variant
+    dot  :: Tensor[(S: ...)] -> Tensor[S] -> Scalar
+    tdot :: Tensor[(S: ...)] -> Tensor[S] -> Scalar     -- unconjugated complex-only co-variant
 
     dot  x y = inner_product x y                        -- Hermitian (complex) / symmetric (real); M = I
     tdot x y = inner_product x y  with unconjugated kernel   -- complex-only conjugation-axis value
 
-Shape contract (bunsen-style; named axes; identical to the L4 combinator
+Shape contract (bunsen-style; named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1; identical to the L4 combinator
 [`inner_product`](./inner_product.md) §Signature read at `M = I`, and to the firm L3
 signature — the L4 verb is value-thread-isomorphic to both):
 
-- `x` — `Tensor[N]` — read-only; the **conjugated** (arg-1) operand in `xᴴ y`.
-- `y` — `Tensor[N]` — read-only; the **linear** (arg-2) operand.
-- result — `Scalar` — element type per the kernel table below; `zero` on the empty axis.
-- `x` and `y` share one length axis `N` and one element type `T ∈ {real, complex}`.
+- `x` — `Tensor[(S: ...)]` — read-only; the **conjugated** (arg-1) operand in `xᴴ y`.
+- `y` — `Tensor[S]` — read-only; the **linear** (arg-2) operand.
+- result — `Scalar` — element type per the kernel table below; `zero` on the empty tensor.
+- `x` and `y` share one shape group `S` (arbitrary unknown rank, NOT rank-1) and one
+  element type `T ∈ {real, complex}`.
 
 Per-element kernel (the conjugation × element-type axes; inherited unchanged from
 the combinator [`inner_product`](./inner_product.md) and the firm L3 reduction):
 
-| element type | operator | per-element `kernel(x[i], y[i])` | form |
+| element type | operator | per-element `kernel(x[idx], y[idx])` | form |
 |---|---|---|---|
-| `real`    | `dot`  | `x[i] · y[i]`       | bilinear symmetric (conjugation a no-op) |
-| `complex` | `dot`  | `conj(x[i]) · y[i]` | Hermitian sesquilinear (arg-1 conjugated) |
-| `complex` | `tdot` | `x[i] · y[i]`       | unconjugated bilinear (the conjugation-axis second value) |
+| `real`    | `dot`  | `x[idx] · y[idx]`       | bilinear symmetric (conjugation a no-op) |
+| `complex` | `dot`  | `conj(x[idx]) · y[idx]` | Hermitian sesquilinear (arg-1 conjugated) |
+| `complex` | `tdot` | `x[idx] · y[idx]`       | unconjugated bilinear (the conjugation-axis second value) |
 
 The convention is **conjugate-linear in arg-1, linear in arg-2** (`⟨x, y⟩ = xᴴ y`),
 inherited unchanged from the combinator. The conjugation choice is **value-bearing
@@ -107,10 +110,10 @@ Carried up **unchanged** from the combinator [`inner_product`](./inner_product.m
 (laws are statements about the value; `dot` is the combinator at `M = I`, so each law
 holds verbatim at this fixed weight). Reproduced for L4 layer-coherence:
 
-1. **Empty-axis identity.** `dot` over a zero-length axis is `zero`.
-2. **Split-additivity / length-concatenation-homomorphism.**
-   `dot (x₁ ++ x₂) (y₁ ++ y₂) = dot x₁ y₁ + dot x₂ y₂` — the monoid homomorphism that
-   licenses parallel/blocked evaluation.
+1. **Empty-tensor identity.** `dot` over an empty tensor is `zero`.
+2. **Split-additivity / shape-concatenation-homomorphism.**
+   `dot (x₁ ++ x₂) (y₁ ++ y₂) = dot x₁ y₁ + dot x₂ y₂` (`++` concatenates the shape group
+   `S`) — the monoid homomorphism that licenses parallel/blocked evaluation.
 3. **Conjugate-linearity in arg-1, linearity in arg-2** (complex Hermitian); the real
    member is bilinear (conjugation a no-op).
 4. **Hermitian symmetry** (complex): `dot x y = conj(dot y x)`; real reduces to plain
@@ -139,7 +142,7 @@ the value are unchanged.
 
 ## Variant axes
 
-1. **Conjugation convention** — `conj(x[i])·y[i]` (Hermitian `dot`) vs `x[i]·y[i]`
+1. **Conjugation convention** — `conj(x[idx])·y[idx]` (Hermitian `dot`) vs `x[idx]·y[idx]`
    (unconjugated `tdot`). Value-bearing for complex vectors; `tdot` is the
    conjugation-axis second value (type-API-surface-only caveat: zero Palace call
    sites — declaration + definition only, inherited from the combinator / L3 leaf).
@@ -170,7 +173,7 @@ is its first-class named-verb home.
 ## Downward to L3
 
 The L4 `dot` verb lowers to the firm L3 [`dot`](../L3/dot.md) as **identity-in-form on
-the body**: both forms are value-thread-isomorphic — the same `Tensor[N] -> Tensor[N] ->
+the body**: both forms are value-thread-isomorphic — the same `Tensor[(S: ...)] -> Tensor[S] ->
 Scalar` signature read at `M = I` with the Hermitian/symmetric kernel, the same six
 algebraic laws, the same deferred IEEE non-law, the same conjugation convention pinned at
 arg-1, the same `(dot, tdot)` conjugation-axis profile.
@@ -203,7 +206,7 @@ directory).
 [`inner_product`](./inner_product.md) (firm cycle-068 D3) at `M = I` with the
 Hermitian/symmetric kernel, value-thread-isomorphic to the firm L3
 [`dot`](../L3/dot.md) (firm cycle-011, specialization-stub cycle-052 D3): the same
-`Tensor[N] -> Tensor[N] -> Scalar` reduction read at the plain-weight conjugation value,
+`Tensor[(S: ...)] -> Tensor[S] -> Scalar` reduction read at the plain-weight conjugation value,
 identity-in-form across the L4>L3 edge (no monadic wrapper to dissolve — §"Downward to
 L3"). The six algebraic laws are carried up unchanged (each a syntactic identity or a
 standard inner-product fact, read at `M = I`); the IEEE-754 reduction-tree non-law is

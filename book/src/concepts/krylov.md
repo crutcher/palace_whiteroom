@@ -30,11 +30,13 @@ Unlike the slice-uniform [`sim-state`](./sim-state.md), the `Krylov` schema is *
 
 ## Record definition — CG
 
+The iterate-stratum fields below are all congruent solution-space vectors, named with the shape group `S` per [`l4_calculus`](../design/l4_calculus.md) §1.2.1 (not rank-1 length axes):
+
 ```text
 Krylov(CG) = {
-  r  : Tensor[N],   -- residual
-  p  : Tensor[N],   -- search direction
-  z? : Tensor[N],   -- preconditioned residual (present iff a preconditioner is set)
+  r  : Tensor[S],   -- residual
+  p  : Tensor[S],   -- search direction
+  z? : Tensor[S],   -- preconditioned residual (present iff a preconditioner is set)
   α  : Scalar,      -- step length
   β  : Scalar       -- direction-update coefficient (the residual proxy read by convergence-test)
 }
@@ -42,9 +44,9 @@ Krylov(CG) = {
 
 | Field | Type | Stratum | Meaning |
 |-------|------|---------|---------|
-| `r` | `Tensor[N]` | run-time, iterate-stratum, solve-local | Residual vector. |
-| `p` | `Tensor[N]` | run-time, iterate-stratum, solve-local | Search (conjugate) direction. |
-| `z?` | `Tensor[N]` | run-time, iterate-stratum, solve-local | Preconditioned residual; present iff `OpParams.T` carries a preconditioner. |
+| `r` | `Tensor[S]` | run-time, iterate-stratum, solve-local | Residual vector. |
+| `p` | `Tensor[S]` | run-time, iterate-stratum, solve-local | Search (conjugate) direction. |
+| `z?` | `Tensor[S]` | run-time, iterate-stratum, solve-local | Preconditioned residual; present iff `OpParams.T` carries a preconditioner. |
 | `α` | `Scalar` | run-time, scalar-stratum, solve-local | Step length for the iterate/residual update. |
 | `β` | `Scalar` | run-time, scalar-stratum, solve-local | Direction-update coefficient; the residual proxy [`convergence-test`](./convergence-test.md) reads. |
 
@@ -54,8 +56,8 @@ Krylov(CG) = {
 
 ```text
 Krylov(GMRES) = {
-  V  : [Tensor[N]],   -- Arnoldi basis (array of basis columns)
-  Z? : [Tensor[N]],   -- preconditioned basis (present iff OpParams.flexible — FGMRES)
+  V  : [Tensor[S]],   -- Arnoldi basis (array of basis columns)
+  Z? : [Tensor[S]],   -- preconditioned basis (present iff OpParams.flexible — FGMRES)
   H  : DenseMatrix,   -- Hessenberg matrix (small-dense, scalar-stratum)
   s  : [Scalar],      -- least-squares RHS / rotated residual vector (small-dense)
   cs : [Scalar],      -- Givens cosines (small-dense)
@@ -67,15 +69,15 @@ Krylov(GMRES) = {
 
 | Field | Type | Stratum | Meaning |
 |-------|------|---------|---------|
-| `V` | `[Tensor[N]]` | run-time, iterate-stratum, restart-local | Arnoldi basis columns. |
-| `Z?` | `[Tensor[N]]` | run-time, iterate-stratum, restart-local | Preconditioned basis; present iff `OpParams.flexible` (FGMRES). |
+| `V` | `[Tensor[S]]` | run-time, iterate-stratum, restart-local | Arnoldi basis columns. |
+| `Z?` | `[Tensor[S]]` | run-time, iterate-stratum, restart-local | Preconditioned basis; present iff `OpParams.flexible` (FGMRES). |
 | `H` | `DenseMatrix` | run-time, scalar-stratum, restart-local | Upper-Hessenberg matrix from the Arnoldi recurrence. |
 | `s` | `[Scalar]` | run-time, scalar-stratum, restart-local | Least-squares RHS / rotated residual; `s` provides the LS-residual proxy. |
 | `cs` / `sn` | `[Scalar]` | run-time, scalar-stratum, restart-local | Givens rotation registers (cosines / sines). |
 | `β` | `Scalar` | run-time, scalar-stratum, restart-local | Current residual proxy read by `convergence-test`. |
 | `j` | `Int` | run-time, restart-local | Inner-iteration index within the current restart cycle. |
 
-**The whole record is run-time and restart-local** — that is the defining property of the ephemeral stratum, distinct from the construction-time [`op-params`](./op-params.md) and the solve-persistent [`sim-state`](./sim-state.md). `Krylov` is **mixed-stratum** internally: it carries both `Tensor[N]`-typed iterate-bundle fields (`V`, `Z`, `r`, `p`) and small-dense scalar-stratum fields (`H`, `s`, `cs`, `sn`, `β`, `α`). On a restarted solver the bundle is **reborn at each restart** (the `Krylov` at restart `r+1` is a fresh bundle, not the prior bundle with `j` reset) — the lifetime that forbids `Krylov` from living in `SimState`.
+**The whole record is run-time and restart-local** — that is the defining property of the ephemeral stratum, distinct from the construction-time [`op-params`](./op-params.md) and the solve-persistent [`sim-state`](./sim-state.md). `Krylov` is **mixed-stratum** internally: it carries both `Tensor[S]`-typed iterate-bundle fields (`V`, `Z`, `r`, `p`) and small-dense scalar-stratum fields (`H`, `s`, `cs`, `sn`, `β`, `α`). On a restarted solver the bundle is **reborn at each restart** (the `Krylov` at restart `r+1` is a fresh bundle, not the prior bundle with `j` reset) — the lifetime that forbids `Krylov` from living in `SimState`.
 
 When [`first-iteration-unrolling`](./first-iteration-unrolling.md) Form B is applied, the recurrence-carry field (CG's `β_prev`; GMRES's `H_{k,k-1}`) is *removed* from the `Krylov` schema and threaded as a `PrevCarry` closure argument instead — so Form B's `Krylov` is one slot lighter.
 

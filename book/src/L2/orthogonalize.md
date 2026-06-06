@@ -80,28 +80,28 @@ follows it.
 ## Signature
 
 ```text
-orthogonalize :: (op: OrthogOp, w: Tensor[N], V: Basis[N, m]) -> { residual: Tensor[N], coeffs: Tensor[m] }
+orthogonalize :: (op: OrthogOp, w: Tensor[(S: ...)], V: Basis[N, m]) -> { residual: Tensor[S], coeffs: Tensor[m] }
 ```
 
-Shape contract (bunsen-style; named axes):
+Shape contract (bunsen-style; named axes; the vector shape group `S` follows the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1; the basis `Basis[N, m]` is a genuine 2-D `m`-column basis and the coefficient vector `coeffs : Tensor[m]` is genuinely 1-D — both KEEP their concrete length axes):
 
 - `op` — `OrthogOp` — the closed-over orthogonalization surface, bound once at solve setup
   (the level-(b)/(c) absorbed surface `krylov-step` carries as `op.orthog`). A record:
   - `op.variant : GSVariant ∈ {MGS, CGS, CGS2}` — the orthogonalization variant; inspected
     exactly once at dispatch, never re-branched per column.
-  - `op.dot : (Tensor[N], Tensor[N]) -> Scalar` — the inner-product hook. The canonical
+  - `op.dot : (Tensor[(S: ...)], Tensor[S]) -> Scalar` — the inner-product hook. The canonical
     [`dot`](../L1/dot.md) (conjugate-linear in the first argument) by default; the SLEPc/ROM
     paths substitute a `B`-weighted dot. This is the `inner-product hook` variant axis,
     carried as a closure field exactly as Palace templates `OrthogonalizeColumn` over
     `InnerProductHelper`.
-- `w` — `Tensor[N]` — read-only; the (un-normalised) candidate vector to orthogonalize.
-- `V` — `Basis[N, m]` — read-only; `m` columns each of length axis `N`, the **precondition**
+- `w` — `Tensor[(S: ...)]` — read-only; the (un-normalised) candidate vector to orthogonalize.
+- `V` — `Basis[N, m]` — read-only; `m` columns each a length-`N` dof-vector, the **precondition**
   being orthonormal (`⟨V[i], V[j]⟩ = δ_ij`) under `op.dot`. The composition does not enforce
   the precondition; it is the caller's contract (inherited from the L1 leaf, whose L0 header
   states it: `orthog.hpp:18-23`).
-- result — `{ residual: Tensor[N], coeffs: Tensor[m] }` — a record with two fields:
-  - `residual : Tensor[N]` — the orthogonal residual `w − Σ_j coeffs[j]·V[j]`, **not
-    normalised**. Same length axis `N`.
+- result — `{ residual: Tensor[S], coeffs: Tensor[m] }` — a record with two fields:
+  - `residual : Tensor[S]` — the orthogonal residual `w − Σ_j coeffs[j]·V[j]`, **not
+    normalised**. Same shape group `S` as `w`.
   - `coeffs : Tensor[m]` — the projection coefficients `coeffs[j] = op.dot(w_eff(j), V[j])`,
     the leading `m` entries of the Arnoldi/Hessenberg column. Element type matches `w` / `V`.
 

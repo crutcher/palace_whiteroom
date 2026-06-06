@@ -28,8 +28,8 @@ literature tie-back — it is **not removed** just because its kernel is replace
 **`nrm2` is a CONSUMER of [`inner_product`](./inner_product.md), NOT a fold member**
 (the do-NOT-merge over-unification guard, carried identically at L2/L3/L4). It
 post-composes two scalar maps — the defensive `abs`, then `√` — onto the combinator's
-**scalar output**; it does not itself fold over the length axis. Merging `nrm2` into
-[`inner_product`](./inner_product.md) would be a category error (a length-axis
+**scalar output**; it does not itself fold over the shape group `S`. Merging `nrm2` into
+[`inner_product`](./inner_product.md) would be a category error (a shape-group `S`
 homomorphism producing `⟨x, x⟩` vs. the scalar map `α ↦ √|α|` on that output). It
 rises as a **consumer verb** alongside the combinator (the permitted dual), not as one
 of its members.
@@ -66,16 +66,18 @@ signatures inside a `text` fence per the L4/L3 notation invariant.
 ## Signature
 
     -- the Euclidean-norm verb: √ ∘ abs ∘ inner_product at the diagonal y = x
-    nrm2 :: Tensor[N] -> Scalar
+    nrm2 :: Tensor[(S: ...)] -> Scalar
 
     nrm2 x = sqrt (abs (inner_product x x))   -- √ ∘ abs ∘ inner_product at y = x
 
-Shape contract (bunsen-style; named axes; identical to the firm L3 / L1 signature —
-the L4 verb is value-thread-isomorphic to both):
+Shape contract (bunsen-style; named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1; identical to the firm L3 / L1
+signature — the L4 verb is value-thread-isomorphic to both):
 
-- `x` — `Tensor[N]` — read-only; the single operand.
+- `x` — `Tensor[(S: ...)]` — read-only; the single operand (shape group `S` of
+  arbitrary unknown rank, NOT rank-1).
 - result — `Scalar` — **always real-valued and non-negative** (`nrm2 x ≥ 0`),
-  regardless of `x`'s element type; `zero` on the empty axis (`inner_product` seeds
+  regardless of `x`'s element type; `zero` on the empty tensor (`inner_product` seeds
   `zero`, `√ (abs zero) = zero`).
 
 The result is always real even for a complex `x`, because the diagonal
@@ -104,7 +106,7 @@ because `√` is not additive). The laws that hold:
 1. **Non-negativity.** `nrm2 x ≥ 0` (real-valued); `= 0` iff `x = 0` (exact arithmetic,
    from combinator law 5 PSD-at-the-diagonal + `√` monotone). The `abs` guard makes the
    non-negativity hold defensively in floating point too.
-2. **Empty-axis identity.** `nrm2` over a zero-length axis is `zero` (`√ (abs zero)`).
+2. **Empty-tensor identity.** `nrm2` over an empty tensor is `zero` (`√ (abs zero)`).
 3. **Absolute homogeneity (the norm-scaling law).** `nrm2 (scal α x) = |α| · nrm2 x`
    for a scalar `α` — follows from combinator multilinearity at the diagonal
    (`inner_product (αx) (αx) = |α|² ⟨x, x⟩`) and `√`.
@@ -116,7 +118,7 @@ because `√` is not additive). The laws that hold:
 
 Laws that explicitly **do not** hold (deferred / category-distinct, NOT restated):
 
-- **Split-additivity / length-concatenation-homomorphism does NOT hold for `nrm2`.**
+- **Split-additivity / shape-concatenation-homomorphism does NOT hold for `nrm2`.**
   `nrm2 (x₁ ++ x₂) ≠ nrm2 x₁ + nrm2 x₂` in general (it is `√(nrm2 x₁² + nrm2 x₂²)`) —
   `√` is not additive. This is exactly **why `nrm2` is a consumer, not a fold member**:
   the homomorphism is a property of [`inner_product`](./inner_product.md)'s reduction,
@@ -157,7 +159,7 @@ distinct from [`dot`](./dot.md), which is a *specialization* of the same combina
 ## Downward to L3
 
 The L4 `nrm2` verb lowers to the firm L3 [`nrm2`](../L3/nrm2.md) as **identity-in-form on
-the body**: both forms are value-thread-isomorphic — the same `Tensor[N] -> Scalar`
+the body**: both forms are value-thread-isomorphic — the same `Tensor[(S: ...)] -> Scalar`
 signature, the same `√ (abs (inner_product x x))` skeleton (L3 writes the defining
 identity through the same-layer `dot(x, x)` leaf; both denote the same Hermitian
 self-inner-product value at the diagonal), the same five laws, the same do-NOT-merge
@@ -191,7 +193,7 @@ convention (no `L4-L2`/`L4-L1` directory).
 `firm` — the L4 form is the calculus-level named verb re-expressing the diagonal consume
 of the combinator [`inner_product`](./inner_product.md) (firm cycle-068 D3) under the
 `√ ∘ abs` scalar map, value-thread-isomorphic to the firm L3 [`nrm2`](../L3/nrm2.md) (firm
-cycle-011, consumer-stub cycle-052 D3): the same `Tensor[N] -> Scalar` `√(abs(inner_product
+cycle-011, consumer-stub cycle-052 D3): the same `Tensor[(S: ...)] -> Scalar` `√(abs(inner_product
 x x))` skeleton, identity-in-form across the L4>L3 edge (no monadic wrapper to dissolve —
 §"Downward to L3"). The five algebraic laws are the square-root norm-axioms over the PSD
 diagonal (each a syntactic identity or a standard norm fact); the homomorphism non-law is

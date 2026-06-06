@@ -33,8 +33,8 @@ The L2 form is the reduce-to-scalar fold over two aligned tensors (`L2/inner_pro
 §Signature), with the optional matrix weight pre-applied to arg-1:
 
 ```text
-inner_product   :: (x: Tensor[N], y: Tensor[N]) -> Scalar
-inner_product_M :: (x: Tensor[N], M: LinearOperator[N, N], y: Tensor[N]) -> Scalar
+inner_product   :: (x: Tensor[(S: ...)], y: Tensor[S]) -> Scalar
+inner_product_M :: (x: Tensor[(S: ...)], M: LinOp[(S: ...), (S: ...)], y: Tensor[S]) -> Scalar
 
 inner_product   x y   = foldl (+) zero (zipWith kernel x y)   -- kernel per the table below
 inner_product_M x M y = inner_product (apply_linop M x) y     -- weighted ≡ pre-apply M to arg-1
@@ -54,16 +54,23 @@ arg-1-conjugated:
 $$ \text{inner\_product}(x, y) = x^{\mathsf H} y = \textstyle\sum_{i} \overline{x_i}\, y_i,
 \qquad \text{inner\_product\_M}(x, M, y) = x^{\mathsf H} M y . $$
 
-The shape precondition `x, y : Tensor[N]` (shared length axis) is the aligned-pass
-precondition the L0 fused reduction kernels require (Palace's
-`MFEM_ASSERT(x.Size() == y.Size())`, `palace/linalg/vector.cpp:668`).
+The shape precondition `x, y : Tensor[(S: ...)]` (congruence over one shape group `S` of
+arbitrary, unknown rank — named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1) is the aligned-pass precondition the L0
+fused reduction kernels require; at the lowered flat call it reads concretely as a shared
+length `N` (Palace's `MFEM_ASSERT(x.Size() == y.Size())`,
+`palace/linalg/vector.cpp:668`).
 
 ## L1 form (RHS)
 
 The L1 form is the **three distinct leaf primitives**, each mirroring one Palace L0
 reduction surface. The conjugation axis lives at one chapter ([`dot`](../L1/dot.md), which
 co-defines `dot` and `tdot`); the M-weighted member is the separate
-[`bilinear-form`](../L1/bilinear-form.md) chapter:
+[`bilinear-form`](../L1/bilinear-form.md) chapter. At this RHS the operands are the
+**concrete Palace `Vector`s** — genuinely flat rank-1 dof-vectors of length `N` (and `M`
+for `bilinear_form`'s domain) — so the `Tensor[N]` / `LinearOperator[M, N]` rendering here
+is the literal L0/L1 call shape, NOT the shape-generic `(S: ...)` of the L2 fold above (the
+rank-1-ness is real at the lowered call, not an accidental implication):
 
 ```text
 dot           :: (x: Tensor[N], y: Tensor[N])                          -> Scalar
@@ -254,8 +261,10 @@ not merely the value. (Same discipline as
 
 The dispatch lowering preserves the L2 value when:
 
-1. **Shared length axis (the aligned-pass precondition).** `x, y : Tensor[N]` (the L2
-   signature precondition). The fused reduction kernels stride over one length axis;
+1. **Shared shape group (the aligned-pass precondition).** `x, y : Tensor[(S: ...)]` (the L2
+   signature precondition — congruence over one shape group `S`). At the lowered L0 call the
+   operands are flat rank-1 `Vector`s, so this congruence is read concretely as a shared
+   length `N`; the fused reduction kernels stride over that one flat axis and
    Palace enforces it with `MFEM_ASSERT(x.Size() == y.Size())`
    (`palace/linalg/vector.cpp:668`). For the weighted member, additionally `M`'s codomain
    matches `x`'s axis and `M`'s domain matches `y`'s axis

@@ -63,10 +63,10 @@ opaque `LinearOperator` argument type and the L0 output-arg mutation idiom
 `apply_linop`'s `A.Mult(x, y)`), but they live on opposite sides of the operator/data
 divide:
 
-- `apply_linop :: (A: LinearOperator[M, N], x: Tensor[N]) -> Tensor[M]` — takes a vector
-  and returns the operator's *action* on it (admits rectangular `M ≠ N`).
-- `assemble_diagonal :: (A: LinearOperator[N, N]) -> Tensor[N]` — takes **no vector** and
-  returns operator-intrinsic *data* (intrinsically **square**, `M = N`).
+- `apply_linop :: (A: LinOp[(R: ...), (D: ...)], x: Tensor[(D: ...)]) -> Tensor[R]` — takes a vector
+  and returns the operator's *action* on it (admits rectangular `R ≠ D`).
+- `assemble_diagonal :: (A: LinOp[(S: ...), (S: ...)]) -> Tensor[(S: ...)]` — takes **no vector** and
+  returns operator-intrinsic *data* (intrinsically **square**, one shape group `S`).
 
 There is no `x` to be linear in; the result is a property of `A` alone. Recording
 `assemble_diagonal` as its own L2 floor — rather than folding it into `apply_linop`'s
@@ -87,32 +87,32 @@ which is a *sibling*, not a fold-parent.
 
 ## Signature
 
-    assemble_diagonal :: LinearOperator[N, N] -> Tensor[N]
+    assemble_diagonal :: LinOp[(S: ...), (S: ...)] -> Tensor[(S: ...)]
     assemble_diagonal A = diag(A)
 
-Shape contract (bunsen-style; named axes):
+Shape contract (named shape groups / operator shapes per [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2; the diagonal is intrinsic to a square operator, so domain and range are one shape group `S`):
 
-- **`A`** — `LinearOperator[N, N]` — a **square** linear operator (domain axis `N` equals
-  codomain axis `N`). Read-only (the L0 method is `const`; the L2 form never writes through
+- **`A`** — `LinOp[(S: ...), (S: ...)]` — a **square** linear operator (domain group `S` equals
+  range group `S`). Read-only (the L0 method is `const`; the L2 form never writes through
   `A`). The operator-representation axis (sparse-CSR / matrix-free / parallel-wrapped /
   complex-wrapped) is **absorbed at L2** into this opaque type — the L2 contract sees only
   "extract the diagonal of this square operator"; the L2 form does not branch on
   representation. The element type (real or complex) is parameterised.
-- **result** — `Tensor[N]` — the diagonal vector, length `N` matching the operator's
-  (shared) domain/codomain axis. Element `result[i]` is the `(i, i)` entry of `A`. A fresh
+- **result** — `Tensor[S]` — the diagonal vector, congruent to the operator's (shared) square
+  shape group `S`. Element `result[i]` is the `(i, i)` entry of `A`. A fresh
   value; no L0 destination buffer is mentioned at L2 (the destination-binding rotation is an
   L1>L0 concern).
 
-The **square requirement** (`M = N`) is intrinsic: a diagonal is only defined where the
-domain and codomain index sets coincide. This is the chief signature difference from the
-sibling `apply_linop`, which admits rectangular `M ≠ N`. Palace enforces the square
+The **square requirement** (range group ≡ domain group) is intrinsic: a diagonal is only defined where the
+domain and range index sets coincide. This is the chief signature difference from the
+sibling `apply_linop`, which admits rectangular `R ≠ D`. Palace enforces the square
 precondition at the L0 source for the AMR path (`MFEM_VERIFY(&trial_fespace ==
 &test_fespace, "Diagonal assembly is only available for square ParOperator!")`,
 `palace/linalg/rap.cpp:165-166` — predicate at `:165`, message string at `:166`) and the
 matrix-free path (`MFEM_VERIFY(diag.Size() == height, ...)`,
 `palace/fem/libceed/operator.cpp:120`) — both transitive through the L1 home.
 
-`LinearOperator[N, N]` is an **opaque type** at L2: its internal representation is not part
+`LinOp[(S: ...), (S: ...)]` is an **opaque type** at L2: its internal representation is not part
 of the L2 signature. The operator is guaranteed to expose a diagonal — the base
 `ComplexOperator::AssembleDiagonal` aborts (`palace/linalg/operator.cpp:25-28`), so the
 operator's L2 domain is the diagonal-capable subclasses (a precondition, not a variant — see
@@ -132,7 +132,7 @@ in the signature).
 vector. The result is determined entirely by `A` — the L2 form is **pure** (extracting the
 diagonal of the same `A` twice returns the same value), with no hidden state, no per-call
 side effects, no in-place mutation at the L2 surface. It consumes `A` and produces a fresh
-`Tensor[N]`; there is no destination buffer (the L0 in-place destination `diag`, its sizing
+`Tensor[S]`; there is no destination buffer (the L0 in-place destination `diag`, its sizing
 `diag.SetSize(height)`, and its `diag = 0.0` zero-init reappear only at the L1>L0 lowering).
 
 The relationship `result[i] = eᵢᵀ A eᵢ` is the **mathematical** definition of the diagonal,
@@ -193,13 +193,13 @@ Absences are deliberate.
    for any scalar `α`. The diagonal of a scaled operator is the scaled diagonal
    (`(α·A)ᵢᵢ = α·Aᵢᵢ`).
 2. **Linearity over operator sum**: `assemble_diagonal (A + B) = assemble_diagonal A +
-   assemble_diagonal B` for square `A`, `B` sharing axis `N` (`(A + B)ᵢᵢ = Aᵢᵢ + Bᵢᵢ`).
+   assemble_diagonal B` for square `A`, `B` sharing shape group `S` (`(A + B)ᵢᵢ = Aᵢᵢ + Bᵢᵢ`).
    Witnessed structurally by `ComplexWrapperOperator::AssembleDiagonal`
    (`palace/linalg/operator.cpp:85-96`), which assembles real and imaginary parts
    independently into `diag.Real()` / `diag.Imag()` after `diag = 0.0`.
-3. **Zero operator**: `assemble_diagonal 0_op = 0_N` (the zero vector of axis `N`). Special
+3. **Zero operator**: `assemble_diagonal 0_op = 0_S` (the zero vector of shape group `S`). Special
    case of law 1 with `α = 0`.
-4. **Identity operator**: `assemble_diagonal I = 𝟙_N` (the all-ones vector of axis `N`),
+4. **Identity operator**: `assemble_diagonal I = 𝟙_S` (the all-ones vector of shape group `S`),
    since `Iᵢᵢ = 1` for all `i`.
 5. **Diagonal-operator round-trip**: `assemble_diagonal (Diag(d)) = d` for the operator
    `Diag(d)` whose action is element-wise multiplication by `d`. Extracting the diagonal of a
@@ -305,7 +305,7 @@ One orthogonal axis:
 Collapsed (absorbed) axis:
 
 - **operator-representation** (`sparse-CSR` | `matrix-free` | `parallel-wrapped` |
-  `complex-wrapped`) — **absorbed** into the opaque `LinearOperator[N, N]` type. The L0
+  `complex-wrapped`) — **absorbed** into the opaque `LinOp[(S: ...), (S: ...)]` type. The L0
   concrete overrides (`HypreCSRMatrix`, `fem::libceed::Operator`, `ParOperator` /
   `ComplexParOperator`, `ComplexWrapperOperator`) collapse to a single L2 type; the L2 contract
   sees only "extract the diagonal of this square operator". This is the canonical application
@@ -392,9 +392,11 @@ has an adjacent L2 parent.
 
 The L2>L1 edge is a **degenerate identity-in-named-terms lowering** — the L2 floor and the L1
 [`assemble-diagonal`](../L1/assemble-diagonal.md) leaf are value-thread-isomorphic on the leaf:
-same signature `assemble_diagonal :: LinearOperator[N, N] -> Tensor[N]`, same
-`assemble_diagonal A = diag(A)` extraction (`result[i] = Aᵢᵢ`), same intrinsic-square `M = N`
-precondition, same opaque-`LinearOperator` representation-axis absorption, same six laws + four
+the L2 group-form signature `assemble_diagonal :: LinOp[(S: ...), (S: ...)] -> Tensor[(S: ...)]`
+lowers to the L1 rank-1 realization `LinearOperator[N, N] -> Tensor[N]` (the concrete flat
+dof-vector length), same
+`assemble_diagonal A = diag(A)` extraction (`result[i] = Aᵢᵢ`), same intrinsic-square (range
+group ≡ domain group) precondition, same opaque-`LinearOperator` representation-axis absorption, same six laws + four
 non-laws. The vocabulary does not shift across the edge, so per the 2026-06-01 vocabulary-shift
 redirect this is recorded **as this in-line note, NOT as a dedicated L2>L1 theme** (the former
 `assemble-diagonal-leaf-identity.md` theme, demoted cycle-050).

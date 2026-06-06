@@ -61,7 +61,12 @@ not re-dispatched here).
 The L1 form is the **explicit sequence of seven firm L1 leaves** under the outer fold, with
 the buffer convention rotated to its in-place L0-faithful form. The seven leaves are the firm
 L2 dependency list (`book/src/L2/krylov-step.md:96`); their L1 signatures
-([`L1/apply_linop`](../L1/apply_linop.md), [`L1/axpy`](../L1/axpy.md), etc.):
+([`L1/apply_linop`](../L1/apply_linop.md), [`L1/axpy`](../L1/axpy.md), etc.). At this RHS the
+operands are the **concrete Palace `Vector`s** — genuinely flat rank-1 dof-vectors of length
+`N`, and the operator a flat square `LinearOperator[N,N]` — so the `Tensor[N]` /
+`LinearOperator[N,N]` rendering here is the literal L0/L1 call shape, NOT the shape-generic
+`(S: ...)` of the L2 kernel composition above (the rank-1-ness is real at the lowered leaf
+call):
 
     apply_linop :: (T: LinearOperator[N,N], x: Tensor[N])          -> Tensor[N]   -- T·x
     axpy        :: (α: Scalar, x: Tensor[N], y: Tensor[N])         -> Tensor[N]   -- α·x + y

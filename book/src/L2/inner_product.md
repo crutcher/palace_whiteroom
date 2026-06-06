@@ -21,7 +21,7 @@ edges:
 element-type / weight specializations Palace exposes — the Hermitian `dot`, the
 unconjugated bilinear `tdot`, the matrix-weighted `xᴴ M y` (`inner_product_M`) — are
 **specialization notes under this entry** (§"Specializations"), not separate
-co-equal chapters: they are this one **reduce-to-scalar fold** over the length axis
+co-equal chapters: they are this one **reduce-to-scalar fold** over the shape group `S`
 read at fixed axis-values. The fusion-rotation form: Palace's distinct reduction
 call shapes (`ComplexVector::Dot` / `TransposeDot`, `linalg::LocalDot` over real and
 complex, `linalg::Dot(comm,x,A,y)` for the weighted member — each a Hypre-kernel +
@@ -71,7 +71,7 @@ at the concept-page level by [`dot`](../concepts/dot.md). The conjugation conven
 pinned in § "Conjugation convention (pinned)" below.
 
 This is an L2 fold, not an L4 combinator: `inner_product` is a pure value-producing
-reduction over the length axis, with no control-flow, no monadic state threading, and
+reduction over the shape group `S`, with no control-flow, no monadic state threading, and
 no convergence predicate. It is a data-parallel reduction (the per-element kernel is
 embarrassingly parallel; only the final sum communicates), not iteration-structural
 (contrast L4 `iterate_while`, which threads state through a stopping predicate). It
@@ -141,35 +141,37 @@ two conventions coexist harmlessly in the Palace call sites.
 ## Signature
 
 ```text
-inner_product   :: (x: Tensor[N], y: Tensor[N]) -> Scalar
-inner_product_M :: (x: Tensor[N], M: LinearOperator[N, N], y: Tensor[N]) -> Scalar
+inner_product   :: (x: Tensor[(S: ...)], y: Tensor[S]) -> Scalar
+inner_product_M :: (x: Tensor[(S: ...)], M: LinOp[(S: ...), (S: ...)], y: Tensor[S]) -> Scalar
 
 inner_product   x y   = foldl (+) zero (zipWith kernel x y)   -- kernel from the table below
 inner_product_M x M y = inner_product (apply_linop M x) y     -- weighted ≡ pre-apply M to arg-1, then plain
 inner_product   x y   = inner_product_M x I y                 -- plain ≡ M = I
 ```
 
-Shape contract (bunsen-style; named axes):
+Shape contract (bunsen-style; named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1):
 
-- `x` — `Tensor[N]` — read-only; the **conjugated** (arg-1) operand (see § "Conjugation
+- `x` — `Tensor[(S: ...)]` — read-only; the **conjugated** (arg-1) operand (see § "Conjugation
   convention (pinned)").
-- `y` — `Tensor[N]` — read-only; the **linear** (arg-2) operand.
-- `M` (weighted member) — `LinearOperator[N, N]` — read-only; the matrix-weight,
-  pre-applied to `x` (the linear-operator type is the opaque
+- `y` — `Tensor[S]` — read-only; the **linear** (arg-2) operand.
+- `M` (weighted member) — `LinOp[(S: ...), (S: ...)]` — read-only; the matrix-weight (a
+  square / endomorphic operator, domain ≡ range = `S`, §1.2.2), pre-applied to `x` (the
+  linear-operator type is the opaque
   [`apply_linop`](../L1/apply_linop.md) interface). For the off-diagonal cross-coupling
-  use the codomain of `M` matches the length axis of `y`; the diagonal
+  use the codomain of `M` matches the shape group `S` of `y`; the diagonal
   (`y = x`, SPD `M`) is the norm-squared consumed downstream.
 - result — `Scalar` — element type per the rule below; `zero` (the additive identity of
-  the scalar field) on the empty length axis.
-- `x` and `y` share one length axis `N` and one element type `T ∈ {real, complex}`.
+  the scalar field) on the empty tensor.
+- `x` and `y` share one shape group `S` (arbitrary unknown rank, NOT rank-1) and one element type `T ∈ {real, complex}`.
 
 Per-element kernel (the conjugation × element-type axes):
 
-| element type | operator | per-element `kernel(x[i], y[i])` | form |
+| element type | operator | per-element `kernel(x[idx], y[idx])` | form |
 |---|---|---|---|
-| `real`    | `inner_product` | `x[i] · y[i]`             | bilinear symmetric (conjugation is a no-op) |
-| `complex` | `inner_product` | `conj(x[i]) · y[i]`      | Hermitian sesquilinear (arg-1 conjugated) |
-| `complex` | `tdot`          | `x[i] · y[i]`            | unconjugated bilinear (see § "tdot") |
+| `real`    | `inner_product` | `x[idx] · y[idx]`             | bilinear symmetric (conjugation is a no-op) |
+| `complex` | `inner_product` | `conj(x[idx]) · y[idx]`      | Hermitian sesquilinear (arg-1 conjugated) |
+| `complex` | `tdot`          | `x[idx] · y[idx]`            | unconjugated bilinear (see § "tdot") |
 
 ## Specializations (the members, as notes under the combinator)
 
@@ -204,8 +206,8 @@ element-type sub-axis is identical to the leaves' (inherited, not re-derived).
 ## Semantics
 
 `inner_product` reduces the two tensors to a scalar: starting from the additive identity
-`zero`, it folds the per-element products `kernel(x[i], y[i])` over the length axis `N`.
-The result is `Σᵢ kernel(xᵢ, yᵢ)` — the (Hermitian / bilinear / M-weighted) inner product
+`zero`, it folds the per-element products `kernel(x[idx], y[idx])` over the shape group `S`.
+The result is `Σ_idx kernel(x[idx], y[idx])` over every position `idx` of `S` — the (Hermitian / bilinear / M-weighted) inner product
 of `x` and `y`.
 
 The complex fold is the **real fold lifted componentwise over `(Re, Im)`**: the complex
@@ -222,11 +224,11 @@ scalar). The weighted member's internal workspace `Ax` (the `A.Mult` scratch buf
 `palace/linalg/operator.cpp:623-627`) is an L2>L1 lowering concern, not L2 algebra — at
 L2 the weighted member is the clean composition `inner_product (apply_linop M x) y`.
 
-The fold **reduces over the length axis `N`** and therefore carries an **MPI collective**
+The fold **reduces over the shape group `S`** and therefore carries an **MPI collective**
 in the L0 realization (`LocalDot` ∘ `Mpi::GlobalSum`, `palace/linalg/vector.hpp:247-253`).
 The collective is **not** in the L2 signature (single-rank scope; ranks read as their
 single-rank equivalents). This is the structural opposite of
-[`linear_combination`](./linear_combination.md), which is element-local in `N` and folds
+[`linear_combination`](./linear_combination.md), which is element-local over `S` and folds
 over the *term list* (no collective) — see § "Sibling fold".
 
 The self-inner-product fast path `&x == &y` (`palace/linalg/vector.cpp:266` returning
@@ -240,14 +242,14 @@ The laws below hold; absences are deliberate.
 
 **Defining fold law (this is what makes the cohort one family):**
 
-1. **Empty-axis identity (the fold's seed).** `inner_product` over a zero-length axis is
+1. **Empty-tensor identity (the fold's seed).** `inner_product` over an empty tensor is
    `zero` (the additive identity of the scalar field) — the fold's initial accumulator.
 
-2. **Split-additivity / length-concatenation-homomorphism (the defining law).**
+2. **Split-additivity / shape-concatenation-homomorphism (the defining law).**
    `inner_product (x₁ ++ x₂) (y₁ ++ y₂) = inner_product x₁ y₁ + inner_product x₂ y₂`,
-   where `++` concatenates along the length axis and `+` is scalar addition. The fold is
-   a **monoid homomorphism from `(length-concatenated tensors, ++)` to `(Scalar, +)`** —
-   it collapses the length axis. This is the inner-product analogue of
+   where `++` concatenates the shape group `S` and `+` is scalar addition. The fold is
+   a **monoid homomorphism from `(shape-concatenated tensors, ++)` to `(Scalar, +)`** —
+   it collapses the shape group `S`. This is the inner-product analogue of
    `linear_combination`'s concatenation-homomorphism, and it is exactly what licenses
    tiling / blocking of the reduction (the transparent HPC trick the L2 fold absorbs).
    It holds for every member; the weighted member inherits it at **whole-vector
@@ -320,7 +322,7 @@ Laws that explicitly **do not** hold:
 ## tdot — the unconjugated member (type-API-surface only)
 
 `tdot` is the unconjugated-bilinear value of the conjugation axis: kernel
-`x[i] · y[i]` (no conjugation), realized at L0 by
+`x[idx] · y[idx]` (no conjugation), realized at L0 by
 `ComplexVector::TransposeDot` (`palace/linalg/vector.cpp:269-274`), which differs from
 `Dot` only in the sign of the imaginary cross-terms. It is co-defined with `dot` at
 [`dot`](../L1/dot.md) (a firm L1 operator) and is a legitimate axis value of this family
@@ -370,8 +372,8 @@ structural claim it is a family member is firm; only its *behavioral* weight is 
 the one this operator unifies (it is NOT a remaining variant — it is the unification
 axis), so the remaining axes are orthogonal to it:
 
-1. **Conjugation convention** — `kernel = conj(x[i])·y[i]` (Hermitian `dot`) vs
-   `kernel = x[i]·y[i]` (unconjugated `tdot`). The ONLY per-element difference between
+1. **Conjugation convention** — `kernel = conj(x[idx])·y[idx]` (Hermitian `dot`) vs
+   `kernel = x[idx]·y[idx]` (unconjugated `tdot`). The ONLY per-element difference between
    `Dot` (`palace/linalg/vector.cpp:263-267`) and `TransposeDot`
    (`palace/linalg/vector.cpp:269-274`) is the sign of the imaginary cross-terms. This is
    the unification axis (the family's namesake); `tdot` is its second value, carried with
@@ -410,7 +412,7 @@ implementation** of the fold: a strided per-element-kernel pass followed by a pi
 sum, rather than the unfused seed-then-accumulate chain. They compute the same value as
 the unfused fold modulo IEEE-754 summation order (the load-bearing reduction-tree
 non-law). The precondition for the strided pass is exactly the signature's shape
-precondition (`x`, `y` share the length axis `N` — Palace's
+precondition (`x`, `y` share the shape group `S` — Palace's
 `MFEM_ASSERT(x.Size() == y.Size())` at `palace/linalg/vector.cpp:668`). L2 de-fuses the
 fused reduction into the fold's seed-and-accumulate and records the fusion as this one
 note.
@@ -425,11 +427,11 @@ tensor** scalar-weighted sum, NOT a reduce-to-scalar inner product. The boundary
 - **Different result type**: `inner_product :: … -> Scalar`;
   `linear_combination :: … -> Tensor[N]`.
 - **Different combining step**: `inner_product`'s step is
-  `acc_scalar + kernel(x[i], y[i])` (**collapses** the length axis `N`);
-  `linear_combination`'s step is `acc_vec + a·t` (**preserves** the length axis,
+  `acc_scalar + kernel(x[idx], y[idx])` (**collapses** the shape group `S`);
+  `linear_combination`'s step is `acc_vec + a·t` (**preserves** the shape group,
   accumulates over the *term* axis).
 - **Different unifying homomorphism**: `inner_product`'s is
-  **`(length-concat, ++) → (Scalar, +)`** (collapses `N`); `linear_combination`'s is
+  **`(shape-concat, ++) → (Scalar, +)`** (collapses `S`); `linear_combination`'s is
   **`(term-list-concat, ++) → (Tensor[N], +)`** (collapses the term list, keeps `N`).
   They fold over **different axes**.
 - **Different laws**: `inner_product` has Hermitian symmetry + PSD-at-diagonal (laws 4–5),
@@ -468,7 +470,7 @@ unification (the structural sibling of the arity-axis unification carried by
 `linear_combination`); the conjugation convention is pinned (arg-1 conjugated, matching
 both L1 leaves) and reconciled against the Palace `yᴴ x` source as the deliberate,
 self-consistent L1 re-order. Every algebraic law is either the defining fold law
-(empty-axis seed, length-concatenation-homomorphism) or a standard sesquilinear/bilinear
+(empty-tensor seed, shape-concatenation-homomorphism) or a standard sesquilinear/bilinear
 fact (sesquilinearity, Hermitian symmetry, PSD-at-diagonal, zero-argument), with the
 PSD-at-diagonal directly confirmed by the in-source `&x==&y` imag=0 elision
 (`palace/linalg/vector.cpp:266,679`) and the SPD-realness assertion
@@ -518,7 +520,7 @@ is a GENUINE translation (conjugation/element-type/weight dispatch + the value-l
   PSD-at-diagonal, `tdot` is not) plus the separate `bilinear-form` chapter (the M-weighted
   reduction); each mirrors Palace's L0 reduction surface. The conjugation and weight axes
   are fixed per L1 operator.
-- **L2**: one fold `inner_product` over `(Tensor[N], Tensor[N])` with an optional pre-
+- **L2**: one fold `inner_product` over `(Tensor[(S: ...)], Tensor[S])` with an optional pre-
   `apply_linop M`; the conjugation value, element type, and weight presence are recovered
   as specializations; the family of fused reduction kernels (a kernel-fusion choice) is
   unfolded into the canonical `foldl (+) zero (zipWith kernel x y)`; the pinned reduction
