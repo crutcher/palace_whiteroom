@@ -5,7 +5,7 @@ scope: FE-assemble cluster GROUND — canonical typed `edges:` blocks on L1/fe_a
 status: pending
 dispatch: cycle-114 D1
 integrated_at: 2026-06-06T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b5f06f0
 integration_notes: "Applied clean by integrator-per-report (staging row D1); no repair-phase warnings carried to finalize. Frontmatter-only edge-grounding: rank: firm + composes->{weak_form_term,fe_space} + lowers-to + cites-evidence on L1/fe_assemble.md + L1/fe_space.md. +5 reachable (3 direct nodes + 2 transitive L1>L0 themes). rank_violations HELD 0, unresolved HELD 0. Build EXIT 0, no finalize build-repair. 2 OQs promoted (fe_collection-own-constituents-future-pass, fe_space-deferred-siblings-still-ungrounded)."
 ---
 

@@ -5,7 +5,7 @@ scope: L1>L0 theme-grounding sweep (dot / nrm2 / scal op→theme edge upgrade)
 status: pending
 dispatch: cycle-114 D2
 integrated_at: 2026-06-06T200000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b5f06f0
 integration_notes: "Applied clean by integrator-per-report (staging row D2); no repair-phase warnings carried to finalize. Frontmatter-only edge upgrade reference->depends-on(kind:lowers-to) on L1/{dot,nrm2,scal}.md (c108 §5 L1-op->theme convention). +3 reachable (the dot/nrm2/scal mutation-rotation themes). rank_violations HELD 0, unresolved HELD 0. Build EXIT 0, no finalize build-repair. 1 OQ promoted (l1l0-theme-grounding-projection-correction)."
 ---
 

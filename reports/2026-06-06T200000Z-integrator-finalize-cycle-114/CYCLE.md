@@ -14,7 +14,7 @@ gate_hits_total: 0
 build_status: EXIT 0 (no finalize build-repair)
 rank_violations: 0
 reachable: 132
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b5f06f0
 ---
 
 # CYCLE-114 — integrator-finalize batch report (batch-36 CLOSING cycle)
