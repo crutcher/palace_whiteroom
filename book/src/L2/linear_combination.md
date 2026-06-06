@@ -8,10 +8,11 @@ edges:
     - L1/axpy
     - L1/axpby
     - L1/axpbypcz
+    - target: L2-L1/linear-combination-fold-specialization
+      kind: lowers-to             # UPGRADED from reference: the L2>L1 lowering theme this variadic fold lowers through (reachability-bearing)
   reference:
     - concepts/scalar-promotion
     - L2/inner_product
-    - L2-L1/linear-combination-fold-specialization
 ---
 
 # linear_combination

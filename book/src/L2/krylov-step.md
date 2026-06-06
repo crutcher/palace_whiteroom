@@ -1,3 +1,38 @@
+---
+layer: L2
+operator: krylov-step
+# Graded-stack scheme (authored from scratch, batch-35 c109; mirrors the c108 L2/divfree-projector
+# from-scratch authoring). This firm L2 fold-kernel rests on its seven firm L1 leaves (depends-on)
+# AND lowers through the L2>L1 kernel-defusion theme (lowers-to depends-on; mirrors how L1 ops reach
+# their L1>L0 theme). The firm L1 leaf list is the chapter's own §Dependencies (:96). This node firm
+# (rank 3). Of the seven L1 leaf targets, apply_linop/dot/nrm2/scal carry rank: firm; axpy/axpby/axpbypcz
+# carry no rank token yet (typed-no-rank), so the rank invariant holds vacuously over those three edges
+# (a no-rank target cannot be a rank violation) — rank_violations remains 0 either way.
+rank: firm
+edges:
+  depends-on:
+    - L1/apply_linop
+    - L1/axpy
+    - L1/axpby
+    - L1/axpbypcz
+    - L1/dot
+    - L1/nrm2
+    - L1/scal
+    - target: L2-L1/krylov-step-kernel-defusion
+      kind: lowers-to             # the L2>L1 lowering theme this kernel composition lowers through
+  reference:
+    - concepts/solver-as-operator
+    - concepts/derived-view-hoisting
+    - concepts/variant-absorption
+    - concepts/first-iteration-unrolling
+    - concepts/sequential-obstruction
+    - concepts/solve-monad
+    - concepts/state-stratification
+    - concepts/apply_BA
+    - concepts/orthogonalization
+    - concepts/constructed-operators
+---
+
 # krylov-step
 
 Pure-functional step kernel for iterative Krylov-shaped solvers and polynomial smoothers. Consumed by L4's `iterate_while` / `solve-monad` outer driver; encapsulates the primitive composition that every Krylov-shaped slice in the Palace corpus factors into.

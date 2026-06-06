@@ -6,6 +6,8 @@ edges:
   depends-on:
     - L2/ksp_solve
     - L1/apply_linop
+    - target: L2-L1/eigsolve-spectral-transform-composition
+      kind: lowers-to             # the L2>L1 lowering theme this composition lowers through (theme prose :171)
   reference:
     - L1/eigsolve
     - L3/eigsolve

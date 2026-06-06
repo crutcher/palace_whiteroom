@@ -1307,3 +1307,62 @@ The c103/c104/c105 per-report integrator OQ appends (append-only between meta-ph
 
 **Kept — deferred / contingent (genuinely open, trigger-gated):**
 - `record-TimeState-needs-definition-home` (c106 D1) — `L4/fold_solve`'s `TimeState` (the persistent `(E, B)` field-state carry) + the speculative `time_step_op` rough-in have no `concepts/time-state.md` definition home. Folds into the record-definition cohort tail (single-consumer today). *Trigger:* a 2nd consumer of `TimeState` surfaces (then promote to a `concepts/` record page), OR a transient-driver L4-feature dispatch that consumes it.
+
+## OQ: l1-blas-leaves-axpy-family-lack-rank-frontmatter
+
+- **status:** OPEN — filed cycle-109 (batch-35, surfaced by the critic on the L2-L1 theme-cohort grounding report; routed to intake by the repairer).
+- **observation.** Three high-fan-out L1 BLAS leaves — `book/src/L1/axpy.md`, `book/src/L1/axpby.md`, `book/src/L1/axpbypcz.md` — carry **no frontmatter at all**: no `rank:`/`firmness:` token and no `edges:` block (they begin directly with `# axpy` etc.). The graded-stack linter classes them `typed-no-rank`. Their sibling BLAS leaves `apply_linop`/`dot`/`nrm2`/`scal` already carry `rank: firm` + `edges:`.
+- **consequence.** When a reachable node lays a `depends-on` edge into one of these three (as the c109 from-scratch `L2/krylov-step` block does for all three), the `rank(u) <= rank(v)` invariant holds only **vacuously** over that edge (a no-rank target cannot register a rank violation), so `rank_violations` stays 0 but the edge is NOT a verified firm->firm rest. The chapters describe these ops as firm in prose; the rank machinery does not yet see them as rank-3 nodes.
+- **recommended resolution.** In the lazy-tail typing campaign (priorities.md item 2), give these three L1 leaves `rank: firm` + an `edges:` block (mirroring `book/src/L1/scal.md` / `book/src/L1/apply_linop.md`), so the inbound `depends-on` edges become verified firm->firm. Until then, treat inbound edges into the axpy-family as holding the rank invariant vacuously.
+- **NOT a c109-report defect.** The c109 grounding report's edges are correct and verified; only its blanket "all targets firm (rank 3)" rationale was loose (softened in-place by the repairer). This OQ records the underlying authoring gap for the typing campaign to pick up.
+
+## OQ: l2-reduce-orthogonalize-cohort-itself-unreachable-blocks-theme-grounding
+
+- **status:** OPEN — filed cycle-109 (batch-35 LEAD D1, the Group-B finding from the L2-L1 theme-cohort
+  grounding pass).
+- **observation.** The batch-35 LEAD `graded-stack-l2-l1-theme-cohort-grounding` assumed all ~10 L2-L1
+  lowering themes are `[garbage?]` for ONE reason: the `lowers-to` edge convention pointed
+  operator→operator and never operator→theme. On-disk that holds for the *theme edge*, but for **5 of the
+  remaining themes** there is a SECOND, dominating reason — the **upper-endpoint L2 op is ITSELF
+  unreachable**. Adding a faithful `L2/<op> →lowers-to→ theme` edge from an unreachable op cannot flip the
+  theme: the mark-sweep never reaches the op. The 4 themes whose host op is on-spine were grounded cleanly
+  this cycle (reachable 102→107). The 5 blocked themes + their unreachable host ops:
+  - `L2-L1/inner-product-fold-specialization` — host `L2/inner_product` is `[GARBAGE*]` (only inbound from
+    unreachable `L3/dot`, `L3/inner_product`). The faithful `lowers-to` edge WAS laid this cycle (edit #5),
+    correct but non-flipping until the reduce cohort grounds.
+  - `L2-L1/chebyshev-iteration-fusion` — host `L2/chebyshev-iteration` `[garbage?]` (only inbound
+    `L3/chebyshev`, unreachable).
+  - `L2-L1/gram-fold-specialization` — host `L2/gram` `[garbage?]`.
+  - `L2-L1/incremental-least-squares-composition-lowering` — host `L2/incremental-least-squares` `[garbage?]`.
+  - `L2-L1/orthogonalize-composition-lowering` — host `L2/orthogonalize` `[garbage?]`.
+  The faithful `lowers-to` relationship is REAL for all 5 (theme prose confirmed); the one-edge LEAD shape
+  simply cannot reach them.
+- **root cause.** These L2 reduce / orthogonalize / iteration ops are off-spine: their only inbound
+  `depends-on` edges come from L3 ops that are THEMSELVES off-spine (`L3/dot`, `L3/inner_product`,
+  `L3/chebyshev`, `L3/orthogonalize`, `L3/gram`, `L3/krylov-step`, … all in the STRONGER GARBAGE
+  SIGNAL / detritus set). No driver/feature column reaches the L2/L3 reduce/orthogonalize cohort via a
+  live `depends-on` path.
+- **recommended next tranche.** Grounding the L2 reduce / orthogonalize / chebyshev cohort — a larger,
+  structurally-distinct pass that traces up through the unreachable L3 reduce/iteration cohort (NOT the
+  bounded one-edge-per-theme LEAD shape). Once an L2 reduce/orthogonalize op is itself reachable, its
+  already-laid (inner_product) or to-be-laid (chebyshev/gram/ils/orthogonalize) theme edge flips it
+  automatically. The deeper question is whether the L3 reduce/iteration cohort grounds via (a) a faithful
+  `depends-on` edge from a reachable consumer (the GROUND-don't-remove §(g) disposition), or (b) is judged
+  absorbed-below-column detritus (the c107 BC/divfree baseline-exception pattern).
+- **NOTABLE for the meta-phase to judge (the c107 disposition pattern).** `L2/inner_product` being
+  `[GARBAGE*]` while it is a **high-fan-out reduce-to-scalar combinator** is itself notable: a high-reuse
+  reduce verb unreachable from any feature root means the reduce cohort (`dot`/`inner_product`/`nrm2` at
+  L2/L3) has NO live `depends-on` path from a driver column. This is either (a) a genuine spine gap — a
+  driver/output-product column SHOULD `depends-on` a reduce verb somewhere (e.g. the residual-norm /
+  energy / gram reductions a solve performs) — to be GROUNDED from the column; OR (b) an expected
+  absorbed-below-column situation like the BC/divfree clusters (c107), to be tracked as a
+  baseline-exception. The meta-phase should make the ground-from-column-vs-absorbed-detritus call (the
+  c107 disposition pattern). Recommended bias: GROUND from the column where a faithful, honestly-typed
+  `depends-on` path exists (the reduce verbs are genuine constituents of the solve/postprocess columns),
+  per §(g) preference order (GROUND > ROUTE > DELETE).
+- **NOT a failed dispatch.** This is the legitimate faithful-path-or-finding outcome: the 4 clean themes
+  grounded, the 5 blocked themes routed with the root cause + next-tranche recommendation. `deflate` /
+  `deflate-composition-lowering` correctly stay garbage (demand-gated FRONTIER member, STOP-PROPOSING list)
+  and are excluded by design, not omitted.
+- **opened_at:** cycle-109
+- **opened_by:** layer-intro-author

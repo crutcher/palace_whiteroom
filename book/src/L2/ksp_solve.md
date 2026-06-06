@@ -8,6 +8,8 @@ edges:
       kind: lifts-to
     - target: L1/ksp_solve
       kind: lowers-from
+    - target: L2-L1/ksp-solve-outer-driver-unfold
+      kind: lowers-to             # the L2>L1 lowering theme: kernel-fold composition re-collapses into the L1 opaque operator
 variant_axes:
   - solver-method (CG single-fold / GMRES restart-nested-fold / FGMRES restart-nested-fold — selects the fold nesting + the result-residual proxy, not the kernel body)
   - element-type (real / complex)

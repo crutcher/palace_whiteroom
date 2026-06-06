@@ -7,10 +7,11 @@ edges:
     - L1/dot
     - L1/bilinear-form
     - L1/apply_linop
+    - target: L2-L1/inner-product-fold-specialization
+      kind: lowers-to             # UPGRADED from reference: faithful L2>L1 lowering theme edge (does NOT flip reachable yet — L2/inner_product is itself unreachable)
   reference:
     - L2/linear_combination
     - concepts/dot
-    - L2-L1/inner-product-fold-specialization
 ---
 
 # inner_product
