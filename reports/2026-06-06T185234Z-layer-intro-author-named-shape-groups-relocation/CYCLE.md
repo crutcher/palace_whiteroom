@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T185234Z
 scope: relocate named-shape-groups general rule out of linear_combination entries to l4_calculus.md §1.2.1
 status: pending
 integrated_at: 2026-06-06T211500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0666e5a
 integration_notes: "cycle-115 D3. DIRECT USER DIRECTIVE 2026-06-06. Applied clean (staging row 2). PROSE-ONLY trim of the general named-shape-groups rule/rationale/migration-note out of book/src/{L4,L3,L2}/linear_combination.md, leaving each to USE the notation + LINK to design/l4_calculus.md sec 1.2.1. NO l4_calculus.md edit (critic verified 1.2.1/1.2.2/4.1 already carry the complete rule). Reachability-neutral (HELD 133), rank_violations HELD 0. sec 1.2.1 anchor-links all resolve; no KaTeX/table breakage. Build EXIT 0, no build-repair. Promoted OQ named-shape-groups-general-rule-restatement-cohort-extent (27 files / 3 tiers, now governed by the forthcoming semantic-consolidation USER DIRECTIVE). citecheck 10 ok/16 AMBIG (ALL in the cohort-inventory FINDING prose, NONE backs an applied change; non-blocking)."
 ---
 

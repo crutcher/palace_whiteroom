@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T185234Z
 scope: graded-stack residual untyped hygiene (D2, cycle-115) — type 4 reachable-but-pre-scheme nodes
 status: pending
 integrated_at: 2026-06-06T211500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0666e5a
 integration_notes: "cycle-115 D2. Applied clean (staging row 1). Frontmatter-only typed-edge hygiene on book/src/L1/fe_collection.md (rank:firm + edges:) + frontmatter-PREPEND on book/src/L1-L0/{dot,nrm2,scal}-mutation-rotation.md (each had NO frontmatter). +1 reachable (132->133): the fe_collection->L1-L0/fe-collection-construction-rotation lowers-to edge rescued that theme from baseline detritus; detritus 127->126. rank_violations HELD 0, unresolved HELD 0, untyped HELD 60. Promoted OQ graded-stack-prose-status-inference-masks-untyped. Build EXIT 0, no build-repair. All per-report gates PASS/N-A. citecheck 20 ok/0 failing."
 ---
 

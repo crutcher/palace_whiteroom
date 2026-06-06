@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T185234Z
 scope: cycle-115 D1 — INDEPENDENT PLATEAU-PROBE — frontier-exhaustion re-derivation on BOTH axes (reachability + forward vocabulary) + true-coverage-hole sweep
 status: pending
 integrated_at: 2026-06-06T211500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 0666e5a
 integration_notes: "cycle-115 D1. OBSERVATION-ONLY (proposed-changes = None; no book/ mutation). Applied clean (staging row 3). VERDICT = frontier-exhaustion CONFIRMED on all 3 commissioned fronts (no missed faithful ground; all 8 promotion_frontier members genuinely gated; no true in-scope coverage hole -- build_mesh is a tracked candidate-(c) Mesh-wrapper deferral). Exhaustion-OF-CURRENT-SCOPE, NOT terminal (NEW USER DIRECTIVE B 2026-06-06 opens the deferred fronts post-consolidation). 2 benign linter-semantics flags (roots=36 = 12 columns x 3 levels; boundary-mode.{L0,L1,L4} double-counted as ROOT + promotion_frontier). Reachability-neutral. Producer appended 4 plateau-probe OQs + integrator appended 1 READ-CONTEXT note. citecheck 21 ok/2 MISS (both scaffolding/priorities.md internal refs outside citecheck roots, backing a FINDING, verified to resolve; non-blocking). All carried to the IMMINENT out-of-band meta-phase."
 ---
 
