@@ -428,6 +428,28 @@ This shape is load-bearing, and it follows three principles:
 > resolution axis. (A separate, out-of-band 2026-06-06 directive also sharpened the L4 calculus notation: named
 > shape groups `Tensor[(S: ...)]` replace the bare `Tensor[N]`-as-same-shape leak, which silently pinned
 > shape-generic operators to rank-1.)
+>
+> **The reachability axis reached its plateau, and the residual garbage was fully named (batch-36).** Cycles
+> 112/113/114 drove reachability from 122 to **132** (rank invariant HELD at 0 throughout), all of it
+> frontmatter-only Axis-2 grounding: c112 typed the L3 reduce/orthogonalize/linear_combination mid-nodes and
+> ground `L2/nrm2` via a faithful adjacent-layer edge; c113 ground `set_subvector_zero`'s lowering theme and ran
+> an **audit-first** sweep that characterized every remaining typed-but-unreachable node; c114 ground the
+> FE-assemble cluster (the element/space/collection vocabulary) and the `dot`/`nrm2`/`scal` L1>L0 themes. The
+> batch's load-bearing move was the audit: rather than blindly typing the lazy tail (which the c112 finding showed
+> does not even move the `untyped` count, because the linter shim-counts legacy-edged files as typed), c113
+> *characterized* the 13 un-baseline-excepted STRONGER-garbage nodes and dispositioned each — 1 groundable (landed
+> c114), 12 baseline-exceptions. The batch-36 meta-phase ratified those 12 into **RE6** (the axpy/`scal`
+> arity-specialization leaves absorbed below the reachable `linear_combination` combinator — combinator-primary,
+> so the leaf-to-combinator edge direction means nothing composes a concrete arity *by name*), **RE7** (the
+> diagonal-preconditioner apply/extract kernels absorbed into the RE1 leg), and **RE8** (the L3 iteration-views
+> over reachable L4 combinators, an L4→L2 altitude-skip distinct from RE2's L3-composed-at-L2 shape). With RE6-RE8
+> ratified, **the entire STRONGER-garbage set of 23 is now fully tracked — zero undispositioned members** — the
+> reachability axis has reached its *faithful floor* exactly as the resolution axis reached `firm`-rests-on-`firm`.
+> The lesson the arc closes: a campaign that has run to its faithful limit is *complete* when every residual is
+> either grounded or carries a tracked promotion condition, not when garbage hits zero — and recognizing that
+> plateau (rather than forcing unfaithful edges to drive a number down) is the disciplined end-state. The forward
+> vocabulary frontier is likewise substantially exhausted (the promotion frontier is all obstruction-/demand-gated;
+> all 40 feature columns are off `seed`); the project is approaching a natural completion plateau on both axes.
 
 ## FLOW — how the goal is met
 

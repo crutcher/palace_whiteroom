@@ -254,6 +254,27 @@ One refinement the typed-edge campaign (batch-34) added:
   live tree from 36 (the bare root set, pre-traversal) to 102. (Full spec:
   `METHODOLOGY-GRADED-STACK.md` §2f.)
 
+One refinement the grounding campaign reached its limit on (batch-35/36):
+
+- **The reachability axis has a *faithful floor*, not zero garbage — and a campaign is complete
+  when every residual is tracked, not when garbage hits zero.** Not every unreachable firm node
+  *can* be grounded: some are firm, faithful dissections that are genuinely *absorbed below a
+  feature column* (a preconditioner folded into the constructed `op.T`; an arity-specialization
+  leaf below its combinator — combinator-primary, so nothing composes the leaf by name) or are
+  *currently-unconsumed iteration-views* (an L3 view whose consumers compose the L4 or L2 surface
+  directly). For these, grounding would require a *forced, unfaithful* edge that inverts a real
+  dependency direction or asserts a constituent-use that does not exist — exactly the over-edge the
+  priority order's "faithful-edge-or-finding" guard forbids. The disciplined disposition is the
+  third one: an explicit, bounded **reachability baseline-exception set** (Axis-2, parallel to the
+  burned-down Axis-1 rank-violation set), each entry carrying a *non-fix-forward* promotion
+  condition (a future faithful column edge, a demand-gate trigger, or transitive grounding of its
+  consuming leg) — the same bounded-transient-gate pattern as `partly-constructive` on the
+  resolution axis. Across batch-35/36 reachability rose 102 → 132 by grounding everything that
+  *could* be grounded; the residual STRONGER-garbage set (23 nodes at batch-36 close) was then
+  *fully* enumerated into RE1-RE8 — **zero undispositioned members**. The reachability axis has
+  reached its faithful floor exactly as the resolution axis rests `firm`-on-`firm`. (Full ledger:
+  `scaffolding/graded-stack-baseline-exceptions.md`, the Axis-2 section.)
+
 ### The OWN-COMPOSITION rule falls out of the root marker
 
 A feature column's edges to *vocabulary* are blocking `depends-on` edges (they constrain

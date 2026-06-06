@@ -2205,8 +2205,8 @@ slug: parallel-dispatch-reachability-measurement-contamination
 first_observed: cycle-110
 last_observed: cycle-110
 recurrence_count: 1
-status: new
-addressed_by: cycle-111 meta-phase (batch-35) — LEDGER-AND-MONITOR (no role-spec change enacted). The discipline self-corrected at recurrence-1 (c111 did NOT recur) and the existing critic + repairer + per-report-integrator-re-measure-on-the-landed-tree safety net caught + fixed both c110 instances. Re-open as a GO (a producer-side "measure your OWN edit-set in isolation; finalize computes the cumulative" role-spec instruction in layer-intro-author) on recurrence-2.
+status: addressed (watch HELD across batch-36 — no recurrence-2)
+addressed_by: cycle-111 meta-phase (batch-35) — LEDGER-AND-MONITOR (no role-spec change enacted). The discipline self-corrected at recurrence-1 (c111 did NOT recur) and the existing critic + repairer + per-report-integrator-re-measure-on-the-landed-tree safety net caught + fixed both c110 instances. Re-open as a GO (a producer-side "measure your OWN edit-set in isolation; finalize computes the cumulative" role-spec instruction in layer-intro-author) on recurrence-2. **batch-36 WATCH RESULT (cycle-114 meta-phase): HELD — NO recurrence-2.** All three batch-36 cycles ran ≥2-layer-intro-author waves on disjoint frontmatter-only file sets (c112 D1/D2 disjoint L3 mid-nodes; c113 D1 observation-only + D2 one-file; c114 D1/D2 disjoint L1 file sets) and each producer correctly reported ONLY its own standalone delta with the finalize step-5b re-measure producing the authoritative cumulative (the disjoint-set isolation pattern the planner mandated each cycle). Contamination did NOT recur. The LEDGER-AND-MONITOR decision is vindicated; the entry stays addressed. Re-open as a GO only on an actual fresh contaminated headline.
 ---
 ```
 
@@ -2215,3 +2215,22 @@ addressed_by: cycle-111 meta-phase (batch-35) — LEDGER-AND-MONITOR (no role-sp
 **Evidence (one instance, self-corrected).** **cycle-110 (detection):** both parallel D1/D2 layer-intro-author dispatches MISreported reachability — D1 reported a 119/+12 headline that was really the cumulative-with-D2 number; D2 reported +12 that was really D1's cascade. BOTH were caught by the critics + fixed by the repairers (each headline corrected to the standalone/isolation truth + a finalize-re-measure instruction); the per-report integrator's re-measure-on-the-landed-tree step produced the authoritative cumulative 119. **cycle-111 (no recurrence):** c111's two parallel dispatches correctly isolated each delta — D1 measured its own +3 standalone, D2 confirmed reachability-neutral, finalize re-measured the cumulative 122. The discipline HELD.
 
 **Decision (batch-35 meta-phase — LEDGER-AND-MONITOR, not codify).** The contamination self-corrected after one occurrence (the c111 producers isolated their deltas without a role-spec change), and a robust three-layer safety net already catches it: the critic flags the measurement-misattribution, the repairer corrects the headline in-place, and the per-report integrator re-measures the authoritative number on the LANDED tree (the single source of truth for reachability — never a producer's working-tree number). Codifying a producer-side measurement-isolation instruction now would harden against a non-recurring pattern; defer it. **Watch / re-open** as a GO on **recurrence-2** — a fresh contaminated headline in a future ≥2-layer-intro-author wave — at which point enact the `layer-intro-author` role-spec instruction: "when ≥2 dispatches share a wave, measure your OWN edit-set in isolation (git-stash siblings, or report only your standalone delta); the per-report integrator + finalize compute the authoritative cumulative on the landed tree — never trust a whole-tree reachability number measured with sibling edits present."
+
+---
+
+```yaml
+---
+slug: stale-pre-c108-rank-direction-error-prose-on-L1-ops
+first_observed: cycle-113
+last_observed: cycle-113
+recurrence_count: 1
+status: addressed (resolved at recurrence-1 — one-off, confirmed bounded by grep at batch-36 close)
+addressed_by: cycle-114 meta-phase (batch-36) — RESOLVED, no systematic sweep needed. The c113 D2 finding hypothesized that the c104-era "an L1-op→theme depends-on would be a rank-direction error" prose (correct BEFORE the c108 §5 L1-op→theme grounding convention, WRONG after) might be carried by many L1 leaves re-grounded in the same c104 era (`normalize`/`reciprocal`/`elementwise_product`/`scal`/...). The meta-phase grep-verified the actual blast radius: only `book/src/L1/set_subvector_zero.md` ever carried the phrase, and c113 D2 ALREADY corrected it in-place (the 3 remaining mentions are the CORRECTED prose explicitly marking the earlier assertion WRONG + superseded). The c114 D2 sweep separately grep-confirmed `dot`/`nrm2`/`scal` carry NO stale prose (clean edge-upgrade, no prose correction). The hypothesized systematic sweep is therefore MOOT — the pattern was a single file, already fixed. No friction-ledger escalation, no plan tranche.
+---
+```
+
+**Pattern (stale pre-convention prose surviving a convention change on re-grounded L1 ops).** A c104-era comment on `L1/set_subvector_zero` asserted an L1-op→L1>L0-theme `depends-on` would be a "rank-direction error." That was correct under the pre-c108 framing but WRONG after the c108 §5 L1-op→theme grounding convention (both endpoints `rank: firm`, so `rank(op=3) ≤ rank(theme=3)` holds and the edge routes liveness DOWN). The risk the finding flagged: such stale prose, plus an un-upgraded `reference`-only op→theme edge, leaves the theme reachable-dead — a silent blocker on the grounding sweep.
+
+**Evidence + resolution (one file, already fixed).** **cycle-113 (detection + fix):** D2 grounded `set_subvector_zero`'s theme and corrected its 3 stale-prose locations in the same edit. **cycle-114 (sweep confirms bounded):** the dot/nrm2/scal theme-grounding sweep found NO stale prose on those three (clean upgrade). **cycle-114 meta-phase (grep-verify):** `grep -rl "rank-direction error" book/src/` returns exactly ONE file — `set_subvector_zero.md` — and its mentions are the CORRECTED prose. The pattern was a one-off, not systematic.
+
+**Decision (batch-36 meta-phase — ADDRESSED/resolved, no codification).** Single-file blast radius, already fixed at recurrence-1. No role-spec edit, no skill, no plan tranche. **Watch / re-open** only if a future c104-era re-grounded L1 leaf surfaces with the same stale framing on a reachability-dead theme (recurrence-2) — at which point a one-edge-per-op grounding micro-sweep (the c114 D2 shape) is the remedy, not a methodology change.

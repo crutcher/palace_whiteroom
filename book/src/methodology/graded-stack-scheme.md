@@ -161,6 +161,19 @@ unmarked nodes are garbage (the detritus / orphaned-intent sweep is one mark-swe
 root set, `METHODOLOGY-GRADED-STACK.md` §2b). A `roadmap_goal` is justified only if its
 `pulled-by` provenance chains, over `depends-on` edges, to a root.
 
+**The detritus set has two measurement subsets — distinguish them when projecting a
+grounding pass's delta.** The linter reports garbage in two buckets:
+`detritus_no_typed_edges_pre_p1_artifact` (**edge-untyped detritus** — dead-ends because their
+`edges:` are not yet typed, i.e. frontmatter-less or legacy-only) and
+`detritus_with_typed_edges_stronger_signal` (the **STRONGER subset** — nodes that DECLARE typed
+`depends-on` deps yet are still unreachable: a real, examined off-spine node, not a typing gap).
+Flipping an *edge-untyped* node reachable (e.g. grounding an op→theme edge whose theme carries no
+frontmatter) drops the **edge-untyped** count, NOT STRONGER; only a *typed-but-unreachable* node
+moving to reachable clears a STRONGER member. A grounding-pass projection that says "STRONGER −N"
+for an edge-untyped flip conflates the two — the faithful result holds STRONGER and drops
+edge-untyped. (c114 D2 surfaced this: grounding three frontmatter-less L1>L0 themes moved
+reachable/edge-untyped but held STRONGER at 23.)
+
 ## 4. The migration mapping — where edges live going forward
 
 Dependency information lives today in **three incompatible representations**. The scheme
