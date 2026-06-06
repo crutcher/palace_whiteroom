@@ -28,7 +28,7 @@ edges:
 
 `SimState` is the value threaded by `Solve a = StateT SimState Identity a` (see [`solve-monad`](./solve-monad.md)). It is `readonly` from the *caller's* perspective (the solve produces a new `SimState` value rather than mutating in place), but its fields are **run-time-evolved** within the solve — the defining property that distinguishes it from the construction-time [`op-params`](./op-params.md).
 
-The iterate `x` is the solution-space vector, named with the shape group `S` per [`l4_calculus`](../design/l4_calculus.md) §1.2.1 (not a rank-1 length axis):
+The iterate `x` is the solution-space vector, named with the shape group `S` per [`l4_calculus`](../semantics/index.md) §1.2.1 (not a rank-1 length axis):
 
 ```text
 SimState = {

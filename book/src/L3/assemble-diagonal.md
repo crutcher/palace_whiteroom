@@ -34,7 +34,7 @@ This L3 entry is the **layer-coherence anchor**: a reader navigating L3 (the ite
     assemble_diagonal :: LinOp[(S: ...), $S] -> Tensor[$S]
     assemble_diagonal A = diag(A)
 
-Shape contract (named shape groups / operator shapes per [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2; the diagonal is intrinsic to a square operator, so domain and range are one shape group `S`; positional values; L3 has no `readonly` annotation and no monadic effect — the typing distinctions are deferred to the wrapper layers above):
+Shape contract (named shape groups / operator shapes per [`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2; the diagonal is intrinsic to a square operator, so domain and range are one shape group `S`; positional values; L3 has no `readonly` annotation and no monadic effect — the typing distinctions are deferred to the wrapper layers above):
 
 - **`A`** — `LinOp[(S: ...), $S]`, an opaque **square** linear-operator type (domain group `S` equals range group `S`). Read-only at L3 (the L0 method is `const`; the L3 form never writes through `A`). The operator-representation axis (sparse-CSR, matrix-free, parallel-wrapped, complex-wrapped) is **absorbed at L3** into this opaque type; the L3 kernel does not branch on representation. The element type (real or complex) is parameterised; the L3 signature is uniform across the element-type axis.
 - **result** — `Tensor[$S]`, the diagonal vector, congruent to the operator's (shared) square shape group `S`; `result[i]` is the `(i, i)` entry of `A`. A fresh value. No L0 destination buffer is mentioned at L3 (the destination-binding rotation is an L1>L0 concern, per the forthcoming [`assemble-diagonal-mutation-rotation`](../L1-L0/assemble-diagonal-mutation-rotation.md) theme).
@@ -95,7 +95,7 @@ The `reciprocal` and `elementwise_product` that complete the diagonal-preconditi
 
 **L1 anchor**: [`L1/assemble-diagonal`](../L1/assemble-diagonal.md) (firm) — authoritative on the Palace surface details (the abstract decls + concrete realisations across sparse/matrix-free/parallel/complex-wrapped representations, the consuming smoother call sites, the libCEED diagonal-assembly unit test), the square-precondition enforcement sites, the Dirichlet `DiagonalPolicy` BC post-step, and the complete L0 evidence list. This L3 entry does not duplicate those details; the L3>L1 rotation is identity-in-form on the primitive itself.
 
-**Strawman reference**: `book/src/design/l4_calculus.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation. `assemble_diagonal` does not get its own L4 entry (per the leaf-primitive / `CONFIRMED-NOT-NEEDED` verdict the cycle-010 audit reached for the operator-to-data and BLAS-1 cohorts).
+**Strawman reference**: `book/src/semantics/index.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation. `assemble_diagonal` does not get its own L4 entry (per the leaf-primitive / `CONFIRMED-NOT-NEEDED` verdict the cycle-010 audit reached for the operator-to-data and BLAS-1 cohorts).
 
 ## Variant axes
 

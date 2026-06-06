@@ -28,7 +28,7 @@ Eigenmode is the **cleanest test of the composition-root pattern over a single b
 
 ## The composition
 
-At L4 the whole simulation is the composition (Haskell-style; the strawman `book/src/design/l4_calculus.md` notation):
+At L4 the whole simulation is the composition (Haskell-style; the strawman `book/src/semantics/index.md` notation):
 
     -- inputs = config; output = the eigenfrequency / Q-factor / mode-field set (the physical product)
     eigenmode :: EigenmodeConfig -> EigenmodeResult

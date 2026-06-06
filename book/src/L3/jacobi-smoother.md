@@ -38,7 +38,7 @@ This L3 entry is the **layer-coherence anchor**: a reader at L3 can find `jacobi
     jacobi_smoother op x = op.dinv ⊙ x
                          = (ω · diag(A)⁻¹) ⊙ x
 
-Shape contract (positional values; bunsen-style named axes; the field shape group `S` follows the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1; no element loop exposed at L3; no monadic effect, no `readonly` typing — the typing distinctions are deferred to the wrapper layers above):
+Shape contract (positional values; bunsen-style named axes; the field shape group `S` follows the named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1; no element loop exposed at L3; no monadic effect, no `readonly` typing — the typing distinctions are deferred to the wrapper layers above):
 
 - **`op`** — `JacobiSmoother[S]` — the constructed smoother closure, an opaque value bound once at setup and immutable across calls. Carries `op.dinv : Tensor[$S]` (the damped inverse diagonal `ω · diag(A)⁻¹`, congruent to the field shape group `S`, same element-type as the operator), `op.omega : Real` (the damping factor, already absorbed into `dinv` at apply time), and `op.sf_max : Real` (the spectral-bound scaling factor, consumed only by the estimated-damping setup). The constructed-operator type is **opaque at L3** — the element-type variant and the operator-representation axis are absorbed; the L3 contract sees only the smoother-action interface.
 - **`x`** — `Tensor[$S]` — the input vector (residual / RHS to smooth). Read-only at L3 (value-threaded positionally; the L3 layer has no in-place mutation in vocabulary — mutation reappears only in the L1>L0 lowering).
@@ -105,7 +105,7 @@ The setup-side dependencies ([`assemble-diagonal`](../L1/assemble-diagonal.md) f
 
 **L1 anchor**: [`L1/jacobi-smoother`](../L1/jacobi-smoother.md) (firm; the constructed-operator gate at L1) — authoritative on the Palace surface details, the setup chain, the `spectrum_estimate` opaque sub-action, the dead-code Hermitian kernel caveat, and the complete L0 evidence list. This L3 entry does not duplicate those details; the L3>L1 rotation is identity-in-form on the gate's apply.
 
-**Strawman reference**: `book/src/design/l4_calculus.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation (rendered as 4-space-indented code blocks here). The L4 layer does not surface `jacobi-smoother` as a standalone entry (per the constructed-operator-gate L4 verdict shared with the firm `apply_linop` / `ksp_solve` gates).
+**Strawman reference**: `book/src/semantics/index.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation (rendered as 4-space-indented code blocks here). The L4 layer does not surface `jacobi-smoother` as a standalone entry (per the constructed-operator-gate L4 verdict shared with the firm `apply_linop` / `ksp_solve` gates).
 
 ## Variant axes
 

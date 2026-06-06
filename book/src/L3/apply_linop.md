@@ -38,7 +38,7 @@ apply_linop :: LinOp[(R: ...), (D: ...)] -> Tensor[$D] -> Tensor[$R]
 apply_linop A x = A · x
 ```
 
-Shape contract (named shape groups / operator shapes per [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2; range-first operator convention; positional values; L3 has no `readonly` annotation and no monadic effect — the typing distinctions are deferred to the wrapper layers above):
+Shape contract (named shape groups / operator shapes per [`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2; range-first operator convention; positional values; L3 has no `readonly` annotation and no monadic effect — the typing distinctions are deferred to the wrapper layers above):
 
 - **`A`** — `LinOp[(R: ...), (D: ...)]`, an opaque linear-map type from domain shape group `D` to range shape group `R`, both of unknown rank (range-first per the matrix convention). The operator-representation axis (sparse, dense, matrix-free, composition, multigrid, block, wrapped) is **absorbed at L3** into this opaque type; the L3 kernel does not branch on representation. The element type (real or complex) is parameterised; the L3 signature is uniform across the element-type axis.
 - **`x`** — `Tensor[$D]`, the input vector, congruent to the operator's domain group `D`. Read-only at L3 (value-threaded positionally; the L3 layer has no in-place mutation in vocabulary — mutation reappears only in the L1>L0 lowering). The element type matches `A`'s element type.
@@ -113,7 +113,7 @@ The non-law set is **inherited unchanged** from L1; the L3 rendering introduces 
 - [`constructed-operators`](../concepts/constructed-operators.md) — the level-(c) variant absorption of operator-representation. The L3 `apply_linop` is uniform across all concrete L0 representations because the construction discipline keeps the operator-representation axis off the L3 signature.
 - [`variant-absorption`](../concepts/variant-absorption.md) — the level-(b)/(c) absorption discipline. Three of `apply_linop`'s four variant axes (element-type, transpose-mode, operator-representation) are absorbed at L3 either by parameterisation, algebraic transform, or opaque-type absorption.
 
-**Strawman reference**: `book/src/design/l4_calculus.md` is the L4 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation. The L4 layer does not surface `apply_linop` as a standalone entry (per the cycle-010 cross-layer audit verdict); the L4 form is the implicit use inside the L4 `krylov-step` body's let-chain.
+**Strawman reference**: `book/src/semantics/index.md` is the L4 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation. The L4 layer does not surface `apply_linop` as a standalone entry (per the cycle-010 cross-layer audit verdict); the L4 form is the implicit use inside the L4 `krylov-step` body's let-chain.
 
 No L4 monadic vocabulary appears in the L3 signature (no `Solve`, no `modify`, no `do`-block). No L2 composition vocabulary appears (no `krylov_update`, no `apply_BA` as a named L2 entry; the constructed-operator surface is referenced as the [`apply_BA`](../concepts/apply_BA.md) concept). That is the discipline of the layer.
 

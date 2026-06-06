@@ -41,10 +41,10 @@ linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros $S) pair
 
 Positional value-threading; no monadic effect (L3 has no `Solve` monad), no record-typing.
 
-Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1):
+Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantics/index.md) §1.2.1):
 
 - `pairs` — `[(Scalar, Tensor[(S: ...)])]` — a finite list of (coefficient, term) pairs. Order is the fold's evaluation order (see §"Algebraic laws", permutation law/non-law pair).
-- each `tᵢ` — `Tensor[(S: ...)]` — **shape precondition**: all terms are *congruent*, sharing one shape group `S` of arbitrary (unknown) rank; the combination is element-local at every position of `S`. (The general named-shape-group convention is in [`l4_calculus`](../design/l4_calculus.md) §1.2.1, linked above.)
+- each `tᵢ` — `Tensor[(S: ...)]` — **shape precondition**: all terms are *congruent*, sharing one shape group `S` of arbitrary (unknown) rank; the combination is element-local at every position of `S`. (The general named-shape-group convention is in [`l4_calculus`](../semantics/index.md) §1.2.1, linked above.)
 - each `aᵢ` — `Scalar` — element type one shared `T ∈ {real, complex}` across all scalars and all terms, with the `real ⊑ complex` scalar-promotion lattice inherited unchanged from [`scalar-promotion`](../concepts/scalar-promotion.md) (promote all-or-none across the scalar list).
 - result — `Tensor[$S]` — same shape group `S`; `zeros[$S]` on the empty list.
 

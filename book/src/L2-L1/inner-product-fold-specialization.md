@@ -56,7 +56,7 @@ $$ \text{inner\_product}(x, y) = x^{\mathsf H} y = \textstyle\sum_{i} \overline{
 
 The shape precondition `x, y : Tensor[(S: ...)]` (congruence over one shape group `S` of
 arbitrary, unknown rank — named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1) is the aligned-pass precondition the L0
+[`l4_calculus`](../semantics/index.md) §1.2.1) is the aligned-pass precondition the L0
 fused reduction kernels require; at the lowered flat call it reads concretely as a shared
 length `N` (Palace's `MFEM_ASSERT(x.Size() == y.Size())`,
 `palace/linalg/vector.cpp:668`).

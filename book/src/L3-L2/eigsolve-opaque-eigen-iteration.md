@@ -392,7 +392,7 @@ Cross-cutting concept references (consumed unchanged across the rotation):
 
 Strawman / combinator evidence:
 
-- `book/src/design/l4_calculus.md` §3.7 — the `iterate_while` conventions; the natural L4 composition
+- `book/src/semantics/index.md` §3.7 — the `iterate_while` conventions; the natural L4 composition
   target for the eigen-iteration loop *if* Palace authored it — but the loop is library-owned, so the
   L4/L3 treatment is the `partial-obstruction` case, NOT a clean `iterate_while` fold. The L3 form does
   not render the loop as `iterate_while_L3` (unlike `ksp_solve`); this theme records that absence as the

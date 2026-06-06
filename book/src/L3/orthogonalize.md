@@ -151,7 +151,7 @@ iteration-rotation form; the concept pages are the narrative.
 
     orthogonalize :: (op, w, V) -> { residual, coeffs }
 
-Shape contract (positional values; L3 has no `readonly` annotation and no monadic effect; the candidate vector shape group `S` follows the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1; the basis `Basis[N, m]` is a genuine 2-D `m`-column basis whose columns `V[j]` are length-`N` dof-vectors congruent to `S`, and `coeffs : Tensor[m]` is genuinely 1-D — both KEEP their concrete length axes):
+Shape contract (positional values; L3 has no `readonly` annotation and no monadic effect; the candidate vector shape group `S` follows the named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1; the basis `Basis[N, m]` is a genuine 2-D `m`-column basis whose columns `V[j]` are length-`N` dof-vectors congruent to `S`, and `coeffs : Tensor[m]` is genuinely 1-D — both KEEP their concrete length axes):
 
 - **`op`** — orthogonalization-parameters value, closure-captured by the body (a positional
   argument never present in the return position). The body reads:

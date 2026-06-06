@@ -30,7 +30,7 @@ The electrostatic pipeline is the cleanest entry point because it is a **fixed-o
 
 ## The composition
 
-At L4 the whole simulation is the composition (Haskell-style; the strawman `book/src/design/l4_calculus.md` notation):
+At L4 the whole simulation is the composition (Haskell-style; the strawman `book/src/semantics/index.md` notation):
 
     -- inputs = config; output = the capacitance matrix (the physical product)
     electrostatic :: ElectrostaticConfig -> CapacitanceMatrix

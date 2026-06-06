@@ -24,7 +24,7 @@ The capacitance matrix is the physical product the user runs the electrostatic s
 
 ## The composition
 
-At L4 the capacitance product is the composition (Haskell-style; the strawman `book/src/design/l4_calculus.md` notation):
+At L4 the capacitance product is the composition (Haskell-style; the strawman `book/src/semantics/index.md` notation):
 
     -- inputs = config (terminal excitations); output = the capacitance matrix (the physical product)
     capacitance :: ElectrostaticConfig -> CapacitanceMatrix

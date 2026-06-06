@@ -85,7 +85,7 @@ Palace's C++ writes the explicit per-domain loop, not the L4 reduction form.
         restricted_energy m field = 0.5 * inner_product field (m `apply` field)   -- ⟨field, M field⟩, real ≥ 0
 
 Shape contract (bunsen-style; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1):
+[`l4_calculus`](../semantics/index.md) §1.2.1):
 
 - `doms : DomainOpMap` — the configured domain-operator map `{idx → M_idx}` (the C++ `DomainPostOperator::M_i`,
   `domainpostoperator.hpp:42`). Read-only. Defines which domains get their own energy row (the reduction's

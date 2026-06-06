@@ -28,7 +28,7 @@ The scattering matrix is the physical product the user runs the **driven** (freq
 
 ## The composition
 
-At L4 the scattering-matrix product is the composition (Haskell-style; the strawman `book/src/design/l4_calculus.md` notation):
+At L4 the scattering-matrix product is the composition (Haskell-style; the strawman `book/src/semantics/index.md` notation):
 
     -- inputs = config (ports + frequency sweep); output = the scattering matrix (the physical product)
     sparameters :: DrivenConfig -> ScatteringMatrix

@@ -32,8 +32,7 @@ invariant under permutation of the term list and under any reassociation of the
 accumulation. The term list has no fixed length at L2 — the **arity axis is the axis
 this single L2 operator unifies** (L2 entry §"L2 vs L1 distinction"). The shape
 precondition `all tᵢ : Tensor[(S: ...)]` (every term is congruent over one shape group `S`
-of arbitrary, unknown rank — NOT rank-1; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1) is the
+of arbitrary, unknown rank; see [`l4_calculus`](../semantics/index.md) §1.2.1) is the
 aligned-pass precondition the L0 fused kernels require.
 
 ## L1 form (RHS)

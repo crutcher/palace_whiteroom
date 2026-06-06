@@ -6,7 +6,7 @@ edges:
 
 # elementwise_product
 
-Base primitive: `y ← x ⊙ z` where `⊙` denotes elementwise (Hadamard) product of two congruent tensors (the same shape group `S`, arbitrary unknown rank — NOT rank-1). The result is the tensor whose value at every multi-index `idx` of `S` is `x[idx]·z[idx]`.
+Base primitive: `y ← x ⊙ z` where `⊙` denotes elementwise (Hadamard) product of two congruent tensors (the same shape group `S`, arbitrary unknown rank — see §Contract / [`l4_calculus`](../semantics/index.md) §1.2.1). The result is the tensor whose value at every multi-index `idx` of `S` is `x[idx]·z[idx]`.
 
 ## Background
 
@@ -15,7 +15,7 @@ Standard Hadamard / pointwise product. In BLAS-terms this is not a level-1 op (n
 ## Contract
 
 - Pure with respect to its operands (in-place output into one of the operands is acceptable as a workspace convention).
-- Shape (named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1): operands and result share one shape group `S` (arbitrary, unknown rank — NOT rank-1); `x, z : Tensor[(S: ...)] → ℝ` (or ℂ); `y : Tensor[$S]`.
+- Shape (see [`l4_calculus`](../semantics/index.md) §1.2.1): operands and result share one shape group `S` (arbitrary, unknown rank); `x, z : Tensor[(S: ...)] → ℝ` (or ℂ); `y : Tensor[$S]`.
 - Both operand tensors and the output tensor are congruent (the same shape group `S`).
 
 ## Role in higher-layer rotations

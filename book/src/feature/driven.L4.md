@@ -51,7 +51,7 @@ reached L4 in cycles 069/070.
 ## The composition
 
 At L4 the whole simulation is the composition (Haskell-style; the strawman
-`book/src/design/l4_calculus.md` notation):
+`book/src/semantics/index.md` notation):
 
     -- inputs = config; output = the frequency response / S-parameters (the physical product)
     driven :: DrivenConfig -> FrequencyResponse

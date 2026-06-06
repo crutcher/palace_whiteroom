@@ -83,7 +83,7 @@ follows it.
 orthogonalize :: (op: OrthogOp, w: Tensor[(S: ...)], V: Basis[N, m]) -> { residual: Tensor[$S], coeffs: Tensor[m] }
 ```
 
-Shape contract (bunsen-style; named axes; the vector shape group `S` follows the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1; the basis `Basis[N, m]` is a genuine 2-D `m`-column basis and the coefficient vector `coeffs : Tensor[m]` is genuinely 1-D — both KEEP their concrete length axes):
+Shape contract (bunsen-style; named axes; the vector shape group `S` follows the named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1; the basis `Basis[N, m]` is a genuine 2-D `m`-column basis and the coefficient vector `coeffs : Tensor[m]` is genuinely 1-D — both KEEP their concrete length axes):
 
 - `op` — `OrthogOp` — the closed-over orthogonalization surface, bound once at solve setup
   (the level-(b)/(c) absorbed surface `krylov-step` carries as `op.orthog`). A record:

@@ -81,7 +81,7 @@ re-derive the fold.
 ## Semantics (overlay)
 
 The L4 calculus is specified in the strawman
-[`../design/l4_calculus.md`](../design/l4_calculus.md).
+[`../semantics/index.md`](../semantics/index.md).
 `assemble_frequency_operator` is a pure term-list fold (its parent
 `linear_combination`'s fold) specialized to a fixed four-term operator-operand
 list with affine-in-ω scalar weights; its L4 rendering uses the strawman's
@@ -342,7 +342,7 @@ the `map_solve` scope boundary that scopes driven out of the shared
 per-element operator of that superset's assemble half — the driven solve half (the
 `map_solve` lift) is a separate methodology decision, NOT this entry's content.
 
-**Strawman reference:** [`../design/l4_calculus.md`](../design/l4_calculus.md) — this
+**Strawman reference:** [`../semantics/index.md`](../semantics/index.md) — this
 verb adds **no reduction rule** (it is `linear_combination`'s fold at the
 operator-operand corner, in the existing `foldl`/`+`/`scal` vocabulary).
 
@@ -462,7 +462,7 @@ Classification / methodology anchors:
 - `book/src/L4/fe_assemble.md` (cycle-068 D1) — the structural-sibling precedent:
   the FE-cohort→L4 lift's combinator-as-entry + firm-on-positive-structure escape +
   shape-contract conventions this entry follows.
-- `book/src/design/l4_calculus.md` — the strawman; this verb adds no reduction rule
+- `book/src/semantics/index.md` — the strawman; this verb adds no reduction rule
   (a fold at the operator-operand corner in the existing `foldl`/`+`/`scal`
   vocabulary).
 

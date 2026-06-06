@@ -6,7 +6,7 @@ These have a different lifecycle from the slices in `spec/`: they are written **
 
 ## Current artifacts
 
-- [**L4 calculus & spec semantics (active-management surface)**](./l4_calculus.md) — **promoted (2026-06-06, semantic-consolidation directive) out of "design strawman" status into the project's active semantic-management surface** — the single home for the spec's semantic rules / defs / abstractions (shape semantics + named shape groups, the L4/L3 pseudo-language notation invariant, monad / ownership / reduction-rule conventions, the calculus grammar). It now appears in `SUMMARY.md` under the top-level `# Semantic surface` Part placed BEFORE `# L4`, not under Design Artifacts. (Physical path move out of `design/` is the cycle-116 LEAD; the file remains at this path until then.)
+- The **L4 calculus & spec semantics (active-management surface)** has **moved out of Design Artifacts** into its own top-level `# Semantic surface` Part — it now lives at [`book/src/semantics/index.md`](../semantics/index.md) (cycle-116 LEAD, the physical path move enacting the 2026-06-06 semantic-consolidation directive). It is the single home for the spec's semantic rules / defs / abstractions (shape semantics + named shape groups, the L4/L3 pseudo-language notation invariant, monad / ownership / reduction-rule conventions, the calculus grammar).
 
 ## Future artifacts (planned but not yet drafted)
 

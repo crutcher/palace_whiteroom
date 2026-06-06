@@ -6,7 +6,7 @@ The tail-recursive value-threading loop combinator at L4. Folds a `Step` functio
 
 L4's job is to write algorithms in a graph-evaluation calculus that makes iteration, dispatch sites, and effect placement structural. `iterate_while` is the **canonical iteration primitive** at L4: every iterative algorithm in the spec (CG, GMRES, Chebyshev, Arnoldi, transient time-stepping, eigenmode iteration) reduces at L4 to one or more `iterate_while`-folds around per-step kernels.
 
-The L4 strawman (`book/src/design/l4_calculus.md` §3.7) gives this combinator as the v0.3 generalisation of the v0.2 `iterate_while_pure` sketch — generalised to carry per-step extras (a `trajectory`) so that residual histories, monitoring metrics, and breakdown tokens can be returned uniformly through the same combinator. The §3.8 demand-pruning law (`l4_calculus.md:186-213`) ensures that consumers reading only `.final_state` see the trajectory pruned away — the per-step extras are never computed when no downstream consumer reads them.
+The L4 strawman (`book/src/semantics/index.md` §3.7) gives this combinator as the v0.3 generalisation of the v0.2 `iterate_while_pure` sketch — generalised to carry per-step extras (a `trajectory`) so that residual histories, monitoring metrics, and breakdown tokens can be returned uniformly through the same combinator. The §3.8 demand-pruning law (`index.md:186-213`) ensures that consumers reading only `.final_state` see the trajectory pruned away — the per-step extras are never computed when no downstream consumer reads them.
 
 This chapter is the L4-row anchor for the combinator that the cycle-006 firm L4 entry [`krylov-step`](./krylov-step.md) consumes structurally without anchor (caveat 2 of the harvester's report), and that the cycle-006 wave-2 abstractor theme [`krylov-step-typed-wrapper-dissolution`](../L4-L3/krylov-step-typed-wrapper-dissolution.md) §"Speculative L4 operators" proposed as a rough-in. Promoting it closes the cycle-006 open question `iterate-while-l4-anchor-missing`.
 
@@ -16,7 +16,7 @@ This chapter is the L4-row anchor for the combinator that the cycle-006 firm L4 
 
 The L4 signature is the value-threading combinator shape, parameterised by the carry type `α`, the readout-record-extras type `e`, and the implicit `Sim` (`Solve`) monad. The strawman's v0.3 form uses `state` for the carry slot; this chapter uses `carry` to avoid collision with the `SimState` of [`solve-monad`](../concepts/solve-monad.md). The two names refer to the same syntactic role.
 
-**Form (pure, no `Solve` threading)** — the `iterate_while_pure` sugar from `l4_calculus.md:178-183`:
+**Form (pure, no `Solve` threading)** — the `iterate_while_pure` sugar from `index.md:178-183`:
 
 ```text
 iterate_while_pure :: α -> (α -> Bool) -> (α -> α) -> α
@@ -49,7 +49,7 @@ Shape contract (bunsen-style; named records; the `α`, `e` slots are arbitrary L
 - **`carry: α`** — the iteration-threaded state. Passed positionally as the first argument (`init`); plumbed forward through each step's `{ state: α, ... }` return; surfaced as `final_state` in the return record. At the consuming slice, `α` is typically the slice's ephemeral-stratum bundle (e.g., CG's `CgState`, GMRES's `Krylov`, Chebyshev's `ChebyshevState`); at the L4 typing, it is fully general — any L4 type may inhabit the carry slot. The carry is **value-threaded** (immutable per the L4 calculus's tensor-and-record discipline); no aliasing concerns.
 - **`cont: α -> Bool`** — the loop predicate. Read by the combinator before each step call. Takes the current carry as its argument; returns `False` to stop. The combinator does *not* call `cont` on `init` before testing whether `init` should be returned without ever stepping — per the strawman §3.7 small-step rule, the predicate fires first (consistent with `while`-loop convention; opposite of `do { ... } while` convention). The predicate is a **pure function**; it cannot read `SimState` (that would defeat the Sim-monad-effect localisation of the body). If a slice's predicate needs to read `SimState.it` against `op.max_it`, the slice folds `it` into its `α` carry and reads it from there — see CG's `s.it < config.max_it && not s.converged` predicate in `cg.md:217`.
 - **`step: α -> { state: α, ...e }`** (pure form) or **`α -> Solve { state: α, ...e }`** (Solve-threaded form) — the per-step body. Produces the next carry value in the `state` field, plus the per-step extras `e` (a record of per-step readouts). The extras record fields are slice-specific (CG: `{ residual_norm: Scalar }`; GMRES: `{ residual_norm: Scalar, breakdown_token: BreakdownTag }`; Chebyshev: `{}`); the combinator is generic in the extras shape.
-- **`extras: { ...e }`** — the per-step readout record. Demand-prunable per §3.8 (`l4_calculus.md:186-213`). Consumers reading the trajectory's per-step extras materialize the computation; consumers reading only `final_state` cause the extras computation to be pruned at the call site. The combinator does not inspect `extras`; it forwards them positionally to the trajectory.
+- **`extras: { ...e }`** — the per-step readout record. Demand-prunable per §3.8 (`index.md:186-213`). Consumers reading the trajectory's per-step extras materialize the computation; consumers reading only `final_state` cause the extras computation to be pruned at the call site. The combinator does not inspect `extras`; it forwards them positionally to the trajectory.
 - **result `{ final_state: α, trajectory: [{ ...e }] }`** — a record carrying the final value of the threaded carry plus the list of all per-step extras records (in iteration order). Demand-pruning of `trajectory` cascades into demand-pruning of each `step`'s extras computation, per the chained §3.8 rewrite. When the consumer reads only `final_state`, the per-step `extras` computation in `step` is pruned at every step.
 
 The signature makes four things structural that are merely conventional in source-level loop encodings:
@@ -61,7 +61,7 @@ The signature makes four things structural that are merely conventional in sourc
 
 ## Semantics
 
-`iterate_while` at L4 is the standard tail-recursive value-threading loop, with the per-step extras collected into a trajectory list. The small-step reduction rule is exactly the strawman §3.7 rule (`l4_calculus.md:164-171`):
+`iterate_while` at L4 is the standard tail-recursive value-threading loop, with the per-step extras collected into a trajectory list. The small-step reduction rule is exactly the strawman §3.7 rule (`index.md:164-171`):
 
 $$
 \begin{aligned}
@@ -89,19 +89,19 @@ $$
 
 The `Solve` monad's `SimState` effect threads transparently through the `do`-block; the combinator does not read or write `SimState` directly. Any `SimState` interaction is the responsibility of `f`'s body — typically a `modify (\s -> s { it = s.it + 1 })` in Krylov step kernels (see [`krylov-step`](./krylov-step.md) §Semantics). The `Solve`-threaded form is equivalent to the pure form modulo the `Sim` effect being orthogonal to the value-threading.
 
-The `iterate_while_pure` sugar (`l4_calculus.md:178-183`) is a closed-form definitional shortcut for the no-extras case:
+The `iterate_while_pure` sugar (`index.md:178-183`) is a closed-form definitional shortcut for the no-extras case:
 
 $$
 \textsf{iterate\_while\_pure}\ a\ p\ f \;\equiv\; (\textsf{iterate\_while}\ a\ p\ (\lambda x.\ \{\textsf{state}: f(x)\}))\textsf{.final\_state}
 $$
 
-When the step has no per-step readouts to surface (e.g., the LBM step at `l4_calculus.md:374-386`), `iterate_while_pure` is the idiomatic form; the trajectory is uniformly empty and `final_state` is the only field consumed.
+When the step has no per-step readouts to surface (e.g., the LBM step at `index.md:374-386`), `iterate_while_pure` is the idiomatic form; the trajectory is uniformly empty and `final_state` is the only field consumed.
 
 Three placement disciplines that the L4 typing enforces (sharpening conventions from the strawman):
 
 - **The predicate is pure on the carry.** No reads of `SimState`, no reads of `OpParams`, no reads of per-step extras. This is structural at L4 because the predicate's type is `α -> Bool` with no monadic effect and no closure over the extras record. If a slice's termination logic requires `SimState.it`, the slice's `α` includes `it` as a field (per `cg.md:217` — `s.it < config.max_it && not s.converged`). If termination requires per-step readouts (e.g., a breakdown token), the readout is folded into the carry by the step body — see [§"Predicate-on-extras"](#predicate-on-extras-anti-pattern) anti-pattern below.
 - **The step body's `Solve` effect is on `SimState` only.** The carry transitions are pure value-threading; any monadic effect inside `f` touches `SimState` (typically the iteration counter) and no other monad state. This is the same effect-localisation discipline as [`solve-monad`](../concepts/solve-monad.md) §"What stays out of the monad" — operator applications, dense recurrences, and carry updates are pure; `SimState` writes are monadic.
-- **Trajectory pruning is demand-driven, not flag-driven.** Per `derived-view-hoisting.md:19` and `l4_calculus.md:186-213`, when a downstream consumer reads only `final_state`, the per-step extras computation in `f`'s body is eliminated by the §3.8 pruning rewrite. The combinator does not branch on a "compute residuals?" flag — there is no such flag. The L4 form makes residual-monitoring vs. no-monitoring the *same algorithm*, with consumer demand picking which extras get materialised. (Contrast with Palace's L0 `print_opts.iterations`-conditional residual printing at `iterative.cpp:422-426` — at L4 the conditionality disappears.)
+- **Trajectory pruning is demand-driven, not flag-driven.** Per `derived-view-hoisting.md:19` and `index.md:186-213`, when a downstream consumer reads only `final_state`, the per-step extras computation in `f`'s body is eliminated by the §3.8 pruning rewrite. The combinator does not branch on a "compute residuals?" flag — there is no such flag. The L4 form makes residual-monitoring vs. no-monitoring the *same algorithm*, with consumer demand picking which extras get materialised. (Contrast with Palace's L0 `print_opts.iterations`-conditional residual printing at `iterative.cpp:422-426` — at L4 the conditionality disappears.)
 
 ### Predicate-on-extras anti-pattern
 
@@ -200,7 +200,7 @@ This L3 form is identity-in-form on the body (no primitive substitution), per th
 
 The combinator has **three variant axes**, all absorbed at the L4 form-level rather than in the consuming-slice's signature:
 
-1. **Pure vs. Solve-threaded body.** Selected by the slice's choice of `step :: α -> { state: α, ...e }` vs. `step :: α -> Solve { state: α, ...e }`. The two forms share the same combinator definition modulo the body's monadic discharge. The slice picks based on whether the step needs to touch `SimState`. Most algorithmic slices (Krylov solvers, time-stepping, eigensolver iteration) pick the Solve-threaded form to carry the `it` counter; pure-numerical slices (LBM at `l4_calculus.md:374-386`) pick the pure form via `iterate_while_pure`.
+1. **Pure vs. Solve-threaded body.** Selected by the slice's choice of `step :: α -> { state: α, ...e }` vs. `step :: α -> Solve { state: α, ...e }`. The two forms share the same combinator definition modulo the body's monadic discharge. The slice picks based on whether the step needs to touch `SimState`. Most algorithmic slices (Krylov solvers, time-stepping, eigensolver iteration) pick the Solve-threaded form to carry the `it` counter; pure-numerical slices (LBM at `index.md:374-386`) pick the pure form via `iterate_while_pure`.
 
 2. **Extras-carrying vs. no-extras.** Selected by whether the slice's step returns a non-empty `e` record. Slices that need per-step readouts (CG: `residual_norm`; GMRES: `residual_norm` + `breakdown_token`) carry extras and access `trajectory`. Slices with no readouts (LBM) use the `iterate_while_pure` sugar. The two are unified at the combinator level — `iterate_while_pure` is definitionally `iterate_while` with `e = ()` (and the no-extras case is the §3.8 trivial pruning).
 
@@ -208,7 +208,7 @@ The combinator has **three variant axes**, all absorbed at the L4 form-level rat
 
 ## Status
 
-`firm` — small-step semantics inherited verbatim from the L4 strawman §3.7 (`l4_calculus.md:164-171`); the demand-pruning law (Law 1) is the load-bearing property and is inherited from the strawman §3.8 (`l4_calculus.md:186-213`) plus the `derived-view-hoisting` concept; three variant axes (Sim threading, extras carrying, bootstrap-free vs. carry-bootstrapped) are catalogued at the combinator level rather than left to slices to re-discover; the no-laws section catalogues five non-laws explicitly (including the predicate-on-extras anti-pattern and the do-while reordering non-equivalence). The combinator is consumed structurally by [`krylov-step`](./krylov-step.md) (Form A) and by every L4 slice's solve function (`cg.md:215-219` for v0.4 CG; `cg.md:441` for v0.5 CG with the with-prev variant; LBM at `l4_calculus.md:382-385` via the pure sugar). Two new follow-up open questions are filed and one existing OQ (`iterate-while-l3-rendering-trajectory-accumulation-gap`) is augmented with a cycle-007 status note (see §Open questions in this report).
+`firm` — small-step semantics inherited verbatim from the L4 strawman §3.7 (`index.md:164-171`); the demand-pruning law (Law 1) is the load-bearing property and is inherited from the strawman §3.8 (`index.md:186-213`) plus the `derived-view-hoisting` concept; three variant axes (Sim threading, extras carrying, bootstrap-free vs. carry-bootstrapped) are catalogued at the combinator level rather than left to slices to re-discover; the no-laws section catalogues five non-laws explicitly (including the predicate-on-extras anti-pattern and the do-while reordering non-equivalence). The combinator is consumed structurally by [`krylov-step`](./krylov-step.md) (Form A) and by every L4 slice's solve function (`cg.md:215-219` for v0.4 CG; `cg.md:441` for v0.5 CG with the with-prev variant; LBM at `index.md:382-385` via the pure sugar). Two new follow-up open questions are filed and one existing OQ (`iterate-while-l3-rendering-trajectory-accumulation-gap`) is augmented with a cycle-007 status note (see §Open questions in this report).
 
 ## L4 vs L3 distinction
 
@@ -219,9 +219,9 @@ The two layers' entries share signature shape (modulo wrapper dissolution) and s
 
 ## Evidence
 
-- `book/src/design/l4_calculus.md:151-184` — the L4 strawman's §3.7 `iterate_while` definition (v0.3 form with extras-carrying step and trajectory accumulator) plus the `iterate_while_pure` sugar. **Canonical reference**: the small-step rule in §Semantics is reproduced verbatim from `l4_calculus.md:164-171`.
-- `book/src/design/l4_calculus.md:186-228` — the §3.8 demand-pruning rule that underwrites Law 1. The pruning-as-graph-DCE framing is the calculus-level justification for the trajectory-pruning behaviour.
-- `book/src/design/l4_calculus.md:374-386` — the LBM `run_lbm` example at the end of the strawman: `iterate_while_pure` consumed in production. Confirms the no-extras sugar's intended call shape.
+- `book/src/semantics/index.md:151-184` — the L4 strawman's §3.7 `iterate_while` definition (v0.3 form with extras-carrying step and trajectory accumulator) plus the `iterate_while_pure` sugar. **Canonical reference**: the small-step rule in §Semantics is reproduced verbatim from `index.md:164-171`.
+- `book/src/semantics/index.md:186-228` — the §3.8 demand-pruning rule that underwrites Law 1. The pruning-as-graph-DCE framing is the calculus-level justification for the trajectory-pruning behaviour.
+- `book/src/semantics/index.md:374-386` — the LBM `run_lbm` example at the end of the strawman: `iterate_while_pure` consumed in production. Confirms the no-extras sugar's intended call shape.
 - `book/src/L4/krylov-step.md` (cycle-006 firm) — the L4 row consuming this combinator structurally as the body-fold of `inner_loop` (§Semantics, §"L4 vs L2 distinction"). Caveat 2 of that entry's open-questions records the missing-anchor question this dispatch closes.
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` (cycle-006 firm) — §"Speculative L4 operators" carries the rough-in signature this chapter adopts and refines; §"What the L3 form for iterate_while looks like" sketches the L3 tail-recursive form cited in §"Lowers to".
 - `book/src/concepts/derived-view-hoisting.md:14-29` — the demand-pruning algebra underwriting Law 1, with the CG residual-norm hoisting worked example as canonical evidence.

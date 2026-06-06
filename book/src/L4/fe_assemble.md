@@ -101,7 +101,7 @@ Per [`state-stratification`](../concepts/state-stratification.md), `space` is th
 
 ### Demand-pruning interaction
 
-Under the strawman §3.8 pruning rule (`book/src/design/l4_calculus.md:186-228`), the assembled operator materializes only when a downstream consumer reads it — `fe_assemble space terms` whose result `K` is never applied prunes the whole fold. In Palace every assembled `K` is unconditionally consumed (handed to `SetOperators` / a Krylov solve immediately after assembly), so the operator never prunes in practice; but the combinator's typing makes the demand-driven materialization structural. Within the fold, the per-term `assemble_term space t` contributions all feed the single summed result — there is no per-term observation point a consumer could selectively read, so (unlike `solve_family`'s per-element solutions, which CAN prune individually) the fold prunes all-or-nothing at the operator boundary.
+Under the strawman §3.8 pruning rule (`book/src/semantics/index.md:186-228`), the assembled operator materializes only when a downstream consumer reads it — `fe_assemble space terms` whose result `K` is never applied prunes the whole fold. In Palace every assembled `K` is unconditionally consumed (handed to `SetOperators` / a Krylov solve immediately after assembly), so the operator never prunes in practice; but the combinator's typing makes the demand-driven materialization structural. Within the fold, the per-term `assemble_term space t` contributions all feed the single summed result — there is no per-term observation point a consumer could selectively read, so (unlike `solve_family`'s per-element solutions, which CAN prune individually) the fold prunes all-or-nothing at the operator boundary.
 
 ## Algebraic laws
 
@@ -153,7 +153,7 @@ L4 concept references:
 - [`derived-view-hoisting`](../concepts/derived-view-hoisting.md) — the §3.8 demand-pruning governing whether the assembled operator materializes (all-or-nothing at the operator boundary; no per-term observation point).
 - [`constructed-operators`](../concepts/constructed-operators.md) — the assembled `K` is a constructed operator; the term list + the space binding is its construction. The downstream solve-coordination caps consume `K` as a [`solver-as-operator`](../concepts/solver-as-operator.md) operand.
 
-**Strawman reference**: `book/src/design/l4_calculus.md` §3.5 (operator application, `:138-145`) is the convention for the `assemble_term space t · v` operator-action form; §3.7 (`iterate_while` + the loop family, `:150-184`) is the family the `foldr`/sum joins as a non-iterating reduce (a fold whose step is a pure monoid combine); §3.8 (demand-pruning, `:186-228`) governs the operator-boundary materialization.
+**Strawman reference**: `book/src/semantics/index.md` §3.5 (operator application, `:138-145`) is the convention for the `assemble_term space t · v` operator-action form; §3.7 (`iterate_while` + the loop family, `:150-184`) is the family the `foldr`/sum joins as a non-iterating reduce (a fold whose step is a pure monoid combine); §3.8 (demand-pruning, `:186-228`) governs the operator-boundary materialization.
 
 ## Lowers to
 
@@ -204,6 +204,6 @@ The variant-axis profile is closed at four axes, all absorbed (none coordination
   - `book/src/L4/eigsolve.md` (the opaque-leaf-wrapping `readonly` precedent — `eigen_iterate` as a black-box input, `:54,:69`), `book/src/L4/fold_solve.md` (the `time_step_op` black-box leaf + the contrast-sibling carry-threaded fold; the map-not-fold guard reference).
   - `book/src/concepts/black-box-vs-accelerated-kernels.md` (the disposition — `:47-87` case 1 black-box kernel rises; `:68-73` the per-element libCEED quadrature leaf inside `fe_assemble` named explicitly as a black-box kernel rising as an input).
   - `book/src/L1-L0/fe-assemble-libceed-boundary-obstruction.md` (the `obstruction (opaque-library-ownership)` the L4 black-box input lifts).
-  - `book/src/design/l4_calculus.md:138-145` (§3.5 operator application), `:150-184` (§3.7 loop family), `:186-228` (§3.8 demand-pruning).
+  - `book/src/semantics/index.md:138-145` (§3.5 operator application), `:150-184` (§3.7 loop family), `:186-228` (§3.8 demand-pruning).
 - **No dedicated test** exercises the L4 `foldr`/sum form (the assembly is exercised at integration level + by `test/unit/test-libceed.cpp` `TestCeedOperatorFullAssemble`, which asserts the assembled matrix matches an MFEM reference to 1e-12 — L0-equivalent `empirical-match` evidence for the leaf `assemble_term`'s faithfulness, not the fold laws). The fold laws are firm-on-positive-structure (read-off syntactic identities), so no test gates them — the same status as the firm L1 `fe_assemble` and `fold_solve`.
 - **Provenance**: harvested cycle-068 D1 from the c067 D2 FE-cohort→L4 survey ranking (rank-1, plan-tag `fe-cohort-l4-lift`); the firm L1 source `fe_assemble` (cycle-054) + the c067 D3 `black-box-vs-accelerated-kernels` concept page are the direct inputs.

@@ -31,7 +31,7 @@ Where the [`electrostatic.L4`](./electrostatic.L4.md) column is a concrete three
 
 ## The composition
 
-At L4 the whole run is the composition (Haskell-style; the strawman `book/src/design/l4_calculus.md` notation):
+At L4 the whole run is the composition (Haskell-style; the strawman `book/src/semantics/index.md` notation):
 
     -- inputs = config; output = the physical product (driver-selected)
     lifecycle :: Config -> Product

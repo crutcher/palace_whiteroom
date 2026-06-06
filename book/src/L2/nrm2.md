@@ -74,8 +74,7 @@ four-stage `Dot → MPI_Allreduce → std::abs → std::sqrt` chain.
 Result is **always real-valued** and non-negative (`nrm2(x) ≥ 0`), regardless of `x`'s element
 type — the element-type axis collapses to a single operator (the post-composed `abs` projects the
 complex self-inner-product onto its real magnitude before `√`). The operand is one shape group
-`S` of arbitrary unknown rank (NOT rank-1; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1). Full shape contract +
+`S` of arbitrary unknown rank (see [`l4_calculus`](../semantics/index.md) §1.2.1). Full shape contract +
 algebraic-law listing: the combinator [`inner_product`](./inner_product.md) + the firm L1 leaf
 [`L1/nrm2`](../L1/nrm2.md).
 

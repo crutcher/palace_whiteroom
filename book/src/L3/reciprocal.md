@@ -18,7 +18,7 @@ Elementwise **multiplicative-inverse** as a whole-tensor field operation at L3 �
 
 ## Context
 
-L3 is the iteration-rotation layer: global tensor-field operations expressed as whole-tensor primitives, with no element loop exposed at the layer's vocabulary and with sequential obstructions named explicitly per [`sequential-obstruction`](../concepts/sequential-obstruction.md). `reciprocal` at L3 is the whole-tensor form of the elementwise multiplicative-inverse — a single field operation acting pointwise over the shape group `S` (arbitrary, unknown rank — NOT rank-1). The operator carries **no iteration view at L3** (it is a leaf primitive, not a step body) and **no sequential obstruction** (every output element depends on exactly one input element; there is no cross-element recurrence to obstruct).
+L3 is the iteration-rotation layer: global tensor-field operations expressed as whole-tensor primitives, with no element loop exposed at the layer's vocabulary and with sequential obstructions named explicitly per [`sequential-obstruction`](../concepts/sequential-obstruction.md). `reciprocal` at L3 is the whole-tensor form of the elementwise multiplicative-inverse — a single field operation acting pointwise over the shape group `S` (arbitrary, unknown rank). The operator carries **no iteration view at L3** (it is a leaf primitive, not a step body) and **no sequential obstruction** (every output element depends on exactly one input element; there is no cross-element recurrence to obstruct).
 
 Unlike the linear BLAS-1 cohort (`axpy`, `scal`, `dot`, `nrm2`), `reciprocal` is a **nonlinear** elementwise map (`1/(a+b) ≠ 1/a + 1/b`) — but it shares the cohort's defining L3 shape: vector-in / vector-out, element-local, reduction-free, rank-local. Like [`scal`](./scal.md) it is a leaf whole-tensor field operation with no inner structural sub-composition; unlike `scal` it is partial (`reciprocal(x)` is defined only where `x[i] ≠ 0`).
 
@@ -35,9 +35,9 @@ This L3 entry is the **layer-coherence anchor**: a reader navigating L3 (the ite
     reciprocal :: Tensor[(S: ...)] -> Tensor[$S]
     reciprocal x = (\idx -> 1 / x[idx])   for every multi-index idx of S
 
-Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1; positional values, no monadic effect, no destination buffer):
+Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantics/index.md) §1.2.1; positional values, no monadic effect, no destination buffer):
 
-- **`x`** — `Tensor[(S: ...)]` — the input tensor whose whole shape is the group `S` (arbitrary, unknown rank — NOT rank-1). Read-only at L3 (the L3 form is pure; the L0 receiver self-overwrite is reintroduced only at the L1>L0 lowering).
+- **`x`** — `Tensor[(S: ...)]` — the input tensor whose whole shape is the group `S` (arbitrary, unknown rank). Read-only at L3 (the L3 form is pure; the L0 receiver self-overwrite is reintroduced only at the L1>L0 lowering).
 - **result** — `Tensor[$S]` — congruent to `x` (same shape group `S`); same element type as `x`. Every output element equals the field-multiplicative-inverse of the corresponding input element. The result element type **tracks** the input element type (real `x` → real result; complex `x` → complex result) — unlike [`nrm2`](./nrm2.md), which collapses both to a real-valued result. `reciprocal` is a self-map on the vector type's element field.
 
 **Precondition (partiality).** `reciprocal(x)` is defined only at indices `i` where `x[i] ≠ 0`. The L0 source carries **no zero-guard** (the complex body computes `s = 1.0 / (XR[i]² + XI[i]²)` unconditionally; the real upstream `mfem::Vector::Reciprocal()` divides without runtime check). At L3 the operator is **partial**: undefined wherever `x[i] = 0`; the no-zero-guard policy lifts as a precondition on the input (callers must ensure `x[i] ≠ 0 ∀ i`), recorded in the same form as [`normalize`](../L1/normalize.md)'s `x ≠ 0` precondition. Consumer call sites preclude zero by precondition (the Jacobi/Chebyshev consumers require `diag(A) > 0`, the SPD assumption) or by construction (the FE-assembly `test_multiplicity` is `≥ 1` per active dof). The partiality is the L3 reflection of the L0 no-zero-guard policy; it is **not** a variant axis and **not** a sequential obstruction — it is a precondition on the input domain.
@@ -102,7 +102,7 @@ The law set and non-law set are **inherited unchanged** from L1; the L3 renderin
 
 **L1 anchor**: [`L1/reciprocal`](../L1/reciprocal.md) (firm) — authoritative on the Palace surface details (the real `mfem::Vector::Reciprocal()` upstream-MFEM alias and the complex `ComplexVector::Reciprocal()` kernel, the four consumer call sites, the no-zero-guard policy, the complete L0 evidence list). This L3 entry does not duplicate those details; the L3>L1 rotation is identity-in-form on the primitive itself.
 
-**Strawman reference**: `book/src/design/l4_calculus.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation. `reciprocal` does not get its own L4 entry (per the leaf-primitive / `CONFIRMED-NOT-NEEDED` verdict the cycle-010 audit reached for the BLAS-1 and operator-to-data cohorts).
+**Strawman reference**: `book/src/semantics/index.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation. `reciprocal` does not get its own L4 entry (per the leaf-primitive / `CONFIRMED-NOT-NEEDED` verdict the cycle-010 audit reached for the BLAS-1 and operator-to-data cohorts).
 
 ## Variant axes
 

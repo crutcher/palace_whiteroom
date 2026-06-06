@@ -394,7 +394,7 @@ construction chain, the empty-boundary single-dof pin, the `WeakDiv` sign conven
 and the complete L0 evidence list. This L3 entry does not duplicate those details; the
 L3>L1 rotation is identity-in-form on the gate's apply.
 
-**Strawman reference**: `book/src/design/l4_calculus.md` is the L4/L3 conventions
+**Strawman reference**: `book/src/semantics/index.md` is the L4/L3 conventions
 source; this L3 entry follows the strawman's Haskell `::` signature notation (rendered
 as 4-space-indented code blocks here). The L4 layer does not surface
 `divfree-projector` as a standalone entry (per the constructed-operator-gate L4 verdict

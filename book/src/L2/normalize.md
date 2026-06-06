@@ -47,9 +47,9 @@ The B-weighted sibling `normalize_B` (rescale by the energy norm `√(xᴴ B x)`
 
 The L2 signature is congruent to the L1 and L3 signatures (L1 spells the flat dof-vector as `Tensor[N]`); only the surrounding layer's framing differs.
 
-Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1; positional values, no monadic effect, no destination buffer):
+Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantics/index.md) §1.2.1; positional values, no monadic effect, no destination buffer):
 
-- **`x`** — `Tensor[(S: ...)]` — read-only whole-tensor argument (the *prior* value) whose whole shape is the group `S` (arbitrary, unknown rank — NOT rank-1). Element type real or complex.
+- **`x`** — `Tensor[(S: ...)]` — read-only whole-tensor argument (the *prior* value) whose whole shape is the group `S` (arbitrary, unknown rank). Element type real or complex.
 - **result.0** — `Scalar` — the norm `β = ‖x‖₂`. **Always real-valued and positive** (`β > 0`), regardless of `x`'s element type (inherited from [`nrm2`](./nrm2.md)'s real-valued-output collapse). The load-bearing returned scalar.
 - **result.1** — `Tensor[$S]` — the unit vector `û = x/β`, congruent to `x` (same shape group `S`) and same element type. Has unit norm: `nrm2(û) = 1` (in exact arithmetic).
 

@@ -97,7 +97,7 @@ floor. This dispatch floors `jacobi-smoother`.
                          = (ω · diag(A)⁻¹) ⊙ x
 
 Shape contract (bunsen-style named axes; the field shape group `S` follows the
-named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1;
+named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1;
 positional values, no monadic effect, no destination buffer):
 
 - **`op`** — `JacobiSmoother[S]` — the constructed smoother closure, an opaque

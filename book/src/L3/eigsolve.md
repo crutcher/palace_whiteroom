@@ -62,7 +62,7 @@ apply_shift_invert op v =
   in if op.has_projector then apply_linop op.projector y' else y'  -- optional divergence-free projection tail
 ```
 
-Shape contract (positional values; named axes; the operator-domain shape group `S` and the square operator form `LinOp[(S: ...), $S]` follow the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2 — `complex` is an element type, not an axis):
+Shape contract (positional values; named axes; the operator-domain shape group `S` and the square operator form `LinOp[(S: ...), $S]` follow the named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2 — `complex` is an element type, not an axis):
 
 - **`op`** — operator-parameters value, closure-captured by the body (first positional argument, never in the return position). The body reads:
   - `op.operand : LinOp[(S: ...), $S]` — the square operator `apply_linop` is applied against *before* the inner solve. Linear shift-invert: the bound mass operator `M` (`palace/linalg/arpack.cpp:579` `opM->Mult(x1, z1)`); no-transform: `K` (`palace/linalg/arpack.cpp:573` `opK->Mult(x1, z1)`); quadratic PEP: the linearization block `L₁` assembled from `(C, M)`. Element type `ComplexOperator` (inherited from L1).
@@ -234,4 +234,4 @@ The L3 per-step body is read directly from the Palace per-step transformed-opera
 - `book/src/L3/ksp_solve.md` (firm, cycle-020) — the inner-solve body dependency (the firm L3 outer-driver fold) and the Palace-authored-loop contrast (its loop renders as `iterate_while_L3`; `eigsolve`'s does not).
 - `book/src/L3/apply_linop.md` (firm, cycle-011) — the body's first-stage whole-tensor operator-application dependency.
 - `book/src/concepts/sequential-obstruction.md`, `book/src/concepts/tensor-field-lift.md`, `book/src/concepts/constructed-operators.md`, `book/src/concepts/solver-as-operator.md`, `book/src/concepts/variant-absorption.md`, `book/src/concepts/solve-monad.md` — cross-cutting concept anchors (the opaque-library loop obstruction, the body-lifts-loop-doesn't partial case, the shifted constructed operator, the solver-as-operator inner solve, the backend-orchestration absorption, the future L4 outer-coordination surface).
-- `book/src/design/l4_calculus.md` — L4 strawman; the `iterate_while` the eigen-iteration loop would fold *if* Palace authored the loop — but it is library-owned, so the L4/L3 treatment is the `partial-obstruction` case.
+- `book/src/semantics/index.md` — L4 strawman; the `iterate_while` the eigen-iteration loop would fold *if* Palace authored the loop — but it is library-owned, so the L4/L3 treatment is the `partial-obstruction` case.

@@ -15,7 +15,7 @@ composition with the iteration view erased).
 
 L4's job is to write algorithms in a graph-evaluation calculus that makes
 lifetimes, dispatch sites, and effect placement structural (per
-[`../design/l4_calculus.md`](../design/l4_calculus.md) §0). `chebyshev` at L4 is
+[`../semantics/index.md`](../semantics/index.md) §0). `chebyshev` at L4 is
 the typed shape of the Chebyshev smoother: a `Solver<OperType>` constructed once
 at setup (the `ChebOp` closure absorbing the variant) and then invoked as a pure
 `apply` action inside an outer solve monad (the multigrid V-cycle or
@@ -77,7 +77,7 @@ apply  :: ChebOp E S -> Bool -> Solve (ChebSim E) ()
 
 Shape contract (bunsen-style; named records and axes; the field shape group `V`
 follows the named-shape-group convention of
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1 — named `V` here to avoid
+[`l4_calculus`](../semantics/index.md) §1.2.1 — named `V` here to avoid
 colliding with the scalar-recurrence state type parameter `S`; `E` is the element
 type, not an axis):
 
@@ -196,7 +196,7 @@ apply op initial_guess = do
 Both `iterate_while_pure` folds are the **no-extras / empty-trajectory** case
 (`iterate-while.md:98`): the value-carry threads the loop and the `y`
 accumulator is the orthogonal `Solve (ChebSim E)` effect — the same shape as the
-strawman `run_lbm` bounded loop (`book/src/design/l4_calculus.md:382-385`). The
+strawman `run_lbm` bounded loop (`book/src/semantics/index.md:382-385`). The
 step-count predicates (`s.it <= op.pc_it`, `c.k <= op.order - 1`) fold the loop
 bounds into the carry exactly as the `iterate-while.md:57,102` predicate
 discipline requires; both folds are total by construction (the counter strictly
@@ -215,7 +215,7 @@ once via `readX` and never written. The `Solve` monad's effect domain is exactly
 `ChebSim`. The bounded iteration is the [`iterate-while`](./iterate-while.md)
 family's `iterate_while_pure` with a step-count predicate (the loop counter
 folded into the carry), per strawman §6.5 step 5
-([`../design/l4_calculus.md`](../design/l4_calculus.md):418) — the calculus's
+([`../semantics/index.md`](../semantics/index.md):418) — the calculus's
 canonical fixed-count bounded-loop form, not a second iteration vocabulary.
 
 ### Setup as a separate monadic action
@@ -414,10 +414,10 @@ Lower-layer rows (the evidence base):
 - L1 [`chebyshev-smoother`](../L1/chebyshev-smoother.md) (cycle-012 firm) — the
   closed-form smoother action; carries the constructed-operator-gate framing.
 
-Strawman reference: [`../design/l4_calculus.md`](../design/l4_calculus.md) §2
+Strawman reference: [`../semantics/index.md`](../semantics/index.md) §2
 (ownership categories), §3.7 (the `iterate_while` family — the bounded
 `pc_it`/`k` loops are its `iterate_while_pure` sugar with a step-count
-predicate), §6.5 step 5 (`l4_calculus.md:418` — the fixed-count bounded loop →
+predicate), §6.5 step 5 (`index.md:418` — the fixed-count bounded loop →
 `iterate_while_pure` + step-count-predicate precedent, witnessed by the
 `run_lbm` example `:382-385`), §3.8 (demand-pruning, noted as not-applicable —
 the trajectory is uniformly empty).
@@ -494,7 +494,7 @@ obstructions are now rendered as nested
 (`s.it <= op.pc_it`, `c.k <= op.order - 1`), the loop counter folded into the
 carry — reusing the canonical firm `iterate-while` family per the cycle-014
 combinator-miner route (i), strawman §6.5 step 5
-(`book/src/design/l4_calculus.md:418`; `run_lbm` precedent `:382-385`). The L4
+(`book/src/semantics/index.md:418`; `run_lbm` precedent `:382-385`). The L4
 form is methodology-level — Palace's C++ realises the behaviour, not the typed
 wrapper; the L0 evidence is transitive through the L1/L2 entries.
 
@@ -565,7 +565,7 @@ entries.
   `:57,102,165` give the counter-folded-into-carry predicate discipline +
   bounded totality discharge, `:193-195` the `iterate_while_pure_L3` lowering
   image.
-- `book/src/design/l4_calculus.md` §2 (ownership categories), §3.7 (`iterate_while`
+- `book/src/semantics/index.md` §2 (ownership categories), §3.7 (`iterate_while`
   family — the bounded `pc_it`/`k` loops are its `iterate_while_pure` sugar with
   a step-count predicate), §6.5 step 5 (`:418` — the fixed-count → step-count-
   predicate precedent; `run_lbm` witness `:382-385`), §3.8 (demand-pruning,

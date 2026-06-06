@@ -224,7 +224,7 @@ Same effect-threading-and-demand-pruning-placement difference as [`iterate-while
 
 ## Evidence
 
-- `book/src/design/l4_calculus.md:151-184` — the L4 strawman's §3.7 `iterate_while` form that this entry generalises with the bootstrap-and-prev structure.
+- `book/src/semantics/index.md:151-184` — the L4 strawman's §3.7 `iterate_while` form that this entry generalises with the bootstrap-and-prev structure.
 - `book/src/concepts/first-iteration-unrolling.md:17-37` — the rotation's call-shape (`first_step` / `steady_step` / `iterate_while_with_carry`) that this combinator realises. The strawman's pseudocode driver `iterate_while_with_carry` is renamed `iterate_while_with_prev` at the L4 row level for consistency with the cycle-006 harvester / abstractor signatures.
 - `book/src/concepts/first-iteration-unrolling.md:39-55` — the "what gets hidden" / "what is preserved" properties: the `_prev` carry field is gone, the iteration-zero branch is gone, the steady step is branch-free; the algorithm's numerics are identical.
 - `book/src/L4/krylov-step.md` (cycle-006 firm) — Form B signature consumes this combinator (`first_step` is the bootstrap, `steady_step` is the steady-step body). The harvester's caveat 2 is closed jointly by this entry and [`iterate-while`](./iterate-while.md).

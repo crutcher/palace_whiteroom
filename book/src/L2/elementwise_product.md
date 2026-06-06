@@ -38,7 +38,7 @@ L2 is the fusion-rotation layer (`book/src/L2/index.md`): "Kernel fusion across 
 algebraic operations is unfolded into composition… Batched specialized BLAS calls are
 written as compositions of base primitives." `elementwise_product` at L2 is the base
 Hadamard-binary-multiply primitive in that vocabulary — a single binary field operation
-acting pointwise over the shared shape group `S` (arbitrary, unknown rank — NOT rank-1). It is the L2 rendering of the same
+acting pointwise over the shared shape group `S` (arbitrary, unknown rank). It is the L2 rendering of the same
 operation the concept page [`elementwise-product`](../concepts/elementwise-product.md)
 names "the diagonal-operator apply primitive at L2": applying a diagonal operator `D` to a
 vector `x` is `elementwise_product(diag(D), x)`.
@@ -89,12 +89,12 @@ fusion-rotation layer; the concept page is the narrative.
     elementwise_product :: (a: Tensor[(S: ...)], b: Tensor[$S]) -> Tensor[$S]
     elementwise_product(a, b) = a ⊙ b
 
-Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md)
+Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantics/index.md)
 §1.2.1; positional values, no monadic effect, no destination buffer):
 
 - **`a`** — `Tensor[(S: ...)]` — read-only at L2 (the L2 form is pure / out-of-place; the L0
   in-place mutation is reintroduced only at the L1>L0 lowering). Its whole shape is the group
-  `S` (arbitrary, unknown rank — NOT rank-1).
+  `S` (arbitrary, unknown rank).
 - **`b`** — `Tensor[$S]` — read-only, congruent to `a` (same shape group `S`) and sharing its element type.
 - **result** — `Tensor[$S]` — congruent to the inputs; `result[idx]` is the per-element
   product `a[idx] · b[idx]`. A fresh value (no L0 destination buffer mentioned at L2).

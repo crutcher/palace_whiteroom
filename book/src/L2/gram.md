@@ -50,10 +50,10 @@ gram dot X = gram2 dot X X                        -- single-set ≡ cross-Gram o
 ```
 
 Shape contract (bunsen-style; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1):
+[`l4_calculus`](../semantics/index.md) §1.2.1):
 
 - `dot` — `(Tensor[(S: ...)], Tensor[$S]) -> Scalar` — the inner-product hook (shape-generic
-  over a congruent shape group `S`, NOT rank-1-pinned — the hook reduces whole congruent
+  over a congruent shape group `S` — the hook reduces whole congruent
   tensors), the **same hook axis**
   the sibling [`orthogonalize`](./orthogonalize.md) carries (`orthogonalize.md`:67-71, the
   `op.dot` field). The canonical Hermitian [`inner_product`](./inner_product.md) /

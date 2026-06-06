@@ -233,7 +233,7 @@ laws or step-semantics, hence structural. This matches the dominant justificatio
 
 **Reduction-chain (secondary)**: the MGS `jloop` → per-column-interleaved-composition consolidation
 is grounded in the small-step `iterate_while` semantics from the strawman
-`book/src/design/l4_calculus.md` §3.7 — the L3 `jloop` tail recursion is the unfolded reduction
+`book/src/semantics/index.md` §3.7 — the L3 `jloop` tail recursion is the unfolded reduction
 sequence of the per-column projection, and the L2 per-variant-sequenced composition is the folded
 (un-unfolded) form referenced by its collective shape. The forward L3→L2 narration re-folds the
 explicit reduction sequence back into the named composition. This is the reduction-chain backing for
@@ -355,7 +355,7 @@ of truth per the cycle-027 brace-drift guard):
 
 Strawman / combinator evidence (the reduction-chain backing):
 
-- `book/src/design/l4_calculus.md` §3.7 — the `iterate_while` conventions source; the L3 MGS `jloop`
+- `book/src/semantics/index.md` §3.7 — the `iterate_while` conventions source; the L3 MGS `jloop`
   tail recursion is the unfolded reduction sequence of the per-column projection, the L2 per-variant
   composition is the folded form referenced by its collective shape.
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` §"What the L3 form for `iterate_while`

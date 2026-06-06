@@ -196,7 +196,7 @@ obstructions are erased to their L2 non-law shadows. This is the substantive con
    composition-driver loop.** At L3 the inner recurrence is rendered as an explicit value-threaded
    `iterate_while_pure_L3` tail recursion over the carry `(r, d, st, y)` with the step-count predicate
    `k <= op.order - 1` (per [`L4-L3/krylov-step-typed-wrapper-dissolution`](../L4-L3/krylov-step-typed-wrapper-dissolution.md)
-   §"What the L3 form for `iterate_while` looks like" and the strawman `book/src/design/l4_calculus.md`
+   §"What the L3 form for `iterate_while` looks like" and the strawman `book/src/semantics/index.md`
    §3.7 conventions). At L2 it is referenced **as a composition driver** — the `for k` loop sequences
    the body composition, not rendered as recursion. **Substantive**: the explicit recursion view is
    erased to a driver reference.
@@ -273,7 +273,7 @@ sequence is shape-invariant across the hop, the loops' iteration views are not.
 
 **Reduction-chain (secondary)**: the `iterate_while_pure_L3` (inner + outer) →
 loop-as-driver/role-reference consolidation is grounded in the small-step `iterate_while` semantics from
-the strawman `book/src/design/l4_calculus.md` §3.7 — each L3 tail recursion is the unfolded reduction
+the strawman `book/src/semantics/index.md` §3.7 — each L3 tail recursion is the unfolded reduction
 sequence of the bounded `iterate_while_pure` combinator, and the L2 driver/role reference is the folded
 (un-unfolded) form. The forward L3→L2 narration re-folds the explicit reduction sequences back into the
 named loop-as-composition-driver.
@@ -396,7 +396,7 @@ dispatch):
 
 Strawman / combinator evidence (the reduction-chain backing):
 
-- `book/src/design/l4_calculus.md` §3.7 — the `iterate_while` conventions source; each L3 tail recursion
+- `book/src/semantics/index.md` §3.7 — the `iterate_while` conventions source; each L3 tail recursion
   is the unfolded reduction sequence of the bounded `iterate_while_pure` combinator, the L2 driver/role
   reference is the folded form.
 - `book/src/L4/iterate-while.md` (firm cycle-007) — the firm `iterate_while`/`iterate_while_pure`

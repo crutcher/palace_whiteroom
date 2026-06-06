@@ -460,7 +460,7 @@ This shape is load-bearing, and it follows three principles:
 > consolidation:** the spec's *semantic* definitions (the calculus grammar, shape semantics + named shape groups,
 > the pseudo-language notation invariant, monad/ownership/reduction conventions) become a **first-class
 > actively-managed surface**, held under the same liveness/unification/consolidation discipline the graded stack
-> applies to *vocabulary* — a semantic rule lives ONCE on the surface (`book/src/design/l4_calculus.md`, promoted out
+> applies to *vocabulary* — a semantic rule lives ONCE on the surface (`book/src/semantics/index.md`, promoted out
 > of "strawman" status and ordered BEFORE the `# L4` Part), and functional-unit entries USE + LINK rather than
 > RE-STATE (a restatement is the semantic analog of a degenerate-identity-lowering smell). **(B) Open all remaining
 > feature fronts simultaneously:** the human fires the demand-gate for ALL deferred fronts at once
@@ -523,7 +523,7 @@ washes out, so only persistent patterns surface as real friction.
   (non-associative reductions, mixed precision, deterministic accumulation) are
   preserved as explicit algebraic claims with the property they buy called out.
 - **Semantic consolidation — USE + LINK, don't RE-STATE.** Semantic rules/defs/abstractions
-  *about the language* live ONCE on the [semantic surface](../design/l4_calculus.md); a
+  *about the language* live ONCE on the [semantic surface](../semantics/index.md); a
   functional-unit entry keeps its own concrete fact + a link, and does not transcribe the
   general rule. A restatement at functional-unit scope is the semantic analog of a
   degenerate-identity-lowering smell, resolved by relocation-to-the-surface + a back-link.

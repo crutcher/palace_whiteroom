@@ -206,7 +206,7 @@ the alias for the L1/L4 BC verb-pair that names it (the consumers live in the L_
 The methodology primitives applicable across all layers are in the `## Methodology concepts (cross-layer)` section
 above (the single methodology sub-graph — not duplicated here).
 
-The L4 calculus has its own design artifact at [`book/src/design/l4_calculus.md`](../design/l4_calculus.md). L4 grammar
+The L4 calculus has its own design artifact at [`book/src/semantics/index.md`](../semantics/index.md). L4 grammar
 productions, reduction rules, and ownership categories are not tracked here — the calculus is a single document with its
 own internal structure. The feature-surface spine (`book/src/feature/`) composes these concepts into entry-point
 columns; those compositions are tracked in the per-column chapters + `feature/index.md`, not duplicated here.

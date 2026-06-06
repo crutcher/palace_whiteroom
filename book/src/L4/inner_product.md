@@ -17,7 +17,7 @@ variant_axes:
 # inner_product
 
 The L4 **reduce-to-scalar inner-product combinator**: a whole-tensor reduction
-`α = ⟨x, y⟩` over the shape group `S` (arbitrary unknown rank, NOT rank-1), lifted to the top of the stack as a
+`α = ⟨x, y⟩` over the shape group `S` (arbitrary unknown rank), lifted to the top of the stack as a
 **feature-surface verb the backend wants**. This is the BLAS-1 *combinator* (the
 general reduce-to-scalar fold parameterized by the conjugation / element-type /
 weight axes) that **rises to L4 regardless**, per the
@@ -71,7 +71,7 @@ not edited this cycle, out of dispatch scope).
 ## Semantics (overlay)
 
 The L4 calculus is specified in the strawman
-[`../design/l4_calculus.md`](../design/l4_calculus.md). `inner_product` is a pure
+[`../semantics/index.md`](../semantics/index.md). `inner_product` is a pure
 whole-tensor reduction over the shape group `S`; its L4 rendering uses the strawman's term/type BNF (§1) with
 no reduction-rule extension (a `reduce`/`zipWith` fold in the existing vocabulary).
 Pseudo-language is Haskell `::` signatures inside a `text` fence per the L4/L3
@@ -89,7 +89,7 @@ notation invariant.
     inner_product   x y   = inner_product_M x I y                  -- plain ≡ M = I
 
 Shape contract (bunsen-style; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1; identical to the firm L3 signature — the
+[`l4_calculus`](../semantics/index.md) §1.2.1; identical to the firm L3 signature — the
 L4 form is value-thread-isomorphic to it, §"Downward to L3"):
 
 - `x` — `Tensor[(S: ...)]` — read-only; the **conjugated** (arg-1) operand in `xᴴ y`.
@@ -98,7 +98,7 @@ L4 form is value-thread-isomorphic to it, §"Downward to L3"):
   square / endomorphic operator, domain ≡ range = `S`, §1.2.2), pre-applied to `x`
   via the opaque [`apply_linop`](../L3/apply_linop.md) gate.
 - result — `Scalar` — element type per the kernel table; `zero` on the empty tensor.
-- `x` and `y` share one shape group `S` (arbitrary unknown rank, NOT rank-1) and one
+- `x` and `y` share one shape group `S` (arbitrary unknown rank) and one
   element type `T ∈ {real, complex}`.
 
 Per-element kernel (the conjugation × element-type axes; inherited unchanged from
@@ -334,7 +334,7 @@ Classification / methodology anchors:
   satisfied by the firm L3 endpoint, not re-mined here.
 - `book/src/concepts/dot.md` — the BLAS-1 heritage / element-type cross-cutting
   framing.
-- `book/src/design/l4_calculus.md` — the strawman; adds no reduction rule (a
+- `book/src/semantics/index.md` — the strawman; adds no reduction rule (a
   `reduce`/`zipWith` fold in the existing vocabulary).
 
 Provenance: combinator-miner:2026-06-02T195402Z (cycle-068 D3) — the

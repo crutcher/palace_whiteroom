@@ -91,7 +91,7 @@ This is a **test-coverage gap relative to the `linalg/iterative.{hpp,cpp}` famil
 
 - [`L0/kspsolver-base-class`](./kspsolver-base-class.md) — the linear-solver side that the eigensolver wraps and calls into via `opInv`.
 - [`L0/mutable-workspace-pattern`](./mutable-workspace-pattern.md) — Category 3 entry cites these wrappers' `mutable ComplexVector` workspace members.
-- Eigenmode-pipeline L1 / L4 entries (forward-target): the future `L1/eigsolve` operator and the L4 `eigensolve-monad` composition will anchor here. The L4 calculus's `iterate_while` primitive (per `book/src/design/l4_calculus.md`) will instantiate against the `Solve()` body of the three branches.
+- Eigenmode-pipeline L1 / L4 entries (forward-target): the future `L1/eigsolve` operator and the L4 `eigensolve-monad` composition will anchor here. The L4 calculus's `iterate_while` primitive (per `book/src/semantics/index.md`) will instantiate against the `Solve()` body of the three branches.
 
 ## Evidence (representative)
 

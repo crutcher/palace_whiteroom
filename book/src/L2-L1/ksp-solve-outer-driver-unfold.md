@@ -38,7 +38,7 @@ The L2 form is reproduced from [`L2/ksp_solve`](../L2/ksp_solve.md) §Signature 
 
 The L2 upper side is **shape-generic**: the RHS `b` and the system operator `A` are congruent over
 one square shape group `S` of unknown rank (`Tensor[(S: ...)]`, square `LinOp[(S: ...), $S]`;
-named shape groups + two-group operator form per [`l4_calculus`](../design/l4_calculus.md)
+named shape groups + two-group operator form per [`l4_calculus`](../semantics/index.md)
 §1.2.1–§1.2.2), and the `SolveResult[S]` carries the same group. At the lowered L1/L0 opaque
 operator the operands are flat rank-1 Palace `Vector`s, so the L1 form below keeps the concrete
 `Tensor[N]` / `LinearOperator[N, N]` rank-1 framing (the boundary record's field content is
@@ -98,7 +98,7 @@ The rewrite is valid when all of the following hold (satisfied for the firm L2 a
 
 **Structural (dominant)**: the non-identity content is a structural fact about the two layer surfaces — L2 renders the solve as an explicit kernel-fold composition (a visible composition is a structural form), L1 collapses it to an opaque operator application (an opaque black box is a structural absence of the kernel and the fold). The solver-method axis's re-absorption is structural: the axis is exposed at composition granularity at L2 (it shapes the visible fold nesting) and absorbed into the opaque type at L1 (it is a construction-bound choice inside `Solver[A]`). This is a claim about the shapes of the two forms (visible composition vs. opaque application; composition-granularity axis vs. opacity-absorbed axis), not about algebraic laws or step-semantics — hence structural. The contrast with the BLAS-1 `-leaf-identity` cohort is itself a structural observation: those edges are identity-in-form (the L2 leaf signature is value-thread-isomorphic to the L1 leaf), this edge is non-identity (the L2 composition is NOT value-thread-isomorphic to the L1 opaque application — the kernel and the fold are present at L2, absent at L1).
 
-**Reduction-chain (secondary)**: the kernel-fold composition's re-collapse is grounded in the small-step `iterate_while` semantics from the strawman `book/src/design/l4_calculus.md` §3.7 — the L2 fold is the named-by-role combinator wrap, and the L1 opaque operator is the *fully-folded* (un-introspectable) terminal of that combinator's reduction. The forward L2→L1 narration re-collapses the visible combinator-wrap into the opaque single application. This is the reduction-chain backing for the central kernel-fold line; it is secondary because the load-bearing content (the kernel-fold → opacity re-collapse + the solver-method axis re-absorption) is structural.
+**Reduction-chain (secondary)**: the kernel-fold composition's re-collapse is grounded in the small-step `iterate_while` semantics from the strawman `book/src/semantics/index.md` §3.7 — the L2 fold is the named-by-role combinator wrap, and the L1 opaque operator is the *fully-folded* (un-introspectable) terminal of that combinator's reduction. The forward L2→L1 narration re-collapses the visible combinator-wrap into the opaque single application. This is the reduction-chain backing for the central kernel-fold line; it is secondary because the load-bearing content (the kernel-fold → opacity re-collapse + the solver-method axis re-absorption) is structural.
 
 **Abstraction-direction note**: L2 is the higher-abstraction layer for this edge (it has the L1 opacity opened into the kernel-fold composition); L1 is the lower-abstraction layer (it leaves the solve as one opaque operator application). The rotation direction is L2 → L1: the L2 form lowers to the L1 form by **re-collapsing** the visible kernel-fold composition into the opaque operator and **re-absorbing** the solver-method axis into the opacity. This matches the methodology's high→low lowering direction; the reverse (how the L1 opaque operator opens into the L2 composition — the *open*) is recorded only in the L2 entry's §"Lowers from" in-line, not narrated here.
 
@@ -145,7 +145,7 @@ L0 evidence (self-verified against `reference/palace/` source via `tools/citeche
 
 Strawman / combinator evidence (the reduction-chain backing):
 
-- `book/src/design/l4_calculus.md` §3.7 — the `iterate_while` conventions source; the L2 fold is the named-by-role combinator wrap, the L1 opaque operator is the fully-folded terminal of the combinator's reduction.
+- `book/src/semantics/index.md` §3.7 — the `iterate_while` conventions source; the L2 fold is the named-by-role combinator wrap, the L1 opaque operator is the fully-folded terminal of the combinator's reduction.
 - `book/src/L4/iterate-while.md` (firm cycle-007) — the firm `iterate_while` combinator the L2 fold references (and the L1 opacity collapses).
 
 Cross-cutting concept references (consumed unchanged across the rotation):

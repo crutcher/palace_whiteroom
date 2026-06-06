@@ -121,7 +121,7 @@ chebyshev :: (op, x, y, initial_guess) -> y'
 Shape contract (positional values; L3 has no `readonly` annotation and no
 monadic effect; the field shape group `S` and the square operator form
 `LinOp[(S: ...), $S]` follow the named-shape-group convention of
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2):
+[`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2):
 
 - **`op`** — operator-parameters value. Closure-captured by the body via the
   convention that `op` is a positional argument never present in the return

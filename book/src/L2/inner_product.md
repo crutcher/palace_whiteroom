@@ -150,7 +150,7 @@ inner_product   x y   = inner_product_M x I y                 -- plain ≡ M = I
 ```
 
 Shape contract (bunsen-style; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1):
+[`l4_calculus`](../semantics/index.md) §1.2.1):
 
 - `x` — `Tensor[(S: ...)]` — read-only; the **conjugated** (arg-1) operand (see § "Conjugation
   convention (pinned)").
@@ -163,7 +163,7 @@ Shape contract (bunsen-style; named shape groups per
   (`y = x`, SPD `M`) is the norm-squared consumed downstream.
 - result — `Scalar` — element type per the rule below; `zero` (the additive identity of
   the scalar field) on the empty tensor.
-- `x` and `y` share one shape group `S` (arbitrary unknown rank, NOT rank-1) and one element type `T ∈ {real, complex}`.
+- `x` and `y` share one shape group `S` (arbitrary unknown rank) and one element type `T ∈ {real, complex}`.
 
 Per-element kernel (the conjugation × element-type axes):
 

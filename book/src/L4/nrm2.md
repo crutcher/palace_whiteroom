@@ -58,7 +58,7 @@ wants**, not because it carries iteration structure.
 ## Semantics (overlay)
 
 The L4 calculus is specified in the strawman
-[`../design/l4_calculus.md`](../design/l4_calculus.md). `nrm2` adds **no reduction-rule
+[`../semantics/index.md`](../semantics/index.md). `nrm2` adds **no reduction-rule
 extension** — it is the [`inner_product`](./inner_product.md) reduction at the diagonal
 `y = x` post-composed with the `√ ∘ abs` scalar map. Pseudo-language is Haskell `::`
 signatures inside a `text` fence per the L4/L3 notation invariant.
@@ -71,11 +71,11 @@ signatures inside a `text` fence per the L4/L3 notation invariant.
     nrm2 x = sqrt (abs (inner_product x x))   -- √ ∘ abs ∘ inner_product at y = x
 
 Shape contract (bunsen-style; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1; identical to the firm L3 / L1
+[`l4_calculus`](../semantics/index.md) §1.2.1; identical to the firm L3 / L1
 signature — the L4 verb is value-thread-isomorphic to both):
 
 - `x` — `Tensor[(S: ...)]` — read-only; the single operand (shape group `S` of
-  arbitrary unknown rank, NOT rank-1).
+  arbitrary unknown rank).
 - result — `Scalar` — **always real-valued and non-negative** (`nrm2 x ≥ 0`),
   regardless of `x`'s element type; `zero` on the empty tensor (`inner_product` seeds
   `zero`, `√ (abs zero) = zero`).
@@ -260,7 +260,7 @@ Classification / methodology anchors:
 - `book/src/concepts/nrm2.md` — the BLAS-1 heritage cross-cutting framing. (Note: its
   scaled-summation stability claim is incorrect per the L1 correction-pending note at
   `book/src/L1/nrm2.md:11`; the L1 entry is authoritative.)
-- `book/src/design/l4_calculus.md` — the strawman; `nrm2` adds no reduction rule (the
+- `book/src/semantics/index.md` — the strawman; `nrm2` adds no reduction rule (the
   combinator's diagonal consume + a `√ ∘ abs` scalar map).
 
 Provenance: harvester:2026-06-02T205715Z (cycle-069 D2) — the `l4-dot-nrm2-named-verb-rise`

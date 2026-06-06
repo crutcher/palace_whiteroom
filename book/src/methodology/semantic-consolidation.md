@@ -6,7 +6,7 @@
 > discipline. It is **not** a directive source. The authoritative statement is the
 > 2026-06-06 user directive, distilled operationally in `CLAUDE.md` §Methodology
 > invariants ("SEMANTIC CONSOLIDATION"); the discipline itself lives on the
-> [semantic surface](../design/l4_calculus.md) (§0.1).
+> [semantic surface](../semantics/index.md) (§0.1).
 >
 > **If this chapter contradicts `CLAUDE.md` or the semantic surface's §0.1, those win
 > and this chapter is corrected.** A contradiction surfacing here is a *drift signal*,
@@ -31,7 +31,7 @@ the *vocabulary*. The two disciplines are deliberately parallel:
 ## The surface
 
 The single home for the spec's semantics is
-[**L4 calculus & spec semantics**](../design/l4_calculus.md) — promoted (2026-06-06) out
+[**L4 calculus & spec semantics**](../semantics/index.md) — promoted (2026-06-06) out
 of its former "design strawman" status into the project's **active-management semantic
 surface**. It holds: the calculus grammar (types / shapes / terms), the shape semantics
 including **named shape groups** (`Tensor[(S: ...)]` binding / `Tensor[$S]` use), the

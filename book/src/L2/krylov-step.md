@@ -51,7 +51,7 @@ A cross-cutting prose treatment lives at [`concepts/solver-as-operator`](../conc
 krylov-step :: (op: OpParams, s: IterState) -> { state: IterState', outputs: StepOutputs }
 ```
 
-Shape contract (bunsen-style; named axes; the solution-space shape group `S` and the square operator form `LinOp[(S: ...), $S]` follow the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2):
+Shape contract (bunsen-style; named axes; the solution-space shape group `S` and the square operator form `LinOp[(S: ...), $S]` follow the named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2):
 
 - `op` — `OpParams` — closed-over operator surface. Bound at solve setup; immutable across the step. Variant axes (preconditioner side, orthogonalization variant, polynomial-kind) are absorbed into `OpParams`'s constructed-operator and scalar-generator closures (level (b)/(c) of [`variant-absorption`](../concepts/variant-absorption.md)). Concretely:
   - `op.T : LinOp[(S: ...), $S]` — the system operator (square, on the solution-space shape group `S`; or constructed `apply_BA = A·M⁻¹` / `M⁻¹·A` / `B^{1/2}·A·B^{1/2}` per pc-side variant).

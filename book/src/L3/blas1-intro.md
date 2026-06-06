@@ -17,7 +17,7 @@ edges:
 
 # BLAS-1 vocabulary (L3)
 
-The closed BLAS-1 cohort at L3: whole-tensor linear-update and reduction primitives, all element-local or parallel-clean over the shape group `S` (arbitrary, unknown rank — NOT rank-1; named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1) — the **obstruction-free end** of the L3 obstruction-profile spectrum (`index.md` §Semantics).
+The closed BLAS-1 cohort at L3: whole-tensor linear-update and reduction primitives, all element-local or parallel-clean over the shape group `S` (arbitrary, unknown rank; see [`l4_calculus`](../semantics/index.md) §1.2.1) — the **obstruction-free end** of the L3 obstruction-profile spectrum (`index.md` §Semantics).
 
 Two L3 **combinators** carry the cohort's settled vocabulary, and the BLAS-1 leaves speak through them as list-length / kernel-value specializations:
 

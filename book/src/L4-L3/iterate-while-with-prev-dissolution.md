@@ -162,8 +162,8 @@ L4 source (the LHS of this rewrite):
 
 - `book/src/L4/iterate-while-with-prev.md:41-50` — the firm L4 `iterate_while_with_prev` `Solve`-threaded signature (the LHS); `:52` the argument order; `:74-93` the §Semantics bootstrap-then-`steady_loop` small-step rules; `:97-103` the three semantic points (bootstrap always runs / predicate after bootstrap / `prev` as closure parameter); `:129-135` Law 1 (degeneracy to `iterate-while` when `β = ()`); `:137-147` Law 2 (trajectory-pruning, the load-bearing transported property); `:182-198` the firm §"Lowers to" L3 form (`iterate_while_with_prev_L3` + `steady_loop_L3`) extracted as the RHS; `:202` the L3>L2 identity-in-form note; `:200` the standalone-pending deferral and `:223` the §"L4 vs L3 distinction" deferral, both re-anchored by this dispatch.
 - `book/src/L4/iterate-while.md:123-133` — the companion Law 1 (single-body demand-pruning) that Law 2 lifts to two bodies; the rule transported through the dissolution.
-- `book/src/design/l4_calculus.md:150-184` — the strawman §3.7 `iterate_while` small-step rule the bootstrap-then-loop semantics generalise (`:164-171` the rule block, `:179-182` the `iterate_while_pure` sugar).
-- `book/src/design/l4_calculus.md:186-213` — the strawman §3.8 demand-driven pruning rule that underwrites Law 2.
+- `book/src/semantics/index.md:150-184` — the strawman §3.7 `iterate_while` small-step rule the bootstrap-then-loop semantics generalise (`:164-171` the rule block, `:179-182` the `iterate_while_pure` sugar).
+- `book/src/semantics/index.md:186-213` — the strawman §3.8 demand-driven pruning rule that underwrites Law 2.
 
 L3 source (the RHS of this rewrite; extracted from the firm cap + firm sub-component):
 

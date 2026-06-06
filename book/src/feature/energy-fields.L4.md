@@ -47,7 +47,7 @@ feature-surface view of that distinct reduction.
 ## The composition
 
 At L4 the domain energy table is the composition (Haskell-style; the strawman
-`book/src/design/l4_calculus.md` notation):
+`book/src/semantics/index.md` notation):
 
     -- inputs = config (the energy-postprocess domain set); output = the domain energy table (the physical product)
     energy_fields :: PostprocessConfig -> Field -> [DomainData]

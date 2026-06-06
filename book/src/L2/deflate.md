@@ -65,7 +65,7 @@ type GramBlock[k] = Schur { S: Matrix[k, k] }    -- NLEPS form (positively sourc
 deflate op X v = v − linear_combination (zip (coords-solve op X v) X)   -- = v − X·(coordinate solve)
 ```
 
-Shape contract (bunsen-style; named axes; the vector shape group `S` follows the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1; the deflation basis `Basis[N, k]` is a genuine 2-D `k`-column basis and the coordinate-solve `Matrix[k, k]` is genuinely 2-D — both KEEP their concrete axes):
+Shape contract (bunsen-style; named axes; the vector shape group `S` follows the named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1; the deflation basis `Basis[N, k]` is a genuine 2-D `k`-column basis and the coordinate-solve `Matrix[k, k]` is genuinely 2-D — both KEEP their concrete axes):
 
 - `op` — `DeflateOp` — the closed-over projection surface, bound once at solve setup. A record:
   - `op.dot : (Tensor[(S: ...)], Tensor[$S]) -> Scalar` — the inner-product hook (the canonical

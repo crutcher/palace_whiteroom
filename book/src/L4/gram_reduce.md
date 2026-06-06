@@ -96,7 +96,7 @@ bodies; Palace's C++ writes the explicit double loop, not the L4 reduction form.
     gram_inverse :: Matrix[m, m] -> Matrix[m, m]            -- = inv (LAPACK); the Cinv / Minv tail
 
 Shape contract (bunsen-style; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1):
+[`l4_calculus`](../semantics/index.md) §1.2.1):
 
 - `K : LinOp[(S: ...), $S]` — read-only; the **domain energy operator** (`M_elec`
   diffusion-energy at `electrostaticsolver.cpp:118`, `M_mag` curl-curl-energy at

@@ -74,7 +74,7 @@ scope).
 ## Semantics (overlay)
 
 The L4 calculus is specified in the strawman
-[`../design/l4_calculus.md`](../design/l4_calculus.md). `linear_combination` is a
+[`../semantics/index.md`](../semantics/index.md). `linear_combination` is a
 pure term-list fold; its L4 rendering uses the strawman's term/type BNF (§1) with
 no reduction-rule extension (it adds no new evaluation rule — it is a fold
 expressible in the existing `foldl` / `+` / `scal` vocabulary). Pseudo-language is
@@ -87,7 +87,7 @@ Haskell `::` signatures inside a `text` fence per the L4/L3 notation invariant.
     linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[$S]
     linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros $S) pairs
 
-Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md)
+Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantics/index.md)
 §1.2.1; identical to the firm L3 signature — the L4 form is value-thread-isomorphic
 to it, §"Downward to L3"):
 
@@ -98,7 +98,7 @@ to it, §"Downward to L3"):
   sharing one shape group `S` of arbitrary, unknown rank; the combination is
   element-local at every position of `S` (see §"Algebraic laws"). (The named-shape-group
   convention — binding `(S: ...)` vs use `$S`, and why a group beats a bare `Tensor[N]`
-  — is the general calculus rule in [`l4_calculus`](../design/l4_calculus.md) §1.2.1,
+  — is the general calculus rule in [`l4_calculus`](../semantics/index.md) §1.2.1,
   linked above.)
 - each `aᵢ` — `Scalar` — one shared element type `T ∈ {real, complex}` across all
   scalars and terms, with the `real ⊑ complex` promotion lattice from
@@ -324,7 +324,7 @@ Classification / methodology anchors:
   combinator** (the c049 mine + c050 L3 propagation), so the 4 gate points are
   satisfied by the firm L3 endpoint, not re-mined here (the gate is for *new*
   mines; this is an upward in-layer rendering of a settled one).
-- `book/src/design/l4_calculus.md` — the strawman; this combinator adds no
+- `book/src/semantics/index.md` — the strawman; this combinator adds no
   reduction rule (a fold in the existing `foldl`/`+`/`scal` vocabulary).
 
 Provenance: combinator-miner:2026-06-02T195402Z (cycle-068 D3) — the

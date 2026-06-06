@@ -20,7 +20,7 @@ Fused vector **normalize** as a whole-tensor field operation at L3 — the **ite
 
 ## Context
 
-L3 is the iteration-rotation layer: global tensor-field operations expressed as whole-tensor primitives, with no element loop exposed at the layer's vocabulary and with sequential obstructions named explicitly per [`sequential-obstruction`](../concepts/sequential-obstruction.md). `normalize` at L3 is the whole-tensor form of the fused norm-then-rescale — a single field operation that returns both the norm reduction `β = nrm2(x)` and the unit vector `û = scal(1/β, x)`. Its signature `(x: Tensor[(S: ...)]) -> (Scalar, Tensor[$S])` exposes no element loop — the norm reduction over the shape group `S` (arbitrary, unknown rank — NOT rank-1) and the element-local rescale are single semantic steps at L3 just as they are at L1.
+L3 is the iteration-rotation layer: global tensor-field operations expressed as whole-tensor primitives, with no element loop exposed at the layer's vocabulary and with sequential obstructions named explicitly per [`sequential-obstruction`](../concepts/sequential-obstruction.md). `normalize` at L3 is the whole-tensor form of the fused norm-then-rescale — a single field operation that returns both the norm reduction `β = nrm2(x)` and the unit vector `û = scal(1/β, x)`. Its signature `(x: Tensor[(S: ...)]) -> (Scalar, Tensor[$S])` exposes no element loop — the norm reduction over the shape group `S` (arbitrary, unknown rank) and the element-local rescale are single semantic steps at L3 just as they are at L1.
 
 Unlike the leaf members of the cycle-036 (A) identity-in-form L3-backfill cohort (`reciprocal`, `elementwise_product` — leaf elementwise field operations with no structural sub-composition), `normalize` is a **fused composite**: it is to the firm L3 [`nrm2`](./nrm2.md) / [`scal`](./scal.md) leaves what `axpy` is to `scal`/vector-add — a recognised composition that Palace ships as one symbol. The fusion is named because the **returned norm** is load-bearing — many call sites consume `β` *after* the rescale (a bare `scal(1/nrm2(x), x)` would discard it). It shares the cohort's defining L3 shape (whole-tensor in, no element loop exposed, identity-in-form to L1) but, being a composite, carries genuine same-layer L3 dependencies (see §Dependencies).
 
@@ -37,9 +37,9 @@ This L3 entry is the **layer-coherence anchor**: a reader navigating L3 (the ite
     normalize :: Tensor[(S: ...)] -> (Scalar, Tensor[$S])
     normalize x = (β, x/β)   where  β = nrm2 x,  β > 0
 
-Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1; positional values, no monadic effect, no destination buffer):
+Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantics/index.md) §1.2.1; positional values, no monadic effect, no destination buffer):
 
-- **`x`** — `Tensor[(S: ...)]` — the input tensor whose whole shape is the group `S` (arbitrary, unknown rank — NOT rank-1). Read-only at L3 (the L3 form is pure; the L0 in-place rescale is reintroduced only at the L1>L0 lowering). Element type real or complex.
+- **`x`** — `Tensor[(S: ...)]` — the input tensor whose whole shape is the group `S` (arbitrary, unknown rank). Read-only at L3 (the L3 form is pure; the L0 in-place rescale is reintroduced only at the L1>L0 lowering). Element type real or complex.
 - **result.0** — `Scalar` — the norm `β = ‖x‖₂`. **Always real-valued and positive** (`β > 0`), regardless of `x`'s element type (inherited from [`nrm2`](./nrm2.md)'s real-valued-output collapse). The load-bearing returned scalar.
 - **result.1** — `Tensor[$S]` — the unit vector `û = x/β`, congruent to `x` (same shape group `S`) and same element type. Has unit norm: `nrm2(û) = 1` (in exact arithmetic).
 
@@ -110,7 +110,7 @@ The factorisation `normalize(x) = (nrm2(x), scal(1/nrm2(x), x))` (law 6) is the 
 
 **L2 floor / L1 anchor**: [`L2/normalize`](../L2/normalize.md) (firm, cycle-043 D10) is the present adjacent L2 floor this L3 entry lowers into via the in-line identity-in-form §"Downward to L2" note above (no dedicated theme chapter — the degenerate `normalize-body-identity` theme was demoted to that note, cycle-050); [`L1/normalize`](../L1/normalize.md) (firm) remains authoritative on the Palace surface details (the `linalg::Normalize` free-function template, the three consumer shapes, the returned-norm load-bearing analysis, the `normalize_B` rough-in note, the complete L0 evidence list). This L3 entry does not duplicate those details; the L3>L2 and (transitive) L3>L1 rotations are identity-in-form on the operator itself.
 
-**Strawman reference**: `book/src/design/l4_calculus.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation. `normalize` does not get its own L4 entry (per the leaf-composite / `CONFIRMED-NOT-NEEDED` verdict the cycle-010 audit reached for the BLAS-1 and operator-to-data cohorts; the fused composite carries no novel L4 calculus content).
+**Strawman reference**: `book/src/semantics/index.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation. `normalize` does not get its own L4 entry (per the leaf-composite / `CONFIRMED-NOT-NEEDED` verdict the cycle-010 audit reached for the BLAS-1 and operator-to-data cohorts; the fused composite carries no novel L4 calculus content).
 
 ## Variant axes
 

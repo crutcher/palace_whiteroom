@@ -30,7 +30,7 @@ The magnetostatic pipeline is â€” like [electrostatic](./electrostatic.L4.md) â€
 
 ## The composition
 
-At L4 the whole simulation is the composition (Haskell-style; the strawman `book/src/design/l4_calculus.md` notation):
+At L4 the whole simulation is the composition (Haskell-style; the strawman `book/src/semantics/index.md` notation):
 
     -- inputs = config; output = the inductance matrix (the physical product)
     magnetostatic :: MagnetostaticConfig -> InductanceMatrix

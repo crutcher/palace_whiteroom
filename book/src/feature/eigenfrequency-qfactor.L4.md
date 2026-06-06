@@ -26,7 +26,7 @@ The eigenfrequency / Q-factor table is the **output-product half** of the eigenm
 
 ## The composition
 
-At L4 the eigenfrequency / Q-factor product is the composition (Haskell-style; the strawman `book/src/design/l4_calculus.md` notation):
+At L4 the eigenfrequency / Q-factor product is the composition (Haskell-style; the strawman `book/src/semantics/index.md` notation):
 
     -- inputs = config (the eigenmode problem); output = the (f, Q) table (the physical product)
     eigenfrequency_qfactor :: EigenmodeConfig -> [(Scalar, Scalar)]

@@ -28,7 +28,7 @@ Boundary-mode is the **second clean witness of the composition-root pattern over
 
 ## The composition
 
-At L4 the whole simulation is the composition (Haskell-style; the strawman `book/src/design/l4_calculus.md` notation):
+At L4 the whole simulation is the composition (Haskell-style; the strawman `book/src/semantics/index.md` notation):
 
     -- inputs = config; output = the converged propagation-mode set (the physical product)
     boundary_mode :: BoundaryModeConfig -> BoundaryModeResult

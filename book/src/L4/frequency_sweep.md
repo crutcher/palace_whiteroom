@@ -62,7 +62,7 @@ map:
 
 The architectural altitude is the same as [`solve_family`](./solve_family.md)'s —
 both are value-threaded loop combinators in the strawman's §3.7 family
-(`book/src/design/l4_calculus.md:150-184`), both the **pure-map degenerate** (each
+(`book/src/semantics/index.md:150-184`), both the **pure-map degenerate** (each
 member independent, no carry between solves; the trajectory IS the collected
 solution family). The combinator differs from [`solve_family`](./solve_family.md)
 on exactly one axis — the **operator-capture** axis (§Variant axes): `solve_family`
@@ -186,7 +186,7 @@ presentations (the §Signature renders both):
    algebraic laws (§Algebraic laws) immediate.
 
 2. **Pure-map degenerate of `iterate_while`** — the §3.7 family rendering
-   (`book/src/design/l4_calculus.md:150-184`), where the carry is `{ remaining,
+   (`book/src/semantics/index.md:150-184`), where the carry is `{ remaining,
    solutions }`, the predicate is `not (null st.remaining)`, the step pops one
    frequency, rebuilds the operator, runs one [`ksp_solve`](./ksp_solve.md), and the
    per-member `extras` is the solution. By §3.7 the trajectory of extras is exactly
@@ -243,7 +243,7 @@ specialization rather than a free per-element-operator general combinator.
 
 ### Demand-pruning interaction
 
-Under the §3.8 pruning rule (`book/src/design/l4_calculus.md:186-228`), per-member
+Under the §3.8 pruning rule (`book/src/semantics/index.md:186-228`), per-member
 solutions materialize only when a downstream consumer reads them — `frequency_sweep
 fam omegas` whose result is never observed prunes every solve. In Palace the driven
 sweep unconditionally consumes each ω's solution immediately (per-ω post-processing:
@@ -426,7 +426,7 @@ L4 concept references:
   axis (`fixed | per-element`), the operand-source axis (the named affine rebuild),
   and the family-index / element-type absorption.
 
-**Strawman reference**: `book/src/design/l4_calculus.md` §3.7 (`iterate_while` + the
+**Strawman reference**: `book/src/semantics/index.md` §3.7 (`iterate_while` + the
 `iterate_while_pure` sugar, `:150-184`) is the family this combinator's pure-map
 degenerate joins; §3.8 (demand-pruning, `:186-228`) governs per-member
 materialization. This verb adds **no reduction rule** (it is a `map` over the
@@ -610,7 +610,7 @@ on-disk `reference/palace/palace/drivers/drivensolver.cpp`).
     the driven `drivensolver.cpp:176-180` site `frequency_sweep` formalizes).
   - `book/src/L4/index.md:30-47` (the L4 outer-driver vocabulary cohort `frequency_sweep`
     joins), `:7-13` (L4-is-vocabulary remit), `:37` (the iterate-while-family-reuse precedent).
-  - `book/src/design/l4_calculus.md:150-184` (§3.7 `iterate_while` + `iterate_while_pure` sugar
+  - `book/src/semantics/index.md:150-184` (§3.7 `iterate_while` + `iterate_while_pure` sugar
     — the family the pure-map degenerate joins), `:186-228` (§3.8 demand-pruning).
   - `book/src/concepts/state-stratification.md` (the operator-basis-captured-once vs
     operator-rebuilt-per-member stratum distinction).

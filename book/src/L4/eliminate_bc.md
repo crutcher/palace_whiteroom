@@ -92,7 +92,7 @@ The pair, both post-composing after `fe_assemble` on the assembled `K`:
           pin  = case policy of DIAG_ONE -> x_bc ; DIAG_ZERO -> zeros
       in  set_essential b' pin                                    -- BC rows ← pin
 
-Shape contract (named shape groups / operator shapes per [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2; the system operator is square, so domain and range are one shape group `S` and the BC-side vectors are congruent to it; the essential-dof index set keeps its genuine flat-index spelling; the BC stratum per [`state-stratification`](../concepts/state-stratification.md)):
+Shape contract (named shape groups / operator shapes per [`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2; the system operator is square, so domain and range are one shape group `S` and the BC-side vectors are congruent to it; the essential-dof index set keeps its genuine flat-index spelling; the BC stratum per [`state-stratification`](../concepts/state-stratification.md)):
 
 - `K` — `LinOp[(S: ...), $S]` — the assembled **square** operator over the true-dof shape group `S`, the
   output of [`fe_assemble`](./fe_assemble.md). `readonly`; squareness is required (BC elimination is
@@ -301,7 +301,7 @@ firm L1 [`essential_dofs`](../L1/essential_dofs.md) (`essential_dofs (space, bdr
 dep-map correctly excludes from its construction stratum (`L4/index.md:100` — `essential_dofs` feeds
 THIS cohort, not the assemble fold).
 
-**Strawman reference**: `book/src/design/l4_calculus.md` §3.5 (operator application, `:138-145`) is the
+**Strawman reference**: `book/src/semantics/index.md` §3.5 (operator application, `:138-145`) is the
 convention for the `K · x_bc` operator-action form; §3.3–3.4 (record/state conventions) for the
 `(DofSet[N], DiagPolicy)` BC stratum.
 

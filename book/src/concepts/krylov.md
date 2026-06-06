@@ -30,7 +30,7 @@ Unlike the slice-uniform [`sim-state`](./sim-state.md), the `Krylov` schema is *
 
 ## Record definition — CG
 
-The iterate-stratum fields below are all congruent solution-space vectors over one shape group — bound `(S: ...)` and used as `$S` per [`l4_calculus`](../design/l4_calculus.md) §1.2.1 (the group `S` is the solution shape, not a rank-1 length axis):
+The iterate-stratum fields below are all congruent solution-space vectors over one shape group — bound `(S: ...)` and used as `$S` per [`l4_calculus`](../semantics/index.md) §1.2.1 (the group `S` is the solution shape, not a rank-1 length axis):
 
 ```text
 Krylov(CG) = {

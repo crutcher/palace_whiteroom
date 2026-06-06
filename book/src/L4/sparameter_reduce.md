@@ -87,7 +87,7 @@ explicit per-port loop (project-then-postscale, two phases), not the L4 reductio
         scale ports i j = port_scale (ports!!i) (ports!!j)  -- lumped: √(R_src/R_dst) (|R|>0); wave: exp(ikₙᵢdᵢ)·exp(ikₙⱼdⱼ)
 
 Shape contract (bunsen-style; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1):
+[`l4_calculus`](../semantics/index.md) §1.2.1):
 
 - `ports : [PortMode]` — read-only; the per-port mode functionals (lumped `s`; wave
   `port_sr + i·port_si`) + the per-port impedance/de-embed parameters (`R`, `kn0`,
@@ -97,7 +97,7 @@ Shape contract (bunsen-style; named shape groups per
   per-entry branch.
 - `family : [(Int, Tensor[(S: ...)])]` — the driven solution family ([`frequency_sweep`](./frequency_sweep.md)'s
   per-ω output): per solved column, the drive-port index `j` + the per-ω complex field `E`
-  (shape group `S` of arbitrary unknown rank, NOT rank-1).
+  (shape group `S` of arbitrary unknown rank).
   Read-only. The whole reduction is applied **once per swept frequency**; the ω index rides
   as the outer family axis (factored out — the driven composition root owns the ω map, so
   `sparameter_reduce` is the per-port reduction at a single ω; see §Lowers to caveat).

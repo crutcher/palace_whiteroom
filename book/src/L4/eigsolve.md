@@ -61,7 +61,7 @@ The L4 cap signature is the `solve-monad` outer-driver shape, specialised to the
     data EigStatus = Converged | PartialConverged Int | MaxIterReached | LinearSolveFailed
     data EigOutcome = Continue | Done EigStatus
 
-Shape contract (bunsen-style; named records and axes; the operator-domain shape group `S` follows the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1 — `complex` is an element type, not an axis; the eigenvalue/error lists `Tensor[K, ...]` are genuine length-K; the same three strata per [`state-stratification`](../concepts/state-stratification.md) the `ksp_solve` cap uses, with `EigState` the eigsolve-specific persistent stratum):
+Shape contract (bunsen-style; named records and axes; the operator-domain shape group `S` follows the named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1 — `complex` is an element type, not an axis; the eigenvalue/error lists `Tensor[K, ...]` are genuine length-K; the same three strata per [`state-stratification`](../concepts/state-stratification.md) the `ksp_solve` cap uses, with `EigState` the eigsolve-specific persistent stratum):
 
 - `OpParams` — operator-internal configuration, captured once at solve construction; `readonly` per [`state-stratification`](../concepts/state-stratification.md). Closes over the bound problem operators (`op.K`, `op.M`, optional `op.C` / `op.A2` per problem-type), the inner solver `op.inv` (the construction-bound [`ksp_solve`](./ksp_solve.md) inverting the shifted operator `(K − σM)`), the shift `σ` and spectral-transform mode (STSINVERT / STPRECOND), the optional divergence-free projector `op.projector`, the Higham scaling factors, the requested mode count `K_max`, tolerance, and iteration cap. The cap's driver does **not** branch on any `OpParams` field (problem-type, spectral-transformation, backend-orchestration are all absorbed per [`variant-absorption`](../concepts/variant-absorption.md) `readonly` typing); the body it hands to the library reads `op.operand` / `op.inv` only.
 - `Inputs` — the per-solve inputs that seed `initial_state` (the optional initial-subspace seed `control.initial_space`; when absent, the library generates its own by internal RNG). Read-only.
@@ -136,7 +136,7 @@ L4 row dependencies:
 
 - `EigOutcome` — the richer termination sum the cap produces and classifies (the eigsolve-specific extension of `Outcome`; registered as this cap's own L4 dep-map row).
 - [`ksp_solve`](./ksp_solve.md) — the sibling cap, and the **inner solver** `op.inv` the per-step body `apply_shift_invert` invokes (the construction-bound `ksp_solve` inverting the shifted operator). The cap composes two layers of solver-as-operator: the eigsolve cap drives an opaque library iteration whose per-step body itself folds a `ksp_solve`.
-- [`iterate-while`](./iterate-while.md) — referenced by *role contrast only*: the combinator an *imagined* Palace-authored eigen-iteration loop would use (per `book/src/design/l4_calculus.md`). Since the loop is library-owned, the cap does **not** consume `iterate-while` substantively — it marks the obstruction instead.
+- [`iterate-while`](./iterate-while.md) — referenced by *role contrast only*: the combinator an *imagined* Palace-authored eigen-iteration loop would use (per `book/src/semantics/index.md`). Since the loop is library-owned, the cap does **not** consume `iterate-while` substantively — it marks the obstruction instead.
 
 L4 concept references:
 
@@ -149,7 +149,7 @@ L4 concept references:
 - [`solver-as-operator`](../concepts/solver-as-operator.md) — the inner `ksp_solve` consumed as an operator (the shift-invert action).
 - [`convergence-test`](../concepts/convergence-test.md) — the stopping-predicate surface the `EigOutcome` classification reads (here library-internal — the threshold relationship is delegated to SLEPc/ARPACK, per [`L1/eigsolve`](../L1/eigsolve.md) §"Algebraic laws").
 
-**Strawman reference**: `book/src/design/l4_calculus.md` §3.3–3.4 (monad / state-effect laws), §3.7 (`iterate_while` small-step — the loop the eigen-iteration would fold *if* Palace authored it; it does not), §3.8 (demand-pruning — not statable here, no per-step observation point) are the conventions source for this cap's laws.
+**Strawman reference**: `book/src/semantics/index.md` §3.3–3.4 (monad / state-effect laws), §3.7 (`iterate_while` small-step — the loop the eigen-iteration would fold *if* Palace authored it; it does not), §3.8 (demand-pruning — not statable here, no per-step observation point) are the conventions source for this cap's laws.
 
 ## Lowers to
 
@@ -197,7 +197,7 @@ The pattern is well-attested: the `partial-obstruction` L3 parent ([`L3/eigsolve
 - `book/src/L4/krylov-step.md` (cycle-006 firm) — the L4 chapter altitude/structure precedent.
 - `book/src/concepts/solve-monad.md:1-68` — the outer-driver pattern: §Shape (`:5-17`), §"Termination as a sum type" (`:58-68`, the `Outcome` classify-once / fold-uniformly law this cap extends to `EigOutcome`).
 - `book/src/concepts/sequential-obstruction.md` — the opaque-library eigen-iteration obstruction the cap marks (the load-bearing concept).
-- `book/src/design/l4_calculus.md` — L4 strawman; §3.3–3.4 (monad / state-effect laws), §3.7 (`iterate_while` — the loop the eigen-iteration would fold *if* Palace authored it; library-owned, so the cap marks the obstruction instead).
+- `book/src/semantics/index.md` — L4 strawman; §3.3–3.4 (monad / state-effect laws), §3.7 (`iterate_while` — the loop the eigen-iteration would fold *if* Palace authored it; library-owned, so the cap marks the obstruction instead).
 - L0 anchors (transitive via the L3 parent; codemap-verified this dispatch against on-disk):
   - `palace/linalg/slepc.cpp:694` — `EPSSolve(eps)`, the entire SLEPc eigen-iteration as one opaque library call (inside `SlepcEPSSolverBase::Solve`, `:687-709`). The decisive negative anchor: no Palace loop at all.
   - `palace/linalg/slepc.cpp:711-716` — `SlepcEPSSolverBase::GetEigenvalue`: `EPSGetEigenvalue(eps, i, &l, nullptr)` then `return l * gamma` — the eigenvalue un-transform at the extraction boundary (the cap's original-problem-coordinate readout).

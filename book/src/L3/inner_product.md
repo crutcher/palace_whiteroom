@@ -100,7 +100,7 @@ inner_product   x y   = inner_product_M x I y                  -- plain ≡ M = 
 ```
 
 Shape contract (bunsen-style; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1; no element loop exposed at L3):
+[`l4_calculus`](../semantics/index.md) §1.2.1; no element loop exposed at L3):
 
 - **`x`** — `Tensor[(S: ...)]` — read-only whole-tensor argument; the **conjugated** (arg-1)
   operand in the Hermitian inner product `xᴴ y` (see §"Conjugation convention").
@@ -111,7 +111,7 @@ Shape contract (bunsen-style; named shape groups per
   (`y = x`, SPD `M`) is the M-weighted norm-squared consumed downstream.
 - **result** — `Scalar` — element type per the rule below; `zero` (the additive identity
   of the scalar field) on the empty tensor.
-- `x` and `y` share one shape group `S` (arbitrary unknown rank, NOT rank-1) and one element type `T ∈ {real, complex}`.
+- `x` and `y` share one shape group `S` (arbitrary unknown rank) and one element type `T ∈ {real, complex}`.
 
 Per-element kernel (the conjugation × element-type axes; inherited from the L2 combinator,
 reproduced for L3-reader coherence):

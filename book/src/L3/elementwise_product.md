@@ -36,9 +36,9 @@ A cross-cutting prose treatment lives at [`elementwise-product`](../concepts/ele
     elementwise_product :: (a: Tensor[(S: ...)], b: Tensor[$S]) -> Tensor[$S]
     elementwise_product(a, b) = a ⊙ b
 
-Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1; positional values, no monadic effect, no destination buffer — the typing distinctions are deferred to the wrapper layers above):
+Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantics/index.md) §1.2.1; positional values, no monadic effect, no destination buffer — the typing distinctions are deferred to the wrapper layers above):
 
-- **`a`** — `Tensor[(S: ...)]` — read-only at L3 (the L3 form is pure; the L0 in-place mutation is reintroduced only at the L1>L0 lowering). Its whole shape is the group `S` (arbitrary, unknown rank — NOT rank-1).
+- **`a`** — `Tensor[(S: ...)]` — read-only at L3 (the L3 form is pure; the L0 in-place mutation is reintroduced only at the L1>L0 lowering). Its whole shape is the group `S` (arbitrary, unknown rank).
 - **`b`** — `Tensor[$S]` — read-only, congruent to `a` (same shape group `S`) and sharing its element type.
 - **result** — `Tensor[$S]` — congruent to the inputs; `result[idx]` is the per-element product `a[idx] · b[idx]`. A fresh value (no L0 destination buffer mentioned at L3).
 
@@ -119,7 +119,7 @@ The law set and non-law set are **inherited unchanged** from L1; the L3 renderin
 - [`elementwise-product`](../concepts/elementwise-product.md) — the cross-cutting prose treatment (Hadamard / pointwise-product background, diagonal-operator-apply role, Palace mapping).
 - [`variant-absorption`](../concepts/variant-absorption.md) — the framing for the element-type axis absorption at L3.
 
-**Strawman reference**: `book/src/design/l4_calculus.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation. `elementwise_product` does not get its own L4 entry (per the leaf-primitive / `CONFIRMED-NOT-NEEDED` verdict the cycle-010 audit reached for the BLAS-1 / `scal` / `apply_linop` cohort) — at L4 it appears inside operator bodies as a let-binding, not as first-class vocabulary.
+**Strawman reference**: `book/src/semantics/index.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation. `elementwise_product` does not get its own L4 entry (per the leaf-primitive / `CONFIRMED-NOT-NEEDED` verdict the cycle-010 audit reached for the BLAS-1 / `scal` / `apply_linop` cohort) — at L4 it appears inside operator bodies as a let-binding, not as first-class vocabulary.
 
 ## Variant axes
 

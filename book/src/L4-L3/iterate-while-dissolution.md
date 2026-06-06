@@ -24,7 +24,7 @@ The L4 `iterate_while` Form A — the extras-carrying, `Solve`-threaded form con
       -> (α -> Solve { state: α, ...e })
       -> Solve { final_state: α, trajectory: [{ ...e }] }
 
-The small-step semantics are the strawman §3.7 rule, reproduced verbatim in the firm L4 row's §Semantics (`iterate-while.md:64-74`, transcribing `book/src/design/l4_calculus.md:164-171`):
+The small-step semantics are the strawman §3.7 rule, reproduced verbatim in the firm L4 row's §Semantics (`iterate-while.md:64-74`, transcribing `book/src/semantics/index.md:164-171`):
 
 $$
 \begin{aligned}
@@ -36,7 +36,7 @@ $$
 \end{aligned}
 $$
 
-The load-bearing L4 property the lowering must transport is **Law 1 — demand-driven trajectory pruning** (`iterate-while.md:123-133`, inherited from `book/src/design/l4_calculus.md:186-213` and [`derived-view-hoisting`](../concepts/derived-view-hoisting.md)): when a consumer observes only the `final_state` field of the result, the §3.8 rule rewrites the body `f` to the subgraph computing only the `state` field, omitting the extras computation. The L4 form is **one** combinator definition; Law 1 is the rewrite that specializes it to "residuals-on" vs "residuals-off" by consumer demand, with no runtime flag.
+The load-bearing L4 property the lowering must transport is **Law 1 — demand-driven trajectory pruning** (`iterate-while.md:123-133`, inherited from `book/src/semantics/index.md:186-213` and [`derived-view-hoisting`](../concepts/derived-view-hoisting.md)): when a consumer observes only the `final_state` field of the result, the §3.8 rule rewrites the body `f` to the subgraph computing only the `state` field, omitting the extras computation. The L4 form is **one** combinator definition; Law 1 is the rewrite that specializes it to "residuals-on" vs "residuals-off" by consumer demand, with no runtime flag.
 
 The wrapper machinery this theme dissolves is three pieces:
 
@@ -92,7 +92,7 @@ This is exactly the L3-side image of **Law 1** of [`iterate-while`](../L4/iterat
 
 ### `iterate_while_pure` — the no-extras sugar
 
-For the no-extras case (`e = ()`, the LBM step at `book/src/design/l4_calculus.md:374-386`), the L4 sugar `iterate_while_pure` (`iterate-while.md:92-98`) lowers to the textbook tail-recursive loop with no accumulator (`iterate-while.md:190-195`):
+For the no-extras case (`e = ()`, the LBM step at `book/src/semantics/index.md:374-386`), the L4 sugar `iterate_while_pure` (`iterate-while.md:92-98`) lowers to the textbook tail-recursive loop with no accumulator (`iterate-while.md:190-195`):
 
     iterate_while_pure_L3 :: α -> (α -> Bool) -> (α -> α) -> α
     iterate_while_pure_L3 a p f = if p a then iterate_while_pure_L3 (f a) p f else a
@@ -142,8 +142,8 @@ L4 source (the LHS of this rewrite):
 
 - `book/src/L4/iterate-while.md:28-43` — the firm L4 `iterate_while` Form A signature (the LHS); `:64-74` the §3.7 small-step rule reproduced verbatim; `:123-133` Law 1 (demand-driven trajectory pruning, the load-bearing transported property); `:190-195` the `iterate_while_pure_L3` no-extras lowering; `:196-197` the L3>L2 identity-in-form note.
 - `book/src/L4/iterate-while-with-prev.md` — the firm L4 sibling cap, whose §"Lowers to" also points at this dissolution (the `prev`-positional addition is the only delta).
-- `book/src/design/l4_calculus.md:150-184` — the strawman §3.7 `iterate_while` definition (v0.3 extras-carrying form + small-step rule at `:164-171` + `iterate_while_pure` sugar at `:178-182`).
-- `book/src/design/l4_calculus.md:186-213` — the strawman §3.8 demand-driven pruning rule that underwrites Law 1.
+- `book/src/semantics/index.md:150-184` — the strawman §3.7 `iterate_while` definition (v0.3 extras-carrying form + small-step rule at `:164-171` + `iterate_while_pure` sugar at `:178-182`).
+- `book/src/semantics/index.md:186-213` — the strawman §3.8 demand-driven pruning rule that underwrites Law 1.
 
 L3 source (the RHS of this rewrite; extracted from the firm sub-component):
 

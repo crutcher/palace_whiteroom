@@ -29,7 +29,7 @@ The canonical instances it cites — [`eigsolve`](./eigsolve.md),
 authoritative L_n entries; if this page and any L_n entry disagree on a factual
 claim about a specific operator, the L_n entry wins.
 
-The page exists because the [vocabulary-shift redirect](../design/l4_calculus.md)
+The page exists because the [vocabulary-shift redirect](../semantics/index.md)
 and the **L4-is-the-backend-lowering-target** framing both
 turn on the same question — *which operators belong at L4?* — and the answer is
 **not** "the ones that don't decompose". It is a three-way judgment about

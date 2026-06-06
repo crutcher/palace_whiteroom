@@ -34,8 +34,8 @@ combinator's — see [`inner_product`](./inner_product.md) §"Specializations".
 Two operators in one chapter because they share the entire reduction skeleton (sum over the
 shape group `S`) and differ only by the per-element kernel. The signature is the combinator's,
 read at the plain (`M = I`) conjugation value (named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1 — both operands congruent over one shape
-group `S` of arbitrary unknown rank, NOT rank-1). Full shape contract:
+[`l4_calculus`](../semantics/index.md) §1.2.1 — both operands congruent over one shape
+group `S` of arbitrary unknown rank). Full shape contract:
 [`inner_product`](./inner_product.md) §Signature.
 
 ## Conjugation variant-axis (the leaf-level fact, value-bearing for complex vectors)

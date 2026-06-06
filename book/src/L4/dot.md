@@ -53,14 +53,14 @@ fold; `dot` is the literature-standard verb a downstream algorithm spells by nam
 `dot` carries **no first-class L4 calculus structure of its own** (no `Solve` monad,
 no iteration carry, no convergence predicate) — like its parent combinator it is a
 **pure value-producing data-parallel reduction** over the shape group `S`
-(arbitrary unknown rank, NOT rank-1). It rises
+(arbitrary unknown rank). It rises
 as a **feature-surface verb the backend wants**, not because it carries iteration
 structure.
 
 ## Semantics (overlay)
 
 The L4 calculus is specified in the strawman
-[`../design/l4_calculus.md`](../design/l4_calculus.md). `dot` adds **no reduction-rule
+[`../semantics/index.md`](../semantics/index.md). `dot` adds **no reduction-rule
 extension** — it is the [`inner_product`](./inner_product.md) reduction read at the
 fixed `M = I` weight with the Hermitian/symmetric kernel. Pseudo-language is Haskell
 `::` signatures inside a `text` fence per the L4/L3 notation invariant.
@@ -75,14 +75,14 @@ fixed `M = I` weight with the Hermitian/symmetric kernel. Pseudo-language is Has
     tdot x y = inner_product x y  with unconjugated kernel   -- complex-only conjugation-axis value
 
 Shape contract (bunsen-style; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1; identical to the L4 combinator
+[`l4_calculus`](../semantics/index.md) §1.2.1; identical to the L4 combinator
 [`inner_product`](./inner_product.md) §Signature read at `M = I`, and to the firm L3
 signature — the L4 verb is value-thread-isomorphic to both):
 
 - `x` — `Tensor[(S: ...)]` — read-only; the **conjugated** (arg-1) operand in `xᴴ y`.
 - `y` — `Tensor[$S]` — read-only; the **linear** (arg-2) operand.
 - result — `Scalar` — element type per the kernel table below; `zero` on the empty tensor.
-- `x` and `y` share one shape group `S` (arbitrary unknown rank, NOT rank-1) and one
+- `x` and `y` share one shape group `S` (arbitrary unknown rank) and one
   element type `T ∈ {real, complex}`.
 
 Per-element kernel (the conjugation × element-type axes; inherited unchanged from
@@ -263,7 +263,7 @@ Classification / methodology anchors:
   abstraction — rises" (`:88-109`) names `dot` as a confirmed keep, the literature-standard
   named verb that rises to L4 alongside its parent combinator (the permitted dual).
 - `book/src/concepts/dot.md` — the BLAS-1 heritage / element-type cross-cutting framing.
-- `book/src/design/l4_calculus.md` — the strawman; `dot` adds no reduction rule (the
+- `book/src/semantics/index.md` — the strawman; `dot` adds no reduction rule (the
   combinator's `reduce`/`zipWith` fold read at `M = I`).
 
 Provenance: harvester:2026-06-02T205715Z (cycle-069 D2) — the `l4-dot-nrm2-named-verb-rise`

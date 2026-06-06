@@ -85,7 +85,7 @@ Three pieces of L4 wrapper machinery are absent at L3 (inherited from the kernel
 
 1. **Convergence-test initialisation** (`init_convergence`). Establish the residual proxy and the threshold `eps = max(op.rel_tol · s.initial_res, op.abs_tol)`, and seed `s.converged` by the pre-loop test `res < eps`. The L0 anchor is `reference/palace/palace/linalg/iterative.cpp:417-418` (CG): the `eps` formula and the pre-loop `converged = (res < eps)` short-circuit (which makes a warm-started already-converged solve take zero iterations — the basis of the L1 idempotent-re-solve law). The residual-proxy denominator depends on the initial-guess policy: cold-start uses `‖b‖_B`-style proxy, warm-start uses the initial-residual proxy (`reference/palace/palace/linalg/iterative.cpp:395-415`).
 
-2. **The outer-driver fold** (`iterate_while_L3 (krylov-step op) (K_0, s_init) predicate`). This is the L3 iteration rotation proper — the tail-recursive form of the L0 `for (; it < max_it && !converged; it++)` loop (`reference/palace/palace/linalg/iterative.cpp:427`). Each fold step is exactly one [`krylov-step`](./krylov-step.md) invocation; the kernel increments `s.it`, updates the iterate-bundle, and emits `outputs.residual_norm`; the predicate reads `s.converged` (set from `outputs.residual_norm < eps`, the L0 `converged = (res < eps)` at `:463`). The fold is published as a tail recursion per [`krylov-step`](./krylov-step.md) §Strawman-reference and the strawman `book/src/design/l4_calculus.md` §3.7 `iterate_while` conventions.
+2. **The outer-driver fold** (`iterate_while_L3 (krylov-step op) (K_0, s_init) predicate`). This is the L3 iteration rotation proper — the tail-recursive form of the L0 `for (; it < max_it && !converged; it++)` loop (`reference/palace/palace/linalg/iterative.cpp:427`). Each fold step is exactly one [`krylov-step`](./krylov-step.md) invocation; the kernel increments `s.it`, updates the iterate-bundle, and emits `outputs.residual_norm`; the predicate reads `s.converged` (set from `outputs.residual_norm < eps`, the L0 `converged = (res < eps)` at `:463`). The fold is published as a tail recursion per [`krylov-step`](./krylov-step.md) §Strawman-reference and the strawman `book/src/semantics/index.md` §3.7 `iterate_while` conventions.
 
 3. **Final-iterate materialisation** (`fold_iterate`). For non-restarted methods (CG, Chebyshev) the running iterate `s.x` is updated in-bundle each step, so `fold_iterate` is identity (the final `s_n.x` is already correct). For restarted methods (GMRES, FGMRES) the externally-visible iterate is folded in *once per restart cycle* from the basis correction `K.V · K.y`; `fold_iterate` materialises the last partial restart-cycle's correction into `s.x`. The placement "iterate folded at restart boundaries, not per step" is inherited from [`krylov-step`](./krylov-step.md) §Semantics counter-increment discussion and `solve-monad` §"Worked example — GMRES".
 
@@ -146,7 +146,7 @@ The fold's `result` fields are demand-pruned per [`derived-view-hoisting`](../co
 - [`variant-absorption`](../concepts/variant-absorption.md) — the body-variant absorption (in `krylov-step`); the driver's loop-shaping axes are *not* absorbed (they shape the fold).
 - [`constructed-operators`](../concepts/constructed-operators.md) — the preconditioner-side absorption into `op.T`.
 
-**Strawman reference**: `book/src/design/l4_calculus.md` §3.7 is the conventions source for the `iterate_while` shape this operator renders as a tail recursion; the L3 rendering is published in [`krylov-step`](./krylov-step.md) §Strawman-reference and `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` §"What the L3 form for `iterate_while` looks like".
+**Strawman reference**: `book/src/semantics/index.md` §3.7 is the conventions source for the `iterate_while` shape this operator renders as a tail recursion; the L3 rendering is published in [`krylov-step`](./krylov-step.md) §Strawman-reference and `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` §"What the L3 form for `iterate_while` looks like".
 
 No L4 monadic vocabulary appears in the L3 signature (no `Solve`, no `modify`, no `do`-block); no L1 opacity appears (the loop is open). That is the discipline of the layer.
 
@@ -194,7 +194,7 @@ The L3 fold structure is directly read from the Palace per-method `Mult` bodies;
 - `book/src/L2/ksp_solve.md` (stub) — the L2 outer-driver anchor this entry lowers to (rotation substantive, theme pending until L2 promotion).
 - `book/src/concepts/sequential-obstruction.md` (firm) — the canonical write-up of the outer-loop obstruction this operator carries.
 - `book/src/concepts/convergence-test.md`, `book/src/concepts/solve-monad.md`, `book/src/concepts/solver-as-operator.md`, `book/src/concepts/derived-view-hoisting.md` — cross-cutting concept anchors (predicate surface, L4 driver, consumer framing, demand-pruning).
-- `book/src/design/l4_calculus.md` §3.7 — the `iterate_while` conventions source the L3 tail-recursion renders.
+- `book/src/semantics/index.md` §3.7 — the `iterate_while` conventions source the L3 tail-recursion renders.
 
 ## L3 vs L1 distinction
 

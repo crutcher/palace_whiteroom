@@ -49,7 +49,7 @@
   - [sparameters — L1 composition-root](./feature/sparameters.L1.md)
   - [sparameters — L0 ground-truth surface](./feature/sparameters.L0.md)
 # Semantic surface — calculus, rules & abstractions
-- [L4 calculus & spec semantics (active-management surface)](./design/l4_calculus.md)
+- [L4 calculus & spec semantics (active-management surface)](./semantics/index.md)
 # L4 — Graph-Evaluation Calculus
 - [Overview](./L4/index.md)
 - [Iteration & step combinators](./L4/iteration-combinators-intro.md)

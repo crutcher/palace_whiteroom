@@ -53,7 +53,7 @@ chebyshev_iteration
 
 Shape contract (bunsen-style; named axes; the field shape group `S` and the
 square operator form `LinOp[(S: ...), $S]` follow the named-shape-group
-convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2) —
+convention of [`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2) —
 identical boundary to L1, with the internal scalar generator made explicit:
 
 - `op` — `ChebOp[S]` — the constructed smoother. Carries `op.A :

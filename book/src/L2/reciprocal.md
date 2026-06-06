@@ -35,7 +35,7 @@ L2 is the fusion-rotation layer (`book/src/L2/index.md`): "Kernel fusion across 
 algebraic operations is unfolded into composition… Batched specialized BLAS calls are
 written as compositions of base primitives." `reciprocal` at L2 is the base
 elementwise-multiplicative-inverse primitive in that vocabulary — a single field operation
-acting pointwise over the shape group `S` (arbitrary, unknown rank — NOT rank-1), with no control flow, no monadic state
+acting pointwise over the shape group `S` (arbitrary, unknown rank), with no control flow, no monadic state
 threading, no reduction, and no convergence predicate.
 
 This is a thin **floor presence** entry, authored under the 2026-05-31 foundation-first
@@ -95,11 +95,11 @@ them but composes neither.
     reciprocal x = (\idx -> 1 / x[idx])   for every multi-index idx of S
 
 Shape contract (bunsen-style; named shape groups per
-[`l4_calculus`](../design/l4_calculus.md) §1.2.1; positional values, no monadic effect, no
+[`l4_calculus`](../semantics/index.md) §1.2.1; positional values, no monadic effect, no
 destination buffer):
 
 - **`x`** — `Tensor[(S: ...)]` — the input tensor whose whole shape is the group `S`
-  (arbitrary, unknown rank — NOT rank-1). Read-only at L2
+  (arbitrary, unknown rank). Read-only at L2
   (the L2 form is pure / out-of-place; the L0 receiver self-overwrite is reintroduced only
   at the L1>L0 lowering).
 - **result** — `Tensor[$S]` — congruent to `x` (same shape group `S`); **same element type** as `x`. Every

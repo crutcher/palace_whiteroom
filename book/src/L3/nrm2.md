@@ -56,8 +56,8 @@ wrapper (the `krylov-step` body or the outer convergence-test consumer), not on 
     nrm2(x) = √⟨x, x⟩ = √dot(x, x)
 
 Result is **always real-valued** and non-negative (`nrm2(x) ≥ 0`), regardless of `x`'s element
-type. The operand is one shape group `S` of arbitrary unknown rank (NOT rank-1; named shape
-groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1); full shape contract +
+type. The operand is one shape group `S` of arbitrary unknown rank (see
+[`l4_calculus`](../semantics/index.md) §1.2.1); full shape contract +
 algebraic-law listing at the firm L1 leaf [`L1/nrm2`](../L1/nrm2.md).
 
 ## Consuming context (the leaf-level fact — RETAINED)
