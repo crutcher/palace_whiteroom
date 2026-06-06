@@ -15,7 +15,7 @@ gate_hits_total: 0
 build_status: EXIT 0 (no finalize build-repair)
 graded_stack_rank_violations: 0
 graded_stack_reachable: 123
-integration_commit: PLACEHOLDER_SHA
+integration_commit: eddd7e6b891307e88a343c9062675140357d2535
 ---
 
 # CYCLE-112 batch finalize — report of records (META-BATCH-36 OPENER, position 1/3)

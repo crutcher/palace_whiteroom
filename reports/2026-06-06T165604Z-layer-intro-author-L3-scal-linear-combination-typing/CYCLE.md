@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T17:03:26Z
 scope: L3 typed-edge frontmatter migration — scal + linear_combination (graded-stack P1 lazy-tail, batch-36 D2)
 status: pending
 integrated_at: 2026-06-06T173500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: eddd7e6b891307e88a343c9062675140357d2535
 integration_notes: "Applied clean (D2, batch-36). Frontmatter-only typed rank: firm + edges: (bare-slug surface mirroring L3/dot) on L3/scal + L3/linear_combination. ZERO standalone delta — both files carried legacy lowers_to/lifts_from, shim-counted typed before the edit, so untyped HELD (representation upgrade legacy→canonical edges:, not a typed-count change; cross-cutting signal F1). rank_violations HELD 0 (firm-rests-on-firm: both rest on L2/linear_combination firm), unresolved HELD 0. Build EXIT 0, no finalize build-repair. 2 OQs promoted to the batch-36 meta-phase (L3-scal-reachable-via-normalize-grounding, linter-legacy-shim-line-citation-527-532-not-546-547)."
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T165604Z
 scope: graded-stack-lazy-tail-typing — typed edges: block (+ rank:) on L3/orthogonalize + L3/nrm2 (D1 LEAD, cycle-112 / batch-36 opener)
 status: pending
 integrated_at: 2026-06-06T173500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: eddd7e6b891307e88a343c9062675140357d2535
 integration_notes: "Applied clean (D1, batch-36 opener). Frontmatter-only typed rank:+edges: on L3/orthogonalize (rank: partial-obstruction, HELD GARBAGE per RE2) + L3/nrm2 (rank: firm). +1 reachable (faithful L3/nrm2 → L2/nrm2 RE5 transitive-grounding flip), −1 detritus. rank_violations HELD 0, unresolved HELD 0, untyped HELD 60. Build EXIT 0, no finalize build-repair. 3 OQs promoted to the batch-36 meta-phase (re2-shadows-orthogonalize-variant-split-theme, lazy-tail-untyped-no-decrement-for-legacy-edged-files, obstruction-resolution-firm-linter-keying-untested). Cumulative landed-tree linter: files=355, typed=295, untyped=60, roots=36, reachable=123, rank_violations=0, unresolved=0, detritus=136."
 ---
 
