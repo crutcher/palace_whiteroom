@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T173043Z
 scope: L1/set_subvector_zero — upgrade L1>L0 theme edge reference→depends-on(lowers-to) (P1 typed-edge grounding, c108 §5 L1-op→theme convention)
 status: pending
 integrated_at: 2026-06-06T180000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: d88f003
 integration_notes: Applied clean by integrator-per-report (D2, staging row 1). Upgraded one edge in book/src/L1/set_subvector_zero.md frontmatter from reference → depends-on(kind:lowers-to) to L1-L0/set-subvector-zero-mutation-rotation + corrected stale pre-c108 "rank-direction error" prose in 3 locations (§Status well-foundedness, §Downward, the frontmatter comment). The theme flipped out of STRONGER GARBAGE SIGNAL. Standalone + TRUE CUMULATIVE: reachable 123→124 (+1, the faithful L1-op→theme §5 ground), detritus 136→135 (−1), STRONGER GARBAGE SIGNAL 25→24 (−1). rank_violations HELD 0 (firm op rank 3 ≤ firm theme rank 3). untyped HELD 60, unresolved HELD 0. Promoted OQ stale-pre-c108-rank-direction-error-prose-on-L1-ops (sibling c104-era L1 leaves likely carry the same stale prose + un-upgraded reference edge — a systematic L1-op→theme grounding sweep for c114). Build EXIT 0, linkcheck2 clean, no finalize build-repair. Committed in cycle-113 finalize atomic commit.
 ---
 
