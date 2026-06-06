@@ -1,11 +1,33 @@
 ---
 layer: L3
 operator: nrm2
-firmness: firm
-lowers_to:
-  - book/src/L1/nrm2.md (identity-in-form on the primitive's signature; no L3-L1 theme — see Lowers-to)
-lifts_from:
-  - book/src/L4/nrm2.md (firm cycle-069 D2 — the L4 Euclidean-norm verb `nrm2(r)`; the kept named abstraction risen to L4 as a named CONSUMER verb of the `inner_product` combinator at the diagonal `y = x` (`√ ∘ abs ∘ inner_product`), NOT a fold member — the do-NOT-merge guard; `concepts/black-box-vs-accelerated-kernels.md` §2; identity-in-form on the body — value-thread-isomorphic, no dedicated L4>L3 theme, the in-line-marker route)
+# Graded-stack scheme (authored from scratch, batch-36 c112 lazy-tail typing; migrates the legacy
+# layer:/firmness:/lowers_to:/lifts_from:/variant_axes: frontmatter to a typed edges: block). This
+# L3 entry is a firm consumer-stub (rank: firm; §Status): `nrm2` at L3 is a CONSUMER of the
+# inner-product fold (`nrm2(x) = √dot(x, x)`), NOT a fold member (the do-NOT-merge carve-out
+# preserved). Its laws are syntactic identities inherited from the firm L1 leaf → firm rests on firm.
+# depends-on: the firm L1 leaf it lowers to as identity-in-form (`L1/nrm2`, its legacy lowers_to);
+# the adjacent firm L2 consumer-stub it lowers to (`L2/nrm2`, §"Downward to L2", identity-in-form);
+# and the same-layer L3 reduce-anchor its defining identity `√dot(x, x)` composes (`L3/dot`, firm,
+# §Evidence "the L3 dependency anchor"). All three are firm → rank invariant holds firm→firm.
+# reference: the L4 verb it lifts to (`L4/nrm2`, its legacy lifts_from); the inner-product combinator
+# it consumes-but-is-NOT-a-member-of (`L2/inner_product` — kept as a navigational reference to honor
+# the do-NOT-merge carve-out, the operator→next-layer depends-on being `L2/nrm2`); the concept page.
+# This block does NOT force a reachability flip; `L3/nrm2` is already reachable inbound via
+# `L3/normalize` + `L4/nrm2` (pre-existing, unchanged).
+rank: firm
+edges:
+  depends-on:
+    - target: L1/nrm2
+      kind: lowers-to             # the firm L1 leaf; identity-in-form on the primitive's signature, no L3-L1 theme (legacy lowers_to)
+    - target: L2/nrm2
+      kind: lowers-to             # the adjacent firm L2 consumer-stub; identity-in-form (§"Downward to L2", no theme file)
+    - target: L3/dot
+      kind: composes              # same-layer reduce-anchor: the defining identity nrm2(x) = √dot(x, x) is L3-internal (§Evidence)
+  reference:
+    - L4/nrm2
+    - L2/inner_product
+    - concepts/nrm2
 variant_axes:
   - element-type (real / complex; collapsed to single operator at L3 — result is always real)
 ---

@@ -1,11 +1,14 @@
 ---
 layer: L3
 operator: scal
-firmness: firm
-lowers_to:
-  - book/src/L2/linear_combination.md (the arity-1 specialization of the firm L3/L2 `linear_combination` fold; `scal(α,x) = linear_combination [(α,x)]`; lowers via the combinator's §"Downward to L2" identity-in-form edge, then the substantive arity-dispatch is the L2>L1 `linear-combination-fold-specialization` theme) → book/src/L1/scal.md (transitive L3>L1 identity in-line; no `L3-L1/` directory)
-lifts_from:
-  - book/src/L3/linear_combination.md (the family combinator this leaf is the arity-1 specialization of — `scal` speaks through `linear_combination`, not as a re-derived base form, per the 2026-06-01 vocabulary-shift redirect)
+rank: firm
+edges:
+  depends-on:
+    - L2/linear_combination
+  reference:
+    - L3/linear_combination
+    - L1/scal
+    - L2-L1/linear-combination-fold-specialization
 variant_axes:
   - element-type (real / complex)
   - scalar-promotion (real-α-against-complex-x via concepts/scalar-promotion)

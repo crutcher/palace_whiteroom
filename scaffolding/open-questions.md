@@ -1330,3 +1330,28 @@ The c103/c104/c105 per-report integrator OQ appends (append-only between meta-ph
 
 **Kept — deferred / contingent (genuinely open, trigger-gated):**
 - `record-TimeState-needs-definition-home` (c106 D1, carried) — `L4/fold_solve`'s `TimeState` `(E,B)` field-state carry + the speculative `time_step_op` rough-in have no `concepts/time-state.md` home; single-consumer today. *Trigger:* a 2nd `TimeState` consumer surfaces, OR a transient-driver L4-feature dispatch consuming it.
+
+## re2-shadows-orthogonalize-variant-split-theme
+opened_at: cycle-112
+opened_by: layer-intro-author
+(D1 LEAD `graded-stack-lazy-tail-typing`, batch-36 opener; Finding F3.) `L3-L2/orthogonalize-variant-split` is detritus for the SAME reason `L3/orthogonalize` is — RE2: no faithful reachable consumer of the L3 iteration-view of `orthogonalize` (`L4/krylov-step` composes the L2 surface directly, not the L3 iteration-view). The UPPER-endpoint `lowers-to` rescue edge (`L3/orthogonalize → L3-L2/orthogonalize-variant-split`, scheme §5) is now in place but LATENT: it cannot rescue the theme while its only inbound depender (`L3/orthogonalize`) is itself RE2-unreachable. Disposition: rides the RE2 cluster; rescued automatically when/if a firm `L4/orthogonalize` Arnoldi-step-monad surface lands (currently unauthored). NOT a delete, NOT a force-edge — a documented RE2-shadowed node (GROUND-don't-remove disposition (1)-attempted-but-blocked-by-ratified-exception). Route: batch-36 meta-phase note under the RE2 cluster.
+
+## lazy-tail-untyped-no-decrement-for-legacy-edged-files
+opened_at: cycle-112
+opened_by: layer-intro-author
+(D1 LEAD `graded-stack-lazy-tail-typing`, batch-36 opener; Finding F1.) The lazy-tail "untyped → typed" framing does NOT decrement `untyped` for L3 mid-nodes that already carried legacy `lowers_to:`/`lifts_from:` frontmatter: `graded_stack_lint.py` (lines 525-531) auto-migrates legacy `lowers_to`/`lifts_from` to `depends-on` edges, so `read_any_edge` is already True → such files were already counted typed-by-legacy-edge (`rank=None`, NOT in the untyped-60). Verified: typing `L3/orthogonalize` + `L3/nrm2` HELD `untyped` at 60 (not 60→58). The real value of typing them is (i) adding the `rank:` token (enters the rank histogram / rank-violation check — `partial-obstruction` 3→4) and (ii) replacing the lossy auto-migrated edge set with a deliberate `depends-on` vs `reference` split. Route: re-baseline the campaign tracker's `untyped` expectation for any lazy-tail file whose legacy frontmatter already carried `lowers_to`/`lifts_from`/`depends_on`.
+
+## obstruction-resolution-firm-linter-keying-untested
+opened_at: cycle-112
+opened_by: layer-intro-author
+(D1 LEAD `graded-stack-lazy-tail-typing`, batch-36 opener; producer caveat.) `L3/orthogonalize` now carries `obstruction_resolution: firm` per graded-stack scheme §1. The linter's rank histogram confirms the `rank: partial-obstruction` token is consumed (count 3→4), but the producer did NOT independently verify the linter keys off `obstruction_resolution: firm` for any downstream-satisfaction rule — no `firm` consumer currently `depends-on` `L3/orthogonalize` (RE2-unreachable), so the path is untested here. Frontmatter is faithful to the scheme regardless. Route: flag for the rank-linter maintainer (confirm `obstruction_resolution` is read for the downstream-satisfaction / obstruction-sub-rank rule).
+
+## L3-scal-reachable-via-normalize-grounding
+opened_at: cycle-112
+opened_by: layer-intro-author
+(D2 `graded-stack-lazy-tail-typing`, batch-36 opener; reachability GROUND-candidate.) After the D2 typed-edge migration, `L3/scal` is still detritus (`[GARBAGE*]`): its only inbound is `L3/normalize`, itself unreachable. Per the GROUND-don't-remove directive (METHODOLOGY-GRADED-STACK §2f), the faithful disposition is to ground `L3/normalize` (or `L3/scal`) into a reachable chain via a real consumer's `depends-on` — whichever reachable op composes `normalize`/`scal` — NOT to delete or fake an inbound edge. This is beyond the frontmatter-only scope of the two D2 files (it requires typing an *upstream* consumer's edge). Note `L3/normalize` is in D1's adjacent family but NOT in D1's named file set (`L3/orthogonalize`+`L3/nrm2`), so neither D2 nor D1 grounds it this cycle. (Sibling: `L3/linear_combination` IS reachable, via `L4/linear_combination`.) Route: a future grounding pass typing the reachable consumer that composes `normalize`/`scal`.
+
+## linter-legacy-shim-line-citation-527-532-not-546-547
+opened_at: cycle-112
+opened_by: layer-intro-author
+(D2 `graded-stack-lazy-tail-typing`, batch-36 opener; citation-hygiene observation.) The D2 report cites the linter's legacy-frontmatter migration shim at `graded_stack_lint.py:518-547` / `:546-547`. The shim that maps `lowers_to`/`lifts_from`/`lifts_to`/`consumes` → `depends-on` edges and counts their presence as "typed" is actually at `graded_stack_lint.py:527-532` (the auto-migrate block; D1's parallel observation `lazy-tail-untyped-no-decrement-for-legacy-edged-files` cites lines 525-531 for the same shim). The substance (legacy frontmatter is shim-counted as typed, so `untyped` does not decrement for legacy-edged files) is correct and confirmed; only the precise line anchor in D2's narration drifted. Route: minor — note for the rank-linter maintainer / future citation when referencing the shim; the finding itself stands.

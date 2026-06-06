@@ -1,11 +1,13 @@
 ---
 layer: L3
 operator: linear_combination
-firmness: firm
-lowers_to:
-  - book/src/L2/linear_combination.md (the firm L2 fold combinator, cycle-018 / inverted-to-entry cycle-049 D1; identity-in-form across the L3>L2 edge — the L3 whole-tensor fold is value-thread-isomorphic to the L2 fold; see §"Downward to L2") → book/src/L1/{scal,axpy,axpby,axpbypcz}.md (the family members recovered as list-length specializations; substantive rotation is the L2>L1 `linear-combination-fold-specialization` fusion-selection theme)
-lifts_from:
-  - book/src/L4/linear_combination.md (firm cycle-068; identity-in-form on the body — the L4 calculus combinator is value-thread-isomorphic to this L3 fold, NO dedicated L4>L3 theme file, the eigsolve/chebyshev in-line-marker route — there is no monadic state-threading / Solve-monad / convergence predicate to dissolve across the L4>L3 edge)
+rank: firm
+edges:
+  depends-on:
+    - L2/linear_combination
+  reference:
+    - L4/linear_combination
+    - L2-L1/linear-combination-fold-specialization
 variant_axes:
   - arity (the UNIFICATION axis — not a remaining variant; recovered as term-list length)
   - output-aliasing (in-place vs out-of-place; orthogonal to arity; an L3>L2>L1 lowering concern, pure/out-of-place at L3)

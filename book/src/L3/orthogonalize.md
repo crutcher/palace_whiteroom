@@ -1,11 +1,43 @@
 ---
 layer: L3
 operator: orthogonalize
-firmness: partial-obstruction
-lifts_from:
-  - book/src/L2/orthogonalize.md (the named `project ▷ subtract` composition; the L2 per-variant batched/interleaved primitive sequence lifts to this L3 body, with the per-variant collective shape disclosed as the residual axis — see §"Lifts from"; the MGS interleaving is the obstruction, CGS/CGS2 lift)
-lowers_to:
-  - book/src/L2/orthogonalize.md (per-step `dot`+`axpy` body identity-in-form, annotated in-line per cycle-012; the SUBSTANTIVE loop-structure variant split — MGS `jloop`/CGS-batched-arm collapse into the L2 per-variant sequencing — is the dedicated `orthogonalize-variant-split` L3>L2 theme, cycle-044)
+# Graded-stack scheme (authored from scratch, batch-36 c112 lazy-tail typing; migrates the legacy
+# layer:/firmness:/lifts_from:/lowers_to:/variant_axes: frontmatter to a typed edges: block). This
+# L3 entry is a `partial-obstruction` (rank: partial-obstruction): the per-step `dot`+`axpy` body
+# lifts for all three variants AND the CGS/CGS2 loop lifts, but the MGS `j`-loop is a witnessed
+# `sequential-obstruction` (§Status). The lifted body is firm (syntactic identities on the
+# `orthog.hpp` source, inherited from the firm L1/L2 entries) → obstruction_resolution: firm.
+# depends-on: the L2 named composition it lifts-from/lowers-to (`L2/orthogonalize`, firm, the
+# `project ▷ subtract` surface — its legacy lifts_from AND lowers_to both name it); the two
+# same-layer L3 body primitives the per-step body composes (`L3/dot`, `L3/axpy`, §Dependencies
+# :366-374); and the dedicated substantive loop-structure lowering theme
+# `L3-L2/orthogonalize-variant-split` (kind: lowers-to — the L3-op-points-at-its-theme rescue edge,
+# mirroring the c111 L2/orthogonalize → L2-L1/orthogonalize-composition-lowering surface; this is the
+# UPPER endpoint that makes the theme reachable per scheme §5 batch-34). reference: the cross-cutting
+# concept pages + the transitive-identity L1 sibling + the two precedent partial-obstruction siblings.
+# RE2 baseline-exception (ratified): typing this block is correct hygiene but does NOT flip
+# `L3/orthogonalize` reachable — `L4/krylov-step` composes the L2 surface directly, not the L3
+# iteration-view, so there is no faithful reachable inbound depender. No forced inbound edge added.
+rank: partial-obstruction
+obstruction_resolution: firm
+edges:
+  depends-on:
+    - target: L2/orthogonalize
+      kind: lowers-to             # the firm L2 `project ▷ subtract` composition; per-step body identity-in-form (legacy lifts_from + lowers_to both name it)
+    - target: L3-L2/orthogonalize-variant-split
+      kind: lowers-to             # the dedicated SUBSTANTIVE L3>L2 loop-structure variant-split theme (cycle-044); this op is its UPPER endpoint (scheme §5 rescue)
+    - target: L3/dot
+      kind: composes              # same-layer body primitive: the projection-coefficient inner product H_j = op.dot(w_eff(j), V[j])
+    - target: L3/axpy
+      kind: composes              # same-layer body primitive: the rank-1 residual update w − H_j·V[j] = axpy(-H_j, V[j], w)
+  reference:
+    - concepts/sequential-obstruction
+    - concepts/tensor-field-lift
+    - concepts/variant-absorption
+    - concepts/orthogonalization
+    - L1/orthogonalize
+    - L3/chebyshev
+    - L3/eigsolve
 variant_axes:
   - gs_orthog (MGS = sequential per-column projector chain, NON-lifting / CGS = batched single-reduction, lifts / CGS2 = two CGS passes, lifts — this is the axis along which the L3 lift verdict SPLITS)
   - dot-hook (canonical ⟨·,·⟩ / B-weighted — parametric, the lift verdict is invariant under the hook substitution)
