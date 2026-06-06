@@ -406,6 +406,28 @@ This shape is load-bearing, and it follows three principles:
 > ~10-theme L2-L1 lowering cohort that stays garbage for one structural reason (the L2/L3 `lowers-to`
 > convention points operator→operator, never operator→theme) — the natural batch-35 lead, a one-edge-per-theme
 > grounding pass.
+>
+> **The grounding campaign ran to its faithful limit, and the residual garbage was named (batch-35).** Cycles
+> 109/110/111 drove reachability from 102 to **122** (rank invariant HELD at 0 throughout): c109 grounded the
+> four on-spine L2-L1 lowering themes; c110 grounded the reduce-to-scalar chain (`dot`/`nrm2`/`inner_product`)
+> and the orthogonalize leg with a *single* faithful `L4/krylov-step` body edit that cascaded the whole chain;
+> c111 grounded the orthogonalize chain down to L0. The batch's load-bearing lesson is the **boundary of
+> grounding**: not every unreachable firm node *can* be grounded, because not every one has a faithful reachable
+> depender. The reduce/orthogonalize verbs *do* (the solve body genuinely calls them), so they were grounded.
+> But the chebyshev/jacobi preconditioner leg is *absorbed into the constructed `op.T`* (the kernel folds
+> `apply_linop op.T`, never naming a concrete preconditioner), the L3 orthogonalize iteration-view is composed
+> only at its L2 surface (krylov-step composes `L2/orthogonalize`, not the L3 view), and `L2/gram` is reached
+> only through the demand-gated `deflate`. Forcing an edge for any of these would *invert a real dependency
+> direction or assert a constituent-use that does not exist* — the over-edge the priority order exists to
+> prevent. So the third disposition activated: these firm-but-absorbed/unconsumed nodes go into an explicit
+> **reachability baseline-exception set** (a new Axis-2 ledger kind, parallel to the now-burned-down Axis-1
+> rank-violation set), each enumerated with a *non-fix-forward promotion condition* — a future faithful column
+> edge, a demand-gate trigger, or transitive grounding of its consuming leg. The lesson: the reachability axis
+> reaches a *faithful floor*, not zero garbage; the disciplined response to that floor is a tracked, bounded
+> exception set with promotion conditions, exactly as `partly-constructive` is the bounded transient gate on the
+> resolution axis. (A separate, out-of-band 2026-06-06 directive also sharpened the L4 calculus notation: named
+> shape groups `Tensor[(S: ...)]` replace the bare `Tensor[N]`-as-same-shape leak, which silently pinned
+> shape-generic operators to rank-1.)
 
 ## FLOW — how the goal is met
 

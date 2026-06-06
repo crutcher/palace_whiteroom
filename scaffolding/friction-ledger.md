@@ -2177,3 +2177,41 @@ addressed_by: cycle-108 meta-phase (batch-34) — NO-GO on a pre-emptive reader 
 **Evidence (one instance, latent since).** **cycle-106 D5:** surfaced during the `unresolved_depends_on_targets: 21` reclassification — D5's migration of all 18 host files to typed `edges:` blocks *removed the trigger* (`unresolved 21→0`, `--strict` EXIT 0), but the reader-bug is **latent**: any remaining un-migrated `:`-bearing legacy-edge item reproduces the artifact. No fresh trigger fired in c107/c108 (both were grounding/node-typing on already-scheme-or-clean chapters).
 
 **Decision (batch-34 meta-phase — NO-GO on a pre-emptive reader fix).** Two non-blocking reader fixes exist (strip the trailing ` (…)` qualifier before the block-mapping test, mirroring `normalize_target`'s paren-strip at `:317`; OR skip the block-mapping branch for legacy-key items). But the P1 typed-edge campaign is *already* converting legacy `:`-bearing items to the clean `edges:` block surface form as files are next-touched (option (a)-lazy tail), which removes the trigger file-by-file — so the migration is the in-flight fix, and a separate `tools/` code-change ask is not warranted while the lazy tail is draining and `unresolved_depends_on_targets` sits at 0. This is a code change (ask-class authority), so it is correctly deferred rather than enacted. **Watch / re-open** as a `tools/` fix-the-reader decision on **recurrence-2** — a fresh `{'book/src/…` false-positive surfacing after the lazy tail is materially drained (i.e. the migration-eliminates-the-trigger bet failed because a long-lived legacy `:`-item persisted). Until then, the bug is latent with no live cost (`unresolved=0` confirmed on the live tree this meta-phase).
+
+---
+
+```yaml
+---
+slug: named-shape-groups-tensor-n-rank-1-leak
+first_observed: cycle-111
+last_observed: cycle-111
+recurrence_count: 1
+status: addressed
+addressed_by: cycle-111 meta-phase (batch-35) — an OUT-OF-BAND user directive (2026-06-06, commits bee5598 + 7b4b2d1) introduced named shape groups Tensor[(S: ...)] + the two-group operator form LinOp[(R: ...), (D: ...)] to the L4 calculus (authoritative def book/src/design/l4_calculus.md §1.2.1-§1.2.2; memory project_named_shape_groups_notation). The orchestrator ALREADY enacted the artifact sweep (design doc + the shape-generic L4/L3/L2 cohort + lowering themes + concept pages + index cells — 64 files; L1/L0 flat Tensor[N] KEPT; audit reports/2026-06-06T030000Z-shape-notation-audit/AUDIT.md). This meta-phase CODIFIED the convention into the producer role-specs so NEW signatures use it: harvester.md §L4/L3-strawman-conventions + layer-intro-author.md §L4/L3-strawman-conventions each gained a "Shape congruence — use NAMED SHAPE GROUPS, not bare Tensor[N]" bullet. Memory: project_named_shape_groups_notation.
+---
+```
+
+**Pattern (a NEW notation convention that emerged from a user directive — the `Tensor[N]`-as-same-shape rank-1 leak).** Not friction in the "something is broken" sense; tracks the emergence + codification of a notation convention the user directed out-of-band. The L4 calculus used bare `Tensor[N]` to mean "same shape as the other operand" — but `Tensor[N]` denotes a **rank-1 tensor of length `N`**, silently pinning shape-generic ops (element-local / whole-tensor / whole-tensor-reduce: `axpy`/`dot`/`nrm2`/`scal`/`normalize`/`reciprocal`/`elementwise_product`/…) to rank-1. The fix: a **named shape group** `Tensor[(S: ...)]` (first binder) / `Tensor[S]` (re-uses, NO colon before `[`) for rank-agnostic congruence, plus the two-group `LinOp[(R: ...), (D: ...)]` for domain≠range operators. `Tensor[N]` is **reserved** for genuinely-flat rank-1 dof-vectors (KEPT at L1/L0 where Palace `Vector` is rank-1, and for genuine rank-1 lists `Tensor[K]`/`Tensor[m]` at any layer).
+
+**Evidence.** **2026-06-06 (out-of-band):** the user introduced the notation + the orchestrator swept the 64 shape-generic calculus-layer files (design doc §1.2.1/§1.2.2 + the L4/L3/L2 cohort + lowering themes + concept pages + index cells); L1/L0 flat KEPT. Audit of record: `reports/2026-06-06T030000Z-shape-notation-audit/AUDIT.md`.
+
+**Residual (settled-by-default).** The complex element-axis rendering (`Tensor[N, complex]` / `ComplexTensor[N]`) was handled as "convert the shape to `(S: ...)`, preserve the `complex` element-type annotation as written" → `Tensor[(S: ...), complex]`. This meta-phase judged a firm dedicated complex-element-type notation convention NOT warranted (the convert-shape-preserve-annotation rule is sufficient and already applied uniformly in the sweep + codified in the two role-spec bullets) — settled-by-default, no OQ filed. **Watch.** If a future complex-element rendering needs a distinct spelling the convert-shape rule cannot express (recurrence-2), file an OQ for a `complex`-element notation call.
+
+---
+
+```yaml
+---
+slug: parallel-dispatch-reachability-measurement-contamination
+first_observed: cycle-110
+last_observed: cycle-110
+recurrence_count: 1
+status: new
+addressed_by: cycle-111 meta-phase (batch-35) — LEDGER-AND-MONITOR (no role-spec change enacted). The discipline self-corrected at recurrence-1 (c111 did NOT recur) and the existing critic + repairer + per-report-integrator-re-measure-on-the-landed-tree safety net caught + fixed both c110 instances. Re-open as a GO (a producer-side "measure your OWN edit-set in isolation; finalize computes the cumulative" role-spec instruction in layer-intro-author) on recurrence-2.
+---
+```
+
+**Pattern (shared-working-tree reachability-measurement contamination across parallel dispatches).** When ≥2 `layer-intro-author` dispatches in one wave both run the reachability linter (`graded_stack_lint.py`) on the SAME working tree, each measures its delta with the OTHER's not-yet-reverted edits present (an apply→lint→revert race across siblings sharing one tree), so each producer's reported reachability headline is contaminated by the sibling's cascade — a producer reports a cumulative-with-sibling number as if it were its own isolated delta.
+
+**Evidence (one instance, self-corrected).** **cycle-110 (detection):** both parallel D1/D2 layer-intro-author dispatches MISreported reachability — D1 reported a 119/+12 headline that was really the cumulative-with-D2 number; D2 reported +12 that was really D1's cascade. BOTH were caught by the critics + fixed by the repairers (each headline corrected to the standalone/isolation truth + a finalize-re-measure instruction); the per-report integrator's re-measure-on-the-landed-tree step produced the authoritative cumulative 119. **cycle-111 (no recurrence):** c111's two parallel dispatches correctly isolated each delta — D1 measured its own +3 standalone, D2 confirmed reachability-neutral, finalize re-measured the cumulative 122. The discipline HELD.
+
+**Decision (batch-35 meta-phase — LEDGER-AND-MONITOR, not codify).** The contamination self-corrected after one occurrence (the c111 producers isolated their deltas without a role-spec change), and a robust three-layer safety net already catches it: the critic flags the measurement-misattribution, the repairer corrects the headline in-place, and the per-report integrator re-measures the authoritative number on the LANDED tree (the single source of truth for reachability — never a producer's working-tree number). Codifying a producer-side measurement-isolation instruction now would harden against a non-recurring pattern; defer it. **Watch / re-open** as a GO on **recurrence-2** — a fresh contaminated headline in a future ≥2-layer-intro-author wave — at which point enact the `layer-intro-author` role-spec instruction: "when ≥2 dispatches share a wave, measure your OWN edit-set in isolation (git-stash siblings, or report only your standalone delta); the per-report integrator + finalize compute the authoritative cumulative on the landed tree — never trust a whole-tree reachability number measured with sibling edits present."
