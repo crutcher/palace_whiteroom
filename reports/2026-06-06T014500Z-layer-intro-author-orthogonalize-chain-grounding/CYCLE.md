@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T014500Z
 scope: graded-stack edge-typing — the orthogonalize lazy-tail chain grounding (D1, cycle-111, THE LEAD; §(g) GROUND-don't-remove)
 status: pending
 integrated_at: 2026-06-06T021500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 9e95b1e
 integration_notes: "cycle-111 D1 (THE LEAD), report 1 of 2. Applied verbatim per the 2 ## Proposed changes anchor-prepend blocks — from-scratch edges: blocks on book/src/L2/orthogonalize.md + book/src/L1/orthogonalize.md (both had a BARE H1, zero pre-existing frontmatter). Reachable 119→122 (+3: L1/orthogonalize, L2-L1/orthogonalize-composition-lowering, L1-L0/orthogonalize-mutation-rotation flip in); detritus 140→137; STRONGER GARBAGE SIGNAL HOLDS 26; rank_violations HELD 0; untyped HELD 60. All per-report gates PASS/N/A. Repairer fixed one low-severity garbage-bucket-wording prose warning (edges: blocks untouched). cargo make book EXIT 0, linkcheck2 clean. OQ l3-orthogonalize-sub-chain-no-faithful-reachable-depender confirmed at open-questions.md:1494 (no duplicate). Batch-35 BATCH-CLOSING cycle."
 ---
 

@@ -8,7 +8,7 @@ meta_batch_position: 3
 batch_cycle_ids: [cycle-109, cycle-110, cycle-111]
 meta_phase_fires_after_this_cycle: true
 status: complete
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 9e95b1e
 ---
 
 # CYCLE-111 — batch finalize (the report-of-record)

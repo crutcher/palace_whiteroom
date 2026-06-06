@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T014500Z
 scope: cycle-111 D2 — type the two axpy-family L1>L0 lowering-theme leaves (frontmatter-only scheme hygiene)
 status: pending
 integrated_at: 2026-06-06T021500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 9e95b1e
 integration_notes: "cycle-111 D2, report 2 of 2 (FRONTMATTER-ONLY scheme hygiene). Applied verbatim per the 2 ## Proposed changes anchor-prepend blocks — from-scratch edges: blocks on book/src/L1-L0/axpby-mutation-rotation.md + book/src/L1-L0/axpbypcz-mutation-rotation.md (both had a BARE H1, zero pre-existing frontmatter; disjoint from D1). Reachability-NEUTRAL (both themes already reachable via inbound reference edges, confirmed by --show-inbound). Producer correctly DECLINED a dispatch-suggested reference: L1-L0/dot-mutation-rotation (don't-manufacture discipline). TRUE CUMULATIVE (both D1+D2): reachable 122, detritus 137, STRONGER GARBAGE 26, rank_violations 0, untyped 60. All per-report gates PASS/N/A; all-pass clean critic-set (no repairer pass). RESOLVES OQ l1-l0-axpy-family-themes-need-scheme-frontmatter (meta-phase to unify/close). Carry-forward body note: pre-existing prose mislabel at axpby-mutation-rotation.md:25-26 deferred to a future body pass. cargo make book EXIT 0, linkcheck2 clean. Batch-35 BATCH-CLOSING cycle."
 ---
 
