@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T001708Z
 scope: type the 3 high-fan-out L1 BLAS leaves (axpy / axpby / axpbypcz) — rank + edges frontmatter
 status: pending
 integrated_at: 2026-06-06T013000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: eaca0753ab3623d57f89ae1d8e5a6bf0d48043be
 integration_notes: Applied clean by integrator-per-report (staging row 2/2). Frontmatter prepend (rank:firm + edges block) on book/src/L1/{axpy,axpby,axpbypcz}.md; files previously carried no frontmatter. Standalone contribution +2 reachable (axpby/axpbypcz themes left detritus); TRUE CUMULATIVE reachable=119. untyped HELD 60 (linter prose-Status fallback already ranked them firm). rank_violations HELD 0. Resolves c109 repairer OQ l1-blas-leaves-axpy-family-lack-rank-frontmatter (meta-phase to unify). Build EXIT 0, linkcheck2 clean. Committed in cycle-110 finalize atomic commit.
 ---
 

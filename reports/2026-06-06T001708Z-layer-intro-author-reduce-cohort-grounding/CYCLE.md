@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T001708Z
 scope: cycle-110 D1 — reduce/orthogonalize/chebyshev cohort GROUNDING pass (batch-35 LEAD, the c109 Group-B next tranche)
 status: pending
 integrated_at: 2026-06-06T013000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: eaca0753ab3623d57f89ae1d8e5a6bf0d48043be
 integration_notes: Applied clean by integrator-per-report (staging row 1/2). Frontmatter-only +3 composes depends-on edges on book/src/L4/krylov-step.md grounding the reduce-to-scalar chain (L4/dot, L4/nrm2, L2/orthogonalize). D1-isolation reachable 107->117; TRUE CUMULATIVE with D2 = 119. rank_violations HELD 0. 4 OQs promoted (reduce-chain RESOLVED-PARTIAL + 3 routed). Build EXIT 0, linkcheck2 clean, no finalize build-repair. Committed in cycle-110 finalize atomic commit.
 ---
 
