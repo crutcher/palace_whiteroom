@@ -65,6 +65,7 @@ status: pending
 - You DON'T enact unifications; you surface them. Follow-up dispatches are scheduled by the next cycle-planner.
 - Be specific — vague observations ("these operators feel related") aren't useful. Concrete claims with evidence are.
 - When you propose a unification, propose the **abstraction** that would subsume both — not just "merge these."
+- **Semantic restatement is a SMELL you surface — USE + LINK, don't RE-STATE (user directive 2026-06-06; CLAUDE.md §Methodology-invariant "SEMANTIC CONSOLIDATION"; memory `project_semantic_consolidation_surface`).** A general semantic rule/def/abstraction about the language (named-shape-groups syntax, the notation invariant, monad/ownership/reduction conventions) restated at a functional-unit (operator/theme/layer-intro) scope is the **semantic analog of a degenerate identity-lowering or an un-grounded detritus node** — the rule should live ONCE on the semantic surface (`book/src/design/l4_calculus.md`) and the functional unit should USE + LINK to it. When your same-layer scan finds such a restatement (especially a **cohort** of it — the 27-file named-shape-groups restatement is the exemplar), surface it as a **relocation-to-the-surface + back-link** observation (route to `layer-intro-author`, the surface owner, + the meta-phase, which migrates the cohort sweep into the plan) — the semantic analog of a unification observation.
 
 ## What you DO NOT do
 

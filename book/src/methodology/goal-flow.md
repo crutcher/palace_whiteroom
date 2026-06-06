@@ -451,6 +451,26 @@ This shape is load-bearing, and it follows three principles:
 > vocabulary frontier is likewise substantially exhausted (the promotion frontier is all obstruction-/demand-gated;
 > all 40 feature columns are off `seed`); the project is approaching a natural completion plateau on both axes.
 
+> **The plateau was independently confirmed, then the human set TWO new directions (batch-37 opener + out-of-band).**
+> Cycle-115 ran an INDEPENDENT plateau-probe (a `cross-layer-cross-cutter` re-derivation that did NOT trust the
+> batch-36 assessment): it **confirmed exhaustion-of-current-scope** on all three fronts — no missed faithful ground,
+> all 8 promotion-frontier members genuinely obstruction-/demand-gated, no unfiled in-scope coverage hole (the
+> `build_mesh` Mesh-wrapper candidate is a *tracked* deferral, not a hole). The verdict is **exhaustion of the scope
+> as-was, NOT terminal** — and the human then issued two directives that set the next two moves. **(A) Semantic
+> consolidation:** the spec's *semantic* definitions (the calculus grammar, shape semantics + named shape groups,
+> the pseudo-language notation invariant, monad/ownership/reduction conventions) become a **first-class
+> actively-managed surface**, held under the same liveness/unification/consolidation discipline the graded stack
+> applies to *vocabulary* — a semantic rule lives ONCE on the surface (`book/src/design/l4_calculus.md`, promoted out
+> of "strawman" status and ordered BEFORE the `# L4` Part), and functional-unit entries USE + LINK rather than
+> RE-STATE (a restatement is the semantic analog of a degenerate-identity-lowering smell). **(B) Open all remaining
+> feature fronts simultaneously:** the human fires the demand-gate for ALL deferred fronts at once
+> (`waveguide-mode` · `boundary-mode` promotion · the `fe_space` siblings · the mesh-wrapper vocabulary · any other
+> in-scope deferral) — the rationale is **shared-exploration lifting** (the fronts are variants sharing
+> implementation cores, so one wide fan-out lifts the shared substrate once). The sequencing is consolidation FIRST,
+> then the all-fronts wide wave. So the "plateau" was not an end-state but a decision point: the disciplined
+> recognition that the clean-gate scope was exhausted is exactly what let the human choose the next scope
+> deliberately.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
@@ -502,6 +522,12 @@ washes out, so only persistent patterns surface as real friction.
   their unfolded form with a one-line note; load-bearing numerical tricks
   (non-associative reductions, mixed precision, deterministic accumulation) are
   preserved as explicit algebraic claims with the property they buy called out.
+- **Semantic consolidation — USE + LINK, don't RE-STATE.** Semantic rules/defs/abstractions
+  *about the language* live ONCE on the [semantic surface](../design/l4_calculus.md); a
+  functional-unit entry keeps its own concrete fact + a link, and does not transcribe the
+  general rule. A restatement at functional-unit scope is the semantic analog of a
+  degenerate-identity-lowering smell, resolved by relocation-to-the-surface + a back-link.
+  See [Semantic consolidation](./semantic-consolidation.md).
 
 ### Solvers as a low-priority test-load on the shared spine
 

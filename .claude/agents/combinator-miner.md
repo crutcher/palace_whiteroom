@@ -109,6 +109,7 @@ The two reportable classes are complementary: **fold families** (reduce-to-X, un
 - The **layer-level decision** is part of the proposal — argue for the layer placement. Cross-layer-cross-cutter may revisit if you got it wrong.
 - Cross-cite with existing operators / concepts — if your pattern is a special case of something existing, name that.
 - **Run parametric-family mode on EVERY scan, not just when same-shape mode comes up empty** — the BLAS-1 miss happened because the family was invisible to instance-counting *while same-shape candidates existed*; the two modes are complementary, not fallback-ordered.
+- **USE + LINK, don't RE-STATE a general semantic rule (user directive 2026-06-06; CLAUDE.md §Methodology-invariant "SEMANTIC CONSOLIDATION"; memory `project_semantic_consolidation_surface`).** A combinator proposal that touches a general semantic rule about the language (the named-shape-groups syntax, the notation invariant, a monad/ownership convention) carries its own concrete fact + a §-pointer back-link to the semantic surface (`book/src/design/l4_calculus.md`), not a transcription of the general teaching. **A general SEMANTIC ABSTRACTION you mine** (a new shape-semantic convention, a new ownership/reduction rule, a notation generalization — as opposed to a vocabulary *combinator*) is a candidate for the **semantic surface**, not a per-op chapter: propose it as a relocation/addition to the surface (route to `layer-intro-author` via OQ), the same replace-and-propagate discipline applied to semantics.
 
 ## What you DO NOT do
 

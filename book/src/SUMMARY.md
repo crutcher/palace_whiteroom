@@ -6,6 +6,7 @@
 - [Goal & Flow](./methodology/goal-flow.md)
 - [Resolution ladder & reachability](./methodology/resolution-ladder.md)
 - [Graded-stack scheme (node-status + typed edges)](./methodology/graded-stack-scheme.md)
+- [Semantic consolidation (active-management semantic surface)](./methodology/semantic-consolidation.md)
 # Feature surfaces — entry points
 - [Overview](./feature/index.md)
 - [Spine ROOT (lifecycle)](./feature/spine-root.md)
@@ -47,6 +48,8 @@
   - [sparameters — L4 composition-root](./feature/sparameters.L4.md)
   - [sparameters — L1 composition-root](./feature/sparameters.L1.md)
   - [sparameters — L0 ground-truth surface](./feature/sparameters.L0.md)
+# Semantic surface — calculus, rules & abstractions
+- [L4 calculus & spec semantics (active-management surface)](./design/l4_calculus.md)
 # L4 — Graph-Evaluation Calculus
 - [Overview](./L4/index.md)
 - [Iteration & step combinators](./L4/iteration-combinators-intro.md)
@@ -349,7 +352,6 @@
 
 # Design Artifacts
 - [Index](./design/index.md)
-- [L4 — Graph-Evaluation Calculus (strawman)](./design/l4_calculus.md)
 # Meta-Reviews
 - [Index](./meta-reviews/index.md)
   - [2026-05-24 — first meta-review (cycles 1–3)](./meta-reviews/2026-05-24.md)

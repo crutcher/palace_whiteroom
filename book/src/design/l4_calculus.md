@@ -1,6 +1,8 @@
-# L4 — Graph-Evaluation Calculus (strawman)
+# L4 calculus & spec semantics — the active-management semantic surface
 
-**Status:** first draft. Many specifics are placeholders — the point of this document is to surface friction early, not to be authoritative. Open questions and push-back signals are noted inline.
+> **⟢ SEMANTIC-CONSOLIDATION DIRECTIVE (user directive 2026-06-06).** This document is no longer a "strawman draft" — it is the project's **single, actively-managed semantic surface**: the unified home for the spec's **semantic rules, definitions, and abstractions** (the calculus grammar, shape semantics + named shape groups, the L4/L3 pseudo-language notation invariant, monad / ownership / reduction-rule / scalar-promotion conventions). It is **held under the same liveness / unification / consolidation discipline** the graded-stack two-axis machinery applies to vocabulary. **The rule: a semantic rule/def/abstraction lives ONCE, here, at the semantic surface; functional-unit (operator / theme / layer-intro) entries USE + LINK to it, they do NOT RE-STATE it** — a semantic rule restated at a functional-unit scope is the semantic analog of a degenerate identity-lowering smell or an un-grounded detritus node, and is resolved by relocation-to-the-surface + a back-link. It is placed **before the `# L4` Part** in `SUMMARY.md` ordering (it defines the language the layers are written in). See the active-management discipline (§0.1) below.
+
+**Status:** **actively-managed semantic surface** (de-strawman'd 2026-06-06). Authoritative for the calculus conventions L4/L3/L2 content cites + continues. Specifics still marked "placeholder" / "open question" inline are genuine open points, not a disclaimer on the whole document.
 
 ## 0. What L4 is and is not
 
@@ -18,6 +20,15 @@ L4 is **not**:
 - A burn API. Not a Rust crate sketch. Not a runtime design.
 - Committed to eager-vs-traced execution, persistent-DS choices, or monad-transformer stacks. Those are realization concerns for the (separate, downstream) burn-realization spec.
 - A complete language. It is the smallest calculus that admits Palace's algorithms cleanly; extensions are added as friction at the lower layers demands them.
+
+## 0.1 Active-management discipline (how this surface stays unified, consolidated, live)
+
+This surface is maintained under the same standing discipline as the graded-stack vocabulary, owned by `layer-intro-author` (authoring) + the `meta-phase` (every-batch liveness/unification refresh, the standing duty analog of the GC sweep).
+
+- **Single home (the LIVENESS rule).** Every semantic rule/def/abstraction about the language or the spec lives here exactly once. A producer (harvester/abstractor/combinator-miner/cross-cutter/layer-intro-author) that needs a semantic rule **cites + links here**; it does not transcribe the rule into its own chapter. The per-op chapter keeps only its **own** concrete shape/semantic facts (e.g. "`axpy` is whole-tensor shape-congruent: `Tensor[(S: ...)] → ...`") plus a pointer to the governing section here (e.g. §1.2.1). The general teaching — the binding/use syntax, the anti-pattern, the migration note — lives only here.
+- **Restatement is a smell (the UNIFICATION rule).** A semantic rule found restated at a functional-unit scope is treated like a degenerate identity-lowering or un-grounded detritus: it is **relocated to this surface and replaced with a back-link**, not left duplicated. The cross-cutters (`same-layer-cross-cutter` especially) surface restatement-cohorts; the meta-phase migrates the cohort sweep into the plan.
+- **Consolidation sections.** The surface is organized by semantic concern: §1 grammar (types/shapes/terms), §1.2 shape semantics + named shape groups, §2 ownership, §3 reduction rules, §4 type+shape rules, §5 equational laws. New semantic abstractions land in the matching section (or a new numbered section). The **L4/L3 pseudo-language notation invariant** (Haskell `::` signatures, TS `{ field: type }` records, do-notation bodies, `$$` math for reduction rules, fenced ` ```text `) is the notational law these sections are written in and that all L4/L3 content follows — it lives here as a convention, not restated in role-specs as content (the role-specs point here).
+- **Batch refresh (meta-phase standing duty).** Each batch the meta-phase re-checks this surface for: (i) drift against the authoritative sources (`CLAUDE.md`, `METHODOLOGY-REDIRECT.md`, memory) — if this surface contradicts a source, the **source wins** and this surface is corrected; (ii) any new restatement-cohort surfaced by the cross-cutters → migrate the sweep to the plan; (iii) any new semantic abstraction that earned a consolidated home. This is the semantic analog of the graded-stack GC sweep.
 
 ## 1. Grammar
 
