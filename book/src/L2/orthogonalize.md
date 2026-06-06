@@ -1,3 +1,28 @@
+---
+layer: L2
+operator: orthogonalize
+# Graded-stack scheme (authored from scratch, batch-35 c111; mirrors the c109 L2/krylov-step
+# from-scratch authoring). This firm L2 named composition (`project ▷ subtract`) rests on the
+# firm L1 leaf it lifts (`L1/orthogonalize`) plus the two firm L1 primitives its composition
+# stages genuinely call (`L1/dot` for `project`, `L1/axpy` for `subtract`; body §:116-131,
+# §Dependencies :245-251) — all depends-on. AND it lowers through the firm L2>L1 lowering theme
+# `orthogonalize-composition-lowering` (lowers-to depends-on; mirrors L2/krylov-step →
+# L2-L1/krylov-step-kernel-defusion). This node firm (rank 3); all three L1 depends-on targets
+# carry rank: firm, the lowering theme is firm content (c022) — rank invariant holds firm→firm.
+rank: firm
+edges:
+  depends-on:
+    - L1/orthogonalize
+    - L1/dot
+    - L1/axpy
+    - target: L2-L1/orthogonalize-composition-lowering
+      kind: lowers-to             # the L2>L1 lowering theme this named composition lowers through
+  reference:
+    - concepts/orthogonalization
+    - concepts/variant-absorption
+    - concepts/sequential-obstruction
+---
+
 # orthogonalize
 
 The L2 first-class composition naming the Gram-Schmidt **orthogonalize-against-basis**

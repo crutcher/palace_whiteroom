@@ -1,3 +1,33 @@
+---
+layer: L1
+operator: orthogonalize
+# Graded-stack scheme (cycle-111, D1): firm L1 Gram-Schmidt leaf — the L0 implementation is
+# read in full (header-only inline `orthog.hpp:18-90`) and the laws are standard Gram-Schmidt
+# facts modulo recorded FP caveats (the firm-on-positive-structure escape; matches the BLAS-1
+# floor `dot`/`nrm2`/`axpy`/`scal`). The blocking depends-on is the rank-terminal POSITIVE L0
+# SOURCE (cites-evidence) — the three Gram-Schmidt kernel bodies + the runtime dispatch wrapper
+# — which is what makes the `firm` rank well-founded. The lowers-to edge points at the firm
+# L1>L0 mutation-rotation theme (the in-place `w` overwrite + raw-pointer `H` write home).
+rank: firm
+edges:
+  depends-on:
+    - target: palace/linalg/orthog.hpp:41-53
+      kind: cites-evidence        # OrthogonalizeColumnMGS — per-j [dot, axpy] sequential body
+    - target: palace/linalg/orthog.hpp:57-74
+      kind: cites-evidence        # OrthogonalizeColumnCGS — batched dots, GlobalSum(m), batched w.Add
+    - target: palace/linalg/orthog.hpp:75-88
+      kind: cites-evidence        # CGS2 refine block — second CGS pass accumulating H[j] += dH[j]
+    - target: palace/linalg/iterative.cpp:307-325
+      kind: cites-evidence        # OrthogonalizeIteration — runtime MGS/CGS/CGS2 dispatch wrapper
+    - target: L1-L0/orthogonalize-mutation-rotation
+      kind: lowers-to             # the L1>L0 mutation-rotation home (in-place w + raw-pointer H)
+  reference:
+    - L1/dot
+    - L1/axpy
+    - concepts/orthogonalization
+    - concepts/sequential-obstruction
+---
+
 # orthogonalize
 
 Mutation-lifted Gram-Schmidt orthogonalisation: given a stored basis `V[0..m-1]` and a

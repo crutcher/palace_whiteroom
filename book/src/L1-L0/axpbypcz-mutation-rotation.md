@@ -1,3 +1,31 @@
+---
+layer: L1-L0
+theme: axpbypcz-mutation-rotation
+rank: firm
+# Graded-stack scheme (cycle-111, D2): L1>L0 lowering-theme leaf, typed from scratch
+# (discharges OQ `l1-l0-axpy-family-themes-need-scheme-frontmatter`). Firm mutation
+# rotation: structural rewrites + a transparent γ==0 constant-folding sub-rule over
+# fully-specified positive L0 source. The blocking depends-on edges are the rank-terminal
+# POSITIVE L0 SOURCE (cites-evidence) the rewrite rests on, which makes the `firm` rank
+# well-founded. The firm L1 parent (axpbypcz) reaches this theme via its own legacy
+# depends-on edge; recorded here as `reference` see-also — scheme hygiene, NOT a
+# reachability flip (the theme was already reachable from that parent).
+edges:
+  depends-on:
+    - target: palace/linalg/vector.cpp:745-758
+      kind: cites-evidence        # real-real free-function body (with γ==0 branch)
+    - target: palace/linalg/vector.cpp:749-751
+      kind: cites-evidence        # γ==0 fast-path calling MFEM add(α,x,β,y,z)
+    - target: palace/linalg/vector.cpp:755-756
+      kind: cites-evidence        # γ≠0 slow-path AXPBY(...); z.Add(...)
+    - target: palace/linalg/vector.hpp:313-316
+      kind: cites-evidence        # free-function template AXPBYPCZ decl
+  reference:
+    - L1/axpbypcz
+    - L1/axpby
+    - L1/axpy
+---
+
 # axpbypcz-mutation-rotation
 
 The mutation rotation for the fused three-scalar three-vector update. Lowers

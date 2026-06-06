@@ -1490,3 +1490,17 @@ The c103/c104/c105 per-report integrator OQ appends (append-only between meta-ph
 - **recommended resolution.** In the lazy-tail typing campaign, give the two themes `rank: firm` + an `edges:` block following the lowering-edge rule (graded-stack scheme §5: a lowering theme `depends-on` both its L1 form and its L0 source). Until then the leaf `lowers-to` edges into them are warn-not-fail.
 - **opened_at:** cycle-110
 - **opened_by:** layer-intro-author (via integrator-per-report, D2)
+
+## OQ: l3-orthogonalize-sub-chain-no-faithful-reachable-depender
+
+- **slug:** `l3-orthogonalize-sub-chain-no-faithful-reachable-depender`
+- **kind:** graded-stack reachability — ground-vs-baseline-exception disposition (for the batch-35 meta-phase §(g) call)
+- **status:** open
+- **observation.** After the c111 D1 orthogonalize lazy-tail grounding (which flipped `L1/orthogonalize`, `L2-L1/orthogonalize-composition-lowering`, `L1-L0/orthogonalize-mutation-rotation` reachable, +3 → reachable 122), the L3 orthogonalize sub-chain `L3/orthogonalize` (`[GARBAGE*]`, declares typed deps `L2/orthogonalize ×2`) + `L3-L2/orthogonalize-variant-split` (`[garbage?]`) remains **detritus** — unreachable from any feature root.
+- **why it cannot be cleanly flipped this cycle.** There is **no faithful reachable depender**. The reachability edge runs `L2/orthogonalize <- L3/orthogonalize` (L3 depends-on L2, i.e. inbound TO L2), so grounding `L2/orthogonalize` does NOT carry liveness UP to `L3/orthogonalize`. The only root-reachable consumer of the orthogonalize family is `L4/krylov-step`, which **deliberately composes `L2/orthogonalize` DIRECTLY** (there is no L4 orthogonalize op; the L4→L2 composition is the documented chain — `L2/orthogonalize <- L3/orthogonalize, L4/krylov-step` per `--show-inbound`). Forcing an `L4/krylov-step → L3/orthogonalize` edge would be UNFAITHFUL (it would assert a constituent-use relationship that does not exist; krylov-step composes the L2 surface, not the L3 iteration-view). Per the §(g) faithful-edge-or-finding discipline, this is correctly declined — a forced edge here is the over-edge the priority order exists to prevent.
+- **the disposition question for the meta-phase (§(g) priority order: GROUND → route-as-detritus → baseline-exception):** is the L3 orthogonalize iteration-view (the MGS `partial-obstruction` + CGS/CGS2 global-tensor-field lifts, firm content at `L3/orthogonalize.md` since c019/c022) —
+  - (i) **genuine detritus** relative to the current feature-root set → a tracked baseline-exception (the L3 iteration-view is a real-but-currently-unconsumed dissection: faithful, firm, but no live depender), OR
+  - (ii) a **future dependency** the spine will reach once a driver/feature column composes the L3 (rather than L2) orthogonalize surface (e.g. an eigenmode-ROM basis-extension feature column that names the iteration-structural L3 form) → a GROUND candidate, but only via a *faithful* future column edge, NOT a forced edge this cycle.
+- **same shape as:** the c109 Group-B finding + the c110 lazy-tail finding (the carried lazy-tail tail is now down to this one sub-chain + the normalize/reciprocal internal-utility chain). Recommend the meta-phase bundle this with the normalize/reciprocal grounding-vs-baseline-exception call and the c110 chebyshev/jacobi preconditioner-leg ratification (all the same §(g) absorbed-below-column-vs-baseline-exception family).
+- **opened_at:** cycle-111
+- **opened_by:** layer-intro-author (D1, the orthogonalize-chain grounding lead)

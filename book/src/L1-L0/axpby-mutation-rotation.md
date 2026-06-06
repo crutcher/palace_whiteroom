@@ -1,3 +1,32 @@
+---
+layer: L1-L0
+theme: axpby-mutation-rotation
+rank: firm
+# Graded-stack scheme (cycle-111, D2): L1>L0 lowering-theme leaf, typed from scratch
+# (discharges OQ `l1-l0-axpy-family-themes-need-scheme-frontmatter`). The theme is a
+# firm mutation-rotation: structural + transparent-trick rewrites over fully-specified
+# positive L0 source. The blocking depends-on edges are the rank-terminal POSITIVE L0
+# SOURCE (cites-evidence) the rewrite rests on, which makes the `firm` rank well-founded.
+# The firm L1 parents (axpy/axpby) reach this theme via their own legacy depends-on
+# edges; here they are recorded as `reference` see-also (this is scheme hygiene, NOT a
+# reachability flip — the theme was already reachable from those parents).
+edges:
+  depends-on:
+    - target: palace/linalg/vector.cpp:710
+      kind: cites-evidence        # real path `y.Add(alpha, x)` (α≠1 branch)
+    - target: palace/linalg/vector.cpp:715-723
+      kind: cites-evidence        # complex AXPY overloads (ComplexVector)
+    - target: palace/linalg/vector.cpp:739-743
+      kind: cites-evidence        # AXPBY real-x→ComplexVector member body
+    - target: palace/linalg/vector.cpp:745-758
+      kind: cites-evidence        # AXPBYPCZ real-real body (the 3-vector generalisation)
+    - target: palace/linalg/vector.hpp:116-117
+      kind: cites-evidence        # ComplexVector::AXPY decl + Add alias
+  reference:
+    - L1/axpy
+    - L1/axpby
+---
+
 # axpby-mutation-rotation
 
 The mutation rotation for BLAS-1 axpy-shaped vector updates. Lowers the pure L1
