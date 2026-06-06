@@ -273,7 +273,7 @@ One refinement the grounding campaign reached its limit on (batch-35/36):
   *could* be grounded; the residual STRONGER-garbage set (23 nodes at batch-36 close) was then
   *fully* enumerated into RE1-RE8 — **zero undispositioned members**. The reachability axis has
   reached its faithful floor exactly as the resolution axis rests `firm`-on-`firm`. (Full ledger:
-  `scaffolding/graded-stack-baseline-exceptions.md`, the Axis-2 section.)
+  `scaffolding/graded-stack-baseline-exceptions.md`, the Axis-2 section.) When a new wave adds substrate ahead of its consumers, the same triage runs again: the batch-37 all-fronts wave added three new firm L1 ops as detritus, and the §2f order dispositioned them live — `build_mesh` GROUNDED (it is the lifecycle composition-root's `config→mesh` stage, so the faithful `lifecycle → build_mesh` composes edge grounds it), while `fe_space_hierarchy` and `interpolator` (no faithful inbound consumer yet) became RE9/RE10 with concrete promotion conditions. A baseline-exception is never a permanent home — it is the honest record that a node is correct but not yet reached, waiting on a faithful future edge, never a forced one.
 
 ### The OWN-COMPOSITION rule falls out of the root marker
 

@@ -471,6 +471,25 @@ This shape is load-bearing, and it follows three principles:
 > recognition that the clean-gate scope was exhausted is exactly what let the human choose the next scope
 > deliberately.
 
+> **Both directives landed, and the "plateau" reopened into a concrete forward campaign (batch-37 close).** The
+> consolidation campaign landed across cycle-116: the semantic surface physically moved out of `design/` to
+> `book/src/semantics/index.md` (with the ~97-file cross-reference rewrite), and the 27-file named-shape-groups
+> restatement cohort was fully swept (Tier A+B+C) so functional-unit entries now USE+LINK the single semantic home
+> rather than RE-STATE it. The all-fronts wide wave landed across cycle-117: a single multi-dispatch fan-out opened
+> the last in-scope deferred feature fronts together — a sixth output-product column (`waveguide-mode`), the
+> `boundary-mode` driver column promoted off `seed`, and three new firm L1 ops (`build_mesh`, `fe_space_hierarchy`,
+> the de-Rham `interpolator`) — so the shared **mesh→fe_space substrate** was lifted once across all the related
+> fronts. The wave did NOT re-plateau the project: it homed a new substrate that now needs its L1>L0 lowering
+> themes and its inbound grounding consumers, which is exactly a high-fan-out forward campaign (batch-38: the three
+> construction-rotation themes + the faithful `lifecycle → build_mesh` grounding edge + the `waveguide_mode_reduce`
+> L4 verb home + the record-definition homes). The reachability GC handled the wave's three new detritus L1 ops by
+> the §2f triage: `build_mesh` is GROUNDABLE (it is literally the lifecycle composition-root's `config→mesh` stage,
+> so the faithful `lifecycle → build_mesh` composes edge grounds it), while `fe_space_hierarchy` and `interpolator`
+> have no faithful inbound consumer yet and were tracked as reachability baseline-exceptions (RE9, RE10) with
+> concrete promotion conditions — the disciplined "ground-don't-remove, baseline-except-don't-force" priority order
+> in live use. The lesson of the whole arc: an honest plateau is a scope decision, and opening the deferred scope
+> exposes the next layer of substrate-and-grounding work rather than ending the project.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction

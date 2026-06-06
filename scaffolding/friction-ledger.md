@@ -2144,10 +2144,10 @@ addressed_by: cycle-105 meta-phase (batch-33) — fixed tools/graded-stack-lint/
 ---
 slug: reachability-gc-ground-dont-remove-future-deps
 first_observed: cycle-107
-last_observed: cycle-108
-recurrence_count: 2
+last_observed: cycle-117
+recurrence_count: 3
 status: addressed
-addressed_by: cycle-108 meta-phase (batch-34) — codified the GROUND-don't-remove disposition (user directive 2026-06-05) into METHODOLOGY-GRADED-STACK.md §2f + §8 + the role-specs (layer-intro-author §(g), cross-layer-cross-cutter §Discipline, meta-phase §Graded-stack standing duties) + the reader-facing book mirrors (resolution-ladder.md batch-34 refinement, graded-stack-scheme.md §5 reachability-vs-well-foundedness clarification, goal-flow.md batch-34 arc). Memory: feedback_gc_ground_dont_remove_future_deps.
+addressed_by: cycle-108 meta-phase (batch-34) — codified the GROUND-don't-remove disposition (user directive 2026-06-05) into METHODOLOGY-GRADED-STACK.md §2f + §8 + the role-specs (layer-intro-author §(g), cross-layer-cross-cutter §Discipline, meta-phase §Graded-stack standing duties) + the reader-facing book mirrors (resolution-ladder.md batch-34 refinement, graded-stack-scheme.md §5 reachability-vs-well-foundedness clarification, goal-flow.md batch-34 arc). Memory: feedback_gc_ground_dont_remove_future_deps. **Batch-37 (cycle-117 meta-phase): recurrence-3 — the disposition applied CLEANLY again on the all-fronts-wave detritus.** The c117 all-fronts wave added 3 new firm L1 ops as detritus (`build_mesh`/`fe_space_hierarchy`/`interpolator`). The batch-37 meta-phase ran the §2f disposition triage faithfully: `build_mesh` is GROUNDABLE via the faithful `feature/lifecycle.L1 → L1/build_mesh` composes edge (the lifecycle do-block literally calls `build_mesh cfg` as stage-1 of `config→mesh→assemble→solve` at `lifecycle.L1.md:39,:44`; it was carried as a `reference` only because `build_mesh` did not yet exist as a node when the lifecycle was authored — the now-firm op makes the genuine composition edge faithful, not forced) → migrated to the plan as a c118 grounding dispatch. `fe_space_hierarchy`/`interpolator` are NOT yet groundable (no faithful inbound consumer — `fe_space_hierarchy`'s consumer is an unbuilt geometric-multigrid preconditioner; `interpolator`'s is an unbuilt field-probe/divfree feature) → dispositioned as RE9/RE10 reachability baseline-exceptions with promotion conditions. The strict priority order (ground → baseline-except, never force) held; no false edge.
 ---
 ```
 
@@ -2234,3 +2234,22 @@ addressed_by: cycle-114 meta-phase (batch-36) — RESOLVED, no systematic sweep 
 **Evidence + resolution (one file, already fixed).** **cycle-113 (detection + fix):** D2 grounded `set_subvector_zero`'s theme and corrected its 3 stale-prose locations in the same edit. **cycle-114 (sweep confirms bounded):** the dot/nrm2/scal theme-grounding sweep found NO stale prose on those three (clean upgrade). **cycle-114 meta-phase (grep-verify):** `grep -rl "rank-direction error" book/src/` returns exactly ONE file — `set_subvector_zero.md` — and its mentions are the CORRECTED prose. The pattern was a one-off, not systematic.
 
 **Decision (batch-36 meta-phase — ADDRESSED/resolved, no codification).** Single-file blast radius, already fixed at recurrence-1. No role-spec edit, no skill, no plan tranche. **Watch / re-open** only if a future c104-era re-grounded L1 leaf surfaces with the same stale framing on a reachability-dead theme (recurrence-2) — at which point a one-edge-per-op grounding micro-sweep (the c114 D2 shape) is the remedy, not a methodology change.
+
+---
+
+```yaml
+---
+slug: new-summary-kind-grouping-placeholder-link-duplicate-file-build-break
+first_observed: cycle-117
+last_observed: cycle-117
+recurrence_count: 1
+status: addressed (GO — codified into integrator-per-report + layer-intro-author this meta-phase)
+addressed_by: cycle-117 meta-phase (batch-37) — codified the "open a NEW SUMMARY kind-grouping ⇒ create its navigational-container group-intro stub in the SAME landing" discipline into the integrator-per-report + layer-intro-author role-specs (the per-report preferred-stub-creation discipline already exists for implied components; this extends it to the by-kind-grouping reorg case so the repair moves from finalize-time to per-report-time).
+---
+```
+
+**Pattern (a new SUMMARY by-kind grouping linked to a placeholder page collides with an existing link → duplicate-file build break).** The directive-3 by-kind sub-chapter grouping convention nests each layer Part's chapters under kind groupings, each with its OWN group-intro page. When a producer opens a NEW grouping mid-cycle but does not (yet) author the group-intro page, the temptation is to point the SUMMARY grouping link at an existing page (e.g. `./L1/index.md`, the Part Overview) as a placeholder — but mdBook treats a file linked twice in SUMMARY.md as a `Duplicate file` and the build FAILS.
+
+**Evidence (one instance, finalize-repaired).** **cycle-117 D3:** opening the new `Mesh & FE-space construction` L1 kind grouping, D3 linked the grouping to the `./L1/index.md` placeholder (D4's OQ had deferred authoring a dedicated group-intro). At finalize, `cargo make book` FAILED with `Duplicate file in SUMMARY.md: "./L1/index.md"`. The finalize applied the **preferred stub-creation build-repair** (per its role-spec step-5): created `book/src/L1/mesh-construction-intro.md` (navigational-container group-intro stub matching the `fe-space-intro.md` format) and repointed the SUMMARY grouping link to it; rebuild EXIT 0. The repair was clean but ran at finalize-time, after a build break.
+
+**Decision (batch-37 meta-phase — GO, codify into the per-report discipline).** The preferred-stub-creation pattern already exists for implied components (a missing cross-ref target → create a `stub`); this is the same pattern applied to the by-kind-grouping case. Codify: a per-report integrator (or the layer-intro-author proposing the grouping) that opens a NEW SUMMARY kind-grouping MUST create its navigational-container group-intro stub in the SAME landing — never placeholder-link an existing page. This moves the repair from finalize-time to per-report-time and avoids the duplicate-file break entirely. **Watch / re-open** if a future grouping-open still placeholder-links despite the codification (recurrence-2).
