@@ -53,7 +53,8 @@ At L0 the construction is the variadic constructor
 (`fespace.hpp:68`). The Palace-side construction is therefore *exactly* the pairing of a mesh with an
 FE collection: the second forwarded argument is the `FECollection` (a
 `std::unique_ptr<FECollection>::get()` at every call site). Every solver model operator builds its
-spaces this way through `ConstructFiniteElementSpaceHierarchy` (`palace/fem/multigrid.hpp:78-126`),
+spaces this way through [`fe_space_hierarchy`](./fe_space_hierarchy.md)'s L0 site
+`ConstructFiniteElementSpaceHierarchy` (`palace/fem/multigrid.hpp:78-126`),
 whose coarse seed is a single `std::make_unique<FiniteElementSpace>(*mesh[coarse_mesh_l], fecs[0].get())`
 (`multigrid.hpp:90`) — i.e. one `fe_space` construction — and whose h/p levels each `AddLevel` one more
 `FiniteElementSpace` built the same way (`multigrid.hpp:106,117`).
@@ -147,11 +148,11 @@ The laws are syntactic identities on the positive construction (no convergence/i
    `ConstructFiniteElementSpaceHierarchy` — `multigrid.hpp:106` varying the mesh, `:117` varying the
    collection — exercise exactly these two independent axes).
 4. **Coarse-seed identity (hierarchy base case).** The coarsest level of a space hierarchy *is* one
-   `fe_space` construction: `ConstructFiniteElementSpaceHierarchy(...)`'s seed is
+   `fe_space` construction: [`fe_space_hierarchy`](./fe_space_hierarchy.md)'s seed is
    `make_unique<FiniteElementSpace>(*mesh[coarse_mesh_l], fecs[0].get())` (`multigrid.hpp:90`). A
    hierarchy of one level reduces to a single `fe_space` call. (This is the in-line annotation of how
-   `fe_space` relates to the deferred `fe_space_hierarchy` — the hierarchy folds `AddLevel` over
-   repeated `fe_space` constructions.)
+   `fe_space` relates to [`fe_space_hierarchy`](./fe_space_hierarchy.md) — the hierarchy folds `AddLevel`
+   over repeated `fe_space` constructions.)
 
 **Non-law (MFEM-owned).** `fe_space` does NOT define the dof numbering, ordering, or conformity of its
 result — these are MFEM's and are read as given (above). No L1 law constrains them.
@@ -206,9 +207,10 @@ five solver pipelines** and the de-opaquing home for four firm L1 entries (the f
 `ConstructFECollections` order schedule — `multigrid.hpp:22-73`), `essential_dofs` (the
 boundary-attribute-marker → essential-true-dof-set extraction, `multigrid.hpp:97-99` — straddles the
 MFEM-owned boundary, likely a noted-property of `fe_space` unless `eliminate_*`'s `DofSet[N]` demands a
-self-standing home), and `fe_space_hierarchy` (the h/p-refinement multigrid stack,
-`multigrid.hpp:78-126`). The `BuildDiscreteInterpolator` (de-Rham interpolator) and
-`BuildProlongationAtLevel` (multigrid transfer) machinery is sibling-pull-gated — named, not authored.
+self-standing home), and [`fe_space_hierarchy`](./fe_space_hierarchy.md) (the h/p-refinement multigrid stack,
+`multigrid.hpp:78-126` — **now firm**, cycle-117 D4). The `BuildDiscreteInterpolator` (de-Rham
+interpolator) and `BuildProlongationAtLevel` (multigrid transfer) machinery is sibling-pull-gated —
+named, not authored.
 
 ## Evidence
 

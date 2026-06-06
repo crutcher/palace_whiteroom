@@ -1418,3 +1418,115 @@ opened_by: layer-intro-author
 **(D1 semantic-surface move, tracked-observation — recorded by the cycle-116 D1 repairer per critic Issue 3; NOT a D1 defect.)** Several L4 entries cite the semantic surface's §3.7 (`### 3.7 Loops (\`iterate_while\`)`) / its small-step rule at line ranges `index.md:151-184` / `:164-171` (e.g. `book/src/L4/iterate-while.md:211`, `:222`; `book/src/L4/ksp_solve.md:117`, `:194`), but on disk §3.7 is at lines **190-225** in the moved surface (`index.md` lines 151-184 are §3.5/§3.6; 164-171 fall in §3.3/§3.4). This is a genuine citation-content drift, but it is **pre-existing and NOT introduced by D1**: HEAD's `design/l4_calculus.md` had §3.7 at the identical line 190 (byte-identical, 513 lines) and the D1 move was a verified 0-content-diff `git mv`. D1 faithfully preserved the drift; correcting the L4 citations was **out of D1 scope** (NOT attempted). Flagged so it is not lost. **Follow-up:** correct the §3.7 line-range citations in the affected L4 entries — a candidate for the same downstream citation-drift / prose-ref-normalize sweep as `ambiguous-bare-index-md-prose-refs-after-semantic-surface-move` above.
 
 *Trigger:* a downstream citation-drift / prose-ref-normalize sweep (candidate-bundle with the ambiguous-basename OQ above).
+
+## waveguide-mode-reduce-needs-l4-verb-home
+opened_at: cycle-117
+opened_by: layer-intro-author
+
+**(cycle-117 D1 — the `waveguide-mode` output-product column promotion gate; record/verb-home obligation.)** The per-mode reduce verb `waveguide_mode_reduce` — the propagation-mode member of the output-product reduce-verb algebra, composed by the new `waveguide-mode` feature column — has **no firm L4 verb chapter** (`L4/waveguide_mode_reduce.md` does not exist). Its per-mode constituents are read at L0 sites (`GetPropagationConstant` shift-invert un-transform, `ApplyVDBackTransform` → `(Et, En)`, `ComputePoyntingPower` power-normalization, `Bz = curl(Et)/(iω)`; `palace/drivers/boundarymodesolver.cpp:273-333`) but the verb itself is unhomed, so the three `waveguide-mode.{L4,L1,L0}` chapters land `status: seed` / `rank: rough-in` under the OWN-COMPOSITION rule — exactly the state `sparameters` was in when `sparameter_reduce` was rough-in (promoted to firm c083). **This is the promotion gate:** once `waveguide_mode_reduce` firms (a firm L4 verb chapter, analogous to `sparameter_reduce` / `eigenfreq_qfactor_reduce`), the `waveguide-mode` column promotes `seed`→`firm` (with the `feature/index.md` cell + `output-product.md` group-intro flip in the same dispatch, per the index-cell-drift guard). **Action:** DISPATCH a combinator-miner / harvester pass to mine + firm the `waveguide_mode_reduce` L4 verb.
+
+*Trigger:* a combinator-miner / harvester pass on `waveguide_mode_reduce` (the verb-home dispatch); promotes the waveguide-mode column on firm.
+
+## record-WaveguideModeTable-needs-definition-home
+opened_at: cycle-117
+opened_by: layer-intro-author
+
+**(cycle-117 D1 — record-definition obligation, ≥2-consumer bar.)** The waveguide-mode output record, named canonically **`WaveguideModeTable`** (settled this dispatch over the earlier dual `WaveguideModeResult` — the repairer reconciled the report to `WaveguideModeTable` throughout), is named in signatures across the 3 `waveguide-mode.{L4,L1,L0}` chapters (and cross-named `BoundaryModeResult` in the 3 boundary-mode chapters owned by D2), so it clears the ≥2-consumer bar for a `book/src/concepts/<record>.md` record-definition page. Fields: `kn : Complex`, `n_eff : Complex`, `Et : Tensor[N_nd, complex]`, `En : Tensor[N_h1, complex]`, `Bz : Maybe (Tensor[N_curl, complex])` (present only for propagating modes). The L0 backing is the per-mode observables `MeasureAndPrintAll` records (`postoperator` measurement cache) + the raw `et`/`en`/`bz` ComplexVectors on the 2D-submesh spaces. **Action:** FLAG for a `concepts/waveguide-mode-table.md` record-definition page (layer-intro-author); the page should reconcile the boundary-mode chapters' cross-name `BoundaryModeResult` to the canonical `WaveguideModeTable` for the reduced product (distinct from the raw `EigResult` the driver returns).
+
+*Trigger:* a layer-intro-author record-definition concept-page pass (`concepts/<record>.md`, ≥2-consumer bar met).
+
+## waveguide-mode-vs-eigenfreq-qfactor-shared-eigsolve-corner
+opened_at: cycle-117
+opened_by: layer-intro-author
+
+**(cycle-117 D1 — non-blocking do-NOT-over-unify observation.)** Both `waveguide-mode` and `eigenfrequency-qfactor` reduce an eigenpair family produced via the `eigsolve` corner — `waveguide-mode` over the `boundary-mode` (2D-submesh-extracted GEP) driver, `eigenfrequency-qfactor` over the `eigenmode` (3D-domain) driver. The reduce verbs differ in OUTPUT shape (mode-fields-table `{kn, n_eff, (Et, En, Bz)}` vs scalar-`(f, Q)`-table) — they are **sibling reduce verbs, NOT a single shared verb** (the same do-NOT-over-unify discipline as the c074 D6 Gram-vs-projection guard). No merge proposed; recorded so a future combinator-miner does not force-unify `waveguide_mode_reduce` with `eigenfreq_qfactor_reduce` over the shared eigsolve corner.
+
+*Trigger:* none (standing guard-note; surfaces only if a combinator-miner proposes a force-unify).
+
+## record-Mesh-needs-definition-home
+opened_at: cycle-117
+opened_by: harvester
+
+**(cycle-117 D3 — record-definition obligation, ≥2-consumer bar.)** The `Mesh` record (the Palace `mfem::ParMesh` wrapper read single-rank + the libCEED local-attribute mapping; backing C++ struct `class Mesh` `palace/fem/mesh.hpp:44`) is the produced output of the new firm L1 operator [`build_mesh`](../book/src/L1/build_mesh.md) and is named in signatures across ≥2 chapters — every driver column's mesh stage + [`fe_space`](../book/src/L1/fe_space.md)'s `mesh: Mesh` input + the deferred `fe_space_hierarchy`. It therefore clears the ≥2-consumer bar for a `book/src/concepts/mesh.md` record-definition page. Fields (from the in-chapter `## Record definition` interim home): `mesh : unique_ptr<mfem::ParMesh>` (construction-time, single-rank), `loc_attr` / `loc_bdr_attr` (construction-time libCEED attribute remaps, `palace/fem/mesh.hpp:51-59`), `ceed_from_self : bool` (run-time flag), `geom_data` (run-time transparent libCEED geometry-factor cache, `:62-69`). The single-machine read surface is `Get`/`Dimension`/`SpaceDimension`/`GetNE`/`GetNBE` (`:84-96`). The in-chapter `## Record definition` in `build_mesh.md` is the interim home (it is the producing chapter); FLAG for a shared `concepts/mesh.md` page (layer-intro-author domain) — likely co-locatable with the cycle-117 D4 FE-space-construction work.
+
+*Trigger:* a layer-intro-author record-definition concept-page pass (`concepts/mesh.md`, ≥2-consumer bar met); candidate-bundle with the D4 FE-space-construction kind-grouping intro work.
+
+## build-mesh-construction-rotation-l1-l0-theme
+opened_at: cycle-117
+opened_by: harvester
+
+**(cycle-117 D3 — named, NOT authored; the forward L1>L0 rotation for `build_mesh`.)** The forward rewrite of the typed `config → Mesh` construction pipeline into the L0 free-function chain `mesh::Load` ▷ `solver->Preprocess` ▷ `mesh::Partition` ▷ `mesh::RefineMesh` ▷ `make_unique<Mesh>` (`palace/main.cpp:287-299`) — including the in-place `unique_ptr` mesh-handle mutation (the level-vector grown in place by `RefineMesh`, `palace/utils/geodata.cpp:421-450`) and the construction-time `EnsureNodes()` + `Update()` finalization (`palace/fem/mesh.hpp:79-80`) — is the L1>L0 theme **`build-mesh-construction-rotation`** (slug only; no chapter authored this cycle, no live edge / `lowers-to` asserted in `build_mesh.md` front-matter, since it would point at a not-yet-firm node). The downstream theme will also need to cite the per-driver `Preprocess` hook bodies (anchored only at the call site `main.cpp:288` + the `BaseSolver::Preprocess` virtual in `build_mesh.md`'s Evidence), per the critic's non-blocking observation #2. **Action:** a follow-on abstractor / harvester dispatch to author the L1>L0 rotation theme (sibling-shaped to `fe-space-construction-rotation` / `fe-collection-construction-rotation`).
+
+*Trigger:* a follow-on abstractor / harvester dispatch authoring the L1>L0 `build-mesh-construction-rotation` theme.
+
+## adaptive-amr-mesh-refinement-obstruction-at-lifecycle-root
+opened_at: cycle-117
+opened_by: harvester
+
+**(cycle-117 D3 — MFEM-opaque adaptive-AMR obstruction note; do-NOT-force.)** `build_mesh` covers only **a-priori** (config-fixed uniform/region) mesh refinement; the **adaptive** (error-estimator-driven) estimate-mark-refine loop is the [`lifecycle`](../book/src/feature/lifecycle.L1.md) composition root's outer fold, and it bottoms out in MFEM-opaque per-element non-conformal AMR machinery (`mfem::Mesh::GeneralRefinement`). Per the cycle-117 open-all-feature-fronts directive ("MFEM-opaque mesh-refinement leaves stay obstruction-documented, not forced"), this is recorded as an obstruction at the lifecycle root, NOT forced to a firm claim in `build_mesh` (it is a non-law there). **Action:** when the `lifecycle` root's outer estimate-mark-refine fold is authored, document the adaptive-AMR refinement as an `obstruction (opaque-library-ownership)` sub-theme (the MFEM `GeneralRefinement` boundary), with the a-priori `build_mesh` refinement as the firm in-scope complement.
+
+*Trigger:* the `lifecycle`-root outer-fold authoring dispatch (document adaptive AMR as an opaque-library obstruction sub-theme; the a-priori `build_mesh` half stays the firm complement).
+
+## build-mesh-kind-grouping-placement-deferred-to-d4
+opened_at: cycle-117
+opened_by: harvester
+
+**(cycle-117 D3 — kind-grouping placement flag; deferred to D4 / layer-intro-author.)** `build_mesh` opened a candidate new L1 kind grouping **`Mesh & FE-space construction`** in `L1/index.md`'s dep-map and `SUMMARY.md` (the integrator inserted the grouping header immediately BEFORE the existing `FE-space sub-spine` grouping, with `build_mesh` the sole row, per the report NOTE's "otherwise" branch since D3 precedes D4 in apply-order). The open judgment, deferred to D4 (layer-intro-author, who owns the L1 layer-index narrative + group-intro pages this cycle, per the parallel-blind shared-index guard): (a) whether the new grouping should instead be **folded into the existing `FE-space sub-spine` grouping** (renaming it to `Mesh & FE-space construction`, since mesh construction is upstream of FE-space construction), and (b) whether to author a `mesh-construction-intro.md` group page (currently the SUMMARY grouping links the `./L1/index.md` placeholder). The `build_mesh` chapter anchor (`./L1/build_mesh.md`) is distinct and parallel-safe regardless of the grouping decision. The integrator did NOT touch the consolidated firm-count / running tally in `L1/index.md` §Vocabulary-cohort — that defers to D4 (the +1 main-cohort firm count for `build_mesh` is D4's to fold).
+
+*Trigger:* the cycle-117 D4 layer-intro-author dispatch (resolve the kind-grouping placement + author/decline the group intro + fold the firm-count tally).
+
+## record-FiniteElementSpaceHierarchy-needs-definition-home
+opened_at: cycle-117
+opened_by: layer-intro-author
+
+**(cycle-117 D4 — record-definition obligation, single-consumer interim home.)** The output record `FiniteElementSpaceHierarchy` (the p-multigrid level stack `fespaces` + lazy per-level prolongation operators `P`; backing C++ class `palace/fem/fespace.hpp:200-286`) is currently named in exactly ONE harvested L1 signature — [`fe_space_hierarchy`](../book/src/L1/fe_space_hierarchy.md) (`([Mesh], [FECollection], Config) → FiniteElementSpaceHierarchy`). Per the record-definition obligation (≥2 consumers → standalone `concepts/<record>.md` page; single-consumer → in-chapter `## Record definition` section), it gets an in-chapter `## Record definition` section in `fe_space_hierarchy.md` (authored this cycle), NOT a `concepts/` page.
+
+*Trigger (promotion to a concepts page):* when a 2nd consumer surfaces — most likely a geometric-multigrid L1 operator (the preconditioner that relaxes over the hierarchy levels via `GetProlongationOperators` / `GetFESpaceAtLevel`), the record crosses the ≥2-consumer bar and the in-chapter section should be lifted to `book/src/concepts/finite-element-space-hierarchy.md`.
+
+## fe-space-hierarchy-construction-rotation
+opened_at: cycle-117
+opened_by: layer-intro-author
+
+**(cycle-117 D4 — deferred L1>L0 lowering theme, sibling-pull-gated; named, NOT authored.)** The L1>L0 rotation `fe-space-hierarchy-construction-rotation` would narrate how the typed `AddLevel`-fold of [`fe_space_hierarchy`](../book/src/L1/fe_space_hierarchy.md) rewrites into the L0 imperative `ConstructFiniteElementSpaceHierarchy` body (`palace/fem/multigrid.hpp:78-126`): the `coarse_mesh_l` computation (`:87-88`), the `make_unique<FiniteElementSpace>` seed (`:89-90`), the two `AddLevel` refinement loops (`:104-112`, `:115-123`), and the optional per-level `GetEssentialTrueDofs` block (`:92-101`). No `lowers-to` edge is asserted from the `fe_space_hierarchy` chapter this cycle. No obstruction expected (a deterministic `push_back`/`AddLevel` fold → imperative-loop rotation, the clean `fe-space-construction-rotation`/`fe-collection-construction-rotation` precedent).
+
+*Trigger:* a follow-on abstractor / lowering-verifier dispatch (sibling-pull-gated); when authored, add the live `lowers-to` edge to the `fe_space_hierarchy` chapter's frontmatter.
+
+## fe-space-front-l1-count-owner-reconciliation-c117
+opened_at: cycle-117
+opened_by: layer-intro-author
+
+**(cycle-117 D4 — count-owner reconciliation note; integrator-finalize confirms at cycle end.)** D4 (count-owner for the cycle-117 L1 landing cohort) reconciled the `L1/index.md` §Vocabulary-cohort consolidated firm-count to the **all-three-firm cycle-end state** per the per-report integrator's dispatch directive ("apply the count consistent with what will be on disk at cycle end — all three firm"): grand total **40 → 43** = 33 main + 4 FE-assembly + **5** FE-space (`fe_space` c064 + `fe_collection` c065 + `essential_dofs` c066 + `fe_space_hierarchy` c117 D4 + the de-Rham interpolator c117 D5) + **1** new Mesh-construction sub-spine (`build_mesh` c117 D3). At D4's apply-time, `build_mesh` is firm on disk (D3 landed); the de-Rham interpolator (D5) lands AFTER D4 in apply-order (D1→D3→D4→D5→D2) and is `overall_status: ready`, so the +1 for it is pre-staged into the tally on the cycle-end-state directive. **integrator-finalize must confirm** the D5 interpolator landed firm at the FE-space sub-spine (read its on-disk `## Status`); if D5 did NOT land firm or homed elsewhere, finalize adjusts the grand total down by 1 (→ 42) and the FE-space sub-spine count from 5.
+
+*Trigger:* integrator-finalize's cycle-117 step-5 count reconciliation (confirm D5 interpolator `## Status` = firm + FE-space sub-spine home).
+
+## build-mesh-fe-space-kind-grouping-fold-residual-c117
+opened_at: cycle-117
+opened_by: layer-intro-author
+
+**(cycle-117 D4 — residual on the D3 kind-grouping placement OQ; D4 did NOT fold the groupings.)** D3's OQ `build-mesh-kind-grouping-placement-deferred-to-d4` deferred two judgments to D4: (a) whether the new `Mesh & FE-space construction` grouping (created by D3, holding only `build_mesh`) should be FOLDED into the existing `FE-space sub-spine` grouping (since mesh construction is upstream of FE-space construction), and (b) whether to author a `mesh-construction-intro.md` group page (the SUMMARY grouping currently links the `./L1/index.md` placeholder). **D4 resolved the firm-count tally (count-owner duty, done) but did NOT fold the groupings or author a mesh group-intro** — `fe_space_hierarchy` landed in the existing `FE-space sub-spine` grouping; `build_mesh` remains the sole row in the standalone `Mesh & FE-space construction` grouping linking the `./L1/index.md` placeholder. The grouping-fold + group-intro authoring remains open.
+
+*Trigger:* a follow-on layer-intro-author dispatch (decide fold-vs-standalone for the Mesh-construction grouping; author/decline `mesh-construction-intro.md`).
+
+## interpolator-construction-rotation-l1-l0-theme-needed
+opened_at: cycle-117
+opened_by: harvester
+
+**(cycle-117 D5 — deferred L1>L0 lowering theme; named, NOT authored; the authoring tracker for the demoted `reference` edge.)** The firm L1 [`interpolator`](../book/src/L1/interpolator.md) operator carries the forthcoming L1>L0 lowering theme `interpolator-construction-rotation` as a **navigational `reference` edge (slug-as-text), NOT a blocking `depends-on` edge** — because the theme is not yet authored, asserting a `depends-on` edge to a non-existent target would regress the graded-stack rank-linter's `unresolved_depends_on_targets`. The theme would narrate how the pure L1 `interpolator(aux, primal)` construction rewrites into the L0 `BuildDiscreteInterpolator` body (`palace/fem/fespace.cpp:173-238`): the cache-drop + lazy-rebuild memoization rotation (`G.reset()` on auxiliary-space change, `palace/fem/fespace.hpp:108-114`), the map-type-pair dispatch → MFEM interpolator kernel selection, and the **transparent 2D-native-vs-libCEED-PA representation note** (the 2D scalar-curl branch `:209-223` bypasses libCEED PA). The firm rank rests on positive L0 source, not on this theme.
+
+*Trigger:* a follow-on abstractor / lowering-verifier dispatch authors `book/src/L1-L0/interpolator-construction-rotation.md`; when authored + `status: firm` (rank 3 ≤ 3), **promote the `reference` edge to a live `depends-on (kind: lowers-to)` edge** in the `interpolator` chapter frontmatter (matching the `fe_space` → `fe-space-construction-rotation` precedent).
+
+## interpolator-derham-exactness-law-anchor
+opened_at: cycle-117
+opened_by: harvester
+
+**(cycle-117 D5 — promote the de-Rham exactness identities from defining-family property to verified law?)** The [`interpolator`](../book/src/L1/interpolator.md) chapter records the de-Rham complex exactness identities `Curl · Grad = 0` and `Div · Curl = 0` as the **DEFINING-FAMILY property** of the discrete de-Rham interpolators (the property that characterizes the family + the reason these specific kernels are chosen) — NOT as a Palace-read algebraic law, because Palace assembles each de-Rham edge independently and never composes two edges in one call, so there is no single positive Palace site to read the identity off. Promoting these to verified-on-Palace algebraic laws would require a **literature / MFEM de-Rham-complex anchor** or a **constructed composition test** (assemble `Grad` then `Curl`, verify the product is zero to machine precision).
+
+*Trigger:* a literature-anchor harvester / lowering-verifier pass that anchors the discrete de-Rham exactness in MFEM's de-Rham construction or a constructed unit test; on success, promote laws `Curl·Grad=0`/`Div·Curl=0` from defining-family property to verified algebraic laws in the `interpolator` chapter.
+
+## gslib-field-interp-facility-dedicated-obstruction-theme
+opened_at: cycle-117
+opened_by: harvester
+
+**(cycle-117 D5 — should the GSLIB point-interpolation facility get its own first-class L1>L0 obstruction theme?)** The GSLIB point/field-interpolation facility (`palace/fem/interpolator.{hpp,cpp}`: `fem::InterpolateFunction` ×2, the `InterpolationOperator` probe-field class, `ComputeLineIntegral`) is recorded **in-chapter as a sibling note** in the firm [`interpolator`](../book/src/L1/interpolator.md) chapter, disposed `obstruction (opaque-library-ownership)` (every entry point routes through `mfem::FindPointsGSLIB`, `#if defined(MFEM_USE_GSLIB)`-guarded with an `MFEM_ABORT` fallback; promotion route NONE). It is recorded in-chapter rather than as a separate L1>L0 obstruction theme because it is a *facility-level* boundary adjacent to (and orthogonal to) the firm de-Rham operator, not a lowering of `interpolator` itself. If a **feature-surface consumer** (e.g. a field-probe / line-integral output product) surfaces that needs the GSLIB facility as a first-class L1>L0 obstruction theme, that theme is a later dedicated dispatch.
+
+*Trigger:* a feature-surface consumer (field-probe / point-sample / line-integral output product) lands that needs the GSLIB facility as a first-class obstruction theme; dispatch an abstractor to author `book/src/L1-L0/gslib-field-interpolation-obstruction.md` (sub-kind `opaque-library-ownership`).

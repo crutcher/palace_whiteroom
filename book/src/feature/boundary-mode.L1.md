@@ -3,7 +3,7 @@ kind: feature-surface
 feature: boundary-mode
 level: L1
 feature_root: seed
-rank: rough-in
+rank: firm
 edges:
   depends-on:
     - target: L1/fe_assemble
@@ -14,6 +14,7 @@ edges:
       kind: cites-evidence
   reference:
     - feature/eigenmode.L1
+    - feature/waveguide-mode.L1           # SIBLING output-product cross-link (reciprocal drift-guard) — homes this driver's stage-(3) readout reduction; a reference, NOT a blocking constituent (OWN-COMPOSITION rule)
 ---
 
 # boundary-mode — L1 composition-root
@@ -46,7 +47,7 @@ At L1 the boundary-mode feature is a pure function `config → propagation-mode 
 ## Inputs / outputs (the feature surface)
 
 - **Input — config.** `BoundaryModeConfig` (the `iodata.solver.boundary_mode` surface): operating frequency `freq` → `ω`; requested mode count `n`; effective-index target `target` → the shift-invert spectral transform; tolerance `tol`; subspace dimension `max_size`; eigensolver backend `type`; boundary `attributes` → the 2D-submesh extraction; plus mesh + linear-solver config for the inner `ksp_solve`. All read-only.
-- **Output — the physical product.** `BoundaryModeResult` — the set of converged propagation modes, each carrying `kn`, `n_eff`, `(Et, En)`, and (for propagating modes) `Bz`. The reduction into the reported waveguide-mode product is a forward-ref (no dedicated output-product column yet). L0: the per-mode `kn`/`(et, en)` measured by `post_op.MeasureAndPrintAll(...)` (`palace/drivers/boundarymodesolver.cpp:314`).
+- **Output — the physical product.** `BoundaryModeResult` — the set of converged propagation modes, each carrying `kn`, `n_eff`, `(Et, En)`, and (for propagating modes) `Bz`. The reduction into the reported waveguide-mode product is homed in the [`waveguide-mode`](./waveguide-mode.L1.md) output-product column (a SIBLING cross-link, the reciprocal drift-guard). L0: the per-mode `kn`/`(et, en)` measured by `post_op.MeasureAndPrintAll(...)` (`palace/drivers/boundarymodesolver.cpp:314`).
 
 ## L1 vs L4
 
@@ -63,8 +64,8 @@ The defining structural fact at both levels: **no `solve_family` map and no `fol
 | extract 2D submesh from 3D boundary | *(driver-local preface; no standalone op yet)* | (preface) | `boundarymodesolver.cpp:42-55, 141` |
 | assemble (A, B) GEP block pencil | [`fe_assemble`](../L1/fe_assemble.md) | firm | `boundarymodesolver.cpp:216`; `modeeigensolver.cpp:395, 470` |
 | opaque eigensolver-as-operator (once; SAME corner as eigenmode) | [`eigsolve`](../L1/eigsolve.md) | firm | `boundarymodesolver.cpp:268`; `modeeigensolver.cpp:477` |
-| per-mode readout (kn, n_eff, Et, En, Bz) | *(waveguide-mode product reduction; forward-ref — no output-product column yet)* | (forward-ref) | `boundarymodesolver.cpp:273-334` |
+| per-mode readout (kn, n_eff, Et, En, Bz) | [`waveguide-mode`](./waveguide-mode.L1.md) (`waveguide_mode_reduce`) — SIBLING output-product column | (sibling ref) | `boundarymodesolver.cpp:273-334` |
 
 ## Status
 
-`seed` — the L1 pure-function composition root for the boundary-mode feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), the L1 counterpart of the [boundary-mode.L4](./boundary-mode.L4.md) composition root and the L1 sibling of the [eigenmode.L1](./eigenmode.L1.md) driver (the SAME opaque eigensolver-as-operator solve corner, distinguished by the 2D-submesh extraction preface). **Re-evaluated cycle-085 under the OWN-COMPOSITION promotion rule** (a column promotes off `seed` when its OWN composition + directly-owned constituents are firm; cross-linked sibling columns are references, NOT blockers): BOTH composed L1 operators are firm ([`fe_assemble`](../L1/fe_assemble.md), [`eigsolve`](../L1/eigsolve.md)), but the column **stays `seed`** on an **own-readout gate** — its directly-owned stage-3 readout reduces into a not-yet-authored waveguide-mode output-product reduction (no firm home; the waveguide-mode product column is demand-gated). The gate is the column's own readout constituent, NOT a sibling-column reference — so authoring a firm waveguide-mode reduction is the promotion route. The defining structural fact carried from L4: a single opaque eigensolver-as-operator application, with NO RHS family-map and NO value-threaded outer solve loop. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. The L1→L0 direction (how each pure operator lowers to the in-place driver writes — the `GetEigenvector(i, e0)` destination write, the `bz.Real() *= ...` accumulations) is the per-operator L1>L0 mutation-rotation themes of the constituent ops; this composition root records only the L1 composition (high→low discipline). Evidence: the L0 driver range `boundarymodesolver.cpp:201-341` realizing the composition, all anchors confirmed on-disk this dispatch, plus the firm L1 constituent down-links.
+`firm` — the L1 pure-function composition root for the boundary-mode feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), the L1 counterpart of the [boundary-mode.L4](./boundary-mode.L4.md) composition root and the L1 sibling of the [eigenmode.L1](./eigenmode.L1.md) driver (the SAME opaque eigensolver-as-operator solve corner, distinguished by the 2D-submesh extraction preface). **Promoted `seed`→`firm` cycle-117 under the OWN-COMPOSITION promotion rule** (a column promotes off `seed` when its OWN composition + directly-owned constituents are firm; cross-linked sibling columns are references, NOT blockers): BOTH composed L1 operators are firm ([`fe_assemble`](../L1/fe_assemble.md), [`eigsolve`](../L1/eigsolve.md)), and the stage-3 readout reduction is now **homed in the [`waveguide-mode`](./waveguide-mode.L1.md) output-product column** (authored cycle-117). The cycle-085 re-eval held this column at `seed` on an **own-readout gate** (its readout reduction had no firm home); cycle-117 **cleared that gate** by homing the readout in the new `waveguide-mode` column, so the readout is no longer an unhomed directly-owned constituent. The cross-link to the [`waveguide-mode`](./waveguide-mode.L1.md) output-product column is a **SIBLING reference (the reciprocal drift-guard), NOT a blocking constituent** — so the fact that `waveguide-mode` is itself `seed` (its own reduce verb `waveguide_mode_reduce` is rough-in) does NOT block boundary-mode, exactly as the [eigenmode.L1](./eigenmode.L1.md) sibling promotes independent of its `eigenfrequency-qfactor` cross-link. (`feature_root: seed` in the frontmatter is the permanent root-set marker, NOT a maturity; the maturity is carried by `rank: firm`.) The defining structural fact carried from L4: a single opaque eigensolver-as-operator application, with NO RHS family-map and NO value-threaded outer solve loop. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. The L1→L0 direction (how each pure operator lowers to the in-place driver writes — the `GetEigenvector(i, e0)` destination write, the `bz.Real() *= ...` accumulations) is the per-operator L1>L0 mutation-rotation themes of the constituent ops; this composition root records only the L1 composition (high→low discipline). Evidence: the L0 driver range `boundarymodesolver.cpp:201-341` realizing the composition, all anchors confirmed on-disk this dispatch, plus the firm L1 constituent down-links.

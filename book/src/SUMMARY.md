@@ -48,6 +48,9 @@
   - [sparameters — L4 composition-root](./feature/sparameters.L4.md)
   - [sparameters — L1 composition-root](./feature/sparameters.L1.md)
   - [sparameters — L0 ground-truth surface](./feature/sparameters.L0.md)
+  - [waveguide-mode — L4 composition-root](./feature/waveguide-mode.L4.md)
+  - [waveguide-mode — L1 composition-root](./feature/waveguide-mode.L1.md)
+  - [waveguide-mode — L0 ground-truth surface](./feature/waveguide-mode.L0.md)
 # Semantic surface — calculus, rules & abstractions
 - [L4 calculus & spec semantics (active-management surface)](./semantics/index.md)
 # L4 — Graph-Evaluation Calculus
@@ -218,10 +221,14 @@
   - [eliminate_rhs](./L1/eliminate_rhs.md)
   - [fe_assemble](./L1/fe_assemble.md)
   - [weak_form_term](./L1/weak_form_term.md)
+- [Mesh & FE-space construction](./L1/mesh-construction-intro.md)
+  - [build_mesh](./L1/build_mesh.md)
 - [FE-space sub-spine](./L1/fe-space-intro.md)
   - [essential_dofs](./L1/essential_dofs.md)
   - [fe_collection](./L1/fe_collection.md)
   - [fe_space](./L1/fe_space.md)
+  - [fe_space_hierarchy](./L1/fe_space_hierarchy.md)
+  - [interpolator](./L1/interpolator.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
