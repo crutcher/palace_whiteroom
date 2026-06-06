@@ -18,7 +18,7 @@ variant_axes:
 # linear_combination
 
 The L4 **scalar-weighted-tensor-sum combinator**: a variadic fold over a list of
-`(Scalar, Tensor[N])` terms producing `Σᵢ aᵢ·tᵢ`, lifted to the top of the stack
+`(Scalar, Tensor[(S: ...)])` terms producing `Σᵢ aᵢ·tᵢ`, lifted to the top of the stack
 as a **feature-surface verb the backend wants**. This is the BLAS-1 *combinator*
 (NOT the fused per-arity accelerated kernels) that **rises to L4 regardless** of
 how its specializations are disposed, per the
@@ -83,27 +83,33 @@ Haskell `::` signatures inside a `text` fence per the L4/L3 notation invariant.
 ## Signature
 
     -- entry point: the variadic scalar-weighted-tensor-sum combinator
-    -- a pure fold over a finite (Scalar, Tensor[N]) term list; no Solve monad, no carry
-    linear_combination :: [(Scalar, Tensor[N])] -> Tensor[N]
-    linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros N) pairs
+    -- a pure fold over a finite (Scalar, Tensor[(S: ...)]) term list; no Solve monad, no carry
+    linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[S]
+    linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros S) pairs
 
-Shape contract (bunsen-style; named axes; identical to the firm L3 signature —
-the L4 form is value-thread-isomorphic to it, §"Downward to L3"):
+Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md)
+§1.2.1; identical to the firm L3 signature — the L4 form is value-thread-isomorphic
+to it, §"Downward to L3"):
 
-- `pairs` — `[(Scalar, Tensor[N])]` — a finite list of (coefficient, term) pairs;
+- `pairs` — `[(Scalar, Tensor[(S: ...)])]` — a finite list of (coefficient, term) pairs;
   list order is the fold's canonical evaluation order (the IEEE summation-order
   residue is a below-L3 lowering concern, not an L4 law — see §"Algebraic laws").
-- each `tᵢ` — `Tensor[N]` — all terms share one length axis `N`.
+- each `tᵢ` — `Tensor[(S: ...)]` — **shape precondition**: all terms are *congruent*,
+  sharing one shape group `S` of arbitrary, unknown rank (the name `S` carries the
+  same-shape contract; `S` is **not** pinned to rank-1 — the combination is
+  element-local at every position of `S`, see §"Algebraic laws"). The earlier
+  `Tensor[N]` rendering accidentally read as a single length axis; `(S: ...)` states
+  the congruence-of-unknown-rank intent directly.
 - each `aᵢ` — `Scalar` — one shared element type `T ∈ {real, complex}` across all
   scalars and terms, with the `real ⊑ complex` promotion lattice from
   [`scalar-promotion`](../concepts/scalar-promotion.md) (promote all-or-none).
-- result — `Tensor[N]` — same length axis; `zeros[N]` on the empty list.
+- result — `Tensor[S]` — the same shape group `S`; `zeros S` on the empty list.
 
 The L4 calculus has no monadic effect on this combinator (contrast the
 `Solve`-threaded iteration combinators): `linear_combination` is a plain
 value-producing fold, threaded as a `let`-binding inside the bodies that consume
 it. The discipline that coefficients flow in only is structural (the single
-return slot is `Tensor[N]`).
+return slot is `Tensor[S]`).
 
 ### Arity specializations (the family members, tied below as notes)
 
@@ -133,14 +139,14 @@ value-thread-isomorphic to the L3 fold — §"Downward to L3"). Reproduced for L
 layer-coherence (an L4 reader verifies them against the L4 signature without
 reaching down):
 
-1. **Empty-list identity (fold seed).** `linear_combination [] = zeros[N]`.
+1. **Empty-list identity (fold seed).** `linear_combination [] = zeros[S]`.
 
 2. **Concatenation-homomorphism (the defining law).**
    `linear_combination (a ++ b) = linear_combination a + linear_combination b`
    (element-wise tensor `+` on the right). This is what makes the four arities one
    combinator — `axpbypcz`'s 3-term list is the concatenation of an `axpby`
    2-term and a `scal` 1-term list. A monoid homomorphism from
-   `([(Scalar,Tensor[N])], ++, [])` to `(Tensor[N], +, zeros)`.
+   `([(Scalar,Tensor[(S: ...)])], ++, [])` to `(Tensor[S], +, zeros)`.
 
 3. **Multilinearity in the scalar list.** Linear separately in each `aᵢ` with all
    other terms fixed; combined with law 2, a multilinear function of the
@@ -208,8 +214,8 @@ value are unchanged across it.
 The L4 `linear_combination` combinator lowers to the firm L3
 [`linear_combination`](../L3/linear_combination.md) as **identity-in-form on the
 body**: the two forms are value-thread-isomorphic. Both layers see the same
-signature `linear_combination :: [(Scalar, Tensor[N])] -> Tensor[N]`, the same
-`foldl (\acc (a,t) -> acc + scal a t) (zeros N) pairs` body, the same seven
+signature `linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[S]`, the same
+`foldl (\acc (a,t) -> acc + scal a t) (zeros S) pairs` body, the same seven
 algebraic laws, the same deferred IEEE non-law, and the same variant-axis profile.
 
 **There is no dedicated L4>L3 theme file** — the identity-in-form annotation lives
@@ -252,11 +258,11 @@ the L3 entry is outside this report's write-scope).
 
 The reduce-to-scalar [`inner_product`](./inner_product.md) (this cycle's sibling
 L4 entry) is a **different** fold — reduce-to-`Scalar`, not scalar-weighted-tensor
-sum. Its result type is `Scalar`, not `Tensor[N]`; it reduces over the length
-axis `N` (a length-concatenation homomorphism to `(Scalar, +)`), whereas
-`linear_combination` is element-local in `N` and folds over the *term list*
-(a term-list concatenation homomorphism to `(Tensor[N], +)`). Its combining step
-is zip-and-reduce-over-`N`; this combinator's is scale-and-accumulate-over-the-
+sum. Its result type is `Scalar`, not `Tensor[S]`; it reduces over the shape
+group `S` (a shape-concatenation homomorphism to `(Scalar, +)`), whereas
+`linear_combination` is element-local over `S` and folds over the *term list*
+(a term-list concatenation homomorphism to `(Tensor[S], +)`). Its combining step
+is zip-and-reduce-over-`S`; this combinator's is scale-and-accumulate-over-the-
 term-list. The two are the small **algebra of folds** at L4 — one
 tensor-producing, one scalar-producing — deliberately **NOT merged** (the
 over-unification guard, symmetric in both entries). The do-NOT-merge boundary is
@@ -267,7 +273,7 @@ load-bearing and is carried identically at L2/L3/L4.
 `firm` — the L4 form is the calculus-level rendering of the firm L3
 [`linear_combination`](../L3/linear_combination.md) combinator (firm cycle-050,
 propagated from the firm L2 entry cycle-018 / inverted-to-entry cycle-049 D1):
-the same variadic whole-tensor `[(Scalar, Tensor[N])] -> Tensor[N]` fold,
+the same variadic whole-tensor `[(Scalar, Tensor[(S: ...)])] -> Tensor[S]` fold,
 value-thread-isomorphic across the L4>L3 edge (identity-in-form on the body; no
 monadic wrapper to dissolve — §"Downward to L3"). The seven algebraic laws are
 carried up unchanged (each a syntactic identity or a standard linear-combination

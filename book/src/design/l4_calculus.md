@@ -44,7 +44,12 @@ Shapes are drawn from bunsen's `DimExpr` algebra:
 σ ::= n                                      -- literal natural
     | s                                      -- shape variable (named axis)
     | σ + σ | σ - σ | σ * σ | σ ^ n          -- algebraic combinations
-    | [σ₁, ..., σₙ]                          -- shape tuple (rank-n shape)
+    | [γ₁, ..., γₙ]                          -- shape tuple (a sequence of shape-group items)
+
+γ ::= σ                                      -- a single axis (literal, variable, or algebraic)
+    | ...                                    -- rank-wildcard: zero or more unconstrained axes
+    | (S: γ₁, ..., γₖ)                       -- named shape group: binds S to the contiguous item run
+    | S                                      -- shape-group reference (congruence by name reuse)
 ```
 
 Examples:
@@ -53,6 +58,18 @@ Examples:
 - `Tensor[H, W, VY=3, VX=3]` — rank-4 with two free axes (`H`, `W`) and two pinned (`VY=3`, `VX=3`)
 - `Tensor[m, n]`          — rank-2 with free axes `m`, `n`
 - `Tensor[h_wins * window, w_wins * window, C]` — algebraic composition
+
+#### 1.2.1 Named shape groups (shape congruence of unknown rank)
+
+A **named shape group** `(S: ...)` gives a name to a *contiguous run of axes* inside a shape — **without committing to its rank or its individual dims**. It reads as *"the shape pattern `...`, named `S`"*. The name is then reused elsewhere in the same signature to assert that two shapes are **congruent** over that run.
+
+- `Tensor[(S: ...)]`        — a tensor whose entire shape is the group `S` (rank unknown). Reusing `S` in another `Tensor[(S: ...)]` in the same signature asserts the two are the same shape.
+- `Tensor[(S: a, ...), b]`  — a named group `S` (a leading axis `a` followed by any number of further axes), then a trailing dim `b`. The shape is the concatenation `[a, …, b]`; the leading run is named `S`.
+- Once `S` is bound, a bare `S` (or `(S: ...)`) elsewhere in the signature **references** it: `f :: Tensor[(S: ...)] -> Tensor[(S: ...)] -> Tensor[S]` constrains all three shapes to one common `S`.
+
+The rank-wildcard `...` matches zero or more axes; a group may mix pinned axes and a wildcard (`(S: a, ...)`), or be a pure wildcard (`(S: ...)`).
+
+**Why this exists — the `Tensor[N]`-as-same-shape anti-pattern.** A single shape *variable* `σ` already expresses "same whole shape, any rank" (`axpy :: Scalar → Tensor[σ] → Tensor[σ] → Tensor[σ]`). Use `σ` when the whole shape is shared. Named groups add two things `σ` cannot: (i) naming a *partial* run so the shared and the free parts of a shape are distinguished (`Tensor[(S: ...), k]` — congruent leading block `S`, free trailing `k`); and (ii) a same-shape assertion that is **visibly rank-agnostic**. Do **not** reach for a bare concrete axis like `Tensor[N]` to mean "same shape as the other operand" — `Tensor[N]` denotes a **rank-1 tensor of length `N`** and silently pins the operands to one dimension. When the intent is congruence-of-unknown-rank, write `Tensor[(S: ...)]` (or reuse `σ`); reserve `Tensor[N]` for genuinely rank-1 vectors (e.g. a flat dof-vector of length `N`).
 
 ### 1.3 Terms
 
@@ -271,7 +288,7 @@ broadcast_to : (target_shape: [σ_1, …, σ_n]) → Tensor[σ_a] → Tensor[σ_
                                           -- shape-side-condition resolved by the DimExpr solver
 ```
 
-Where shapes match symbolically (`σ` on both inputs of `axpy`), they must be syntactically identical *modulo the* `DimExpr` *equational theory*. Where shapes are related (`m, n` of `matvec`), the relation is stated in the signature.
+Where shapes match symbolically (`σ` on both inputs of `axpy`), they must be syntactically identical *modulo the* `DimExpr` *equational theory*. Where shapes are related (`m, n` of `matvec`), the relation is stated in the signature. Where only a *partial run* of axes must agree across operands of unknown rank, name it with a shape group (§1.2.1) and reuse the name: every occurrence of a group `S` in a signature must resolve to one congruent axis-run under the same `DimExpr` theory. A named group is the rank-agnostic same-shape contract; a bare concrete axis (`Tensor[N]`) is **not** — it is a rank-1 commitment.
 
 ### 4.2 Linear annotations for sim-state ownership
 

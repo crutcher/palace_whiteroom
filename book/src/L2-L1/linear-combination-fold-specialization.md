@@ -22,8 +22,8 @@ The L2 form is the variadic fold over a list of (coefficient, term) pairs
 ([`linear_combination`](../L2/linear_combination.md) §Signature):
 
 ```text
-linear_combination :: [(Scalar, Tensor[N])] -> Tensor[N]
-linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros N) pairs
+linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[S]
+linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros S) pairs
 ```
 
 The fold is pure / out-of-place and **order-agnostic for value** (the L2 entry's
@@ -31,7 +31,9 @@ permutation EXACT-ARITHMETIC law, law 7): in exact arithmetic the result `Σᵢ 
 invariant under permutation of the term list and under any reassociation of the
 accumulation. The term list has no fixed length at L2 — the **arity axis is the axis
 this single L2 operator unifies** (L2 entry §"L2 vs L1 distinction"). The shape
-precondition `all tᵢ : Tensor[N]` (every term shares one length axis) is the
+precondition `all tᵢ : Tensor[(S: ...)]` (every term is congruent over one shape group `S`
+of arbitrary, unknown rank — NOT rank-1; named shape groups per
+[`l4_calculus`](../design/l4_calculus.md) §1.2.1) is the
 aligned-pass precondition the L0 fused kernels require.
 
 ## L1 form (RHS)
@@ -39,7 +41,10 @@ aligned-pass precondition the L0 fused kernels require.
 The L1 form is the **four distinct fixed-arity leaf primitives**, each mirroring one
 Palace L0 C++ symbol one-to-one
 ([`scal`](../L1/scal.md) / [`axpy`](../L1/axpy.md) / [`axpby`](../L1/axpby.md) /
-[`axpbypcz`](../L1/axpbypcz.md) §Signature):
+[`axpbypcz`](../L1/axpbypcz.md) §Signature). At this RHS the operands are the **concrete
+Palace `Vector`s** — genuinely flat rank-1 dof-vectors of length `N` — so the `Tensor[N]`
+rendering here is the literal L0/L1 call shape, NOT the shape-generic `(S: ...)` of the L2
+fold above (the rank-1-ness is real at the lowered call, not an accidental implication):
 
 ```text
 scal     :: (α: Scalar, x: Tensor[N])                                            -> Tensor[N]
@@ -170,9 +175,11 @@ order in this table, not merely the value.
 
 The fusion-selection lowering preserves the L2 value when:
 
-1. **Shared length axis (the aligned-pass precondition).** All terms satisfy
-   `all tᵢ : Tensor[N]` (the L2 signature precondition). The fused single-pass kernels
-   (`add(α, x, β, y, z)`) stride over one length axis; if the terms did not share `N`
+1. **Shared shape group (the aligned-pass precondition).** All terms satisfy
+   `all tᵢ : Tensor[(S: ...)]` (the L2 signature precondition — congruence over one shape
+   group `S`). At the lowered L0 call the operands are flat rank-1 `Vector`s, so this
+   congruence is read concretely as a shared length `N`: the fused single-pass kernels
+   (`add(α, x, β, y, z)`) stride over that one flat axis; if the terms did not share it
    the fused leaves would not apply and the lowering would have to fall back to
    per-term `scal` + add (which Palace does not do — the precondition always holds in
    the BLAS-1 cohort).
@@ -212,8 +219,8 @@ The fusion-selection lowering preserves the L2 value when:
 `algebraic` — the selection rule **is** the L2 entry's already-firm laws read as a
 lowering: law 6 (the four specialization identities `scal/axpy/axpby/axpbypcz =
 linear_combination [...]`) gives the arity-1/2/3 dispatch directly, and law 2
-(concatenation-homomorphism, the monoid homomorphism from `([(Scalar,Tensor[N])], ++,
-[])` to `(Tensor[N], +, zeros)`) licenses the arity-≥4 split into an iterated chain
+(concatenation-homomorphism, the monoid homomorphism from `([(Scalar,Tensor[(S: ...)])], ++,
+[])` to `(Tensor[S], +, zeros)`) licenses the arity-≥4 split into an iterated chain
 (`linear_combination (a ++ b) = linear_combination a + linear_combination b`, so the
 fold over a long list equals the running accumulate of fixed-arity chunks). The
 arity-3 → arity-2 fall-through is law 5 (zero-coefficient term-drop), and it is grounded

@@ -70,23 +70,25 @@ subsumed".
 ## Signature
 
 ```text
-linear_combination :: [(Scalar, Tensor[N])] -> Tensor[N]
-linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros N) pairs
+linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[S]
+linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros S) pairs
 ```
 
-Shape contract (bunsen-style; named axes):
+Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1):
 
-- `pairs` — `[(Scalar, Tensor[N])]` — a finite list of (coefficient, term) pairs.
+- `pairs` — `[(Scalar, Tensor[(S: ...)])]` — a finite list of (coefficient, term) pairs.
   Order is the fold's evaluation order (see § "Algebraic laws", permutation
   law/non-law pair).
-- each `tᵢ` — `Tensor[N]` — **shape precondition**: all terms share one length axis
-  `N` (`all tᵢ : Tensor[N]`). This is the aligned-fusion-kernels precondition — every
-  term shares the length axis the single aligned pass strides over.
+- each `tᵢ` — `Tensor[(S: ...)]` — **shape precondition**: all terms are *congruent*,
+  sharing one shape group `S` of arbitrary (unknown) rank — NOT rank-1; the combination
+  is element-local at every position of `S`. The name `S` carries the same-shape contract,
+  and is also the aligned-fusion-kernels precondition — every term shares the shape the
+  single aligned pass strides over.
 - each `aᵢ` — `Scalar` — element type one shared `T ∈ {real, complex}` across all
   scalars and all terms, with the `real ⊑ complex` scalar-promotion lattice inherited
   unchanged from [`concepts/scalar-promotion`](../concepts/scalar-promotion.md)
   (promote all-or-none across the scalar list).
-- result — `Tensor[N]` — same length axis `N`; `zeros[N]` on the empty list.
+- result — `Tensor[S]` — same shape group `S`; `zeros[S]` on the empty list.
 
 ### Arity specializations (the family members, as notes under the combinator)
 
@@ -118,7 +120,7 @@ scalar-promotion sub-axis is identical to the L1 leaves' (inherited, not re-deri
 ## Semantics
 
 `linear_combination` accumulates a running tensor sum: starting from the zero tensor
-of axis `N`, it folds left over the term list, adding each scaled term `aᵢ·tᵢ` into
+of shape group `S`, it folds left over the term list, adding each scaled term `aᵢ·tᵢ` into
 the accumulator. The result is the tensor `Σᵢ aᵢ·tᵢ` (the linear combination of the
 terms with the paired coefficients).
 
@@ -128,11 +130,12 @@ a fresh tensor; no destination buffer appears in the signature. The L0 in-place 
 buffer) are an L2>L1 (and onward L1>L0) lowering concern, captured by the
 output-aliasing variant axis below — not by the L2 algebra.
 
-Each accumulate step is element-local and reduction-free in the length axis `N` (every
-output element `result[i] = Σⱼ aⱼ·tⱼ[i]` depends only on element `i` of each term).
-The fold's sequencing is over the **term list**, not over `N` — there is no
+Each accumulate step is element-local and reduction-free over `S` (every
+output position `result[idx] = Σⱼ aⱼ·tⱼ[idx]` for every multi-index `idx` of `S`
+depends only on position `idx` of each term).
+The fold's sequencing is over the **term list**, not over `S` — there is no
 cross-element communication and no MPI collective (terms are rank-local; ranks own
-disjoint slices of `N`). Contrast `dot` / `nrm2`, which reduce over `N` and do carry an
+disjoint slices of `S`). Contrast `dot` / `nrm2`, which reduce over `S` and do carry an
 MPI collective.
 
 Palace's L0 surface stops at arity 3 (`AXPBYPCZ`; there is no `AXPBYPCZPDW`).
@@ -150,8 +153,8 @@ accumulation loops. This is the correct generalization direction, not scope cree
 
 The laws below hold; absences are deliberate.
 
-1. **Empty-list identity (the fold's seed).** `linear_combination [] = zeros[N]` —
-   the additive identity of `Tensor[N]`. This is the fold's initial accumulator.
+1. **Empty-list identity (the fold's seed).** `linear_combination [] = zeros[S]` —
+   the additive identity of `Tensor[S]`. This is the fold's initial accumulator.
 
 2. **Concatenation-homomorphism (the defining law).**
    `linear_combination (a ++ b) = linear_combination a + linear_combination b`,
@@ -160,7 +163,7 @@ The laws below hold; absences are deliberate.
    concatenation of an `axpby` 2-term list and a `scal` 1-term list, so
    `linear_combination [(α,x),(β,y),(γ,z)] = linear_combination [(α,x),(β,y)] +
    linear_combination [(γ,z)]` = `axpby(α,x,β,y) + scal(γ,z)`. It is a monoid
-   homomorphism from `([(Scalar,Tensor[N])], ++, [])` to `(Tensor[N], +, zeros)`,
+   homomorphism from `([(Scalar,Tensor[(S: ...)])], ++, [])` to `(Tensor[S], +, zeros)`,
    and it directly generalizes the per-operator distribution laws already recorded
    (axpby.md laws 6–7; axpbypcz.md laws 8–10).
 
@@ -304,28 +307,28 @@ The single aligned pass over compatible-shape operands — the MFEM `add(α, x, 
 5-arg in-place linear-combine (`palace/linalg/vector.cpp:726-730` for the `AXPBY`
 real-real path; `:749-751` for the `AXPBYPCZ` `γ==0` fast-path) — is the
 **transparent-performance-trick implementation** of the fold: one strided pass computing
-`Σᵢ aᵢ·tᵢ[i]` per element rather than the unfused seed-then-accumulate chain. It computes
+`Σᵢ aᵢ·tᵢ[idx]` per position `idx` rather than the unfused seed-then-accumulate chain. It computes
 the same value as the unfused fold modulo IEEE-754 summation order (the load-bearing
 permutation non-law above). The precondition for the aligned pass is exactly the
-signature's shape precondition `all tᵢ : Tensor[N]` (every term shares the length axis
-the pass strides over). L2 de-fuses the aligned pass into the fold's
+signature's shape precondition `all tᵢ : Tensor[(S: ...)]` (every term is congruent over the
+shape group `S` the pass strides over). L2 de-fuses the aligned pass into the fold's
 seed-and-accumulate and records the fusion as this one note.
 
 ## Sibling fold: dot is not subsumed
 
-`dot :: (Tensor[N], Tensor[N]) -> Scalar` is a **different** fold —
+`dot :: (Tensor[(S: ...)], Tensor[S]) -> Scalar` is a **different** fold —
 `foldl (+) 0 (zipWith (·) x y)` (conjugation-weighted in the Hermitian complex case) — a
 **reduce-to-scalar** inner product, NOT a scalar-weighted **tensor** sum. Its result type
-is `Scalar`, not `Tensor[N]`; it reduces over the length axis `N` (and carries an MPI
-collective), whereas `linear_combination` is element-local in `N` and folds over the
+is `Scalar`, not `Tensor[S]`; it reduces over the shape group `S` (and carries an MPI
+collective), whereas `linear_combination` is element-local over `S` and folds over the
 term list. Its laws are symmetry / Hermitian-symmetry / positive-semi-definiteness, which
 have no analogue here. The target is a small **algebra of folds** — a tensor-producing
 linear-combination fold AND a scalar-producing inner-product fold — not one
 mega-combinator. The sibling [`inner_product`](./inner_product.md) L2 fold (firm cycle-019) captures `dot` /
 `tdot` as conjugation-convention variants (the axis there is conjugation-convention, not
 arity). It is deliberately **NOT merged** into `linear_combination`: same operand shape
-`(Tensor[N], Tensor[N])`-ish, but a different codomain (`Scalar` vs `Tensor[N]`) and a
-different combining step (zip-and-reduce-over-`N` vs scale-and-accumulate-over-the-term-list).
+`(Tensor[(S: ...)], Tensor[S])`-ish, but a different codomain (`Scalar` vs `Tensor[S]`) and a
+different combining step (zip-and-reduce-over-`S` vs scale-and-accumulate-over-the-term-list).
 The do-NOT-merge boundary is load-bearing and symmetric — recorded here and in
 [`inner_product`](./inner_product.md) §"Sibling fold". The two are the small algebra of
 folds (one tensor-producing, one scalar-producing), not one mega-combinator.
@@ -366,7 +369,7 @@ live call sites).
   mirroring Palace's four L0 C++ symbols one-to-one; each a leaf primitive whose
   one-to-one shape is load-bearing for the L1>L0 mutation rotation. The arity is fixed
   per operator; the term list is below L1 resolution.
-- **L2**: one variadic fold `linear_combination` over a `[(Scalar, Tensor[N])]` term
+- **L2**: one variadic fold `linear_combination` over a `[(Scalar, Tensor[(S: ...)])]` term
   list; the four fixed arities are recovered as list-length specializations (law 6); the
   family's distinct fixed-arity call shapes (a kernel-fusion / call-shape choice) are
   unfolded into the canonical multi-term combination; the single aligned pass is de-fused
