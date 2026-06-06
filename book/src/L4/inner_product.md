@@ -81,8 +81,8 @@ notation invariant.
 
     -- entry point: the reduce-to-scalar inner-product combinator
     -- a pure reduction over the shape group S; no Solve monad, no carry
-    inner_product   :: Tensor[(S: ...)] -> Tensor[S] -> Scalar
-    inner_product_M :: Tensor[(S: ...)] -> LinOp[(S: ...), (S: ...)] -> Tensor[S] -> Scalar
+    inner_product   :: Tensor[(S: ...)] -> Tensor[$S] -> Scalar
+    inner_product_M :: Tensor[(S: ...)] -> LinOp[$S, $S] -> Tensor[$S] -> Scalar
 
     inner_product   x y   = reduce (+) zero (zipWith kernel x y)   -- kernel from the table below
     inner_product_M x M y = inner_product (apply_linop M x) y      -- weighted ≡ pre-apply M to arg-1, then plain
@@ -93,8 +93,8 @@ Shape contract (bunsen-style; named shape groups per
 L4 form is value-thread-isomorphic to it, §"Downward to L3"):
 
 - `x` — `Tensor[(S: ...)]` — read-only; the **conjugated** (arg-1) operand in `xᴴ y`.
-- `y` — `Tensor[S]` — read-only; the **linear** (arg-2) operand.
-- `M` (weighted member) — `LinOp[(S: ...), (S: ...)]` — read-only matrix-weight (a
+- `y` — `Tensor[$S]` — read-only; the **linear** (arg-2) operand.
+- `M` (weighted member) — `LinOp[(S: ...), $S]` — read-only matrix-weight (a
   square / endomorphic operator, domain ≡ range = `S`, §1.2.2), pre-applied to `x`
   via the opaque [`apply_linop`](../L3/apply_linop.md) gate.
 - result — `Scalar` — element type per the kernel table; `zero` on the empty tensor.
@@ -263,8 +263,8 @@ not edited this dispatch.
 
 The scalar-weighted-tensor-sum [`linear_combination`](./linear_combination.md)
 (this cycle's sibling L4 entry) is a **different** fold — scalar-weighted **tensor**
-sum producing `Tensor[S]`, NOT a reduce-to-scalar. Its concatenation-homomorphism
-is over the *term list* to `(Tensor[S], +)`; this combinator's is over the *shape
+sum producing `Tensor[$S]`, NOT a reduce-to-scalar. Its concatenation-homomorphism
+is over the *term list* to `(Tensor[$S], +)`; this combinator's is over the *shape
 group `S`* to `(Scalar, +)`. Its combining step is scale-and-accumulate-over-the-term-
 list; this combinator's is zip-and-reduce-over-`S`. The two are the small **algebra
 of folds** at L4 — one tensor-producing, one scalar-producing — deliberately **NOT
@@ -276,7 +276,7 @@ at L2/L3/L4).
 `firm` — the L4 form is the calculus-level rendering of the firm L3
 [`inner_product`](../L3/inner_product.md) combinator (firm cycle-051, propagated
 from the firm L2 entry cycle-019 / inverted-to-entry cycle-049 D2): the same
-reduce-to-scalar `Tensor[(S: ...)] -> Tensor[S] -> Scalar` reduction,
+reduce-to-scalar `Tensor[(S: ...)] -> Tensor[$S] -> Scalar` reduction,
 value-thread-isomorphic across the L4>L3 edge (identity-in-form on the body; no
 monadic wrapper to dissolve — §"Downward to L3"). The seven algebraic laws are
 carried up unchanged (each a syntactic identity or a standard inner-product fact);

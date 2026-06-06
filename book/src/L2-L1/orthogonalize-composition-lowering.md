@@ -29,7 +29,7 @@ prefix `V`, parameterised by the orthogonalisation variant and the inner-product
 ([`orthogonalize`](../L2/orthogonalize.md) §Signature, §Semantics):
 
 ```text
-orthogonalize :: (op: OrthogOp, w: Tensor[(S: ...)], V: Basis[N, m]) -> { residual: Tensor[S], coeffs: Tensor[m] }
+orthogonalize :: (op: OrthogOp, w: Tensor[(S: ...)], V: Basis[N, m]) -> { residual: Tensor[$S], coeffs: Tensor[m] }
 
 orthogonalize op w V =
   let coeffs   = project  op.variant op.dot w V    -- the per-variant batched inner products

@@ -69,7 +69,7 @@ ChebOp :: { A: LinOp[E], dinv: Tensor[E, (V: ...)], order: Int, pc_it: Int
           , scalarInit: S
           , scalars: (Int, S) -> { α₀?: E, sd?: E, sr?: E, st: S } }
 
-ChebSim :: { x: Read[Tensor[E, V]], y: ReadWrite[Tensor[E, V]] }
+ChebSim :: { x: Read[Tensor[E, $V]], y: ReadWrite[Tensor[E, $V]] }
 
 setup  :: LinOp[E] -> SetupParams -> Variant -> Solve s (ChebOp E S)
 apply  :: ChebOp E S -> Bool -> Solve (ChebSim E) ()
@@ -89,7 +89,7 @@ type, not an axis):
   not a single union — there is no runtime variant tag at apply-time, only a
   closure dispatch through `scalars`. Fields:
   - `A: LinOp[E]` — the captured SPD operator (residual + direction-image).
-  - `dinv: Tensor[E, V]` — `1/diag(A)` (the `D⁻¹` action), congruent to the
+  - `dinv: Tensor[E, $V]` — `1/diag(A)` (the `D⁻¹` action), congruent to the
     field shape group `V`; real-valued even for complex `A`.
   - `order: Int` — polynomial degree (`> 0`); the inner `iterate_while_pure`
     step-count-predicate bound (`c.k <= order - 1`).
@@ -102,7 +102,7 @@ type, not an axis):
     absorbed into the closure type per [`variant-absorption`](../concepts/variant-absorption.md)
     level (c).
 - `ChebSim E` — the capability-typed sim-state record threaded by the `Solve`
-  monad: `x: Read[Tensor[E, V]]` (the rhs; read-only) and `y: ReadWrite[Tensor[E,
+  monad: `x: Read[Tensor[E, $V]]` (the rhs; read-only) and `y: ReadWrite[Tensor[E,
   V]]` (the accumulator; the only field written), both congruent to the field
   shape group `V`. The `Read`/`ReadWrite` split
   encodes the L4 mutation discipline at the type surface (per

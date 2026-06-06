@@ -42,7 +42,7 @@ The L3 form is value-threaded (positional `(op, K, s)`; no `Solve` monad, no `re
 The L2 form is reproduced from [`L2/ksp_solve`](../L2/ksp_solve.md) §Signature — the outer-driver composition:
 
 ```text
-ksp_solve :: (K: Solver[A: LinOp[(S: ...), (S: ...)]], b: Tensor[(S: ...)]) -> SolveResult[S]
+ksp_solve :: (K: Solver[A: LinOp[(S: ...), $S]], b: Tensor[$S]) -> SolveResult[S]
 ksp_solve K b =
   let (op, s_0)     = setup K b                          -- bind kernel op-surface; seed state
   let s_init        = init_convergence op s_0            -- residual proxy + eps + pre-loop converged flag

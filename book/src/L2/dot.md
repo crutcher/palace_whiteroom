@@ -28,8 +28,8 @@ combinator's — see [`inner_product`](./inner_product.md) §"Specializations".
 
 ## Signature
 
-    dot   :: (x: Tensor[(S: ...)], y: Tensor[S]) -> Scalar
-    tdot  :: (x: Tensor[(S: ...)], y: Tensor[S]) -> Scalar     -- complex-only variant
+    dot   :: (x: Tensor[(S: ...)], y: Tensor[$S]) -> Scalar
+    tdot  :: (x: Tensor[(S: ...)], y: Tensor[$S]) -> Scalar     -- complex-only variant
 
 Two operators in one chapter because they share the entire reduction skeleton (sum over the
 shape group `S`) and differ only by the per-element kernel. The signature is the combinator's,

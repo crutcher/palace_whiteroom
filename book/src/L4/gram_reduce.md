@@ -78,8 +78,8 @@ bodies; Palace's C++ writes the explicit double loop, not the L4 reduction form.
 
     -- the operator-weighted symmetric-Gram reduction over a solution family-pair grid,
     -- parameterized by the per-entry normalization weight w(i,j):
-    gram_reduce :: LinOp[(S: ...), (S: ...)]   -- the operator weight K (square SPD domain energy operator)
-                -> [Tensor[(S: ...)]]           -- the solution family xs = [x_0 .. x_{m-1}] (congruent to K's domain S)
+    gram_reduce :: LinOp[(S: ...), $S]   -- the operator weight K (square SPD domain energy operator)
+                -> [Tensor[$S]]           -- the solution family xs = [x_0 .. x_{m-1}] (congruent to K's domain S)
                 -> (Int -> Int -> Scalar)       -- the per-entry normalization weight w(i,j)
                 -> Matrix[m, m]                 -- the symmetric Gram matrix G, Gᵢⱼ = w(i,j) · (xⱼᵀ K xᵢ)
     gram_reduce k xs w =
@@ -98,7 +98,7 @@ bodies; Palace's C++ writes the explicit double loop, not the L4 reduction form.
 Shape contract (bunsen-style; named shape groups per
 [`l4_calculus`](../design/l4_calculus.md) §1.2.1):
 
-- `K : LinOp[(S: ...), (S: ...)]` — read-only; the **domain energy operator** (`M_elec`
+- `K : LinOp[(S: ...), $S]` — read-only; the **domain energy operator** (`M_elec`
   diffusion-energy at `electrostaticsolver.cpp:118`, `M_mag` curl-curl-energy at
   `magnetostaticsolver.cpp:129`; the feature chapters call it `K`). Symmetric/SPD —
   the load-bearing precondition for `G`-symmetry.

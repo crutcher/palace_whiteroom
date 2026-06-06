@@ -66,11 +66,11 @@ structural distinction from its BLAS-1-floor cohort siblings [`dot`](./dot.md) a
 
 - [`dot`](./dot.md) is the conjugation-axis **leaf-of** the reduce-to-`Scalar` fold
   [`inner_product`](./inner_product.md) (it folds the length axis to a scalar).
-- [`scal`](./scal.md) is the arity-1 **member-of** the reduce-to-`Tensor[S]` fold
+- [`scal`](./scal.md) is the arity-1 **member-of** the reduce-to-`Tensor[$S]` fold
   [`linear_combination`](./linear_combination.md) (it is the arity-1 scalar-weighted-sum
   term).
 - `reciprocal` (this entry) is **neither**. It is a *nonlinear* elementwise self-map
-  `Tensor[(S: ...)] -> Tensor[S]` (`1/(a+b) ≠ 1/a + 1/b` — the defining non-linearity that
+  `Tensor[(S: ...)] -> Tensor[$S]` (`1/(a+b) ≠ 1/a + 1/b` — the defining non-linearity that
   distinguishes it from the linear `linear_combination` leaves). It does not reduce over the
   length axis (so it is not an `inner_product` member) and it is not a scalar-weighted-sum
   term (so it is not a `linear_combination` member). No L2 fold subsumes it.
@@ -91,7 +91,7 @@ them but composes neither.
 
 ## Signature
 
-    reciprocal :: Tensor[(S: ...)] -> Tensor[S]
+    reciprocal :: Tensor[(S: ...)] -> Tensor[$S]
     reciprocal x = (\idx -> 1 / x[idx])   for every multi-index idx of S
 
 Shape contract (bunsen-style; named shape groups per
@@ -102,7 +102,7 @@ destination buffer):
   (arbitrary, unknown rank — NOT rank-1). Read-only at L2
   (the L2 form is pure / out-of-place; the L0 receiver self-overwrite is reintroduced only
   at the L1>L0 lowering).
-- **result** — `Tensor[S]` — congruent to `x` (same shape group `S`); **same element type** as `x`. Every
+- **result** — `Tensor[$S]` — congruent to `x` (same shape group `S`); **same element type** as `x`. Every
   output element equals the field-multiplicative-inverse of the corresponding input element.
   The result element type **tracks** the input element type (real `x` → real result; complex
   `x` → complex result) — unlike [`nrm2`](./nrm2.md), which collapses both to a real-valued
@@ -353,7 +353,7 @@ axis (see § "No fold-parent").
 ## Downward to L1
 
 L2 `reciprocal` lowers to L1 [`reciprocal`](../L1/reciprocal.md) via an **identity-in-form**
-relationship: the signature is congruent at both layers (L2 `Tensor[(S: ...)] -> Tensor[S]`; L1 the flat dof-vector spelling `Tensor[N] -> Tensor[N]`); the
+relationship: the signature is congruent at both layers (L2 `Tensor[(S: ...)] -> Tensor[$S]`; L1 the flat dof-vector spelling `Tensor[N] -> Tensor[N]`); the
 body is the same elementwise multiplicative-inverse field operation; the eight algebraic laws,
 the non-law set (partiality, nonlinearity, IEEE-754 caveats), and the single-orthogonal-axis
 variant profile (element-type) all transport unchanged. The only fusion content is the

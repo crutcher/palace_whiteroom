@@ -35,11 +35,11 @@ carries the load-bearing one-to-one L0-symbol shape for the L1>L0 mutation rotat
 
 ## Signature
 
-    axpby :: Scalar -> Tensor[(S: ...)] -> Scalar -> Tensor[S] -> Tensor[S]
+    axpby :: Scalar -> Tensor[(S: ...)] -> Scalar -> Tensor[$S] -> Tensor[$S]
     axpby α x β y = α·x + β·y = linear_combination [(α, x), (β, y)]
 
 Arity-2 instance (general second coeff) of the combinator's
-`linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[S]`
+`linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[$S]`
 (`linear_combination.md` §Signature). Named shape groups per
 [`l4_calculus`](../design/l4_calculus.md) §1.2.1: `S` is the shared shape group of
 arbitrary, unknown rank (NOT rank-1) — the two terms and the result are congruent and

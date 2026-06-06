@@ -48,8 +48,8 @@ Shapes are drawn from bunsen's `DimExpr` algebra:
 
 γ ::= σ                                      -- a single axis (literal, variable, or algebraic)
     | ...                                    -- rank-wildcard: zero or more unconstrained axes
-    | (S: γ₁, ..., γₖ)                       -- named shape group: binds S to the contiguous item run
-    | S                                      -- shape-group reference (congruence by name reuse)
+    | (S: γ₁, ..., γₖ)                       -- named shape group: BINDS S to the contiguous item run
+    | $S                                     -- shape-group USE: references a group bound elsewhere (congruence)
 ```
 
 Examples:
@@ -61,23 +61,25 @@ Examples:
 
 #### 1.2.1 Named shape groups (shape congruence of unknown rank)
 
-A **named shape group** `(S: ...)` gives a name to a *contiguous run of axes* inside a shape — **without committing to its rank or its individual dims**. It reads as *"the shape pattern `...`, named `S`"*. The name is then reused elsewhere in the same signature to assert that two shapes are **congruent** over that run.
+A **named shape group** `(S: ...)` gives a name to a *contiguous run of axes* inside a shape — **without committing to its rank or its individual dims**. It reads as *"the shape pattern `...`, named `S`"*. The name is then **used** (`$S`) elsewhere in the same signature to assert that two shapes are **congruent** over that run.
 
-- `Tensor[(S: ...)]`        — a tensor whose entire shape is the group `S` (rank unknown). Reusing `S` in another `Tensor[(S: ...)]` in the same signature asserts the two are the same shape.
+- **Binding vs use.** A group is **bound** exactly once, at its first naming, by the parenthesized form `(S: ...)`. Every *later* occurrence that refers back to it is a **use**, written with a `$` sigil: `$S`. The `$` makes a back-reference visually distinct from a fresh binding and from a single-axis variable.
+- `Tensor[(S: ...)]`        — a tensor whose entire shape is the group `S` (rank unknown); this is the **binding**.
+- `Tensor[$S]`              — a tensor congruent to the already-bound group `S`; this is a **use**.
 - `Tensor[(S: a, ...), b]`  — a named group `S` (a leading axis `a` followed by any number of further axes), then a trailing dim `b`. The shape is the concatenation `[a, …, b]`; the leading run is named `S`.
-- Once `S` is bound, a bare `S` (or `(S: ...)`) elsewhere in the signature **references** it: `f :: Tensor[(S: ...)] -> Tensor[(S: ...)] -> Tensor[S]` constrains all three shapes to one common `S`.
+- A whole congruent signature: `f :: Tensor[(S: ...)] -> Tensor[$S] -> Tensor[$S]` — `S` is bound by the first operand, the second operand and the result are uses; all three shapes are one common `S`.
 
 The rank-wildcard `...` matches zero or more axes; a group may mix pinned axes and a wildcard (`(S: a, ...)`), or be a pure wildcard (`(S: ...)`).
 
-**Why this exists — the `Tensor[N]`-as-same-shape anti-pattern.** A single shape *variable* `σ` already expresses "same whole shape, any rank" (`axpy :: Scalar → Tensor[σ] → Tensor[σ] → Tensor[σ]`). Use `σ` when the whole shape is shared. Named groups add two things `σ` cannot: (i) naming a *partial* run so the shared and the free parts of a shape are distinguished (`Tensor[(S: ...), k]` — congruent leading block `S`, free trailing `k`); and (ii) a same-shape assertion that is **visibly rank-agnostic**. Do **not** reach for a bare concrete axis like `Tensor[N]` to mean "same shape as the other operand" — `Tensor[N]` denotes a **rank-1 tensor of length `N`** and silently pins the operands to one dimension. When the intent is congruence-of-unknown-rank, write `Tensor[(S: ...)]` (or reuse `σ`); reserve `Tensor[N]` for genuinely rank-1 vectors (e.g. a flat dof-vector of length `N`).
+**Why this exists — the `Tensor[N]`-as-same-shape anti-pattern.** A single shape *variable* `σ` already expresses "same whole shape, any rank" (`axpy :: Scalar → Tensor[σ] → Tensor[σ] → Tensor[σ]`). Use `σ` when the whole shape is shared. Named groups add two things `σ` cannot: (i) naming a *partial* run so the shared and the free parts of a shape are distinguished (`Tensor[(S: ...), k]` binds the leading block `S`, and a later `Tensor[$S, k']` shares it with a free trailing `k'`); and (ii) a same-shape assertion that is **visibly rank-agnostic**. Do **not** reach for a bare concrete axis like `Tensor[N]` to mean "same shape as the other operand" — `Tensor[N]` denotes a **rank-1 tensor of length `N`** and silently pins the operands to one dimension. When the intent is congruence-of-unknown-rank, write `Tensor[(S: ...)]` (or reuse `σ`); reserve `Tensor[N]` for genuinely rank-1 vectors (e.g. a flat dof-vector of length `N`).
 
 #### 1.2.2 Operator shapes — domain and range groups
 
 A linear operator whose **domain shape differs from its range shape** names *two* groups: a range group `R` and a domain group `D`. Written **range-first**, matching the matrix convention (an `M×N` matrix maps a length-`N` domain to a length-`M` range):
 
-- `LinOp[(R: ...), (D: ...)]` — an operator from domain shape `D` to range shape `R`, both of unknown rank.
-- Applied: `apply_linop :: LinOp[(R: ...), (D: ...)] -> Tensor[(D: ...)] -> Tensor[R]` — the operand must be congruent to the domain group `D`; the result is the range group `R`.
-- A square / endomorphic operator reuses one group: `LinOp[(S: ...), (S: ...)]` (e.g. a preconditioner or a symmetric system matrix, domain ≡ range).
+- `LinOp[(R: ...), (D: ...)]` — an operator from domain shape `D` to range shape `R`, both of unknown rank; this **binds** both `R` and `D`.
+- Applied: `apply_linop :: LinOp[(R: ...), (D: ...)] -> Tensor[$D] -> Tensor[$R]` — the operand is a **use** of the domain group (`$D`); the result is a use of the range group (`$R`).
+- A square / endomorphic operator binds one group and uses it for the range: `LinOp[(S: ...), $S]` (e.g. a preconditioner or a symmetric system matrix, domain ≡ range), applied `Tensor[(S: ...)] -> Tensor[$S]` when the operand introduces `S`, or `LinOp[(S: ...), $S] -> Tensor[$S] -> Tensor[$S]` when the operator does.
 
 This generalizes the rank-1 spelling `LinearOperator[M, N]` (where `M`, `N` are genuine flat dof-vector lengths) to the rank-agnostic case. At **L1/L0**, Palace operators act on flat dof-vectors and the concrete `LinearOperator[M, N]` / `Tensor[N]` rank-1 spelling is faithful — keep it there; the `LinOp[(R: ...), (D: ...)]` form is the L4/L3/L2 calculus rendering.
 

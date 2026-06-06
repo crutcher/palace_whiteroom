@@ -33,8 +33,8 @@ The L2 form is the reduce-to-scalar fold over two aligned tensors (`L2/inner_pro
 §Signature), with the optional matrix weight pre-applied to arg-1:
 
 ```text
-inner_product   :: (x: Tensor[(S: ...)], y: Tensor[S]) -> Scalar
-inner_product_M :: (x: Tensor[(S: ...)], M: LinOp[(S: ...), (S: ...)], y: Tensor[S]) -> Scalar
+inner_product   :: (x: Tensor[(S: ...)], y: Tensor[$S]) -> Scalar
+inner_product_M :: (x: Tensor[(S: ...)], M: LinOp[$S, $S], y: Tensor[$S]) -> Scalar
 
 inner_product   x y   = foldl (+) zero (zipWith kernel x y)   -- kernel per the table below
 inner_product_M x M y = inner_product (apply_linop M x) y     -- weighted ≡ pre-apply M to arg-1

@@ -79,9 +79,9 @@ The L2 form is the named `coords ▷ (schur-)solve ▷ back-project` composition
 ([`deflate`](../L2/deflate.md) §Signature, `book/src/L2/deflate.md:55-66`):
 
 ```text
-deflate :: (op: DeflateOp, X: Basis[N, k], v: Tensor[(S: ...)]) -> Tensor[S]
+deflate :: (op: DeflateOp, X: Basis[N, k], v: Tensor[(S: ...)]) -> Tensor[$S]
 
-type DeflateOp = { dot: (Tensor[(S: ...)], Tensor[S]) -> Scalar  -- inner-product hook
+type DeflateOp = { dot: (Tensor[(S: ...)], Tensor[$S]) -> Scalar  -- inner-product hook
                  , block: GramBlock[k] }                      -- coordinate-solve block
 
 type GramBlock[k] = Schur { S: Matrix[k, k] }    -- coords solved against −S⁻¹(XᴴX) then S⁻¹

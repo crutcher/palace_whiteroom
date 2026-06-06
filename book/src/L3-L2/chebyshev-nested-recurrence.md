@@ -28,7 +28,7 @@ The `chebyshev` lowering chain spans the layer-edges of the artifact:
   sweep loop are both below L1 resolution (the polynomial is one closed-form action; `apply_linop` and
   the opaque setup `spectrum_estimate` are the only L1 dependencies).
 - **L2 firm** ([`L2/chebyshev-iteration`](../L2/chebyshev-iteration.md), cycle-012) — the
-  **fusion-rotation** form `(op: ChebOp[(S: ...)], x, y, initial_guess) -> Tensor[S]`: the closed-form
+  **fusion-rotation** form `(op: ChebOp[(S: ...)], x, y, initial_guess) -> Tensor[$S]`: the closed-form
   polynomial unfolded into an explicit `order`-step three-term recurrence built from named L1 leaf
   primitives (`apply_linop`, `axpby`, `scal`, `elementwise_product`), with the HPC element-fused
   kernels (`ApplyOrder0`, `ApplyOrderK`) de-fused into base composition and the scalar generator made
@@ -119,7 +119,7 @@ The L2 form is reproduced from [`L2/chebyshev-iteration`](../L2/chebyshev-iterat
 the `sweep`-iterated-by-role composition:
 
 ```text
-chebyshev_iteration :: (op: ChebOp[(S: ...)], x, y, initial_guess) -> Tensor[S]
+chebyshev_iteration :: (op: ChebOp[(S: ...)], x, y, initial_guess) -> Tensor[$S]
 sweep(op, x, y, first):
   -- 1. residual: r = x − A·y   (or r = x, y = 0 on first sweep without guess)
   r = if first && not initial_guess

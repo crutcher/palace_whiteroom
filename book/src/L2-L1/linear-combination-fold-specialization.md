@@ -22,8 +22,8 @@ The L2 form is the variadic fold over a list of (coefficient, term) pairs
 ([`linear_combination`](../L2/linear_combination.md) §Signature):
 
 ```text
-linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[S]
-linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros S) pairs
+linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[$S]
+linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros $S) pairs
 ```
 
 The fold is pure / out-of-place and **order-agnostic for value** (the L2 entry's
@@ -220,7 +220,7 @@ The fusion-selection lowering preserves the L2 value when:
 lowering: law 6 (the four specialization identities `scal/axpy/axpby/axpbypcz =
 linear_combination [...]`) gives the arity-1/2/3 dispatch directly, and law 2
 (concatenation-homomorphism, the monoid homomorphism from `([(Scalar,Tensor[(S: ...)])], ++,
-[])` to `(Tensor[S], +, zeros)`) licenses the arity-≥4 split into an iterated chain
+[])` to `(Tensor[$S], +, zeros)`) licenses the arity-≥4 split into an iterated chain
 (`linear_combination (a ++ b) = linear_combination a + linear_combination b`, so the
 fold over a long list equals the running accumulate of fixed-arity chunks). The
 arity-3 → arity-2 fall-through is law 5 (zero-coefficient term-drop), and it is grounded

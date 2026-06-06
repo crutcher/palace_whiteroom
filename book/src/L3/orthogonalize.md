@@ -126,7 +126,7 @@ Shape contract (positional values; L3 has no `readonly` annotation and no monadi
   - `op.variant : GSVariant ∈ {MGS, CGS, CGS2}` — the orthogonalization variant; **inspected
     exactly once at dispatch**, never re-branched per column. This is the axis along which the
     L3 lift verdict splits (MGS non-lifting / CGS, CGS2 lifting).
-  - `op.dot : (Tensor[(S: ...)], Tensor[S]) -> Scalar` — the inner-product hook; the canonical
+  - `op.dot : (Tensor[(S: ...)], Tensor[$S]) -> Scalar` — the inner-product hook; the canonical
     [`dot`](./dot.md) (conjugate-linear in the first argument) by default, the SLEPc/ROM paths
     substitute a `B`-weighted dot. A parametric axis: the lift verdict is invariant under the
     hook (the body shape and the MGS/CGS structural split are unchanged).
@@ -135,7 +135,7 @@ Shape contract (positional values; L3 has no `readonly` annotation and no monadi
   being orthonormal (`⟨V[i], V[j]⟩ = δ_ij`) under `op.dot`. The operator does not enforce the
   precondition (inherited from the L1 leaf, whose L0 header states it, `orthog.hpp:18-23`).
 - **result `{ residual, coeffs }`** — a record with two whole-tensor fields:
-  - `residual : Tensor[S]` — the orthogonal residual `w − Σ_j coeffs[j]·V[j]`, **not
+  - `residual : Tensor[$S]` — the orthogonal residual `w − Σ_j coeffs[j]·V[j]`, **not
     normalised** (the L0 header's load-bearing no-output-normalisation contract,
     `orthog.hpp:22`). Same shape group `S` as `w`.
   - `coeffs : Tensor[m]` — the projection coefficients (the leading `m` entries of the
@@ -170,7 +170,7 @@ operation lifts to a global tensor-field form.
 ### Tensor-field body (one inner step `j`)
 
 Fix the inner-step body that runs once for each basis column `j ∈ {0, …, m−1}`. With the basis
-column `V[j] : Tensor[N]` (a basis column) and the candidate `w_eff(j) : Tensor[S]`, the body is
+column `V[j] : Tensor[N]` (a basis column) and the candidate `w_eff(j) : Tensor[$S]`, the body is
 
 $$
 \begin{aligned}

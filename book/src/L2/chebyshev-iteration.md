@@ -47,18 +47,18 @@ here is the firm operator definition.
 
 ```text
 chebyshev_iteration
-  :: (op: ChebOp[S], x: Tensor[(S: ...)], y: Tensor[S], initial_guess: Bool)
-     -> Tensor[S]
+  :: (op: ChebOp[S], x: Tensor[(S: ...)], y: Tensor[$S], initial_guess: Bool)
+     -> Tensor[$S]
 ```
 
 Shape contract (bunsen-style; named axes; the field shape group `S` and the
-square operator form `LinOp[(S: ...), (S: ...)]` follow the named-shape-group
+square operator form `LinOp[(S: ...), $S]` follow the named-shape-group
 convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2) —
 identical boundary to L1, with the internal scalar generator made explicit:
 
 - `op` — `ChebOp[S]` — the constructed smoother. Carries `op.A :
-  LinOp[(S: ...), (S: ...)]` (square, on the field shape group `S`), `op.dinv :
-  Tensor[S]`, `op.order : Int`, `op.pc_it :
+  LinOp[(S: ...), $S]` (square, on the field shape group `S`), `op.dinv :
+  Tensor[$S]`, `op.order : Int`, `op.pc_it :
   Int`, and the scalar generator `op.scalars`:
   - **4th-kind**: `scalars(k) = { α₀ = 4/(3·λ_max), sd_k = (2k−1)/(2k+3), sr_k =
     (8k+4)/((2k+3)·λ_max) }` — closed form in `k` and `λ_max`; stateless.
@@ -66,7 +66,7 @@ identical boundary to L1, with the internal scalar generator made explicit:
     `α₀ = 1/θ`, and for `k ≥ 1`: `ρ_k = 1/(2θ/δ − ρ_{k−1})`, `sd_k = ρ_k·ρ_{k−1}`,
     `sr_k = 2·ρ_k/δ` — threads a scalar state `ρ` across `k`.
 - `x`, `y`, `initial_guess` — as in L1.
-- result — `Tensor[S]` — the post-sweep accumulator.
+- result — `Tensor[$S]` — the post-sweep accumulator.
 
 The L2 form differs from L1 only in **resolution**: L1 sees one closed-form
 polynomial action; L2 sees the explicit `order`-step recurrence built from named

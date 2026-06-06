@@ -92,7 +92,7 @@ floor. This dispatch floors `jacobi-smoother`.
 
 ## Signature
 
-    jacobi_smoother :: (op: JacobiSmoother[S], x: Tensor[(S: ...)]) -> Tensor[S]
+    jacobi_smoother :: (op: JacobiSmoother[S], x: Tensor[(S: ...)]) -> Tensor[$S]
     jacobi_smoother op x = op.dinv ⊙ x
                          = (ω · diag(A)⁻¹) ⊙ x
 
@@ -102,7 +102,7 @@ positional values, no monadic effect, no destination buffer):
 
 - **`op`** — `JacobiSmoother[S]` — the constructed smoother closure, an opaque
   value bound once at setup and immutable across calls. Carries
-  `op.dinv : Tensor[S]` (the damped inverse diagonal `ω · diag(A)⁻¹`, congruent
+  `op.dinv : Tensor[$S]` (the damped inverse diagonal `ω · diag(A)⁻¹`, congruent
   to the field shape group `S`, same
   element-type as the operator), `op.omega : Real` (the damping factor, already
   absorbed into `dinv` at apply time), and `op.sf_max : Real` (the spectral-bound
@@ -110,10 +110,10 @@ positional values, no monadic effect, no destination buffer):
   constructed-operator type is **opaque at L2** — the element-type variant and
   the operator-representation axis are absorbed; the L2 contract sees only the
   smoother-action interface.
-- **`x`** — `Tensor[S]` — the input vector (residual / RHS to smooth). Read-only
+- **`x`** — `Tensor[$S]` — the input vector (residual / RHS to smooth). Read-only
   at L2 (the L2 form is pure / out-of-place; the L0 in-place output-arg mutation
   is reintroduced only at the L1>L0 lowering).
-- **result** — `Tensor[S]` — the post-smoothing output, a fresh value produced by
+- **result** — `Tensor[$S]` — the post-smoothing output, a fresh value produced by
   the elementwise product; no L0 destination buffer is mentioned at L2 (the
   destination-binding rotation is an L1>L0 concern). Same shape group `S`.
 
@@ -137,7 +137,7 @@ same gate; the rotation is identity-in-form on the gate's apply.
 inverse diagonal `op.dinv = ω · D⁻¹`. The result is determined entirely by `op`
 and `x` — no hidden state, no per-call side effects, no in-place mutation at the
 L2 surface. The L2 form is **pure / out-of-place** (the same `op` applied to the
-same `x` returns the same `Tensor[S]` value); the L0 receiver-mutating idiom
+same `x` returns the same `Tensor[$S]` value); the L0 receiver-mutating idiom
 (`Mult(x, y)` writes through `y`) is an L1>L0 lowering concern, not L2 algebra.
 
 The apply is **inner-product-free, iteration-free, and reduction-free**: it is a
@@ -214,7 +214,7 @@ authoritative on every factual claim about the Palace surface.
    consumes a whole tensor and returns its image under the linear map
    `M = diag(dinv)`).
 
-2. **Zero-vector annihilation.** `jacobi_smoother op 0_S = 0_S`. Follows from law
+2. **Zero-vector annihilation.** `jacobi_smoother op 0_$S = 0_$S`. Follows from law
    1 with `α = β = 0`.
 
 3. **Diagonal-operator round-trip with `assemble_diagonal`.** For the
@@ -456,7 +456,7 @@ cycle-041 leaf-vs-fold design fork.
 L2 `jacobi-smoother` lowers to L1 [`jacobi-smoother`](../L1/jacobi-smoother.md)
 via a **degenerate identity-in-named-terms** rotation, annotated in-line here
 rather than as a dedicated L2>L1 theme file: the L2 form sees `jacobi_smoother ::
-(op: JacobiSmoother[S], x: Tensor[(S: ...)]) -> Tensor[S]` and the L1 floor the
+(op: JacobiSmoother[S], x: Tensor[(S: ...)]) -> Tensor[$S]` and the L1 floor the
 concrete rank-1 `Tensor[N]` spelling of the same gate, with the same shape contract,
 the same six algebraic laws, the same non-law set, and the same
 two-orthogonal-plus-one-absorbed variant profile. There is **no kernel fusion to

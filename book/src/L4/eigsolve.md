@@ -55,7 +55,7 @@ The L4 cap signature is the `solve-monad` outer-driver shape, specialised to the
 
     -- the per-step body the library folds (handed in as an ApplyOp / __pc_apply_EPS callback);
     -- whole-tensor, LIFTS — identity-in-form to the firm L2/L3 apply_shift_invert composition
-    apply_shift_invert :: OpParams -> Tensor[(S: ...)] -> Tensor[S]
+    apply_shift_invert :: OpParams -> Tensor[(S: ...)] -> Tensor[$S]
 
     -- the RICHER termination sum (the eigsolve-specific extension of the canonical Outcome)
     data EigStatus = Converged | PartialConverged Int | MaxIterReached | LinearSolveFailed

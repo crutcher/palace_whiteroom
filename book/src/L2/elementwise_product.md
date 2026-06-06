@@ -51,11 +51,11 @@ is *not* on the batch-12 meta-phase leaf-vs-fold design fork. The two L2 fold co
 - [`inner_product`](./inner_product.md) — folds the **length axis** to a `Scalar`
   (`foldl (+) zero (zipWith kernel x y)`); the `dot` / `tdot` / `bilinear-form` family.
 - [`linear_combination`](./linear_combination.md) — folds the **term axis**, keeping
-  `Tensor[S]` (`foldl (\acc (a,t) -> acc + a·t) zeros pairs`); the
+  `Tensor[$S]` (`foldl (\acc (a,t) -> acc + a·t) zeros pairs`); the
   `scal` / `axpy` / `axpby` / `axpbypcz` arity family.
 
 `elementwise_product` is **neither**: it is a binary field operation
-`(Tensor[(S: ...)], Tensor[S]) -> Tensor[S]` that consumes two congruent operands and produces a
+`(Tensor[(S: ...)], Tensor[$S]) -> Tensor[$S]` that consumes two congruent operands and produces a
 congruent result, with no fold skeleton (no reduction to a scalar, no variadic term list
 to accumulate). It does not fuse *up* into either cohort, and neither cohort subsumes it.
 The closest relationship is the **inverse** subsumption with `scal`:
@@ -86,7 +86,7 @@ fusion-rotation layer; the concept page is the narrative.
 
 ## Signature
 
-    elementwise_product :: (a: Tensor[(S: ...)], b: Tensor[S]) -> Tensor[S]
+    elementwise_product :: (a: Tensor[(S: ...)], b: Tensor[$S]) -> Tensor[$S]
     elementwise_product(a, b) = a ⊙ b
 
 Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md)
@@ -95,8 +95,8 @@ Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l
 - **`a`** — `Tensor[(S: ...)]` — read-only at L2 (the L2 form is pure / out-of-place; the L0
   in-place mutation is reintroduced only at the L1>L0 lowering). Its whole shape is the group
   `S` (arbitrary, unknown rank — NOT rank-1).
-- **`b`** — `Tensor[S]` — read-only, congruent to `a` (same shape group `S`) and sharing its element type.
-- **result** — `Tensor[S]` — congruent to the inputs; `result[idx]` is the per-element
+- **`b`** — `Tensor[$S]` — read-only, congruent to `a` (same shape group `S`) and sharing its element type.
+- **result** — `Tensor[$S]` — congruent to the inputs; `result[idx]` is the per-element
   product `a[idx] · b[idx]`. A fresh value (no L0 destination buffer mentioned at L2).
 
 `a` and `b` must be congruent (same shape group `S`) and share the same element type (both real or
@@ -104,7 +104,7 @@ both complex). The element-type axis (real or complex) is parameterised; the L2 
 is uniform across it. The **conjugate variant** (complex element-type only) takes one
 operand to its conjugate before multiplying:
 
-    elementwise_product_conj :: (a: ComplexTensor[(S: ...)], b: ComplexTensor[S]) -> ComplexTensor[S]
+    elementwise_product_conj :: (a: ComplexTensor[(S: ...)], b: ComplexTensor[$S]) -> ComplexTensor[$S]
     elementwise_product_conj(a, b) = ā ⊙ b
 
 — modeled here, as at L1 and L3, as the same operator with a **conjugation variant axis**
@@ -112,7 +112,7 @@ operand to its conjugate before multiplying:
 
 The L2 signature is **congruent to the L1 signature** modulo notation (L1 spells the flat dof-vector as `Tensor[N]`; L2 states the rank-generic congruence as the group `S`); the rotation is
 identity-in-form. `elementwise_product` is a leaf binary field operation, not a fold
-member: there is no `[(Scalar, Tensor[S])]` term-list argument (contrast
+member: there is no `[(Scalar, Tensor[$S])]` term-list argument (contrast
 `linear_combination`) and no reduction to a `Scalar` (contrast `inner_product`). The
 operator-action recovery `apply_linop(DiagonalOperator(d), x) = elementwise_product(d, x)`
 (law 9) is a derived identity, not a decomposition.
@@ -256,7 +256,7 @@ in the L1>L0 lowering.
 
 **Fold-parent**: **none (fork-INDEPENDENT).** `elementwise_product` is **not** a member or
 leaf of either L2 fold cohort. It is not the term-axis fold `linear_combination` (which
-keeps `Tensor[S]` but accumulates a `[(Scalar, Tensor[S])]` term list — a different shape),
+keeps `Tensor[$S]` but accumulates a `[(Scalar, Tensor[$S])]` term list — a different shape),
 and it is not the length-axis fold `inner_product` (which reduces to a `Scalar`). There is
 no `do-NOT-merge` fold boundary for this entry because there is no fold to merge it into.
 This distinguishes it from the cycle-041 BLAS-1 floors (`dot` = conjugation-leaf of
@@ -390,7 +390,7 @@ about the BLAS-1 floors' relationship to the *fold* parents `inner_product` /
 
 L2 `elementwise_product` lowers to L1 [`elementwise_product`](../L1/elementwise_product.md)
 via a **degenerate identity-in-named-terms** rotation, recorded **in-line** (no dedicated theme) per
-the 2026-06-01 vocabulary-shift redirect: the signature is congruent at both layers (L2 `(Tensor[(S: ...)], Tensor[S]) -> Tensor[S]`; L1 the flat dof-vector spelling `(Tensor[N], Tensor[N]) -> Tensor[N]`), and the mapping is the total bijective identity on the leaf —
+the 2026-06-01 vocabulary-shift redirect: the signature is congruent at both layers (L2 `(Tensor[(S: ...)], Tensor[$S]) -> Tensor[$S]`; L1 the flat dof-vector spelling `(Tensor[N], Tensor[N]) -> Tensor[N]`), and the mapping is the total bijective identity on the leaf —
 every L2 binding (the `a ⊙ b` body, the ten algebraic laws, both variant axes: element-type +
 conjugation sub-axis) maps to the same L1 binding at the same position. There is no multi-operation
 kernel fusion to unfold — `elementwise_product` is a leaf binary field operation with **no fold-parent**
@@ -440,7 +440,7 @@ this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified vi
   no-interposed-L2-entry situation this dispatch now closes).
 - `book/src/L2/index.md` — the L2 Part overview; §"Fold cohorts" defines the two fold cohorts
   `elementwise_product` is **not** a member of (`inner_product` reduce-to-`Scalar`,
-  `linear_combination` reduce-to-`Tensor[S]`); §"Identity-in-form BLAS-1 floors" / the
+  `linear_combination` reduce-to-`Tensor[$S]`); §"Identity-in-form BLAS-1 floors" / the
   cycle-041 floor-cohort note is the precedent framing this standalone floor extends.
 - `book/src/L2/scal.md` (firm cycle-041) — the floor-cohort template; `scal` is the
   broadcast-scalar special case `scal(α, x) = elementwise_product(broadcast(α, S), x)` (law 7,

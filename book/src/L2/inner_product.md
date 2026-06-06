@@ -141,8 +141,8 @@ two conventions coexist harmlessly in the Palace call sites.
 ## Signature
 
 ```text
-inner_product   :: (x: Tensor[(S: ...)], y: Tensor[S]) -> Scalar
-inner_product_M :: (x: Tensor[(S: ...)], M: LinOp[(S: ...), (S: ...)], y: Tensor[S]) -> Scalar
+inner_product   :: (x: Tensor[(S: ...)], y: Tensor[$S]) -> Scalar
+inner_product_M :: (x: Tensor[(S: ...)], M: LinOp[$S, $S], y: Tensor[$S]) -> Scalar
 
 inner_product   x y   = foldl (+) zero (zipWith kernel x y)   -- kernel from the table below
 inner_product_M x M y = inner_product (apply_linop M x) y     -- weighted ≡ pre-apply M to arg-1, then plain
@@ -154,8 +154,8 @@ Shape contract (bunsen-style; named shape groups per
 
 - `x` — `Tensor[(S: ...)]` — read-only; the **conjugated** (arg-1) operand (see § "Conjugation
   convention (pinned)").
-- `y` — `Tensor[S]` — read-only; the **linear** (arg-2) operand.
-- `M` (weighted member) — `LinOp[(S: ...), (S: ...)]` — read-only; the matrix-weight (a
+- `y` — `Tensor[$S]` — read-only; the **linear** (arg-2) operand.
+- `M` (weighted member) — `LinOp[(S: ...), $S]` — read-only; the matrix-weight (a
   square / endomorphic operator, domain ≡ range = `S`, §1.2.2), pre-applied to `x` (the
   linear-operator type is the opaque
   [`apply_linop`](../L1/apply_linop.md) interface). For the off-diagonal cross-coupling
@@ -520,7 +520,7 @@ is a GENUINE translation (conjugation/element-type/weight dispatch + the value-l
   PSD-at-diagonal, `tdot` is not) plus the separate `bilinear-form` chapter (the M-weighted
   reduction); each mirrors Palace's L0 reduction surface. The conjugation and weight axes
   are fixed per L1 operator.
-- **L2**: one fold `inner_product` over `(Tensor[(S: ...)], Tensor[S])` with an optional pre-
+- **L2**: one fold `inner_product` over `(Tensor[(S: ...)], Tensor[$S])` with an optional pre-
   `apply_linop M`; the conjugation value, element type, and weight presence are recovered
   as specializations; the family of fused reduction kernels (a kernel-fusion choice) is
   unfolded into the canonical `foldl (+) zero (zipWith kernel x y)`; the pinned reduction

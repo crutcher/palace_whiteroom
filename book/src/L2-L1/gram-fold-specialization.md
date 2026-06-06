@@ -36,7 +36,7 @@ The L2 form is the all-pairs reduce-to-matrix fold over a `k`-column basis (`L2/
 `book/src/L2/gram.md:42-50`), with an optional matrix weight carried in the `dot` hook:
 
 ```text
-gram  :: (dot: (Tensor[(S: ...)], Tensor[S]) -> Scalar, X: Basis[N, k])                  -> Matrix[k, k]
+gram  :: (dot: (Tensor[(S: ...)], Tensor[$S]) -> Scalar, X: Basis[N, k])                  -> Matrix[k, k]
 gram2 :: (dot,                                          X: Basis[N, k], Y: Basis[N, m]) -> Matrix[m, k]
 
 gram  dot X   = Matrix (\i j -> dot X[j] X[i])   -- entry (i,j) = ⟨X[j], X[i]⟩ = X[j]ᴴ X[i]

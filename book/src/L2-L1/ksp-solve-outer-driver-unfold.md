@@ -25,7 +25,7 @@ The L2 entry's §"Lowers from" narrates the **open** (L1-opacity → L2-composit
 
 The L2 form is reproduced from [`L2/ksp_solve`](../L2/ksp_solve.md) §Signature — the outer-driver composition (the convergence-test fold of the visible kernel):
 
-    ksp_solve :: (K: Solver[A: LinOp[(S: ...), (S: ...)]], b: Tensor[(S: ...)]) -> SolveResult[S]
+    ksp_solve :: (K: Solver[A: LinOp[(S: ...), $S]], b: Tensor[$S]) -> SolveResult[S]
     ksp_solve K b =
       let (op, s_0)     = setup K b                          -- bind kernel op-surface; seed state (iterate, eps, counters)
       let s_init        = init_convergence op s_0            -- residual proxy + eps + pre-loop converged flag
@@ -37,7 +37,7 @@ The L2 form is reproduced from [`L2/ksp_solve`](../L2/ksp_solve.md) §Signature 
       in extract_result s_final                               -- the four-field SolveResult readout
 
 The L2 upper side is **shape-generic**: the RHS `b` and the system operator `A` are congruent over
-one square shape group `S` of unknown rank (`Tensor[(S: ...)]`, square `LinOp[(S: ...), (S: ...)]`;
+one square shape group `S` of unknown rank (`Tensor[(S: ...)]`, square `LinOp[(S: ...), $S]`;
 named shape groups + two-group operator form per [`l4_calculus`](../design/l4_calculus.md)
 §1.2.1–§1.2.2), and the `SolveResult[S]` carries the same group. At the lowered L1/L0 opaque
 operator the operands are flat rank-1 Palace `Vector`s, so the L1 form below keeps the concrete

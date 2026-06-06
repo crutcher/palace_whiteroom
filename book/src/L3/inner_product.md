@@ -50,7 +50,7 @@ L3 is the **iteration-rotation** layer (`book/src/L3/index.md` §Semantics): glo
 tensor-field operations expressed as `state' = f(state, params)`, with sequential
 obstructions named explicitly per [`sequential-obstruction`](../concepts/sequential-obstruction.md).
 `inner_product` at L3 is a whole-tensor reduction — its signature
-`Tensor[(S: ...)] -> Tensor[S] -> Scalar` exposes no element loop; the reduction over the
+`Tensor[(S: ...)] -> Tensor[$S] -> Scalar` exposes no element loop; the reduction over the
 shape group `S` is a single semantic step at L3, just as the L2 fold is a single
 algebraic step at the fusion-rotation layer.
 
@@ -91,8 +91,8 @@ combinator also appears inside other L4 composed entries (e.g.
 ## Signature
 
 ```text
-inner_product   :: Tensor[(S: ...)] -> Tensor[S] -> Scalar
-inner_product_M :: Tensor[(S: ...)] -> LinOp[(S: ...), (S: ...)] -> Tensor[S] -> Scalar
+inner_product   :: Tensor[(S: ...)] -> Tensor[$S] -> Scalar
+inner_product_M :: Tensor[(S: ...)] -> LinOp[$S, $S] -> Tensor[$S] -> Scalar
 
 inner_product   x y   = reduce (+) zero (zipWith kernel x y)   -- kernel from the table below
 inner_product_M x M y = inner_product (apply_linop M x) y      -- weighted ≡ pre-apply M to arg-1, then plain
@@ -104,8 +104,8 @@ Shape contract (bunsen-style; named shape groups per
 
 - **`x`** — `Tensor[(S: ...)]` — read-only whole-tensor argument; the **conjugated** (arg-1)
   operand in the Hermitian inner product `xᴴ y` (see §"Conjugation convention").
-- **`y`** — `Tensor[S]` — read-only whole-tensor argument; the **linear** (arg-2) operand.
-- **`M`** (weighted member) — `LinOp[(S: ...), (S: ...)]` — read-only; the matrix-weight (a
+- **`y`** — `Tensor[$S]` — read-only whole-tensor argument; the **linear** (arg-2) operand.
+- **`M`** (weighted member) — `LinOp[(S: ...), $S]` — read-only; the matrix-weight (a
   square / endomorphic operator, domain ≡ range = `S`, §1.2.2),
   pre-applied to `x` via the opaque [`apply_linop`](./apply_linop.md) gate. The diagonal
   (`y = x`, SPD `M`) is the M-weighted norm-squared consumed downstream.
@@ -200,7 +200,7 @@ composition `inner_product (apply_linop M x) y`.
 
 L3 is the iteration-rotation layer, and `inner_product`'s iteration view is the reduction
 over the shape group `S`. **The reduction lifts as a whole-tensor operation** — the
-signature `Tensor[(S: ...)] -> Tensor[S] -> Scalar` exposes no element loop, and the
+signature `Tensor[(S: ...)] -> Tensor[$S] -> Scalar` exposes no element loop, and the
 reduction-tree shape is opaque at L3 (the bit-level non-associativity is a recorded
 non-law, not a structural element of the L3 form). **There is NO sequential obstruction**
 for `inner_product` — the reduction over all independent positions of the shape group `S` is a parallel
@@ -354,7 +354,7 @@ subsumption.
 
 `firm` — the L3 form is the iteration-rotation rendering of the firm L2 `inner_product`
 combinator (firm cycle-019, inverted to combinator-as-entry cycle-049 D2): a whole-tensor
-reduce-to-scalar field reduction `Tensor[(S: ...)] -> Tensor[S] -> Scalar` with **no sequential
+reduce-to-scalar field reduction `Tensor[(S: ...)] -> Tensor[$S] -> Scalar` with **no sequential
 obstruction** (the shape-group `S` reduction is parallel-clean in exact arithmetic; the pinned
 L0 tree is a deferred non-law). The L3 form is **value-thread-isomorphic to the L2
 reduction** (identity-in-form across the L3>L2 edge — §"Downward to L2"); algebraic laws
@@ -440,7 +440,7 @@ to this L3 entry:
 
 ## L3 vs L2 distinction
 
-- **L2**: one fusion-rotation fold `inner_product` over `(Tensor[(S: ...)], Tensor[S])` with an
+- **L2**: one fusion-rotation fold `inner_product` over `(Tensor[(S: ...)], Tensor[$S])` with an
   optional pre-`apply_linop M`; the family of fused reduction kernels (a kernel-fusion
   choice) is unfolded into the canonical `foldl (+) zero (zipWith kernel x y)`; the pinned
   reduction tree is de-fused into the fold's seed-and-accumulate. The combinator IS the L2

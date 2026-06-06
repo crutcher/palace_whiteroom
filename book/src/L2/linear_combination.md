@@ -70,8 +70,8 @@ subsumed".
 ## Signature
 
 ```text
-linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[S]
-linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros S) pairs
+linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[$S]
+linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros $S) pairs
 ```
 
 Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1):
@@ -88,7 +88,7 @@ Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../design/l
   scalars and all terms, with the `real ⊑ complex` scalar-promotion lattice inherited
   unchanged from [`concepts/scalar-promotion`](../concepts/scalar-promotion.md)
   (promote all-or-none across the scalar list).
-- result — `Tensor[S]` — same shape group `S`; `zeros[S]` on the empty list.
+- result — `Tensor[$S]` — same shape group `S`; `zeros[$S]` on the empty list.
 
 ### Arity specializations (the family members, as notes under the combinator)
 
@@ -153,8 +153,8 @@ accumulation loops. This is the correct generalization direction, not scope cree
 
 The laws below hold; absences are deliberate.
 
-1. **Empty-list identity (the fold's seed).** `linear_combination [] = zeros[S]` —
-   the additive identity of `Tensor[S]`. This is the fold's initial accumulator.
+1. **Empty-list identity (the fold's seed).** `linear_combination [] = zeros[$S]` —
+   the additive identity of `Tensor[$S]`. This is the fold's initial accumulator.
 
 2. **Concatenation-homomorphism (the defining law).**
    `linear_combination (a ++ b) = linear_combination a + linear_combination b`,
@@ -163,7 +163,7 @@ The laws below hold; absences are deliberate.
    concatenation of an `axpby` 2-term list and a `scal` 1-term list, so
    `linear_combination [(α,x),(β,y),(γ,z)] = linear_combination [(α,x),(β,y)] +
    linear_combination [(γ,z)]` = `axpby(α,x,β,y) + scal(γ,z)`. It is a monoid
-   homomorphism from `([(Scalar,Tensor[(S: ...)])], ++, [])` to `(Tensor[S], +, zeros)`,
+   homomorphism from `([(Scalar,Tensor[(S: ...)])], ++, [])` to `(Tensor[$S], +, zeros)`,
    and it directly generalizes the per-operator distribution laws already recorded
    (axpby.md laws 6–7; axpbypcz.md laws 8–10).
 
@@ -316,10 +316,10 @@ seed-and-accumulate and records the fusion as this one note.
 
 ## Sibling fold: dot is not subsumed
 
-`dot :: (Tensor[(S: ...)], Tensor[S]) -> Scalar` is a **different** fold —
+`dot :: (Tensor[(S: ...)], Tensor[$S]) -> Scalar` is a **different** fold —
 `foldl (+) 0 (zipWith (·) x y)` (conjugation-weighted in the Hermitian complex case) — a
 **reduce-to-scalar** inner product, NOT a scalar-weighted **tensor** sum. Its result type
-is `Scalar`, not `Tensor[S]`; it reduces over the shape group `S` (and carries an MPI
+is `Scalar`, not `Tensor[$S]`; it reduces over the shape group `S` (and carries an MPI
 collective), whereas `linear_combination` is element-local over `S` and folds over the
 term list. Its laws are symmetry / Hermitian-symmetry / positive-semi-definiteness, which
 have no analogue here. The target is a small **algebra of folds** — a tensor-producing
@@ -327,7 +327,7 @@ linear-combination fold AND a scalar-producing inner-product fold — not one
 mega-combinator. The sibling [`inner_product`](./inner_product.md) L2 fold (firm cycle-019) captures `dot` /
 `tdot` as conjugation-convention variants (the axis there is conjugation-convention, not
 arity). It is deliberately **NOT merged** into `linear_combination`: same operand shape
-`(Tensor[(S: ...)], Tensor[S])`-ish, but a different codomain (`Scalar` vs `Tensor[S]`) and a
+`(Tensor[(S: ...)], Tensor[$S])`-ish, but a different codomain (`Scalar` vs `Tensor[$S]`) and a
 different combining step (zip-and-reduce-over-`S` vs scale-and-accumulate-over-the-term-list).
 The do-NOT-merge boundary is load-bearing and symmetric — recorded here and in
 [`inner_product`](./inner_product.md) §"Sibling fold". The two are the small algebra of

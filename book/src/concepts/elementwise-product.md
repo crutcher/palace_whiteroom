@@ -15,7 +15,7 @@ Standard Hadamard / pointwise product. In BLAS-terms this is not a level-1 op (n
 ## Contract
 
 - Pure with respect to its operands (in-place output into one of the operands is acceptable as a workspace convention).
-- Shape (named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1): operands and result share one shape group `S` (arbitrary, unknown rank — NOT rank-1); `x, z : Tensor[(S: ...)] → ℝ` (or ℂ); `y : Tensor[S]`.
+- Shape (named shape groups per [`l4_calculus`](../design/l4_calculus.md) §1.2.1): operands and result share one shape group `S` (arbitrary, unknown rank — NOT rank-1); `x, z : Tensor[(S: ...)] → ℝ` (or ℂ); `y : Tensor[$S]`.
 - Both operand tensors and the output tensor are congruent (the same shape group `S`).
 
 ## Role in higher-layer rotations

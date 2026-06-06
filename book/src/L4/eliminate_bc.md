@@ -32,9 +32,9 @@ post-compositions that pin essential (Dirichlet) dofs into an assembled operator
 inhomogeneous Dirichlet data into the right-hand side. Two co-equal verbs over the same
 `(DofSet[N], DiagPolicy)` vocabulary:
 
-- `eliminate_essential_bc` — the **operator-side** pin: `LinOp[(S: ...), (S: ...)] -> LinOp[(S: ...), (S: ...)]`,
+- `eliminate_essential_bc` — the **operator-side** pin: `LinOp[(S: ...), $S] -> LinOp[$S, $S]`,
   zero the essential rows/cols of `K` and set the eliminated diagonal per policy.
-- `eliminate_rhs` — the **RHS-side** lift: `... -> Tensor[S]`, subtract the boundary-data forcing
+- `eliminate_rhs` — the **RHS-side** lift: `... -> Tensor[$S]`, subtract the boundary-data forcing
   `K·x_bc` from `b` and pin the essential rows per policy.
 
 Both compose **AFTER** the [`fe_assemble`](./fe_assemble.md) fold — they consume the *already-assembled*
@@ -80,12 +80,12 @@ the `readonly` BC-stratum the call-sites share.
 The pair, both post-composing after `fe_assemble` on the assembled `K`:
 
     -- operator-side: pin the essential dofs into the assembled square operator
-    eliminate_essential_bc :: LinOp[(S: ...), (S: ...)] -> DofSet[N] -> DiagPolicy
-                              -> LinOp[(S: ...), (S: ...)]
+    eliminate_essential_bc :: LinOp[(S: ...), $S] -> DofSet[N] -> DiagPolicy
+                              -> LinOp[$S, $S]
 
     -- RHS-side: lift the inhomogeneous Dirichlet data into the right-hand side
-    eliminate_rhs :: LinOp[(S: ...), (S: ...)] -> Tensor[(S: ...)] -> Tensor[(S: ...)] -> DiagPolicy
-                     -> Tensor[S]
+    eliminate_rhs :: LinOp[(S: ...), $S] -> Tensor[$S] -> Tensor[$S] -> DiagPolicy
+                     -> Tensor[$S]
     eliminate_rhs K x_bc b policy =
       let y    = apply_linop K (restrict_essential x_bc)          -- K · Eₑ(x_bc)
           b'   = linear_combination [(1, b), (-1, y)]             -- b − K·x_bc
@@ -94,7 +94,7 @@ The pair, both post-composing after `fe_assemble` on the assembled `K`:
 
 Shape contract (named shape groups / operator shapes per [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2; the system operator is square, so domain and range are one shape group `S` and the BC-side vectors are congruent to it; the essential-dof index set keeps its genuine flat-index spelling; the BC stratum per [`state-stratification`](../concepts/state-stratification.md)):
 
-- `K` — `LinOp[(S: ...), (S: ...)]` — the assembled **square** operator over the true-dof shape group `S`, the
+- `K` — `LinOp[(S: ...), $S]` — the assembled **square** operator over the true-dof shape group `S`, the
   output of [`fe_assemble`](./fe_assemble.md). `readonly`; squareness is required (BC elimination is
   defined only when domain group ≡ range group, i.e. `height == width`; the rectangular case is a hard L0 reject — the
   `trial-test-coincidence` variant axis). The operator-side result decomposes block-wise on the
@@ -117,7 +117,7 @@ Shape contract (named shape groups / operator shapes per [`l4_calculus`](../desi
   (`restrict_essential`). `readonly`.
 - `b : Tensor[(S: ...)]` — (RHS-side only) the right-hand-side vector to adjust, congruent to `S`. `readonly` at L4 (the L4 form
   returns a fresh value; the in-place `b.Add` is an L3-and-below concern).
-- result — operator-side `LinOp[(S: ...), (S: ...)]` (the eliminated operator); RHS-side `Tensor[S]` (the
+- result — operator-side `LinOp[(S: ...), $S]` (the eliminated operator); RHS-side `Tensor[$S]` (the
   adjusted RHS `b − K·x_bc` with essential rows pinned per policy).
 
 `restrict_essential` / `set_essential` are the essential-dof gather/scatter masking projections onto
@@ -275,7 +275,7 @@ L4 rows / vocabulary this surface consumes:
 
 - [`fe_assemble`](./fe_assemble.md) (**reference**) — the assemble-fold combinator `eliminate_bc`
   post-composes AFTER. This is a navigational see-also (the pipeline-position relationship), NOT a
-  blocking fold dependency: `eliminate_bc` consumes `K` as an opaque assembled `LinOp[(S: ...), (S: ...)]`,
+  blocking fold dependency: `eliminate_bc` consumes `K` as an opaque assembled `LinOp[(S: ...), $S]`,
   not `fe_assemble`'s term-list machinery (the separability law 8). Edge classified `reference`.
 - [`linear_combination`](./linear_combination.md) (**depends-on**) — the RHS-side `b − K·x_bc` is one
   `linear_combination [(1,b),(-1,y)]` (firm c068; the rank invariant holds — firm rests on firm).
@@ -365,7 +365,7 @@ structurally identical at the load-bearing post-composition shape (electrostatic
 real-stiffness `Ar` block `DIAG_ONE` `:571`, the imaginary-stiffness `Ai` + both mass blocks
 `DIAG_ZERO` `:574,608,611`, both policies exercised), no break-witness, and
 the over-unification guard honored (the two verbs are genuinely distinct — operator-side
-`LinOp[(S: ...), (S: ...)]` vs RHS-side `Tensor[S]` — homed as a co-equal PAIR, not merged into one
+`LinOp[(S: ...), $S]` vs RHS-side `Tensor[$S]` — homed as a co-equal PAIR, not merged into one
 combinator; the diagonal-policy split is a variant axis, not a 2nd pipeline). No dedicated unit test
 exercises BC elimination at this entry point (codemap search of `test/unit/**` for `EliminateBC` /
 `SetEssentialTrueDofs` returns no hits), but the missing test does not gate syntactic-identity laws on

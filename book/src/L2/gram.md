@@ -40,7 +40,7 @@ L2 to L1 in [`L2-L1/gram-fold-specialization`](../L2-L1/gram-fold-specialization
 ## Signature
 
 ```text
-gram :: (dot: (Tensor[(S: ...)], Tensor[S]) -> Scalar, X: Basis[N, k]) -> Matrix[k, k]
+gram :: (dot: (Tensor[(S: ...)], Tensor[$S]) -> Scalar, X: Basis[N, k]) -> Matrix[k, k]
 gram dot X = Matrix (\i j -> dot X[j] X[i])      -- entry (i,j) = ⟨X[j], X[i]⟩ = X[j]ᴴ X[i]
 
 -- cross-Gram (two-set) member:
@@ -52,7 +52,7 @@ gram dot X = gram2 dot X X                        -- single-set ≡ cross-Gram o
 Shape contract (bunsen-style; named shape groups per
 [`l4_calculus`](../design/l4_calculus.md) §1.2.1):
 
-- `dot` — `(Tensor[(S: ...)], Tensor[S]) -> Scalar` — the inner-product hook (shape-generic
+- `dot` — `(Tensor[(S: ...)], Tensor[$S]) -> Scalar` — the inner-product hook (shape-generic
   over a congruent shape group `S`, NOT rank-1-pinned — the hook reduces whole congruent
   tensors), the **same hook axis**
   the sibling [`orthogonalize`](./orthogonalize.md) carries (`orthogonalize.md`:67-71, the

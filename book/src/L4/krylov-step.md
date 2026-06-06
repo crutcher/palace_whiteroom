@@ -70,7 +70,7 @@ first_step  :: OpParams -> Krylov -> (SimState -> Solve { sim: SimState', krylov
 steady_step :: OpParams -> Krylov -> (PrevCarry -> SimState -> Solve { sim: SimState', krylov: Krylov', carry: PrevCarry', outputs: StepOutputs })
 ```
 
-Shape contract (bunsen-style; named records and axes; the solution-space shape group `S` and the operator form `LinOp[(S: ...), (S: ...)]` follow the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2):
+Shape contract (bunsen-style; named records and axes; the solution-space shape group `S` and the operator form `LinOp[(S: ...), $S]` follow the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2):
 
 - `OpParams` — operator-internal configuration, captured once at solve construction; `readonly` per [`state-stratification`](../concepts/state-stratification.md). Closes over the variant selectors (`pc_side`, `gs_orthog`, `flexible`, polynomial-kind, restart-mode) and the constructed-operator surfaces. The kernel body does not branch on `OpParams` fields — variant absorption is structural per the `readonly` typing (see [`variant-absorption`](../concepts/variant-absorption.md) level (b)/(c)). Fields are slice-specific; the kernel sees them only through the closed-over surfaces `op.T`, `op.orthog?`, `op.scalars?`, `op.eps`.
 - `Krylov` — solve-local ephemeral bundle; born at restart entry, discarded at restart exit or solve return. Per `state-stratification`, `Krylov` is **not** part of `SimState` — its lifetime is strictly within a single restart cycle. Mixed-stratum: contains both `Tensor[(S: ...)]`-typed iterate-bundle fields (`V`, `Z`, basis-columns, all congruent to the solution-space shape group `S`) and small-dense scalar-stratum fields (`H`, `s`, `cs`, `sn`, `β`). Threaded through the kernel as a plain value (not as a monadic effect — its lifetime defeats encoding-as-state).
@@ -126,9 +126,9 @@ This is the canonical CG instantiation of Form B: the `Krylov` bundle is `CgStat
 The v0.5 `CgState<S>` schema is one scalar lighter than the Form-A (v0.4) schema — `beta_prev` is gone:
 
     type CgState<S> = {
-      x:         Tensor[S],
-      r:         Tensor[S],
-      p:         Tensor[S],
+      x:         Tensor[$S],
+      r:         Tensor[$S],
+      p:         Tensor[$S],
       beta:      Scalar,        // (r, r); always nonzero on entry to a steady step
       it:        Int,
       converged: Bool,
@@ -174,7 +174,7 @@ The first iteration is unrolled (precondition `s.it == 0`, so `p ← r` uncondit
 The driver runs the first step, then folds `cg_steady_step` with `iterate_while_with_prev` — `iterate_while` over the pair `(state, beta_prev)`, threading the prior step's `beta` as the next step's `beta_prev` without storing it in `CgState`. This is a closure over the loop carry, not new calculus machinery:
 
     cg_solve
-      :: !CgConfig -> LinOp<S> -> Tensor[S] -> Tensor[S] -> Bool
+      :: !CgConfig -> LinOp<S> -> Tensor[$S] -> Tensor[$S] -> Bool
       -> { final_state: CgState<S>, residual_history: [Scalar] }
     cg_solve config opA b x_initial initial_guess =
       let { state: s0, initial_res } = cg_init opA b x_initial initial_guess in

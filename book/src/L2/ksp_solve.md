@@ -43,10 +43,10 @@ The L2↔L1 rotation is **non-identity**: it is the *un-collapse* of the L1 opac
 ## Signature
 
 ```text
-ksp_solve :: (K: Solver[A: LinOp[(S: ...), (S: ...)]], b: Tensor[(S: ...)]) -> SolveResult[S]
+ksp_solve :: (K: Solver[A: LinOp[(S: ...), $S]], b: Tensor[$S]) -> SolveResult[S]
 
 SolveResult[S] = {
-  x          : Tensor[S],   -- approximate solution to A · x = b
+  x          : Tensor[$S],   -- approximate solution to A · x = b
   converged  : Bool,        -- whether the convergence test was satisfied
   iterations : Int,         -- number of inner Krylov iterations consumed
   initial_res: Real,        -- initial residual norm (per the solver's residual proxy)
@@ -68,9 +68,9 @@ ksp_solve K b =
   in extract_result s_final                               -- the four-field SolveResult readout
 ```
 
-Shape contract (bunsen-style; named axes — `SolveResult` matches the firm [`L1/ksp_solve`](../L1/ksp_solve.md) result so the L2↔L1 rotation is on the *body*, not the boundary type; the solution-space shape group `S` and the square operator form `LinOp[(S: ...), (S: ...)]` follow the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2):
+Shape contract (bunsen-style; named axes — `SolveResult` matches the firm [`L1/ksp_solve`](../L1/ksp_solve.md) result so the L2↔L1 rotation is on the *body*, not the boundary type; the solution-space shape group `S` and the square operator form `LinOp[(S: ...), $S]` follow the named-shape-group convention of [`l4_calculus`](../design/l4_calculus.md) §1.2.1–§1.2.2):
 
-- **`K`** — `Solver[A]` — the construction-bound Krylov-solver value, identical in surface to the [`L1/ksp_solve`](../L1/ksp_solve.md) `K`: it binds the system operator `A : LinOp[(S: ...), (S: ...)]` (square, on the solution-space shape group `S`; or the constructed `apply_BA` per the preconditioner-side axis), an optional preconditioner `M⁻¹`, the convergence-control scalars `rel_tol` / `abs_tol` / `max_it`, and (for restarted methods) the restart dimension `max_dim`. Read-only at the call site. **At L2 the L1 opacity is opened**: `K` is destructured by `setup` into the kernel op-surface `op` (which [`krylov-step`](./krylov-step.md) consumes per-step) plus the loop-shaping fields (`max_it`, `max_dim`, the solver-method nesting) the driver fold reads. The kernel's six body-variant axes are absorbed into `op` at construction (per [`variant-absorption`](../concepts/variant-absorption.md)); the driver's six loop-shaping axes shape the fold (see §"Variant axes").
+- **`K`** — `Solver[A]` — the construction-bound Krylov-solver value, identical in surface to the [`L1/ksp_solve`](../L1/ksp_solve.md) `K`: it binds the system operator `A : LinOp[(S: ...), $S]` (square, on the solution-space shape group `S`; or the constructed `apply_BA` per the preconditioner-side axis), an optional preconditioner `M⁻¹`, the convergence-control scalars `rel_tol` / `abs_tol` / `max_it`, and (for restarted methods) the restart dimension `max_dim`. Read-only at the call site. **At L2 the L1 opacity is opened**: `K` is destructured by `setup` into the kernel op-surface `op` (which [`krylov-step`](./krylov-step.md) consumes per-step) plus the loop-shaping fields (`max_it`, `max_dim`, the solver-method nesting) the driver fold reads. The kernel's six body-variant axes are absorbed into `op` at construction (per [`variant-absorption`](../concepts/variant-absorption.md)); the driver's six loop-shaping axes shape the fold (see §"Variant axes").
 - **`b`** — `Tensor[(S: ...)]` — the right-hand side. Read-only. Must be congruent to the operator's domain shape group `S`. Seeds the initial residual `r_0 = b - A·x_0` inside `setup` / `init_convergence`.
 - **result** — `SolveResult[S]` — the four-field solve-result record plus the solution `x`. The solution `x` is the converged iterate; the four statistics fields are the L2 readout of the convergence-test state, projected by `extract_result` from the terminal fold carry. These are the L2 composition's exposure of the [`krylov-step`](./krylov-step.md) kernel's `outputs.residual_norm` readout (demand-pruned per [`derived-view-hoisting`](../concepts/derived-view-hoisting.md)): `converged`/`iterations`/`initial_res`/`final_res` are pure functions of the fold's terminal carry. The L0 origins are the `IterativeSolver` result members `converged` / `initial_res` / `final_res` / `final_it` (`reference/palace/palace/linalg/iterative.hpp:52-55`), exposed through `GetConverged` (`:98`, with its `rel_tol > 0 || abs_tol > 0` gate) and `GetInitialRes` / `GetFinalRes` / `GetNumIterations` (`:101-108`); they are written on solve exit as `final_res = res; final_it = it;` (CG, `reference/palace/palace/linalg/iterative.cpp:484-485`) and `final_res = beta; final_it = it;` (GMRES, `:703-704`).
 

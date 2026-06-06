@@ -46,7 +46,7 @@ the opaque eigen-iteration consumes ([`eigsolve`](../L2/eigsolve.md) §Signature
 `book/src/L2/eigsolve.md:55-77`). It is the only Palace-authored, L2-opened half of the L1
 eigsolve opacity; the eigen-iteration fold itself is named by role, not opened:
 
-    apply_shift_invert :: (op: SpectralTransformOp, v: Tensor[(S: ...), complex]) -> Tensor[(S: ...), complex]
+    apply_shift_invert :: (op: SpectralTransformOp, v: Tensor[(S: ...), complex]) -> Tensor[$S, complex]
 
     -- spectral-transformation = none (no transform):        apply M⁻¹ K   (or M⁻¹ alone, per backend)
     -- spectral-transformation = shift-invert (linear):      (K − σM)⁻¹ M

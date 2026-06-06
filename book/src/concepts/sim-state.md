@@ -42,7 +42,7 @@ SimState = {
 
 | Field | Type | Stratum / lifetime | Meaning |
 |-------|------|--------------------|---------|
-| `x` | `Tensor[S]` | run-time, persists across the `Mult` call | The current iterate; the solve's primary product. Updated at restart-cycle boundaries (folding the correction `K.V · K.y`), **not** per step — see [`krylov-step`](../L4/krylov-step.md). |
+| `x` | `Tensor[$S]` | run-time, persists across the `Mult` call | The current iterate; the solve's primary product. Updated at restart-cycle boundaries (folding the correction `K.V · K.y`), **not** per step — see [`krylov-step`](../L4/krylov-step.md). |
 | `it` | `Int` | run-time, persists across the `Mult` call | Iteration counter; the per-step `modify (\s -> s { it = s.it + 1 })` is typically the kernel's *sole* monadic effect. |
 | `converged` | `Bool` | run-time, written at solve exit | Convergence flag; set by the convergence test, read by the caller. |
 | `final_res` | `Scalar` | run-time, written at solve exit | Final absolute residual (may be an estimate of the true residual, not a recomputed one). |
