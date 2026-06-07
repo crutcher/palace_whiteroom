@@ -4,7 +4,7 @@ cycle: cycle-132
 batch: batch-42
 batch_position: 3/3 (THIRD / BATCH-CLOSING primary cycle of meta-batch-42; cycles 130/131/132)
 finalized_at: 2026-06-07T193433Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 16b6df5
 reports_applied: 1
 reports_deferred: 0
 reports_rejected: 0

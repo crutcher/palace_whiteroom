@@ -8,7 +8,7 @@ inputs:
   - book/src/L4-L3/fe-assemble-fold-dissolution.md       # site (i): :3 intro-prose operator-value mention
   - book/src/L4-L3/mk-matrix-free-operator-dissolution.md  # site (ii): :151 derived-product square-op spelling
 integrated_at: 2026-06-07T193433Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 16b6df5
 integration_notes: >-
   Applied clean by integrator-per-report (cycle-132 BATCH-CLOSING, batch-42). ONE prose-fidelity
   CONVERT landed at book/src/L4-L3/fe-assemble-fold-dissolution.md:3
