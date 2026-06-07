@@ -5,7 +5,7 @@ scope: cycle-133 batch CYCLE.md — batch-43 OPENER (1/3); the sharding-MATH non
 cycle_id: cycle-133
 batch: batch-43
 batch_position: 1/3 (OPENER/FIRST primary cycle of meta-batch-43; cycles 133/134/135; the batch-43 meta-phase fires AFTER cycle-135's finalize)
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 74d7357
 ---
 
 # CYCLE-133 batch integration record — batch-43 OPENER: the sharding-MATH non-destabilization HARD GATE is CLEAR on BOTH arms → WAVE-2 GREENLIT

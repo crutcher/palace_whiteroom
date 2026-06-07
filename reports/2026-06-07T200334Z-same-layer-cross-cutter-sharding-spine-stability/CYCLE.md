@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T200334Z
 scope: L4/L3/L2 cross-cut — sharding-MATH probe spine-stability cross-check (lateral/same-layer arm, D2)
 status: pending
 integrated_at: 2026-06-07T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 74d7357
 integration_notes: "cycle-133 (batch-43 OPENER, 1/3). Applied clean by integrator-per-report — audit-class, NO book mutation. Verdict ALL-GREEN, ZERO-RED: no firm L4/L3/L2 reduce/fold combinator re-roots; the firm reduce primitives already carry the split/concatenation monoid-homomorphism, so partition-restriction is a DERIVED reference-class consumer (reduce∘restrict), NOT a re-root (domain_energy_reduce the precedent). DISCHARGES-GREEN the D1 vertical-arm contingency → COMBINED gate CLEAR; WAVE-2 GREENLIT for c134. Promoted OQ sharding-math-non-destabilization-probe-lateral-arm-verdict. WAVE-2 tripwire recorded: reference-class-only edges to firm roots."
 ---
 

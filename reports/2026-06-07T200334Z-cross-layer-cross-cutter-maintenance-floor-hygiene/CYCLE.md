@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T20:19:56Z
 scope: MAINTENANCE FLOOR standing hygiene (batch-43 opener, cycle-133 D3) — clean-bill health audit
 status: pending
 integrated_at: 2026-06-07T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 74d7357
 integration_notes: "cycle-133 (batch-43 OPENER, 1/3). Applied clean by integrator-per-report — audit-class, NO book mutation. Verdict clean-bill, baseline HELD EXACTLY on all eleven gate counts (§2g escalate-guard does NOT fire); 3 realizes-kernel-api kernel-impl edges reference-class on disk; semantic surface no stale path/anchor drift; RE4 consumer-gated, RE11 premises hold. Promoted OQ maintenance-floor-baseline-re-baseline-on-sharding-sketch-landing (standing re-baseline caveat for the batch-43 meta if WAVE-2 lands reference-class roadmap_goal nodes). The single citecheck graded-stack-baseline-exceptions.md:267 MISS is a tool-SCOPE artifact (scaffolding-relative path), non-blocking."
 ---
 

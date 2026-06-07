@@ -38,7 +38,7 @@ Artifact-changes aggregate: 24 `book/src/**/*.md` files modified (D1: 1, D2: 5, 
 - **retroactive-budget global**: 0 across all 3 rows (well under the ≥4 block threshold). PASS.
 - **Cross-report aggregation gates**: no cross-report contention. D1/D2/D3 are file-disjoint (D1 → `semantics/index.md`; D2 → 5 L4/L4-L3 signature-body files; D3 → the 18-file inner_product anchor cohort — no path shared between any pair). The D1→D2 WAVE-2 dependency (D2 consumes D1's §1.2.2-R ruling) was honored by serial apply-order.
 - **build-breakage repair**: none required (EXIT 0).
-- **consumed-report frontmatter integrity**: 3/3 reports marked `integrated_at: 2026-06-07T210500Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows) + `integration_notes`.
+- **consumed-report frontmatter integrity**: 3/3 reports marked `integrated_at: 2026-06-07T210500Z` + `integration_commit: 74d7357` (two-phase SHA patch follows) + `integration_notes`.
 - **commit atomicity**: single commit (artifact + scaffolding + log + book output + staging + consumed-report frontmatter).
 
 ## Wave-conflict observations
@@ -83,5 +83,5 @@ No wave conflicts. File-disjoint dispatches; the single WAVE-2 dependency resolv
 - `scaffolding/integrator-signals.md` — cycle-130 section prepended (all 6 subsections).
 - `scaffolding/roadmap.md` — cycle-130 GRADED-STACK SNAPSHOT prepended (consolidation note; no measurable coverage move).
 - `log/cycle-130.md` — written; `log/README.md` index entry prepended (newest first). The slice-era `cycle-130.md` (2026-05-26 `forward polynomial_recurrence_step`) renamed to `cycle-130-slice-era.md` (c123–c129 precedent); its index entry re-pointed.
-- 3 consumed-report `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes` frontmatter touches.
+- 3 consumed-report `integrated_at` + `integration_commit: 74d7357` + `integration_notes` frontmatter touches.
 - Single `git commit && git push origin main`; two-phase SHA patch follows.

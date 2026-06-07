@@ -44,7 +44,7 @@ No files created or deleted. No `depends-on`/`reference` edge changes. The `cons
 - **retroactive-budget global:** 0 (well under the ≥4 block threshold). PASS.
 - **build-breakage repair:** none required — `cargo make book` EXIT 0; NO deletions → no linkcheck2 dead-link hazards; the §1.3.1 table edit + all re-spelled signatures resolve.
 - **commit atomicity:** single commit (below) covers the staging log, both per-report applications, all housekeeping writes, and both consumed-report `integrated_at` touches.
-- **consumed-report frontmatter integrity:** both reports' `status: pending`→`integrated` + `integrated_at` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows) + `integration_notes`.
+- **consumed-report frontmatter integrity:** both reports' `status: pending`→`integrated` + `integrated_at` + `integration_commit: 74d7357` (two-phase SHA patch follows) + `integration_notes`.
 - **staging reconciliation:** clean — rows == dispatched-ready (2 == 2); no completeness gap.
 - Per-report gates (per staging rows): all 0 / N/A. citecheck flagged section-reference tokens (`1.3.1:155`) + basename-collision `[AMBIG]` nits (L4/ vs L1/) on report PROSE-DISCUSSION pointers as non-blocking false-positives; the edit-blocks all used full `book/src/L4/...` paths.
 

@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T201937Z
 scope: L4↔L1 cross-cut — sharding-MATH non-destabilization probe (vertical arm), batch-43 LEAD WAVE-1
 status: pending
 integrated_at: 2026-06-07T210000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 74d7357
 integration_notes: "cycle-133 (batch-43 OPENER, 1/3). Applied clean by integrator-per-report — audit-class, NO book mutation. Verdict gate-CLEAR-for-roadmap_goal-sketch (SPLIT-leaning-CLEAR): the general decomposition-reduce abstraction CLEAR (firm domain_energy_reduce precedent), the Dörfler cross-rank bisection NO-CLEAR (pure MPI, stays deferred OQ). Combined with the D2 lateral arm (ALL-GREEN) the WAVE-1 hard gate is CLEAR on both arms → WAVE-2 GREENLIT for c134. Promoted OQ sharding-math-non-destabilization-probe-vertical-arm-verdict. DIRECTIVE-1 MPI boundary intact."
 ---
 
