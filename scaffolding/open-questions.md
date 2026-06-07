@@ -64,6 +64,14 @@ These are genuinely-open AND actionable; they are tracked in `scaffolding/priori
 
 Genuinely open but **not yet actionable** — each waits on a stated trigger (an upstream change, a not-yet-firm dependency, a "when-relevant" survey, or a downstream dispatch that will consume it). Promoted into the plan by a future meta-phase once its trigger fires.
 
+> **⟢ 2026-06-07 OUT-OF-BAND RE-SCOPE — SEVERAL DEFERRED FAMILIES BELOW ARE NOW ACTIVATED (their triggers FIRED by the re-scope; migrated to the plan).** The re-scope (CLAUDE.md §Scope DIRECTIVE 2/3; memories `project_lift_through_deferred_in_scope` / `project_kernel_api_impl_distinction`) LIFTS the STOP-PROPOSING posture for the in-scope deferred set and lifts the spine-dependency opaque-library kernels with constructive impls. The families whose trigger is now FIRED — migrated to the **CYCLE-121/batch-39 lift-through campaign** in `scaffolding/priorities.md`:
+> - **`eigsolve / SLEPc family`** → plan item-2(c) `constructive-spine-kernels` (the SLEPc EPS eigsolve gets a kernel-impl = constructive Lanczos/Arnoldi/Krylov-Schur, `kernel-api` = `L3/eigsolve.md`). Also feeds the NLEPS/deflate consumer (RE3, plan item-4a).
+> - **`chebyshev / preconditioning family`** + **`assemble-diagonal / diagonal-preconditioning family`** → plan item-1 `geometric-multigrid-preconditioner` (the V-cycle smoother + diagonal-preconditioner chains, discharging RE1/RE5/RE7).
+> - **`FE-assembly sub-spine siblings`** (libCEED boundary) → plan item-2(a) `constructive-spine-kernels` (libCEED element-quadrature kernel-impl = matrix-free tensor contractions; `kernel-api` = `L1-L0/fe-assemble-libceed-boundary-obstruction.md`).
+> - **`fem / FE-space family`** (`fe_space_hierarchy` consumer) → plan item-1 (geometric-multigrid composes the level-stack by name, discharging RE9) + the `record-FiniteElementSpaceHierarchy-promote-watch` NOW FIRING.
+> - The **NLEPS / iterate-while / orthogonalize-L2 families** → plan item-4 `re-discharge-tail` (deflate RE3; the krylov-iteration feature column RE2/RE8).
+> Entries in these families that name a now-fired trigger should be read as **migrated to the plan**, not still-deferred. A future scheduled meta-phase will compact them to the closed index as the plan items land. **MPI/sharding stays DEFERRED** (DIRECTIVE 1 — a `roadmap_goal` future direction, NOT activated).
+
 ### BLAS-1 / linear-update family
 - `dot-reduction-tree-determinism-survey` — survey Palace bit-determinism claims for dot uses. *Trigger:* a deterministic-reduction solver variant becomes relevant.
 - `axpby-corpus-coverage-exhaustive-indexing` — exhaustive enumeration of ~25 uncited axpy-shaped sites + 3 defined-not-used L0 forms. *Trigger:* L1 vocabulary fully firm / a consumer needs the full set.

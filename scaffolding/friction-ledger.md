@@ -26,6 +26,21 @@ addressed_by: <commit-sha> | <skill-slug> | <meta-decision> | null
 - `addressed` — meta-phase enacted a fix (cited); watch for recurrence
 - `resolved` — `addressed` + no recurrence for ≥10 cycles
 
+## plateau-as-scope-boundary-not-project-boundary
+
+```yaml
+---
+slug: plateau-as-scope-boundary-not-project-boundary
+first_observed: meta-36
+last_observed: meta-38
+recurrence_count: 3
+status: addressed
+addressed_by: out-of-band-rescope-meta-2026-06-07
+---
+```
+
+The forward-frontier "plateau" surfaced as an ASK at batch-36 and was re-confirmed at batch-37 (directives landed) and batch-38 (probe re-confirmed) — three consecutive times. The pattern: a clean-gate frontier reaching exhaustion was read as approaching a *terminal* state, when it was a *scope* boundary. The plateau was an artifact of three postures (document-don't-fill obstructions; single-machine-no-MPI as a hard stop; STOP-PROPOSING for demand-gated in-scope vocabulary), all of which were the human's to lift, not the meta-phase's to work around. **Addressed by the 2026-06-07 out-of-band re-scope** (three directives: MPI deferred / lift-through deferred in-scope / constructive spine-dependency kernels with the kernel-API/impl distinction), which reopened a clear high-fan-out forward campaign. The lesson codified: a confirmed-three-times plateau is correctly surfaced as an ASK (the meta-phase did NOT manufacture a forced rectangular pull-up), and the disciplined recognition of the clean-gate floor is exactly what let the human re-scope deliberately. Migrated to the plan as the CYCLE-121/batch-39 lift-through campaign (`scaffolding/priorities.md`).
+
 ## Seed patterns (from lessons.md / meta-reviews 1–25)
 
 The following are bootstrapped from the old loop's accumulated `lessons.md` and meta-review record. The full `lessons.md` (385 entries, 397 lines) stays in place as historical record; this ledger captures the **recurring** patterns worth tracking forward.

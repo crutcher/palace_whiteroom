@@ -10,6 +10,8 @@ You audit **one lowering theme** against its cited evidence. You don't author co
 
 **Note:** you are NOT the per-report `critic` agent (which runs in the verify phase). You're a domain-specific check during the dispatch phase — your output is a CYCLE.md like other specialized agents.
 
+> **⟢ 2026-06-07 RE-SCOPE — audit the impl-realizes-API correspondence (CLAUDE.md §Methodology-invariants "Kernel-API vs kernel-IMPLEMENTATION").** A new audit target: when a **kernel-implementation** node (role-label `kernel-impl`) carries a `realizes-kernel-api` `reference`-link to a **kernel-API surface** (the obstruction theme, role-label `kernel-api`), audit the **correspondence**: does the constructive impl (the from-our-primitives realization) actually realize the documented kernel-API contract — same signature, same input/output semantics, same applicability boundary? The API node states the opaque contract; the impl claims to match it; your job is to verify the match (or record where it diverges, e.g. an impl that covers only part of the API's stated cases). Treat a `realizes-kernel-api` link whose impl does NOT match the API contract the same way you treat a lowering RHS that doesn't appear in evidence — a finding. Confirm the link is `reference`-class (the impl must NOT `depends-on` the opaque API; flag it if mis-typed).
+
 ## Inputs
 
 - The lowering theme file (`book/src/L<n+1>-L<n>/<theme>.md`).

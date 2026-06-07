@@ -514,6 +514,30 @@ This shape is load-bearing, and it follows three principles:
 > stands at a genuine terminal-state-of-current-scope: the disciplined recognition that the next move is again a
 > deliberate scope decision for the human, not a forced internal frontier.
 
+> **The plateau ENDED — the human re-scoped (out-of-band, 2026-06-07).** The batch-38 (third-consecutive) plateau
+> ASK was answered not with a winding-down but with a **generative re-scope**: three directives that reopen a clear
+> high-fan-out forward campaign by lifting three postures that had together *manufactured* the plateau. **(1) MPI /
+> sharding is a deferred future direction, not active work** — the MPI implementation rests on a sharding theory
+> assuming a lifetime structure the spine has deeply re-written, so lifting the MPI-associated version could be
+> *destructive* to the abstraction spine; it is recorded as a future goal (and the sharding *math* as an
+> exploratory-only-if-non-destabilizing decomposition abstraction), but MPI/distributed stays out of active scope.
+> **(2) The existing deferred IN-SCOPE work is lifted through** — the STOP-PROPOSING posture that had parked the
+> RE1-RE10 baseline-exceptions + the demand-gated vocabulary is LIFTED; the forward frontier is now *building the
+> grounded in-scope consumers and discharging the exceptions* (the geometric-multigrid preconditioner — the highest
+> fan-out, discharging RE9/RE1/RE5/RE7 by composing the level-stack + smoother + diagonal-preconditioner chains by
+> name; then AMR; then the residual RE-cohort consumers). The reachability baseline-exception set, which batch-35→36
+> had correctly named the *faithful floor*, is thereby reframed: it was a faithful floor *under the then-current scope*,
+> and each exception carried a promotion condition precisely because a future consumer could fire it — the re-scope
+> fires them. **(3) Spine-dependency opaque-library kernels are lifted with a constructive implementation, preserving
+> a kernel-API vs kernel-implementation distinction** (see the FLOW section below) — revising "document obstructions,
+> don't fill them" for the *spine-dependency* opaque-library kernels (the libCEED quadrature leaf, the
+> triangular-solve/GS-SSOR relaxation, the SLEPc eigsolve loop), while the enum-only-stub carve-out (MINRES/BiCGStab)
+> is preserved unchanged. The lesson the arc closes: a plateau confirmed three times is still a *scope* boundary, not a
+> *project* boundary — and the disciplined recognition of the clean-gate floor is exactly what let the human re-scope
+> deliberately into the deferred-but-in-scope substrate (the constructive kernels, the multigrid preconditioner, AMR)
+> that the earlier postures had been holding back. The vocabulary-shift redirect and the graded-stack machinery — *how*
+> vocabulary is expressed — are unchanged; the re-scope governs *what* is now the frontier.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
@@ -604,9 +628,37 @@ value** — not merely "does it decompose":
 
 Combinators must reach L4 regardless of how their specialized leaves are dispositioned.
 
+### The kernel-API vs kernel-implementation distinction (2026-06-07 re-scope)
+
+A black-box / opaque-library kernel that is **a dependency of something firm in the spine** AND has **a
+well-understood implementation in terms of the semantics already built** is no longer left only as an opaque
+obstruction. It gets **two linked surfaces, preserved for review:**
+
+1. A **kernel-API surface** — the existing obstruction theme, repositioned as "the API." It stays claim-free
+   (`status: obstruction (opaque-library-ownership)`, role-labelled `kernel-api`) and documents the opaque contract
+   the spine calls: signature, semantics, the library boundary.
+2. A **kernel-implementation** — a new constructive chapter realizing the kernel **from the artifact's already-firm
+   primitives** (normal resolution rank, role-labelled `kernel-impl`), with ordinary `depends-on` edges to its
+   constituents.
+
+The two are joined by a **`realizes-kernel-api`** edge (impl → API) of the *navigational* `reference` class — the
+implementation does **not** depend on the opaque API (it is a *correspondence to review*, not a build dependency), so
+the link constrains neither rank nor liveness. A reviewer reads both the black-box contract and the from-our-primitives
+version side by side and checks they match; the `lowering-verifier` audits the correspondence. The founding kernels are
+the libCEED element-quadrature leaf (impl = matrix-free FE operator application as tensor contractions), the
+triangular-solve / GS-SSOR relaxation (impl behind the multigrid smoother), and the SLEPc eigsolve loop (impl =
+constructive Lanczos/Arnoldi/Krylov-Schur in the existing `lanczos_step` / `krylov-step` vocabulary).
+
+**Carve-out:** enum-only-stubs (config tokens routed to an abort, e.g. MINRES/BiCGStab) are *not* external-kernel
+callouts and are *not* spine dependencies — they stay single-node obstructions and get no implementation. The
+dual-surface trigger is the conjunction *spine-dependency AND well-understood-in-our-semantics*.
+
 ### Scope, in one line
 
 Single-machine (CPU → GPU via backend devices); MPI / multi-rank distribution is out
-of scope (flagged once, then read as single-rank). **All five solver pipelines and
-MFEM-equivalent FE assembly are in scope.** Unimplemented Palace stubs are documented as
-obstruction themes, not targeted for filling in.
+of *active* scope (a deferred future direction; flagged once, then read as single-rank).
+**All five solver pipelines, MFEM-equivalent FE assembly, the geometric-multigrid
+preconditioner, and AMR are in scope** (the last two single-machine-valid — parallelism by
+composition). *Enum-only* Palace stubs are documented as obstruction themes, not targeted
+for filling in; *spine-dependency opaque-library kernels* get a constructive implementation
+alongside their kernel-API obstruction surface (the distinction above).
