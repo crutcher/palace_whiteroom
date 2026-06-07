@@ -11,6 +11,7 @@ edges:
     - L1/weak_op          # rough-in op -> RANK VIOLATION (firm rests on rough-in)
   reference:
     - feature/sibling.L4  # sibling root: reference, not blocking
+    - L1/ref_only_leaf    # firm leaf reached ONLY by reference -> §2g/RE11 reference-reachable detritus, NOT true-detritus
 ---
 # widget (L4 feature column)
 

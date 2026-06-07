@@ -17,9 +17,29 @@ two analyses run over it:
      `depends-on` edges. Unmarked nodes are GARBAGE (detritus / dead intent).
      Emits the detritus list + a per-file inbound-reference report.
 
-Both analyses consume ONLY the blocking bit (`depends-on`); `reference` edges
-constrain nothing and carry no liveness (§3). The optional edge `kind:` is
-documentation the linter ignores.
+     REFERENCE-REACHABLE reporting tier (batch-39 meta-phase, ASK-1; scheme §2g).
+     A SECOND mark runs from the same roots traversing BOTH `depends-on` AND
+     `reference` edges. The `detritus` set then SPLITS into two sub-buckets:
+       - reference-reachable detritus — depends-on-unreachable but reachable once
+         `reference` edges are followed. These are the §2g / RE11 DELIBERATE-
+         reference-only-reachable cohort (combinator-primary leaves whose
+         combinator back-links them by `reference`; DIRECTIVE-3 kernel-impls
+         linked to their kernel-api surface by a `reference`-class
+         `realizes-kernel-api` edge; feature-root→node `reference` under
+         OWN-COMPOSITION). They are firm-and-faithful-but-correctly-off-the
+         -`depends-on`-spine, NOT decay — `detritus` over-counts them by ~design
+         under the post-§3 structural models.
+       - true-detritus — unreachable EVEN under the reference-augmented mark.
+         Genuine dead intent / orphaned vocabulary; the real health signal.
+     This is a REPORTING/CLASSIFICATION refinement ONLY (scheme §2g): it changes
+     NO gate. `reference` still constrains nothing and carries no liveness; the
+     depends-on-only GC still marks both sub-buckets `[GARBAGE*]`; we merely
+     SEPARATE them so the headline health number (`true_detritus`) is clean.
+
+Both *gating* analyses consume ONLY the blocking bit (`depends-on`); `reference`
+edges constrain nothing and carry no liveness (§3) — the reference-augmented mark
+is a non-gating reporting overlay. The optional edge `kind:` is documentation the
+linter ignores.
 
 INCREMENTAL-SAFE (hard requirement (a)). Most of the tree is not yet typed
 (253/357 files pre-P1). A file with no rank/edge frontmatter is counted as an
@@ -676,6 +696,42 @@ def reachability_gc(nodes: dict[str, Node]) -> tuple[set[str], list[str], dict[s
     return reachable, garbage, inbound
 
 
+def reference_augmented_reachable(
+        nodes: dict[str, Node]) -> tuple[set[str], dict[str, list[str]]]:
+    """Mark from the feature roots traversing BOTH `depends-on` AND `reference`
+    edges (the ASK-1 / scheme-§2g reporting overlay; NON-gating).
+
+    Returns (ref_reachable, ref_inbound). A node in `ref_reachable` but NOT in
+    the depends-on-only GC set is DELIBERATELY reference-only-reachable — the §2g
+    / RE11 cohort (firm-and-faithful but correctly off the `depends-on` spine).
+    A node unreachable even here is TRUE-detritus (genuine dead intent).
+
+    `ref_inbound[slug]` = the nodes that point at `slug` over a `depends-on` OR
+    `reference` edge — the attribution for "who keeps this reachable-via-reference
+    node alive" (the back-linking combinator / kernel-api / root)."""
+    roots = [n.slug for n in nodes.values() if n.is_root]
+    reachable: set[str] = set()
+    stack = list(roots)
+    while stack:
+        s = stack.pop()
+        if s in reachable:
+            continue
+        reachable.add(s)
+        node = nodes.get(s)
+        if node is None:
+            continue
+        for nxt in (*node.depends_on, *node.references):
+            if nxt in nodes and nxt not in reachable:
+                stack.append(nxt)
+
+    ref_inbound: dict[str, list[str]] = {s: [] for s in nodes}
+    for node in nodes.values():
+        for tgt in (*node.depends_on, *node.references):
+            if tgt in ref_inbound:
+                ref_inbound[tgt].append(node.slug)
+    return reachable, ref_inbound
+
+
 OUTSIDE_DAG_PREFIXES = ("methodology/", "design/")
 OUTSIDE_DAG_SUFFIXES = ("/index", "index")  # index.md pages
 # group-intro feature pages (not columns): driver-leaf, output-product, spine-root
@@ -726,6 +782,7 @@ def build_summary(nodes: dict[str, Node]) -> dict:
     apply_lowering_theme_ranks(nodes)
     violations, frontier, unresolved = rank_check(nodes)
     reachable, garbage, inbound = reachability_gc(nodes)
+    ref_reachable, ref_inbound = reference_augmented_reachable(nodes)
 
     roots = sorted(n.slug for n in nodes.values() if n.is_root)
     untyped = sorted(n.slug for n in nodes.values() if n.untyped)
@@ -752,6 +809,30 @@ def build_summary(nodes: dict[str, Node]) -> dict:
     detritus_with_typed_edges = sorted(
         s for s in detritus if nodes[s].depends_on)
 
+    # ASK-1 / scheme §2g reference-reachable reporting tier (NON-gating). Split
+    # the detritus by the reference-augmented mark: a depends-on-unreachable node
+    # that IS reachable once `reference` edges are followed is the DELIBERATE
+    # reference-only-reachable cohort (§2g / RE11 — combinator-primary leaves,
+    # DIRECTIVE-3 kernel-impls via `realizes-kernel-api`, root-sibling refs); a
+    # node unreachable EVEN under that mark is TRUE-detritus (genuine dead
+    # intent). The headline `detritus` count is UNCHANGED (no gate change);
+    # `true_detritus` is the clean health signal the §2g escalate-guard watches.
+    detritus_reference_reachable = sorted(
+        s for s in detritus if s in ref_reachable)
+    true_detritus = sorted(
+        s for s in detritus if s not in ref_reachable)
+    # the stronger-signal bucket, split the same way (the meta-attention subset).
+    stronger_reference_reachable = sorted(
+        s for s in detritus_with_typed_edges if s in ref_reachable)
+    stronger_true_detritus = sorted(
+        s for s in detritus_with_typed_edges if s not in ref_reachable)
+    # attribution: for each reference-reachable detritus node, who points at it
+    # (the back-linking combinator / kernel-api surface / root that keeps it
+    # reference-reachable). Restricted to the cohort to keep the report focused.
+    reference_reachable_inbound = {
+        s: sorted(set(ref_inbound[s]))
+        for s in detritus_reference_reachable if ref_inbound.get(s)}
+
     rank_hist: dict[str, int] = {}
     for n in typed:
         lbl = (n.rank_token.split(" (")[0] if n.rank_token else
@@ -768,9 +849,15 @@ def build_summary(nodes: dict[str, Node]) -> dict:
             "unresolved_depends_on_targets": len(unresolved),
             "promotion_frontier": len(frontier),
             "reachable": len(reachable),
+            "reference_reachable": len(ref_reachable),
             "detritus": len(detritus),
             "detritus_no_typed_edges_pre_p1_artifact": len(detritus_no_typed_edges),
             "detritus_with_typed_edges_stronger_signal": len(detritus_with_typed_edges),
+            # ASK-1 / §2g reference-reachable split (non-gating reporting tier):
+            "detritus_reference_reachable_re11_cohort": len(detritus_reference_reachable),
+            "true_detritus": len(true_detritus),
+            "stronger_signal_reference_reachable": len(stronger_reference_reachable),
+            "stronger_signal_true_detritus": len(stronger_true_detritus),
             "expected_unreachable_outside_dag": len(expected_unreachable),
         },
         "rank_histogram": rank_hist,
@@ -784,6 +871,11 @@ def build_summary(nodes: dict[str, Node]) -> dict:
         "detritus": detritus,
         "detritus_no_typed_edges_pre_p1_artifact": detritus_no_typed_edges,
         "detritus_with_typed_edges_stronger_signal": detritus_with_typed_edges,
+        "detritus_reference_reachable_re11_cohort": detritus_reference_reachable,
+        "true_detritus": true_detritus,
+        "stronger_signal_reference_reachable": stronger_reference_reachable,
+        "stronger_signal_true_detritus": stronger_true_detritus,
+        "reference_reachable_inbound": reference_reachable_inbound,
         "expected_unreachable_outside_dag": expected_unreachable,
         "untyped": untyped,
         "lowering_theme_notes": {
@@ -793,7 +885,8 @@ def build_summary(nodes: dict[str, Node]) -> dict:
     }
 
 
-def render_text(summary: dict, show_untyped: bool, show_inbound: bool) -> None:
+def render_text(summary: dict, show_untyped: bool, show_inbound: bool,
+                show_reference_reachable: bool = False) -> None:
     t = summary["totals"]
     print("=" * 72)
     print("graded-stack-lint  —  rank check + reachability GC")
@@ -861,6 +954,40 @@ def render_text(summary: dict, show_untyped: bool, show_inbound: bool) -> None:
         print(f"\n  edge-untyped detritus (pre-P1 artifact, {n_pre}):")
         for s in summary["detritus_no_typed_edges_pre_p1_artifact"]:
             print(f"    [garbage?] {s}")
+
+        # ASK-1 / scheme §2g reference-reachable reporting tier (NON-gating).
+        # Always print the headline split so the clean health number surfaces;
+        # the per-node listing is gated behind --reference-reachable.
+        n_ref = t["detritus_reference_reachable_re11_cohort"]
+        n_true = t["true_detritus"]
+        print(f"\n  ── reference-reachable split (§2g / RE11, non-gating) ──")
+        print(f"  {n_ref} of the {len(summary['detritus'])} detritus node(s) are "
+              f"REFERENCE-REACHABLE: depends-on-unreachable but reachable once\n"
+              f"  `reference` edges are followed — the DELIBERATE reference-only-"
+              f"reachable cohort (combinator-primary leaves, DIRECTIVE-3\n"
+              f"  kernel-impls via realizes-kernel-api, root-sibling refs). These "
+              f"are firm-and-faithful, NOT decay (tracked as RE11).")
+        print(f"  TRUE-DETRITUS ({n_true}) — unreachable EVEN via `reference` "
+              f"edges = the genuine dead-intent health signal (watch this number, "
+              f"not the raw detritus count).")
+        if show_reference_reachable:
+            if summary["true_detritus"]:
+                print(f"\n  TRUE-DETRITUS ({n_true}) — inspect first "
+                      f"(genuine garbage / dead intent):")
+                for s in summary["true_detritus"]:
+                    tag = ("GARBAGE*" if s in
+                           summary["detritus_with_typed_edges_stronger_signal"]
+                           else "garbage?")
+                    print(f"    [{tag}] {s}")
+            if summary["detritus_reference_reachable_re11_cohort"]:
+                print(f"\n  reference-reachable detritus ({n_ref}, RE11 cohort — "
+                      f"deliberate, NOT decay; shown with the back-link that keeps "
+                      f"each reachable-via-reference):")
+                rri = summary["reference_reachable_inbound"]
+                for s in summary["detritus_reference_reachable_re11_cohort"]:
+                    via = rri.get(s)
+                    via_s = f"  <-ref/dep-  {', '.join(via)}" if via else ""
+                    print(f"    [ref-reachable] {s}{via_s}")
     else:
         print("\nDETRITUS: none (every typed DAG node is reachable from a root).")
     print(f"\nexpected-unreachable (outside-DAG: methodology/design/index/"
@@ -880,7 +1007,9 @@ def render_text(summary: dict, show_untyped: bool, show_inbound: bool) -> None:
     print()
     print("=" * 72)
     print(f"RESULT: {t['rank_violations']} rank violation(s), "
-          f"{t['detritus']} detritus node(s), "
+          f"{t['detritus']} detritus node(s) "
+          f"({t['true_detritus']} true-detritus / "
+          f"{t['detritus_reference_reachable_re11_cohort']} reference-reachable §2g), "
           f"{t['untyped']} untyped (warning).")
     print("=" * 72)
 
@@ -898,6 +1027,9 @@ def main(argv: list[str] | None = None) -> int:
                     help="list every untyped file (default: just the count)")
     ap.add_argument("--show-inbound", action="store_true",
                     help="print the per-file inbound-reference report")
+    ap.add_argument("--reference-reachable", action="store_true",
+                    help="list the §2g reference-reachable / true-detritus split "
+                         "node-by-node (the headline split counts always print)")
     ap.add_argument("--strict", action="store_true",
                     help="treat unresolved depends-on targets as failures too")
     args = ap.parse_args(argv)
@@ -918,7 +1050,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.json:
         print(json.dumps(summary, indent=2))
     else:
-        render_text(summary, args.show_untyped, args.show_inbound)
+        render_text(summary, args.show_untyped, args.show_inbound,
+                    args.reference_reachable)
 
     fail = summary["totals"]["rank_violations"] > 0
     if args.strict and summary["totals"]["unresolved_depends_on_targets"] > 0:

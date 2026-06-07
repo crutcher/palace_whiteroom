@@ -21,6 +21,8 @@ L2/legacy_compose   (root via legacy status: seed)
                                   --depends-on--> L1/good_op           (composes: vocabulary op)
                                   --reference---> feature/sibling.L4   (composes: sibling column)
 L1/orphan           (firm)        --depends-on--> L0/leaf_cite         (NO root depends on it)
+L1/ref_only_leaf    (firm)        --depends-on--> L0/leaf_cite
+                                  <--reference--   feature/widget.L4    (reachable ONLY via reference)
 L1-L0/widget-lowering (declared firm)
                                   --depends-on--> L1/weak_op (rough-in), L0/leaf_cite
 concepts/untyped_concept          (no frontmatter at all)
@@ -73,8 +75,26 @@ concepts/untyped_concept          (no frontmatter at all)
    `rough-in (test-coverage-bounded)` and manufactured a spurious violation —
    the exact c095 bug (12 ledger instances) this case guards against.
 
-Confirmed outputs (cycle-096 — adds assertion #9):
-`files=10, typed=9, untyped=1, roots=3, rank_violations=2, reachable=7,
-detritus=2, promotion_frontier=1, exit=1`.
-(cycle-094 P0-B baseline was `files=9, typed=8, … reachable=6` before the
-`prose_firm_provenance` guard node was added.)
+10. **Reference-reachable split** (ASK-1 / scheme §2g; the deliberate-reference-
+    only-reachable cohort guard) — `L1/ref_only_leaf` is `firm` and no feature
+    root `depends-on` it, so the depends-on-only GC marks it DETRITUS
+    (`[GARBAGE*]`, stronger-signal bucket — it declares a typed dep). But
+    `feature/widget.L4` (a reachable root) points at it over a `reference` edge,
+    so the reference-augmented mark REACHES it. It must therefore land in
+    `detritus_reference_reachable_re11_cohort` (with back-link attribution
+    `<-ref/dep- feature/widget.L4`), NOT in `true_detritus`. `L1/orphan` and
+    `L1-L0/widget-lowering` have NO inbound reference from a reachable node, so
+    they stay `true_detritus` — the genuine dead-intent health signal. This
+    guards that the §2g split separates the deliberate cohort (firm-and-faithful,
+    correctly off the depends-on spine) from real garbage, and that the split is
+    a REPORTING refinement only (gate behavior — exit 1 from the rank violations —
+    is unchanged; raw `detritus` still counts all three).
+
+Confirmed outputs (cycle-123 batch-39 meta — adds assertion #10, the §2g
+reference-reachable tier):
+`files=11, typed=10, untyped=1, roots=3, rank_violations=2, reachable=7,
+reference_reachable=8, detritus=3 (true_detritus=2 / reference_reachable=1),
+promotion_frontier=1, exit=1`.
+(cycle-096 was `files=10, … reachable=7, detritus=2` before the `ref_only_leaf`
+reference-reachable-cohort guard node was added; cycle-094 P0-B baseline was
+`files=9, typed=8, … reachable=6` before the `prose_firm_provenance` guard.)

@@ -31,6 +31,28 @@ over `depends-on` edges (scheme §3). Unmarked nodes are **garbage** (detritus /
 dead intent). Also emits a **per-file inbound-reference report** (who
 `depends-on` each node).
 
+**Reference-reachable reporting tier** (batch-39 meta-phase, ASK-1; scheme §2g).
+A *second*, non-gating mark runs from the same roots over BOTH `depends-on` AND
+`reference` edges, splitting the `detritus` set:
+
+- **reference-reachable detritus** — depends-on-unreachable but reachable once
+  `reference` edges are followed: the §2g / **RE11** DELIBERATE reference-only-
+  reachable cohort (combinator-primary leaves back-linked by their combinator's
+  `reference`; DIRECTIVE-3 kernel-impls linked to their kernel-api surface by a
+  `reference`-class `realizes-kernel-api` edge; feature-root→node `reference`
+  under OWN-COMPOSITION). These are firm-and-faithful-but-correctly-off-the
+  -`depends-on`-spine — `detritus` over-counts them by ~design under the post-§3
+  structural models.
+- **true-detritus** — unreachable EVEN under the reference-augmented mark:
+  genuine dead intent / orphaned vocabulary. **This is the clean health signal**
+  (the §2g escalate-guard watches `true_detritus`, not the raw `detritus`).
+
+A reporting/classification refinement ONLY — it changes **no gate**. `reference`
+still constrains nothing and carries no liveness (§3); the gating depends-on-only
+GC still marks both sub-buckets `[GARBAGE*]`; the tier merely *separates* them.
+The split counts always print (text + JSON); the per-node listing + the back-link
+attribution are gated behind `--reference-reachable`.
+
 ## The graph it builds (the parse contract)
 
 **Node identity** is the repo-relative slug — no `book/src/` prefix, no `.md`
@@ -131,6 +153,7 @@ Flags:
 | `--json` | emit the machine-parseable JSON summary (for integrator-finalize) |
 | `--show-untyped` | list every untyped file (default: just the count) |
 | `--show-inbound` | print the per-file inbound-reference report |
+| `--reference-reachable` | list the §2g reference-reachable / true-detritus split node-by-node, with the back-link that keeps each reference-reachable node alive (the split COUNTS always print regardless) |
 | `--strict` | treat unresolved `depends-on` targets as failures too |
 
 ### JSON summary (for integrator-finalize, graded-stack §8)
@@ -138,13 +161,21 @@ Flags:
 `--json` emits a single object: `totals` (file/typed/untyped/root counts,
 `rank_violations`, `promotion_frontier`, `reachable`, `detritus` +
 the pre-P1 `detritus_no_typed_edges_pre_p1_artifact` /
-`detritus_with_typed_edges_stronger_signal` split), `rank_histogram`, `roots`,
+`detritus_with_typed_edges_stronger_signal` split + the §2g reference-reachable
+split `reference_reachable` / `detritus_reference_reachable_re11_cohort` /
+`true_detritus` / `stronger_signal_reference_reachable` /
+`stronger_signal_true_detritus`), `rank_histogram`, `roots`,
 `rank_violations` (each `{src, src_rank, dep, dep_rank}`),
 `unresolved_depends_on_targets`, `promotion_frontier`, `detritus`,
-`expected_unreachable_outside_dag`, `untyped`, `lowering_theme_notes`, and the
-`inbound_reference_report`. `integrator-finalize` runs `--json` at cycle-end and
-records the `totals` block (the graded-stack §8 "run the linters at finalize"
-bullet).
+`detritus_reference_reachable_re11_cohort`, `true_detritus`,
+`stronger_signal_reference_reachable`, `stronger_signal_true_detritus`,
+`reference_reachable_inbound` (per reference-reachable-detritus node: who
+back-links it), `expected_unreachable_outside_dag`, `untyped`,
+`lowering_theme_notes`, and the `inbound_reference_report`.
+`integrator-finalize` runs `--json` at cycle-end and records the `totals` block
+(the graded-stack §8 "run the linters at finalize" bullet) — and should now
+track **`true_detritus`** (the clean health number) alongside the raw
+`detritus`, since the latter over-counts the deliberate RE11 cohort by ~design.
 
 ## Fixture (correctness validation)
 
@@ -155,12 +186,15 @@ migration mapping + the prose-`## Status` leading-token rule (see
 
 ```bash
 python3 tools/graded-stack-lint/graded_stack_lint.py \
-    --book-src tools/graded-stack-lint/fixture/book/src --show-inbound
+    --book-src tools/graded-stack-lint/fixture/book/src \
+    --show-inbound --reference-reachable
 # Expect: 2 rank violations (widget.L4→weak_op, widget-lowering→weak_op),
-#         detritus L1/orphan (firm but unreachable), 1 untyped concept page,
-#         L1/prose_firm_provenance read as FIRM via its prose ## Status line
-#         (despite the body mentioning "rough-in"/"stub" — the token-priority
-#         bug guard), exit code 1.
+#         detritus=3 split into true_detritus=2 (L1/orphan, L1-L0/widget-lowering)
+#         + reference_reachable=1 (L1/ref_only_leaf, kept reachable only by
+#         feature/widget.L4's reference edge — the §2g/RE11 cohort guard),
+#         1 untyped concept page, L1/prose_firm_provenance read as FIRM via its
+#         prose ## Status line (despite the body mentioning "rough-in"/"stub" —
+#         the token-priority bug guard), exit code 1.
 ```
 
 ## Adoption note
