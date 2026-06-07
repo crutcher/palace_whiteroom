@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T054924Z
 scope: geometric-multigrid-preconditioner feature-surface column (DIRECTIVE-2 grounded consumer-(1), batch-39 LEAD)
 status: pending
 integrated_at: 2026-06-07T054924Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ae2e2f4
 integration_notes: "Applied (sanctioned integration-sequencing exception). GMG L4+L1 columns rough-in + NEW Infrastructure feature sub-kind. Grounds RE9/RE1/RE5/RE7."
 ---
 

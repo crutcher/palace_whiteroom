@@ -13,7 +13,7 @@ inputs:
   - book/src/L3/smoother-intro.md, book/src/L4/iteration-combinators-intro.md, book/src/L4/iterate-while.md (existing cohort framing + iteration vocab)
   - palace/linalg/distrelaxation.cpp:101-119, palace/linalg/gmg.cpp:172-205 (Palace's own `Y <- Y + B(X - A Y)` comments)
 integrated_at: 2026-06-07T054924Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ae2e2f4
 integration_notes: "Applied clean. L2/correction_step rough-in dep-map row; replace-and-propagate routed to harvester."
 ---
 

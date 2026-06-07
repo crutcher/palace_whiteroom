@@ -11,7 +11,7 @@ reports_deferred: 0
 reports_rejected: 0
 gate_hits_total: 0
 finalize_build_repairs: 1
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ae2e2f4
 ---
 
 # integrator-finalize — cycle-121 (batch-39, position 1/3, THE OPENER)

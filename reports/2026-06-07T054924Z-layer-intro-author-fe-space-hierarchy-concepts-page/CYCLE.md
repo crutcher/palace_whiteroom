@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T054924Z
 scope: FiniteElementSpaceHierarchy record concepts-page promotion + multigrid→fe_space_hierarchy RE9-edge VERIFY (cycle-121 D2, dep D1)
 status: pending
 integrated_at: 2026-06-07T054924Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ae2e2f4
 integration_notes: "Applied clean. concepts/FiniteElementSpaceHierarchy.md firm + fe_space_hierarchy Record-def trim (>=2-consumer promotion)."
 ---
 

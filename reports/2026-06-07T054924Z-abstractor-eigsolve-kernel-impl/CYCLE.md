@@ -12,7 +12,7 @@ inputs:
   - palace/linalg/arpack.cpp:270,273,278,318,342,369 (Arnoldi-iteration param, shift-invert mode, naupd basis driver, neupd extraction)
   - reports/2026-06-07T054924Z-cycle-planner-cycle-121/CYCLE.md (D5)
 integrated_at: 2026-06-07T054924Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ae2e2f4
 integration_notes: "Applied clean (repaired). L3/eigsolve-impl + L3/lanczos_step roadmap_goal (DIRECTIVE-3); finalize de-linked 2 dead README.md links in eigsolve-impl.md."
 ---
 

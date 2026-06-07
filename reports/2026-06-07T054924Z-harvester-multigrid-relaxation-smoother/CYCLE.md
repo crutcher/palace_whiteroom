@@ -10,7 +10,7 @@ inputs:
   - L0 source: palace/linalg/distrelaxation.{cpp,hpp} (all ranges on-disk verified)
   - firm constituents: L1/chebyshev-smoother, L1/apply_linop, L1/axpby, L1/interpolator
 integrated_at: 2026-06-07T054924Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ae2e2f4
 integration_notes: "Applied clean. L1/multigrid-relaxation-smoother FIRM (kernel-impl); triangular-solve obstruction gained kernel-api role-label. Made LIVE intra-cycle by D1's depends-on."
 ---
 

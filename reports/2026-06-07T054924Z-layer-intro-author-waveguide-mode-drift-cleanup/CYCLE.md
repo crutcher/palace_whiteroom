@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T054924Z
 scope: waveguide-mode drift / liveness hygiene (L0 stale rank + index/output-product stale seed cells)
 status: pending
 integrated_at: 2026-06-07T054924Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ae2e2f4
 integration_notes: "Applied clean. waveguide-mode .L0/index maturity drift cleanup; feature-column firm 12->13; feature_root: seed KEPT."
 ---
 

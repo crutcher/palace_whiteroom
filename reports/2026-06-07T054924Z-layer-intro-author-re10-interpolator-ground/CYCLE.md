@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T054924Z
 scope: RE10 discharge — ground L1/interpolator off detritus via two faithful depends-on edges
 status: pending
 integrated_at: 2026-06-07T054924Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ae2e2f4
 integration_notes: "Applied clean. RE10 DISCHARGED — L1/interpolator grounded via divfree-projector + waveguide_mode_reduce depends-on(uses) edges."
 ---
 

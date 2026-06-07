@@ -12,7 +12,7 @@ inputs:
   - palace/fem/integrator.hpp:58-61 (BilinearFormIntegrator::Assemble pure-virtual leaf-kernel contract)
   - reference: project_kernel_api_impl_distinction, project_lift_through_deferred_in_scope, project_blackbox_vs_accelerated_kernels
 integrated_at: 2026-06-07T054924Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ae2e2f4
 integration_notes: "Applied clean. L1/libceed-quadrature-kernel-impl roadmap_goal (DIRECTIVE-3 dual-surface); grounded-future [GARBAGE*] awaiting c122 substrate harvest."
 ---
 

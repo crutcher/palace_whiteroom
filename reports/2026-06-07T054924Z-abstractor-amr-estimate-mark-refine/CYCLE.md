@@ -15,7 +15,7 @@ inputs:
   - book/src/feature/lifecycle.L4.md, lifecycle.L0.md, spine-root.md (the loop is ALREADY homed via fold_solve state-generated)
   - book/src/L4/fold_solve.md (schedule-source=state-generated axis names the AMR loop as a witness)
 integrated_at: 2026-06-07T054924Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: ae2e2f4
 integration_notes: "Applied clean (repaired). L1-L0/amr-estimate-mark-refine rough-in theme + 2 L1 rough-in verb rows (AMR front opener)."
 ---
 
