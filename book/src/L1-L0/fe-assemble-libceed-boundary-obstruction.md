@@ -27,8 +27,14 @@ tensor-contraction-respine" — RATIFIED by the batch-16 meta-phase as
 
 ## Status
 
-`obstruction (opaque-library-ownership)` — the mandatory sub-kind tag (per CLAUDE.md
-§Methodology-invariants "Obstruction themes have two sub-kinds"). The entire callable that
+`obstruction (opaque-library-ownership)` — **kernel-api** (the DIRECTIVE-3 role-label: this
+node IS the opaque kernel-API CONTRACT the spine calls; the from-our-tensor-algebra realization
+is the separate **kernel-impl** node
+[`libceed-quadrature-kernel-impl`](../L1/libceed-quadrature-kernel-impl.md), linked back here by
+a `realizes-kernel-api` `reference`-class edge — free, navigational, NOT a `depends-on`; a
+reviewer reads both and checks they match, `lowering-verifier` audits the correspondence). The
+role-label does NOT change the obstruction disposition; this remains the mandatory sub-kind tag
+(per CLAUDE.md §Methodology-invariants "Obstruction themes have two sub-kinds"). The entire callable that
 produces the element-local quadrature contribution lives **outside Palace** (in libCEED),
 so the boundary is *structural ownership*, not unimplementation. Promotion route: **none**
 in the conventional sense — the theme stays obstruction unless Palace re-architects its

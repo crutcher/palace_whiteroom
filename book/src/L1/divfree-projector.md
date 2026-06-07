@@ -14,6 +14,8 @@ edges:
     - L1/ksp_solve                # the inner projected-H1 solve (step 3)
     - L1/apply_linop              # step-1 WeakDiv apply + step-4 Grad apply
     - L1/axpy                     # step-4 additive gradient correction
+    - target: book/src/L1/interpolator.md
+      kind: uses                  # the Grad discrete-gradient operator IS interpolator's L0 lift (GetDiscreteInterpolator, palace/linalg/divfree.cpp:117)
   reference:
     - L2/divfree-projector        # the L2 fusion-rotation floor above
     - concepts/set_subvector_zero # the Z_{bdr_eff} essential-BC zeroing (step 2)
@@ -244,6 +246,12 @@ L1-internal:
   (step 4) linear-operator applications.
 - [`axpy`](./axpy.md) — the `y + Grad·ψ` gradient correction (step 4, fused as
   `Grad->AddMult(ψ, y, 1.0)`, the apply-and-accumulate idiom).
+- [`interpolator`](./interpolator.md) — the construction of the `P.Grad` discrete
+  gradient operator. `Grad` is the de-Rham discrete grid-transfer operator
+  `interpolator` constructs (`Grad = &nd_fespace.GetDiscreteInterpolator(...)`,
+  `palace/linalg/divfree.cpp:117`); the projector *uses* this constructed `LinOp`
+  in steps 1/4 (`uses` edge — a build-time construction dependency on the
+  interpolator operator, distinct from the run-time `apply_linop` application).
 
 Shared concepts (cross-referenced, not duplicated):
 

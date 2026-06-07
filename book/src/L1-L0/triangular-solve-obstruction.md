@@ -542,7 +542,22 @@ concrete, NOT to anchor this obstruction):
 
 ## Status
 
-`obstruction` — claim-free documentation of the absence of a general
+`obstruction (opaque-library-ownership)` — **kernel-api**. (DIRECTIVE-3
+role-label, 2026-06-07: this theme is repositioned as the **kernel-API surface**
+— the reviewable opaque contract the multigrid smoother slot calls. This edit
+adds the `kernel-api` role-label AND clarifies the sub-kind from the prior bare
+`obstruction` to `obstruction (opaque-library-ownership)` — it stays
+obstruction-*kind* (NOT downgraded, NOT promoted to a constructive status); the
+sub-kind is the accurate one because it genuinely IS the opaque
+GS-SSOR / sparse-triangular relaxation boundary (HYPRE / external direct-solver
+ownership), claim-free, with negative anchors. Its constructive
+kernel-IMPLEMENTATION counterpart is
+[`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md) (the
+Hiptmair distributive smoother, firm c121), which `realizes-kernel-api` this
+surface via a `reference`-class edge; `lowering-verifier` audits the
+impl-realizes-API correspondence.)
+
+Claim-free documentation of the absence of a general
 triangular-solve primitive in Palace, with negative anchors. **Not
 `rough-in`** (no constructive L1 form is proposed and none should be —
 per CLAUDE.md §Scope, unimplemented Palace components are not direct

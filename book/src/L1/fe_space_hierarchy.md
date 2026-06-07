@@ -28,6 +28,7 @@ edges:
       kind: cites-evidence        # ConstructFiniteElementSpaceHierarchy whole body; close brace verified on disk at :126 (return fespaces; :125, } :126)
   reference:
     - L1/build_mesh                # the [Mesh] input element type — the `Mesh` record home (D3 this cycle); navigational, NOT a depends-on
+    - concepts/FiniteElementSpaceHierarchy   # the output record's cross-cutting definition home (promoted c121; producer + GMG-column consumers ≥2)
 ---
 
 # `fe_space_hierarchy` — p-multigrid FE-space hierarchy
@@ -103,10 +104,11 @@ Shape contract (bunsen-style, named axes):
   level `coarse_mesh_l`, `multigrid.hpp:87-88`) plus the optional Dirichlet-BC
   attributes `dbc_attr` / output `dbc_tdof_lists` (`multigrid.hpp:81-82`). The
   `Config` here is the multigrid-hierarchy slice; see *Config fields* below.
-- result — `FiniteElementSpaceHierarchy` — the coarse-to-fine level stack; see
-  *Record definition*. `GetNumLevels()` is the produced level count;
-  `GetFinestFESpace()` is the finest [`fe_space`](./fe_space.md)
-  (`FiniteElementSpace[N]`, `N` its true-dof count).
+- result — `FiniteElementSpaceHierarchy` — the coarse-to-fine level stack; the
+  field schema + strata are defined at
+  [`concepts/FiniteElementSpaceHierarchy`](../concepts/FiniteElementSpaceHierarchy.md).
+  `GetNumLevels()` is the produced level count; `GetFinestFESpace()` is the finest
+  [`fe_space`](./fe_space.md) (`FiniteElementSpace[N]`, `N` its true-dof count).
 
 **Shape note (named shape groups, USE+LINK).** The list inputs `[Mesh]` /
 `[FECollection]` and the per-level `FiniteElementSpace[N]` are **genuine rank-1**
@@ -119,25 +121,25 @@ not a shape-generic operator.
 
 ## Record definition: `FiniteElementSpaceHierarchy`
 
-The output record is defined here (single-consumer: `fe_space_hierarchy` is the
-sole harvested L1 producer/consumer of this type; its downstream
-geometric-multigrid solver consumers are not yet L1-harvested). The backing C++
-class is `palace::FiniteElementSpaceHierarchy` (`palace/fem/fespace.hpp:200-286`).
+The output record `FiniteElementSpaceHierarchy` now has a cross-cutting
+definition home at [`concepts/FiniteElementSpaceHierarchy`](../concepts/FiniteElementSpaceHierarchy.md)
+— its field schema (`fespaces` construction-time level stack; `P` run-time-lazy
+prolongations), per-field construction-vs-run-time strata, the read surface, and
+the L0 backing `class FiniteElementSpaceHierarchy` (`palace/fem/fespace.hpp:200-286`)
+are defined there. It was promoted to a standalone page (c121) once the
+≥2-consumer bar was met: this chapter is the **producer** (the `AddLevel`-fold),
+and the [geometric-multigrid preconditioner](../feature/geometric-multigrid-preconditioner.L4.md)
+is the **consumer** (its V-cycle composes the record's `GetProlongationOperators()`
+level-stack by name).
 
-| field | type | meaning | stratum |
-|---|---|---|---|
-| `fespaces` | `[FiniteElementSpace]` | the coarse-to-fine level stack; `fespaces[0]` the coarsest, `fespaces.back()` the finest. Each is one [`fe_space`](./fe_space.md) value. (`fespace.hpp:203`) | construction-time (built by the fold; thereafter read-only) |
-| `P` | `[Operator?]` | per-level **prolongation** operators (`P[l]` lifts level `l` → `l+1`); `mutable`, **lazily** materialized on first `GetProlongationAtLevel(l)` via `BuildProlongationAtLevel` (`fespace.hpp:204,206,249-255`) — `nullptr` until then. | run-time (lazy; populated on demand during the multigrid solve, not at construction) |
-
-Accessors (read-as-given, NOT L1 operations): `GetNumLevels`
-(`fespace.hpp:215`), `GetFESpaceAtLevel` (`:223-234`), `GetFinestFESpace`
-(`:236-247`), `GetProlongationAtLevel` / `GetProlongationOperators`
-(`:249-267`), `GetDiscreteInterpolatorAtLevel` / `GetDiscreteInterpolators`
-(`:269-285`). The prolongation/interpolator machinery is **sibling-pull-gated**:
-the `BuildProlongationAtLevel` (multigrid transfer) and discrete-interpolator
-construction are read-as-given properties of the record here, not L1 operations
-(the deferred `BuildDiscreteInterpolator` / `BuildProlongationAtLevel` siblings,
-named in the `fe_space` deferred-sibling list).
+Producer-local note: the fold's output value IS this record — the coarse-seed
+`make_unique<FiniteElementSpace>` populates `fespaces[0]`, each `AddLevel`
+`push_back`es one more level (`fespace.hpp:217-221`, strict append + a `nullptr`
+prolongation slot), and the prolongation operators `P[l]` are left `nullptr` by the
+fold (lazily built later during the multigrid solve, NOT here). The
+prolongation/discrete-interpolator machinery is read-as-given (sibling-pull-gated
+per the [`fe_space`](./fe_space.md) deferred-sibling list); see the concepts page
+for the field-level detail.
 
 ## Config fields (the multigrid-hierarchy slice)
 

@@ -51,6 +51,9 @@
   - [waveguide-mode — L4 composition-root](./feature/waveguide-mode.L4.md)
   - [waveguide-mode — L1 composition-root](./feature/waveguide-mode.L1.md)
   - [waveguide-mode — L0 ground-truth surface](./feature/waveguide-mode.L0.md)
+- [Infrastructure / shared-substrate columns](./feature/infrastructure.md)
+  - [geometric-multigrid-preconditioner — L4 composition-root](./feature/geometric-multigrid-preconditioner.L4.md)
+  - [geometric-multigrid-preconditioner — L1 composition-root](./feature/geometric-multigrid-preconditioner.L1.md)
 # Semantic surface — calculus, rules & abstractions
 - [L4 calculus & spec semantics (active-management surface)](./semantics/index.md)
 # L4 — Graph-Evaluation Calculus
@@ -119,9 +122,11 @@
   - [jacobi-smoother](./L3/jacobi-smoother.md)
 - [Solver capabilities & field transitions](./L3/solver-caps-intro.md)
   - [eigsolve](./L3/eigsolve.md)
+  - [eigsolve-impl](./L3/eigsolve-impl.md)
   - [fold_solve](./L3/fold_solve.md)
   - [krylov-step](./L3/krylov-step.md)
   - [ksp_solve](./L3/ksp_solve.md)
+  - [lanczos_step](./L3/lanczos_step.md)
   - [orthogonalize](./L3/orthogonalize.md)
 
 # L3 > L2 — Lowering
@@ -206,6 +211,7 @@
   - [floquet-correction](./L1/floquet-correction.md)
   - [jacobi-smoother](./L1/jacobi-smoother.md)
   - [ksp_solve](./L1/ksp_solve.md)
+  - [multigrid-relaxation-smoother](./L1/multigrid-relaxation-smoother.md)
 - [Krylov least-squares leaves](./L1/krylov-least-squares-intro.md)
   - [back_solve](./L1/back_solve.md)
   - [ls_update_column](./L1/ls-update-column.md)
@@ -221,6 +227,7 @@
   - [eliminate_essential_bc](./L1/eliminate_essential_bc.md)
   - [eliminate_rhs](./L1/eliminate_rhs.md)
   - [fe_assemble](./L1/fe_assemble.md)
+  - [libceed-quadrature-kernel-impl](./L1/libceed-quadrature-kernel-impl.md)
   - [weak_form_term](./L1/weak_form_term.md)
 - [Mesh & FE-space construction](./L1/mesh-construction-intro.md)
   - [build_mesh](./L1/build_mesh.md)
@@ -264,6 +271,7 @@
   - [scal-mutation-rotation](./L1-L0/scal-mutation-rotation.md)
   - [set-subvector-zero-mutation-rotation](./L1-L0/set-subvector-zero-mutation-rotation.md)
 - [Construction-rotation themes](./L1-L0/construction-rotation-intro.md)
+  - [amr-estimate-mark-refine](./L1-L0/amr-estimate-mark-refine.md)
   - [build-mesh-construction-rotation](./L1-L0/build-mesh-construction-rotation.md)
   - [essential-dofs-construction-rotation](./L1-L0/essential-dofs-construction-rotation.md)
   - [fe-collection-construction-rotation](./L1-L0/fe-collection-construction-rotation.md)
@@ -328,6 +336,7 @@
   - [elementwise-product](./concepts/elementwise-product.md)
   - [erasure-scope](./concepts/erasure-scope.md)
   - [finest-level-unwrap](./concepts/finest-level-unwrap.md)
+  - [FiniteElementSpaceHierarchy — record definition](./concepts/FiniteElementSpaceHierarchy.md)
   - [first-iteration-unrolling](./concepts/first-iteration-unrolling.md)
   - [gemv_basis](./concepts/gemv_basis.md)
   - [givens](./concepts/givens.md)

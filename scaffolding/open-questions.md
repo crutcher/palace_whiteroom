@@ -1601,3 +1601,165 @@ opened_by: harvester
 - `waveguide-mode-reduce-field-map-l1-homes` (c118 D5, OPEN, low-fan-out) — the per-mode field maps (`ApplyVDBackTransform`/`ComputePoyntingPower`/discrete-curl `Bz`) bottom out in `ModeOperator`/`ModeEigenSolver` L0 methods; the verb is firm regardless (firm-on-positive-structure escape). *Trigger:* a cross-pipeline recurrence of the discrete-curl/VD-back-transform/Poynting maps OR a harvester field-map-home pass. The discrete-curl interpolator is a candidate cross-pipeline shared primitive (and c121 item-1 grounds an edge to it).
 - linter-maintenance `tools/` ask-class bundle — `graded-stack-prose-status-inference-masks-untyped`, the `semantics/index` expected-unreachable-matcher note, the `--show-stronger` per-detritus-node STRONGER-attribution flag, the `citecheck --end-anchor`/close-brace-END check. NO-GO this batch (plateau; low-value `tools/`-code cycle). *Trigger:* a `tools/`-code cycle (gated on the human's terminal-state answer OR a citecheck recurrence-3). `routes to meta-phase decision` (ask-class `tools/` authority, NOT human-escalated).
 - producer report-frontmatter YAML-hygiene reminder (c118-noted) — the c118 interpolator producer report's `scope:` line carried an unquoted colon; report frontmatter isn't graph-typed. Producer-side awareness only. *Trigger:* none (non-blocking reminder).
+
+---
+
+## multigrid-relaxation-smoother-mutation-rotation-theme-named-not-authored
+opened_at: cycle-121
+opened_by: harvester
+The `multigrid-relaxation-smoother` L1>L0 lowering theme is **named but not authored**. The `Mult2(x, y, r)` output-arg mutation idiom + the four scratch vectors (`x_G`, `y_G`, `r_G`, `r`, `distrelaxation.hpp:50`) reintroduce at L0; the per-step decomposition is the firm sister themes (`apply-linop-mutation-rotation`, `axpby-mutation-rotation`) plus the Chebyshev-smoother + interpolator-apply legs. *Action:* flag for an abstractor dispatch (L1>L0 theme authoring). Source: `reports/2026-06-07T054924Z-harvester-multigrid-relaxation-smoother/CYCLE.md` §Open-questions.
+
+## multigrid-relaxation-smoother-l3-partial-obstruction-row-not-authored
+opened_at: cycle-121
+opened_by: harvester
+The outer `pc_it` relaxation sweep is a witnessed sequential-obstruction (`multigrid-relaxation-smoother` NL1); its formal home is an `L3/multigrid-relaxation-smoother.md` `partial-obstruction` row (body-lifts / sweep-does-not, paralleling `L3/chebyshev`). Out of the one-operator-at-L1 dispatch's scope. *Action:* flag for the L3-iteration-views planner (DIRECTIVE-2 grounded-consumer item-4). The L1 firm status does NOT depend on it (at L1 the sweep is a pure `pc_it`-fold parameter). Source: `reports/2026-06-07T054924Z-harvester-multigrid-relaxation-smoother/CYCLE.md` §Open-questions.
+
+## multigrid-relaxation-smoother-lowering-verifier-realizes-kernel-api-audit
+opened_at: cycle-121
+opened_by: harvester
+The `realizes-kernel-api` correspondence (the opaque GS-SSOR contract `triangular-solve-obstruction` vs this from-our-primitives Chebyshev realization) should be audited by `lowering-verifier` once the impl lands. A **c122 candidate** per the cycle-planner caveat — not dispatched this cycle. Source: `reports/2026-06-07T054924Z-harvester-multigrid-relaxation-smoother/CYCLE.md` §Open-questions.
+
+## multigrid-relaxation-smoother-d1-forward-reference-coupling
+opened_at: cycle-121
+opened_by: harvester
+The geometric-multigrid preconditioner column (D1, integrated next this cycle) forward-references the canonical slug `book/src/L1/multigrid-relaxation-smoother.md`. This report (D3) is integrated FIRST so D1's link resolves. No file collision (D1 = `feature/*.{L4,L1}.md`; D3 = the `L1/` chapter + the `L1-L0/` theme status edit). NOTE for finalize: the impl node is transiently reachability-GC-`GARBAGE*` (its only consumer edge is `reference`-class via `L4/preconditioning-framework`); D1 adds the hard `depends-on` consumer that makes it live this same cycle. *Action:* per-report integrator wired the live link when both land; finalize re-check reachability after D1 lands. Source: `reports/2026-06-07T054924Z-harvester-multigrid-relaxation-smoother/CYCLE.md` §Open-questions.
+
+## multigrid-relaxation-smoother-index-tally-kernel-impl-count
+opened_at: cycle-121
+opened_by: harvester
+The `multigrid-relaxation-smoother` kernel-impl is registered as its own dep-map row + its own §Vocabulary-cohort "Kernel-impl (smoother)" sub-list bullet (both landed c121). It is a distinct *kind* (kernel-impl), NOT a "main-cohort firm operator", so the "33 main / 43 firm grand total" consolidated tally in `L1/index.md` is deliberately left unchanged. *Action:* flag for the integrator/layer-intro-author to confirm whether a separate kernel-impl count line is wanted (no count-owner for L1 was named this cycle; single index-touching dispatch this cycle, so no parallel-blind tally divergence risk). Source: `reports/2026-06-07T054924Z-harvester-multigrid-relaxation-smoother/CYCLE.md` §Open-questions.
+
+## record-MultigridConfig-needs-definition-home
+opened_at: cycle-121
+opened_by: layer-intro-author
+The GMG L4 column's input signature names `MultigridConfig` (the `mg_cycle_it` / `mg_smooth_it` / `mg_smooth_order` / `mg_smooth_sf_max` / `mg_smooth_sf_min` / `mg_smooth_cheby_4th` linear-solver config slice; L0 home `palace/linalg/ksp.cpp` `LinearSolverData` / the `IoData` `Solver.Linear` surface). It is currently defined only by its USE in this column. *Action:* if a 2nd consumer surfaces it warrants a `concepts/MultigridConfig.md` record-definition page; for now it is single-consumer (this column) and would take an in-chapter §Record-definition section — deferred, flagged for the record-definition dispatcher. NOT authored this cycle to keep the landing to composition-root scope. Source: `reports/2026-06-07T054924Z-layer-intro-author-geometric-multigrid-preconditioner/CYCLE.md` §Open-questions.
+
+## geometric-multigrid-preconditioner-rough-in-promotion-smoother-leg-gated
+opened_at: cycle-121
+opened_by: layer-intro-author
+The GMG preconditioner column landed `rank: rough-in` (well-foundedness cap: its smoother leg rests on the `L3/chebyshev` partial-obstruction + D3's `multigrid-relaxation-smoother`, rough-in on disk). *Action (c122+ re-check):* the column promotes off rough-in when D3's `multigrid-relaxation-smoother` firms AND the `L3/chebyshev` partial-obstruction's V-cycle recursion is resolved-or-documented at the column level. The c122 RE re-check should re-survey the smoother leg's on-disk `## Status` and re-evaluate. Do NOT flip this column firm before the smoother leg firms (well-foundedness). Source: `reports/2026-06-07T054924Z-layer-intro-author-geometric-multigrid-preconditioner/CYCLE.md` §Open-questions.
+
+## vcycle-level-recursive-combinator-mining-candidate
+opened_at: cycle-121
+opened_by: layer-intro-author
+The V-cycle (`vcycle ps bs b0 l` recursing to `l-1`) is a level-recursive combinator that does NOT yet exist as named L4 vocabulary — it is presented in the GMG column as an in-line recursion, not a firm combinator. *Action:* if the level-recursive restrict→recurse→prolong pattern recurs (it also appears in the AMG/auxiliary-space transfers), it is a combinator-miner candidate (flagged for D6 / the shared-substrate probe — NOT mined by the column, which composes rather than mines). Source: `reports/2026-06-07T054924Z-layer-intro-author-geometric-multigrid-preconditioner/CYCLE.md` §Open-questions.
+
+## geometric-multigrid-additional-driver-agnostic-consumers-hcurl-errorestimator
+opened_at: cycle-121
+opened_by: layer-intro-author
+GMG is also constructed in `hcurl.cpp:101` (H(curl) mass-matrix solver) and `errorestimator.cpp:86` (flux-recovery error estimator) — additional driver-agnostic consumers of the GMG infrastructure column, consistent with the driver-agnostic sub-kind (no single producing driver to reciprocal-link). *Action:* the AMR errorestimator consumer (D7 this cycle) composes this column; a navigational cross-link from the AMR column TO this one is the correct wiring (NOT a depends-on from this column to AMR). Noted for D7 / the c122 planner. Source: `reports/2026-06-07T054924Z-layer-intro-author-geometric-multigrid-preconditioner/CYCLE.md` §Open-questions.
+
+## geometric-multigrid-smoother-leg-edge-target-l3-vs-l4-chebyshev
+opened_at: cycle-121
+opened_by: layer-intro-author
+The GMG L4 column targets its `depends-on (composes)` smoother-leg edge at `L3/chebyshev` (the iteration-rotation form closest to the V-cycle's smoother sweep) rather than `L4/chebyshev` (the typed-wrapper form). The V-cycle is an L4 composition but its smoother sweep is the L3 partial-obstruction body. *Action:* if the linter / reviewer prefers the L4-level edge for an L4 column, this is a cheap re-target — flagged as a deliberate producer choice, not an oversight. (Linter ran clean at apply with the L3 target — 0 rank violations.) Source: `reports/2026-06-07T054924Z-layer-intro-author-geometric-multigrid-preconditioner/CYCLE.md` §Open-questions.
+
+## record-FiniteElementSpaceHierarchy-promote-watch-wording-reconcile
+opened_at: cycle-121
+opened_by: integrator-per-report
+The c121 D2 dispatch PROMOTED `FiniteElementSpaceHierarchy` to a standalone `concepts/FiniteElementSpaceHierarchy.md` record page (producer `L1/fe_space_hierarchy` + the GMG-preconditioner column = ≥2 consumers; the bar is "≥2 consumers", NOT "≥2 *firm* consumers" — same shape as the `concepts/mesh.md` precedent, a record page is a `reference` target named-by-use). This was a SANCTIONED dispatch+critic judgment (META `surface-or-evidence: pass`; critic explicitly ruled the bar met at floor, see META.md Issue 2). **Nuance for reconciliation:** the prior `record-FiniteElementSpaceHierarchy-promote-watch` entry (c118 D6, line ~1600) worded its trigger as "a 2nd *FIRM* consumer (the geometric-multigrid preconditioner — the RE9 consumer) lands" — but GMG landed `rough-in`, so that watch's *literal* trigger did NOT strictly fire (the D1 integration row noted the same). These are NOT in conflict for application — D2's promotion is the correct disposition under the live "≥2 consumers, not ≥2 firm" rule. *Action (c122 / meta-phase):* mark the old watch RESOLVED-by-promotion and reconcile its "2nd FIRM consumer" wording to the live "≥2 consumers" bar so the ledger is self-consistent. The page is on disk (`book/src/concepts/FiniteElementSpaceHierarchy.md`, `rank: firm`); the in-chapter §Record-definition is trimmed to a back-link. Source: this report + META.md Issue 2 + D1 staging row note.
+
+## fe-space-hierarchy-concepts-page-re9-c122-linter-confirm
+opened_at: cycle-121
+opened_by: integrator-per-report
+Part 1 of c121 D2 was a VERIFY-only of D1's `GMG → L1/fe_space_hierarchy` `depends-on (composes)` edge (the RE9-grounding edge; D2 authored NO edge edit, to avoid double-registration). D1 landed earlier this cycle and its staging row reports the reachability GC now shows `L1/fe_space_hierarchy`'s neighborhood live (smoother became reachable; the GMG columns are `[FRONTIER]`). *Action (c122):* the authoritative RE9-discharge confirmation is the c122 linter re-run with `--show-inbound` on `L1/fe_space_hierarchy` — it should show the inbound `depends-on` from the GMG column and the node should drop off the detritus list. This per-report integration only landed the record-page promotion (Part 2) + verified D1's edge faithfulness; the measurement is c122's per the plan's RE-re-check standing duty. Source: this report §Open-questions + Part-1 Supporting-evidence.
+
+## interpolator-backward-reference-note-redundant-after-ground
+opened_at: cycle-121
+opened_by: integrator-per-report
+After the c121 D8 RE10 GROUND landed the two authoritative forward `depends-on (kind: uses)` edges on the CONSUMERS (`L1/divfree-projector → L1/interpolator`, `L4/waveguide_mode_reduce → L1/interpolator`), the pre-existing **backward** "consumer:" `reference` note inside `book/src/L1/interpolator.md:23` (a navigational see-also pointing the *other* direction, toward `L1/divfree-projector`) is now redundant with the authoritative forward edges. It is harmless (free navigational, does not affect rank or reachability) and was deliberately left as-is this dispatch (no edit to `interpolator.md` was in D8 scope — the GROUND is the two inbound consumer edges). *Action (future dep-map refresh / layer-intro-author):* trim the redundant backward note if a dep-map cleanliness pass touches `interpolator.md`. Non-blocking. Source: `reports/2026-06-07T054924Z-layer-intro-author-re10-interpolator-ground/CYCLE.md` §Open-questions caveat 1.
+
+## interpolator-re10-discharge-c122-linter-re-measure
+opened_at: cycle-121
+opened_by: integrator-per-report
+The RE10 discharge was CONFIRMED at apply time (this integration): `L1/interpolator` flipped OFF the linter's STRONGER-GARBAGE list and now shows inbound `<- L1-L0/interpolator-construction-rotation, L1/divfree-projector, L1/multigrid-relaxation-smoother, L4/waveguide_mode_reduce`; the mutual-pair lowering theme `L1-L0/interpolator-construction-rotation` also became reachable (transitive); RANK VIOLATIONS none (firm/firm well-foundedness holds); linter exit 0 (post-apply STRONGER-GARBAGE list = 18 nodes). The report's pre-edit prose estimate was a "STRONGER 27→25 / +2 reachable" delta; the authoritative post-batch re-measure (reconciling the exact STRONGER-count delta against the c122 pre-batch baseline) is the c122 planner's standing RE-premise re-check duty. *Action (c122):* re-run `graded_stack_lint.py --show-inbound` on the LANDED full-batch tree and record the authoritative STRONGER-GARBAGE count + confirm `L1/interpolator` stays live; mark RE10 fully discharged in the RE ledger. Source: `reports/2026-06-07T054924Z-layer-intro-author-re10-interpolator-ground/CYCLE.md` §Open-questions caveat 2.
+
+## libceed-quadrature-kernel-impl-realizes-leaf-reference-label
+opened_at: cycle-121
+opened_by: integrator-per-report
+The c121 D4 abstractor introduced a NEW `reference`-class edge label `realizes-leaf` (impl → firm `fe_assemble`) alongside the DIRECTIVE-3-mandated `realizes-kernel-api` (impl → the kept obstruction theme). It expresses "this kernel-impl is the constructive interior of the fold's opaque per-term leaf `A(space, term)`." It is `reference`-class (free, navigational, NOT depends-on; the linters ignore the optional `kind:` via the optional-kind-is-documentation mechanism), so it adds NO machinery and was applied as-authored. But it is a label not in prior use. *Action (c122 lowering-verifier / meta-phase):* decide whether `realizes-leaf` should stay a distinct documented label, fold into a plain `reference` (no `kind:`), or reuse `realizes-kernel-api` semantics — a free relabel either way. Source: `reports/2026-06-07T054924Z-abstractor-libceed-quadrature-kernel-impl/CYCLE.md` §Open-questions caveat 1.
+
+## libceed-quadrature-kernel-impl-roadmap-goal-vs-rough-in-disposition
+opened_at: cycle-121
+opened_by: integrator-per-report
+The D4 node landed `roadmap_goal` (rank-0), NOT `rough-in` (rank-2): its constructive constituents (the per-element/per-quad-point tensor-contraction substrate `element_restrict`/`basis_apply`/`quad_point_contract`/`geom_factor_build`) are *intended/speculative* substrate that does not yet exist in ANY form in firm L1 vocabulary (the `stub`/`rough-in` bar requires a real-but-undissected referent; per METHODOLOGY-GRADED-STACK §1e an intended/speculative referent that may rest on anything is `roadmap_goal`). The genuine vocabulary shift (flat-vector BLAS vs `[E, P, ...]` rank structure) is the rank-0 justification. *Action (c122 planner):* if the combinator-miner D6 shared-substrate probe THIS cycle surfaces a firm-composable substrate, re-evaluate whether this node can promote straight to `rough-in`. Source: `reports/2026-06-07T054924Z-abstractor-libceed-quadrature-kernel-impl/CYCLE.md` §Open-questions caveat 2.
+
+## libceed-quadrature-kernel-impl-reachability-grounding-confirm
+opened_at: cycle-121
+opened_by: integrator-per-report
+CONFIRMED at apply (this integration): the new node `L1/libceed-quadrature-kernel-impl` reads `[GARBAGE*]` on the Axis-2 reachability GC (in the STRONGER-GARBAGE list) because its ONLY inbound edges are `reference`-class (`realizes-kernel-api`, `realizes-leaf`) — which by DIRECTIVE-3 are FREE (do NOT carry liveness), so the mark from feature roots over `depends-on` does NOT reach it; and its own 4 `depends-on` substrate targets are `[UNRESOLVED]` (no file yet) — WARNING, non-strict, linter exit 0, 0 rank violations. This is the INTENDED DIRECTIVE-3 disposition for a kernel-impl whose correspondence to the spine is a *reviewed reference*, not a build dependency — NOT a defect. Per `feedback_gc_ground_dont_remove_future_deps` the grounding is the `realizes-leaf` correspondence + the substrate-mining pull (ground, don't remove). *Action (c122 lowering-verifier/planner):* confirm the node is treated as grounded-future (not swept) and re-measure on the full-batch landed tree. Source: this integration + the report's §Open-questions caveat 3 ("Pulled-by reachability").
+
+## libceed-quadrature-kernel-impl-realizes-api-faithfulness-audit
+opened_at: cycle-121
+opened_by: integrator-per-report
+The impl-realizes-API correspondence — that the constructive `A = Gᵀ B_𝒟ᵀ D B_𝒟 G` pipeline faithfully matches what the opaque libCEED kernel computes — is the reviewable claim DIRECTIVE-3 wants checked (a reviewer reads BOTH the kept `fe-assemble-libceed-boundary-obstruction` kernel-api CONTRACT and this kernel-impl, confirms they match). The strongest empirical anchor named by the producer is `test/unit/test-libceed.cpp` `TestCeedOperatorFullAssemble` (assembled matrix matches MFEM reference to 1e-12), cited in `fe_assemble.md` as future `empirical-match` evidence for `A`'s faithfulness. *Action (c122):* dispatch a `lowering-verifier` impl-realizes-API audit of the libceed-quadrature-kernel-impl ↔ kernel-api correspondence (pairs with the parallel c121 multigrid-relaxation-smoother realizes-kernel-api audit OQ). Source: `reports/2026-06-07T054924Z-abstractor-libceed-quadrature-kernel-impl/CYCLE.md` §Open-questions caveat 4.
+
+## libceed-quadrature-kernel-impl-sum-factorization-classification
+opened_at: cycle-121
+opened_by: integrator-per-report
+The `basis_apply` (`B`) stage factors into sum-factorized 1-D contractions on tensor-product elements (the matrix-free efficiency win). The D4 abstractor noted this as a sub-axis but did NOT lift it, classifying it as a *transparent* performance trick (algebraically equal to the dense `B` contraction; per CLAUDE.md §Optimization-tricks-vs-base-algebra a one-line note, not separate vocabulary). *Action (harvester, when `basis_apply` is mined as part of the combinator-miner D6 shared-substrate promotion):* confirm the transparent-not-load-bearing classification holds before erasing the sum-factorization to a one-line note. Source: `reports/2026-06-07T054924Z-abstractor-libceed-quadrature-kernel-impl/CYCLE.md` §Open-questions caveat 5.
+
+## eigsolve-impl-c122-consumer-wiring-grounding-trigger
+opened_at: cycle-121
+opened_by: integrator-per-report
+The new rank-0 `roadmap_goal` nodes `L3/eigsolve-impl` + `L3/lanczos_step` landed this cycle with NO blocking `depends-on` inbound consumer — the only inbound edge is the `realizes-kernel-api` `reference`-class edge (free; does NOT carry liveness). Liveness rests on the grounding disposition (`feedback_gc_ground_dont_remove_future_deps`): genuinely-wanted future deps of the eigenmode feature root, grounded as roadmap_goals rather than stranded. **Action (c122 planner + meta-phase RE-recheck):** the RE3 deflate / NLEPS-deflated-eigensolve consumer AND the RE8 krylov-iteration-view consumer should `depends-on` `L3/eigsolve-impl` (and `L3/lanczos_step` via it), firing both nodes' `roadmap_goal → stub` promotion. Deflation = thick-restart basis + locked-converged-vector extension; the NLEPS-deflated eigensolve IS `eigsolve-impl` + a deflation-projection stage. If c122 does not wire a blocking consumer, the reachability GC sweep will correctly flag both nodes — that is the intended accountability, not a defect to pre-empt. This is the DIRECTIVE-2 RE3/RE8 discharge coupling; surfaced for the meta-phase RE-recheck. Source: `reports/2026-06-07T054924Z-abstractor-eigsolve-kernel-impl/CYCLE.md` §Open-questions bullet 1 + critic finding 1.
+
+## eigsolve-impl-lanczos-step-materialization-route
+opened_at: cycle-121
+opened_by: integrator-per-report
+`L3/lanczos_step` landed as a rank-0 `roadmap_goal` co-constituent (clean-gate choice — author at rank-0, NOT firm). Its firming draws on the MINRES obstruction theme's literature-anchored symmetric-Lanczos form (`L1-L0/minres-iteration.md`) — but MINRES itself is `obstruction (enum-only-stub)` (Palace routes it to `MFEM_ABORT`), so `lanczos_step` has **no positive Palace-source body** to firm against directly. Its firming is therefore a **literature-anchor + impl-correspondence** route (operator-algebra: specializes firm `krylov-step` + literature), NOT a positive-source route. The known loss-of-orthogonality of the pure band-3 recurrence (the `reorthogonalization` variant axis) is the numerical caveat to resolve at firming. **Action (c122/harvester):** at promotion, materialize against the MINRES literature form + lowering-verifier impl↔api correspondence; do NOT expect a positive Palace read. Source: `reports/2026-06-07T054924Z-abstractor-eigsolve-kernel-impl/CYCLE.md` §Open-questions bullet 2.
+
+## eigsolve-impl-lowering-verifier-correspondence-audit
+opened_at: cycle-121
+opened_by: integrator-per-report
+The impl↔api eigenpair-correspondence (does `eigsolve-impl` compute the same converged `(λᵢ, xᵢ)` as the opaque `EPSSolve`, modulo tolerance + the four L1 non-determinism sources?) is the `lowering-verifier`'s job once both nodes firm — the `empirical-match` justification is DEFERRED to it, not asserted at this rank-0 landing. **Action (c122):** dispatch a `lowering-verifier` impl-realizes-API audit of the `eigsolve-impl` ↔ kernel-api `eigsolve` correspondence (pairs with the parallel c121 multigrid-relaxation-smoother + libceed-quadrature realizes-kernel-api audit OQs — a DIRECTIVE-3 kernel-api/impl-integrity cohort the meta-phase tracks as a standing duty). Source: `reports/2026-06-07T054924Z-abstractor-eigsolve-kernel-impl/CYCLE.md` §Open-questions bullet 4.
+
+## eigsolve-impl-rayleigh-ritz-thick-restart-promotion
+opened_at: cycle-121
+opened_by: integrator-per-report
+`rayleigh_ritz` (project-onto-basis + small-dense-eigensolve + lift-back extraction) and `thick_restart` (Krylov-Schur basis-compression / lock-converged / re-seed) are named INLINE in `eigsolve-impl`, NOT their own dep-map rows this cycle (single-consumer bar). If a second eigensolve-flavor consumer appears (a JD/Davidson impl, or the subspace-iteration `EPSSUBSPACE` variant at `slepc.cpp:641`), `rayleigh_ritz` should promote to its own L3 entry — it is the shared extraction substrate across all projection-based eigensolvers. **Action (combinator-miner):** watch for the second consumer; promote `rayleigh_ritz`. Also flagged: the `iterate_while_L3`-over-basis-extension shape is a D6 shared-substrate candidate (shared with the relaxation-smoother GS sweep + multigrid V-cycle). Source: `reports/2026-06-07T054924Z-abstractor-eigsolve-kernel-impl/CYCLE.md` §Open-questions bullets 5-6.
+
+## correction-step-replace-and-propagate-scope
+opened_at: cycle-121
+opened_by: integrator-per-report
+The L2 `correction_step` combinator (rough-in dep-map row landed c121 D6) is a **replace-and-propagate** mine, not a mine-and-strand: the intended refactor makes `correction_step` the L2 entry, with the L2 `jacobi-smoother` and `chebyshev-iteration` bodies re-expressed as `correction_step` with their specific `B` (specialization notes under it), and the D3 `multigrid-relaxation-smoother` L1>L0 lowering / the D1 V-cycle L1 surface expressing their per-sweep bodies THROUGH `correction_step` (or its L1 analog) rather than re-deriving `y + B(x−A·y)`. Open layer-placement refinement: whether the L1 smoother *gates* (closure-carried `B`) also re-express through it, or keep their opaque form and only the L2 unfoldings use the combinator (miner's read: L1 gates keep the closure; L2 unfoldings + the V-cycle body use the combinator). **Action (harvester + same-layer-cross-cutter):** harvester formalizes `book/src/L2/residual-correction-step.md` (NOT authored c121 — only the dep-map row landed) and enacts the propagation; same-layer-cross-cutter confirms the propagation set. Source: `reports/2026-06-07T054924Z-combinator-miner-kernel-shared-substrate/CYCLE.md` §Open-questions bullet 1.
+
+## correction-step-one-vs-two-operator-conjugated-form
+opened_at: cycle-121
+opened_by: integrator-per-report
+The conjugated correction form `y + T·B'·Tᵀ·(x − A·y)` (de-Rham auxiliary `T=G`, multigrid coarse-grid `T=P`) can be modeled two ways: (a) a single `correction_step` whose `B` is *any* LinOp (the conjugated `T·B'·Tᵀ` is just one such `B`), with the conjugation/Galerkin structure a *note*; or (b) `correction_step` + a distinct `conjugated_correction_step` tied by a conjugation law `conjugated_correction_step A T B' = correction_step A (T·B'·Tᵀ)`. The argument for (b): the transferred-space `B'` + transfer `T` is the form the distributive smoother and multigrid actually carry (the conjugation is not pre-formed). Both stated for the explore-and-coalesce multi-formulation discipline. **Action (harvester):** decide one-vs-two during formalization. Source: `reports/2026-06-07T054924Z-combinator-miner-kernel-shared-substrate/CYCLE.md` §Open-questions bullet 2.
+
+## correction-step-construction-vs-apply-stratum-assemblediagonal-reciprocal
+opened_at: cycle-121
+opened_by: integrator-per-report
+The Jacobi/Chebyshev `B` is built from `dinv = reciprocal(assemble_diagonal A)` (`chebyshev.cpp:177-178`, the D1 RE5/RE7 grounding site). That construction is the *building of `B`* — a setup-stratum step distinct from `correction_step`'s run-time apply — and should NOT be folded into the step combinator. Recorded to keep the construction/apply strata separate when the harvester formalizes the chapter. **Action (harvester):** keep `assemble-diagonal`/`reciprocal` `B`-construction out of the `correction_step` run-time apply. Source: `reports/2026-06-07T054924Z-combinator-miner-kernel-shared-substrate/CYCLE.md` §Open-questions bullet 3.
+
+## correction-step-divfree-projector-borderline-7th-instance
+opened_at: cycle-121
+opened_by: integrator-per-report
+`divfree-projector`'s `I − Grad(GᵀMG)⁻¹GᵀM` is a residual-*projection* (`x − correction`), the same conjugated shape with `A = M`, `T = Grad`, `B' = (GᵀMG)⁻¹` — but it is an exact auxiliary *solve* and a one-shot projector (not an iterate-update). It is a borderline 7th instance of `correction_step`, likely a specialization-note ("exact-solve conjugated correction, used as a projector") rather than a core instance; the miner did NOT count it toward the bar (instances 1-6 clear it). **Action (harvester / same-layer-cross-cutter):** decide whether `divfree-projector` is annotated as a `correction_step` specialization-note or stays a standalone gate. Source: `reports/2026-06-07T054924Z-combinator-miner-kernel-shared-substrate/CYCLE.md` §Open-questions bullet 4.
+
+## flux-recovery-estimate-flux-channel-axis-vs-separate-verbs
+opened_at: cycle-121
+opened_by: integrator-per-report
+The four concrete Palace estimators (`Grad`/`Curl`/`TimeDependent`/`BoundaryMode`) share `ComputeErrorEstimates` (`palace/linalg/errorestimator.cpp:184-268`); the composites *sum* a Grad + Curl call (`grad_estimates += curl_estimates`, `:536`/`:566`). The abstractor (D7 `amr-estimate-mark-refine`) proposes ONE speculative L1 verb `flux_recovery_estimate` with a **flux-channel variant axis** (Grad-only / Curl-only / Grad+Curl composite), the `+=` composite being an `axpy(1,·)`-shape over indicators rather than a new verb. **Action (harvester):** at promotion of `flux_recovery_estimate`, confirm this collapse holds — or alternatively the composite is a thin `linear_combination`-over-indicators wrapper (still not a new estimate verb). Source: `reports/2026-06-07T054924Z-abstractor-amr-estimate-mark-refine/CYCLE.md` §Open-questions bullet 1.
+
+## flux-projector-constructed-operator-gate-vs-absorbed
+opened_at: cycle-121
+opened_by: integrator-per-report
+The flux-projection solve inside `flux_recovery_estimate` — `projector.Mult(F, G)` (`errorestimator.cpp:193`) — is a `FluxProjector`-member solve (a mass-matrix projection, `use_mg`-gated multigrid). It reuses `ksp_solve`-shape vocabulary but the `FluxProjector` is its own constructed-operator closure (sibling to `divfree-projector`'s `P.ksp`). The `Estimator` record (defined in-chapter in `amr-estimate-mark-refine.md`) bundles it as a construction-time member. **Harvester decision:** is `FluxProjector` a distinct constructed-operator gate (its own L1 entry), or absorbed into `flux_recovery_estimate`'s `Estimator` closure? Abstractor lean: absorbed (it is a construction-time member, like `divfree-projector`'s sub-solver). This is the `Estimator`-record field-firming route the c121 critic/repairer deferred from the in-chapter `## Record definition`. Source: `reports/2026-06-07T054924Z-abstractor-amr-estimate-mark-refine/CYCLE.md` §Open-questions bullet 2 + critic surface-or-evidence finding.
+
+## dorfler-cross-rank-bisection-distributed-note-deferred
+opened_at: cycle-121
+opened_by: integrator-per-report
+The full `ComputeDorflerThreshold` cross-rank threshold bisection (`palace/utils/dorfler.cpp:101-166`, with `Mpi::GlobalMin`/`GlobalMax`/`GlobalSum` collectives `:67-68`/`:84-85`) is read single-rank-degenerate per DIRECTIVE-1 (single-rank `min_threshold == max_threshold`, the bisection only confirms the exact local threshold) in the c121 `dorfler_mark` rough-in. When/if a sharding-math note is lifted (the deferred DIRECTIVE-1 future direction, `project_sharding_mpi_deferred`), the bisection is the canonical "select a global threshold from per-rank local thresholds" reconciliation — an MPI collective folded into a future L1>L0 distributed note, NOT the single-rank L1 signature. **Action (deferred; flag for that future distributed note, NOT lifted now).** Source: `reports/2026-06-07T054924Z-abstractor-amr-estimate-mark-refine/CYCLE.md` §Open-questions bullet 3.
+
+## amr-refine-obstruction-sub-kind-precedent
+opened_at: cycle-121
+opened_by: integrator-per-report
+The `refine` leg of the AMR step body is marked `obstruction (opaque-library-ownership)` — `mfem::ParMesh::GeneralRefinement` (`palace/drivers/basesolver.cpp:239`) is MFEM-owned; Palace never exposes mesh refinement as a standalone callable. This is the AMR analogue of `triangular-solve-obstruction`. It is explicitly **NOT** a DIRECTIVE-3 `kernel-api/impl` candidate: mesh refinement is not a "well-understood-in-our-tensor-semantics" kernel (hanging-node constraint generation is genuinely MFEM-structural, not a tensor contraction) — it stays single-node obstruction, NO constructive impl owed (the enum-only-stub-style carve-out generalizes: spine-dependency-but-not-tensor-expressible). **Action (lowering-verifier):** may confirm the boundary at a later pass. Source: `reports/2026-06-07T054924Z-abstractor-amr-estimate-mark-refine/CYCLE.md` §Open-questions bullet 4 + edge-label-fidelity critic note.
+
+## amr-estimate-mark-refine-theme-firmness-gate
+opened_at: cycle-121
+opened_by: integrator-per-report
+The L1>L0 theme `amr-estimate-mark-refine` (landed c121 D7, rough-in) firms to `firm` only when BOTH `flux_recovery_estimate` and `dorfler_mark` are harvested firm (graded-stack scheme §5 min-endpoint-rank well-foundedness: a lowering theme is at most as resolved as its least-resolved endpoint; the refine obstruction sub-leaf does NOT gate, it is a documented boundary). The refine leg stays a permanent `obstruction (opaque-library-ownership)` sub-leaf. **Action (c122+ harvester):** harvest the two speculative L1 verbs (the estimate verb leans on the already-on-disk libCEED kernel-api `fe-assemble-libceed-boundary-obstruction`; the mark verb is self-contained), then firm-flip this theme. The two verbs currently live as rough-in dep-map rows (`book/src/L1/index.md` Rough-in AMR estimate/mark vocabulary group) + plain-text forward-refs in the theme prose — NOT materialized as stub files this cycle (the de-link path the repairer chose guarantees a clean rebuild; stub materialization deferred to harvest). Source: `reports/2026-06-07T054924Z-abstractor-amr-estimate-mark-refine/CYCLE.md` §Open-questions bullets 5-6.

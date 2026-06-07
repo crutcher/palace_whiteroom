@@ -7,6 +7,8 @@ edges:
   depends-on:
     - target: L4/eigsolve
       kind: composes               # consumes the converged eigenpair family eigsolve returns
+    - target: book/src/L1/interpolator.md
+      kind: uses                   # the Bz = curl(Et)/(iω) formation constructs the discrete-curl CurlOp via GetDiscreteInterpolator (boundarymodesolver.cpp:319-323); an L4→L1 altitude-skip (RE2/RE8/c110 precedent)
     - target: palace/drivers/boundarymodesolver.cpp:272-340
       kind: cites-evidence
   reference:
@@ -219,7 +221,15 @@ power-normalization, and the discrete-curl `Bz` formation — bottom out in
 `ModeOperator` / `ModeEigenSolver` boundary-mode model methods at L0
 (`mode_op.ApplyVDBackTransform` / `ComputePoyntingPower` / `GetDiscreteInterpolator`);
 their dedicated L1 homes are deferred (OQ
-`waveguide-mode-reduce-field-map-l1-homes`).
+`waveguide-mode-reduce-field-map-l1-homes`). The one exception with a firm L1 home is
+the discrete-curl operator behind `Bz`: the `CurlOp` the `Bz = curl(Et)/(iω)` formation
+applies is the de-Rham discrete grid-transfer operator
+[`interpolator`](../L1/interpolator.md) constructs
+(`mode_op.GetCurlSpace().GetDiscreteInterpolator(mode_op.GetNDSpace())`,
+`palace/drivers/boundarymodesolver.cpp:319-323`) — an L4→L1 altitude-skip `uses`
+dependency on the firm L1 interpolator (the RE2/RE8/c110 altitude-skip precedent: the
+reduce verb's readout calls the L1 operator directly, with no intervening L3/L2
+absorption reshaping the call).
 
 ## Lowers to
 
