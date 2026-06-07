@@ -9,7 +9,7 @@ inputs:
   - palace/fem/interpolator.cpp:282-310 (cited evidence — the over-range under audit)
   - palace/fem/interpolator.hpp:50-56 (decls)
 integrated_at: 2026-06-07T034500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b33dde37a14c6dbfafe688f6c871d6ecddf019c1
 integration_notes: "D2 cycle-119. Applied clean (staging row D2, status applied). Citation over-range hygiene: interpolator.cpp:282-310 → :282-306 at 4 sites across book/src/L1-L0/interpolator-construction-rotation.md + book/src/L1/interpolator.md, plus a verified_against: YAML block append. Pure citation-range correction — no edge/status/node change; graded-stack rank+reachability UNCHANGED. cargo make book EXIT 0, no build-repair. Step-5b all HELD vs c118 baseline. OQ interpolator-cpp-282-310-over-range-fixed RESOLVED-by-landing (producer self-appended; closure is meta-phase authority). Methodology note carried: citecheck --anchor/--scan do NOT catch a range-END over-run; only an on-disk close-brace read does."
 ---
 

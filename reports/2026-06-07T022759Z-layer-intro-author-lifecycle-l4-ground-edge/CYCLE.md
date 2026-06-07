@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T022759Z
 scope: feature/lifecycle.L4 — §2f GROUND the faithful build_mesh stage-1 composes edge (L4 sibling of c118 D4)
 status: pending
 integrated_at: 2026-06-07T034500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b33dde37a14c6dbfafe688f6c871d6ecddf019c1
 integration_notes: "D1 cycle-119. Applied clean (staging row D1, status applied). §2f GROUND edge feature/lifecycle.L4 →depends-on(composes)→ L1/build_mesh added (3 surgical edits on book/src/feature/lifecycle.L4.md). Honest-typing of the L4 lifecycle sibling — build_mesh ALREADY reachable via lifecycle.L1→build_mesh (c118 D4); reachable HELD at 139 (no flip). well-foundedness firm(3)→firm(3) HOLDS. cargo make book EXIT 0, no build-repair. Step-5b rank_violations=0 HELD, no newly-orphaned node. OQ lifecycle-l4-sibling-analogous-unground-build_mesh-edge RESOLVED-by-landing (producer self-appended the RESOLVED note; closure is meta-phase authority)."
 ---
 
