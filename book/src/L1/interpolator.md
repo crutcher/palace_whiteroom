@@ -205,7 +205,7 @@ the de-Rham discrete grid-transfer operator above and is **library-owned**:
   `palace/fem/interpolator.cpp:133-280`).
 - `fem::InterpolateFunction(const mfem::Vector &xyz, ...)` — point-list
   interpolation (`palace/fem/interpolator.hpp:56`, body
-  `palace/fem/interpolator.cpp:282-310`).
+  `palace/fem/interpolator.cpp:282-306`).
 - the `InterpolationOperator` probe-field class
   (`palace/fem/interpolator.hpp:24-44`).
 
@@ -326,7 +326,7 @@ the firm rank is well-founded.
   `palace/drivers/boundarymodesolver.cpp:322` (boundary-mode discrete-curl `Bz`),
   `palace/models/postoperator.cpp:1673` (post-processing curl).
 - GSLIB obstruction anchors: `palace/fem/interpolator.hpp:50-56` (decls),
-  `palace/fem/interpolator.cpp:133-280` + `:282-310` (`InterpolateFunction` bodies),
+  `palace/fem/interpolator.cpp:133-280` + `:282-306` (`InterpolateFunction` bodies),
   `:190` / `:293` (`FindPointsGSLIB`), `:278` / `:304` / `:108` / `:363`
   (`MFEM_ABORT` GSLIB-absent fallbacks).
 - L1>L0 lowering: [`interpolator-construction-rotation`](../L1-L0/interpolator-construction-rotation.md)

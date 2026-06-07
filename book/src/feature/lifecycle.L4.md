@@ -6,6 +6,8 @@ feature_root: seed
 rank: firm
 edges:
   depends-on:
+    - target: L1/build_mesh
+      kind: composes               # stage-1: config -> mesh scaffold (mesh::Load/Preprocess/Partition/RefineMesh)
     - target: L4/fold_solve
       kind: composes
     - target: palace/main.cpp:158-328
@@ -43,7 +45,7 @@ At L4 the whole run is the composition (Haskell-style; the strawman `book/src/se
 
 Three composed stages, each a link DOWN to firm L4 vocabulary or to a per-driver feature column:
 
-1. **Build the mesh (driver-agnostic scaffold).** `build_mesh cfg` loads, preprocesses, partitions, and a-priori-refines the mesh sequence — the `readonly` construction stratum every driver consumes. L0: `mesh::Load` / `Preprocess` / `Partition` / `RefineMesh` (`palace/main.cpp:287-302`).
+1. **Build the mesh (driver-agnostic scaffold).** [`build_mesh`](../L1/build_mesh.md) `cfg` loads, preprocesses, partitions, and a-priori-refines the mesh sequence — the `readonly` construction stratum every driver consumes (the `Mesh` record it produces is [`concepts/mesh`](../concepts/mesh.md)). L0: `mesh::Load` / `Preprocess` / `Partition` / `RefineMesh` (`palace/main.cpp:287-302`).
 
 2. **Dispatch the per-driver specialization** — `dispatch (problem_type cfg)` selects ONE per-driver feature column by `ProblemType`. This is the **specialization seam**: the lifecycle root composes the *feature column*, and each column is itself a full composition root one level down. On disk this cycle: [`electrostatic.L4`](./electrostatic.L4.md) (the `ELECTROSTATIC` branch), [`magnetostatic.L4`](./magnetostatic.L4.md) (the `MAGNETOSTATIC` branch), [`eigenmode.L4`](./eigenmode.L4.md) (the `EIGENMODE` branch), [`driven.L4`](./driven.L4.md) (the `DRIVEN` branch), and [`transient.L4`](./transient.L4.md) (the `TRANSIENT` branch). L0: the `switch (iodata.problem.type)` (`palace/main.cpp:257-280`): `ELECTROSTATIC` `:267`, `MAGNETOSTATIC` `:270`, `EIGENMODE` `:264`, `DRIVEN` `:261`, `TRANSIENT` `:273`, `BOUNDARYMODE` `:276`.
 
@@ -64,7 +66,7 @@ The whole run therefore lowers cleanly outward to the L4 backend surface as `lif
 
 | Stage | L4 constituent | Status | L0 site |
 |---|---|---|---|
-| build mesh | driver-agnostic mesh scaffold (`mesh::Load`/`Partition`/`RefineMesh`) | — (L0 scaffold) | `palace/main.cpp:287-302` |
+| build mesh | [`build_mesh`](../L1/build_mesh.md) (driver-agnostic stage-1 `config→mesh` constituent: load → preprocess → partition → a-priori-refine) | firm | `palace/main.cpp:287-302` |
 | dispatch → electrostatic column | [`electrostatic.L4`](./electrostatic.L4.md) (sibling reference) | firm | `palace/main.cpp:267` |
 | dispatch → magnetostatic column | [`magnetostatic.L4`](./magnetostatic.L4.md) (sibling reference) | firm | `palace/main.cpp:270` |
 | dispatch → eigenmode / driven / transient / boundary-mode columns | [eigenmode.L4](./eigenmode.L4.md) / [driven.L4](./driven.L4.md) / [transient.L4](./transient.L4.md) / [boundary-mode.L4](./boundary-mode.L4.md) (sibling references) | firm / firm / firm / rough-in | `palace/main.cpp:264, 261, 273, 276` |

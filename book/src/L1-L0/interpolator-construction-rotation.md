@@ -178,7 +178,7 @@ the boundary; do not target Palace stubs/opaque-library facilities for fill-in).
 - `void InterpolateFunction(const mfem::GridFunction &U, mfem::GridFunction &V)` — mesh-to-mesh field
   interpolation (`interpolator.hpp:52`; body `interpolator.cpp:133-280`).
 - `void InterpolateFunction(const mfem::Vector &xyz, const mfem::GridFunction &U, mfem::Vector &V, ...)`
-  — point-list interpolation (`interpolator.hpp:56`; body `interpolator.cpp:282-310`).
+  — point-list interpolation (`interpolator.hpp:56`; body `interpolator.cpp:282-306`).
 
 **Disposition: `obstruction (opaque-library-ownership)`.** Every code path in this facility is the MFEM
 `mfem::FindPointsGSLIB` find-points/interpolate engine (`interpolator.cpp:190`, `:293`), guarded by
@@ -235,7 +235,7 @@ negative-anchor scan.
   storing trial/test spaces (`:105-109`), `AddDomainInterpolator<T>` template (`:114-115`) pushing into
   the owned `domain_interps` container (`:117`).
 - GSLIB obstruction anchors: `palace/fem/interpolator.hpp:50-56` (decls — `InterpolateFunction`
-  GridFunction `:52`, point-list `:56`), `palace/fem/interpolator.cpp:133-280` + `:282-310`
+  GridFunction `:52`, point-list `:56`), `palace/fem/interpolator.cpp:133-280` + `:282-306`
   (`InterpolateFunction` bodies), `:190` / `:293` (`mfem::FindPointsGSLIB`), `:135` / `:285` / `:83` /
   `:311` (`#if defined(MFEM_USE_GSLIB)` guards), `:108` / `:278` / `:304` / `:363` (`MFEM_ABORT`
   GSLIB-absent fallbacks).
@@ -258,3 +258,15 @@ negative-anchor scan.
   `gslib-field-interp-facility-dedicated-obstruction-theme`, c117 D5) — the field-interp facility is an
   in-theme sub-note here; whether it earns a first-class obstruction theme triggers on a
   field-probe/point-sample output-product feature consumer landing.
+
+```yaml
+verified_against:
+  - citation: palace/fem/interpolator.cpp:282-306
+    verdict: supports
+    audited_at: 2026-06-07T02:27:59Z
+    note: point-list InterpolateFunction body; corrected from over-range :282-310 which ran 4 lines into ComputeLineIntegral (starts :308); close-brace confirmed on disk at :306
+  - citation: palace/fem/interpolator.cpp:133-280
+    verdict: supports
+    audited_at: 2026-06-07T02:27:59Z
+    note: GridFunction-overload InterpolateFunction body; anchor-verified clean
+```
