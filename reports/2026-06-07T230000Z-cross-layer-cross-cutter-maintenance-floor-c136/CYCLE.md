@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T230000Z
 scope: L-stack maintenance-floor standing hygiene — c136 (batch-44 OPENER; first per-BATCH sweep on the new cadence)
 status: integrated
 integrated_at: 2026-06-07T230000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5828a07
 integration_notes: |
   Applied cycle-136 (batch-44 LEAD/OPENER). AUDIT-CLASS clean-bill — NO book mutation; the only artifact write was the OQ promotion (synthesis-edges-next-batch-maintenance-floor-audit) + the staging row. The first per-BATCH-cadence maintenance-floor sweep (batch-43-enacted). No proposed-changes block; nothing to apply to book/.
 ---

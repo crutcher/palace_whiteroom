@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T231000Z
 scope: synthesis-iteration-library-defs — render the `iteration` library def bodies (Wave 2 of the Synthesis build)
 status: integrated
 integrated_at: 2026-06-07T230000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5828a07
 integration_notes: |
   Applied cycle-136 (batch-44 LEAD/OPENER, Wave-2). Merged def bodies onto the iteration shell — iterate_while/iterate_while_pure/iterate_while_with_prev, krylov-step Form A+B (CG worked def), chebyshev setup/apply + clustering types. Reference edges 7->15, all reference-class. Build EXIT 0; rank_violations=0; KaTeX $-sigil-fence PASS. Finalize normalized the `status:` token (filled VIEW chapter carries no `status:` field).
 inputs:

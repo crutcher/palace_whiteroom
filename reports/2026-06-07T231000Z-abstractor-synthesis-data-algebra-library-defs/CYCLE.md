@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T231000Z
 scope: Synthesis Wave-2 — render the `data-algebra` library def bodies (synthesis-data-algebra-library-defs)
 status: integrated
 integrated_at: 2026-06-07T230000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5828a07
 integration_notes: |
   Applied cycle-136 (batch-44 LEAD/OPENER, Wave-2). Merged def bodies onto the data-algebra shell — 13 firm op defs + 2 clustering types + the sharding-decompose-reduce rank-0 roadmap_goal note. DIRECTIVE-3 dual surface intact (#extern assemble_term kernel-API + inline mk_matrix_free_operator kernel-impl); DIRECTIVE-1 boundary held. Reference edges 18->20, all reference-class. Build EXIT 0; rank_violations=0; KaTeX $-sigil-fence PASS; nested-fence truncation averted. Finalize normalized the `status:` token (filled VIEW chapter carries no `status:` field).
 inputs:

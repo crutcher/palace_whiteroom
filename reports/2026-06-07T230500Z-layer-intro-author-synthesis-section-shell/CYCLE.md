@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T230500Z
 scope: synthesis-section-shell — # Synthesis Part shell + SUMMARY wiring + 5 per-library intros + the types library body
 status: integrated
 integrated_at: 2026-06-07T230000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5828a07
 integration_notes: |
   Applied cycle-136 (batch-44 LEAD/OPENER). Created the `# Synthesis` Part — index + types BODY (IoData/OpParams/SimState) + 4 stub library shells (iteration/data-algebra/coordination/drivers) + SUMMARY wiring immediately before `# Feature surfaces`. All 6 navigational-containers (reference-class edges only). Build EXIT 0; rank_violations=0. Finalize normalized the cross-chapter status-token convention (filled VIEW chapters carry no `status:` field; drivers stays `status: stub`).
 ---

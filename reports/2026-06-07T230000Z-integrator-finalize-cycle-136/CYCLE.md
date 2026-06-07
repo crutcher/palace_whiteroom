@@ -53,7 +53,7 @@ The three Wave-2 calculus libraries landed with **inconsistent `status:` tokens*
 
 - **retroactive-budget global**: 0 (well under the ≥4 block threshold).
 - **commit atomicity**: one commit (artifact + SUMMARY + scaffolding + log + reports + consumed-report frontmatter).
-- **consumed-report frontmatter integrity**: 5/5 marked `integrated_at` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows).
+- **consumed-report frontmatter integrity**: 5/5 marked `integrated_at` + `integration_commit: 5828a07` (two-phase SHA patch follows).
 - Per-report gates (retroactive per-slice, concept_writes, edge-label, H1, append-on-missing-slug, variant-axis, SUMMARY-registration, rank-gate, KaTeX-fence): all PASS/N-A across all 5 rows (per the staging log).
 
 ## Build status

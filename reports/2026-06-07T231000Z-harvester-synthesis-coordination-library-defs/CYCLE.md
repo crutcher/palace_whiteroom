@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T231000Z
 scope: synthesis library — coordination (outer-driver caps & coordination combinators) def bodies
 status: integrated
 integrated_at: 2026-06-07T230000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 5828a07
 integration_notes: |
   Applied cycle-136 (batch-44 LEAD/OPENER, Wave-2). Merged def bodies onto the coordination shell — preconditioning-framework/ksp_solve/eigsolve/solve_family/frequency_sweep/fold_solve + the coordination type block. The EigState in-chapter type block RESOLVES the D1 OQ record-EigState-needs-definition-home (single-consumer, back-linked to EigResult). 2 #extern kernel-API callouts after type sigs. Reference edges all reference-class. Build EXIT 0; rank_violations=0; KaTeX $-sigil-fence PASS; closure-signature + #extern-placement COMPLIANT. Finalize normalized the `status:` token (filled VIEW chapter carries no `status:` field).
 inputs:
