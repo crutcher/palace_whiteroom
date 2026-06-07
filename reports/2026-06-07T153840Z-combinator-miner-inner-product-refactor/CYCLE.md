@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T153840Z
 scope: Pattern proposal — inner-product-family-re-style-elimination (RE6-style reduce-family combinator-arity-notes refactor)
 status: integrated
 integrated_at: 2026-06-07T180000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: acf65f6
 integration_notes: "Applied clean (D4). inner-product-family RE-style elimination: DELETED L2/dot+L2/nrm2+L3/dot+L3/nrm2, folded into firm inner_product (dot->Specializations, nrm2->Consumer; do-NOT-merge boundary held). ~20 book edits re-pointing all inbound (frontmatter depends-on + body links + SUMMARY + index dep-map rows). The new deleted-slug FRONTMATTER-EDGE gate caught + re-pointed a legacy consumes: dangler L2/normalize->L2/nrm2 the report inventory MISSED -> unresolved_depends_on_targets stayed 0 at finalize (no c124-style build-repair). cargo make book EXIT 0; rank_violations 0; L2/L3 firm count -2. 1 OQ promoted (inner-product-combinator-section-anchor-stability)."
 ---
 

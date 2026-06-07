@@ -5,7 +5,7 @@ cycle: cycle-127
 batch: batch-41
 batch_position: 1/3 (OPENER / FIRST primary cycle; the batch-41 meta-phase fires AFTER cycle-129's finalize, aggregating 127/128/129)
 status: complete
-integration_commit: PLACEHOLDER_SHA
+integration_commit: acf65f6
 ---
 
 # CYCLE-127 batch CYCLE.md — integrator-finalize (batch-41 OPENER, position 1/3)
@@ -41,7 +41,7 @@ The OPENING primary cycle of meta-batch-41 (cycles 127/128/129), the FIRST prima
 - **retroactive-budget global:** 0 (well below the ≥4 block). PASS.
 - **build-breakage repair:** `cargo make book` EXIT 0; ZERO build-repairs needed. The D4 4-deletion link sweep is clean (no dead `dot`/`nrm2` links — linkcheck2 would hard-error on a miss); the D1↔D2 matrix-free cross-references resolve. (One within-finalize CONSISTENCY fix applied — the D3-flagged D2 same-drift realign — NOT a build break.)
 - **commit atomicity:** single commit (below).
-- **consumed-report frontmatter integrity:** all 5 marked `status: integrated` + `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes`. PASS.
+- **consumed-report frontmatter integrity:** all 5 marked `status: integrated` + `integrated_at` + `integration_commit: acf65f6` + `integration_notes`. PASS.
 - **Step-5b graded-stack rank gate:** `rank_violations: 0` (HELD; baseline fully discharged c096 → any violation NEW + blocks; NONE). PASS.
 - **Step-5b reachability gate:** NO newly-orphaned node (`reachable` 157→163, a gain; D4's 4 deletions are intentional). PASS.
 - **Step-5b `unresolved_depends_on_targets`:** 0 (HELD; the deleted-slug frontmatter-edge gate + the legacy `consumes:` dangler re-point at apply-time left 0 residual). PASS.

@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T154422Z
 scope: L2 index — firm-count prose ↔ dep-map row-count reconcile (D5, WAVE-2, dep D4)
 status: integrated
 integrated_at: 2026-06-07T180000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: acf65f6
 integration_notes: "Applied clean (D5, WAVE-2 dep D4). L2/index prose firm-count reconciled to the post-D4 self-summing dep-map row count: 17 firm + 1 partly-constructive = 18 rows (per-report integrator's independent landed-tree firm-row count = 17, matches D5's post-D4 arithmetic). The 2 stale growth-log standing-count claims annotated as-of-cycle + forwarded; the frozen cycle-042 snapshot left untouched. The D4->D5 serial sequencing HELD. cargo make book EXIT 0; no rank/edge change. No OQ."
 ---
 

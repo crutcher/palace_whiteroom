@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T153621Z
 scope: feature/matrix-free-operator.{L4,L1} backend-lowering feature-surface column + mk_matrix_free_operator cap firm-flip
 status: integrated
 integrated_at: 2026-06-07T180000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: acf65f6
 integration_notes: "Applied clean (D1 LEAD). L4 cap mk_matrix_free_operator roadmap_goal->FIRM (lowers-to edge reference->depends-on, firm L2 dep) + firm feature/matrix-free-operator.{L4,L1} column (4 blocking depends-on composes edges naming the libceed substrate ops by name) + SUMMARY/feature-index/infrastructure alpha-inserts. The 4 substrate ops climbed OUT of the reference-only-reachable RE11 cohort into HARD-reachable (RE11 sub-cohort GROUNDED, confirmed by finalize --show-inbound). cargo make book EXIT 0; rank_violations 0; reachable 157->163. 1 OQ promoted."
 ---
 

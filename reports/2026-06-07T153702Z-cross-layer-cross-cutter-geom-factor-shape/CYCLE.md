@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T153702Z
 scope: L1↔L2 cross-cut — matrix-free `D`-stage typing drift between the L2 combinator and its firm `quad_point_contract` substrate op
 status: integrated
 integrated_at: 2026-06-07T180000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: acf65f6
 integration_notes: "Applied clean (D3). Surgical L2 inline-annotation faithful-render realign at matrix-free-operator-apply.md:79 (quad_point_contract: drop run-time Q pre-multiplied into geom at build; output axis C->C', C'=C symmetric case). Pure inline prose in an already-firm chapter, no rank/edge change. The same drift D3 FLAGGED in D2's theme :168 (do-NOT-expand-into-D2 dispatch boundary) was applied by finalize as a within-finalize consistency fix. cargo make book EXIT 0. No OQ."
 ---
 

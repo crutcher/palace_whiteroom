@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T153721Z
 scope: L4>L3 theme sketch — mk-matrix-free-operator-dissolution (the matrix-free constructive-interior dissolution; RE11 grounder)
 status: integrated
 integrated_at: 2026-06-07T180000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: acf65f6
 integration_notes: "Applied clean (D2). NEW firm L4>L3 theme mk-matrix-free-operator-dissolution (the constructive-INTERIOR five-stage element-local rank-tensor contraction sweep; 5 depends-on composes edges to the L2 combinator + 4 substrate ops; LHS lowers link to the now-firm cap resolves). L4-L3/index theme tally 11->12; SUMMARY alpha-insert (ksp<mk<solve). The 4 substrate ops + cap + combinator are now HARD-reachable (RE11 grounder). FINALIZE applied the D3-flagged same-drift faithful-render fix at :168 (quad_point_contract: drop run-time Q, output axis C->C'). cargo make book EXIT 0; rank_violations 0. 1 OQ promoted (RE11-grounding-recheck, DISCHARGED this cycle)."
 inputs:
   - book/src/L4/mk_matrix_free_operator.md (the L4 cap — the LHS; D1 firms it off roadmap_goal this cycle, read-only here)
