@@ -2011,3 +2011,119 @@ The c130/c131/c132 per-report appends were the closure-signature polish-pass mar
 ## Batch-43 raw appends (cycles 133/134/135) — UNIFIED into the Closed index (batch-43 meta-phase)
 
 The c133/c134/c135 per-report + cross-cutter appends were the sharding-MATH probe verdicts (both arms CLEAR), the WAVE-2 sketch landing markers, the re-baseline confirmations, the 2 c135-RESOLVED OQs, and the 4 batch-43-meta tee-ups. **All are now compacted into the "Closed by the batch-43 meta-phase" section of the Closed index above** (full prose in git history per the OQ-ledger discipline). The slugs — `sharding-math-non-destabilization-probe-vertical-arm-verdict`, `sharding-math-non-destabilization-probe-lateral-arm-verdict`, `maintenance-floor-baseline-re-baseline-on-sharding-sketch-landing`, `maintenance-floor-re-baseline-CONFIRMED-c134-sharding-sketch-landed`, `sharding-decompose-reduce-l4-index-roadmap-goal-listing`, `sharding-decompose-reduce-summary-group-placement`, `sharding-decompose-reduce-formal-RE-disposition-re11-extend-vs-re12`, `maintenance-floor-exception-ledger-rebaseline-disposition-c135`, `directive-1-mpi-sharding-boundary-held-batch43-confirmation`, `maintenance-floor-hygiene-sweep-cadence-per-batch-vs-per-cycle` — are preserved there as cross-reference anchors. The 2 deferred/contingent residuals (`sharding-decompose-reduce-solve-generalization-promotion-pull`, `dorfler-cross-rank-bisection-distributed-note-deferred`) are in §Open — deferred / contingent (the sharding-MATH exploration family).
+
+---
+
+## record-EigState-needs-definition-home
+opened_at: cycle-136
+opened_by: layer-intro-author
+
+The `coordination` Synthesis library intro (`book/src/synthesis/coordination.md`) names `EigState` as a coordination-clustering state carrier (per the directive's coordination type-placement example, and the `coordination` D4 scope). There is NO `book/src/concepts/EigState.md` on disk (the `concepts/` set holds `sim-state`, `op-params`, `krylov`, `solve-result`, `step-outputs`, `prev-carry`, `dofset`, `WaveguideModeTable`, `config-record` — no `EigState`). If `EigState` is named in the rendered `eigsolve`/eigenmode coordination def signatures (≥2 consumers → a `concepts/<record>.md` page; 1 consumer → an in-chapter `## Record definition` section), a record-definition home must be dispatched. Wave-2 D4 (harvester, coordination) should either confirm `EigState` collapses to `SimState` for the eigen cap (then no new home) or flag the home. Not blocking the shell. (Promoted from the shell report's Open questions.)
+
+## synthesis-type-placement-boundary-per-type-wave2-judgment
+opened_at: cycle-136
+opened_by: layer-intro-author
+
+The shell placed only the three unambiguous ≥2-API-group types (`IoData`/`OpParams`/`SimState`) in the `types` library. `SolveResult` is `reference`-listed primarily by `coordination` (likely single-group → cluster before that group), but if a `drivers` output-product also names it directly it would cross the ≥2-group bar and migrate to `types`. The shell left it clustering with `coordination`; the Wave-2 D4 harvester should flag if a second API-group consumer surfaces (semantic-consolidation: define once — migrate, don't duplicate). Per-type Wave-2 judgment call.
+
+## synthesis-drivers-library-body-deferred
+opened_at: cycle-136
+opened_by: layer-intro-author
+
+Per the directive's LEAD-sequencing (d), the `drivers` library composes everything and is authored last. This shell seeds it as `stub`; a later batch-44 cycle authors the body (after the 3 calculus-library def bodies land). The per-driver config records cluster before their driver column with the config's utility API. Trigger: the 3 calculus library def bodies (`iteration`/`data-algebra`/`coordination`) reach a renderable state.
+
+## synthesis-chapter-kind-mechanics-role-spec-codification
+opened_at: cycle-136
+opened_by: layer-intro-author
+
+The `layer-intro-author` / `abstractor` / `harvester` / `lowering-verifier` role-specs do not yet encode the Synthesis chapter-KIND mechanics (type-placement, `#extern`-after-type-sig, deep-link-inline, implementation-VIEW-links-not-restates, topological def order, Haskell `where`). The shell + the Wave-2 dispatch scopes carry the load-bearing bullets from CLAUDE.md §SYNTHESIS in-line. Flag for the batch-44 meta-phase: codify the Synthesis chapter-KIND mechanics into the role-specs.
+
+## synthesis-adds-no-depends-on-edges-postapply-confirm
+opened_at: cycle-136
+opened_by: layer-intro-author
+
+Every Synthesis chapter is reference-reachable navigational (implementation VIEW); it links reference-class to the authoritative L4/semantics/concepts defs and constrains no firm node's rank/liveness. The D5 maintenance-floor cross-cutter is asked to confirm this for the post-apply tree (the `#extern` callouts in the Wave-2 D2/D3/D4 def bodies must not mis-type a `depends-on` edge to the opaque kernels). Per-report integrator note (c136): the shell apply was confirmed `reference`-only by the graded-stack linter (0 rank violations; the 4 stub libraries classified `[FRONTIER]`, `index`/`types` navigational-container expected-unreachable) — the post-apply confirmation here pertains to the Wave-2 def-body landings.
+
+## synthesis-iteration-krylov-update-helper-inline-vs-named-wave3
+opened_at: cycle-136
+opened_by: abstractor
+
+The Wave-2 `iteration` library `krylov-step` Form A render (`book/src/synthesis/iteration.md`) folds three named compositions — `krylov_update`, `optionally_apply_auxiliary`, `derived_views` — whose authoritative homes are L2 (`L2/krylov-step` §Semantics for `krylov_update`; `L2/orthogonalize` for the GMRES `op.orthog` fold). These are *deep-linked-unchanged lower artifacts*; per CLAUDE.md §SYNTHESIS they COULD be rendered INLINE (they ARE the implementation). The abstractor rendered them as named helper calls with a link-and-comment rather than fully inlining the per-slice L1-primitive sequence, because the L4 chapter itself keeps them as named calls (`krylov_update K_aux op w`) and defers primitive enumeration to L2 (the per-slice CG/GMRES bundle update differs). Flag for Wave-3 / a later `data-algebra`-Wave dispatch or lowering-verifier: confirm whether the abstract-named-helper rendering suffices for the implementation VIEW, or whether the per-slice `krylov_update` body (the `axpy`/`dot`/`axpby` sequence — already exhibited concretely inline in the Form-B `cg_steady_step`) should be inlined here. Non-blocking (the Form-B CG worked def already exhibits the concrete primitive sequence inline). (Promoted from the report's Open questions.)
+
+## synthesis-iteration-chebyshev-unicode-scalar-render-cosmetic
+opened_at: cycle-136
+opened_by: abstractor
+
+The Wave-2 `iteration` library `chebyshev` render (`book/src/synthesis/iteration.md`) keeps the L4 chapter's `α₀`, `.*.`, `.+.`, `.-.` field-algebra operators verbatim (the authoritative spelling at `book/src/L4/chebyshev.md`). These are inside ` ```text ` fences (not KaTeX-rendered), so the `$`-sigil-fence rule is satisfied and the unicode is literal. If the build's font rendering of `α₀` is undesirable a later pass may ASCII-ize to `alpha0`. Cosmetic, non-blocking. (Promoted from the report's Open questions.)
+
+## synthesis-iteration-shell-vs-body-reconciliation-c136
+opened_at: cycle-136
+opened_by: abstractor
+
+The Wave-2 `iteration` def-body report reproduced the Wave-1 shell's frontmatter + intro and proposed flipping `status: stub` → `navigational-container`, appending the `## Clustering types` + `## Library defs` body. Resolution (c136 per-report integrator): the Wave-1 shell HAD landed first (`book/src/synthesis/iteration.md` existed on disk with `status: stub`, content byte-matching the report's `[old]` payload), so the `[old]→[new]` diff applied cleanly (full-file replace, status flipped, body rendered). SUMMARY.md was untouched (the shell already registered the entry, item 7 of the shell change-set). Closed by the apply — recorded for the audit trail. (Promoted from the report's Open questions.)
+
+## synthesis-iteration-wave2-adds-no-depends-on-edges-confirmed-c136
+opened_at: cycle-136
+opened_by: abstractor
+
+The report asserts every frontmatter edge added by the Wave-2 `iteration` body is `reference`-class (the rendered-form-links-to-authoritative-chapter relationship); no new `depends-on` blocking edge, no rank claim on any rendered form. Confirmed by the c136 per-report integrator: the post-apply graded-stack-lint reports 0 rank violations; `synthesis/iteration` is now `navigational-container` (reference-reachable, NOT `[FRONTIER]`, NOT true-detritus); the 15 frontmatter edges are all under `edges: reference:`; no `depends-on` block present. This discharges the per-report half of the D5 `synthesis-adds-no-depends-on-edges-postapply-confirm` confirmation for the Wave-2 iteration landing. The remaining D2/D3/D4 `#extern`-edge-typing confirmation stands for the data-algebra/coordination def-body landings. (Promoted from the report's Open questions.)
+
+## synthesis-data-algebra-utility-api-member-sets-rough-in-c136
+opened_at: cycle-136
+opened_by: abstractor
+
+The Wave-2 `data-algebra` synthesis library renders minimal "natural intrinsic namespace" utility-API member sets for the two clustering types it bundles: `DofSet[N]` (`member` / `size` / `is_empty` / `complement`) and `WaveguideModeTable` (`num_modes` / `mode_at` / `propagating`). These are SYNTHESIZED rough-in surfaces — the type's plausible intrinsic namespace per the type-placement rule — NOT lifted from positive Palace sites. The sibling Wave-2 libraries (`iteration` clustering types landed; `coordination` pending) should align utility-API depth so the libraries are mutually consistent. *Trigger:* a follow-on alignment pass if the project wants utility-API members grounded in concept-page accessors; non-blocking. (Promoted from the report's Open questions.)
+
+## synthesis-data-algebra-helper-name-glue-vs-spine-verbs-c136
+opened_at: cycle-136
+opened_by: abstractor
+
+The `data-algebra` rendered defs use synthesized helper names that spell the L4 chapters' prose, NOT claims about named Palace/spine verbs: `restrict_essential`/`set_essential`/`mask_to`/`scatter_essential` (eliminate_bc), `conj_if_complex` (inner_product kernel), `apply_chain`/`element_restrict[_T]`/`basis_apply[_T]`/`quad_point_contract` (mk_matrix_free_operator contraction chain), `mkOp` (operator-VALUE constructor). The alternative is to render only the top-level body and elide the `where` helpers as "(opaque; see L4 chapter)". The abstractor chose plausible helper names for readability of the implementation VIEW, flagged as glue. *Trigger:* `lowering-verifier` auditing the body-shape correspondence should treat these as rendering glue (check def↔L4-body shape, not exact helper spelling); coalesce by use if the elided form is preferred. (Promoted from the report's Open questions.)
+
+## synthesis-data-algebra-mk-matrix-free-apply-chain-inline-render-c136
+opened_at: cycle-136
+opened_by: abstractor
+
+`mk_matrix_free_operator`'s `apply` is rendered inline as the `apply_chain` `where`-helper — the firm L2 contraction chain `Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G` as the unchanged-lower-artifact-rendered-inline (per the SYNTHESIS directive's deep-link-inline rule). The `_T` transpose-pairing spelling (`element_restrict_T`/`basis_apply_T`) is the synthesized form of the chapter's transpose chain — faithful to the chain order, but the `_T` naming is glue. The authoritative chain lives in `book/src/L2/matrix-free-operator-apply.md`. This is the DIRECTIVE-3 kernel-IMPL surface (the constructive matrix-free interior), distinct from the `#extern assemble_term` kernel-API opaque leaf rendered in `fe_assemble`. *Trigger:* lowering-verifier audit of the impl↔L2-chain correspondence. (Promoted from the report's Open questions.)
+
+## synthesis-data-algebra-wave2-adds-no-depends-on-edges-confirmed-c136
+opened_at: cycle-136
+opened_by: abstractor
+
+The report asserts every frontmatter edge in the Wave-2 `data-algebra` body is `reference`-class (the rendered-form-links-to-authoritative-chapter relationship); no new `depends-on` blocking edge, no rank claim on any rendered form. Confirmed by the c136 per-report integrator: the post-apply graded-stack-lint reports 0 rank violations; the 20 frontmatter edges are all under `edges: reference:` (a strict superset of the shell's 18, adding `concepts/dofset` + `concepts/WaveguideModeTable`); no `depends-on` block present; no firm-node rank/liveness constraint added. The DIRECTIVE-3 dual-surface is rendered correctly (`#extern assemble_term` kernel-API opaque leaf in `fe_assemble`; inline `mk_matrix_free_operator` contraction-chain kernel-IMPL), with the `realizes-kernel-api` correspondence recorded on the L4 chapters, not re-asserted here. This discharges the per-report half of the D2/D3 `#extern`-edge-typing confirmation for the data-algebra landing. NOTE: `record-DomainData-needs-definition-home` (the `domain_energy_reduce` output row) is ALREADY tracked in this ledger (c078 D1 / c079 D3) — not re-opened; the report links `DomainData` to its authoritative `feature/energy-fields.L4.md §Record definition` home under the single-consumer bar. (Promoted from the report's Open questions.)
+
+## record-EigState-schema-home-is-EigResult
+opened_at: cycle-136
+opened_by: harvester
+
+RESOLUTION of the D1 OQ `record-EigState-needs-definition-home` (above, opened by the shell/layer-intro-author this same cycle). The Wave-2 `coordination` def-body dispatch resolved the shell's flagged EigState-home question: `EigState` does **NOT** collapse to `SimState` (genuinely distinct shape — `pairs`/`converged`/`requested`/`error`/`EigStatus`, vs `SimState`'s `x`/`it`/`converged`/`final_res`/`initial_res`; per `book/src/L4/eigsolve.md:70`). BUT it is **single-consumer** — named in only the `eigsolve` cap signature — so per the record-definition obligation an **in-chapter type block suffices** (now rendered in `book/src/synthesis/coordination.md` §"Coordination type block → EigState — the eigsolve persistent stratum", clustered before its sole consumer, bundled with its utility API). Its authoritative field-schema home is the `EigResult` record in `book/src/L1/eigsolve.md` (navigationally homed in `book/src/concepts/eigsolve.md`); the EigState↔EigResult correspondence is the authoritative schema back-link. No `book/src/concepts/EigState.md` page was created and **none is required** (single-consumer). *Migration trigger:* if a SECOND coordination/drivers consumer of `EigState` surfaces (e.g. the eigenmode `drivers`-library column names it directly), it crosses the ≥2-consumer bar and should migrate to a dedicated `concepts/EigState.md` page cross-referencing `EigResult`, rather than duplicating the in-chapter block. **This entry RESOLVES the D1 `record-EigState-needs-definition-home` OQ — the meta-phase may close that entry in its unify pass.** (Per-report integrator c136 reconciliation, confirmed against the landed body + the prior D1 ledger entry.) (Promoted from the report's Open questions.)
+
+## synthesis-eigsolve-impl-kernel-impl-node-not-yet-standing-c136
+opened_at: cycle-136
+opened_by: harvester
+
+The `coordination` library renders `eigen_iterate` (the SLEPc EPSSolve / ARPACK naupd RCI loop) as `#extern` — the kernel-API boundary — and DEEP-LINKS (does not inline) the constructive `eigsolve-impl` (Lanczos/Arnoldi/Krylov-Schur in the `lanczos_step`/`krylov_step` vocabulary). The directive's "render deep-linked-UNCHANGED lower artifacts inline" rule does NOT pull `eigsolve-impl` in, because it is a SEPARATE kernel-IMPL realization (linked to the kernel-API by a `realizes-kernel-api` reference-class edge), not an unchanged lowering of the opaque API. The `eigsolve-impl` kernel-impl node is **not yet a standing chapter** (the L4 `eigsolve` is the cap, not the impl). *Trigger for the planner:* its authoring is the DIRECTIVE-3 spine-dependency kernel-impl work (SLEPc EPS eigsolve-loop arm) — when a firm `eigsolve-impl` chapter lands, the `iteration` or a dedicated kernel-impl library may render its body inline; `coordination` keeps the `#extern` surface either way. Not blocking. (Promoted from the report's Open questions.)
+
+## synthesis-coordination-inner-iteration-slug-forward-ref-reconciliation-c136
+opened_at: cycle-136
+opened_by: harvester
+
+The rendered `coordination` def bodies use inner `iteration`-library identifiers as plain inline-code tokens (`krylov_step`, `iterate_while`, `fresh_krylov`, `applyBasis`, `Krylov`, `StepOutputs`) — forward-references to the sibling Wave-2 `iteration` library (which landed THIS cycle, per the staging row). The underscore form `krylov_step` was chosen to match the L4-calculus identifier convention (vs the L4 chapter's hyphenated chapter slug `krylov-step`). Per-report-integrator c136 check: the sibling `synthesis/iteration.md` landed earlier this cycle (its STAGING row is present) and renders `krylov_step` / `iterate_while` / `iterate_while_with_prev` as its def names — so the underscore-form forward-refs in `coordination` MATCH the canonical rendered-def names in `iteration` (verified the sibling row records `krylov-step Form A + Form B` and `iterate_while`). The `[`iteration`](./iteration.md)` chapter link resolves regardless. *No action required* — recorded for completeness; the slug reconciliation is consistent on disk. (Promoted from the report's Open questions.)
+
+## synthesis-coordination-fold-solve-state-generated-schedule-source-not-rendered-c136
+opened_at: cycle-136
+opened_by: harvester
+
+The `fold_solve` rendering surfaces only the fixed-list fold (the firm default signature surface, the transient witness); the state-generated `schedule-source` form (driven-PROM SweepAdaptive / AMR, via the L4 chapter's §3.7 carry form) is NOT rendered inline — a prose pointer to the L4 chapter stands in, matching the chapter's own treatment. Not a gap (the variant axis is recorded in the L4 chapter; the Synthesis view renders the default surface + the variant pointer). Recorded for the variant-axis-coverage trail. (Promoted from the report's Open questions.)
+
+## synthesis-coordination-chapter-status-seed-token-reconciliation-c136
+opened_at: cycle-136
+opened_by: harvester
+
+The `coordination` chapter status flipped `stub` → `seed` (both the body blockquote AND the frontmatter `status:` field) now the Wave-2 def bodies are rendered — a `seed` navigational-container implementation VIEW (makes no resolution claim, carries `reference`-edges only, no `rank:`). The directive does not pin a status token for rendered Synthesis library chapters. Per-report-integrator c136 NOTE: I flipped the frontmatter `status:` to `seed` to match the report's body declaration (leaving it at `stub` would be internally inconsistent with the `> **Status: \`seed\`.**` body blockquote). The sibling `data-algebra` Wave-2 landing deliberately LEFT its frontmatter at `status: stub` (per that report's own disposition) even with bodies rendered — so the three calculus-library chapters are currently INCONSISTENT in their status token (`iteration` flipped to `navigational-container`; `data-algebra` left `stub`; `coordination` flipped to `seed`). *Trigger for the layer-intro-author / meta-phase:* pick ONE convention for rendered Synthesis library chapter status and normalize the three (+ the eventual `drivers`). Not blocking. (Promoted from the report's Open questions.)
+
+## synthesis-edges-next-batch-maintenance-floor-audit
+opened_at: cycle-136
+opened_by: cross-layer-cross-cutter
+
+Forward-looking note from the c136 per-batch maintenance-floor sweep (finding vi). At that sweep's dispatch time the new `# Synthesis` Part was NOT yet on disk (it was the batch-44 LEAD, authored by sibling wave-mates THIS same cycle); the sweep therefore covered only the pre-existing artifact and recorded this note so the signal is not lost. The Synthesis Part has since LANDED this cycle (per the c136 STAGING rows: `synthesis/{index,types,iteration,data-algebra,coordination}` + the `# Synthesis` SUMMARY Part; `drivers` body deferred to a later batch-44 cycle). The **next per-batch maintenance-floor sweep** (batch-45, or whenever the full Synthesis Part incl. `drivers` body has landed) should audit the `synthesis/` chapters as an **implementation-rendering VIEW that LINKS to the authoritative L4/semantics defs** (it renders, it does not depend-on for build/rank/liveness): (a) confirm every `synthesis/` outbound edge is `reference`-class — a Synthesis chapter carrying a `depends-on` onto an L4 op would mis-type the rendering relationship as a build dependency; (b) re-run the KaTeX `$`-sigil fence scan over the new L4-pseudo-language def bodies (Synthesis renders concrete defs in the same notation, so it is `$`-sigil-fence-relevant); (c) check the new chapters do not RE-STATE semantics already owned by `L4/` or `semantics/index.md` (the implementation-rendering VIEW must USE+LINK, not duplicate — the SEMANTIC-CONSOLIDATION discipline); (d) note the cross-chapter status-token inconsistency the c136 Wave-2 landings introduced (`iteration` → `navigational-container`, `data-algebra` left `stub`, `coordination` → `seed`) is tracked separately under `synthesis-coordination-chapter-status-seed-token-reconciliation-c136`. The per-cycle step-5b two-invariant tripwire (`rank_violations==0` + no newly-orphaned node + detritus escalate-guard) backstops any regression at finalize between batch sweeps; the linter disposition is EXPECTED to move BY DESIGN with the new files + `reference`-class edges, but the two hard invariants must still hold. NOT actionable as a defect — recorded for the next batch sweep. (Promoted from the report's Open questions / caveats, finding vi.)

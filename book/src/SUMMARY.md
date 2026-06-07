@@ -7,6 +7,13 @@
 - [Resolution ladder & reachability](./methodology/resolution-ladder.md)
 - [Graded-stack scheme (node-status + typed edges)](./methodology/graded-stack-scheme.md)
 - [Semantic consolidation (active-management semantic surface)](./methodology/semantic-consolidation.md)
+# Synthesis — synthesized-library implementation view
+- [Overview](./synthesis/index.md)
+- [Library — types (shared cross-cutting type defs)](./synthesis/types.md)
+- [Library — iteration (iteration & step combinators)](./synthesis/iteration.md)
+- [Library — data-algebra (data-algebra combinators & named verbs)](./synthesis/data-algebra.md)
+- [Library — coordination (outer-driver caps & coordination combinators)](./synthesis/coordination.md)
+- [Library — drivers (entry-point surfaces)](./synthesis/drivers.md)
 # Feature surfaces — entry points
 - [Overview](./feature/index.md)
 - [Spine ROOT (lifecycle)](./feature/spine-root.md)
