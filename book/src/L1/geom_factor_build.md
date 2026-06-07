@@ -1,21 +1,21 @@
 ---
 layer: L1
 operator: geom_factor_build
-# Graded-stack: rough-in (rank 2). The geometry-factor build-pass (build-QFunction) of the libCEED
-# pipeline: (mesh-nodes, quad-weights) → geom_data. Promoted roadmap_goal → rough-in (cycle-124 D4) on
-# the element-local rank-tensor vocabulary the cohort firms this wave: the shape-vocabulary home
-# concepts/element-local-tensor (D5) defines the per-quad-point carrier Tensor[(E, P, G)] this op
-# produces, so the op now RESTS on a (to-be-firm) shape home. depends-on concepts/element-local-tensor
-# (the [E, P, G] geom-data carrier shape home) — rank invariant rank(u) <= min(deps): rough-in (2) <=
-# the record page's rank; firm follows once concepts/element-local-tensor firms (firm-on-positive-
-# structure escape — laws are syntactic setup-stratum-purity / pointwise identities on positive source).
+# Graded-stack: firm (rank 3). The geometry-factor build-pass (build-QFunction) of the libCEED
+# pipeline: (mesh-nodes, quad-weights) → geom_data. Promoted roadmap_goal → rough-in (cycle-124 D4) →
+# firm (cycle-125 D1) on the element-local rank-tensor vocabulary: the shape-vocabulary home
+# concepts/element-local-tensor (firm c124 D5, commit db5ea4d) defines the per-quad-point carrier
+# Tensor[(E, P, G)] this op produces, so the op RESTS on a firm shape home. depends-on
+# concepts/element-local-tensor (the [E, P, G] geom-data carrier shape home) — rank invariant
+# rank(u) <= min(deps): the dep is now firm, so the firm-flip is warranted (firm-on-positive-structure
+# escape — laws are syntactic setup-stratum-purity / pointwise identities on positive source).
 # Setup-stratum (built once per mesh/order, reused across applies). Reachable via
 # libceed-quadrature-kernel-impl (pulled-by) and quad_point_contract (which consumes geom_data).
-rank: rough-in
+rank: firm
 edges:
   depends-on:
     - target: concepts/element-local-tensor
-      kind: shape-vocabulary   # the [E, P, G] per-quad-point geom-data carrier shape home this op produces (D5; rank-constrained, GC-live)
+      kind: shape-vocabulary   # the [E, P, G] per-quad-point geom-data carrier shape home this op produces (firm c124 D5; rank-constrained, GC-live)
   reference:
     - target: L1/libceed-quadrature-kernel-impl
       kind: pulled-by      # the consumer whose pipeline's D stage consumes this op's geom_data output (free)
@@ -32,19 +32,17 @@ contracts against — the Jacobian-derived geometry metric times the quadrature 
 
 ## Status
 
-`rough-in` (rank 2). **Promoted roadmap_goal → rough-in (cycle-124 D4).** The Palace realization is
-exhaustively anchored (the `f_build_geom_factor_*` build-QFunction with its `attr`/`q_w`/`grad_x` inputs
+`firm` (rank 3). **Promoted roadmap_goal → rough-in (cycle-124 D4) → firm (cycle-125 D1).** The Palace
+realization is exhaustively anchored (the `f_build_geom_factor_*` build-QFunction with its `attr`/`q_w`/`grad_x` inputs
 and `geom_data` output — see *Verified-against*), and the operator produces the **quad-point-rank**
-carrier `Tensor[(E, P, G)]` whose **shape-vocabulary home is `concepts/element-local-tensor`** — the
-record page the cohort authors this wave (D5). The rank-0 disposition was warranted only while the
-`[E, P, G]` carrier had no definition home in firm L1 vocabulary; with the home in place (as a
-`depends-on` shape-vocabulary edge), the op rests on a defined shape, so the honest disposition rises to
-rough-in. Promotion route to firm: once `concepts/element-local-tensor` firms, this promotes
-`rough-in → firm` on the **firm-on-positive-structure escape** — every law below is a syntactic
-setup-stratum-purity / pointwise-block-diagonality identity on fully-specified positive source (the
-build-QFunction is read directly off `AssembleCeedGeometryData`), so the absence of a dedicated
-build-QFunction unit test does not gate firm; the only remaining gate is the firmness of the `[E, P, G]`
-shape home.
+carrier `Tensor[(E, P, G)]` whose **shape-vocabulary home is `concepts/element-local-tensor`** — now
+**firm on disk** (c124 D5, commit `db5ea4d`). With that home firm (as a `depends-on` shape-vocabulary
+edge), the op rests on a firm shape and the well-foundedness cap lifts: `rank(u) ≤ min(deps)` no longer
+bounds this op below firm. The promotion is on the **firm-on-positive-structure escape** — every law
+below is a syntactic setup-stratum-purity / pointwise-block-diagonality identity on fully-specified
+positive source (the build-QFunction is read directly off `AssembleCeedGeometryData`), so the absence
+of a dedicated build-QFunction unit test does not gate firm; the only gate was the firmness of the
+`[E, P, G]` shape home, now discharged.
 
 ## L1 form (the constructive sketch)
 
@@ -74,7 +72,7 @@ This is the **setup stratum** of the build/run-time split (`concepts/build-time-
 fixed, only the trial field varies per apply. (When the mesh moves — e.g. AMR refinement — `geom_data` is
 rebuilt; that is a setup-stratum invalidation, not a run-time cost.)
 
-## Algebraic laws (rough-in — syntactic identities on positive source; firm on shape-home firmness)
+## Algebraic laws (firm — syntactic identities on positive source)
 
 - **Setup-stratum purity:** `geom_factor_build` is a pure function of `(mesh_nodes, quad_weights)` — no
   field/state dependence; its output is cacheable and reused across applies (the build/run-time split law).
@@ -86,9 +84,9 @@ rebuilt; that is a setup-stratum invalidation, not a run-time cost.)
   the element, so `geom_data` is constant in `p` — a degenerate case worth noting (the curved/high-order
   case is the general one).
 
-These laws are syntactic facts on the positively-read build-QFunction. They are stated as rough-in (not
-yet firm) only because the `[E, P, G]` shape home (`concepts/element-local-tensor`) is itself firming
-this wave; the laws themselves require no test (firm-on-positive-structure).
+These laws are syntactic facts on the positively-read build-QFunction. They require no test
+(firm-on-positive-structure); the only gate was the firmness of the `[E, P, G]` shape home
+(`concepts/element-local-tensor`), now firm on disk (c124 D5).
 
 ## Applicability conditions
 
@@ -111,11 +109,11 @@ this wave; the laws themselves require no test (firm-on-positive-structure).
   `geom_data` field-set `:483-484` (the build output's consumer site).
 - `palace/fem/libceed/integrator.hpp:14-23` — `EvalMode` (`Weight`/`Grad`/`Interp`): the build inputs'
   evaluation modes.
-- `book/src/L1/libceed-quadrature-kernel-impl.md` — the roadmap_goal consumer (pulled-by).
+- `book/src/L1/libceed-quadrature-kernel-impl.md` — the firm kernel-impl consumer (pulled-by).
 
 ## Related
 
-- [`libceed-quadrature-kernel-impl`](./libceed-quadrature-kernel-impl.md) — the roadmap_goal that
+- [`libceed-quadrature-kernel-impl`](./libceed-quadrature-kernel-impl.md) — the firm kernel-impl that
   consumes this op's `geom_data` output in its `D` stage.
 - [`quad_point_contract`](./quad_point_contract.md) — the `D` stage that contracts against this op's
   `geom_data` (the run-time apply half of the build/apply split).

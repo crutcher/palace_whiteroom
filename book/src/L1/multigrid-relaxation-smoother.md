@@ -110,7 +110,7 @@ multigrid_relaxation_smoother(op, x, y, initial_guess) =
 ```
 
 Shape contract (bunsen-style; named axes — `Tensor[N]` is the genuinely-flat
-rank-1 dof-vector at L1, per `book/src/design/l4_calculus.md` §1.2.2 "reserve
+rank-1 dof-vector at L1, per `book/src/semantics/index.md` §1.2.1 "reserve
 `Tensor[N]` for genuinely-flat rank-1 dof-vectors at L1/L0"):
 
 - `op` — `DistRelaxSmoother[N, M]` — the constructed distributive-smoother

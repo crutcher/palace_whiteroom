@@ -1978,3 +1978,145 @@ the real homes rather than force-fitting onto the wrong path; the integrator app
 `ido == 2` close-brace). No residual action; the plan-path note is for the planner's path-hygiene
 record. Source: `reports/2026-06-07T112037Z-layer-intro-author-gmg-hygiene/CYCLE.md`
 §Open-questions caveat 1 + §On-disk citation verification.
+
+## libceed-substrate-rough-in-to-firm-flip-and-45-to-47-tally-followup — RESOLVED
+resolved_at: cycle-125 (D1)
+resolved_by: integrator-per-report (applying reports/2026-06-07T124519Z-harvester-substrate-firm-flip)
+
+CLOSES the OQ opened at cycle-124 (§ above, line ~1934). The prescribed `Action (c125 ...)` was
+executed exactly: the c125 D1 firm-flip report flipped `book/src/L1/element_restrict.md` +
+`book/src/L1/geom_factor_build.md` + `book/src/L1/libceed-quadrature-kernel-impl.md` from `rough-in`
+→ `firm` (each `rank: firm` on disk this apply) on the firm-on-positive-structure escape — the
+well-foundedness cap rose because their shape home `concepts/element-local-tensor` is firm on disk
+(c124 D5), and the kernel-impl's four `composes` deps are now all firm (`basis_apply` +
+`quad_point_contract` c124 D3; `element_restrict` + `geom_factor_build` c125 D1), so
+`rank(impl) ≤ min(deps) = firm`. The `L1/index.md` consolidated tally was reconciled 45 → 47
+(libCEED-substrate sub-spine 2 → 4: 33 main + 4 FE-assembly + 5 FE-space + 1 Mesh-construction +
+4 libCEED-substrate = 47), and the multi-era count-history prose (both 45 and 43) was drained to a
+single clean current count of 47. The `realizes-kernel-api` edge stayed `reference`-class and the
+kept `fe-assemble-libceed-boundary-obstruction` kernel-api surface is untouched (`status:
+obstruction`, `opaque-library-ownership`). No new OQ opened. Note: the OQ ledger is unified by the
+meta-phase; this is the append-only per-report-integrator closure note (the original open section
+above is left in place for meta-phase migration/compaction). Source:
+`reports/2026-06-07T124519Z-harvester-substrate-firm-flip/CYCLE.md` §Open questions / caveats.
+
+## matrix-free-operator-apply-l2-l1-no-theme-deliberate
+opened_at: cycle-125
+opened_by: integrator-per-report (promoted from abstractor D2 §Open questions / caveats)
+
+The L2 `matrix-free-operator-apply` combinator and the L1 `libceed-quadrature-kernel-impl` name the
+same chain `A = Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G` over the same element-local vocabulary — identity-in-named-terms,
+a degenerate-lowering smell. Resolved in-line in the chapter §"Downward to L1" + the `reference`-class
+`lifts-kernel-impl` frontmatter edge; **no `L2-L1/matrix-free-operator-apply-*` theme authored** (the
+absence is deliberate, not a coverage gap). The genuine vocabulary shift in this cohort is the
+flat-`Tensor[N]` → element-local-tensor edge (`concepts/element-local-tensor` + the substrate ops'
+L1>L0 rotations), not an L2>L1 hop on this combinator. Flagged for the lowering-verifier / cross-cutter:
+confirm no L2>L1 theme is expected here. Source:
+`reports/2026-06-07T124519Z-abstractor-matrix-free-operator-apply/CYCLE.md`.
+
+## matrix-free-operator-apply-role-vs-vocabulary-distinction
+opened_at: cycle-125
+opened_by: integrator-per-report (promoted from abstractor D2 §Open questions / caveats)
+
+The L1 kernel-impl ("realization of one opaque kernel") and the L2 combinator ("reusable named
+composition") differ in *role*, not *vocabulary* — the honest reason the relationship is
+identity-in-named-terms. If a future reviewer judges the role-distinction insufficient to warrant TWO
+chapters (L1 impl + L2 combinator) over the same chain, the resolution would be to fold the L2
+combinator's composition-level laws INTO the L1 kernel-impl and drop the L2 chapter. The planner
+scoped this as a deepen-the-layer L2 lift (the L2 combinator IS the reusable composition-root the
+fe_assemble leaf and future element-local compositions instantiate), so the two-chapter split is
+intended. Surfaced for the batch-40 meta in case the role-vs-vocabulary line wants codifying. Source:
+`reports/2026-06-07T124519Z-abstractor-matrix-free-operator-apply/CYCLE.md`.
+
+## mk_matrix_free_operator-l4-backend-lowering-placeholder
+opened_at: cycle-125
+opened_by: integrator-per-report (promoted from abstractor D2 §Open questions / caveats — the speculative L4 placeholder, NOT authored this cycle)
+
+The speculative L4 `mk_matrix_free_operator` (the backend-lowering operator constructor whose apply
+lowers to the tensor-contraction graph `Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G`) is NOT authored this cycle and was
+deliberately NOT landed as a `roadmap_goal` chapter — per the graded-stack directive a speculative L4
+operator should land as a `roadmap_goal` with an inbound blocking consumer reaching a feature root,
+but the L4 backend-lowering feature surface that would pull it is itself a c126 / batch-41 candidate
+(the ASK-2 "A" L4 depth + the "B" 5-driver L4-completeness capstone). Authoring it now would strand it
+(no pull-chain to a root yet). Signature sketch:
+`mk_matrix_free_operator :: FESpace -> WeakFormTerm -> GeomFactors -> LinearOperator (Tensor[(N: ...)])`.
+**The c126 / batch-41 L4 matrix-free dispatch should land it as a `roadmap_goal` once the L4
+backend-lowering surface provides the pull.** Source:
+`reports/2026-06-07T124519Z-abstractor-matrix-free-operator-apply/CYCLE.md`.
+
+## matrix-free-operator-apply-amr-rebuild-consumer-forward-note
+opened_at: cycle-125
+opened_by: integrator-per-report (promoted from abstractor D2 §Open questions / caveats)
+
+Forward note: `geom_factor_build` (and thus the build-stratum of `matrix-free-operator-apply`) is
+rebuilt on AMR refinement (the mesh-change rebuild noted in `concepts/element-local-tensor`
+§Build-vs-run). When the AMR consumer (DIRECTIVE-2 grounded consumer-(2)) lands, it is a faithful
+consumer of this combinator's rebuild boundary — a future `depends-on` / `reference` edge, not
+authored this cycle. Source:
+`reports/2026-06-07T124519Z-abstractor-matrix-free-operator-apply/CYCLE.md`.
+
+## vcycle-level-recursive-combinator-mining-candidate — RESOLVED (negative finding, do-not-mine)
+resolved_at: cycle-125
+resolved_by: integrator-per-report (promoted from combinator-miner D3 §Open questions / pick (b))
+
+RESOLUTION of `vcycle-level-recursive-combinator-mining-candidate` (opened cycle-121, layer-intro-author;
+section above at ~line 1642) — **NEGATIVE finding, do-NOT-mine.** The combinator-miner D3 audit found the
+level-recursive `restrict → recurse → prolong-add` cycle occurs in **exactly ONE** place in Palace
+(`palace/linalg/gmg.cpp:172-205` `VCycle`, driven by the `gmg.cpp:137-140` `pc_it` wrapper);
+`search_text 'VCycle|recursi|Cycle\('` over `palace/linalg/*.cpp` returns only the three `gmg.cpp`
+structural hits + two `iterative.cpp` log-string false positives (critic independently reproduced this
+count). The OQ's speculated AMG / auxiliary-space recurrences do NOT bear out: AMG is opaque HYPRE
+(BoomerAMG, never a Palace-owned level recursion); the Hiptmair aux-space smoother
+(`distrelaxation.cpp:97-118` `Mult2`) is a FLAT single-level `pc_it` sweep, not a level recursion.
+One instance fails both the ≥3-same-shape bar and the ≥2-sibling-family bar; mining would be
+mine-and-strand (the 2026-06-01 redirect re-mandate forbids it). The recursion is ALREADY correctly
+dispositioned in-line as the consumer's iteration over the firm `L2/correction_step` body
+(`L2/correction_step.md:47-53`; `feature/geometric-multigrid-preconditioner.L4.md:66` annotates
+`vcycle` "NOT a new vocabulary op"). **Re-open condition:** a SECOND Palace-authored level-recursive
+cycle surfaces (a Palace-owned AMG V-cycle, or a W-cycle / full-multigrid variant with ≥2 recursive
+calls per level) — at which point the unifying op is a hylomorphism over the level-stack (`unfold`-restrict
+∘ recurse ∘ `fold`-prolong) and must NOT be folded into the flat-tail `fold_solve`/`iterate-while`
+family (balanced tree recursion ≠ tail recursion). No such second instance exists in the current tree.
+*Note:* the original OQ section above is left in place for the meta-phase's unify/close authority; this
+appended note records the negative-finding resolution per the per-report integrator's append-only OQ
+discipline. Source: `reports/2026-06-07T124519Z-combinator-miner-gmg-hygiene-bundle/CYCLE.md` §pick (b).
+
+## gmg-smoother-l3-partial-obstruction-home — RESOLVED (already covered, do-not-author)
+resolved_at: cycle-125
+resolved_by: integrator-per-report (promoted from combinator-miner D3 §Open questions / pick (c))
+
+RESOLUTION (audit record) of the cycle-125 D3 pick-(c) question "does the GMG outer `pc_it` smoother
+sweep need its OWN L3 partial-obstruction home?" — **NO; ALREADY COVERED, do-NOT-author** (a redundant
+chapter would be the manufactured-redundant-home the plan told the agent to avoid). The `pc_it` sweep
+decomposes into a body + a loop, each already homed: (1) the per-sweep body `y ← y + B(x − A y)` is the
+firm L2 combinator `L2/correction_step.md` (firm c122), with existing L3 body-views `L3/chebyshev.md`
+(polynomial `B`) and `L3/jacobi-smoother.md` (diagonal `B`); (2) the outer `pc_it` loop is ALREADY homed
+as a partial-obstruction at L3 — `L3/chebyshev.md` is `firmness: partial-obstruction` and its scope text
+names "the outer `pc_it` Richardson sweep" as the witnessed sequential obstruction (the body lifts, the
+loop does not; the same fixed-count smoother-sweep idiom as `gmg.cpp:137` / `distrelaxation.cpp:102`,
+cross-cited by `correction_step` as one family); (3) the Hiptmair distributive variant adds only the
+gradient-space `G B_G Gᵀ` correction (`distrelaxation.cpp:108-117`) — a SECOND `correction_step` body
+under the SAME flat `pc_it` loop, introducing no new loop structure. No residual un-homed loop remains.
+**Re-open / deferred-nicety condition:** if the GMG column's smoother-leg story is ever felt to need its
+OWN L3 navigational stub (distinct from `L3/chebyshev`), that is a layer-intro-author navigational call,
+NOT a partial-obstruction home. *Note:* no prior standalone OQ section carried this exact slug (it is the
+D3 plan-pick audit result, recorded here for the ledger). Source:
+`reports/2026-06-07T124519Z-combinator-miner-gmg-hygiene-bundle/CYCLE.md` §pick (c).
+
+## batch-37-era-stale-design-l4-calculus-path-drift-sweep — RESIDUAL CLEARED (count 1→0; flag for meta-close)
+resolved_at: cycle-125
+resolved_by: integrator-per-report (D3 pick (a) landed the residual fix)
+
+UPDATE to `batch-37-era-stale-design-l4-calculus-path-drift-sweep` (opened cycle-124, harvester;
+section at ~line 1927). The cycle-125 D3 pick (a) re-pointed the LAST remaining stale
+`book/src/design/l4_calculus.md` reference — at `book/src/L1/multigrid-relaxation-smoother.md:113`,
+a batch-37-era file — to the live `book/src/semantics/index.md` §1.2.1 (the section number was ALSO
+corrected: §1.2.2 "Operator shapes" was wrong; the reserve-`Tensor[N]`-for-rank-1 rule lives at §1.2.1
+"Named shape groups", `semantics/index.md:85`). **`grep -rn 'design/l4_calculus' book/src/` now returns
+0 hits** (verified on-disk this apply; was exactly 1 hit pre-apply, this line). The sweep is therefore
+COMPLETE: the c124 D3/D4 fixes covered the four libceed-substrate ops, this c125 D3 fix covered the
+residual batch-37-era file. **The OQ can be CLOSED.** Per the per-report integrator's append-only OQ
+discipline, the actual close/migration is the meta-phase's unify authority — FLAGGED here for the
+batch-40 meta-phase to close (count→0, no remaining instances; the bundle-with-c116-prose-ref-normalize-cohort
+trigger is moot for THIS slug, though that sibling cohort may still have its own residue). Source:
+`reports/2026-06-07T124519Z-combinator-miner-gmg-hygiene-bundle/CYCLE.md` §pick (a).

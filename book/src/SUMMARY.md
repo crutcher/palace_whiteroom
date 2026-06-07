@@ -163,6 +163,8 @@
   - [jacobi-smoother](./L2/jacobi-smoother.md)
   - [normalize](./L2/normalize.md)
   - [reciprocal](./L2/reciprocal.md)
+- [Constructive-kernel compositions](./L2/constructive-kernel-compositions-intro.md)
+  - [matrix-free-operator-apply](./L2/matrix-free-operator-apply.md)
 
 # L2 > L1 — Lowering
 - [Overview](./L2-L1/index.md)
