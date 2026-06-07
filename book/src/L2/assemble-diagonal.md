@@ -448,7 +448,7 @@ to this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified
 - [`book/src/L2/index.md`](./index.md) §"Identity-in-form BLAS-1 floors" — the floor cohort
   and the foundation-first directive `l2-floor-under-l3-leaf-cohort` this entry extends to the
   operator-to-data primitive.
-- [`book/src/L2/dot.md`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator) (firm cycle-041) — the structural precedent: a thin
+- [`book/src/L2/dot.md`](./inner_product.md#specializations) (firm cycle-041) — the structural precedent: a thin
   identity-in-form L2 floor entry. (`dot` is leaf-of a fold; this entry is fork-independent —
   the differences are noted in § "No fold-parent".)
 - `palace/linalg/operator.cpp:25-28` — `ComplexOperator::AssembleDiagonal` base

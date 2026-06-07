@@ -94,6 +94,15 @@ A linear operator whose **domain shape differs from its range shape** names *two
 
 This generalizes the rank-1 spelling `LinearOperator[M, N]` (where `M`, `N` are genuine flat dof-vector lengths) to the rank-agnostic case. At **L1/L0**, Palace operators act on flat dof-vectors and the concrete `LinearOperator[M, N]` / `Tensor[N]` rank-1 spelling is faithful — keep it there; the `LinOp[(R: ...), (D: ...)]` form is the L4/L3/L2 calculus rendering.
 
+##### 1.2.2-R — the operator-VALUE spelling ruling (the cohort-sweep scope-gate)
+
+This is the **canonical per-site decision** a whole-book closure-signature compliance sweep applies. It is the *application* of §1.2.2 + §1.3.1 (the bracketed-operator-value ruling and its table); it does not restate them. For each occurrence of an operator-value in a signature or a lowering-theme LHS:
+
+1. **Calculus-level operator-VALUE codomain → bracketed form (CONVERT if opaque).** An operator-value in a **codomain / return position** of an L4/L3/L2 signature or a lowering-theme LHS — an operator **constructor** `mk :: A -> Op[X → Y]`, an operator **transformer** `t :: Op[X → Y] -> Op[X' → Y']`, or a calculus-level result annotation `op_w = … : LinOp[…]` — carries higher-order intent and is spelled in the **bracketed operator-value form**: `LinOp[(R: ...), (D: ...)]` (or square `LinOp[(N: ...), $N]`), or `Op[τ_in → τ_out]`. The bracket already groups the in/out arrow, so the codomain is **already compliant** and wants **no outer parens** (§1.3.1:153, :158). The **non-compliant smell** is the opaque type-application form `LinearOperator[N, N]` / `LinearOperator (Tensor[…])` — a bare type name applied to dim slots, **no in/out arrow**, the higher-order intent hidden. The fix is to **re-spell** it bracketed; wrapping the opaque form in outer parens does NOT make it compliant (§1.3.1:154).
+2. **Genuine rank-1 flat-dof form → KEEP rank-1 (do NOT convert).** A genuine **rank-1 flat-dof** form is KEPT exactly as written per §1.2.2:95 ("at L1/L0 … keep it there"). This covers (i) any **L1/L0** operator/vector signature (`LinearOperator[M, N]` / `Tensor[N]` over genuine flat dof-vector lengths), and (ii) a **plain operator-VALUE record FIELD** at L4/L3 whose dim is a genuine flat-dof length (the deliberate c129-D2 within-chapter dual-spelling — e.g. an `assemble_frequency_operator` `{ K, C, M }` field, a `divfree-projector` `{ P.M, P.WeakDiv, P.Grad }` field). The convention governs closure-**RETURNING calculus signatures**, NOT genuine rank-1 L1/L0 forms; a record field that merely *holds* a rank-1 operator value is not a closure-returning signature and is out of scope.
+
+**One-line discriminator for the sweep:** *is this an operator-value in a calculus-level (L4/L3/L2) signature/theme-LHS codomain position, spelled opaquely?* → **CONVERT to bracketed**. *Is it an L1/L0 form, or a record field holding a genuine rank-1 operator value?* → **KEEP**.
+
 #### 1.2.3 Named axes of fixed meaning (the element-local family)
 
 Distinct from a **congruence shape group** (§1.2.1, `(S: ...)` / `$S` — a *name for an unknown-rank run* asserting two shapes agree) is a **concrete named axis of fixed meaning**: a single letter that denotes one specific, fixed quantity, the way `Tensor[H, W, VY=3, VX=3]` (§1.2) names a height, a width, and two pinned velocity axes. A concrete named axis is NOT rank-agnostic and is NOT a back-reference — it is one axis with a fixed semantic role.
@@ -117,7 +126,11 @@ e ::= x                                      -- variable
     | πᵢ e                                   -- tuple projection
     | if e₀ then e₁ else e₂                  -- conditional
     | op(e₁, ..., eₙ)                        -- primitive operator application
-    | apply A e                              -- operator application
+    | op-with-params { l₁ = e₁, ..., lₖ = eₖ ; λ(x: τ_in). e } : Op[τ_in → τ_out]
+                                             -- operator-VALUE introducer: a record of closed-over
+                                             -- !-params paired with a body lambda (§1.3.1); its
+                                             -- eliminator is `apply` below (§3.5)
+    | apply A e                              -- operator application (eliminates an Op value, §3.5)
     | return e                               -- monadic return (Sim)
     | e₁ >>= e₂                              -- monadic bind
     | do { s₁; ...; sₙ; e }                  -- do-notation block

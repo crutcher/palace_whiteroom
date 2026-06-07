@@ -143,7 +143,7 @@ The genuine translation that carries the re-order is the KEPT
 (re-audited cycle-049 D2 (c); §"Downward to L2"). L3 sees the convention pinned at arg-1
 and a single-step whole-tensor reduction.
 
-## Specializations (the members, as notes under the combinator)
+## Specializations
 
 The members are **not separate L3 chapters** — they are this field reduction read at
 fixed axis-values. Each is the combinator with one axis pinned; there is no co-equal
@@ -292,7 +292,7 @@ Laws that explicitly **do not** hold:
   same-layer L3 dependency (the per-element kernel and the shape-group `S` reduction are at or
   below the L3 layer's resolution).
 - **Consumers (L3)**: [`krylov-step`](./krylov-step.md) (CG/GMRES coefficients). The
-  do-NOT-merge consumers [`nrm2`](#consumer-not-an-instance-nrm2--matrix-weighted-norm) / `matrix-weighted-norm` are
+  do-NOT-merge consumers [`nrm2`](#consumer-nrm2-and-matrix-weighted-norm) / `matrix-weighted-norm` are
   `√ ∘ abs ∘ inner_product` at `y=x` — see §"Consumer (NOT an instance)".
 - **Upward reference (L2)**: [`L2/inner_product`](../L2/inner_product.md) (firm cycle-019,
   inverted to combinator-as-entry cycle-049 D2) — authoritative on the algebraic laws,
@@ -331,7 +331,7 @@ unchanged from the L2 combinator §"Variant axes":
 transparent for value, load-bearing for bit-reproduction (the IEEE non-law); recorded in
 the L2>L1 lowering theme.
 
-## Consumer (NOT an instance): nrm2 / matrix-weighted-norm
+## Consumer: nrm2 and matrix-weighted-norm
 
 `nrm2` and `matrix-weighted-norm` are `√ ∘ abs ∘ inner_product` at the diagonal (`y = x`),
 **NOT fold/reduction members** — they are **consumers** of this combinator's output:
@@ -422,11 +422,11 @@ to this L3 entry:
   names the reductions (`dot`, `nrm2`) as field operations; this combinator is the entry
   they re-express through. Line 15 §Semantics-overlay obstruction-profile spectrum — the
   obstruction-free end this entry sits at.
-- [§"Specializations"](#specializations-the-members-as-notes-under-the-combinator) — the
+- [§"Specializations"](#specializations) — the
   Hermitian/unconjugated `dot` specialization (the residual standalone `L3/dot` leaf,
   firm cycle-011, was eliminated cycle-127 RE-style; its conjugation variant-axis +
   no-sequential-obstruction verdict + krylov-step consuming context are folded here).
-- [§"Consumer (NOT an instance)"](#consumer-not-an-instance-nrm2--matrix-weighted-norm) — the
+- [§"Consumer (NOT an instance)"](#consumer-nrm2-and-matrix-weighted-norm) — the
   `√ ∘ abs ∘ inner_product` consumer `nrm2` (the residual standalone `L3/nrm2` leaf, firm
   cycle-011, was eliminated cycle-127 RE-style; do-NOT-merge boundary preserved — NOT a member).
 - [`book/src/L2-L1/inner-product-fold-specialization.md`](../L2-L1/inner-product-fold-specialization.md)

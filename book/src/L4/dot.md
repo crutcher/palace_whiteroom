@@ -35,7 +35,7 @@ specialization downstream algorithms reference by name).
 The L4 form re-expresses **through** the firm L4 combinator
 [`inner_product`](./inner_product.md) (replace-and-propagate, NOT a re-derived
 fold) and is value-thread-isomorphic to the firm L3 named abstraction
-[`L3/dot`](../L3/inner_product.md#specializations-the-members-as-notes-under-the-combinator).
+[`L3/dot`](../L3/inner_product.md#specializations).
 
 ## Context
 
@@ -172,7 +172,7 @@ is its first-class named-verb home.
 
 ## Downward to L3
 
-The L4 `dot` verb lowers to the firm L3 [`dot`](../L3/inner_product.md#specializations-the-members-as-notes-under-the-combinator) as **identity-in-form on
+The L4 `dot` verb lowers to the firm L3 [`dot`](../L3/inner_product.md#specializations) as **identity-in-form on
 the body**: both forms are value-thread-isomorphic — the same `Tensor[(S: ...)] -> Tensor[$S] ->
 Scalar` signature read at `M = I` with the Hermitian/symmetric kernel, the same six
 algebraic laws, the same deferred IEEE non-law, the same conjugation convention pinned at
@@ -205,7 +205,7 @@ directory).
 `firm` — the L4 form is the calculus-level named verb re-expressing the combinator
 [`inner_product`](./inner_product.md) (firm cycle-068 D3) at `M = I` with the
 Hermitian/symmetric kernel, value-thread-isomorphic to the firm L3
-[`dot`](../L3/inner_product.md#specializations-the-members-as-notes-under-the-combinator) (firm cycle-011, specialization-stub cycle-052 D3): the same
+[`dot`](../L3/inner_product.md#specializations) (firm cycle-011, specialization-stub cycle-052 D3): the same
 `Tensor[(S: ...)] -> Tensor[$S] -> Scalar` reduction read at the plain-weight conjugation value,
 identity-in-form across the L4>L3 edge (no monadic wrapper to dissolve — §"Downward to
 L3"). The six algebraic laws are carried up unchanged (each a syntactic identity or a

@@ -159,7 +159,7 @@ Shape contract (positional values; L3 has no `readonly` annotation and no monadi
     exactly once at dispatch**, never re-branched per column. This is the axis along which the
     L3 lift verdict splits (MGS non-lifting / CGS, CGS2 lifting).
   - `op.dot : (Tensor[(S: ...)], Tensor[$S]) -> Scalar` — the inner-product hook; the canonical
-    [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator) (conjugate-linear in the first argument) by default, the SLEPc/ROM paths
+    [`dot`](./inner_product.md#specializations) (conjugate-linear in the first argument) by default, the SLEPc/ROM paths
     substitute a `B`-weighted dot. A parametric axis: the lift verdict is invariant under the
     hook (the body shape and the MGS/CGS structural split are unchanged).
 - **`w`** — `Tensor[(S: ...)]` — read-only; the (un-normalised) candidate vector to orthogonalize.
@@ -212,7 +212,7 @@ w^{(j+1)}  &= w^{(j)} - H_j \cdot V[j],
 $$
 
 where `w_eff(j)` is the candidate as seen by column `j`. Each line is a global tensor-field
-expression: `H_j` is a [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator) reduction (whole-tensor in, scalar out), and the
+expression: `H_j` is a [`dot`](./inner_product.md#specializations) reduction (whole-tensor in, scalar out), and the
 update is an [`axpy`](./linear_combination.md#arity-specializations) (`w − H_j·V[j]` = `axpy(-H_j, V[j], w)`). There is no
 per-element dependence *within* a line; the **per-step body lifts cleanly** to whole-tensor
 field arithmetic, identically to the firm L2 `project`/`subtract` stages. **What differs across
@@ -383,7 +383,7 @@ Laws that explicitly **do NOT** hold:
   column-order-invariant up to reduction-tree noise; MGS is not, because the left-to-right
   rank-1-projector composition does not commute). This is the algebraic shadow of the MGS
   sequential obstruction. Inherited from L1/L2.
-- **Reduction-tree associativity (floating point).** Inherited from [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator): different
+- **Reduction-tree associativity (floating point).** Inherited from [`dot`](./inner_product.md#specializations): different
   summation orders inside the projection give different bit-level coefficients. Load-bearing.
 - **Stage-fusion across the CGS2 pass boundary.** The second CGS pass is not fusible with the
   first — fusing them would compute the correction against the *un*-orthogonalised `w` and
@@ -399,14 +399,14 @@ Laws that explicitly **do NOT** hold:
 their L1 names (L3-native by signature shape, each operating on whole tensors with no element
 loop exposed):
 
-- [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator) — the projection-coefficient inner product `H_j = op.dot(w_eff(j), V[j])`
+- [`dot`](./inner_product.md#specializations) — the projection-coefficient inner product `H_j = op.dot(w_eff(j), V[j])`
   (and, for CGS/CGS2, the batched `coeffs = Vᴴw` reduction). The conjugate-linear
   first-argument convention is inherited; the `op.dot` hook is a `dot` substitution.
 - [`axpy`](./linear_combination.md#arity-specializations) — the rank-1 residual update `w − H_j·V[j]` = `axpy(-H_j, V[j], w)` (and,
   for CGS/CGS2, the batched `w − V·coeffs` subtraction).
 
 `orthogonalize` does **not** depend on the L3 reductions in a normalisation role:
-[`nrm2`](./inner_product.md#consumer-not-an-instance-nrm2--matrix-weighted-norm) and [`scal`](./linear_combination.md#arity-specializations) are the **caller's** normalisation step (the
+[`nrm2`](./inner_product.md#consumer-nrm2-and-matrix-weighted-norm) and [`scal`](./linear_combination.md#arity-specializations) are the **caller's** normalisation step (the
 Hessenberg sub-diagonal + rescale), excluded by the L0 header's "does not normalize the output"
 contract — they are not dependencies of this operator.
 
@@ -471,7 +471,7 @@ distinguishing feature of this entry against the precedent partial-obstruction o
    The canonical hook is the GMRES/FGMRES Arnoldi default; the `B`-weighted hook is the SLEPc/ROM
    basis-extension substitution.
 3. **element-type** (`real | complex`) — fully parametric, absorbed by the `op.dot` dependency
-   (the conjugation lives in [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator)); it does not produce distinct operators at L3,
+   (the conjugation lives in [`dot`](./inner_product.md#specializations)); it does not produce distinct operators at L3,
    and the lift verdict is element-type-invariant. All parametric tests cover both element types
    (`test-orthog.cpp:123` real, `:234` complex).
 

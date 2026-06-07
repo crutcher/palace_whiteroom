@@ -101,7 +101,7 @@ backend-lowering operator-constructor). Transcribed from the cap §"Speculative 
 
     -- the operator-CONSTRUCTOR: build (once) a matrix-free LinearOperator value over the FLAT
     -- operator-domain shape Tensor[(N: ...)]; its `apply` is a contraction graph, not a CSR spmv.
-    mk_matrix_free_operator :: FESpace -> WeakFormTerm -> GeomFactors -> LinearOperator (Tensor[(N: ...)])
+    mk_matrix_free_operator :: FESpace -> WeakFormTerm -> GeomFactors -> Op[Tensor[(N: ...)] → Tensor[(N: ...)]]
 
     -- the `apply` is named by its lowering to the firm L2 chain combinator (the reference-class
     -- `lowers-to` edge), an ATOMIC five-stage contraction over the flat operator-domain shape:
@@ -119,7 +119,7 @@ The L4-form machinery this theme dissolves is **three** pieces:
    but at L4 the build is a single opaque atomic step; the *iteration over element-geometry families* it must
    perform is hidden.
 
-2. **The flat operator-domain shape `Tensor[(N: ...)]`.** The L4 `LinearOperator (Tensor[(N: ...)])` is typed
+2. **The flat operator-domain shape `Tensor[(N: ...)]`.** The L4 `Op[Tensor[(N: ...)] → Tensor[(N: ...)]]` is typed
    over the **flat global true-dof axis** — the operator-domain congruence group `(N: ...)`
    ([`semantics/index`](../semantics/index.md) §1.2.1). At L4 the operator is a black box over this flat shape;
    the element-local rank structure it traverses internally (`[(E, L)]` / `[(E, P, C)]` / `[(E, P, G)]`,
@@ -148,7 +148,7 @@ vocabulary, composing the firm substrate ops BY NAME):
     -- per-geometry-type element loop building the restriction/basis/geom-data context per geometry type;
     -- the once-atomic L4 `apply` dissolves into the five-stage rank-tensor contraction over the element
     -- families, with `element_restrict`'s G as the FLAT→ELEMENT-LOCAL shape boundary.
-    mk_matrix_free_operator_L3 :: (space, term, geom) -> LinearOperator[(N: ...)]
+    mk_matrix_free_operator_L3 :: (space, term, geom) -> LinOp[(N: ...), $N]
     mk_matrix_free_operator_L3 space term geom =
       let op = make_composite_operator space         -- 1. mutable composite ceed::Operator accumulator
       let _  =                                        -- 2. loop the per-geometry-type element families
@@ -367,7 +367,7 @@ L4 source (the LHS of this rewrite):
 - `book/src/L4/mk_matrix_free_operator.md` (firm c127 D1 LEAD — **same-cycle sibling**; the live link resolves
   once D1's firm-flip is applied before the single finalize build) — the L4 backend-lowering operator-constructor:
   §Intent (the constructor/apply split, the `partial matrix-free` branch), §"Speculative L4 form" (the
-  `mk_matrix_free_operator :: FESpace -> WeakFormTerm -> GeomFactors -> LinearOperator (Tensor[(N: ...)])`
+  `mk_matrix_free_operator :: FESpace -> WeakFormTerm -> GeomFactors -> Op[Tensor[(N: ...)] → Tensor[(N: ...)]]`
   signature + the `apply = matrix-free-operator-apply space term geom = Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G` lowering), the `lowers-to`
   edge to the L2 combinator this theme realizes as the L3 element sweep.
 - `book/src/L2/matrix-free-operator-apply.md` (firm c125 D2) — the named contraction-chain combinator the L4

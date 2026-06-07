@@ -133,7 +133,7 @@ The fold's `result` fields are demand-pruned per [`derived-view-hoisting`](../co
 **Same-layer (L3)**:
 
 - [`krylov-step`](./krylov-step.md) — the per-step kernel this operator folds. **Direct, load-bearing dependency**: `ksp_solve`'s body is `iterate_while_L3 (krylov-step op) …`. The kernel supplies the body; `ksp_solve` supplies the fold. This is the canonical L3 kernel/driver pair.
-- The L3-native whole-tensor primitives appear only *transitively* through `krylov-step` ([`apply_linop`](./apply_linop.md), [`axpy`](./linear_combination.md#arity-specializations), [`axpby`](./linear_combination.md#arity-specializations), [`axpbypcz`](./linear_combination.md#arity-specializations), [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator), [`nrm2`](./inner_product.md#consumer-not-an-instance-nrm2--matrix-weighted-norm), [`scal`](./linear_combination.md#arity-specializations)) — the driver does not call them directly; the kernel does.
+- The L3-native whole-tensor primitives appear only *transitively* through `krylov-step` ([`apply_linop`](./apply_linop.md), [`axpy`](./linear_combination.md#arity-specializations), [`axpby`](./linear_combination.md#arity-specializations), [`axpbypcz`](./linear_combination.md#arity-specializations), [`dot`](./inner_product.md#specializations), [`nrm2`](./inner_product.md#consumer-nrm2-and-matrix-weighted-norm), [`scal`](./linear_combination.md#arity-specializations)) — the driver does not call them directly; the kernel does.
 
 **Cross-cutting concepts** (consumed unchanged across the chain):
 

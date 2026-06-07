@@ -148,7 +148,7 @@ Shape contract (bunsen-style; named records and axes; the operator stratum per
   solution, the `E` written by `ksp.Mult(RHS, E)` at `drivensolver.cpp:196`). Per
   the family-map, `solutions[i]` aligns with `omegas[i]` (order-preserving
   collection).
-- `op_w = assemble_frequency_operator fam omega : LinearOperator[N, N]` — the per-ω
+- `op_w = assemble_frequency_operator fam omega : LinOp[(N: ...), $N]` — the per-ω
   **rebuilt** operator (the firm [`assemble_frequency_operator`](./assemble_frequency_operator.md),
   `A(ω) = K + iω·C − ω²·M + A2(ω)`); the per-member operand the inner
   [`ksp_solve`](./ksp_solve.md) inverts. This is the load-bearing structural element

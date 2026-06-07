@@ -173,7 +173,7 @@ Per-element kernel (the conjugation × element-type axes):
 | `complex` | `inner_product` | `conj(x[idx]) · y[idx]`      | Hermitian sesquilinear (arg-1 conjugated) |
 | `complex` | `tdot`          | `x[idx] · y[idx]`            | unconjugated bilinear (see § "tdot") |
 
-## Specializations (the members, as notes under the combinator)
+## Specializations
 
 The members are **not separate L2 chapters** — they are this fold read at fixed
 axis-values. Each row is the combinator with one axis pinned; there is no co-equal
@@ -446,7 +446,7 @@ the reciprocal boundary at its own §"Sibling fold: dot is not subsumed" — tha
 D1's refactor scope this batch; this note is the `inner_product`-side half of the
 two-combinator boundary and is edited here only.)
 
-## Consumer (NOT an instance): nrm2 / matrix-weighted-norm
+## Consumer: nrm2 and matrix-weighted-norm
 
 `nrm2` and `matrix-weighted-norm` are `√ ∘ inner_product` at the diagonal (`y = x`), NOT
 fold members:

@@ -36,7 +36,7 @@ of its members.
 
 The L4 form re-expresses **through** the firm L4 combinator
 [`inner_product`](./inner_product.md) at the diagonal (NOT a re-derived fold) and is
-value-thread-isomorphic to the firm L3 named abstraction [`L3/nrm2`](../L3/inner_product.md#consumer-not-an-instance-nrm2--matrix-weighted-norm).
+value-thread-isomorphic to the firm L3 named abstraction [`L3/nrm2`](../L3/inner_product.md#consumer-nrm2-and-matrix-weighted-norm).
 
 ## Context
 
@@ -158,7 +158,7 @@ distinct from [`dot`](./dot.md), which is a *specialization* of the same combina
 
 ## Downward to L3
 
-The L4 `nrm2` verb lowers to the firm L3 [`nrm2`](../L3/inner_product.md#consumer-not-an-instance-nrm2--matrix-weighted-norm) as **identity-in-form on
+The L4 `nrm2` verb lowers to the firm L3 [`nrm2`](../L3/inner_product.md#consumer-nrm2-and-matrix-weighted-norm) as **identity-in-form on
 the body**: both forms are value-thread-isomorphic — the same `Tensor[(S: ...)] -> Scalar`
 signature, the same `√ (abs (inner_product x x))` skeleton (L3 writes the defining
 identity through the same-layer `dot(x, x)` leaf; both denote the same Hermitian
@@ -192,7 +192,7 @@ convention (no `L4-L2`/`L4-L1` directory).
 
 `firm` — the L4 form is the calculus-level named verb re-expressing the diagonal consume
 of the combinator [`inner_product`](./inner_product.md) (firm cycle-068 D3) under the
-`√ ∘ abs` scalar map, value-thread-isomorphic to the firm L3 [`nrm2`](../L3/inner_product.md#consumer-not-an-instance-nrm2--matrix-weighted-norm) (firm
+`√ ∘ abs` scalar map, value-thread-isomorphic to the firm L3 [`nrm2`](../L3/inner_product.md#consumer-nrm2-and-matrix-weighted-norm) (firm
 cycle-011, consumer-stub cycle-052 D3): the same `Tensor[(S: ...)] -> Scalar` `√(abs(inner_product
 x x))` skeleton, identity-in-form across the L4>L3 edge (no monadic wrapper to dissolve —
 §"Downward to L3"). The five algebraic laws are the square-root norm-axioms over the PSD

@@ -382,8 +382,8 @@ with no element loop exposed):
   linear-update family (here realised as `elementwise_product` then `axpby`; the
   three-input `axpbypcz` shape is the unfused canonical form).
 
-`chebyshev` does **not** depend on the L3 reductions [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator) /
-[`nrm2`](./inner_product.md#consumer-not-an-instance-nrm2--matrix-weighted-norm) — it is inner-product-free. This is the structural
+`chebyshev` does **not** depend on the L3 reductions [`dot`](./inner_product.md#specializations) /
+[`nrm2`](./inner_product.md#consumer-nrm2-and-matrix-weighted-norm) — it is inner-product-free. This is the structural
 distinction from L3 [`krylov-step`](./krylov-step.md).
 
 **Cross-cutting concepts:**

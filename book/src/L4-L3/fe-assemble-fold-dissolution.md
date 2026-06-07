@@ -27,14 +27,14 @@ The L4 [`fe_assemble`](../L4/fe_assemble.md) combinator — the firm D1 assemble
 
     -- entry point: capture the space once, fold the opaque per-term assembly leaf over the
     -- immutable term list, reduce by operator-+ into one global operator (a list-homomorphism)
-    fe_assemble :: FiniteElementSpace[N] -> [WeakFormTerm] -> LinearOperator[N, N]
+    fe_assemble :: FiniteElementSpace[N] -> [WeakFormTerm] -> LinOp[(N: ...), $N]
     fe_assemble space terms = foldr (\t acc -> assemble_term space t + acc) zero terms
                             = Σ_{t ∈ terms} assemble_term space t
 
     -- the opaque per-term assembly leaf the combinator quantifies over (one weak-form term to its
     -- global-dof contribution; bottoms out in a libCEED element-local quadrature kernel the L4
     -- entry does NOT render):
-    assemble_term :: FiniteElementSpace[N] -> WeakFormTerm -> LinearOperator[N, N]
+    assemble_term :: FiniteElementSpace[N] -> WeakFormTerm -> LinOp[(N: ...), $N]
 
     -- equivalently, the HOMOMORPHIC member of the strawman §3.7 iterate_while family
     -- (carry = remaining term list + running operator sum; the step does NOT read the running

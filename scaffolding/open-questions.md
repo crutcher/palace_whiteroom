@@ -1966,3 +1966,31 @@ The batch-41 per-report appends are unified into the Closed index (above) + the 
 
 **Kept — deferred / contingent (compacted to one-liner with trigger):**
 - `inner-product-combinator-section-anchor-stability` (c127) — ~30 inbound links depend on two long `inner_product` §-heading anchors staying verbatim; latent build-fragility. *Trigger / disposition:* a cheap count-owner anchor-shortening sweep (shorten the 2 long §-anchors + re-point the ~30 inbound in one pass) — LOW priority, fold into a cycle that touches `inner_product`. Not yet a dedicated plan item.
+
+---
+
+## cycle-130 per-report integration appends
+
+### `closure-signature-op-with-params-bnf-promotion` — RESOLVED-BY-LANDING (BNF-promotion half)
+opened_at: cycle-130
+opened_by: integrator-per-report (promoting D1 layer-intro-author report Open question)
+
+**RESOLVED by the c130 D1 landing.** The BNF-promotion half of `closure-signature-introduction-form-into-bnf-and-role-discipline-bullet` (a.k.a. `closure-signature-op-with-params-bnf-promotion`) — the §1.3 `e ::=` grammar gaining the `op-with-params { … ; λ(x: τ_in). e } : Op[τ_in → τ_out]` introducer to match the §3.5 `apply` eliminator — landed this cycle in `book/src/semantics/index.md` §1.3 (the BNF block now generates the operator-VALUE introducer term that the §3.5 reduction rule already used). The producing report left the **formal ledger close to the meta-phase** (which holds unify/close authority; the parent slug is parked in plan Backlog Low). **Hand-off / recommended ledger action:** at the batch-42 meta-phase, close `closure-signature-introduction-form-into-bnf-and-role-discipline-bullet` FULLY — both halves are now landed (role-discipline-bullet ENACTED batch-41 meta; BNF-promotion LANDED c130 D1). This marker records the resolution so the meta-phase sees the BNF half is discharged.
+
+### `closure-signature-cohort-sweep-1.2.2-R-scope-gate` (D2 hand-off note) — OPEN (scope-gate now pinned)
+opened_at: cycle-130
+opened_by: integrator-per-report (promoting D1 layer-intro-author report Open question)
+
+The c130 D1 landing pinned the §1.2.2-R operator-VALUE spelling RULING (the cohort-sweep scope-gate) into `book/src/semantics/index.md` §1.2.2. It is authored as the single scope-gate D2 (the lifter sweep, WAVE-2) reads: the one-line discriminator (calculus-level L4/L3/L2 codomain spelled opaquely → CONVERT to bracketed; L1/L0 form or rank-1 record field → KEEP). **D2 caveat (carried from the report):** D2 should on-disk re-localize each convert-site (`fe-assemble-fold-dissolution.md`, `mk-matrix-free-operator-dissolution.md`, `fe_assemble.md`, `frequency_sweep.md`) and keep-site (`assemble_frequency_operator.md:103-105`, the `divfree-projector` fields) before acting — the report flagged that OQ line numbers have drifted, and the critic noted the illustrative `divfree-projector` keep-site has no `book/src/L4/divfree-projector.md` file (it lives at L1/L2/L3), so the D2 sweep must re-localize that field rather than trusting the prose path. Remains OPEN as the standing D2 scope-gate reference.
+
+### `fe-assemble-fold-dissolution-intro-prose-monoid-carrier-codomain-consistency` (D2 separable follow-up) — OPEN (optional stylistic-consistency)
+opened_at: cycle-130
+opened_by: integrator-per-report (promoting D2 lifter report Open question)
+
+The c130 D2 sweep CONVERTed the two operator-VALUE signature codomains in `book/src/L4-L3/fe-assemble-fold-dissolution.md` (`:30` theme-LHS `fe_assemble`, `:37` leaf `assemble_term`) to `LinOp[(N: ...), $N]`, but deliberately KEPT the **intro-prose monoid-carrier mention** `LinearOperator[N,N]` at `:3` ("reduces the per-term `LinearOperator[N,N]` contributions by operator-`+`"). This is correct running narrative naming the reduction monoid carrier, NOT a signature codomain — and unlike the `fe_assemble` *cap* file (which had a within-file settled `:35/:60/:71` signature driving a same-file-consistency conversion of its monoid-carrier prose), the *theme* file has no within-file settled signature spelling driving an intro-prose conversion, so the D2 sweep did not expand the named codomain sweep to cover it (avoiding over-reach). **NOT a defect** (it is correct prose). *Trigger / disposition:* if a later finalize-time / consistency pass wants the theme intro prose to mirror the theme's own converted `:30/:37` signatures, that is a one-line bounded fidelity edit (`LinearOperator[N,N]` → `LinOp[(N: ...), $N]` at `:3`). Optional stylistic consistency only; not blocking.
+
+### `mk-matrix-free-dissolution-codomain-spelling-Op-vs-LinOp-uniformity` (D2 benign flag) — OPEN (benign style choice, critic-cleared)
+opened_at: cycle-130
+opened_by: integrator-per-report (promoting D2 lifter report Open question + the critic's recorded non-defect)
+
+The c130 D2 sweep used **two** §1.2.2-compliant spellings within `book/src/L4-L3/mk-matrix-free-operator-dissolution.md`: the explicit-arrow `Op[Tensor[(N: ...)] → Tensor[(N: ...)]]` (verbatim from the cap `mk_matrix_free_operator.md:60`) for the transcribed L4 constructor signature (`:104`, `:130` prose, `:139`/now-`:370` backtick form, + the `index.md:46` mirror), and the compact square-op `LinOp[(N: ...), $N]` for the derived L3-form product (`:151`). Per `semantics/index.md:154,:156` both `Op[...]` and `LinOp[...]` are sanctioned §1.2.2 re-spelling targets and denote the SAME square endomorphism, so this is principled (match-the-cap-verbatim for the transcribed signature; square-op for the derived product) and internally consistent. The **critic examined and cleared this as a benign style choice, NOT a defect** (META.md §"Issues found" item 1). *Trigger / disposition:* if a reviewer/meta-phase prefers a single uniform spelling across the theme, the `:151` L3-form product could instead read `Op[Tensor[(N: ...)] → Tensor[(N: ...)]]`. Flagged, not blocking; the current dual-spelling is correct as-is.
