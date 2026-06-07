@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T171929Z
 scope: L4 closure-signature non-compliant-cohort re-spell sweep + 2 stale-token corrections — highorder-signature-noncompliant-cohort-c129-lifter-sweep
 status: integrated
 integrated_at: 2026-06-07T193500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f153841
 integration_notes: |
   cycle-129 D2 (WAVE-2, dep D1). Applied clean by integrator-per-report (staging row 2). Re-spelled the 7 opaque LinearOperator[...] high-order/closure codomain sites to the bracketed LinOp[(N: ...), $N] form across L4/assemble_frequency_operator.md (4: :99,:106,:127,:293), L4/fe_assemble.md (3: :60,:71,:35) + the 2 narrative L4/index.md rows (:61 eliminate_bc reconcile, :62 fe_assemble); + 2 evidenced stale-token corrections — mk_matrix_free_operator roadmap_goal->firm (c127) in fe_assemble.md:16,164; boundary-mode.L4 rough-in->firm in lifecycle.L4.md:72 (both nodes already firm on disk). RESOLVES OQ highorder-signature-noncompliant-cohort-c129-lifter-sweep + fe-assemble-stale-mk-matrix-free-roadmap-goal-token + lifecycle-l4-stale-boundary-mode-rough-in-token (RESOLVED markers = batch-41 meta unify-authority). DELIBERATE within-chapter plain operator-VALUE rank-1 dual-spelling PRESERVED -> routed to META-owned OQ closure-signature-l4-constructor-restatement-compliance-cohort-sweep. NO status/rank/edge change (pure prose/signature re-spell + 2 stale-prose maturity-token corrections; underlying nodes already firm; constructs-via edge stays reference-class). Build EXIT 0; ZERO finalize build-repairs. All totals HELD vs c127/c128.
 inputs:

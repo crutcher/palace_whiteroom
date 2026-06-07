@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T171604Z
 scope: PIN the operator-transformer-codomain adjudication into semantics §1.3.1 (oq-highorder-operator-transformer-codomain-convention)
 status: integrated
 integrated_at: 2026-06-07T193500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f153841
 integration_notes: |
   cycle-129 D1 (LEAD, WAVE-1). Applied clean by integrator-per-report (staging row 1). Pinned the operator-transformer/-constructor codomain adjudication into semantics §1.3.1 (book/src/semantics/index.md — ruling bullet after the :155 reconciliation paragraph + a "Grouping" column + a third opaque-LinearOperator[N,N] row to the §1.3.1 table); bracketed Op[...]/LinOp[...] = already compliant, opaque LinearOperator[...] = the smell (re-spell-not-wrap). RESOLVES OQ oq-highorder-operator-transformer-codomain-convention (RESOLVED marker = batch-41 meta unify-authority; report did NOT edit open-questions.md). Supplied the scope predicate D2's sweep consumed. NO status/rank/edge change (semantic-surface prose only; no-op on graded-stack). Build EXIT 0; ZERO finalize build-repairs. All totals HELD vs c127/c128.
 ---
