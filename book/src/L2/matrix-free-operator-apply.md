@@ -69,7 +69,7 @@ differential-operator `𝒟 ∈ {Identity, Gradient, Curl, Divergence}`), the co
 
     matrix-free-operator-apply
       :: ElemRestriction -> Basis -> GeomData -> Coefficient
-      -> LinearOperator[(N: ...)]
+      -> LinOp[(N: ...), $N]
     -- one term's element-local→global linear operator, as a contraction-chain fold
 
     apply (A = mk-operator restr basis geom Q) :: Tensor[(N: ...)] -> Tensor[(N: ...)]

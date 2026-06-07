@@ -134,7 +134,7 @@ basis captured once outside the sweep):
   this driven specialization (the weights `iω`, `−ω²` are complex; the general
   `real | complex` element-type axis of `linear_combination` collapses to
   complex-only here, a scope-out, not a remaining axis).
-- result — `LinearOperator[N, N]` — the combined operator `A(ω)`, square on the
+- result — `LinOp[(N: ...), $N]` — the combined operator `A(ω)`, square on the
   same axis `N`; itself a `LinearOperator` the per-ω inner solve applies (the
   apply/assemble duality, law 6).
 
@@ -143,7 +143,7 @@ The L4 calculus has **no monadic effect** on this verb (contrast the
 value-producing combination, threaded as a `let`-binding inside the driven solve
 loop's body that consumes it. The discipline that the fixed basis flows in only
 is structural (the `FrequencyOperatorFamily[N]` record is the captured-once input;
-the single return slot is `LinearOperator[N, N]`).
+the single return slot is `LinOp[(N: ...), $N]`).
 
 ### Through linear_combination (the operator-operand corner)
 

@@ -1994,3 +1994,17 @@ opened_at: cycle-130
 opened_by: integrator-per-report (promoting D2 lifter report Open question + the critic's recorded non-defect)
 
 The c130 D2 sweep used **two** §1.2.2-compliant spellings within `book/src/L4-L3/mk-matrix-free-operator-dissolution.md`: the explicit-arrow `Op[Tensor[(N: ...)] → Tensor[(N: ...)]]` (verbatim from the cap `mk_matrix_free_operator.md:60`) for the transcribed L4 constructor signature (`:104`, `:130` prose, `:139`/now-`:370` backtick form, + the `index.md:46` mirror), and the compact square-op `LinOp[(N: ...), $N]` for the derived L3-form product (`:151`). Per `semantics/index.md:154,:156` both `Op[...]` and `LinOp[...]` are sanctioned §1.2.2 re-spelling targets and denote the SAME square endomorphism, so this is principled (match-the-cap-verbatim for the transcribed signature; square-op for the derived product) and internally consistent. The **critic examined and cleared this as a benign style choice, NOT a defect** (META.md §"Issues found" item 1). *Trigger / disposition:* if a reviewer/meta-phase prefers a single uniform spelling across the theme, the `:151` L3-form product could instead read `Op[Tensor[(N: ...)] → Tensor[(N: ...)]]`. Flagged, not blocking; the current dual-spelling is correct as-is.
+
+---
+
+## cycle-131 per-report integration appends
+
+### `closure-signature-1.2.2-R-operator-value-codomain-axis-exhausted` (EXHAUSTION finding for the meta-phase) — OPEN (meta-phase to confirm + mark COMPLETE)
+opened_at: cycle-131
+opened_by: integrator-per-report (promoting D1 lifter report Open question + the c131 repairer note)
+
+The c131 D1 §1.2.2-R residual operator-VALUE codomain sweep CONVERTed the four remaining calculus-level opaque `LinearOperator[…]` codomain smells to the bracketed square form `LinOp[(N: ...), $N]`: the L2 combinator constructor codomain `book/src/L2/matrix-free-operator-apply.md:72`, its dep-map MIRROR row `book/src/L2/index.md:143` (the repairer-added 4th block, for chapter↔index agreement), and the two result-codomain prose sites `book/src/L4/assemble_frequency_operator.md:137` and `:146` (which lagged the already-bracketed signature codomain at `:99`). The deliberate KEEP classes are intact: (i) L1/L0 genuine rank-1 flat-dof signatures; (ii) the `{K, C, M}`-style operator-VALUE record FIELDS (§1.2.2-R clause-2, c129-D2 dual-spelling, `assemble_frequency_operator.md:103-105`/`:121`); (iii) law-prose / conceptual-noun / operand-monoid-carrier mentions.
+
+**EXHAUSTION finding (critic-disputed-then-resolved):** the critic narrowly disputed the original 3-block report (one mirror site `L2/index.md:143` was missed); the repairer added the 4th block converting it, RESOLVING the dispute. **With all four edits now landed, the operator-VALUE-codomain axis IS exhausted of calculus-level opaque smells.** The integrator confirmed this at apply-time: the arrow-codomain re-grep `grep -rnE '\-> *LinearOperator\['` over `book/src/{L4,L3,L2}` + the lowering dirs (`L4-L3`, `L3-L2`, `L2-L1`) returns **CLEAN** (zero hits) after the four edits.
+
+*Trigger / disposition:* the **batch-42 meta-phase** should re-run the arrow-codomain grep (a plain `LinearOperator[` grep drowns the codomain hits in operand/field/L1-realization noise — use the arrow pattern) and, if clean (it was clean at c131 apply-time), mark the §1.2.2-R closure-signature compliance sweep **COMPLETE for the operator-VALUE-codomain axis**. The meta-phase holds the formal COMPLETE ruling; this marker records the apply-time clean re-grep so the meta-phase has the evidence.
