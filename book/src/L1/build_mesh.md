@@ -7,9 +7,9 @@ cycle: cycle-117
 # surface and produces the `Mesh` typed value; no other L1 operator is invoked). It rests on its
 # positive L0 ctor + build-referent source (cites-evidence, rank-terminal ground truth). The `Mesh`
 # record is its produced output; `fe_space` (firm) consumes it (a consumed-by relation, NOT a dep of
-# build_mesh). Well-foundedness rank(u) <= rank(v): this node firm (rank 3); the only edges are
-# cites-evidence to rank-terminal L0 source. The L1>L0 mutation-rotation theme is named-not-authored
-# (forthcoming), so no `lowers-to` edge is asserted yet (would point at a not-yet-firm node).
+# build_mesh). Well-foundedness rank(u) <= rank(v): this node firm (rank 3); the cites-evidence edges
+# point at rank-terminal L0 source, and the `lowers-to` edge points at the firm L1>L0
+# `build-mesh-construction-rotation` theme (c118; rank firm = min(endpoints)).
 rank: firm
 edges:
   depends-on:
@@ -17,6 +17,8 @@ edges:
       kind: cites-evidence        # the `class Mesh` wrapper (ctor chain :72-81, single-machine surface :84-96, libCEED attr map :96-115)
     - target: palace/main.cpp:286-301
       kind: cites-evidence        # the build referent: Load -> Preprocess -> Partition -> RefineMesh -> wrap
+    - target: L1-L0/build-mesh-construction-rotation
+      kind: lowers-to             # the L1>L0 home: how this typed construction rewrites into the L0 free-function chain (c118)
   reference:
     - L1/fe_space                  # the primary consumer of the constructed Mesh (fe_space takes `mesh: Mesh`)
     - feature/lifecycle.L1         # the composition root that forward-references `build_mesh :: Config -> Mesh`
@@ -81,30 +83,17 @@ typed geometric object, not a tensor; the named-shape-group notation governs ten
 
 ## Record definition
 
-`Mesh` is the Palace wrapper for MFEM's `ParMesh` class, with extensions for Palace
-(`palace/fem/mesh.hpp:44`). It is the produced output of `build_mesh` and the consumed input of
-[`fe_space`](./fe_space.md). Single-consumer-judgment: `Mesh` is consumed by ≥2 chapters (every driver
-column's mesh stage + `fe_space` + the deferred `fe_space_hierarchy`), so per the record-definition
-obligation it warrants a shared `concepts/mesh.md` page — **flagged in Open questions**
-(`record-Mesh-needs-definition-home`). This in-chapter section is the interim definition home until that
-page lands (it is the chapter that *produces* the record).
-
-| field | type | meaning | stratum |
-|---|---|---|---|
-| `mesh` | `unique_ptr<mfem::ParMesh>` (single-rank) | the underlying MFEM mesh object; can also point to a derived `mfem::ParSubMesh` (`palace/fem/mesh.hpp:47-49`) | construction-time (owns the loaded/partitioned/refined mesh) |
-| `loc_attr` | `unordered_map<int,int>` | global (MFEM, 1-based) **domain** attribute → process-local contiguous (1-based) libCEED attribute (`palace/fem/mesh.hpp:51-58`) | construction-time (built by `Update`); single-rank = identity-flavoured remap (see *Scope*) |
-| `loc_bdr_attr` | `unordered_map<int, unordered_map<int,int>>` | global **boundary** attribute → (neighbouring domain attr → local boundary attr) — discriminates boundary elements bordering more than one domain (`palace/fem/mesh.hpp:51-59`) | construction-time |
-| `ceed_from_self` | `bool` | true after `RebuildCeedAttributes()` (`palace/fem/mesh.hpp:60`) | run-time flag |
-| `geom_data` | `mutable ceed::CeedObjectMap<ceed::CeedGeomFactorData>` | cached libCEED geometry-factor quadrature data (`w·|J|`, `adj(J)^T/|J|`) per element-geometry/thread (`palace/fem/mesh.hpp:62-69`) | run-time (transparent cache, re-derivable on demand — a performance store, NOT lifted structure) |
-
-The backing C++ struct is `class Mesh` (`palace/fem/mesh.hpp:44`). It is constructed by either the variadic
-ctor that builds the `mfem::ParMesh` from forwarded args (`palace/fem/mesh.hpp:72-75`) or, the form `main`
-uses, the `unique_ptr`-adopting ctor `Mesh(std::unique_ptr<T> &&mesh)` (`:76-81`) which runs
-`EnsureNodes()` + `Update()` (`:79-80`) to finalize the geometry and build the attribute maps. The
-single-machine read surface is `Get()` / `Dimension()` / `SpaceDimension()` / `GetNE()` / `GetNBE()`
-(`palace/fem/mesh.hpp:84-96`); the libCEED attribute-map accessors are `GetCeedAttributes` /
-`GetCeedBdrAttributes` (`:96-115`). The config-relevant `IoData` surface this record mirrors is
-`model.mesh` + `model.refinement` (cross-ref [`config-record`](../concepts/config-record.md)).
+`Mesh` is defined in its cross-cutting home [`concepts/mesh.md`](../concepts/mesh.md) (the
+record-definition page: fields, types, per-field construction-vs-run-time stratum, and the L0
+`class Mesh` backing home `palace/fem/mesh.hpp:44-115`). It has ≥2 consumers — this chapter
+(`build_mesh`, the **producer**), [`fe_space`](./fe_space.md) (`mesh: Mesh` input),
+[`fe_space_hierarchy`](./fe_space_hierarchy.md) (`[Mesh]` element type), and the
+[`lifecycle`](../feature/lifecycle.L1.md) root's stage-(1) — so per the record-definition
+obligation it has a shared `concepts/` home (promoted c118 D6) rather than an in-chapter table.
+In brief: `Mesh` wraps a single-rank `mfem::ParMesh` augmented with the libCEED domain/boundary
+local-attribute maps (`loc_attr` / `loc_bdr_attr`), finalized at construction by the adopting
+ctor's `EnsureNodes()` + `Update()` (`palace/fem/mesh.hpp:76-81`); see the
+[`Mesh` record page](../concepts/mesh.md) for the full schema.
 
 ## Algebraic laws
 
@@ -177,13 +166,13 @@ in scope and lifted here.
 
 ## Downward (to L0)
 
-The L1>L0 rotation `build-mesh-construction-rotation` (named, NOT authored this cycle) will narrate how the
-typed `config → Mesh` construction rewrites into the L0 free-function chain `mesh::Load` ▷
+The L1>L0 rotation [`build-mesh-construction-rotation`](../L1-L0/build-mesh-construction-rotation.md)
+narrates how the typed `config → Mesh` construction rewrites into the L0 free-function chain `mesh::Load` ▷
 `solver->Preprocess` ▷ `mesh::Partition` ▷ `mesh::RefineMesh` ▷ `make_unique<Mesh>` (`palace/main.cpp:287-299`),
 including the in-place `unique_ptr` mesh-handle mutation (the level-vector grown in place by `RefineMesh`,
-`palace/utils/geodata.cpp:421-450`) and the construction-time `EnsureNodes()` + `Update()` finalization
-(`palace/fem/mesh.hpp:79-80`). No `lowers-to` edge is asserted in this chapter's front-matter yet (it would
-point at a not-yet-authored node); the theme is flagged in Open questions.
+`palace/utils/geodata.cpp:421-455`) and the construction-time `EnsureNodes()` + `Update()` finalization
+(`palace/fem/mesh.hpp:79-80`). The `lowers-to` edge to that theme is asserted in this chapter's front-matter
+(c118).
 
 ## Status
 
@@ -205,9 +194,9 @@ mesh-wrapper front (every driver column's mesh stage and the FE-space sub-spine,
 attribute remap are read as single-rank equivalents (see *Scope*); MFEM-opaque adaptive mesh refinement is
 left to the `lifecycle` root's outer fold (obstruction-documented there), NOT forced to a firm claim here.
 
-**`Mesh` record home:** an in-chapter `## Record definition` section is authored above (interim home); a
-shared `concepts/mesh.md` page is flagged (`record-Mesh-needs-definition-home`) since `Mesh` has ≥2
-consumers.
+**`Mesh` record home:** the cross-cutting [`concepts/mesh.md`](../concepts/mesh.md) record page
+is the definition home (promoted c118 D6, since `Mesh` has ≥2 consumers); this chapter's
+§Record-definition is a back-link to it (the OQ `record-Mesh-needs-definition-home` is resolved).
 
 **Deferred follow-on (named, NOT authored this cycle):** the L1>L0
 `build-mesh-construction-rotation` theme; the `concepts/mesh.md` record page; and (downstream) the

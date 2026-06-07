@@ -22,6 +22,8 @@ edges:
       kind: composes              # each level is one fe_space(mesh, collection) construction (coarse seed :89-90, AddLevel :106/:117)
     - target: L1/fe_collection
       kind: composes              # the [FECollection] schedule it folds one-per-level (fecs[0] :90, fecs[l] :117)
+    - target: L1-L0/fe-space-hierarchy-construction-rotation
+      kind: lowers-to             # the L1>L0 forward-rewrite theme for this AddLevel-fold (D2 this cycle)
     - target: palace/fem/multigrid.hpp:78-126
       kind: cites-evidence        # ConstructFiniteElementSpaceHierarchy whole body; close brace verified on disk at :126 (return fespaces; :125, } :126)
   reference:

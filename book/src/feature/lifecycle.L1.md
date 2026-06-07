@@ -6,6 +6,8 @@ feature_root: seed
 rank: firm
 edges:
   depends-on:
+    - target: L1/build_mesh
+      kind: composes
     - target: L1/fe_assemble
       kind: composes
     - target: L1/ksp_solve
@@ -64,7 +66,7 @@ The L1→L0 direction (how the mesh-refine + driver solves lower to the in-place
 
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
-| build mesh | `mesh::Load`/`Partition`/`RefineMesh` (driver-agnostic mesh scaffold) | — (L0 scaffold) | `palace/main.cpp:287-302` |
+| build mesh | [`build_mesh`](../L1/build_mesh.md) (driver-agnostic stage-1 `config→mesh` constituent: load → preprocess → partition → a-priori-refine) | firm | `palace/main.cpp:287-302` |
 | per-driver dispatch (electrostatic) | [`electrostatic.L1`](./electrostatic.L1.md) (sibling reference) | firm | `palace/main.cpp:267` |
 | per-driver dispatch (magnetostatic) | [`magnetostatic.L1`](./magnetostatic.L1.md) (sibling reference) | firm | `palace/main.cpp:270` |
 | per-driver dispatch (eigenmode / driven / transient / boundary-mode) | [eigenmode.L1](./eigenmode.L1.md) / [driven.L1](./driven.L1.md) / [transient.L1](./transient.L1.md) / [boundary-mode.L1](./boundary-mode.L1.md) (sibling references) | firm / firm / firm / rough-in | `palace/main.cpp:264, 261, 273, 276` |

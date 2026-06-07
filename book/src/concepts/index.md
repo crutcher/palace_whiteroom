@@ -40,6 +40,7 @@ edges:
     - concepts/incremental-least-squares
     - concepts/krylov
     - concepts/ksp_solve
+    - concepts/mesh
     - concepts/negative-result-slice
     - concepts/nested-constructed-operator-gate
     - concepts/nrm2
@@ -63,6 +64,7 @@ edges:
     - concepts/trsv
     - concepts/two_operator_split
     - concepts/variant-absorption
+    - concepts/WaveguideModeTable
 ---
 
 # Concepts — Shared Library
@@ -178,6 +180,7 @@ Maintained by the integrator: a new `concepts/<name>.md` page lands as an alpha-
 | [incremental-least-squares](./incremental-least-squares.md) | algorithm |
 | [krylov](./krylov.md) | record |
 | [ksp_solve](./ksp_solve.md) | layer-pattern |
+| [Mesh](./mesh.md) | record |
 | [negative-result-slice](./negative-result-slice.md) | methodology |
 | [nested-constructed-operator-gate](./nested-constructed-operator-gate.md) | layer-pattern |
 | [nrm2](./nrm2.md) | primitive |
@@ -201,3 +204,4 @@ Maintained by the integrator: a new `concepts/<name>.md` page lands as an alpha-
 | [trsv](./trsv.md) | primitive |
 | [two_operator_split](./two_operator_split.md) | methodology |
 | [variant-absorption](./variant-absorption.md) | methodology |
+| [WaveguideModeTable](./WaveguideModeTable.md) | record |
