@@ -4,7 +4,7 @@ cycle: cycle-131
 batch: batch-42
 batch_position: 2/3 (SECOND primary cycle of meta-batch-42; cycles 130/131/132; the batch-42 meta-phase fires AFTER cycle-132's finalize, aggregating all three; cycle counter does NOT reset)
 finalized_at: 2026-06-07T192500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3f19e0b5aeab590d7d0a9a1adf6b28cef88a2552
 reports_applied: 1
 reports_deferred: 0
 reports_rejected: 0

@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T190246Z
 scope: §1.2.2-R residual operator-VALUE codomain sweep — calculus-codomain sites the c130 sweep did not reach
 status: pending
 integrated_at: 2026-06-07T192500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 3f19e0b5aeab590d7d0a9a1adf6b28cef88a2552
 integration_notes: |
   Applied clean as the sole report of cycle-131 (batch-42 position 2/3, §1.2.2/closure-signature
   POLISH PASS). 4 §1.2.2-R operator-VALUE-codomain spelling-fidelity edits applied faithfully
