@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T182605Z
 scope: semantic-surface §1.3 BNF op-with-params promotion + §1.2.2 cohort-sweep RULING (c130 D1 LEAD)
 status: pending
 integrated_at: 2026-06-07T210500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8588108
 integration_notes: "cycle-130 (batch-42 OPENER, 1/3) D1 applied clean. §1.3 op-with-params BNF introducer + §1.2.2-R ruling block landed on book/src/semantics/index.md; no status/rank/edge change. Build EXIT 0; graded-stack baseline HELD (rank_violations 0, unresolved 0). 2 OQs promoted (closure-signature-op-with-params-bnf-promotion RESOLVED-BY-LANDING [BNF half], closure-signature-cohort-sweep-1.2.2-R-scope-gate). The BNF half of the closure-signature introduction-form is discharged end-to-end."
 ---
 

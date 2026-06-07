@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T182605Z
 scope: inner_product combinator chapter — long §-anchor shortening + inbound-link re-point (anchor-fidelity hygiene, MAINTENANCE FLOOR item-4)
 status: pending
 integrated_at: 2026-06-07T210500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8588108
 integration_notes: "cycle-130 (batch-42 OPENER, 1/3) D3 applied clean. Count-owner anchor-stability sweep: 2 long inner_product Part-A section-anchors shortened in L2+L3; 66 inbound #fragment links re-pointed across 18 files via tree-wide replace_all; out-of-scope L4/inner_product.md sibling long-headings deliberately untouched. cargo make book EXIT 0 — ZERO dangling-fragment errors (the load-bearing post-apply safety net PASSED). No status/rank/edge change; graded-stack baseline HELD. 0 OQs."
 ---
 

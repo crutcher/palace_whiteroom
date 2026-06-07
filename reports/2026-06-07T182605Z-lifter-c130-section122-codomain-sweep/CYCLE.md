@@ -13,7 +13,7 @@ inputs:
   - book/src/L4-L3/index.md  (dep-map mirror — row 46 quotes the mk-matrix-free theme-LHS codomain)
   - book/src/L4/assemble_frequency_operator.md  (READ-only — sibling cap whose settled codomain spelling LinOp[(N: ...), $N] anchors the frequency_sweep:151 conversion)
 integrated_at: 2026-06-07T210500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8588108
 integration_notes: "cycle-130 (batch-42 OPENER, 1/3) D2 applied clean (WAVE-2 dep D1). 15 §1.2.2-R codomain re-spell edits (opaque LinearOperator[…] -> bracketed LinOp[...]/Op[...]) across 5 L4/L4-L3 files; documented KEEP sites preserved; no status/rank/edge change (frontmatter untouched, no new cross-file links). One stale 2-line [old] anchor ordering in the mk-matrix-free block re-localized on disk (same target + same conversion). Build EXIT 0; graded-stack baseline HELD. 2 benign-style OQs promoted."
 ---
 
