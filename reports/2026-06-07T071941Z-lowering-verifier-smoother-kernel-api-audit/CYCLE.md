@@ -12,7 +12,7 @@ inputs:
   - reference/palace/palace/linalg/amg.cpp:19,24
   - reference/palace/palace/linalg/ams.cpp:162
 integrated_at: 2026-06-07T071941Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 17cdafe9d9515c72045691b07420fbdfa25af81a
 integration_notes: "cycle-122 D5. Applied clean. 8-entry verified_against: block appended to multigrid-relaxation-smoother + 2 off-by-one citation corrections (distrelaxation.cpp :103→:102, :121-152→:121-151). realizes-kernel-api edge reference-class + kernel-api status confirmed unchanged. 0 gate hits. See reports/cycle-122-integrator-staging/STAGING.md."
 ---
 

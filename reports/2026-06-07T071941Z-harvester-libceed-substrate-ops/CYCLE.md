@@ -10,7 +10,7 @@ inputs:
   - palace/fem/libceed/integrator.{cpp,hpp}, restriction.cpp, basis.cpp, bilinearform.cpp (codemap-verified)
   - book/src/design/l4_calculus.md §1.2.1 (named shape groups — governing semantic surface)
 integrated_at: 2026-06-07T071941Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 17cdafe9d9515c72045691b07420fbdfa25af81a
 integration_notes: "cycle-122 D4. Applied clean. 4 libceed substrate ops (element_restrict/basis_apply/quad_point_contract/geom_factor_build) landed roadmap_goal; unresolved_depends_on_targets 6→2. 0 gate hits. See reports/cycle-122-integrator-staging/STAGING.md."
 ---
 

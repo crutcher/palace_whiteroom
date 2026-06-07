@@ -12,7 +12,7 @@ inputs:
   - reports/2026-06-07T071941Z-cycle-planner-cycle-122/CYCLE.md (D6 row)
   - reference/palace (slepc.cpp, arpack.cpp, fem/libceed/integrator.{cpp,hpp}, fem/bilinearform.cpp, fem/integrator.hpp, fem/libceed/operator.cpp, test/unit/test-libceed.cpp)
 integrated_at: 2026-06-07T071941Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 17cdafe9d9515c72045691b07420fbdfa25af81a
 integration_notes: "cycle-122 D6. Applied clean. verified_against: blocks appended to libceed-quadrature-kernel-impl (8) + eigsolve-impl (7); D4-confirmed stale-prose re-anchor on the libceed impl. realizes-kernel-api edges + kernel-api statuses confirmed unchanged. 0 gate hits. See reports/cycle-122-integrator-staging/STAGING.md."
 ---
 

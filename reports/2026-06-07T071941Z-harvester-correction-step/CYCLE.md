@@ -13,7 +13,7 @@ inputs:
   - book/src/L2/jacobi-smoother.md, book/src/L2/chebyshev-iteration.md (propagation targets)
   - book/src/semantics/index.md §1.2.1 (named shape groups, USE+LINK)
 integrated_at: 2026-06-07T071941Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 17cdafe9d9515c72045691b07420fbdfa25af81a
 integration_notes: "cycle-122 D3. Applied clean. L2/correction_step promoted rough-in→FIRM (depends-on apply_linop+axpby) + replace-and-propagate into chebyshev-iteration/jacobi-smoother; L2 firm 21→22; 3 c121 OQs settled. 0 gate hits. See reports/cycle-122-integrator-staging/STAGING.md."
 ---
 

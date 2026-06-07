@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T071941Z
 scope: GMG preconditioner column rough-in→firm promotion-eval (cycle-122 D7)
 status: pending
 integrated_at: 2026-06-07T071941Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 17cdafe9d9515c72045691b07420fbdfa25af81a
 integration_notes: "cycle-122 D7. Applied clean. GMG preconditioner column promoted rough-in→FIRM at L4+L1 (feature_root: seed KEPT) + faithful depends-on(composes)→reference re-type of L3/chebyshev + L2/jacobi-smoother iteration-views; RE1 re-stated. 0 gate hits. See reports/cycle-122-integrator-staging/STAGING.md."
 ---
 

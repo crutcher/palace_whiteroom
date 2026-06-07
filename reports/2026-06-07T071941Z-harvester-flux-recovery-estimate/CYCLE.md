@@ -11,7 +11,7 @@ inputs:
   - palace/linalg/errorestimator.hpp (class structure)
   - palace/fem/errorindicator.cpp:11-47 (ErrorIndicator::AddIndicator running-average fold)
 integrated_at: 2026-06-07T071941Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 17cdafe9d9515c72045691b07420fbdfa25af81a
 integration_notes: "cycle-122 D1. Applied clean. L1/flux_recovery_estimate landed FIRM (the ZZ flux-recovery AMR estimate verb; depends-on ksp_solve/apply_linop/nrm2); unresolved_depends_on_targets 2→1. Flat SUMMARY entry (AMR group-intro deferred to c123). 0 gate hits. See reports/cycle-122-integrator-staging/STAGING.md."
 ---
 

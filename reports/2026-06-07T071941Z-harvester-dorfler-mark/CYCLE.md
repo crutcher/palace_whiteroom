@@ -13,7 +13,7 @@ inputs:
   - abstractor:2026-06-07T054924Z-amr-estimate-mark-refine (the proposing report)
   - book/src/semantics/index.md §1.2 (named shape groups; Tensor[N] reserved for flat rank-1 vectors)
 integrated_at: 2026-06-07T071941Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 17cdafe9d9515c72045691b07420fbdfa25af81a
 integration_notes: "cycle-122 D2 (FINAL report). Applied clean. L1/dorfler_mark landed FIRM; unresolved_depends_on_targets 1→0; FIRED the amr-estimate-mark-refine theme firm-flip rough-in→firm (both L1 endpoints firm). Flat SUMMARY entry (AMR group-intro deferred to c123). 0 gate hits. See reports/cycle-122-integrator-staging/STAGING.md."
 ---
 
