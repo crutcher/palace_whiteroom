@@ -127,6 +127,43 @@ e ::= x                                      -- variable
 
 A `do`-block statement `s` is either `x ← e` (monadic bind), `let x = e` (pure binding), or just `e` (side-effect-only call returning `Sim ()`).
 
+#### 1.3.1 Closure-returning signatures (the calculus is high-order)
+
+L4 is a **high-order calculus**: a function/operator signature's domain *and* codomain may themselves be function types (the `τ₁ → τ₂` and `Op[τ_in → τ_out]` type formers of §1.1). A constructor whose *intended use is to yield a closure* — a value that is **applied later**, not a fully-evaluated result — must make that higher-order intent **syntactically explicit**, so the closure codomain is not misread as the final argument of a still-curried call.
+
+- **The paren-grouping convention.** When a signature's codomain is a closure (its intended use is to be applied later), **group the closure sub-signature in parens**:
+
+  ```text
+  example :: foo -> (bar -> baz)
+  ```
+
+  reads "`example` takes a `foo` and **returns a closure** `bar -> baz`" — the result of `example x` is *itself a function* awaiting a `bar`. This is **deliberately distinct** from the un-parenthesized
+
+  ```text
+  example :: foo -> bar -> baz
+  ```
+
+  which — although `->` associates right, so the two are the *same type* — by convention signals an ordinary **fully-curried** call: a two-argument function whose intended use is `example x y : baz`. The parens are a **reader-intent marker**, not a type-theoretic change: they say *"the codomain here is a closure you hold and apply, not the last operand of a multi-arg call."* Use them whenever a constructor's product is a function to be applied later (operator constructors, partial-application factories, continuation-returning steps).
+
+- **Bare closure type vs the operator-VALUE spelling — reconciling with `Op[τ_in → τ_out]`.** The calculus has two spellings for "returns something applied later," and they are NOT interchangeable:
+
+  | Form | Meaning | Use when |
+  |---|---|---|
+  | `... -> (τ_in -> τ_out)` | the **general closure type** — a bare function value, applied directly by juxtaposition `(g x)` | the returned value is a *plain function* with no closed-over operator-parameter state worth naming, applied directly |
+  | `... -> Op[τ_in → τ_out]` | the **operator-VALUE spelling** (§1.1 `Op[_]` type) — a closure-with-closed-params + body lambda, applied via the `apply` term (§3.5) | the returned value is a **named operator** carrying closed-over `!`-shareable parameters (matrix/basis/geometry tables, factorizations) — an *operator instance* in the §2 ownership sense, applied `apply A v` |
+
+  `Op[τ_in → τ_out]` is the **specialization** of the bare closure type `(τ_in -> τ_out)` for the second ownership category of §2 (*operator internal parameters*): an `Op` value's closed-over data is `!`-tagged by construction and is read-only across a solve, and it is eliminated by `apply` (§3.5) rather than by bare juxtaposition. Prefer `Op[…]` whenever the returned closure is an operator instance with closed params (the matrix-free FE operator, a preconditioner, a constructed step); reserve the bare `(τ_in -> τ_out)` for a genuinely plain returned function (e.g. a predicate or a continuation with no operator-parameter closure). Both forms benefit from the same paren-grouping habit; for `Op[…]` the brackets already group the in/out arrow, so the codomain is unambiguous without outer parens — `mk :: A -> B -> Op[X → Y]` already reads "returns an operator."
+
+- **Term-level form of an operator value (resolves the §Working-Notes operator-body gap).** An `Op[τ_in → τ_out]` value is, at the term level, a closure pairing its **closed-over parameters** with a **body lambda** over the run-time argument:
+
+  ```text
+  op-with-params { p₁ = e₁, …, pₖ = eₖ ; λ(x: τ_in). e_body }   : Op[τ_in → τ_out]
+  ```
+
+  i.e. a record of closed-over (`!`-shareable) params `pᵢ` together with a body abstraction `λ(x: τ_in). e_body` of type `τ_in → τ_out` that may reference both `x` and the `pᵢ`. Its eliminator is the operator-application rule of §3.5: `apply (op-with-params p, λx. e) v → e[p/params, v/x]`. (The two halves — the closed params and the body lambda — are exactly the `op-with-params p` and `λx.e` already named in the §3.5 reduction; this subsection names the *introduction* form to match the existing elimination form.)
+
+This is a **reader-intent / introduction-form convention**, not a calculus extension — it is the higher-order sibling of §1.2.1 (which makes shape congruence visibly rank-agnostic). Functional-unit entries that return a closure cite + link here; they do not restate the rule.
+
 ## 2. Ownership categories
 
 The calculus distinguishes **three categories of value** at the syntactic level. This is the core of "ownership and update-operation extraction":
@@ -491,7 +528,7 @@ The CG slice's v0.1 push-back ("residual-norm logging forces a Writer effect") i
 
 - `iterate_while` formalized in §3.7 with small-step semantics (standard fixed-point unfolding).
 - `broadcast_to` added to the primitive signatures in §4.1.
-- Operator constructors written as curried functions returning `Op[τ_in → τ_out]`: e.g., `Bgk :: !LbmTables → Scalar → Op[…]`. This isn't a calculus extension, just a convention surfaced by the v0.2 example.
+- Operator constructors written as curried functions returning `Op[τ_in → τ_out]`: e.g., `Bgk :: !LbmTables → Scalar → Op[…]`. Not a calculus extension — a reader-intent **convention** for the high-order codomain. **Promoted to a stated convention in §1.3.1** (user directive 2026-06-07): closure-returning signatures group the closure codomain (`foo -> (bar -> baz)`), and the operator-VALUE spelling `Op[τ_in → τ_out]` is the §2-ownership specialization of the bare closure type for operator instances.
 
 ## 8. Remaining open questions
 
@@ -515,5 +552,5 @@ The CG slice's v0.1 push-back ("residual-norm logging forces a Writer effect") i
 - Shape-solving formalization deferred.
 - The `iterate_while` semantics are total only when the predicate is eventually false — algorithmic correctness obligation on the slice that uses the loop, not enforced by the calculus.
 - `runSim :: Sim S α → S → S` is named as the state-only eliminator but not formally defined. Will be tightened when an orchestration-level use (multi-stage simulation, file I/O) actually surfaces — purely algorithmic slices don't force it.
-- An operator's body `Op[τ_in → τ_out]` is described informally as "closure with params + body lambda" but not given an explicit term-level form in §1.3. Tighten when needed — possibly `Op { params; \x. e }` or similar.
+- ~~An operator's body `Op[τ_in → τ_out]` is described informally as "closure with params + body lambda" but not given an explicit term-level form in §1.3.~~ **RESOLVED (§1.3.1, user directive 2026-06-07):** the operator-value introduction form is `op-with-params { p₁ = e₁, … ; λ(x: τ_in). e_body } : Op[τ_in → τ_out]` — a record of closed-over `!`-params paired with the body lambda, eliminated by the §3.5 `apply` rule. §1.3.1 also states the closure-codomain paren-grouping convention (`foo -> (bar -> baz)`) and the bare-closure-vs-`Op`-value distinction.
 - The §3.8 pruning rule is stated for operator outputs at the binding level; its effect on operator-internal sub-expressions ("standard graph DCE") is implicit. Pin formally when needed.

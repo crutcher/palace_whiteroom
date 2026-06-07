@@ -50,8 +50,10 @@ At L4 the matrix-free operator is the composition (Haskell-style; the strawman
 `book/src/semantics/index.md` notation):
 
     -- input  = an FE space, a weak-form term (Q, 𝒟), and the precomputed geometry factors
-    -- output = a LinearOperator whose `apply` is the un-materialized contraction graph
-    matrix_free_operator :: FESpace -> WeakFormTerm -> GeomFactors -> LinearOperator (Tensor[(N: ...)])
+    -- output = an `Op` value (operator instance) whose `apply` is the un-materialized contraction graph;
+    --          the codomain uses the operator-VALUE spelling `Op[τ_in → τ_out]` per the closure-returning-signature
+    --          convention (`book/src/semantics/index.md` §1.3.1) — a constructor product carrying closed-over params, applied via `apply`
+    matrix_free_operator :: FESpace -> WeakFormTerm -> GeomFactors -> Op[Tensor[(N: ...)] → Tensor[(N: ...)]]
     matrix_free_operator space term geom =
       mk_matrix_free_operator space term geom        -- (1) the constructor cap ── L4/mk_matrix_free_operator (firm)
       -- whose apply runs the firm L2 contraction-chain combinator:

@@ -206,20 +206,24 @@ master assembler field-wiring (restriction → basis → QFunction → basis →
 element-additivity of the scatter-add) are syntactic-identity / structural facts on that positive
 source, not reconstructed from negative anchors.
 
-## Speculative higher (L4) placeholder (rough-in, for a later harvester)
+## Higher (L4) — firm
 
-At L4 this combinator would surface as a **matrix-free linear-operator constructor** in the
-backend-lowering feature surface — the calculus form whose semantics match the burn/GPU tensor-
-contraction backend directly (`project_l4_is_backend_lowering_target`). Rough sketch (NOT authored
-this cycle — placeholder for a later harvester / L4-completeness capstone):
+At L4 this combinator's action is the **apply** of a now-firm matrix-free linear-operator constructor
+in the backend-lowering feature surface — the calculus form whose semantics match the burn/GPU tensor-
+contraction backend directly (`project_l4_is_backend_lowering_target`). The L4 surface landed firm in
+cycle-127:
 
-    mk_matrix_free_operator
-      :: FESpace -> WeakFormTerm -> GeomFactors -> LinearOperator (Tensor[(N: ...)])
-
-with the apply lowering to the L4 tensor-contraction graph `Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G` over the
-element-local axes. This is the L4 backend-lowering entry point for matrix-free assembly; it is the
-remaining ASK-2 "A" depth (matrix-free assembly fused with `fe_assemble`'s term-fold at L4) flagged as
-a c126 / batch-41 candidate. Left as a §Open-questions placeholder, not a chapter, this cycle.
+- [`L4/mk_matrix_free_operator`](../L4/mk_matrix_free_operator.md) (firm) — the **operator-constructor**
+  whose action this L2 combinator IS. Signature
+  `mk_matrix_free_operator :: FESpace -> WeakFormTerm -> GeomFactors -> Op[Tensor[(N: ...)] → Tensor[(N: ...)]]`;
+  its `apply` runs the element-local tensor-contraction chain `Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G` — i.e. this
+  combinator — over the element-local axes.
+- [`feature/matrix-free-operator.L4`](../feature/matrix-free-operator.L4.md) (firm) — the L4
+  backend-lowering feature-surface column for matrix-free FE operators (the assemble-side
+  composition-root).
+- [`L4-L3/mk-matrix-free-operator-dissolution`](../L4-L3/mk-matrix-free-operator-dissolution.md) (firm)
+  — the dissolution theme whose RHS composes this combinator (the flat-`Tensor[(N: ...)]` black-box
+  apply → the five-stage element-local rank-tensor contraction sweep).
 
 ## Verified-against
 
