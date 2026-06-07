@@ -1,4 +1,71 @@
 ---
+agent: layer-intro-author
+invoked_at: 2026-06-07T230615Z
+scope: synthesis/drivers library body (the deferred 6th Synthesis chapter — the topological-LAST library)
+status: pending
+integrated_at: 2026-06-07T231500Z
+integration_commit: PLACEHOLDER_SHA
+integration_notes: |
+  cycle-137 (batch-44 position 2/3). Applied clean by integrator-per-report (STAGING row 1).
+  Filled synthesis/drivers.md stub-shell -> rendered implementation VIEW (13 composition defs:
+  6 sim drivers + 6 output products + lifecycle ROOT; + 6 IoData-projection-view config type
+  aliases) + 2 synthesis/index.md edits (drivers matrix row + Status completeness line).
+  COMPLETES the `# Synthesis` Part 6/6. Finalize NORMALIZED the index 5-library matrix
+  (iteration/data-algebra/coordination rows stale `stub (Wave 2)` -> `navigational (rendered)`).
+  cargo make book EXIT 0, ZERO build-repairs; step-5c KaTeX `$`-sigil assertion PASS; graded-stack
+  rank_violations=0, no newly-orphaned node, all 6 synthesis chapters classify
+  expected_unreachable_outside_dag (NOT detritus).
+---
+
+# CYCLE: Synthesis `drivers` library body
+
+## Summary
+
+Fills the deferred `drivers` library body in `book/src/synthesis/drivers.md` — the topological-LAST Synthesis chapter, the LEAD of cycle-137 (batch-44). It RENDERS the entry-point surfaces lifted from the firm Feature L4 spine as synthesized library code that **composes** the already-rendered calculus libraries (`types` / `iteration` / `data-algebra` / `coordination`) BY NAME. In topological order: (1) the per-driver config records (rendered as `IoData` projection-views, clustered with their utility API before each driver, back-linked to `concepts/config-record.md` — NO field-schema restatement); (2) the **5 sim-driver composition defs** (`electrostatic` / `magnetostatic` / `driven` / `transient` / `eigenmode`) + the **6th boundary-mode driver**; (3) the **6 output-product composition defs** (`capacitance` / `inductance` / `sparameters` / `eigenfrequency_qfactor` / `energy_fields` / `waveguide_mode`) composing the c136-rendered reduce verbs by name; (4) the **lifecycle ROOT** LAST (the spine-ROOT meta-feature, dispatching on `problem.type` over the 6 driver defs, folding the AMR estimate-mark-refine schedule via `fold_solve`).
+
+The chapter is flipped off `status: stub` to the c136-normalized filled-implementation-VIEW convention (NO `status:` field — kind-only `navigational-container`, no `rank:`; verified against `types.md`/`coordination.md`/`data-algebra.md` frontmatter, all of which carry no `status:` field). It is an implementation VIEW: `reference`-class navigational edges ONLY, no `depends-on`; link-don't-restate (renders the synthesized code form, back-links to `feature/`/`L4`/`semantics` for the authoritative compositional + algebraic claims). All `$`-sigil pseudocode is inside ` ```text ` fences (the KaTeX `$`-sigil-fence rule); the outer proposed-changes fence below is 4 backticks (the c136 cycle-019 nested-fence truncation-hazard fix).
+
+This completes the `# Synthesis` Part: **6/6 library chapters bodied.**
+
+## Proposed changes
+
+One edit MERGING-WITH the existing `drivers.md` stub shell: keep the chapter's orientation intent, replace the `status: stub` frontmatter + the stub body with the rendered composition defs + the filled-VIEW frontmatter/intro.
+
+````edit:book/src/synthesis/drivers.md
+[old]:
+---
+status: stub
+kind: navigational-container (synthesis library — drivers; body deferred to a later batch-44 cycle)
+# Intro shell. No `rank:` — implementation VIEW, reference-class links only.
+edges:
+  reference:
+    - feature/index
+    - feature/lifecycle.L4
+    - synthesis/types
+    - synthesis/iteration
+    - synthesis/data-algebra
+    - synthesis/coordination
+    - synthesis/index
+---
+
+# Library `drivers` — entry-point surfaces (lifted from the Feature spine)
+
+> **Status: `stub`.** This is the library intro shell; the body is **deferred to a later batch-44 cycle**. Per the directive's LEAD-sequencing, `drivers` composes everything (the calculus libraries + the shared types) and therefore comes **last** in topological order — it is authored after the 3 calculus libraries' def bodies land.
+
+The top bracket of the [Synthesis](./index.md) library partition: the synthesized rendering of the entry-point surfaces — the **5 simulation drivers** (electrostatic / magnetostatic / driven / transient / eigenmode), the **lifecycle ROOT** (`main` → `BaseSolver` dispatch), and the **output products** (capacitance / inductance / S-parameters / eigenfrequency+Q / energy-fields / waveguide-mode) — rendered as library code that **composes** the [`types`](./types.md), [`iteration`](./iteration.md), [`data-algebra`](./data-algebra.md), and [`coordination`](./coordination.md) libraries.
+
+These are the same composition roots the [Feature surfaces](../feature/index.md) spine presents top-down; the `drivers` library is the **implementation rendering** of those entry points (the synthesized code that realizes them), parallel to the Feature spine's entry-point VIEW.
+
+## What this library will hold (topological order — composes everything below it)
+
+The expected contents (refine by use): the per-driver config records cluster **before** their driver def, bundled with the config's utility API ([type-placement rule](./index.md#type-placement--cluster-a-type-with-its-api-group)); then the per-driver composition def; then the output-product reductions; finally the lifecycle ROOT that dispatches on `IoData.problem.type`. Authoring is deferred so the def bodies compose the already-rendered calculus-library defs by name.
+
+## Rendering conventions
+
+Per the [Synthesis overview](./index.md#rendering-conventions): topological def order (this library is topologically last); per-driver config records placed before their driver, bundled with utility API; deep-linked-unchanged lower artifacts inline; Haskell `where` for private helpers; code-doc per def; link to the Feature columns + the composed calculus-library defs, do not re-cite L0.
+
+[new]:
+---
 kind: navigational-container (synthesis library — drivers; entry-point composition defs rendered)
 # Implementation VIEW, reference-class links only. No `rank:`, no `status:` — this
 # is the filled implementation-VIEW convention the c136 finalize normalized the
@@ -361,3 +428,37 @@ The per-driver dispatch is over the driver defs rendered above (references, the 
 ## Status
 
 `navigational-container` (rendered library chapter — the filled implementation-VIEW convention: no `status:` field, no `rank:`, the same convention the c136 finalize normalized `types`/`iteration`/`data-algebra`/`coordination` to). Holds the synthesized composition defs of the 6 sim drivers + 6 output products + the lifecycle ROOT (topologically last), each composing the already-rendered calculus-library defs ([`types`](./types.md) / [`iteration`](./iteration.md) / [`data-algebra`](./data-algebra.md) / [`coordination`](./coordination.md)) BY NAME and lifting the composition from the firm Feature L4 columns. The compositional claims live in the linked [`../feature/<column>.L4.md`](../feature/index.md) chapters; the per-op algebra lives in the [`../L4/<op>.md`](../L4/index.md) chapters; this chapter LINKS to both and renders only the synthesized code form (link-don't-restate, semantic-consolidation). `reference`-class navigational edges only — it adds no `depends-on` blocking edge and constrains no firm node's rank/liveness. With this body landed, the `# Synthesis` Part is complete: **6/6 library chapters bodied.**
+````
+
+## Supporting evidence
+
+- **Feature L4 composition roots lifted from** (all firm, all on-disk, read this dispatch): `book/src/feature/{electrostatic,magnetostatic,driven,transient,eigenmode,boundary-mode}.L4.md` (the 6 drivers); `book/src/feature/{capacitance,inductance,sparameters,eigenfrequency-qfactor,energy-fields,waveguide-mode}.L4.md` (the 6 output products); `book/src/feature/lifecycle.L4.md` (the spine ROOT). Each rendered def's composition (the `-- (1)/(2)/(3)` stages + the constituent down-link table) is transcribed faithfully from its column's "## The composition" block.
+- **Calculus-library defs composed BY NAME** (rendered c136, on-disk): from `book/src/synthesis/data-algebra.md` — `fe_assemble` (`fe_assemble :: FiniteElementSpace[N] -> [WeakFormTerm] -> LinOp[(N: ...), $N]`), `assemble_frequency_operator` (+ the `FrequencyOperatorFamily[N]` record), `gram_reduce` (`gram_reduce k xs w`, with the `w` weight closure the capacitance/inductance specializations supply), `sparameter_reduce` (`sparameter_reduce ports family`), `eigenfreq_qfactor_reduce` (`eigenfreq_qfactor_reduce ptype kappa eigs`), `domain_energy_reduce` (`domain_energy_reduce doms field e_total`), `waveguide_mode_reduce` (`waveguide_mode_reduce res w`); from `book/src/synthesis/coordination.md` — `ksp_solve`, `eigsolve` (with the `#extern eigen_iterate` SLEPc loop), `solve_family` (`solve_family op rhss = map (ksp_solve op) rhss`), `frequency_sweep`, `fold_solve` (with the `#extern time_step_op` MFEM ODESolver step); from `book/src/synthesis/types.md` — `IoData`.
+- **Per-driver config-record homing:** the per-driver config records (`ElectrostaticConfig` etc.) are **projections of the one `IoData`**, authoritatively defined in `book/src/concepts/config-record.md:107-126` ("There is ONE IoData type; the per-driver config records are projections of it" + the per-driver projection table). Rendered here as type aliases over `IoData` with the projection accessor as the utility API — NOT a field-schema restatement (record-definition obligation satisfied: the schema lives once, in `config-record.md`; this is a use-site projection-view). No new record needs a definition home — all 6 are projection-views of the already-homed `IoData`.
+- **Status-convention verification:** read `book/src/synthesis/{types,coordination,data-algebra}.md` frontmatter — `types.md` carries `kind: navigational-container ... ` with NO `status:` field; `data-algebra.md` / `coordination.md` likewise carry `kind:`-only frontmatter (their `> **Status: \`seed\`**` body banners are a c136 residual the finalize normalization left in the body, NOT the frontmatter convention). The drivers frontmatter is flipped to the matching no-`status:` filled-VIEW convention (resolves the `drivers` arm of OQ `synthesis-coordination-chapter-status-seed-token-reconciliation-c136`).
+- **SUMMARY:** `book/src/SUMMARY.md:16` already carries the `drivers` row (`Library — drivers (entry-point surfaces)`) — no SUMMARY edit needed (the c136 shell wired it).
+- **Index-cell flip:** `book/src/synthesis/index.md:40` carries the 5-library partition matrix with the `drivers` row Status cell = `stub (deferred)`. This dispatch flips that cell to `navigational (rendered)` (matching the other rendered libraries' cells) — see the second edit below.
+
+````edit:book/src/synthesis/index.md
+[old]:
+| [`drivers`](./drivers.md) | (lifted from [Feature surfaces](../feature/index.md)) | the entry-point surfaces — 5 sim drivers + lifecycle ROOT + output products — composing the calculus libraries | stub (deferred) |
+[new]:
+| [`drivers`](./drivers.md) | (lifted from [Feature surfaces](../feature/index.md)) | the entry-point surfaces — 6 sim drivers + 6 output products + lifecycle ROOT — composing the calculus libraries | navigational (rendered) |
+````
+
+Also flip the §Status line of `index.md` (the per-library completeness note) so it no longer calls `drivers` `stub`:
+
+````edit:book/src/synthesis/index.md
+[old]:
+`navigational-container` (Part index). This page makes no resolution claim — it is the orientation + dep-map for the Synthesis implementation VIEW. The per-library chapters carry their own status (`types` rendered; `iteration` / `data-algebra` / `coordination` / `drivers` `stub` pending Wave-2 def rendering).
+[new]:
+`navigational-container` (Part index). This page makes no resolution claim — it is the orientation + dep-map for the Synthesis implementation VIEW. All six per-library chapters are now rendered (the filled implementation-VIEW convention: `kind`-only frontmatter, no `status:`/`rank:`) — `types` + the three calculus libraries (`iteration` / `data-algebra` / `coordination`) + the topologically-last `drivers` library (cycle-137). The `# Synthesis` Part is complete: 6/6 library chapters bodied.
+````
+
+## Open questions / caveats
+
+- **`record-WaveguideModeTable` / `record-DomainData` already homed.** `WaveguideModeTable` is named in the `waveguide_mode` signature; it has a `concepts/WaveguideModeTable.md` home (≥2-consumer, promoted c118 D6) — back-linked, not restated. `DomainData` (named in `energy_fields`) is a single-consumer in-chapter record (`feature/energy-fields.L4.md §Record definition`) flagged OQ `record-DomainData-needs-definition-home` for cross-cutter re-check; this Synthesis render does NOT create a 2nd consumer requiring promotion (it composes `domain_energy_reduce` whose result element is `DomainData` — the same single authoritative consumer surface). No new record-definition flag from this dispatch.
+- **`build_mesh` / `estimate_mark_refine` / AMR leaf rendered by reference, not as filled defs.** The lifecycle ROOT composes `build_mesh` (`L1/build_mesh`, firm — a mesh scaffold, not an L4 calculus op, so it has no synthesized calculus-library def) and the AMR `estimate_mark_refine` leaf (in active scope per DIRECTIVE-2 but with NO synthesized impl rendered — AMR's constructive impl is not a Synthesis deliverable this batch). Both are composed by reference (named in the `lifecycle` def + its `where` block) rather than fabricating a def, per the directive's `#extern`/deep-link discipline (a non-rendered constituent is named, not invented). If a future cycle renders the AMR estimate-mark-refine impl (a `library` def, likely in a future `coordination`/`drivers` extension), the `fold_solve_amr` `where`-helper here should compose it by name. Flag: `synthesis-lifecycle-amr-estimate-mark-refine-rendered-by-reference` — surfaced for the batch-44 meta / a future AMR-impl cycle; NOT blocking (the lifecycle ROOT's compositional claim is the AMR fold over driver dispatch, which IS rendered; the AMR leaf's *internal* impl is a separate future deliverable).
+- **`#extern` boundaries are in the calculus libraries, composed here by reference.** The two opaque-kernel `#extern` leaves the drivers touch — `time_step_op` (MFEM ODESolver, under `fold_solve` in `coordination.md`) and `eigen_iterate` (SLEPc EPS loop, under `eigsolve` in `coordination.md`) — are rendered `#extern` in `coordination.md` and composed here by reference (the `transient`/`eigenmode`/`boundary_mode` defs name `fold_solve`/`eigsolve`, which carry the `#extern` internally). The drivers library renders NO new `#extern` (correct — the kernel boundaries belong to the operators that own them, not the composition roots). No kernel-API/impl gap from this dispatch.
+- **Per-driver config records as `IoData` projection-views — a deliberate clean-room rendering choice.** I rendered the six per-driver config records (`ElectrostaticConfig` etc.) as `type X = IoData` projection aliases with the projection accessor as the utility API, per `config-record.md:107` ("the per-driver config records are projections of [the one IoData]"). This is the faithful synthesized form (one parsed config, several driver views) and satisfies the type-placement rule (clustered before the driver group, bundled with the projection utility API). An alternative rendering — distinct narrowed record types per driver — was rejected because it would invent a data shape the spec does not carry (the spec is explicit there is ONE `IoData`); the projection-view is the non-over-structured choice. Flag for the lowering-verifier / meta if a future use wants the narrowed-record form, but the projection-view matches the authoritative `config-record.md` framing.
+- **Single-file LEAD sizing — landed as one dispatch.** The plan flagged the ~13-def single-file render as a potential token-budget split candidate. It rendered cleanly in one pass (the defs are short compositions of already-rendered firm vocabulary, the layer-intro-author's wheelhouse). No sub-split needed; no token-budget pressure to escalate.
