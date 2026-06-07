@@ -1909,3 +1909,72 @@ The batch-39 new-intake (lines ~1556-1859 above) is the verbose trail of the lif
 - `flux-recovery-estimate-flux-channel-axis-vs-separate-verbs` + `flux-projector-constructed-operator-gate-vs-absorbed` + `amr-refine-obstruction-sub-kind-precedent` — AMR formalization details (settled at the firm flux_recovery_estimate harvest: flux-channel variant axis; FluxProjector absorbed; refine = permanent obstruction, NOT a kernel-api/impl candidate). *Trigger:* a lowering-verifier AMR-corpus pass.
 - `eigsolve-arpack-ido99-break-range-carry-forward` — non-load-bearing citation anchor nit `arpack.cpp:330-333`→`:331-334` in `L3/eigsolve.md` §Evidence. *Trigger:* an opportunistic lifter/integrator carry-forward touch.
 - `multigrid-relaxation-smoother-outer-sweep-l3-partial-obstruction-home` (line ~1615) + `multigrid-relaxation-smoother-index-tally-kernel-impl-count` + `geometric-multigrid-preconditioner-rough-in-promotion-smoother-leg-gated` + `geometric-multigrid-smoother-leg-edge-target-l3-vs-l4-chebyshev` + `geometric-multigrid-additional-driver-agnostic-consumers-hcurl-errorestimator` + `interpolator-backward-reference-note-redundant-after-ground` — GMG/smoother low-priority hygiene/refinement cohort (the column firmed c122; the L3 partial-obstruction smoother-sweep home is the krylov-iteration/L3-iteration-view territory). *Trigger:* an opportunistic layer-intro-author/lifter GMG-cohort touch.
+
+## nleps-deflated-eigensolve-nev-config-vs-runtime-loop-bound-split
+
+opened_at: cycle-124
+opened_by: harvester (D1, nleps-deflated-eigensolve consumer)
+
+`NepControl.nev` is recorded in the `nleps-deflated-eigensolve` chapter's record-definition as a construction-time config field, but it is also **run-time-mutated** — `QuasiNewtonSolver::Solve` increments `nev` on out-of-range converged pairs (`palace/linalg/nleps.cpp:630`). The convergence-target variant axis notes the mutation. A future refiner may split it into a config field + a run-time loop-bound carrier if the distinction proves load-bearing for a downstream NEP consumer. *Trigger:* a 2nd NEP/deflation consumer, or the chapter's promotion off `roadmap_goal`.
+
+## nleps-deflate-gram-typed-frontmatter-edge-on-deflate-chapter
+
+opened_at: cycle-124
+opened_by: harvester (D1, nleps-deflated-eigensolve consumer)
+
+RE3's "faithful `deflate → L2/gram` edge" is satisfied here by the `nleps-deflated-eigensolve` consumer naming BOTH `deflate` and `gram` as direct `depends-on (composes)` constituents (the consumer surfaces the edge as reachable through a built consumer). `L2/deflate.md` / `L2/gram.md` are prose-only chapters carrying their typed-edge content in the L2 index dep-map (`L2/index.md:123`, `deflate.md:282-284`), NOT in YAML frontmatter `edges:` blocks. If the meta-phase later wants the `deflate → gram` edge as a typed frontmatter edge on `deflate.md` itself (for a frontmatter-edge-graph linter), that is a separate `deflate`-chapter dispatch (out of the one-operator consumer scope — the D1 harvester did not modify the `deflate` chapter). *Trigger:* a meta-phase frontmatter-edge-graph completeness pass, or a graded-stack-lint that reads frontmatter edges from `deflate.md`.
+
+## batch-37-era-stale-design-l4-calculus-path-drift-sweep
+
+opened_at: cycle-124
+opened_by: harvester (D4, element_restrict + geom_factor_build)
+
+The batch-37 semantic-surface move (`book/src/design/l4_calculus.md` → `book/src/semantics/index.md`) was applied via a c116 substring rewrite that reached files extant at that time, but **batch-37-era files authored as roadmap_goals around the same window still carry the ORIGINAL stale `book/src/design/l4_calculus.md §1.2.1` citation path** (distinct from the `ambiguous-bare-index-md-prose-refs-after-semantic-surface-move` cohort, which is about the c116 rewrite's `index.md:NNN` bare-basename residue). The four libceed-substrate chapters are the CONFIRMED instances: `basis_apply` / `quad_point_contract` (fixed cycle-124 D3) and `element_restrict` / `geom_factor_build` (fixed cycle-124 D4 — this report) had the stale `design/l4_calculus.md §1.2.1` path on-disk and were re-pointed to the live `semantics/index.md §1.2.1` on touch. Other batch-37-era files may carry the same stale path. *Trigger:* a meta-phase semantic-surface drift sweep — `grep -rn 'design/l4_calculus' book/src` to enumerate any remaining instances and re-point them. Bundle candidate with the c116 prose-ref-normalize cohort (line ~1564) — same semantic-surface-move citation-drift family.
+
+## libceed-substrate-rough-in-to-firm-flip-and-45-to-47-tally-followup
+opened_at: cycle-124
+opened_by: layer-intro-author (D5, concepts/element-local-tensor + kernel-impl promotion)
+
+The cycle-124 substrate-cohort wave landed the firm shape home `concepts/element-local-tensor.md` (D5, `rank: firm`) and the two D4 substrate ops `element_restrict` + `geom_factor_build` at `rough-in` *capped on that shape home* (a rough-in op may rest on a to-be-firm dep; a firm op may not). The shape home IS firm on disk now, so by the §(h) well-foundedness rule (an entry is at most as resolved as its least-resolved dep) the rough-in cap on those two has RISEN to firm — they qualify for a `rough-in → firm` flip (each is firm-on-positive-structure: syntactic gather/scatter-add + setup-stratum-purity identities on positive libCEED source). Once both firm, the consumer `libceed-quadrature-kernel-impl` (rough-in, capped at `min(deps)`) re-caps to firm (its laws are syntactic-identity composition facts on the positively-read `AssembleCeedOperator` pipeline). **Tally consequence:** the L1/index firm grand-total rises 45 → 47 and the libCEED-substrate sub-spine count 2 → 4. *Action (c125, layer-intro-author/harvester + the integrator's cross-report rank-propagation):* flip the two D4 ops + the kernel-impl rough-in → firm and bump the L1/index consolidated tally 45 → 47 (sub-spine 2 → 4). This wave deliberately did NOT do the flip (those two were rough-in on-disk at D5 apply time — the cap-rises-to-firm is a *consequence* of D5 landing, applied next cycle, not retroactively within D5's own apply). Source: `reports/2026-06-07T112037Z-layer-intro-author-element-local-tensor/CYCLE.md` §Open-questions caveat 1.
+
+## inner-product-family-re-style-elimination-candidate
+
+opened_at: cycle-124
+opened_by: combinator-miner (D6, RE6 axpy/scal arity-leaf elimination)
+
+RE6 (cycle-124 D6) ELIMINATED the 8 `linear_combination` arity-leaf nodes (`L2/L3 × {scal,axpy,axpby,axpbypcz}`) off-spine — folding their unique L0 anchors into the combinator's §Arity specializations and deleting the standalone chapters. The **over-unification guard** deliberately left the `inner_product`-family siblings (`dot` Hermitian/symmetric specialization + `nrm2` `√∘abs∘inner_product` consumer) standalone at both L2 and L3 — they reduce-to-`Scalar` (a DIFFERENT fold, different codomain + combining step), correctly OUT of RE6 scope. **Candidate:** a future `inner_product`-family RE-style refactor — the `dot`/`nrm2` analog of RE6 — could eliminate the `dot`/`nrm2` standalone nodes the same way (fold their unique L0 anchors into `inner_product`'s §Specializations, delete the standalone chapters, re-point inbound links). It is NOT RE6 and was NOT proposed by D6. The `dot`/`nrm2` standalone nodes survive in the L2 "Fold-family specialization / consumer stubs" group + the L3 "BLAS-1 vocabulary" group; both groups remain non-empty after RE6 (each keeps `dot`/`nrm2`; L3 also keeps `inner_product`/`linear_combination`). The do-NOT-merge `dot`/`nrm2` boundary (codomain/fold distinction load-bearing — `dot-l2-leaf-floor-vs-fold-only-design`) means any such refactor must preserve the consumer-not-member status of `nrm2`. *Trigger:* a planner/combinator-miner decision to run the `inner_product`-family analog of RE6, ranked by fan-out against the remaining frontier. Source: `reports/2026-06-07T112037Z-combinator-miner-re6-arity-refactor/CYCLE.md` §Open-questions caveat 2 + §Proposed-combinator over-unification guard.
+
+## interpolator-backward-reference-note-trim-target-unidentified
+
+opened_at: cycle-124
+opened_by: layer-intro-author (D7, cheap-hygiene bundle) — promoted by integrator-per-report
+
+The cycle-124 D7 scope listed "+ the interpolator backward-reference-note trim (item-5)" but
+neither priorities.md item-5 nor the c123-D3 report names a SPECIFIC backward-reference note in
+`book/src/L1/interpolator.md` to trim. The D7 agent read the interpolator file in full and found
+its references are all faithful forward-consumer notes (`divfree-projector`, `apply_linop`,
+`fe_space`, the GSLIB obstruction sub-note) — none reads as a stale "backward-reference note"
+needing trimming; the c123 re10-interpolator-ground dispatch GROUNDED two inbound `depends-on`
+edges (divfree / waveguide_mode_reduce → interpolator), which is the OPPOSITE of a trim. The agent
+correctly DECLINED to invent a trim against an unspecified target (an invented trim would be
+unverifiable). **Action for the next planner / meta:** specify the exact `file:line` of the
+backward-reference note to trim in `L1/interpolator.md`, OR confirm the item is stale/moot and
+close it. Do NOT re-dispatch the trim without a concrete target. Source:
+`reports/2026-06-07T112037Z-layer-intro-author-gmg-hygiene/CYCLE.md` §Open-questions caveat 2.
+
+## d7-ido99-citation-plan-path-correction-disposition
+
+opened_at: cycle-124
+opened_by: layer-intro-author (D7) — recorded by integrator-per-report (informational, resolved)
+
+INFORMATIONAL (resolved at integration — recorded so finalize/meta see the plan-path drift). The
+cycle-124 D7 plan named `book/src/L1/eigsolve.md` as the home of the ARPACK ido-99 `:330-333`
+citation drift, but that file has NO ido-99 citation. The stale `:330-333` actually lived at three
+real homes: `book/src/L3/eigsolve.md:94`, `book/src/L3/eigsolve.md:221`, and
+`book/src/L3-L2/eigsolve-opaque-eigen-iteration.md:188`. The D7 agent relocated the correction to
+the real homes rather than force-fitting onto the wrong path; the integrator applied the
+`:330-333`→`:331-334` fix at all three correct homes (verified on-disk against
+`reference/palace/palace/linalg/arpack.cpp:331-334` — the `ido == 99` break clause; `:330` is the
+`ido == 2` close-brace). No residual action; the plan-path note is for the planner's path-hygiene
+record. Source: `reports/2026-06-07T112037Z-layer-intro-author-gmg-hygiene/CYCLE.md`
+§Open-questions caveat 1 + §On-disk citation verification.

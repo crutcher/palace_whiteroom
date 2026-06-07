@@ -5,12 +5,8 @@ kind: navigational-container (group intro)
 # indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
 edges:
   reference:
-    - L2/axpby
-    - L2/axpbypcz
-    - L2/axpy
     - L2/dot
     - L2/nrm2
-    - L2/scal
 ---
 
 # L2 fold-family specialization / consumer stubs
@@ -19,16 +15,12 @@ The once-standalone same-named BLAS-1 leaves, **reduced to thin specialization /
 stubs** under their fold combinators (cycle-052 vocabulary-shift-redirect refactor —
 the combinator is the entry, these are pointers up to it). Each stub **defers** all
 semantics / laws / fusion-rotation framing to its combinator and keeps only its unique
-L0 anchors + its one variant-axis row. The files are kept on disk (reduce-to-stub, not
-delete) so every inbound link stays live.
+L0 anchors + its one variant-axis row.
 
-Specialization-stubs of [`linear_combination`](./linear_combination.md) (fixed arity;
-output-aliasing is the **fold's** axis, carried by reference):
-
-- [`scal`](./scal.md) — arity-1 (`scal(α,x) = linear_combination [(α,x)]`).
-- [`axpy`](./axpy.md) — arity-2, second coefficient fixed to 1.
-- [`axpby`](./axpby.md) — arity-2, general second coefficient.
-- [`axpbypcz`](./axpbypcz.md) — arity-3 (the maximal fixed-arity L0 symbol).
+The four `linear_combination` arity members (`scal`/`axpy`/`axpby`/`axpbypcz`) were
+**eliminated cycle-124 (RE6)**, their unique L0 anchors folded into
+[`linear_combination` §Arity specializations](./linear_combination.md#arity-specializations) —
+the combinator is now the sole family entry.
 
 Specialization / consumer stubs of [`inner_product`](./inner_product.md) (do-NOT-merge —
 codomain / fold distinction load-bearing, §"Fold-cohort boundary"):
@@ -38,4 +30,4 @@ codomain / fold distinction load-bearing, §"Fold-cohort boundary"):
 - [`nrm2`](./nrm2.md) — the `√ ∘ abs ∘ inner_product` **consumer** at `y=x` (NOT a fold
   member); the `std::abs` defensive guard preserved as an explicit numerical claim.
 
-All six `firm` (specialization / consumer stubs). Chapters are alphabetical.
+Both `firm` (specialization / consumer stubs). Chapters are alphabetical.

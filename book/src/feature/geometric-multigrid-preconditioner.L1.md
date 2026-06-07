@@ -20,6 +20,7 @@ edges:
     - feature/geometric-multigrid-preconditioner.L4
     - L3/chebyshev
     - L2/jacobi-smoother
+    - L2/correction_step               # DOWNWARD annotation: each pure V-cycle per-sweep leg is the L1 realization of the L2 correction_step combinator (firm c122). NOT a depends-on — an L1 form cannot depend UP on an L2 abstraction (CLAUDE.md §"Layers are defined high→low"); reference-class navigational only.
 ---
 
 # geometric-multigrid preconditioner — L1 composition-root
@@ -82,6 +83,17 @@ is whole-tensor by signature shape at each step (the L1 mutation-rotation of the
 `R[l]`/`Y[l]` scratch vectors), but the **level recursion and the `pc_it` Richardson sweep
 are sequential obstructions** inherited from [`L3/chebyshev`](../L3/chebyshev.md) — see the
 L4 surface's §"Why this is rough-in".
+
+**Downward annotation (L1 → L2 navigational, NOT a dependency).** Each per-sweep V-cycle leg
+(pre-smooth `presmooth (bs!l) x`, the residual+prolong-add coarse-grid correction, post-smooth)
+is the L1 pure-function realization of the L2 [`correction_step`](../L2/correction_step.md)
+combinator `y + B·(x − A·y)` (firm c122): the smooth legs with `B` = the per-level point
+smoother, the coarse-grid leg with the conjugated `B = P·B'·Pᵀ` (correction_step law 6, T = P).
+This is a **downward annotation only** — NO `depends-on` edge is created (an L1 form is defined
+in L1 vocabulary and cannot depend UP on an L2 abstraction, CLAUDE.md §"Layers are defined
+high→low"); the L1 body is already well-grounded in the firm L1 primitives `axpby`/`apply_linop`
+that `correction_step` itself decomposes into. The reference is the combinator-primary
+navigational link.
 
 ## Status
 

@@ -266,7 +266,7 @@ reason `elementwise_product` is **not** on the batch-12 meta-phase leaf-vs-fold 
 **Sibling subsumption (not dependency)**:
 
 - `scal(α, x) = elementwise_product(broadcast(α, S), x)` — `elementwise_product` strictly
-  generalises [`scal`](./scal.md) (broadcast specialisation; law 7), the **inverse** of
+  generalises [`scal`](./linear_combination.md#arity-specializations) (broadcast specialisation; law 7), the **inverse** of
   `scal`'s membership in the `linear_combination` fold. The L0 surfaces are distinct (`scal`
   is `Vector::operator*=(α)` on a scalar; `elementwise_product` is
   `BaseDiagonalOperator::Mult` over two vectors); both stay as L2 siblings, not a dependency
@@ -442,7 +442,7 @@ this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified vi
   `elementwise_product` is **not** a member of (`inner_product` reduce-to-`Scalar`,
   `linear_combination` reduce-to-`Tensor[$S]`); §"Identity-in-form BLAS-1 floors" / the
   cycle-041 floor-cohort note is the precedent framing this standalone floor extends.
-- `book/src/L2/scal.md` (firm cycle-041) — the floor-cohort template; `scal` is the
+- `book/src/L2/linear_combination.md` §Arity specializations (the arity-1 `scal` readout, folded in cycle-124 RE6) — the floor-cohort template; `scal` is the
   broadcast-scalar special case `scal(α, x) = elementwise_product(broadcast(α, S), x)` (law 7,
   the inverse-fork relationship). `book/src/L2/dot.md` (firm cycle-041) — the thin
   identity-in-form floor template (leaf, laws inherited unchanged from the L1 leaf, fusion note

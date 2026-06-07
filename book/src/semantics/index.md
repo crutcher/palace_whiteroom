@@ -94,6 +94,12 @@ A linear operator whose **domain shape differs from its range shape** names *two
 
 This generalizes the rank-1 spelling `LinearOperator[M, N]` (where `M`, `N` are genuine flat dof-vector lengths) to the rank-agnostic case. At **L1/L0**, Palace operators act on flat dof-vectors and the concrete `LinearOperator[M, N]` / `Tensor[N]` rank-1 spelling is faithful — keep it there; the `LinOp[(R: ...), (D: ...)]` form is the L4/L3/L2 calculus rendering.
 
+#### 1.2.3 Named axes of fixed meaning (the element-local family)
+
+Distinct from a **congruence shape group** (§1.2.1, `(S: ...)` / `$S` — a *name for an unknown-rank run* asserting two shapes agree) is a **concrete named axis of fixed meaning**: a single letter that denotes one specific, fixed quantity, the way `Tensor[H, W, VY=3, VX=3]` (§1.2) names a height, a width, and two pinned velocity axes. A concrete named axis is NOT rank-agnostic and is NOT a back-reference — it is one axis with a fixed semantic role.
+
+The recurring concrete-named-axis family in this spec is the **element-local rank-tensor family** — the shape vocabulary of matrix-free FE operator application (the libCEED element-quadrature substrate). Its three shapes — `Tensor[(E, L)]`, `Tensor[(E, P, C)]`, `Tensor[(E, P, G)]` — are built from five fixed axes (`E` elements, `L` local-dofs-per-element, `P` quad-points, `C` value-components, `G` geometry-factor-components). The **authoritative definition home** for these axes (meaning, construction-vs-run-time stratum, the L0 libCEED layout each is read off) is the record page [`concepts/element-local-tensor`](../concepts/element-local-tensor.md) — this surface states only the *convention* (these are concrete named axes, not congruence groups), the record page owns the *definitions*, and the substrate operators (`basis_apply` / `quad_point_contract` / `element_restrict` / `geom_factor_build`) keep only their own signatures over the family. The flat global dof-axis `N` stays the genuine rank-1 `Tensor[(N: ...)]` (§1.2.1) and is NOT part of this family; the restriction `G` / `Gᵀ` is the boundary between the two.
+
 ### 1.3 Terms
 
 ```bnf

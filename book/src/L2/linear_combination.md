@@ -91,7 +91,7 @@ Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantic
   (promote all-or-none across the scalar list).
 - result — `Tensor[$S]` — same shape group `S`; `zeros[$S]` on the empty list.
 
-### Arity specializations (the family members, as notes under the combinator)
+### Arity specializations
 
 The four arity forms are list-length specializations of the combinator — **specialization
 notes, not standalone L2 chapters** (vocabulary-shift redirect). Each is the combinator at a
@@ -103,6 +103,22 @@ axpy(α, x, y)              = linear_combination [(α, x), (1, y)]      -- arity
 axpby(α, x, β, y)          = linear_combination [(α, x), (β, y)]      -- arity 2, general
 axpbypcz(α, x, β, y, γ, z) = linear_combination [(α, x), (β, y), (γ, z)] -- arity 3
 ```
+
+**Per-arity unique L0 surface** (folded in from the eliminated L2 arity-leaf chapters,
+cycle-124 RE6 refactor — the bounded-arity L0 call shapes each readout label names; the
+combinator's generic free-function-surface anchors `vector.hpp:305-316` do not pinpoint these
+at the per-arity resolution):
+
+| Arity | Readout | Unique L0 anchors (paths relative to `reference/palace/`) |
+|---|---|---|
+| 1 | `scal(α,x)` | `linalg/vector.hpp:98-99` (`ComplexVector::operator*=` decl, "Scale all entries by s."); `linalg/vector.cpp:203-227` (`operator*=` def) incl. `:207-211` (`si==0.0` real fast-path / scalar-promotion site); `linalg/vector.hpp:262-270` (`linalg::Normalize` fused `nrm2+scal` consumer). Receiver-mutating `*=` member idiom — the only family member NOT a free function. |
+| 2 (coeff-1) | `axpy(α,x,y)` | `linalg/vector.hpp:115-118` (`ComplexVector::AXPY` + `Add`/`Subtract` aliases decl); `linalg/vector.cpp:276-311` (`ComplexVector::AXPY` def + element-wise kernels); `linalg/vector.cpp:714-718` (real-α-on-complex forwarding overload — scalar-promotion sub-axis); `linalg/vector.cpp:720-724` (complex-α overload → member `ComplexVector::AXPY`). |
+| 2 (general) | `axpby(α,x,β,y)` | `linalg/vector.hpp:130-131` (`ComplexVector::AXPBY` member decl, receiver-mutating); `linalg/vector.cpp:732-737` (complex-complex specialisation → member); `linalg/vector.cpp:739-743` (real-scalar-on-complex promotion site). |
+| 3 | `axpbypcz(α,x,β,y,γ,z)` | `linalg/vector.hpp:133-136` (`ComplexVector::AXPBYPCZ` member decl); `linalg/vector.cpp:745-758` (real-real, incl. the `γ==0` arity-collapse fast-path `:749-751` → `add(α,x,β,y,z)` — the exact algebraic content of law 5, and the `γ≠0` split `:755-756`); `linalg/vector.cpp:760-765` (complex-complex → member); `linalg/vector.cpp:767-772` (real-scalar-on-complex promotion site). |
+
+(All anchors carried in from the eliminated L2 leaf chapters where they were self-verified
+on-disk via `tools/citecheck` at cycle-052; this RE6 pass moves them in-layer into the
+combinator, no re-localization claim.)
 
 These names remain useful as *readout labels* for the bounded-arity L0 call shapes (the
 L2>L1 [`linear-combination-fold-specialization`](../L2-L1/linear-combination-fold-specialization.md)
@@ -239,8 +255,8 @@ Laws that explicitly **do not** hold:
   stay firm **L1** leaves (the L1>L0 one-to-one symbol shape is load-bearing for the
   mutation rotation; `axpby-as-primitive` keeps them fused there). **At L2 and above the
   family speaks through this combinator** — the separate L2 `scal`/`axpy`/`axpby`/`axpbypcz`
-  chapters are scheduled to collapse into the §"Arity specializations" notes above
-  (cycle-050 refactor; see the replace-and-propagate map in
+  chapters were **eliminated cycle-124 (RE6)**, their unique L0 anchors folded into
+  §"Arity specializations" above (see the replace-and-propagate map in
   `reports/2026-06-01T190900Z-combinator-miner-refactor-pass-linear-combination-family/CYCLE.md`).
 - Concepts: [`scalar-promotion`](../concepts/scalar-promotion.md) — the element-type
   axis (`real ⊑ complex`), the concept-page-level sibling of this arity-axis unification;

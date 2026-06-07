@@ -73,7 +73,7 @@ lowering-verifier positive anchoring, the complete L0 evidence list). This L2 en
 ### Standalone gate — no fold-parent
 
 Unlike the cycle-041 BLAS-1 floors ([`dot`](./dot.md) / [`nrm2`](./nrm2.md) /
-[`scal`](./scal.md)), which are leaves / consumers of the `inner_product` /
+[`scal`](./linear_combination.md#arity-specializations)), which are leaves / consumers of the `inner_product` /
 `linear_combination` fold cohort and carry a load-bearing do-NOT-merge boundary,
 `divfree-projector` is **not a member of any fold cohort**. It is a **constructed-operator
 gate**: its primary argument `P` is a structured opaque value assembled once at solver setup
@@ -327,7 +327,7 @@ folded into any L2 expression.
 **No fold-parent.** `divfree-projector` is a standalone constructed-operator gate, not a member
 of the `inner_product` / `linear_combination` fold cohort; there is no fold-parent dependency
 and no do-NOT-merge boundary (contrast the cycle-041 BLAS-1 floors [`dot`](./dot.md) /
-[`nrm2`](./nrm2.md) / [`scal`](./scal.md)).
+[`nrm2`](./nrm2.md) / [`scal`](./linear_combination.md#arity-specializations)).
 
 **L1 anchor:** [`L1/divfree-projector`](../L1/divfree-projector.md) (firm cycle-015) —
 authoritative on the Palace surface, the construction chain, the empty-boundary single-dof pin,

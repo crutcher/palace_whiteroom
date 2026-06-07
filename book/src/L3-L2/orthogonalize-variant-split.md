@@ -131,7 +131,7 @@ per-step body identity-in-form. The hop has three branches, one per variant; the
 the substantive content, the CGS/CGS2 branches are clean lifts on both sides.
 
 1. **The per-step body is identity-in-form (all variants).** The L3 inner-step body — one
-   [`dot`](../L3/dot.md) for `H_j = op.dot(w_eff(j), V[j])`, one [`axpy`](../L3/axpy.md) for
+   [`dot`](../L3/dot.md) for `H_j = op.dot(w_eff(j), V[j])`, one [`axpy`](../L3/linear_combination.md#arity-specializations) for
    `w − H_j·V[j]` — maps line-for-line to the L2 `project`/`subtract` stage primitives. This is the
    same body-identity the BLAS-1 `-body-identity` cohort records for its leaves; it is **shared
    across MGS / CGS / CGS2** and is not the substantive content of this hop.
@@ -256,8 +256,8 @@ entries' in-line lift notes, not narrated here.
 new L3 vocabulary is introduced. The L3 form referenced in the LHS is the firm
 [`L3/orthogonalize`](../L3/orthogonalize.md) entry; the L2 form referenced in the RHS is the firm
 [`L2/orthogonalize`](../L2/orthogonalize.md) entry. The per-step body's `dot` / `axpy` primitives are
-firm at both layers ([`L3/dot`](../L3/dot.md), [`L3/axpy`](../L3/axpy.md); [`L2/dot`](../L2/dot.md),
-[`L2/axpy`](../L2/axpy.md)); they are referenced, not introduced.
+firm at both layers ([`L3/dot`](../L3/dot.md), [`L3/axpy`](../L3/linear_combination.md#arity-specializations); [`L2/dot`](../L2/dot.md),
+[`L2/axpy`](../L2/linear_combination.md#arity-specializations)); they are referenced, not introduced.
 
 ## Variant-split / unconditional-erasure contrast
 

@@ -362,7 +362,7 @@ of the inner `ksp_solve` carried by reference (§"Iteration-rotation marker").
   obstruction-carrying-by-reference rather than obstruction-free.
 - [`apply_linop`](./apply_linop.md) — the `P.WeakDiv·y` (step 1) and `P.Grad·ψ` (step 4)
   whole-tensor linear-operator applications.
-- [`axpy`](./axpy.md) — the `y + Grad·ψ` gradient-correction accumulate (step 4, fused as
+- [`axpy`](./linear_combination.md#arity-specializations) — the `y + Grad·ψ` gradient-correction accumulate (step 4, fused as
   `Grad->AddMult(ψ, y, 1.0)`, the apply-and-accumulate idiom).
 
 **Cross-cutting concepts**:

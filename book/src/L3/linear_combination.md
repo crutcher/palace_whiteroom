@@ -26,7 +26,7 @@ L3 is the iteration-rotation layer: global tensor-field operations expressed as 
 
 The L3 form is **value-thread-isomorphic to the L2 form**: the L2 combinator's signature is already whole-tensor in / whole-tensor out over a term list (`[(Scalar, Tensor[(S: ...)])] -> Tensor[$S]`), with no element loop exposed at the layer's vocabulary. The L3 layer's vocabulary requirement — whole-tensor primitives, no element loops — is satisfied by the L2 signature shape directly. The relationship to the lower layer is therefore the identity rotation on the combinator itself (see §"Downward to L2"); the per-element semantics (`result[idx] = Σⱼ aⱼ·tⱼ[idx]` for every multi-index `idx` of `S`) is the **referent**, not the L3 surface — the L3 surface is the whole-tensor fold signature, which is already L3-native.
 
-This entry is the **propagate half** of the cycle-049 D1 replace-and-propagate map (`reports/2026-06-01T190900Z-combinator-miner-refactor-pass-linear-combination-family/CYCLE.md` (b.3)): cycle-049 D1 inverted the L2 entry to combinator-as-entry (the four arity leaves became specialization notes under it) but did not propagate to L3; this entry is the L3 analog. The four L3 leaf chapters (`L3/{scal,axpy,axpby,axpbypcz}.md`) were re-expressed through this combinator cycle-051 (D2) and **reduced to specialization-stubs cycle-052** (D2) under the `collapsed-leaf-disposition-convention-cohort-wide` convention (reduce-to-stub, files KEPT on disk so inbound links stay live): each is the arity-1/2/2/3 readout label pointing up to this combinator, with its body collapsed into the §"Arity specializations" notes here. This combinator IS the L3 family entry.
+This entry is the **propagate half** of the cycle-049 D1 replace-and-propagate map (`reports/2026-06-01T190900Z-combinator-miner-refactor-pass-linear-combination-family/CYCLE.md` (b.3)): cycle-049 D1 inverted the L2 entry to combinator-as-entry (the four arity leaves became specialization notes under it) but did not propagate to L3; this entry is the L3 analog. The four L3 leaf chapters (`L3/{scal,axpy,axpby,axpbypcz}.md`) were re-expressed through this combinator cycle-051 (D2) and **eliminated cycle-124 (RE6)**, their unique L0 anchors folded into the §"Arity specializations" notes here: each is the arity-1/2/2/3 readout label, with its body and L0 anchors now resident in §"Arity specializations" above. This combinator IS the L3 family entry.
 
 The combinator is data-parallel, not iteration-structural: `linear_combination` is a pure value-producing reduction over a term list, with no control-flow, no monadic state threading, and no convergence predicate (contrast L4 `iterate_while`, which threads state through a stopping predicate). It lifts to [`L4/linear_combination`](../L4/linear_combination.md) (firm cycle-068) **identity-in-form on the body** — the L4 calculus combinator is value-thread-isomorphic to this L3 fold, with no dedicated L4>L3 theme file (the eigsolve/chebyshev in-line-marker route), precisely because there is no monadic state-threading or convergence predicate to dissolve across the edge. The combinator belongs with the tensor algebra at L3, alongside the BLAS-1 cohort, and rises to L4 as the calculus-level rendering of that same fold.
 
@@ -50,7 +50,7 @@ Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantic
 
 The L3 calculus has no record-typing and no `readonly` annotation; the signature is positional. The discipline that the coefficients flow in only (never out) is structural (the return position has only one slot, of type `Tensor[$S]`).
 
-### Arity specializations (the family members, as notes under the combinator)
+### Arity specializations
 
 The four arity forms are list-length specializations of the combinator — **specialization notes, not standalone L3 chapters under this combinator's algebra** (vocabulary-shift redirect). Each is the combinator at a fixed term-list length:
 
@@ -61,7 +61,22 @@ axpby(α, x, β, y)          = linear_combination [(α, x), (β, y)]         -- 
 axpbypcz(α, x, β, y, γ, z) = linear_combination [(α, x), (β, y), (γ, z)] -- arity 3
 ```
 
-These names remain useful as *readout labels* for the bounded-arity L0 call shapes. They are NOT separate L3 operators with their own algebra — every law below is the combinator's; the per-arity facts (`axpby` bilinearity, `axpbypcz` trilinearity, etc.) are the multilinearity law (law 3) read at a fixed list length. **The L3 leaf chapters `L3/{scal,axpy,axpby,axpbypcz}.md` were reduced to specialization-stubs cycle-052** (reduce-to-stub, files KEPT on disk) — each defers its semantics / laws to these notes and points up to this combinator. The L3 form differs from the four leaf readout labels only in **resolution**, along the arity axis: the leaves see four distinct fixed-arity operators; this combinator sees one variadic fold whose list length recovers each fixed arity.
+**Per-arity unique L0 surface + live consumer sites** (folded in from the eliminated L3
+arity-leaf chapters, cycle-124 RE6 refactor):
+
+| Arity | Readout | Unique L0 anchors + live consumer sites (relative to `reference/palace/`) |
+|---|---|---|
+| 1 | `scal(α,x)` | Surface: `linalg/vector.hpp:98-99` (`operator*=` decl); `linalg/vector.cpp:203-227` (def) incl. `:206-211` (`s.imag()==0.0` shape branch / promotion); `linalg/vector.hpp:262-270` (`linalg::Normalize`). Consumers: `linalg/iterative.cpp:632, 811` (GMRES Arnoldi normalisation); `linalg/operator.cpp:661, 673` (`Normalize` sites); `linalg/nleps.cpp:486-491` (eigenvector normalisation). Receiver-mutating `*=` member — distinct from the free-function family surface. |
+| 2 (coeff-1) | `axpy(α,x,y)` | `linalg/vector.cpp:276-311` (`ComplexVector::AXPY`); `linalg/vector.cpp:702-712` (free-function `AXPY` incl. the **load-bearing `α==1.0` fast-path** — the one constant-fold branch distinguishing `axpy`); `linalg/vector.cpp:715-718` (promotion site); `linalg/vector.hpp:115-118`, `:305-307` (decls). |
+| 2 (general) | `axpby(α,x,β,y)` | `linalg/vector.cpp:726-730` (real-real MFEM single-aligned `add(α,x,β,y,y)` fused pass); `linalg/vector.cpp:732-737` (complex-complex); `linalg/vector.cpp:739-743` (promotion); `linalg/vector.hpp:130-131`, `:309-311` (decls). No L0 constant-fold branch (distinguishes it from `axpy`). |
+| 3 | `axpbypcz(α,x,β,y,γ,z)` | `linalg/vector.cpp:745-758` (real-real incl. `γ==0` arity-collapse `:749-751`); `linalg/vector.cpp:760-765` (complex-complex); `linalg/vector.cpp:767-772` (promotion); `linalg/vector.hpp:133-136`, `:313-316` (decls). |
+
+(Anchors carried in from the eliminated L3 leaf chapters, self-verified on-disk at cycle-052;
+this RE6 pass moves them in-layer, no re-localization claim. The `axpby-as-primitive` decision
+`scaffolding/decisions/axpby-as-primitive.md` — `axpby`/`axpbypcz` are fused primitives, not
+`scal∘axpy` decompositions — is carried by the combinator already and unaffected.)
+
+These names remain useful as *readout labels* for the bounded-arity L0 call shapes. They are NOT separate L3 operators with their own algebra — every law below is the combinator's; the per-arity facts (`axpby` bilinearity, `axpbypcz` trilinearity, etc.) are the multilinearity law (law 3) read at a fixed list length. **The L3 leaf chapters `L3/{scal,axpy,axpby,axpbypcz}.md` were eliminated cycle-124 (RE6)**, their unique L0 anchors folded into §Arity specializations above. The L3 form differs from the four leaf readout labels only in **resolution**, along the arity axis: the leaves see four distinct fixed-arity operators; this combinator sees one variadic fold whose list length recovers each fixed arity.
 
 ## Semantics
 
@@ -117,7 +132,7 @@ The **substantive** rotation in the downward chain is NOT this identity edge but
 
 ## Dependencies
 
-**Same-layer (L3)**: this combinator unifies the four L3 BLAS-1 linear-update leaves [`scal`](./scal.md) (arity 1), [`axpy`](./axpy.md) (arity 2, second coeff 1), [`axpby`](./axpby.md) (arity 2), [`axpbypcz`](./axpbypcz.md) (arity 3) as list-length specializations (law 6). These four leaf chapters were re-expressed through this combinator cycle-051 and reduced to specialization-stubs cycle-052 (reduce-to-stub, files KEPT on disk) — each defers to the §"Arity specializations" notes here. The composition surfaces that *consume* `linear_combination` at L3 are the iterate-stratum update inside [`krylov-step`](./krylov-step.md)'s `krylov_update` (the GMRES basis-correction sum is a `linear_combination` over scalar-weighted basis terms).
+**Same-layer (L3)**: this combinator unifies the four L3 BLAS-1 linear-update leaves `scal` (arity 1), `axpy` (arity 2, second coeff 1), `axpby` (arity 2), `axpbypcz` (arity 3) as list-length specializations (law 6). These four leaf chapters were re-expressed through this combinator cycle-051 and eliminated cycle-124 (RE6) — their unique L0 anchors folded into the [§"Arity specializations"](#arity-specializations) notes here. The composition surfaces that *consume* `linear_combination` at L3 are the iterate-stratum update inside [`krylov-step`](./krylov-step.md)'s `krylov_update` (the GMRES basis-correction sum is a `linear_combination` over scalar-weighted basis terms).
 
 **Cross-cutting concepts** (consumed unchanged across the chain):
 

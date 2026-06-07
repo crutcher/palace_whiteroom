@@ -28,8 +28,8 @@ edges:
       kind: lowers-to             # the dedicated SUBSTANTIVE L3>L2 loop-structure variant-split theme (cycle-044); this op is its UPPER endpoint (scheme §5 rescue)
     - target: L3/dot
       kind: composes              # same-layer body primitive: the projection-coefficient inner product H_j = op.dot(w_eff(j), V[j])
-    - target: L3/axpy
-      kind: composes              # same-layer body primitive: the rank-1 residual update w − H_j·V[j] = axpy(-H_j, V[j], w)
+    - target: L3/linear_combination
+      kind: composes              # same-layer body primitive: the rank-1 residual update w − H_j·V[j] = axpy(-H_j, V[j], w); axpy leaf eliminated into the combinator (RE6, cycle-124), this is its arity-2 specialization (see linear_combination §arity-specializations)
   reference:
     - concepts/sequential-obstruction
     - concepts/tensor-field-lift
@@ -213,7 +213,7 @@ $$
 
 where `w_eff(j)` is the candidate as seen by column `j`. Each line is a global tensor-field
 expression: `H_j` is a [`dot`](./dot.md) reduction (whole-tensor in, scalar out), and the
-update is an [`axpy`](./axpy.md) (`w − H_j·V[j]` = `axpy(-H_j, V[j], w)`). There is no
+update is an [`axpy`](./linear_combination.md#arity-specializations) (`w − H_j·V[j]` = `axpy(-H_j, V[j], w)`). There is no
 per-element dependence *within* a line; the **per-step body lifts cleanly** to whole-tensor
 field arithmetic, identically to the firm L2 `project`/`subtract` stages. **What differs across
 variants is `w_eff(j)` and the inter-`j` structure** — and that is the iteration-rotation
@@ -402,11 +402,11 @@ loop exposed):
 - [`dot`](./dot.md) — the projection-coefficient inner product `H_j = op.dot(w_eff(j), V[j])`
   (and, for CGS/CGS2, the batched `coeffs = Vᴴw` reduction). The conjugate-linear
   first-argument convention is inherited; the `op.dot` hook is a `dot` substitution.
-- [`axpy`](./axpy.md) — the rank-1 residual update `w − H_j·V[j]` = `axpy(-H_j, V[j], w)` (and,
+- [`axpy`](./linear_combination.md#arity-specializations) — the rank-1 residual update `w − H_j·V[j]` = `axpy(-H_j, V[j], w)` (and,
   for CGS/CGS2, the batched `w − V·coeffs` subtraction).
 
 `orthogonalize` does **not** depend on the L3 reductions in a normalisation role:
-[`nrm2`](./nrm2.md) and [`scal`](./scal.md) are the **caller's** normalisation step (the
+[`nrm2`](./nrm2.md) and [`scal`](./linear_combination.md#arity-specializations) are the **caller's** normalisation step (the
 Hessenberg sub-diagonal + rescale), excluded by the L0 header's "does not normalize the output"
 contract — they are not dependencies of this operator.
 

@@ -27,6 +27,7 @@ edges:
     - L1/set_subvector_zero            # the essential-dof pin on the auxiliary residual x_G (consumed-by, not a spine dep)
     - concepts/sequential-obstruction  # the outer pc_it relaxation-sweep recurrence (documented non-law)
     - L4/preconditioning-framework     # the multigrid V-cycle consumer that installs this as per-level smoother
+    - L2/correction_step               # DOWNWARD annotation: each per-sweep leg (primary B; auxiliary conjugated G·B_G·Gᵀ) is the L1 realization of the L2 correction_step combinator (firm c122). NOT a depends-on (L1 cannot depend UP on L2); reference-class navigational.
 ---
 
 # multigrid-relaxation-smoother
@@ -140,6 +141,20 @@ The two relaxation legs per sweep (`distrelaxation.cpp:104-117`):
    essential dofs to zero (`:112-115`); relax in the auxiliary space
    `y_G = B_G x_G` (`:116`); prolong the correction back and add
    `y := y + G y_G` (`:117`).
+
+**Downward annotation (L1 → L2 navigational, NOT a dependency).** Both legs are
+the L1 realization of the L2 [`correction_step`](../L2/correction_step.md)
+combinator `y + B·(x − A·y)` (firm c122) with a different `B`-slot: the primary
+leg is `correction_step A B x y` (B = the primary point smoother); the auxiliary
+leg is `correction_step A (G·B_G·Gᵀ) x y` — the **conjugated** preconditioner
+`B = T·B'·Tᵀ` with `T = G` (correction_step law 6, the de-Rham auxiliary-space
+specialization). The two-leg sequence is multiplicative (the auxiliary leg reads
+the post-primary residual; law 1 above). This is a **downward annotation only** —
+NO `depends-on` edge to `correction_step` is created (an L1 form cannot depend UP
+on an L2 abstraction, CLAUDE.md §"Layers are defined high→low"); this smoother is
+already correctly grounded in the firm L1 primitives `apply_linop` + `axpby` that
+`correction_step` itself decomposes into. The link is the combinator-primary
+navigational back-reference.
 
 ## Record definition
 

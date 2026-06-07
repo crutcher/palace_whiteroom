@@ -375,10 +375,10 @@ with no element loop exposed):
 
 - [`apply_linop`](./apply_linop.md) — the operator action `A·y` (residual) and
   `A·d` (direction-image).
-- [`axpy`](./axpy.md), [`axpby`](./axpby.md) — residual / accumulate / direction
+- [`axpy`](./linear_combination.md#arity-specializations), [`axpby`](./linear_combination.md#arity-specializations) — residual / accumulate / direction
   updates.
-- [`scal`](./scal.md) — initial-direction scaling.
-- [`axpbypcz`](./axpbypcz.md) — the direction update `d = sd·d + sr·t` is in the
+- [`scal`](./linear_combination.md#arity-specializations) — initial-direction scaling.
+- [`axpbypcz`](./linear_combination.md#arity-specializations) — the direction update `d = sd·d + sr·t` is in the
   linear-update family (here realised as `elementwise_product` then `axpby`; the
   three-input `axpbypcz` shape is the unfused canonical form).
 

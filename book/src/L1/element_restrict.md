@@ -1,18 +1,25 @@
 ---
 layer: L1
 operator: element_restrict
-# Graded-stack: roadmap_goal (rank 0). One of the four libCEED contraction-substrate ops the
-# `libceed-quadrature-kernel-impl` roadmap_goal (c121-D4) declares as depends-on targets. It is the
-# G / Gᵀ stage of A = Gᵀ B_𝒟ᵀ D B_𝒟 G. Rank-0 because it operates on RANK-STRUCTURED element-local
-# tensors (Tensor[(E, L)]) that our firm flat-vector-BLAS L1 vocabulary (Tensor[N]) does not carry —
-# a genuine vocabulary shift, not a re-expression. A roadmap_goal may rest on anything (rank invariant
-# rank(u) <= rank(v) is vacuous at rank 0). Reachable: pulled-by libceed-quadrature-kernel-impl, which
-# reaches the feature root via the fe_assemble fold's 7 feature-column inbound edges.
-rank: roadmap_goal
+# Graded-stack: rough-in (rank 2). The G / Gᵀ stage of A = Gᵀ B_𝒟ᵀ D B_𝒟 G. Promoted roadmap_goal →
+# rough-in (cycle-124 D4) on the element-local rank-tensor vocabulary the cohort firms this wave: the
+# shape-vocabulary home concepts/element-local-tensor (D5) defines the rank-structured element-local
+# tensor Tensor[(E, L)] this op contracts over, so the operator now RESTS on a (to-be-firm) shape home
+# rather than introducing an unanchored shape. depends-on concepts/element-local-tensor (the [E, L]
+# shape home) — rank invariant rank(u) <= min(deps): rough-in (2) <= the record page's rank; firm
+# follows once concepts/element-local-tensor firms (the firm-on-positive-structure escape, gated only
+# by the shape vocabulary, not by tests — laws are syntactic gather/scatter-add identities on positive
+# source). The flat global axis N stays a genuine rank-1 Tensor[(N: ...)] (L1/L0 flat-vector
+# convention). Reachable: pulled-by libceed-quadrature-kernel-impl, which reaches the feature root via
+# the fe_assemble fold's feature-column inbound edges.
+rank: rough-in
 edges:
+  depends-on:
+    - target: concepts/element-local-tensor
+      kind: shape-vocabulary   # the [E, L] element-local rank-tensor shape home this op's signature contracts over (D5; rank-constrained, GC-live)
   reference:
     - target: L1/libceed-quadrature-kernel-impl
-      kind: pulled-by      # the roadmap_goal consumer whose A = Gᵀ B_𝒟ᵀ D B_𝒟 G pipeline composes this G/Gᵀ stage (free; this node does not depend on its consumer)
+      kind: pulled-by      # the consumer whose A = Gᵀ B_𝒟ᵀ D B_𝒟 G pipeline composes this G/Gᵀ stage (free; this node does not depend on its consumer)
     - target: concepts/tensor-field-lift   # Gᵀ scatter-add (assembly) is the element->global lift this substrate targets
 ---
 
@@ -26,22 +33,28 @@ is the indexing/permutation backbone of matrix-free FE operator application.
 
 ## Status
 
-`roadmap_goal` (rank 0). **The clean-gate call is ROADMAP_GOAL, not firm/rough-in.** The Palace
-realization is exhaustively anchored (see *Verified-against* — `CeedElemRestriction` construction and
-its index-map builder), but the operator's signature contracts over a **rank-structured element-local
-tensor** `Tensor[(E, L)]` (element axis `E`, local-dofs-per-element axis `L`) that **no firm L1
-operator carries**: our firm L1 algebra is flat-vector BLAS-1/2 over `Tensor[N]` (the
-`space.GetTrueVSize()` true-dof axis). Introducing the `[E, L]` element-rank structure is a genuine
-**vocabulary shift**, so the honest disposition is rank-0 — it carries the constructive sketch and the
-named shape groups, with NO claim that the rank-structured substrate exists in firm L1 vocabulary.
-Promotion route: once the element-rank tensor substrate is firm L1 vocabulary, this promotes
-`roadmap_goal → rough-in → firm` on the usual gates, and the consumer
-`libceed-quadrature-kernel-impl`'s `depends-on` edge to it becomes firm-resting.
+`rough-in` (rank 2). **Promoted roadmap_goal → rough-in (cycle-124 D4).** The Palace realization is
+exhaustively anchored (see *Verified-against* — `CeedElemRestriction` construction and its index-map
+builder), and the operator's signature now contracts over the **element-local rank-tensor**
+`Tensor[(E, L)]` (element axis `E`, local-dofs-per-element axis `L`) whose **shape-vocabulary home is
+`concepts/element-local-tensor`** — the record page the cohort authors this wave (D5). The rank-0
+disposition was warranted only while that `[E, L]` shape had no definition home in firm L1 vocabulary;
+with the home in place (as a `depends-on` shape-vocabulary edge), the op rests on a defined shape rather
+than introducing an unanchored one, so the honest disposition rises to rough-in. Promotion route to
+firm: once `concepts/element-local-tensor` firms, this promotes `rough-in → firm` on the
+**firm-on-positive-structure escape** — every algebraic law below is a syntactic gather/scatter-add
+operator-algebra identity on fully-specified positive source (the index map is read directly off
+`InitRestriction`), so the absence of a dedicated restriction unit test does not gate firm; the only
+remaining gate is the firmness of the `[E, L]` shape home. The flat global axis `N` stays a genuine
+rank-1 `Tensor[(N: ...)]` dof-vector (the firm L1 `Tensor[N]` convention for Palace `Vector` — KEPT
+flat) and is NOT part of the shape-vocabulary shift.
 
 ## L1 form (the constructive sketch)
 
 For semantic/notation conventions (named shape groups, `Tensor[(S: ...)]` binding vs `Tensor[$S]`
-use), see the governing surface `book/src/design/l4_calculus.md` §1.2.1 — not restated here.
+use), see the governing surface `book/src/semantics/index.md` §1.2.1 — not restated here. The
+`[E, L]` / `[E, P, G]` element-local rank-tensor shape family is defined at
+`concepts/element-local-tensor` — linked, not restated.
 
     element_restrict :: ElemRestriction -> Tensor[(N: ...)] -> Tensor[(E, L)]
         -- G   (gather):  global true-dof vector -> per-element local-dof tensor
@@ -58,12 +71,12 @@ the **transpose scatter-add**: it sums each element-local contribution into its 
 accumulation).
 
 The flat global axis `N` stays a genuine rank-1 `Tensor[(N: ...)]` dof-vector (the firm L1 `Tensor[N]`
-convention for Palace `Vector` — KEPT flat). The element-local side `Tensor[(E, L)]` is the new
-rank-structured axis this op introduces (the vocabulary shift). On a tensor-product element `L`
-itself factors as a per-dimension dof product, but that factoring is an interior detail of `basis_apply`
-(the sum-factorization sub-axis), not of the restriction.
+convention for Palace `Vector` — KEPT flat). The element-local side `Tensor[(E, L)]` is the
+rank-structured axis (the shape-vocabulary home `concepts/element-local-tensor`). On a tensor-product
+element `L` itself factors as a per-dimension dof product, but that factoring is an interior detail of
+`basis_apply` (the sum-factorization sub-axis), not of the restriction.
 
-## Algebraic laws (sketch — to be confirmed at promotion)
+## Algebraic laws (rough-in — syntactic identities on positive source; firm on shape-home firmness)
 
 - **Transpose/adjoint pair:** `⟨G x, y⟩_{(E,L)} = ⟨x, Gᵀ y⟩_N` — `element_restrict_t` is the exact
   adjoint of `element_restrict` (the gather and the scatter-add are transposes of the same Boolean
@@ -76,8 +89,10 @@ itself factors as a per-dimension dof product, but that factoring is an interior
 - **`G Gᵀ` is NOT the identity** on the element-local side (it averages-then-redistributes across the
   shared-dof equivalence classes) — stated as a non-law to forestall the false `G Gᵀ = I` assumption.
 
-These are the standard restriction/prolongation algebra; they are sketched (not asserted firm) pending
-the firm element-rank substrate.
+These are the standard restriction/prolongation algebra — syntactic identities on the positively-read
+Boolean index map. They are stated as rough-in (not yet firm) only because the `[E, L]` shape home
+(`concepts/element-local-tensor`) is itself firming this wave; the laws themselves require no test
+(firm-on-positive-structure).
 
 ## Applicability conditions
 
@@ -90,7 +105,7 @@ the firm element-rank substrate.
 
 ## Verified-against
 
-- `palace/fem/libceed/restriction.cpp:389-425` — `InitRestriction`: the element-restriction builder;
+- `palace/fem/libceed/restriction.cpp:389-426` — `InitRestriction`: the element-restriction builder;
   dispatches lexicographic (`InitLexicoRestr`, `:113`) vs native (`InitNativeRestr`, `:207`) ordering
   for the local-dof → global-dof index map.
 - `palace/fem/libceed/restriction.cpp:200` — `CeedElemRestrictionCreate(...)` — the libCEED restriction
@@ -106,4 +121,6 @@ the firm element-rank substrate.
 - [`libceed-quadrature-kernel-impl`](./libceed-quadrature-kernel-impl.md) — the roadmap_goal that
   composes this stage (the `G`/`Gᵀ` ends of the pipeline).
 - [`basis_apply`](./basis_apply.md) — the `B`/`Bᵀ` stage applied AFTER `G` (and before `Gᵀ`).
+- `concepts/element-local-tensor` — the `[E, L]` element-local rank-tensor shape-vocabulary home this
+  op's element-local side rests on (the `depends-on` shape edge).
 - `concepts/tensor-field-lift` — `Gᵀ` (assembly) is the element→global lift this substrate targets.

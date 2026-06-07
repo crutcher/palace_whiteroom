@@ -185,7 +185,7 @@ For `eigsolve`, **Palace authors no loop.** The eigen-iteration is reverse-commu
 (RCI) at ARPACK — Palace's `while(true)` loop (`arpack.cpp:315-339`) is a *callback dispatcher*: it
 calls the opaque ARPACK driver `naupd` (`arpack.cpp:318`) and dispatches the per-step matvec `ApplyOp`
 only when `naupd` returns the reverse-communication tag `ido == 1 || ido == -1` (`arpack.cpp:323-326`),
-breaking on `ido == 99` (`arpack.cpp:330-333`). All eigen-iteration *logic* (basis extension, restart,
+breaking on `ido == 99` (`arpack.cpp:331-334`). All eigen-iteration *logic* (basis extension, restart,
 Rayleigh-Ritz, convergence) is inside `naupd`. At SLEPc the entire iteration is one opaque call
 `EPSSolve(eps)` (`slepc.cpp:694`, inside `SlepcEPSSolverBase::Solve` `:687-709`) — Palace supplies only
 the PC-shell callback `__pc_apply_EPS` and the A0/A1 shell matvecs; there is no Palace loop at all.

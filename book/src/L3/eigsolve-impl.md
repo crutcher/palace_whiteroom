@@ -188,4 +188,8 @@ verified_against:
     verdict: supports
     audited_at: 2026-06-07T093000Z
     note: neupd(...) post-iteration eigenpair extraction (:369) — the impl's rayleigh_ritz + extract_eigpairs; num_it = iparam[2] :342; iparam[2] arpack_it :270; iparam[6] = sinvert?3:1 :273; which::largest_magnitude :278; exact.
+  - citation: book/src/L3/nleps-deflated-eigensolve.md
+    verdict: realizes-kernel-api-faithful
+    audited_at: 2026-06-07T120000Z
+    note: c124-D2 follow-up — the new nleps-deflated-eigensolve consumer (c124-D1) wires the FIRST blocking depends-on edge to this impl (the linear-eigensolve seed, nleps.cpp:470-474). The seed edge is faithful (the NEP loop genuinely averages eigenvectors[] linear-eigensolve outputs at :471). This grounds eigsolve-impl off the RE11 reference-only-reachable cohort — the intended RE11-discharge disposition, NOT decay. The realizes-kernel-api edges to L3/eigsolve + L4/eigsolve stay reference-class (re-confirmed on disk); no mistype to depends-on. The impl stays roadmap_goal (D1 did not promote); the prior c122 structural correspondence audit (above) is unaffected.
 ```

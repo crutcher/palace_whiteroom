@@ -1,20 +1,23 @@
 ---
 layer: L1
 operator: libceed-quadrature-kernel-impl
-# Graded-stack scheme. This is a roadmap_goal (rank 0) kernel-IMPL node (DIRECTIVE-3 item-2a):
+# Graded-stack scheme. This is a rough-in (rank 2) kernel-IMPL node (DIRECTIVE-3 item-2a):
 # the constructive, in-our-tensor-algebra realization of the libCEED element-quadrature kernel
 # that the firm `fe_assemble` fold (`K = Σ_i A(space, term_i)`) folds over opaquely as the leaf
-# `A(space, term)`. It is rank-0 (roadmap_goal) because its constructive constituents — the
-# per-element / per-quad-point tensor-contraction substrate — are NOT yet firm L1 vocabulary
-# (our firm L1 ops are flat-vector BLAS; the rank-structured element-local tensors are a genuine
-# vocabulary shift). A roadmap_goal may rest on anything, incl. other roadmap_goals (the rank
-# invariant `rank(u) <= rank(v)` is vacuously satisfied since rank(u)=0). The `realizes-kernel-api`
-# edge to the KEPT obstruction theme is `reference`-class (navigational/free — NOT depends-on; it
-# does not block, does not constrain rank, does not carry liveness — it is a correspondence to be
-# REVIEWED, audited by lowering-verifier). Pulled-by: `fe_assemble` (firm, the spine consumer whose
-# opaque leaf this realizes) reaches the feature root via 7 feature-column inbound edges — so this
-# roadmap_goal is reachable (not speculation-noise).
-rank: roadmap_goal
+# `A(space, term)`. Promoted roadmap_goal → rough-in (cycle-124 D5): its constructive constituents —
+# the four element-local tensor-contraction substrate ops — became live L1 vocabulary this wave
+# (`basis_apply` + `quad_point_contract` FIRM via c124 D3; `element_restrict` + `geom_factor_build`
+# ROUGH-IN via c124 D4, capped on the `concepts/element-local-tensor` shape home, c124 D5). Per the
+# well-foundedness cap `rank(impl) <= min over depends-on deps of rank(v)`: with two firm + two
+# rough-in `composes` deps, min = rough-in, so this node CANNOT be firm — it lands rough-in. It firms
+# when `element_restrict` + `geom_factor_build` firm, which happens the moment the
+# `concepts/element-local-tensor` record page firms (their rough-in is capped on it, c124 D5 lands it
+# firm). The `realizes-kernel-api` edge to the KEPT obstruction theme is `reference`-class
+# (navigational/free — NOT depends-on; it does not block, does not constrain rank, does not carry
+# liveness — it is a correspondence to be REVIEWED, audited by lowering-verifier). Pulled-by:
+# `fe_assemble` (firm, the spine consumer whose opaque leaf this realizes) reaches the feature root
+# via 7 feature-column inbound edges — so this node is reachable (not speculation-noise).
+rank: rough-in
 edges:
   reference:
     - target: L1-L0/fe-assemble-libceed-boundary-obstruction
@@ -56,21 +59,29 @@ correspondence.
 
 ## Status
 
-`roadmap_goal` (rank 0) — **kernel-impl** (the DIRECTIVE-3 role-label; this node is the
-constructive realization, NOT the API surface). The clean-gate call is **ROADMAP_GOAL, not firm**:
-the operator decomposition is well-understood and exhaustively anchored in the Palace libCEED source
-(see *Evidence*), but its constructive constituents — the per-element / per-quadrature-point
-tensor-contraction substrate (`element_restrict`, `basis_apply`, `quad_point_contract`,
-`geom_factor_build`) — are **not yet firm L1 vocabulary**. Our firm L1 algebra is **flat-vector
-BLAS-1/2** (`apply_linop`, `axpy`, `dot` over `Tensor[N]`); the libCEED kernel contracts over
-**rank-structured element-local tensors** (`[E, P, ...]` over elements `E` and quadrature points
-`P`) that no firm L1 operator carries. Realizing the kernel is therefore a genuine **vocabulary
-shift**, not a re-expression in existing terms — so the honest disposition is a rank-0 roadmap_goal
-that carries the constructive sketch + declares the substrate it would rest on, with NO claim that
-the substrate exists. Promotion route: harvester mines the four substrate operators (the
-combinator-miner shared-substrate probe of this same cycle targets exactly this contraction core);
-once they are firm, this node promotes `roadmap_goal → rough-in → firm` on the usual gates and its
-`depends-on` edges become firm-resting.
+`rough-in` (rank 2) — **kernel-impl** (the DIRECTIVE-3 role-label; this node is the constructive
+realization, NOT the API surface). **Promoted roadmap_goal → rough-in (cycle-124 D5).** The operator
+decomposition is well-understood and exhaustively anchored in the Palace libCEED source (see
+*Evidence*), and its constructive constituents — the per-element / per-quadrature-point
+tensor-contraction substrate — became **live L1 vocabulary this wave**: `basis_apply` +
+`quad_point_contract` are now **firm** (c124 D3), and `element_restrict` + `geom_factor_build` are
+**rough-in** (c124 D4), each resting on the `concepts/element-local-tensor` shape home (c124 D5). The
+genuine vocabulary shift away from flat-vector BLAS (`Tensor[N]`) to the rank-structured element-local
+tensors (`[E, L]` / `[E, P, C]` / `[E, P, G]`, `concepts/element-local-tensor`) is realized, so the
+rank-0 disposition no longer holds.
+
+**The rank is CAPPED at rough-in by well-foundedness** (CLAUDE.md §Methodology-invariants: an entry
+is at most as resolved as its least-resolved dependency — the graded-stack `rank(u) ≤ rank(v)`
+invariant): the four `depends-on
+(composes)` substrate deps are 2 firm + 2 rough-in, so
+`rank(impl) ≤ min over composes deps of rank(v) = rough-in`. This node **cannot be firm** while
+`element_restrict` / `geom_factor_build` are rough-in — it lands rough-in. **Promotion route to firm:**
+`element_restrict` + `geom_factor_build` firm the moment the `concepts/element-local-tensor` record
+page firms (their rough-in is capped on that shape home, and c124 D5 lands it firm); once all four
+substrate deps are firm, this node's `min(deps)` rises to firm and it promotes `rough-in → firm` on the
+firm-on-positive-structure escape (its laws are syntactic-identity composition facts on the positively
+read `AssembleCeedOperator` pipeline — no test gates them). **Blocking promotion condition:**
+`element_restrict` + `geom_factor_build` must reach firm.
 
 **The `realizes-kernel-api` link is `reference`-class (free, navigational).** This impl does **not**
 `depends-on` the opaque API; the relationship is a *correspondence to be reviewed*, not a build
@@ -163,24 +174,30 @@ explicit field roles in the Palace libCEED operator-construction code. What is *
 only the *existence of firm L1 substrate operators* for the contraction stages — hence rank-0
 roadmap_goal, not firm.
 
-## Substrate L1 operators (roadmap_goal, authored c122 D4; harvester promotion targets)
+## Substrate L1 operators (c124 cohort: 2 firm + 2 rough-in)
 
-The four contraction-substrate operators are now rank-0 `roadmap_goal` chapters with
-codemap-verified anchors (authored c122 D4), wired as this impl's `depends-on` substrate:
+The four contraction-substrate operators became live L1 vocabulary in the cycle-124 substrate-cohort
+wave (D3 + D4 + D5), typed over the `concepts/element-local-tensor` shape family, wired as this impl's
+`depends-on (composes)` substrate:
 
 - [`element_restrict`](./element_restrict.md) — `G`/`Gᵀ`: the per-element gather/scatter
-  `Tensor[(N: ...)] ↔ Tensor[(E, L)]`.
+  `Tensor[(N: ...)] ↔ Tensor[(E, L)]`. **`rough-in`** (c124 D4; capped on the
+  `concepts/element-local-tensor` shape home — firms when that record page firms).
 - [`basis_apply`](./basis_apply.md) — `B`/`Bᵀ`: the basis-eval contraction
-  `Tensor[(E, L)] ↔ Tensor[(E, P, C)]`, keyed on the `EvalMode` the term's `𝒟` selects.
+  `Tensor[(E, L)] ↔ Tensor[(E, P, C)]`, keyed on the `EvalMode` the term's `𝒟` selects. **`firm`**
+  (c124 D3; firm-on-positive-structure).
 - [`quad_point_contract`](./quad_point_contract.md) — `D`: the pointwise per-quad-point
-  `geom_data ⊙ ·` contraction (the embarrassingly-parallel lift).
+  `geom_data ⊙ ·` contraction (the embarrassingly-parallel lift). **`firm`** (c124 D3;
+  firm-on-positive-structure).
 - [`geom_factor_build`](./geom_factor_build.md) — the setup-stratum build-QFunction
-  `(mesh-nodes, quad-weights) → geom_data`.
+  `(mesh-nodes, quad-weights) → geom_data :: Tensor[(E, P, G)]`. **`rough-in`** (c124 D4; capped on
+  the `concepts/element-local-tensor` shape home — firms when that record page firms).
 
-These four are the **shared tensor-contraction substrate** mined as a cohort (c122 D4) across the
-element-local rank-structured tensor front; harvester promotes them `roadmap_goal → rough-in → firm`
-when the element-local rank-tensor L1 vocabulary front lands, at which point this impl's
-`depends-on` edges become firm-resting and the node itself can promote off `roadmap_goal`.
+The shared shape vocabulary these four are typed over is [`concepts/element-local-tensor`](../concepts/element-local-tensor.md)
+(c124 D5, firm). With two firm + two rough-in substrate deps, this impl is capped at **rough-in** by
+well-foundedness (`rank(impl) ≤ min(deps)`); it promotes `rough-in → firm` once `element_restrict` +
+`geom_factor_build` firm (which happens when the `concepts/element-local-tensor` record page firms —
+the rank-propagation flips them firm, lifting `min(deps)` to firm).
 
 ## Verified-against
 

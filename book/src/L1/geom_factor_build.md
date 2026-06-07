@@ -1,16 +1,24 @@
 ---
 layer: L1
 operator: geom_factor_build
-# Graded-stack: roadmap_goal (rank 0). The geometry-factor build-pass (build-QFunction) of the libCEED
-# pipeline: (mesh-nodes, quad-weights) → geom_data. Rank-0: it produces the per-quad-point geom_data
-# carrier Tensor[(E, P, G)] — a setup-stratum rank-structured tensor our firm flat-vector-BLAS L1
-# (Tensor[N]) does not carry. Setup-stratum (built once per mesh/order, reused across applies).
-# Reachable via libceed-quadrature-kernel-impl (pulled-by) and quad_point_contract (which consumes geom_data).
-rank: roadmap_goal
+# Graded-stack: rough-in (rank 2). The geometry-factor build-pass (build-QFunction) of the libCEED
+# pipeline: (mesh-nodes, quad-weights) → geom_data. Promoted roadmap_goal → rough-in (cycle-124 D4) on
+# the element-local rank-tensor vocabulary the cohort firms this wave: the shape-vocabulary home
+# concepts/element-local-tensor (D5) defines the per-quad-point carrier Tensor[(E, P, G)] this op
+# produces, so the op now RESTS on a (to-be-firm) shape home. depends-on concepts/element-local-tensor
+# (the [E, P, G] geom-data carrier shape home) — rank invariant rank(u) <= min(deps): rough-in (2) <=
+# the record page's rank; firm follows once concepts/element-local-tensor firms (firm-on-positive-
+# structure escape — laws are syntactic setup-stratum-purity / pointwise identities on positive source).
+# Setup-stratum (built once per mesh/order, reused across applies). Reachable via
+# libceed-quadrature-kernel-impl (pulled-by) and quad_point_contract (which consumes geom_data).
+rank: rough-in
 edges:
+  depends-on:
+    - target: concepts/element-local-tensor
+      kind: shape-vocabulary   # the [E, P, G] per-quad-point geom-data carrier shape home this op produces (D5; rank-constrained, GC-live)
   reference:
     - target: L1/libceed-quadrature-kernel-impl
-      kind: pulled-by      # the roadmap_goal consumer whose pipeline's D stage consumes this op's geom_data output (free)
+      kind: pulled-by      # the consumer whose pipeline's D stage consumes this op's geom_data output (free)
     - target: concepts/build-time-vs-run-time-stratification   # this is the setup-stratum (build-once) factor of the build/apply split
 ---
 
@@ -24,18 +32,26 @@ contracts against — the Jacobian-derived geometry metric times the quadrature 
 
 ## Status
 
-`roadmap_goal` (rank 0). **Clean-gate: ROADMAP_GOAL, not firm/rough-in.** The Palace realization is
+`rough-in` (rank 2). **Promoted roadmap_goal → rough-in (cycle-124 D4).** The Palace realization is
 exhaustively anchored (the `f_build_geom_factor_*` build-QFunction with its `attr`/`q_w`/`grad_x` inputs
-and `geom_data` output — see *Verified-against*), but the operator produces the **quad-point-rank**
-carrier `Tensor[(E, P, G)]` that the firm flat-vector-BLAS L1 (`Tensor[N]`) does not carry — a genuine
-**vocabulary shift** — so the honest disposition is rank-0. Promotion route: firm when the quad-point-rank
-geom_data carrier is firm L1 vocabulary.
+and `geom_data` output — see *Verified-against*), and the operator produces the **quad-point-rank**
+carrier `Tensor[(E, P, G)]` whose **shape-vocabulary home is `concepts/element-local-tensor`** — the
+record page the cohort authors this wave (D5). The rank-0 disposition was warranted only while the
+`[E, P, G]` carrier had no definition home in firm L1 vocabulary; with the home in place (as a
+`depends-on` shape-vocabulary edge), the op rests on a defined shape, so the honest disposition rises to
+rough-in. Promotion route to firm: once `concepts/element-local-tensor` firms, this promotes
+`rough-in → firm` on the **firm-on-positive-structure escape** — every law below is a syntactic
+setup-stratum-purity / pointwise-block-diagonality identity on fully-specified positive source (the
+build-QFunction is read directly off `AssembleCeedGeometryData`), so the absence of a dedicated
+build-QFunction unit test does not gate firm; the only remaining gate is the firmness of the `[E, P, G]`
+shape home.
 
 ## L1 form (the constructive sketch)
 
 Semantic/notation conventions (named shape groups, the build/run-time stratification) live on
-`book/src/design/l4_calculus.md` §1.2.1 + `concepts/build-time-vs-run-time-stratification` — linked, not
-restated.
+`book/src/semantics/index.md` §1.2.1 + `concepts/build-time-vs-run-time-stratification` — linked, not
+restated. The `[E, P, G]` quad-point-rank carrier shape is defined at `concepts/element-local-tensor`
+— linked, not restated.
 
     geom_factor_build :: MeshNodes -> QuadWeights -> Tensor[(E, P, G)]
         -- per (e, p): geom_data[e,p] = f(J(mesh_nodes)[e,p], w[e,p])
@@ -58,7 +74,7 @@ This is the **setup stratum** of the build/run-time split (`concepts/build-time-
 fixed, only the trial field varies per apply. (When the mesh moves — e.g. AMR refinement — `geom_data` is
 rebuilt; that is a setup-stratum invalidation, not a run-time cost.)
 
-## Algebraic laws (sketch — to be confirmed at promotion)
+## Algebraic laws (rough-in — syntactic identities on positive source; firm on shape-home firmness)
 
 - **Setup-stratum purity:** `geom_factor_build` is a pure function of `(mesh_nodes, quad_weights)` — no
   field/state dependence; its output is cacheable and reused across applies (the build/run-time split law).
@@ -70,6 +86,10 @@ rebuilt; that is a setup-stratum invalidation, not a run-time cost.)
   the element, so `geom_data` is constant in `p` — a degenerate case worth noting (the curved/high-order
   case is the general one).
 
+These laws are syntactic facts on the positively-read build-QFunction. They are stated as rough-in (not
+yet firm) only because the `[E, P, G]` shape home (`concepts/element-local-tensor`) is itself firming
+this wave; the laws themselves require no test (firm-on-positive-structure).
+
 ## Applicability conditions
 
 1. A high-order mesh with a tabulated mesh `CeedBasis` for the geometry map (the `mesh_basis` / `mesh_restr`
@@ -80,14 +100,15 @@ rebuilt; that is a setup-stratum invalidation, not a run-time cost.)
 
 ## Verified-against
 
-- `palace/fem/libceed/integrator.cpp:340-419` — the build-QFunction `f_build_geom_factor_*`: the
-  `(dim, space_dim)`-keyed QFunction dispatch (`f_build_geom_factor_22`/`33`/`21`/`31`/`32`, `:352-377`),
-  the inputs `attr` (`CEED_EVAL_INTERP`, `:386`), `q_w` (`CEED_EVAL_WEIGHT`, `:387-388`), `grad_x`
-  (Jacobian, `CEED_EVAL_GRAD`, `:389-390`), and the `geom_data` output (`CEED_EVAL_NONE`, `:396-398`,
-  size `2 + space_dim*dim` verified at `:394`).
-- `palace/fem/libceed/integrator.cpp:423-465` — `AssembleCeedOperator`: the `geom_data` /
-  `geom_data_restr` inputs the master assembler threads into the apply-QFunction (the build output's
-  consumer site).
+- `palace/fem/libceed/integrator.cpp:335-421` — `AssembleCeedGeometryData`: the build-QFunction
+  `f_build_geom_factor_*` assembly: the `(dim, space_dim)`-keyed QFunction dispatch
+  (`f_build_geom_factor_22`/`33`/`21`/`31`/`32`, the `switch (10 * space_dim + dim)` block `:348-384`),
+  the inputs `attr` (`CEED_EVAL_INTERP`, `:387`), `q_w` (`CEED_EVAL_WEIGHT`, `:388`), `grad_x`
+  (Jacobian, `CEED_EVAL_GRAD`, `:389-390`), and the `geom_data` output (`CEED_EVAL_NONE`, `:397-398`,
+  size `2 + space_dim*dim` verified at `:395`).
+- `palace/fem/libceed/integrator.cpp:423-427` — `AssembleCeedOperator`: the `geom_data` /
+  `geom_data_restr` parameters the master assembler receives, threaded into the apply-QFunction at the
+  `geom_data` field-set `:483-484` (the build output's consumer site).
 - `palace/fem/libceed/integrator.hpp:14-23` — `EvalMode` (`Weight`/`Grad`/`Interp`): the build inputs'
   evaluation modes.
 - `book/src/L1/libceed-quadrature-kernel-impl.md` — the roadmap_goal consumer (pulled-by).
@@ -98,4 +119,6 @@ rebuilt; that is a setup-stratum invalidation, not a run-time cost.)
   consumes this op's `geom_data` output in its `D` stage.
 - [`quad_point_contract`](./quad_point_contract.md) — the `D` stage that contracts against this op's
   `geom_data` (the run-time apply half of the build/apply split).
+- `concepts/element-local-tensor` — the `[E, P, G]` quad-point-rank carrier shape-vocabulary home this
+  op's output rests on (the `depends-on` shape edge).
 - `concepts/build-time-vs-run-time-stratification` — the setup/run-time stratification this op anchors.

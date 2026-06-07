@@ -18,7 +18,7 @@ Elementwise **multiplicative-inverse** as a base tensor-algebra primitive at L2 
 tensor of the same shape whose every element is the field-multiplicative-inverse of
 the corresponding input element. `reciprocal` is a **standalone elementwise leaf** at L2
 with **no fold-parent** — unlike [`dot`](./dot.md) (a leaf-of [`inner_product`](./inner_product.md))
-and [`scal`](./scal.md) (an arity-1 member-of [`linear_combination`](./linear_combination.md)),
+and [`scal`](./linear_combination.md#arity-specializations) (an arity-1 member-of [`linear_combination`](./linear_combination.md)),
 `reciprocal` is not a member of any L2 fold (it neither reduces over the length axis to a
 scalar nor sums scalar-weighted terms; it is a *nonlinear* elementwise self-map). Companion
 to L1 [`reciprocal`](../L1/reciprocal.md) (the mutation-lifted form of the same
@@ -62,11 +62,11 @@ L2 entry adds **fusion-rotation framing** and does not duplicate those details.
 
 `reciprocal` is a **standalone elementwise leaf** at L2 with **no fold-parent**. This is the
 structural distinction from its BLAS-1-floor cohort siblings [`dot`](./dot.md) and
-[`scal`](./scal.md):
+[`scal`](./linear_combination.md#arity-specializations):
 
 - [`dot`](./dot.md) is the conjugation-axis **leaf-of** the reduce-to-`Scalar` fold
   [`inner_product`](./inner_product.md) (it folds the length axis to a scalar).
-- [`scal`](./scal.md) is the arity-1 **member-of** the reduce-to-`Tensor[$S]` fold
+- [`scal`](./linear_combination.md#arity-specializations) is the arity-1 **member-of** the reduce-to-`Tensor[$S]` fold
   [`linear_combination`](./linear_combination.md) (it is the arity-1 scalar-weighted-sum
   term).
 - `reciprocal` (this entry) is **neither**. It is a *nonlinear* elementwise self-map
@@ -118,7 +118,7 @@ beyond the transparent `s = 1/|z|²` intermediate factoring — see § "Fusion n
 upstream `mfem::Vector::Reciprocal()` divides without runtime check). At L2 the operator is
 **partial**: undefined wherever `x[i] = 0`; the no-zero-guard policy lifts as a precondition
 on the input (callers must ensure `x[i] ≠ 0 ∀ i`), recorded in the same form as
-[`scal`](./scal.md)'s inverse-law non-zero requirement and L1 `normalize`'s `x ≠ 0`
+[`scal`](./linear_combination.md#arity-specializations)'s inverse-law non-zero requirement and L1 `normalize`'s `x ≠ 0`
 precondition. Consumer call sites preclude zero by precondition (the Jacobi/Chebyshev
 consumers require `diag(A) > 0`, the SPD assumption) or by construction (the FE-assembly
 `test_multiplicity` is `≥ 1` per active dof). The partiality is the L2 reflection of the L0
@@ -189,7 +189,7 @@ once (§ Signature) and not re-stated per law. Absences are deliberate and inher
 3. **Scalar-factor distribution**: `reciprocal(scal(α, x)) = scal(1/α, reciprocal(x))` for any
    nonzero scalar `α`. The reciprocal of a uniformly-scaled vector is the inverse-scaled
    reciprocal — pointwise `1/(α·x[i]) = (1/α)·(1/x[i])`. This is the law that makes
-   `reciprocal` compose cleanly with [`scal`](./scal.md):
+   `reciprocal` compose cleanly with [`scal`](./linear_combination.md#arity-specializations):
    `(reciprocal ∘ scal(α)) = (scal(1/α) ∘ reciprocal)`.
 4. **Multiplicative-distributivity (over the elementwise product)**:
    `reciprocal(elementwise_product(x, y)) = elementwise_product(reciprocal(x), reciprocal(y))`
@@ -215,7 +215,7 @@ Laws that explicitly **do not** hold (inherited unchanged from L1):
 - **Linearity in `x`**: `reciprocal(x + y) ≠ reciprocal(x) + reciprocal(y)` in general.
   `1/(a+b)` is not `1/a + 1/b` — the reciprocal is a **nonlinear** elementwise map. This is the
   defining feature distinguishing it from the linear BLAS-1 leaves
-  ([`scal`](./scal.md), `axpy`, `axpby`, `axpbypcz`) at L2 — and the structural reason
+  ([`scal`](./linear_combination.md#arity-specializations), `axpy`, `axpby`, `axpbypcz`) at L2 — and the structural reason
   `reciprocal` is **not** a member of the `linear_combination` fold (the fold's members are the
   linear scalar-weighted-sum arities; a nonlinear self-map is not a fold member).
 - **Bit-level involution under finite precision**: law 1 holds exactly in `ℝ` / `ℂ` but is
@@ -247,7 +247,7 @@ body is a transparent factoring of the closed form `z̄/|z|²`; it does not surf
 sub-operator.
 
 **Fold-parent**: **NONE**. Unlike [`dot`](./dot.md) (leaf-of [`inner_product`](./inner_product.md))
-and [`scal`](./scal.md) (arity-1 member-of [`linear_combination`](./linear_combination.md)),
+and [`scal`](./linear_combination.md#arity-specializations) (arity-1 member-of [`linear_combination`](./linear_combination.md)),
 `reciprocal` is a **standalone elementwise leaf with no fold-parent** — it is a nonlinear
 self-map, not a reduction term. The leaf-vs-fold design fork (`book/src/L2/index.md`
 §"Working Notes") does not apply to this floor (see § "No fold-parent" above).
@@ -385,7 +385,7 @@ reader navigating L2 must find `reciprocal` defined in L2 vocabulary as the base
 elementwise-multiplicative-inverse primitive, not have to reach down to L1 (or up to L3) to
 recover the field-operation shape.
 
-The cycle-041 BLAS-1-floor entries [`dot`](./dot.md), [`nrm2`](./nrm2.md), [`scal`](./scal.md)
+The cycle-041 BLAS-1-floor entries [`dot`](./dot.md), [`nrm2`](./nrm2.md), [`scal`](./linear_combination.md#arity-specializations)
 are the freshest structural precedents on the same `l2-floor-under-l3-leaf-cohort` directive:
 identity-in-form rotation on the primitive's signature, thin floor presence, methodology
 invariant enacted. `reciprocal` is the **fold-parent-free** member of the broader floor effort
@@ -406,7 +406,7 @@ to this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified
   §"Algebraic laws".
 - [`book/src/L3/reciprocal.md`](../L3/reciprocal.md) (firm cycle-038) — the L3 leaf this floor
   goes under; the iteration-rotation rendering whose adjacent L2 parent this entry supplies.
-- [`book/src/L2/dot.md`](./dot.md), [`book/src/L2/scal.md`](./scal.md) (firm cycle-041) — the
+- [`book/src/L2/dot.md`](./dot.md), [`book/src/L2/linear_combination.md`](./linear_combination.md#arity-specializations) (the arity-1 `scal` readout, firm cycle-041; folded in cycle-124 RE6) — the
   BLAS-1-floor cohort siblings; the thin identity-in-form floor form, the firm-on-positive-
   structure status judgement, and the floor-presence framing are inherited from these. The
   do-NOT-merge fold-cohort boundary applies to *them* (leaf-of / member-of a fold); `reciprocal`

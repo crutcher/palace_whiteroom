@@ -25,6 +25,7 @@ edges:
     - feature/eigenmode.L4
     - L3/chebyshev                     # the L3 ITERATION-VIEW of the smoother leg (partial-obstruction; sibling-view, NOT a blocking constituent — GROUNDS RE1 reachability)
     - L2/jacobi-smoother               # the L2 iteration-view / point-smoother leg (firm; sibling-view)
+    - L2/correction_step               # the per-sweep residual-correction COMBINATOR each smooth + coarse-grid-correction leg names (firm c122; navigational down-link, NOT a blocking dep — RE11-clean reference-only)
 ---
 
 # geometric-multigrid preconditioner — L4 composition-root
@@ -63,16 +64,25 @@ At L4 the preconditioner is the composition (Haskell-style; the strawman
       in  bind_preconditioner (vcycle ps bs b0)    -- (3) bind the V-cycle as a preconditioner ── L4/preconditioning-framework (firm)
 
     -- the V-cycle itself is a level-recursive combinator (NOT a new vocabulary op; the
-    -- recursion structure read off gmg.cpp:172-205):
+    -- recursion structure read off gmg.cpp:172-205). Each smooth + the coarse-grid
+    -- correction is a `correction_step` (the L2 residual-correction combinator
+    -- `y + B·(x − A·y)`, firm c122) with a different choice of the preconditioner slot B:
+    -- pre/post-smooth use B = the per-level point smoother; the coarse-grid leg uses the
+    -- conjugated B = P·(recursive V-cycle solve)·Pᵀ (correction_step law 6, T = P):
     vcycle ps bs b0 l x =
       if l == 0
         then b0 x                                       -- coarse solve
-        else do { y  <- presmooth  (bs!l) x             -- B[l]->Mult2  (Y ← B(X − A Y))
-                ; r  <- residual   (a!l) x y            -- R ← X − A Y         (linalg::AXPBY)
+        else do { y  <- presmooth  (bs!l) x             -- correction_step (B = B[l]); gmg.cpp:184  (Y ← Y + B(X − A Y))
+                ; r  <- residual   (a!l) x y            -- R ← X − A Y         (linalg::AXPBY)  ── the correction_step residual stage
                 ; rc <- restrict   (ps!(l-1)) r         -- Pᵀ R              (RealMultTranspose)
                 ; ec <- vcycle ps bs b0 (l-1) rc        -- recurse to coarser level
                 ; y' <- prolong_add (ps!(l-1)) ec y     -- Y += P E          (RealMult)
-                ; postsmooth (bs!l) x y' }              -- B[l]->MultTranspose2
+                ; postsmooth (bs!l) x y' }              -- correction_step (B = B[l]ᵀ); gmg.cpp:204
+
+    -- The pre-smooth → restrict → recurse → prolong-add chain (R ← X − A Y, Pᵀ R, recurse,
+    -- Y += P E) is exactly `correction_step A (P·B'·Pᵀ) x y` — the coarse-grid correction as
+    -- the conjugated-B specialization of the per-sweep combinator (see
+    -- [`correction_step`](../L2/correction_step.md) §"Conjugated preconditioner" + law 6).
 
 Three composed stages, each a link DOWN to firm vocabulary:
 
@@ -93,7 +103,10 @@ Three composed stages, each a link DOWN to firm vocabulary:
    [`L2/jacobi-smoother`](../L2/jacobi-smoother.md) (**firm**) polynomial smoothers. Each
    non-coarse level `l` carries a smoother `B[l]` applied as
    `Y ← Y + B(X − A Y)` (pre-smooth `Mult2`, post-smooth `MultTranspose2`;
-   `gmg.cpp:184,202`). When an auxiliary H(curl)/H1 space is supplied the smoother is the
+   `gmg.cpp:184,202`) — i.e. a [`correction_step`](../L2/correction_step.md) (the L2
+   residual-correction combinator, firm c122) with `B` = the per-level point smoother; the
+   coarse-grid correction is the same combinator with the conjugated `B = P·B'·Pᵀ` (law 6).
+   When an auxiliary H(curl)/H1 space is supplied the smoother is the
    **distributive-relaxation (Hiptmair)** smoother `DistRelaxationSmoother`
    (`gmg.cpp:42-46`; `distrelaxation.cpp:13-36`, which itself folds two
    `ChebyshevSmoother` instances — one on the primary space, one on the auxiliary space);
