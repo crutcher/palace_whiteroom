@@ -125,17 +125,19 @@ This is the canonical CG instantiation of Form B: the `Krylov` bundle is `CgStat
 
 The v0.5 `CgState<S>` schema is one scalar lighter than the Form-A (v0.4) schema — `beta_prev` is gone:
 
-    type CgState<S> = {
-      x:         Tensor[$S],
-      r:         Tensor[$S],
-      p:         Tensor[$S],
-      beta:      Scalar,        // (r, r); always nonzero on entry to a steady step
-      it:        Int,
-      converged: Bool,
-    }
-    -- `beta_prev` is gone. The steady step uses (s.beta / beta_prev) where
-    -- beta_prev is supplied as a closure-captured scalar from the prior step,
-    -- not a state field.
+```text
+type CgState<S> = {
+  x:         Tensor[$S],
+  r:         Tensor[$S],
+  p:         Tensor[$S],
+  beta:      Scalar,        // (r, r); always nonzero on entry to a steady step
+  it:        Int,
+  converged: Bool,
+}
+-- `beta_prev` is gone. The steady step uses (s.beta / beta_prev) where
+-- beta_prev is supplied as a closure-captured scalar from the prior step,
+-- not a state field.
+```
 
 The first iteration is unrolled (precondition `s.it == 0`, so `p ← r` unconditionally — the Form-A `if it == 0` branch is hoisted out); the steady step is branch-free (precondition `s.it >= 1, beta_prev > 0`):
 
@@ -173,26 +175,28 @@ The first iteration is unrolled (precondition `s.it == 0`, so `p ← r` uncondit
 
 The driver runs the first step, then folds `cg_steady_step` with `iterate_while_with_prev` — `iterate_while` over the pair `(state, beta_prev)`, threading the prior step's `beta` as the next step's `beta_prev` without storing it in `CgState`. This is a closure over the loop carry, not new calculus machinery:
 
-    cg_solve
-      :: !CgConfig -> LinOp<S> -> Tensor[$S] -> Tensor[$S] -> Bool
-      -> { final_state: CgState<S>, residual_history: [Scalar] }
-    cg_solve config opA b x_initial initial_guess =
-      let { state: s0, initial_res } = cg_init opA b x_initial initial_guess in
-      let eps = max (config.rel_tol * initial_res) config.abs_tol in
-      if sqrt (abs s0.beta) < eps then
-        { final_state: { ...s0, converged: True }, residual_history: [] }
-      else
-        let { state: s1, residual_norm: res1 } = cg_first_step opA eps s0 in
-        if s1.converged || s1.it >= config.max_it then
-          { final_state: s1, residual_history: [res1] }
-        else
-          let { final_state, trajectory } =
-            iterate_while_with_prev s1 s0.beta
-              (\(s, _) -> s.it < config.max_it && not s.converged)
-              (\(s, beta_prev) ->
-                let r = cg_steady_step opA eps beta_prev s in
-                (r, s.beta)) in
-          { final_state, residual_history: [res1] ++ trajectory.map(\t -> t.residual_norm) }
+```text
+cg_solve
+  :: !CgConfig -> LinOp<S> -> Tensor[$S] -> Tensor[$S] -> Bool
+  -> { final_state: CgState<S>, residual_history: [Scalar] }
+cg_solve config opA b x_initial initial_guess =
+  let { state: s0, initial_res } = cg_init opA b x_initial initial_guess in
+  let eps = max (config.rel_tol * initial_res) config.abs_tol in
+  if sqrt (abs s0.beta) < eps then
+    { final_state: { ...s0, converged: True }, residual_history: [] }
+  else
+    let { state: s1, residual_norm: res1 } = cg_first_step opA eps s0 in
+    if s1.converged || s1.it >= config.max_it then
+      { final_state: s1, residual_history: [res1] }
+    else
+      let { final_state, trajectory } =
+        iterate_while_with_prev s1 s0.beta
+          (\(s, _) -> s.it < config.max_it && not s.converged)
+          (\(s, beta_prev) ->
+            let r = cg_steady_step opA eps beta_prev s in
+            (r, s.beta)) in
+      { final_state, residual_history: [res1] ++ trajectory.map(\t -> t.residual_norm) }
+```
 
 **What this CG rotation hides.** (a) The `beta_prev` state field is gone — the steady-state schema is one scalar lighter, and a reader of `CgState<S>` sees only fields with a non-trivial role at *every* step. (b) The `if s.it == 0` branch is gone from the step body — both `cg_first_step` and `cg_steady_step` are straight-line, each named primitive firing exactly once per call. (c) The `0/0`-avoidance precondition moves from a runtime branch to a static call-site obligation: `cg_steady_step` requires `beta_prev > 0`, automatically satisfied by construction (only ever called with `s.beta` from a strictly-preceding step, and `beta > 0` is the `CheckDot` precondition on SPD systems).
 

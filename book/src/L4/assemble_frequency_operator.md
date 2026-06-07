@@ -93,27 +93,29 @@ signatures inside a `text` fence per the L4/L3 notation invariant.
 
 ## Signature
 
-    -- the driven per-ω system-operator assembly verb:
-    -- the operator-operand specialization of linear_combination at the affine-in-ω corner
-    assemble_frequency_operator
-      :: FrequencyOperatorFamily[N] -> Scalar -> LinOp[(N: ...), $N]
+```text
+-- the driven per-ω system-operator assembly verb:
+-- the operator-operand specialization of linear_combination at the affine-in-ω corner
+assemble_frequency_operator
+  :: FrequencyOperatorFamily[N] -> Scalar -> LinOp[(N: ...), $N]
 
-    -- the once-assembled fixed-basis family (the readonly construction stratum):
-    type FrequencyOperatorFamily[N] =
-      { K  : LinearOperator[N, N]            -- stiffness (curl-curl), assembled once
-      , C  : LinearOperator[N, N]            -- damping (impedance/conductivity), assembled once
-      , M  : LinearOperator[N, N]            -- mass (permittivity), assembled once
-      , A2 : Scalar -> LinOp[(N: ...), $N]  -- frequency-dependent extra term (closure over ω)
-      }
+-- the once-assembled fixed-basis family (the readonly construction stratum):
+type FrequencyOperatorFamily[N] =
+  { K  : LinearOperator[N, N]            -- stiffness (curl-curl), assembled once
+  , C  : LinearOperator[N, N]            -- damping (impedance/conductivity), assembled once
+  , M  : LinearOperator[N, N]            -- mass (permittivity), assembled once
+  , A2 : Scalar -> LinOp[(N: ...), $N]  -- frequency-dependent extra term (closure over ω)
+  }
 
-    -- the body IS linear_combination at the operator-operand corner (arity-4 instance):
-    assemble_frequency_operator fam omega =
-      linear_combination                     -- operator-operand corner (operand monoid = operator-+)
-        [ (1,          fam.K)
-        , (1i * omega, fam.C)
-        , (-(omega^2), fam.M)
-        , (1,          fam.A2 omega)
-        ]
+-- the body IS linear_combination at the operator-operand corner (arity-4 instance):
+assemble_frequency_operator fam omega =
+  linear_combination                     -- operator-operand corner (operand monoid = operator-+)
+    [ (1,          fam.K)
+    , (1i * omega, fam.C)
+    , (-(omega^2), fam.M)
+    , (1,          fam.A2 omega)
+    ]
+```
 
 Shape contract (bunsen-style; named axes; the construction stratum is the fixed
 basis captured once outside the sweep):

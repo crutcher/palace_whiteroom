@@ -79,14 +79,16 @@ notation invariant.
 
 ## Signature
 
-    -- entry point: the reduce-to-scalar inner-product combinator
-    -- a pure reduction over the shape group S; no Solve monad, no carry
-    inner_product   :: Tensor[(S: ...)] -> Tensor[$S] -> Scalar
-    inner_product_M :: Tensor[(S: ...)] -> LinOp[$S, $S] -> Tensor[$S] -> Scalar
+```text
+-- entry point: the reduce-to-scalar inner-product combinator
+-- a pure reduction over the shape group S; no Solve monad, no carry
+inner_product   :: Tensor[(S: ...)] -> Tensor[$S] -> Scalar
+inner_product_M :: Tensor[(S: ...)] -> LinOp[$S, $S] -> Tensor[$S] -> Scalar
 
-    inner_product   x y   = reduce (+) zero (zipWith kernel x y)   -- kernel from the table below
-    inner_product_M x M y = inner_product (apply_linop M x) y      -- weighted ≡ pre-apply M to arg-1, then plain
-    inner_product   x y   = inner_product_M x I y                  -- plain ≡ M = I
+inner_product   x y   = reduce (+) zero (zipWith kernel x y)   -- kernel from the table below
+inner_product_M x M y = inner_product (apply_linop M x) y      -- weighted ≡ pre-apply M to arg-1, then plain
+inner_product   x y   = inner_product_M x I y                  -- plain ≡ M = I
+```
 
 Shape contract (bunsen-style; named shape groups per
 [`l4_calculus`](../semantics/index.md) §1.2.1; identical to the firm L3 signature — the

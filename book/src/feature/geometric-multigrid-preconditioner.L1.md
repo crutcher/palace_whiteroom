@@ -41,24 +41,26 @@ combinator composition lowers onto.
 The V-cycle is a **level-recursive pure function** over flat dof-vectors (`Vector` is rank-1
 at L1, so the shapes here are genuinely flat `Tensor[N]`):
 
-    -- one V-cycle sweep at level l, pure (no in-place mutation)
-    vcycle :: [LinOp[(S: ...), $S]]   -- A[l]  per-level operators (square)
-           -> [Smoother]              -- B[l]  per-level smoothers
-           -> [LinOp[(C: ...), (F: ...)]] -- P[l]  prolongations  (coarse → fine)
-           -> Solver                  -- b0    coarse solve
-           -> Int -> Tensor[N] -> Tensor[N]
-    vcycle as bs ps b0 0 x = b0 x                                   -- coarse solve
-    vcycle as bs ps b0 l x =
-      let y   = presmooth (bs!l) x                                  -- Y ← B(X − A·0)   gmg.cpp:184
-          r   = axpby 1.0 x (-1.0) (apply (as!l) y)                -- R ← X − A Y       gmg.cpp:187-188
-          rc  = apply_transpose (ps!(l-1)) r                       -- Pᵀ R (restrict)  gmg.cpp:191
-          ec  = vcycle as bs ps b0 (l-1) rc                        -- recurse coarser   gmg.cpp:196
-          y'  = y `vadd` apply (ps!(l-1)) ec                       -- Y += P E (prolong) gmg.cpp:199-200
-      in  postsmooth (bs!l) x y'                                   -- MultTranspose2    gmg.cpp:204
+```text
+-- one V-cycle sweep at level l, pure (no in-place mutation)
+vcycle :: [LinOp[(S: ...), $S]]   -- A[l]  per-level operators (square)
+       -> [Smoother]              -- B[l]  per-level smoothers
+       -> [LinOp[(C: ...), (F: ...)]] -- P[l]  prolongations  (coarse → fine)
+       -> Solver                  -- b0    coarse solve
+       -> Int -> Tensor[N] -> Tensor[N]
+vcycle as bs ps b0 0 x = b0 x                                   -- coarse solve
+vcycle as bs ps b0 l x =
+  let y   = presmooth (bs!l) x                                  -- Y ← B(X − A·0)   gmg.cpp:184
+      r   = axpby 1.0 x (-1.0) (apply (as!l) y)                -- R ← X − A Y       gmg.cpp:187-188
+      rc  = apply_transpose (ps!(l-1)) r                       -- Pᵀ R (restrict)  gmg.cpp:191
+      ec  = vcycle as bs ps b0 (l-1) rc                        -- recurse coarser   gmg.cpp:196
+      y'  = y `vadd` apply (ps!(l-1)) ec                       -- Y += P E (prolong) gmg.cpp:199-200
+  in  postsmooth (bs!l) x y'                                   -- MultTranspose2    gmg.cpp:204
 
-    -- the outer driver: pc_it Richardson sweeps over the finest level
-    geometric_multigrid as bs ps b0 pc_it x =
-      iterate pc_it (vcycle as bs ps b0 (length as - 1)) x         -- gmg.cpp:135-141
+-- the outer driver: pc_it Richardson sweeps over the finest level
+geometric_multigrid as bs ps b0 pc_it x =
+  iterate pc_it (vcycle as bs ps b0 (length as - 1)) x         -- gmg.cpp:135-141
+```
 
 Three composed pieces, each a firm L1 link:
 

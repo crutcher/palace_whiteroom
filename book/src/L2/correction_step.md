@@ -89,11 +89,13 @@ dep-map row (`book/src/L2/index.md:96`). This dispatch firms it.
 
 ## Signature
 
-    correction_step
-      :: (A: LinOp[(S: ...), $S], B: LinOp[(S: ...), $S], x: Tensor[(S: ...)], y: Tensor[$S])
-         -> Tensor[$S]
-    correction_step A B x y = axpby 1 y 1 (apply_linop B (axpby 1 x (-1) (apply_linop A y)))
-                            = y + B·(x − A·y)
+```text
+correction_step
+  :: (A: LinOp[(S: ...), $S], B: LinOp[(S: ...), $S], x: Tensor[(S: ...)], y: Tensor[$S])
+     -> Tensor[$S]
+correction_step A B x y = axpby 1 y 1 (apply_linop B (axpby 1 x (-1) (apply_linop A y)))
+                        = y + B·(x − A·y)
+```
 
 Shape contract (bunsen-style named axes; the field shape group `S` and the square-operator
 form `LinOp[(S: ...), $S]` follow the named-shape-group convention of

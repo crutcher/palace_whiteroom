@@ -67,18 +67,20 @@ Writing `term = (Q, 𝒟)` (a [`weak_form_term`](../L1/weak_form_term.md): coeff
 differential-operator `𝒟 ∈ {Identity, Gradient, Curl, Divergence}`), the combinator is the
 **pipe of the four substrate verbs** over the element-local-tensor family:
 
-    matrix-free-operator-apply
-      :: ElemRestriction -> Basis -> GeomData -> Coefficient
-      -> LinOp[(N: ...), $N]
-    -- one term's element-local→global linear operator, as a contraction-chain fold
+```text
+matrix-free-operator-apply
+  :: ElemRestriction -> Basis -> GeomData -> Coefficient
+  -> LinOp[(N: ...), $N]
+-- one term's element-local→global linear operator, as a contraction-chain fold
 
-    apply (A = mk-operator restr basis geom Q) :: Tensor[(N: ...)] -> Tensor[(N: ...)]
-    apply A x =
-        x   |> element_restrict restr            -- G   :: [(N: ...)] -> [E, L]
-            |> basis_apply (mode-of 𝒟) basis     -- B_𝒟 :: [E, L]    -> [E, P, C]
-            |> quad_point_contract geom           -- D   :: [E, P, C] -> [E, P, C'] (pointwise, against [E, P, G]; C' = test components, = C in the symmetric trial==test case)
-            |> basis_apply (transpose (mode-of 𝒟)) basis   -- B_𝒟ᵀ :: [E, P, C] -> [E, L]
-            |> element_restrict_transpose restr   -- Gᵀ  :: [E, L]    -> [(N: ...)]  (scatter-ADD)
+apply (A = mk-operator restr basis geom Q) :: Tensor[(N: ...)] -> Tensor[(N: ...)]
+apply A x =
+    x   |> element_restrict restr            -- G   :: [(N: ...)] -> [E, L]
+        |> basis_apply (mode-of 𝒟) basis     -- B_𝒟 :: [E, L]    -> [E, P, C]
+        |> quad_point_contract geom           -- D   :: [E, P, C] -> [E, P, C'] (pointwise, against [E, P, G]; C' = test components, = C in the symmetric trial==test case)
+        |> basis_apply (transpose (mode-of 𝒟)) basis   -- B_𝒟ᵀ :: [E, P, C] -> [E, L]
+        |> element_restrict_transpose restr   -- Gᵀ  :: [E, L]    -> [(N: ...)]  (scatter-ADD)
+```
 
 That is the named form of `A = Gᵀ ∘ B_𝒟ᵀ ∘ D(Q, geom) ∘ B_𝒟 ∘ G`. The combinator's two strata:
 

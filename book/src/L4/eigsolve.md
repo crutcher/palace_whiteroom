@@ -38,28 +38,30 @@ The cap is defined **in L4 vocabulary** (high→low discipline): its semantics, 
 
 The L4 cap signature is the `solve-monad` outer-driver shape, specialised to the opaque-library eigen-iteration and the richer termination sum. The entry point and its single opaque driver layer:
 
-    -- entry point: run the outer driver over the initial SimState
-    eigsolve :: OpParams -> Inputs -> EigState
-    eigsolve op inp = execState (solve_loop op inp) (initial_state inp)
+```text
+-- entry point: run the outer driver over the initial SimState
+eigsolve :: OpParams -> Inputs -> EigState
+eigsolve op inp = execState (solve_loop op inp) (initial_state inp)
 
-    -- outer driver: the eigen-iteration is OPAQUE — one library step, classified once
-    -- (NOT a tail-recursion of a Palace-authored restart_cycle; Palace authors no loop)
-    solve_loop :: OpParams -> Inputs -> Solve ()
-    solve_loop op inp = do
-      o <- eigen_iterate op inp        -- OPAQUE library fold (SLEPc EPSSolve / ARPACK naupd RCI)
-      classify_into_state o            -- fold the EigOutcome into EigState once at the boundary
+-- outer driver: the eigen-iteration is OPAQUE — one library step, classified once
+-- (NOT a tail-recursion of a Palace-authored restart_cycle; Palace authors no loop)
+solve_loop :: OpParams -> Inputs -> Solve ()
+solve_loop op inp = do
+  o <- eigen_iterate op inp        -- OPAQUE library fold (SLEPc EPSSolve / ARPACK naupd RCI)
+  classify_into_state o            -- fold the EigOutcome into EigState once at the boundary
 
-    -- the opaque eigen-iteration, named by ROLE only (a sequential-obstruction marker,
-    -- NOT a renderable Palace loop): folds the per-step apply_shift_invert body library-internally
-    eigen_iterate :: OpParams -> Inputs -> Solve EigOutcome
+-- the opaque eigen-iteration, named by ROLE only (a sequential-obstruction marker,
+-- NOT a renderable Palace loop): folds the per-step apply_shift_invert body library-internally
+eigen_iterate :: OpParams -> Inputs -> Solve EigOutcome
 
-    -- the per-step body the library folds (handed in as an ApplyOp / __pc_apply_EPS callback);
-    -- whole-tensor, LIFTS — identity-in-form to the firm L2/L3 apply_shift_invert composition
-    apply_shift_invert :: OpParams -> Tensor[(S: ...)] -> Tensor[$S]
+-- the per-step body the library folds (handed in as an ApplyOp / __pc_apply_EPS callback);
+-- whole-tensor, LIFTS — identity-in-form to the firm L2/L3 apply_shift_invert composition
+apply_shift_invert :: OpParams -> Tensor[(S: ...)] -> Tensor[$S]
 
-    -- the RICHER termination sum (the eigsolve-specific extension of the canonical Outcome)
-    data EigStatus = Converged | PartialConverged Int | MaxIterReached | LinearSolveFailed
-    data EigOutcome = Continue | Done EigStatus
+-- the RICHER termination sum (the eigsolve-specific extension of the canonical Outcome)
+data EigStatus = Converged | PartialConverged Int | MaxIterReached | LinearSolveFailed
+data EigOutcome = Continue | Done EigStatus
+```
 
 Shape contract (bunsen-style; named records and axes; the operator-domain shape group `S` follows the named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1 — `complex` is an element type, not an axis; the eigenvalue/error lists `Tensor[K, ...]` are genuine length-K; the same three strata per [`state-stratification`](../concepts/state-stratification.md) the `ksp_solve` cap uses, with `EigState` the eigsolve-specific persistent stratum):
 

@@ -87,8 +87,10 @@ which is a *sibling*, not a fold-parent.
 
 ## Signature
 
-    assemble_diagonal :: LinOp[(S: ...), $S] -> Tensor[$S]
-    assemble_diagonal A = diag(A)
+```text
+assemble_diagonal :: LinOp[(S: ...), $S] -> Tensor[$S]
+assemble_diagonal A = diag(A)
+```
 
 Shape contract (named shape groups / operator shapes per [`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2; the diagonal is intrinsic to a square operator, so domain and range are one shape group `S`):
 

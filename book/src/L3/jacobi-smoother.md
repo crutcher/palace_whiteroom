@@ -34,9 +34,11 @@ This L3 entry is the **layer-coherence anchor**: a reader at L3 can find `jacobi
 
 ## Signature
 
-    jacobi_smoother :: (op: JacobiSmoother[S], x: Tensor[(S: ...)]) -> Tensor[$S]
-    jacobi_smoother op x = op.dinv ⊙ x
-                         = (ω · diag(A)⁻¹) ⊙ x
+```text
+jacobi_smoother :: (op: JacobiSmoother[S], x: Tensor[(S: ...)]) -> Tensor[$S]
+jacobi_smoother op x = op.dinv ⊙ x
+                     = (ω · diag(A)⁻¹) ⊙ x
+```
 
 Shape contract (positional values; bunsen-style named axes; the field shape group `S` follows the named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1; no element loop exposed at L3; no monadic effect, no `readonly` typing — the typing distinctions are deferred to the wrapper layers above):
 

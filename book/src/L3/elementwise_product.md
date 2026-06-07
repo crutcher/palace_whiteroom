@@ -33,8 +33,10 @@ A cross-cutting prose treatment lives at [`elementwise-product`](../concepts/ele
 
 ## Signature
 
-    elementwise_product :: (a: Tensor[(S: ...)], b: Tensor[$S]) -> Tensor[$S]
-    elementwise_product(a, b) = a ⊙ b
+```text
+elementwise_product :: (a: Tensor[(S: ...)], b: Tensor[$S]) -> Tensor[$S]
+elementwise_product(a, b) = a ⊙ b
+```
 
 Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantics/index.md) §1.2.1; positional values, no monadic effect, no destination buffer — the typing distinctions are deferred to the wrapper layers above):
 
@@ -44,8 +46,10 @@ Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantic
 
 `a` and `b` must be congruent (same shape group `S`) and share the same element type (both real or both complex). The element-type axis (real or complex) is parameterised; the L3 signature is uniform across it. The **conjugate variant** (complex element-type only) takes one operand to its conjugate before multiplying:
 
-    elementwise_product_conj :: (a: ComplexTensor[(S: ...)], b: ComplexTensor[$S]) -> ComplexTensor[$S]
-    elementwise_product_conj(a, b) = ā ⊙ b
+```text
+elementwise_product_conj :: (a: ComplexTensor[(S: ...)], b: ComplexTensor[$S]) -> ComplexTensor[$S]
+elementwise_product_conj(a, b) = ā ⊙ b
+```
 
 — modeled here, as at L1, as the same operator with a **conjugation variant axis** (see Variant axes) rather than as a separate primitive.
 

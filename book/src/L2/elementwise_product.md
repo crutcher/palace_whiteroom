@@ -86,8 +86,10 @@ fusion-rotation layer; the concept page is the narrative.
 
 ## Signature
 
-    elementwise_product :: (a: Tensor[(S: ...)], b: Tensor[$S]) -> Tensor[$S]
-    elementwise_product(a, b) = a ⊙ b
+```text
+elementwise_product :: (a: Tensor[(S: ...)], b: Tensor[$S]) -> Tensor[$S]
+elementwise_product(a, b) = a ⊙ b
+```
 
 Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantics/index.md)
 §1.2.1; positional values, no monadic effect, no destination buffer):
@@ -104,8 +106,10 @@ both complex). The element-type axis (real or complex) is parameterised; the L2 
 is uniform across it. The **conjugate variant** (complex element-type only) takes one
 operand to its conjugate before multiplying:
 
-    elementwise_product_conj :: (a: ComplexTensor[(S: ...)], b: ComplexTensor[$S]) -> ComplexTensor[$S]
-    elementwise_product_conj(a, b) = ā ⊙ b
+```text
+elementwise_product_conj :: (a: ComplexTensor[(S: ...)], b: ComplexTensor[$S]) -> ComplexTensor[$S]
+elementwise_product_conj(a, b) = ā ⊙ b
+```
 
 — modeled here, as at L1 and L3, as the same operator with a **conjugation variant axis**
 (see Variant axes) rather than as a separate primitive.

@@ -82,10 +82,12 @@ Haskell `::` signatures inside a `text` fence per the L4/L3 notation invariant.
 
 ## Signature
 
-    -- entry point: the variadic scalar-weighted-tensor-sum combinator
-    -- a pure fold over a finite (Scalar, Tensor[(S: ...)]) term list; no Solve monad, no carry
-    linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[$S]
-    linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros $S) pairs
+```text
+-- entry point: the variadic scalar-weighted-tensor-sum combinator
+-- a pure fold over a finite (Scalar, Tensor[(S: ...)]) term list; no Solve monad, no carry
+linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[$S]
+linear_combination pairs = foldl (\acc (a, t) -> acc + scal a t) (zeros $S) pairs
+```
 
 Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantics/index.md)
 §1.2.1; identical to the firm L3 signature — the L4 form is value-thread-isomorphic

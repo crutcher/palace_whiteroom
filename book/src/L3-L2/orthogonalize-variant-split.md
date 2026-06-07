@@ -95,11 +95,13 @@ The L2 form is reproduced from [`L2/orthogonalize`](../L2/orthogonalize.md) §Se
 `project ▷ subtract` composition with the iteration view erased and the per-variant sequencing
 disclosed as the residual axis:
 
-    orthogonalize :: (op: OrthogOp, w: Tensor[(S: ...)], V: Basis[N, m]) -> { residual: Tensor[$S], coeffs: Tensor[m] }
-    orthogonalize op w V =
-      let coeffs   = project op.variant op.dot w V      -- the per-variant batched inner products
-      let residual = subtract w coeffs V                -- w − Σ_j coeffs[j]·V[j]
-      in { residual, coeffs }
+```text
+orthogonalize :: (op: OrthogOp, w: Tensor[(S: ...)], V: Basis[N, m]) -> { residual: Tensor[$S], coeffs: Tensor[m] }
+orthogonalize op w V =
+  let coeffs   = project op.variant op.dot w V      -- the per-variant batched inner products
+  let residual = subtract w coeffs V                -- w − Σ_j coeffs[j]·V[j]
+  in { residual, coeffs }
+```
 
 where `project` / `subtract` are the two composition stages whose **interleaving** is the variant
 axis (disclosed as the collective-shape residual axis, not rendered as iteration):

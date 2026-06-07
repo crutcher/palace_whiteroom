@@ -34,8 +34,10 @@ This L3 entry is the **layer-coherence anchor**: a reader navigating L3 (the ite
 
 ## Signature
 
-    normalize :: Tensor[(S: ...)] -> (Scalar, Tensor[$S])
-    normalize x = (β, x/β)   where  β = nrm2 x,  β > 0
+```text
+normalize :: Tensor[(S: ...)] -> (Scalar, Tensor[$S])
+normalize x = (β, x/β)   where  β = nrm2 x,  β > 0
+```
 
 Shape contract (bunsen-style; named shape groups per [`l4_calculus`](../semantics/index.md) §1.2.1; positional values, no monadic effect, no destination buffer):
 

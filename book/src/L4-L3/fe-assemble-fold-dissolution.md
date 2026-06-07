@@ -25,30 +25,32 @@ This is a **genuine vocabulary translation, not an identity-in-named-terms renam
 
 The L4 [`fe_assemble`](../L4/fe_assemble.md) combinator — the firm D1 assemble-fold shape (the firm entry §Signature). The entry point, transcribed from the firm cap:
 
-    -- entry point: capture the space once, fold the opaque per-term assembly leaf over the
-    -- immutable term list, reduce by operator-+ into one global operator (a list-homomorphism)
-    fe_assemble :: FiniteElementSpace[N] -> [WeakFormTerm] -> LinOp[(N: ...), $N]
-    fe_assemble space terms = foldr (\t acc -> assemble_term space t + acc) zero terms
-                            = Σ_{t ∈ terms} assemble_term space t
+```text
+-- entry point: capture the space once, fold the opaque per-term assembly leaf over the
+-- immutable term list, reduce by operator-+ into one global operator (a list-homomorphism)
+fe_assemble :: FiniteElementSpace[N] -> [WeakFormTerm] -> LinOp[(N: ...), $N]
+fe_assemble space terms = foldr (\t acc -> assemble_term space t + acc) zero terms
+                        = Σ_{t ∈ terms} assemble_term space t
 
-    -- the opaque per-term assembly leaf the combinator quantifies over (one weak-form term to its
-    -- global-dof contribution; bottoms out in a libCEED element-local quadrature kernel the L4
-    -- entry does NOT render):
-    assemble_term :: FiniteElementSpace[N] -> WeakFormTerm -> LinOp[(N: ...), $N]
+-- the opaque per-term assembly leaf the combinator quantifies over (one weak-form term to its
+-- global-dof contribution; bottoms out in a libCEED element-local quadrature kernel the L4
+-- entry does NOT render):
+assemble_term :: FiniteElementSpace[N] -> WeakFormTerm -> LinOp[(N: ...), $N]
 
-    -- equivalently, the HOMOMORPHIC member of the strawman §3.7 iterate_while family
-    -- (carry = remaining term list + running operator sum; the step does NOT read the running
-    -- sum to compute its own contribution — the contributions are independent, hence a map-reduce
-    -- NOT a carry-threaded fold):
-    fe_assemble space terms =
-      (iterate_while
-         { remaining: terms, acc: zero }          -- carry: remaining terms + running operator sum
-         (\c -> not (null c.remaining))            -- continue while terms remain
-         (\c -> let t   = head c.remaining
-                    sub = assemble_term space t    -- the term's contribution is INDEPENDENT of acc
-                in { state: { remaining: tail c.remaining
-                            , acc: c.acc + sub } }))   -- reduce by operator-+ (commutes/associates)
-        .final_state.acc                           -- == Σ_{t ∈ terms} assemble_term space t
+-- equivalently, the HOMOMORPHIC member of the strawman §3.7 iterate_while family
+-- (carry = remaining term list + running operator sum; the step does NOT read the running
+-- sum to compute its own contribution — the contributions are independent, hence a map-reduce
+-- NOT a carry-threaded fold):
+fe_assemble space terms =
+  (iterate_while
+     { remaining: terms, acc: zero }          -- carry: remaining terms + running operator sum
+     (\c -> not (null c.remaining))            -- continue while terms remain
+     (\c -> let t   = head c.remaining
+                sub = assemble_term space t    -- the term's contribution is INDEPENDENT of acc
+            in { state: { remaining: tail c.remaining
+                        , acc: c.acc + sub } }))   -- reduce by operator-+ (commutes/associates)
+    .final_state.acc                           -- == Σ_{t ∈ terms} assemble_term space t
+```
 
 The assemble-fold-shell machinery this theme dissolves is **three** pieces:
 

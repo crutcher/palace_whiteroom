@@ -144,31 +144,33 @@ The L4>L3 dissolution produces the L3 **explicit element-iterated contraction sw
 (`operator.cpp:182-189`), read at the L3 iteration-rotation tier. The L3 rendering (in the L3 value-thread
 vocabulary, composing the firm substrate ops BY NAME):
 
-    -- L3 explicit element-iterated contraction sweep: the once-atomic L4 constructor dissolves into a
-    -- per-geometry-type element loop building the restriction/basis/geom-data context per geometry type;
-    -- the once-atomic L4 `apply` dissolves into the five-stage rank-tensor contraction over the element
-    -- families, with `element_restrict`'s G as the FLAT→ELEMENT-LOCAL shape boundary.
-    mk_matrix_free_operator_L3 :: (space, term, geom) -> LinOp[(N: ...), $N]
-    mk_matrix_free_operator_L3 space term geom =
-      let op = make_composite_operator space         -- 1. mutable composite ceed::Operator accumulator
-      let _  =                                        -- 2. loop the per-geometry-type element families
-            for_each (mesh.GetCeedGeomFactorData ceed) (\(geom_type, data) ->   -- bilinearform.cpp:54
-              let restr  = element_restrict_context space geom_type data.indices   -- G / Gᵀ index map  (:65,:67)
-              let basis  = basis_context space geom_type                            -- B_𝒟 tabulated basis (:68,:69)
-              let geomd  = data.geom_data                                           -- D's [(E,P,G)] carrier (:75)
-              let sub_op = assemble_subop_for_term term restr basis geomd           -- the per-term sub-operator
-              in op.AddSubOperator(sub_op))                                          -- accumulate            (:77)
-      let _  = op.Finalize()                                                         --                       (:104)
-      in op   -- the composite whose `apply`/`Mult` runs the five-stage contraction sweep below
+```text
+-- L3 explicit element-iterated contraction sweep: the once-atomic L4 constructor dissolves into a
+-- per-geometry-type element loop building the restriction/basis/geom-data context per geometry type;
+-- the once-atomic L4 `apply` dissolves into the five-stage rank-tensor contraction over the element
+-- families, with `element_restrict`'s G as the FLAT→ELEMENT-LOCAL shape boundary.
+mk_matrix_free_operator_L3 :: (space, term, geom) -> LinOp[(N: ...), $N]
+mk_matrix_free_operator_L3 space term geom =
+  let op = make_composite_operator space         -- 1. mutable composite ceed::Operator accumulator
+  let _  =                                        -- 2. loop the per-geometry-type element families
+        for_each (mesh.GetCeedGeomFactorData ceed) (\(geom_type, data) ->   -- bilinearform.cpp:54
+          let restr  = element_restrict_context space geom_type data.indices   -- G / Gᵀ index map  (:65,:67)
+          let basis  = basis_context space geom_type                            -- B_𝒟 tabulated basis (:68,:69)
+          let geomd  = data.geom_data                                           -- D's [(E,P,G)] carrier (:75)
+          let sub_op = assemble_subop_for_term term restr basis geomd           -- the per-term sub-operator
+          in op.AddSubOperator(sub_op))                                          -- accumulate            (:77)
+  let _  = op.Finalize()                                                         --                       (:104)
+  in op   -- the composite whose `apply`/`Mult` runs the five-stage contraction sweep below
 
-    -- the apply (run-stratum): ceed::Operator::Mult — the five-stage element-local rank-tensor contraction
-    apply op v =
-        v   |> element_restrict restr                  -- G   :: Tensor[(N: ...)] -> Tensor[(E, L)]   (flat→element-local)
-            |> basis_apply (mode-of 𝒟) basis           -- B_𝒟 :: [(E, L)]    -> [(E, P, C)]
-            |> quad_point_contract geomd               -- D   :: [(E, P, C)] -> [(E, P, C')]  (pointwise, against [(E, P, G)]; C' = test components, = C in the symmetric trial==test case)
-            |> basis_apply (transpose (mode-of 𝒟)) basis  -- B_𝒟ᵀ :: [(E, P, C)] -> [(E, L)]
-            |> element_restrict_transpose restr        -- Gᵀ  :: [(E, L)]    -> Tensor[(N: ...)]  (scatter-ADD; element-local→flat)
-            |> dof_multiplicity_scale                  -- y *= dof_multiplicity  (shared-dof averaging, single-rank)
+-- the apply (run-stratum): ceed::Operator::Mult — the five-stage element-local rank-tensor contraction
+apply op v =
+    v   |> element_restrict restr                  -- G   :: Tensor[(N: ...)] -> Tensor[(E, L)]   (flat→element-local)
+        |> basis_apply (mode-of 𝒟) basis           -- B_𝒟 :: [(E, L)]    -> [(E, P, C)]
+        |> quad_point_contract geomd               -- D   :: [(E, P, C)] -> [(E, P, C')]  (pointwise, against [(E, P, G)]; C' = test components, = C in the symmetric trial==test case)
+        |> basis_apply (transpose (mode-of 𝒟)) basis  -- B_𝒟ᵀ :: [(E, P, C)] -> [(E, L)]
+        |> element_restrict_transpose restr        -- Gᵀ  :: [(E, L)]    -> Tensor[(N: ...)]  (scatter-ADD; element-local→flat)
+        |> dof_multiplicity_scale                  -- y *= dof_multiplicity  (shared-dof averaging, single-rank)
+```
 
 where:
 

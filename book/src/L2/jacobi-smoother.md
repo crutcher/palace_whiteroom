@@ -99,9 +99,11 @@ floor. This dispatch floors `jacobi-smoother`.
 
 ## Signature
 
-    jacobi_smoother :: (op: JacobiSmoother[S], x: Tensor[(S: ...)]) -> Tensor[$S]
-    jacobi_smoother op x = op.dinv ⊙ x
-                         = (ω · diag(A)⁻¹) ⊙ x
+```text
+jacobi_smoother :: (op: JacobiSmoother[S], x: Tensor[(S: ...)]) -> Tensor[$S]
+jacobi_smoother op x = op.dinv ⊙ x
+                     = (ω · diag(A)⁻¹) ⊙ x
+```
 
 Shape contract (bunsen-style named axes; the field shape group `S` follows the
 named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1;

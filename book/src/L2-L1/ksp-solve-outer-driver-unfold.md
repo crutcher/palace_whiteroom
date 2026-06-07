@@ -25,16 +25,18 @@ The L2 entry's §"Lowers from" narrates the **open** (L1-opacity → L2-composit
 
 The L2 form is reproduced from [`L2/ksp_solve`](../L2/ksp_solve.md) §Signature — the outer-driver composition (the convergence-test fold of the visible kernel):
 
-    ksp_solve :: (K: Solver[A: LinOp[(S: ...), $S]], b: Tensor[$S]) -> SolveResult[S]
-    ksp_solve K b =
-      let (op, s_0)     = setup K b                          -- bind kernel op-surface; seed state (iterate, eps, counters)
-      let s_init        = init_convergence op s_0            -- residual proxy + eps + pre-loop converged flag
-      let s_n           = iterate_while                       -- the outer-driver fold over the kernel (NAMED BY ROLE)
-                            (\s -> (krylov-step op s).state)  --   body: the L2 kernel (state projection) — VISIBLE
-                            s_init                            --   seed
-                            (\s -> not s.converged && s.it < op.max_it)  -- convergence predicate
-      let s_final       = materialise_iterate op s_n          -- fold restart-cycle correction into s.x (identity for CG)
-      in extract_result s_final                               -- the four-field SolveResult readout
+```text
+ksp_solve :: (K: Solver[A: LinOp[(S: ...), $S]], b: Tensor[$S]) -> SolveResult[S]
+ksp_solve K b =
+  let (op, s_0)     = setup K b                          -- bind kernel op-surface; seed state (iterate, eps, counters)
+  let s_init        = init_convergence op s_0            -- residual proxy + eps + pre-loop converged flag
+  let s_n           = iterate_while                       -- the outer-driver fold over the kernel (NAMED BY ROLE)
+                        (\s -> (krylov-step op s).state)  --   body: the L2 kernel (state projection) — VISIBLE
+                        s_init                            --   seed
+                        (\s -> not s.converged && s.it < op.max_it)  -- convergence predicate
+  let s_final       = materialise_iterate op s_n          -- fold restart-cycle correction into s.x (identity for CG)
+  in extract_result s_final                               -- the four-field SolveResult readout
+```
 
 The L2 upper side is **shape-generic**: the RHS `b` and the system operator `A` are congruent over
 one square shape group `S` of unknown rank (`Tensor[(S: ...)]`, square `LinOp[(S: ...), $S]`;

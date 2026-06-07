@@ -31,8 +31,10 @@ This L3 entry is the **layer-coherence anchor**: a reader navigating L3 (the ite
 
 ## Signature
 
-    assemble_diagonal :: LinOp[(S: ...), $S] -> Tensor[$S]
-    assemble_diagonal A = diag(A)
+```text
+assemble_diagonal :: LinOp[(S: ...), $S] -> Tensor[$S]
+assemble_diagonal A = diag(A)
+```
 
 Shape contract (named shape groups / operator shapes per [`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2; the diagonal is intrinsic to a square operator, so domain and range are one shape group `S`; positional values; L3 has no `readonly` annotation and no monadic effect — the typing distinctions are deferred to the wrapper layers above):
 

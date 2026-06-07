@@ -91,8 +91,10 @@ them but composes neither.
 
 ## Signature
 
-    reciprocal :: Tensor[(S: ...)] -> Tensor[$S]
-    reciprocal x = (\idx -> 1 / x[idx])   for every multi-index idx of S
+```text
+reciprocal :: Tensor[(S: ...)] -> Tensor[$S]
+reciprocal x = (\idx -> 1 / x[idx])   for every multi-index idx of S
+```
 
 Shape contract (bunsen-style; named shape groups per
 [`l4_calculus`](../semantics/index.md) §1.2.1; positional values, no monadic effect, no

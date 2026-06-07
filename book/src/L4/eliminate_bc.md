@@ -79,18 +79,20 @@ the `readonly` BC-stratum the call-sites share.
 
 The pair, both post-composing after `fe_assemble` on the assembled `K`:
 
-    -- operator-side: pin the essential dofs into the assembled square operator
-    eliminate_essential_bc :: LinOp[(S: ...), $S] -> DofSet[N] -> DiagPolicy
-                              -> LinOp[$S, $S]
+```text
+-- operator-side: pin the essential dofs into the assembled square operator
+eliminate_essential_bc :: LinOp[(S: ...), $S] -> DofSet[N] -> DiagPolicy
+                          -> LinOp[$S, $S]
 
-    -- RHS-side: lift the inhomogeneous Dirichlet data into the right-hand side
-    eliminate_rhs :: LinOp[(S: ...), $S] -> Tensor[$S] -> Tensor[$S] -> DiagPolicy
-                     -> Tensor[$S]
-    eliminate_rhs K x_bc b policy =
-      let y    = apply_linop K (restrict_essential x_bc)          -- K · Eₑ(x_bc)
-          b'   = linear_combination [(1, b), (-1, y)]             -- b − K·x_bc
-          pin  = case policy of DIAG_ONE -> x_bc ; DIAG_ZERO -> zeros
-      in  set_essential b' pin                                    -- BC rows ← pin
+-- RHS-side: lift the inhomogeneous Dirichlet data into the right-hand side
+eliminate_rhs :: LinOp[(S: ...), $S] -> Tensor[$S] -> Tensor[$S] -> DiagPolicy
+                 -> Tensor[$S]
+eliminate_rhs K x_bc b policy =
+  let y    = apply_linop K (restrict_essential x_bc)          -- K · Eₑ(x_bc)
+      b'   = linear_combination [(1, b), (-1, y)]             -- b − K·x_bc
+      pin  = case policy of DIAG_ONE -> x_bc ; DIAG_ZERO -> zeros
+  in  set_essential b' pin                                    -- BC rows ← pin
+```
 
 Shape contract (named shape groups / operator shapes per [`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2; the system operator is square, so domain and range are one shape group `S` and the BC-side vectors are congruent to it; the essential-dof index set keeps its genuine flat-index spelling; the BC stratum per [`state-stratification`](../concepts/state-stratification.md)):
 

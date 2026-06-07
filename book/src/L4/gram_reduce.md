@@ -76,24 +76,26 @@ bodies; Palace's C++ writes the explicit double loop, not the L4 reduction form.
 
 ## Signature
 
-    -- the operator-weighted symmetric-Gram reduction over a solution family-pair grid,
-    -- parameterized by the per-entry normalization weight w(i,j):
-    gram_reduce :: LinOp[(S: ...), $S]   -- the operator weight K (square SPD domain energy operator)
-                -> [Tensor[$S]]           -- the solution family xs = [x_0 .. x_{m-1}] (congruent to K's domain S)
-                -> (Int -> Int -> Scalar)       -- the per-entry normalization weight w(i,j)
-                -> Matrix[m, m]                 -- the symmetric Gram matrix G, Gᵢⱼ = w(i,j) · (xⱼᵀ K xᵢ)
-    gram_reduce k xs w =
-      symmetric_from_upper                                  -- mirror lower triangle from upper (G symmetric)
-        [ [ w i j * entry k xs i j | j <- [i .. m-1] ]      -- map over upper-triangle pairs
-          | i <- [0 .. m-1] ]
-      where
-        m              = length xs
-        entry k xs i j
-          | i == j     = matrix_weighted_norm (xs!!i) k     -- diagonal: xᵢᵀ K xᵢ   (L1 matrix-weighted-norm radicand)
-          | otherwise  = bilinear_form (xs!!j) k (xs!!i)    -- off-diag: xⱼᵀ K xᵢ   (L1 bilinear-form)
+```text
+-- the operator-weighted symmetric-Gram reduction over a solution family-pair grid,
+-- parameterized by the per-entry normalization weight w(i,j):
+gram_reduce :: LinOp[(S: ...), $S]   -- the operator weight K (square SPD domain energy operator)
+            -> [Tensor[$S]]           -- the solution family xs = [x_0 .. x_{m-1}] (congruent to K's domain S)
+            -> (Int -> Int -> Scalar)       -- the per-entry normalization weight w(i,j)
+            -> Matrix[m, m]                 -- the symmetric Gram matrix G, Gᵢⱼ = w(i,j) · (xⱼᵀ K xᵢ)
+gram_reduce k xs w =
+  symmetric_from_upper                                  -- mirror lower triangle from upper (G symmetric)
+    [ [ w i j * entry k xs i j | j <- [i .. m-1] ]      -- map over upper-triangle pairs
+      | i <- [0 .. m-1] ]
+  where
+    m              = length xs
+    entry k xs i j
+      | i == j     = matrix_weighted_norm (xs!!i) k     -- diagonal: xᵢᵀ K xᵢ   (L1 matrix-weighted-norm radicand)
+      | otherwise  = bilinear_form (xs!!j) k (xs!!i)    -- off-diag: xⱼᵀ K xᵢ   (L1 bilinear-form)
 
-    -- the alternate Maxwell form is the inverse (a CONSUMER, not part of the reduction):
-    gram_inverse :: Matrix[m, m] -> Matrix[m, m]            -- = inv (LAPACK); the Cinv / Minv tail
+-- the alternate Maxwell form is the inverse (a CONSUMER, not part of the reduction):
+gram_inverse :: Matrix[m, m] -> Matrix[m, m]            -- = inv (LAPACK); the Cinv / Minv tail
+```
 
 Shape contract (bunsen-style; named shape groups per
 [`l4_calculus`](../semantics/index.md) §1.2.1):

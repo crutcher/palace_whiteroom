@@ -46,16 +46,18 @@ the opaque eigen-iteration consumes ([`eigsolve`](../L2/eigsolve.md) §Signature
 `book/src/L2/eigsolve.md:55-77`). It is the only Palace-authored, L2-opened half of the L1
 eigsolve opacity; the eigen-iteration fold itself is named by role, not opened:
 
-    apply_shift_invert :: (op: SpectralTransformOp, v: Tensor[(S: ...), complex]) -> Tensor[$S, complex]
+```text
+apply_shift_invert :: (op: SpectralTransformOp, v: Tensor[(S: ...), complex]) -> Tensor[$S, complex]
 
-    -- spectral-transformation = none (no transform):        apply M⁻¹ K   (or M⁻¹ alone, per backend)
-    -- spectral-transformation = shift-invert (linear):      (K − σM)⁻¹ M
-    -- spectral-transformation = shift-invert (quadratic):   (L₀ − σL₁)⁻¹ L₁   -- PEP block linearization
+-- spectral-transformation = none (no transform):        apply M⁻¹ K   (or M⁻¹ alone, per backend)
+-- spectral-transformation = shift-invert (linear):      (K − σM)⁻¹ M
+-- spectral-transformation = shift-invert (quadratic):   (L₀ − σL₁)⁻¹ L₁   -- PEP block linearization
 
-    apply_shift_invert op v =
-      let w  = apply_linop op.operand v        -- apply_linop against M (linear) / the PEP block L₁ (quadratic)
-      let y  = ksp_solve op.inv w              -- inner ksp_solve inverting the shifted (K − σM) (or (L₀ − σL₁))
-      in scale_untransform op y                -- the per-backend γ / δ un-scale (informational coordinate bookkeeping)
+apply_shift_invert op v =
+  let w  = apply_linop op.operand v        -- apply_linop against M (linear) / the PEP block L₁ (quadratic)
+  let y  = ksp_solve op.inv w              -- inner ksp_solve inverting the shifted (K − σM) (or (L₀ − σL₁))
+  in scale_untransform op y                -- the per-backend γ / δ un-scale (informational coordinate bookkeeping)
+```
 
 where the composition operator `▷` denotes left-to-right dataflow: the `apply_linop` result feeds
 the inner `ksp_solve`, whose result feeds the `scale_untransform` tail. The composition is

@@ -56,19 +56,21 @@ This combinator abstracts a shape recurring across solver pipelines, so it runs 
 
 The combinator captures the space once, outside the fold, and threads it unchanged into every per-term `assemble_term`; the per-term contributions are summed (the `foldr` reduces by operator-`+`):
 
-    -- entry point: capture the space once, fold the term list by assemble_term, sum the contributions
-    fe_assemble :: FiniteElementSpace[N] -> [WeakFormTerm] -> LinOp[(N: ...), $N]
-    fe_assemble space terms = foldr (\t acc -> assemble_term space t + acc) zero terms
+```text
+-- entry point: capture the space once, fold the term list by assemble_term, sum the contributions
+fe_assemble :: FiniteElementSpace[N] -> [WeakFormTerm] -> LinOp[(N: ...), $N]
+fe_assemble space terms = foldr (\t acc -> assemble_term space t + acc) zero terms
 
-    -- equivalently, as the map-then-reduce the foldr-over-a-commutative-monoid IS
-    -- (each term independent; no carry; the reduction is operator-+ over LinOp[(N: ...), $N]):
-    fe_assemble space terms = sum [ assemble_term space t | t <- terms ]
-                            = Σ_{t ∈ terms} assemble_term space t
+-- equivalently, as the map-then-reduce the foldr-over-a-commutative-monoid IS
+-- (each term independent; no carry; the reduction is operator-+ over LinOp[(N: ...), $N]):
+fe_assemble space terms = sum [ assemble_term space t | t <- terms ]
+                        = Σ_{t ∈ terms} assemble_term space t
 
-    -- the opaque per-term assembly leaf: ONE weak-form term to its global-dof contribution.
-    -- BLACK-BOX KERNEL (libCEED-owned element-local quadrature + restriction); rises as a
-    -- readonly opaque-surface INPUT to the combinator, folded over WITHOUT cracking it open.
-    assemble_term :: FiniteElementSpace[N] -> WeakFormTerm -> LinOp[(N: ...), $N]
+-- the opaque per-term assembly leaf: ONE weak-form term to its global-dof contribution.
+-- BLACK-BOX KERNEL (libCEED-owned element-local quadrature + restriction); rises as a
+-- readonly opaque-surface INPUT to the combinator, folded over WITHOUT cracking it open.
+assemble_term :: FiniteElementSpace[N] -> WeakFormTerm -> LinOp[(N: ...), $N]
+```
 
 Shape contract (bunsen-style; named records and axes; the construction stratum per [`state-stratification`](../concepts/state-stratification.md)):
 

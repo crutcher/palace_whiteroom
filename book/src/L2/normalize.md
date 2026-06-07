@@ -42,8 +42,10 @@ The B-weighted sibling `normalize_B` (rescale by the energy norm `√(xᴴ B x)`
 
 ## Signature
 
-    normalize :: Tensor[(S: ...)] -> (Scalar, Tensor[$S])
-    normalize x = (β, x/β)   where  β = nrm2 x,  β > 0
+```text
+normalize :: Tensor[(S: ...)] -> (Scalar, Tensor[$S])
+normalize x = (β, x/β)   where  β = nrm2 x,  β > 0
+```
 
 The L2 signature is congruent to the L1 and L3 signatures (L1 spells the flat dof-vector as `Tensor[N]`); only the surrounding layer's framing differs.
 

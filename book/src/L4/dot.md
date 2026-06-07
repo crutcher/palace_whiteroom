@@ -67,12 +67,14 @@ fixed `M = I` weight with the Hermitian/symmetric kernel. Pseudo-language is Has
 
 ## Signature
 
-    -- the Hermitian/symmetric inner-product verb: inner_product at M = I
-    dot  :: Tensor[(S: ...)] -> Tensor[$S] -> Scalar
-    tdot :: Tensor[(S: ...)] -> Tensor[$S] -> Scalar     -- unconjugated complex-only co-variant
+```text
+-- the Hermitian/symmetric inner-product verb: inner_product at M = I
+dot  :: Tensor[(S: ...)] -> Tensor[$S] -> Scalar
+tdot :: Tensor[(S: ...)] -> Tensor[$S] -> Scalar     -- unconjugated complex-only co-variant
 
-    dot  x y = inner_product x y                        -- Hermitian (complex) / symmetric (real); M = I
-    tdot x y = inner_product x y  with unconjugated kernel   -- complex-only conjugation-axis value
+dot  x y = inner_product x y                        -- Hermitian (complex) / symmetric (real); M = I
+tdot x y = inner_product x y  with unconjugated kernel   -- complex-only conjugation-axis value
+```
 
 Shape contract (bunsen-style; named shape groups per
 [`l4_calculus`](../semantics/index.md) §1.2.1; identical to the L4 combinator
