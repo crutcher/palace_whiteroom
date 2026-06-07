@@ -109,11 +109,13 @@ chapter is the only current consumer; harvester promotes the fuller homes when t
   per-element error-indicator vector, the global true-DOF count, the scalar error estimate). The shape is
   presented at the lifecycle column `lifecycle.L4 §3` (the home of the loop composition); defined here for
   the step-body signature.
-- **`RefineConfig`** — the (construction-time) refinement config record. The L0 home is the Palace
-  `RefinementData` struct (`palace/utils/configfile.hpp:96-125`), the `refinement.*` IoData surface;
-  the fields this step body reads are `fraction` (← `update_fraction`, the Dörfler bulk fraction θ,
-  default 0.7, `:118-119`), with sibling construction-time fields `tol`/`max_it`/`max_size`/`max_nc_levels`
-  also on the record. Construction-time stratum (read once before the loop), not run-time-threaded.
+- **`RefineConfig`** — the (construction-time) refinement config record, an alias for the Palace
+  `RefinementData` struct. Its full field-by-field definition home is
+  [`concepts/RefinementData`](../concepts/RefinementData.md) (`palace/utils/configfile.hpp:97-154`,
+  the `refinement.*` IoData surface). The fields this step body reads are `fraction`
+  (← `update_fraction`, the Dörfler bulk fraction θ, default 0.7), with sibling construction-time
+  fields `tol`/`max_it`/`max_size`/`max_nc_levels` also on the record. Construction-time stratum
+  (read once before the loop), not run-time-threaded.
 - **`Estimator`** — the per-driver flux-recovery estimator closure (construction-time): it bundles the
   flux coefficient (electrostatic `ε` / magnetostatic `μ⁻¹` / composite) + the `FluxProjector` member
   (the mass-matrix flux-projection sub-solver) + the libCEED per-element-integration kernel-api. Its

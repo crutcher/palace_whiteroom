@@ -54,6 +54,8 @@
 - [Infrastructure / shared-substrate columns](./feature/infrastructure.md)
   - [geometric-multigrid-preconditioner — L4 composition-root](./feature/geometric-multigrid-preconditioner.L4.md)
   - [geometric-multigrid-preconditioner — L1 composition-root](./feature/geometric-multigrid-preconditioner.L1.md)
+  - [krylov-iteration — L4 composition-root](./feature/krylov-iteration.L4.md)
+  - [krylov-iteration — L1 composition-root](./feature/krylov-iteration.L1.md)
 # Semantic surface — calculus, rules & abstractions
 - [L4 calculus & spec semantics (active-management surface)](./semantics/index.md)
 # L4 — Graph-Evaluation Calculus
@@ -242,8 +244,9 @@
   - [fe_space](./L1/fe_space.md)
   - [fe_space_hierarchy](./L1/fe_space_hierarchy.md)
   - [interpolator](./L1/interpolator.md)
-- [dorfler_mark](./L1/dorfler_mark.md)
-- [flux_recovery_estimate](./L1/flux_recovery_estimate.md)
+- [AMR estimate / mark vocabulary](./L1/amr-estimate-mark-intro.md)
+  - [dorfler_mark](./L1/dorfler_mark.md)
+  - [flux_recovery_estimate](./L1/flux_recovery_estimate.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)
@@ -362,6 +365,7 @@
   - [plane-rotation-stream](./concepts/plane-rotation-stream.md)
   - [prev-carry](./concepts/prev-carry.md)
   - [rotation — methodology concept](./concepts/rotation.md)
+  - [RefinementData — record definition](./concepts/RefinementData.md)
   - [scal](./concepts/scal.md)
   - [scalar-promotion](./concepts/scalar-promotion.md)
   - [scope-out-obstruction](./concepts/scope-out-obstruction.md)

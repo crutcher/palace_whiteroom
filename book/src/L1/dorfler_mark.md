@@ -247,16 +247,14 @@ cohort), defined here in themselves:
   [`amr-estimate-mark-refine`](../L1-L0/amr-estimate-mark-refine.md) theme names; defined here as the
   positively-anchored home for the verb's result.
 - **`θ : Real`** is a scalar, not a record — but its config home is the **`RefinementData`** struct
-  (`palace/utils/configfile.hpp:97-119`), the `refinement.*` IoData surface. The field this verb reads
+  (`palace/utils/configfile.hpp:97-154`), the `refinement.*` IoData surface. The field this verb reads
   is `update_fraction` (the Dörfler bulk fraction, default `0.7`, `:117-119`); sibling
   construction-time fields (`tol`/`max_it`/`max_size`/`max_nc_levels`/`nonconformal`) parameterize the
-  enclosing AMR loop, not this verb. **Construction-time stratum** (read once, before the loop).
-  `RefinementData` is used by ≥2 chapters (this verb, `flux_recovery_estimate`, the
-  `amr-estimate-mark-refine` theme, the lifecycle feature column) — its full field-by-field definition
-  is a cross-cutting concept home; the `amr-estimate-mark-refine` theme already defines it inline as a
-  single-consumer record (§Record definition there). Flagged in Open questions
-  (`record-RefinementData-needs-concept-definition-home`) so the cross-cutting page is dispatched; this
-  verb references the θ ← `update_fraction` field only.
+  enclosing AMR loop, not this verb. **Construction-time stratum** (read once, before the loop). The
+  full field-by-field definition of `RefinementData` (used by ≥2 chapters — this verb, the
+  `amr-estimate-mark-refine` theme, the lifecycle feature column) is its cross-cutting record-definition
+  home [`concepts/RefinementData`](../concepts/RefinementData.md); this verb references the
+  θ ← `update_fraction` field only.
 
 ## Variant axes
 
