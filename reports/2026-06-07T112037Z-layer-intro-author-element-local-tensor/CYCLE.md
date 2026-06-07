@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T123000Z
 scope: cycle-124 D5 — concepts/element-local-tensor record page + libceed-quadrature-kernel-impl promotion + L1/index substrate-cohort tally + semantics §1.2.3 element-local-axes
 status: pending
 integrated_at: 2026-06-07T112037Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 331a5ed
 integration_notes: "cycle-124 (batch-40 opener) D5. Applied clean. CREATED concepts/element-local-tensor.md FIRM (the shape-family record-definition home, closing D3's firm live-links + D4's rough-in bare-slug forward-refs) + promoted L1/libceed-quadrature-kernel-impl roadmap_goal->ROUGH-IN (realizes-kernel-api edges UNTOUCHED, DIRECTIVE-3 preserved) + new semantic 1.2.3 (USE+LINK) + SOLE-OWNED L1/index consolidated tally 43->45 firm + cohort header DRAINED. 1 OQ promoted (45->47 firm-flip follow-up). 2 ledger entries flagged resolved-by-landing for meta unify."
 inputs:
   - reports/2026-06-07T112037Z-cycle-planner-c124/CYCLE.md (D5 entry + Overlap; D5 SOLE-OWNS the L1/index consolidated tally this wave)

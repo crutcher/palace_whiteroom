@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T113000Z
 scope: L1 operators basis_apply + quad_point_contract (the two arithmetic libceed substrate ops; element-local rank-tensor vocabulary shift)
 status: pending
 integrated_at: 2026-06-07T112037Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 331a5ed
 integration_notes: "cycle-124 (batch-40 opener) D3. Applied clean. Promoted L1/basis_apply + L1/quad_point_contract roadmap_goal->FIRM (firm-on-positive-structure escape) + reference edge to concepts/element-local-tensor + stale design/l4_calculus.md ->semantics/index.md path fix + repaired EvalMode/apply-QFunction pinpoints. L1/index in-place flips only (consolidated tally deferred to D5). Part of the libCEED-substrate firm-flip (43->45)."
 inputs:
   - reports/2026-06-07T112037Z-cycle-planner-c124/CYCLE.md (D3 entry + Overlap + consolidated-tally partition: D5 owns L1/index tally)

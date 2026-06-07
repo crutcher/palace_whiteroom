@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T112037Z
 scope: cycle-124 D7 — bundled cheap-hygiene (correction_step back-links + eigsolve arpack-ido99 citation nit)
 status: pending
 integrated_at: 2026-06-07T112037Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 331a5ed
 integration_notes: "cycle-124 (batch-40 opener) D7. Applied clean. Cheap-hygiene bundle, zero maturity/GC/rank impact: 4 new reference-class L2/correction_step down-links (2 as explicit downward-annotation NON-edges) on the GMG L4/L1 + multigrid-relaxation-smoother + 3 stale ido==99 citation corrections :330-333->:331-334. 2 OQs promoted (interpolator-backward-reference-note-trim-target-unidentified [actionable, next planner]; d7-ido99-citation-plan-path-correction-disposition [informational/resolved])."
 ---
 

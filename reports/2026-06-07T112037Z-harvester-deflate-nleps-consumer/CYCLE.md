@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T113007Z
 scope: L3 operator: nleps-deflated-eigensolve (the deflate / NLEPS-deflated-eigensolve CONSUMER node)
 status: pending
 integrated_at: 2026-06-07T112037Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 331a5ed
 integration_notes: "cycle-124 (batch-40 opener) D1. Applied clean. Landed L3/nleps-deflated-eigensolve roadmap_goal composition-root; faithful blocking depends-on (composes) edges FIRED RE3 (deflate->gram) + GROUNDED RE11 (eigsolve-impl direct, lanczos_step transitive). 2 OQs promoted. RE3/RE11 dispositions flagged for the batch-40 meta to record in graded-stack-baseline-exceptions.md (meta write-territory)."
 inputs:
   - cycle-124 plan D1 (reports/2026-06-07T112037Z-cycle-planner-c124/CYCLE.md:55-58)

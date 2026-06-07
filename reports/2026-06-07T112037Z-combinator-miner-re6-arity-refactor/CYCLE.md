@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T120000Z
 scope: RE6 combinator-arity-notes refactor — eliminate the 8 axpy/scal arity leaves into the linear_combination combinator (replace-and-propagate)
 status: pending
 integrated_at: 2026-06-07T112037Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 331a5ed
 integration_notes: "cycle-124 (batch-40 opener) D6. Applied clean. RE6 DISCHARGED — the 8 scal/axpy/axpby/axpbypcz arity-leaf standalone nodes (L2+L3) ELIMINATED into linear_combination #arity-specializations (delete-not-ground): per-arity unique-L0 anchors folded in, 8 chapters git rm'd, SUMMARY + L2/L3 index dep-maps de-registered, ~90 inbound links re-pointed. 1 OQ promoted (inner-product-family-re-style-elimination-candidate). NOTE: D6's body/index re-point sweep MISSED two FRONTMATTER depends-on edges (L3/normalize->L3/scal, L3/orthogonalize->L3/axpy) — repaired at finalize (re-pointed to L3/linear_combination; lint-invisible to linkcheck2, caught by graded-stack unresolved_depends_on_targets). RE6 disposition flagged for the batch-40 meta baseline-exceptions update."
 ---
 

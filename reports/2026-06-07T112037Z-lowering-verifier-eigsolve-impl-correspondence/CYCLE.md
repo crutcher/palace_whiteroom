@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T120000Z
 scope: kernel-api/impl correspondence + consumer-faithfulness audit — eigsolve-impl (D2, narrowed per D2 contingency)
 status: pending
 integrated_at: 2026-06-07T112037Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 331a5ed
 integration_notes: "cycle-124 (batch-40 opener) D2. Applied clean. Audited D1's wiring: fresh verified_against block on the consumer chapter (5 entries) + one entry into eigsolve-impl's existing block (->8). realizes-kernel-api edges confirmed reference-class; consumer depends-on edges faithful. Edge-integrity + consumer-faithfulness PASS. No promotions/new edges. CONFIRMS (does not itself fire) D1's RE3/RE11 disposition."
 inputs:
   - book/src/L3/eigsolve-impl.md (roadmap_goal kernel-impl; realizes-kernel-api → L3/eigsolve + L4/eigsolve)

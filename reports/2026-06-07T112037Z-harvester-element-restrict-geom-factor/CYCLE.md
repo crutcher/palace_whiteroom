@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T120000Z
 scope: L1 operators element_restrict + geom_factor_build (cycle-124 D4; item-2 element-local-rank-tensor front, indexing/geometry half)
 status: pending
 integrated_at: 2026-06-07T112037Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 331a5ed
 integration_notes: "cycle-124 (batch-40 opener) D4. Applied clean. Promoted L1/element_restrict + L1/geom_factor_build roadmap_goal->ROUGH-IN (the honest one-rank climb; well-foundedness caps them at rough-in while the shape home concepts/element-local-tensor firms this same wave via a depends-on (shape-vocabulary) edge) + the stale-path fix + re-anchored build-QFunction citations. 1 OQ promoted (batch-37-era-stale-design-l4-calculus-path-drift-sweep). The 45->47 firm flip is the c125 follow-up."
 inputs:
   - cycle-124 plan reports/2026-06-07T112037Z-cycle-planner-c124/CYCLE.md (D4 entry + Overlap + consolidated-tally partition: D5 owns the L1/index.md tally)
