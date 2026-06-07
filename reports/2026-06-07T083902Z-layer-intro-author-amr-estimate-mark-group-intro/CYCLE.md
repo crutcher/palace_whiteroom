@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T084500Z
 scope: L1 AMR estimate/mark by-kind group-intro authoring + SUMMARY re-nest + L1/index.md dep-map header de-stale (cycle-123 D1)
 status: pending
 integrated_at: 2026-06-07T083902Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e79fb8c
 integration_notes: "Applied clean (D1; META was needs-revision SOLELY on the D4-before-D1 ordering coupling, fully discharged by the dispatch order — applied unchanged once D4 landed). amr-estimate-mark-intro.md navigational-container group-intro authored; 2 flat AMR verbs re-nested under the SUMMARY grouping; index.md dep-map group header de-staled. Closes OQ amr-estimate-mark-group-intro-needs-authoring. cargo make book EXIT 0; rank_violations 0; both step-5b block-conditions PASS. Batch-39 BATCH-CLOSING finalize."
 ---
 

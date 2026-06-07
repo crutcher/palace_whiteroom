@@ -63,7 +63,7 @@ Scaffolding (append-only, by the per-report integrators):
 - **retroactive-budget global ≥4:** NOT hit (global = 0 across all 4 rows). PASS.
 - **build-breakage repair:** none required (build EXIT 0). PASS.
 - **commit atomicity:** single atomic commit (artifact + staging + housekeeping + consumed-report frontmatter). PASS.
-- **consumed-report frontmatter integrity:** all 4 marked `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes`; two-phase SHA patch follows. PASS.
+- **consumed-report frontmatter integrity:** all 4 marked `integrated_at` + `integration_commit: e79fb8c` + `integration_notes`; two-phase SHA patch follows. PASS.
 - **Staging-log completeness cross-check:** 4 rows == 4 dispatched-ready reports. No mismatch; no reconciliation needed. PASS.
 
 ## Build status

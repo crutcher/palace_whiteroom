@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T084500Z
 scope: concepts/RefinementData.md record-definition page (cycle-123 D4)
 status: pending
 integrated_at: 2026-06-07T083902Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e79fb8c
 integration_notes: "Applied clean (D4, integrated FIRST so D1's forward link resolves). concepts/RefinementData.md firm record-definition page landed; consumers re-pointed (struct cite :97-154); SUMMARY concepts-list alpha insert. Closes OQ record-RefinementData-needs-concept-definition-home. cargo make book EXIT 0; rank_violations 0; both step-5b block-conditions PASS. Batch-39 BATCH-CLOSING finalize."
 ---
 

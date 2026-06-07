@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T083902Z
 scope: D2 cycle-123 — the L3-iteration-view feature column (Krylov-iteration infrastructure column; DIRECTIVE-2 item-4b; discharges RE2/RE8)
 status: pending
 integrated_at: 2026-06-07T083902Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e79fb8c
 integration_notes: "Applied clean (D2). krylov-iteration.{L4,L1} infrastructure feature column landed (feature_root: seed, rank: rough-in); blocking depends-on edges DISCHARGE RE2 (L3/orthogonalize) + RE8 (L3/krylov-step, L3/fold_solve) via a GENUINE depends-on reachability flip (confirmed on landed tree; eigsolve-impl + lanczos_step correctly stayed detritus). Landed rough-in PRECISELY to keep rank(u) <= min deps over its partial-obstruction L3 deps. Promoted OQ krylov-iteration-rough-in-vs-firm-over-partial-obstruction-iteration-views (a batch-39 meta headline) + optional eigsolve-impl-reference-uplink. cargo make book EXIT 0; rank_violations 0; both step-5b block-conditions PASS. Batch-39 BATCH-CLOSING finalize."
 ---
 

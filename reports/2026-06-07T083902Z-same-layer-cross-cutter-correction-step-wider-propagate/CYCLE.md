@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T083902Z
 scope: cycle-123 D3 — correction_step wider replace-and-propagate (confirm-propagation-or-record-closure-rationale)
 status: pending
 integrated_at: 2026-06-07T083902Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e79fb8c
 integration_notes: "Applied clean (D3, PURE OBSERVATION — no book/ edit, no ## Proposed changes). Closed 2 OQs (correction-step-wider-replace-and-propagate-set-l1-and-feature-column c122 + correction-step-replace-and-propagate-scope c121 transitive) + promoted NEW OQ correction-step-l4-reference-edge-adds-to-reference-only-reachable-liveness-evidence (the candidate L4 correction_step reference down-link as COMPLEMENTARY reference-only-reachable meta-evidence; NOT enacted this cycle). Feeds the batch-39 meta reference-edge-liveness adjudication (complementary to the D2 depends-on flip). Batch-39 BATCH-CLOSING finalize."
 ---
 
