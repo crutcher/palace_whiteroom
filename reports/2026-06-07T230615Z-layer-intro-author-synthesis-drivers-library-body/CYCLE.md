@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T230615Z
 scope: synthesis/drivers library body (the deferred 6th Synthesis chapter — the topological-LAST library)
 status: pending
 integrated_at: 2026-06-07T231500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e24d757
 integration_notes: |
   cycle-137 (batch-44 position 2/3). Applied clean by integrator-per-report (STAGING row 1).
   Filled synthesis/drivers.md stub-shell -> rendered implementation VIEW (13 composition defs:

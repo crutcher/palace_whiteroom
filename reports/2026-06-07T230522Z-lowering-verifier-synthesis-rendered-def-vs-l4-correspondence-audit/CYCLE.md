@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T230522Z
 scope: cycle-137 synthesis-rendered-def-vs-l4-correspondence-audit — the c136-rendered Synthesis library defs vs their authoritative L4 chapter bodies
 status: pending
 integrated_at: 2026-06-07T231500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: e24d757
 integration_notes: |
   cycle-137 (batch-44 position 2/3). AUDIT-CLASS report (directive-sanctioned Synthesis
   rendered-def-vs-L4 correspondence audit; top-level verdict FULLY-SUPPORTED). NO `## Proposed
