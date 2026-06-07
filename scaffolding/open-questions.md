@@ -2120,3 +2120,26 @@ discipline, the actual close/migration is the meta-phase's unify authority — F
 batch-40 meta-phase to close (count→0, no remaining instances; the bundle-with-c116-prose-ref-normalize-cohort
 trigger is moot for THIS slug, though that sibling cohort may still have its own residue). Source:
 `reports/2026-06-07T124519Z-combinator-miner-gmg-hygiene-bundle/CYCLE.md` §pick (a).
+
+## mk_matrix_free_operator-l4-backend-lowering-placeholder — RESOLUTION MARKER (landed as roadmap_goal with pull-chain wired, c126 D1)
+opened_at: cycle-125
+resolution_appended_at: cycle-126
+resolution_appended_by: integrator-per-report (append-only; the actual close/migration is meta-phase unify authority — FLAGGED for the batch-40 meta-phase to close)
+
+The OQ `mk_matrix_free_operator-l4-backend-lowering-placeholder` (opened cycle-125, above) is RESOLVED by
+c126 D1 (`reports/2026-06-07T134107Z-abstractor-l4-mk-matrix-free-operator/CYCLE.md`). The speculative L4
+`mk_matrix_free_operator` (the backend-lowering operator constructor whose apply lowers to the
+tensor-contraction graph `Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G`) is now landed as a claim-free `roadmap_goal` (rank 0)
+chapter `book/src/L4/mk_matrix_free_operator.md`. The c125 strand concern (no pull-chain to a root yet)
+is DISCHARGED: the chapter is pulled to a feature root by a **`reference`-class** (`constructs-via` /
+`pulled-by`) edge from the firm `L4/fe_assemble` spine consumer (the matrix-free representation IS the
+constructive interior of fe_assemble's per-term `assemble_term` leaf under the `UseFullAssembly`-false
+dispatch), and it down-links the firm `L2/matrix-free-operator-apply` combinator (c125 D2) via a
+`reference`-class `lowers-to` edge. Both edges are `reference` (navigational, free, NOT rank-constrained)
+— a firm node may reference a rank-0 roadmap_goal but must not `depends-on` it — so `rank_violations: 0`
+holds. The deep L4 backend-lowering feature surface that would firm this node (the blocking pull) remains
+batch-41 "A" work; landing it firm now would over-claim, so it stays `roadmap_goal` by design. Signature:
+`mk_matrix_free_operator :: FESpace -> WeakFormTerm -> GeomFactors -> LinearOperator (Tensor[(N: ...)])`.
+Per the per-report integrator's append-only OQ discipline, the actual close (header→RESOLVED on the
+cycle-125 entry above + migration) is the meta-phase's unify authority — FLAGGED here for the batch-40
+meta-phase to close. Source: `reports/2026-06-07T134107Z-abstractor-l4-mk-matrix-free-operator/CYCLE.md`.

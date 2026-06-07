@@ -75,6 +75,7 @@
   - [gram_reduce](./L4/gram_reduce.md)
   - [inner_product](./L4/inner_product.md)
   - [linear_combination](./L4/linear_combination.md)
+  - [mk_matrix_free_operator](./L4/mk_matrix_free_operator.md)
   - [nrm2](./L4/nrm2.md)
   - [sparameter_reduce](./L4/sparameter_reduce.md)
   - [waveguide_mode_reduce](./L4/waveguide_mode_reduce.md)

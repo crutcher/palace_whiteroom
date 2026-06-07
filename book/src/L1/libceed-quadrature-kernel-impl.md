@@ -259,7 +259,11 @@ verified_against:
     audited_at: 2026-06-07T093000Z
     note: Palace-supplied restriction/basis inputs trial_restr :64 test_restr :66 trial_basis :68 test_basis :69; leaf call integ->Assemble :75; fold AddSubOperator :77; exact (the G/B operands + the firm fold L0 home).
   - citation: reference/palace/test/unit/test-libceed.cpp:284
-    verdict: empirical-anchor-confirmed-deferred
-    audited_at: 2026-06-07T093000Z
-    note: TestCeedOperatorFullAssemble exists (:284); :298 asserts mat_diff MaxNorm < 1.0e-12 * max(mat_ref MaxNorm, 1.0) — assembled libCEED matrix matches MFEM reference to 1e-12. The empirical-match target for the FIRMING audit (the lowering-verifier re-audit owed now that the impl is firm — c125 D1). Path is palace/test/... single-palace under reference/, NOT doubled.
+    verdict: empirical-match
+    audited_at: 2026-06-07T134107Z
+    note: FIRMING empirical-match re-audit (c126 D2; owed since c124 now the impl is firm c125 D1). TestCeedOperatorFullAssemble (:284) asserts mat_diff MaxNorm < 1.0e-12 * max(mat_ref MaxNorm, 1.0) at :298 — the libCEED-assembled matrix (mat_test, from a_test.PartialAssemble then FullAssemble) matches the MFEM-assembled reference (mat_ref) to 1e-12. Empirical evidence that the constructive A = Gᵀ B_𝒟ᵀ D B_𝒟 G impl realizes the opaque kernel-api faithfully. citecheck --anchor TestCeedOperatorFullAssemble [ok] :284; --anchor MaxNorm [ok] :298. Upgrades the c124 empirical-anchor-confirmed-deferred row.
+  - citation: reference/palace/test/unit/test-libceed.cpp:328-377
+    verdict: empirical-match
+    audited_at: 2026-06-07T134107Z
+    note: TestCeedOperator harness — mat_ref built MFEM-side (a_ref.Assemble/SpMat :332-334); op_test built libCEED matrix-free (a_test.PartialAssemble :338, the un-materialized ceed::Operator the impl's partial-assembly variant describes), mat_test materialized via a_test.FullAssemble :342. TWO matches asserted — apply-level TestCeedOperatorMult(op_test, op_ref) :339 (Mult/MultTranspose y_test*y_test < 1e-12 :280, directly exercises the A x contraction the impl realizes) AND assembled-matrix-level TestCeedOperatorFullAssemble :343. Covers BOTH representation variants (partial matrix-free + full materialized). citecheck --anchor TestCeedOperatorMult [ok] :339.
 ```

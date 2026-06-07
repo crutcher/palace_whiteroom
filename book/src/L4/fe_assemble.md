@@ -12,6 +12,8 @@ edges:
     - L4/index
     - concepts/black-box-vs-accelerated-kernels
     - concepts/state-stratification
+    - target: L4/mk_matrix_free_operator
+      kind: constructs-via   # NAVIGATIONAL `reference` (NOT depends-on): the matrix-free constructive interior of this fold's per-term `assemble_term` leaf under the `UseFullAssembly`-false dispatch. `mk_matrix_free_operator` is a rank-0 `roadmap_goal`; a firm node may `reference` it (free, no liveness/rank constraint — scheme §1g) but must NOT `depends-on` it (would violate well-foundedness). This is the pull-to-root that keeps `mk_matrix_free_operator` reachable / not-garbage.
 variant_axes:
   - assembly-representation (partial matrix-free ceed::Operator / full materialized HypreCSRMatrix — absorbed into OpParams; both compute the same operator action)
   - term-position (domain volume integrators / boundary surface integrators — one concatenated L1 term list; absorbed into the [WeakFormTerm] element list)
@@ -158,6 +160,8 @@ L4 concept references:
 ## Lowers to
 
 L4 `fe_assemble` lowers to the L3 global tensor-field assembly view (the explicit composite-operator accumulation, with the per-term leaf bottoming out in the libCEED boundary) via the substantive L4>L3 dissolution theme [`fe-assemble-fold-dissolution`](../L4-L3/fe-assemble-fold-dissolution.md) (**D2 of this cycle authors it**; canonical slug `fe-assemble-fold-dissolution`). The rotation is **substantive** (not identity-in-form): the `foldr`/sum collapses to the L3 explicit accumulating composite-operator build (the L0 `for`-over-integrators + `AddSubOperator` shape), the space-capture-once hoist becomes the `BilinearForm space(...)`-outside-the-loop placement, and the per-term black-box leaf `assemble_term` bottoms out in the [`fe-assemble-libceed-boundary-obstruction`](../L1-L0/fe-assemble-libceed-boundary-obstruction.md) `obstruction (opaque-library-ownership)` boundary. This entry records the rotation *direction* (L4 `foldr`/sum combinator → L3 explicit accumulating composite-operator build) in-line per high→low discipline; it does **not** author the theme. The L3-entry-vs-dissolution-home verdict (whether a standalone `L3/fe_assemble` entry is warranted, or whether the dissolution theme is the authoritative L3-form home — the `solve_family` NO-ENTRY-warrant question) is D2's to record; the family fold here carries **no `sequential-obstruction`** (the term contributions are independent — embarrassingly parallel, summed; law 1/3), so the likely verdict is the `solve_family` shape (the dissolution theme is the authoritative downward home, the loop lifts), but D2 owns it.
+
+The opaque per-term leaf `assemble_term` has a **matrix-free constructive interior** under the `partial matrix-free` (`UseFullAssembly`-false) dispatch (`palace/fem/bilinearform.cpp:143`): the L4 backend-lowering operator-constructor [`mk_matrix_free_operator`](./mk_matrix_free_operator.md) (`roadmap_goal`, c126 D1), whose `apply` is the firm [`L2/matrix-free-operator-apply`](../L2/matrix-free-operator-apply.md) contraction chain `A = Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G`. This is a **navigational `reference` (`constructs-via`), NOT a `depends-on`** — `fe_assemble` folds `assemble_term` as an *opaque black-box-kernel input* (its firmness is in the fold apparatus, not the leaf interior); the matrix-free interior is the backend-lowering surface a future L4 feature column will firm, pulled to a root by this navigational edge. A firm node may reference a rank-0 `roadmap_goal` (free, scheme §1g); it must not block on it.
 
 ## Variant axes
 
