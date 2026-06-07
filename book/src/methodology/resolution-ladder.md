@@ -79,6 +79,20 @@ This invariant **subsumes** two rules the project previously enforced by hand: "
 reduction is as firm as its least-firm folded primitive" (the `firm`/rank-3 case) and
 the feature-column OWN-COMPOSITION promotion rule (Axis 2 below).
 
+**The cap is NOT escaped by firm-on-positive-structure.** A composition-root (a feature
+column, a combinator) whose blocking `depends-on` constituents include a
+`partial-obstruction` (rank ≈2.5) or `rough-in` node is **capped at that dep's rank** — it
+cannot be `firm`. The *firm-on-positive-structure* escape (which lets an entry skip the
+*test-coverage* law-confidence gate) is **orthogonal**: it escapes a law-confidence
+demotion, not the well-foundedness cap. The two precedents: the geometric-multigrid
+preconditioner column promoted **firm** because *all* its blocking constituents were firm
+(well-foundedness satisfied, then firm-on-positive-structure cleared the residual
+test-coverage question); the krylov-iteration column correctly landed **rough-in** because
+two of its three blocking constituents (`fold_solve`, `orthogonalize`) are
+`partial-obstruction` (well-foundedness caps it; there is no firm to escape *to*). A
+composition-root may still narrate its positive composition structure as firm-in-prose;
+its *node rank* is the capped value.
+
 It is **orthogonal to, and compatible with, "layers are defined high → low."** Those are
 two duals:
 
@@ -274,6 +288,23 @@ One refinement the grounding campaign reached its limit on (batch-35/36):
   *fully* enumerated into RE1-RE8 — **zero undispositioned members**. The reachability axis has
   reached its faithful floor exactly as the resolution axis rests `firm`-on-`firm`. (Full ledger:
   `scaffolding/graded-stack-baseline-exceptions.md`, the Axis-2 section.) When a new wave adds substrate ahead of its consumers, the same triage runs again: the batch-37 all-fronts wave added three new firm L1 ops as detritus, and the §2f order dispositioned them live — `build_mesh` GROUNDED (it is the lifecycle composition-root's `config→mesh` stage, so the faithful `lifecycle → build_mesh` composes edge grounds it), while `fe_space_hierarchy` and `interpolator` (no faithful inbound consumer yet) became RE9/RE10 with concrete promotion conditions. A baseline-exception is never a permanent home — it is the honest record that a node is correct but not yet reached, waiting on a faithful future edge, never a forced one.
+
+  Under the 2026-06-07 lift-through campaign (batch-39) the in-scope RE set became a *discharge
+  target* rather than a permanent floor: building the grounded consumers (the geometric-multigrid
+  preconditioner, the krylov-iteration column) FIRED the RE promotion conditions and discharged 8 of
+  the original 10 (RE1/RE2/RE5/RE7/RE8/RE9/RE10), leaving RE3 (deflate/NLEPS, consumer-gated) + RE6
+  (axpy-arity, refactor-gated). The same batch ratified a **new** Axis-2 kind, **RE11 — the
+  *deliberate-reference-only-reachable* cohort**: firm/roadmap_goal nodes that reach a root ONLY via a
+  `reference`-class edge *by structural design* (combinator-primary leaves, whose typed edge runs
+  leaf→combinator `depends-on` with combinator→leaf `reference`; and DIRECTIVE-3 kernel-impls, linked
+  to their kernel-API surface by a `realizes-kernel-api` `reference` edge that the impl is *forbidden*
+  to make `depends-on`). The §2f GROUND disposition does not apply to these — there is no faithful
+  `depends-on` edge to type, so the reachability GC correctly marks them garbage and the discipline is
+  to *track* them (RE11), not to manufacture a forced edge. The contrast is the diagnostic: when a node
+  is genuinely *composed*, the consumer carries a real `depends-on` edge and the node flips reachable
+  on the spine (the krylov-iteration column → `krylov-step`/`fold_solve`/`orthogonalize`); a node whose
+  only inbound is a deliberate `reference` stays off the `depends-on` spine. The `reference`-carries-no-liveness
+  rule (below) is unchanged and correct — these nodes are not dead, just correctly off the spine.
 
 ### The OWN-COMPOSITION rule falls out of the root marker
 

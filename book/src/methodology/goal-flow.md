@@ -538,6 +538,29 @@ This shape is load-bearing, and it follows three principles:
 > that the earlier postures had been holding back. The vocabulary-shift redirect and the graded-stack machinery — *how*
 > vocabulary is expressed — are unchanged; the re-scope governs *what* is now the frontier.
 
+> **The lift-through campaign LANDED and the plateau is broken (batch-39).** Cycles 121/122/123 executed the
+> re-scope's forward campaign. Cycle-121 ran a wide all-fronts fan-out that broke the batch-36→38 plateau: the
+> geometric-multigrid preconditioner column landed (the highest-fan-out lift-through consumer), the constructive-kernel
+> frontier opened (three `kernel-impl` nodes — libCEED quadrature, eigsolve Lanczos/Arnoldi, the relaxation smoother —
+> each linked to its kept kernel-API surface by a `realizes-kernel-api` reference edge), the AMR front opened, and
+> reachability jumped +17 in one cycle. Cycle-122 wired the consumers (the four libCEED contraction-substrate ops; the
+> AMR estimate/mark verbs; the `correction_step` L2 combinator with replace-and-propagate), firm-flipped the GMG column
+> and the AMR theme, drove `unresolved_depends_on_targets` to 0, and confirmed BOTH kernel-API correspondence audits
+> FAITHFUL. Cycle-123 closed the batch: the krylov-iteration infrastructure feature column composed the L3
+> iteration-rotation form *by name*, a REAL `depends-on` reachability flip that discharged RE2 + RE8. Across the batch
+> the in-scope RE set burned down from a permanent floor to a discharge target — **8 of the original 10 discharged or
+> grounded** (RE1/RE2/RE5/RE7/RE8/RE9/RE10), leaving RE3 (deflate/NLEPS, consumer-gated) + RE6 (axpy-arity,
+> refactor-gated). The batch's two scheme questions were adjudicated by the meta-phase: **(a)** a `detritus` count that
+> climbs as a function of *correct* modelling (firm nodes reachable only via deliberate `reference` edges — the
+> combinator-primary leaves, the kernel-impl→kernel-API links) is NOT decay — these are the new Axis-2 baseline-exception
+> kind **RE11**, tracked not read-as-garbage; the `reference`-carries-no-liveness rule stays unchanged (making
+> `reference` carry liveness would break the combinator-primary model). **(b)** A composition-root's rank is *capped* by
+> its least-resolved blocking dep; firm-on-positive-structure escapes the test-coverage gate, not the well-foundedness
+> cap — so the krylov-iteration column is correctly rough-in over its partial-obstruction deps (the GMG column was firm
+> only because *its* deps were firm). The lesson the arc adds: a re-scope that names the *consumers* (build this
+> preconditioner, this iteration column) discharges baseline-exceptions far more cleanly than chasing the exceptions
+> directly — the exceptions are a downstream readout of which consumers exist, and they fall out when the consumers land.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction

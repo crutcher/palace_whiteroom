@@ -2287,3 +2287,22 @@ addressed_by: cycle-120 meta-phase (batch-38) — LEDGER-AND-MONITOR, no tools/ 
 **Evidence (two instances, one batch, both caught by the on-disk-END-read guard).** **cycle-118 D3 (introduction):** the `interpolator-construction-rotation` authoring landed `palace/fem/interpolator.cpp:282-310` for the point-list `InterpolateFunction` body, which over-ran by 4 lines into `ComputeLineIntegral` (the point-list body close-brace is at `:306`). The c118 D3 repairer fixed the report narrative but left the artifact blocks over-ranged. **cycle-119 D2 (detection + fix):** the lowering-verifier corrected all 4 artifact sites to `:282-306` via an on-disk close-brace read + `citecheck --anchor 'InterpolateFunction'` (which had passed the over-range clean — confirming the blind spot). Pure citation-range correction; no edge/status/node/graph change.
 
 **Decision (batch-38 meta-phase — LEDGER-AND-MONITOR, not codify a tools/ change).** A `citecheck --end-anchor` / close-brace-END check is a `tools/`-code change (ask-class authority) and the existing on-disk-END-read role-spec guard already catches the pattern (it caught both c118/c119 instances). Hardening the tool now, at a project plateau with the citation surface largely settled, is low-value. **Watch / re-open** as a `tools/` GO on recurrence-3 — a fresh over-range that SHIPS to the artifact (the guard was skipped), at which point the `--end-anchor` check earns its code cost.
+
+## reference-only-reachable-firm-nodes-over-counted-as-detritus
+
+```yaml
+---
+slug: reference-only-reachable-firm-nodes-over-counted-as-detritus
+first_observed: cycle-122
+last_observed: cycle-123
+recurrence_count: 2
+status: addressed
+addressed_by: cycle-123 meta-phase (batch-39) — METHODOLOGY-GRADED-STACK.md §2g (deliberate-reference-only-reachable = Axis-2 baseline-exception, NOT decay) + RE11 ratification (scaffolding/graded-stack-baseline-exceptions.md) + book methodology mirrors. The reference-edge-liveness scheme question is ADJUDICATED.
+---
+```
+
+**Pattern.** Three structural models the project adopted AFTER the graded-stack §3 "reference does not carry liveness" rule was written — combinator-primary (leaf→combinator `depends-on`, combinator→leaf `reference`), the DIRECTIVE-3 kernel-API/impl dual-surface (`realizes-kernel-api` is `reference`-class by design), and feature-root→node `reference` (OWN-COMPOSITION) — SYSTEMATICALLY produce firm/roadmap_goal nodes that reach a root ONLY via `reference` edges. The depends-on-only reachability GC correctly marks them `[GARBAGE*]`, so `detritus` climbs per-cycle as a function of CORRECT modeling rather than actual decay (batch-39: ≈123→132). Surfaced as the c122 finalize headline, re-confirmed c123 with a clean CONTRASTING data class (the c123-D2 krylov-iteration column gave a REAL depends-on reachability flip — RE2/RE8 discharged — mechanically distinct from the reference-only cohort that stayed detritus).
+
+**Why it is NOT a defect.** rank_violations HELD 0 throughout; no node went dark; the flagged nodes are firm-and-faithful, just correctly-off-the-`depends-on`-spine (exactly the absorbed-below-spine RE1–RE10 pattern). The §3 rule is correct and its load-bearing purpose ("a mere mention must not keep DEAD vocabulary alive") still holds — these nodes are not dead.
+
+**Decision (batch-39 meta-phase — ADJUDICATED).** **NO-GO on making `reference` edges carry liveness** (would break the §3 rule's purpose + the combinator-primary/RE6/RE8 model). **GO on a scheme clarification:** codified §2g — deliberate-reference-only-reachable structural nodes are the Axis-2 baseline-exception pattern (ratified as RE11), tracked not read-as-decay; a `detritus` climb fully accounted by new such nodes does NOT trip the escalate-guard; an impl mis-typing `realizes-kernel-api` as `depends-on` IS a defect. **ASK (surfaced to human):** an optional `tools/` linter reporting tier separating `reference-reachable` from `true-detritus` (a `tools/`-code change, ask-class) — would make the headline `detritus` a cleaner health signal but changes no gate. Re-open as a GO if the human approves the reporting tier, or if a NON-deliberate reference-only-reachable node (a real missing `depends-on` edge masquerading as RE11) ships uncaught.
