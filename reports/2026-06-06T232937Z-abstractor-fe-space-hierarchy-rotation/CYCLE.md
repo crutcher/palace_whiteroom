@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T232937Z
 scope: L1>L0 theme sketch — fe-space-hierarchy-construction-rotation
 status: integrated
 integrated_at: 2026-06-07T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f3d99801dec34c7af0714338ec1a38a04de603cb
 integration_notes: "Applied clean as c118 D2 (batch-38 opener). New firm L1>L0 theme fe-space-hierarchy-construction-rotation.md + new fe_space_hierarchy lowers-to edge (OUTBOUND; RE9 op stays batch-37-ratified baseline-excepted, theme grounds HOME only). cargo make book EXIT 0; rank_violations=0; STRONGER 24→27 includes this theme (RE9-attributed, not a new RE). 0 gate hits."
 inputs:
   - book/src/L1/fe_space_hierarchy.md (firm L1 op, c117)

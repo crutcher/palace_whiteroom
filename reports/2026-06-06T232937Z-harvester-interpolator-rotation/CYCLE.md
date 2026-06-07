@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T232937Z
 scope: L1>L0 theme: interpolator-construction-rotation
 status: integrated
 integrated_at: 2026-06-07T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f3d99801dec34c7af0714338ec1a38a04de603cb
 integration_notes: "Applied clean as c118 D3 (batch-38 opener). New firm L1>L0 theme interpolator-construction-rotation.md (GSLIB opaque-library-ownership obstruction sub-note, route NONE) + interpolator reference→depends-on(lowers-to) edge upgrade (OUTBOUND; RE10 op stays batch-37-ratified baseline-excepted). cargo make book EXIT 0; rank_violations=0; STRONGER includes this theme (RE10-attributed). Non-blocking: interpolator.cpp:282-310 ~3-line over-range left in artifact (passing bounds, non-load-bearing). 0 gate hits."
 inputs:
   - cycle-118 dispatch D3 (batch-38 mesh->fe_space substrate lowering campaign)

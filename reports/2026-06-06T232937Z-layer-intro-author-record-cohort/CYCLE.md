@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T232937Z
 scope: cycle-118 D6 (batch-38) — record-definition cohort (Mesh / FiniteElementSpaceHierarchy / WaveguideModeTable) + Mesh-&-FE-space kind-grouping fold-vs-standalone decision
 status: integrated
 integrated_at: 2026-06-07T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f3d99801dec34c7af0714338ec1a38a04de603cb
 integration_notes: "Applied clean as c118 D6 (batch-38 opener, LAST apply). New firm concepts/mesh.md + concepts/WaveguideModeTable.md record-definition pages (kind: record, data-shape only) + 4 back-link re-points + mesh-construction kind-grouping KEEP-STANDALONE. build_mesh.md#record-definition anchor PRESERVED (all cross-file refs re-pointed to concepts/mesh.md). cargo make book EXIT 0; 0 dead links; rank_violations=0. OPEN: record-FiniteElementSpaceHierarchy-promote-watch (<2 firm consumers, KEPT in-chapter). 0 gate hits."
 ---
 

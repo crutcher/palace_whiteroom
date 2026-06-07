@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T232937Z
 scope: L1>L0 theme sketch — build-mesh-construction-rotation
 status: integrated
 integrated_at: 2026-06-07T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f3d99801dec34c7af0714338ec1a38a04de603cb
 integration_notes: "Applied clean as c118 D1 (batch-38 opener, mesh→fe_space substrate campaign). New firm L1>L0 theme build-mesh-construction-rotation.md + build_mesh reference→depends-on(lowers-to) edge. cargo make book EXIT 0; graded-stack rank_violations=0; reachable 136→139 (build_mesh grounded by D4, this theme flips reachable). 0 gate hits."
 inputs:
   - book/src/L1/build_mesh.md (firm c117 — the upper endpoint; the named-not-authored Downward note at :178-186)

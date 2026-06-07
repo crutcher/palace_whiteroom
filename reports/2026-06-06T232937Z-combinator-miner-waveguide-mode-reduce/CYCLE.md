@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T232937Z
 scope: L4 reduce-verb home — waveguide_mode_reduce (output-product column completion)
 status: integrated
 integrated_at: 2026-06-07T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f3d99801dec34c7af0714338ec1a38a04de603cb
 integration_notes: "Applied clean as c118 D5 (batch-38 opener). New firm L4 verb waveguide_mode_reduce.md (Data-algebra firm 21→22) + waveguide-mode.{L4,L1} column rough-in→FIRM (own-composition rule; feature_root: seed KEPT). HARD GUARD honored: distinct sibling of eigenfreq_qfactor_reduce, non-unify guard closed-negative. cargo make book EXIT 0; rank_violations=0; promotion_frontier 8→6 (the 2 waveguide-mode nodes promoted). 0 gate hits."
 ---
 

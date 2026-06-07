@@ -4,7 +4,7 @@ invoked_at: 2026-06-06T232937Z
 scope: feature/lifecycle.L1 — §2f GROUND build_mesh as the stage-1 depends-on(composes) edge
 status: integrated
 integrated_at: 2026-06-07T003000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f3d99801dec34c7af0714338ec1a38a04de603cb
 integration_notes: "Applied clean as c118 D4 (batch-38 opener). GROUND edge feature/lifecycle.L1 → L1/build_mesh (composes), the GROUND-don't-remove disposition (batch-37-meta migrated-to-plan item); faithful do-block constituent-USE, lifecycle.L1 firm → build_mesh firm (3≤3). cargo make book EXIT 0; rank_violations=0; build_mesh GROUNDED off detritus (reachable 136→139). Surfaced NEW OQ lifecycle-l4-sibling-analogous-unground-build_mesh-edge. 0 gate hits."
 ---
 
