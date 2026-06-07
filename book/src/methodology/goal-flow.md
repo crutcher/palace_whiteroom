@@ -561,6 +561,27 @@ This shape is load-bearing, and it follows three principles:
 > preconditioner, this iteration column) discharges baseline-exceptions far more cleanly than chasing the exceptions
 > directly — the exceptions are a downstream readout of which consumers exist, and they fall out when the consumers land.
 
+> **The constructive-kernel layer began to take shape (batch-40).** Cycles 124/125/126 advanced the
+> first of the two post-lift-through directions the human set ("A then B": deepen the constructive-kernel /
+> matrix-free layer, then audit 5-driver L4-completeness). Cycle-124 built the `nleps-deflated-eigensolve` L3
+> consumer — a real `depends-on` composition-root that *fired* RE3 (making the `deflate → gram` constituent
+> edge reachable) and *grounded* the eigsolve-impl / Lanczos-step kernel-implementations (their first faithful
+> consumer) — and *discharged* RE6 by eliminating the eight axpy-family arity leaves into their combinator's
+> arity-specialization notes (delete-not-ground, the higher-value disposition). Cycle-125 completed the libCEED
+> contraction substrate (the four element-local ops firm, the quadrature kernel-implementation firm) and landed
+> the first matrix-free L2 combinator. Cycle-126 capped the surface with an L4 backend-lowering
+> operator-*constructor* (`mk_matrix_free_operator`, a claim-free `roadmap_goal` pulled to a feature root by a
+> reference-class chain). The matrix-free backend-lowering surface now spans three layers — L1 implementation,
+> L2 combinator, L4 constructor — which is exactly the burn/GPU-relevant build the re-scope opened. With this,
+> the original ten reachability baseline-exceptions stand nine-of-ten discharged or grounded (only the
+> consumer-gated GMRES running-QR view remains), and the live exception cohort is the *deliberate*
+> reference-only-reachable substrate — firm nodes correctly off the `depends-on` spine until a firm `fe_assemble`
+> body composes them by name, which is the batch-41 "A" deepening's job. The lesson the arc adds: a deletion that
+> *folds* a node into its successor is a cleaner discharge than a grounding edge — it removes the node from the
+> graph entirely — but it surfaced a new de-link surface (frontmatter typed edges, invisible to the markdown
+> link-checker), a reminder that as the dependency graph became load-bearing, every destructive refactor must
+> sweep the typed edges, not only the prose links.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
