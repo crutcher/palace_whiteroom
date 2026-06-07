@@ -220,7 +220,7 @@ Laws that do **NOT** hold (stated to bound the operator):
   applied to the same residual. Conflating the two changes the operator.
 - **NOT symmetric in general.** `Mult2` (primary→auxiliary,
   `distrelaxation.cpp:101-119`) and `MultTranspose2`
-  (auxiliary→primary→primary-transpose, `:121-152`) apply the legs in the
+  (auxiliary→primary→primary-transpose, `:121-151`) apply the legs in the
   REVERSED order with the transposed point smoothers `Bᵀ`, `B_Gᵀ`; the
   forward action is symmetric only if used as a forward+transpose pair (the
   SSOR-symmetric-sweep idiom). The single `Mult2` action alone is non-symmetric.
@@ -228,7 +228,7 @@ Laws that do **NOT** hold (stated to bound the operator):
 ## Non-laws / load-bearing caveats
 
 - **NL1 — outer `pc_it` relaxation-sweep is a witnessed sequential-obstruction.**
-  The `for (int it = 0; it < pc_it; it++)` loop (`distrelaxation.cpp:103`)
+  The `for (int it = 0; it < pc_it; it++)` loop (`distrelaxation.cpp:102`)
   threads `y` across sweeps: each sweep reads the previous sweep's residual
   `x − A·y` (`:106`/`:109`). This is a genuine sequential recurrence — the loop
   does NOT lift to a single global tensor-field expression (the L3-iteration
@@ -307,13 +307,13 @@ lines — on-disk values used):
   essential-dof set `dbc_tdof_list_G = PtAP_G->GetEssentialTrueDofs()` (`:61`),
   and `B->SetOperator(op)` / `B_G->SetOperator(op_G)` (`:64-65`).
 - `palace/linalg/distrelaxation.cpp:101-119` — `Mult2`, the relaxation action:
-  sweep loop (`:103`), primary leg `y = y + B(x − A·y)` (`:104-106`,
+  sweep loop (`:102`), primary leg `y = y + B(x − A·y)` (`:104-106`,
   `SetInitialGuess(initial_guess || it > 0)` `:105`), auxiliary leg
   `y = y + G B_G Gᵀ(x − A·y)` (`:108-117`) — `A->Mult(y, r)` (`:109`),
   `linalg::AXPBY(1.0, x, -1.0, r)` (`:110`), `Gᵀ` transfer (`:111`),
   essential-dof pin (`:112-115`), `B_G` auxiliary relax (`:116`), `G` prolong-add
   (`:117`).
-- `palace/linalg/distrelaxation.cpp:121-152` — `MultTranspose2`, the reversed-order
+- `palace/linalg/distrelaxation.cpp:121-151` — `MultTranspose2`, the reversed-order
   transpose action (basis for the "not symmetric in general" non-law and the
   SSOR forward+transpose-pair idiom).
 
@@ -356,3 +356,39 @@ NOT gate the L1 firm status (at L1 the sweep is a pure `pc_it`-fold parameter).
 L1>L0 lowering theme `multigrid-relaxation-smoother-mutation-rotation`
 (named-not-authored; reintroduces the `Mult2(x, y, r)` output-arg mutation +
 scratch vectors `x_G`/`y_G`/`r_G`/`r`).
+
+```yaml
+verified_against:
+  - citation: reference/palace/palace/linalg/distrelaxation.hpp:23-30
+    verdict: supports
+    audited_at: 2026-06-07T072951Z
+    note: Hiptmair-distributive-relaxation header comment + class decl; the kernel-impl IS the Hiptmair distributive smoother realizing the relaxation slot; citecheck --anchor zero-drift (comment :24, class :30).
+  - citation: reference/palace/palace/linalg/distrelaxation.cpp:13-36
+    verdict: supports
+    audited_at: 2026-06-07T072951Z
+    note: ctor — the two ChebyshevSmoother / ChebyshevSmoother1stKind point-smoothers B, B_G (GS-free by construction, realizing the kernel-api GS-free route); B_G->SetInitialGuess(false) :35; close brace :36; citecheck zero-drift.
+  - citation: reference/palace/palace/linalg/distrelaxation.cpp:38-69
+    verdict: supports
+    audited_at: 2026-06-07T072951Z
+    note: SetOperators — A/A_G capture (:49-50), auxiliary essential-dof set dbc_tdof_list_G (:61), B/B_G SetOperator (:64-65); close brace :69; citecheck zero-drift.
+  - citation: reference/palace/palace/linalg/distrelaxation.cpp:101-119
+    verdict: supports
+    audited_at: 2026-06-07T072951Z
+    note: Mult2 relaxation action body — primary leg y=y+B(x-Ay) (:104-106), auxiliary leg y=y+G B_G Gt(x-Ay) (A->Mult :109, AXPBY :110, Gt :111, ess-pin :112-115, B_G :116, G prolong-add :117); close brace :119; per-leg anchors all citecheck zero-drift.
+  - citation: reference/palace/palace/linalg/distrelaxation.cpp:121-151
+    verdict: supports
+    audited_at: 2026-06-07T072951Z
+    note: MultTranspose2 reversed-order transpose action (basis for the not-symmetric-in-general non-law + SSOR forward+transpose-pair idiom); function close brace at :151 on disk (chapter prose cites :152 — END +1 drift, see Change 2).
+  - citation: reference/palace/palace/linalg/chebyshev.hpp:82
+    verdict: supports
+    audited_at: 2026-06-07T072951Z
+    note: Adams et al. 2003 polynomial-versus-Gauss-Seidel citation — the kernel-api correspondence anchor that the realized relaxation is GS-free by design; citecheck --anchor zero-drift.
+  - citation: reference/palace/palace/linalg/amg.cpp:24
+    verdict: supports
+    audited_at: 2026-06-07T072951Z
+    note: GPU GS->l1-Jacobi flip (relax_type = 18) corroborating the GS triangular sweep is the non-removable kernel engineered around; citecheck --anchor zero-drift.
+  - citation: book/src/L1-L0/triangular-solve-obstruction.md
+    verdict: supports
+    audited_at: 2026-06-07T072951Z
+    note: kernel-api correspondence FAITHFUL — the impl realizes the relaxation-slot semantics the opaque GS-SSOR/sparse-triangular contract names, via a GS-free route; realizes-kernel-api edge is reference-class (NOT depends-on); the api theme stays obstruction (opaque-library-ownership). Scoped-coverage faithful (impl covers the Hiptmair distributive case; chebyshev/jacobi siblings realize the point-smoother cases of the same slot).
+```

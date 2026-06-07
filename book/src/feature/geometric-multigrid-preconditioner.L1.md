@@ -3,7 +3,7 @@ kind: feature-surface
 feature: geometric-multigrid-preconditioner
 level: L1
 feature_root: seed
-rank: rough-in
+rank: firm
 edges:
   depends-on:
     - target: L1/fe_space_hierarchy
@@ -67,9 +67,10 @@ Three composed pieces, each a firm L1 link:
    `prolong = apply (P[l])` are the only inter-level transfers. **GROUNDS RE9.** L0:
    `gmg.cpp:191` (restrict), `:199` (prolong).
 2. **Per-level smoother** — [`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md)
-   (D3 kernel-impl, forward-ref) / the Chebyshev/Jacobi polynomial smoothers
+   (kernel-impl, **firm** c121) / the Chebyshev/Jacobi polynomial smoothers
    ([`L3/chebyshev`](../L3/chebyshev.md) / [`L2/jacobi-smoother`](../L2/jacobi-smoother.md),
-   cross-linked as references). The smoother's diagonal-preconditioner setup
+   cross-linked as references — the L2/L3 iteration-views of the smoother, not blocking deps).
+   The smoother's diagonal-preconditioner setup
    (`dinv = reciprocal(assemble_diagonal A)`) composes the firm
    [`reciprocal`](../L1/reciprocal.md)/[`normalize`](../L1/normalize.md) chains. **GROUNDS
    RE1/RE5/RE7.** L0: `chebyshev.cpp:177-178`.
@@ -84,11 +85,14 @@ L4 surface's §"Why this is rough-in".
 
 ## Status
 
-`rough-in` — the L1 pure-function surface of the infrastructure / shared-substrate GMG
-preconditioner column. `feature_root: seed` preserved. Held at rough-in by the same
-well-foundedness gate as the [L4 surface](./geometric-multigrid-preconditioner.L4.md): the
-smoother leg rests on the partial-obstruction [`L3/chebyshev`](../L3/chebyshev.md) + D3's
-forward-referenced [`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md).
-The V-cycle body is the mutation-rotated pure rendering of `gmg.cpp:126-205`; the level
-recursion + Richardson sweep are the documented sequential obstructions. Evidence:
-`gmg.cpp:126-205`.
+`firm` (promoted rough-in→firm cycle-122) — the L1 pure-function surface of the
+infrastructure / shared-substrate GMG preconditioner column. `feature_root: seed` preserved.
+Firm on the same well-foundedness basis as the
+[L4 surface](./geometric-multigrid-preconditioner.L4.md): all blocking `depends-on`
+constituents are firm on disk (`fe_space_hierarchy`, `multigrid-relaxation-smoother` (kernel-impl
+c121), `reciprocal`, `normalize`). The [`L3/chebyshev`](../L3/chebyshev.md) (partial-obstruction)
++ [`L2/jacobi-smoother`](../L2/jacobi-smoother.md) cross-links are the L2/L3 iteration-VIEWS of
+the smoother (`reference`-class, already so typed here) — sibling-views, not blocking deps. The
+V-cycle body is the mutation-rotated pure rendering of `gmg.cpp:126-205`; the level recursion +
+`pc_it` Richardson sweep are the documented sequential obstructions inherited from the firm
+smoother and do not gate the compositional firm claim. Evidence: `gmg.cpp:126-205`.

@@ -43,7 +43,14 @@ constructed-operator gate L1 names (replacing the L0
 at L2 as a single field operation.
 
 **`jacobi-smoother` is a constructed-operator gate, fork-INDEPENDENT, with NO
-fold-parent.** It is **not** a member of the L2 fold cohort — it is neither an
+fold-parent.** It is the **`B`-slot** of the L2 step-kernel combinator
+[`correction_step`](./correction_step.md) `y + B·(x − A·y)` for the Jacobi choice
+`B = ω·D⁻¹` (the *degree-zero, non-iterated* case): the bare gate here IS the
+`B` apply `op.dinv ⊙ x`, and the Jacobi *iteration* (the Richardson sweep
+`y ← y + (ω·D⁻¹)·(x − A·y)` over `pc_it` sweeps) is `correction_step` with this
+`B` wrapped in the consumer's loop — exactly the "the bare gate is the
+preconditioner *action*, the Richardson sweep is the consumer's responsibility"
+precondition the §Semantics records. It is **not** a member of the L2 fold cohort — it is neither an
 arity member of [`linear_combination`](./linear_combination.md) (the
 reduce-to-`Tensor[N]` term-axis fold) nor a leaf/consumer of
 [`inner_product`](./inner_product.md) (the reduce-to-`Scalar` length-axis fold).

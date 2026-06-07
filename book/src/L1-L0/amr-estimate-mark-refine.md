@@ -1,9 +1,11 @@
 ---
-# Lowering theme. Per graded-stack scheme §5: rank = min(endpoint ranks). The L1
-# endpoints (flux_recovery_estimate / dorfler_mark) are rough-in speculative
-# vocabulary (rank 2); the refine endpoint is an opaque-library obstruction leaf.
-# So the theme is rough-in pending the harvester-promotion of its L1 cohort.
-rank: rough-in
+# Lowering theme. Per graded-stack scheme §5: rank = min(endpoint ranks). The two
+# constructive L1 endpoints (flux_recovery_estimate / dorfler_mark) are BOTH harvested
+# firm (rank 3) as of cycle-122 (flux_recovery_estimate D1, dorfler_mark D2); the refine
+# endpoint is a permanent opaque-library obstruction leaf that does NOT gate promotion
+# (a documented boundary, not an unfilled body — see ## Status). So the theme firm-flips
+# rough-in → firm: rank = min(firm, firm) = firm.
+rank: firm
 edges:
   depends-on:
     - target: L1/flux_recovery_estimate
@@ -56,13 +58,13 @@ identity-lowering smell.
 
 ## Status
 
-`rough-in` — the structural three-way decomposition (estimate / mark / refine) is positively anchored
-at L0, but the two lowering endpoints are **speculative L1 vocabulary proposed THIS cycle**
-(`flux_recovery_estimate` and `dorfler_mark` — plain-text forward-references, not-yet-on-disk speculative
-ops per the rough-in forward-reference convention; the integrator may materialize them as rough-in
-stub rows, both rough-in pending harvester promotion). The theme firms
-to `firm` when both L1 endpoints are harvested firm (well-foundedness: a lowering theme is at most as
-resolved as its least-resolved endpoint, scheme §5). The **refine** leg is a permanent
+`firm` — the structural three-way decomposition (estimate / mark / refine) is positively anchored
+at L0, and the two constructive lowering endpoints are now **both harvested firm L1 vocabulary**
+([`flux_recovery_estimate`](../L1/flux_recovery_estimate.md), cycle-122 D1, and
+[`dorfler_mark`](../L1/dorfler_mark.md), cycle-122 D2 — both live on-disk firm chapters, no longer the
+plain-text forward-references of the original rough-in authoring). The theme firm-flipped
+rough-in → `firm` per its stated gate (well-foundedness: a lowering theme is at most as
+resolved as its least-resolved endpoint, scheme §5 — `rank = min(firm, firm) = firm`). The **refine** leg is a permanent
 `obstruction (opaque-library-ownership)` sub-leaf (MFEM owns `GeneralRefinement`); it does not gate the
 theme's promotion because it is a documented boundary, not an unfilled body (the
 [`triangular-solve-obstruction`](./triangular-solve-obstruction.md) precedent for an opaque-library
@@ -85,14 +87,13 @@ indicator vector is `Tensor[(E: n_elem)]`, the field DOF vector is `Tensor[(D: n
 
 where:
 
-- `flux_recovery_estimate :: Estimator -> Tensor[(D: n_dof)] -> Tensor[(E: n_elem)]` *(speculative L1
-  op, rough-in; plain-text forward-ref — not yet on disk)* — the ZZ
-  flux-recovery estimate verb (rough-in, this cohort). Recovers a *smooth* flux by projecting the
+- [`flux_recovery_estimate`](../L1/flux_recovery_estimate.md) `:: Estimator -> Tensor[(D: n_dof)] -> Tensor[(E: n_elem)]` *(firm L1
+  op, cycle-122 D1)* — the ZZ
+  flux-recovery estimate verb. Recovers a *smooth* flux by projecting the
   *discontinuous* material flux onto a smooth FE space, then returns the per-element L2 norm of the
   difference (the ZZ a-posteriori indicator).
-- `dorfler_mark :: Real -> Tensor[(E: n_elem)] -> IndexSet[E]` *(speculative L1 op, rough-in; plain-text
-  forward-ref — not yet on disk)* — the Dörfler (bulk) marking verb
-  (rough-in, this cohort). Returns the *smallest* element index set whose summed squared-error covers at
+- [`dorfler_mark`](../L1/dorfler_mark.md) `:: Real -> Tensor[(E: n_elem)] -> IndexSet[E]` *(firm L1 op, cycle-122 D2)* — the Dörfler (bulk) marking verb.
+  Returns the *smallest* element index set whose summed squared-error covers at
   least fraction θ of the total — `arg min |S| s.t. Σ_{i∈S} e_i² ≥ θ · Σ_i e_i²`.
 - `refine :: Mesh -> IndexSet[E] -> Mesh` — the MFEM-opaque mesh refinement leaf (obstruction).
 - `nrm2`, `solve` are existing vocabulary ([`nrm2`](../L1/nrm2.md); the per-driver `Solve` override is
@@ -227,13 +228,14 @@ as the boundary the AMR step crosses.
 marking math are syntactic identities on positive Palace source; the refine leg is a documented opaque
 boundary, not a reconstructed claim.
 
-## Speculative L1 operators (need harvester promotion)
+## L1 operators (harvested firm, cycle-122)
 
-- `flux_recovery_estimate` — the ZZ flux-recovery a-posteriori error estimate verb.
-- `dorfler_mark` — the Dörfler bulk-marking verb (smallest index set covering θ of total squared error).
+- [`flux_recovery_estimate`](../L1/flux_recovery_estimate.md) — the ZZ flux-recovery a-posteriori error estimate verb (firm, cycle-122 D1).
+- [`dorfler_mark`](../L1/dorfler_mark.md) — the Dörfler bulk-marking verb (smallest index set covering θ of total squared error; firm, cycle-122 D2).
 
-(The `refine` leaf is NOT proposed as a fillable operator — it is the MFEM-opaque obstruction sub-leaf,
-the AMR analogue of `triangular-solve-obstruction`.)
+Both endpoints are now harvested firm; the theme firm-flipped this cycle (see ## Status). (The `refine`
+leaf is NOT proposed as a fillable operator — it is the MFEM-opaque obstruction sub-leaf, the AMR
+analogue of `triangular-solve-obstruction`.)
 
 ## Verified-against
 
@@ -248,4 +250,4 @@ the AMR analogue of `triangular-solve-obstruction`.)
   `:348-353`) + `:391-500` (`CurlFluxErrorEstimator` ctor; 2D-scalar-curl `:450`) — citecheck `[ok]`.
 - `palace/main.cpp:304` (the `SolveEstimateMarkRefine` call site) — citecheck `[ok]`.
 
-## Status: rough-in
+## Status: firm

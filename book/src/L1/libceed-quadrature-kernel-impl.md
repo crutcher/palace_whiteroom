@@ -24,19 +24,19 @@ edges:
     - target: L1/weak_form_term    # the (coefficient, differential-operator) pair whose differential-operator selects the basis-eval mode B and whose coefficient enters the pointwise contraction D
     - target: concepts/tensor-field-lift   # the contraction pipeline is the matrix-free GPU-tensor target form (backend-lowering)
   depends-on:
-    # NOTE (clean-gate): these are the speculative tensor-contraction substrate operators this
-    # impl WOULD rest on. They do NOT exist as firm L1 vocabulary yet (rough-in roadmap-deps).
-    # Because THIS node is rank-0 (roadmap_goal), these may themselves be rank-0 and the rank
-    # invariant holds. Listed as the declared-future deps the graded stack tracks; harvester
-    # promotes them when the substrate is mined (combinator-miner D6 of this cycle probes exactly
-    # this shared contraction substrate).
-    - target: L1/element_restrict        # G — global-dof → per-element-dof gather (rough-in; no anchor yet)
+    # NOTE (clean-gate): these are the tensor-contraction substrate operators this impl WOULD
+    # rest on. They now exist as rank-0 `roadmap_goal` L1 chapters WITH codemap-verified anchors
+    # (authored c122 D4); they are NOT yet firm L1 vocabulary. Because THIS node is rank-0
+    # (roadmap_goal), these rank-0 deps satisfy the rank invariant. Listed as the declared-future
+    # deps the graded stack tracks; harvester promotes them firm when the element-local rank-tensor
+    # substrate front is mined.
+    - target: L1/element_restrict        # G — global-dof → per-element-dof gather (roadmap_goal, authored c122 D4)
       kind: composes
-    - target: L1/basis_apply             # B — per-element-dof → per-quad-point eval (interp/grad/curl/div) (rough-in; no anchor yet)
+    - target: L1/basis_apply             # B — per-element-dof → per-quad-point eval (interp/grad/curl/div) (roadmap_goal, authored c122 D4)
       kind: composes
-    - target: L1/quad_point_contract     # D — pointwise geom×coeff×weight contraction at quad points (rough-in; no anchor yet)
+    - target: L1/quad_point_contract     # D — pointwise geom×coeff×weight contraction at quad points (roadmap_goal, authored c122 D4)
       kind: composes
-    - target: L1/geom_factor_build       # the build-QFunction: Jacobian × quad-weight → geom_data (rough-in; no anchor yet)
+    - target: L1/geom_factor_build       # the build-QFunction: Jacobian × quad-weight → geom_data (roadmap_goal, authored c122 D4)
       kind: composes
 ---
 
@@ -163,18 +163,24 @@ explicit field roles in the Palace libCEED operator-construction code. What is *
 only the *existence of firm L1 substrate operators* for the contraction stages — hence rank-0
 roadmap_goal, not firm.
 
-## Speculative L1 operators (rough-in; harvester promotion targets)
+## Substrate L1 operators (roadmap_goal, authored c122 D4; harvester promotion targets)
 
-- `element_restrict` — `G`/`Gᵀ`: the per-element gather/scatter `Tensor[(N: ...)] ↔ Tensor[(E, L)]`.
-- `basis_apply` — `B`/`Bᵀ`: the basis-eval contraction `Tensor[(E, L)] ↔ Tensor[(E, P, C)]`, keyed on
-  the `EvalMode` the term's `𝒟` selects.
-- `quad_point_contract` — `D`: the pointwise per-quad-point `geom_data ⊙ ·` contraction (the
-  embarrassingly-parallel lift).
-- `geom_factor_build` — the setup-stratum build-QFunction `(mesh-nodes, quad-weights) → geom_data`.
+The four contraction-substrate operators are now rank-0 `roadmap_goal` chapters with
+codemap-verified anchors (authored c122 D4), wired as this impl's `depends-on` substrate:
 
-These four are the **shared tensor-contraction substrate** the combinator-miner shared-substrate
-probe (D6 of this cycle) is designed to mine ONCE across the relaxation (D3) / contraction (D4=this)
-/ Krylov (D5) kernel-impls; harvester promotes them when the substrate is firm.
+- [`element_restrict`](./element_restrict.md) — `G`/`Gᵀ`: the per-element gather/scatter
+  `Tensor[(N: ...)] ↔ Tensor[(E, L)]`.
+- [`basis_apply`](./basis_apply.md) — `B`/`Bᵀ`: the basis-eval contraction
+  `Tensor[(E, L)] ↔ Tensor[(E, P, C)]`, keyed on the `EvalMode` the term's `𝒟` selects.
+- [`quad_point_contract`](./quad_point_contract.md) — `D`: the pointwise per-quad-point
+  `geom_data ⊙ ·` contraction (the embarrassingly-parallel lift).
+- [`geom_factor_build`](./geom_factor_build.md) — the setup-stratum build-QFunction
+  `(mesh-nodes, quad-weights) → geom_data`.
+
+These four are the **shared tensor-contraction substrate** mined as a cohort (c122 D4) across the
+element-local rank-structured tensor front; harvester promotes them `roadmap_goal → rough-in → firm`
+when the element-local rank-tensor L1 vocabulary front lands, at which point this impl's
+`depends-on` edges become firm-resting and the node itself can promote off `roadmap_goal`.
 
 ## Verified-against
 
@@ -211,3 +217,39 @@ probe (D6 of this cycle) is designed to mine ONCE across the relaxation (D3) / c
   facility; its GSLIB point-interp sibling is a separate obstruction, not realized here).
 - `concepts/tensor-field-lift`, `concepts/build-time-vs-run-time-stratification` — the per-quad-point
   lift + the setup/run-time stratification the pipeline uses.
+
+```yaml
+verified_against:
+  - citation: book/src/L1-L0/fe-assemble-libceed-boundary-obstruction.md
+    verdict: realizes-kernel-api-faithful
+    audited_at: 2026-06-07T093000Z
+    note: STRUCTURAL correspondence audit (impl is roadmap_goal; empirical-match deferred to firming). The five-stage A = Gᵀ B_𝒟ᵀ D B_𝒟 G pipeline maps 1:1 onto the kernel-api leaf contract (integrator.hpp:58-61 Assemble pure-virtual; restriction/basis/geom_data field roles). realizes-kernel-api edge confirmed reference-class (NOT depends-on); API stays obstruction(opaque-library-ownership), undowngraded; fe_assemble stays firm.
+  - citation: reference/palace/palace/fem/libceed/integrator.cpp:423-445
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: AssembleCeedOperator master assembler signature with trial_restr/test_restr/trial_basis/test_basis/geom_data/geom_data_restr inputs (:423-427) — the five inputs wiring Gᵀ Bᵀ D B G; on-disk awk read, exact.
+  - citation: reference/palace/palace/fem/integrator.hpp:58-61
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: BilinearFormIntegrator::Assemble pure-virtual leaf-kernel contract (= 0) — the SHARED anchor on which the impl-realizes-api correspondence pivots (the impl's A(space,term) IS the constructive interior of this opaque dispatch); exact.
+  - citation: reference/palace/palace/fem/libceed/integrator.cpp:340-419
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: build-QFunction f_build_geom_factor_* — attr CEED_EVAL_INTERP (:387), q_w CEED_EVAL_WEIGHT (:388), grad_x CEED_EVAL_GRAD (:389-390), geom_data output + 2+space_dim*dim verify (:395-397); the geom_factor_build stage; exact.
+  - citation: reference/palace/palace/fem/libceed/integrator.cpp:451-512
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: apply-QFunction/operator-field wiring — geom_data input (:457-458), q_w CEED_EVAL_WEIGHT (:462), AddOperatorActiveInputFields (:492) / AddOperatorActiveOutputFields (:493); the B G input / Bᵀ Gᵀ output chains around the pointwise D; in-range.
+  - citation: reference/palace/palace/fem/libceed/integrator.hpp:14-23
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: enum EvalMode { Weight None Interp Grad Div Curl } (:15-23) — the B basis-eval modes the term's 𝒟 selects; exact.
+  - citation: reference/palace/palace/fem/bilinearform.cpp:64-70
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: Palace-supplied restriction/basis inputs trial_restr :64 test_restr :66 trial_basis :68 test_basis :69; leaf call integ->Assemble :75; fold AddSubOperator :77; exact (the G/B operands + the firm fold L0 home).
+  - citation: reference/palace/test/unit/test-libceed.cpp:284
+    verdict: empirical-anchor-confirmed-deferred
+    audited_at: 2026-06-07T093000Z
+    note: TestCeedOperatorFullAssemble exists (:284); :298 asserts mat_diff MaxNorm < 1.0e-12 * max(mat_ref MaxNorm, 1.0) — assembled libCEED matrix matches MFEM reference to 1e-12. The empirical-match target for the FIRMING audit (deferred; impl is roadmap_goal). Path is palace/test/... single-palace under reference/, NOT doubled.
+```

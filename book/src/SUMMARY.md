@@ -142,6 +142,7 @@
 - [Overview](./L2/index.md)
 - [Step kernels](./L2/step-kernels-intro.md)
   - [chebyshev-iteration](./L2/chebyshev-iteration.md)
+  - [correction_step](./L2/correction_step.md)
   - [krylov-step](./L2/krylov-step.md)
 - [Fold combinators](./L2/folds-intro.md)
   - [gram](./L2/gram.md)
@@ -228,6 +229,10 @@
   - [eliminate_rhs](./L1/eliminate_rhs.md)
   - [fe_assemble](./L1/fe_assemble.md)
   - [libceed-quadrature-kernel-impl](./L1/libceed-quadrature-kernel-impl.md)
+  - [element_restrict](./L1/element_restrict.md)
+  - [basis_apply](./L1/basis_apply.md)
+  - [quad_point_contract](./L1/quad_point_contract.md)
+  - [geom_factor_build](./L1/geom_factor_build.md)
   - [weak_form_term](./L1/weak_form_term.md)
 - [Mesh & FE-space construction](./L1/mesh-construction-intro.md)
   - [build_mesh](./L1/build_mesh.md)
@@ -237,6 +242,8 @@
   - [fe_space](./L1/fe_space.md)
   - [fe_space_hierarchy](./L1/fe_space_hierarchy.md)
   - [interpolator](./L1/interpolator.md)
+- [dorfler_mark](./L1/dorfler_mark.md)
+- [flux_recovery_estimate](./L1/flux_recovery_estimate.md)
 
 # L1 > L0 — Lowering
 - [Overview](./L1-L0/index.md)

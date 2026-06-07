@@ -12,7 +12,14 @@ direction/residual/accumulator updates with the HPC element-fused kernels
 ## Context
 
 At L1, [`chebyshev-smoother`](../L1/chebyshev-smoother.md) names the polynomial
-action `y + p_order(D⁻¹ A)·(x − A·y)` as one closed-form smoother step. L2 is the
+action `y + p_order(D⁻¹ A)·(x − A·y)` as one closed-form smoother step. This step
+is a **specialization of the L2 step-kernel combinator
+[`correction_step`](./correction_step.md)** `y + B·(x − A·y)` with the
+preconditioner slot `B = p_order(D⁻¹ A)` (the order-`order` correction polynomial
+in `D⁻¹ A`): `correction_step` names the residual-correction skeleton, and
+`chebyshev-iteration` fills `B` with the polynomial and unfolds its internal
+three-term recurrence (Palace spells the contract verbatim — `chebyshev.cpp:193`
+4th-kind, `:264` 1st-kind: "Apply smoother: y = y + p(A) (x - A y)"). L2 is the
 layer where that polynomial is unfolded: the order-`order` Chebyshev correction
 polynomial is realised as a parameterised three-term recurrence
 

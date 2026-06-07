@@ -157,3 +157,35 @@ The constituents are firm chapters; the Palace anchors are the kernel-api's loop
 - `book/src/methodology/resolution-ladder.md` — the `roadmap_goal` rank-0 discipline + reachability/pulled-by requirement this node satisfies.
 - `book/src/concepts/sequential-obstruction.md` — the classification preserved on the impl's basis-extension + thick-restart loops.
 - `book/src/semantics/index.md` §1.2.1–§1.2.2 (named-shape-group convention, the `BV : Tensor[(B: ncv), (S: ...), complex]` form), §3.7 (`iterate_while`), §3.8 (demand-pruning) — USED + linked, not restated.
+
+```yaml
+verified_against:
+  - citation: book/src/L3/eigsolve.md
+    verdict: realizes-kernel-api-faithful
+    audited_at: 2026-06-07T093000Z
+    note: STRUCTURAL correspondence audit (impl is roadmap_goal; empirical-match deferred to firming). The thick-restart Krylov-Schur driver + inner basis-extension loop + Rayleigh-Ritz extraction faithfully realizes the kernel-api opaque eigen-iteration; the per-step body is the same apply_linop ▷ ksp_solve ▷ scale_untransform composition. Obstruction PRESERVED (impl constructs the loop the library owns, does not dissolve it). realizes-kernel-api edge confirmed reference-class (NOT depends-on); API stays partial-obstruction, undowngraded.
+  - citation: reference/palace/palace/linalg/slepc.cpp:630-654
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: DECISIVE — SlepcEPSSolverBase::SetType; :635 EPSSetType(eps, EPSKRYLOVSCHUR) lands EXACTLY (zero drift). The default opaque eigen-iteration IS Krylov-Schur, the algorithm this impl reconstructs; EPSPOWER :638, EPSSUBSPACE :641, EPSJD :644, MFEM_ABORT arm :652.
+  - citation: reference/palace/palace/linalg/slepc.cpp:687-709
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: SlepcEPSSolverBase::Solve — the opaque library iteration EPSSolve(eps) :694, Customize() :693, EPSGetConverged :695, RescaleEigenvectors :707; the no-Palace-loop anchor the impl's outer driver realizes; exact.
+  - citation: reference/palace/palace/linalg/slepc.cpp:602-628
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: SetProblemType — EPS_HEP :607 / EPS_NHEP :610 / EPS_GHEP :613 / EPS_GHIEP :616 / EPS_GNHEP :619; the problem-symmetry axis selecting lanczos_step (Hermitian) vs krylov-step (non-Hermitian); exact.
+  - citation: reference/palace/palace/linalg/slepc.cpp:731-736
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: GetBV — EPSGetBV(eps, &bv) :734; the SLEPc Krylov-basis-vectors object the impl's BV carry realizes; exact.
+  - citation: reference/palace/palace/linalg/arpack.cpp:315-339
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: ARPACK RCI loop — while(true) :315, naupd :318, ApplyOp dispatch on ido==1||-1 :323-326, ApplyOpB on ido==2 :327-330, break on ido==99 :331-334 (break at :333). The library-owned inner basis-extension loop the impl reconstructs. NOTE the eigsolve.md/impl framing cites the ido==99 break as :330-333 — off-by-one on the range start (:330 is the ido==2 close-brace); break IS in-range; carry-forward to :331-334 for a future lifter (non-load-bearing).
+  - citation: reference/palace/palace/linalg/arpack.cpp:369
+    verdict: supports
+    audited_at: 2026-06-07T093000Z
+    note: neupd(...) post-iteration eigenpair extraction (:369) — the impl's rayleigh_ritz + extract_eigpairs; num_it = iparam[2] :342; iparam[2] arpack_it :270; iparam[6] = sinvert?3:1 :273; which::largest_magnitude :278; exact.
+```

@@ -3,7 +3,7 @@ kind: feature-surface
 feature: geometric-multigrid-preconditioner
 level: L4
 feature_root: seed
-rank: rough-in
+rank: firm
 edges:
   depends-on:
     - target: L4/preconditioning-framework
@@ -11,11 +11,7 @@ edges:
     - target: L1/fe_space_hierarchy
       kind: composes                  # GetProlongationOperators() — the level-stack P[l] prolongation GMG restricts/prolongs over (GROUNDS RE9)
     - target: L1/multigrid-relaxation-smoother
-      kind: composes                  # D3 kernel-impl: the distributive/Hiptmair relaxation smoother (forward-ref, lands same cycle)
-    - target: L3/chebyshev
-      kind: composes                  # the per-level Chebyshev polynomial smoother leg (partial-obstruction; GROUNDS RE1)
-    - target: L2/jacobi-smoother
-      kind: composes                  # the Jacobi (point) smoother leg / diagonal-preconditioner gate (firm)
+      kind: composes                  # D3 kernel-impl (firm c121): the distributive/Hiptmair relaxation smoother — the faithful blocking smoother constituent
     - target: L1/reciprocal
       kind: composes                  # dinv.Reciprocal() — diagonal-preconditioner extract (GROUNDS RE7)
     - target: L1/normalize
@@ -27,6 +23,8 @@ edges:
   reference:
     - feature/lifecycle.L4
     - feature/eigenmode.L4
+    - L3/chebyshev                     # the L3 ITERATION-VIEW of the smoother leg (partial-obstruction; sibling-view, NOT a blocking constituent — GROUNDS RE1 reachability)
+    - L2/jacobi-smoother               # the L2 iteration-view / point-smoother leg (firm; sibling-view)
 ---
 
 # geometric-multigrid preconditioner — L4 composition-root
@@ -128,35 +126,43 @@ Three composed stages, each a link DOWN to firm vocabulary:
   `pc_it`) V-cycle sweep — `B(x) ≈ A⁻¹ x` to preconditioner accuracy — consumed per Krylov
   iteration. L0: `GeometricMultigridSolver::Mult` (`gmg.cpp:126-142`).
 
-## Why this is rough-in (not firm)
+## Why this is firm (c122 re-check)
 
 Under the OWN-COMPOSITION promotion rule (a column promotes off its current rung when its
 OWN composition + directly-owned constituents are at-rank; cross-linked sibling columns are
 references, NOT blockers) **and** the well-foundedness invariant `rank(u) ≤ min(deps)`, this
-column is **rough-in**, not firm:
+column is now **firm**. The c121 rough-in landing was gated on one item — "the smoother leg
+firms" — and the c122 re-check finds that gate cleared, with one edge re-classification:
 
-- Its directly-owned **smoother leg** rests on [`L3/chebyshev`](../L3/chebyshev.md), which
-  is **partial-obstruction** (`chebyshev.md` `## Status`: the per-step body lifts cleanly
-  to a whole-tensor expression, but the inner `k`-recurrence and the outer `pc_it`
-  Richardson sweep are *witnessed sequential obstructions* — the V-cycle inherits this
-  un-liftable iteration in the same way).
-- Its [`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md) constituent
-  is D3's kernel-impl, **forward-referenced this cycle and not yet firm on disk**; the
-  well-foundedness invariant caps this column at no more resolved than that constituent.
+- **The faithful blocking smoother constituent is
+  [`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md), which is now
+  `firm` on disk** (kernel-impl, c121 D3; `## Status: \`firm\``). The c121 prose called it
+  "forward-referenced, not yet firm" — that was true at authoring time and is now stale.
+- **[`L3/chebyshev`](../L3/chebyshev.md) (partial-obstruction) is NOT a blocking
+  `depends-on` of this column — it is the L3 *iteration-view* of the smoother**, re-typed to
+  `reference` (sibling-view) this cycle. The firm `multigrid-relaxation-smoother` depends on
+  the firm [`L1/chebyshev-smoother`](../L1/chebyshev-smoother.md) (the per-level point
+  smoother `B`/`B_G`), NOT on `L3/chebyshev`; and it documents the `pc_it` Richardson sweep
+  as a **sequential-obstruction that does not gate its L1 firm status** (the sweep is a pure
+  `pc_it`-fold parameter at L1). The column inherits exactly that disposition: its V-cycle
+  level recursion + `pc_it` Richardson sweep are documented sequential-obstructions, and they
+  do not gate the *compositional* firm claim — the same firm-on-positive-structure +
+  documented-sequential-obstruction discipline that promoted the smoother itself. (Forcing a
+  `column →depends-on→ L3-iteration-view` edge would be the §2g over-edge — the real
+  relationship is a sibling-view, so it is a `reference`.)
 
-So `rank(geometric-multigrid-preconditioner) ≤ min(rank(chebyshev), rank(relaxation-smoother))`
-holds only at rough-in. The other directly-owned constituents ARE firm
+So every directly-owned **blocking** constituent is firm
 ([`preconditioning-framework`](../L4/preconditioning-framework.md),
 [`fe_space_hierarchy`](../L1/fe_space_hierarchy.md),
-[`jacobi-smoother`](../L2/jacobi-smoother.md), [`reciprocal`](../L1/reciprocal.md),
-[`normalize`](../L1/normalize.md)); the column is held at rough-in only by the smoother leg.
-**Promotion condition:** the smoother leg firms (D3's `multigrid-relaxation-smoother`
-promotes to firm AND the chebyshev partial-obstruction's V-cycle recursion is either lifted
-or accepted as a documented sequential-obstruction at the column level) — a c122+ re-check.
+[`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md),
+[`reciprocal`](../L1/reciprocal.md), [`normalize`](../L1/normalize.md)), and
+`rank(geometric-multigrid-preconditioner) = firm ≤ min(deps) = firm` holds. The
+chebyshev/jacobi iteration-views remain `reference` cross-links (the drift-guard sibling
+pointers; they still GROUND RE1's reachability via this live column).
 
-This is the clean-gate landing (the redirect's verify-present discipline): the substrate is
-cleanly composable BY NAME, but its smoother leg is not yet firm, so the column lands
-rough-in rather than forcing a firm claim.
+This is the clean-gate landing matured: the substrate is cleanly composable BY NAME, the
+compositional V-cycle algebra is exhaustively cited (`gmg.cpp:126-205`), and all blocking
+constituents firmed — so the column promotes to firm without a forced claim.
 
 ## Single-machine reading (DIRECTIVE-1)
 
@@ -172,24 +178,31 @@ DIRECTIVE-1 keeps OUT). No MPI-associated version is lifted here.
 | Stage | Constituent | Status | L0 site |
 |---|---|---|---|
 | level-stack + prolongations | [`fe_space_hierarchy`](../L1/fe_space_hierarchy.md) `GetProlongationOperators()` (GROUNDS RE9) | firm (c117) | `ksp.cpp:221,228`; `gmg.cpp:182-201`; `fespace.cpp:240` |
-| per-level relaxation smoother | [`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md) (D3 kernel-impl, forward-ref) | rough-in (D3) | `distrelaxation.cpp:13-36`; `gmg.cpp:42-60` |
-| Chebyshev polynomial smoother leg (GROUNDS RE1) | [`L3/chebyshev`](../L3/chebyshev.md) | partial-obstruction | `chebyshev.cpp:160-220`; `gmg.cpp:50-60` |
-| Jacobi (point) smoother / diagonal gate | [`L2/jacobi-smoother`](../L2/jacobi-smoother.md) | firm | `chebyshev.cpp:177` (`AssembleDiagonal`) |
+| per-level relaxation smoother (blocking dep) | [`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md) (kernel-impl, c121) | firm | `distrelaxation.cpp:13-36`; `gmg.cpp:42-60` |
+| Chebyshev polynomial smoother leg — L3 iteration-VIEW (reference; GROUNDS RE1) | [`L3/chebyshev`](../L3/chebyshev.md) | partial-obstruction | `chebyshev.cpp:160-220`; `gmg.cpp:50-60` |
+| Jacobi (point) smoother / diagonal gate — L2 iteration-view (reference) | [`L2/jacobi-smoother`](../L2/jacobi-smoother.md) | firm | `chebyshev.cpp:177` (`AssembleDiagonal`) |
 | diagonal-precond extract + reciprocal/normalize (GROUNDS RE5/RE7) | [`L1/reciprocal`](../L1/reciprocal.md) / [`L1/normalize`](../L1/normalize.md) | firm | `chebyshev.cpp:177-178` (`AssembleDiagonal(dinv); dinv.Reciprocal()`) |
 | bind V-cycle as preconditioner | [`preconditioning-framework`](../L4/preconditioning-framework.md) | firm (c096) | `ksp.cpp:207-234` |
 
 ## Status
 
-`rough-in` — the first **infrastructure / shared-substrate** feature-surface
-composition-root (DIRECTIVE-2 grounded consumer-(1), batch-39 LEAD). The GC-root marker
-`feature_root: seed` is preserved (root-role is permanent/categorical, a separate axis from
-the resolution ladder). Held at rough-in by the well-foundedness invariant: its smoother leg
-rests on [`L3/chebyshev`](../L3/chebyshev.md) (partial-obstruction) + D3's
-forward-referenced [`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md)
-(not yet firm on disk). All other directly-owned constituents are firm. **Promotion
-condition:** the smoother leg firms (c122+ re-check). This chapter carries the
-*compositional* claim (the GMG preconditioner = this V-cycle composition of these constituent
-pieces, GROUNDING RE9/RE1/RE5/RE7 by name), not the constituents' per-op algebraic claims
-(those live in the linked chapters). Evidence: `gmg.cpp:126-205` (Mult + VCycle) +
-`ksp.cpp:206-234` (construction with the prolongation operators + smoother config) realizing
-the composition, plus the firm constituent down-links.
+`firm` (promoted rough-in→firm cycle-122, the D7 promotion-eval re-check) — the first
+**infrastructure / shared-substrate** feature-surface composition-root (DIRECTIVE-2 grounded
+consumer-(1), batch-39 LEAD). The GC-root marker `feature_root: seed` is preserved (root-role
+is permanent/categorical, a separate axis from the resolution ladder). **Why firm:** every
+directly-owned **blocking** constituent is firm on disk — `preconditioning-framework` (c096),
+`fe_space_hierarchy` (c117), `multigrid-relaxation-smoother` (c121 kernel-impl), `reciprocal`,
+`normalize`; the well-foundedness invariant `rank(u) ≤ min(deps) = firm` holds. The
+[`L3/chebyshev`](../L3/chebyshev.md) (partial-obstruction) and
+[`L2/jacobi-smoother`](../L2/jacobi-smoother.md) constituents are the L2/L3 **iteration-views**
+of the smoother, re-typed to `reference` (sibling-view) this cycle — the faithful blocking
+smoother dep is the firm `multigrid-relaxation-smoother` (which rests on the firm
+[`L1/chebyshev-smoother`](../L1/chebyshev-smoother.md), not `L3/chebyshev`). The V-cycle level
+recursion + `pc_it` Richardson sweep are documented sequential-obstructions inherited from the
+firm smoother — they do not gate the *compositional* firm claim (firm-on-positive-structure +
+documented-sequential-obstruction discipline). This chapter carries the *compositional* claim
+(the GMG preconditioner = this V-cycle composition of these constituent pieces, GROUNDING
+RE9/RE1/RE5/RE7 by name), not the constituents' per-op algebraic claims (those live in the
+linked chapters). Evidence: `gmg.cpp:126-205` (Mult + VCycle) + `ksp.cpp:206-234`
+(construction with the prolongation operators + smoother config) realizing the composition,
+plus the firm constituent down-links.
