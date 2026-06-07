@@ -69,7 +69,7 @@ The whole run therefore lowers cleanly outward to the L4 backend surface as `lif
 | build mesh | [`build_mesh`](../L1/build_mesh.md) (driver-agnostic stage-1 `config→mesh` constituent: load → preprocess → partition → a-priori-refine) | firm | `palace/main.cpp:287-302` |
 | dispatch → electrostatic column | [`electrostatic.L4`](./electrostatic.L4.md) (sibling reference) | firm | `palace/main.cpp:267` |
 | dispatch → magnetostatic column | [`magnetostatic.L4`](./magnetostatic.L4.md) (sibling reference) | firm | `palace/main.cpp:270` |
-| dispatch → eigenmode / driven / transient / boundary-mode columns | [eigenmode.L4](./eigenmode.L4.md) / [driven.L4](./driven.L4.md) / [transient.L4](./transient.L4.md) / [boundary-mode.L4](./boundary-mode.L4.md) (sibling references) | firm / firm / firm / rough-in | `palace/main.cpp:264, 261, 273, 276` |
+| dispatch → eigenmode / driven / transient / boundary-mode columns | [eigenmode.L4](./eigenmode.L4.md) / [driven.L4](./driven.L4.md) / [transient.L4](./transient.L4.md) / [boundary-mode.L4](./boundary-mode.L4.md) (sibling references) | firm / firm / firm / firm | `palace/main.cpp:264, 261, 273, 276` |
 | adaptive estimate-mark-refine fold | [`fold_solve`](../L4/fold_solve.md) (state-generated `schedule-source`) | firm | `palace/drivers/basesolver.cpp:153-276` |
 
 ## Status

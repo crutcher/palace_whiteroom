@@ -96,14 +96,14 @@ signatures inside a `text` fence per the L4/L3 notation invariant.
     -- the driven per-ω system-operator assembly verb:
     -- the operator-operand specialization of linear_combination at the affine-in-ω corner
     assemble_frequency_operator
-      :: FrequencyOperatorFamily[N] -> Scalar -> LinearOperator[N, N]
+      :: FrequencyOperatorFamily[N] -> Scalar -> LinOp[(N: ...), $N]
 
     -- the once-assembled fixed-basis family (the readonly construction stratum):
     type FrequencyOperatorFamily[N] =
       { K  : LinearOperator[N, N]            -- stiffness (curl-curl), assembled once
       , C  : LinearOperator[N, N]            -- damping (impedance/conductivity), assembled once
       , M  : LinearOperator[N, N]            -- mass (permittivity), assembled once
-      , A2 : Scalar -> LinearOperator[N, N]  -- frequency-dependent extra term (closure over ω)
+      , A2 : Scalar -> LinOp[(N: ...), $N]  -- frequency-dependent extra term (closure over ω)
       }
 
     -- the body IS linear_combination at the operator-operand corner (arity-4 instance):
@@ -124,7 +124,7 @@ basis captured once outside the sweep):
   Operand-stationarity = `fixed-basis`. (The L0 `BuildParSumOperator` enforces the
   shared-space precondition directly: `MFEM_VERIFY(... same FiniteElementSpace)`,
   `rap.cpp:774-777`.)
-- `fam.A2` — `Scalar -> LinearOperator[N, N]` — the frequency-dependent extra term,
+- `fam.A2` — `Scalar -> LinOp[(N: ...), $N]` — the frequency-dependent extra term,
   applied at the swept `omega`. Operand-stationarity =
   `parameter-dependent-operand` (the lone non-fixed operand carrying constant
   coeff `1`; the "affine modulo A2" caveat).
@@ -290,7 +290,7 @@ existing witnesses; this entry adds the operator-operand witness, not a second
 **identity-in-form on the body**: the two forms are value-thread-isomorphic. Both
 layers see the same operator-operand `linear_combination` specialization — the
 same signature
-`assemble_frequency_operator :: FrequencyOperatorFamily[N] -> Scalar -> LinearOperator[N, N]`,
+`assemble_frequency_operator :: FrequencyOperatorFamily[N] -> Scalar -> LinOp[(N: ...), $N]`,
 the same arity-4 term list `[(1, K), (iω, C), (−ω², M), (1, A2 ω)]`, the same six
 laws, the same affine-modulo-`A2` and single-pipeline caveats, the same deferred
 IEEE non-law.
