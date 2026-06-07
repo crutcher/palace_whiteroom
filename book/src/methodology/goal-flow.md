@@ -620,6 +620,26 @@ This shape is load-bearing, and it follows three principles:
 > RE-set re-checks). When (a) is done, the forward question is once again the strategic one the capstone
 > raised — wind to maintenance, or open a deferred-and-gated direction — with no bounded in-scope construction
 > left in between. That is the juncture batch-42 leaves the project at.
+>
+> **A deferred-and-gated direction was opened, explored, and discharged — and the strategic question returns a third time (batch-43).** Cycles 133/134/135
+> were the human's chosen response to the batch-42 done-ness recognition: rather than winding to maintenance, *open the
+> one deferred-and-gated substantive direction* — the sharding *math* (domain decomposition as a mathematical abstraction
+> on tensor-field problems, distinct from the MPI mechanics, which stay out of scope). The discipline that governed it is
+> the project in miniature: the math was lifted **gated-first**, behind a hard *spine-non-destabilization* probe that had
+> to clear before any authoring. The probe cleared on both arms — and the *reason* it cleared is itself a finding worth
+> keeping: the firm reduce primitives **already carry** the mathematical core a decomposition needs (the
+> split/concatenation monoid-homomorphism over the index set), so a sub-domain restriction is a *derived consumer*
+> (`subdomain_reduce = reduce ∘ restrict-to-block`) that composes the existing firm vocabulary by reference, **not** a
+> re-rooting of the spine. The sketch landed as a single claim-free `roadmap_goal` (rank-0) chapter wired with
+> reference-class edges to the firm roots only — so every firm node stayed firm and the rank invariant held by
+> construction. The lesson the arc adds: a deferred direction, opened deliberately and gated honestly, can be *explored
+> without destabilizing the completed artifact* — the exploration produces a grounded future-direction surface (and a
+> formal place for it in the reachability model, the reference-emitting `roadmap_goal`-leaf disposition) rather than a
+> forced pull-up. With the math discharged (the MPI mechanics deferred, the solve-case generalization demand-gated on a
+> domain-decomposition-preconditioner consumer that is not in flight), the strategic forward question returns for the
+> *third consecutive batch* — wind to maintenance (the thrice-reinforced default), open a demand-gated front only if its
+> consumer enters scope, or take a new substantive direction / re-scope / downstream-build handoff. The artifact has
+> reached steady-state in-scope completeness; the construction the stack was built to enable is now downstream of it.
 
 ## FLOW — how the goal is met
 

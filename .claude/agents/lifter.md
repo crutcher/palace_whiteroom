@@ -85,7 +85,7 @@ When re-anchoring themes at **L4>L3** or **L3>L2**, the canonical reference is t
 - **Signatures**: Haskell `::` arrow form — `f :: A -> B -> C`.
 - **Records**: TypeScript brace form — `{ field: type }`.
 - **Body shapes**: Haskell-style do-notation (`do { let x = e; modify f; pure r }`) and lambda (`\s -> ...`).
-- **Fenced**: ` ```text ... ``` ` for code/signatures; ` $$ ... $$ ` math display for reduction rules and small-step semantics.
+- **Fenced**: ` ```text ... ``` ` for code/signatures; ` $$ ... $$ ` math display for reduction rules and small-step semantics. **`$`-sigil pseudocode (`Tensor[$S]`, `LinOp[$S,$S]`, `$N`) MUST be inside a ` ```text ` FENCE, NEVER a 4-space-indented code block** (batch-43 meta-phase; friction-ledger `katex-dollar-sigil-eaten-in-indented-pseudocode`; memory `project_katex_dollar_sigil_fence_requirement`): KaTeX's `[preprocessor.katex]` skips *fenced* and *inline* code but NOT *indented* code, so an indented `$`-sigil block has its `$...$` eaten as inline-math and renders `<span class="katex">` garbage into the `<pre>`. This is for the LANDED chapter body; it does NOT conflict with the 4-space-indent rule above (that rule prevents nested-fence mis-toggle *inside a `proposed-changes` block* — for `$`-sigil content use a fenced ` ```text ` sample, which the modern proposed-changes mechanism handles; copy a landed `$`-sigil sibling such as `book/src/L4/gram_reduce.md`).
 
 If the firmed-up operator's signature shifts to a different notation convention, the lift is no longer pure rewriting — stop and flag in Open questions; abstractor reread is required.
 
