@@ -1,0 +1,64 @@
+---
+agent: cycle-planner
+invoked_at: 2026-06-07T232841Z
+scope: cycle-138 dispatch plan
+status: pending
+---
+
+# Cycle 138 dispatch plan
+
+## Goals selected this cycle
+
+c138 is the **BATCH-CLOSING** cycle (3/3) of meta-batch-44; the batch-44 meta-phase fires AFTER this cycle's finalize. The batch LEAD (the `# Synthesis` Part) is substantively COMPLETE (6/6 chapters bodied as of c137). This closer is a tight consolidation + maintenance slate that leaves the batch in a clean state for the meta-phase: (1) COMPLETE the Synthesis correspondence-audit coverage (the c137 audit pulled only `iteration`/`data-algebra`; this cycle pulls `coordination`/`drivers`/`types`) so the whole Part's rendered defs are verified faithful before meta; (2) the per-BATCH maintenance-floor full-hygiene sweep (item 0 cadence) NOW COVERING the full `synthesis/` Part (the c136 sweep deferred the `synthesis/` edge-audit; the c137 D2 partially pre-empted `iteration`/`data-algebra`; this sweep folds in the remaining `drivers`/`types`/`index` edges); (3) a small, mechanical refresh of the latent stale `cg_solve` worked example at `L4/krylov-step.md:192-197` — cheap, file-disjoint from the audits, leaves the batch clean (disposition reasoned below).
+
+## Dispatches
+
+1. **agent:** `lowering-verifier`
+   **scope:** `synthesis-rendered-def-vs-l4-correspondence-audit-coordination-drivers-types` — complete the Synthesis correspondence-audit coverage the c137 audit left open (OQ `synthesis-correspondence-audit-coverage-coordination-drivers-types-next-pull`). Audit (AUDIT-CLASS, no book mutation) the rendered defs in the three un-pulled libraries against their authoritative chapter bodies: **(a)** `book/src/synthesis/coordination.md` — the `eigsolve` SLEPc-EPS kernel-API/impl dual-surface in particular (the `#extern` kernel-API surface + the `realizes-kernel-api` `reference`-class edge to the `eigsolve-impl` node at `book/src/L3/eigsolve-impl.md`, DIRECTIVE-3 intactness), plus `fold_solve` / `fresh_krylov` / `applyBasis` vs their L4 chapters; **(b)** `book/src/synthesis/drivers.md` — the 6-sim-driver + 6-output-product + lifecycle-ROOT composition defs (landed c137) vs the Feature-surface `feature/*.L4.md` columns; **(c)** `book/src/synthesis/types.md` — the shared type/record block vs the authoritative `concepts/<record>.md` / L4 record homes. Verify `reference`-class edge-typing throughout + no semantic-restatement (semantic-consolidation "define once, link" preserved). Deliverable: per-library clean-bill or flagged-residual list for the batch-44 meta.
+   **deps:** none
+   **rationale:** Completes the directive-licensed rendered-def-vs-L4 audit coverage of the now-complete Synthesis Part so the batch-44 meta inherits a fully-verified Synthesis surface. Directly discharges the c137-opened next-pull OQ. fan-out: hygiene/closure (verifies the batch LEAD's faithfulness).
+
+2. **agent:** `cross-layer-cross-cutter`
+   **scope:** `maintenance-floor-batch-44-full-hygiene-sweep` — the once-per-BATCH full-hygiene maintenance-floor sweep (item 0 cadence; the batch-44 dedicated maintenance-floor cross-cutter). AUDIT-CLASS (no book mutation unless a one-line stale token surfaces): **(i)** graded-stack lint `--json --reference-reachable` totals vs the c137 finalize baseline (`rank_violations==0` + no newly-orphaned node + detritus-count escalate-guard — flag any move); **(ii)** RE-set premise re-check (RE4 consumer-gate watch; the `L4/sharding-decompose-reduce` §2g-extension promotion-pull watch; RE11 §2g escalate-guard); **(iii)** kernel-API/impl integrity (the 3 `realizes-kernel-api` edges stay `reference`-class on disk); **(iv)** semantic-surface (`semantics/index.md`) liveness/anchor-drift scan; **(v)** DIRECTIVE-1 boundary (no MPI-associated `linalg/rap.*` / `utils/geodata.*` / MPI-collective node lifted as active work); **(vi) the deferred `synthesis/` edge-audit** — the remaining `drivers` / `types` / `index` synthesis-edge typing (the c136 sweep deferred this via OQ `synthesis-edges-next-batch-maintenance-floor-audit`; c137 D2 covered `iteration`/`data-algebra` defs but not these chapters' edge blocks) — confirm `reference`-class throughout, 0 `depends-on` from a navigational-container synthesis chapter. Deliverable: a clean-bill audit OR a flagged-residual list for the batch-44 meta.
+   **deps:** none
+   **rationale:** The per-batch maintenance floor (item 0 + item 1), now extended to cover the full `synthesis/` Part. Leaves the health signals clean and the synthesis edge-typing verified before the batch-44 meta's standing-duty sweep. fan-out: LOW/hygiene.
+
+3. **agent:** `harvester`
+   **scope:** `l4-krylov-step-cg-solve-worked-example-refresh` — refresh the STALE `cg_solve` WORKED EXAMPLE at `book/src/L4/krylov-step.md:192-197` (codemap hint — on-disk-confirm the END line; the close-`}` boundary is the drift-prone bound) from the older positional form `iterate_while_with_prev s1 s0.beta (cont) (steady)` with tuple returns to the **canonical boot/init/steady/cont arg order + record returns** matching the authoritative `iterate_while_with_prev` signature at `book/src/L4/iterate-while-with-prev.md:43-50` — the exact form the synthesis `cg_solve` def already renders (`book/src/synthesis/iteration.md:290-297`). MECHANICAL worked-example refresh only (content-precision/staleness nuance, NOT a citation/correspondence defect); does NOT touch the operator's Semantics/Laws/Signature. Resolves OQ `synthesis-l4-krylov-step-worked-example-cg-solve-stale-vs-iterate-while-with-prev-signature`.
+   **deps:** none
+   **rationale:** A latent worked-example staleness the c137 audit surfaced as telemetry; mechanical, file-disjoint from D1/D2, leaves the batch in a cleaner state for meta. fan-out: LOW/hygiene (worked-example fidelity). See disposition note below.
+
+## Overlap analysis
+
+- **D1 ↔ D2:** D1 is a SCOPED correspondence audit of the three un-pulled synthesis library DEF BODIES vs their L4/feature/concepts homes; D2 is a maintenance-floor sweep whose synthesis touch is the EDGE-BLOCK typing of `drivers`/`types`/`index` (+ lint totals / RE-set / kernel-integrity / semantic-surface / DIRECTIVE-1). Both are AUDIT-CLASS (no book mutation) → no artifact write to collide. They share the `synthesis/` SUBJECT but address ORTHOGONAL aspects (def-body correspondence vs edge-typing + global health) and write DISJOINT report files. NOT overlapping → PARALLEL. (Per the conflict-tolerance philosophy, any mild subject-adjacency is corrected cheaply by the integrator's audit-class handling; false sequentialization is the worse error here.)
+- **D1/D2 ↔ D3:** D3 mutates exactly ONE file, `book/src/L4/krylov-step.md` (a worked-example region), which is NOT in D1's audit scope (D1 audits the `synthesis/` chapters, not `L4/krylov-step.md`) and NOT in D2's sweep targets. Disjoint files, disjoint operators → NOT overlapping → PARALLEL.
+- No consolidated-tally collision: no layer-index firm/partial-obstruction running-count is touched (D1/D2 audit-class; D3 is a worked-example body edit, not an index landing). No floor→adjacent-entry re-anchor coupling (no floor lands). No cross-report forward-reference to a not-yet-existing slug (D3 references only on-disk authoritative chapters; D1 references on-disk synthesis + L4 + concepts files). No DIRECTIVE-1 boundary lift (D2 actively guards it).
+
+## Sequencing schedule
+
+**One wave (fully parallel):** D1 + D2 + D3.
+All three are non-overlapping (two audit-class, one file-disjoint mechanical edit). ONE `integrator-finalize` at cycle end (the per-cycle step-5b two-invariant tripwire is the per-cycle maintenance floor; D2 is the per-batch dedicated sweep).
+
+## Deliverable-presence verification
+
+Per the MANDATORY pre-dispatch deliverable-presence check (paste-inline evidence):
+
+- **D1 (`synthesis-rendered-def-vs-l4-correspondence-audit-coordination-drivers-types`)** — OPEN BY CONSTRUCTION (audit-class; the OQ `synthesis-correspondence-audit-coverage-coordination-drivers-types-next-pull` was opened c137 by the lowering-verifier explicitly naming coordination/drivers/types as un-audited next-pull). Targets verified present:
+  - `ls book/src/synthesis/*.md` → `coordination.md` (23455), `drivers.md` (32232), `types.md` (7367) all present (alongside `iteration.md`/`data-algebra.md`/`index.md`).
+  - Dual-surface target `book/src/L3/eigsolve-impl.md` PRESENT (the coordination `eigsolve` `realizes-kernel-api` reference target exists).
+  - No RESOLVED/CLOSED for the next-pull OQ: not in Closed index (the OQ is live, opened c137).
+  - Structural-block: NONE — audit-class, no maturity gate.
+- **D2 (`maintenance-floor-batch-44-full-hygiene-sweep`)** — OPEN BY CONSTRUCTION (the once-per-batch dedicated maintenance-floor sweep, item-0 cadence; the c137 D2 was a SCOPED correspondence audit, NOT the per-batch full sweep — the batch-44 full-hygiene sweep has not yet fired this batch; c136 D5 fired the batch-44-OPENER sweep but deferred the `synthesis/` edge-audit, which the now-complete Part now needs). Standing-gate evidence (c137 finalize, RE-CONFIRMED in finalize report): linter baseline `files=392, typed=331, untyped=61, roots=45, reachable=163, reference_reachable=247, rank_violations=0, unresolved_depends_on_targets=0, detritus=123, true_detritus=51`; D2 re-runs and diffs. Deferred `synthesis/` edge-audit OQ `synthesis-edges-next-batch-maintenance-floor-audit` is open (line 2125). Structural-block: NONE.
+- **D3 (`l4-krylov-step-cg-solve-worked-example-refresh`)** — target file present and stale confirmed inline:
+  - `book/src/L4/krylov-step.md` PRESENT; `## Status` line present.
+  - Stale region CONFIRMED on disk (`sed -n '190,198p'`): the worked example uses `iterate_while_with_prev s1 s0.beta (\(s,_) -> ...) (\(s, beta_prev) -> (r, s.beta))` — positional `s1 s0.beta cont steady` order with a TUPLE return `(r, s.beta)`.
+  - Authoritative form CONFIRMED (`iterate-while-with-prev.md:43-50`): boot/init/steady/cont arg order with `Solve { final_state, trajectory }` record return.
+  - OQ RESOLVED-grep: `grep -c '...krylov-step-worked-example...RESOLVED|...CLOSED'` → 0 (the OQ is live, opened c137).
+  - Structural-block: NONE — a mechanical worked-example refresh, not a promotion (no test-coverage / positive-anchor gate; it is a syntactic refresh to an already-authoritative on-disk signature). NOT on the STOP-PROPOSING negative list.
+
+## Open questions / caveats
+
+- **krylov-step-staleness disposition — FIX THIS CYCLE (D3), with a meta-note.** The OQ `synthesis-l4-krylov-step-worked-example-cg-solve-stale...` carries `intake_route: meta-phase`, and the c137 finalize §Next-cycle-priorities item 3(c) tentatively assigned it to the batch-44 meta. I judge it BETTER FIXED THIS CYCLE: (i) it is purely MECHANICAL (a syntactic refresh of one worked example to an already-on-disk authoritative signature — no triage, no plan-shaping decision the meta-phase needs to own); (ii) it is file-disjoint and parallel-safe (no cost to D1/D2); (iii) fixing it leaves the batch in the clean state a closer should hand the meta-phase, rather than carrying a known stale worked example past the batch boundary. The meta-route was appropriate when the OQ was telemetry-only; now that it is a concrete one-region refresh, a harvester dispatch is the cheaper, cleaner resolution. **Meta-note:** the batch-44 meta-phase should still CONFIRM closure (verify D3 landed the refresh + the OQ is in the Closed index) rather than re-migrate it; if for any reason D3 does NOT land clean, the meta-phase inherits it per the original `intake_route`.
+- **`synthesis-chapter-kind-mechanics-role-spec-codification` (OQ line 2035) is correctly NOT dispatched this cycle** — it is a META-PHASE job (codify the Synthesis chapter KIND into role-specs), per the c137 finalize item 3(b) and the task brief. Left for the batch-44 meta.
+- **The Synthesis index per-library status-token convention** (OQs `synthesis-index-per-library-status-cell-rendered-completeness-convention` [RESOLVED by c137 finalize] + `synthesis-coordination-chapter-status-seed-token-reconciliation-c136`) — the per-chapter status-token normalization across the 6 synthesis chapters is a shell-author/meta decision (pick ONE rendered-Synthesis-library status convention). The c137 finalize already normalized the index matrix cells to `navigational (rendered)`; the residual per-chapter frontmatter token reconciliation is left for the batch-44 meta's standing-duty sweep (out of this closer's audit-only scope). D2 will FLAG (not fix) any residual chapter-token inconsistency it observes.
+- **Tight closer, as expected** — 3 dispatches (2 audit-class + 1 mechanical fix), one wave. No substantive frontier is dispatched (the in-scope spine is L4-COMPLETE; the Synthesis LEAD is substantively complete; the deferred fronts stay consumer-gated). This is the consolidation/maintenance closer the c137 finalize item 2 anticipated.

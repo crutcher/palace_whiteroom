@@ -1,6 +1,38 @@
-## 2026-05-26 cycle-138 — back divfree — pass
+# cycle-138 — 2026-06-07 — batch-44 position 3/3 (BATCH-CLOSING): the `# Synthesis` Part is COMPLETE and whole-Part correspondence-audited
 
-- Synthesis: Retroactive L0→L1 rotation_claims for divfree slice; on-disk L1 already present from cycle 1. Five claims cover defining condition, state stratification, apply procedure, complex specialization, and variant axes. Add concept stubs noted as dependencies via dep-map edges; mark essential-bc-pin as a methodology concept appearing here for the first time.
-- Verdict: pass.
-- Friction: none.
-- Structural change: applied: 1 dep-map edge(s), 1 lesson(s); 5 rotation_claim(s).
+**Batch-44 THIRD / BATCH-CLOSING primary cycle** of meta-batch-44 (cycles 136/137/138). The batch-44 meta-phase fires AFTER this cycle-138 finalize, aggregating 136/137/138 as a separate dispatch/commit. The cycle counter does NOT reset.
+
+**Direction.** Batch-44 = **the SYNTHESIS section** (USER DIRECTIVE 2026-06-07; `project_synthesis_section_directive`) is the **LEAD**; the **wind-to-maintenance floor** (`project_batch44_direction_wind_to_maintenance`) is the steady-state surround. c136 stood up the Part (5/6 bodied); c137 completed it (6/6 bodied, `drivers` body landed); **c138 is the BATCH-CLOSING consolidation/maintenance cycle — it completes the Synthesis rendered-def↔L4 correspondence-audit coverage, applies a within-`firm` worked-example fidelity fix, and runs the once-per-batch full-hygiene sweep. The SYNTHESIS LEAD direction closes substantively complete.**
+
+## What landed
+
+**D1 (`harvester`, `l4-krylov-step-cg-solve-worked-example-refresh`) — within-`firm` worked-example fidelity.** Refreshed the stale `cg_solve` Form-B worked-example in `book/src/L4/krylov-step.md:192-197`: the stale `iterate_while_with_prev` call updated to the canonical boot/init/steady/cont arg order + record returns. A within-body fidelity fix — `krylov-step` stays `firm`; no dep-map (`book/src/L4/index.md`) or `SUMMARY.md` edit (chapter already registered). The edit lands entirely inside the pre-existing ` ```text ` fence (no new `$`-sigil pseudocode). 1 OQ promoted (`iterate-while-with-prev-evidence-prose-stale-cg-call-shape` — the secondary stale occurrence at `iterate-while-with-prev.md:233`, routed to a follow-up single-operator dispatch). DISCHARGES OQ `synthesis-l4-krylov-step-worked-example-cg-solve-stale-vs-iterate-while-with-prev-signature` (the c137-surfaced staleness).
+
+**D2 (`lowering-verifier`, `synthesis-rendered-def-vs-l4-correspondence-audit-coordination-drivers-types`) — AUDIT-CLASS correspondence audit (the LAST pull).** Directive-sanctioned audit of the rendered Synthesis defs vs the authoritative L4 chapter bodies over the libraries c137 did not pull — `coordination` + `drivers` + `types`; **top-level verdict FULLY-SUPPORTED**. NO `## Proposed changes` to `book/` → NO build relevance. 2 NEW OQ promotions only (`l4-eigsolve-initial-state-vs-initial-eig-state-seed-inconsistency` → abstractor, the upstream `L4/eigsolve.md` :44/:97 `initial_state` vs `StateT EigState` self-inconsistency; `synthesis-types-iodata-omits-units-field` → layer-intro-author shell pass, the `IoData` 5-of-6-field `units:Units` completeness add). **The whole `# Synthesis` Part is now correspondence-audited** (c137 covered iteration + data-algebra; c138 covers coordination + drivers + types), modulo those 2 gated non-blocking residuals. DISCHARGES OQ `synthesis-correspondence-audit-coverage-coordination-drivers-types-next-pull`.
+
+**D3 (`cross-layer-cross-cutter`, `maintenance-floor-batch-44-full-hygiene-sweep`) — MAINTENANCE FLOOR clean-bill (the once-per-batch full-hygiene sweep).** Audit-class, NO book/scaffolding mutation. Independently re-verified: `rank_violations==0`, `unresolved_depends_on_targets==0`, all 6 synthesis chapters `reference`-class-only (0 blocking edges, correct GC classification = `expected_unreachable_outside_dag`, NOT detritus), 3 `realizes-kernel-api` reference-class edges, 3 `#extern` boundaries, 0 `$`-sigil-fence leaks, DIRECTIVE-1 MPI boundary clean (0 frontmatter `depends-on` onto MPI nodes). No OQ append needed, no baseline-exception ledger edit needed. DISCHARGES OQ `synthesis-edges-next-batch-maintenance-floor-audit`.
+
+## Build + linters
+
+- `cargo make book` (mdbook + linkcheck2): **Build Done EXIT 0.** **ZERO build-repairs.** `L4/krylov-step.html` rebuilt with the refreshed `cg_solve` Form-B worked-example.
+- **Step-5c KaTeX `$`-sigil collision assertion PASS:** `class="katex"` inside any `<pre>` block across ALL built HTML = **0** (the edit lands inside a pre-existing ` ```text ` fence).
+- Only the pre-existing benign KaTeX/markdown-bracket "Potential incomplete link" WARNs in **untouched** files — math-bracket false positives (`[k+1]` / `[j+1]` array-index notation), NOT dangling-fragment errors.
+- **Step-5b graded-stack linters (LANDED tree, authoritative; `--reference-reachable` tier run):** both block-conditions **PASS** — `rank_violations: 0` (baseline fully discharged → any violation would be NEW; held 0) + NO newly-orphaned node. **ALL counts HELD EXACTLY vs c137 by design** (c138's only book edit is a within-`firm` body-fidelity fix; the other 2 reports are audit-class with no book mutation): `files=392, typed=331, untyped=61, roots=45, reachable=163, reference_reachable=247, rank_violations=0, unresolved=0, promotion_frontier=12, detritus=123 (HELD), true_detritus=51 (HELD), expected_unreachable_outside_dag=54 (HELD)`. Trend: `rank_violations` …→0 (c135)→0 (c136)→0 (c137)→0 (c138).
+
+## Counts + process
+
+- NO vocabulary firm-count FLIP (no status/rank/edge change on any node; `krylov-step` stays `firm`, a within-body fidelity fix). SLICE CORPUS: 0.
+- 3 of 3 dispatched-ready reports applied clean (3/3 staging rows == dispatched-ready — **119th consecutive clean staging**); zero deferrals / rejections / per-report gate-hits.
+- retroactive-budget global = 0; per-report gates all PASS/N/A; 0 implied-component stubs.
+- OQ activity (per-report integrators): 3 NEW OQs promoted (D1 one, D2 two); 3 OQs DISCHARGED (recorded for the meta-phase to close/migrate — finalize does not edit existing OQs per the write-authority partition).
+- ZERO within-finalize consistency fixes.
+- The slice-era `cycle-138.md` was renamed to `cycle-138-slice-era.md` (c123–c137 precedent).
+- `scaffolding/{roadmap,integrator-signals,cycle-record}` + `log/` committed atomically + the 3 consumed-report `integrated_at` touches; two-phase SHA-patch follows; NO `.claude/agents/` changes FROM THIS FINALIZE (the batch-44 meta fires after c138 as a separate dispatch/commit).
+
+## The `# Synthesis` Part is COMPLETE and whole-Part correspondence-audited — batch-44 closes substantively complete
+
+The synthesized-library implementation view is **6 of 6 chapters bodied** (c137) AND now **whole-Part rendered-def↔L4 correspondence-audited** (c137 iteration + data-algebra; c138 coordination + drivers + types), modulo 2 gated non-blocking residuals. The SYNTHESIS LEAD direction — the batch-44 headline — closes substantively complete. DIRECTIVE-3 dual-surface intact; DIRECTIVE-1 boundary held; reference-class edges only throughout.
+
+## Carry to the batch-44 meta (fires next, aggregating 136/137/138)
+
+**(1)** Close/migrate the 3 OQ discharges (`synthesis-l4-krylov-step-worked-example-cg-solve-stale-vs-iterate-while-with-prev-signature`, `synthesis-correspondence-audit-coverage-coordination-drivers-types-next-pull`, `synthesis-edges-next-batch-maintenance-floor-audit`) + migrate the 3 new OQs (`iterate-while-with-prev-evidence-prose-stale-cg-call-shape`, `l4-eigsolve-initial-state-vs-initial-eig-state-seed-inconsistency`, `synthesis-types-iodata-omits-units-field`) — per the write-authority partition the meta-phase owns OQ unify/close; finalize only records them. **(2)** Render the Synthesis-complete + correspondence-audited disposition + codify the synthesis-chapter kind (implementation-VIEW navigational-container + `#extern` placement + type-placement rule + lowering-verifier correspondence-audit duty) into the role-specs. **(3)** Surface a FRESH forward-direction §CENTRAL ASK — the SYNTHESIS LEAD is complete and the in-scope FEATURE-SURFACE SPINE remains L4-COMPLETE; with `project_batch44_direction_wind_to_maintenance` as the standing default, surface whether the human wants a new substantive direction or to settle into the maintenance steady-state.

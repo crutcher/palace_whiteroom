@@ -190,11 +190,13 @@ cg_solve config opA b x_initial initial_guess =
       { final_state: s1, residual_history: [res1] }
     else
       let { final_state, trajectory } =
-        iterate_while_with_prev s1 s0.beta
-          (\(s, _) -> s.it < config.max_it && not s.converged)
-          (\(s, beta_prev) ->
+        iterate_while_with_prev
+          (\_ -> pure { state: s1, prev: s0.beta })            -- bootstrap: seed (s1, beta_prev = s0.beta)
+          s1                                                    -- initial carry
+          (\(s, beta_prev) ->                                  -- steady_step: (carry, prev)
             let r = cg_steady_step opA eps beta_prev s in
-            (r, s.beta)) in
+            pure { state: r.state, prev: s.beta, residual_norm: r.residual_norm })
+          (\s -> s.it < config.max_it && not s.converged) in   -- cont: pure on carry, fires LAST
       { final_state, residual_history: [res1] ++ trajectory.map(\t -> t.residual_norm) }
 ```
 
