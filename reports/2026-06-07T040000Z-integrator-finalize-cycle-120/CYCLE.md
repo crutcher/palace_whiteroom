@@ -6,7 +6,7 @@ batch_position: 3/3 — THE BATCH-CLOSING (THIRD/FINAL) PRIMARY CYCLE (cycles 11
 finalized_at: 2026-06-07T040000Z
 observation_only: true
 meta_phase_next: true  # the batch-38 meta-phase fires NEXT as a SEPARATE dispatch, aggregating 118/119/120
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 09b011f5ca59b7b123e3035cd59e4c13048a20c6
 ---
 
 # CYCLE-120 — batch CYCLE.md (integrator-finalize) — **THE BATCH-CLOSING FINALIZE OF META-BATCH-38**
