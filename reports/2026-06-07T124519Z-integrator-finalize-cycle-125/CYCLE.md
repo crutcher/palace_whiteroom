@@ -11,7 +11,7 @@ reports_rejected: 0
 gate_hits_total: 0
 build_status: cargo make book (mdbook + linkcheck2 0.12.0) EXIT 0; 0 dead links; ZERO finalize build-repairs
 graded_stack: rank_violations 0 (HELD); unresolved_depends_on_targets 0 (HELD); reachable 157 (HELD, no orphaning); reference_reachable 235→243; both block-conditions PASS
-integration_commit: PLACEHOLDER_SHA
+integration_commit: dca60b0fe398230a33421863a30b2608e41bce69
 ---
 
 # CYCLE-125 batch integration record (batch-40 MIDDLE — position 2/3)

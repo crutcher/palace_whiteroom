@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T130000Z
 scope: cycle-125 D3 — GMG/hygiene bundle (stale-path fix + V-cycle combinator audit + GMG-smoother L3-home audit)
 status: integrated
 integrated_at: 2026-06-07T124519Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: dca60b0fe398230a33421863a30b2608e41bce69
 integration_notes: "cycle-125 D3 (batch-40 MIDDLE). Applied clean by integrator-per-report (staging row 3, after D1+D2); no gate hits. GMG cross-ref hygiene: multigrid-relaxation-smoother.md:113 re-pointed last stale design/l4_calculus.md §1.2.2 → live semantics/index.md §1.2.1 (double-correction path AND section); STALE-PATH SWEEP COMPLETE (grep design/l4_calculus book/src = 0, was 1; OQ batch-37-era-stale-design-l4-calculus-path-drift-sweep flagged for meta CLOSE). Two NEGATIVE-finding records (V-cycle do-not-mine; GMG-smoother-L3-home already-covered). rank_violations 0. Build EXIT 0, no finalize build-repair."
 ---
 

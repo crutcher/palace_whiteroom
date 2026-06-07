@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T130000Z
 scope: L2 combinator sketch — matrix-free FE operator-application contraction chain (ASK-2 "A" deepen-the-layer, cycle-125 D2)
 status: integrated
 integrated_at: 2026-06-07T124519Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: dca60b0fe398230a33421863a30b2608e41bce69
 integration_notes: "cycle-125 D2 (batch-40 MIDDLE). Applied clean by integrator-per-report (staging row 2, after D1 per the apply-ordering); no gate hits. L2 firm 22→23: new firm L2 constructive-kernel combinator matrix-free-operator-apply (the matrix-free / burn-GPU backend-lowering surface, a 2nd faithful depends-on(composes) substrate consumer) + new L2 by-kind group Constructive-kernel compositions + group-intro, both SUMMARY-registered. NO L2-L1 theme (identity-in-named-terms smell → in-line Downward-to-L1 + reference-class lifts-kernel-impl edge). 4 OQs promoted. rank_violations 0. Build EXIT 0, no finalize build-repair."
 inputs:
   - book/src/L1/libceed-quadrature-kernel-impl.md (the L1 kernel-impl whose A = Gᵀ B_𝒟ᵀ D B_𝒟 G chain this lifts)

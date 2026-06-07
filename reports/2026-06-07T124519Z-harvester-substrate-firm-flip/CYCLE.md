@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T124519Z
 scope: L1 firm-flip cohort — element_restrict + geom_factor_build + libceed-quadrature-kernel-impl (rough-in → firm); SOLE-OWN L1/index.md tally 45 → 47
 status: integrated
 integrated_at: 2026-06-07T124519Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: dca60b0fe398230a33421863a30b2608e41bce69
 integration_notes: "cycle-125 D1 (batch-40 MIDDLE). Applied clean by integrator-per-report (staging row 1); no gate hits. L1 firm 45→47 (element_restrict + geom_factor_build rough-in→firm, sole blocking dep concepts/element-local-tensor firm on disk c124 D5); libceed-quadrature-kernel-impl rough-in→firm (4 depends-on(composes) substrate deps now firm); realizes-kernel-api edge stays reference-class, the kernel-api obstruction surface untouched. CLOSED OQ libceed-substrate-rough-in-to-firm-flip-and-45-to-47-tally-followup. rank_violations 0. Build EXIT 0, no finalize build-repair."
 inputs:
   - reports/2026-06-07T124519Z-cycle-planner-c125/CYCLE.md (D1 entry)
