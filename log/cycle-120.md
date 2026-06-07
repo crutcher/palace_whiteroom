@@ -1,6 +1,61 @@
-## 2026-05-26 cycle-120 — forward divfree [L1→L2] — pass
+## 2026-06-07 cycle-120 — 1 report applied clean (OBSERVATION-ONLY) — 115th consecutive cycle under split integrator — **POSITION 3/3 OF META-BATCH-38, THE BATCH-CLOSING (THIRD/FINAL) PRIMARY CYCLE (cycles 118/119/120; the batch-38 meta-phase fires AFTER this finalize, aggregating all three)** — **THE BATCH-CLOSING PLATEAU-CONFIRMATION PRE-META AUDIT, an OBSERVATION-ONLY cycle**: a single `cross-layer-cross-cutter` plateau-probe (the c115 D1 precedent) independently re-derived the batch-38 terminal-state on BOTH graded-stack axes and CONFIRMED the plateau, surfacing 2 structured FINDINGS for the batch-38 meta-phase. NO artifact mutation (`## Proposed changes` = None). `cargo make book` EXIT 0 with NO build-repair (no edits landed); graded-stack linter `rank_violations=0` / `unresolved=0` / `reachable=139` — **ALL totals HELD vs c119**, exactly the expected outcome for an observation-only cycle.
 
-- Synthesis: Cycle 125 retroactive_claims: backfilled per-building-block L1→L2 rotation_claims for divfree (apply_linop on WeakDiv, set_subvector_zero on bdr_eff, ksp_solve on M, apply_linop+axpy gradient correction, complex specialization as primitive-level unrolling, and the construction-time variant absorption). Added L2 dep-map edges; no new prose surface (L2 section landed cycle 124).
-- Verdict: pass.
-- Friction: none.
-- Structural change: applied: 1 dep-map edge(s), 1 lesson(s); 6 rotation_claim(s).
+> Note: this file supersedes a stale pre-redirect-era `cycle-120` log entry (old slice-vertical numbering, 2026-05-26, `forward divfree [L1→L2]`); the cycle counter collided across the 2026-05-26 structural redirect. The current cycle-120 is the batch-38 position-3 (batch-closing) cycle under the layered-stack flow. Old content recoverable from git history.
+
+---
+
+**POSITION 3/3 OF META-BATCH-38, THE BATCH-CLOSING CYCLE** (3:1 cadence; cycles 118/119/120; the cycle counter does NOT reset across batch boundaries; **the batch-38 meta-phase fires AFTER cycle-120's finalize, aggregating 118/119/120 as a SEPARATE dispatch**; this finalize ran NO meta-phase housekeeping). Under the 2026-06-01 VOCABULARY-SHIFT REDIRECT (`METHODOLOGY-REDIRECT.md`) + the 2026-06-02/03 user directives + the 2026-06-04 GRADED RESOLUTION LADDER + FEATURE-ROOT REACHABILITY (`METHODOLOGY-GRADED-STACK.md`) + the 2026-06-05 GROUND-don't-remove grounding directive + the 2026-06-06 SEMANTIC CONSOLIDATION (directive A) + OPEN-ALL-FEATURE-FRONTS (directive B). This finalize made NO `.claude/agents/` change → no session-restart concern from the finalize itself.
+
+### Headline — the batch-closing plateau-confirmation pre-meta audit: plateau LARGELY CONFIRMED, 2 structured FINDINGS routed to the batch-38 meta-phase
+
+Cycle-120 is the **batch-closing observation-only plateau-confirmation pre-meta audit** (the c115 D1 precedent), trusting neither the planner nor the c118/c119 finalizes. The batch-38 substantive frontier — the mesh→fe_space substrate lowering + grounding campaign — was consumed at c118; c119 cleared the honest grounding/hygiene tail; c120 is the independent terminal-state re-derivation before the batch-38 meta-phase fires. One dispatch, applied clean (observation-only):
+
+- **D1 (cross-layer-cross-cutter, `plateau-probe`) — the INDEPENDENT terminal-state re-derivation.** `## Proposed changes` = None; NO artifact mutation. The two `tools/` graded-stack linters were re-run on disk and the baseline confirmed exactly: `files=369, reachable=139, roots=39, detritus=132, STRONGER=27, rank_violations=0, untyped=61, promotion_frontier=6, unresolved=0` (matches the planner baseline + the c119 finalize). **VERDICT: PLATEAU LARGELY CONFIRMED** — Axis-1 (rank/well-foundedness) is clean (`rank_violations=0`); the `promotion_frontier` (6) is entirely obstruction-/demand-gated; the in-scope feature + vocabulary frontier has NO coverage hole (all 5 drivers + lifecycle + 6 output products + boundary-mode columns present; mesh/fe_space/fe-assembly vocabulary all homed); STRONGER=27 maps **EXHAUSTIVELY (27/27)** to the ratified RE1-RE10 reachability baseline-exception set; the in-scope feature frontier is closed by c117/c118. The sweep surfaced **2 STRUCTURED FINDINGS** for the batch-38 meta-phase (both routed to the OQ-ledger by the per-report integrator, NOT applied as artifact changes this cycle):
+
+  - **FINDING-1 (`re10-interpolator-has-faithful-reachable-consumer-missed-ground`, Axis-2 missed grounding, §2f GROUND-priority-1).** The c117 RE10-ratification premise ("`interpolator` has no faithful inbound consumer yet — an unbuilt field-probe/divfree feature") is **FALSIFIED**. `L1/interpolator` (RE10, STRONGER-garbage) has **TWO faithful inbound `depends-on` consumers from REACHABLE firm nodes**: (1) `L4/waveguide_mode_reduce` (firm c118, reachable via the `feature/waveguide-mode.L4` root) genuinely consumes the discrete-curl interpolator to form `Bz = curl(Et)/(iω)` — `mode_op.GetCurlSpace().GetDiscreteInterpolator(mode_op.GetNDSpace())` + `CurlOp.Mult(...)` at `palace/drivers/boundarymodesolver.cpp:319-323` (the exact `GetDiscreteInterpolator` accessor `L1/interpolator` formalizes, `palace/fem/fespace.hpp:107`); (2) `L1/divfree-projector` (firm, reachable) consumes the discrete-`Grad` interpolator at `palace/linalg/divfree.cpp:117`. `L1/interpolator.md`'s own prose ALREADY names both consumers; neither carries a `depends-on` edge to it. This is the §2f GROUND case (faithful-edge, NOT a false one): grounding either consumer→`L1/interpolator` flips RE10 (`L1/interpolator` + its `L1-L0/interpolator-construction-rotation` theme, +2 reachable) live and DISCHARGES the RE10 baseline-exception. **Caveat:** the `waveguide_mode_reduce → interpolator` L4→L1 altitude-crossing edge convention should be confirmed by layer-intro-author before authoring — so this is a **meta-phase decision**, NOT a this-cycle apply. The asymmetry (RE9 correct, RE10 falsified) IS the finding: RE9 (`fe_space_hierarchy`) was independently re-checked and its premise HOLDS — no faithful inbound `depends-on` consumer exists (the geometric-multigrid preconditioner is genuinely unbuilt; all book mentions are navigational), so RE9 stays correctly baseline-excepted.
+
+  - **FINDING-2 (`waveguide-mode-column-promotion-index-cell-drift`, consistency-drift).** The c118 D5 `waveguide-mode` column promotion (rough-in→firm, gated on `waveguide_mode_reduce` firming) flipped `feature/waveguide-mode.{L1,L4}` to `rank: firm` but left STALE: (a) `feature/waveguide-mode.L0` still `rank: rough-in` with a status note citing the now-RESOLVED gate; (b) `feature/index.md` driver-leaf narrative still says "only `waveguide-mode` remains `seed`" + "its own reduce verb … has no firm L4 verb home yet"; (c) `feature/output-product.md` group-intro still says "The column is `seed` (own reduce verb rough-in)". The L1/L4 chapters say PROMOTED; the L0 chapter + the two index/group-intro surfaces say STILL-SEED — exactly the index-cell drift the `layer-intro-author` §FEATURE-SURFACE index-cell-drift guard exists to prevent. **Caveat:** `feature_root: seed` is CORRECTLY KEPT on all three levels (the permanent GC-root marker, NOT a maturity tier) — the drift is the `rough-in`/`seed`-as-maturity prose, not the root marker. A c121 mechanical cleanup (layer-intro-author).
+
+### Build — EXIT 0, NO build-repair needed
+
+`cargo make book` (mdbook + linkcheck2 0.12.0) EXIT 0. NO artifact edits landed this cycle (observation-only) → no new files, no SUMMARY change, nothing to repair. Zero dead links. The only diagnostics are the pre-existing benign `Potential incomplete link` warnings (KaTeX / markdown-bracket false-positives, NOT cycle-120 files — no cycle-120 files exist). No surgical repair required.
+
+### Step-5b — graded-stack linters (the build-gate companion, ran on the landed tree)
+
+**`rank_violations: 0`** (baseline fully discharged c096, so ANY violation would be NEW and BLOCK — there are NONE; **GATE PASSES**) + **`unresolved_depends_on_targets: 0`** (HELD) + **NO newly-orphaned node** (`reachable` HELD 139 — every previously-reachable node remains reachable; the second block-condition does NOT fire). Totals on the landed tree:
+
+`files=369`, `typed=308`, `untyped=61`, `roots=39`, `reachable=139`, `rank_violations=0`, `unresolved_depends_on_targets=0`, `promotion_frontier=6`, `detritus=132` (`detritus_no_typed_edges_pre_p1_artifact=105`, `detritus_with_typed_edges_stronger_signal=27`, `expected_unreachable_outside_dag=46`).
+
+**Delta vs c119** (`files=369, typed=308, untyped=61, roots=39, reachable=139, detritus=132, STRONGER=27, rank_violations=0, unresolved=0, promotion_frontier=6, expected_unreachable_outside_dag=46`):
+- **ALL HELD.** No movement on any axis. This is exactly the expected outcome for an observation-only cycle: D1 made no artifact mutation, no graph change, no new files.
+
+**Both step-5b block-conditions PASS.** On the high `untyped`/`detritus` mass: informational, NOT a block (pre-P1 untyped tail + typed-but-unreached nodes under the ratified RE1-RE10 baseline-exceptions). **rank_violations trend: 22 (c094) → 0 (c096) → … → 0 (c118) → 0 (c119) → 0 (c120). reachable trend across the campaign: 36 → 81 → … → 136 → 139 → 139 → 139 (HELD).**
+
+### RE disposition
+
+- **NO RE change this cycle (observation-only).** BUT **FINDING-1 RECOMMENDS the batch-38 meta DISCHARGE RE10** (`interpolator`) via a c121 grounding dispatch — the c117 RE10 premise is FALSIFIED (2 faithful reachable-firm consumers exist), modulo the L4→L1 altitude-crossing-edge-convention confirmation. RE9 (`fe_space_hierarchy`) independently re-checked, premise HOLDS (stays correctly baseline-excepted). RE1-RE8 UNCHANGED. STRONGER HELD 27. Finalize did NOT ratify/move any RE (meta-phase authority).
+
+### Counts
+
+- No firm-count status flips this cycle — D1 observation-only (no authored vocabulary, no node promotion, no edge). Layer tallies unchanged.
+- SLICE CORPUS: 0 (fully deleted cycles 097/098/099)
+
+### Process
+
+- retroactive-budget global = 0; per-report safety-net gates all PASS/N/A (an observation report with no `## Proposed changes` block no-ops every per-report gate)
+- 0 implied-component stubs created by finalize (no build-repair this cycle)
+- **1/1 staging rows == 1 dispatched-ready** (101st consecutive clean staging); zero deferrals, zero rejections, zero gate-hits, zero finalize build-repairs
+- The 2 D1 findings were appended to `scaffolding/open-questions.md` by the per-report integrator (under `## c120 D1 plateau-probe`); finalize made no duplicate append — closure/migration is meta-phase authority
+- `scaffolding/{roadmap,integrator-signals,cycle-record}` + `log/` committed atomically with the consumed-report `integrated_at` touch; two-phase SHA-patch follows
+- NO `.claude/agents/` changes FROM THIS FINALIZE
+
+### THE CARRY to the batch-38 meta-phase (fires NEXT as a SEPARATE dispatch, aggregating 118/119/120)
+
+This is the **BATCH-CLOSING finalize of meta-batch-38**; the batch-38 meta-phase fires next, aggregating cycles 118/119/120. The c120 plateau-probe is the DIRECT pre-meta input:
+
+1. **PLATEAU CONFIRMED [CENTRAL]** — both axes; STRONGER 27/27 maps to the ratified RE1-RE10; no coverage holes; the in-scope feature frontier is closed by c117/c118 (re-confirms the c115/c119 plateau-probe verdict, exhaustion-OF-CURRENT-SCOPE, not terminal).
+2. **FINDING-1 — the missed RE10 §2f GROUND edge** (`L1/interpolator` has faithful reachable-firm consumers `L4/waveguide_mode_reduce` + `L1/divfree-projector`; grounding either DISCHARGES RE10, +2 reachable). A real low-fan-out honesty cleanup the meta-phase should migrate to the plan as a c121 grounding pick (layer-intro-author), **modulo the L4→L1 altitude-crossing-edge-convention confirmation**.
+3. **FINDING-2 — the waveguide-mode `.L0`/index consistency drift** (c118 D5 promoted L1/L4, left `.L0` `rank: rough-in` + stale `seed` prose in `feature/index.md` + `feature/output-product.md`) — a c121 mechanical cleanup (layer-intro-author).
+4. **Carried items:** `record-FiniteElementSpaceHierarchy-promote-watch` (UNFIRED — promote to a `concepts/` page once a 2nd firm consumer surfaces); the carried linter-maintenance **ask-class `tools/` bundle** (incl. the `--show-stronger` per-node-attribution flag request); the producer report-frontmatter YAML-hygiene flag (c118 interpolator report's unquoted-colon `scope:` line); the `divfree-projector.md` bare-basename citecheck **AMBIG** (CYCLE.md cited the bare basename `divfree-projector.md` which matches `book/src/{L1,L2,L3}/divfree-projector.md`; the intended target is `book/src/L1/divfree-projector.md` — disambiguate to the full path when the c121 RE10 grounding dispatch authors the edge).
+
+Written by `integrator-finalize` (split integrator-per-report ×1 + finalize ×1).
