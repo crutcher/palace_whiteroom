@@ -2,26 +2,34 @@
 layer: L4
 operator: mk_matrix_free_operator
 kind: backend-lowering-operator-constructor
-status: roadmap_goal
-rank: roadmap_goal
+status: firm
+rank: firm
 edges:
-  reference:
-    # The firm L2 contraction-chain combinator this op's `apply` lowers to (free, navigational —
-    # the L4 op is the operator-CONSTRUCTOR surface; the L2 combinator is the apply-chain COMPOSITION
-    # `A = Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G` it produces. A `roadmap_goal` may rest on / reference anything;
-    # this is `reference`-class so it neither constrains rank nor blocks — scheme §1g).
+  depends-on:
+    # The firm L2 contraction-chain combinator this op's `apply` lowers to. Promoted from
+    # `reference (lowers-to)` to `depends-on (lowers-to)` at the c127 D1 firm-flip: now that this
+    # op is FIRM, its `apply` genuinely BLOCKING-depends-on the firm L2 contraction chain
+    # `A = Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G`. firm→firm, rank-legal (rank(u) ≤ min(deps) = firm — §1g).
     - target: L2/matrix-free-operator-apply
       kind: lowers-to
+  reference:
     # The firm spine consumer that PULLS this op to a feature root (the reachability / not-garbage edge).
     # `fe_assemble` reaches the feature root via its 7 feature-column inbound edges; the matrix-free
     # representation IS the constructive interior of its per-term `assemble_term` leaf under the
-    # matrix-free (`UseFullAssembly` false) dispatch. This edge is the INBOUND mirror of the
-    # `fe_assemble → mk_matrix_free_operator` `reference` (constructs-via) edge added in fe_assemble's
-    # frontmatter — recorded both ways for navigation; a firm node referencing a rank-0 roadmap_goal
-    # via `reference` is permitted (it must NOT `depends-on` it — that would violate well-foundedness).
+    # matrix-free (`UseFullAssembly` false) dispatch. STAYS `reference` (constructs-via) — fe_assemble
+    # folds the leaf OPAQUELY (its firmness is in the fold apparatus, not the leaf interior), so it must
+    # NOT `depends-on` this op even now both are firm; a firm→firm navigational reference is fine.
     - target: L4/fe_assemble
       kind: pulled-by
-    # The firm L4 fold whose per-term leaf this op specializes (same consumer, the construct-via role).
+    # The dedicated L4 backend-lowering feature surface that composes this constructor cap by name and
+    # FIRMED it off roadmap_goal (the named promotion condition; c127 D1). This is the inbound
+    # blocking `depends-on (composes)` pull recorded as the column's edge; mirrored here for navigation.
+    - target: feature/matrix-free-operator.L4
+      kind: pulled-by
+    # The L4>L3 down-narrative theme dissolving this constructor's apply into the L3 contraction-chain
+    # view (authored c127 D2).
+    - target: L4-L3/mk-matrix-free-operator-dissolution
+      kind: lowers-to
     - target: L4/index
     - target: concepts/element-local-tensor
     - target: concepts/black-box-vs-accelerated-kernels
@@ -35,7 +43,7 @@ variant_axes:
 
 > **⟢ backend-lowering-operator-constructor.** The L4 constructor that builds a **matrix-free (un-materialized) linear operator** from an FE space and a weak-form term — the operator whose `apply` is the burn/GPU tensor-contraction graph rather than a materialized matrix-vector product. This is the L4 surface the outward backend wants (DIRECTIVE-1: L4 is the outward backend-lowering target) for the `assembly-representation: partial matrix-free` axis that [`fe_assemble`](./fe_assemble.md) absorbs (`L4/fe_assemble.md:16,:166`).
 
-> **⟢ roadmap_goal (rank 0) — claim-free intent.** This chapter carries **no positive Palace-source claim** about a named L4 `mk_matrix_free_operator` constructor. It is the intent node for the L4 backend-lowering operator-constructor whose `apply` lowers to the firm [`L2/matrix-free-operator-apply`](../L2/matrix-free-operator-apply.md) contraction chain. Everything below the §Intent line is a **speculative reconstruction** in our L4 vocabulary, explicitly flagged; nothing here is asserted as Palace source. Pulled by the firm [`fe_assemble`](./fe_assemble.md) spine consumer (the reachability edge to a feature root). Promotes `roadmap_goal → rough-in → firm` as the dedicated L4 backend-lowering feature surface lands (batch-41 "A") and provides the blocking pull-chain that licenses a non-speculative claim.
+> **⟢ firm (rank 3) — promoted off roadmap_goal cycle-127 D1.** This chapter now carries a positive *compositional* claim: `mk_matrix_free_operator` is the L4 operator-constructor for the matrix-free (un-materialized) FE linear operator — the `partial matrix-free` (`UseFullAssembly`-false) branch of Palace's order-threshold assembly dispatch (`palace/fem/bilinearform.cpp:147`, `PartialAssemble()`), whose `apply` IS the firm [`L2/matrix-free-operator-apply`](../L2/matrix-free-operator-apply.md) contraction chain `A = Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G`. **Promotion basis (the §1g well-foundedness check):** all blocking deps are firm (the L2 combinator c125 D2 + transitively the four firm L1 substrate ops), `min(deps) = firm`; the constructor + apply composition algebra is exhaustively cited (no loop / recurrence obstruction in the constructor surface — a fixed five-stage chain, firm-on-positive-structure escape); and the dedicated L4 backend-lowering feature surface [`feature/matrix-free-operator.L4`](../feature/matrix-free-operator.L4.md) (c127 D1) now PULLS it via a faithful blocking `depends-on (composes)` edge — the cap's previously-recorded promotion condition, met without forcing the spine. The constructor signature + apply-lowering below are now the *asserted* L4 form, not a speculative reconstruction.
 
 ## Intent
 
@@ -43,11 +51,11 @@ What this becomes: a `firm` L4 operator `mk_matrix_free_operator` — the **oper
 
 The two representations Palace already carries are the **variant axis** this op makes structural: the matrix-free `ceed::Operator` (the wrapper `palace/fem/libceed/operator.hpp:32`, sub-operators added by `AddSubOperator` `:48`) is the un-materialized form `mk_matrix_free_operator` builds; `CeedOperatorFullAssemble` (`:81-82`) is the alternative CSR materialization (the `full` branch). The L4 form is **representation-agnostic in its signature** (the variant axis absorbs the partial/full choice, inherited from `L4/fe_assemble.md:166` + `L1/fe_assemble.md:182-187`) — `mk_matrix_free_operator` names specifically the *partial / un-materialized* constructor that the backend-lowering target wants.
 
-## Speculative L4 form (the constructor signature + apply-lowering)
+## L4 form (the constructor signature + apply-lowering)
 
-> **SPECULATIVE** — a reconstruction in our L4 vocabulary; not asserted as Palace source. Refine against evidence as the backend-lowering surface firms.
+> **FIRM** — the asserted L4 form (promoted off speculative c127 D1). The signature + apply-lowering below are the L4 rendering of the positively-cited `partial matrix-free` constructor + its contraction-chain apply.
 
-Signature (per the c125 D2 OQ placeholder, refined to the project's named-shape-group notation per [`semantics/index`](../semantics/index.md) §1.2 — the operator-domain shape group `(N: ...)` is the rank-structured DOF axis family, NOT a flat `Tensor[N]`; this is the genuine vocabulary shift the [`element-local-tensor`](../concepts/element-local-tensor.md) family carries away from the BLAS-1 flat vector):
+Signature (in the project's named-shape-group notation per [`semantics/index`](../semantics/index.md) §1.2 — the operator-domain shape group `(N: ...)` is the rank-structured DOF axis family, NOT a flat `Tensor[N]`; this is the genuine vocabulary shift the [`element-local-tensor`](../concepts/element-local-tensor.md) family carries away from the BLAS-1 flat vector):
 
     mk_matrix_free_operator :: FESpace -> WeakFormTerm -> GeomFactors -> LinearOperator (Tensor[(N: ...)])
     -- FESpace      : the finite-element space (the `readonly` construction stratum `fe_assemble` captures once)
@@ -55,7 +63,7 @@ Signature (per the c125 D2 OQ placeholder, refined to the project's named-shape-
     -- GeomFactors  : the build-stratum [E, P, G] geometry-factor carrier (the firm `geom_factor_build` product)
     -- result       : a LinearOperator whose `apply` is the contraction chain (un-materialized)
 
-The apply lowers to the firm L2 contraction-chain combinator (the `reference`-class `lowers-to` edge):
+The apply lowers to the firm L2 contraction-chain combinator (the `depends-on (lowers-to)` edge — promoted from `reference` at the c127 D1 firm-flip; firm→firm, rank-legal):
 
     apply (mk_matrix_free_operator space term geom) v
       = matrix-free-operator-apply space term geom v          -- the firm L2 combinator
@@ -63,26 +71,27 @@ The apply lowers to the firm L2 contraction-chain combinator (the `reference`-cl
 
 where (per [`L2/matrix-free-operator-apply`](../L2/matrix-free-operator-apply.md)) `G`/`Gᵀ` is `element_restrict` (the `[(N: ...)] ↔ [E, L]` gather / scatter-add), `B_𝒟`/`B_𝒟ᵀ` is `basis_apply` (the `[E, L] ↔ [E, P, C]` basis-eval contraction keyed on 𝒟), and `D` is `quad_point_contract` (the pointwise `[E, P, C]` per-quad-point diagonal against the `[E, P, G]` geometry carrier `GeomFactors`). The L4 op is the **operator-constructor surface**; the L2 combinator is the **apply-chain composition** it produces — the constructor/apply split is the GPU-backend-relevant factoring (build the contraction graph once at construction; run it per `apply`).
 
-## Pull-chain (reachability — why this is not garbage)
+## Pull-chain (reachability — why this is firm and not garbage)
 
-This `roadmap_goal` is reachable from a feature root by ONE `reference`-class hop:
+Now firm, this op is reachable from a feature root by a faithful **blocking `depends-on`** inbound edge:
 
-- **Inbound (pull-to-root):** firm [`fe_assemble`](./fe_assemble.md) gains a `reference`-class (`kind: constructs-via`) down-edge → `mk_matrix_free_operator` (added to `fe_assemble`'s frontmatter + §Lowers-to prose this dispatch). `fe_assemble` reaches the feature root via its 7 feature-column inbound edges; the matrix-free representation IS the constructive interior of its per-term `assemble_term` leaf under the `UseFullAssembly`-false dispatch. The edge is **`reference`, NOT `depends-on`** — a firm node may *navigationally reference* a rank-0 roadmap_goal, but must NOT carry a *blocking* `depends-on` to it (that would violate well-foundedness `rank(fe_assemble) = firm > rank(mk_matrix_free_operator) = 0`). The `reference` edge carries no liveness constraint and constrains no rank (scheme §1g) — so `rank_violations` stays 0.
-- **Downward (lowers-to):** `mk_matrix_free_operator` → firm [`L2/matrix-free-operator-apply`](../L2/matrix-free-operator-apply.md), `reference`-class `lowers-to`. The L4 op's apply is the named L2 contraction chain; the L2 combinator (firm, c125 D2) composes the four firm element-local substrate ops (`element_restrict` / `basis_apply` / `quad_point_contract` / `geom_factor_build`). A `roadmap_goal` may rest on / reference anything — but recorded as `reference` (not `depends-on`) so the rank-0 node imposes no rank floor on the firm L2 combinator.
+- **Inbound (pull-to-root, BLOCKING):** the firm feature surface [`feature/matrix-free-operator.L4`](../feature/matrix-free-operator.L4.md) (c127 D1) carries a `depends-on (composes)` edge → `mk_matrix_free_operator`. firm→firm, rank-legal (`rank(column) = firm ≤ rank(cap) = firm`). This is the faithful blocking pull that licenses the firm claim — the cap's previously-recorded promotion condition, now met.
+- **Inbound (navigational):** firm [`fe_assemble`](./fe_assemble.md) keeps its `reference`-class (`kind: constructs-via`) down-edge → `mk_matrix_free_operator`. STAYS `reference`, NOT `depends-on` — `fe_assemble` folds its per-term `assemble_term` leaf OPAQUELY (its firmness is in the fold apparatus, not the leaf interior), so it must not blocking-depend on the constructor even now both are firm. A firm→firm navigational reference is permitted (scheme §1g).
+- **Downward (lowers-to, BLOCKING):** `mk_matrix_free_operator` → firm [`L2/matrix-free-operator-apply`](../L2/matrix-free-operator-apply.md), now `depends-on (lowers-to)` (promoted from `reference` at the firm-flip). The op's `apply` IS the named L2 contraction chain; the L2 combinator (firm, c125 D2) composes the four firm element-local substrate ops. firm→firm, rank-legal — `rank_violations` stays 0.
 
-## Speculative L4 operators proposed (none new)
+## L4 operators proposed (none new)
 
-This cap proposes **no new speculative operator** beyond itself: `mk_matrix_free_operator` IS the speculative L4 op (landed as the `roadmap_goal` chapter, the in-discipline home). Its declared dependencies are all already firm on disk — the L2 combinator and the four L1 substrate ops below it. The intent's only open work is the *upward* pull (the dedicated L4 backend-lowering feature surface, batch-41 "A") that would firm this node.
+This cap proposes **no new operator** beyond itself: `mk_matrix_free_operator` is the L4 backend-lowering operator-constructor. Its dependencies are all firm on disk — the L2 combinator and (transitively) the four L1 substrate ops below it. The *upward* pull that firmed this node (the dedicated L4 backend-lowering feature surface, batch-41 "A") landed c127 D1.
 
-## Declared dependencies (all firm — the well-foundedness it WILL rest on when firmed)
+## Blocking dependencies (all firm — the well-foundedness this rests on)
 
-When this promotes off `roadmap_goal`, its blocking deps will be (currently recorded as `reference` because rank-0 imposes nothing):
+Now firm, its blocking deps are (the L2 combinator recorded `depends-on (lowers-to)`; the four substrate ops reached transitively through it):
 
 - [`L2/matrix-free-operator-apply`](../L2/matrix-free-operator-apply.md) — firm (c125 D2); the apply-chain composition.
 - (transitively, via the L2 combinator) `L1/element_restrict`, `L1/basis_apply`, `L1/quad_point_contract`, `L1/geom_factor_build` — all firm (c124 D3 / c125 D1).
 - [`concepts/element-local-tensor`](../concepts/element-local-tensor.md) — firm (c124 D5); the rank-structured shape family `(N: ...)`/`[E, L]`/`[E, P, C]`/`[E, P, G]` the chain is typed over.
 
-## L0 anchors (construction-site evidence — speculative-intent, not a positive L4 claim)
+## L0 anchors (construction-site evidence — the positive compositional claim)
 
 The matrix-free *representation* this L4 op names is grounded at:
 

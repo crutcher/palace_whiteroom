@@ -17,7 +17,7 @@ Elementwise **multiplicative-inverse** as a base tensor-algebra primitive at L2 
 **fusion-rotation** rendering of `y[i] = 1/x[i]`. Consumes a tensor `x`; produces a fresh
 tensor of the same shape whose every element is the field-multiplicative-inverse of
 the corresponding input element. `reciprocal` is a **standalone elementwise leaf** at L2
-with **no fold-parent** — unlike [`dot`](./dot.md) (a leaf-of [`inner_product`](./inner_product.md))
+with **no fold-parent** — unlike [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator) (a leaf-of [`inner_product`](./inner_product.md))
 and [`scal`](./linear_combination.md#arity-specializations) (an arity-1 member-of [`linear_combination`](./linear_combination.md)),
 `reciprocal` is not a member of any L2 fold (it neither reduces over the length axis to a
 scalar nor sums scalar-weighted terms; it is a *nonlinear* elementwise self-map). Companion
@@ -61,10 +61,10 @@ L2 entry adds **fusion-rotation framing** and does not duplicate those details.
 ## No fold-parent (standalone leaf; the leaf-vs-fold fork does not apply)
 
 `reciprocal` is a **standalone elementwise leaf** at L2 with **no fold-parent**. This is the
-structural distinction from its BLAS-1-floor cohort siblings [`dot`](./dot.md) and
+structural distinction from its BLAS-1-floor cohort siblings [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator) and
 [`scal`](./linear_combination.md#arity-specializations):
 
-- [`dot`](./dot.md) is the conjugation-axis **leaf-of** the reduce-to-`Scalar` fold
+- [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator) is the conjugation-axis **leaf-of** the reduce-to-`Scalar` fold
   [`inner_product`](./inner_product.md) (it folds the length axis to a scalar).
 - [`scal`](./linear_combination.md#arity-specializations) is the arity-1 **member-of** the reduce-to-`Tensor[$S]` fold
   [`linear_combination`](./linear_combination.md) (it is the arity-1 scalar-weighted-sum
@@ -105,7 +105,7 @@ destination buffer):
 - **result** — `Tensor[$S]` — congruent to `x` (same shape group `S`); **same element type** as `x`. Every
   output element equals the field-multiplicative-inverse of the corresponding input element.
   The result element type **tracks** the input element type (real `x` → real result; complex
-  `x` → complex result) — unlike [`nrm2`](./nrm2.md), which collapses both to a real-valued
+  `x` → complex result) — unlike [`nrm2`](./inner_product.md#consumer-not-an-instance-nrm2--matrix-weighted-norm), which collapses both to a real-valued
   result. `reciprocal` is a self-map on the vector type's element field.
 
 The L2 signature is **congruent in shape to the L1 signature** modulo notation (L1 spells the flat dof-vector as `Tensor[N]`; L2 states the rank-generic congruence as the group `S`); the rotation
@@ -246,7 +246,7 @@ primitive for both real and complex). The intermediate scalar `s = 1/|z|²` in t
 body is a transparent factoring of the closed form `z̄/|z|²`; it does not surface as an L2
 sub-operator.
 
-**Fold-parent**: **NONE**. Unlike [`dot`](./dot.md) (leaf-of [`inner_product`](./inner_product.md))
+**Fold-parent**: **NONE**. Unlike [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator) (leaf-of [`inner_product`](./inner_product.md))
 and [`scal`](./linear_combination.md#arity-specializations) (arity-1 member-of [`linear_combination`](./linear_combination.md)),
 `reciprocal` is a **standalone elementwise leaf with no fold-parent** — it is a nonlinear
 self-map, not a reduction term. The leaf-vs-fold design fork (`book/src/L2/index.md`
@@ -385,7 +385,7 @@ reader navigating L2 must find `reciprocal` defined in L2 vocabulary as the base
 elementwise-multiplicative-inverse primitive, not have to reach down to L1 (or up to L3) to
 recover the field-operation shape.
 
-The cycle-041 BLAS-1-floor entries [`dot`](./dot.md), [`nrm2`](./nrm2.md), [`scal`](./linear_combination.md#arity-specializations)
+The cycle-041 BLAS-1-floor entries [`dot`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator), [`nrm2`](./inner_product.md#consumer-not-an-instance-nrm2--matrix-weighted-norm), [`scal`](./linear_combination.md#arity-specializations)
 are the freshest structural precedents on the same `l2-floor-under-l3-leaf-cohort` directive:
 identity-in-form rotation on the primitive's signature, thin floor presence, methodology
 invariant enacted. `reciprocal` is the **fold-parent-free** member of the broader floor effort
@@ -406,7 +406,7 @@ to this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified
   §"Algebraic laws".
 - [`book/src/L3/reciprocal.md`](../L3/reciprocal.md) (firm cycle-038) — the L3 leaf this floor
   goes under; the iteration-rotation rendering whose adjacent L2 parent this entry supplies.
-- [`book/src/L2/dot.md`](./dot.md), [`book/src/L2/linear_combination.md`](./linear_combination.md#arity-specializations) (the arity-1 `scal` readout, firm cycle-041; folded in cycle-124 RE6) — the
+- [`book/src/L2/dot.md`](./inner_product.md#specializations-the-members-as-notes-under-the-combinator), [`book/src/L2/linear_combination.md`](./linear_combination.md#arity-specializations) (the arity-1 `scal` readout, firm cycle-041; folded in cycle-124 RE6) — the
   BLAS-1-floor cohort siblings; the thin identity-in-form floor form, the firm-on-positive-
   structure status judgement, and the floor-presence framing are inherited from these. The
   do-NOT-merge fold-cohort boundary applies to *them* (leaf-of / member-of a fold); `reciprocal`

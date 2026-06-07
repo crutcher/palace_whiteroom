@@ -58,6 +58,7 @@ The Feature Part is nested by kind into **three sub-chapter groupings** (directi
 | **[Infrastructure / shared-substrate columns](./infrastructure.md)** | | | |
 | [geometric-multigrid-preconditioner](./geometric-multigrid-preconditioner.L4.md) (firm) | [L4 root](./geometric-multigrid-preconditioner.L4.md) | [L1 root](./geometric-multigrid-preconditioner.L1.md) | — |
 | [krylov-iteration](./krylov-iteration.L4.md) (rough-in) | [L4 root](./krylov-iteration.L4.md) | [L1 root](./krylov-iteration.L1.md) | — |
+| [matrix-free-operator](./matrix-free-operator.L4.md) (firm) | [L4 root](./matrix-free-operator.L4.md) | [L1 root](./matrix-free-operator.L1.md) | — |
 
 The **driven**, **transient**, and **eigenmode** driver columns (cycle-073) complete the 5-driver leaf-column set: with electrostatic + magnetostatic (the fixed-operator pair) these three add the **operator-VARYING** corner (driven — the per-ω rebuild + `SetOperators`-inside-the-loop [`frequency_sweep`](../L4/frequency_sweep.md) map), the **state-threaded sequential-fold** corner (transient — the [`fold_solve`](../L4/fold_solve.md) time-step march), and the **opaque-library black-box** corner (eigenmode — the SLEPc eigen-iteration). The driven column is the first whose three L4 composition stages all compose FIRM combinators (the assemble basis, the per-ω operand verb, and the operator-varying solve map are each firm).
 

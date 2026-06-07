@@ -5,7 +5,7 @@ firmness: firm
 edges:
   depends-on:
     - L4/inner_product
-    - L3/nrm2
+    - L3/inner_product           # L3/nrm2 leaf eliminated into the combinator (cycle-127, RE-style); this verb is the √∘abs∘inner_product CONSUMER at the diagonal (NOT a fold member — see L3/inner_product §Consumer)
   reference:
     - concepts/black-box-vs-accelerated-kernels
     - concepts/nrm2
@@ -36,7 +36,7 @@ of its members.
 
 The L4 form re-expresses **through** the firm L4 combinator
 [`inner_product`](./inner_product.md) at the diagonal (NOT a re-derived fold) and is
-value-thread-isomorphic to the firm L3 named abstraction [`L3/nrm2`](../L3/nrm2.md).
+value-thread-isomorphic to the firm L3 named abstraction [`L3/nrm2`](../L3/inner_product.md#consumer-not-an-instance-nrm2--matrix-weighted-norm).
 
 ## Context
 
@@ -158,7 +158,7 @@ distinct from [`dot`](./dot.md), which is a *specialization* of the same combina
 
 ## Downward to L3
 
-The L4 `nrm2` verb lowers to the firm L3 [`nrm2`](../L3/nrm2.md) as **identity-in-form on
+The L4 `nrm2` verb lowers to the firm L3 [`nrm2`](../L3/inner_product.md#consumer-not-an-instance-nrm2--matrix-weighted-norm) as **identity-in-form on
 the body**: both forms are value-thread-isomorphic — the same `Tensor[(S: ...)] -> Scalar`
 signature, the same `√ (abs (inner_product x x))` skeleton (L3 writes the defining
 identity through the same-layer `dot(x, x)` leaf; both denote the same Hermitian
@@ -192,7 +192,7 @@ convention (no `L4-L2`/`L4-L1` directory).
 
 `firm` — the L4 form is the calculus-level named verb re-expressing the diagonal consume
 of the combinator [`inner_product`](./inner_product.md) (firm cycle-068 D3) under the
-`√ ∘ abs` scalar map, value-thread-isomorphic to the firm L3 [`nrm2`](../L3/nrm2.md) (firm
+`√ ∘ abs` scalar map, value-thread-isomorphic to the firm L3 [`nrm2`](../L3/inner_product.md#consumer-not-an-instance-nrm2--matrix-weighted-norm) (firm
 cycle-011, consumer-stub cycle-052 D3): the same `Tensor[(S: ...)] -> Scalar` `√(abs(inner_product
 x x))` skeleton, identity-in-form across the L4>L3 edge (no monadic wrapper to dissolve —
 §"Downward to L3"). The five algebraic laws are the square-root norm-axioms over the PSD
@@ -223,11 +223,12 @@ Combinator + L3/L1 endpoints (firm; the value-isomorphism this L4 named verb res
   consumes; §"Consumer (NOT an instance): nrm2 / matrix-weighted-norm" already records
   `nrm2(x) = √ (abs (inner_product x x))` at the diagonal as a consumer, NOT a member, with
   combinator law 5 (PSD) as the well-definedness witness.
-- `book/src/L3/nrm2.md` (firm cycle-011; consumer-stub cycle-052 D3) — the firm L3 named
-  abstraction this verb is value-thread-isomorphic to: signature + defining identity
-  (`:33-34`), the consuming-context roles (`:42-52`), the `std::abs` defensive-guard note
-  (`:58-68`), the §"Downward to L2 (consumer identity-in-form)" note (`:95-127`); its L0
-  anchor `palace/linalg/vector.hpp:255-260` re-verified on-disk at `:128-132` this batch.
+- [`L3/inner_product`](../L3/inner_product.md) §"Consumer (NOT an instance)" (the firm L3
+  `nrm2` consumer this verb is value-thread-isomorphic to — the standalone `L3/nrm2` leaf,
+  firm cycle-011, was eliminated cycle-127 RE-style, its signature + defining identity +
+  consuming-context roles + the `std::abs` defensive-guard note folded into the combinator's
+  §"Consumer (NOT an instance)"; do-NOT-merge boundary preserved — NOT a fold member). Its L0
+  anchor `palace/linalg/vector.hpp:255-260` re-verified on-disk this batch.
 - `book/src/L1/nrm2.md` (firm cycle-003) — authoritative on Palace surface, signature,
   algebraic laws, variant axes, the defining identity `nrm2(x) = √dot(x, x)`, the
   B-weighted-overload boundary, and the complete L0 evidence list (inherited transitively):

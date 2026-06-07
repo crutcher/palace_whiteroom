@@ -6,7 +6,7 @@ edges:
   depends-on:
     - target: L4/inner_product
       kind: specializes
-    - L3/dot
+    - L3/inner_product           # L3/dot leaf eliminated into the combinator (cycle-127, RE-style); this verb is its Hermitian/symmetric specialization (see L3/inner_product §Specializations)
   reference:
     - concepts/black-box-vs-accelerated-kernels
     - concepts/dot
@@ -35,7 +35,7 @@ specialization downstream algorithms reference by name).
 The L4 form re-expresses **through** the firm L4 combinator
 [`inner_product`](./inner_product.md) (replace-and-propagate, NOT a re-derived
 fold) and is value-thread-isomorphic to the firm L3 named abstraction
-[`L3/dot`](../L3/dot.md).
+[`L3/dot`](../L3/inner_product.md#specializations-the-members-as-notes-under-the-combinator).
 
 ## Context
 
@@ -172,7 +172,7 @@ is its first-class named-verb home.
 
 ## Downward to L3
 
-The L4 `dot` verb lowers to the firm L3 [`dot`](../L3/dot.md) as **identity-in-form on
+The L4 `dot` verb lowers to the firm L3 [`dot`](../L3/inner_product.md#specializations-the-members-as-notes-under-the-combinator) as **identity-in-form on
 the body**: both forms are value-thread-isomorphic — the same `Tensor[(S: ...)] -> Tensor[$S] ->
 Scalar` signature read at `M = I` with the Hermitian/symmetric kernel, the same six
 algebraic laws, the same deferred IEEE non-law, the same conjugation convention pinned at
@@ -205,7 +205,7 @@ directory).
 `firm` — the L4 form is the calculus-level named verb re-expressing the combinator
 [`inner_product`](./inner_product.md) (firm cycle-068 D3) at `M = I` with the
 Hermitian/symmetric kernel, value-thread-isomorphic to the firm L3
-[`dot`](../L3/dot.md) (firm cycle-011, specialization-stub cycle-052 D3): the same
+[`dot`](../L3/inner_product.md#specializations-the-members-as-notes-under-the-combinator) (firm cycle-011, specialization-stub cycle-052 D3): the same
 `Tensor[(S: ...)] -> Tensor[$S] -> Scalar` reduction read at the plain-weight conjugation value,
 identity-in-form across the L4>L3 edge (no monadic wrapper to dissolve — §"Downward to
 L3"). The six algebraic laws are carried up unchanged (each a syntactic identity or a
@@ -234,10 +234,11 @@ Combinator + L3/L1 endpoints (firm; the value-isomorphism this L4 named verb res
 - `book/src/L4/inner_product.md` (firm cycle-068 D3) — the L4 combinator this verb
   re-expresses through; §"Specializations" already names `dot(x, y) = inner_product x y`
   as the Hermitian/symmetric specialization, §2-keep dual.
-- `book/src/L3/dot.md` (firm cycle-011; specialization-stub cycle-052 D3) — the firm L3
-  named abstraction this verb is value-thread-isomorphic to: signature (`:43-44`), the
-  conjugation variant-axis kernel table (`:56-60`), the consuming-context framing (`:72-76`),
-  the §"Downward to L2 (through inner_product)" identity-in-form note (`:92-103`).
+- [`L3/inner_product`](../L3/inner_product.md) §"Specializations" (the firm L3 `dot`
+  specialization this verb is value-thread-isomorphic to — the standalone `L3/dot` leaf,
+  firm cycle-011, was eliminated cycle-127 RE-style, its signature + conjugation
+  variant-axis kernel table + consuming-context framing folded into the combinator's
+  §"Specializations"; the §"Downward to L2" identity-in-form note now lives on the combinator).
 - `book/src/L1/dot.md` (firm cycle-002) — authoritative on Palace surface, signature,
   algebraic laws, variant axes, and the complete L0 evidence list (inherited transitively
   here): `palace/linalg/vector.hpp:110-113`, `palace/linalg/vector.cpp:263-274` (Hermitian

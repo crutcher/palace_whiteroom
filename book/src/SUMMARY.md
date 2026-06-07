@@ -56,6 +56,8 @@
   - [geometric-multigrid-preconditioner — L1 composition-root](./feature/geometric-multigrid-preconditioner.L1.md)
   - [krylov-iteration — L4 composition-root](./feature/krylov-iteration.L4.md)
   - [krylov-iteration — L1 composition-root](./feature/krylov-iteration.L1.md)
+  - [matrix-free-operator — L4 backend-lowering composition-root](./feature/matrix-free-operator.L4.md)
+  - [matrix-free-operator — L1 composition-root](./feature/matrix-free-operator.L1.md)
 # Semantic surface — calculus, rules & abstractions
 - [L4 calculus & spec semantics (active-management surface)](./semantics/index.md)
 # L4 — Graph-Evaluation Calculus
@@ -99,15 +101,14 @@
 - [iterate-while-with-prev-dissolution](./L4-L3/iterate-while-with-prev-dissolution.md)
 - [krylov-step-typed-wrapper-dissolution](./L4-L3/krylov-step-typed-wrapper-dissolution.md)
 - [ksp-solve-driver-dissolution](./L4-L3/ksp-solve-driver-dissolution.md)
+- [mk-matrix-free-operator-dissolution](./L4-L3/mk-matrix-free-operator-dissolution.md)
 - [solve-family-map-dissolution](./L4-L3/solve-family-map-dissolution.md)
 
 # L3 — Global Tensor-Field Operations
 - [Overview](./L3/index.md)
 - [BLAS-1 vocabulary](./L3/blas1-intro.md)
-  - [dot](./L3/dot.md)
   - [inner_product](./L3/inner_product.md)
   - [linear_combination](./L3/linear_combination.md)
-  - [nrm2](./L3/nrm2.md)
 - [Elementwise field operations](./L3/elementwise-intro.md)
   - [elementwise_product](./L3/elementwise_product.md)
   - [normalize](./L3/normalize.md)
@@ -148,9 +149,7 @@
   - [gram](./L2/gram.md)
   - [inner_product](./L2/inner_product.md)
   - [linear_combination](./L2/linear_combination.md)
-- [Fold-family specialization / consumer stubs](./L2/fold-family-stubs-intro.md)
-  - [dot](./L2/dot.md)
-  - [nrm2](./L2/nrm2.md)
+- [Fold-family combinators (former stubs — eliminated)](./L2/fold-family-stubs-intro.md)
 - [Named compositions](./L2/named-compositions-intro.md)
   - [deflate](./L2/deflate.md)
   - [eigsolve](./L2/eigsolve.md)

@@ -9,6 +9,8 @@ edges:
     - feature/geometric-multigrid-preconditioner.L1
     - feature/krylov-iteration.L4
     - feature/krylov-iteration.L1
+    - feature/matrix-free-operator.L4
+    - feature/matrix-free-operator.L1
 ---
 
 # Infrastructure / shared-substrate columns
@@ -47,3 +49,13 @@ Current members (alpha-within-this-kind):
   capped at partial-obstruction by its `fold_solve` / `orthogonalize` iteration-views, the
   body-lifts-loop-doesn't honesty; coupled to the roadmap_goal
   [`eigsolve-impl`](../L3/eigsolve-impl.md) constructive eigensolve consumer.)
+- [**matrix-free-operator**](./matrix-free-operator.L4.md) — the matrix-free FE operator
+  **backend-lowering surface** every high-order driver's assemble stage composes when the
+  order-threshold `UseFullAssembly` dispatch selects partial assembly; the **assemble-side**
+  infrastructure analog of the solve-side GMG column. The batch-41 "A" / DIRECTIVE-3 grounded
+  consumer that firms the [`mk_matrix_free_operator`](../L4/mk_matrix_free_operator.md) cap off
+  `roadmap_goal` (composing the constructor cap + the firm L2 contraction-chain combinator by name)
+  and GROUNDS the RE11 libceed-substrate sub-cohort (its L1 surface names the four firm element-local
+  substrate ops `element_restrict`/`basis_apply`/`quad_point_contract`/`geom_factor_build` via
+  blocking `depends-on (composes)` edges — a genuine depends-on reachability flip). (firm — the
+  constructor surface is a fixed contraction chain with no loop obstruction, all blocking deps firm.)

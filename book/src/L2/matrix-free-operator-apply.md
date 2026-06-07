@@ -76,7 +76,7 @@ differential-operator `𝒟 ∈ {Identity, Gradient, Curl, Divergence}`), the co
     apply A x =
         x   |> element_restrict restr            -- G   :: [(N: ...)] -> [E, L]
             |> basis_apply (mode-of 𝒟) basis     -- B_𝒟 :: [E, L]    -> [E, P, C]
-            |> quad_point_contract geom Q         -- D   :: [E, P, C] -> [E, P, C]  (pointwise, against [E, P, G])
+            |> quad_point_contract geom           -- D   :: [E, P, C] -> [E, P, C'] (pointwise, against [E, P, G]; C' = test components, = C in the symmetric trial==test case)
             |> basis_apply (transpose (mode-of 𝒟)) basis   -- B_𝒟ᵀ :: [E, P, C] -> [E, L]
             |> element_restrict_transpose restr   -- Gᵀ  :: [E, L]    -> [(N: ...)]  (scatter-ADD)
 
