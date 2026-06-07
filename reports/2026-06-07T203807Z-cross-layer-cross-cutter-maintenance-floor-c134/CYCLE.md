@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T203807Z
 scope: MAINTENANCE FLOOR standing hygiene + c134 re-baseline duty (batch-43, D2)
 status: pending
 integrated_at: 2026-06-07T214500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 31b5e6b
 integration_notes: |
   Applied clean as the batch-43 c134 D2 maintenance-floor audit (AUDIT-CLASS — NO book mutation; touched only scaffolding/open-questions.md append). Verdict: clean-bill + RE-BASELINE CONFIRMED. The c133-baseline forecast (files→386, roadmap_goal 3→4, rank_violations=0/unresolved=0 held) CONFIRMED on disk by the D1 sharding-sketch landing earlier this cycle. The 3 realizes-kernel-api kernel-impl edges stay reference-class; semantic surface clean; RE4 consumer-gated (premise holds), RE11 premises hold + the new sharding-decompose-reduce node joins the RE11 deliberate-reference-only-reachable cohort (§2g) BY DESIGN. integrator-finalize ran the AUTHORITATIVE post-landing lint per the report's recommendation and re-baselined the scaffolding/-held running counts (files=386, roadmap_goal=4, detritus=123, true_detritus=51; rank_violations=0, unresolved=0) — the c133 files=385 snapshot is SUPERSEDED. The FORMAL held-baseline-exceptions re-baseline + RE-set disposition for the new node is the batch-43 meta's to own. Promoted OQ maintenance-floor-re-baseline-CONFIRMED-c134-sharding-sketch-landed. Per-report integrator: integrator-per-report (staging row #2). Cycle-end housekeeping + commit: integrator-finalize cycle-134.
 ---

@@ -14,7 +14,7 @@ staging_reconciliation: clean (2 == 2; 115th consecutive clean staging)
 build_status: cargo make book EXIT 0 (Build Done in 92.80 s); ZERO build-repairs
 rank_violations: 0
 unresolved_depends_on_targets: 0
-commit: PLACEHOLDER_SHA
+commit: 31b5e6b
 ---
 
 # CYCLE-134 batch report — integrator-finalize (batch-43 MIDDLE, 2/3)
@@ -43,7 +43,7 @@ Batch-43 MIDDLE / 2nd of cycles 133/134/135. The batch-43 LEAD is the human-chos
 - **retroactive-budget global = 0** (D1 = fresh rank-0 sketch authoring + 1 SUMMARY row; D2 = audit-class, NO book mutation; both 0-retroactive — well below per-slice ≥3 / global ≥4 block thresholds).
 - **build-breakage repair = 0** (clean first build, EXIT 0).
 - **commit atomicity** = single commit (artifact + staging log + housekeeping + consumed-report frontmatter).
-- **consumed-report frontmatter integrity** = both touched with `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes`.
+- **consumed-report frontmatter integrity** = both touched with `integrated_at` + `integration_commit: 31b5e6b` + `integration_notes`.
 - Per-report gates (D1/D2 staging rows): all PASS/N/A; the D1 citecheck 2 AMBIG are non-blocking report-prose `--scan` artifacts (the LANDED chapter uses relative links resolving unambiguously to the L4 siblings); the rank-gate PASSED (`rank_violations=0`).
 
 ## Build status

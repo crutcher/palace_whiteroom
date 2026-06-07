@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T203807Z
 scope: L4 roadmap_goal sketch — sharding-decompose-reduce (sharding-MATH-as-decomposition-abstraction)
 status: pending
 integrated_at: 2026-06-07T214500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 31b5e6b
 integration_notes: |
   Applied clean as the batch-43 WAVE-2 LEAD (the gate-CLEAR sharding-math decomposition-abstraction sketch). Landed a NEW rank-0 roadmap_goal L4 chapter book/src/L4/sharding-decompose-reduce.md (subdomain_reduce = reduce ∘ restrict-to-block) composing the 5 firm reduce roots BY NAME via reference-class edges ONLY + a SUMMARY.md wiring edit (alpha-position between nrm2 and sparameter_reduce). The hard spine-non-destabilization tripwire PASSED on the LANDED tree (rank_violations=0, unresolved=0 — verified via the rank linter, not assumed; the firm roots are under reference: only, NO depends-on into the rank-0 node). RE-BASELINED counts (c133 files=385 SUPERSEDED): files=386, typed=325, rank_histogram.roadmap_goal 3→4, reachable=163 HELD (the node is reference-reachable-only, NOT hard-reachable), reference_reachable=247 HELD, detritus 122→123 (RE11-cohort-class per §2g). DIRECTIVE-1 honored: the MPI/distributed mechanism cited as deferred-future ONLY, NOT lifted. KaTeX-collision check PASSED (fenced text pseudocode; 0 class="katex" spans on the rendered chapter). cargo make book EXIT 0; ZERO build-repairs. 3 forward-direction OQs promoted. Per-report integrator: integrator-per-report (staging row #1). Cycle-end housekeeping + commit: integrator-finalize cycle-134.
 inputs:
