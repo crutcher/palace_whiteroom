@@ -9,7 +9,7 @@ inputs:
   - book/src/feature/matrix-free-operator.L4.md
   - book/src/L4-L3/mk-matrix-free-operator-dissolution.md
 integrated_at: 2026-06-07T170138Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f93eaff
 integration_notes: "cycle-128 D4 (batch-41 MIDDLE) applied clean by integrator-per-report (single prose-only edit: the L2 §'Speculative higher (L4) placeholder' -> '## Higher (L4) — firm' USE+LINK pointer to the 3 now-firm c127 chapters); DISCHARGES OQ matrix-free-operator-apply-l4-placeholder-now-stale (meta to CLOSE via unify authority); finalize aligned the new pointer's reproduced signature LinearOperator(...)->Op[...] to track D1's cap fix (lockstep consistency); NO frontmatter/status/edge change, graded-stack no-op, all totals HELD."
 ---
 

@@ -37,7 +37,7 @@ The batch-38 arc: c118 consumed the substantive frontier (the mesh→fe_space su
 - `scaffolding/integrator-signals.md` — prepended the c120 section (all 6 subsections).
 - `log/cycle-120.md` — written (superseding the stale pre-redirect-era entry).
 - `log/README.md` — prepended the c120 index entry (newest-first).
-- `reports/.../plateau-probe/CYCLE.md` — `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes` frontmatter touch.
+- `reports/.../plateau-probe/CYCLE.md` — `integrated_at` + `integration_commit: f93eaff` + `integration_notes` frontmatter touch.
 - `reports/2026-06-07T040000Z-integrator-finalize-cycle-120/CYCLE.md` — this batch CYCLE.md.
 
 ## Safety-net gate results (aggregated)

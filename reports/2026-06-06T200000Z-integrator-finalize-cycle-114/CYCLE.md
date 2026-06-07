@@ -52,7 +52,7 @@ No new files → no SUMMARY/index inserts. 0 implied-component stubs.
 - **unresolved_depends_on_targets:** 0 (HELD). PASS.
 - **build-breakage:** none (EXIT 0). PASS.
 - **commit atomicity:** single commit (this finalize). PASS.
-- **consumed-report frontmatter integrity:** both marked `integrated_at: 2026-06-06T200000Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows). PASS.
+- **consumed-report frontmatter integrity:** both marked `integrated_at: 2026-06-06T200000Z` + `integration_commit: f93eaff` (two-phase SHA patch follows). PASS.
 
 ## Build status
 

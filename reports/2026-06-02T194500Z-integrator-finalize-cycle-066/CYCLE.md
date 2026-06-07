@@ -53,7 +53,7 @@ Edited files:
 - **retroactive-budget global**: 0 across all 4 rows (well under the ≥4 block threshold). PASS.
 - **build-breakage repair**: none needed (build exit 0). PASS.
 - **commit atomicity**: single commit + push (below). PASS.
-- **consumed-report frontmatter integrity**: all 4 reports marked `integrated_at: 2026-06-02T194500Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows) + `integration_notes`. PASS.
+- **consumed-report frontmatter integrity**: all 4 reports marked `integrated_at: 2026-06-02T194500Z` + `integration_commit: f93eaff` (two-phase SHA patch follows) + `integration_notes`. PASS.
 - **staging-row-count vs dispatched-ready**: 4 rows == 4 dispatched-ready reports. No completeness gap (cycle-018 friction did NOT recur). PASS.
 
 Per-report gates (retroactive per-slice, concept_writes, edge-label, H1, append-on-missing-slug, variant-axis, bookkeeping, SUMMARY-chapter-registration) were all clean per the staging rows (0 hits each).

@@ -39,7 +39,7 @@ The deferred **graded-stack P2 slice-deletion tranche** (the batch-31 LEAD) LAUN
 - **retroactive-budget global = 0** (4 absorb-and-deletes into existing firm homes + 1 index cleanup + 1 within-file re-anchor; no retroactive rewrites of existing firm-chapter CLAIMS) — well under the ≥4 block threshold.
 - **build-breakage repair:** none (clean first build; the D1–D4↔D5 co-landing constraint held).
 - **commit atomicity:** single commit (this finalize) — staging log + all per-report changes + housekeeping + consumed-report frontmatter.
-- **consumed-report frontmatter integrity:** all 6 marked `status: integrated` + `integrated_at` + `integration_commit` (PLACEHOLDER_SHA → two-phase SHA patch) + `integration_notes`.
+- **consumed-report frontmatter integrity:** all 6 marked `status: integrated` + `integrated_at` + `integration_commit` (f93eaff → two-phase SHA patch) + `integration_notes`.
 - **Per-report rank-gates** (from staging): D1–D4 each deleted a `reference`-class reachability-GC detritus leaf (no inbound `depends-on` blocking edge; absorbs ADD firm L0 to existing firm homes, no rank change); D5 removal-only (no node status flip); D6 within-file narration (rank `firm` already on disk). All PASS / N/A.
 
 ## Build status

@@ -37,7 +37,7 @@ Scaffolding/housekeeping (this finalize): `scaffolding/priorities.md` (planner c
 - **retroactive-budget global:** 0 (per-row sum across both staging rows = 0; far under the ≥4 block threshold). PASS.
 - **build-breakage repair:** none — `cargo make book` EXIT 0 (~93s); no repair needed.
 - **commit atomicity:** single commit (artifact + scaffolding + log + consumed-report frontmatter + staging log).
-- **consumed-report frontmatter integrity:** both reports marked `integrated_at: 2026-06-05T223500Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch to follow) + `integration_notes`.
+- **consumed-report frontmatter integrity:** both reports marked `integrated_at: 2026-06-05T223500Z` + `integration_commit: f93eaff` (two-phase SHA patch to follow) + `integration_notes`.
 - **Per-report gates** (per staging rows, both PASS/N/A): retroactive-per-slice, concept_writes-on-existing-slug, forward-edge-without-surface, edge-label/prose-mismatch, H1-reuses-page-heading, append-on-missing-slug, variant-axis-missing, SUMMARY-registration, alpha-position, graded-resolution rank gate (D1 firm→firm or firm→untyped-non-node; D2 vacuous — no rank/no depends-on), citecheck-bounds + path-hygiene.
 
 ## Build status
@@ -82,4 +82,4 @@ No firm-count status flips (all 18 edits frontmatter-only — no new authored vo
 
 ---
 
-*Two-phase SHA patch: this finalize records `integration_commit: PLACEHOLDER_SHA` on both consumed reports; a follow-up patch commit replaces every placeholder with the actual SHA from the cycle commit, then pushes again (cycle-004/005 canonical pattern).*
+*Two-phase SHA patch: this finalize records `integration_commit: f93eaff` on both consumed reports; a follow-up patch commit replaces every placeholder with the actual SHA from the cycle commit, then pushes again (cycle-004/005 canonical pattern).*

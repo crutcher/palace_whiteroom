@@ -54,7 +54,7 @@ Staging cross-check: **4 staging rows == 4 dispatched-ready reports** (no cycle-
 - **edge-label / H1 / variant-axis / append-on-missing-slug / SUMMARY-chapter-registration** — 0 each (per-report). PASS.
 - **build-breakage repair** — none needed (build exit 0, no dead links). PASS.
 - **commit atomicity** — single commit (artifact + scaffolding + log + book output + consumed-report frontmatter). PASS.
-- **consumed-report frontmatter integrity** — all 4 marked `integrated_at` + `integration_commit: f270ba5` + `integration_notes` (PLACEHOLDER_SHA patched to the real SHA in the canonical two-phase follow-up commit). PASS.
+- **consumed-report frontmatter integrity** — all 4 marked `integrated_at` + `integration_commit: f270ba5` + `integration_notes` (f93eaff patched to the real SHA in the canonical two-phase follow-up commit). PASS.
 
 ## Wave-conflict observations
 

@@ -61,7 +61,7 @@ no concept page; no stub materialized).
 - **commit atomicity** — single commit (artifact + staging log + housekeeping + consumed-report
   frontmatter). PASS.
 - **consumed-report frontmatter integrity** — `integrated_at` + `integration_commit`
-  (PLACEHOLDER_SHA, two-phase patch) + `integration_notes` added. PASS.
+  (f93eaff, two-phase patch) + `integration_notes` added. PASS.
 - Per-report gates (from the staging row): `citecheck-bounds-path-hygiene` 16 ok / 10 `[AMBIG]`
   (ALL bare-basename PROSE shorthand in the report's audit narrative; ZERO MISS/OOB/unresolvable;
   the `verified_against:` block + all on-disk edits use full paths — cosmetic, non-blocking);

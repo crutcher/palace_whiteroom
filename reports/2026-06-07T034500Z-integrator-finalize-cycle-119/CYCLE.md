@@ -40,7 +40,7 @@ No new files, no SUMMARY change, no concepts/index change, no stub creation. Tot
 | retroactive-budget global ≥4 | 0 — PASS |
 | build-breakage repair | none needed — `cargo make book` EXIT 0 first run |
 | commit atomicity | one commit (this finalize) + two-phase SHA-patch follow-up |
-| consumed-report frontmatter integrity | both D1/D2 `integrated_at` + `integration_commit: PLACEHOLDER_SHA` + `integration_notes` set |
+| consumed-report frontmatter integrity | both D1/D2 `integrated_at` + `integration_commit: f93eaff` + `integration_notes` set |
 | Step-5b rank gate (NEW rank_violation) | `rank_violations=0` HELD — PASS (no NEW violation; baseline fully discharged c096) |
 | Step-5b reachability (newly-orphaned node) | NO newly-orphaned node — PASS (`reachable` HELD 139) |
 | Step-5b `unresolved_depends_on_targets` | 0 HELD — PASS |
@@ -86,7 +86,7 @@ NO RE change. `build_mesh` was DISCHARGED at c118 D4; D1 honest-types the second
 - retroactive-budget global = 0; per-report safety-net gates all PASS/N/A; 0 implied-component stubs.
 - 2/2 staging rows == 2 dispatched-ready (100th consecutive clean staging / 114th consecutive clean split-integrator cycle).
 - `scaffolding/{roadmap,integrator-signals,cycle-record}` + `log/{cycle-119.md,README.md}` committed atomically with both consumed-report `integrated_at` touches.
-- Two-phase SHA-patch follows this commit (replaces `PLACEHOLDER_SHA` with the actual finalize commit SHA).
+- Two-phase SHA-patch follows this commit (replaces `f93eaff` with the actual finalize commit SHA).
 - NO `.claude/agents/` changes FROM THIS FINALIZE.
 
 Written by `integrator-finalize` (split integrator-per-report ×2 + finalize ×1).

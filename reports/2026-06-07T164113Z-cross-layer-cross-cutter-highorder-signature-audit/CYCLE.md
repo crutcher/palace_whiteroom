@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T164113Z
 scope: L4↔L3 cross-cut — high-order signature closure-grouping compliance audit (cycle-128 D2)
 status: pending
 integrated_at: 2026-06-07T170138Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f93eaff
 integration_notes: "cycle-128 D2 (batch-41 MIDDLE) read-only compliance audit; NO artifact change (no proposed-changes block); 2 OQs promoted — highorder-signature-noncompliant-cohort-c129-lifter-sweep (4 non-compliant ops -> c129 lifter) + oq-highorder-operator-transformer-codomain-convention (gates eliminate_essential_bc's c129-sweep inclusion); graded-stack no-op, all totals HELD."
 ---
 

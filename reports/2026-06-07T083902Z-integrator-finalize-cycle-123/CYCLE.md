@@ -146,7 +146,7 @@ Meta adjudication.
 
 - retroactive-budget global = 0; per-report gates all PASS / N/A; 0 implied-component stubs; ZERO finalize build-repairs.
 - `scaffolding/{roadmap,integrator-signals,cycle-record}` + `log/{cycle-123.md, README.md}` committed atomically + the 4 consumed-report `integrated_at` touches + the staging log. The stale slice-vertical-era `log/cycle-123.md` (2026-05-26 `cg_preconditioning_framework`) was renamed to `log/cycle-123-slice-era.md` to free the filename for the live layered-flow cycle-123 (the cycle counter collided across the pre/post-redirect eras); its `log/README.md` index reference was updated.
-- Two-phase SHA-patch follows (replace PLACEHOLDER_SHA with the finalize commit SHA, then push).
+- Two-phase SHA-patch follows (replace f93eaff with the finalize commit SHA, then push).
 - NO `.claude/agents/` changes FROM THIS FINALIZE (meta-phase domain).
 
 Written by `integrator-finalize` (split integrator-per-report ×4 + finalize ×1).

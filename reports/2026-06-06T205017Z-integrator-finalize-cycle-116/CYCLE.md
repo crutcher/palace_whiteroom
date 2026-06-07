@@ -158,5 +158,5 @@ constraint (D1-before-D2) is the one the staging-log row-order records.
 ## Commit
 
 Single atomic commit (artifact + scaffolding + log + book output + consumed-report frontmatter),
-pushed to `origin main`, followed by the two-phase SHA-patch commit replacing `PLACEHOLDER_SHA`.
+pushed to `origin main`, followed by the two-phase SHA-patch commit replacing `f93eaff`.
 See the finalize response for the recorded SHAs.

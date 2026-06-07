@@ -56,7 +56,7 @@ Plus `scaffolding/open-questions.md` (per-report appends, in-cycle) — finalize
 - **retroactive-budget global: 0** (well under the ≥4 block threshold) — PASS. Per-row: D6 0, D1 0, D3 0, D4 0, D2 0, D5 0.
 - **build-breakage repair:** none required — `cargo make book` exit 0, linkcheck2 clean.
 - **commit atomicity:** single commit (this finalize) — artifact + scaffolding + log + book output + staging log + consumed-report frontmatter.
-- **consumed-report frontmatter integrity:** all 6 marked `integrated_at: 2026-06-03T055824Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows) + `integration_notes`.
+- **consumed-report frontmatter integrity:** all 6 marked `integrated_at: 2026-06-03T055824Z` + `integration_commit: f93eaff` (two-phase SHA patch follows) + `integration_notes`.
 - Per-report citecheck (from staging): D6 22/0, D1 26/0, D3 29/0, D4 21/0, D2 5/0, D5 9/0 — all clean.
 
 ## Wave-conflict observations

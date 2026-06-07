@@ -47,7 +47,7 @@ Staging log `reports/cycle-077-integrator-staging/STAGING.md` carries **5 rows**
 - **retroactive-budget global ≥4 → block:** global draws = **0** across all 5 rows (record-definition data-shape pages no-op the claim checks per the record-definition convention; D4/D5 firm-on-positive-structure L1 entries — every law a syntactic identity on positive source). PASS, well under the ≥4 threshold.
 - **build-breakage repair:** none required (build exit 0, linkcheck2 clean).
 - **commit atomicity:** single commit (this finalize) + the canonical two-phase SHA patch follow-up.
-- **consumed-report frontmatter integrity:** all 5 reports marked `integrated_at: 2026-06-03T154500Z` + `integration_commit: PLACEHOLDER_SHA` (patched post-commit) + `integration_notes`.
+- **consumed-report frontmatter integrity:** all 5 reports marked `integrated_at: 2026-06-03T154500Z` + `integration_commit: f93eaff` (patched post-commit) + `integration_notes`.
 
 ## Wave-conflict observations
 

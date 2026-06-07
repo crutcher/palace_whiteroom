@@ -47,7 +47,7 @@ Housekeeping writes (finalize): `scaffolding/roadmap.md` (FE-assembly section + 
 - **staging row-count cross-check:** 3 rows == 3 dispatched-ready reports. No mismatch; no reconciliation-from-working-tree needed (the staging log was authoritative this cycle). Working-tree `git status --porcelain book/` matched the staging Files-touched columns exactly.
 - **build-breakage repair:** none needed (exit 0; all same-cycle cross-links resolved).
 - **commit atomicity:** single commit for all artifact + scaffolding + log + book output + consumed-report frontmatter; pushed immediately. Two-phase SHA patch follows (placeholder → actual SHA).
-- **consumed-report frontmatter integrity:** D1/D2/D3 each carry `integrated_at: 2026-06-02T082437Z` + `integration_commit: PLACEHOLDER_SHA` (patched post-commit) + `integration_notes`.
+- **consumed-report frontmatter integrity:** D1/D2/D3 each carry `integrated_at: 2026-06-02T082437Z` + `integration_commit: f93eaff` (patched post-commit) + `integration_notes`.
 
 ## Wave-conflict observations
 

@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T163919Z
 scope: closure-returning-signature convention — semantics surface §1.3.1 + mk_matrix_free_operator exemplar
 status: pending
 integrated_at: 2026-06-07T170138Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f93eaff
 integration_notes: "cycle-128 D1 (batch-41 MIDDLE) applied clean by integrator-per-report (all 5 proposed-changes blocks incl. the repairer-added feature-column Change 5); finalize applied the TWO flagged lockstep consistency fixes (L4/index.md:119 dep-map mirror + the D4 L2-pointer signature mention, both LinearOperator(...)->Op[...]); semantics §1.3.1 landed; NO status/rank/edge change (graded-stack no-op, all totals HELD); 3 OQs promoted (2 routed to batch-41 meta)."
 ---
 

@@ -39,7 +39,7 @@ Cycle-115 is the **OPENER of meta-batch-37** (cycles 115/116/117). Three dispatc
 - **Per-report gates** (across all 3 rows): rank-well-foundedness 0, edge-label/prose-mismatch 0, YAML round-trip 0, SUMMARY-registration N/A (all slugs pre-exist), forward-edge-without-surface 0, append-on-missing-slug 0, variant-axis-missing 0. D3 prose-only (no edges touched); D1 observation-only (no proposed-changes → all gates N/A).
 - **build-breakage:** none (EXIT 0).
 - **commit atomicity:** single commit (this finalize) + the two-phase SHA-patch follow-up.
-- **consumed-report frontmatter integrity:** all 3 marked `integrated_at: 2026-06-06T211500Z` + `integration_commit: PLACEHOLDER_SHA` (patched in phase 2).
+- **consumed-report frontmatter integrity:** all 3 marked `integrated_at: 2026-06-06T211500Z` + `integration_commit: f93eaff` (patched in phase 2).
 
 ## Build status
 

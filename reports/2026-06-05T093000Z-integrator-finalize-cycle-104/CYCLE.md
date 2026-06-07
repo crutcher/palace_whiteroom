@@ -41,7 +41,7 @@ Staging-row count 4 == 4 dispatched-ready reports. The cycle-018 staging-complet
 - **retroactive-budget global = 0** (no retroactive edits this cycle — pure forward typing/content + prose-drift hygiene). Well under the ≥4 block threshold.
 - **build-breakage repair:** NONE needed. `cargo make book` EXIT 0.
 - **commit atomicity:** single commit (below).
-- **consumed-report frontmatter integrity:** all 4 marked `integrated_at: 2026-06-05T093000Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch below) + `integration_notes`.
+- **consumed-report frontmatter integrity:** all 4 marked `integrated_at: 2026-06-05T093000Z` + `integration_commit: f93eaff` (two-phase SHA patch below) + `integration_notes`.
 - Per-report gates (yaml-validity, dangling-reference/dangling-live-link, rank-invariant/rank-well-foundedness, forward-edge-without-surface, SUMMARY-registration, alpha-position, citecheck-bounds): all **0** across all 4 staging rows. D3 arrived ready post-repair (2 build-critical warnings repaired by the repairer before integration).
 
 ## Build status
@@ -94,4 +94,4 @@ NONE. The 4 dispatches touched disjoint surfaces. The one shared file `L1/index.
 
 ## Commit
 
-Single atomic commit + push to `origin/main` (staging log + all 4 per-report integrator changes + the new `set_subvector_zero.md` + finalize housekeeping writes + the 4 consumed-report frontmatter touches). Two-phase SHA patch follows (replaces `PLACEHOLDER_SHA` in the 4 reports' `integration_commit` with the actual SHA, then re-push). Written by `integrator-finalize` (split integrator-per-report ×4 + finalize ×1).
+Single atomic commit + push to `origin/main` (staging log + all 4 per-report integrator changes + the new `set_subvector_zero.md` + finalize housekeeping writes + the 4 consumed-report frontmatter touches). Two-phase SHA patch follows (replaces `f93eaff` in the 4 reports' `integration_commit` with the actual SHA, then re-push). Written by `integrator-finalize` (split integrator-per-report ×4 + finalize ×1).

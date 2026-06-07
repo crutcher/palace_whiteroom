@@ -42,7 +42,7 @@ Two headline outcomes landed, plus the discharge of a c127 OQ and a read-only co
 - **retroactive-budget global ≥4 → BLOCK:** PASS — global = 0 across all 4 rows (no status/rank/edge change anywhere this cycle).
 - **build-breakage repair:** PASS — `cargo make book` EXIT 0; ZERO build-repairs needed (no deletions this cycle → no linkcheck2 deletion hazards; D1's new §1.3.1 subsection + all matrix-free cross-references resolve).
 - **commit atomicity:** book + scaffolding + log + reports in one commit (below).
-- **consumed-report frontmatter integrity:** all 4 marked `integrated_at: 2026-06-07T170138Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows) + `integration_notes`.
+- **consumed-report frontmatter integrity:** all 4 marked `integrated_at: 2026-06-07T170138Z` + `integration_commit: f93eaff` (two-phase SHA patch follows) + `integration_notes`.
 - **Step-5b graded-stack linters (landed tree, ASK-1 `--reference-reachable` tier active):** BOTH block-conditions PASS — `rank_violations: 0` (nothing changed rank/edge; held trivially) + NO newly-orphaned node (`reachable` HELD 163). `unresolved_depends_on_targets: 0` (HELD; no edge touched).
 
 ## Build status

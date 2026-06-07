@@ -42,7 +42,7 @@ No new files, no SUMMARY edits, no dep-map rows, no concept writes, no stubs mat
 - **retroactive-budget global** = 0 (no retroactive edits this cycle). PASS.
 - **build-breakage repair** — `cargo make book` EXIT 0; NO build-repair needed (prose/citation-text edits only). PASS.
 - **commit atomicity** — single commit covers the staging log + both per-report artifact changes + all housekeeping writes + both consumed-report frontmatter touches. PASS.
-- **consumed-report frontmatter integrity** — both reports marked `integrated_at: 2026-06-05T070500Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch to follow) + `integration_notes:`. PASS.
+- **consumed-report frontmatter integrity** — both reports marked `integrated_at: 2026-06-05T070500Z` + `integration_commit: f93eaff` (two-phase SHA patch to follow) + `integration_notes:`. PASS.
 - **Per-report gates** (per-report integrators' job) — all PASS/N/A across both staging rows (no new file → no SUMMARY-chapter-registration / alpha-insert; no dep-map row; no concept_writes; no forward-edge claim; no rank-gate promotion).
 
 ## Build status

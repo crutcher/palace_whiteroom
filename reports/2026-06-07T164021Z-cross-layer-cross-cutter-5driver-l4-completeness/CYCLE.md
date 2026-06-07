@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T164021Z
 scope: 5-driver L4-completeness audit (ASK-2 "B" capstone) — does every sim driver reach L4 by composing FIRM L4 vocabulary BY NAME?
 status: pending
 integrated_at: 2026-06-07T170138Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f93eaff
 integration_notes: "cycle-128 D3 (batch-41 MIDDLE) the ASK-2 'B' CAPSTONE; read-only audit, NO artifact change (no proposed-changes block); CAPSTONE VERDICT recorded prominently in roadmap/log/integrator-signals for the batch-41 meta — the in-scope FEATURE-SURFACE SPINE is L4-COMPLETE (ALL 5 drivers + lifecycle ROOT PASS, 12 named constituents firm on disk, 2 tracked opaque-library boundaries NOT gaps, NO GAP); recommends DEFER / wind the in-scope spine to MAINTENANCE; 2 c129-cleanup stale-token OQs promoted; graded-stack no-op, all totals HELD."
 ---
 

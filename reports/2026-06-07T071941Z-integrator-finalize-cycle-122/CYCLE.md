@@ -48,7 +48,7 @@ Edited chapters: `book/src/L1/libceed-quadrature-kernel-impl.md` (verified_again
 - **retroactive-budget global:** 0 across all 7 rows. PASS (well below the ≥4 block threshold).
 - **build-breakage repair:** NONE needed (`cargo make book` EXIT 0 first pass).
 - **commit atomicity:** single commit (artifact + staging + housekeeping + consumed-report frontmatter). PASS.
-- **consumed-report frontmatter integrity:** all 7 reports marked `integrated_at: 2026-06-07T071941Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch follows). PASS.
+- **consumed-report frontmatter integrity:** all 7 reports marked `integrated_at: 2026-06-07T071941Z` + `integration_commit: f93eaff` (two-phase SHA patch follows). PASS.
 
 ### Graded-stack linters (step-5b, on the LANDED tree) — both block-conditions PASS
 
@@ -94,4 +94,4 @@ Resolutions/discharges: 3 c121 `correction_step` OQs SETTLED; `amr-estimate-mark
 
 ## Commit
 
-Single atomic commit (artifact + staging log + housekeeping + 7 consumed-report frontmatter touches) + `git push origin main`. Two-phase SHA patch follows (PLACEHOLDER_SHA → actual SHA). NO `.claude/agents/` changes from this finalize.
+Single atomic commit (artifact + staging log + housekeeping + 7 consumed-report frontmatter touches) + `git push origin main`. Two-phase SHA patch follows (f93eaff → actual SHA). NO `.claude/agents/` changes from this finalize.

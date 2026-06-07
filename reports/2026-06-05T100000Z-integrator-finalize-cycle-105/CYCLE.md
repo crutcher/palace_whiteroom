@@ -39,7 +39,7 @@ Staging-row count 4 == 4 dispatched-ready reports. The cycle-018 staging-complet
 - **retroactive-budget global = 0** (forward content + citation hygiene + a no-op; no retroactive edits). Well under the ≥4 block threshold.
 - **build-breakage repair:** NONE needed. `cargo make book` EXIT 0.
 - **commit atomicity:** single commit (below).
-- **consumed-report frontmatter integrity:** all 4 marked `status: integrated` + `integrated_at: 2026-06-05T100000Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA patch below) + `integration_notes`.
+- **consumed-report frontmatter integrity:** all 4 marked `status: integrated` + `integrated_at: 2026-06-05T100000Z` + `integration_commit: f93eaff` (two-phase SHA patch below) + `integration_notes`.
 - Per-report gates (valid-YAML, dangling-reference/dangling-live-link, rank-well-foundedness, forward-edge-without-surface, SUMMARY-registration, alpha-position, citecheck-bounds, forward-ref-de-stale-completeness): all **0** across all 4 staging rows. NO repair phase ran (all 4 set ready by the critic directly).
 
 ## Build status
@@ -107,4 +107,4 @@ The whole batch was the meta-phase-owned **GRADED-STACK TYPED-EDGE CAMPAIGN P1**
 
 ## Commit
 
-Single atomic commit + push to `origin/main` (the staging log + all 4 per-report integrator changes + the new `set-subvector-zero-mutation-rotation.md` + finalize housekeeping writes + the 4 consumed-report frontmatter touches). Two-phase SHA patch follows (replaces `PLACEHOLDER_SHA` in the 4 reports' `integration_commit` with the actual SHA, then re-push). Written by `integrator-finalize` (split integrator-per-report ×4 + finalize ×1).
+Single atomic commit + push to `origin/main` (the staging log + all 4 per-report integrator changes + the new `set-subvector-zero-mutation-rotation.md` + finalize housekeeping writes + the 4 consumed-report frontmatter touches). Two-phase SHA patch follows (replaces `f93eaff` in the 4 reports' `integration_commit` with the actual SHA, then re-push). Written by `integrator-finalize` (split integrator-per-report ×4 + finalize ×1).
