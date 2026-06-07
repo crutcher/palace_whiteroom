@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T134107Z
 scope: L1 kernel-impl-realizes-kernel-api empirical-match re-audit — libceed-quadrature-kernel-impl
 status: pending
 integrated_at: 2026-06-07T134107Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bdb62e
 integration_notes: "Applied clean by integrator-per-report (D2); finalized cycle-126 (batch-40 CLOSER). Audit-only FIRMING empirical-match re-audit of the now-firm libceed-quadrature-kernel-impl: verified_against test-libceed.cpp:284 row upgraded empirical-anchor-confirmed-deferred->empirical-match + new :328-377 harness row; NO status/rank/edge change; DIRECTIVE-3 integrity preserved (kernel-api obstruction surface untouched). DIRECTIVE-3 impl-realizes-API empirical-match owed-debt discharged. Build EXIT 0, no finalize build-repair."
 inputs:
   - book/src/L1/libceed-quadrature-kernel-impl.md

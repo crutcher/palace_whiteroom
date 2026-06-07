@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T140000Z
 scope: L4 roadmap_goal cap — mk_matrix_free_operator backend-lowering operator-constructor + pull-chain
 status: pending
 integrated_at: 2026-06-07T134107Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 8bdb62e
 integration_notes: "Applied clean by integrator-per-report (D1); finalized cycle-126 (batch-40 CLOSER). NEW L4 roadmap_goal cap mk_matrix_free_operator created + pull-chain wired reference-class (rank_violations:0 holds — no firm->roadmap_goal depends-on); SUMMARY/L4-index alpha-inserted; RESOLUTION MARKER appended for OQ mk_matrix_free_operator-l4-backend-lowering-placeholder (header-close = batch-40 meta unify-authority). Build EXIT 0, no finalize build-repair."
 inputs:
   - reports/2026-06-07T134107Z-cycle-planner-c126/CYCLE.md (D1 entry)
