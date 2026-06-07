@@ -80,7 +80,7 @@ inputs:
 
 ## L4 / L3 strawman + pseudo-language conventions
 
-When re-anchoring themes at **L4>L3** or **L3>L2**, the canonical reference is `book/src/design/l4_calculus.md` (the L4 strawman, user directive 2026-05-27, mid-cycle-006). The strawman's notation must be preserved during the lift:
+When re-anchoring themes at **L4>L3** or **L3>L2**, the canonical reference is the active-management semantic surface `book/src/semantics/index.md` (the surface got its own home at cycle-116, relocated from the former `book/src/design/l4_calculus.md`; user directive 2026-05-27, mid-cycle-006). The surface's notation must be preserved during the lift:
 
 - **Signatures**: Haskell `::` arrow form — `f :: A -> B -> C`.
 - **Records**: TypeScript brace form — `{ field: type }`.

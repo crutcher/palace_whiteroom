@@ -582,6 +582,27 @@ This shape is load-bearing, and it follows three principles:
 > link-checker), a reminder that as the dependency graph became load-bearing, every destructive refactor must
 > sweep the typed edges, not only the prose links.
 
+> **The "A then B" arc completed — the in-scope spine is L4-COMPLETE (batch-41).** Cycles 127/128/129
+> finished the two-step forward direction the human set after the lift-through. "A" (cycle-127): the
+> matrix-free / element-local constructive-kernel layer landed fully firm across three layers — the L1
+> contraction substrate, the L2 combinator, and the L4 operator-constructor (`mk_matrix_free_operator`
+> firm-flipped off `roadmap_goal` once a feature-surface composition-root pulled it by a faithful
+> `depends-on` chain) — which grounded the libCEED-substrate reachability baseline-exception exactly as
+> its promotion condition predicted, and folded the inner-product reduce-family (`dot`/`nrm2`) into its
+> combinator. "B" (cycle-128): the 5-driver L4-completeness capstone audited whether every simulation
+> driver (electrostatic / magnetostatic / eigenmode / driven / transient) plus the lifecycle root reaches
+> L4 by composing firm vocabulary *by name* — and returned ALL-PASS, with the only two non-trivial
+> constituents (the SLEPc eigensolve loop, the transient per-step ODE body) being tracked opaque-boundaries
+> rather than coverage gaps: **no gap.** A mid-batch user directive (the calculus is high-order;
+> closure-returning signatures group the closure or use the `Op[τ_in → τ_out]` operator-value spelling, never
+> the opaque type-application form) was codified onto the semantic surface as §1.3.1 and completed
+> end-to-end. The lesson the arc adds, and the reason this is a juncture rather than just another batch:
+> a top-down completeness audit against the firm bottom-up vocabulary is how the project *recognizes
+> done-ness* — when the feature-surface roots all reach L4 by name, the in-scope artifact is complete for
+> its in-scope purpose, and the forward question becomes a strategic one (wind to maintenance, or open a
+> deferred-and-gated direction like the sharding-math) rather than a coverage-filling one. The capstone's
+> own recommendation is to wind the in-scope spine to maintenance.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
