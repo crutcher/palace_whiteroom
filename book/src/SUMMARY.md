@@ -79,6 +79,7 @@
   - [linear_combination](./L4/linear_combination.md)
   - [mk_matrix_free_operator](./L4/mk_matrix_free_operator.md)
   - [nrm2](./L4/nrm2.md)
+  - [sharding-decompose-reduce](./L4/sharding-decompose-reduce.md)
   - [sparameter_reduce](./L4/sparameter_reduce.md)
   - [waveguide_mode_reduce](./L4/waveguide_mode_reduce.md)
 - [Outer-driver caps & coordination combinators](./L4/outer-driver-combinators-intro.md)
