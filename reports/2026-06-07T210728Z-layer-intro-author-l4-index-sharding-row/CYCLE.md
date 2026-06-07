@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T210728Z
 scope: L4 index — add roadmap_goal dep-map row for sharding-decompose-reduce; resolve 2 flagged OQs
 status: pending
 integrated_at: 2026-06-07T220000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 51443e7
 integration_notes: |
   Applied clean by integrator-per-report (staging row `l4-index-sharding-row`, status applied). Landed one `roadmap_goal` dep-map row for `sharding-decompose-reduce` into book/src/L4/index.md's "Data-algebra combinators & named verbs" table, alpha-positioned between `nrm2` and `sparameter_reduce` (mirroring the `mk_matrix_free_operator` rank-0 precedent at index.md:119); signature cell's Haskell list-comprehension bar ESCAPED `\|`. Resolved 2 OQs (L4-index-listing → YES; SUMMARY-placement → RATIFIED). FINALIZE BUILD-VERIFY PASSED: cargo make book EXIT 0; the new row renders as a well-formed 5-cell (5-column) `<td>` table row in book/book/html/L4/index.html — the escaped `\|` did NOT split it into an extra column; 0 katex-in-pre blocks (no `$`-sigil collision). Graded-stack lint counts UNCHANGED vs c134 (`files=386, rank_violations=0, unresolved=0` — a `reference`-class navigational row adds NO typed-graph `depends-on` edge).
 ---

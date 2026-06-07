@@ -31,7 +31,7 @@ c135 is the **thin consolidation + maintenance BATCH-CLOSING** cycle of meta-bat
 - **retroactive-budget global:** 0 (well under the ≥4 block threshold). PASS.
 - **build-breakage repair:** 0 build-repairs needed.
 - **commit atomicity:** single commit (this finalize). PASS.
-- **consumed-report frontmatter integrity:** both consumed reports stamped `integrated_at: 2026-06-07T220000Z` + `integration_commit: PLACEHOLDER_SHA` (two-phase SHA-patch follows) + `integration_notes`. PASS.
+- **consumed-report frontmatter integrity:** both consumed reports stamped `integrated_at: 2026-06-07T220000Z` + `integration_commit: 51443e7` (two-phase SHA-patch follows) + `integration_notes`. PASS.
 - Per-report gates (recorded by integrator-per-report): all PASS/N-A. The only staging gate-hit was 4 AMBIG citecheck hits on the bare basename `index.md` in the D1 report's prose — NON-BLOCKING (the report's shorthand for the file it is itself editing; the critic verified every on-disk target resolves; the landed row uses relative `./*.md` links). No MISS/OOB; no broken book link landed.
 
 ## Build status

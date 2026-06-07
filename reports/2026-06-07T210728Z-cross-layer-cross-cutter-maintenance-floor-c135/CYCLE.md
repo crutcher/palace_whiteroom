@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T210728Z
 scope: L-stack maintenance-floor standing hygiene + batch-43-meta tee-up — c135 (batch-43 BATCH-CLOSING)
 status: pending
 integrated_at: 2026-06-07T220000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 51443e7
 integration_notes: |
   Applied clean by integrator-per-report (staging row `maintenance-floor-c135`, status applied). Audit-class clean-bill report — NO book mutation (carries no `## Proposed changes`); touched only scaffolding/open-questions.md (append-only) promoting 4 batch-43-meta TEE-UP findings. Graded-stack disposition HELD EXACTLY vs c134 (`files=386, typed=325, reachable=163, reference_reachable=247, rank_violations=0, unresolved=0, promotion_frontier=11, detritus=123, true_detritus=51, roadmap_goal-bucket=4`). All per-report safety-net gates no-op (no proposed-changes). The 4 tee-ups (formal RE-disposition for the new node, exception-ledger re-baseline, DIRECTIVE-1 confirmation, hygiene-sweep cadence) are META-OWNED and carried verbatim into the batch-43 meta-phase tee-up.
 ---
