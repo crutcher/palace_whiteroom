@@ -10,7 +10,7 @@ The OUT-OF-BAND RESCOPE meta-phase (fired off-schedule 2026-06-07 to enact three
 - §Scope — rewritten with the three re-scope directives (MPI/sharding deferred future direction with the non-destabilization gate; the geometric-multigrid preconditioner + AMR now in active scope; the enum-stub-vs-spine-dependency-opaque-kernel split).
 - §Methodology invariants — NEW invariant "Kernel-API vs kernel-IMPLEMENTATION distinction" (spine-dependency opaque-library kernels get BOTH a `kernel-api` surface + a `kernel-impl` node, linked by a `realizes-kernel-api` `reference`-class edge).
 
-**`.claude/agents/` (6 role-specs):**
+**`.claude/agents/` (7 role-specs):**
 - `cycle-planner.md` — NEW 2026-06-07-RESCOPE banner: the lift-through frontier (geometric-multigrid preconditioner = LEAD; constructive spine-dependency kernels; AMR; RE-discharge tail); STOP-PROPOSING LIFTED for the in-scope set; MPI/sharding stays OUT.
 - `harvester.md` — NEW banner: kernel-API/impl distinction (author the `kernel-impl`, keep the `kernel-api`, link `realizes-kernel-api` `reference`-class) + lift-through-deferred discipline.
 - `abstractor.md` — NEW banner: same kernel-API/impl + lift-through (supersedes "obstruction theme = no constructive form" for spine-dependency opaque-library kernels; enum-stub carve-out preserved).
