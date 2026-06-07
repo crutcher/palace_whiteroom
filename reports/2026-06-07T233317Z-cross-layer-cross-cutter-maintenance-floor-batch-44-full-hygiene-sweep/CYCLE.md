@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T233317Z
 scope: L-stack maintenance-floor full-hygiene sweep — batch-44 BATCH-CLOSING (c138), now COVERING the full synthesis/ Part
 status: integrated
 integrated_at: 2026-06-07T235126Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f1b69f1
 integration_notes: "cycle-138 (batch-44 BATCH-CLOSING). MAINTENANCE FLOOR clean-bill, AUDIT-CLASS; NO book/scaffolding mutation. The once-per-batch full-hygiene sweep (batch-43-enacted cadence). Verified rank_violations==0, unresolved_depends_on_targets==0, all 6 synthesis chapters reference-class-only (0 blocking edges, correct GC = expected_unreachable_outside_dag), 3 realizes-kernel-api reference-class edges, 3 #extern boundaries, 0 $-sigil-fence leaks, DIRECTIVE-1 MPI boundary clean. DISCHARGES OQ synthesis-edges-next-batch-maintenance-floor-audit. No OQ append needed. No build relevance. retroactive-budget 0."
 ---
 

@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T233350Z
 scope: cycle-138 synthesis-rendered-def-vs-l4-correspondence-audit — the c137-un-pulled three Synthesis libraries (coordination / drivers / types) vs their authoritative L4 / feature / concepts homes
 status: integrated
 integrated_at: 2026-06-07T235126Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f1b69f1
 integration_notes: "cycle-138 (batch-44 BATCH-CLOSING). AUDIT-CLASS, FULLY-SUPPORTED verdict; NO book mutation (no ## Proposed changes). Completes the whole-Part Synthesis rendered-def<->L4 correspondence-audit coverage (c137 covered iteration + data-algebra; this covered coordination + drivers + types), modulo 2 gated non-blocking residuals. Promoted 2 NEW OQs (l4-eigsolve-initial-state-vs-initial-eig-state-seed-inconsistency -> abstractor; synthesis-types-iodata-omits-units-field -> layer-intro-author). DISCHARGES OQ synthesis-correspondence-audit-coverage-coordination-drivers-types-next-pull. No build relevance. retroactive-budget 0."
 inputs:
   - book/src/synthesis/coordination.md

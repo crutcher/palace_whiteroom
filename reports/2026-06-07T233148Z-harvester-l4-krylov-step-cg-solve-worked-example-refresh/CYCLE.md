@@ -4,7 +4,7 @@ invoked_at: 2026-06-07T233148Z
 scope: L4 operator: krylov-step (cg_solve worked-example call-form refresh)
 status: integrated
 integrated_at: 2026-06-07T235126Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: f1b69f1
 integration_notes: "cycle-138 (batch-44 BATCH-CLOSING). Applied the single [old]->[new] edit to book/src/L4/krylov-step.md:192-197 (stale cg_solve Form-B worked-example -> canonical iterate_while_with_prev boot/init/steady/cont arg order + record returns). krylov-step stays firm; no dep-map/SUMMARY edit; edit inside the pre-existing ```text fence. DISCHARGES OQ synthesis-l4-krylov-step-worked-example-cg-solve-stale-vs-iterate-while-with-prev-signature; promoted OQ iterate-while-with-prev-evidence-prose-stale-cg-call-shape. cargo make book EXIT 0; step-5c KaTeX assertion PASS. retroactive-budget 0."
 inputs:
   - book/src/L4/krylov-step.md:192-198 (the stale cg_solve Form-B worked example)
