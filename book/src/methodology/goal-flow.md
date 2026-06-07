@@ -490,6 +490,30 @@ This shape is load-bearing, and it follows three principles:
 > in live use. The lesson of the whole arc: an honest plateau is a scope decision, and opening the deferred scope
 > exposes the next layer of substrate-and-grounding work rather than ending the project.
 
+> **The directives' campaign was consumed, and the plateau was confirmed a third time (batch-38 close).** Cycles
+> 118/119/120 ran the mesh→fe_space substrate campaign to completion and then re-confirmed the plateau. Cycle-118
+> (the opener, six clean dispatches) homed the three L1>L0 construction-rotation themes for the new substrate ops,
+> ground `build_mesh` off detritus via the faithful `lifecycle → build_mesh` composes edge (the §2f preferred
+> GROUND, since `build_mesh` literally *is* the lifecycle composition-root's `config→mesh` stage), homed the
+> `waveguide_mode_reduce` L4 verb (promoting the sixth output-product column off rough-in), and landed the
+> `Mesh`/`WaveguideModeTable` record-definition pages. Cycle-119 cleared the honest grounding/hygiene tail — the
+> analogous L4 lifecycle sibling edge and an interpolator citation over-range. Cycle-120 was an
+> *observation-only* plateau-probe (a `cross-layer-cross-cutter` re-derivation that did not trust the c118/c119
+> finalizes) that re-confirmed the terminal-state on both axes (rank invariant clean; the STRONGER-garbage set
+> maps exhaustively to the ratified reachability baseline-exceptions; no in-scope coverage hole). The probe's
+> load-bearing finding was a **stale baseline-exception premise**: RE10 (the de-Rham `interpolator`) had been
+> ratified as "no faithful inbound consumer yet," but the now-firm `waveguide_mode_reduce` (and the firm
+> `divfree-projector`) *do* consume it by name — so a correct baseline-exception had silently become a missed
+> GROUND the moment its consumer firmed. The batch-38 meta-phase discharged RE10 (migrating the faithful grounding
+> to the next batch) and installed a new standing guard: the every-batch baseline-exception review must
+> re-verify each "no faithful consumer" premise against any consumer that firmed in the batch. The lesson the arc
+> adds: a tracked baseline-exception is not a permanent disposition — it carries a promotion condition precisely
+> *because* the world can change under it, and the every-batch re-check is what converts a now-stale exception
+> back into an honest grounding rather than letting it ossify into permanent garbage. With the directives' work
+> fully consumed and the plateau confirmed a third consecutive time (batch-36 → batch-37 → batch-38), the project
+> stands at a genuine terminal-state-of-current-scope: the disciplined recognition that the next move is again a
+> deliberate scope decision for the human, not a forced internal frontier.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
