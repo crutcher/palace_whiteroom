@@ -603,6 +603,24 @@ This shape is load-bearing, and it follows three principles:
 > deferred-and-gated direction like the sharding-math) rather than a coverage-filling one. The capstone's
 > own recommendation is to wind the in-scope spine to maintenance.
 
+> **A bounded consolidation polish pass, then the forward question returns (batch-42).** Cycles 130/131/132
+> were the human's chosen response to the batch-41 done-ness recognition: rather than immediately winding to
+> maintenance, a bounded *consolidation* pass to bring the calculus surface to fully-consistent. The whole pass
+> was about a single notational invariant — that a high-order operator's codomain, when it is genuinely an
+> operator *value*, is spelled in the bracketed `Op[τ_in → τ_out]` / `LinOp[(N: …), $N]` form (which carries
+> the in/out arrow and the shape-group congruence), never the opaque `LinearOperator[N,N]` type-application
+> form. The pass swept every calculus-level (L4/L3/L2) operator-value codomain into the bracketed spelling,
+> promoted the matching `op-with-params` *introduction* form into the grammar (it had only had its elimination
+> form, the `apply` rule), and retired a latent build-fragility (two long section-anchors that ~60 inbound
+> links depended on staying verbatim). It moved no node's maturity — the graded-stack health signals held
+> exactly across all three cycles — because consolidation is not construction: it makes the *same* artifact
+> say itself more consistently. The lesson the arc adds: once the artifact is recognized as in-scope-complete,
+> the remaining work splits cleanly into (a) bounded consolidation that converges (this pass — and it
+> *exhausted*, the convert-axis grep going to zero), and (b) the standing maintenance floor (liveness, GC,
+> RE-set re-checks). When (a) is done, the forward question is once again the strategic one the capstone
+> raised — wind to maintenance, or open a deferred-and-gated direction — with no bounded in-scope construction
+> left in between. That is the juncture batch-42 leaves the project at.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
