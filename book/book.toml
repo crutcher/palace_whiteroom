@@ -14,6 +14,13 @@ create-missing = false
 
 # ── preprocessors ─────────────────────────────────────────────────────────────
 
+# Strip the leading YAML frontmatter block (read by tools/graded-stack-lint) so
+# mdBook does not render it — without this the `# comment` frontmatter lines render
+# as <h1> section headers and the `key: value` lines as body text. Runs first.
+[preprocessor.frontmatter]
+command = "python3 ./strip-frontmatter.py"
+before = ["mermaid", "katex", "links"]
+
 [preprocessor.mermaid]
 command = "mdbook-mermaid"
 
