@@ -443,3 +443,43 @@ verified_against:
     audited_at: 2026-06-07T203807Z
     note: R·A·P Galerkin triple product assembly (hypre_ParCSRMatrixRAPKT / hypre_ParCSRMatMat) — eventual operator-restrict-and-compose MECHANISM (citecheck --anchor ok)
 ```
+
+```yaml
+verified_against:
+  - citation: book/src/L4/sharding-decompose-reduce.md:103-113,244-267
+    verdict: supports
+    audited_at: 2026-06-08T172000Z
+    note: SOLVE-case recovery framed STRICTLY WEAKER than reduce case — exact ONLY for block-diagonal, approximate additive-Schwarz preconditioner for coupled, partition-of-unity-weighted for overlapping; no false exact-recovery claim; mirrors domain_energy_reduce Sigma p=1 config-conditional NON-law
+  - citation: book/src/L4/sharding-decompose-reduce.md:184-221
+    verdict: supports
+    audited_at: 2026-06-08T172000Z
+    note: speculative laws framed as DERIVED-from-firm-law INTENT, not asserted proven; only reduce-case law 1 rides a standing firm law; solve-case law 5 explicitly CONFIG-CONDITIONAL (block-diagonal exact, coupled approximate) — no analogous free solve law claimed
+  - citation: book/src/L4/sharding-decompose-reduce.md:6-14
+    verdict: supports
+    audited_at: 2026-06-08T172000Z
+    note: 3 new solve roots (ksp_solve/fold_solve/krylov-step) under the reference edge-class ONLY in frontmatter edges; zero depends-on key; all 3 confirmed rank firm on-disk — no rank(firm)=3 > rank(roadmap_goal)=0 violation manufactured
+  - citation: book/src/L4/domain_energy_reduce.md:172-178
+    verdict: supports
+    audited_at: 2026-06-08T172000Z
+    note: Sigma p=1 config-conditional partition-coverage NON-law — the exact model the SOLVE exact-recovery NON-law mirrors (overlap double-count, partial under-count)
+  - citation: book/src/L4/inner_product.md:154-157
+    verdict: supports
+    audited_at: 2026-06-08T172000Z
+    note: firm split-additivity / shape-concatenation monoid-homomorphism — the standing firm law the REDUCE case (law 1) rides; verified anchor exact
+  - citation: book/src/L4/linear_combination.md:146-151
+    verdict: supports
+    audited_at: 2026-06-08T172000Z
+    note: firm concatenation-homomorphism (reduce-to-tensor recovery) — standing firm law for the reduce case; verified anchor exact
+  - citation: reference/palace/palace/utils/geodata.cpp:262,3239,3242
+    verdict: supports
+    audited_at: 2026-06-08T172000Z
+    note: DIRECTIVE-1 MPI mesh-partitioning mechanism (Partition / GeneratePartitioning / N-subdomain split) cited in deferred-future Evidence framing, NOT lifted; citecheck --anchor ok on all three
+  - citation: reference/palace/palace/linalg/rap.hpp:24,rap.cpp:116-126
+    verdict: supports
+    audited_at: 2026-06-08T172000Z
+    note: DIRECTIVE-1 ParOperator / RAP Galerkin triple-product parallel-assembly mechanism cited as deferred realization path, NOT lifted; citecheck --anchor ok
+  - citation: reference/palace/palace/models/romoperator.cpp:586
+    verdict: partially-supports
+    audited_at: 2026-06-08T172000Z
+    note: no-native-DD-preconditioner claim confirmed (no Schwarz anywhere in palace; only overlap site is the wave-port ROM check); chapter cites bare romoperator.cpp:586 omitting the models/ dir prefix — content correct, path under-qualified
+```
