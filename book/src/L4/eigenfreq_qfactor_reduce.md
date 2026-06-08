@@ -35,11 +35,10 @@ backend wants** ([`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-a
 target) — the output-product half of the eigenmode composition root
 ([`eigenmode.L4`](../feature/eigenmode.L4.md)) reaches the L4 surface through it.
 
-It is **genuine NEW spine vocabulary, NOT a `gram_reduce` specialization** — c074 D6
-probed and REFUSED the eigenmode-as-3rd-Gram-witness subsume: the eigenmode Q-factor is a
+It is **genuine NEW spine vocabulary, NOT a `gram_reduce` specialization** — the
+eigenmode-as-3rd-Gram-witness subsume is REFUSED: the eigenmode Q-factor is a
 per-mode SCALAR-RATIO (rank-1, one `(f,Q)` row per mode), with no family-PAIR grid, the
-wrong rank for a symmetric-Gram reduction (`gram_reduce.md:178-189`; OQ
-`gram-reduce-third-witness-probe-eigenmode-driven-postprocess`, CLOSED-NEGATIVE). It is
+wrong rank for a symmetric-Gram reduction (`gram_reduce.md:178-189`). It is
 the eigenmode output-product column's OWN reduction verb.
 
 ## Context
@@ -119,7 +118,7 @@ field readout, NOT part of this `(f,Q)` scalar reduction.
 This is the **reduce-to-scalar-table** rank between the reduce-to-scalar `inner_product`
 (one scalar over a tensor) and the reduce-to-matrix `gram_reduce` (a matrix over a
 family-PAIR grid): `eigenfreq_qfactor_reduce` produces a 1-D table of scalar tuples over a
-family (rank-1, per-mode), the wrong rank for a Gram subsume — the c074 D6 closed-negative.
+family (rank-1, per-mode), the wrong rank for a Gram subsume.
 
 ## Algebraic laws
 
@@ -148,8 +147,7 @@ Laws that explicitly **do not** hold:
   per-mode map producing one table row each. (Contrast `inner_product`, which DOES reduce
   across the length axis.)
 - **Not a symmetric-Gram reduction.** No family-PAIR grid, no symmetric mirror — the
-  rank-1 vs rank-2 distinction from [`gram_reduce`](./gram_reduce.md) (c074 D6
-  closed-negative; OQ `gram-reduce-third-witness-probe-eigenmode-driven-postprocess`).
+  rank-1 vs rank-2 distinction from [`gram_reduce`](./gram_reduce.md).
 
 ## Dependencies
 
@@ -160,8 +158,8 @@ Laws that explicitly **do not** hold:
 Sibling data-algebra reduction combinators (the L4 algebra-of-folds family):
 
 - [`gram_reduce`](./gram_reduce.md) (reduce-to-matrix) — the rank-2 family-PAIR Gram
-  reduction; `eigenfreq_qfactor_reduce` is the rank-1 per-mode sibling (the c074 D6
-  closed-negative non-subsume: different rank, scalar-ratio vs bilinear).
+  reduction; `eigenfreq_qfactor_reduce` is the rank-1 per-mode sibling (the
+  non-subsume: different rank, scalar-ratio vs bilinear).
 - [`inner_product`](./inner_product.md) (reduce-to-scalar) — the single-tensor reduction;
   `eigenfreq_qfactor_reduce`'s per-mode κ (the `½R|I|²/E` energy ratio) is a small inner
   weighted-reduction at the single-mode level.
@@ -178,52 +176,28 @@ substantive downward content (the C++ readout loop, the problem-type un-transfor
 `eigensolver.cpp:430-439`, the κ computation `postoperator.cpp:1188-1203`) lives in the
 eigenmode driver / postoperator L0 and the firm L1 scalar-map primitives. **Both scalar-map
 halves now have firm L1 homes:** the eigenvalue un-transform `√μ`/`λ/i` →
-[`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (firm, c080); the κ participation
-ratio `½R|I|²/E` → [`participation_ratio`](../L1/participation_ratio.md) (firm, c077). This entry
+[`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (firm); the κ participation
+ratio `½R|I|²/E` → [`participation_ratio`](../L1/participation_ratio.md) (firm). This entry
 records the rotation direction in-line per high→low discipline; it does not author a theme.
 
 ## Status
 
-`firm`. **Reasoning (firm-on-positive-structure / syntactic-identity escape):** the
-combinator's **structure** is read directly off the two positive readout sites — the
-eigenvalue→ω un-transform (`eigensolver.cpp:424-439`) and the Q-factor body
-(`postoperator.cpp:1185-1203`) — and **every** law (§Algebraic laws) is a **syntactic
-identity** on the per-mode map: law 1 (concatenation-homomorphism) is a read-off of the
-inter-mode-stateless readout loop (`eigensolver.cpp:424`, `postoperator.cpp:1180`); law 2
-(un-transform purity) folds the **firm L1** [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md)
-(c080) then a bare `.real()`; law 3 (Q is a scalar ratio) folds the **firm L1**
-[`participation_ratio`](../L1/participation_ratio.md) (c077) into the bare `f/|κ|` quotient
-(`:1200-1202`); law 4 (lossless totality `κ=0 ⇒ Q=∞`) is read literally off the
-`(κ == 0.0) ? mfem::infinity() :` branch (`:1200-1202`). The eigenpair→`(f,Q)` **assembly**
-— `quality_factor = freq_re / std::abs(mode_port_kappa)` (`:1202`) — is bare scalar
-arithmetic composing two firm halves; it carries **no axiom requiring an unverified
-mathematical property**. This is the same escape that landed
-[`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (c080),
-[`assemble_frequency_operator`](./assemble_frequency_operator.md), and
-[`frequency_sweep`](./frequency_sweep.md) firm; the contrast is the SIBLING c080
-[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) audit, which RULED OUT the escape
-precisely because its norm-axiom laws (triangle / Cauchy–Schwarz / parallelogram) are
-theorems conditional on an inner-product structure (SPD/Hermitian `B`) the L0 source only
-*numerically asserts*. No such theorem-needing-proof exists in this verb's assembly.
-
-**Both structure-side gates were already discharged before this promotion:** both per-mode
-building blocks the verb folds have firm L1 homes — the **eigenvalue un-transform** is firm
-L1 [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (c080) and the
-**κ-participation** half is firm L1 [`participation_ratio`](../L1/participation_ratio.md)
-(c077). The earlier `rough-in (test-coverage-bounded)` qualifier was held only on the
-absence of a dedicated eigenpair→`(f,Q)` **assembly test** (gate-(b)). The batch-25
-meta-phase established the Palace corpus contains **no positive assembly test** (only
-output-round-trip-invariance tests), so a new test is out of write-scope — and the OQ
-`eigenfreq-qfactor-reduce-firm-needs-assembly-test` named **an in-scope lowering-verifier
-law-confidence pass (now that both folded primitives are firm)** as the alternative
-promotion route. This dispatch IS that pass: the audit finds the assembly-level laws are
-syntactic identities over firm primitives + positive source, carrying no residual untested
-semantic claim, so the firm-on-positive-structure escape discharges gate-(b). The existing
-PostOperator postprocess unit test (`palace/test/unit/test-postoperator.cpp`, the `[idempotent]`
-round-trip) remains supporting **output-invariance** documentation (the κ loss rate
-`mode_port_kappa` `:216`/`:259`, the `participation_ratio` fields `:160-188`) — L0-equivalent
-evidence the output fields exist and are unit-coherent — but it is **not** the firming basis;
-the firming basis is the syntactic-identity escape.
+`firm` (firm-on-positive-structure / syntactic-identity escape) — the combinator's structure is read
+directly off the two positive readout sites — the eigenvalue→ω un-transform
+(`eigensolver.cpp:424-439`) and the Q-factor body (`postoperator.cpp:1185-1203`) — and every law
+(§Algebraic laws) is a syntactic identity on the per-mode map: law 1 (concatenation-homomorphism) reads
+off the inter-mode-stateless readout loop; law 2 (un-transform purity) folds the firm L1
+[`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) then a bare `.real()`; law 3 (Q is a scalar
+ratio) folds the firm L1 [`participation_ratio`](../L1/participation_ratio.md) into the bare `f/|κ|`
+quotient (`:1200-1202`); law 4 (lossless totality `κ=0 ⇒ Q=∞`) reads literally off the
+`(κ == 0.0) ? mfem::infinity() :` branch. The eigenpair→`(f,Q)` assembly
+(`quality_factor = freq_re / std::abs(mode_port_kappa)`, `:1202`) is bare scalar arithmetic composing
+two firm halves, carrying no axiom requiring an unverified mathematical property. (Contrast the SIBLING
+[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) audit, which RULED OUT the escape because its
+norm-axiom laws are theorems conditional on an inner-product structure the L0 source only numerically
+asserts; no such theorem-needing-proof exists in this verb's assembly.) The Palace corpus contains no
+positive assembly test (only output-round-trip-invariance tests), so the missing dedicated test does not
+gate the syntactic-identity laws.
 
 **Scope: 1-of-1 — the eigenmode pipeline's output product.** This is the eigenmode driver's
 OWN output-product reduction; it is not a cross-pipeline shared verb (the other four
@@ -234,45 +208,7 @@ transient via the field/energy time-history, field-energy via the per-DOMAIN sib
 does not apply — this is a single-pipeline output-product verb by design (like
 [`frequency_sweep`](./frequency_sweep.md)'s single-witness-driven-by-design scope).
 
-verified_against:
-
-```yaml
-verified_against:
-  - citation: palace/drivers/eigensolver.cpp:424-439
-    verdict: supports
-    audited_at: 2026-06-03T200338Z
-    note: positive site 1 (the un-transform readout) re-verified on-disk via citecheck --anchor; readout loop start line 424, std::sqrt at line 433 (linear EVP), omega /= 1i at line 438 (quadratic EVP); law 2 is a firm-L1 (eigenvalue-untransform c080) composition over this site, a syntactic identity not a theorem.
-  - citation: palace/models/postoperator.cpp:1185-1203
-    verdict: supports
-    audited_at: 2026-06-03T200338Z
-    note: positive site 2 (the Q-factor assembly) re-verified on-disk via citecheck --anchor; resistor_power = 0.5|R|Re(I conj I) at line 1197, mode_port_kappa signed quotient at lines 1198-1199 (firm L1 participation_ratio c077), quality_factor = (kappa==0) ? infinity() else freq_re/|kappa| at lines 1200-1202; the assembly is bare scalar arithmetic over two firm halves — firm-on-positive-structure escape applies (no inner-product-axiom content, the matrix-weighted-norm contrast).
-  - citation: palace/models/postoperator.cpp:1171-1222
-    verdict: supports
-    audited_at: 2026-06-03T200338Z
-    note: full MeasureLumpedPortsEig body read on-disk; the per-port loop line 1180 and per-mode readout (eigensolver.cpp line 424) carry NO inter-mode accumulator, so law 1 (concatenation-homomorphism) is a structural read-off of the list-map spine, not a derived theorem.
-  - citation: palace/test/unit/test-postoperator.cpp:216-216
-    verdict: partially-supports
-    audited_at: 2026-06-03T200338Z
-    note: mode_port_kappa CHECK-asserted invariant under nondimensionalization (output-invariance documentation of the kappa reduction-output field); supporting, NOT the firming basis (the firm-on-positive-structure escape is) — verdict unchanged from the c079 audit.
-  - citation: palace/test/unit/test-postoperator.cpp:160-188
-    verdict: partially-supports
-    audited_at: 2026-06-03T200338Z
-    note: participation_ratio CHECK-asserted round-trip-invariant (output-invariance documentation of the per-mode energy-participation reduction-output); supporting, NOT the firming basis — verdict unchanged from the c079 audit.
-  - citation: book/src/L1/eigenvalue-untransform.md
-    verdict: supports
-    audited_at: 2026-06-03T200338Z
-    note: firm L1 home of the folded un-transform half (c080); landed firm on the SAME firm-on-positive-structure escape, so law 2 is a firm-primitive composition.
-  - citation: book/src/L1/participation_ratio.md
-    verdict: supports
-    audited_at: 2026-06-03T200338Z
-    note: firm L1 home of the folded kappa-participation half (c077); the resistive kappa = 1/2 R|I|^2/E quotient the verb's kappa closure folds — firm, so law 3 is a firm-primitive composition.
-```
-
 ## Evidence
-
-All L0 citations self-verified on-disk this dispatch via the codemap
-(`mcp__palace-codemap__read_range` + `search_text` line pinpoints against
-`reference/palace/`).
 
 - **Eigenfrequency un-transform (positive site 1):** `palace/drivers/eigensolver.cpp:424`
   (the `for (int i = 0; i < num_conv; i++)` readout loop start), `:427`
@@ -280,7 +216,7 @@ All L0 citations self-verified on-disk this dispatch via the codemap
   std::sqrt(omega)` — linear EVP `μ = -λ² = ω²`), `:435-439` (`omega /= 1i` — quadratic EVP
   `λ = iω`), `:458` (`post_op.MeasureAndPrintAll(i, E, B, omega, …)` — the per-mode
   measure+record), `:471` (loop close), `:472-475` (`MFEM_VERIFY(num_conv >= …n)`). Firm L1 home:
-  [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (c080).
+  [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md).
 - **Quality-factor body (positive site 2):** `palace/models/postoperator.cpp:1171-1172`
   (`void PostOperator<solver_t>::MeasureLumpedPortsEig() const` def), `:1177` (`auto freq_re
   = measurement_cache.freq.real()` — `f = Re ω`), `:1188-1191` (the `κ_mj = ½R_j I_mj²/E_m`
@@ -288,23 +224,15 @@ All L0 citations self-verified on-disk this dispatch via the codemap
   `:1198-1199` (`mode_port_kappa = copysign(resistor_power/energy_electric_all, …)`),
   `:1200-1202` (`quality_factor = (κ==0) ? mfem::infinity() : freq_re/|κ|`), loop
   `:1180-1221`. Inductive-port participation sibling (NOT a Q): `:1215-1219`.
-- **Feature-chapter forward-mine flags (the §reduction stage that flagged the mine):**
+- **Composing feature columns:**
   `book/src/feature/eigenmode.L4.md:40,45,55,70`, `book/src/feature/eigenmode.L1.md:36,41,57,61`,
   `book/src/feature/eigenmode.L0.md:29,36`, `book/src/feature/lifecycle.L4.md:44`,
   `book/src/feature/lifecycle.L1.md:41`, `book/src/feature/lifecycle.L0.md:40,45`.
 - **Sibling-combinator grounding:** `book/src/L4/gram_reduce.md` (the reduce-to-matrix
-  sibling + the c074 D6 closed-negative non-subsume at `:178-189`),
+  sibling + the non-subsume at `:178-189`),
   `book/src/L4/inner_product.md` (the reduce-to-scalar sibling),
   `book/src/concepts/black-box-vs-accelerated-kernels.md` §"The combinators rise regardless"
   (the L4-feature-surface-verb warrant).
 - **No dedicated test** exercises the eigenmode postprocess Q-factor / eigenfrequency
   reduction (the `MeasureLumpedPortsEig` body + the readout loop are integration-level under
-  the eigenmode `Solve(mesh)` driver, not unit-tested under `reference/palace/test/unit/`) —
-  the rough-in test-gate.
-- **Provenance:** harvested cycle-075 D3 from the eigenmode feature-column forward-mine flags
-  (`eigenmode.L4.md:40` + the lifecycle output-product surface); c074 D6 established this is a
-  per-mode scalar ratio (NOT a `gram_reduce` family-pair), so this is genuine NEW spine
-  vocabulary (combinator-as-entry). WARRANT verdict: genuine L4 entry (the eigenmode
-  output-product reduction verb; the reduce-to-scalar-table member of the L4 algebra-of-folds,
-  a navigable L4 home for the eigenmode `(f,Q)` reduction — NOT a stranded mine, NOT a
-  `gram_reduce` specialization).
+  the eigenmode `Solve(mesh)` driver, not unit-tested under `reference/palace/test/unit/`).

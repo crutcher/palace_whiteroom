@@ -55,18 +55,11 @@ no convergence predicate, no carry. (The per-element kernel is embarrassingly
 parallel; only the final sum communicates — and the MPI collective is out of scope
 per CLAUDE.md §Scope, ranks read as single-rank equivalents.)
 
-**This supersedes the prior "no L4 entry" verdict.** The firm L3
-[`inner_product`](../L3/inner_product.md) entry records "No `L4/inner_product`
-exists — folds/leaves are not first-class L4 vocabulary (cycle-010 audit)" — the
-reading that *iteration-structural* content is the L4 admission test. The
-2026-06-01 VOCABULARY-SHIFT REDIRECT + L4-is-the-backend-lowering-target framing
+The VOCABULARY-SHIFT REDIRECT + L4-is-the-backend-lowering-target framing
 (memory `project_blackbox_vs_accelerated_kernels`,
-`project_l4_is_backend_lowering_target`) **change the admission test**: L4 is the
+`project_l4_is_backend_lowering_target`) set the admission test: L4 is the
 feature surface, and the data-algebra combinators are feature-surface verbs the
-backend wants, so they rise regardless of carrying iteration structure. The L3
-entry's "no L4" lines are now **stale** and are re-anchored to this entry by a
-follow-up lifter pass (flagged §"Downward to L3" + the report's Open questions —
-not edited this cycle, out of dispatch scope).
+backend wants, so they rise regardless of carrying iteration structure.
 
 ## Semantics (overlay)
 
@@ -134,13 +127,10 @@ Per [`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerated-ke
 "`dot(p, Ap)`" / "residual `nrm2(r)`" rather than an inlined `inner_product`
 application): they **rise to L4 alongside** this combinator as a permitted dual —
 the general combinator vs. the named specializations downstream algorithms
-reference. **They are the next-pull L4 candidates** (`L4/dot`, `L4/nrm2`) — noted
-here, **NOT authored this cycle** (the cycle-068 D3 scope authors the *combinators*;
-the kept named abstractions are a clean follow-on once this combinator is on disk,
-sequenced like `assemble_frequency_operator`). `tdot` is the unconjugated
-complex-only conjugation-axis value (type-API-surface-only caveat: zero Palace call
-sites — declaration + definition only). `bilinear_form` is the weighted member
-(`inner_product_M`; its L1 leaf is rough-in, L1-promotion-gated).
+reference. They have their own L4 homes ([`dot`](./dot.md), [`nrm2`](./nrm2.md)).
+`tdot` is the unconjugated complex-only conjugation-axis value
+(type-API-surface-only caveat: zero Palace call sites — declaration + definition
+only). `bilinear_form` is the weighted member (`inner_product_M`).
 
 ## Algebraic laws
 
@@ -232,7 +222,7 @@ laws, the same deferred IEEE non-law, the same conjugation convention, and the s
 variant-axis profile.
 
 **There is no dedicated L4>L3 theme file** — the identity-in-form annotation lives
-in-line here, per the cycle-012 non-adjacent-identity / in-line-marker convention
+in-line here, per the non-adjacent-identity / in-line-marker convention
 (CLAUDE.md §Methodology invariants "Identity rotations across non-adjacent layers
 are annotated in-line"). This is the **same in-line-marker route**
 [`eigsolve`](./eigsolve.md) and [`chebyshev`](./chebyshev.md) take to their L3
@@ -246,7 +236,7 @@ combinator with no vocabulary shift), so it is correctly an in-line note.
 
 The **substantive** rotation in the downward chain is the L2>L1
 [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md)
-theme (KEPT, cycle-049 D2(c)): the conjugation/element-type/weight dispatch, the
+theme (KEPT): the conjugation/element-type/weight dispatch, the
 value-level `xᴴ y` ↔ `yᴴ x` re-order, and the per-call pinned reduction trees (the
 load-bearing IEEE non-law content). The transitive L4>L3>L2>L1
 identity-then-substantive chain composes this in-line L4>L3 identity with the firm
@@ -254,17 +244,10 @@ L3>L2 identity (the L3 entry's §"Downward to L2") and the substantive L2>L1
 fusion-selection — annotated in-line per the per-adjacent-edge directory convention
 (no `L4-L2`/`L4-L1` directory).
 
-**Staleness note (out of this cycle's edit scope):** the firm L3
-[`inner_product`](../L3/inner_product.md) §Context + frontmatter `lifts_from`
-currently assert "No `L4/inner_product` exists". With this entry on disk those
-lines are stale and should be re-anchored to point up here (a thin lifter
-re-anchor pass, the `eigsolve` precedent). Flagged in the report's Open questions;
-not edited this dispatch.
-
 ## Sibling combinator (do NOT merge)
 
 The scalar-weighted-tensor-sum [`linear_combination`](./linear_combination.md)
-(this cycle's sibling L4 entry) is a **different** fold — scalar-weighted **tensor**
+is a **different** fold — scalar-weighted **tensor**
 sum producing `Tensor[$S]`, NOT a reduce-to-scalar. Its concatenation-homomorphism
 is over the *term list* to `(Tensor[$S], +)`; this combinator's is over the *shape
 group `S`* to `(Scalar, +)`. Its combining step is scale-and-accumulate-over-the-term-
@@ -273,73 +256,39 @@ of folds** at L4 — one tensor-producing, one scalar-producing — deliberately
 merged** (the over-unification guard, symmetric in both entries; carried identically
 at L2/L3/L4).
 
-## Status
-
-`firm` — the L4 form is the calculus-level rendering of the firm L3
-[`inner_product`](../L3/inner_product.md) combinator (firm cycle-051, propagated
-from the firm L2 entry cycle-019 / inverted-to-entry cycle-049 D2): the same
-reduce-to-scalar `Tensor[(S: ...)] -> Tensor[$S] -> Scalar` reduction,
-value-thread-isomorphic across the L4>L3 edge (identity-in-form on the body; no
-monadic wrapper to dissolve — §"Downward to L3"). The seven algebraic laws are
-carried up unchanged (each a syntactic identity or a standard inner-product fact);
-the IEEE-754 reduction-tree non-law is deferred to the firm L2>L1 fusion-selection
-theme (NOT restated as an L4 law); the conjugation convention is pinned at arg-1;
-the variant-axis profile is closed (conjugation = the unification axis;
-element-type + weight-presence orthogonal). It carries **no first-class L4 calculus
-structure of its own** (no `Solve` monad, no iteration carry) — it rises as a
-**feature-surface verb the backend wants** per the
-[`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerated-kernels.md)
-§"The combinators rise regardless" + L4-is-the-backend-lowering-target framing.
-The L0 anchors are **inherited transitively through the firm L3/L2 combinator**
-(self-verified at L2 cycle-019), not re-localized this pass. The `tdot` member
-carries the type-API-surface-only evidentiary caveat inherited from L2/L3 (not a
-status reduction — the reduction *structure* is firm and `dot`/weighted are
-behaviorally exercised; only `tdot`'s behavioral weight is API-only). The
-empirical-match caveat is inherited unchanged from L2 (the `test-vector.cpp:206-207`
-real-dot value test is the positive witness; the missing dedicated test does not
-gate firm because every L4 law is a syntactic identity carried up from the firm
-combinator below — the firm-on-positive-structure / syntactic-identity escape).
-
 ## Evidence
 
 L2 / L3 endpoints (firm; the value-isomorphism this L4 entry rests on):
 
-- `book/src/L3/inner_product.md` (firm cycle-051) — the firm L3 reduction this L4
+- `book/src/L3/inner_product.md` (firm) — the firm L3 reduction this L4
   entry re-expresses through: signature + kernel table (`:82-115`), conjugation
   convention (`:117-131`), the §"Specializations" notes (`:133-166`), the seven
   algebraic laws + deferred IEEE non-law (`:206-270`), the §"Downward to L2"
   identity-in-form note (`:363-387`), variant axes (`:294-317`), the `nrm2`
   do-NOT-merge consumer (`:319-337`), status + `tdot` caveat (`:339-361`).
-- `book/src/L2/inner_product.md` (firm cycle-019; inverted-to-entry cycle-049 D2,
-  commit `92327f7`) — authoritative on the self-verified L0 evidence list
+- `book/src/L2/inner_product.md` (firm) — authoritative on the self-verified L0
+  evidence list
   (`palace/linalg/vector.cpp:263-267` Hermitian kernel, `:269-274` `tdot`,
   `:664-685` real/complex reductions; `palace/linalg/operator.cpp:598-638`
   SPD-norm + weighted member; `palace/linalg/vector.hpp:247-253`
   local-then-collective; `test/unit/test-vector.cpp:206-207` real-dot value test),
   inherited transitively here.
-- `book/src/L2-L1/inner-product-fold-specialization.md` (KEPT; cycle-049 D2(c)) —
+- `book/src/L2-L1/inner-product-fold-specialization.md` (KEPT) —
   the substantive L2>L1 translation: conjugation/element-type/weight dispatch, the
   `xᴴ y` ↔ `yᴴ x` re-order, the per-call pinned reduction trees (the IEEE non-law
   home deferred there).
 
 Classification / methodology anchors:
 
-- `book/src/concepts/black-box-vs-accelerated-kernels.md` (cycle-067 D3) — the
+- `book/src/concepts/black-box-vs-accelerated-kernels.md` — the
   three-way disposition: §"The combinators rise regardless" (`:128-136`) names
   `inner_product` as the combinator that rises to L4 regardless; §2 "Kept named
   abstraction — rises" (`:88-109`) names `dot`/`nrm2` as the literature-standard
-  named verbs that rise *alongside* it (the permitted dual; the next-pull L4
-  candidates).
+  named verbs that rise *alongside* it (the permitted dual).
 - `skills/disciplined-cross-pipeline-combinator-mining-gate/SKILL.md` — the
   combinator-mining gate; this rise is **propagation of an already-firm mined
-  combinator** (the c049 mine + c051 L3 propagation), so the 4 gate points are
-  satisfied by the firm L3 endpoint, not re-mined here.
+  combinator**, so the 4 gate points are satisfied by the firm L3 endpoint.
 - `book/src/concepts/dot.md` — the BLAS-1 heritage / element-type cross-cutting
   framing.
 - `book/src/semantics/index.md` — the strawman; adds no reduction rule (a
   `reduce`/`zipWith` fold in the existing vocabulary).
-
-Provenance: combinator-miner:2026-06-02T195402Z (cycle-068 D3) — the
-`linear-combination-inner-product-rise-to-l4` plan-tag enactment; rises the firm
-L3 combinator to L4 as the directive-2 disposition-2 / L4-is-the-backend-lowering-
-target feature-surface verb.

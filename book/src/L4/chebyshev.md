@@ -49,15 +49,14 @@ The relationship to the lower layers:
   wrapper-dissolution shape that
   [`krylov-step-typed-wrapper-dissolution`](../L4-L3/krylov-step-typed-wrapper-dissolution.md)
   catalogs for the Krylov kernel; a dedicated L4>L3 chebyshev identity-theme is
-  an Open Question follow-up if the lowering-verifier wants a standalone audit
-  anchor.
+  an Open Question follow-up if a standalone audit anchor is wanted.
 - **L3 > L2**: the L3 explicit-iteration form lowers to the L2 primitive
   composition with the iteration view erased (the body identity-in-form).
 
 `chebyshev` at L4 is a **methodology-level typed shape** — Palace's C++ source
 realises the *behaviour* (the `Mult2` member-method family) but not the L4
-typed-wrapper form; the L0 evidence sits at the cycle-012 firm L1/L2 entries and
-the slice corpus, which L4 cites as its evidence base.
+typed-wrapper form; the L0 evidence sits at the firm L1/L2 entries, which L4
+cites as its evidence base.
 
 ## Signature
 
@@ -398,8 +397,8 @@ L4 row dependencies (the iteration vocabulary this entry consumes):
   primitive; both bounded loops are its `iterate_while_pure` sugar with a
   **step-count predicate** (`s.it <= op.pc_it`, `c.k <= op.order - 1`), the loop
   counter folded into the carry. The fixed-count (vs. convergence-gated)
-  distinction lives in the predicate, not the combinator (route (i),
-  combinator-miner cycle-014; strawman §6.5 step 5). The inner `st`/`rho_prev`
+  distinction lives in the predicate, not the combinator (route (i);
+  strawman §6.5 step 5). The inner `st`/`rho_prev`
   recurrence-carry may alternatively use
   [`iterate-while-with-prev`](./iterate-while-with-prev.md) (see §Variant axes);
   this entry adopts the plain `iterate_while_pure` carry-`st` form (4th-kind's
@@ -407,11 +406,11 @@ L4 row dependencies (the iteration vocabulary this entry consumes):
 
 Lower-layer rows (the evidence base):
 
-- L2 [`chebyshev-iteration`](../L2/chebyshev-iteration.md) (cycle-012 firm) — the
+- L2 [`chebyshev-iteration`](../L2/chebyshev-iteration.md) (firm) — the
   primitive composition this L4 wrapper's body is value-thread-isomorphic to;
   carries the L1 primitive-call enumeration, the fusion-transparency classification,
   the scalar recurrences, and the L0 source ranges.
-- L1 [`chebyshev-smoother`](../L1/chebyshev-smoother.md) (cycle-012 firm) — the
+- L1 [`chebyshev-smoother`](../L1/chebyshev-smoother.md) (firm) — the
   closed-form smoother action; carries the constructed-operator-gate framing.
 
 Strawman reference: [`../semantics/index.md`](../semantics/index.md) §2
@@ -472,54 +471,29 @@ Both are firm-vocabulary-valid. **This entry adopts the plain `iterate_while_pur
 carry-`st` form**: the 4th-kind's `st = ()` makes it the degenerate no-prev case,
 so the carry-`st` form unifies both polynomial kinds without a bootstrap step,
 whereas the with-prev form would require a bootstrap `first_step` that the
-4th-kind does not need. (Decided cycle-015, resolving combinator-miner OQ
-`chebyshev-l4-inner-loop-presentation-carry-st-vs-with-prev`. If a
-same-layer-cross-cutter later wants to unify the `st`-carry with the CG
-`beta_prev`-carry under one recurrence-variable-threading note, that is a
-separate sideways emission, not a change to this entry's chosen form.)
+4th-kind does not need. (Resolves OQ
+`chebyshev-l4-inner-loop-presentation-carry-st-vs-with-prev`. A unification of the
+`st`-carry with the CG `beta_prev`-carry under one recurrence-variable-threading
+note would be a separate sideways emission, not a change to this entry's chosen
+form.)
 
 ## Status
 
-`firm` — re-anchored cycle-015 (lifter
-`reports/2026-05-28T202138Z-lifter-chebyshev-l4-firm-via-iterate-while-reanchor/`).
-The body re-typing is a clean re-type of the cycle-012 firm L1/L2 entries against
-the L4 state-stratification idiom: the `ChebOp` closure absorbs the variant at
-level (c) via distinct closure types; `initial_guess` is the
-degenerate-case-absorption `Bool`; the capability typing makes the mutation
-discipline structural; every body algebraic law is the L1/L2 body law sharpened
-by the typing, and the body-level non-laws (obstruction non-collapse,
-polynomial-expansion non-equivalence) are inherited. The two sequential
-obstructions are now rendered as nested
+`firm` — typed-wrapper re-type of the firm L1/L2 entries against the L4
+state-stratification idiom: the `ChebOp` closure absorbs the variant at level (c)
+via distinct closure types; `initial_guess` is the degenerate-case-absorption
+`Bool`; the capability typing makes the mutation discipline structural; every body
+algebraic law is the L1/L2 body law sharpened by the typing, with the body-level
+non-laws (obstruction non-collapse, polynomial-expansion non-equivalence)
+inherited. The two sequential obstructions are nested
 [`iterate_while_pure`](./iterate-while.md) folds with **step-count predicates**
-(`s.it <= op.pc_it`, `c.k <= op.order - 1`), the loop counter folded into the
-carry — reusing the canonical firm `iterate-while` family per the cycle-014
-combinator-miner route (i), strawman §6.5 step 5
-(`book/src/semantics/index.md:418`; `run_lbm` precedent `:382-385`). The L4
-form is methodology-level — Palace's C++ realises the behaviour, not the typed
-wrapper; the L0 evidence is transitive through the L1/L2 entries.
-
-**Wrapper-iteration-vocabulary reconcile (the former `rough-in` driver) — closed
-cycle-015.** The cycle-013 repairer downgraded this entry `firm`→`rough-in`
-because the two sequential obstructions were rendered as un-anchored `forM_`
-(outer `pc_it`) / `foldM` (inner `k`) binds, which had no L4 dep-map row, no
-concept page, and competed with the firm canonical
-[`iterate-while`](./iterate-while.md) family (whose entry, `iterate-while.md:7`,
-names **Chebyshev** as a consumer). The cycle-014 combinator-miner
-(`reports/2026-05-28T193256Z-combinator-miner-chebyshev-l4-wrapper-iteration-vocabulary-reconcile/`)
-decided **route (i): REUSE the `iterate-while` family** — both bounded loops are
-`iterate_while_pure` with a step-count predicate, the fixed-count
-(vs. convergence-gated) distinction living in the predicate, not the combinator.
-This cycle-015 lifter pass enacts that re-anchor (§Semantics body + the prose
-naming `forM_`/`foldM` throughout) and the `L4/index.md` dep-map row rewrite,
-closing OQ `chebyshev-l4-firm-via-iterate-while-reanchor`. The inner-loop
-presentation question (`iterate_while_pure` carry-`st` vs.
-`iterate-while-with-prev` closure-`prev`) is **resolved to the plain
-carry-`st` form** — see §Variant axes — closing OQ
-`chebyshev-l4-inner-loop-presentation-carry-st-vs-with-prev`.
-
-**Caveat (independent of the above; never the status driver)**: no dedicated unit
-test (multigrid-integration coverage only) — same justification as the firm L1/L2
-entries.
+(`s.it <= op.pc_it`, `c.k <= op.order - 1`), the loop counter folded into the carry
+(reusing the canonical firm `iterate-while` family; strawman §6.5 step 5,
+`book/src/semantics/index.md:418`, `run_lbm` precedent `:382-385`). Methodology-level
+— Palace's C++ realises the behaviour, not the typed wrapper; the L0 evidence is
+transitive through the L1/L2 entries. Caveat (never the status driver): no dedicated
+unit test (multigrid-integration coverage only) — same justification as the firm
+L1/L2 entries.
 
 ## L4 vs L3 distinction
 
@@ -539,19 +513,19 @@ entries.
 
 ## Evidence
 
-- `book/src/L2/chebyshev-iteration.md` (cycle-012 firm) — the L2 primitive
+- `book/src/L2/chebyshev-iteration.md` (firm) — the L2 primitive
   composition this L4 wrapper's body is value-thread-isomorphic to; the L1
   primitive-call enumeration, fusion-transparency classification, scalar
   recurrences (4th-kind closed form; 1st-kind `ρ`-threaded), and L0 source ranges
   are cited there and inherited.
-- `book/src/L1/chebyshev-smoother.md` (cycle-012 firm) — the L1 closed-form
+- `book/src/L1/chebyshev-smoother.md` (firm) — the L1 closed-form
   smoother action; the constructed-operator-gate framing, the affine/linear laws,
   the transpose-under-symmetry law, and the `initial_guess` degenerate-case
   absorption are anchored there.
-- `book/src/L3/chebyshev.md` (this cycle) — the value-threaded L3 form this L4
+- `book/src/L3/chebyshev.md` — the value-threaded L3 form this L4
   entry lifts from; the partial-obstruction verdict (body lifts, loops do not)
   this entry's two `iterate_while_pure` folds inherit.
-- `book/src/L4/krylov-step.md` (cycle-006 firm) — the typed-wrapper precedent
+- `book/src/L4/krylov-step.md` (firm) — the typed-wrapper precedent
   (state-stratification records, `Solve` monad, `readonly` `OpParams`,
   effect-localisation discipline) this entry follows, and the contrast operator:
   `krylov-step` folds via a **convergence**-predicate `iterate_while` with a
@@ -559,7 +533,7 @@ entries.
   `iterate_while_pure` with a uniformly-empty trajectory. Both consume the
   [`iterate-while`](./iterate-while.md) family; the predicate shape is the
   distinction.
-- `book/src/L4/iterate-while.md` (cycle-007 firm) — the canonical iteration
+- `book/src/L4/iterate-while.md` (firm) — the canonical iteration
   primitive this entry's two bounded loops consume via `iterate_while_pure` with
   a step-count predicate; `iterate-while.md:7` names Chebyshev as a consumer,
   `:57,102,165` give the counter-folded-into-carry predicate discipline +
@@ -571,22 +545,13 @@ entries.
   predicate precedent; `run_lbm` witness `:382-385`), §3.8 (demand-pruning,
   not-applicable for the uniformly-empty-trajectory smoother) — the strawman
   conventions this entry cites and continues.
-- `palace/linalg/chebyshev.cpp:191-220, :261-293` (4th/1st-kind `Mult2`; verified
-  via codemap) — the L0 behaviour the L4 typed wrapper re-types; cited transitively
-  via the L1/L2 entries. The outer `iterate_while_pure` is the L4 surface of
+- `palace/linalg/chebyshev.cpp:191-220, :261-293` (4th/1st-kind `Mult2`) — the L0
+  behaviour the L4 typed wrapper re-types; cited transitively via the L1/L2 entries.
+  The outer `iterate_while_pure` is the L4 surface of
   `for (int it = 0; it < pc_it; it++)` (`:191`); the inner `iterate_while_pure`
   is the L4 surface of `for (int k = 1; k < order; k++)` (`:200`).
-- `palace/linalg/chebyshev.hpp:72-75` (`MultTranspose2 → Mult2`; verified via
-  codemap) — the transpose-under-symmetry law witness (law 4).
-- Provenance: the cycle-001-era §L4 "calculus form" this entry promotes (the
-  `ChebOp`/`ChebSim` types, the `apply` monadic action, the `setup` action, the
-  capability-typed sim-state, the initial-guess branch-vs-derived-view discussion)
-  was lifted from the cycle-001-era Phase-1 chebyshev §L4 (439-line form), reduced
-  cycle-015 once its material became authoritative here and deleted cycle-099
-  (graded-stack P2; git history is the record). The former §L4's `forM_`/`foldM` rendering of
-  the two obstructions is **superseded** here by the `iterate_while_pure` +
-  step-count-predicate re-anchor (cycle-014 combinator-miner route (i), enacted
-  cycle-015) — the slice predates the firm `iterate-while` family (cycle-007).
+- `palace/linalg/chebyshev.hpp:72-75` (`MultTranspose2 → Mult2`) — the
+  transpose-under-symmetry law witness (law 4).
 
 No L0 Palace source range "is" the L4 `chebyshev`; the L4 form names a typed
-shape, and all L0 evidence is transitive through the cycle-012 firm L1/L2 entries.
+shape, and all L0 evidence is transitive through the firm L1/L2 entries.

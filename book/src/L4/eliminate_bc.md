@@ -6,7 +6,7 @@ rank: firm
 edges:
   depends-on:
     - target: L4/linear_combination
-      kind: folds                 # the RHS-side b − K·x_bc is one linear_combination [(1,b),(-1,y)] (firm c068)
+      kind: folds                 # the RHS-side b − K·x_bc is one linear_combination [(1,b),(-1,y)]
     - target: L1/apply_linop
       kind: folds                 # the operator action K·x_bc = apply_linop K (restrict_essential x_bc) in the RHS lift
     - target: concepts/dofset
@@ -53,9 +53,7 @@ and effect placement structural (`L4/index.md:7-13`). `eliminate_bc` is the **BC
 the deliverable's L4 assemble surface — the verb-pair every conforming-FE solver pipeline calls after
 [`fe_assemble`](./fe_assemble.md) builds the system operator and before the solve. It is the L4 lift of
 the two firm L1 separable post-compositions [`eliminate_essential_bc`](../L1/eliminate_essential_bc.md)
-and [`eliminate_rhs`](../L1/eliminate_rhs.md) (both firm, cycle-053/firm-on-positive-structure), pulled
-up as the answer to the cycle-100 completeness survey's one genuine in-scope L4 hole (OQ
-`bc-elimination-cohort-l4-disposition`).
+and [`eliminate_rhs`](../L1/eliminate_rhs.md) (both firm on the firm-on-positive-structure escape).
 
 The combinator is defined **in L4 vocabulary** (high→low discipline, CLAUDE.md §Methodology invariants):
 its semantics, signatures, and laws are stated in terms of the free/essential dof partition block-
@@ -280,7 +278,7 @@ L4 rows / vocabulary this surface consumes:
   blocking fold dependency: `eliminate_bc` consumes `K` as an opaque assembled `LinOp[(S: ...), $S]`,
   not `fe_assemble`'s term-list machinery (the separability law 8). Edge classified `reference`.
 - [`linear_combination`](./linear_combination.md) (**depends-on**) — the RHS-side `b − K·x_bc` is one
-  `linear_combination [(1,b),(-1,y)]` (firm c068; the rank invariant holds — firm rests on firm).
+  `linear_combination [(1,b),(-1,y)]` (firm; the rank invariant holds — firm rests on firm).
 - [`apply_linop`](../L1/apply_linop.md) — the operator action `K·x_bc` in the RHS-side lift (the firm
   L1 operator-action verb; the assembled operator applied opaquely).
 - `set_subvector` / essential-dof mask (concept, NOT a spine verb) — `restrict_essential` /
@@ -310,8 +308,8 @@ convention for the `K · x_bc` operator-action form; §3.3–3.4 (record/state c
 ## Lowers to
 
 L4 `eliminate_bc` lowers to the L3 forms via the substantive L4>L3 dissolution theme
-[`bc-elimination-post-composition-dissolution`](../L4-L3/bc-elimination-post-composition-dissolution.md)
-(this cycle; canonical slug `bc-elimination-post-composition-dissolution`). The rotation is
+[`bc-elimination-post-composition-dissolution`](../L4-L3/bc-elimination-post-composition-dissolution.md).
+The rotation is
 **substantive** (not identity-in-form): the operator-side pure post-composition collapses to Palace's
 **deferred-config-then-apply** two-step (record `(dofs, policy)` on the `ParOperator` wrapper via
 `SetEssentialTrueDofs`, then mutate the assembled `HypreParMatrix` in place via `EliminateBC` at
@@ -323,7 +321,7 @@ round-trip realizing the single `apply_linop`. This entry records the rotation *
 high→low discipline; it does **not** author the theme. The L1>L0 mutation rotation
 (`fe-operator-assemble-mutation-rotation` for the operator pin, and the `eliminate_rhs` leg folded
 into that same theme — §"The `eliminate_rhs` leg (folded here)" — for the RHS lift; there is no
-separate `eliminate-rhs-mutation-rotation` theme, disposition FOLD c103) carries the L1→L0 half;
+separate `eliminate-rhs-mutation-rotation` theme) carries the L1→L0 half;
 the L4>L3 theme carries the L4→L3 post-composition-to-imperative-staging half.
 
 ## Variant axes
@@ -346,18 +344,17 @@ the L4>L3 theme carries the L4→L3 post-composition-to-imperative-staging half.
 
 `firm` — the post-assembly BC-application verb-pair `(eliminate_essential_bc, eliminate_rhs)` is the
 canonical L4 BC-application surface, the assemble-half-completing companion of
-[`fe_assemble`](./fe_assemble.md). The promotion is the **firm-on-positive-structure escape** (the
-`fe_assemble` / `solve_family` / `apply_linop` precedent): every law (operator-side idempotence, free-
-block preservation, policy-determines-only-the-diagonal, DIAG_ZERO-distribution; RHS-side affine-on-
-interior linearity, linearity-in-boundary-data, homogeneous-BC identity; the cohort separable-post-
-composition framing) is a **read-off syntactic identity** on the positive `EliminateBC` zero-rows-cols-
-then-set-diagonal operation (`palace/linalg/rap.cpp:139-148`) + the recorded `(dofs, policy)`
-(`:36-47`) + the positive `EliminateRHS` body (`:56-83`), and the laws are the direct L4-vocabulary lift
-of the two firm L1 law-sets (`L1/eliminate_essential_bc.md:126-172`, `L1/eliminate_rhs.md:112-162`,
-both firm on the same firm-on-positive-structure clean-gate).
+[`fe_assemble`](./fe_assemble.md). The promotion is the **firm-on-positive-structure escape**: every law
+(operator-side idempotence, free-block preservation, policy-determines-only-the-diagonal,
+DIAG_ZERO-distribution; RHS-side affine-on-interior linearity, linearity-in-boundary-data, homogeneous-BC
+identity; the cohort separable-post-composition framing) is a **read-off syntactic identity** on the
+positive `EliminateBC` zero-rows-cols-then-set-diagonal operation (`palace/linalg/rap.cpp:139-148`) + the
+recorded `(dofs, policy)` (`:36-47`) + the positive `EliminateRHS` body (`:56-83`), and the laws are the
+direct L4-vocabulary lift of the two firm L1 law-sets (`L1/eliminate_essential_bc.md:126-172`,
+`L1/eliminate_rhs.md:112-162`).
 
 The well-foundedness rank invariant holds: the one blocking `depends-on` edge is to
-[`linear_combination`](./linear_combination.md) (firm c068, the RHS-side `b − K·x_bc`); the edge to
+[`linear_combination`](./linear_combination.md) (firm, the RHS-side `b − K·x_bc`); the edge to
 [`fe_assemble`](./fe_assemble.md) is `reference` (post-composition position, not a blocking fold
 dependency — the separability law 8). `firm` therefore rests only on `firm`.
 
@@ -369,16 +366,8 @@ real-stiffness `Ar` block `DIAG_ONE` `:571`, the imaginary-stiffness `Ai` + both
 the over-unification guard honored (the two verbs are genuinely distinct — operator-side
 `LinOp[(S: ...), $S]` vs RHS-side `Tensor[$S]` — homed as a co-equal PAIR, not merged into one
 combinator; the diagonal-policy split is a variant axis, not a 2nd pipeline). No dedicated unit test
-exercises BC elimination at this entry point (codemap search of `test/unit/**` for `EliminateBC` /
-`SetEssentialTrueDofs` returns no hits), but the missing test does not gate syntactic-identity laws on
-fully-specified positive source — the firm-on-positive-structure escape exactly as for `fe_assemble`
-and the two firm L1 sources.
-
-This dispatch (cycle-101 D1) closes OQ `bc-elimination-cohort-l4-disposition` (the one genuine in-scope
-L4 hole from the cycle-100 completeness survey) on **route (a)** — the cohort lifts cleanly to L4 as a
-small post-assembly combinator pair. The coupled L4>L3 dissolution theme
-[`bc-elimination-post-composition-dissolution`](../L4-L3/bc-elimination-post-composition-dissolution.md)
-lands this same cycle (the cap/theme pair together, avoiding the cross-cycle stale-assertion window).
+exercises BC elimination at this entry point (`test/unit/**` has no `EliminateBC` / `SetEssentialTrueDofs`
+hits), but the missing test does not gate syntactic-identity laws on fully-specified positive source.
 
 ## L4 vs L3 distinction
 
@@ -398,8 +387,7 @@ lands this same cycle (the cap/theme pair together, avoiding the cross-cycle sta
 
 `eliminate_bc` at L4 is a methodology-level surface distilled from the BC-application machinery Palace
 shares across the conforming-FE pipelines; Palace's C++ does not realise the L4 verb-pair form (it
-writes the deferred-config-then-apply operator pin + the in-place pooled-scratch RHS loop). All L0
-citations self-verified against on-disk source this dispatch via codemap `read_range`.
+writes the deferred-config-then-apply operator pin + the in-place pooled-scratch RHS loop).
 
 - `palace/linalg/rap.cpp:36-47` — `ParOperator::SetEssentialTrueDofs(tdof_list, policy)`: records the
   essential-true-dof list (`dbc_tdof_list.MakeRef(tdof_list)`, `:45`) and the diagonal policy
@@ -434,11 +422,7 @@ citations self-verified against on-disk source this dispatch via codemap `read_r
 - `book/src/L4/fe_assemble.md` — the assemble-fold combinator this post-composes after; its
   §Algebraic-laws "BC-elimination is NOT part of the fold" is the upstream framing this surface
   realizes.
-- **No dedicated test** exercises BC elimination at this entry point (codemap `test/unit/**` search for
-  `EliminateBC` / `SetEssentialTrueDofs` / `EliminateRHS` returns no hits); the laws are firm-on-
-  positive-structure (read-off syntactic identities), so no test gates them — the same status as the
-  two firm L1 sources and `fe_assemble`.
-- **Provenance**: harvested cycle-101 D1 from OQ `bc-elimination-cohort-l4-disposition` (the cycle-100
-  completeness-survey hole); the two firm L1 sources (cycle-053) + the firm L1 `essential_dofs`
-  (cycle-066) + the firm L4 `fe_assemble` (cycle-068) + `linear_combination` (cycle-068) are the direct
-  inputs.
+- **No dedicated test** exercises BC elimination at this entry point (`test/unit/**` has no
+  `EliminateBC` / `SetEssentialTrueDofs` / `EliminateRHS` hits); the laws are firm-on-positive-structure
+  (read-off syntactic identities), so no test gates them — the same status as the two firm L1 sources and
+  `fe_assemble`.

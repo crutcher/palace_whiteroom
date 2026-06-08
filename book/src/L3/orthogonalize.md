@@ -1,23 +1,12 @@
 ---
 layer: L3
 operator: orthogonalize
-# Graded-stack scheme (authored from scratch, batch-36 c112 lazy-tail typing; migrates the legacy
-# layer:/firmness:/lifts_from:/lowers_to:/variant_axes: frontmatter to a typed edges: block). This
-# L3 entry is a `partial-obstruction` (rank: partial-obstruction): the per-step `dot`+`axpy` body
-# lifts for all three variants AND the CGS/CGS2 loop lifts, but the MGS `j`-loop is a witnessed
+# `partial-obstruction` (rank: partial-obstruction): the per-step `dot`+`axpy` body lifts for all
+# three variants AND the CGS/CGS2 loop lifts, but the MGS `j`-loop is a witnessed
 # `sequential-obstruction` (§Status). The lifted body is firm (syntactic identities on the
 # `orthog.hpp` source, inherited from the firm L1/L2 entries) → obstruction_resolution: firm.
-# depends-on: the L2 named composition it lifts-from/lowers-to (`L2/orthogonalize`, firm, the
-# `project ▷ subtract` surface — its legacy lifts_from AND lowers_to both name it); the two
-# same-layer L3 body primitives the per-step body composes (`L3/dot`, `L3/axpy`, §Dependencies
-# :366-374); and the dedicated substantive loop-structure lowering theme
-# `L3-L2/orthogonalize-variant-split` (kind: lowers-to — the L3-op-points-at-its-theme rescue edge,
-# mirroring the c111 L2/orthogonalize → L2-L1/orthogonalize-composition-lowering surface; this is the
-# UPPER endpoint that makes the theme reachable per scheme §5 batch-34). reference: the cross-cutting
-# concept pages + the transitive-identity L1 sibling + the two precedent partial-obstruction siblings.
-# RE2 baseline-exception (ratified): typing this block is correct hygiene but does NOT flip
-# `L3/orthogonalize` reachable — `L4/krylov-step` composes the L2 surface directly, not the L3
-# iteration-view, so there is no faithful reachable inbound depender. No forced inbound edge added.
+# RE2 baseline-exception: `L4/krylov-step` composes the L2 surface directly, not the L3
+# iteration-view, so there is no faithful reachable inbound depender (no forced inbound edge added).
 rank: partial-obstruction
 obstruction_resolution: firm
 edges:
@@ -25,11 +14,11 @@ edges:
     - target: L2/orthogonalize
       kind: lowers-to             # the firm L2 `project ▷ subtract` composition; per-step body identity-in-form (legacy lifts_from + lowers_to both name it)
     - target: L3-L2/orthogonalize-variant-split
-      kind: lowers-to             # the dedicated SUBSTANTIVE L3>L2 loop-structure variant-split theme (cycle-044); this op is its UPPER endpoint (scheme §5 rescue)
+      kind: lowers-to             # the dedicated SUBSTANTIVE L3>L2 loop-structure variant-split theme; this op is its UPPER endpoint
     - target: L3/inner_product
-      kind: composes              # same-layer body primitive: the projection-coefficient inner product H_j = op.dot(w_eff(j), V[j]); the dot specialization-stub was eliminated into the combinator (cycle-127, RE-style — see inner_product §Specializations)
+      kind: composes              # same-layer body primitive: the projection-coefficient inner product H_j = op.dot(w_eff(j), V[j]); the dot specialization-stub was eliminated into the combinator (see inner_product §Specializations)
     - target: L3/linear_combination
-      kind: composes              # same-layer body primitive: the rank-1 residual update w − H_j·V[j] = axpy(-H_j, V[j], w); axpy leaf eliminated into the combinator (RE6, cycle-124), this is its arity-2 specialization (see linear_combination §arity-specializations)
+      kind: composes              # same-layer body primitive: the rank-1 residual update w − H_j·V[j] = axpy(-H_j, V[j], w); axpy leaf eliminated into the combinator (RE6), this is its arity-2 specialization (see linear_combination §arity-specializations)
   reference:
     - concepts/sequential-obstruction
     - concepts/tensor-field-lift
@@ -79,12 +68,12 @@ captures it; where no global form exists, the **obstruction** is a first-class o
 **third `partial-obstruction`** operator, and the one that makes the body-lifts/loop-doesn't
 shape **variant-dependent**:
 
-- L3 [`chebyshev`](./chebyshev.md) (`partial-obstruction`, c013) — body lifts, but the inner
+- L3 [`chebyshev`](./chebyshev.md) (`partial-obstruction`) — body lifts, but the inner
   `k`-recurrence + outer `pc_it` sweep are sequential obstructions rooted in **numerical
   stability** (Phillips & Fischer 2022 §2: the recurrence form is chosen over explicit
   polynomial expansion). The obstruction is **unconditional** — it holds for every parameter
   value.
-- L3 [`eigsolve`](./eigsolve.md) (`partial-obstruction`, c024) — body lifts, but the
+- L3 [`eigsolve`](./eigsolve.md) (`partial-obstruction`) — body lifts, but the
   eigen-iteration loop is a sequential obstruction rooted in **opaque-library-ownership** (SLEPc
   `EPSSolve` / ARPACK `naupd` RCI own the loop; Palace authors none). Also **unconditional**.
 - `orthogonalize` (this entry) — body lifts (one `dot` + one `axpy` against whole tensors), but
@@ -97,7 +86,7 @@ shape **variant-dependent**:
 
 The load-bearing structural fact this entry records: **`orthogonalize` at L3 has a lifting body
 and a loop whose liftability is variant-dependent — CGS/CGS2 lift, MGS is a Palace-authored
-numerical-stability sequential obstruction.** This is the cycle-036 D2 audit's **(B)**
+numerical-stability sequential obstruction.** This is the L3-cohort-growth audit's **(B)**
 prediction enacted (`book/src/L3/index.md:48`: "MGS variant has sequential-obstruction at L3
 explicitly noted at L1; CGS/CGS2 variants lift cleanly — would be a third `partial-obstruction`
 row after `chebyshev` and `eigsolve`").
@@ -109,7 +98,7 @@ The relationship to the adjacent layers:
   `orthogonalize` at level-(b) as the optional `op.orthog (V_prefix, w)` auxiliary stage; an
   imagined L4 form would thread the `{ residual, coeffs }` record through the Arnoldi-step
   monad, but that surface is a future dispatch. This entry lifts from L2 only.
-- **Downward** to L2: [`orthogonalize`](../L2/orthogonalize.md) (firm, cycle-012) is the same
+- **Downward** to L2: [`orthogonalize`](../L2/orthogonalize.md) (firm) is the same
   `project ▷ subtract` composition with the iteration view erased (the per-variant batched /
   interleaved primitive sequence named, the collective shape disclosed as the residual axis).
   The L3>L2 rotation on the **body** is **identity-in-form**: the L3 per-step tensor-field
@@ -134,7 +123,7 @@ value-thread-isomorphic to the L1 [`orthogonalize`](../L1/orthogonalize.md) leaf
 at the per-step body level. That non-adjacent relationship is the **transitive consequence of
 the two adjacent-edge identities** and is annotated **in-line** here (and in the dep-map),
 citing the existing adjacent entries; **no `book/src/L3-L1/` directory is created** (per the
-cycle-012 meta-phase decision `l3-l1-inline-identity-rotation-convention`, lowering directories
+meta-phase decision `l3-l1-inline-identity-rotation-convention`, lowering directories
 are per-adjacent-edge only). Note the caveat: the L1↔L2↔L3 body identity is on the **per-step
 `dot`+`axpy` body**; it does **not** erase the L3 loop-structure obstruction, which is a
 property of the surrounding `j`-loop *for the MGS variant only* (the same way `chebyshev`'s body
@@ -423,10 +412,10 @@ contract — they are not dependencies of this operator.
 
 **Adjacent-layer siblings:**
 
-- L2: [`orthogonalize`](../L2/orthogonalize.md) (firm, cycle-012) — the named `project ▷
+- L2: [`orthogonalize`](../L2/orthogonalize.md) (firm) — the named `project ▷
   subtract` composition this entry's body is identity-in-form to; the per-variant collective
   shape it discloses as the residual axis is the L2 reading of this entry's lift split.
-- L1: [`orthogonalize`](../L1/orthogonalize.md) (firm, cycle-012) — the pure leaf the body is
+- L1: [`orthogonalize`](../L1/orthogonalize.md) (firm) — the pure leaf the body is
   value-thread-isomorphic to (transitively; in-line annotation, no `L3-L1/` directory).
 - L4: no firm `L4/orthogonalize.md` (unauthored; the natural Arnoldi-step-monad target is a
   future dispatch).
@@ -437,11 +426,11 @@ narrated forward from L1 to L0 by the firm
 [`orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md) theme (and the
 L2>L1 [`orthogonalize-composition-lowering`](../L2-L1/orthogonalize-composition-lowering.md)
 theme narrates the L2 composition into the L1 leaf). At L3>L2 the **per-step `dot`+`axpy` body** is
-identity-in-form (annotated in-line above, per the cycle-012 non-adjacent-identity convention), but
+identity-in-form (annotated in-line above, per the non-adjacent-identity convention), but
 the **variant-split loop rotation** — the MGS `jloop` tail recursion collapsing into the L2
 per-variant sequencing, and the CGS/CGS2 batched-arm straight-line statements collapsing into the
 L2 collective-shape residual axis — is **substantive** and is narrated forward from L3 to L2 by the
-[`orthogonalize-variant-split`](../L3-L2/orthogonalize-variant-split.md) theme (cycle-044). The
+[`orthogonalize-variant-split`](../L3-L2/orthogonalize-variant-split.md) theme. The
 L3>L2 edge therefore carries both an in-line body-identity note (the per-step body) and a dedicated
 theme (the loop-structure variant split).
 
@@ -486,12 +475,12 @@ and the firm L1 leaf body); the **CGS / CGS2 loop structure also lifts** (the ba
 non-removable because the batched form *is* CGS — the serial projector chain is what buys MGS's
 roundoff-orthogonality) with a cited non-removability reason (numerical stability;
 `concepts/sequential-obstruction.md:37-48`). This is the **third** `partial-obstruction` L3 row
-after `chebyshev` (c013, numerical-stability obstruction, **unconditional**) and `eigsolve`
-(c024, opaque-library obstruction, **unconditional**); `orthogonalize`'s distinguishing feature
+after `chebyshev` (numerical-stability obstruction, **unconditional**) and `eigsolve`
+(opaque-library obstruction, **unconditional**); `orthogonalize`'s distinguishing feature
 is that the obstruction is **variant-conditional** — present for MGS, absent for CGS/CGS2 — so
 the partial-obstruction verdict splits along the `gs_orthog` axis. The body's algebraic laws are
 syntactic identities on fully-specified C++ source (the `orthog.hpp:41-89` MGS/CGS bodies,
-read in full) inherited from the cycle-012 firm L1/L2 entries; the obstruction structure is
+read in full) inherited from the firm L1/L2 entries; the obstruction structure is
 explicit and cited. **Caveat (not a status reduction)**: the operator carries dedicated
 parametric test coverage across all three variants (real / complex / B-weighted, the empty-basis
 edge case, the direct substitutability assertion `⟨residual, V[i]⟩ ≈ 0`,
@@ -516,11 +505,11 @@ firmness is on the per-step body and the variant contract, both of which hold).
 
 The L3>L2 hop erases the explicit iteration view (the `jloop` tail recursion / the batched-arm
 straight-line statements collapse to L2's per-variant sequencing) and leaves the **per-step body**
-identity-in-form. The body identity-in-form annotation lives in-line here (per the cycle-012
+identity-in-form. The body identity-in-form annotation lives in-line here (per the
 meta-phase non-adjacent-identity convention; precedent `book/src/L3/chebyshev.md`,
 `book/src/L3/eigsolve.md`); the **substantive loop-structure variant split** (which is NOT an
 identity rotation — the MGS `jloop`/CGS-batched-arm collapse is a real rewrite) is the dedicated
-[`orthogonalize-variant-split`](../L3-L2/orthogonalize-variant-split.md) L3>L2 theme (cycle-044, the
+[`orthogonalize-variant-split`](../L3-L2/orthogonalize-variant-split.md) L3>L2 theme (the
 first substantive — non-identity — `L3-L2/` theme).
 
 ## Evidence
@@ -529,50 +518,50 @@ first substantive — non-identity — `L3-L2/` theme).
   basis vectors using modified or classical Gram-Schmidt; "Assumes that the input vectors are
   normalized, but does not normalize the output vectors!" (`:22`) — the load-bearing
   no-output-normalisation contract (the `{ residual, coeffs }` record stops at the un-normalised
-  residual). Self-verified via citecheck this dispatch.
+  residual). 
 - `palace/linalg/orthog.hpp:41-53` — `OrthogonalizeColumnMGS`: the per-`j` loop
   `H[j] = dot_op(w, V[j]); Mpi::GlobalSum(1, &H[j], comm); w.Add(-H[j], V[j])` (`:46-52`). The
   interleaving of `dot` and `w.Add` in the **same** `j`-loop iteration — the `w.Add` feeding the
   next iteration's `dot` — is the source witness of the MGS **sequential obstruction**
   (`[dot, axpy] × m`, `m` reductions of size 1). The non-lifting half of the variant-split
-  verdict. Self-verified.
+  verdict. 
 - `palace/linalg/orthog.hpp:57-89` — `OrthogonalizeColumnCGS`: empty-basis early return
   (`m == 0`, `:62-64`); `m` batched local dots into `H[0..m-1]` against the **original** `w`
   (`:66-69`); single `Mpi::GlobalSum(m, H, comm)` (`:70`); `m` batched `w.Add`s (`:71-74`); the
   `refine` branch (`:75-88`) re-enters with `dH`, accumulating `H[j] += dH[j]` (the CGS2 `[CGS]
   × 2` second pass). The dots-against-original-`w` structure is the source witness that CGS/CGS2
   **lift** (the basis index is a reduction axis, no recurrence): `H = Vᴴw`, `w' = w − VH`. The
-  lifting half of the variant-split verdict. Self-verified.
+  lifting half of the variant-split verdict. 
 - `palace/linalg/iterative.cpp:308-325` — `OrthogonalizeIteration`: the runtime variant dispatch
   (`switch (type)` over `MGS / CGS / CGS2` at `:313-323`, `CGS2 = OrthogonalizeColumnCGS(...,
   true)` at `:321-322`); confirms the variant is bound at solver construction and dispatched
-  once, against the leading `j + 1` columns — the L3 `case op.variant`. Self-verified.
+  once, against the leading `j + 1` columns — the L3 `case op.variant`. 
 - `palace/linalg/iterative.cpp:630-632` — GMRES Arnoldi consumer:
   `OrthogonalizeIteration(gs_orthog, comm, V, w, Hj, j)` immediately followed by the caller's
   `Norml2` (sub-diagonal) and `scal` (normalisation) — confirming normalisation is the caller's,
-  outside this operator. Self-verified.
+  outside this operator. 
 - `palace/linalg/iterative.cpp:809-811` — FGMRES Arnoldi consumer: the identical
-  `OrthogonalizeIteration` call + `Norml2` + `scal` sequence. Self-verified.
+  `OrthogonalizeIteration` call + `Norml2` + `scal` sequence. 
 - `test/unit/test-orthog.cpp:99-120` — empty-prefix edge case: all three variants leave `w`
-  unchanged (`m = 0` identity, law 3). Self-verified.
+  unchanged (`m = 0` identity, law 3). 
 - `test/unit/test-orthog.cpp:123-160` — parametric real test: all three variants zero the
   per-rank component and pass `⟨residual, V[i]⟩ ≈ 0` to `1e-12` (law 1, the substitutability
   witness); the orthogonality assertion `CHECK_THAT(dot, WithinAbs(0.0, 1e-12))` is at line 158,
   inside the check loop (leading comment `:154`, `for` opens `:155`, body `:155-159`); TEST_CASE
-  closes at 160. Self-verified.
-- `test/unit/test-orthog.cpp:234` — complex parametrisation (the element-type axis). Self-verified.
-- `book/src/L2/orthogonalize.md` (cycle-012 firm) — the L2 named composition this entry's body
+  closes at 160. 
+- `test/unit/test-orthog.cpp:234` — complex parametrisation (the element-type axis). 
+- `book/src/L2/orthogonalize.md` (firm) — the L2 named composition this entry's body
   is identity-in-form to; §Semantics `project`/`subtract` stages and the per-variant collective
   shape are the L2 reading of this entry's lift split. The L2 column-order-non-commutativity
   non-law is the L3 MGS obstruction.
-- `book/src/L1/orthogonalize.md` (cycle-012 firm) — the L1 leaf the body is
+- `book/src/L1/orthogonalize.md` (firm) — the L1 leaf the body is
   value-thread-isomorphic to (transitively, in-line); the coefficient/normalisation boundary and
   the variant-axis contract are inherited from it.
-- `book/src/L3/chebyshev.md` (cycle-013 partial-obstruction) — the precedent for the
+- `book/src/L3/chebyshev.md` (partial-obstruction) — the precedent for the
   body-lifts/loop-doesn't shape and the in-line identity-rotation annotation (§Downward); the
   contrast operator (numerical-stability obstruction, **unconditional**) vs this entry's
   **variant-conditional** obstruction.
-- `book/src/L3/eigsolve.md` (cycle-024 partial-obstruction) — the second precedent
+- `book/src/L3/eigsolve.md` (partial-obstruction) — the second precedent
   (opaque-library obstruction, unconditional); the contrast on obstruction *root* (Palace
   authors no loop) vs this entry (Palace authors the MGS recurrence; the obstruction is
   numerical-stability-rooted like `chebyshev`).
@@ -587,146 +576,23 @@ first substantive — non-identity — `L3-L2/` theme).
 
 ## Supporting evidence
 
-- cycle-036 D2 L3-cohort-growth audit (`reports/2026-05-31T200500Z-cross-layer-cross-cutter-l3-cohort-growth-audit/CYCLE.md`),
-  verdict (B) at `book/src/L3/index.md:48`: "`orthogonalize` (MGS variant has
-  sequential-obstruction at L3 explicitly noted at L1; CGS/CGS2 variants lift cleanly — would be
-  a third `partial-obstruction` row after `chebyshev` and `eigsolve`)". This dispatch enacts that
-  verdict.
+- The L3-cohort-growth audit verdict (B) at `book/src/L3/index.md:48`: "`orthogonalize` (MGS
+  variant has sequential-obstruction at L3 explicitly noted at L1; CGS/CGS2 variants lift cleanly
+  — would be a third `partial-obstruction` row after `chebyshev` and `eigsolve`)".
 - The L1 leaf (`book/src/L1/orthogonalize.md:200-203`) and L2 composition
   (`book/src/L2/orthogonalize.md:133-134, 290-292`) both forecast this L3 entry: "The MGS branch
   carries a sequential-obstruction that surfaces at L3 (MGS has no global tensor-field form;
   CGS/CGS2 lift cleanly) — that obstruction is an L3 property of the variant, not an L1 contract
   distinction." This entry is that L3 property, formalised.
-- OQ `l3-cohort-growth-audit-c036-verdict` — the (A) cohort closed cycle-039 (6-of-6); this is
-  the first **(B)** substantive partial-obstruction member to land under the same OQ.
 
 ## Open questions / caveats
 
 - **No firm L4 `orthogonalize`.** The `L4/orthogonalize.md` chapter is unauthored; the natural
   L4 target is the Arnoldi-step-monad auxiliary stage that `krylov-step` carries as `op.orthog`.
-  This entry lifts from L2 only and notes the L4 surface as a future dispatch. Not in scope here
-  (one-operator discipline + abstractor territory for the speculative L4 sketch). Flagging for
-  the planner.
+  This entry lifts from L2 only and notes the L4 surface as a future direction.
 - **MGS-obstruction-root parallel with `chebyshev` (not `eigsolve`).** The MGS obstruction is
   numerical-stability-rooted (Palace authors the serial recurrence to buy roundoff-orthogonality)
   — the same *root* as `chebyshev`, distinct from `eigsolve`'s opaque-library root. But unlike
   both precedents the obstruction is **variant-conditional** (present for MGS, absent for
-  CGS/CGS2). This is a genuinely new partial-obstruction sub-shape (variant-split). I did not
-  promote it to a named obstruction sub-kind in `concepts/sequential-obstruction.md` (concept-page
-  authoring is layer-intro-author territory + the existing MGS example already covers the
-  structure); flagging in case a future cross-cutter wants to name the variant-split shape
-  explicitly across the L3 obstruction taxonomy.
-- **L3/index.md §Semantics-overlay taxonomy refresh.** The §Semantics overlay currently
-  enumerates four firm obstruction *shapes* (a)/(b)/(c)/(d) and notes (b)/(c) as the two
-  `partial-obstruction` operators (`chebyshev`/`eigsolve`). This entry adds a **third**
-  `partial-obstruction` with a new variant-split character — the taxonomy prose and the
-  `partial-obstruction` count (2 → 3) will need a refresh. That is layer-intro-author /
-  index-tally-owner territory (the D2 layer-intro-author owns the consolidated tally this cycle
-  per the count-ownership convention); I append only my dep-map row + SUMMARY registration and
-  defer the §Working-Notes tally entirely. Flagging the taxonomy-prose refresh for the
-  index-owner.
-- **Count tally deferred (count-ownership).** Per the cycle-040 dispatch instruction and the
-  cycle-039 meta-phase count-ownership convention (friction-ledger
-  `parallel-blind-shared-index-count-divergence`), I do **not** write the §Working-Notes
-  consolidated firm / partial-obstruction running-count tally — the D2 layer-intro-author owns it
-  this cycle. My `book/src/L3/index.md` edit is the dep-map **row only**.
-
-```yaml
-verified_against:
-  - citation: palace/linalg/orthog.hpp:18-23
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: header scope contract; modified-or-classical Gram-Schmidt against a basis set
-  - citation: palace/linalg/orthog.hpp:22
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: the no-output-normalisation contract sentence -- citecheck anchor "does not normalize" OK at :22
-  - citation: palace/linalg/orthog.hpp:41-53
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: OrthogonalizeColumnMGS; dot+GlobalSum+w.Add interleaved in the SAME j-loop iteration (:49/:50/:51) -- the MGS sequential-obstruction source witness
-  - citation: palace/linalg/orthog.hpp:46-52
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: the MGS j-loop body; w.Add(:51) feeds the next iteration dot(:49) -- loop-carried candidate
-  - citation: palace/linalg/orthog.hpp:57-89
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: OrthogonalizeColumnCGS; m dots-against-original-w then single GlobalSum then m w.Add -- the lifting half; refine branch is the CGS2 second pass
-  - citation: palace/linalg/orthog.hpp:62-64
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: CGS empty-basis early return (m == 0) -- law 3 source
-  - citation: palace/linalg/orthog.hpp:66-69
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: m batched local dots into H against the original w (not progressively-subtracted) -- the basis index is a reduction axis
-  - citation: palace/linalg/orthog.hpp:70
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: single Mpi::GlobalSum(m, H, comm) -- one reduction of size m, the batched CGS reduction
-  - citation: palace/linalg/orthog.hpp:71-74
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: m batched w.Add subtractions -- the w - V H matvec
-  - citation: palace/linalg/orthog.hpp:75-88
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: CGS refine branch; dH against once-projected w then H[j] += dH[j] -- the CGS2 [CGS] x 2 non-fusible second pass
-  - citation: palace/linalg/iterative.cpp:308-325
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: OrthogonalizeIteration dispatcher; orthogonalizes against leading j+1 columns
-  - citation: palace/linalg/iterative.cpp:313-323
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: switch(type) over MGS/CGS/CGS2 -- the L3 case op.variant; inspected once at dispatch
-  - citation: palace/linalg/iterative.cpp:321-322
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: CGS2 = OrthogonalizeColumnCGS(..., true) -- the refine=true CGS2 binding
-  - citation: palace/linalg/iterative.cpp:630-632
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: GMRES consumer; OrthogonalizeIteration(:630) then Norml2(:631) then w *= 1/Hj (scal, :632) -- normalisation is the caller's, outside the operator
-  - citation: palace/linalg/iterative.cpp:809-811
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: FGMRES consumer; identical OrthogonalizeIteration + Norml2 + scal sequence
-  - citation: test/unit/test-orthog.cpp:99-120
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: empty-prefix edge; all three variants GENERATE'd, w unchanged (RangeEquals) at :120 -- law 3 empirical
-  - citation: test/unit/test-orthog.cpp:123-160
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: parametric real; per-rank component zeroed (:152) and orthogonality loop (comment :154, for :155, body :155-159) asserting WithinAbs(0.0,1e-12) at :158 -- law 1 substitutability witness across MGS/CGS/CGS2
-  - citation: test/unit/test-orthog.cpp:234
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: complex parametrisation TEST_CASE -- element-type axis coverage
-  - citation: book/src/concepts/sequential-obstruction.md:37-48
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: canonical MGS-as-sequential-obstruction argument; the (I - V[m-1]...) ... (I - V[0]...) w projector composition matches the entry
-  - citation: book/src/concepts/sequential-obstruction.md:22
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: MGS example classifying CGS as the parallel-reduction alternative exposed as the gs_orthog variant
-  - citation: book/src/concepts/variant-absorption.md:131
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: gs_orthog axis absorbed at all three levels under residual-axis disclosure; Householder scoped out
-  - citation: book/src/L2/orthogonalize.md:133-134
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: L2 forecast of the L3 MGS sequential-obstruction / CGS-CGS2-lift split
-  - citation: book/src/L2/orthogonalize.md:290-292
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: L2 reading of the lift split as the collective-shape residual axis + MGS column-order non-commutativity non-law
-  - citation: book/src/L1/orthogonalize.md:200-203
-    verdict: supports
-    audited_at: 2026-06-01T125900Z
-    note: L1 leaf forecast that the MGS sequential-obstruction is an L3 property of the variant, not an L1 contract distinction
-```
+  CGS/CGS2): a partial-obstruction sub-shape (variant-split) the existing MGS example in
+  `concepts/sequential-obstruction.md` already covers structurally.

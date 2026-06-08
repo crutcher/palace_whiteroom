@@ -29,36 +29,34 @@ the substantive content of this hop.
 
 The `eigsolve` lowering chain spans the layer-edges of the artifact:
 
-- **L1 firm** ([`L1/eigsolve`](../L1/eigsolve.md), cycle-022) — the opaque eigensolver-as-operator
+- **L1 firm** ([`L1/eigsolve`](../L1/eigsolve.md)) — the opaque eigensolver-as-operator
   collapse `(E, control) -> EigResult`; the eigen-iteration loop, the per-step transformed-operator
   application, the inner linear solve, and the result extraction are all invisible (an eigensolve is
   one indivisible operator application). The eigensolver `E` is a black box mapping a problem to its
   eigenpairs.
-- **L2 firm** ([`L2/eigsolve`](../L2/eigsolve.md), cycle-023) — the **named shift-invert
+- **L2 firm** ([`L2/eigsolve`](../L2/eigsolve.md)) — the **named shift-invert
   spectral-transform composition**: the per-step body `apply_shift_invert = apply_linop ▷ ksp_solve`
   opened, and the eigen-iteration fold `eigen_iterate` **named by role only** (the iteration view
   erased). The RHS of this theme. This is a **partial-opening** named composition: it opens the fold
   body but leaves the fold itself opaque-library-owned — the structural reason the L3 backfill is
   `partial-obstruction`.
-- **L2>L1 firm** ([`L2-L1/eigsolve-spectral-transform-composition`](../L2-L1/eigsolve-spectral-transform-composition.md),
-  cycle-025) — the partial un-collapse of the L1 opacity into the named shift-invert composition;
+- **L2>L1 firm** ([`L2-L1/eigsolve-spectral-transform-composition`](../L2-L1/eigsolve-spectral-transform-composition.md)) — the partial un-collapse of the L1 opacity into the named shift-invert composition;
   non-identity (the L1 opaque `E.linear` opened into the explicit inner `ksp_solve` inverting
   `(K − σM)`; the loop half stays collapsed). The body-half analogue of this theme on the L2↔L1 edge.
-- **L3 firm `partial-obstruction`** ([`L3/eigsolve`](../L3/eigsolve.md), cycle-024) — the
+- **L3 firm `partial-obstruction`** ([`L3/eigsolve`](../L3/eigsolve.md)) — the
   **iteration-rotation** view: the value-threaded `(E, control) -> EigResult` with the per-step body
   `apply_shift_invert` rendered as a whole-tensor value-threaded expression (it lifts), and the
   eigen-iteration loop rendered as an **explicit obstruction marker** — `eigen_iterate` named by role
   with a cited opaque-library `sequential-obstruction` (the loop does not lift and cannot even be
-  rendered as a tail recursion, because Palace authors no loop). The **third** `partial-obstruction`
-  L3 operator, and the first whose obstruction is rooted in opaque-library-ownership. The LHS of this
+  rendered as a tail recursion, because Palace authors no loop). A `partial-obstruction`
+  L3 operator whose obstruction is rooted in opaque-library-ownership. The LHS of this
   theme.
 - **L3>L2 firm — this theme.** Narrates how the L3 iteration-rotation form lowers into the L2 named
   composition. **Substantive (non-identity)** on the loop (the obstruction *marker* is erased and the
   named obstruction shadows to the L2 non-laws); identity-in-form on the per-step body.
 
-This theme is the **third substantive L3>L2 theme**, after [`ksp-solve-outer-driver`](./ksp-solve-outer-driver.md)
-(cycle-021, the first) and [`orthogonalize-variant-split`](./orthogonalize-variant-split.md) (cycle-044,
-the second). All three share the structural shape "substantive iteration-rotation erasure" — the L3
+This theme is a **substantive L3>L2 theme**, alongside [`ksp-solve-outer-driver`](./ksp-solve-outer-driver.md)
+and [`orthogonalize-variant-split`](./orthogonalize-variant-split.md). All three share the structural shape "substantive iteration-rotation erasure" — the L3
 iteration form dissolves into the L2 surface where the iteration view is erased and the obstruction
 survives only as L2-vocabulary non-laws. The **distinguishing feature** of this theme is the erasure
 scope: the loop is **opaque-library-owned**, living *entirely outside Palace*. See §"Erasure-scope
@@ -300,24 +298,23 @@ erasure-scope taxonomy (unconditional / variant-conditional / opaque-library). I
 expression of the L3 entry's **opaque-library partial-obstruction** verdict: the partial-obstruction is
 rooted in opaque-library-ownership, and so is this theme's substantive erasure.
 
-## Verified-against
+## Evidence
 
 L3 evidence (the LHS):
 
-- `book/src/L3/eigsolve.md` (firm `partial-obstruction`, cycle-024) — the L3 opaque-library form this
+- `book/src/L3/eigsolve.md` (firm `partial-obstruction`) — the L3 opaque-library form this
   theme references as LHS. §"Value-threaded form (L3 rendering)" (the `eigen_iterate` named-by-role with
   the obstruction marker; `apply_shift_invert` `where`-bound body), §"Iteration-rotation marker" (the
   body-lifts / loop-doesn't split, loop's non-lift because Palace authors no loop), §Status (the
   `partial-obstruction` reflecting the loop structure, rooted in opaque-library-ownership), §"Lowers to"
   + §"L3 vs L2 distinction" (records the L3>L2 hop as the body identity-in-form + the loop view erased —
-  the same rotation this theme narrates forward; re-anchored by this dispatch to point at this theme for
-  the substantive loop-erasure).
+  the same rotation this theme narrates forward, pointing at this theme for the substantive loop-erasure).
 - `book/src/L3/apply_linop.md`, `book/src/L3/ksp_solve.md` (firm) — the L3 per-step body constituents,
   identity-in-form across the hop.
 
 L2 evidence (the RHS):
 
-- `book/src/L2/eigsolve.md` (firm, cycle-023) — the L2 named composition this theme references as RHS.
+- `book/src/L2/eigsolve.md` (firm) — the L2 named composition this theme references as RHS.
   §Signature (the `apply_shift_invert = apply_linop ▷ ksp_solve` body opened + the `eigen_iterate` fold
   named by role), §Semantics phase 2 (the fold body opened / the loop opaque + named-by-role), §"Algebraic
   laws" non-laws "Opening of the eigen-iteration fold at L2" + "Fold-merge / restart associativity" (the
@@ -327,21 +324,19 @@ L2 evidence (the RHS):
 
 Sibling-theme evidence (the substantive-theme precedents + the body-edge sibling):
 
-- `book/src/L3-L2/ksp-solve-outer-driver.md` (firm, cycle-021) — the first substantive L3>L2 theme; the
+- `book/src/L3-L2/ksp-solve-outer-driver.md` (firm) — a substantive L3>L2 theme; the
   structural precedent for the iteration-view erasure + obstruction-to-non-law shadow rotation. The
   **unconditional** erasure-scope corner. This theme's §"Erasure-scope taxonomy contrast" extends that
   precedent's contrast template to the opaque-library axis.
-- `book/src/L3-L2/orthogonalize-variant-split.md` (firm, cycle-044) — the second substantive L3>L2 theme;
+- `book/src/L3-L2/orthogonalize-variant-split.md` (firm) — a substantive L3>L2 theme;
   the **variant-conditional** erasure-scope corner. Its §"Variant-split / unconditional-erasure contrast"
   is the two-corner table this theme extends to three corners.
-- `book/src/L2-L1/eigsolve-spectral-transform-composition.md` (firm, cycle-025) — the body-half analogue
+- `book/src/L2-L1/eigsolve-spectral-transform-composition.md` (firm) — the body-half analogue
   on the adjacent L2↔L1 edge: the partial un-collapse of the L1 opacity into the named shift-invert
   composition (the body opened; the loop left collapsed). This theme is the L3↔L2-edge counterpart on the
   loop (the body is identity-in-form here; the loop's marker is erased).
 
-L0 evidence (self-verified against `reference/palace/` source on-disk via `read_range` + `citecheck
---anchor` this dispatch; the codemap is localization-only, citecheck/on-disk is the citation source of
-truth per the cycle-027 brace-drift guard):
+L0 evidence:
 
 - `reference/palace/palace/linalg/slepc.cpp:687-709` — `SlepcEPSSolverBase::Solve` (def `:687-709`): the
   **SLEPc eigen-iteration entry that does NOT lift / is NOT renderable.** `Customize()` (`:693`) then the
@@ -350,7 +345,7 @@ truth per the cycle-027 brace-drift guard):
   obstruction marker: the SLEPc eigen-iteration is a **single opaque library call** — there is no Palace
   loop at all to render.
 - `reference/palace/palace/linalg/slepc.cpp:694` — `EPSSolve(eps)`: the opaque library eigen-iteration
-  call (the fold L3 marks / L2 names by role). Anchor verified (`citecheck --anchor 'EPSSolve'`).
+  call (the fold L3 marks / L2 names by role).
 - `reference/palace/palace/linalg/arpack.cpp:315-339` — the **ARPACK RCI eigen-iteration loop that does
   NOT lift / is a callback dispatcher, not a renderable Palace recurrence.** The RCI `while(true)` loop
   (`:315`) calling the opaque ARPACK driver `naupd` (`:318`), dispatching `ApplyOp(&workd[ipntr[0]-1],
@@ -359,7 +354,7 @@ truth per the cycle-027 brace-drift guard):
   (basis extension, restart, convergence) is inside `naupd`. No Palace-authored eigen-step kernel /
   eigen-iteration driver pair.
 - `reference/palace/palace/linalg/arpack.cpp:318` — `naupd(...)`: the opaque ARPACK driver (the fold L3
-  marks / L2 names by role). Anchor verified (`citecheck --anchor 'naupd'`).
+  marks / L2 names by role).
 - `reference/palace/palace/linalg/arpack.cpp:562-590` — `ArpackEPSSolver::ApplyOp`: the **per-step body
   that LIFTS** (explicit Palace-owned shift-invert composition). Shift-invert branch `opM->Mult(x1, z1);
   opInv->Mult(z1, y1); y1 *= gamma` (`:579-581`); no-transform branch `opK->Mult(x1, z1); ...` (`:572-575`);
@@ -398,33 +393,20 @@ Strawman / combinator evidence:
   not render the loop as `iterate_while_L3` (unlike `ksp_solve`); this theme records that absence as the
   opaque-library erasure-scope corner.
 
-Open-questions ledger:
-
-- `scaffolding/open-questions.md` slug `l3-l2-substantive-erasure-scope-taxonomy` (the meta-phase-flagged
-  taxonomy question from the L3-L2 §Working-Notes) — this theme supplies the third corner
-  (opaque-library) of the unconditional / variant-conditional / opaque-library axis. Surfaced in this
-  CYCLE.md §Open questions for the meta-phase to consider naming the taxonomy across the substantive cohort.
-
 ## Status
 
-`firm` — the theme's content is firm: both endpoints are firm ([`L3/eigsolve`](../L3/eigsolve.md)
-cycle-024 `partial-obstruction`; [`L2/eigsolve`](../L2/eigsolve.md) cycle-023); the substantive
+`firm` — both endpoints are firm ([`L3/eigsolve`](../L3/eigsolve.md) `partial-obstruction`; [`L2/eigsolve`](../L2/eigsolve.md)); the substantive
 non-identity content (the opaque-library obstruction-marker erasure + the marker's shadow-to-non-laws)
 is structurally grounded and citation-backed at both layers and the L0 source (the SLEPc `EPSSolve`
 single-call site + the ARPACK `naupd` RCI callback-dispatch loop are the decisive negative anchors for
 the un-renderable-loop / opaque-library-ownership claim); the per-step body's L3>L2 rotation is
 identity-in-form (the `apply_linop ▷ ksp_solve ▷ scale_untransform` body maps line-for-line, witnessed
-at both the ARPACK `ApplyOp` and SLEPc `__pc_apply_EPS` assembly sites); the rewrite-shape table is
-total on the fold structure with the single non-identity line (the fold's obstruction-marker erasure)
-explicitly delimited; no speculative L3 vocabulary is introduced; the four applicability conditions are
-stated and confirmed. The erasure-scope taxonomy contrast positions this theme as the **third / final
-erasure-scope root** (opaque-library) after the unconditional `ksp-solve-outer-driver` (cycle-021) and
-the variant-conditional `orthogonalize-variant-split` (cycle-044), completing the substantive L3>L2
-cohort across all three roots. This is the L3>L2-edge half of the `eigsolve` chain (L1-firm cycle-022 →
-L2-firm cycle-023 → L3-firm `partial-obstruction` cycle-024 → L2>L1 cycle-025 → **this L3>L2 theme
-cycle-045**).
+at both the ARPACK `ApplyOp` and SLEPc `__pc_apply_EPS` assembly sites). The erasure-scope taxonomy contrast positions this theme as the **opaque-library
+erasure-scope root** after the unconditional `ksp-solve-outer-driver` and
+the variant-conditional `orthogonalize-variant-split`, completing the substantive L3>L2
+cohort across all three roots.
 
-Authored cycle-045 wave-1 (abstractor, D1), enacting **Layers are defined high→low** (LHS L3, RHS L2,
+It enacts **Layers are defined high→low** (LHS L3, RHS L2,
 forward narration: the L3 obstruction marker erases into the L2 role-reference fold). Unlike the BLAS-1
 `-body-identity` cohort (clean identity-lowerings) and the body-identity portion of this hop (the
 `apply_shift_invert` body), the L3>L2 *loop* rotation here is **substantive** — the opaque-library
@@ -437,11 +419,11 @@ the library boundary and the erasure permanently.
 
 The `eigsolve` chain divides its substantive content across two adjacent edges, by subject:
 
-- **L2>L1 ([`eigsolve-spectral-transform-composition`](../L2-L1/eigsolve-spectral-transform-composition.md),
-  cycle-025; the BODY edge)**: the substantive content is the partial un-collapse of the L1 opacity into
+- **L2>L1 ([`eigsolve-spectral-transform-composition`](../L2-L1/eigsolve-spectral-transform-composition.md);
+  the BODY edge)**: the substantive content is the partial un-collapse of the L1 opacity into
   the named shift-invert composition — the L1 opaque `E.linear` opened into the explicit inner
   `ksp_solve`. The *body* is opened; the *loop* stays collapsed (named by role at both L2 and L1).
-- **`eigsolve-opaque-eigen-iteration` (this theme, cycle-045; the LOOP edge)**: the substantive content
+- **`eigsolve-opaque-eigen-iteration` (this theme; the LOOP edge)**: the substantive content
   is the opaque-library obstruction-marker erasure — the L3 marked `eigen_iterate` erased to the L2 plain
   role reference. The *loop* marker is erased; the *body* stays identity-in-form across the hop.
 

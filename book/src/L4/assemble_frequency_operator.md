@@ -51,7 +51,7 @@ of the L4 vocabulary its parent [`linear_combination`](./linear_combination.md)
 occupies, specialized to operator operands and an affine-in-ω scalar schedule.
 It is the **assemble-half companion** to the iteration-structural driven *solve*
 half: the per-ω operator this verb assembles is the operand the driven solve loop
-inverts. (The driven solve half is **not** this dispatch's concern — the per-ω
+inverts. (The driven solve half is **not** this entry's concern — the per-ω
 `SetOperators`-inside-the-loop that scopes driven out of the shared
 [`solve_family`](./solve_family.md) is the `map_solve` boundary recorded at
 `L4/solve_family.md`; whether driven's *solve* half rises to L4 is a separate
@@ -298,9 +298,9 @@ laws, the same affine-modulo-`A2` and single-pipeline caveats, the same deferred
 IEEE non-law.
 
 **There is no dedicated L4>L3 or L4>L1 theme file** — the identity-in-form
-annotation lives in-line here, per the cycle-012 non-adjacent-identity
-in-line-marker convention (CLAUDE.md §Methodology invariants "Identity rotations
-across non-adjacent layers are annotated in-line"). This is the **same in-line
+annotation lives in-line here, per the non-adjacent-identity in-line-marker
+convention (CLAUDE.md §Methodology invariants "Identity rotations across
+non-adjacent layers are annotated in-line"). This is the **same in-line
 route** its parent [`linear_combination`](./linear_combination.md) takes
 (`L4/linear_combination.md:206-249`): there is no monadic wrapper, no `Solve`
 monad, no convergence predicate, no outer driver to dissolve across the L4>L3 edge
@@ -322,7 +322,7 @@ in-line note.
 ## Dependencies
 
 **Through (the combinator this specializes):** the firm L4
-[`linear_combination`](./linear_combination.md) (cycle-068 D3) — at the
+[`linear_combination`](./linear_combination.md) — at the
 **operator-operand** corner of its operand-category variant axis.
 `assemble_frequency_operator` is the arity-4 driven specialization; it does not
 re-derive the fold. Every law is the combinator's law at this corner.
@@ -348,40 +348,6 @@ per-element operator of that superset's assemble half — the driven solve half 
 verb adds **no reduction rule** (it is `linear_combination`'s fold at the
 operator-operand corner, in the existing `foldl`/`+`/`scal` vocabulary).
 
-## Status
-
-`firm` — the L4 form is the calculus-level rendering of the firm L1
-[`assemble_frequency_operator`](../L1/assemble_frequency_operator.md)
-(firm-on-positive-structure cycle-062 D3), re-expressed as the **operator-operand
-specialization** of the firm L4 [`linear_combination`](./linear_combination.md)
-combinator (cycle-068 D3): the same arity-4 operator-operand term list, the same
-six laws, value-thread-isomorphic across the L4>L1 edge (identity-in-form on the
-body; no monadic wrapper to dissolve — §"Downward to L1"). The promotion is the
-**firm-on-positive-structure / syntactic-identity escape** (the
-`linear_combination` / `fe_assemble` / `apply_linop` precedent): every law is a
-read-off syntactic operator-algebra identity carried up from the firm combinator +
-the firm L1 cap (operator addition is a commutative monoid; scalar-operator scaling
-distributes; the term-drop law is positively anchored in the operator domain at the
-L0 `coeff[i] != 0` prune, `rap.cpp` fold body) — the absence of a dedicated
-driven-assembly unit test does not gate firm because no law is an unconfirmed
-runtime property; they are all syntactic identities on positive source. Two
-recorded caveats are **non-gating** because they are stated facts, not unconfirmed
-laws: (a) **affine modulo `A2`** — the fixed-basis degree-≤2 structure is exact for
-`{K, C, M}`; `A2` is an ω-dependent operand carrying coeff `1` (the
-`parameter-dependent-operand` stationarity case + the affine-as-a-whole non-law);
-(b) **single-pipeline-by-design** — the affine-operator-*family* specialization is
-witnessed by driven only and permanently so, so it lands as a single-pipeline
-specialization with no second-pipeline discharge owed (the operand-category
-generality comes from the firm tensor-operand BLAS-1 cohort plus this operator-operand
-witness, per the `disciplined-cross-pipeline-combinator-mining-gate`). The L0
-anchors are **inherited transitively through the firm L1 cap** (self-verified at L1
-cycle-062, the per-ω combination + once-assembled basis + `BuildParSumOperator`
-fold body re-confirmed on-disk this dispatch); this is an upward in-layer rendering,
-not a fresh family discovery. This dispatch (cycle-069 D1) is the **rank-2
-FE-cohort→L4 lift** opening the driven pipeline's **assemble half** at the L4
-feature surface (directive-1: L4 is the outward backend-lowering target), riding
-`linear_combination`'s cycle-068 rise (the gate cleared at `L4/linear_combination.md:40`).
-
 ## L4 vs L1 distinction
 
 - **L1**: the mutation-rotation layer's pure-functional rendering of Palace's per-ω
@@ -402,24 +368,23 @@ feature surface (directive-1: L4 is the outward backend-lowering target), riding
 L1 cap as the operator-operand specialization of the firm L4 combinator; Palace's
 C++ has no direct L4 realization (it writes the imperative per-ω `GetSystemMatrix`
 → `BuildParSumOperator` build). The L0 anchors are inherited transitively through
-the firm L1 cap; the load-bearing ones re-confirmed on-disk this dispatch.
+the firm L1 cap.
 
 Firm endpoints this entry rests on:
 
-- `book/src/L1/assemble_frequency_operator.md` (firm cycle-062 D3) — the firm L1
+- `book/src/L1/assemble_frequency_operator.md` (firm) — the firm L1
   source: the warrant (`:69`), the affine-modulo-`A2` caveat (`:77`, `:107`), the
   single-pipeline-by-design caveat (`:79-87`), the six laws read at the
   operator-operand corner (`:89-108`), the operator-operand framing (`:26-28`,
   `:60-69`), and the full positive L0 citation list (`:136-144`).
-- `book/src/L4/linear_combination.md` (firm cycle-068 D3) — the firm L4 combinator
+- `book/src/L4/linear_combination.md` (firm) — the firm L4 combinator
   this entry is the operator-operand specialization of: the operand-category
   variant axis naming the operator-operand corner + this entry as next-pull consumer
   (`:196-204`), the seven algebraic laws this entry reads at the corner
   (`:128-183`), the in-line L4>L3 identity route this entry's L4>L1 identity composes
   with (`:206-249`), the gate-cleared forward-reference (`:40`).
 
-L0 source ranges (paths relative to `reference/palace/`; the load-bearing fold body
-+ driven sites re-confirmed on-disk this dispatch via direct `sed` read):
+L0 source ranges (paths relative to `reference/palace/`):
 
 - `palace/linalg/rap.cpp:766-787` — `BuildParSumOperator` (the operator-operand
   scalar-weighted-sum primitive): the template signature (`:766-767`), the
@@ -427,32 +392,28 @@ L0 source ranges (paths relative to `reference/palace/`; the load-bearing fold b
   the shape precondition law), the `SumOperator` seed (`:780-781`), and the fold
   body `for (i) if (ops[i] && coeff[i] != 0) sum->AddOperator(ops[i]->LocalOperator(), coeff[i])`
   (`:782-786`) — the scalar-weighted operator accumulate with the zero-coefficient
-  sparsity prune (law 4). On-disk-confirmed this dispatch: the fold-body span is
-  `:766-787`; the function continues past `:787` into a `set_essential` branch
-  (`:789+`), so `:766-787` is the fold-body excerpt (NOT the function close brace —
-  the L1 cap cites the same span).
+  sparsity prune (law 4). The fold-body span is `:766-787`; the function continues
+  past `:787` into a `set_essential` branch (`:789+`), so `:766-787` is the
+  fold-body excerpt (NOT the function close brace — the L1 cap cites the same span).
 - `palace/models/spaceoperator.cpp:521-528` —
   `SpaceOperator::GetSystemMatrix(a0, a1, a2, K, C, M, A2)` ≡
   `BuildParSumOperator({a0, a1, a2, ScalarType{1}}, {K, C, M, A2})` (the one-line
-  forward; the literal 4-term scalar-weighted operand list, the arity-4 instance).
-  On-disk-confirmed this dispatch (`:527` is the `BuildParSumOperator` call,
-  `:528` the close brace).
+  forward; the literal 4-term scalar-weighted operand list, the arity-4 instance;
+  `:527` is the `BuildParSumOperator` call, `:528` the close brace).
 - `palace/drivers/drivensolver.cpp:91-93` — the fixed operator basis assembled ONCE
   before the sweep (`K = GetStiffnessMatrix`, `C = GetDampingMatrix`,
-  `M = GetMassMatrix`; operand-stationarity = fixed-basis). On-disk-confirmed.
+  `M = GetMassMatrix`; operand-stationarity = fixed-basis).
 - `palace/drivers/drivensolver.cpp:175` — `A2 = GetExtraSystemMatrix<ComplexOperator>(omega, ...)`
   (the ω-dependent extra-term operand; the "affine modulo A2" caveat).
-  On-disk-confirmed.
 - `palace/drivers/drivensolver.cpp:176-177` — `A = GetSystemMatrix(1.0+0.0i, 1i*omega, -omega*omega+0.0i, K, C, M, A2)`
   (the per-ω affine combination INSIDE the sweep loop; weights `{1, iω, −ω²}`).
-  On-disk-confirmed.
 - `palace/drivers/drivensolver.cpp:180` — `ksp.SetOperators(*A, *P)` (the per-ω
   operator capture = the `map_solve` superset scope boundary; the cross-cutting
-  role-contrast reference, NOT this entry's content). On-disk-confirmed.
+  role-contrast reference, NOT this entry's content).
 
 Classification / methodology anchors:
 
-- `book/src/concepts/black-box-vs-accelerated-kernels.md` (cycle-067 D3) —
+- `book/src/concepts/black-box-vs-accelerated-kernels.md` —
   §"The combinators rise regardless" (`:128-136`): `linear_combination` rises to L4
   regardless as a feature-surface verb; this operator-operand specialization rides
   that rise.
@@ -461,7 +422,7 @@ Classification / methodology anchors:
   owed (the operand-category generality comes from the firm tensor-operand cohort +
   this operator-operand witness; the affine-operator-family specialization is
   permanently driven-only by design).
-- `book/src/L4/fe_assemble.md` (cycle-068 D1) — the structural-sibling precedent:
+- `book/src/L4/fe_assemble.md` — the structural-sibling precedent:
   the FE-cohort→L4 lift's combinator-as-entry + firm-on-positive-structure escape +
   shape-contract conventions this entry follows.
 - `book/src/semantics/index.md` — the strawman; this verb adds no reduction rule
@@ -473,12 +434,3 @@ the structure is firm-on-positive-structure (every law a read-off syntactic
 operator-algebra identity carried up from the firm combinator + the firm L1 cap),
 so no test gates firm — the same status as the firm L1 `assemble_frequency_operator`
 and the firm L4 `linear_combination` / `fe_assemble`.
-
-**Provenance:** harvested cycle-069 D1 from the c067 D2 FE-cohort→L4 survey ranking
-(rank-2, plan-tag `fe-cohort-l4-lift`); the firm L1 `assemble_frequency_operator`
-(cycle-062) + the firm L4 `linear_combination` (cycle-068 D3, the operand-operand
-corner + the c069-gated next-pull note) are the direct inputs. WARRANT verdict:
-genuine L4 entry (both dispositions VALID; standalone entry chosen on layer-coherence
-with the firm L1 cap's same-warrant standalone home + the named `map_solve` scope
-boundary + operand-category-corner-distinctness from `linear_combination`'s
-tensor-operand §Specializations).

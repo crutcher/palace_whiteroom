@@ -5,7 +5,7 @@ firmness: firm
 edges:
   depends-on:
     - L4/inner_product
-    - L3/inner_product           # L3/nrm2 leaf eliminated into the combinator (cycle-127, RE-style); this verb is the √∘abs∘inner_product CONSUMER at the diagonal (NOT a fold member — see L3/inner_product §Consumer)
+    - L3/inner_product           # L3/nrm2 leaf eliminated into the combinator; this verb is the √∘abs∘inner_product CONSUMER at the diagonal (NOT a fold member — see L3/inner_product §Consumer)
   reference:
     - concepts/black-box-vs-accelerated-kernels
     - concepts/nrm2
@@ -166,7 +166,7 @@ self-inner-product value at the diagonal), the same five laws, the same do-NOT-m
 consumer carve-out, the same load-bearing `abs` defensive guard.
 
 **There is no dedicated L4>L3 theme file** — the identity-in-form annotation lives in-line
-here, per the cycle-012 non-adjacent-identity / in-line-marker convention (CLAUDE.md
+here, per the non-adjacent-identity / in-line-marker convention (CLAUDE.md
 §Methodology invariants "Identity rotations across non-adjacent layers are annotated
 in-line"). This is the **same in-line-marker route** the combinator
 [`inner_product`](./inner_product.md) and the sibling named verb [`dot`](./dot.md) take to
@@ -188,60 +188,32 @@ firm L3>L2 identity (the L3 entry's §"Downward to L2 (consumer identity-in-form
 substantive L1>L0 rotation — annotated in-line per the per-adjacent-edge directory
 convention (no `L4-L2`/`L4-L1` directory).
 
-## Status
-
-`firm` — the L4 form is the calculus-level named verb re-expressing the diagonal consume
-of the combinator [`inner_product`](./inner_product.md) (firm cycle-068 D3) under the
-`√ ∘ abs` scalar map, value-thread-isomorphic to the firm L3 [`nrm2`](../L3/inner_product.md#consumer-nrm2-and-matrix-weighted-norm) (firm
-cycle-011, consumer-stub cycle-052 D3): the same `Tensor[(S: ...)] -> Scalar` `√(abs(inner_product
-x x))` skeleton, identity-in-form across the L4>L3 edge (no monadic wrapper to dissolve —
-§"Downward to L3"). The five algebraic laws are the square-root norm-axioms over the PSD
-diagonal (each a syntactic identity or a standard norm fact); the homomorphism non-law is
-the **defining reason `nrm2` is a consumer, not a fold member**; the inner reduction-tree
-IEEE non-law is deferred to the firm L2>L1 fold-specialization theme (NOT restated as an
-L4 law); the `abs` defensive guard is preserved as an explicit part of the scalar map; the
-element-type axis is collapsed (result always real). It carries **no first-class L4
-calculus structure of its own** (no `Solve` monad, no iteration carry) — it rises as a
-**kept named abstraction / feature-surface verb the backend wants** per
-[`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerated-kernels.md) §2,
-alongside the rising combinator (the permitted dual; as a *consumer* verb, the do-NOT-merge
-boundary the over-unification guard). The L0 anchors are **inherited transitively through
-the firm L3/L1 leaf** (the firm L1 [`nrm2`](../L1/nrm2.md) carries the complete L0 evidence
-list; the `vector.hpp:255-260` `Norml2` one-line composition was re-verified on disk at the
-L3 entry this batch), not re-localized this pass. The empirical-match witness is the
-`test-vector.cpp:209-211` `Norml2` value test (`norm = √14` for `(1,2,3)`, inherited
-transitively); the missing dedicated L4 test does not gate firm because every L4 law is a
-syntactic identity / standard norm fact carried up from the firm combinator / leaf below
-(the firm-on-positive-structure / syntactic-identity escape, the same bar
-[`inner_product`](./inner_product.md) cleared).
-
 ## Evidence
 
 Combinator + L3/L1 endpoints (firm; the value-isomorphism this L4 named verb rests on):
 
-- `book/src/L4/inner_product.md` (firm cycle-068 D3) — the L4 combinator this verb
-  consumes; §"Consumer (NOT an instance): nrm2 / matrix-weighted-norm" already records
+- `book/src/L4/inner_product.md` (firm) — the L4 combinator this verb
+  consumes; §"Consumer (NOT an instance): nrm2 / matrix-weighted-norm" records
   `nrm2(x) = √ (abs (inner_product x x))` at the diagonal as a consumer, NOT a member, with
   combinator law 5 (PSD) as the well-definedness witness.
 - [`L3/inner_product`](../L3/inner_product.md) §"Consumer (NOT an instance)" (the firm L3
-  `nrm2` consumer this verb is value-thread-isomorphic to — the standalone `L3/nrm2` leaf,
-  firm cycle-011, was eliminated cycle-127 RE-style, its signature + defining identity +
-  consuming-context roles + the `std::abs` defensive-guard note folded into the combinator's
-  §"Consumer (NOT an instance)"; do-NOT-merge boundary preserved — NOT a fold member). Its L0
-  anchor `palace/linalg/vector.hpp:255-260` re-verified on-disk this batch.
-- `book/src/L1/nrm2.md` (firm cycle-003) — authoritative on Palace surface, signature,
+  `nrm2` consumer this verb is value-thread-isomorphic to — the standalone `L3/nrm2` leaf
+  was eliminated, its signature + defining identity + consuming-context roles + the
+  `std::abs` defensive-guard note folded into the combinator's §"Consumer (NOT an
+  instance)"; do-NOT-merge boundary preserved — NOT a fold member). Its L0
+  anchor is `palace/linalg/vector.hpp:255-260`.
+- `book/src/L1/nrm2.md` (firm) — authoritative on Palace surface, signature,
   algebraic laws, variant axes, the defining identity `nrm2(x) = √dot(x, x)`, the
   B-weighted-overload boundary, and the complete L0 evidence list (inherited transitively):
   `palace/linalg/vector.hpp:255-260`, `palace/linalg/vector.hpp:262-270`,
   `palace/linalg/operator.cpp:600-619`.
 - `book/src/L1-L0/nrm2-mutation-rotation.md` (firm) — the four-stage L0 chain and the full
   `std::abs` defensive-guard classification (the substantive downward content home).
-- `book/src/L4/dot.md` (this cycle, sibling) — the sibling named verb (`nrm2(x) = √dot(x, x)`
+- `book/src/L4/dot.md` (sibling) — the sibling named verb (`nrm2(x) = √dot(x, x)`
   is the L3-internal defining identity; both rise through the same combinator as the
   permitted dual).
 
-L0 transitive anchors (verified on-disk this dispatch via `citecheck --anchor`, not
-re-localized — inherited through the firm leaves above):
+L0 transitive anchors (inherited through the firm leaves above):
 
 - `palace/linalg/vector.hpp:255-260` — `linalg::Norml2` template (anchor confirmed at
   `:257`); body line `:259` is `return std::sqrt(std::abs(Dot(comm, x, x)));` — the one-line
@@ -255,7 +227,7 @@ re-localized — inherited through the firm leaves above):
 
 Classification / methodology anchors:
 
-- `book/src/concepts/black-box-vs-accelerated-kernels.md` (cycle-067 D3) — §2 "Kept named
+- `book/src/concepts/black-box-vs-accelerated-kernels.md` — §2 "Kept named
   abstraction — rises" (`:88-109`) names `nrm2` as a confirmed keep, the 2-norm named verb
   (`residual nrm2(r)`) that rises to L4 alongside the rising combinator (the permitted dual).
 - `book/src/concepts/nrm2.md` — the BLAS-1 heritage cross-cutting framing. (Note: its
@@ -263,9 +235,3 @@ Classification / methodology anchors:
   `book/src/L1/nrm2.md:11`; the L1 entry is authoritative.)
 - `book/src/semantics/index.md` — the strawman; `nrm2` adds no reduction rule (the
   combinator's diagonal consume + a `√ ∘ abs` scalar map).
-
-Provenance: harvester:2026-06-02T205715Z (cycle-069 D2) — the `l4-dot-nrm2-named-verb-rise`
-plan-tag enactment; rises the kept named abstraction `nrm2` to L4 as a named *consumer* verb
-through the firm `L4/inner_product`, per directive-2 disposition-2 (keep-and-rise) and
-`concepts/black-box-vs-accelerated-kernels.md` §2 (the do-NOT-merge over-unification guard
-preserved: consumer, not fold member).

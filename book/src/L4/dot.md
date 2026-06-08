@@ -6,7 +6,7 @@ edges:
   depends-on:
     - target: L4/inner_product
       kind: specializes
-    - L3/inner_product           # L3/dot leaf eliminated into the combinator (cycle-127, RE-style); this verb is its Hermitian/symmetric specialization (see L3/inner_product §Specializations)
+    - L3/inner_product           # this verb is the Hermitian/symmetric specialization of the L3 combinator (see L3/inner_product §Specializations)
   reference:
     - concepts/black-box-vs-accelerated-kernels
     - concepts/dot
@@ -181,7 +181,7 @@ algebraic laws, the same deferred IEEE non-law, the same conjugation convention 
 arg-1, the same `(dot, tdot)` conjugation-axis profile.
 
 **There is no dedicated L4>L3 theme file** — the identity-in-form annotation lives in-line
-here, per the cycle-012 non-adjacent-identity / in-line-marker convention (CLAUDE.md
+here, per the non-adjacent-identity / in-line-marker convention (CLAUDE.md
 §Methodology invariants "Identity rotations across non-adjacent layers are annotated
 in-line"). This is the **same in-line-marker route** the parent combinator
 [`inner_product`](./inner_product.md) takes to its L3 form (and that
@@ -193,8 +193,8 @@ identity-in-named-terms theme** (the §1d smell — LHS and RHS the same named v
 vocabulary shift), so it is correctly an in-line note.
 
 The **substantive** rotation in the downward chain is the L2>L1
-[`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md) theme
-(KEPT, cycle-049 D2): the conjugation/element-type dispatch, the value-level `xᴴ y` ↔ `yᴴ x`
+[`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md) theme:
+the conjugation/element-type dispatch, the value-level `xᴴ y` ↔ `yᴴ x`
 re-order (Palace's `linalg::Dot` pins arg-2), and the per-call pinned reduction trees (the
 load-bearing IEEE non-law content). The transitive L4>L3>L2>L1 identity-then-substantive
 chain composes this in-line L4>L3 identity with the firm L3>L2 identity (the L3 entry's
@@ -202,57 +202,28 @@ chain composes this in-line L4>L3 identity with the firm L3>L2 identity (the L3 
 annotated in-line per the per-adjacent-edge directory convention (no `L4-L2`/`L4-L1`
 directory).
 
-## Status
-
-`firm` — the L4 form is the calculus-level named verb re-expressing the combinator
-[`inner_product`](./inner_product.md) (firm cycle-068 D3) at `M = I` with the
-Hermitian/symmetric kernel, value-thread-isomorphic to the firm L3
-[`dot`](../L3/inner_product.md#specializations) (firm cycle-011, specialization-stub cycle-052 D3): the same
-`Tensor[(S: ...)] -> Tensor[$S] -> Scalar` reduction read at the plain-weight conjugation value,
-identity-in-form across the L4>L3 edge (no monadic wrapper to dissolve — §"Downward to
-L3"). The six algebraic laws are carried up unchanged (each a syntactic identity or a
-standard inner-product fact, read at `M = I`); the IEEE-754 reduction-tree non-law is
-deferred to the firm L2>L1 fold-specialization theme (NOT restated as an L4 law); the
-conjugation convention is pinned at arg-1; the conjugation × element-type variant profile
-is closed. It carries **no first-class L4 calculus structure of its own** (no `Solve`
-monad, no iteration carry) — it rises as a **kept named abstraction / feature-surface verb
-the backend wants** per [`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerated-kernels.md)
-§2, alongside the rising combinator (the permitted dual). The L0 anchors are **inherited
-transitively through the firm L3/L2/L1 leaf** (self-verified at L2 cycle-019; the firm L1
-[`dot`](../L1/dot.md) carries the complete L0 evidence list), not re-localized this pass.
-The `tdot` co-variant carries the type-API-surface-only evidentiary caveat inherited from
-L1/L2/L3 (zero Palace call sites; declaration + definition only) — not a status reduction
-(the `dot` reduction structure is firm and behaviorally exercised; only `tdot`'s
-behavioral weight is API-only). The empirical-match witness is the `test-vector.cpp:206-207`
-real-dot value test (inherited transitively); the missing dedicated L4 test does not gate
-firm because every L4 law is a syntactic identity carried up from the firm combinator /
-leaf below (the firm-on-positive-structure / syntactic-identity escape, the same bar
-[`inner_product`](./inner_product.md) cleared).
-
 ## Evidence
 
 Combinator + L3/L1 endpoints (firm; the value-isomorphism this L4 named verb rests on):
 
-- `book/src/L4/inner_product.md` (firm cycle-068 D3) — the L4 combinator this verb
+- `book/src/L4/inner_product.md` (firm) — the L4 combinator this verb
   re-expresses through; §"Specializations" already names `dot(x, y) = inner_product x y`
   as the Hermitian/symmetric specialization, §2-keep dual.
 - [`L3/inner_product`](../L3/inner_product.md) §"Specializations" (the firm L3 `dot`
-  specialization this verb is value-thread-isomorphic to — the standalone `L3/dot` leaf,
-  firm cycle-011, was eliminated cycle-127 RE-style, its signature + conjugation
-  variant-axis kernel table + consuming-context framing folded into the combinator's
-  §"Specializations"; the §"Downward to L2" identity-in-form note now lives on the combinator).
-- `book/src/L1/dot.md` (firm cycle-002) — authoritative on Palace surface, signature,
+  specialization this verb is value-thread-isomorphic to — the `L3/dot` leaf's signature +
+  conjugation variant-axis kernel table + consuming-context framing live in the combinator's
+  §"Specializations"; the §"Downward to L2" identity-in-form note lives on the combinator).
+- `book/src/L1/dot.md` (firm) — authoritative on Palace surface, signature,
   algebraic laws, variant axes, and the complete L0 evidence list (inherited transitively
   here): `palace/linalg/vector.hpp:110-113`, `palace/linalg/vector.cpp:263-274` (Hermitian
   kernel + `tdot`), `palace/linalg/vector.cpp:665-685` (real/complex reductions).
-- `book/src/L2-L1/inner-product-fold-specialization.md` (KEPT; cycle-049 D2) — the
+- `book/src/L2-L1/inner-product-fold-specialization.md` — the
   substantive L2>L1 translation: conjugation/element-type dispatch + the `xᴴ y` ↔ `yᴴ x`
   re-order + per-call pinned reduction trees (the IEEE non-law home deferred there).
 
-L0 transitive anchors (verified on-disk this dispatch via `citecheck --anchor`, not
-re-localized — inherited through the firm leaves above):
+L0 transitive anchors (inherited through the firm leaves above):
 
-- `palace/linalg/vector.cpp:263-267` — `linalg::Dot` (anchor confirmed at `:263`); the
+- `palace/linalg/vector.cpp:263-267` — `linalg::Dot`; the
   Hermitian reduction kernel. (Path relative to `reference/palace/`.)
 - `palace/linalg/iterative.cpp:395, 404, 444, 460` — CG using `linalg::Dot` for `β = ⟨z, r⟩`
   and the α-denominator `⟨z, p⟩`; the consuming context at L0 (the `dot(p, Ap)` /
@@ -262,14 +233,9 @@ re-localized — inherited through the firm leaves above):
 
 Classification / methodology anchors:
 
-- `book/src/concepts/black-box-vs-accelerated-kernels.md` (cycle-067 D3) — §2 "Kept named
+- `book/src/concepts/black-box-vs-accelerated-kernels.md` — §2 "Kept named
   abstraction — rises" (`:88-109`) names `dot` as a confirmed keep, the literature-standard
   named verb that rises to L4 alongside its parent combinator (the permitted dual).
 - `book/src/concepts/dot.md` — the BLAS-1 heritage / element-type cross-cutting framing.
 - `book/src/semantics/index.md` — the strawman; `dot` adds no reduction rule (the
   combinator's `reduce`/`zipWith` fold read at `M = I`).
-
-Provenance: harvester:2026-06-02T205715Z (cycle-069 D2) — the `l4-dot-nrm2-named-verb-rise`
-plan-tag enactment; rises the kept named abstraction `dot` to L4 as a named verb through the
-firm `L4/inner_product`, per directive-2 disposition-2 (keep-and-rise) and
-`concepts/black-box-vs-accelerated-kernels.md` §2.

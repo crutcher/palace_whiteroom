@@ -2,7 +2,7 @@
 
 > **⟢ SEMANTIC-CONSOLIDATION DIRECTIVE (user directive 2026-06-06).** This document is no longer a "strawman draft" — it is the project's **single, actively-managed semantic surface**: the unified home for the spec's **semantic rules, definitions, and abstractions** (the calculus grammar, shape semantics + named shape groups, the L4/L3 pseudo-language notation invariant, monad / ownership / reduction-rule / scalar-promotion conventions). It is **held under the same liveness / unification / consolidation discipline** the graded-stack two-axis machinery applies to vocabulary. **The rule: a semantic rule/def/abstraction lives ONCE, here, at the semantic surface; functional-unit (operator / theme / layer-intro) entries USE + LINK to it, they do NOT RE-STATE it** — a semantic rule restated at a functional-unit scope is the semantic analog of a degenerate identity-lowering smell or an un-grounded detritus node, and is resolved by relocation-to-the-surface + a back-link. It is placed **before the `# L4` Part** in `SUMMARY.md` ordering (it defines the language the layers are written in). See the active-management discipline (§0.1) below.
 
-**Status:** **actively-managed semantic surface** (de-strawman'd 2026-06-06). Authoritative for the calculus conventions L4/L3/L2 content cites + continues. Specifics still marked "placeholder" / "open question" inline are genuine open points, not a disclaimer on the whole document.
+**Status:** **actively-managed semantic surface.** Authoritative for the calculus conventions L4/L3/L2 content cites + continues. Specifics still marked "placeholder" / "open question" inline are genuine open points, not a disclaimer on the whole document.
 
 ## 0. What L4 is and is not
 
@@ -94,12 +94,12 @@ A linear operator whose **domain shape differs from its range shape** names *two
 
 This generalizes the rank-1 spelling `LinearOperator[M, N]` (where `M`, `N` are genuine flat dof-vector lengths) to the rank-agnostic case. At **L1/L0**, Palace operators act on flat dof-vectors and the concrete `LinearOperator[M, N]` / `Tensor[N]` rank-1 spelling is faithful — keep it there; the `LinOp[(R: ...), (D: ...)]` form is the L4/L3/L2 calculus rendering.
 
-##### 1.2.2-R — the operator-VALUE spelling ruling (the cohort-sweep scope-gate)
+##### 1.2.2-R — the operator-VALUE spelling ruling
 
-This is the **canonical per-site decision** a whole-book closure-signature compliance sweep applies. It is the *application* of §1.2.2 + §1.3.1 (the bracketed-operator-value ruling and its table); it does not restate them. For each occurrence of an operator-value in a signature or a lowering-theme LHS:
+This is the **canonical per-site decision** for spelling an operator-value. It is the *application* of §1.2.2 + §1.3.1 (the bracketed-operator-value ruling and its table); it does not restate them. For each occurrence of an operator-value in a signature or a lowering-theme LHS:
 
-1. **Calculus-level operator-VALUE codomain → bracketed form (CONVERT if opaque).** An operator-value in a **codomain / return position** of an L4/L3/L2 signature or a lowering-theme LHS — an operator **constructor** `mk :: A -> Op[X → Y]`, an operator **transformer** `t :: Op[X → Y] -> Op[X' → Y']`, or a calculus-level result annotation `op_w = … : LinOp[…]` — carries higher-order intent and is spelled in the **bracketed operator-value form**: `LinOp[(R: ...), (D: ...)]` (or square `LinOp[(N: ...), $N]`), or `Op[τ_in → τ_out]`. The bracket already groups the in/out arrow, so the codomain is **already compliant** and wants **no outer parens** (§1.3.1:153, :158). The **non-compliant smell** is the opaque type-application form `LinearOperator[N, N]` / `LinearOperator (Tensor[…])` — a bare type name applied to dim slots, **no in/out arrow**, the higher-order intent hidden. The fix is to **re-spell** it bracketed; wrapping the opaque form in outer parens does NOT make it compliant (§1.3.1:154).
-2. **Genuine rank-1 flat-dof form → KEEP rank-1 (do NOT convert).** A genuine **rank-1 flat-dof** form is KEPT exactly as written per §1.2.2:95 ("at L1/L0 … keep it there"). This covers (i) any **L1/L0** operator/vector signature (`LinearOperator[M, N]` / `Tensor[N]` over genuine flat dof-vector lengths), and (ii) a **plain operator-VALUE record FIELD** at L4/L3 whose dim is a genuine flat-dof length (the deliberate c129-D2 within-chapter dual-spelling — e.g. an `assemble_frequency_operator` `{ K, C, M }` field, a `divfree-projector` `{ P.M, P.WeakDiv, P.Grad }` field). The convention governs closure-**RETURNING calculus signatures**, NOT genuine rank-1 L1/L0 forms; a record field that merely *holds* a rank-1 operator value is not a closure-returning signature and is out of scope.
+1. **Calculus-level operator-VALUE codomain → bracketed form (CONVERT if opaque).** An operator-value in a **codomain / return position** of an L4/L3/L2 signature or a lowering-theme LHS — an operator **constructor** `mk :: A -> Op[X → Y]`, an operator **transformer** `t :: Op[X → Y] -> Op[X' → Y']`, or a calculus-level result annotation `op_w = … : LinOp[…]` — carries higher-order intent and is spelled in the **bracketed operator-value form**: `LinOp[(R: ...), (D: ...)]` (or square `LinOp[(N: ...), $N]`), or `Op[τ_in → τ_out]`. The bracket already groups the in/out arrow, so the codomain is **already compliant** and wants **no outer parens** (§1.3.1). The **non-compliant smell** is the opaque type-application form `LinearOperator[N, N]` / `LinearOperator (Tensor[…])` — a bare type name applied to dim slots, **no in/out arrow**, the higher-order intent hidden. The fix is to **re-spell** it bracketed; wrapping the opaque form in outer parens does NOT make it compliant (§1.3.1).
+2. **Genuine rank-1 flat-dof form → KEEP rank-1 (do NOT convert).** A genuine **rank-1 flat-dof** form is KEPT exactly as written per §1.2.2 ("at L1/L0 … keep it there"). This covers (i) any **L1/L0** operator/vector signature (`LinearOperator[M, N]` / `Tensor[N]` over genuine flat dof-vector lengths), and (ii) a **plain operator-VALUE record FIELD** at L4/L3 whose dim is a genuine flat-dof length (the deliberate within-chapter dual-spelling — e.g. an `assemble_frequency_operator` `{ K, C, M }` field, a `divfree-projector` `{ P.M, P.WeakDiv, P.Grad }` field). The convention governs closure-**RETURNING calculus signatures**, NOT genuine rank-1 L1/L0 forms; a record field that merely *holds* a rank-1 operator value is not a closure-returning signature and is out of scope.
 
 **One-line discriminator for the sweep:** *is this an operator-value in a calculus-level (L4/L3/L2) signature/theme-LHS codomain position, spelled opaquely?* → **CONVERT to bracketed**. *Is it an L1/L0 form, or a record field holding a genuine rank-1 operator value?* → **KEEP**.
 
@@ -290,7 +290,7 @@ Operationally, this is captured by an "observed" relation on expressions. Root o
 
 - The return value of `runSim` (when `Sim` is used at orchestration level).
 - The result expression of a top-level program.
-- Explicit observation channels (file writes, external sinks — these are out of scope here; see §8).
+- Explicit observation channels (file writes, external sinks — these are out of scope here; see §7).
 
 Observation propagates structurally:
 
@@ -518,35 +518,7 @@ Correspondence steps:
 
 Reduction chain: β, let-substitution, the spread rule, monadic associativity (to flatten the do-block), the `apply Op v` substitution rule, and the δ-rules for each primitive. The `bgk_collision` δ-rule expands into its constituent operations (`sum_velocities`, `momentum`, `equilibrium`, axpy-style relaxation) — see the `bgk_collision` concept entry once it is written. Each step in the chain is mechanical; no exotic reductions are needed.
 
-## 7. Iteration log
-
-### v0.3 — decisions made
-
-**Demand-driven evaluation and pruning added (§3.8).** L4 is formally a graph-evaluation language. Operators produce records of outputs; only those that some root consumer transitively reaches are computed; the rest are pruned at solve time. **This replaces the "effects beyond state" open question from v0.2** — instead of adding a Writer-style effect channel for residual logging / monitoring / metrics, optional outputs become regular record fields, and demand pruning handles whether they're computed.
-
-The CG slice's v0.1 push-back ("residual-norm logging forces a Writer effect") is **resolved by this**: `cg_step` returns `{ state, residual_norm }`; `iterate_while` collects per-step extras into a trajectory; a caller reading `residual_history` materializes the residual norms; a caller reading only `final_state` prunes them.
-
-**`iterate_while` generalized (§3.7).** The step now returns `{ state, ...extras }`; the iteration produces `{ final_state, trajectory: [{ ...extras }] }`. `iterate_while_pure` sugar covers the no-extras case.
-
-**`Sim` recedes.** With pruning + extras-bearing iteration, `Sim` is no longer needed for per-algorithm state evolution or for "place to put metrics." Per-algorithm code is **pure** functions over records. `Sim` is reserved for genuine top-level orchestration concerns: file I/O, multi-stage workflows, RNG threading. Algorithm bodies (CG, GMRES, LBM step, eigensolver step) are pure.
-
-### v0.2 — decisions made
-
-**P-1 resolved (state shape).** v0.1 cached `density` and `velocity` in `LbmState`, forcing recomputation each step. v0.2 drops them: `LbmState` carries only `dist` and `step`; macroscopics are *derived views* produced by `bgkOp` as part of its return record, and consumed (or discarded) by the step's destructure pattern. This makes the dataflow explicit and removes the recomputation problem.
-
-**P-2 resolved (operator currying).** v0.1 threaded `!Boundary` (and `!LbmTables`, `τ`) through every step call. v0.2 introduces the operator-with-closed-params pattern: `Stream`, `Bgk tables tau`, `Reflect boundary` are constructed once at simulator setup, closing their params in; the step applies them via `apply opInst arg`. This is the standard operator-with-weights pattern from PL theory and operator-algebra literature.
-
-**P-3 resolved (no Reader monad needed).** With operators-carrying-closed-params (P-2), the shared-param concern partly evaporates — params are closed into operator instances at construction time, not threaded by the monad. The `Sim` monad threads only state. A Reader layer can be added if a future slice surfaces a real need (e.g., deeply-nested sub-computations that all need the same env), but the LBM and projected CG slices don't.
-
-**P-4 resolved (explicit broadcasting).** v0.2 commits to explicit `broadcast_to [shape] e` rather than numpy-style implicit broadcasting. Adds slight noise; wins on dataflow clarity. The `broadcast_to` primitive is added to §4.1.
-
-### v0.2 — additions to the calculus
-
-- `iterate_while` formalized in §3.7 with small-step semantics (standard fixed-point unfolding).
-- `broadcast_to` added to the primitive signatures in §4.1.
-- Operator constructors written as curried functions returning `Op[τ_in → τ_out]`: e.g., `Bgk :: !LbmTables → Scalar → Op[…]`. Not a calculus extension — a reader-intent **convention** for the high-order codomain. **Promoted to a stated convention in §1.3.1** (user directive 2026-06-07): closure-returning signatures group the closure codomain (`foo -> (bar -> baz)`), and the operator-VALUE spelling `Op[τ_in → τ_out]` is the §2-ownership specialization of the bare closure type for operator instances.
-
-## 8. Remaining open questions
+## 7. Remaining open questions
 
 - **External observation channels** (file I/O, stdout, on-disk snapshots): pruning handles in-graph optionality, but a runtime needs *some* way to mark certain consumers as "always observed." Likely modeled as `Sim`-level orchestration with explicit `write_to_file` / `emit_event` ops that always demand their inputs. Not yet drafted.
 - **Sub-jaxprs / higher-order primitives.** JAX's `cond` and `while_loop` embed sub-jaxprs as parameters (program-as-data). Our `iterate_while` takes lambdas. Whether the calculus also admits the program-as-data form (free-monad style) for cases like `cond branches` is open. May matter for control-flow that gets transformed (vmap-like patterns).
@@ -554,19 +526,9 @@ The CG slice's v0.1 push-back ("residual-norm logging forces a Writer effect") i
 - **Shape solving formalization.** Symbolic shape equations are solved by bunsen's `DimExpr` solver. Whether to formalize this in L4 (as side-conditions in type rules) or treat it as an external check is open. Likely external, with type judgments annotated by shape-side-conditions.
 - **Pruning of operator-internal data.** The §3.8 pruning rule is stated for operator outputs. Whether it extends *inside* operator bodies — pruning sub-expressions whose values feed only to outputs that are themselves pruned — needs formalizing. This is standard graph DCE, but worth pinning the rule explicitly.
 
-## 9. Next steps
+## 8. Standing caveats
 
-1. Exercise the calculus on **one Palace slice** — CG is the obvious first candidate. It has iterative-solver structure, convergence predicates, and multiple state fields, all of which test L4's loop construct and monadic facilities. The CG slice will likely force a v0.3 around effects (residual-norm monitoring).
-2. Surface effects-beyond-state demand and design a `Writer` / `Eff` layer if the CG slice forces it.
-3. Build the first `concepts/` entries — at minimum `axpy`, `dot`, `matvec` for CG; possibly `stream`, `bgk_collision`, `reflect` once an LBM-style slice is needed.
-
-## Working Notes
-
-- **v0.3** added demand-driven pruning (§3.8), generalized `iterate_while` to carry per-step extras (§3.7), and *displaced* the v0.2 "effects-beyond-state" open question: optional outputs become record fields, demand pruning handles whether they're computed, no separate effect channel needed. `Sim` recedes from per-algorithm code; algorithms are pure.
-- **v0.2** resolved P-1 (state shape), P-2 (operator currying), P-3 (no Reader needed), P-4 (explicit broadcasting). The worked LBM example was rewritten accordingly.
-- Sub-jaxprs (embedded-program-as-value) deferred.
-- Shape-solving formalization deferred.
-- The `iterate_while` semantics are total only when the predicate is eventually false — algorithmic correctness obligation on the slice that uses the loop, not enforced by the calculus.
-- `runSim :: Sim S α → S → S` is named as the state-only eliminator but not formally defined. Will be tightened when an orchestration-level use (multi-stage simulation, file I/O) actually surfaces — purely algorithmic slices don't force it.
-- ~~An operator's body `Op[τ_in → τ_out]` is described informally as "closure with params + body lambda" but not given an explicit term-level form in §1.3.~~ **RESOLVED (§1.3.1, user directive 2026-06-07):** the operator-value introduction form is `op-with-params { p₁ = e₁, … ; λ(x: τ_in). e_body } : Op[τ_in → τ_out]` — a record of closed-over `!`-params paired with the body lambda, eliminated by the §3.5 `apply` rule. §1.3.1 also states the closure-codomain paren-grouping convention (`foo -> (bar -> baz)`) and the bare-closure-vs-`Op`-value distinction.
-- The §3.8 pruning rule is stated for operator outputs at the binding level; its effect on operator-internal sub-expressions ("standard graph DCE") is implicit. Pin formally when needed.
+- Sub-jaxprs (embedded-program-as-value) are not admitted; shape-solving is treated as an external `DimExpr` check, not formalized in the type rules.
+- The `iterate_while` semantics are total only when the predicate is eventually false — an algorithmic correctness obligation on the slice that uses the loop, not enforced by the calculus.
+- `runSim :: Sim S α → S → S` is named as the state-only eliminator but not formally defined (purely algorithmic slices don't force it).
+- The §3.8 pruning rule is stated for operator outputs at the binding level; its effect on operator-internal sub-expressions ("standard graph DCE") is implicit.

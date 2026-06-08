@@ -8,9 +8,9 @@ L4's job is to write algorithms in a graph-evaluation calculus that makes iterat
 
 The L4 strawman (`book/src/semantics/index.md` §3.7) gives this combinator as the v0.3 generalisation of the v0.2 `iterate_while_pure` sketch — generalised to carry per-step extras (a `trajectory`) so that residual histories, monitoring metrics, and breakdown tokens can be returned uniformly through the same combinator. The §3.8 demand-pruning law (`index.md:186-213`) ensures that consumers reading only `.final_state` see the trajectory pruned away — the per-step extras are never computed when no downstream consumer reads them.
 
-This chapter is the L4-row anchor for the combinator that the cycle-006 firm L4 entry [`krylov-step`](./krylov-step.md) consumes structurally without anchor (caveat 2 of the harvester's report), and that the cycle-006 wave-2 abstractor theme [`krylov-step-typed-wrapper-dissolution`](../L4-L3/krylov-step-typed-wrapper-dissolution.md) §"Speculative L4 operators" proposed as a rough-in. Promoting it closes the cycle-006 open question `iterate-while-l4-anchor-missing`.
+This chapter is the L4-row anchor for the combinator that the firm L4 entry [`krylov-step`](./krylov-step.md) consumes structurally as the body-fold of `inner_loop`.
 
-`iterate_while` at L4 is a **methodology-level combinator**, not a Palace-source artefact — Palace's iteration loops at L0 are explicit `for`/`while` C++ constructs (e.g., the PCG main loop at `palace/linalg/iterative.cpp:427`, the GMRES inner Arnoldi at `palace/linalg/iterative.cpp:615`). The L4 form names the abstract shape those L0 loops realise. Palace evidence sits at L0 (and in the slice corpus at L2 through L4 v0.4-v0.5 renderings); L4 cites the strawman §3.7 as its conventions source.
+`iterate_while` at L4 is a **methodology-level combinator**, not a Palace-source artefact — Palace's iteration loops at L0 are explicit `for`/`while` C++ constructs (e.g., the PCG main loop at `palace/linalg/iterative.cpp:427`, the GMRES inner Arnoldi at `palace/linalg/iterative.cpp:615`). The L4 form names the abstract shape those L0 loops realise. Palace evidence sits at L0; L4 cites the strawman §3.7 as its conventions source.
 
 ## Signature
 
@@ -166,7 +166,7 @@ Laws that explicitly **do not** hold:
 
 ## Dependencies
 
-L4 concept references (consumed structurally; per the cycle-006 cross-cutter caveat, these are concept-page links — see Open Questions for the L4-row-vs-concept dependency question, inherited unchanged from `krylov-step.md`):
+L4 concept references (consumed structurally; concept-page links):
 
 - [`solve-monad`](../concepts/solve-monad.md) — the `Solve a = StateT SimState Identity a` monad threaded through the Solve-threaded signature form.
 - [`derived-view-hoisting`](../concepts/derived-view-hoisting.md) — the demand-pruning algebra underwriting Law 1 (trajectory pruning when only `final_state` is consumed).
@@ -185,7 +185,7 @@ The L4>L3 lowering for `iterate_while` is the tail-recursive value-threading L3 
 2. **The record-structured `{ state: α, ...e }` step return becomes a positional tuple.** L3 has no row-polymorphic record spread; the step's positional shape `(α', e)` is what the recursion threads. Trajectory accumulation becomes explicit list-cons.
 3. **The trajectory record-list with demand-pruning attached structurally collapses to either an explicit accumulator pass-through OR an outright drop**, depending on the slice's downstream consumer demand. The L3 form encodes the §3.8 pruning as a *call-site choice*: a slice that reads only `final_state` lowers to an L3 form whose step computes only the next carry (no extras); a slice that reads the trajectory lowers to an L3 form whose step computes both. The L3 form does not carry the demand-pruning *rewrite rule* — that lives at L4 — only the *resolved form*.
 
-The L4>L3 theme for `iterate_while` is now authored as the dedicated standalone chapter [`iterate-while-dissolution`](../L4-L3/iterate-while-dissolution.md) (cycle-047), extracted from the sub-component description in the `krylov-step-typed-wrapper-dissolution` theme (§"What the L3 form for iterate_while looks like"). The dedicated theme captures **both** L3 forms: the **trajectory-keeping unpruned form** `iterate_while_L3` — the ground form that materialises the `[readout]` accumulator this firm L4 form keeps (per Law 1) — and the **§3.8-pruned form** `iterate_while_L3_pruned`, which is the collapse-rule image (Law 1's L3-side demand-pruning rewrite applied to the ground form under a `final_state`-only consumer). The earlier sub-component's trajectory-drop is the *pruned image*, not a gap in the firm L4 form; the unpruned ground form is the reconciliation that closes cycle-006 OQ `iterate-while-l3-rendering-trajectory-accumulation-gap`. See [`iterate-while-dissolution`](../L4-L3/iterate-while-dissolution.md) §"L3 form (RHS)" for the two forms and the collapse rule.
+The L4>L3 theme for `iterate_while` is the dedicated standalone chapter [`iterate-while-dissolution`](../L4-L3/iterate-while-dissolution.md). It captures **both** L3 forms: the **trajectory-keeping unpruned form** `iterate_while_L3` — the ground form that materialises the `[readout]` accumulator this firm L4 form keeps (per Law 1) — and the **§3.8-pruned form** `iterate_while_L3_pruned`, the collapse-rule image (Law 1's L3-side demand-pruning rewrite applied to the ground form under a `final_state`-only consumer). See [`iterate-while-dissolution`](../L4-L3/iterate-while-dissolution.md) §"L3 form (RHS)" for the two forms and the collapse rule.
 
 The L3 form for `iterate_while_pure` is the textbook tail-recursive loop with no accumulator:
 
@@ -194,7 +194,7 @@ iterate_while_pure_L3 :: α -> (α -> Bool) -> (α -> α) -> α
 iterate_while_pure_L3 a p f = if p a then iterate_while_pure_L3 (f a) p f else a
 ```
 
-This L3 form is identity-in-form on the body (no primitive substitution), per the same combinator-miner cycle-002 assertion that justifies `krylov-step` L3>L2 identity. The L3>L2 lowering for the loop combinator itself is *also* identity-in-form (the same tail-recursive shape is L2-native), so the full L4>L3>L2 chain for `iterate_while_pure` collapses to the L4>L3 wrapper dissolution alone.
+This L3 form is identity-in-form on the body (no primitive substitution), the same disposition that justifies `krylov-step` L3>L2 identity. The L3>L2 lowering for the loop combinator itself is *also* identity-in-form (the same tail-recursive shape is L2-native), so the full L4>L3>L2 chain for `iterate_while_pure` collapses to the L4>L3 wrapper dissolution alone.
 
 ## Variant axes
 
@@ -208,27 +208,27 @@ The combinator has **three variant axes**, all absorbed at the L4 form-level rat
 
 ## Status
 
-`firm` — small-step semantics inherited verbatim from the L4 strawman §3.7 (`index.md:164-171`); the demand-pruning law (Law 1) is the load-bearing property and is inherited from the strawman §3.8 (`index.md:186-213`) plus the `derived-view-hoisting` concept; three variant axes (Sim threading, extras carrying, bootstrap-free vs. carry-bootstrapped) are catalogued at the combinator level rather than left to slices to re-discover; the no-laws section catalogues five non-laws explicitly (including the predicate-on-extras anti-pattern and the do-while reordering non-equivalence). The combinator is consumed structurally by [`krylov-step`](./krylov-step.md) (Form A) and by every L4 slice's solve function (`cg.md:215-219` for v0.4 CG; `cg.md:441` for v0.5 CG with the with-prev variant; LBM at `index.md:382-385` via the pure sugar). Two new follow-up open questions are filed and one existing OQ (`iterate-while-l3-rendering-trajectory-accumulation-gap`) is augmented with a cycle-007 status note (see §Open questions in this report).
+`firm` — small-step semantics inherited verbatim from the L4 strawman §3.7 (`index.md:164-171`); the demand-pruning law (Law 1) is the load-bearing property and is inherited from the strawman §3.8 (`index.md:186-213`) plus the `derived-view-hoisting` concept; three variant axes (Sim threading, extras carrying, bootstrap-free vs. carry-bootstrapped) are catalogued at the combinator level; the no-laws section catalogues five non-laws explicitly (including the predicate-on-extras anti-pattern and the do-while reordering non-equivalence). The combinator is consumed structurally by [`krylov-step`](./krylov-step.md) (Form A) and by every L4 slice's solve function (`cg.md:215-219` for v0.4 CG; `cg.md:441` for v0.5 CG with the with-prev variant; LBM at `index.md:382-385` via the pure sugar).
 
 ## L4 vs L3 distinction
 
 - **L4**: a single combinator with structural demand-pruning of the trajectory; the body's `Solve`-monad effect is orthogonal to the value-threaded carry; the predicate is purely on the carry; the trajectory is materialised exactly when a downstream consumer reads it.
 - **L3**: a tail-recursive loop with explicit `SimState`-positional threading; the §3.8 pruning becomes a *call-site choice* (the slice's step is rendered with or without extras based on the consumer); the trajectory accumulator is either passed through positionally or dropped. The L3 form does not carry the pruning *rule*; it carries the pruning's *result* per call site.
 
-The two layers' entries share signature shape (modulo wrapper dissolution) and small-step semantics on the body. They differ in **effect threading and demand-pruning placement**. The L4>L3 lowering is the dedicated standalone theme [`iterate-while-dissolution`](../L4-L3/iterate-while-dissolution.md) (cycle-047; extracted from `krylov-step-typed-wrapper-dissolution`) — it erases the monadic packaging and resolves the demand-pruning per consumer, rendering the unpruned `iterate_while_L3` ground form when the trajectory is observed and the pruned `iterate_while_L3_pruned` form under a `final_state`-only consumer.
+The two layers' entries share signature shape (modulo wrapper dissolution) and small-step semantics on the body. They differ in **effect threading and demand-pruning placement**. The L4>L3 lowering is the dedicated standalone theme [`iterate-while-dissolution`](../L4-L3/iterate-while-dissolution.md) — it erases the monadic packaging and resolves the demand-pruning per consumer, rendering the unpruned `iterate_while_L3` ground form when the trajectory is observed and the pruned `iterate_while_L3_pruned` form under a `final_state`-only consumer.
 
 ## Evidence
 
 - `book/src/semantics/index.md:151-184` — the L4 strawman's §3.7 `iterate_while` definition (v0.3 form with extras-carrying step and trajectory accumulator) plus the `iterate_while_pure` sugar. **Canonical reference**: the small-step rule in §Semantics is reproduced verbatim from `index.md:164-171`.
 - `book/src/semantics/index.md:186-228` — the §3.8 demand-pruning rule that underwrites Law 1. The pruning-as-graph-DCE framing is the calculus-level justification for the trajectory-pruning behaviour.
 - `book/src/semantics/index.md:374-386` — the LBM `run_lbm` example at the end of the strawman: `iterate_while_pure` consumed in production. Confirms the no-extras sugar's intended call shape.
-- `book/src/L4/krylov-step.md` (cycle-006 firm) — the L4 row consuming this combinator structurally as the body-fold of `inner_loop` (§Semantics, §"L4 vs L2 distinction"). Caveat 2 of that entry's open-questions records the missing-anchor question this dispatch closes.
-- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` (cycle-006 firm) — §"Speculative L4 operators" carries the rough-in signature this chapter adopts and refines; §"What the L3 form for iterate_while looks like" sketches the L3 tail-recursive form cited in §"Lowers to".
+- `book/src/L4/krylov-step.md` (firm) — the L4 row consuming this combinator structurally as the body-fold of `inner_loop` (§Semantics, §"L4 vs L2 distinction").
+- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` (firm) — §"What the L3 form for iterate_while looks like" sketches the L3 tail-recursive form cited in §"Lowers to".
 - `book/src/concepts/derived-view-hoisting.md:14-29` — the demand-pruning algebra underwriting Law 1, with the CG residual-norm hoisting worked example as canonical evidence.
 - `book/src/concepts/solve-monad.md:1-69` — the `Solve a = StateT SimState Identity a` monad threaded through the Solve-threaded signature; §"What stays out of the monad" articulates the effect-localisation discipline this combinator honours.
 - `book/src/L4/krylov-step.md` §Semantics Form A — the canonical `iterate_while` call site at L4 v0.4 (`iterate_while s0' (\s -> s.it < config.max_it && not s.converged) (\s -> cg_step opA eps s)`, firm-homed there).
 - The L3↔L4 correspondence (firm-homed at `book/src/L4/krylov-step.md` + `book/src/L4-L3/iterate-while-dissolution.md`) explicitly maps Palace's `for (; it < max_it && !converged; it++)` to `iterate_while`. **L0 evidence**: `reference/palace/palace/linalg/iterative.cpp:427` (the PCG main-loop predicate-driven `for`-loop) is the canonical Palace iteration shape this combinator names.
 - `reference/palace/palace/linalg/iterative.cpp:427` — PCG outer loop. `for (; it < max_it && !converged; it++)` is the canonical Palace iterate_while pattern with bounded `max_it` and convergence flag in the predicate, both folded into the L4 `α` carry per the §Signature predicate discipline.
-- `reference/palace/palace/linalg/iterative.cpp:615` — GMRES inner Arnoldi loop. `for (;; j++, it++)` with break-on-converged at line 644 is the second Palace iteration shape; the predicate-in-body break corresponds at L4 to `s.converged` being a carry field set inside the step body and read by the predicate on the next iteration. (The current GMRES slice writes this as a tail-recursive `inner_loop`; migration to `iterate_while` is filed as a cycle-007 follow-up OQ.)
+- `reference/palace/palace/linalg/iterative.cpp:615` — GMRES inner Arnoldi loop. `for (;; j++, it++)` with break-on-converged at line 644 is the second Palace iteration shape; the predicate-in-body break corresponds at L4 to `s.converged` being a carry field set inside the step body and read by the predicate on the next iteration.
 
 No new Palace L0 source ranges are claimed beyond those already cited; the combinator's L0 evidence base is the existing slice-level citations.

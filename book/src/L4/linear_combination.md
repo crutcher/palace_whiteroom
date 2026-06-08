@@ -56,20 +56,12 @@ the GMRES basis-correction sum inside [`krylov-step`](./krylov-step.md)'s body,
 `L4/krylov-step.md:67`, IS a `linear_combination` over scalar-weighted basis
 terms).
 
-**This supersedes the prior "no L4 entry" verdict.** The firm L3
-[`linear_combination`](../L3/linear_combination.md) entry (and the L2 entry it
-propagated from) records "no L4 entry — the fold is a pure value-producing
-reduction… not a calculus combinator with monadic state-threading or a
-convergence predicate" — the cycle-010 audit reading that *iteration-structural*
-content is the L4 admission test. The 2026-06-01 VOCABULARY-SHIFT REDIRECT +
-L4-is-the-backend-lowering-target framing (memory
-`project_blackbox_vs_accelerated_kernels`, `project_l4_is_backend_lowering_target`)
-**change the admission test**: L4 is the *feature surface*, and the data-algebra
-combinators are feature-surface verbs the backend wants, so they rise regardless
-of carrying iteration structure. The L3 entry's "no L4" lines are now **stale**
-and are re-anchored to this entry by a follow-up lifter pass (flagged §"Downward
-to L3" + the report's Open questions — not edited this cycle, out of dispatch
-scope).
+The admission test for L4 is **feature-surface membership**, not iteration
+structure: L4 is the *feature surface* (the backend-lowering target), and the
+data-algebra combinators are feature-surface verbs the backend wants, so they rise
+regardless of carrying iteration structure (per the VOCABULARY-SHIFT REDIRECT +
+L4-is-the-backend-lowering-target framing, memory
+`project_blackbox_vs_accelerated_kernels`, `project_l4_is_backend_lowering_target`).
 
 ## Semantics (overlay)
 
@@ -206,10 +198,8 @@ value are unchanged across it.
    **operator-operand corner** is the driven per-ω system-operator assembly
    `A(ω) = K + iω·C − ω²·M + A2(ω)` — the L1
    [`assemble_frequency_operator`](../L1/assemble_frequency_operator.md)
-   specialization (cycle-062). **This is the next-pull L4 consumer** that rides
-   `linear_combination` rising: its L4 lift re-expresses *through* this present L4
-   combinator (the cycle-068 planner sequenced it to c069 precisely because it is
-   GATED on this entry existing on disk — OQ in the c068 plan §Open questions).
+   specialization, an L4 consumer that rides `linear_combination` rising: its L4
+   lift re-expresses *through* this present L4 combinator.
 
 ## Downward to L3
 
@@ -221,7 +211,7 @@ signature `linear_combination :: [(Scalar, Tensor[(S: ...)])] -> Tensor[$S]`, th
 algebraic laws, the same deferred IEEE non-law, and the same variant-axis profile.
 
 **There is no dedicated L4>L3 theme file** — the identity-in-form annotation lives
-in-line here, per the cycle-012 non-adjacent-identity / in-line-marker convention
+in-line here, per the non-adjacent-identity / in-line-marker convention
 (CLAUDE.md §Methodology invariants "Identity rotations across non-adjacent layers
 are annotated in-line"). This is the **same in-line-marker route**
 [`eigsolve`](./eigsolve.md) takes to its L3 form (L4>L3 by in-line marker-erasure,
@@ -247,18 +237,9 @@ entry's §"Downward to L2") and the substantive L2>L1 fusion-selection — annot
 in-line per the per-adjacent-edge directory convention (no `L4-L2`/`L4-L1`
 directory).
 
-**Staleness note (out of this cycle's edit scope):** the firm L3
-[`linear_combination`](../L3/linear_combination.md) §"Lifts from" + frontmatter
-`lifts_from` currently assert "no L4 entry". With this entry on disk those lines
-are stale and should be re-anchored to point up here (a thin lifter/lowering-verifier
-re-anchor pass, the same routine `eigsolve` triggered for the seven stale
-`L3/eigsolve` §Upward "no L4 cap" assertions, `L4/index.md:81`). Flagged in the
-report's Open questions; not edited this dispatch (one-operator-per-dispatch +
-the L3 entry is outside this report's write-scope).
-
 ## Sibling combinator (do NOT merge)
 
-The reduce-to-scalar [`inner_product`](./inner_product.md) (this cycle's sibling
+The reduce-to-scalar [`inner_product`](./inner_product.md) (the sibling
 L4 entry) is a **different** fold — reduce-to-`Scalar`, not scalar-weighted-tensor
 sum. Its result type is `Scalar`, not `Tensor[$S]`; it reduces over the shape
 group `S` (a shape-concatenation homomorphism to `(Scalar, +)`), whereas
@@ -270,52 +251,25 @@ tensor-producing, one scalar-producing — deliberately **NOT merged** (the
 over-unification guard, symmetric in both entries). The do-NOT-merge boundary is
 load-bearing and is carried identically at L2/L3/L4.
 
-## Status
-
-`firm` — the L4 form is the calculus-level rendering of the firm L3
-[`linear_combination`](../L3/linear_combination.md) combinator (firm cycle-050,
-propagated from the firm L2 entry cycle-018 / inverted-to-entry cycle-049 D1):
-the same variadic whole-tensor `[(Scalar, Tensor[(S: ...)])] -> Tensor[$S]` fold,
-value-thread-isomorphic across the L4>L3 edge (identity-in-form on the body; no
-monadic wrapper to dissolve — §"Downward to L3"). The seven algebraic laws are
-carried up unchanged (each a syntactic identity or a standard linear-combination
-fact); the IEEE-754 summation-order non-law is deferred to the firm L2>L1
-fusion-selection theme (NOT restated as an L4 law); the variant-axis profile is
-closed (arity = the unification axis; output-aliasing + element-type +
-operand-category orthogonal). It carries **no first-class L4 calculus structure of
-its own** (no `Solve` monad, no iteration carry) — it rises as a **feature-surface
-verb the backend wants** per the
-[`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerated-kernels.md)
-§"The combinators rise regardless" + L4-is-the-backend-lowering-target framing,
-NOT because it carries iteration structure. The L0 anchors are **inherited
-transitively through the firm L3/L2 combinator** (self-verified at L2 cycle-018),
-not re-localized this pass — this is an upward in-layer rendering, not a fresh
-family discovery. The empirical-match caveat is inherited unchanged from L2 (no
-dedicated unit test for the BLAS-1 linear-combination free functions; grounded by
-source-transcription + verified live call sites + the `chebyshev`-precedent
-firm-without-dedicated-test bar); the missing test does not gate firm because
-every L4 law is a syntactic identity carried up from the firm combinator below
-(the firm-on-positive-structure / syntactic-identity escape).
-
 ## Evidence
 
 L2 / L3 endpoints (firm; the value-isomorphism this L4 entry rests on):
 
-- `book/src/L3/linear_combination.md` (firm cycle-050) — the firm L3 fold this L4
+- `book/src/L3/linear_combination.md` (firm) — the firm L3 fold this L4
   entry re-expresses through: signature (`:36-37`), the §"Arity specializations"
   notes (`:51-62`), the seven algebraic laws + deferred IEEE non-law (`:80-104`),
   the §"Downward to L2" identity-in-form note (`:108-114`), variant axes
   (`:133-141`), the firm-without-dedicated-test caveat (`:152`).
-- `book/src/L2/linear_combination.md` (firm cycle-018; inverted-to-entry cycle-049
-  D1, commit `92327f7`) — the original combinator inversion; authoritative on the
-  self-verified L0 evidence list (inherited transitively here).
-- `book/src/L2-L1/linear-combination-fold-specialization.md` (firm; cycle-049
-  D1(c) KEEP) — the substantive L2>L1 fusion-selection theme: arity-dispatch +
+- `book/src/L2/linear_combination.md` (firm; commit `92327f7`) — the original
+  combinator inversion; authoritative on the L0 evidence list (inherited
+  transitively here).
+- `book/src/L2-L1/linear-combination-fold-specialization.md` (firm) — the
+  substantive L2>L1 fusion-selection theme: arity-dispatch +
   the pinned-summation-order table (the load-bearing IEEE residue deferred there).
 
 Classification / methodology anchors:
 
-- `book/src/concepts/black-box-vs-accelerated-kernels.md` (cycle-067 D3) — the
+- `book/src/concepts/black-box-vs-accelerated-kernels.md` — the
   three-way disposition: §"The combinators rise regardless" (`:128-136`) names
   `linear_combination` as the combinator that rises to L4 regardless; §3
   "Accelerated kernel — stopped low" (`:111-126`) names the `scal`/`axpy`/`axpby`/
@@ -323,13 +277,8 @@ Classification / methodology anchors:
   combinator rises in place of.
 - `skills/disciplined-cross-pipeline-combinator-mining-gate/SKILL.md` — the
   combinator-mining gate; this rise is **propagation of an already-firm mined
-  combinator** (the c049 mine + c050 L3 propagation), so the 4 gate points are
-  satisfied by the firm L3 endpoint, not re-mined here (the gate is for *new*
-  mines; this is an upward in-layer rendering of a settled one).
+  combinator**, so the 4 gate points are satisfied by the firm L3 endpoint, not
+  re-mined here (the gate is for *new* mines; this is an upward in-layer rendering
+  of a settled one).
 - `book/src/semantics/index.md` — the strawman; this combinator adds no
   reduction rule (a fold in the existing `foldl`/`+`/`scal` vocabulary).
-
-Provenance: combinator-miner:2026-06-02T195402Z (cycle-068 D3) — the
-`linear-combination-inner-product-rise-to-l4` plan-tag enactment; rises the firm
-L3 combinator to L4 as the directive-2 disposition-2 / L4-is-the-backend-lowering-
-target feature-surface verb.

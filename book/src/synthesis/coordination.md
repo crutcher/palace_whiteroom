@@ -1,6 +1,6 @@
 ---
-kind: navigational-container (synthesis library — coordination; Wave-2 def bodies rendered)
-# Intro shell. No `rank:` — implementation VIEW, reference-class links only.
+kind: navigational-container (synthesis library — coordination)
+# Rendered library chapter. No `rank:` — implementation VIEW, reference-class links only.
 edges:
   reference:
     - L4/outer-driver-combinators-intro
@@ -15,8 +15,6 @@ edges:
 ---
 
 # Library `coordination` — outer-driver caps & coordination combinators
-
-> **Status: `seed`.** The per-operator synthesized def bodies below are the Wave-2 (harvester) rendering of the L4 [Outer-driver caps & coordination combinators](../L4/outer-driver-combinators-intro.md) doc-group. This is the implementation VIEW — it RENDERS the synthesized code form; the authoritative semantics / algebraic laws live ONCE in the linked L4 chapters, and a rendered def's correspondence to its L4 chapter body is reviewable.
 
 The synthesized rendering of the L4 [Outer-driver caps & coordination combinators](../L4/outer-driver-combinators-intro.md) doc-group: the `Solve`-monadic outer-driver caps and the map/fold coordination combinators that drive the iteration kernels to convergence and over RHS / schedule / frequency families. Implementation VIEW — links to the authoritative L4 chapters for laws/semantics, renders the synthesized code form here.
 
@@ -224,10 +222,8 @@ The `Solve`-monadic outer-driver cap for the generalized eigenproblem. Unlike `k
 eigsolve :: OpParams -> Inputs -> EigState
 -- NOTE: the seed is `initial_eig_state` (the EigState constructor in the type block above),
 -- DELIBERATELY eigen-specific (the cap threads `Solve a = StateT EigState Identity a`, so an
--- EigState-seeding constructor is the correct discharge). The authoritative L4 chapter
--- (book/src/L4/eigsolve.md:44) now also writes `initial_eig_state inp` — the formerly-latent
--- naming inconsistency (the L4 chapter once reused `initial_state` for the EigState-threaded cap)
--- has been reconciled upstream; this render and the L4 chapter now agree.
+-- EigState-seeding constructor is the correct discharge; the authoritative ../L4/eigsolve.md
+-- chapter writes `initial_eig_state inp` to match).
 eigsolve op inp = execState (solve_loop op inp) (initial_eig_state inp)
   where
     -- outer driver: a SINGLE opaque library step + one classification (NOT a Palace tail-recursion).

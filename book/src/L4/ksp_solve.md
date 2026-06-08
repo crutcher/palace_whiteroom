@@ -16,7 +16,7 @@ edges:
     - target: concepts/sim-state
       kind: uses-record               # SimState the Solve = StateT SimState Identity persistent-state record discharged by execState; the cap's net effect is the SimState transition; see §Signature
   reference:
-    - L4/index                        # navigational container: the L4 Part overview anchoring the firm c047 solve_loop / restart_cycle / Outcome outer-driver vocabulary rows (was a consumes: entry; an index is a navigational container → reference, scheme §2)
+    - L4/index                        # navigational container: the L4 Part overview anchoring the firm solve_loop / restart_cycle / Outcome outer-driver vocabulary rows
     - concepts/solve-monad            # the Solve = StateT SimState Identity outer-driver pattern this cap realises (non-node narrative-pointer concept page → reference)
     - concepts/state-stratification   # the three-stratum SimState / OpParams / Krylov typing
     - concepts/convergence-test       # the stopping-predicate surface the Outcome classification reads
@@ -44,7 +44,7 @@ The relationship to the inner kernel is **driver-to-kernel**, mirroring the L3 p
 - [`krylov-step`](./krylov-step.md) names the per-step fold body — a single `Solve { krylov, outputs }` action whose sole `SimState` effect is the counter increment.
 - `ksp_solve` (this entry) names the **outer coordination** — the `Solve ()` driver that folds `krylov-step` inside `restart_cycle`, classifies the returned bundle into an `Outcome`, and tail-recurses via `solve_loop` until `Done`. It sits *above* the [`iterate-while`](./iterate-while.md) family (the inner kernel-fold), not inside it.
 
-The cap is defined **in L4 vocabulary** (high→low discipline): its semantics, signature, and laws are stated in terms of the `Solve` monad, the `solve-monad` outer-driver surface, and the `iterate-while` family — NOT in terms of L3 value-threading primitives. The L4>L3 dissolution (the `Solve` monad collapsing to positional `(K, s)` threading, `solve_loop`'s `do`/`unless` collapsing to the `iterate_while_L3` predicate) is a separate L4>L3 theme (`L4-L3/ksp-solve-driver-dissolution`, D3's dispatch this cycle), narrated forward from L4 to L3; it is **not** authored here. The firm L3 image of this cap is the layer-coherent [`L3/ksp_solve`](../L3/ksp_solve.md), whose body is the value-threaded `iterate_while_L3 (krylov-step op)` fold — the dissolution target.
+The cap is defined **in L4 vocabulary** (high→low discipline): its semantics, signature, and laws are stated in terms of the `Solve` monad, the `solve-monad` outer-driver surface, and the `iterate-while` family — NOT in terms of L3 value-threading primitives. The L4>L3 dissolution (the `Solve` monad collapsing to positional `(K, s)` threading, `solve_loop`'s `do`/`unless` collapsing to the `iterate_while_L3` predicate) is a separate L4>L3 theme (`L4-L3/ksp-solve-driver-dissolution`), narrated forward from L4 to L3; it is **not** authored here. The firm L3 image of this cap is the layer-coherent [`L3/ksp_solve`](../L3/ksp_solve.md), whose body is the value-threaded `iterate_while_L3 (krylov-step op)` fold — the dissolution target.
 
 `ksp_solve` at L4 is a **methodology-level cap**, not a Palace-source artefact — there is no L0 source range that "is" the L4 `ksp_solve`. The Palace evidence sits at L3 / L1 / L0 (the per-method `Mult` bodies and the `IterativeSolver` base); L4 cites the L3 driver and the L1 collapse as its evidence base, plus the `solve-monad` concept for the outer-driver pattern and the strawman for the monad / loop / pruning conventions.
 
@@ -134,7 +134,7 @@ Laws that explicitly **do not** hold:
 
 ## Dependencies
 
-L4 outer-driver vocabulary (the firm c047 rows this cap consumes — `book/src/L4/index.md` §Vocabulary-cohort "`solve-monad` outer-driver vocabulary"):
+L4 outer-driver vocabulary (the firm rows this cap consumes — `book/src/L4/index.md` §Vocabulary-cohort "`solve-monad` outer-driver vocabulary"):
 
 - `solve_loop` — the outer driver the cap's entry point runs (`execState (solve_loop op inp) …`). The cap *is* the discharge of this action.
 - `restart_cycle` — the per-cycle body `solve_loop` tail-recurses on (`one_cycle` for non-restarted solvers). Supplies the four-phase cycle.
@@ -159,7 +159,7 @@ L4 concept references:
 
 ## Lowers to
 
-L4 `ksp_solve` lowers to L3 [`ksp_solve`](../L3/ksp_solve.md) via the L4>L3 dissolution theme `L4-L3/ksp-solve-driver-dissolution` (**D3's dispatch this cycle**; pending). The rotation is **substantive** (not identity-in-form): the `Solve a = StateT SimState Identity a` threading collapses to explicit positional `(K, s)` value-threading; `solve_loop`'s `do { o <- restart_cycle …; unless (done o) … }` collapses to the L3 `iterate_while_L3` outer tail-recursion with the predicate `\s -> not s.converged && s.it < op.max_it` (the `Outcome` pattern-match dissolving into the predicate's read of `s.converged`); the once-per-cycle `modify`-correction collapses to the L3 `fold_iterate` boundary write; and the `Outcome` sum collapses to the L3 soft-fail `Bool` `result.converged` (the multi-reason classification scattering into L3's per-test branches). This entry records the rotation *direction* (L4 monadic cap → L3 explicit fold) in-line per the high→low discipline; it does **not** author the theme. The firm L3 image is [`L3/ksp_solve`](../L3/ksp_solve.md) (the value-threaded outer-driver fold), whose own §"Lowers to" carries the further L3>L2 hop (substantive, theme pending L2 promotion).
+L4 `ksp_solve` lowers to L3 [`ksp_solve`](../L3/ksp_solve.md) via the L4>L3 dissolution theme `L4-L3/ksp-solve-driver-dissolution`. The rotation is **substantive** (not identity-in-form): the `Solve a = StateT SimState Identity a` threading collapses to explicit positional `(K, s)` value-threading; `solve_loop`'s `do { o <- restart_cycle …; unless (done o) … }` collapses to the L3 `iterate_while_L3` outer tail-recursion with the predicate `\s -> not s.converged && s.it < op.max_it` (the `Outcome` pattern-match dissolving into the predicate's read of `s.converged`); the once-per-cycle `modify`-correction collapses to the L3 `fold_iterate` boundary write; and the `Outcome` sum collapses to the L3 soft-fail `Bool` `result.converged` (the multi-reason classification scattering into L3's per-test branches). This entry records the rotation *direction* (L4 monadic cap → L3 explicit fold) in-line per the high→low discipline; it does **not** author the theme. The firm L3 image is [`L3/ksp_solve`](../L3/ksp_solve.md) (the value-threaded outer-driver fold), whose own §"Lowers to" carries the further L3>L2 hop (substantive, theme pending L2 promotion).
 
 ## Variant axes
 
@@ -172,10 +172,6 @@ Four axes, all **coordination-shaping** (they shape the outer driver, not the pe
 
 These four are **distinct from** [`krylov-step`](./krylov-step.md)'s six body-variant axes (all absorbed into the kernel's `OpParams` `readonly` typing). The only shared axis is **restart-shape**: at the body level the kernel is restart-*agnostic*; at the cap level restart-shape selects the per-cycle verb. The two appearances are complementary — the kernel ignores restart, the cap owns it.
 
-## Status
-
-`firm` — the `Solve`-monadic outer-driver cap `solve op inp = execState (solve_loop op inp) initial_state` is the canonical top-of-stack coordination shape for the preconditioned-Krylov solve; its body is assembled from the firm c047 `solve-monad` vocabulary (`solve_loop` / `restart_cycle` / `Outcome`) and folds the firm [`krylov-step`](./krylov-step.md) kernel via the firm [`iterate-while`](./iterate-while.md) family. The algebraic content is the cap's coordination identities (the `execState`/`StateT` discharge fusion, the `solve_loop`-as-`iterate_while_pure` fold equivalence, the monad-law normal form, the `Outcome` classify-once law — all sharpened from the strawman §3.3–3.4 / §3.7 / §3.8 rules) plus the trajectory-terminal fixed-point laws (operator-inverse, zero-RHS short-circuit) inherited from the L1 collapse and the L3 driver, with the outer-loop `sequential-obstruction` recorded as the load-bearing non-lift. The variant-axis profile is closed at four coordination-shaping axes (outcome-classification, restart-shape, element-type, convergence-failure-policy), complementary to `krylov-step`'s six body axes. The pattern is well-attested: the firm L3 driver ([`L3/ksp_solve`](../L3/ksp_solve.md); L0 bodies CG `palace/linalg/iterative.cpp:361-486`, GMRES `:544-705`), the firm L1 collapse ([`L1/ksp_solve`](../L1/ksp_solve.md)), the `solve-monad` concept ([`solve-monad`](../concepts/solve-monad.md)), and the strawman conventions. This dispatch (cycle-048 R2) is the **L4 driver-half cap** consuming the cycle-047 outer-driver vocabulary anchor; it closes the `ksp_solve` half of OQ `l4-ksp-solve-eigsolve-caps-gated-on-solve-monad-outer-driver-vocabulary` and resolves `solve-monad-l4-row-firm-maturity-straddle` for the `solve_loop` / `restart_cycle` rows by firming their backing per-operator page. The L4>L3 dissolution theme (`L4-L3/ksp-solve-driver-dissolution`) is D3's dispatch this cycle; the cap records the rotation direction in-line but does not author the theme.
-
 ## L4 vs L3 distinction
 
 - **L3**: value-threaded explicit fold `ksp_solve :: (op, K_0, s_0) -> (s_final, result)`. The iteration view is load-bearing — the outer tail-recursive `iterate_while_L3 (krylov-step op)` loop is rendered explicitly, the four-field `result` is a positional projection, and the outer-loop `sequential-obstruction` is named. No `Solve` monad, no `Outcome` sum (the soft-fail is a `Bool`), no `readonly` typing.
@@ -183,16 +179,17 @@ These four are **distinct from** [`krylov-step`](./krylov-step.md)'s six body-va
 
 ## Evidence
 
-`ksp_solve` at L4 is a methodology-level cap; Palace's C++ source does not realise the L4 form. The L0 evidence is transitive through the firm L3 driver and L1 collapse; the cap-level coordination apparatus is evidenced by the `solve-monad` concept and the strawman. Citations self-verified against source this dispatch (codemap `read_range`).
+`ksp_solve` at L4 is a methodology-level cap; Palace's C++ source does not realise the L4 form. The L0 evidence is transitive through the firm L3 driver and L1 collapse; the cap-level coordination apparatus is evidenced by the `solve-monad` concept and the strawman.
 
-- `book/src/L3/ksp_solve.md` (cycle-020 firm) — the firm L3 driver this cap lowers to. Its body is the `iterate_while_L3 (krylov-step op)` fold; its §"Iteration-rotation marker" names the outer-loop `sequential-obstruction`; its four-field `result` is the L3 image of the cap's terminal `SimState` readout. The dissolution target.
+- `book/src/L3/ksp_solve.md` (firm) — the firm L3 driver this cap lowers to. Its body is the `iterate_while_L3 (krylov-step op)` fold; its §"Iteration-rotation marker" names the outer-loop `sequential-obstruction`; its four-field `result` is the L3 image of the cap's terminal `SimState` readout. The dissolution target.
 - `book/src/L1/ksp_solve.md` (firm) — the L1 opaque collapse; the five fixed-point laws (linearity in `b`, zero-RHS-zero-solution, operator-inverse, idempotent re-solve, construction-commutes) that the cap restates as trajectory-terminal laws; the soft-fail `Bool` the `Outcome` sum lifts.
-- `book/src/L4/krylov-step.md` (cycle-006 firm) — the inner kernel-fold body this cap drives; the kernel/driver pairing; the §"Algebraic laws" associativity non-law cited for the cap's outer-cycle fold-merge non-law.
-- `book/src/L4/iterate-while.md` (cycle-007 firm) — the inner kernel-fold combinator `restart_cycle` invokes; the combinator Law 2 degenerates the outer driver to.
+- `book/src/L4/krylov-step.md` (firm) — the inner kernel-fold body this cap drives; the kernel/driver pairing; the §"Algebraic laws" associativity non-law cited for the cap's outer-cycle fold-merge non-law.
+- `book/src/L4/iterate-while.md` (firm) — the inner kernel-fold combinator `restart_cycle` invokes; the combinator Law 2 degenerates the outer driver to.
 - `book/src/concepts/solve-monad.md:1-68` — the outer-driver pattern: §Shape (`:5-17`, the `solve` / `solve_loop` entry point), §"Worked example — GMRES" (`:47-56`, the `restart_cycle` four phases), §"Termination as a sum type" (`:58-68`, the `Outcome` classify-once / fold-uniformly law).
 - `book/src/concepts/state-stratification.md` — the three-stratum typing and the ephemeral-`Krylov` discipline keeping the bundle out of the `Solve` effect.
 - `book/src/semantics/index.md:119-136` — §3.3 monad laws (`:121-127`) + §3.4 state effects (`:131-136`); the normal-form law (Law 3) is sharpened from these. `:150-184` — §3.7 `iterate_while` small-step + the `iterate_while_pure` sugar (`:178-182`) the fold-equivalence law (Law 2) cites. `:186-228` — §3.8 demand-pruning, the trajectory-vs-classifier demand-split (§"Demand-pruning interaction").
-- L0 anchors (transitive via the L3 driver; codemap-verified this dispatch):
+- L0 anchors (transitive via the L3 driver):
+  - `palace/linalg/iterative.cpp:361-486` — the CG `Mult` body (the non-restarted single-loop driver); `palace/linalg/iterative.cpp:544-705` — the GMRES `Mult` body (the restart-nested driver). The L0 bodies of the L3 driver this cap lowers to.
   - `palace/linalg/iterative.cpp:417-418` — `eps = max(rel_tol·initial_res, abs_tol)` + pre-loop `converged = (res < eps)` short-circuit (the cap's zero-RHS / converged-warm-start `Done`-on-entry).
   - `palace/linalg/iterative.cpp:427` — CG single-loop outer-driver `for (; it < max_it && !converged; it++)` (the `one_cycle`-specialised `solve_loop`).
   - `palace/linalg/iterative.cpp:484-485` — CG result write `final_res = res; final_it = it;` (the terminal `SimState` readout, non-restarted residual proxy).
@@ -202,4 +199,3 @@ These four are **distinct from** [`krylov-step`](./krylov-step.md)'s six body-va
   - `palace/linalg/iterative.hpp:98` — `GetConverged()` with its `rel_tol > 0 || abs_tol > 0` gate (a loop-shaping convention folded into the cap's `converged` readout).
   - `palace/linalg/iterative.hpp:101-108` — accessors `GetInitialRes` / `GetFinalRes` / `GetNumIterations`.
   - `palace/linalg/ksp.cpp:296-310` — `BaseKspSolver::Mult` — the soft-fail policy: `:301-307` logs a warning and returns the iterate regardless (no abort), the basis of the cap's `Done False` first-class arm; counters `:308-309` are the driver-side cumulative accumulators above the cap.
-- Cap-half OQ closure: OQ `l4-ksp-solve-eigsolve-caps-gated-on-solve-monad-outer-driver-vocabulary` (`ksp_solve` half) + OQ `solve-monad-l4-row-firm-maturity-straddle` (`solve_loop` / `restart_cycle` rows, by firming the backing page).

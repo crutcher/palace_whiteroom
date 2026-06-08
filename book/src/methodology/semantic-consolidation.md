@@ -73,6 +73,7 @@ The surface's §0.1 carries the operative discipline; in summary:
   authoritative sources, migrate any new restatement-cohort sweep into the plan, and
   confirm newly-mined general semantic abstractions earned a consolidated home.
 
-The pilot was the cycle-115 relocation of the named-shape-groups general rule out of the
-three `linear_combination` entries; the broader 27-file named-shape-groups restatement
-cohort is the founding sweep governed by this discipline.
+The named-shape-groups general rule lives once on the surface (§1.2.1) with the
+functional-unit entries (the `linear_combination` cohort and the broader
+named-shape-groups cohort) using + linking it rather than restating it — the founding
+sweep governed by this discipline.

@@ -19,23 +19,23 @@ intent: >
   field/operator to an index-set block; recover the global reduction by the firm reduce
   verbs' standing concatenation-homomorphism over a PARTITION of the index set), plus the
   per-sub-domain SOLVE decomposition it generalizes to. The speculative future-direction
-  abstraction the batch-43 (C) sharding-MATH gate authorizes — the MATH of decomposition,
+  abstraction the sharding-MATH gate authorizes — the MATH of decomposition,
   NOT the message-passing.
 pulled_by:
-  - human batch-43 (C) directive (open the deferred sharding-MATH gate; gated-first, exploratory-only)
-  - c133 WAVE-1 hard non-destabilization probe CLEARED (both arms; the firm reduce verbs already carry the homomorphism law)
+  - human directive (open the deferred sharding-MATH gate; gated-first, exploratory-only)
+  - hard non-destabilization probe CLEARED (both arms; the firm reduce verbs already carry the homomorphism law)
 ---
 
 # sharding-decompose-reduce
 
 > **⟢ STATUS: `roadmap_goal` (rank 0) — a claim-free FUTURE-DIRECTION sketch, NOT active
-> vocabulary.** This chapter records the sharding-as-decomposition-abstraction MATH the
-> batch-43 (C) gate authorizes as an *exploratory* direction. It asserts NO claims; every
-> form below is explicitly speculative. It composes firm roots under `reference:` ONLY (no
-> `depends-on`) — a rank-0 node may reference firm nodes freely, but a `depends-on` edge
-> from this node to a firm (rank-3) node would manufacture a rank violation. MPI/distributed
-> mechanics are the deferred-future *mechanism*, cited but NOT lifted (DIRECTIVE-1). This is
-> the MATH of decomposition, NOT the message-passing.
+> vocabulary.** This chapter records the sharding-as-decomposition-abstraction MATH as an
+> *exploratory* direction. It asserts NO claims; every form below is explicitly speculative.
+> It composes firm roots under `reference:` ONLY (no `depends-on`) — a rank-0 node may
+> reference firm nodes freely, but a `depends-on` edge from this node to a firm (rank-3) node
+> would manufacture a rank violation. MPI/distributed mechanics are the deferred-future
+> *mechanism*, cited but NOT lifted (DIRECTIVE-1). This is the MATH of decomposition, NOT the
+> message-passing.
 
 The intended **sharding-as-decomposition-abstraction**: split a global tensor-field reduction
 (or solve) over a **partition of its index set** into per-block sub-problems, run the firm
@@ -112,11 +112,10 @@ over — NOT in terms of any Palace Schwarz loop (Palace ships none; see §Statu
 > [`domain_energy_reduce`](./domain_energy_reduce.md)'s `partition-coverage` / `Σ pᵢ = 1` non-law),
 > NOT papered over with a false homomorphic-solve claim.
 
-## Context — why this is non-destabilizing (the c133 gate-CLEAR, recorded)
+## Context — why this is non-destabilizing
 
-L4 is **vocabulary** (`L4/index.md:7-13`). This roadmap_goal records the sharding-MATH the
-batch-43 (C) directive opens, GATED behind the c133 hard non-destabilization probe, which
-CLEARED on both arms:
+L4 is **vocabulary** (`L4/index.md:7-13`). This roadmap_goal records the sharding-MATH,
+gated behind a hard non-destabilization probe that CLEARED on both arms:
 
 - **Vertical arm (general abstraction non-destabilizing).** The general decomposition-reduce
   abstraction does not re-root the spine: the firm [`domain_energy_reduce`](./domain_energy_reduce.md)
@@ -319,17 +318,17 @@ higher rank and the well-foundedness invariant is re-checked at that rank):
   (partition-of-unity χ_b weights, the halo, the convergent outer Schwarz iteration) is the deferred
   *mechanism*, recorded as open intent, NOT asserted. A real single-machine-valid domain-decomposition
   preconditioner consumer (a Schwarz preconditioner / DD solver leg pulling `subdomain_solve` by name)
-  would be the pull that promotes this from roadmap_goal toward a real rank — the
-  `...solve-generalization-promotion-pull` OQ, which STAYS DEFERRED (no such consumer in flight this
-  cycle; this extension is the gated, exploratory MATH-only sketch). Palace ships NO native
+  would be the pull that promotes this from roadmap_goal toward a real rank, which STAYS
+  DEFERRED (no such consumer in flight; this extension is the gated, exploratory MATH-only
+  sketch). Palace ships NO native
   additive-Schwarz / domain-decomposition preconditioner (the only `subdomain`/`overlap` source sites
   are the MPI mesh-partitioning `palace/utils/geodata.cpp:3242` and the wave-port ROM overlap `palace/models/romoperator.cpp:586`,
   neither a DD solver) — so this solve-generalization is a genuine decomposition-abstraction sketch,
   NOT a lift of existing Palace solver code.
-- **Open: the sharding-into-component-blocks future GOAL.** The batch-43 (C) directive records
-  sharding-into-component-blocks as a FUTURE GOAL behind a hard spine-non-destabilization gate.
-  This chapter is the gated MATH-only sketch; the component-block sharding proper (with the
-  destructive MPI lifetime structure) remains a deferred future direction, NOT active work.
+- **Open: the sharding-into-component-blocks future GOAL.** Sharding-into-component-blocks is
+  a FUTURE GOAL behind a hard spine-non-destabilization gate. This chapter is the gated
+  MATH-only sketch; the component-block sharding proper (with the destructive MPI lifetime
+  structure) remains a deferred future direction, NOT active work.
 
 ## Status
 
@@ -346,31 +345,29 @@ overlapping ⇒ partition-of-unity weighted), carried as a NON-law in the exact 
 [`domain_energy_reduce`](./domain_energy_reduce.md) carries `Σ pᵢ = 1`. It composes the firm reduce AND
 solve roots ([`ksp_solve`](./ksp_solve.md) / [`fold_solve`](./fold_solve.md) /
 [`krylov-step`](./krylov-step.md) BY NAME) under `reference:` ONLY — NEVER `depends-on` — so it
-manufactures no rank violation (the baseline `rank_violations=0` holds; the graded-stack rank linter
-enforces `rank(u) ≤ min(deps)` over `depends-on` edges only, and a `reference` edge carries no rank
-constraint). The deferred MPI/distributed mechanism (and the deferred Schwarz outer-iteration /
-partition-of-unity mechanism) is cited as the eventual realization path, NOT lifted (DIRECTIVE-1:
-lifting the MPI-associated version may be destabilizing to the abstraction spine; Palace ships no
-native DD preconditioner to lift in any case). Promotion route: a real single-machine-valid consumer (a
-domain-decomposition preconditioner / additive-Schwarz solver leg) pulling the restrict/compose
-abstraction by name (the deferred `...solve-generalization-promotion-pull` OQ), at which point the
+manufactures no rank violation (the graded-stack rank linter enforces `rank(u) ≤ min(deps)` over
+`depends-on` edges only, and a `reference` edge carries no rank constraint). The deferred
+MPI/distributed mechanism (and the deferred Schwarz outer-iteration / partition-of-unity mechanism) is
+cited as the eventual realization path, NOT lifted (DIRECTIVE-1: lifting the MPI-associated version may
+be destabilizing to the abstraction spine; Palace ships no native DD preconditioner to lift in any
+case).
+
+**Promotion route:** a real single-machine-valid consumer (a domain-decomposition preconditioner /
+additive-Schwarz solver leg) pulling the restrict/compose abstraction by name, at which point the
 `reference` edges are re-examined for which become blocking `depends-on` at the consumer's rank and the
 well-foundedness invariant is re-checked.
 
 **Pulled-by provenance (the reachability requirement).** This roadmap_goal is pulled by the
-human batch-43 (C) directive (open the deferred sharding-MATH gate, gated-first, exploratory)
-and authorized by the c133 WAVE-1 hard non-destabilization probe CLEAR (both arms). Its
-reference edges reach the firm reduce roots, which are reachable from the feature-surface spine
-roots (the output-product columns compose `domain_energy_reduce` / `gram_reduce` /
-`inner_product`); the abstraction's eventual blocking consumer (a domain-decomposition solver
-leg) would reach the solver-driver roots. Recorded as exploratory future-direction intent per
-the gated-first, no-rank/liveness-regression-on-firm-nodes constraint.
+human directive (open the deferred sharding-MATH gate, gated-first, exploratory) and authorized
+by the hard non-destabilization probe CLEAR (both arms). Its reference edges reach the firm
+reduce roots, which are reachable from the feature-surface spine roots (the output-product
+columns compose `domain_energy_reduce` / `gram_reduce` / `inner_product`); the abstraction's
+eventual blocking consumer (a domain-decomposition solver leg) would reach the solver-driver
+roots.
 
 ## Evidence
 
-All Palace L0 citations self-verified on-disk this dispatch via
-`tools/citecheck/citecheck.py --anchor` (against `reference/palace/`). The book cross-references
-are to firm sibling chapters' standing laws.
+The book cross-references are to firm sibling chapters' standing laws.
 
 - **Structural model (the firm domain-restricted reduce precedent):**
   [`domain_energy_reduce`](./domain_energy_reduce.md):21-27 (a domain-RESTRICTED SPD energy
@@ -405,97 +402,3 @@ are to firm sibling chapters' standing laws.
     type), `palace/linalg/rap.cpp:116-126` (the `R·A·P` Galerkin triple product assembly,
     `hypre_ParCSRMatrixRAPKT` / `hypre_ParCSRMatMat` — the eventual operator-restriction-and-compose
     mechanism).
-- **Gate provenance:** c133 WAVE-1 hard non-destabilization probe CLEARED (vertical arm:
-  general decomposition-reduce non-destabilizing, `domain_energy_reduce` the structural
-  precedent; lateral arm: ALL-GREEN/ZERO-RED, the firm reduce verbs already carry the
-  homomorphism law). Human batch-43 (C) directive: open the deferred sharding-MATH gate,
-  gated-first, exploratory-only (roadmap_goal-class, reference-class edges to firm roots, no
-  rank/liveness regression on firm nodes); MPI/distributed STAYS OUT.
-
-```yaml
-verified_against:
-  - citation: book/src/L4/domain_energy_reduce.md:21-27,147-152,172-178
-    verdict: supports
-    audited_at: 2026-06-07T203807Z
-    note: structural model — a firm domain-RESTRICTED reduce composing firm primitives; carries the map-independence/concatenation-homomorphism fold law + the config-conditional partition-of-unity NON-law this chapter follows
-  - citation: book/src/L4/inner_product.md:154-157
-    verdict: supports
-    audited_at: 2026-06-07T203807Z
-    note: firm split-additivity / shape-concatenation monoid-homomorphism — the reduce-to-scalar recovery law a partition's ++-decomposition rides; the lateral-arm gate-CLEAR basis
-  - citation: book/src/L4/linear_combination.md:146-151
-    verdict: supports
-    audited_at: 2026-06-07T203807Z
-    note: firm concatenation-homomorphism — the reduce-to-tensor recovery law
-  - citation: reference/palace/palace/utils/geodata.cpp:262
-    verdict: supports
-    audited_at: 2026-06-07T203807Z
-    note: Partition(IoData&, unique_ptr<Mesh>, MPI_Comm) — the deferred distributed-mesh builder (eventual source of partition P); cited as MECHANISM, NOT lifted (citecheck --anchor ok)
-  - citation: reference/palace/palace/utils/geodata.cpp:3230-3242
-    verdict: supports
-    audited_at: 2026-06-07T203807Z
-    note: GetMeshPartitioning — METIS GeneratePartitioning element-to-block assignment; deferred MECHANISM (citecheck --anchor ok)
-  - citation: reference/palace/palace/linalg/rap.hpp:24
-    verdict: supports
-    audited_at: 2026-06-07T203807Z
-    note: class ParOperator — the distributed-operator type; deferred MECHANISM, NOT lifted (citecheck --anchor ok)
-  - citation: reference/palace/palace/linalg/rap.cpp:116-126
-    verdict: supports
-    audited_at: 2026-06-07T203807Z
-    note: R·A·P Galerkin triple product assembly (hypre_ParCSRMatrixRAPKT / hypre_ParCSRMatMat) — eventual operator-restrict-and-compose MECHANISM (citecheck --anchor ok)
-```
-
-```yaml
-verified_against:
-  - citation: book/src/L4/sharding-decompose-reduce.md:103-113,244-267
-    verdict: supports
-    audited_at: 2026-06-08T172000Z
-    note: SOLVE-case recovery framed STRICTLY WEAKER than reduce case — exact ONLY for block-diagonal, approximate additive-Schwarz preconditioner for coupled, partition-of-unity-weighted for overlapping; no false exact-recovery claim; mirrors domain_energy_reduce Sigma p=1 config-conditional NON-law
-  - citation: book/src/L4/sharding-decompose-reduce.md:184-221
-    verdict: supports
-    audited_at: 2026-06-08T172000Z
-    note: speculative laws framed as DERIVED-from-firm-law INTENT, not asserted proven; only reduce-case law 1 rides a standing firm law; solve-case law 5 explicitly CONFIG-CONDITIONAL (block-diagonal exact, coupled approximate) — no analogous free solve law claimed
-  - citation: book/src/L4/sharding-decompose-reduce.md:6-14
-    verdict: supports
-    audited_at: 2026-06-08T172000Z
-    note: 3 new solve roots (ksp_solve/fold_solve/krylov-step) under the reference edge-class ONLY in frontmatter edges; zero depends-on key; all 3 confirmed rank firm on-disk — no rank(firm)=3 > rank(roadmap_goal)=0 violation manufactured
-  - citation: book/src/L4/domain_energy_reduce.md:172-178
-    verdict: supports
-    audited_at: 2026-06-08T172000Z
-    note: Sigma p=1 config-conditional partition-coverage NON-law — the exact model the SOLVE exact-recovery NON-law mirrors (overlap double-count, partial under-count)
-  - citation: book/src/L4/inner_product.md:154-157
-    verdict: supports
-    audited_at: 2026-06-08T172000Z
-    note: firm split-additivity / shape-concatenation monoid-homomorphism — the standing firm law the REDUCE case (law 1) rides; verified anchor exact
-  - citation: book/src/L4/linear_combination.md:146-151
-    verdict: supports
-    audited_at: 2026-06-08T172000Z
-    note: firm concatenation-homomorphism (reduce-to-tensor recovery) — standing firm law for the reduce case; verified anchor exact
-  - citation: reference/palace/palace/utils/geodata.cpp:262,3239,3242
-    verdict: supports
-    audited_at: 2026-06-08T172000Z
-    note: DIRECTIVE-1 MPI mesh-partitioning mechanism (Partition / GeneratePartitioning / N-subdomain split) cited in deferred-future Evidence framing, NOT lifted; citecheck --anchor ok on all three
-  - citation: reference/palace/palace/linalg/rap.hpp:24,rap.cpp:116-126
-    verdict: supports
-    audited_at: 2026-06-08T172000Z
-    note: DIRECTIVE-1 ParOperator / RAP Galerkin triple-product parallel-assembly mechanism cited as deferred realization path, NOT lifted; citecheck --anchor ok
-  - citation: reference/palace/palace/models/romoperator.cpp:586
-    verdict: partially-supports
-    audited_at: 2026-06-08T172000Z
-    note: no-native-DD-preconditioner claim confirmed (no Schwarz anywhere in palace; only overlap site is the wave-port ROM check); chapter cites bare romoperator.cpp:586 omitting the models/ dir prefix — content correct, path under-qualified
-```
-
-```yaml
-verified_against:
-  - citation: book/src/L4/sharding-decompose-reduce.md:326,394,395
-    verdict: supports
-    audited_at: 2026-06-08T180000Z
-    note: c141 land-clean dir-prefix hygiene — the 3 body-prose bare-basename citations (geodata.cpp:3242 / romoperator.cpp:586) re-anchored to the chapter's full palace/-prefixed body convention (palace/utils/geodata.cpp:3242, palace/models/romoperator.cpp:586), matching :295/:297/:400; discharges the c140 :484 path-under-qualified note
-  - citation: reference/palace/palace/utils/geodata.cpp:3242
-    verdict: supports
-    audited_at: 2026-06-08T180000Z
-    note: citecheck --anchor "partitioning mesh" ok — anchor exact at :3242 (Mpi::Print N-subdomain partition-finished site); confirms re-anchored path resolves on disk
-  - citation: reference/palace/palace/models/romoperator.cpp:586
-    verdict: supports
-    audited_at: 2026-06-08T180000Z
-    note: citecheck --anchor "overlap" ok — anchor exact at :586 (the wave-port ROM "ports don't have any overlap" check comment); confirms re-anchored path resolves on disk
-```

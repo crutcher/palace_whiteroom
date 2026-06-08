@@ -320,18 +320,3 @@ The framework's L0 home is `BaseKspSolver`:
   (`palace/linalg/ksp.cpp:25-99`); `ConfigurePreconditionerSolver` dispatches the pc-type and wraps
   in a `GeometricMultigridSolver` when `fespaces.GetNumLevels() > 1`
   (`palace/linalg/ksp.cpp:125-235`).
-
-## Status
-
-`firm` (harvested cycle-096 D1 from OQ `l4-preconditioning-framework-promotion`; the
-firm-on-positive-structure / syntactic-identity escape). Every law is a syntactic read-off over the
-positive `BaseKspSolver` source plus the firm [`ksp_solve`](./ksp_solve.md) cap (c048): the bind
-precondition is the L0 binding guard, the stratification is the build-vs-run split read off the const
-class, the brand role-fixity and derived-view-consistency are type-level rotations of the
-`SetOperators` body (no run-time content added), and the counter monotonicity is read off the const
-`Mult` body (`palace/linalg/ksp.cpp:296-310`). The `depends-on: [L4/ksp_solve]` dependency is firm,
-so the rank invariant `rank(preconditioning-framework) ≤ rank(ksp_solve)` holds (firm ≤ firm). No
-constructive sub-part rests on a negative anchor; the v0.2 capability typing and v0.3 derived-view
-hoist are type-level refinements of positive source, not literature reconstructions. Source-of-truth
-absorbed from the `cg_preconditioning_framework` slice's §L4 / §L4-v0.2 / §L4-v0.3 (the slice is the
-cycle-001-era precursor; this chapter is its firm L4 home, re-citing L0 directly).

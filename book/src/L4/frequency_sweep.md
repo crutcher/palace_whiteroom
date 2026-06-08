@@ -37,9 +37,9 @@ together they close the last pipeline-half L4 gap, bringing the whole assemble+s
 deliverable to L4 across all five pipelines' representable shells.
 
 This is the **driven feature's OWN single-witness form** — it is NOT framed as a
-shared generalized cross-pipeline `map_solve` parent (batch-21 meta decision 4: the
-`map_solve` shared form is on the STOP-PROPOSING list; this entry is the driven
-specialization, scoped single-witness-driven by design). It is the named **scope
+shared generalized cross-pipeline `map_solve` parent (the `map_solve` shared form is
+on the STOP-PROPOSING list; this entry is the driven specialization, scoped
+single-witness-driven by design). It is the named **scope
 boundary** that [`solve_family`](./solve_family.md) explicitly scopes the driven
 pipeline *out* of (`L4/solve_family.md:65,90,137,163`): the `operator-capture =
 per-element` axis value that `solve_family`'s `fixed`-only laws do NOT cover.
@@ -82,9 +82,9 @@ the [`ksp_solve`](./ksp_solve.md) per-member cap, the
 [`state-stratification`](../concepts/state-stratification.md) operator stratum —
 NOT in terms of L3 value-threading or the L0 C++ frequency loop. The L4>L3
 dissolution (the `map` collapsing to an L3 explicit per-ω `for`-loop with the
-operator rebuild + `SetOperators` *inside* the loop body) is a separate cycle-070
-L4>L3 theme ([`frequency-sweep-dissolution`](../L4-L3/frequency-sweep-dissolution.md),
-authored by D2 this same cycle), narrated forward from L4 to L3; it is **not**
+operator rebuild + `SetOperators` *inside* the loop body) is a separate
+L4>L3 theme ([`frequency-sweep-dissolution`](../L4-L3/frequency-sweep-dissolution.md)),
+narrated forward from L4 to L3; it is **not**
 authored here.
 
 `frequency_sweep` at L4 is a **methodology-level combinator** distilled from the
@@ -438,9 +438,8 @@ existing [`ksp_solve`](./ksp_solve.md) cap composed with the existing
 L4 `frequency_sweep` lowers to an L3 explicit per-ω `for`-loop with the operator
 **rebuild + `SetOperators` inside the loop body** (the Palace C++ shape,
 §Specialization) and the operator basis hoisted outside — via the L4>L3 dissolution
-theme [`frequency-sweep-dissolution`](../L4-L3/frequency-sweep-dissolution.md)
-(**cycle-070 D2 abstractor; authored this same cycle**; canonical slug
-`frequency-sweep-dissolution`). The rotation is **substantive** (not identity-in-form):
+theme [`frequency-sweep-dissolution`](../L4-L3/frequency-sweep-dissolution.md).
+The rotation is **substantive** (not identity-in-form):
 the `map` collapses to a positional `for (std::size_t omega_i = ...)` loop; the
 per-member operator rebuild `assemble_frequency_operator fam omega` becomes the inline
 `GetSystemMatrix(...)` call *inside* the loop; the `ksp.SetOperators(*A, *P)` capture
@@ -476,8 +475,7 @@ Four axes, one load-bearing (operator-capture) and three absorbed/pinned:
    ω²·M + A2(ω)`. Absorbed into the per-member operator verb; sharpens the per-element
    scope (driven's per-member operator is rebuilt-from-a-fixed-basis, which is what makes
    this a single-pipeline specialization rather than a free per-element-operator general
-   combinator — the `map_solve` shared form STOP-PROPOSING boundary, batch-21 meta
-   decision 4).
+   combinator — the `map_solve` shared form STOP-PROPOSING boundary).
 3. **element-type** (`complex`) — pinned. The driven sweep is complex-valued (the
    `{iω, −ω²}` weights and the `ComplexOperator` basis, `drivensolver.cpp:91-93,176`);
    the general `real | complex` axis collapses to complex-only here.
@@ -487,11 +485,8 @@ Four axes, one load-bearing (operator-capture) and three absorbed/pinned:
 
 ## Status
 
-`firm` — the **firm-on-positive-structure escape** applies (CLAUDE.md §Methodology
-invariants "Two rough-in qualifiers are first-class", the `apply_nonlinear_pencil` /
-[`fold_solve`](./fold_solve.md) / [`assemble_frequency_operator`](./assemble_frequency_operator.md)
-precedent). The combinator's structural signature is well-anchored at L0 (the
-operator-basis-captured-once + operator-rebuilt-per-member + map-collect shape, the
+`firm` (firm-on-positive-structure escape). The combinator's structural signature is well-anchored
+at L0 (the operator-basis-captured-once + operator-rebuilt-per-member + map-collect shape, the
 operator-capture = per-element axis, the per-member operand = the firm
 `assemble_frequency_operator` verb) by the **single positive driven loop**
 (`drivensolver.cpp:91-93,168-196`). Every law (§Algebraic laws) is a **syntactic
@@ -500,20 +495,15 @@ map b` (with the per-member operator a pure function of the index, so independen
 holds), the member-independence is the map's naturality, and the load-bearing **non**-law
 (the `SetOperators`-NON-hoist) is read directly off the `GetSystemMatrix`/`SetOperators`-
 *inside*-the-loop placement. These are read-off identities on the positive driven loop +
-the firm [`assemble_frequency_operator`](./assemble_frequency_operator.md) operand (firm
-cycle-069 D1) + the firm [`ksp_solve`](./ksp_solve.md) cap (firm cycle-048) — NOT
+the firm [`assemble_frequency_operator`](./assemble_frequency_operator.md) operand +
+the firm [`ksp_solve`](./ksp_solve.md) cap — NOT
 test-gated convergence-semantics claims (the [`eigsolve`](./eigsolve.md) distinction) —
-so the absence of a dedicated driven-sweep unit test does NOT gate them, and the entry is
-`firm`. (Contrast the **operator-capture axis** against [`solve_family`](./solve_family.md),
-also `firm` (c086): `solve_family`'s load-bearing independence claim — that the `KspSolver`
-*reuse* across members carries no hidden cross-member state — was ultimately discharged on
-positive structure (read off the const `BaseKspSolver::Mult` body, `palace/linalg/ksp.cpp:297-310`,
-whose only cross-call state is two monotone telemetry counters); `frequency_sweep` instead
-rebuilds a *fresh* operator and re-captures it per member, so its no-cross-member-state
-property is read directly off the per-member `SetOperators(*A, *P)` rebuild rather than off a
-reused solver. The two entries are now equal in maturity (both firm); the load-bearing
-distinction is the **fixed-shared-capture vs. fresh-per-member-rebuild** axis itself, not a
-firm-vs-rough-in maturity gap.)
+so the absence of a dedicated driven-sweep unit test does NOT gate them. (Contrast the
+**operator-capture axis** against [`solve_family`](./solve_family.md), also `firm`:
+`frequency_sweep` rebuilds a *fresh* operator and re-captures it per member, so its
+no-cross-member-state property is read directly off the per-member `SetOperators(*A, *P)`
+rebuild rather than off a reused solver. The load-bearing distinction is the
+**fixed-shared-capture vs. fresh-per-member-rebuild** axis itself, not a maturity gap.)
 
 **Scope (load-bearing) — single-witness-driven BY DESIGN**: `frequency_sweep`
 (operator-varying frequency sweep) is witnessed by the **driven uniform sweep ONLY**
@@ -529,21 +519,14 @@ operator sweep). So the operator-VARYING map is exhibited by the uniform driven 
 — `frequency_sweep` lands as a **single-witness driven specialization**, which is fine under
 the redirect (solvers are pulled up as a low-priority test-load; a clean single-witness
 driven form through existing vocabulary is a legitimate landing). It is **NOT** framed as a
-shared generalized `map_solve` cross-pipeline parent (batch-21 meta decision 4: `map_solve`
-is on the STOP-PROPOSING list as a SHARED form) — it is the driven feature's OWN form. The
+shared generalized `map_solve` cross-pipeline parent — it is the driven feature's OWN form. The
 operator-capture = per-element generality is recorded on [`solve_family`](./solve_family.md)'s
 variant axis as the named superset value; this entry is the driven instance of that value, not
-a second-pipeline witness (none exists, by design).
-
-This dispatch (cycle-070 D1, LEAD) is the **driven-pipeline solve-half L4 lift** (plan-tag the
-driven feature-surface completion), closing the last pipeline-half L4 gap: with
-[`assemble_frequency_operator`](./assemble_frequency_operator.md) (the driven assemble half,
-cycle-069) firm and `frequency_sweep` (the driven solve half) landing here, the whole
-assemble+solve deliverable reaches L4 across all 5 pipelines' representable shells
-(directive-1: L4 is the outward backend-lowering target). The L4>L3 dissolution theme
-([`frequency-sweep-dissolution`](../L4-L3/frequency-sweep-dissolution.md)) is cycle-070 D2's
-job this same cycle; this entry records the rotation direction in-line but does not author the
-theme.
+a second-pipeline witness (none exists, by design). With
+[`assemble_frequency_operator`](./assemble_frequency_operator.md) (the driven assemble half) firm
+and `frequency_sweep` (the driven solve half), the whole assemble+solve deliverable reaches L4
+across all 5 pipelines' representable shells (directive-1: L4 is the outward backend-lowering
+target).
 
 ## L4 vs L3 distinction
 
@@ -566,9 +549,7 @@ theme.
 
 `frequency_sweep` at L4 is a methodology-level combinator distilled from the single driven
 driver sweep; Palace's C++ does not realise the L4 map form (it writes the explicit per-ω
-rebuild-and-solve loop). All L0 citations self-verified against on-disk source this dispatch
-via `tools/citecheck/citecheck.py --anchor` (the codemap `read_range` confirmed against the
-on-disk `reference/palace/palace/drivers/drivensolver.cpp`).
+rebuild-and-solve loop).
 
 - **Operator-varying frequency-sweep witness (positive, single-witness driven):**
   - `palace/drivers/drivensolver.cpp:80` (`const auto &omega_sample =
@@ -620,13 +601,3 @@ on-disk `reference/palace/palace/drivers/drivensolver.cpp`).
   identities on the positive driven loop — the firm-on-positive-structure escape; the
   operator-capture = per-element axis value is read directly off the per-member `SetOperators`
   rebuild, not assumed), so the entry is `firm`.
-- **Provenance**: the batch-21 meta-phase-decided LIFT (the driven solve-half → L4 decision
-  closing the last pipeline-half L4 gap); harvested cycle-070 D1 (LEAD). The firm
-  [`assemble_frequency_operator`](./assemble_frequency_operator.md) (cycle-069 D1, the driven
-  assemble half / per-member operand) + the firm [`ksp_solve`](./ksp_solve.md) (cycle-048, the
-  per-member solve cap) + the [`solve_family`](./solve_family.md) `per-element` scope boundary
-  (cycle-055) are the direct inputs. WARRANT verdict: genuine L4 entry (the driven feature's OWN
-  single-witness solve-half form; the operator-varying map is a distinct shell from
-  `solve_family`'s fixed-operator map and `fold_solve`'s sequential fold — a navigable L4 home as
-  the driven solve-coordination verb + the named `per-element` scope boundary, NOT a shared
-  `map_solve` parent per batch-21 meta decision 4).

@@ -315,8 +315,8 @@ Laws that explicitly **do NOT** hold:
   consumer **via `eigsolve-impl`'s Hermitian arm** (the symmetric-pencil seed recurrence), NOT as a
   direct constituent of the NEP outer loop — so it is a `reference` here, and its grounding comes
   from `eigsolve-impl` being grounded (the liveness reaches `lanczos_step` transitively over
-  `eigsolve-impl`'s own `folds` edge). Named per the dispatch scope's "name `lanczos_step` as the
-  symmetric-pencil basis-extension constituent carried via `eigsolve-impl`".
+  `eigsolve-impl`'s own `folds` edge). It is the symmetric-pencil basis-extension constituent
+  carried via `eigsolve-impl`.
 - [`L3/eigsolve`](./eigsolve.md) (partial-obstruction, kernel-api) — the eigsolve gate whose
   `direct_newton` orchestration variant treats `QuasiNewtonSolver` as one opaque step; this consumer
   is the constructive opening of that variant.
@@ -352,7 +352,7 @@ consumer's cap lifts and it promotes on its own positively-sourced outer-loop st
 outer-loop laws are syntactic identities on the positive `nleps.cpp` sweep — the
 firm-on-positive-structure escape applies to the consumer's OWN structure once the seed cap clears).
 
-**The GROUNDING is independent of this rank** (the dispatch scope's honest clean-gate): wiring the
+**The GROUNDING is independent of this rank:** wiring the
 blocking `depends-on` edges FIRES RE3 (the `deflate → L2/gram` faithful edge is now reachable
 through a built consumer) and GROUNDS `L3/eigsolve-impl` + `L3/lanczos_step` off RE11 — liveness
 flows over `depends-on` regardless of rank. So even at `roadmap_goal` this consumer discharges RE3
@@ -382,23 +382,21 @@ identities on the positive sweep; the missing convergence test does not gate the
 
 ## Evidence
 
-All Palace ranges `read_range`-verified + `tools/citecheck/citecheck.py --anchor`-checked this
-dispatch against the on-disk file (paths relative to `reference/`):
+Palace ranges (paths relative to `reference/`):
 
 - `palace/linalg/nleps.cpp:351` — `int QuasiNewtonSolver::Solve()`: the outer NEP driver function
-  (the consumer's outer-loop home). citecheck `[ok]` anchor `QuasiNewtonSolver::Solve` at `:351`.
+  (the consumer's outer-loop home).
 - `palace/linalg/nleps.cpp:356-359` — the deflation-scheme comment: "Using the deflation scheme used
   by SLEPc's NEP solver with minimality index set to 1" (`:356`), Effenberger 2013 ref (`:357-358`),
   "the deflation scheme solves an extended problem of size n + k" (`:359`). The SLEPc-NEP
-  minimality-index-1 anchor (the dispatch scope's `:356-359` citation).
+  minimality-index-1 anchor.
 - `palace/linalg/nleps.cpp:470-474` — the initial-guess seed: the eigenvector averaging seed
   (`:471` `v.AXPBYPCZ(0.5, eigenvectors[i1], 0.5, eigenvectors[i2], 0.0)`) from the linear
   eigensolver and `eig_opInv = eig` (`:474`, the lagged preconditioner eigenvalue) — the
   `eigsolve-impl` blocking-seed constituent.
 - `palace/linalg/nleps.cpp:505-537` — the `deflated_solve` lambda: the deflated extended linear
   solve (`auto deflated_solve =` at `:505`, closing `};` at `:537`). The deflation-projection
-  positive site (`coords ▷ schur-solve ▷ back-project`, the `S = λI − H` Schur form). citecheck
-  `[ok]` anchor `deflated_solve` at `:505`.
+  positive site (`coords ▷ schur-solve ▷ back-project`, the `S = λI − H` Schur form).
 - `palace/linalg/nleps.cpp:524-531` — the Gram double-loop `SS(i,j) = linalg::Dot(GetComm(), X[i],
   X[j])` (`:529`) = `XᴴX` — the L2 `gram` positive site the deflated solve LU-solves (the RE3
   faithful `deflate → gram` constituent).
@@ -407,19 +405,17 @@ dispatch against the on-disk file (paths relative to `reference/`):
   `deflate` Schur form.
 - `palace/linalg/nleps.cpp:547-576` — the deflated-residual purpose comment (`:547-549`) + the
   `compute_residual` lambda (`auto compute_residual = [this, &k, &H,` at `:550`, closing `};` at
-  `:576`): `r = T(λ)v + T(λ)X(λI−H)⁻¹v2`, `r2 = Xᴴv`. The `nleps_deflated_residual` site. citecheck
-  `[ok]` anchor `compute_residual` at `:550`.
+  `:576`): `r = T(λ)v + T(λ)X(λI−H)⁻¹v2`, `r2 = Xᴴv`. The `nleps_deflated_residual` site.
 - `palace/linalg/nleps.cpp:578-580` — the Armijo backtrack constants (`armijo_c`,
   `backtrack_factor`, `max_backtrack`) — the inner-step damping.
-- `palace/linalg/nleps.cpp:590` — `while (it < nleps_it)`: the inner quasi-Newton iteration loop.
-  citecheck `[ok]` anchor `while (it < nleps_it)` at `:590` (within `:590-619`).
+- `palace/linalg/nleps.cpp:590` — `while (it < nleps_it)`: the inner quasi-Newton iteration loop
+  (within `:590-619`).
 - `palace/linalg/nleps.cpp:604` — `if (res < rtol)`: the inner convergence test (the deflate-trigger
   branch).
 - `palace/linalg/nleps.cpp:610-619` — the converged-pair deflation/basis-extension: normalize
   (`scale = Norml2(v); v *= 1/scale`, `:610-611`), `eigs.resize(k+1); eigs[k]=eig` (`:612-613`),
-  `X.resize(k+1)` (`:614`), `X[k]=v` (`:615`), `H` bordered (`:616-618`), `k++` (`:619`). citecheck
-  `[ok]` anchor `X.resize` at `:614` (within `:613-619`). The variadic-in-`k` growth + locked-vector
-  invariance (laws 2, 3).
+  `X.resize(k+1)` (`:614`), `X[k]=v` (`:615`), `H` bordered (`:616-618`), `k++` (`:619`). The
+  variadic-in-`k` growth + locked-vector invariance (laws 2, 3).
 - `palace/linalg/nleps.cpp:623-630` — the in-range / out-of-range guess-index vs `nev` increment
   (`if (eig.imag() > sigma.imag()) guess_idx++ else nev++`) — the convergence-target variant axis.
 - `palace/linalg/nleps.cpp:664-667` — the Jacobian deflation terms (`S = eig·I − H` `:664`,
@@ -451,27 +447,3 @@ Constituent chapters (firm/roadmap_goal vocabulary this consumer composes):
   well-foundedness cap this consumer's rank satisfies.
 - No dedicated unit test: NLEPS has zero `test/unit/**` hits; the outer-loop structure laws are
   syntactic identities on the positive sweep, not test-gated.
-
-```yaml
-verified_against:
-  - citation: reference/palace/palace/linalg/nleps.cpp:505-537
-    verdict: supports
-    audited_at: 2026-06-07T120000Z
-    note: deflated_solve lambda (:505) genuinely composes deflate + gram — :524-531 is the all-pairs Gram SS(i,j)=Dot(X[i],X[j]) (gram constituent, faithful); :532-535 is the Schur form S=eig*I-H, SS=-S^-1(X^*X), back-projection X*(S^-1 .) (deflate constituent, faithful); :515-518 k==0 no-deflation branch matches the k=0-reduces-to-bare-solve law. depends-on edges to deflate/gram are NOT forced.
-  - citation: reference/palace/palace/linalg/nleps.cpp:356-359
-    verdict: supports
-    audited_at: 2026-06-07T120000Z
-    note: deflation-scheme comment — SLEPc NEP minimality-index-1 (:356), Effenberger 2013 (:357-358), extended problem of size n+k (:359); exact, anchors land [ok].
-  - citation: reference/palace/palace/linalg/nleps.cpp:470-474
-    verdict: supports
-    audited_at: 2026-06-07T120000Z
-    note: seed edge faithful — :471 v.AXPBYPCZ averages eigenvectors[i1],eigenvectors[i2] (the linear-eigensolve OUTPUTS), eig_opInv=eig at :474 (lagged precond eigenvalue). The NEP loop genuinely seeds each new pair from the linear eigensolve, so eigsolve-impl is a genuine depends-on constituent, NOT a forced/manufactured edge.
-  - citation: reference/palace/palace/linalg/nleps.cpp:613-619
-    verdict: supports
-    audited_at: 2026-06-07T120000Z
-    note: basis extension — eigs.resize(k+1)/eigs[k]=eig (:612-613), X.resize(k+1)/X[k]=v (:614-615), H.col(k).head(k)=v2/scale and H(k,k)=eig (:616-618), k++ (:619); the variadic-in-k growth + append-only locked-vector invariance (laws 2,3 faithful). anchor X.resize [ok] at :614.
-  - citation: book/src/L3/eigsolve-impl.md
-    verdict: realizes-kernel-api-faithful
-    audited_at: 2026-06-07T120000Z
-    note: edge integrity re-confirmed on disk — eigsolve-impl realizes-kernel-api edges to L3/eigsolve (lines 20-21) AND L4/eigsolve (lines 22-23) BOTH sit under the reference block, reference-class, NOT mistyped to depends-on. PASS. D1 did NOT promote eigsolve-impl (stays roadmap_goal); the consumer's new blocking depends-on edge GROUNDS the impl off RE11 (the intended RE11-discharge disposition, not decay).
-```

@@ -8,7 +8,7 @@ edges:
     - target: L4/eigsolve
       kind: composes               # consumes the converged eigenpair family eigsolve returns
     - target: book/src/L1/interpolator.md
-      kind: uses                   # the Bz = curl(Et)/(iω) formation constructs the discrete-curl CurlOp via GetDiscreteInterpolator (boundarymodesolver.cpp:319-323); an L4→L1 altitude-skip (RE2/RE8/c110 precedent)
+      kind: uses                   # the Bz = curl(Et)/(iω) formation constructs the discrete-curl CurlOp via GetDiscreteInterpolator (boundarymodesolver.cpp:319-323); an L4→L1 altitude-skip
     - target: palace/drivers/boundarymodesolver.cpp:272-340
       kind: cites-evidence
   reference:
@@ -106,7 +106,7 @@ Shape contract (using the named-shape-groups notation governed by the semantic s
 - `res : EigResult` — the converged eigenpair family ([`eigsolve`](./eigsolve.md)'s output
   on the 2D-submesh GEP; each `(λᵢ, xᵢ)`). Read-only. The `WaveguideModeTable` record is
   defined in its cross-cutting home
-  ([`concepts/WaveguideModeTable.md`](../concepts/WaveguideModeTable.md), promoted c118 D6).
+  ([`concepts/WaveguideModeTable.md`](../concepts/WaveguideModeTable.md)).
 - `w : Scalar` — the operating angular frequency `ω`; read-only. Rides as a fixed scalar
   parameter (the `n_eff` divisor + the `Bz` `1/ω` scale), NOT a per-mode datum — the
   per-ω-axis-factored-out convention the SIBLING
@@ -227,9 +227,8 @@ applies is the de-Rham discrete grid-transfer operator
 [`interpolator`](../L1/interpolator.md) constructs
 (`mode_op.GetCurlSpace().GetDiscreteInterpolator(mode_op.GetNDSpace())`,
 `palace/drivers/boundarymodesolver.cpp:319-323`) — an L4→L1 altitude-skip `uses`
-dependency on the firm L1 interpolator (the RE2/RE8/c110 altitude-skip precedent: the
-reduce verb's readout calls the L1 operator directly, with no intervening L3/L2
-absorption reshaping the call).
+dependency on the firm L1 interpolator: the reduce verb's readout calls the L1 operator
+directly, with no intervening L3/L2 absorption reshaping the call.
 
 ## Lowers to
 
@@ -251,78 +250,7 @@ solve), the `n_eff` divide and the `Bz` `1/ω` scale apply that same ω — the 
 separation the SIBLING [`sparameter_reduce`](./sparameter_reduce.md):235-239 applies for
 its swept-ω axis (here ω is a single value, not a sweep).
 
-## Status
-
-`firm`. **Reasoning (firm-on-positive-structure / syntactic-identity escape):** the
-combinator's **structure** is read directly off the two positive readout loops — the
-`kn`/`n_eff` print loop (`boundarymodesolver.cpp:272-278`) and the field-readout +
-`Bz`-formation loop (`:292-335`) — and **every** law (§Algebraic laws) is a **syntactic
-identity** on the per-mode map: law 1 (concatenation-homomorphism) is a read-off of the
-inter-mode-stateless readout loop (`:292`, no accumulator); law 2 (un-transform +
-effective-index purity) is the literal `GetPropagationConstant(i)` (`:299`) + the scalar
-`kn/ω` divide (`:276`); law 3 (power-normalization totality) is read literally off the
-`if (std::abs(P_initial) > 0.0) { e0 *= 1/√|P| }` branch (`:305-308`); law 4 (conditional
-`Bz`) is read off the `IsPropagating(kn)` branch (`:316`) + the `1/(iω)` curl formation
-(`:325-332`) + the `IsPropagating` predicate body (`modeeigensolver.cpp:516-519`). The
-per-mode **assembly** is the structural collect of these maps over the eigenpair family;
-it carries **no axiom requiring an unverified mathematical property** — the VD
-back-transform and the Poynting power are opaque boundary-mode model methods whose OUTPUTS
-the reduction collects verbatim (the `eigsolve`-opaque-leaf / `sparameter_reduce`
-cached-projection-crossing parallel: an evaluation-strategy detail the reduction abstracts
-over, not an algebraic axiom). This is the same escape that landed the SIBLINGS
-[`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md) (c082),
-[`sparameter_reduce`](./sparameter_reduce.md) (c083), and
-[`domain_energy_reduce`](./domain_energy_reduce.md) (c091) firm; the contrast is the c080/c091
-[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) audit, which RULED OUT the escape
-because its norm-axiom laws are theorems conditional on an inner-product structure the L0
-source only numerically asserts — **no such theorem-needing-proof exists in this verb's
-per-mode map**.
-
-**No dedicated assembly test.** The boundary-mode readout loops are integration-level under
-the boundary-mode `Solve(mesh)` driver, not unit-tested under
-`reference/palace/test/unit/` (the boundary-mode driver has no positive assembly test, the
-same disposition as the `eigenfreq_qfactor_reduce` / `sparameter_reduce` readouts). Under
-the firm-on-positive-structure escape the missing test is redundant: every per-mode map law
-is a syntactic identity over the positive source + opaque model-method outputs, carrying no
-residual untested semantic claim. The escape discharges the assembly-test gate (the SAME
-route as the c082/c083/c091 sibling promotions).
-
-**Scope: single-pipeline (boundary-mode) BY DESIGN.** This is the boundary-mode driver's
-OWN output-product reduction; it is not a cross-pipeline shared verb (the other output
-products: eigenmode `(f,Q)` via `eigenfreq_qfactor_reduce`, driven S-parameters via
-`sparameter_reduce`, electrostatic/magnetostatic capacitance/inductance via `gram_reduce`,
-field-energy per-domain via `domain_energy_reduce`). The propagating-vs-evanescent split is
-a **variant axis** (the `Bz` `Just`/`Nothing` arm), NOT a 2nd pipeline. The
-over-unification guard vs `eigenfreq_qfactor_reduce` (same `eigsolve` corner) is
-CLOSED-NEGATIVE — author as its own verb (field-carrying ≠ scalar-only).
-
-verified_against:
-
-```yaml
-verified_against:
-  - citation: palace/drivers/boundarymodesolver.cpp:272-340
-    verdict: supports
-    audited_at: 2026-06-06T232937Z
-    note: the two per-mode readout loops re-verified on-disk via codemap read_range. kn/n_eff print loop :272-278 (GetPropagationConstant :275, kn.real()/omega :276); field-readout loop :292-335 — eigenvector load eig.GetEigenvector(i, e0) :297, kn :299, VD back-transform ApplyVDBackTransform(e0, kn, et, en) :300, Poynting power ComputePoyntingPower :304, normalize e0 *= 1/sqrt(|P|) under if(|P|>0) :305-308, IsPropagating(kn) branch :316, discrete curl interpolator :319-323, Bz = curl(Et)/(iw) formation bz.Real()=curl_eti; bz.Real()*=1/omega; bz.Imag()=curl_etr; bz.Imag()*=-1/omega :325-332. Function returns :339-340. Every law is a syntactic read-off of this positive source.
-  - citation: palace/models/modeeigensolver.cpp:516-519
-    verdict: supports
-    audited_at: 2026-06-06T232937Z
-    note: ModeEigenSolver::IsPropagating(kn) body re-verified on-disk — return |kn.imag()| < 0.1*|kn.real()| && |kn.real()| > 0.0. The per-mode Maybe predicate (law 4); a pure per-mode branch on kn, not a cross-mode combine.
-  - citation: book/src/L4/eigenfreq_qfactor_reduce.md:73
-    verdict: supports
-    audited_at: 2026-06-06T232937Z
-    note: sibling result type [(Scalar, Scalar)] (scalar-only) — the load-bearing non-unify contrast; this verb carries mode FIELDS (Et,En,Bz). Same eigsolve corner, different result kind/fold (the over-unification guard, closed-negative).
-  - citation: book/src/feature/waveguide-mode.L4.md:59
-    verdict: supports
-    audited_at: 2026-06-06T232937Z
-    note: 'the signature waveguide_mode_reduce :: EigResult -> Scalar -> WaveguideModeTable + the rough-in verb gate (:83) + the per-mode body enumeration (:43-49); the WaveguideModeTable record''s current in-chapter home (§Inputs/outputs).'
-```
-
 ## Evidence
-
-All L0 citations self-verified on-disk this dispatch via the codemap
-(`mcp__palace-codemap__read_range` + `search_text` line pinpoints against
-`reference/palace/`).
 
 - **The two per-mode readout loops (positive witness — the reduction itself):**
   `palace/drivers/boundarymodesolver.cpp:272-278` (the `kn`/`n_eff` print loop:
@@ -354,9 +282,3 @@ All L0 citations self-verified on-disk this dispatch via the codemap
   loops are integration-level under the boundary-mode `Solve(mesh)` driver, not unit-tested
   under `reference/palace/test/unit/`) — redundant under the firm-on-positive-structure
   escape.
-- **Provenance:** cycle-118 D5 (batch-38, output-product column completion) — formalizes
-  the rough-in verb flagged 5× in the `waveguide-mode.{L4,L1}` feature columns
-  (OQ `waveguide-mode-reduce-needs-l4-verb-home`). WARRANT verdict: genuine L4 entry (the
-  boundary-mode output-product reduction verb; the field-carrying propagation-mode member of
-  the L4 output-product reduce-verb algebra, a navigable L4 home — NOT a stranded mine, NOT
-  an `eigenfreq_qfactor_reduce` specialization, over-unification-guard closed-negative).

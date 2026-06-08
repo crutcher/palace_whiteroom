@@ -1,5 +1,5 @@
 ---
-kind: navigational-container (synthesis library — iteration; def bodies rendered Wave-2)
+kind: navigational-container (synthesis library — iteration)
 # Rendered library chapter. No `rank:` — implementation VIEW, reference-class
 # links only; the rendered def bodies are faithful transcriptions of the
 # authoritative L4 chapter bodies (lowering-verifier may audit), they carry no
@@ -380,4 +380,4 @@ This library has **no `#extern` kernel** of its own: the iteration combinators a
 
 ## Status
 
-`navigational-container` (rendered library chapter). Holds the synthesized def bodies of the four iteration & step combinators (`iterate_while` / `iterate_while_pure`, `iterate_while_with_prev`, `krylov-step` Form A + Form B, `chebyshev`) plus the three iteration-clustering type renderings (`Krylov`, `StepOutputs`, `PrevCarry`). The rendered bodies are faithful transcriptions of the authoritative L4 chapter bodies (linked per def; lowering-verifier may audit the correspondence); the laws/semantics live in those chapters. Implementation VIEW — `reference`-class links only, no new `depends-on` edge, no rank claim on any rendered form.
+`navigational-container` (rendered library chapter). Holds the synthesized def bodies of the four iteration & step combinators (`iterate_while` / `iterate_while_pure`, `iterate_while_with_prev`, `krylov-step` Form A + Form B, `chebyshev`) plus the three iteration-clustering type renderings (`Krylov`, `StepOutputs`, `PrevCarry`). The rendered bodies are faithful transcriptions of the authoritative L4 chapter bodies (linked per def; lowering-verifier may audit the correspondence); the laws/semantics live in those chapters. Implementation VIEW — `reference`-class links only, no `depends-on` edge, no rank claim on any rendered form.

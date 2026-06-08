@@ -38,8 +38,8 @@ wants** ([`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerat
 output-product half of the [`energy-fields`](../feature/energy-fields.L4.md) composition root reaches the
 L4 surface through it.
 
-It is **genuine NEW spine vocabulary, NOT a `participation_ratio` fold-inline** — the Wave-1 D4
-confirm-probe (cycle-079) probed and REFUSED the bare-`participation_ratio`-fold subsume: the per-domain
+It is **genuine NEW spine vocabulary, NOT a `participation_ratio` fold-inline** — the
+bare-`participation_ratio`-fold subsume is REFUSED: the per-domain
 numerator `energyᵢ = ½⟨field, M_idx field⟩` is itself a domain-restricted SPD energy reduction (the
 load-bearing content), so the verb folds TWO L1 primitives per row, not one. The firm
 [`participation_ratio`](../L1/participation_ratio.md):188-191 explicitly disclaims that numerator-energy
@@ -137,7 +137,7 @@ This is the **reduce-to-scalar-table** rank between the reduce-to-scalar
 1-D table of scalar tuples over a domain family (rank-1, per-domain) — the per-domain sibling of the
 per-mode [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md). The upstream is a SINGLE solution
 field, not a solution family — there is no family-PAIR `xⱼᵀ K xᵢ` bilinear, no `symmetric_from_upper`
-(the load-bearing distinction from `gram_reduce`; the c074 D6 do-NOT-over-unify guard, honored).
+(the load-bearing distinction from `gram_reduce`; the do-NOT-over-unify guard, honored).
 
 ## Algebraic laws
 
@@ -180,8 +180,8 @@ Laws that explicitly **do NOT** hold (or hold only config-conditionally):
   is a per-domain map producing one table row each. (The whole-domain total `e_total` is computed by a
   SEPARATE un-restricted energy reduction upstream, NOT by summing the per-domain rows — see law 4.)
 - **Not a symmetric-Gram reduction.** No family-PAIR grid, no symmetric mirror — the rank-1 vs rank-2
-  distinction from [`gram_reduce`](./gram_reduce.md) (the single solution field is not a family; the c074
-  D6 over-unification guard).
+  distinction from [`gram_reduce`](./gram_reduce.md) (the single solution field is not a family; the
+  over-unification guard).
 
 ### On the uniform total-guard (D4 flag #2)
 
@@ -204,22 +204,19 @@ report's Open questions for a possible `problems/` drive-by).
 
 ## Dependencies
 
-- [`participation_ratio`](../L1/participation_ratio.md) (firm, c077) — the per-domain participation quotient
+- [`participation_ratio`](../L1/participation_ratio.md) (firm) — the per-domain participation quotient
   `pᵢ = energyᵢ / e_total` this reduction folds (the second of the two folded primitives; the firm L1 home
   for the quotient half).
-- [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091) — the
+- [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm) — the
   domain-restricted SPD energy form `½⟨field, M_idx field⟩` this reduction folds as the per-domain
-  numerator (the first folded primitive; promoted to firm by the batch-29 firm-flip-and-cascade wave,
-  discharging this verb's former inherited-rough-in gate — both folded primitives are now firm).
+  numerator (the first folded primitive). Both folded primitives are firm.
 
 Sibling data-algebra reduction combinators (the L4 algebra-of-folds family):
 
-- [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md) (firm, c082) — the per-MODE scalar-table
+- [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md) (firm) — the per-MODE scalar-table
   reduction; `domain_energy_reduce` is the per-DOMAIN sibling (same rank-1 scalar-table shape, different
   family index: mode vs domain). Together they are the two rank-1 scalar-table members of the
-  algebra-of-folds. (The sibling reached `firm` because BOTH its folded primitives have firm L1 homes —
-  `eigenvalue-untransform` c080 + `participation_ratio` c077 — so the firm-on-positive-structure escape
-  applies to it; `domain_energy_reduce` does NOT yet share that property, see §Status.)
+  algebra-of-folds.
 - [`gram_reduce`](./gram_reduce.md) (reduce-to-matrix) — the rank-2 family-PAIR Gram reduction; the
   do-NOT-merge over-unification guard (single field, not a family; rank-1 table, not a rank-2 grid).
 - [`inner_product`](./inner_product.md) (reduce-to-scalar) — the single-tensor reduction; the per-domain
@@ -272,53 +269,26 @@ discipline; it does not author a theme.
 
 ## Status
 
-`firm` — promoted from `rough-in` by the cycle-091 batch-29 firm-flip-and-cascade wave (D3
-lowering-verifier law-confidence pass), coupled to the [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
-firm flip. **Reasoning (warrant-first):** the combinator's **structure** is read directly off the
-positive `MeasureDomainFieldEnergy` per-domain loop (`postoperator.cpp:1021-1099`) — the per-domain map,
-the domain-restricted energy form, the participation quotient, the shared denominator — and every map law
-(§Algebraic laws) is a syntactic identity on that per-domain map. The two factors that previously gated it
-to `rough-in` are now both addressed:
+`firm` — the combinator's structure is read directly off the positive
+`MeasureDomainFieldEnergy` per-domain loop (`postoperator.cpp:1021-1099`) — the per-domain map, the
+domain-restricted energy form, the participation quotient, the shared denominator — and every map law
+(§Algebraic laws) is a syntactic identity on that per-domain map over two firm folded primitives:
+the per-domain numerator is the firm [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (restricted
+to one domain attribute, `B = M_idx`) and the participation half is the firm
+[`participation_ratio`](../L1/participation_ratio.md). The `(energyᵢ, pᵢ)` assembly is bare scalar
+arithmetic over two firm halves with no inner-product-axiom content of its own (the same disposition as
+the per-MODE sibling [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md)). The
+firm-on-positive-structure escape applies: every map law is a syntactic identity over two firm halves, so
+the missing per-domain test is redundant (the existing `test-domainpostoperator.cpp:83-93` asserts only
+the WHOLE-domain SI energy `GetElectricFieldEnergy`, supporting positive-structure evidence, not the
+firming basis).
 
-1. **The formerly-rough-in folded numerator is now firm.** The per-domain numerator it folds — the
-   domain-restricted energy form `½⟨field, M_idx field⟩` — is the
-   [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) primitive (restricted to one domain attribute,
-   `B = M_idx`), which was promoted to **firm** (c091) on the firm-on-positive-structure escape (both
-   norm-axiom law-sides discharged). So **BOTH** folded primitives now have firm L1 homes —
-   matrix-weighted-norm (c091) AND the firm [`participation_ratio`](../L1/participation_ratio.md) (c077) —
-   removing the "least-firm folded primitive" cap that held the verb at rough-in.
-2. **The missing dedicated test does NOT independently gate firm under the escape.** The
-   `MeasureDomainFieldEnergy` body is integration-level, and the existing
-   `test-domainpostoperator.cpp:83-93` asserts the WHOLE-domain SI energy `GetElectricFieldEnergy` (the
-   energy-FORM constituent at the denominator instance, citecheck-confirmed this cycle — NO unit test
-   calls the per-domain `GetDomainElectric/MagneticFieldEnergy` restricted form), so it is SUPPORTING
-   positive-structure evidence, not the firming basis. The escape (CLAUDE.md §Methodology invariants, the
-   `rough-in (test-coverage-bounded)` bullet) makes the missing per-domain test REDUNDANT: every map law
-   is a syntactic identity over two firm halves, and syntactic-identity map laws over firm constituents
-   are not test-gated (the [`participation_ratio.md`](../L1/participation_ratio.md):184-186 /
-   `apply_linop` / `eigsolve` precedent). There is NO law for which that test is the only evidence — the
-   batch-24 meta-phase ruling that the 2nd gate is dischargeable via the existing postprocess coverage is
-   the in-scope route, exercised here.
-
-This is materially the **same disposition as the per-MODE sibling**
-[`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md) (firm c082): BOTH its folded primitives have
-firm L1 homes ([`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) c080 +
-[`participation_ratio`](../L1/participation_ratio.md) c077) and the per-mode assembly is bare scalar
-arithmetic over two firm halves with no inner-product-axiom content. `domain_energy_reduce` now shares
-that property exactly — its per-domain numerator's inner-product axioms are discharged at the firm
-matrix-weighted-norm L1 home, and the `(energyᵢ, pᵢ)` assembly is bare scalar arithmetic over two firm
-halves (the matrix-weighted-norm-squared energy form + the participation quotient) introducing no
-inner-product-axiom content of its own. The earlier contrast (the firm sibling shows "what clearing gate
-(a) would buy") is now realized: gate (a) is cleared, and the escape applies here as it did there.
-
-(The structural contrast is the rank-2 family-PAIR [`gram_reduce`](./gram_reduce.md), now also firm
-— its off-diagonal folded primitive [`bilinear-form`](../L1/bilinear-form.md) firmed and `gram_reduce`
-flipped to firm in the cycle-095 firm-flip-and-cascade wave, so BOTH reductions now rest entirely on firm
-folded primitives. The standing distinction between them is therefore NOT maturity but SHAPE:
-`domain_energy_reduce` folds two scalar primitives per row over a single field (rank-1 per-domain table),
-whereas `gram_reduce` folds an off-diagonal `bilinear-form` `xⱼᵀ K xᵢ` over a family-PAIR grid (rank-2,
-with the `symmetric_from_upper` mirror) — the c074 D6 do-NOT-over-unify guard, which is a permanent
-shape distinction independent of either verb's firmness.)
+The structural contrast is the rank-2 family-PAIR [`gram_reduce`](./gram_reduce.md), also firm: the
+standing distinction is SHAPE, not maturity — `domain_energy_reduce` folds two scalar primitives per row
+over a single field (rank-1 per-domain table), whereas `gram_reduce` folds an off-diagonal
+[`bilinear-form`](../L1/bilinear-form.md) `xⱼᵀ K xᵢ` over a family-PAIR grid (rank-2, with the
+`symmetric_from_upper` mirror) — the do-NOT-over-unify guard, a permanent shape distinction independent of
+either verb's firmness.
 
 **Scope: 1-of-1 — the field-energy output product, driver-AGNOSTIC.** This is the field-energy
 postprocess's reduction; it is driver-agnostic (the SAME per-domain reduction reduces any field-bearing
@@ -329,12 +299,6 @@ design (like [`sparameter_reduce`](./sparameter_reduce.md)'s single-witness-driv
 per-domain sibling of the per-mode [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md).
 
 ## Evidence
-
-All L0 citations self-verified on-disk this dispatch via `tools/citecheck/citecheck.py --anchor`
-(against `reference/palace/`). NOTE: the `palace-codemap` `read_range` was **+1 drifted** on the
-`MeasureDomainFieldEnergy` opening-brace boundary — the participation-ratio guard lines are on-disk
-`:1039` (electric) / `:1064` (magnetic), NOT the codemap-reported `:1038`/`:1063`; the citations below
-are the citecheck-confirmed on-disk numbers.
 
 - **Per-domain energy-table reduction (positive structure):**
   `palace/models/postoperator.cpp:1021-1099` (the `MeasureDomainFieldEnergy()` body), `:1025-1026`
@@ -376,49 +340,15 @@ are the citecheck-confirmed on-disk numbers.
   `:87-91` (the SI-energy assertion `U = ½·ε₀·E₀²·sx·sy·sz`) — a positive unit-test witness for the
   energy-FORM (the `½⟨field, M field⟩` shape, whole-domain instance), supporting the folded numerator
   primitive's correctness. It does NOT exercise the per-domain restriction or the participation assembly
-  (the per-domain test-gate that §Status point 2 holds REDUNDANT under the firm-on-positive-structure
-  escape, the verb being firm).
-- **Folded L1 primitives:** [`participation_ratio`](../L1/participation_ratio.md) (firm c077 — the
+  (redundant under the firm-on-positive-structure escape).
+- **Folded L1 primitives:** [`participation_ratio`](../L1/participation_ratio.md) (firm — the
   `energyᵢ/e_total` quotient half; :188-191 disclaims the numerator-energy reduction as "named not authored"
-  = THIS verb), [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091 — the
-  `½⟨field, M field⟩` energy-form half; promoted by the batch-29 firm-flip-and-cascade wave on the
-  firm-on-positive-structure escape).
+  = THIS verb), [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm — the
+  `½⟨field, M field⟩` energy-form half).
 - **Sibling-combinator grounding:** [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md) (the
   per-MODE rank-1 scalar-table sibling), [`gram_reduce`](./gram_reduce.md) (the rank-2 over-unification
   guard), [`inner_product`](./inner_product.md) (the reduce-to-scalar base of the per-domain energy);
   `book/src/concepts/black-box-vs-accelerated-kernels.md` §"The combinators rise regardless" (the
   L4-feature-surface-verb warrant).
-- **Composing feature column:** [`energy-fields.L4`](../feature/energy-fields.L4.md) (seed c078 — the
-  output-product column that composes this verb; forward-refs this slug at `:8,48,62,134,156` — authoring
-  this chapter resolves those plain-text refs to live links).
-- **Provenance:** harvested cycle-079 D3 from OQ `domain_energy_reduce-l4-verb-needs-authoring` (c078 D1);
-  Wave-1 D4 combinator-miner confirm-probe verdict DISTINCT-VERB-WARRANTED (the per-domain numerator is a
-  domain-restricted SPD energy reduction, so the verb folds TWO L1 primitives per row, refusing the bare
-  `participation_ratio`-fold-inline subsume). WARRANT verdict: genuine NEW L4 spine vocabulary — the
-  field-energy output-product reduction verb, the per-DOMAIN rank-1 scalar-table sibling of the per-MODE
-  `eigenfreq_qfactor_reduce`, completing the L4 algebra-of-folds family; NOT a `participation_ratio` fold,
-  NOT a `gram_reduce` specialization.
-
-```yaml
-verified_against:
-  - citation: book/src/L1/matrix-weighted-norm.md (§Status, firm c091 — D1)
-    verdict: supports
-    audited_at: 2026-06-04T053300Z
-    note: first folded primitive (per-domain energy numerator, matrix-weighted-norm-squared at B=M_idx) now firm; the former inherited-rough-in gate is discharged
-  - citation: book/src/L1/participation_ratio.md (firm c077, :184-191)
-    verdict: supports
-    audited_at: 2026-06-04T053300Z
-    note: second folded primitive (the energyᵢ/e_total quotient) firm; :184-186 establishes that syntactic-identity quotient/map laws over firm constituents are not test-gated
-  - citation: reference/palace/palace/models/postoperator.cpp:1021-1099
-    verdict: supports
-    audited_at: 2026-06-04T053300Z
-    note: MeasureDomainFieldEnergy per-domain loop — the positive structure; every map law is a read-off syntactic identity on it (citecheck OK)
-  - citation: reference/palace/palace/models/domainpostoperator.cpp:262-274
-    verdict: supports
-    audited_at: 2026-06-04T053300Z
-    note: the 0.5*LocalDot(field, M_idx·field) domain-restricted energy form (matrix-weighted-norm-squared at B=M_idx), :274 the 0.5*dot return (citecheck OK)
-  - citation: reference/palace/test/unit/test-domainpostoperator.cpp:83-93
-    verdict: partially-supports
-    audited_at: 2026-06-04T053300Z
-    note: asserts the WHOLE-domain GetElectricFieldEnergy SI energy (the energy-FORM constituent, denominator instance) — supporting positive-structure evidence, NOT the per-domain restriction or participation assembly; the missing per-domain test is redundant under the firm-on-positive-structure escape
-```
+- **Composing feature column:** [`energy-fields.L4`](../feature/energy-fields.L4.md) — the
+  output-product column that composes this verb.

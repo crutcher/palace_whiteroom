@@ -1,12 +1,11 @@
 ---
-kind: navigational-container (synthesis library — drivers; entry-point composition defs rendered)
-# Implementation VIEW, reference-class links only. No `rank:`, no `status:` — this
-# is the filled implementation-VIEW convention the c136 finalize normalized the
-# calculus libraries to: it RENDERS the synthesized code form of the firm Feature
-# L4 composition roots; the authoritative compositional claims live in the linked
-# ../feature/<column>.L4.md chapters and the authoritative per-op algebra in the
-# ../L4/<op>.md chapters. Adds no `depends-on` blocking edge; constrains no
-# rank/liveness (scheme §4/§5).
+kind: navigational-container (synthesis library — drivers)
+# Implementation VIEW, reference-class links only. No `rank:`, no `status:` (the
+# filled implementation-VIEW convention): it RENDERS the synthesized code form of
+# the firm Feature L4 composition roots; the authoritative compositional claims
+# live in the linked ../feature/<column>.L4.md chapters and the authoritative
+# per-op algebra in the ../L4/<op>.md chapters. Adds no `depends-on` blocking
+# edge; constrains no rank/liveness (scheme §4/§5).
 edges:
   reference:
     - feature/index
@@ -40,7 +39,7 @@ These are the same composition roots the [Feature surfaces](../feature/index.md)
 
 ## What this library holds (topological order — composes everything below it)
 
-A def appears after everything it uses. The realized order: the per-driver config records (each a thin `IoData` projection-view, rendered immediately before its driver and bundled with its utility API per the [type-placement rule](./index.md#type-placement--cluster-a-type-with-its-api-group)); then the 6 sim-driver composition defs; then the 6 output-product composition defs (each composing a c136-rendered reduce verb from [`data-algebra`](./data-algebra.md) over a driver's solution family); finally the lifecycle ROOT, which dispatches on `IoData.problem.type` over the 6 driver defs and folds the AMR estimate-mark-refine schedule via [`fold_solve`](./coordination.md).
+A def appears after everything it uses. The realized order: the per-driver config records (each a thin `IoData` projection-view, rendered immediately before its driver and bundled with its utility API per the [type-placement rule](./index.md#type-placement--cluster-a-type-with-its-api-group)); then the 6 sim-driver composition defs; then the 6 output-product composition defs (each composing a rendered reduce verb from [`data-algebra`](./data-algebra.md) over a driver's solution family); finally the lifecycle ROOT, which dispatches on `IoData.problem.type` over the 6 driver defs and folds the AMR estimate-mark-refine schedule via [`fold_solve`](./coordination.md).
 
 The composed constituents already rendered in the calculus libraries (composed BY NAME here): from [`data-algebra`](./data-algebra.md) — `fe_assemble`, `assemble_frequency_operator`, `gram_reduce`, `sparameter_reduce`, `eigenfreq_qfactor_reduce`, `domain_energy_reduce`, `waveguide_mode_reduce`; from [`coordination`](./coordination.md) — `ksp_solve`, `eigsolve`, `solve_family`, `frequency_sweep`, `fold_solve`; from [`types`](./types.md) — `IoData` (the parsed config every driver projects).
 
@@ -221,7 +220,7 @@ The per-mode propagation-mode reduction is presented as a feature in [`waveguide
 
 ## Output products (composing the reduce verbs)
 
-Each output product is a one-reduction tail on a producing driver column: it consumes the driver's solution family and composes a c136-rendered reduce verb from [`data-algebra`](./data-algebra.md) by name. The reduce verbs are NOT re-rendered here (they live in `data-algebra`); the products *compose* them.
+Each output product is a one-reduction tail on a producing driver column: it consumes the driver's solution family and composes a rendered reduce verb from [`data-algebra`](./data-algebra.md) by name. The reduce verbs are NOT re-rendered here (they live in `data-algebra`); the products *compose* them.
 
 ### `capacitance` — voltage (`w = 1`) Gram output product
 
@@ -258,7 +257,7 @@ inductance cfg =
 
 ### `sparameters` — port-projection output product
 
-Renders [`sparameters.L4`](../feature/sparameters.L4.md). The port-projection reduction [`sparameter_reduce`](./data-algebra.md) over the `driven` driver's per-ω solution family — projecting each per-ω field onto the configured port modes (NOT a Gram self-fold — the c074/c075 do-NOT-over-unify distinction).
+Renders [`sparameters.L4`](../feature/sparameters.L4.md). The port-projection reduction [`sparameter_reduce`](./data-algebra.md) over the `driven` driver's per-ω solution family — projecting each per-ω field onto the configured port modes (NOT a Gram self-fold — the do-NOT-over-unify distinction).
 
 ```text
 -- # Arguments
@@ -360,4 +359,4 @@ The per-driver dispatch is over the driver defs rendered above (references, the 
 
 ## Status
 
-`navigational-container` (rendered library chapter — the filled implementation-VIEW convention: no `status:` field, no `rank:`, the same convention the c136 finalize normalized `types`/`iteration`/`data-algebra`/`coordination` to). Holds the synthesized composition defs of the 6 sim drivers + 6 output products + the lifecycle ROOT (topologically last), each composing the already-rendered calculus-library defs ([`types`](./types.md) / [`iteration`](./iteration.md) / [`data-algebra`](./data-algebra.md) / [`coordination`](./coordination.md)) BY NAME and lifting the composition from the firm Feature L4 columns. The compositional claims live in the linked [`../feature/<column>.L4.md`](../feature/index.md) chapters; the per-op algebra lives in the [`../L4/<op>.md`](../L4/index.md) chapters; this chapter LINKS to both and renders only the synthesized code form (link-don't-restate, semantic-consolidation). `reference`-class navigational edges only — it adds no `depends-on` blocking edge and constrains no firm node's rank/liveness. With this body landed, the `# Synthesis` Part is complete: **6/6 library chapters bodied.**
+`navigational-container` (rendered library chapter — the filled implementation-VIEW convention: no `status:`/`rank:`). Holds the synthesized composition defs of the 6 sim drivers + 6 output products + the lifecycle ROOT (topologically last), each composing the already-rendered calculus-library defs ([`types`](./types.md) / [`iteration`](./iteration.md) / [`data-algebra`](./data-algebra.md) / [`coordination`](./coordination.md)) BY NAME and lifting the composition from the firm Feature L4 columns. The compositional claims live in the linked [`../feature/<column>.L4.md`](../feature/index.md) chapters; the per-op algebra lives in the [`../L4/<op>.md`](../L4/index.md) chapters; this chapter LINKS to both and renders only the synthesized code form (link-don't-restate, semantic-consolidation). `reference`-class navigational edges only — it adds no `depends-on` blocking edge and constrains no firm node's rank/liveness.

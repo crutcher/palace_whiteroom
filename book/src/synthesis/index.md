@@ -60,4 +60,4 @@ These conventions govern every library chapter in this Part:
 
 ## Status
 
-`navigational-container` (Part index). This page makes no resolution claim — it is the orientation + dep-map for the Synthesis implementation VIEW. All six per-library chapters are now rendered (the filled implementation-VIEW convention: `kind`-only frontmatter, no `status:`/`rank:`) — `types` + the three calculus libraries (`iteration` / `data-algebra` / `coordination`) + the topologically-last `drivers` library (cycle-137). The `# Synthesis` Part is complete: 6/6 library chapters bodied.
+`navigational-container` (Part index) — makes no resolution claim; the orientation + dep-map for the Synthesis implementation VIEW. All six per-library chapters (`types` + `iteration` / `data-algebra` / `coordination` + `drivers`) are rendered.

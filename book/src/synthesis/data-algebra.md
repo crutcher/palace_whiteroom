@@ -1,5 +1,5 @@
 ---
-kind: navigational-container (synthesis library — data-algebra; def bodies rendered Wave-2)
+kind: navigational-container (synthesis library — data-algebra)
 # Implementation VIEW, reference-class links only. No `rank:` — renders the
 # synthesized code form of firm L4 ops; the authoritative laws/semantics live in
 # the linked ../L4/<op>.md chapters. Adds no `depends-on` blocking edge.
@@ -410,7 +410,7 @@ Renders the synthesized form of the [`WaveguideModeTable`](../concepts/Waveguide
 
 ```text
 -- The per-mode waveguide propagation-mode table. Authoritative schema + field strata
--- + L0 backing: ../concepts/WaveguideModeTable.md (promoted c118 D6).
+-- + L0 backing: ../concepts/WaveguideModeTable.md.
 WaveguideModeTable = [ WaveguideModeRow ]
 WaveguideModeRow = {
   kn    : Complex,            -- propagation constant (complex scalar)
@@ -459,4 +459,6 @@ waveguide_mode_reduce res w =
 
 ## Status
 
-`stub` (intro shell) → the body is now rendered. The library chapter remains a `navigational-container` (implementation VIEW): it renders the synthesized code form of the firm L4 data-algebra operators, linking `reference`-class to the authoritative `../L4/<op>.md` chapters; it manufactures no `depends-on` edge and constrains no firm node's rank/liveness. The `sharding-decompose-reduce` roadmap_goal is a stub note (no firm def to synthesize). The shell author / integrator may flip the chapter frontmatter `status: stub` → a rendered marker if the project tracks per-library rendering completeness; left as `stub` here pending the shell's own convention.
+`stub` — a `navigational-container` (implementation VIEW): it renders the synthesized code form of the firm L4 data-algebra operators, linking `reference`-class to the authoritative `../L4/<op>.md` chapters; it manufactures no `depends-on` edge and constrains no firm node's rank/liveness. The `sharding-decompose-reduce` roadmap_goal is a stub note (no firm def to synthesize).
+
+(NOTE: this leading `stub` token is the SOLE on-disk rank carrier — the frontmatter has no `rank:`/`status:`. It is the only `stub`-ranked node in the book, and unlike its `navigational-container`-untyped sibling library chapters it reads as rank-1; flagged for the integrator/meta-phase to reconcile the inconsistency without moving the baseline in this de-bulk pass.)

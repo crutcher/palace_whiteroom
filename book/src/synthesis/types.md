@@ -100,4 +100,4 @@ The `Solve` monad (`Solve a = StateT SimState Identity a`) that threads `SimStat
 
 ## Status
 
-`navigational-container` (rendered library chapter). Holds the rendered synthesized form of the three cross-cutting shared types (`IoData`, `OpParams`, `SimState`); the authoritative field schemas live in the linked `concepts/` record-definition pages. Single-group-clustering types are deliberately absent (placed before their API group in Wave 2 per the type-placement rule).
+`navigational-container` (rendered library chapter). Holds the synthesized form of the three cross-cutting shared types (`IoData`, `OpParams`, `SimState`); the authoritative field schemas live in the linked `concepts/` record-definition pages. Single-group-clustering types are deliberately absent (placed before their API group per the type-placement rule).

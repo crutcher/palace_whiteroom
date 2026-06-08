@@ -17,7 +17,7 @@ L4 `krylov-step` (per [`L4/krylov-step`](../L4/krylov-step.md)) is the typed wra
 
 L3's job is the *iteration rotation*: global tensor-field operations expressed as `state' = f(state, params)`, with sequential obstructions named explicitly (per [`sequential-obstruction`](../concepts/sequential-obstruction.md)). L3 carries neither monadic structure (that is L4's coordination layer, deliberately above L3) nor typed state-stratification records (the three strata exist at L3 only as positional values whose ordering is a convention, not a typing). The lowering is therefore the *dissolution* of the L4 wrapper, recovering the value-threading form that L3 expects.
 
-The L3 form this lowering produces is **identity-in-form** on the kernel body's primitive sequence — the same five primitive groups (apply, optional auxiliary, iterate-update, scalar-update, output-readout) in the same dataflow-forced order — but **substantively rotated** at the type/wrapper level. The further L3>L2 lowering on the kernel body is identity-in-form per the firm theme [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md) (which ratifies the combinator-miner cycle-002 assertion; the original slice evidence at `cg.md:341-362` has been lifted into that firm entry per the cycle-009 corpus reduction, and `arnoldi_step.md:178-213` remains the valid live anchor), but this does **not** collapse the L3 row away: the L4 entry lowers via this theme to the firm L3 entry [`L3/krylov-step`](../L3/krylov-step.md) (the value-threaded RHS rendered as a layer-coherent operator), and the body's L3>L2 identity hop is completed by the separate theme [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md). The lowering chain is therefore L4>L3>L2>L1 with no skipped rows. (The earlier cycle-006 reading — that the body's identity-in-form lets this theme skip the L3 row and lower transitively to L2 — is SUPERSEDED by the user directive 2026-05-27 mid-cycle-009 codified as the CLAUDE.md §Methodology invariants bullet **Identity-lowerings still require both L levels**: each layer is coherent within itself, so an L3 reader must find `krylov-step` defined in L3 vocabulary at L3 even when the body rewrite is trivial.) See §"Audit of cycle-002 identity-in-form claim" below for the full audit.
+The L3 form this lowering produces is **identity-in-form** on the kernel body's primitive sequence — the same five primitive groups (apply, optional auxiliary, iterate-update, scalar-update, output-readout) in the same dataflow-forced order — but **substantively rotated** at the type/wrapper level. The further L3>L2 lowering on the kernel body is identity-in-form per the firm theme [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md) (`arnoldi_step.md:178-213` is the live anchor), but this does **not** collapse the L3 row away: the L4 entry lowers via this theme to the firm L3 entry [`L3/krylov-step`](../L3/krylov-step.md) (the value-threaded RHS rendered as a layer-coherent operator), and the body's L3>L2 identity hop is completed by the separate theme [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md). The lowering chain is therefore L4>L3>L2>L1 with no skipped rows — each layer is coherent within itself, so an L3 reader finds `krylov-step` defined in L3 vocabulary at L3 even when the body rewrite is trivial. See §"Audit of cycle-002 identity-in-form claim" below for the full audit.
 
 ## L4 form (LHS)
 
@@ -41,7 +41,7 @@ krylov-step op K = \s -> do
   pure { krylov: K', outputs }
 ```
 
-The body is consumed by an outer `iterate_while`-style combinator (currently unanchored in the L4 vocabulary — see [Speculative L4 operators](#speculative-l4-operators)) inside `solve-monad`'s `restart_cycle` / `inner_loop`.
+The body is consumed by an outer `iterate_while`-style combinator (see [Speculative L4 operators](#speculative-l4-operators)) inside `solve-monad`'s `restart_cycle` / `inner_loop`.
 
 **Form B — first-iteration-unrolled** (opt-in per `first-iteration-unrolling`):
 
@@ -94,8 +94,8 @@ The five primitive-group dataflow chain — `apply_linop`, optional auxiliary (`
 
 ### What this lowering does NOT cover
 
-- **L3>L2 lowering on the body** (the iteration rotation in the negative direction). The L3 body is in primitive-composition form already; the further L3>L2 lowering on the body is identity-in-form per the combinator-miner cycle-002 claim, audited and confirmed in this report. That lowering belongs in `book/src/L3-L2/` and is a separate theme (likely a one-line `krylov-step-body-identity` theme noting the L3>L2 body rewrite is the identity rotation).
-- **Outer-loop sequential obstruction**. The fact that the *outer* `iterate_while` loop carries a `sequential-obstruction` at L3 (the original CG evidence at `cg.md:341-349` has been lifted into the firm L3 entry [`L3/krylov-step`](../L3/krylov-step.md) §Algebraic-laws non-lift catalogue per the cycle-009 corpus reduction, and `arnoldi_step.md:194-213` remains the valid live anchor) is a property of the loop, not of the step kernel. The step-body L4>L3 lowering described here is independent of the outer-loop obstruction. The loop obstruction is documented in the firm L3 entry's non-lift catalogue and the [`sequential-obstruction`](../concepts/sequential-obstruction.md) concept page; this theme does not re-state it.
+- **L3>L2 lowering on the body** (the iteration rotation in the negative direction). The L3 body is in primitive-composition form already; the further L3>L2 lowering on the body is identity-in-form. That lowering belongs in `book/src/L3-L2/` and is the separate theme [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md).
+- **Outer-loop sequential obstruction**. The fact that the *outer* `iterate_while` loop carries a `sequential-obstruction` at L3 (homed in the firm L3 entry [`L3/krylov-step`](../L3/krylov-step.md) §Algebraic-laws non-lift catalogue; `arnoldi_step.md:194-213` is the live anchor) is a property of the loop, not of the step kernel. The step-body L4>L3 lowering described here is independent of the outer-loop obstruction. The loop obstruction is documented in the firm L3 entry's non-lift catalogue and the [`sequential-obstruction`](../concepts/sequential-obstruction.md) concept page; this theme does not re-state it.
 - **MGS-orthogonalisation sequential obstruction**. Per `arnoldi_step.md:194-213`, the `gs_orthog = MGS` variant of `op.orthog` carries a sequential obstruction at L3 (the per-i sequencing of `H[i,j] ← ⟨w, V[i]⟩` and `w ← w − H[i,j] · V[i]`). This is a property of the `orthog` primitive under the MGS variant, not of `krylov-step` itself. The `krylov-step` body sees `op.orthog` as an opaque call site; whether that call lifts depends on the variant axis, which is absorbed below the `krylov-step` surface. This theme does not duplicate the `orthog`-variant obstruction; it cites it.
 
 ## Applicability conditions
@@ -106,7 +106,7 @@ The rewrite is valid when all four of the following hold (which they do for the 
 
 2. **`OpParams` is closure-captured at the per-step call site, not threaded.** The L4 signature has `op` as the first positional argument of `krylov-step :: OpParams -> Krylov -> ...`, and the call site uses partial application (`krylov-step op` as a curried form). At L3 this becomes `op` as a closure-captured argument of the body. The rewrite assumes `op` is not re-bound between steps; if a future variant has per-step-varying `op` (which would defeat variant absorption), the rewrite needs revision.
 
-3. **The five primitive groups are L3-native or carry their own L3-edge classification.** Each of `apply_linop`, `axpy`, `axpby`, `axpbypcz`, `dot`, `nrm2`, `scal` is an L1 primitive whose L2>L3 lift is identity (the original CG evidence at `cg.md:351-362` has been lifted into the firm theme [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md) §Verified-against per the cycle-009 corpus reduction; `arnoldi_step.md:185-188` remains the valid live anchor). The optional auxiliary stage (`op.orthog` under MGS) carries its own L3 obstruction (per `arnoldi_step.md:194-213`), which is independent of the `krylov-step` body rewrite. This dispatch's lowering does not introduce new L3 obstructions; it inherits the existing classification of its constituent primitives.
+3. **The five primitive groups are L3-native or carry their own L3-edge classification.** Each of `apply_linop`, `axpy`, `axpby`, `axpbypcz`, `dot`, `nrm2`, `scal` is an L1 primitive whose L2>L3 lift is identity (firm in [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md); `arnoldi_step.md:185-188` is the live anchor). The optional auxiliary stage (`op.orthog` under MGS) carries its own L3 obstruction (per `arnoldi_step.md:194-213`), which is independent of the `krylov-step` body rewrite. This lowering does not introduce new L3 obstructions; it inherits the existing classification of its constituent primitives.
 
 4. **The `Krylov` ephemeral bundle has plain-value lifecycle (born at restart, discarded at restart-or-return) and is not aliased by any other state.** The L4 typing makes this structural (`Krylov` is not a field of `SimState`; lifetime is restart-scoped); at L3 it becomes a discipline. The rewrite assumes no caller threads `Krylov` across restart boundaries (which would mis-type its lifetime). Per `solve-monad.md:53`, this discipline is honoured by `restart_cycle` building a fresh `Krylov` per cycle.
 
@@ -123,19 +123,13 @@ If a future Krylov-shaped slice violates any of these (e.g., a method whose `OpP
 - The dominant content is structural: the L4 wrapper (record types, monad, readonly typing, Form-A/B distinction) dissolves into an L3 value-threading form, and the kernel body's primitive sequence is preserved by construction (not by an algebraic argument, but by the syntactic shape of the rewrite — every L4 primitive call becomes an L3 primitive call at the same position in the dataflow chain).
 - The secondary reduction-chain component is the `modify (\s -> s { it = s.it + 1 })` to `s' = s { it = s.it + 1 }` step. This is a one-step reduction of the `StateT` monad's `modify` operator — `modify f` in `StateT s m a` unfolds to `\s -> ((), f s)`, and the surrounding `do`-block desugars to explicit value-threading. The reduction is mechanical (the `StateT` monad's evaluation rules are standard); the L3 form is the desugared trace.
 
-The combinator-miner's cycle-002 assertion (the original CG evidence at `cg.md:351-362` has been lifted into the firm theme [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md) §Verified-against per the cycle-009 corpus reduction) is justified as **`empirical-match`** at the L2>L3 edge — the slice corpus's L2 prose uses primitive-composition form that is L3-native by inspection, and the assertion is the recognition that no rewrite is needed. The L4>L3 hop covered here is a different rotation (typed wrapper to value-threaded form); it is **not** identity-in-form on the wrapper, only on the body. The two rotations compose to give an L4>L2 chain that is non-identity at the wrapper level and identity-in-form on the body — which is the harvester's "Lowers to" claim.
+The body identity-in-form assertion (firm in [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md)) is justified as **`empirical-match`** at the L2>L3 edge — the L2 primitive-composition form is L3-native by inspection, and the assertion is the recognition that no rewrite is needed. The L4>L3 hop covered here is a different rotation (typed wrapper to value-threaded form); it is **not** identity-in-form on the wrapper, only on the body. The two rotations compose to give an L4>L2 chain that is non-identity at the wrapper level and identity-in-form on the body.
 
 ## Speculative L4 operators
 
-This theme surfaces one L4 vocabulary need that the harvester output flagged as unanchored (caveat 2 in the wave-1 report). The lowering's L4 form refers to an outer combinator `iterate_while` (and its `_with_prev` variant for Form B); the L3 form makes this concrete as a tail-recursive value-threading loop. **The L4 anchor for these combinators does not yet exist** — `solve-monad.md` references `inner_loop` informally without naming the combinator.
+The lowering's L4 form refers to an outer combinator [`iterate_while`](../L4/iterate-while.md) (and its [`_with_prev`](../L4/iterate-while-with-prev.md) variant for Form B); the L3 form makes this concrete as a tail-recursive value-threading loop. Both are firm L4 rows.
 
-- `iterate_while` — rough-in. Intended signature (best guess based on the L4 form):
-
-  ```text
-  iterate_while :: (carry -> Solve { carry: carry', readout: r, continue: Bool }) -> carry -> Solve [r]
-  ```
-
-  Or, decomposed:
+- `iterate_while` — signature:
 
   ```text
   iterate_while :: Step -> carry -> Solve Trajectory
@@ -145,15 +139,13 @@ This theme surfaces one L4 vocabulary need that the harvester output flagged as 
 
   The combinator folds a `Step` over an initial `carry` value, threading the carry through and accumulating readouts, until the step signals `continue = False`. The monadic effect (`Solve`) is the `SimState`-monad of `solve-monad`. The fold body is exactly the L4 `krylov-step` shape: input is `(SimState, Krylov)` (the carry pair, where `SimState` is the monad's state and `Krylov` is the explicit value), output is the next carry plus the demand-prunable `StepOutputs` record plus the continue-bit (derived from `outputs.breakdown_token` and `convergence-test` against the residual proxy).
 
-- `iterate_while_with_prev` — rough-in. Intended signature:
+- `iterate_while_with_prev` — signature:
 
   ```text
   iterate_while_with_prev :: (PrevCarry -> Step) -> PrevCarry -> Step -> carry -> Solve Trajectory
   ```
 
   Where the first argument is a `PrevCarry`-parameterised step (the `steady_step` of Form B), the second is the initial `PrevCarry` value, the third is the bootstrapping step (the `first_step` of Form B that produces the initial `PrevCarry`), and the fourth is the initial carry. Used exactly when the first-iteration-unrolling rotation is applied; degenerates to `iterate_while` when `PrevCarry = ()`.
-
-Both rough-ins live in [the L4 dep-map](../L4/index.md) annotated as `(rough-in, proposed-by: abstractor:2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering)`. Harvester promotes later — likely candidate for cycle-007's `harvester` dispatch on the L4 loop-combinator family. **Note**: these are the same combinators the harvester output flagged as unanchored (caveat 2); this theme's L4 form re-uses them as already-named placeholders, not as fresh proposals. The promotion to firm L4 vocabulary is needed to honour the L4-rows-depend-on-L4-rows convention (per cycle-005 open question `state-stratification-as-l4-concept-or-l4-row`).
 
 ### What the L3 form for `iterate_while` looks like
 
@@ -197,44 +189,41 @@ $$
 
 which is exactly the L3-side image of Law 1 of [`iterate-while`](../L4/iterate-while.md) — the L4 demand-pruning law transports through the L4>L3 wrapper dissolution because the dissolution is value-thread-isomorphic on the body (the §"Audit of cycle-002 identity-in-form claim" below establishes this). The applicability of the pruned form is selected by the new Condition 5 in §"Applicability conditions" below; for Palace's actual KSP consumer surface, Condition 5 holds and the pruned form is the rendered L3 shape.
 
-Both forms are tail-recursive value-threaded loops; the `Solve` monad has dissolved (the `sim` argument is positional, not monadic), and the `sequential-obstruction` of the outer loop survives at L3 (the original CG evidence at `cg.md:341-349` has been lifted into the firm L3 entry [`L3/krylov-step`](../L3/krylov-step.md) §Algebraic-laws non-lift catalogue per the cycle-009 corpus reduction; `arnoldi_step.md:194-213` remains the valid live anchor) — the L3 form names the loop tail-recursively but does not claim it lifts to a global tensor-field op. This is the expected outcome for Krylov methods at L3 per [`sequential-obstruction`](../concepts/sequential-obstruction.md). The unpruned form additionally allocates the trajectory list (an `O(N)` accumulator); the pruned form does not.
+Both forms are tail-recursive value-threaded loops; the `Solve` monad has dissolved (the `sim` argument is positional, not monadic), and the `sequential-obstruction` of the outer loop survives at L3 (homed in the firm L3 entry [`L3/krylov-step`](../L3/krylov-step.md) §Algebraic-laws non-lift catalogue; `arnoldi_step.md:194-213` is the live anchor) — the L3 form names the loop tail-recursively but does not claim it lifts to a global tensor-field op. This is the expected outcome for Krylov methods at L3 per [`sequential-obstruction`](../concepts/sequential-obstruction.md). The unpruned form additionally allocates the trajectory list (an `O(N)` accumulator); the pruned form does not.
 
 ## Audit of cycle-002 identity-in-form claim
 
-The open question `krylov-step-l3-identity-in-form-audit` (scaffolding/open-questions.md) records the combinator-miner cycle-002 assertion: "the L2→L3 rotation on the `krylov-step` body is identity-in-form, citing `cg.md:351-362` and `arnoldi_step.md:185-188`." (Note: the open-questions ledger records the citation as `cg.md:352-362`; the range that fully contains Claim 2 — including its `### Claim 2: step body lifts as identity` header at line 351 — is `cg.md:351-362`. This dispatch canonicalizes to the inclusive range.) The CG half of this evidence (`cg.md:351-362`) has since been lifted into the firm theme [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md) §Verified-against per the cycle-009 corpus reduction; the historical slice ranges are retained here as the audit's provenance record, and `arnoldi_step.md:185-188` remains the valid live anchor. This dispatch audits the assertion as the secondary half of its job.
+The combinator-miner assertion is: "the L2→L3 rotation on the `krylov-step` body is identity-in-form, citing `cg.md:351-362` and `arnoldi_step.md:185-188`." The CG half of this evidence is homed in the firm theme [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md) §Evidence; `arnoldi_step.md:185-188` is the live anchor.
 
-**Audit verdict**: The cycle-002 assertion is **correct as stated** (about L2>L3), and remains correct for the body. The L4>L3 hop this dispatch addresses is a different rotation; the two compose to give the full L4>L2 chain.
+**Audit verdict**: The assertion is **correct as stated** (about L2>L3), and remains correct for the body. The L4>L3 hop this theme addresses is a different rotation; the two compose to give the full L4>L2 chain.
 
 **Evidence reviewed**:
 
-1. `cg.md:341-362` (cited by combinator-miner; re-read for the cycle-006 audit; the range has since been lifted into the firm theme [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md) §Verified-against per the cycle-009 corpus reduction) — the L2→L3 rotation claims for CG. Claim 2 ("step body lifts as identity") states verbatim: *"The L2→L3 rotation on the step body is therefore the **identity in form**: no unfolding, no global lift, no schema change."* The justification is that L2's primitive vocabulary (`apply_linop`, `axpy`, `axpby`, `dot`, scalar arithmetic) is already L3-native — each is a whole-tensor operation with no element loop exposed at L2. **Audit finding**: the assertion is well-supported; the L2 primitives are L3-native by inspection of their signatures (e.g., `apply_linop : LinOp[(S: ...), $S] -> Tensor[$S] -> Tensor[$S]` is a global field operation, congruent over one shape group `S` of unknown rank per [`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2).
+1. The L2→L3 rotation claims for CG (homed in [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md)). Claim 2 ("step body lifts as identity") states verbatim: *"The L2→L3 rotation on the step body is therefore the **identity in form**: no unfolding, no global lift, no schema change."* The justification is that L2's primitive vocabulary (`apply_linop`, `axpy`, `axpby`, `dot`, scalar arithmetic) is already L3-native — each is a whole-tensor operation with no element loop exposed at L2. **Audit finding**: the assertion is well-supported; the L2 primitives are L3-native by inspection of their signatures (e.g., `apply_linop : LinOp[(S: ...), $S] -> Tensor[$S] -> Tensor[$S]` is a global field operation, congruent over one shape group `S` of unknown rank per [`l4_calculus`](../semantics/index.md) §1.2.1–§1.2.2).
 
-2. `arnoldi_step.md:178-213` (cited by combinator-miner; re-read for this audit) — the L2→L3 rotation for the Arnoldi step. The three uncontested primitives (`apply_BA`, `subdiag_norm`, `normalize`) are listed as L3-trivial (identity lifts). The fourth (`orthogonalize` under MGS) carries a sequential obstruction — but this is at the *primitive* level, inside `op.orthog`, not at the `krylov-step` body level. **Audit finding**: the obstruction is correctly localised to the orthog primitive; the `krylov-step` body around `op.orthog` is still identity-in-form (it calls `op.orthog` as an opaque operator).
+2. `arnoldi_step.md:178-213` — the L2→L3 rotation for the Arnoldi step. The three uncontested primitives (`apply_BA`, `subdiag_norm`, `normalize`) are listed as L3-trivial (identity lifts). The fourth (`orthogonalize` under MGS) carries a sequential obstruction — but this is at the *primitive* level, inside `op.orthog`, not at the `krylov-step` body level. **Audit finding**: the obstruction is correctly localised to the orthog primitive; the `krylov-step` body around `op.orthog` is still identity-in-form (it calls `op.orthog` as an opaque operator).
 
 3. The L4 form's body (from `L4/krylov-step` §Semantics, reproduced in §"L4 form (LHS)" above). Each line of the body is a binding of an L1 primitive (`apply_linop`, `axpy` / `axpby` / `axpbypcz`, `dot`, `nrm2`, `scal`) to a `let`-bound variable, plus the optional `op.orthog` / `op.scalars` call and the `derived_views` readout. **Audit finding**: every primitive call survives L4>L3 textually unchanged (modulo the wrapper dissolution discussed in §"L3 form" above). The body is identity-in-form between the L4 body and the L3 body for the same reason the L2 body is identity-in-form on the way to L3 — the primitives are L3-native.
 
-**Audit verdict — confirmed-with-refinement**: the cycle-002 framing was "L2>L3 step-body lift is identity-in-form". This dispatch sharpens to: "**L4>L3>L2 step-body chain is identity-in-form on the kernel body's primitive sequence**; the L4>L3 hop is non-identity *at the wrapper level* (records dissolve, monad dissolves, readonly typing demotes, Form A/B presentation collapses), but the body's dataflow chain survives both hops textually unchanged." This refinement is more precise but does not contradict the original claim. The original framing was correct for the question it asked (about the body); this dispatch answers the broader question (about the wrapper).
+**Audit verdict — confirmed-with-refinement**: the **L4>L3>L2 step-body chain is identity-in-form on the kernel body's primitive sequence**; the L4>L3 hop is non-identity *at the wrapper level* (records dissolve, monad dissolves, readonly typing demotes, Form A/B presentation collapses), but the body's dataflow chain survives both hops textually unchanged.
 
-**Consequence for L3 dep-map** (cycle-006 verdict, SUPERSEDED cycle-010): per the harvester's "Lowers to" section and per this audit, the cycle-006 verdict was that **no L3 `krylov-step` row was proposed** on identity-in-form grounds. This verdict is **SUPERSEDED** by the user directive 2026-05-27 mid-cycle-009 codified as the CLAUDE.md §Methodology invariants bullet **Identity-lowerings still require both L levels**: each layer is coherent within itself, and an L3 reader must find `krylov-step` defined in L3 vocabulary at L3, even when the lowering is trivial. The L4 entry lowers transitively to the L2 entry via this theme (L4>L3 wrapper dissolution) plus a one-line L3>L2 theme (identity-in-form on the body, ratified at [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md) cycle-009). **Cycle-010 backfill**: the L3 entry [`L3/krylov-step`](../L3/krylov-step.md) was authored cycle-010 wave-1 (`reports/2026-05-27T215300Z-harvester-l3-krylov-step/CYCLE.md`) per priority #20 (identity-lowering-both-levels-backfill); the L3 form is the wrapper-dissolution RHS rendered as a layer-coherent operator entry, not a duplicate of L2. The "operational difference" framing was a category error — the difference between "L3 `krylov-step`" and "L2 `krylov-step` with an outer `iterate_while` tail-recursion" is the **layer rendering**, not the operational content; both renderings are needed for their respective layers to be coherent.
+**Consequence for L3 dep-map**: the body identity-in-form does **not** eliminate the L3 row — per the invariant **Identity-lowerings still require both L levels**, each layer is coherent within itself, and an L3 reader must find `krylov-step` defined in L3 vocabulary at L3 even when the lowering is trivial. The L4 entry lowers transitively to the L2 entry via this theme (L4>L3 wrapper dissolution) plus the L3>L2 theme (identity-in-form on the body, [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md)); the firm L3 entry [`L3/krylov-step`](../L3/krylov-step.md) is the wrapper-dissolution RHS rendered as a layer-coherent operator entry, not a duplicate of L2. The difference between "L3 `krylov-step`" and "L2 `krylov-step` with an outer `iterate_while` tail-recursion" is the **layer rendering**, not the operational content; both renderings are needed for their respective layers to be coherent.
 
-**Open question disposition**: this dispatch *audits* the cycle-005 open question `krylov-step-l3-identity-in-form-audit` and proposes closing it as **confirmed-with-refinement** — the assertion holds and the framing is sharpened (the L4>L3>L2 step-body chain is identity-in-form on the kernel body's primitive sequence; the L4>L3 hop is non-identity only at the wrapper level). This identity-in-form finding governs the *body* rewrite; it does NOT eliminate the L3 row — per the cycle-009 invariant **Identity-lowerings still require both L levels**, the firm L3 entry [`L3/krylov-step`](../L3/krylov-step.md) is its layer-coherent rendering (authored cycle-010 wave-1, see §"Audit of cycle-002 identity-in-form claim" below). Integrator will mark accordingly; if integration uncovers a non-identity finding (e.g., a corpus check on a slice this dispatch did not re-verify reveals body-level rotation), the question stays open and the L3 row is re-rendered with the body rotation made explicit.
-
-## Verified-against
+## Evidence
 
 L4 source (the input form of this lowering):
 
-- `book/src/L4/krylov-step.md` (wave-1 harvester output, this cycle; the firm L4 entry this lowering applies to) — §Signature (Form A and Form B signatures), §Semantics (body shape, monadic effect placement), §"L4 vs L2 distinction" (the wrapper-vs-composition framing).
-- `reports/2026-05-27T080944Z-harvester-krylov-step-L4/CYCLE.md` — the harvester dispatch report carrying the same content plus open questions (caveat 2 on `iterate_while` anchoring, cited above).
+- `book/src/L4/krylov-step.md` — the firm L4 entry this lowering applies to: §Signature (Form A and Form B signatures), §Semantics (body shape, monadic effect placement), §"L4 vs L2 distinction" (the wrapper-vs-composition framing).
 
 L3 evidence (the target form of this lowering, including the identity-in-form audit):
 
-- `book/src/L3-L2/krylov-step-body-identity.md` §Verified-against (line 125; the terminal firm home of the cycle-002 Claim-2 verbatim quote, lifted there per the cycle-009 corpus reduction) — the combinator-miner cycle-002 evidence for L2>L3 body identity. Claim 2 ("step body lifts as identity") is the cited support, preserved there with the verbatim claim quote. Re-read for the cycle-006 audit; assertion confirmed.
+- `book/src/L3-L2/krylov-step-body-identity.md` §Evidence — the evidence for L2>L3 body identity. Claim 2 ("step body lifts as identity") is the cited support, preserved there with the verbatim claim quote.
 - Arnoldi step L2>L3 lift — three uncontested primitives plus the variant-dependent `op.orthog` obstruction (localised below the step body, not at the body level). Firm L0 home `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C inner Arnoldi loop; the MGS obstruction firm at [`concepts/sequential-obstruction`](../concepts/sequential-obstruction.md). Confirms the audit.
-- `book/src/L3/krylov-step.md` §Algebraic-laws non-lift catalogue (the cycle-002 Claim-1 negative result, lifted there + into [`concepts/sequential-obstruction`](../concepts/sequential-obstruction.md) per the cycle-009 corpus reduction) — the negative L3 result for the *outer* loop. Cited for completeness; the outer-loop obstruction is independent of the step-body rotation handled by this theme.
+- `book/src/L3/krylov-step.md` §Algebraic-laws non-lift catalogue — the negative L3 result for the *outer* loop. Cited for completeness; the outer-loop obstruction is independent of the step-body rotation handled by this theme.
 
 L2 sink (the eventual target after L3>L2):
 
-- `book/src/L2/krylov-step.md` (cycle-005 firm) — the L2 entry whose body shape matches the L3 form produced by this lowering. The L2 entry's §Semantics body and the L3 form's body are textually equivalent up to wrapper packaging.
+- `book/src/L2/krylov-step.md` — the L2 entry whose body shape matches the L3 form produced by this lowering. The L2 entry's §Semantics body and the L3 form's body are textually equivalent up to wrapper packaging.
 
 Concept-page references (for the dissolved L4 vocabulary):
 
@@ -244,50 +233,15 @@ Concept-page references (for the dissolved L4 vocabulary):
 - `book/src/concepts/sequential-obstruction.md` — the obstruction classification the L3 outer loop carries (referenced for completeness, not introduced).
 - `book/src/concepts/derived-view-hoisting.md` — the demand-pruning algebra preserved across the rotation; the §"Worked example: CG residual norm" (lines 14-19) is the canonical §3.8 instantiation for `residual_norm` extras, cited by Condition 5 and the §"What the L3 form for `iterate_while` looks like" §3.8 preamble.
 
-<!-- The narrative §"Verified-against" list above carries the cycle-006 evidence registry (prose-shaped: file + section descriptor); the trailing `verified_against:` YAML block below carries the cycle-007 wave-2 audit's structured evidence trail (per-citation verdict + audited_at + note), per the trailing-YAML precedent at `book/src/L1-L0/axpby-mutation-rotation.md:173-189`. Both lists are intentionally retained: the prose form is the human-readable evidence registry; the YAML form is the machine-checkable audit-trail. -->
+L0 consumer-surface evidence confirming Condition 5 across the KSP family (no per-iteration residual history is retained; the result is exactly four scalars):
 
-verified_against:
-  - citation: book/src/L4/iterate-while.md:28-43
-    verdict: supports
-    audited_at: 2026-05-27T170121Z
-    note: cycle-007 firm L4 signature explicitly carries trajectory:[{...e}]; cycle-006 L3 rendering correctly omits it per §3.8 collapse but elides the rule-citation. This dispatch adds the citation.
-  - citation: book/src/L4/iterate-while.md:123-133
-    verdict: supports
-    audited_at: 2026-05-27T170121Z
-    note: Law 1 (trajectory pruning) is the rule that justifies the cycle-006 L3 single-readout rendering for Palace; now cited explicitly in §"What the L3 form for iterate_while looks like" and Condition 5.
-  - citation: book/src/L4/iterate-while-with-prev.md:137-147
-    verdict: supports
-    audited_at: 2026-05-27T170121Z
-    note: Law 2 of the with-prev chapter lifts the pruning rule to both step bodies; same disposition for the Form B L3 rendering covered by this theme.
-  - citation: reference/palace/palace/linalg/iterative.cpp:420-485
-    verdict: supports
-    audited_at: 2026-05-27T170121Z
-    note: PCG outer loop retains no per-iteration residual history; final_res, final_it captured as scalars at lines 484-485. Confirms Condition 5 holds for CG.
-  - citation: reference/palace/palace/linalg/iterative.cpp:614-705
-    verdict: supports
-    audited_at: 2026-05-27T170121Z
-    note: GMRES inner Arnoldi loop same disposition as PCG; per-iteration beta either printed or overwritten; final_res, final_it captured at 703-704. Confirms Condition 5 holds for GMRES.
-  - citation: reference/palace/palace/linalg/iterative.cpp:734-870
-    verdict: supports
-    audited_at: 2026-05-27T170121Z
-    note: FGMRES structurally identical to GMRES (one more workspace Z[] for flexible-preconditioner Krylov basis); same per-iteration beta discipline. Confirms Condition 5 holds for FGMRES.
-  - citation: reference/palace/palace/linalg/iterative.hpp:52-55
-    verdict: supports
-    audited_at: 2026-05-27T170121Z
-    note: KSP result-extraction surface is exactly four mutable scalars (converged, initial_res, final_res, final_it); no list-shaped or trajectory-shaped field. Canonical structural evidence that Condition 5 holds in Palace.
-  - citation: reference/palace/palace/linalg/iterative.hpp:97-108
-    verdict: supports
-    audited_at: 2026-05-27T170121Z
-    note: Four public Get* accessors parallel to the four scalars (GetConverged, GetInitialRes, GetFinalRes, GetNumIterations); no GetResidualHistory() or analogue.
-  - citation: reference/palace/palace/linalg/ksp.cpp:296-310
-    verdict: supports
-    audited_at: 2026-05-27T170121Z
-    note: Sole caller of KSP result-extraction surface; consumes converged (branch), final_res/initial_res (warning ratio), final_it (counter sum); no per-iteration consumption anywhere in palace/. Operational evidence that Condition 5 holds.
-  - citation: book/src/concepts/derived-view-hoisting.md:14-19
-    verdict: supports
-    audited_at: 2026-05-27T170121Z
-    note: §"Worked example: CG residual norm" is the canonical instantiation of the §3.8 pruning for iterate_while's residual_norm extras; cross-referenced from §"What the L3 form for iterate_while looks like" §3.8 preamble and from Condition 5.
+- `reference/palace/palace/linalg/iterative.cpp:420-485` — PCG outer loop; `final_res`, `final_it` captured as scalars at `:484-485`.
+- `reference/palace/palace/linalg/iterative.cpp:614-705` — GMRES inner Arnoldi loop; per-iteration beta printed or overwritten; `final_res`, `final_it` at `:703-704`.
+- `reference/palace/palace/linalg/iterative.cpp:734-870` — FGMRES (one more workspace `Z[]`); same per-iteration beta discipline.
+- `reference/palace/palace/linalg/iterative.hpp:52-55` — KSP result-extraction surface: exactly four mutable scalars (`converged`, `initial_res`, `final_res`, `final_it`); no trajectory-shaped field.
+- `reference/palace/palace/linalg/iterative.hpp:97-108` — the four public `Get*` accessors (`GetConverged`, `GetInitialRes`, `GetFinalRes`, `GetNumIterations`); no `GetResidualHistory()` analogue.
+- `reference/palace/palace/linalg/ksp.cpp:296-310` — sole caller; consumes the four scalars only; no per-iteration consumption anywhere in `palace/`.
 
 ## Status
 
-`firm` — the theme's rewrite shape is fully anchored against the cycle-006 wave-1 firm L4 entry [`krylov-step`](../L4/krylov-step.md), the cycle-007 wave-1 firm L4 row [`iterate-while`](../L4/iterate-while.md) (with its Law 1 §3.8 demand-pruning rule), the cycle-007 wave-1 firm L4 row [`iterate-while-with-prev`](../L4/iterate-while-with-prev.md), and the cycle-007 wave-2 lowering-verifier audit (`reports/2026-05-27T170121Z-lowering-verifier-iterate-while-L3-trajectory-reconciliation/CYCLE.md`, verdict (c) — L3 single-readout is correct under §3.8 pruning for Palace's KSP consumer surface). The L3 form is rendered in two shapes (pruned + unpruned) governed by Condition 5; the §"What the L3 form for `iterate_while` looks like" subsection cites the §3.8 collapse rule explicitly; the trailing `verified_against:` block carries the cycle-007 wave-2 audit's 10-citation evidence base. The two speculative L4 operators (`iterate_while`, `iterate_while_with_prev`) are now firm; the audit of the cycle-002 identity-in-form claim is preserved. The cycle-006 / cycle-007 OQ `iterate-while-l3-rendering-trajectory-accumulation-gap` is closed by this dispatch.
+`firm` — the rewrite shape is anchored against the firm L4 entry [`krylov-step`](../L4/krylov-step.md), the firm L4 rows [`iterate-while`](../L4/iterate-while.md) (with its Law 1 §3.8 demand-pruning rule) and [`iterate-while-with-prev`](../L4/iterate-while-with-prev.md). The L3 form is rendered in two shapes (pruned + unpruned) governed by Condition 5; the §"What the L3 form for `iterate_while` looks like" subsection cites the §3.8 collapse rule explicitly. The two outer-loop combinators (`iterate_while`, `iterate_while_with_prev`) are firm; the audit of the identity-in-form claim is preserved.

@@ -2,25 +2,16 @@
 layer: L4-L3
 theme: mk-matrix-free-operator-dissolution
 kind: lowering-theme
-# Graded-stack scheme. A `firm` L4>L3 lowering theme: the matrix-free constructive-INTERIOR dissolution.
-# It dissolves the L4 `mk_matrix_free_operator` CONSTRUCTOR (the operator whose `apply` is the
-# backend-lowering contraction graph) into the L3 explicit element-iterated contraction sweep — the
-# genuine flat-`Tensor[(N: ...)]` → element-local rank-tensor (`[(E,L)]`/`[(E,P,C)]`/`[(E,P,G)]`)
-# vocabulary shift, composing the firm element-local substrate ops + the firm L2 chain combinator BY NAME.
-# This is the RE11 libceed-substrate-sub-cohort GROUNDER: a faithful `depends-on` consumer that names the
-# substrate ops (NOT the opaque libCEED leaf the sibling `fe-assemble-fold-dissolution` bottoms out at).
-# Well-foundedness: its `depends-on (composes)` constituents — the L2 combinator (firm c125 D2) + the four
-# L1 substrate ops (firm c124 D3 / c125 D1) — are all firm, so a lowering theme that names them as the RHS
-# constituents rests on firm vocabulary; the rotation shape is read directly off positive Palace source
-# (`BilinearForm::PartialAssemble` + `Operator::Mult`), syntactic-structural facts, firm-on-positive-structure.
-# Pulled-by: the L4 `mk_matrix_free_operator` cap (firm c127 D1, the LHS this theme lowers) reaches the
-# feature root via the `feature/matrix-free-operator.L4` backend-lowering column (firm c127 D1).
+# A firm L4>L3 lowering theme: the matrix-free constructive-INTERIOR dissolution.
+# Dissolves the L4 `mk_matrix_free_operator` CONSTRUCTOR (whose `apply` is the backend-lowering
+# contraction graph) into the L3 explicit element-iterated contraction sweep — the flat-`Tensor[(N: ...)]`
+# → element-local rank-tensor vocabulary shift, composing the firm substrate ops + the firm L2 chain
+# combinator BY NAME. The RE11 libceed-substrate-sub-cohort grounder.
 rank: firm
 edges:
   depends-on:
-    # The RHS constituents this theme composes BY NAME (all firm) — the substantive grounding of RE11.
-    # `composes` = the L3 contraction-chain RHS is built from these firm verbs; rank-constrained, GC-live.
-    - target: L2/matrix-free-operator-apply   # the named contraction-chain combinator the apply lowers to (firm c125 D2)
+    # The RHS constituents this theme composes BY NAME — the L3 contraction-chain RHS is built from these.
+    - target: L2/matrix-free-operator-apply   # the named contraction-chain combinator the apply lowers to
       kind: composes
     - target: L1/element_restrict             # G / Gᵀ — the [(N: ...)] ↔ [(E, L)] gather / scatter-add (the flat→element-local boundary)
       kind: composes
@@ -31,11 +22,11 @@ edges:
     - target: L1/geom_factor_build            # the build-stratum [(E, P, G)] geometry-factor carrier D contracts against
       kind: composes
   reference:
-    - target: L4/mk_matrix_free_operator      # the L4 constructor cap this theme is the L4>L3 dissolution of (the LHS; firm c127 D1)
+    - target: L4/mk_matrix_free_operator      # the L4 constructor cap this theme is the L4>L3 dissolution of (the LHS)
       kind: lowers
     - target: L4-L3/fe-assemble-fold-dissolution   # the OUTER-fold sibling whose opaque per-term leaf this theme is the constructive INTERIOR of (the scope boundary)
       kind: sibling
-    - target: concepts/element-local-tensor   # the rank-structured shape family the contraction sweep is typed over (firm c124 D5)
+    - target: concepts/element-local-tensor   # the rank-structured shape family the contraction sweep is typed over
     - target: semantics/index                 # §1.2.1 named shape groups + §1.2.3 the element-local family — USED+LINKED, not restated
     - target: L4-L3/index
 ---
@@ -62,7 +53,7 @@ graph hides.
 ## Context — distinct from, and the constructive INTERIOR of, `fe-assemble-fold-dissolution`
 
 This theme is the **constructive interior** of the opaque per-term leaf that the sibling
-[`fe-assemble-fold-dissolution`](./fe-assemble-fold-dissolution.md) (firm c068) bottoms out at. That theme
+[`fe-assemble-fold-dissolution`](./fe-assemble-fold-dissolution.md) bottoms out at. That theme
 lowers the OUTER assemble-FOLD — `fe_assemble space terms = Σ_t assemble_term space t` → the L3 imperative
 integrator-fold over the two integrator containers, accumulating per-term sub-operators by `AddSubOperator` —
 and treats each per-term `assemble_term` leaf as an `obstruction (opaque-library-ownership)` libCEED boundary,
@@ -76,7 +67,7 @@ GROUNDING condition (a faithful `depends-on` consumer naming the substrate ops, 
 
 The two themes are **complementary, non-overlapping** scope partitions of the FE-operator construction surface:
 
-- [`fe-assemble-fold-dissolution`](./fe-assemble-fold-dissolution.md) (c068) — the OUTER assemble-fold over an
+- [`fe-assemble-fold-dissolution`](./fe-assemble-fold-dissolution.md) — the OUTER assemble-fold over an
   OPAQUE per-term leaf (`K = Σ_t assemble_term space t`; the homomorphic map-then-reduce). Per-term leaf:
   opaque libCEED boundary, NOT lowered.
 - `mk-matrix-free-operator-dissolution` (this theme) — the per-term leaf's matrix-free `apply` INTERIOR
@@ -86,7 +77,7 @@ The two themes are **complementary, non-overlapping** scope partitions of the FE
 The rotation direction is **L4 → L3**, narrated forward per the high→low discipline (CLAUDE.md §Methodology
 invariants "Layers are defined high→low"). Notes about the reverse lift (how the L3 explicit element sweep
 lifts back into the once-built L4 contraction-graph constructor, what licenses recovering the build/run
-stratification) live in this report's working notes, not in this formal chapter.
+stratification) are not in this formal chapter.
 
 The shape-group notation (`(N: ...)` operator-domain congruence group §1.2.1; the element-local rank-tensor
 family `[(E, L)]` / `[(E, P, C)]` / `[(E, P, G)]` §1.2.3) is governed by
@@ -96,7 +87,7 @@ family `[(E, L)]` / `[(E, P, C)]` / `[(E, P, G)]` §1.2.3) is governed by
 
 ## L4 form (LHS)
 
-The L4 [`mk_matrix_free_operator`](../L4/mk_matrix_free_operator.md) constructor (the firm c127 D1 cap; the
+The L4 [`mk_matrix_free_operator`](../L4/mk_matrix_free_operator.md) constructor (the firm cap; the
 backend-lowering operator-constructor). Transcribed from the cap §"Speculative L4 form":
 
     -- the operator-CONSTRUCTOR: build (once) a matrix-free LinearOperator value over the FLAT
@@ -261,7 +252,7 @@ only cross-element write is the commutative/associative `Gᵀ` scatter-add).
 
 - **The OUTER assemble-fold over the term family.** The `K = Σ_t assemble_term space t` reduction over the
   weak-form term list is the sibling [`fe-assemble-fold-dissolution`](./fe-assemble-fold-dissolution.md)
-  (firm c068) — that theme lowers the per-term FOLD; this theme lowers a SINGLE term's matrix-free `apply`
+  — that theme lowers the per-term FOLD; this theme lowers a SINGLE term's matrix-free `apply`
   INTERIOR. (The `for_each (domain_integs ++ boundary_integs)` per-term loop nested inside the per-geometry-
   type loop at `bilinearform.cpp:71-77`/`:90-97` is the fold sibling's content; this theme's per-term sub-op
   is one iteration of it.)
@@ -279,7 +270,7 @@ only cross-element write is the commutative/associative `Gᵀ` scatter-add).
   interior rotation.
 - **The opaque libCEED kernel interior.** This theme renders the apply as the named composition of the firm
   substrate ops (`element_restrict` / `basis_apply` / `quad_point_contract`) — the **kernel-IMPL** vocabulary
-  ([`libceed-quadrature-kernel-impl`](../L1/libceed-quadrature-kernel-impl.md), firm c125 D1, the in-our-tensor-
+  ([`libceed-quadrature-kernel-impl`](../L1/libceed-quadrature-kernel-impl.md), the in-our-tensor-
   algebra realization). The opaque libCEED CALL itself (`integ->Assemble` → libCEED, the **kernel-API** surface)
   is the [`fe-assemble-libceed-boundary-obstruction`](../L1-L0/fe-assemble-libceed-boundary-obstruction.md)
   `obstruction (opaque-library-ownership)` boundary. This theme composes the kernel-IMPL substrate (the firm
@@ -288,8 +279,8 @@ only cross-element write is the commutative/associative `Gᵀ` scatter-add).
 ## L3-entry-vs-dissolution-home verdict
 
 **WARRANT-FIRST per the vocabulary-shift redirect. The verdict is DISSOLUTION-HOME (no interposed
-`L3/mk_matrix_free_operator` entry)** — matching the `solve_family` (c057) / `fe_assemble` (c068) NO-ENTRY
-shape. The decision criterion (per the `fold_solve` c059 L3-ENTRY precedent): **does the L3 image carry a
+`L3/mk_matrix_free_operator` entry)** — matching the `solve_family` / `fe_assemble` NO-ENTRY
+shape. The decision criterion (per the `fold_solve` L3-ENTRY precedent): **does the L3 image carry a
 `sequential-obstruction` or `partial-obstruction` that warrants a standing iteration-rotation chapter?**
 
 - The per-geometry-type element loop carries **NO `sequential-obstruction`** — the elements are independent;
@@ -358,7 +349,7 @@ five-stage rank-tensor contraction sweep over `[(E, L)]` / `[(E, P, C)]` / `[(E,
 ## Speculative L4 operators
 
 None. This theme lowers the already-authored L4 constructor
-([`mk_matrix_free_operator`](../L4/mk_matrix_free_operator.md), firm c127 D1 — same-cycle sibling) assembled
+([`mk_matrix_free_operator`](../L4/mk_matrix_free_operator.md)) assembled
 from the already-firm L2 chain combinator + the four firm L1 substrate ops. No new speculative operator is
 introduced; the RHS constituents are all firm on disk.
 
@@ -366,19 +357,18 @@ introduced; the RHS constituents are all firm on disk.
 
 L4 source (the LHS of this rewrite):
 
-- `book/src/L4/mk_matrix_free_operator.md` (firm c127 D1 LEAD — **same-cycle sibling**; the live link resolves
-  once D1's firm-flip is applied before the single finalize build) — the L4 backend-lowering operator-constructor:
+- `book/src/L4/mk_matrix_free_operator.md` — the L4 backend-lowering operator-constructor:
   §Intent (the constructor/apply split, the `partial matrix-free` branch), §"Speculative L4 form" (the
   `mk_matrix_free_operator :: FESpace -> WeakFormTerm -> GeomFactors -> Op[Tensor[(N: ...)] → Tensor[(N: ...)]]`
   signature + the `apply = matrix-free-operator-apply space term geom = Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G` lowering), the `lowers-to`
   edge to the L2 combinator this theme realizes as the L3 element sweep.
-- `book/src/L2/matrix-free-operator-apply.md` (firm c125 D2) — the named contraction-chain combinator the L4
+- `book/src/L2/matrix-free-operator-apply.md` — the named contraction-chain combinator the L4
   apply lowers to; the source of the five-stage pipe + the composition-level laws (linearity, the `Gᵀ … G`
   symmetry sandwich, element-additivity of the scatter-add) the L3 sweep preserves.
-- `book/src/L1/libceed-quadrature-kernel-impl.md` (firm c125 D1) — the kernel-IMPL home of the concrete chain
+- `book/src/L1/libceed-quadrature-kernel-impl.md` — the kernel-IMPL home of the concrete chain
   `A = Gᵀ B_𝒟ᵀ D B_𝒟 G` (the constructive substrate this theme composes by name; the kernel-IMPL, NOT the
   kernel-API boundary).
-- `book/src/L4-L3/fe-assemble-fold-dissolution.md` (firm c068) — the OUTER-fold SIBLING whose opaque per-term
+- `book/src/L4-L3/fe-assemble-fold-dissolution.md` — the OUTER-fold SIBLING whose opaque per-term
   leaf this theme is the constructive INTERIOR of; the scope boundary (`:125-126,:218` §"What this lowering does
   NOT cover" puts the matrix-free interior out of its scope — this theme authors it).
 
@@ -392,41 +382,33 @@ L3 source (the RHS of this rewrite):
 - `book/src/L0/fem-bilinearform-file.md` (firm L0 navigation) — independently names the `BilinearForm` /
   `ceed::Operator` matrix-free construction; corroborates the L3 RHS shape.
 
-L0 evidence (the matrix-free construction + apply witness; self-verified exact against on-disk source this
-dispatch via `tools/citecheck/citecheck.py --anchor` + direct on-disk `Read` of the close-brace END per the
-recurrence-6 / END-drift discipline):
+L0 evidence (the matrix-free construction + apply witness):
 
 - **The Palace-owned matrix-free constructor (the L3 RHS home)** (`palace/fem/bilinearform.cpp`):
-  - `:28-107` — `BilinearForm::PartialAssemble` — the whole matrix-free construction body (on-disk `Read`-confirmed
-    the close-brace END at `:107`: `return op;` at `:106`, `}` at `:107`; `citecheck --anchor 'PartialAssemble'`
-    [ok] anchor at `:28` within range).
+  - `:28-107` — `BilinearForm::PartialAssemble` — the whole matrix-free construction body (`return op;` at `:106`, `}` at `:107`).
   - `:37-46` — the composite `ceed::Operator` / `ceed::SymmetricOperator` construction (the mutable accumulator;
     the L4 constructor allocation).
   - `:54` — `for (const auto &[geom, data] : mesh.GetCeedGeomFactorData(ceed))` — the explicit
-    **per-geometry-type element loop** the once-atomic L4 constructor hides (`citecheck --anchor
-    'GetCeedGeomFactorData'` [ok] anchor at `:54`).
-  - `:65,:67` — `trial_restr`/`test_restr` `GetCeedElemRestriction` — the per-geometry-type `G` / `Gᵀ` index map
-    build (`citecheck --anchor 'GetCeedElemRestriction'` [ok] anchors at `:65,:67`).
+    **per-geometry-type element loop** the once-atomic L4 constructor hides.
+  - `:65,:67` — `trial_restr`/`test_restr` `GetCeedElemRestriction` — the per-geometry-type `G` / `Gᵀ` index map build.
   - `:68,:69` — `trial_basis`/`test_basis` `GetCeedBasis` — the per-geometry-type `B_𝒟` tabulated basis build.
   - `:75` — `integ->Assemble(ceed, trial_restr, test_restr, trial_basis, test_basis, data.geom_data,
     data.geom_data_restr, &sub_op)` — the per-term sub-operator build, consuming the `[(E, P, G)]`
     `data.geom_data` carrier (the kernel-API CALL; this theme composes the kernel-IMPL interior, not the CALL).
-  - `:77` — `op->AddSubOperator(sub_op)` — the per-term sub-operator accumulation into the composite
-    (`citecheck --anchor 'AddSubOperator'` [ok] anchor at `:77` within range 73-77).
+  - `:77` — `op->AddSubOperator(sub_op)` — the per-term sub-operator accumulation into the composite.
   - `:104` — `op->Finalize()` — the composite finalize.
   - `:118,:143` — `UseFullAssembly` predicate + the `if (UseFullAssembly(...))` partial-vs-full branch (this
     constructor IS the `partial` / un-materialized branch — the matrix-free-representation condition).
 - **The matrix-free apply (the contraction-sweep witness)** (`palace/fem/libceed/operator.cpp`):
   - `:182-189` — `Operator::Mult`: `y = 0.0; CeedAddMult(op, u, v, x, y); if (dof_multiplicity.Size() > 0)
     y *= dof_multiplicity;` — the un-materialized matvec (the five-stage element-local contraction sweep + the
-    shared-dof `dof_multiplicity` post-scale, read single-rank); `citecheck --anchor 'Operator::Mult'` [ok]
-    anchor at `:182` within range.
+    shared-dof `dof_multiplicity` post-scale, read single-rank).
   - `:483` — `CeedOperatorAssembleCOO` — the derived assembled-COO materialization (the `full` variant; out of
     this theme's scope, named for the boundary).
 
 Concept-page references:
 
-- [`concepts/element-local-tensor`](../concepts/element-local-tensor.md) (firm c124 D5) — the `[(E, L)]` /
+- [`concepts/element-local-tensor`](../concepts/element-local-tensor.md) — the `[(E, L)]` /
   `[(E, P, C)]` / `[(E, P, G)]` rank-tensor shape family the contraction sweep is typed over; the genuine
   vocabulary shift away from flat `Tensor[(N: ...)]`. The definition home — USED + LINKED, not restated.
 - [`semantics/index`](../semantics/index.md) §1.2.1 (named shape groups, the flat `(N: ...)` operator-domain
@@ -436,42 +418,21 @@ Concept-page references:
   the build (per-geometry context + geom-factor) vs run (per-`Mult` contraction) stratification the
   constructor/apply split realizes.
 
-## Status
+## Structural notes
 
-`firm` — on the **structural rotation**. The matrix-free constructor dissolution (the atomic build → the
-explicit per-geometry-type element loop; the flat-`Tensor[(N: ...)]` black-box apply → the five-stage
-element-local rank-tensor contraction sweep; the opaque `GeomFactors` → the per-geometry `data.geom_data`
-`[(E, P, G)]` carrier) is read **directly off positive Palace source** — every piece of the construction
-rotation is witnessed exactly by `BilinearForm::PartialAssemble` (`bilinearform.cpp:28-107`) and the apply by
-`ceed::Operator::Mult` (`operator.cpp:182-189`). The three coordinated rewrites are exhaustively cited against
-the firm cap's §"Speculative L4 form", the firm L2 combinator's five-stage pipe + composition-level laws, and
-the L0 construction/apply witnesses. Justification is `structural` + secondary `reduction-chain`. No
-speculative operator introduced. The RHS constituents — the L2 combinator + the four L1 substrate ops — are all
-firm on disk; the theme rests on firm vocabulary (well-foundedness: `rank(theme) ≤ min(deps) = firm` permits
-firm), and the rotation shape is a syntactic-structural fact on positive source (firm-on-positive-structure —
-no test gates the contraction-composition identity; the firm L1 kernel-impl additionally carries an
-empirical-match anchor `test-libceed.cpp:284,:339` confirming the contraction realizes the kernel faithfully to
-1e-12).
-
-**On the GENUINE vocabulary shift (load-bearing — not degenerate).** The theme is a genuine translation, NOT
+**The vocabulary shift is genuine — not degenerate.** The theme is a genuine translation, NOT
 an identity-in-named-terms rename (the §1d smell). The L4 vocabulary carries **NO** element-local rank axes
 (`E`/`L`/`P`/`C`/`G`) — the L4 operator is a black box over the flat operator-domain shape `Tensor[(N: ...)]`;
 those axes appear ONLY when the flat black-box apply is dissolved into the element-iterated contraction sweep,
 with `element_restrict`'s `G` / `Gᵀ` as the boundary between the flat and element-local shape vocabularies
 (`semantics/index` §1.2.3). The flat→element-local shape reorganization + the atomic-build→explicit-element-loop
-iteration shift are the substance of the rotation.
+iteration shift are the substance of the rotation. The rotation shape is a syntactic-structural fact on positive
+source; the firm L1 kernel-impl additionally carries an empirical-match anchor `test-libceed.cpp:284,:339`
+confirming the contraction realizes the kernel faithfully to 1e-12.
 
-**On the scope boundary vs `fe-assemble-fold-dissolution` (load-bearing).** This theme covers the matrix-free
-constructive INTERIOR of the per-term leaf that the firm c068 [`fe-assemble-fold-dissolution`](./fe-assemble-fold-dissolution.md)
+**Scope boundary vs `fe-assemble-fold-dissolution`.** This theme covers the matrix-free
+constructive INTERIOR of the per-term leaf that [`fe-assemble-fold-dissolution`](./fe-assemble-fold-dissolution.md)
 treats as an `obstruction (opaque-library-ownership)` opaque boundary (and explicitly puts OUT of its scope,
 `:125-126,:218`). The two are complementary, non-overlapping: `fe-assemble-fold-dissolution` lowers the OUTER
 term-FOLD over the opaque leaf; this theme lowers a SINGLE term's matrix-free apply interior, composing the
-firm kernel-IMPL substrate ops by name. The critic disambiguator if overlap is flagged: the scope statements +
-the FOLD-vs-INTERIOR partition.
-
-**On the RE11 grounding (load-bearing).** This theme is the prospective RE11 libceed-substrate sub-cohort
-GROUNDER. Its `depends-on (composes)` edges to the L2 combinator + the four L1 substrate ops are the faithful
-`depends-on` consumer (from a node reachable from a feature root via the L4 cap's backend-lowering column, firm
-c127 D1) that the substrate ops needed to ground (the RE11 promotion condition was exactly: a faithful
-`depends-on` consumer naming the substrate ops, not the opaque libCEED leaf). Re-check on the landed tree at
-finalize (per the plan's RE11 grounding re-check duty).
+firm kernel-IMPL substrate ops by name.

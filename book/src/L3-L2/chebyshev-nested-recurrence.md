@@ -23,11 +23,11 @@ member of the substantive L3>L2 cohort — the sibling of the unconditional sing
 
 The `chebyshev` lowering chain spans the layer-edges of the artifact:
 
-- **L1 firm** ([`L1/chebyshev-smoother`](../L1/chebyshev-smoother.md), cycle-012) — the closed-form
+- **L1 firm** ([`L1/chebyshev-smoother`](../L1/chebyshev-smoother.md)) — the closed-form
   polynomial action `y + p_order(D⁻¹ A)·(x − A·y)` as one smoother step; the recurrence body and the
   sweep loop are both below L1 resolution (the polynomial is one closed-form action; `apply_linop` and
   the opaque setup `spectrum_estimate` are the only L1 dependencies).
-- **L2 firm** ([`L2/chebyshev-iteration`](../L2/chebyshev-iteration.md), cycle-012) — the
+- **L2 firm** ([`L2/chebyshev-iteration`](../L2/chebyshev-iteration.md)) — the
   **fusion-rotation** form `(op: ChebOp[(S: ...)], x, y, initial_guess) -> Tensor[$S]`: the closed-form
   polynomial unfolded into an explicit `order`-step three-term recurrence built from named L1 leaf
   primitives (`apply_linop`, `axpby`, `scal`, `elementwise_product`), with the HPC element-fused
@@ -40,20 +40,20 @@ The `chebyshev` lowering chain spans the layer-edges of the artifact:
   un-fusion of the L2 base composition into the L1 closed-form action; the `ApplyOrder0`/`ApplyOrderK`
   fusion transparency and the L1↔L2 polynomial-action equivalence (modulo floating-point
   reassociation).
-- **L3 firm** ([`L3/chebyshev`](../L3/chebyshev.md), cycle-013) — the **iteration-rotation** view:
+- **L3 firm** ([`L3/chebyshev`](../L3/chebyshev.md)) — the **iteration-rotation** view:
   the value-threaded `(op, x, y, initial_guess) -> y'` with the two nested loops rendered
   **explicitly** as `iterate_while_pure_L3` tail recursions over **step-count predicates** (outer
   `itloop` over `s.it <= op.pc_it`; inner `kloop` over `c.k <= op.order - 1`), each carrying a
-  first-class `sequential-obstruction`. The **first** `partial-obstruction` L3 operator (c013), and
+  first-class `sequential-obstruction`. The **first** `partial-obstruction` L3 operator, and
   the only one whose obstruction is a **nested double loop**. The LHS of this theme.
 - **L3>L2 firm — this theme.** Narrates how the L3 nested-tail-recursion iteration-rotation form
   lowers into the L2 `sweep`-iterated-by-role composition. **Substantive (non-identity)** on the loop
   surface (the iteration view is erased and the two named obstructions shadow to the L2 non-laws);
   identity-in-form on the per-inner-step body.
 
-This theme is the **third substantive L3>L2 theme**, after the sibling
-[`ksp-solve-outer-driver`](./ksp-solve-outer-driver.md) (cycle-021) and
-[`orthogonalize-variant-split`](./orthogonalize-variant-split.md) (cycle-044). All three share the
+This theme is a **substantive L3>L2 theme**, alongside the siblings
+[`ksp-solve-outer-driver`](./ksp-solve-outer-driver.md) and
+[`orthogonalize-variant-split`](./orthogonalize-variant-split.md). All three share the
 structural shape "substantive iteration-rotation erasure" — the L3 explicit iteration form (tail
 recursion + named `sequential-obstruction`) dissolves into the L2 surface where the iteration view is
 erased and the obstruction survives only as L2-vocabulary non-laws. The **distinguishing features** of
@@ -184,8 +184,7 @@ The `op.scalars(k, st)` call is identical across the hop (the scalar generator i
 `op`, not part of the tensor-field state; the 4th/1st-kind variant is absorbed identically at both
 layers). This body identity-in-form is the part the L3 entry's §"Downward to L2" already annotates
 in-line, and it is **retained** in-line — the body annotation is not the subject of this theme. (It is
-the chebyshev analogue of `krylov-step-body-identity`; per the cycle-012 non-adjacent-identity
-convention the body identity needs no theme. What needed a theme is Part B.)
+the chebyshev analogue of `krylov-step-body-identity`; the body identity needs no theme. What needed a theme is Part B.)
 
 ### Part B — the nested loop surface is a substantive erasure (the load-bearing part)
 
@@ -293,13 +292,13 @@ non-laws in-line, not narrated here.
 vocabulary is introduced. The L3 form referenced in the LHS is the firm
 [`L3/chebyshev`](../L3/chebyshev.md) entry; the L2 form referenced in the RHS is the firm
 [`L2/chebyshev-iteration`](../L2/chebyshev-iteration.md) entry. The `iterate_while_pure_L3` /
-`iterate_while_pure` combinators are firm (`book/src/L4/iterate-while.md`, firmed cycle-007); they are
+`iterate_while_pure` combinators are firm (`book/src/L4/iterate-while.md`); they are
 referenced, not introduced.
 
 ## Erasure-scope contrast
 
-The three substantive L3>L2 themes divide along the **erasure-scope** axis (the c044 §Working-Notes
-taxonomy candidate, now populated to three members):
+The three substantive L3>L2 themes divide along the **erasure-scope** axis (the §Working-Notes
+taxonomy, populated to three members):
 
 | Theme | Operator | Erasure scope | Loop structure | Obstruction root |
 |---|---|---|---|---|
@@ -336,47 +335,44 @@ carries both in this single theme because the L2 `chebyshev-iteration` entry is 
 
 `body-identity + nested-loop-erasure = the full chebyshev L3>L2 story.` This theme makes the
 loop-erasure (Part B) the explicit subject; the body identity (Part A) is recorded as the
-non-substantive counterpart, retained in-line per the cycle-012 non-adjacent-identity convention.
+non-substantive counterpart, retained in-line per the non-adjacent-identity convention.
 
-## Verified-against
+## Evidence
 
 L3 evidence (the LHS):
 
-- `book/src/L3/chebyshev.md` (firm `partial-obstruction`, cycle-013) — the L3 nested-tail-recursion form
+- `book/src/L3/chebyshev.md` (firm `partial-obstruction`) — the L3 nested-tail-recursion form
   this theme references as LHS. §"Value-threaded form (L3 rendering)" (the inner `kloop` + outer `itloop`
   `iterate_while_pure_L3` tail recursions), §"Iteration-rotation marker" (the two first-class
   `sequential-obstruction`s — inner `k`-recurrence + outer `pc_it`-sweep), §"Downward to L2" (records the
   body identity-in-form + the no-L3-L2-theme assertion that this theme supersedes for the substantive
   loop surface).
-- `book/src/L4/chebyshev.md` (firm cycle-015) — the L4 `Solve`-monad wrapper whose two nested
+- `book/src/L4/chebyshev.md` (firm) — the L4 `Solve`-monad wrapper whose two nested
   `iterate_while_pure` folds the L3 form renders as the `iterate_while_pure_L3` tail recursions this theme
   dissolves.
 
 L2 evidence (the RHS):
 
-- `book/src/L2/chebyshev-iteration.md` (firm, cycle-012) — the L2 fusion-rotation composition this theme
+- `book/src/L2/chebyshev-iteration.md` (firm) — the L2 fusion-rotation composition this theme
   references as RHS. §Semantics (the `sweep` body composition with the inner `for k` loop as a
   composition driver + the outer `pc_it`-sweep named by role; iteration view erased), §"Algebraic laws"
   non-laws "Step-reordering / associativity of the `k`-recurrence" + "`pc_it`-sweep commutativity with the
   residual recompute" + "Polynomial-expansion equivalence" (the L2-vocabulary shadows of the two erased
   obstructions and their numerical-stability root).
-- `book/src/L1/chebyshev-smoother.md` (firm, cycle-012) — the L1 closed-form action; the body is
+- `book/src/L1/chebyshev-smoother.md` (firm) — the L1 closed-form action; the body is
   value-thread-isomorphic to it transitively (in-line, no `L3-L1/` directory).
 
 Sibling-theme evidence (the substantive L3>L2 cohort):
 
-- `book/src/L3-L2/ksp-solve-outer-driver.md` (firm cycle-021) — the first substantive L3>L2 theme; the
+- `book/src/L3-L2/ksp-solve-outer-driver.md` (firm) — a substantive L3>L2 theme; the
   **unconditional single-loop** sibling. §"Rewrite shape" (the iteration-view-erasure + obstruction-shadow
   pattern this theme mirrors for the nested-double-loop case), §"Kernel-identity / driver-non-identity
   contrast" (the body/loop division template).
-- `book/src/L3-L2/orthogonalize-variant-split.md` (firm cycle-044) — the second substantive L3>L2 theme;
+- `book/src/L3-L2/orthogonalize-variant-split.md` (firm) — a substantive L3>L2 theme;
   the **variant-conditional single-loop** sibling. §"Variant-split / unconditional-erasure contrast" (the
-  erasure-scope axis this theme populates with a third member). Line 381 flags `chebyshev` "(in-line at
-  `chebyshev-iteration` already; its obstruction is unconditional)" — superseded for the substantive loop
-  surface by this theme.
+  erasure-scope axis this theme populates with a third member).
 
-L0 evidence (self-verified against `reference/palace/` source via `palace-codemap` `read_range` this
-dispatch):
+L0 evidence:
 
 - `reference/palace/palace/linalg/chebyshev.cpp:191-220` — `ChebyshevSmoother<OperType>::Mult2` (4th-kind)
   — the canonical nested-double-loop body the L3 form renders as nested tail recursions. The outer
@@ -399,9 +395,9 @@ Strawman / combinator evidence (the reduction-chain backing):
 - `book/src/semantics/index.md` §3.7 — the `iterate_while` conventions source; each L3 tail recursion
   is the unfolded reduction sequence of the bounded `iterate_while_pure` combinator, the L2 driver/role
   reference is the folded form.
-- `book/src/L4/iterate-while.md` (firm cycle-007) — the firm `iterate_while`/`iterate_while_pure`
+- `book/src/L4/iterate-while.md` (firm) — the firm `iterate_while`/`iterate_while_pure`
   combinators both forms reference (L3 explicit tail recursions / L2 loop-as-driver).
-- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` (firm cycle-008) — publishes the L3
+- `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` (firm) — publishes the L3
   tail-recursion rendering of a bounded loop; the conventions source the L3 form's explicit recursion
   follows.
 
@@ -414,38 +410,14 @@ Cross-cutting concept references (consumed unchanged across the rotation):
   variant absorbed into `op.scalars`, loop-invariant — the basis of applicability condition 4).
 - `book/src/concepts/chebyshev-iteration.md` — narrative.
 
-Open-questions ledger:
-
-- `scaffolding/open-questions.md` slug `l3-l2-chebyshev-substantive-theme-vs-in-line-decision`
-  (this dispatch's question) — the open question this theme closes. Status updates to `closed` on
-  integration with answer-link `book/src/L3-L2/chebyshev-nested-recurrence.md` (this file).
-
 ## Status
 
-`firm` — the theme's content is firm: both endpoints are firm ([`L3/chebyshev`](../L3/chebyshev.md)
-cycle-013 `partial-obstruction`; [`L2/chebyshev-iteration`](../L2/chebyshev-iteration.md) cycle-012); the
-substantive non-identity content (Part B: the nested-loop iteration-view erasure + the two obstructions'
-shadow-to-non-laws) is structurally grounded and citation-backed at both layers and the L0 source; the
-body identity-in-form (Part A) is information-preserving and retained in-line; the rewrite-shape tables
-are total on the body + loop structure with the three non-identity lines (the two fold lines + the
-obstruction line) explicitly delimited; no speculative L3 vocabulary is introduced; the four
-applicability conditions are stated and confirmed for both variant bodies. This theme is the **third
-substantive L3>L2 theme** and the **unconditional-nested-double-loop** member of the erasure-scope axis,
-joining `ksp-solve-outer-driver` (unconditional-single-loop) and `orthogonalize-variant-split`
-(variant-conditional-single-loop).
-
-Authored cycle-045 wave-1 (cross-layer-cross-cutter, audit-first dispatch — landed because the
-substantive loop-erasure exceeds the cycle-012 in-line non-adjacent-identity convention, which covers
-only IDENTITY edges; the `ksp-solve-outer-driver` + `orthogonalize-variant-split` precedents establish
-that a `partial-obstruction`'s substantive loop-erasure gets a dedicated theme while the body identity
-stays in-line), enacting **Identity-lowerings still require both L levels** (both layers carry a
-chebyshev entry; this theme is the connecting substantive rotation) and **Layers are defined high→low**
-(LHS L3, RHS L2, forward narration).
+`firm` — the substantive non-identity content (Part B: the nested-loop iteration-view erasure + the two obstructions' shadow-to-non-laws) is structurally grounded and citation-backed at both layers and the L0 source; the body identity-in-form (Part A) is information-preserving and retained in-line; both endpoints are firm. This theme is the **unconditional-nested-double-loop** member of the erasure-scope axis, joining `ksp-solve-outer-driver` (unconditional-single-loop) and `orthogonalize-variant-split` (variant-conditional-single-loop). It enacts **Identity-lowerings still require both L levels** and **Layers are defined high→low** (LHS L3, RHS L2, forward narration).
 
 ## L3>L2 vs body-identity distinction
 
 The body identity-in-form (Part A) is the chebyshev analogue of `krylov-step-body-identity`; per the
-cycle-012 non-adjacent-identity convention it needs no theme and stays in-line in the L3 §"Downward to
+non-adjacent-identity convention it needs no theme and stays in-line in the L3 §"Downward to
 L2". The substantive content of this theme is the loop surface (Part B): the two nested
 `iterate_while_pure_L3` tail recursions dissolve to the L2 loop-as-driver + role reference, erasing the
 iteration view and the two named `sequential-obstruction`s. Together: **body identity-in-form +

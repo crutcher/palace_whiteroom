@@ -196,34 +196,31 @@ frontmatter (54 files) as typed edges (see (a)).
 | **(b)** prose `## Dependencies` + `L_n/index.md` dep-map tables | the bulk (NOT parseable) | NOT auto-migrated. The **authoritative** edge set moves to per-chapter `edges:` frontmatter; the prose dep-map table becomes a *derived human-readable view* (it may lag, like the index status cells). P1 reads each chapter's prose Dependencies cell, classifies each listed slug `depends-on` vs `reference` deliberately (the typing pass IS the audit), and writes the `edges:` block. The index table is regenerated/back-checked against the frontmatter, not parsed as the source. |
 | **(c)** feature `composes:` / `l0_ground_truth:` frontmatter | 24 files (the 12 columns × levels with frontmatter) | `composes:` entries become `edges:` — a `composes:` target that is a *vocabulary op* → `depends-on`; a `composes:` target that is a *sibling feature column* → `reference` (the OWN-COMPOSITION rule, §3). `l0_ground_truth:` entries become `edges: depends-on:` with `kind: cites-evidence` (the L0 source the column rests on). The free-text maturity qualifiers in the `composes:` strings (e.g. "(firm — …)") are dropped from the edge (the dep's rank is read from the dep's own frontmatter, never restated on the edge — the index-cell-drift lesson). |
 
-### The design fork (P1-cost; flagged for the batch-30 meta-phase / human)
+### Why per-chapter `edges:` frontmatter everywhere
 
-The recommendation above is **option (a): per-chapter `edges:` frontmatter everywhere.** The
-planner flagged a real three-way fork that materially sets P1's cost:
+The going-forward home is **option (a): per-chapter `edges:` frontmatter everywhere** — every
+file that is a real DAG node gets a hand-classified `edges:` block. It is chosen over two
+alternatives that materially set the typing cost:
 
-- **(a) per-chapter `edges:` frontmatter everywhere** — *heavy but clean.* Every one of the
-  ~357 files (or at least the ~250+ that are real DAG nodes) gets a hand-classified `edges:`
-  block during P1. Highest up-front cost; deterministic, complete, and the only option that
-  covers themes + concepts (which appear in NO index table).
-- **(b) parse the index dep-map tables** — *lighter but lossy.* Cheaper if only the per-layer
-  index tables are typed, but the tables are inconsistent free text, and **themes, concepts,
-  and feature columns are not rows in any layer dep-map table** — so this option structurally
-  misses a large fraction of the DAG and cannot type the lowering edges at all.
+- **(a) per-chapter `edges:` frontmatter everywhere** — *heavy but clean.* Every real DAG node
+  (~250+ of the ~357 files) gets a hand-classified `edges:` block. Highest up-front cost;
+  deterministic, complete, and the only option that covers themes + concepts (which appear in
+  NO index table).
+- **(b) parse the index dep-map tables** — *lighter but lossy.* The tables are inconsistent
+  free text, and **themes, concepts, and feature columns are not rows in any layer dep-map
+  table** — so this option structurally misses a large fraction of the DAG and cannot type the
+  lowering edges at all.
 - **(c) hybrid** — frontmatter for leaf entries + table-parse for the index aggregates. Splits
-  the difference but creates two edge-of-truth surfaces that drift (the exact failure mode the
+  the difference but creates two edge-of-truth surfaces that drift (the failure mode the
   index-status-cell drift already demonstrates).
 
-**My recommendation is (a)**, accepting the heavy P1 cost, because it is the only option that
-(i) is deterministically parseable, (ii) covers themes/concepts/feature-columns that no table
-holds, and (iii) avoids a second drifting source-of-truth. **This materially raises P1's
-cost** (a hand-classification pass over ~250 nodes, not a parse of ~15 index tables) — that is
-a batch-30 meta-phase / human decision point, recorded in this report's Open questions. If the
-human prefers a cheaper bounded rollout, **(a)-incremental** is the natural compromise: type
-the high-fan-out frontier + the feature roots + their transitive `depends-on` closure first
-(the nodes the reachability GC and the bilinear-form rank-validation actually need), and let
-the long tail of leaf entries acquire `edges:` lazily as they are next touched — the linters
-already treat un-typed frontmatter as a WARNING, not a hard error, so an incrementally-typed
-artifact is runnable throughout.
+Option (a) is the only one that (i) is deterministically parseable, (ii) covers
+themes/concepts/feature-columns that no table holds, and (iii) avoids a second drifting
+source-of-truth. The **(a)-incremental** rollout types the high-fan-out frontier + the feature
+roots + their transitive `depends-on` closure first (the nodes the reachability GC and the
+rank-validation actually need), letting the long tail of leaf entries acquire `edges:` lazily
+as they are next touched — the linters treat un-typed frontmatter as a WARNING, not a hard
+error, so an incrementally-typed artifact is runnable throughout.
 
 ## 5. Node-status for the un-fronted files (253 of 357)
 

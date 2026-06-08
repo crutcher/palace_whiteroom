@@ -93,7 +93,7 @@ round-trip (the assembled operator's galerkin true-dof action realized on the fl
 RHS-side L1→L0 half is folded into the firm
 [`fe-operator-assemble-mutation-rotation`](../L1-L0/fe-operator-assemble-mutation-rotation.md) theme
 (§"The `eliminate_rhs` leg (folded here)") — there is no separate `eliminate-rhs-mutation-rotation`
-theme (disposition FOLD, cycle-103 D6); see `L1/eliminate_rhs.md` §"Downward to L0".
+theme (disposition FOLD); see `L1/eliminate_rhs.md` §"Downward to L0".
 
 ## What does NOT change in the rotation
 
@@ -127,7 +127,7 @@ by `b − K·x_bc` and the essential block by the pin). The **diagonal-policy se
 ## L3-entry-vs-dissolution-home verdict
 
 **WARRANT-FIRST: DISSOLUTION-HOME (no interposed `L3/eliminate_bc` entry).** The decision criterion (per
-the `fold_solve` c059 L3-ENTRY vs `solve_family` c057 / `fe_assemble` c068 NO-ENTRY precedents): does the
+the `fold_solve` L3-ENTRY vs `solve_family` / `fe_assemble` NO-ENTRY precedents): does the
 L3 image carry a `sequential-obstruction` or `partial-obstruction` warranting a standing iteration-
 rotation chapter? **No** — the BC verb-pair lowers to two one-shot imperative stagings (a deferred-
 config-then-apply operator mutation + an in-place pooled-scratch RHS mutation), neither an iteration.
@@ -138,12 +138,12 @@ redirect anti-mirror smell. This theme is the authoritative L3-form home.
 ## Evidence
 
 - `palace/linalg/rap.cpp:36-47` — `SetEssentialTrueDofs` (the operator-side deferred-config record;
-  `:45-46` writes, `:39-43` guards). Codemap-verified this dispatch.
+  `:45-46` writes, `:39-43` guards).
 - `palace/linalg/rap.cpp:139-148` — the `EliminateBC` in-place apply (`:143` call, `:141` square guard,
-  `:145-148` rectangular reject). Codemap-verified this dispatch.
+  `:145-148` rectangular reject).
 - `palace/linalg/rap.cpp:56-83` — `EliminateRHS` (the RHS-side in-place pooled-scratch loop: gather
   `:64`, prolong `:65`, apply `:69`, restrict `:72`, in-place `b.Add(-1.0,·)` `:73`, in-place pin
-  `:74-81`). Codemap-verified this dispatch.
+  `:74-81`).
 - `book/src/L4/eliminate_bc.md` — the LHS L4 verb-pair (the eight laws this theme's RHS realizes; the
   in-line §"Lowers to" rotation direction).
 - `book/src/L1/eliminate_essential_bc.md` / `book/src/L1/eliminate_rhs.md` — the firm L1 sources; their
@@ -151,5 +151,3 @@ redirect anti-mirror smell. This theme is the authoritative L3-form home.
   with.
 - `book/src/L1-L0/fe-operator-assemble-mutation-rotation.md` — the operator-side L1>L0 theme (the
   build-up-then-assemble protocol + the separable BC-elimination post-compositions).
-- **Provenance**: cycle-101 D1, the coupled L4>L3 theme for the `eliminate_bc` cap landed this same
-  cycle; closes OQ `bc-elimination-cohort-l4-disposition` (route (a)) jointly with the cap.
