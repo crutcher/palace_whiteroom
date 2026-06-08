@@ -7,7 +7,7 @@ batch: batch-46
 batch_position: BATCH-CLOSING 3/3
 zero_dispatch: true
 status: complete
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b106d37
 ---
 
 # Cycle 144 — integrator-finalize batch report-of-record
