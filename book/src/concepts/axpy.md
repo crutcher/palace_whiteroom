@@ -2,7 +2,7 @@
 edges:
   reference:
     - L1/axpy                      # authoritative operator entry (definition)
-    - L2/krylov-step               # use-site cross-link (Krylov update axpy chains)
+    - L2/krylov_step               # use-site cross-link (Krylov update axpy chains)
 ---
 
 # axpy
@@ -42,8 +42,8 @@ axpy(α, x, y)        // y ← α x + y; y mutated
 
 ## Slices that use this primitive
 
-- [`krylov-step` (CG instance)](../L2/krylov-step.md) — `x ← x + α p` (`x.Add(α, p)`), `r ← r − α A p`
+- [`krylov_step` (CG instance)](../L2/krylov_step.md) — `x ← x + α p` (`x.Add(α, p)`), `r ← r − α A p`
   (`r.Add(-α, Ap)`).
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — basis-correction sum `x ← x + Σ y_k
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — basis-correction sum `x ← x + Σ y_k
   v_k` unfolds at L2 to a sequence of `axpy` calls (or one `gemv`-shaped
   primitive; canonical pinning deferred to L2).

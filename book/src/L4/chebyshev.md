@@ -2,10 +2,10 @@
 
 Typed-wrapper fixed-degree polynomial-smoother operator at L4 — the Chebyshev
 smoother as a constructed `ChebOp` whose `apply` is a `Solve`-monad action over
-a capability-typed sim-state. The thin state-bearing wrapper around the pure
+a capability-typed SimState. The thin state-bearing wrapper around the pure
 fixed-degree polynomial action; the two sequential obstructions (the outer
 `pc_it` Richardson sweep, the inner `k`-recurrence) surface as nested
-[`iterate_while_pure`](./iterate-while.md) folds with **step-count predicates** —
+[`iterate_while_pure`](./iterate_while.md) folds with **step-count predicates** —
 they do not collapse. Companion to L3
 [`chebyshev`](../L3/chebyshev.md) (the value-threaded form of the same body)
 and L2 [`chebyshev-iteration`](../L2/chebyshev-iteration.md) (the primitive
@@ -21,8 +21,8 @@ at setup (the `ChebOp` closure absorbing the variant) and then invoked as a pure
 `apply` action inside an outer solve monad (the multigrid V-cycle or
 distributive-relaxation iteration).
 
-`chebyshev` at L4 is **not** an instance of [`krylov-step`](./krylov-step.md),
-even though both consume the [`iterate-while`](./iterate-while.md) family. The
+`chebyshev` at L4 is **not** an instance of [`krylov_step`](./krylov_step.md),
+even though both consume the [`iterate_while`](./iterate_while.md) family. The
 Krylov step kernel is folded by a **convergence-predicate-driven** `iterate_while`
 over a trajectory of demand-prunable per-step extras; the Chebyshev smoother is
 folded by a **step-count-predicate** `iterate_while_pure` (the loops are bounded
@@ -32,7 +32,7 @@ residual-norm trajectory — the trajectory is uniformly empty). It is therefore
 the canonical L4 example of a **fixed-degree** operator whose sequential
 obstructions are `iterate_while_pure` folds with step-count predicates — the
 predicate shape, not the combinator, is what distinguishes the smoother from
-the convergence-gated Krylov step (per [`iterate-while`](./iterate-while.md)
+the convergence-gated Krylov step (per [`iterate_while`](./iterate_while.md)
 §Variant axes).
 
 The relationship to the lower layers:
@@ -43,7 +43,7 @@ The relationship to the lower layers:
   the `Read`/`ReadWrite` capability typing on `ChebSim` demotes to a documented
   mutation discipline; the two `iterate_while_pure` folds dissolve to the L3
   `iterate_while_pure_L3` tail recursions over the step-count predicate
-  (`iterate-while.md:193-195`), matching the L3 `itloop`/`kloop` shape. The
+  (`iterate_while.md:193-195`), matching the L3 `itloop`/`kloop` shape. The
   kernel body's primitive sequence is value-thread-isomorphic to L3
   [`chebyshev`](../L3/chebyshev.md). This is the same
   wrapper-dissolution shape that
@@ -100,7 +100,7 @@ type, not an axis):
     `ρ`-threaded). The kernel does not branch on variant — the variant axis is
     absorbed into the closure type per [`variant-absorption`](../concepts/variant-absorption.md)
     level (c).
-- `ChebSim E` — the capability-typed sim-state record threaded by the `Solve`
+- `ChebSim E` — the capability-typed SimState record threaded by the `Solve`
   monad: `x: Read[Tensor[E, $V]]` (the rhs; read-only) and `y: ReadWrite[Tensor[E,
   V]]` (the accumulator; the only field written), both congruent to the field
   shape group `V`. The `Read`/`ReadWrite` split
@@ -108,8 +108,8 @@ type, not an axis):
   [`solve-monad`](../concepts/solve-monad.md)): `apply` may read `x` but not
   write it, and read/write `y`.
 - `Solve (ChebSim E)` — the state monad over `ChebSim E`. `apply` returns
-  `Solve (ChebSim E) ()` — its only product is the sim-state transition (the
-  accumulated `y`); there is no result-value record (contrast `krylov-step`'s
+  `Solve (ChebSim E) ()` — its only product is the SimState transition (the
+  accumulated `y`); there is no result-value record (contrast `krylov_step`'s
   `Solve { sim, krylov, outputs }`, because the smoother is inner-product-free
   and convergence-test-free, producing no per-step readout).
 - `Variant` — `Kind4 | Kind1`, consumed only by `setup` to select the scalar
@@ -140,11 +140,11 @@ The shape contract makes three things structural that are conventional at L3:
 `chebyshev` at L4 is the constructed-operator smoother whose `apply` action
 applies `op.pc_it` Richardson sweeps of a degree-`op.order` matrix polynomial of
 `D⁻¹ A`. The two sequential obstructions surface as two nested
-[`iterate_while_pure`](./iterate-while.md) folds with **step-count predicates**
+[`iterate_while_pure`](./iterate_while.md) folds with **step-count predicates**
 (the bounded loop counters folded into the carry, per strawman §6.5 step 5):
 the outer `pc_it` sweep and the inner `k`-degree recurrence. Each step is a pure
 tensor-field expression on the field algebra; the `Solve` monad threads the
-sim-state accumulator `y` (the orthogonal effect; the trajectory is uniformly
+SimState accumulator `y` (the orthogonal effect; the trajectory is uniformly
 empty) and the inner fold's value-carry threads the ephemeral `(r, d)` plus the
 scalar-state `st` plus the counter `k`.
 
@@ -193,14 +193,14 @@ apply op initial_guess = do
 ```
 
 Both `iterate_while_pure` folds are the **no-extras / empty-trajectory** case
-(`iterate-while.md:98`): the value-carry threads the loop and the `y`
+(`iterate_while.md:98`): the value-carry threads the loop and the `y`
 accumulator is the orthogonal `Solve (ChebSim E)` effect — the same shape as the
 strawman `run_lbm` bounded loop (`book/src/semantics/index.md:382-385`). The
 step-count predicates (`s.it <= op.pc_it`, `c.k <= op.order - 1`) fold the loop
-bounds into the carry exactly as the `iterate-while.md:57,102` predicate
+bounds into the carry exactly as the `iterate_while.md:57,102` predicate
 discipline requires; both folds are total by construction (the counter strictly
 increments, so the predicate becomes false in `bound` steps — the
-bounded-`max_it`-folded-into-carry totality discharge of `iterate-while.md:165`).
+bounded-`max_it`-folded-into-carry totality discharge of `iterate_while.md:165`).
 The field expressions `(x .-. ay)`, `(sd .* d .+. sr .* t)`, etc. are pure
 values — the `r`, `d`, `t`, `ay`, `ad` bindings are immutable `let`-bindings to
 field-algebra results, not in-place buffers. The L2/runtime is free to realise
@@ -211,7 +211,7 @@ What the L4 typing adds is **placement discipline**: every field-algebra call
 sits in a pure `let`-binding; the only monadic effects are the `writeY`
 (degenerate-case `y := 0`) and the `modifyY` accumulator updates; `x` is read
 once via `readX` and never written. The `Solve` monad's effect domain is exactly
-`ChebSim`. The bounded iteration is the [`iterate-while`](./iterate-while.md)
+`ChebSim`. The bounded iteration is the [`iterate_while`](./iterate_while.md)
 family's `iterate_while_pure` with a step-count predicate (the loop counter
 folded into the carry), per strawman §6.5 step 5
 ([`../semantics/index.md`](../semantics/index.md):418) — the calculus's
@@ -220,7 +220,7 @@ canonical fixed-count bounded-loop form, not a second iteration vocabulary.
 ### Setup as a separate monadic action
 
 Setup is itself a `Solve` action (it issues a spectrum-estimate sub-solve), but
-its product is an **immutable operator closure**, not new sim-state. The closure
+its product is an **immutable operator closure**, not new SimState. The closure
 embeds the variant choice (per
 [`constructed-operators`](../concepts/constructed-operators.md)):
 
@@ -255,7 +255,7 @@ persisted spectral bounds. The variant axis is fully absorbed into the closure �
   previous sweep's accumulated `y`). The carry holds only the bounded sweep
   counter `it`; the cross-step linkage is the `y` accumulator, threaded by the
   `Solve` monad orthogonally to the value-carry (the Solve-threaded-body
-  discipline of `iterate-while.md:59`).
+  discipline of `iterate_while.md:59`).
 - The inner `iterate_while_pure { r, d, st, k: 1 } (\c -> c.k <= op.order - 1) …`
   fold is the L4 surface of the three-term-recurrence sequentiality in `k`. The
   value-carry threads `(r, d, scalar_state)` plus the counter `k`; each step
@@ -270,8 +270,8 @@ persisted spectral bounds. The variant axis is fully absorbed into the closure �
 Both obstructions are made explicit as bounded `iterate_while_pure` folds with
 step-count predicates; the bound is folded into the carry counter, and the
 predicate — not the combinator — encodes the fixed-count (vs. convergence-gated)
-nature (the distinction `krylov-step` resolves the other way, with a convergence
-predicate; see [`iterate-while`](./iterate-while.md) §Variant axes). Nothing
+nature (the distinction `krylov_step` resolves the other way, with a convergence
+predicate; see [`iterate_while`](./iterate_while.md) §Variant axes). Nothing
 pretends to be parallel. They are inherited from the L3
 [`chebyshev`](../L3/chebyshev.md) partial-obstruction verdict.
 
@@ -341,7 +341,7 @@ Laws that explicitly **do not** hold:
   (inherited from the L3 partial-obstruction verdict). Neither fold is a `reduce`
   or a parallel map; the step-count predicate does not change this (it bounds the
   iteration, it does not parallelise it — the carry-threaded recurrence forces
-  sequentiality, per `iterate-while.md:155` step-composition non-law).
+  sequentiality, per `iterate_while.md:155` step-composition non-law).
 - **Polynomial-expansion equivalence.** Replacing the recurrence with an explicit
   monomial sum is numerically unstable for the operative `order` range; same
   polynomial mathematically, **not** the same algorithm. Load-bearing
@@ -354,7 +354,7 @@ Laws that explicitly **do not** hold:
 - **Linearity in `y` across the full `pc_it`-sweep action.** Affine, not linear,
   in `y` with a non-zero initial guess (the `M·x` offset). Only the
   `initial_guess = false` single-sweep form (law 1) is linear in `x`.
-- **Demand-pruning of a trajectory.** Unlike `krylov-step` (whose `iterate_while`
+- **Demand-pruning of a trajectory.** Unlike `krylov_step` (whose `iterate_while`
   trajectory of per-step extras is demand-pruned per §3.8), `chebyshev` produces
   **no** per-step readout to prune — it is inner-product-free and
   convergence-test-free, so there is no `StepOutputs` trajectory and no
@@ -372,7 +372,7 @@ L4 concept references:
   scalar-recurrence stratum `S` threaded through the inner `iterate_while_pure`
   carry) is the worked example this entry instantiates.
 - [`solve-monad`](../concepts/solve-monad.md) — the `Solve (ChebSim E)` monad
-  threading sim-state (the `y` accumulator) orthogonally to the two
+  threading SimState (the `y` accumulator) orthogonally to the two
   `iterate_while_pure` value-carries; the capability-typed `Read`/`ReadWrite`
   accessors.
 - [`constructed-operators`](../concepts/constructed-operators.md) — the `ChebOp`
@@ -393,14 +393,14 @@ L4 concept references:
 
 L4 row dependencies (the iteration vocabulary this entry consumes):
 
-- [`iterate-while`](./iterate-while.md) at L4 — the canonical iteration
+- [`iterate_while`](./iterate_while.md) at L4 — the canonical iteration
   primitive; both bounded loops are its `iterate_while_pure` sugar with a
   **step-count predicate** (`s.it <= op.pc_it`, `c.k <= op.order - 1`), the loop
   counter folded into the carry. The fixed-count (vs. convergence-gated)
   distinction lives in the predicate, not the combinator (route (i);
   strawman §6.5 step 5). The inner `st`/`rho_prev`
   recurrence-carry may alternatively use
-  [`iterate-while-with-prev`](./iterate-while-with-prev.md) (see §Variant axes);
+  [`iterate_while_with_prev`](./iterate_while_with_prev.md) (see §Variant axes);
   this entry adopts the plain `iterate_while_pure` carry-`st` form (4th-kind's
   `st = ()` degenerate case unifies both kinds without a bootstrap step).
 
@@ -433,9 +433,9 @@ identity-in-form, iteration view erased):
   collapses to a positional operator-parameters value; the `Read`/`ReadWrite`
   capability typing demotes to a documented mutation discipline; the two
   `iterate_while_pure` folds become the L3 `iterate_while_pure_L3` tail
-  recursions over their step-count predicates (`iterate-while.md:193-195`),
+  recursions over their step-count predicates (`iterate_while.md:193-195`),
   matching the L3 `itloop`/`kloop`. The kernel body's primitive sequence is
-  value-thread-isomorphic. Same shape as the krylov-step typed-wrapper
+  value-thread-isomorphic. Same shape as the krylov_step typed-wrapper
   dissolution (`book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md`); no
   dedicated chebyshev L4>L3 theme authored by this dispatch (Open Question).
 - **L3 > L2** (identity-in-form on the body): the explicit iteration view erases;
@@ -465,7 +465,7 @@ There is one **presentation** axis at the inner `k`-recurrence fold, decided
 here (not a residual variant axis): the scalar-recurrence state `st`
 (`rho_prev` for 1st-kind) may either ride in the `iterate_while_pure` carry
 (`{ r, d, st, k }`, this entry's form) **or** be threaded as the closure `prev`
-parameter of [`iterate-while-with-prev`](./iterate-while-with-prev.md)
+parameter of [`iterate_while_with_prev`](./iterate_while_with_prev.md)
 (schema-narrowed carry `{ r, d, k }`, mirroring the CG `beta_prev` treatment).
 Both are firm-vocabulary-valid. **This entry adopts the plain `iterate_while_pure`
 carry-`st` form**: the 4th-kind's `st = ()` makes it the degenerate no-prev case,
@@ -486,9 +486,9 @@ via distinct closure types; `initial_guess` is the degenerate-case-absorption
 algebraic law is the L1/L2 body law sharpened by the typing, with the body-level
 non-laws (obstruction non-collapse, polynomial-expansion non-equivalence)
 inherited. The two sequential obstructions are nested
-[`iterate_while_pure`](./iterate-while.md) folds with **step-count predicates**
+[`iterate_while_pure`](./iterate_while.md) folds with **step-count predicates**
 (`s.it <= op.pc_it`, `c.k <= op.order - 1`), the loop counter folded into the carry
-(reusing the canonical firm `iterate-while` family; strawman §6.5 step 5,
+(reusing the canonical firm `iterate_while` family; strawman §6.5 step 5,
 `book/src/semantics/index.md:418`, `run_lbm` precedent `:382-385`). Methodology-level
 — Palace's C++ realises the behaviour, not the typed wrapper; the L0 evidence is
 transitive through the L1/L2 entries. Caveat (never the status driver): no dedicated
@@ -525,17 +525,17 @@ L1/L2 entries.
 - `book/src/L3/chebyshev.md` — the value-threaded L3 form this L4
   entry lifts from; the partial-obstruction verdict (body lifts, loops do not)
   this entry's two `iterate_while_pure` folds inherit.
-- `book/src/L4/krylov-step.md` (firm) — the typed-wrapper precedent
+- `book/src/L4/krylov_step.md` (firm) — the typed-wrapper precedent
   (state-stratification records, `Solve` monad, `readonly` `OpParams`,
   effect-localisation discipline) this entry follows, and the contrast operator:
-  `krylov-step` folds via a **convergence**-predicate `iterate_while` with a
+  `krylov_step` folds via a **convergence**-predicate `iterate_while` with a
   demand-pruned trajectory; `chebyshev` folds via a **step-count**-predicate
   `iterate_while_pure` with a uniformly-empty trajectory. Both consume the
-  [`iterate-while`](./iterate-while.md) family; the predicate shape is the
+  [`iterate_while`](./iterate_while.md) family; the predicate shape is the
   distinction.
-- `book/src/L4/iterate-while.md` (firm) — the canonical iteration
+- `book/src/L4/iterate_while.md` (firm) — the canonical iteration
   primitive this entry's two bounded loops consume via `iterate_while_pure` with
-  a step-count predicate; `iterate-while.md:7` names Chebyshev as a consumer,
+  a step-count predicate; `iterate_while.md:7` names Chebyshev as a consumer,
   `:57,102,165` give the counter-folded-into-carry predicate discipline +
   bounded totality discharge, `:193-195` the `iterate_while_pure_L3` lowering
   image.

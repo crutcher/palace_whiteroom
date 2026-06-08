@@ -1,10 +1,10 @@
 ---
 layer: L3
-operator: divfree-projector
+operator: divfree_projector
 firmness: firm
 edges:
   depends-on:
-    - target: L2/divfree-projector
+    - target: L2/divfree_projector
       kind: lowers-to
     - target: L1/set_subvector_zero
       kind: uses                        # step-2 essential-BC zeroing `Z_{bdr_eff}(rhs)` IS the set_subvector_zero primitive (divfree.cpp:171-174; §Semantics step 2). The firm L1 operator is the authoritative home; this depends-on gives the firm-but-absorbed set_subvector_zero cluster root-reachability via this projector.
@@ -19,13 +19,13 @@ variant_axes:
     - operator-representation (the constructed M / WeakDiv / Grad operators, bdr_eff dof-subset, and the inner ksp solver are all built once at setup and collapsed into the opaque DivFreeProjector closure)
 ---
 
-# divfree-projector
+# divfree_projector
 
 Divergence-free projector as a whole-tensor field operation at L3: the
 constructed-operator gate `y' = divfree_project(P, y)` that maps an H(curl)
 (Nedelec) field to its **divergence-free component** by removing the irrotational
 (discrete-gradient) part. The iteration-rotation rendering of the same
-Helmholtz-style subspace projection that L1 [`divfree-projector`](../L1/divfree-projector.md)
+Helmholtz-style subspace projection that L1 [`divfree_projector`](../L1/divfree_projector.md)
 provides; identity-in-form lowering to L1 on the constructed-operator-gate apply.
 Unlike the thinnest gate [`jacobi-smoother`](./jacobi-smoother.md), this gate's
 per-call body **invokes an inner solve** — it carries a `sequential-obstruction`
@@ -38,13 +38,13 @@ L3 is the iteration-rotation layer: global tensor-field operations expressed as
 whole-tensor primitives with no element loop exposed at the layer's vocabulary,
 with sequential obstructions named explicitly per
 [`sequential-obstruction`](../concepts/sequential-obstruction.md).
-`divfree-projector` at L3 is the value-threaded form of the divergence-free
+`divfree_projector` at L3 is the value-threaded form of the divergence-free
 projection — the same constructed-operator gate that L1 names (replacing the L0
 `DivFreeSolver<VecType>::Mult(VecType &y)` in-place mutation idiom,
 `palace/linalg/divfree.cpp:155-187`), read at L3 as a whole-tensor field operation
 over an opaque constructed projector value.
 
-`divfree-projector` is a **constructed-operator gate** at L3, in the same family as
+`divfree_projector` is a **constructed-operator gate** at L3, in the same family as
 the firm [`ksp_solve`](./ksp_solve.md), [`eigsolve`](./eigsolve.md), and
 [`jacobi-smoother`](./jacobi-smoother.md): its primary argument `P` is a structured
 opaque value built once at solver setup (`palace/linalg/divfree.cpp:43-152`),
@@ -53,7 +53,7 @@ carrying the ε-weighted H1 mass operator `M`, the weak-divergence operator
 `bdr_eff`, and — load-bearing at L3 — the **construction-bound inner solver**
 `P.ksp : Solver[P.M]`. Where `jacobi-smoother` is the *thinnest* gate (its apply is
 one elementwise product, carrying no obstruction of any kind) and `apply_linop` is
-a leaf operator-apply, `divfree-projector` sits with `ksp_solve` and `eigsolve` as
+a leaf operator-apply, `divfree_projector` sits with `ksp_solve` and `eigsolve` as
 an **obstruction-carrying** gate — but with a sharp distinction in *how* it carries
 the obstruction (see §"Iteration-rotation marker"): it carries one **by reference**,
 through its inner `ksp_solve`, rather than authoring an outer loop of its own.
@@ -81,7 +81,7 @@ loop.
 
 The relationship to the adjacent layers:
 
-- **Upward** to L4: there is **no standalone L4 entry** for `divfree-projector`.
+- **Upward** to L4: there is **no standalone L4 entry** for `divfree_projector`.
   Like the firm `apply_linop` / `ksp_solve` / `jacobi-smoother` constructed-operator
   gates, the projector apply carries no monadic effect of its own, no
   state-stratification typing, and no outer-driver structure authored at the
@@ -93,9 +93,9 @@ The relationship to the adjacent layers:
   "Layers are defined high→low", the absence of an L4 entry is a deliberate scoping
   verdict, not a gap.
 
-- **Downward** to L2/L1: `divfree-projector` lowers to the adjacent L2 floor
-  [`divfree-projector`](../L2/divfree-projector.md) and onward to L1
-  [`divfree-projector`](../L1/divfree-projector.md). The L3>L2 rotation is a **degenerate
+- **Downward** to L2/L1: `divfree_projector` lowers to the adjacent L2 floor
+  [`divfree_projector`](../L2/divfree_projector.md) and onward to L1
+  [`divfree_projector`](../L1/divfree_projector.md). The L3>L2 rotation is a **degenerate
   identity-in-named-terms lowering**, annotated in-line here (no dedicated L3>L2 theme file):
   L1, L2, and L3 all see
   `divfree_project :: (P: DivFreeProjector[N_nd, N_h1], y: Field[N_nd]) -> Field[N_nd]`
@@ -124,11 +124,11 @@ The relationship to the adjacent layers:
   their identity rotations in-line).
 
 This L3 entry is the **layer-coherence anchor**: a reader at L3 can find
-`divfree-projector` here, in L3 vocabulary, without having to reach down to L1 to
+`divfree_projector` here, in L3 vocabulary, without having to reach down to L1 to
 recover the constructed-operator-gate apply, and without having to consult a
 consuming eigensolver's projection slot to see the gate in use. It enacts the
 methodology invariant **Identity-lowerings still require
-both L levels** (CLAUDE.md §Methodology invariants; the firm L3 `krylov-step` backfill is the
+both L levels** (CLAUDE.md §Methodology invariants; the firm L3 `krylov_step` backfill is the
 precedent, the firm L3 `ksp_solve` + `jacobi-smoother` the
 constructed-operator-gate siblings), and is one of the six (A) firm
 identity-in-form L3 candidates ("constructed-operator gate, like firm-L3
@@ -151,7 +151,7 @@ to the wrapper layers above):
   weak-divergence operator `P.WeakDiv : LinearOperator[N_nd, N_h1]`, the discrete
   gradient `P.Grad : LinearOperator[N_h1, N_nd]`, the essential-boundary dof subset
   `P.bdr_eff : DofSubset[N_h1]`, and the **inner solver** `P.ksp : Solver[P.M]` — is
-  authoritative at the L1 entry (`book/src/L1/divfree-projector.md` §Signature) and is
+  authoritative at the L1 entry (`book/src/L1/divfree_projector.md` §Signature) and is
   not re-derived here. At L3 the contract sees only the projector-action interface and
   the two domain axes; the construction is a separate setup action.
 - **`y`** — `Field[N_nd]` — the input Nedelec field to project. Read-only at L3
@@ -273,11 +273,11 @@ outer-loop obstruction documented at the firm `ksp_solve` L3 entry and the
 This is exactly the [`nested-constructed-operator-gate`](../concepts/nested-constructed-operator-gate.md)
 **fidelity rule** at L3: the inner gate's iteration stays interior to `ksp_solve`'s own
 L3 entry; at this entry's resolution `P.ksp->Mult(rhs, psi)` is an opaque field-to-field
-action. In obstruction-profile terms `divfree-projector` is an **obstruction-carrying**
+action. In obstruction-profile terms `divfree_projector` is an **obstruction-carrying**
 gate (with `ksp_solve`, `eigsolve`) rather than an obstruction-free leaf (`jacobi-smoother`,
 `apply_linop`, `dot`, `scal`) — but it carries its obstruction *by composition*, not by
 authoring an outer loop. `ksp_solve` authors its own fold; `eigsolve` delegates to an
-opaque library loop; `divfree-projector` delegates to its inner `ksp_solve` gate. The
+opaque library loop; `divfree_projector` delegates to its inner `ksp_solve` gate. The
 three are the obstruction-carrying constructed-operator gates at L3, distinguished by
 *whose* loop carries the obstruction.
 
@@ -287,7 +287,7 @@ The five laws that hold at L1 transport unchanged to L3, because the
 constructed-operator-gate apply is identity-in-form across the L3→L1 hop. The two
 load-bearing non-laws also transport unchanged. The laws are reproduced here so the L3
 reader does not have to reach to L1 for the listing; the L1 entry
-(`book/src/L1/divfree-projector.md` §Algebraic laws) is authoritative on every factual
+(`book/src/L1/divfree_projector.md` §Algebraic laws) is authoritative on every factual
 claim about the Palace surface.
 
 1. **Linearity.** `divfree_project P (α·u + β·v) = α · divfree_project P u + β · divfree_project P v`.
@@ -347,11 +347,11 @@ of the inner `ksp_solve` carried by reference (§"Iteration-rotation marker").
 
 - [`ksp_solve`](./ksp_solve.md) — the inner projected H1 solve `P.M · ψ = rhs` (step 3,
   `palace/linalg/divfree.cpp:175`). **Direct, load-bearing dependency**: this is the
-  nested-constructed-operator gate's inner gate. `divfree-projector`'s closure carries
+  nested-constructed-operator gate's inner gate. `divfree_projector`'s closure carries
   `P.ksp : Solver[P.M]` as a sub-field; the per-call body invokes it opaquely. The CG
   iteration internal to `ksp_solve` is the standard outer-loop `sequential-obstruction`;
-  it is interior to `ksp_solve` and **does not leak** into `divfree-projector` (the
-  fidelity rule). This is the structural fact that makes `divfree-projector`
+  it is interior to `ksp_solve` and **does not leak** into `divfree_projector` (the
+  fidelity rule). This is the structural fact that makes `divfree_projector`
   obstruction-carrying-by-reference rather than obstruction-free.
 - [`apply_linop`](./apply_linop.md) — the `P.WeakDiv·y` (step 1) and `P.Grad·ψ` (step 4)
   whole-tensor linear-operator applications.
@@ -362,8 +362,8 @@ of the inner `ksp_solve` carried by reference (§"Iteration-rotation marker").
 
 - [`nested-constructed-operator-gate`](../concepts/nested-constructed-operator-gate.md) —
   the structural shape this entry instantiates at L3: the closure `P` carries the inner
-  gate `P.ksp`. The firm-instances list names `divfree-projector` (one nested gate) and
-  the transitive chain `eigsolve ⊃ divfree-projector ⊃ ksp_solve`. The fidelity rule
+  gate `P.ksp`. The firm-instances list names `divfree_projector` (one nested gate) and
+  the transitive chain `eigsolve ⊃ divfree_projector ⊃ ksp_solve`. The fidelity rule
   (inner iteration stays interior to the inner gate) is the discipline this L3 entry
   follows.
 - [`sequential-obstruction`](../concepts/sequential-obstruction.md) — the canonical
@@ -381,7 +381,7 @@ The setup-side dependencies (the construction-time assembly of `M`, `WeakDiv`, `
 L1-entry concerns, not part of the L3 apply — they are consumed once at construction,
 before the gate is folded into any L3 expression.
 
-**L1 anchor**: [`L1/divfree-projector`](../L1/divfree-projector.md) (firm; the
+**L1 anchor**: [`L1/divfree_projector`](../L1/divfree_projector.md) (firm; the
 constructed-operator gate at L1) — authoritative on the Palace-surface details, the
 construction chain, the empty-boundary single-dof pin, the `WeakDiv` sign convention,
 and the complete L0 evidence list. This L3 entry does not duplicate those details; the
@@ -390,14 +390,14 @@ L3>L1 rotation is identity-in-form on the gate's apply.
 **Strawman reference**: `book/src/semantics/index.md` is the L4/L3 conventions
 source; this L3 entry follows the strawman's Haskell `::` signature notation (rendered
 as 4-space-indented code blocks here). The L4 layer does not surface
-`divfree-projector` as a standalone entry (per the constructed-operator-gate L4 verdict
+`divfree_projector` as a standalone entry (per the constructed-operator-gate L4 verdict
 shared with the firm `apply_linop` / `ksp_solve` / `jacobi-smoother` gates).
 
 ## Variant axes
 
 `divfree_project` has **one orthogonal variant axis at L3, plus the absorbed
 operator-representation axis** — the same framing as L1
-(`book/src/L1/divfree-projector.md`), transported unchanged. Both are absorbed into the
+(`book/src/L1/divfree_projector.md`), transported unchanged. Both are absorbed into the
 constructed-operator closure; neither appears in the per-call apply's positional
 signature.
 
@@ -426,7 +426,7 @@ The variant-axis profile (one orthogonal + one absorbed) matches the L1 entry ex
 **No new axes introduced by the L3 rendering; no axes merged or split.** (Note: the inner
 `ksp_solve`'s own five loop-shaping variant axes — krylov-method, initial-guess-policy,
 etc. — are interior to that gate, absorbed into `P.ksp` at construction; they are not
-`divfree-projector` axes.)
+`divfree_projector` axes.)
 
 ## Caveats
 
@@ -458,9 +458,9 @@ Caveats (not status reductions):
 
 ## Lowers to
 
-L3 `divfree-projector` lowers to the adjacent L2 floor
-[`divfree-projector`](../L2/divfree-projector.md) and onward to L1
-[`divfree-projector`](../L1/divfree-projector.md) — **no non-adjacent L3-L1 directory**.
+L3 `divfree_projector` lowers to the adjacent L2 floor
+[`divfree_projector`](../L2/divfree_projector.md) and onward to L1
+[`divfree_projector`](../L1/divfree_projector.md) — **no non-adjacent L3-L1 directory**.
 The L3>L2 rotation is a **degenerate identity-in-named-terms lowering**, annotated in-line
 here rather than as a dedicated L3>L2 theme file: L1, L2, and L3 all see
 `divfree_project :: (P: DivFreeProjector[N_nd, N_h1], y: Field[N_nd]) -> Field[N_nd]`
@@ -495,7 +495,7 @@ sees a fixed four-step whole-tensor composition with the inner solve opaque.
 
 ## Lifts from
 
-**`divfree-projector` has no standalone L4 entry.** Like the firm `apply_linop` /
+**`divfree_projector` has no standalone L4 entry.** Like the firm `apply_linop` /
 `ksp_solve` / `jacobi-smoother` constructed-operator gates, the projector apply authors
 no monadic effect of its own, no state-stratification typing, and no outer-driver
 structure — its body is a fixed four-step composition delegating its only iteration to the
@@ -508,8 +508,8 @@ a fixed-composition constructed-operator action and add no calculus content.
 The L3 form is value-thread-isomorphic to the firm L1 form on the gate's apply; the entry
 exists for layer-coherence reasons — a reader navigating L3 (whose index advertises
 whole-tensor field operations and constructed-operator gates as L3 vocabulary) must find
-`divfree-projector` defined in L3 vocabulary, not have to reach down to L1 to recover the
-constructed-operator-gate apply. The firm L3 `krylov-step` backfill is the
+`divfree_projector` defined in L3 vocabulary, not have to reach down to L1 to recover the
+constructed-operator-gate apply. The firm L3 `krylov_step` backfill is the
 structural precedent for the constructed-operator-shaped layer-coherence backfill; the
 firm L3 `ksp_solve` and `jacobi-smoother` are the
 constructed-operator-gate siblings — `ksp_solve` the obstruction-authoring inner gate this
@@ -521,12 +521,12 @@ The L3 form is value-thread-isomorphic to the firm L1 form (per the identity-in-
 rotation on the constructed-operator-gate apply); all L0 evidence is transitive through
 L1. Direct citations relevant to this L3 entry:
 
-- `book/src/L1/divfree-projector.md` (firm) — the L1 entry whose signature, semantics,
+- `book/src/L1/divfree_projector.md` (firm) — the L1 entry whose signature, semantics,
   five algebraic laws, two non-laws, one-orthogonal-plus-one-absorbed variant profile, and
   complete L0 evidence list are transported unchanged to L3. Authoritative on every
   Palace-surface factual claim.
 - `book/src/L3/index.md:46` — the L3-cohort-growth audit verdict
-  naming `divfree-projector` as one of the six (A) firm identity-in-form L3 backfill
+  naming `divfree_projector` as one of the six (A) firm identity-in-form L3 backfill
   candidates ("constructed-operator gate, like firm-L3 `ksp_solve`").
 - `palace/linalg/divfree.cpp:155-187` — `DivFreeSolver<VecType>::Mult(VecType &y)`: the
   four-step apply the L3 whole-tensor composition lowers to. Step 1 `WeakDiv->Mult`
@@ -555,19 +555,19 @@ L1. Direct citations relevant to this L3 entry:
   L3 content; its inner-solve step delegates to `ksp-solve-mutation-rotation` per the
   fidelity rule).
 - `book/src/concepts/nested-constructed-operator-gate.md` (firm) — the concept this entry
-  instantiates at L3; the firm-instances list names `divfree-projector` (one nested gate)
-  and the transitive chain `eigsolve ⊃ divfree-projector ⊃ ksp_solve`; the fidelity rule
+  instantiates at L3; the firm-instances list names `divfree_projector` (one nested gate)
+  and the transitive chain `eigsolve ⊃ divfree_projector ⊃ ksp_solve`; the fidelity rule
   this entry follows.
 - `book/src/L3/ksp_solve.md` (firm) — the inner gate this projector delegates to;
   the home of the carried `sequential-obstruction`.
-- `book/src/L3/jacobi-smoother.md` (firm), `book/src/L3/krylov-step.md` (firm),
+- `book/src/L3/jacobi-smoother.md` (firm), `book/src/L3/krylov_step.md` (firm),
   `book/src/L3/apply_linop.md` (firm) — the L3 identity-in-form /
   constructed-operator-gate backfill precedents this entry follows; `jacobi-smoother` the
   obstruction-free contrast.
 
 ## L3 vs L4 distinction
 
-- **L4**: no standalone `divfree-projector` entry. A projector action that delegates its
+- **L4**: no standalone `divfree_projector` entry. A projector action that delegates its
   only iteration to an inner solve carries no monadic effect, no typed records, no
   outer-driver structure of its own; if it appeared at L4 it would be a let-binding
   consuming a constructed projector (which itself consumes a constructed solver), not

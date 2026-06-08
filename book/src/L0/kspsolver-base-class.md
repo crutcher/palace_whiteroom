@@ -91,7 +91,7 @@ The L4 `solve-monad` concept abstracts this whole flow: a constructed solver is 
 ## Referenced from
 
 - [`L1/ksp_solve`](../L1/ksp_solve.md) — the pure-functional solve operator anchored on this class's `Mult` entry point.
-- [`L2/krylov-step`](../L2/krylov-step.md) — the per-step body that `BaseKspSolver::Mult` invokes (via `ksp->Mult`) when the inner iterative solver is one of CG / GMRES / FGMRES.
+- [`L2/krylov_step`](../L2/krylov_step.md) — the per-step body that `BaseKspSolver::Mult` invokes (via `ksp->Mult`) when the inner iterative solver is one of CG / GMRES / FGMRES.
 - [`L1/apply_linop`](../L1/apply_linop.md) — `BaseKspSolver` owns an `OperType` reference (the system operator) and dispatches `apply_linop` calls into it from inside the iterative solver.
 - [`L0/ksp-factory-file`](./ksp-factory-file.md) — the factory functions that construct the `IterativeSolver` and `Solver` objects passed to the `BaseKspSolver` constructor.
 - [`L0/apply-linop-overload-set`](./apply-linop-overload-set.md) — the `OperType` template parameter resolves to one of `Operator` / `ComplexOperator`, whose `Mult` family is the per-step primitive.

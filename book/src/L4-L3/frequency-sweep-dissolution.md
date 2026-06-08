@@ -146,7 +146,7 @@ The rewrite is valid when all of the following hold (the first is the operator-v
 
 ## Speculative L4 operators
 
-None. This theme lowers an already-authored L4 combinator ([`frequency_sweep`](../L4/frequency_sweep.md)) assembled from the already-firm [`ksp_solve`](../L4/ksp_solve.md) cap mapped via the already-firm [`iterate-while`](../L4/iterate-while.md) family, with the per-member operator-and-RHS functions `assemble_frequency_operator` / `rhs_at` constituents of the cap. No new speculative operator is introduced.
+None. This theme lowers an already-authored L4 combinator ([`frequency_sweep`](../L4/frequency_sweep.md)) assembled from the already-firm [`ksp_solve`](../L4/ksp_solve.md) cap mapped via the already-firm [`iterate_while`](../L4/iterate_while.md) family, with the per-member operator-and-RHS functions `assemble_frequency_operator` / `rhs_at` constituents of the cap. No new speculative operator is introduced.
 
 ## Evidence
 
@@ -154,7 +154,7 @@ L4 source (the LHS of this rewrite):
 
 - `book/src/L4/frequency_sweep.md` — the L4 operator-varying map-over-frequency-family combinator: §Signature (the `frequency_sweep` / `map (\w -> ksp_solve (A w) (b w)) omegas` shape + the operator-varying per-member function), §Semantics (the direct-map form + the operator-rebuilt-per-member structural payoff), §"Algebraic laws" (concatenation-homomorphism, operator-per-member NO-hoist, element-independence / order-preservation — the load-bearing transported properties), §"Lowers to" (the in-line rotation-direction record this theme realizes), §Variant axes (the operator-capture distinction from the fixed sibling, the fixed-list vs state-generated schedule axis).
 - `book/src/L4/ksp_solve.md` — the per-member cap the map runs (the per-element solve, delegated to its own theme).
-- `book/src/L4/iterate-while.md` — the §3.7 family whose pure-map degenerate the combinator IS (the alternate LHS rendering).
+- `book/src/L4/iterate_while.md` — the §3.7 family whose pure-map degenerate the combinator IS (the alternate LHS rendering).
 - `book/src/L4/solve_family.md` — the **fixed-operator** sibling whose operator-capture hoist this map LACKS; the load-bearing contrast.
 
 L3 source (the RHS of this rewrite):

@@ -1,6 +1,6 @@
 # ksp-solve-driver-dissolution
 
-The L4>L3 lowering theme for the [`ksp_solve`](../L4/ksp_solve.md) **outer-driver cap** — the `Solve`-monadic coordination `solve op inp = execState (solve_loop op inp) (initial_state inp)` that drives [`krylov-step`](../L4/krylov-step.md) to convergence and classifies termination once at the cycle boundary. The theme dissolves the L4 outer-driver machinery (the `Solve = StateT SimState Identity` monad, the `solve_loop` / `restart_cycle` `do`-block drivers, the `Outcome = Continue | Done Bool` termination sum) into the firm L3 value-threaded outer-driver fold [`L3/ksp_solve`](../L3/ksp_solve.md) `(op, K_0, s_0) -> (s_final, result)`. It is the **driver-half** companion to the kernel-half [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md): the kernel theme dissolves the per-step body; this theme dissolves the *outer coordination around the body's fold*. It **composes strictly above** the inner-fold combinator dissolution [`iterate-while-dissolution`](./iterate-while-dissolution.md) — that theme dissolves the `iterate_while` combinator the L4 `restart_cycle` invokes; this theme dissolves the `solve_loop` / `restart_cycle` / `Outcome` driver that wraps that fold.
+The L4>L3 lowering theme for the [`ksp_solve`](../L4/ksp_solve.md) **outer-driver cap** — the `Solve`-monadic coordination `solve op inp = execState (solve_loop op inp) (initial_state inp)` that drives [`krylov_step`](../L4/krylov_step.md) to convergence and classifies termination once at the cycle boundary. The theme dissolves the L4 outer-driver machinery (the `Solve = StateT SimState Identity` monad, the `solve_loop` / `restart_cycle` `do`-block drivers, the `Outcome = Continue | Done Bool` termination sum) into the firm L3 value-threaded outer-driver fold [`L3/ksp_solve`](../L3/ksp_solve.md) `(op, K_0, s_0) -> (s_final, result)`. It is the **driver-half** companion to the kernel-half [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md): the kernel theme dissolves the per-step body; this theme dissolves the *outer coordination around the body's fold*. It **composes strictly above** the inner-fold combinator dissolution [`iterate-while-dissolution`](./iterate-while-dissolution.md) — that theme dissolves the `iterate_while` combinator the L4 `restart_cycle` invokes; this theme dissolves the `solve_loop` / `restart_cycle` / `Outcome` driver that wraps that fold.
 
 ## Slug
 
@@ -8,12 +8,12 @@ The L4>L3 lowering theme for the [`ksp_solve`](../L4/ksp_solve.md) **outer-drive
 
 ## Context
 
-[`L4/ksp_solve`](../L4/ksp_solve.md) is a firm L4 outer-driver cap, consuming the `solve-monad` outer-driver vocabulary (`solve_loop` / `restart_cycle` / `Outcome`) and folding the firm [`krylov-step`](../L4/krylov-step.md) kernel via the firm [`iterate-while`](../L4/iterate-while.md) family. The cap's own §"Lowers to" names the dissolution to L3 as **substantive** (not identity-in-form) and records the rotation *direction* in-line per the high→low discipline, deferring the theme itself to this chapter.
+[`L4/ksp_solve`](../L4/ksp_solve.md) is a firm L4 outer-driver cap, consuming the `solve-monad` outer-driver vocabulary (`solve_loop` / `restart_cycle` / `Outcome`) and folding the firm [`krylov_step`](../L4/krylov_step.md) kernel via the firm [`iterate_while`](../L4/iterate_while.md) family. The cap's own §"Lowers to" names the dissolution to L3 as **substantive** (not identity-in-form) and records the rotation *direction* in-line per the high→low discipline, deferring the theme itself to this chapter.
 
 The L4>L3 hop for the iterative-solve family splits cleanly across **three** dedicated themes, each at a different stratum:
 
-- [`iterate-while-dissolution`](./iterate-while-dissolution.md) — the **inner-fold combinator**: how the L4 `iterate_while` combinator (the `Solve`-threaded extras-carrying loop) dissolves into the L3 `iterate_while_L3` tail-recursive value-threaded worker. This is what the L4 `restart_cycle` invokes to fold `krylov-step`.
-- [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) — the **per-step body**: how the L4 `krylov-step` typed wrapper (records, `Solve` monad, `OpParams` `readonly`) dissolves into the L3 value-threaded kernel `(op, K, s) -> (K', s', outputs)`.
+- [`iterate-while-dissolution`](./iterate-while-dissolution.md) — the **inner-fold combinator**: how the L4 `iterate_while` combinator (the `Solve`-threaded extras-carrying loop) dissolves into the L3 `iterate_while_L3` tail-recursive value-threaded worker. This is what the L4 `restart_cycle` invokes to fold `krylov_step`.
+- [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) — the **per-step body**: how the L4 `krylov_step` typed wrapper (records, `Solve` monad, `OpParams` `readonly`) dissolves into the L3 value-threaded kernel `(op, K, s) -> (K', s', outputs)`.
 - `ksp-solve-driver-dissolution` (this theme) — the **outer driver + termination classification**: how the L4 `solve_loop` / `restart_cycle` `do`-block coordination and the `Outcome` sum dissolve into the L3 outer fold + restart nesting + the scattered per-test termination branches + the soft-fail `Bool` `result.converged`.
 
 The three compose: the full L4 `ksp_solve` cap lowers to the full L3 `ksp_solve` driver by applying this theme to the outer coordination, [`iterate-while-dissolution`](./iterate-while-dissolution.md) to the inner fold it invokes, and [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) to the per-step body that fold runs. This theme is the **dedicated home** for the outer-coordination stratum — a reader navigating from the firm `L4/ksp_solve` cap's §"Lowers to" lands here, at the driver dissolution, rather than re-deriving it inline or conflating it with the kernel theme.
@@ -48,7 +48,7 @@ The `restart_cycle` body has four phases in dataflow order (the firm cap §Seman
 
     restart_cycle op inp = do
       let K0          = fresh_krylov op inp s              -- 1. fresh ephemeral bundle (plain value)
-      let (Kn, outs)  = iterate_while (krylov_step op K0) cont  -- 2. inner kernel-fold (iterate-while family)
+      let (Kn, outs)  = iterate_while (krylov_step op K0) cont  -- 2. inner kernel-fold (iterate_while family)
       modify (\s -> s { x = s.x + Kn.V `dot` Kn.y })      -- 3. fold correction into SimState.x, once
       pure (classify Kn op s)                             -- 4. classify the terminal bundle into Outcome, once
 
@@ -70,7 +70,7 @@ The L4>L3 dissolution produces the firm L3 value-threaded **outer-driver fold** 
     ksp_solve op K_0 s_0 =
       let s_init                = init_convergence op K_0 s_0     -- residual proxy + eps + converged_0
       let (K_n, s_n, outputs_n) = iterate_while_L3                -- the outer-driver fold
-                                    (krylov-step op)              --   body: the L3 kernel
+                                    (krylov_step op)              --   body: the L3 kernel
                                     (K_0, s_init)                 --   seed carry
                                     (\s -> not s.converged && s.it < op.max_it)  -- predicate
       let s_final               = fold_iterate op K_n s_n         -- final iterate materialised into s.x
@@ -94,7 +94,7 @@ The L4 `Solve = StateT SimState Identity` threading dissolves to the L3 explicit
 
 ### 2. `solve_loop` `do`/`unless` → `iterate_while_L3` outer tail recursion with the convergence predicate
 
-The L4 `solve_loop op inp = do { o <- restart_cycle op inp; unless (done o) (solve_loop op inp) }` dissolves to the L3 outer-driver fold `iterate_while_L3 (krylov-step op) (K_0, s_init) (\s -> not s.converged && s.it < op.max_it)`. This is the **load-bearing collapse**: the cap's Law 2 (`solve_loop` ≡ `iterate_while_pure` over outer cycles, because only the terminal `SimState` is observed) is exactly what licenses rendering `solve_loop` as the L3 `iterate_while_L3` outer tail recursion. The combinator dissolution itself — how the L4 `iterate_while` becomes the L3 `iterate_while_L3` worker — is **delegated to** [`iterate-while-dissolution`](./iterate-while-dissolution.md) (this theme composes above it); what *this* theme adds is the **`Outcome` → predicate collapse**: the L4 `unless (done o)` guard (a pattern-match on the `Outcome` sum) dissolves into the L3 predicate's read of `s.converged` (the firm L3 entry §Signature note, `book/src/L3/ksp_solve.md:78` — "the convergence-flag `modify` becomes the predicate's read of `s.converged`"). The `Outcome`'s three arms scatter as follows:
+The L4 `solve_loop op inp = do { o <- restart_cycle op inp; unless (done o) (solve_loop op inp) }` dissolves to the L3 outer-driver fold `iterate_while_L3 (krylov_step op) (K_0, s_init) (\s -> not s.converged && s.it < op.max_it)`. This is the **load-bearing collapse**: the cap's Law 2 (`solve_loop` ≡ `iterate_while_pure` over outer cycles, because only the terminal `SimState` is observed) is exactly what licenses rendering `solve_loop` as the L3 `iterate_while_L3` outer tail recursion. The combinator dissolution itself — how the L4 `iterate_while` becomes the L3 `iterate_while_L3` worker — is **delegated to** [`iterate-while-dissolution`](./iterate-while-dissolution.md) (this theme composes above it); what *this* theme adds is the **`Outcome` → predicate collapse**: the L4 `unless (done o)` guard (a pattern-match on the `Outcome` sum) dissolves into the L3 predicate's read of `s.converged` (the firm L3 entry §Signature note, `book/src/L3/ksp_solve.md:78` — "the convergence-flag `modify` becomes the predicate's read of `s.converged`"). The `Outcome`'s three arms scatter as follows:
 
 - `Done True` (converged, `K.beta < ε`) → the predicate's `not s.converged` clause flips false, where `s.converged` was set from the per-step `outputs.residual_norm < eps` readout (the L0 `converged = (res < eps)`, `reference/palace/palace/linalg/iterative.cpp:463`).
 - `Done False` (exhausted `op.max_it`) → the predicate's `s.it < op.max_it` clause flips false (the L0 loop guard `it < max_it`, `reference/palace/palace/linalg/iterative.cpp:427`).
@@ -107,7 +107,7 @@ So the single typed `Outcome`-decision site of the L4 cap **scatters** into the 
 The L4 `restart_cycle`'s four-phase `do`-block dissolves to the L3 restart nesting plus the `fold_iterate` boundary write:
 
 - Phase 1 (`let K0 = fresh_krylov …`) → the L3 outer restart fold's per-cycle `K`-re-seed (`book/src/L3/ksp_solve.md:90` — the externally-visible iterate is folded "once per restart cycle from the basis correction `K.V · K.y`").
-- Phase 2 (`let (Kn, outs) = iterate_while (krylov_step op K0) cont`) → the L3 inner fold `iterate_while_L3 (krylov-step op) …` — **delegated to** [`iterate-while-dissolution`](./iterate-while-dissolution.md) for the combinator dissolution and [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) for the body. The sole `SimState` effect inside (`modify (\s -> s { it = s.it + 1 })`) dissolves to the kernel's positional `s.it` increment.
+- Phase 2 (`let (Kn, outs) = iterate_while (krylov_step op K0) cont`) → the L3 inner fold `iterate_while_L3 (krylov_step op) …` — **delegated to** [`iterate-while-dissolution`](./iterate-while-dissolution.md) for the combinator dissolution and [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) for the body. The sole `SimState` effect inside (`modify (\s -> s { it = s.it + 1 })`) dissolves to the kernel's positional `s.it` increment.
 - Phase 3 (`modify (\s -> s { x = s.x + Kn.V · Kn.y })`, the once-per-cycle correction) → the L3 `fold_iterate op K_n s_n` (`book/src/L3/ksp_solve.md:51,90`): for non-restarted methods (CG, Chebyshev) the running iterate `s.x` is updated in-bundle each step so `fold_iterate` is identity; for restarted methods (GMRES, FGMRES) it materialises the last partial restart-cycle's correction into `s.x`. The L4 `modify`'s single-named-mutation-point discipline (`book/src/concepts/solve-monad.md:27`) dissolves to the L3 explicit `s.x` boundary write.
 - Phase 4 (`pure (classify Kn op s)`, the `Outcome` classification) → dissolves per rewrite (2) above (the predicate-read + restart re-seed) and rewrite (4) below (the `result.converged` field).
 
@@ -124,7 +124,7 @@ The **outer-loop `sequential-obstruction`** survives at L3: the L3 form names th
 ### What this lowering does NOT cover
 
 - **The inner `iterate_while` combinator dissolution** — delegated to [`iterate-while-dissolution`](./iterate-while-dissolution.md). This theme dissolves the *outer* driver (`solve_loop` / `restart_cycle` / `Outcome`); the inner-fold combinator (`iterate_while` → `iterate_while_L3`) is that theme's job. This theme composes strictly above it.
-- **The per-step body dissolution** — delegated to [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) (firm). The `krylov-step` typed wrapper → L3 value-threaded kernel is that theme; this theme treats the body as opaque (`krylov-step op`).
+- **The per-step body dissolution** — delegated to [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) (firm). The `krylov_step` typed wrapper → L3 value-threaded kernel is that theme; this theme treats the body as opaque (`krylov_step op`).
 - **The L3>L2 hop on the driver**, which is **substantive** (the L2 anchor erases the iteration view to an outer-driver-by-role reference; firm L3 entry §"Lowers to", `book/src/L3/ksp_solve.md:169-173`), pending the L2 `ksp_solve` promotion past `stub` — a separate L3>L2 theme (`L3-L2/ksp-solve-outer-driver`, pending), not duplicated here.
 
 ## Applicability conditions
@@ -150,15 +150,15 @@ The rewrite is valid when all four of the following hold (the first three inheri
 
 ## Speculative L4 operators
 
-None. This theme lowers an already-firm L4 cap ([`L4/ksp_solve`](../L4/ksp_solve.md)) assembled from already-firm L4 outer-driver vocabulary (`solve_loop` / `restart_cycle` / `Outcome`) folding the already-firm [`krylov-step`](../L4/krylov-step.md) kernel via the firm [`iterate-while`](../L4/iterate-while.md) family. No new speculative operator is introduced.
+None. This theme lowers an already-firm L4 cap ([`L4/ksp_solve`](../L4/ksp_solve.md)) assembled from already-firm L4 outer-driver vocabulary (`solve_loop` / `restart_cycle` / `Outcome`) folding the already-firm [`krylov_step`](../L4/krylov_step.md) kernel via the firm [`iterate_while`](../L4/iterate_while.md) family. No new speculative operator is introduced.
 
 ## Evidence
 
 L4 source (the LHS of this rewrite):
 
 - `book/src/L4/ksp_solve.md` — the firm L4 outer-driver cap: §Signature (the `ksp_solve` / `solve_loop` / `restart_cycle` / `Outcome` shape), §Semantics (the four-phase `restart_cycle`), §"Algebraic laws" (Law 1 `execState`/`StateT` fusion, Law 2 `solve_loop`-as-`iterate_while_pure`, Law 5 `Outcome` classify-once — the load-bearing transported properties), §"Lowers to" (the in-line rotation-direction record this theme realizes), §"L4 vs L3 distinction".
-- `book/src/L4/krylov-step.md` — the inner kernel-fold body `restart_cycle` runs (the per-step body, delegated to its own theme).
-- `book/src/L4/iterate-while.md` — the inner-fold combinator `restart_cycle` invokes (the combinator dissolution delegated to `iterate-while-dissolution`).
+- `book/src/L4/krylov_step.md` — the inner kernel-fold body `restart_cycle` runs (the per-step body, delegated to its own theme).
+- `book/src/L4/iterate_while.md` — the inner-fold combinator `restart_cycle` invokes (the combinator dissolution delegated to `iterate-while-dissolution`).
 - `book/src/concepts/solve-monad.md:1-68` — the `Solve = StateT SimState Identity` outer-driver pattern: §Shape (`:5-19`, the `solve` / `solve_loop` entry point), §"What stays out of the monad" (`:29-35`, the `K`-out-of-monad discipline), §"Worked example — GMRES" (`:47-56`, the four-phase `restart_cycle`), §"Termination as a sum type" (`:58-68`, the `Outcome` classify-once / fold-uniformly law).
 - `book/src/semantics/index.md:119-136` — §3.3 monad laws (`:121-127`) + §3.4 state effects (`:131-136`), underwriting the reduction-chain `>>=`-to-positional-threading and the monad-law normal form. `:150-184` — §3.7 `iterate_while` + `iterate_while_pure` sugar (`:178-182`), the fold-equivalence the `solve_loop` collapse cites. `:186-228` — §3.8 demand-pruning (the trajectory-vs-classifier demand split inherited through the inner fold).
 
@@ -195,6 +195,6 @@ Concept-page references:
 ## L4 vs L3 distinction
 
 - **L4**: the `Solve`-monadic outer-driver cap. `solve_loop` / `restart_cycle` thread `SimState` through the `Solve = StateT SimState Identity` monad; termination is the `Outcome = Continue | Done Bool` sum classified once per cycle at a single typed decision site; the per-cycle `x`-correction is a single named `modify` point; the outer driver is a `do`-block tail recursion whose convergence test (`unless (done o)`) is lifted to the coordination layer.
-- **L3**: the value-threaded outer-driver fold `(op, K_0, s_0) -> (s_final, result)`. The `Solve` monad has dissolved to positional `(K, s)` threading; termination is the soft-fail `Bool` `result.converged`, scattered across the predicate's two clauses (`not s.converged`, `s.it < op.max_it`) and the restart loop's re-seed; the per-cycle `x`-correction is the explicit `fold_iterate` boundary write; the outer driver is the explicit `iterate_while_L3 (krylov-step op)` tail recursion. The outer-loop `sequential-obstruction` is named at both layers (the monad makes interior termination visible but does not remove the sequentiality).
+- **L3**: the value-threaded outer-driver fold `(op, K_0, s_0) -> (s_final, result)`. The `Solve` monad has dissolved to positional `(K, s)` threading; termination is the soft-fail `Bool` `result.converged`, scattered across the predicate's two clauses (`not s.converged`, `s.it < op.max_it`) and the restart loop's re-seed; the per-cycle `x`-correction is the explicit `fold_iterate` boundary write; the outer driver is the explicit `iterate_while_L3 (krylov_step op)` tail recursion. The outer-loop `sequential-obstruction` is named at both layers (the monad makes interior termination visible but does not remove the sequentiality).
 
 The two layers share the per-cycle dataflow shape (modulo wrapper dissolution) and the four-phase cycle body; they differ in **effect threading, termination-classification placement, and the iteration-view explicitness**. The rotation erases the monadic packaging, scatters the single `Outcome`-decision site into the L3 predicate + restart re-seed, dissolves the `Outcome` sum to the soft-fail `Bool`, and renders the outer driver as an explicit `iterate_while_L3` fold — narrated forward L4→L3.

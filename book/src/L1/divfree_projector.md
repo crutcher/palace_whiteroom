@@ -1,6 +1,6 @@
 ---
 layer: L1
-operator: divfree-projector
+operator: divfree_projector
 firmness: firm
 # Graded-stack scheme: this L1 mutation-rotation gate lowers to its L1>L0 mutation-rotation
 # theme (lowers-to depends-on). Its inner gate is the firm L1 ksp_solve (depends-on). The
@@ -17,13 +17,13 @@ edges:
     - target: book/src/L1/interpolator.md
       kind: uses                  # the Grad discrete-gradient operator IS interpolator's L0 lift (GetDiscreteInterpolator, palace/linalg/divfree.cpp:117)
   reference:
-    - L2/divfree-projector        # the L2 fusion-rotation floor above
+    - L2/divfree_projector        # the L2 fusion-rotation floor above
     - concepts/set_subvector_zero # the Z_{bdr_eff} essential-BC zeroing (step 2)
     - concepts/nested-constructed-operator-gate
     - concepts/constructed-operators
 ---
 
-# divfree-projector
+# divfree_projector
 
 Mutation-lifted divergence-free projector: a pure-functional linear projection
 `y' = divfree_project(P, y)` that maps an H(curl) (Nedelec) vector field to its

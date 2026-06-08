@@ -76,7 +76,7 @@ the kernel-api theme documents (Adams 2003 polynomial-over-Gauss-Seidel,
 
 This is a **constructed-operator gate** at L1, in the family of
 [`chebyshev-smoother`](./chebyshev-smoother.md) and
-[`divfree-projector`](./divfree-projector.md): the primary argument `op` is a
+[`divfree_projector`](./divfree_projector.md): the primary argument `op` is a
 structured opaque value built once at setup (the ctor + `SetOperators` step),
 carrying the captured operators `A` / `A_G`, the discrete gradient `G`, the
 auxiliary essential-dof set, the two point-smoother closures, and the fixed
@@ -89,10 +89,10 @@ reintroduced in the forthcoming L1>L0 lowering theme, not in the L1 signature.
 
 The de-Rham structural pattern — relax in the primary space, correct through the
 discrete gradient `G` into an auxiliary space — is the SAME shape as
-[`divfree-projector`](./divfree-projector.md) (`I − Grad(GᵀMG)⁻¹GᵀM`): both
+[`divfree_projector`](./divfree_projector.md) (`I − Grad(GᵀMG)⁻¹GᵀM`): both
 consume the [`interpolator`](./interpolator.md)-produced discrete gradient `G`
 and apply a sub-operation in the gradient space. The distinction:
-`divfree-projector` performs an exact auxiliary *solve* `(GᵀMG)⁻¹`, while this
+`divfree_projector` performs an exact auxiliary *solve* `(GᵀMG)⁻¹`, while this
 smoother performs an inexact auxiliary *relaxation* `B_G` (a fixed-degree
 Chebyshev sweep, not a solve to convergence).
 
@@ -290,7 +290,7 @@ References (NOT spine dependencies):
 - [`set_subvector_zero`](./set_subvector_zero.md) — the auxiliary essential-dof
   pin `Z_ess · x_G` (`linalg::SetSubVector(x_G, *dbc_tdof_list_G, 0.0)`,
   `distrelaxation.cpp:112-115`); consumed-by, the same essential-dof-pin atom
-  `divfree-projector` uses.
+  `divfree_projector` uses.
 - [`triangular-solve-obstruction`](../L1-L0/triangular-solve-obstruction.md) —
   the `realizes-kernel-api` target (the opaque GS-SSOR kernel-api this impl
   realizes; `reference`-class, free).

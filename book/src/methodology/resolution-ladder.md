@@ -104,7 +104,7 @@ two duals:
 
 ### Worked example — rank propagating upward (the cycles 088–095 cascade, completed)
 
-The `matrix-weighted-norm` cascade is exactly a wave of rank propagating upward under
+The `matrix_weighted_norm` cascade is exactly a wave of rank propagating upward under
 the invariant. The relevant fragment of the DAG (`depends-on` edges, leaf at the
 bottom):
 
@@ -117,12 +117,12 @@ bottom):
                        |        |                                    |
             depends-on |        | depends-on             depends-on  |
                        v        v                                    v
-       bilinear-form (L1)   matrix-weighted-norm (L1) <--------------+
+       bilinear_form (L1)   matrix_weighted_norm (L1) <--------------+
        ── off-diagonal      ── diagonal leaf
           leaf (firmed c095)    (firmed c091)
 ```
 
-Before cycle-091, `matrix-weighted-norm` sat at `rough-in (test-coverage-bounded)`: its
+Before cycle-091, `matrix_weighted_norm` sat at `rough-in (test-coverage-bounded)`: its
 structure was anchored, but its norm-axiom laws (triangle, Cauchy–Schwarz, parallelogram)
 were gated on a missing direct test of the SPD-weighted `√`-entry-point. By the invariant,
 **nothing above it could exceed `rough-in`** — so `gram_reduce` and `domain_energy_reduce`
@@ -134,23 +134,23 @@ The cap lifted in **two waves**, one per leaf — and the whole chain is now `fi
 example is a completed rank-propagation *discharge*, not a standing block.
 
 **Wave 1 (cycle-091) — the diagonal leaf.** Cycles 088–089 discharged both law-sides of
-`matrix-weighted-norm` (the structure-side laws are inner-product-space theorems whose SPD premise
+`matrix_weighted_norm` (the structure-side laws are inner-product-space theorems whose SPD premise
 holds provably-by-construction at the usage sites; the floating-point sub-claims inherit additively
 from the firm constituents `dot` and `apply_linop` through a deterministic IEEE-754 outer `√`). The
 batch-28 meta-phase judged the lone remaining test gate **redundant**, and cycle-091 flipped
-`matrix-weighted-norm` to **`firm` (rank 3)**. Rank then propagated up its branch:
-`domain_energy_reduce` — which folds *only* `matrix-weighted-norm`, so all of its `depends-on` deps
+`matrix_weighted_norm` to **`firm` (rank 3)**. Rank then propagated up its branch:
+`domain_energy_reduce` — which folds *only* `matrix_weighted_norm`, so all of its `depends-on` deps
 were now firm — promoted to `firm` in the same wave, and through it the `energy-fields` feature column
 reached **`rank: firm`**.
 
 **Wave 2 (cycle-095) — the off-diagonal leaf.** `gram_reduce` could *not* promote in wave 1, because
-it folds a **second** leaf: the *off-diagonal* `bilinear-form` primitive, still `rough-in` after c091.
+it folds a **second** leaf: the *off-diagonal* `bilinear_form` primitive, still `rough-in` after c091.
 By the invariant, `gram_reduce` was correctly held at `rough-in` (and the four columns over it at
 `seed`-resolution) until that last support firmed — a faithful illustration of the invariant *holding
 a node back while one support is still soft*. Cycle-095 (the `bilinear-form-firm-flip-and-cascade-wave`)
-discharged it: D1 flipped `bilinear-form` to **`firm`** on the firm-on-positive-structure escape,
+discharged it: D1 flipped `bilinear_form` to **`firm`** on the firm-on-positive-structure escape,
 clearing `gram_reduce`'s sole residual gate, so D3 flipped `gram_reduce` to **`firm`** (both folded
-leaves — diagonal `matrix-weighted-norm` from c091, off-diagonal `bilinear-form` from c095 — now firm).
+leaves — diagonal `matrix_weighted_norm` from c091, off-diagonal `bilinear_form` from c095 — now firm).
 With its own reduce verb firm, the rank wave continued upward: the four output-product / driver columns
 over `gram_reduce` — `capacitance`, `inductance`, `electrostatic`, `magnetostatic` — each reached
 **`rank: firm`** at cycle-095 under the OWN-COMPOSITION rule (their cross-linked sibling columns are
@@ -302,7 +302,7 @@ One refinement the grounding campaign reached its limit on (batch-35/36):
   `depends-on` edge to type, so the reachability GC correctly marks them garbage and the discipline is
   to *track* them (RE11), not to manufacture a forced edge. The contrast is the diagnostic: when a node
   is genuinely *composed*, the consumer carries a real `depends-on` edge and the node flips reachable
-  on the spine (the krylov-iteration column → `krylov-step`/`fold_solve`/`orthogonalize`); a node whose
+  on the spine (the krylov-iteration column → `krylov_step`/`fold_solve`/`orthogonalize`); a node whose
   only inbound is a deliberate `reference` stays off the `depends-on` spine. The `reference`-carries-no-liveness
   rule (below) is unchanged and correct — these nodes are not dead, just correctly off the spine.
 

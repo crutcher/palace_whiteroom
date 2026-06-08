@@ -2,7 +2,7 @@
 edges:
   reference:
     - L1/nrm2                      # authoritative operator entry (definition)
-    - L2/krylov-step               # use-site cross-link (residual norm / Arnoldi sub-diagonal)
+    - L2/krylov_step               # use-site cross-link (residual norm / Arnoldi sub-diagonal)
 ---
 
 # nrm2
@@ -41,7 +41,7 @@ nrm2(x) → ℝ
 
 ## Slices that use this primitive
 
-- [`krylov-step` (CG instance)](../L2/krylov-step.md) — residual norm `‖r‖` per iteration.
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — initial residual norm `β`, Arnoldi
+- [`krylov_step` (CG instance)](../L2/krylov_step.md) — residual norm `‖r‖` per iteration.
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — initial residual norm `β`, Arnoldi
   sub-diagonal `H[j+1, j] = ‖w‖`, and the incremental `|s[j+1]|`
   residual norm.

@@ -16,7 +16,7 @@ edges:
   reference:
     - L2/jacobi-smoother      # specialization: B = ω·D⁻¹ (non-iterated, degree-0)
     - L2/chebyshev-iteration  # specialization: B = p_order(D⁻¹A) (the polynomial correction)
-    - L1/divfree-projector    # borderline NOTE (NOT a core instance; A = I complementary projector)
+    - L1/divfree_projector    # borderline NOTE (NOT a core instance; A = I complementary projector)
     - concepts/sequential-obstruction
     - concepts/constructed-operators
     - concepts/variant-absorption
@@ -43,13 +43,13 @@ choice of `B`. Palace names the contract **verbatim** in its own source comments
 `palace/linalg/chebyshev.cpp:193`,`:264` "Apply smoother: y = y + p(A) (x - A y)").
 
 `correction_step` is a **step-kernel combinator** (the entry; sibling to
-[`krylov-step`](./krylov-step.md) and [`chebyshev-iteration`](./chebyshev-iteration.md) in the
+[`krylov_step`](./krylov_step.md) and [`chebyshev-iteration`](./chebyshev-iteration.md) in the
 Step-kernels cohort). It is the **combinator-as-entry**: the smoothers are specializations that
 choose `B`, NOT same-named floors mirrored beside it (the 2026-06-01 vocabulary-shift redirect,
 `METHODOLOGY-REDIRECT.md` §1d). The outer `pc_it` smoothing sweep / the V-cycle recursion are
 the **consumer's** `iterate_while` fold (`distrelaxation.cpp:102` `for (it < pc_it)`;
 `gmg.cpp:172` `VCycle`), NOT folded into this kernel — `correction_step` is the per-sweep body,
-the fold is the driver above it (the same kernel-plus-driver split `krylov-step` (kernel) /
+the fold is the driver above it (the same kernel-plus-driver split `krylov_step` (kernel) /
 L4 `iterate_while` (driver) establishes).
 
 ## Context
@@ -76,7 +76,7 @@ state which `B` they plug into the shared step.
   substrate, `L1/libceed-quadrature-kernel-impl`) is NOT a `correction_step` — it is the
   *realization of an `apply_linop`* (the `A·y` operand of a correction step), one layer of
   substrate below this combinator.
-- The **`divfree-projector`** body `y + P.Grad·K⁻¹(Z(P.WeakDiv·y))` is a **borderline**
+- The **`divfree_projector`** body `y + P.Grad·K⁻¹(Z(P.WeakDiv·y))` is a **borderline**
   case (see §Borderline below): it shares the `y + correction` skeleton but the correction is
   a complementary projection of `y` itself (the `A = I`, no-external-`x` degenerate), not a
   preconditioned residual against an external RHS. Annotated as a borderline NOTE, **kept out
@@ -183,9 +183,9 @@ is a *choice of `B`*, closed under the LinOp interface — `T·B'·Tᵀ` is itse
 distinct `conjugated_correction_step` operator is needed. The conjugation is a specialization
 NOTE (law 6), not a second combinator.
 
-### Borderline: divfree-projector is NOT a core instance
+### Borderline: divfree_projector is NOT a core instance
 
-The [`divfree-projector`](./divfree-projector.md) body `y' = y − P.Grad·K⁻¹(Z(P.WeakDiv·y))`
+The [`divfree_projector`](./divfree_projector.md) body `y' = y − P.Grad·K⁻¹(Z(P.WeakDiv·y))`
 (read with the sign at step 4 absorbed) shares the `y + correction` skeleton, and its
 restrict ▷ inner-solve ▷ prolong middle is *shaped like* the conjugated correction above. But it
 is **borderline, not a core instance**: the correction is a complementary projection of `y`
@@ -193,9 +193,9 @@ is **borderline, not a core instance**: the correction is a complementary projec
 itself), not `x − A·y` against an external right-hand side. There is no system operator `A`
 being smoothed (equivalently `A = I` and there is no external `x`); the projector removes the
 gradient part of its own input. Annotated here as a borderline specialization NOTE so a reader
-sees the structural kinship, but `divfree-projector` is **kept out of the core `correction_step`
+sees the structural kinship, but `divfree_projector` is **kept out of the core `correction_step`
 roster** (it is a complementary-projector gate in its own right — firm
-[`L2/divfree-projector`](./divfree-projector.md)).
+[`L2/divfree_projector`](./divfree_projector.md)).
 
 ## Algebraic laws
 
@@ -257,7 +257,7 @@ Laws that explicitly **do not** hold:
 - **Bit-determinism across `B`-representations.** Inherited from the `B`-slot specializations:
   a matrix-free high-order-Nedelec `A` (or a `B` built from an approximate `assemble_diagonal`)
   yields a representation-dependent floating-point value (the approximate-diagonal non-law of
-  [`assemble-diagonal`](./assemble-diagonal.md) propagates through `B = ω·D⁻¹`). The algebraic
+  [`assemble_diagonal`](./assemble_diagonal.md) propagates through `B = ω·D⁻¹`). The algebraic
   laws hold; their IEEE-754 realizations are representation-dependent. Load-bearing per CLAUDE.md
   §"Optimization tricks vs. base algebra".
 
@@ -305,7 +305,7 @@ is itself an apply) + `axpby` (the residual `x − A·y` and the `y + correction
 **Specializations (reference — they cite THIS combinator; the combinator does not depend on
 them)**: [`jacobi-smoother`](./jacobi-smoother.md), [`chebyshev-iteration`](./chebyshev-iteration.md).
 
-**Borderline reference (NOT a core instance)**: [`divfree-projector`](./divfree-projector.md).
+**Borderline reference (NOT a core instance)**: [`divfree_projector`](./divfree_projector.md).
 
 **Cross-cutting concepts**:
 
@@ -380,7 +380,7 @@ Paths relative to `reference/palace/`:
   body §Semantics is `correction_step` with the polynomial filling the `B` slot.
 - `book/src/L2/jacobi-smoother.md` (firm) — the `B = ω·D⁻¹` (degree-zero, non-iterated)
   specialization; the bare gate is the `B` apply.
-- `book/src/L1/divfree-projector.md` (firm) — the borderline case (complementary projector,
+- `book/src/L1/divfree_projector.md` (firm) — the borderline case (complementary projector,
   `A = I` / no external `x`), kept OUT of the core roster.
 - `book/src/semantics/index.md` §1.2.1–§1.2.2 — the named-shape-group convention `S` follows
   (USE+LINK, not restated).

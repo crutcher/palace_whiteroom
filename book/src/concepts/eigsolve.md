@@ -141,7 +141,7 @@ the load-bearing fact for the L3 verdict:
   is itself the NEP-interior cohort (see below).
 
 Because Palace authors **no eigen-iteration kernel/driver pair** analogous to the
-([`krylov-step`](../L3/krylov-step.md), [`ksp_solve`](../L3/ksp_solve.md)) pair,
+([`krylov_step`](../L3/krylov_step.md), [`ksp_solve`](../L3/ksp_solve.md)) pair,
 the L3 iteration rotation **cannot render the loop** — there is nothing to
 rotate. The body lifts cleanly to a global tensor-field expression; the loop is
 a witnessed [`sequential-obstruction`](./sequential-obstruction.md) rooted in

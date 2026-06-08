@@ -269,7 +269,7 @@ in **scope of the erasure**:
 | | [`ksp-solve-outer-driver`](./ksp-solve-outer-driver.md) | `orthogonalize-variant-split` (this theme) |
 |---|---|---|
 | L3 form | explicit `iterate_while_L3` tail recursion + named outer-loop `sequential-obstruction` | `case op.variant`: CGS/CGS2 straight-line global statements + explicit MGS `jloop` tail recursion + named MGS `sequential-obstruction` |
-| L2 form | `iterate_while (krylov-step op) …` named-by-role; obstruction erased | `project ▷ subtract` per-variant-sequenced; iteration view erased; per-variant difference disclosed as residual axis |
+| L2 form | `iterate_while (krylov_step op) …` named-by-role; obstruction erased | `project ▷ subtract` per-variant-sequenced; iteration view erased; per-variant difference disclosed as residual axis |
 | substantive content | iteration view erased; obstruction shadows to L2 fold non-laws | **MGS branch only:** iteration view erased; obstruction shadows to the column-order-non-commutativity non-law + the `m×1` residual axis |
 | erasure scope | **unconditional** — the whole operator IS the loop | **variant-conditional** — the MGS branch carries the erasure; CGS/CGS2 are clean lifts on both sides; the per-step body is identity-in-form across all arms |
 | obstruction root | trajectory scalars gate the next step (intrinsic step-boundary sequentiality) | MGS roundoff-orthogonality (numerical-stability-rooted; the serial projector chain is what MGS buys) |

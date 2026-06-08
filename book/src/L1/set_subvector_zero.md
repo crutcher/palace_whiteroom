@@ -15,7 +15,7 @@ edges:
   reference:
     - L1/eliminate_essential_bc
     - L1/eliminate_rhs
-    - L1/divfree-projector
+    - L1/divfree_projector
     - concepts/set_subvector_zero
 ---
 
@@ -58,7 +58,7 @@ The canonical use-sites span the whole solver surface:
 - **divfree projector**: `linalg::SetSubVector(rhs, *bdr_tdof_list_M, 0.0)`
   (`palace/linalg/divfree.cpp:173`) — zero the H1 RHS on the boundary true-dofs before the inner
   `ksp->Mult(rhs, psi)` so the projected system `M·ψ = rhs` respects the essential BC. This is the
-  use-site the [`divfree-projector`](./divfree-projector.md) chapter's dep-map already names as
+  use-site the [`divfree_projector`](./divfree_projector.md) chapter's dep-map already names as
   `set_subvector_zero (concept)` — now a live L1 node.
 - **geometric-multigrid restriction residual**: `linalg::SetSubVector(X[l-1],
   *dbc_tdof_lists[l-1], 0.0)` (`palace/linalg/gmg.cpp:194`) — zero the restricted residual on the
@@ -195,7 +195,7 @@ It is the **vector-side** sibling of the matrix-side
 [`eliminate_essential_bc`](./eliminate_essential_bc.md) on the "essential-BC cleanup" axis, split
 by the vector-entry vs operator-row/column representation. It is **not** built on those operators
 and they are **not** built on it as a dep-map edge (the references are navigational); rather
-[`eliminate_rhs`](./eliminate_rhs.md) and [`divfree-projector`](./divfree-projector.md) *use* this
+[`eliminate_rhs`](./eliminate_rhs.md) and [`divfree_projector`](./divfree_projector.md) *use* this
 primitive at their essential-dof pin / RHS-clean steps.
 
 Concept reference (cross-cutting; do not duplicate):
@@ -262,8 +262,8 @@ non-adjacent-identity-rotation convention, not via an `L1-L3/` directory.
   `SetSubVector(ComplexVector &x, const mfem::Array<int> &rows, double s)`: `forall` writing
   `XR[id] = sr` (`:489`) AND `XI[id] = 0.0` (`:490`) — grounds the complex-case whole-dof zeroing.
 - `palace/linalg/divfree.cpp:173` — `linalg::SetSubVector(rhs, *bdr_tdof_list_M, 0.0);` — the
-  divfree-projector use-site (zero the H1 RHS on the boundary true-dofs before the inner solve);
-  the use-site `divfree-projector`'s dep-map names as `set_subvector_zero (concept)`.
+  divfree_projector use-site (zero the H1 RHS on the boundary true-dofs before the inner solve);
+  the use-site `divfree_projector`'s dep-map names as `set_subvector_zero (concept)`.
 - `palace/linalg/gmg.cpp:194` — `linalg::SetSubVector(X[l - 1], *dbc_tdof_lists[l - 1], 0.0);` —
   the geometric-multigrid restriction-residual zeroing.
 - `palace/linalg/distrelaxation.cpp:114` — `linalg::SetSubVector(x_G, *dbc_tdof_list_G, 0.0);` —

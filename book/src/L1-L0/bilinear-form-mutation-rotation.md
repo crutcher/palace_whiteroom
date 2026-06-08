@@ -1,7 +1,7 @@
 # bilinear-form-mutation-rotation
 
-The mutation rotation for the operator-weighted (bilinear-form) inner product. Lowers the pure L1
-form `bilinear_form(x, M, y) = xᴴ M y` ([`L1/bilinear-form`](../L1/bilinear-form.md)) into Palace's L0 `linalg::Dot(comm, x, A, y)` three-step composition
+The mutation rotation for the operator-weighted (bilinear_form) inner product. Lowers the pure L1
+form `bilinear_form(x, M, y) = xᴴ M y` ([`L1/bilinear_form`](../L1/bilinear_form.md)) into Palace's L0 `linalg::Dot(comm, x, A, y)` three-step composition
 `ComplexVector Ax(A.Height()); A.Mult(x, Ax); return Dot(comm, Ax, y)`
 (`palace/linalg/operator.cpp:621-639`). It is the **off-diagonal sibling** of
 [`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md): where the
@@ -10,7 +10,7 @@ theme lowers the general case `y ≠ x` with no precondition on `M`'s symmetry. 
 two sibling sub-themes** rather than restating them: the leading `A.Mult(x, Ax)` is
 [`apply-linop-mutation-rotation`](./apply-linop-mutation-rotation.md) Sub-pattern A; the inner
 `Dot(comm, Ax, y)` is [`dot-mutation-rotation`](./dot-mutation-rotation.md) Sub-pattern A (the
-`Mpi::GlobalSum ∘ LocalDot` two-step). What this theme adds is the bilinear-form machinery: the
+`Mpi::GlobalSum ∘ LocalDot` two-step). What this theme adds is the bilinear_form machinery: the
 **internally-allocated `Ax` workspace** (Category-4 synthetic — distinct from the caller-supplied
 `Bx` of the sibling theme), the **element-type-of-`M` overload split** (real `A : Operator` with a
 real/imaginary lane split on complex `x` vs complex `A : ComplexOperator` with a single direct
@@ -25,30 +25,30 @@ L1 form `xᴴ M y` with `x ↔ y` argument-order swap).
 
 ## L1 form (LHS)
 
-The pure-functional matrix-weighted bilinear-form inner product consumes three read-only inputs
+The pure-functional matrix-weighted bilinear_form inner product consumes three read-only inputs
 and produces a fresh scalar; nothing is mutated, and there is no workspace in the signature. The
-LHS shape (the L1 operator; see [`L1/bilinear-form`](../L1/bilinear-form.md)):
+LHS shape (the L1 operator; see [`L1/bilinear_form`](../L1/bilinear_form.md)):
 
     alpha = bilinear_form(x, M, y)    -- alpha = xᴴ M y, scalar
                                       -- (complex x, real M, complex y    -> complex)
                                       -- (complex x, complex M, complex y -> complex)
                                       -- (the real x / real M / real y case is not
                                       --  surfaced by Palace's L0 overload set;
-                                      --  see L1/bilinear-form §Variant axes)
+                                      --  see L1/bilinear_form §Variant axes)
 
 The L1 algebraic identity that anchors the lowering is
 `bilinear_form(x, M, y) = dot(x, apply_linop(M, y))` — the matrix-weighted form unfolds into one
-`apply_linop` + one `dot` (per [`L1/bilinear-form`](../L1/bilinear-form.md) §"Composition into
+`apply_linop` + one `dot` (per [`L1/bilinear_form`](../L1/bilinear_form.md) §"Composition into
 `apply_linop` + `dot`"). At L1 the operator is a single semantic step (the closed-form `xᴴ M y`);
 the three-step unfolding is what this theme makes explicit. The element-type axis of `M`
 (`real`/`complex`) is collapsed at L1 — see *Variant axes*. The MPI collective is **not** in the
 L1 signature; the L1 reduction is one semantic step. The workspace `Ax` is **not** in the L1
 signature; the operator returns a fresh scalar with no buffer parameter.
 
-There is **no SPD precondition on `M`** at L1 (per [`L1/bilinear-form`](../L1/bilinear-form.md)
+There is **no SPD precondition on `M`** at L1 (per [`L1/bilinear_form`](../L1/bilinear_form.md)
 §Applicability conditions); the operator is well-defined for any linear `M`, including
 non-Hermitian and indefinite weights. This is the **structural distinguisher** from
-`matrix-weighted-norm`: the bilinear form has no positivity / Hermiticity / squareness gate, while
+`matrix_weighted_norm`: the bilinear form has no positivity / Hermiticity / squareness gate, while
 the weighted norm requires SPD (and the consumer-pattern outer `√` would otherwise be undefined).
 
 ## L0 form (RHS)
@@ -199,7 +199,7 @@ Citations:
 
 The two surfaced Palace call-sites for `linalg::Dot(comm, x, A, y)` both live in
 `palace/models/boundarymodeoperator.cpp::ComputePoyntingPower` and span both M-symmetry-property
-witnesses (per [`L1/bilinear-form`](../L1/bilinear-form.md) §"Variant axes"):
+witnesses (per [`L1/bilinear_form`](../L1/bilinear_form.md) §"Variant axes"):
 
     // palace/models/boundarymodeoperator.cpp:85  — Hermitian-A witness
     std::complex<double> P = 0.5 * std::conj(kn) / omega * linalg::Dot(comm, et, *Bttr, et);
@@ -209,19 +209,19 @@ witnesses (per [`L1/bilinear-form`](../L1/bilinear-form.md) §"Variant axes"):
 
 The line `:85` is the **diagonal Hermitian-`A` case** `bilinear_form(et, Bttr, et) = etᴴ Bttr et`
 — a real-valued energy-norm-squared (`Bttr` is a real symmetric MFEM `HypreParMatrix`; the form
-hits law 8 of [`L1/bilinear-form`](../L1/bilinear-form.md) §"Algebraic laws"). This site is
-**structurally** the same as a `matrix-weighted-norm` callsite (it computes `√(etᴴ Bttr et)`'s
-square), but it is **call-coded** through the bilinear-form overload (not through `Norml2`),
-because the caller (`ComputePoyntingPower`) wants the unrooted bilinear-form value to combine with
+hits law 8 of [`L1/bilinear_form`](../L1/bilinear_form.md) §"Algebraic laws"). This site is
+**structurally** the same as a `matrix_weighted_norm` callsite (it computes `√(etᴴ Bttr et)`'s
+square), but it is **call-coded** through the bilinear_form overload (not through `Norml2`),
+because the caller (`ComputePoyntingPower`) wants the unrooted bilinear_form value to combine with
 a `std::conj(kn) / omega` complex prefactor.
 
 The line `:90` is the **off-diagonal non-Hermitian-`A` case**
 `bilinear_form(en, Atn, et) = enᴴ Atn et` with `Atn = ComplexWrapperOperator(Atnr, Atni)` a
 complex wrapper around a **non-symmetric** MFEM `HypreParMatrix`. This site is the direct witness
-that law 7 (Hermitian symmetry — see [`L1/bilinear-form`](../L1/bilinear-form.md) §"Algebraic
+that law 7 (Hermitian symmetry — see [`L1/bilinear_form`](../L1/bilinear_form.md) §"Algebraic
 laws") **does not** hold here: `linalg::Dot(comm, en, Atn, et) ≠ linalg::Dot(comm, et, Atn, en)`
 in general. This is the structural reason a separate L1 operator
-`bilinear-form` exists distinct from `matrix-weighted-norm` — the off-diagonal non-Hermitian case
+`bilinear_form` exists distinct from `matrix_weighted_norm` — the off-diagonal non-Hermitian case
 is admitted.
 
 Both callsites use the **complex-`A` overload** (Sub-pattern B): `Bttr` is wrapped to
@@ -233,7 +233,7 @@ the surface, not closed by this theme.
 
 A second informational callsite is `palace/linalg/nleps.cpp:675` —
 `linalg::Dot(GetComm(), w, w0)` in the Newton-denominator expression — but this is the
-**unweighted** two-argument `linalg::Dot` (the `dot` lowering, not the bilinear-form lowering).
+**unweighted** two-argument `linalg::Dot` (the `dot` lowering, not the bilinear_form lowering).
 The L1 entry notes it as a witness that callers sometimes inline the L1>L0 unfolding manually
 (computing `xᴴ M y` as `dot(x, apply_linop(M, y))` rather than calling the matrix-weighted
 overload). This is **not** a Sub-pattern A or B callsite for this theme — it is a peer datum
@@ -249,7 +249,7 @@ Citations:
   `Atn = ComplexWrapperOperator(Atnr, Atni)` and line `:90` is the non-Hermitian-`A` callsite.
 - `palace/linalg/nleps.cpp:672-675` — Newton denominator: `delta_eig = -(linalg::Dot(GetComm(),
    u, w0) + u2_w0) / linalg::Dot(GetComm(), w, w0)` (`:674-675`). Unweighted `linalg::Dot`;
-   informational only (does not exercise the bilinear-form overload).
+   informational only (does not exercise the bilinear_form overload).
 
 ## The internal workspace `Ax` — the structural distinguisher from the weighted-norm sibling
 
@@ -257,12 +257,12 @@ The **single structural distinguisher** between this theme and
 [`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md) is the
 **workspace-ownership boundary**:
 
-- **`matrix-weighted-norm` (`Norml2`): workspace is CALLER-SUPPLIED.** The L0 signature
+- **`matrix_weighted_norm` (`Norml2`): workspace is CALLER-SUPPLIED.** The L0 signature
   `linalg::Norml2(comm, x, B, Bx)` takes `Bx` as a destination parameter; the eigensolver
   callsites pre-allocate it once outside a loop and reuse across all eigenvectors
   (`palace/linalg/arpack.cpp:470`, `slepc.cpp:505`, `nleps.cpp:146`). The reuse is a transparent
   performance trick (allocation hoisting); algebraically invisible.
-- **`bilinear-form` (`Dot(...,A,...)`): workspace is INTERNALLY-ALLOCATED.** The L0 signature
+- **`bilinear_form` (`Dot(...,A,...)`): workspace is INTERNALLY-ALLOCATED.** The L0 signature
   `linalg::Dot(comm, x, A, y)` does **not** take a workspace parameter; the body allocates
   `ComplexVector Ax(A.Height())` on entry (`palace/linalg/operator.cpp:624` / `:634`) and lets
   it fall out of scope on return. This is Category 4 ("synthetic workspace") of
@@ -316,7 +316,7 @@ condition 3) for the real-on-complex case.
 ## Reduction tree — load-bearing-numerical recording
 
 The bilinear form accumulates non-associativity from **two** inherited sources (per
-[`L1/bilinear-form`](../L1/bilinear-form.md) §Semantics):
+[`L1/bilinear_form`](../L1/bilinear_form.md) §Semantics):
 
 1. **`apply_linop(M, x)`'s internal kernel** — a sparse-matrix realisation of `M` and a
    matrix-free realisation of the *same* operator produce bit-different `M·x` (the
@@ -325,7 +325,7 @@ The bilinear form accumulates non-associativity from **two** inherited sources (
    (Hypre per-rank kernel + MPI tree-reduce). Pinned per the `dot` lowering.
 
 There is **no outer `√`** here (unlike the weighted-norm sibling), so the bilinear form is one
-reduction-non-associativity layer "shallower" than `matrix-weighted-norm`. Bit-identical
+reduction-non-associativity layer "shallower" than `matrix_weighted_norm`. Bit-identical
 reproduction of a specific Palace `Dot(comm, x, A, y)` call requires matching **both** the
 `A`-representation kernel tree and the inner `Dot` reduction tree — not merely the value. (Same
 discipline as the weighted-norm sibling, minus the deterministic-`sqrt` final step.)
@@ -333,7 +333,7 @@ discipline as the weighted-norm sibling, minus the deterministic-`sqrt` final st
 ## Conjugation asymmetry — the L1/L0 reconciliation
 
 A core feature of this theme — and the key surface-form distinction from the weighted-norm sibling
-— is that **the conjugation handedness is materially visible** in the bilinear-form lowering,
+— is that **the conjugation handedness is materially visible** in the bilinear_form lowering,
 because the bilinear form's result is complex-valued and the imaginary part is not discarded.
 
 In the weighted-norm sibling, the inner `Dot(comm, Bx, x)` result is a `std::complex<double>` but
@@ -345,7 +345,7 @@ from `yᴴ M x` by `conj`-and-`Mᴴ` (`xᴴ M y = conj(yᴴ Mᴴ x)`, which equa
 Hermitian `M`, and in general requires the `Mᴴ` adjoint).
 
 This is why the L1 form picks the L1 `dot`-convention naming (arg-1 conjugated) — to give the
-clean specialisation `bilinear_form(x, I, y) = dot(x, y)` ([`L1/bilinear-form`](../L1/bilinear-form.md)
+clean specialisation `bilinear_form(x, I, y) = dot(x, y)` ([`L1/bilinear_form`](../L1/bilinear_form.md)
 law 6) — while the L0 form uses the arg-2-conjugated `Dot` convention (matching Palace's
 two-argument `linalg::Dot`). The L1>L0 lowering is the argument-position swap:
 
@@ -361,7 +361,7 @@ The lowering rule: **when the L1 form is `bilinear_form(x, M, y)`, the L0 surfac
 `linalg::Dot(comm, y, M, x)`** (positions swapped; the *first* L0 argument is the *second* L1
 argument). This matches the inherited handling of the same asymmetry in
 [`dot-mutation-rotation`](./dot-mutation-rotation.md) §"The conjugation asymmetry" — the
-bilinear-form theme inherits the convention reconciliation rather than introducing a new one.
+bilinear_form theme inherits the convention reconciliation rather than introducing a new one.
 
 Palace's own callsites are consistent with the L0 convention `Dot(comm, x, A, y) = yᴴ A x`:
 `linalg::Dot(comm, et, Bttr, et)` at `boundarymodeoperator.cpp:85` returns `etᴴ Bttr et` (the
@@ -378,7 +378,7 @@ The rewrite preserves semantics when:
    virtual is `const`. The only buffer mutation is the internal workspace `Ax` overwrite (the
    inherited `apply_linop` rotation, scoped to the call). The result is a returned scalar.
 2. **`M` is a linear operator.** Nonlinear weights are not supported and not meaningful for
-   `xᴴ M y` (see [`L1/bilinear-form`](../L1/bilinear-form.md) §Applicability conditions).
+   `xᴴ M y` (see [`L1/bilinear_form`](../L1/bilinear_form.md) §Applicability conditions).
 3. **Shape compatibility.** `M`'s codomain axis equals `x`'s length; `M`'s domain axis equals
    `y`'s length. **`M` need not be square** — unlike the weighted-norm sibling, the bilinear form
    admits rectangular `M`. (The L0 surface enforces `Ax.Size() == y.Size()` via the inherited
@@ -392,7 +392,7 @@ The rewrite preserves semantics when:
 4. **No SPD / Hermitian / positivity precondition on `M`.** The form `xᴴ M y` is well-defined for
    any linear `M`. The non-Hermitian witness `boundarymodeoperator.cpp:90` (`Atn`) is direct
    evidence that Palace exercises this. **This is the structural distinguisher from
-   `matrix-weighted-norm`**, which requires SPD.
+   `matrix_weighted_norm`**, which requires SPD.
 5. **Element-type compatibility.** The L0 surface fixes `x` and `y` as `ComplexVector`; the
    L1 entry's §Signature element-type table records this constraint. The real-`x` / real-`M` /
    real-`y` case is **not** surfaced (Palace does not provide an `xᵀ A y` overload); this is the
@@ -420,7 +420,7 @@ The rewrite preserves semantics when:
 
 The theme as a whole is `structural`, resting on:
 
-- One **algebraic identity** ([`L1/bilinear-form`](../L1/bilinear-form.md) Composition note:
+- One **algebraic identity** ([`L1/bilinear_form`](../L1/bilinear_form.md) Composition note:
   `bilinear_form(x, M, y) = dot(x, apply_linop(M, y))`).
 - Two **inherited sub-themes** (`apply-linop-mutation-rotation` Sub-pattern A, applied once or
   twice; `dot-mutation-rotation` Sub-pattern A).
@@ -441,12 +441,12 @@ reconstruction, no literature inference, no speculative operator). Hence `firm` 
 
 ## Speculative L1 operators
 
-**None.** This theme lowers the existing L1 [`bilinear-form`](../L1/bilinear-form.md) operator
+**None.** This theme lowers the existing L1 [`bilinear_form`](../L1/bilinear_form.md) operator
 (rough-in test-coverage-bounded) into existing firm L1 vocabulary — `apply_linop` for the `M·x`
 (or `M·y`) step, `dot` for the inner reduction. It proposes no new L1 vocabulary. The sibling
-**matrix-weighted-norm** `linalg::Norml2(comm, x, B, Bx)` shares the same two L1 primitives but
+**matrix_weighted_norm** `linalg::Norml2(comm, x, B, Bx)` shares the same two L1 primitives but
 with the diagonal restriction `y = x` plus an outer `√` and an SPD applicability condition; it is
-a **different operator** ([`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md)) with its own
+a **different operator** ([`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md)) with its own
 firm theme ([`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md)).
 The two themes share L0-file-block evidence (both live in `palace/linalg/operator.{hpp,cpp}`) and
 inherited sub-themes (`apply-linop` Sub-pattern A + `dot` Sub-pattern A) but are kept separate
@@ -456,7 +456,7 @@ vs internally-allocated `Ax`).
 
 ## Variant axes
 
-`bilinear-form` has two orthogonal variant axes at the L1>L0 edge (per `classify-variant-axis`),
+`bilinear_form` has two orthogonal variant axes at the L1>L0 edge (per `classify-variant-axis`),
 plus one collapsed onto an inherited sub-theme:
 
 - **element-type of `M`**: `real` | `complex`. At L0 these are the two overloads
@@ -466,7 +466,7 @@ plus one collapsed onto an inherited sub-theme:
   (`std::complex<double>`) and the same closed-form `xᴴ M y`. At L1 these **collapse to a single
   operator** — the element-type axis is absorbed by `apply_linop`'s representation variant axis.
 - **M-symmetry-property**: `hermitian` | `non-symmetric`. This axis is **material at L1** because
-  law 7 (Hermitian symmetry) of [`L1/bilinear-form`](../L1/bilinear-form.md) holds conditionally.
+  law 7 (Hermitian symmetry) of [`L1/bilinear_form`](../L1/bilinear_form.md) holds conditionally.
   At L0 it is **not** a variant axis — the same `linalg::Dot(comm, x, A, y)` overload handles
   both cases without dispatch. Palace exercises both witnesses in the same function:
   `boundarymodeoperator.cpp:85` (Hermitian `Bttr`), `:90` (non-Hermitian `Atn`). The lowering is
@@ -496,7 +496,7 @@ rough-in L1 entry is consistent).
 
 L0 evidence ranges:
 
-- `palace/linalg/operator.hpp:386-394` — both bilinear-form overload declarations + comments
+- `palace/linalg/operator.hpp:386-394` — both bilinear_form overload declarations + comments
   (`// Compute the bilinear form inner product yᴴ A x for a {real,complex} operator A and complex
    vectors. Allocates workspace internally.`).
 - `palace/linalg/operator.cpp:621-629` — real-`A` overload body: `ComplexVector Ax(A.Height())`
@@ -508,16 +508,16 @@ L0 evidence ranges:
 - `palace/models/boundarymodeoperator.cpp:75-93` — `ComputePoyntingPower` body. Line `:85`
   Hermitian-`A` callsite (`Bttr`); line `:90` non-Hermitian-`A` callsite (`Atn`).
 - `palace/linalg/nleps.cpp:672-675` — Newton denominator using unweighted `linalg::Dot(GetComm(),
-   w, w0)` (informational; not a bilinear-form callsite).
+   w, w0)` (informational; not a bilinear_form callsite).
 
 L1 / cross-theme anchors:
 
-- [`L1/bilinear-form`](../L1/bilinear-form.md) — the L1 operator this theme lowers
+- [`L1/bilinear_form`](../L1/bilinear_form.md) — the L1 operator this theme lowers
   (rough-in test-coverage-bounded): closed form `xᴴ M y` (`:18-19`), composition note
   `bilinear_form(x, M, y) = dot(x, apply_linop(M, y))` (`:111-117`), conjugation convention
   (`:148-159`), algebraic laws 1-8 (`:181-220`), variant axes incl. M-symmetry-property
   (`:258-302`), applicability conditions (`:304-318`), test-coverage promotion gate (`:319-344`).
-- [`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md) — the sibling diagonal-restricted
+- [`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md) — the sibling diagonal-restricted
   operator (rough-in test-coverage-bounded) for parallel-structure verification.
 - [`L1-L0/matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md) —
   the firm paired sibling theme; followed as the structural precedent. Workspace boundary
@@ -536,10 +536,10 @@ L1 / cross-theme anchors:
 - [`L1/dot`](../L1/dot.md)`:43, 104-105` — the arg-1-conjugated L1 convention + the documented
   L1/L0 conjugation asymmetry.
 
-## Relationship to the matrix-weighted-norm sibling
+## Relationship to the matrix_weighted_norm sibling
 
-The L1 operator [`bilinear-form`](../L1/bilinear-form.md) and its sibling
-[`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md) share L0-file-block evidence (both live
+The L1 operator [`bilinear_form`](../L1/bilinear_form.md) and its sibling
+[`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md) share L0-file-block evidence (both live
 in `palace/linalg/operator.{hpp,cpp}`) and inherited sub-themes (`apply_linop` Sub-pattern A + `dot`
 Sub-pattern A), but are distinct operators with their own firm themes
 ([`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md)). The

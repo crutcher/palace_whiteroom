@@ -3,7 +3,7 @@ edges:
   reference:
     - L1/apply_linop               # authoritative operator entry (definition)
     - concepts/constructed-operators  # sibling concept (constructed-operator unfolding)
-    - L2/krylov-step               # use-site cross-link (matvec count / per-step apply)
+    - L2/krylov_step               # use-site cross-link (matvec count / per-step apply)
 ---
 
 # apply_linop
@@ -119,8 +119,8 @@ Palace's C++ form is `A.Mult(x, y)` (mutating, overwrites `y`).
 
 ## Slices that use this primitive
 
-- [`krylov-step` (CG instance)](../L2/krylov-step.md) — single application per inner iteration
+- [`krylov_step` (CG instance)](../L2/krylov_step.md) — single application per inner iteration
   (`A p`).
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — single application per Arnoldi
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — single application per Arnoldi
   step (`A v_j` or `M⁻¹ A v_j` via the constructed-operator
   `apply_BA`).

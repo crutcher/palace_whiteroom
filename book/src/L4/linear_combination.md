@@ -44,7 +44,7 @@ surface must name it so every in-scope feature (assemble AND solve) can reach L4
 written against the backend's verb set.
 
 `linear_combination` is **not** an iteration-structural combinator like
-[`iterate-while`](./iterate-while.md) / [`solve_family`](./solve_family.md) /
+[`iterate_while`](./iterate_while.md) / [`solve_family`](./solve_family.md) /
 [`fold_solve`](./fold_solve.md). Those thread a `SimState` carry through a
 stopping predicate or a schedule; `linear_combination` is a **pure
 value-producing data-parallel reduction** over a *statically-known finite term
@@ -52,8 +52,8 @@ list* — no control-flow, no monadic `Solve` effect, no convergence predicate, 
 carry-dependence between terms. It is the **data-algebra half** of the L4
 vocabulary (alongside its sibling [`inner_product`](./inner_product.md)), the
 half the iteration-structural combinators *consume* in their step bodies (e.g.
-the GMRES basis-correction sum inside [`krylov-step`](./krylov-step.md)'s body,
-`L4/krylov-step.md:67`, IS a `linear_combination` over scalar-weighted basis
+the GMRES basis-correction sum inside [`krylov_step`](./krylov_step.md)'s body,
+`L4/krylov_step.md:67`, IS a `linear_combination` over scalar-weighted basis
 terms).
 
 The admission test for L4 is **feature-surface membership**, not iteration

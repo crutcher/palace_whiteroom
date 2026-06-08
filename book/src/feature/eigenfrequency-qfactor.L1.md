@@ -8,7 +8,7 @@ edges:
   depends-on:
     - target: L4/eigenfreq_qfactor_reduce
       kind: folds
-    - target: L1/eigenvalue-untransform
+    - target: L1/eigenvalue_untransform
       kind: folds
     - target: L1/participation_ratio
       kind: folds
@@ -65,5 +65,5 @@ The defining structural fact at both levels: a **rank-1 per-mode scalar-ratio ta
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
 | producing driver column (sibling reference, not a blocker) | [`eigenmode.L1`](./eigenmode.L1.md) (driver feature column) | firm | `eigensolver.cpp:32-477` |
-| eigenfrequency un-transform | [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (firm L1; folded by [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md)) | firm | `eigensolver.cpp:430-439` |
+| eigenfrequency un-transform | [`eigenvalue_untransform`](../L1/eigenvalue_untransform.md) (firm L1; folded by [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md)) | firm | `eigensolver.cpp:430-439` |
 | Q-factor κ participation | [`participation_ratio`](../L1/participation_ratio.md) (firm L1; folded by [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md)) | firm | `postoperator.cpp:1188-1203` |

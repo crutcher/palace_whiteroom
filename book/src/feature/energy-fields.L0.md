@@ -64,7 +64,7 @@ The source stages, in order:
    `M_i.find(idx)` (`:259`), applies the restricted operator `it->second.first->Mult(E.Real(), D)`
    (`:265`), forms `double dot = linalg::LocalDot(E.Real(), D)` (`:266`), adds the imaginary part if
    present (`:267-271`), globally sums (`:272`), and returns `0.5 * dot` (`:273`) — the
-   `½⟨E, M_idx E⟩` SPD energy form (the [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
+   `½⟨E, M_idx E⟩` SPD energy form (the [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)
    squared radicand restricted to one domain). The magnetic sibling
    `GetDomainMagneticFieldEnergy(int idx, const GridFunction &B)` (`:277`) is identical with `B`/`H`,
    returning `0.5 * dot` (`:296`).
@@ -88,7 +88,7 @@ accumulation → value-returning per-domain `(energyᵢ, pᵢ)` evaluations) and
 composition root [`energy-fields.L4`](./energy-fields.L4.md) (the per-domain `for` loop + the energy
 form + the participation quotient → the `domain_energy_reduce`
 per-domain energy-table reduction combinator, folding the
-[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared energy form and the firm
+[`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)-squared energy form and the firm
 [`participation_ratio`](../L1/participation_ratio.md)). The per-operator L1>L0 mutation-rotation of
 the readout carries the per-write lifts; this feature surface records the output-product *site map*
 (which source range realizes which reduction stage).

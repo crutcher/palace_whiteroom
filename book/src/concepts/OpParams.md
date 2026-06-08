@@ -8,10 +8,10 @@ edges:
     - target: palace/linalg/iterative.hpp:155-217
       kind: cites-evidence            # GmresSolver variant selectors: max_dim (:180), gs_orthog (:184), pc_side (:187)
   reference:
-    - L4/krylov-step
+    - L4/krylov_step
     - concepts/solve-monad
     - concepts/state-stratification
-    - concepts/sim-state
+    - concepts/SimState
     - concepts/krylov
     - concepts/variant-absorption
     - concepts/constructed-operators
@@ -21,7 +21,7 @@ edges:
 
 # OpParams
 
-> **Kind: `record`.** This page defines the *data shape* of the L4 `OpParams` record — its fields, their types and meaning, the construction-vs-run-time stratum of each, and the L0 source home it mirrors. The *behaviour* over `OpParams` (how `krylov-step` reads it through closed-over surfaces) lives in the operator chapters that consume it — this page does not restate that algebra.
+> **Kind: `record`.** This page defines the *data shape* of the L4 `OpParams` record — its fields, their types and meaning, the construction-vs-run-time stratum of each, and the L0 source home it mirrors. The *behaviour* over `OpParams` (how `krylov_step` reads it through closed-over surfaces) lives in the operator chapters that consume it — this page does not restate that algebra.
 
 `OpParams` is the **operator-internal-parameters** stratum of the L4 three-stratum solve typing: the readonly variant-selector + constructed-operator-surface closure that a Krylov-shaped solve captures **once at solve construction** and never re-inspects from the per-step kernel. It is the concrete record realising stratum (2) of [`state-stratification`](./state-stratification.md) — see that page for *why* the three-way split is load-bearing (lifetimes-visible + variant-absorption-mechanically-checkable); this page enumerates the record's fields.
 
@@ -77,17 +77,17 @@ OpParams = {
 - Operator + preconditioner handles (not owned): `const OperType *A` (`iterative.hpp:49`), `const Solver<OperType> *B` (`iterative.hpp:50`) — closed over by the `T` surface.
 - GMRES variant selectors: `max_dim` (`iterative.hpp:180`), `Orthogonalization gs_orthog` (`iterative.hpp:184`), `PreconditionerSide pc_side` (`iterative.hpp:187`).
 
-These are exactly the fields [`state-stratification`](./state-stratification.md) §"Worked example — GMRES" maps to `OpParams` ("instance fields (configuration) ↔ OpParams"). The L0 layout stores them as plain instance fields alongside the run-time workspace and statistics; the L4 `OpParams` record un-mixes the construction-time configuration from the run-time strata (see [`krylov`](./krylov.md) for the ephemeral workspace and [`sim-state`](./sim-state.md) for the solve statistics). The `mutable` keyword on the L0 statistics/workspace fields is itself the L0 signal of the stratum boundary: the non-`mutable` fields above are the `OpParams` stratum.
+These are exactly the fields [`state-stratification`](./state-stratification.md) §"Worked example — GMRES" maps to `OpParams` ("instance fields (configuration) ↔ OpParams"). The L0 layout stores them as plain instance fields alongside the run-time workspace and statistics; the L4 `OpParams` record un-mixes the construction-time configuration from the run-time strata (see [`krylov`](./krylov.md) for the ephemeral workspace and [`SimState`](./SimState.md) for the solve statistics). The `mutable` keyword on the L0 statistics/workspace fields is itself the L0 signal of the stratum boundary: the non-`mutable` fields above are the `OpParams` stratum.
 
 ## Used by
 
-- [`krylov-step`](../L4/krylov-step.md) — the per-step kernel reads `OpParams` only through `op.T`, `op.orthog?`, `op.scalars?`, `op.eps` (`L4/krylov-step.md:37`); it never branches on the raw selector fields.
+- [`krylov_step`](../L4/krylov_step.md) — the per-step kernel reads `OpParams` only through `op.T`, `op.orthog?`, `op.scalars?`, `op.eps` (`L4/krylov_step.md:37`); it never branches on the raw selector fields.
 - [`solve-monad`](./solve-monad.md) — the outer driver closes the constructed-operator surfaces over the `OpParams` selectors at construction.
 
 ## See also
 
 - [`state-stratification`](./state-stratification.md) — the three-stratum typing this record's stratum (2) belongs to (do not duplicate; this page is the field schema, that page is the conceptual typing).
-- [`sim-state`](./sim-state.md) — stratum (1), the run-time externally-visible record.
+- [`SimState`](./SimState.md) — stratum (1), the run-time externally-visible record.
 - [`krylov`](./krylov.md) — stratum (3), the ephemeral workspace record.
 - [`variant-absorption`](./variant-absorption.md) — why the `readonly` typing makes variant absorption structural.
 - [`constructed-operators`](./constructed-operators.md) / [`constructed-operator-factory`](./constructed-operator-factory.md) — where the variant selectors are closed over into the `T` / `orthog?` / `scalars?` surfaces.

@@ -48,7 +48,7 @@ structural difference from the BLAS-1 floor cohort. The two L2 fold cohorts
 (`book/src/L2/index.md` §"Fold cohorts") are:
 
 - [`inner_product`](./inner_product.md) — folds the **length axis** to a `Scalar`
-  (`foldl (+) zero (zipWith kernel x y)`); the `dot` / `tdot` / `bilinear-form` family.
+  (`foldl (+) zero (zipWith kernel x y)`); the `dot` / `tdot` / `bilinear_form` family.
 - [`linear_combination`](./linear_combination.md) — folds the **term axis**, keeping
   `Tensor[$S]` (`foldl (\acc (a,t) -> acc + a·t) zeros pairs`); the
   `scal` / `axpy` / `axpby` / `axpbypcz` arity family.

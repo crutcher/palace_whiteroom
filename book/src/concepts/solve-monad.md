@@ -4,7 +4,7 @@ edges:
     - concepts/state-stratification
     - concepts/constructed-operators
     - concepts/sequential-obstruction
-    - L2/krylov-step
+    - L2/krylov_step
 ---
 # solve-monad
 
@@ -44,7 +44,7 @@ The rule of thumb: if the action reads or writes `SimState`, it's in the monad; 
 
 ## Used by
 
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — restarted GMRES / FGMRES coordination over `SimState`, with `Krylov` threaded as a `let`-bound bundle inside each `restart_cycle`.
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — restarted GMRES / FGMRES coordination over `SimState`, with `Krylov` threaded as a `let`-bound bundle inside each `restart_cycle`.
 
 ## See also
 

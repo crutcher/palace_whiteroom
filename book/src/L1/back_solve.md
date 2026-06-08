@@ -19,17 +19,17 @@ columns the leading `(j+1)×(j+1)` block is an upper-triangular factor `R`, and 
 rotated RHS `s` (initialised `s = β₀·e₁`) carries the least-squares residual in its
 tail entry `s[j+1]`. That column-by-column triangularisation — the
 `replay ▷ generate ▷ apply ▷ apply_rhs` stream — is the **L2 named composition**
-[`incremental-least-squares`](../L2/incremental-least-squares.md).
+[`incremental_least_squares`](../L2/incremental_least_squares.md).
 At restart-cycle close (convergence, restart boundary, or max-iterations) the
 least-squares problem is finished by **back-solving** the triangular system
 `R · y = s` for the coordinate vector `y`. That back-solve is this L1 leaf.
 
 This leaf is the terminal **`back_solve`** projection named by the L2 entry's
-signature (`L2/incremental-least-squares.md:81-83`); the concept page
+signature (`L2/incremental_least_squares.md:81-83`); the concept page
 [`concepts/givens`](../concepts/givens.md)
 names it as the `back_solve` step "via `trsv`" (`:29`). (Note: the slug
-`ls_update_column` at `L2/incremental-least-squares.md:412` and
-`concepts/incremental-least-squares.md:14` names the DISTINCT per-column streaming
+`ls_update_column` at `L2/incremental_least_squares.md:412` and
+`concepts/incremental_least_squares.md:14` names the DISTINCT per-column streaming
 update step `ls_update_column(K, j, h_new) → K'`, not this terminal back-solve —
 hence this leaf takes the artifact-native slug `back_solve`.) It is split out as its own
 firm L1 primitive — rather than left as a sub-step inside the L2 composition —
@@ -90,7 +90,7 @@ Shape contract (bunsen-style, named axes):
   sub-diagonal — every diagonal and super-diagonal entry present, sub-diagonal zero.
   Its uppertriangularity is load-bearing: it is what makes a *back-substitution*
   (rather than a full factor-and-solve) the right kernel, and it is established by
-  the running-QR stream (the [`incremental-least-squares`](../L2/incremental-least-squares.md)
+  the running-QR stream (the [`incremental_least_squares`](../L2/incremental_least_squares.md)
   L2 composition), not by this leaf.
 - `s` — `Tensor[j+1]` — the right-hand side: the leading `j+1` entries of the
   rotated RHS accumulated by the running-QR stream (`s` started as `β₀·e₁`, each
@@ -155,7 +155,7 @@ Two semantic points are load-bearing and recorded rather than smoothed:
 exact-arithmetic least-squares minimiser.** The defining contract is
 `R · back_solve(R, s) = s` for upper-triangular non-singular `R`. The
 upper-triangularity is established by the running-QR stream (the
-[`incremental-least-squares`](../L2/incremental-least-squares.md) composition has
+[`incremental_least_squares`](../L2/incremental_least_squares.md) composition has
 annihilated every sub-diagonal); non-singularity holds unless Arnoldi breaks down
 (a zero diagonal `R[i][i]` would divide-by-zero at `:656`, the lucky-breakdown /
 exact-convergence case Palace handles upstream by the residual test exiting before
@@ -172,7 +172,7 @@ for any consistent ordering), but the *floating-point* result depends on it. Per
 CLAUDE.md numerical-trick taxonomy this is a **load-bearing numerical** detail (the
 reduction order is part of the algorithm's finite-precision behaviour, jointly with
 the running-QR rotation order that produced `R` and `s` — see the L2 entry's
-rotation-stream non-associativity non-law, `L2/incremental-least-squares.md:278-285`).
+rotation-stream non-associativity non-law, `L2/incremental_least_squares.md:278-285`).
 It is **not** a transparent reorder: a different summation order would give a
 bit-different `y`. The exact per-lowered-call reduction order is pinned by the
 L2>L1 theme. (The back-solve is *not* a reduction in the
@@ -192,7 +192,7 @@ The laws below hold; absences are deliberate. "Exact" means exact arithmetic.
    squares interpretation: `y` minimises `‖β₀·e₁ − H̄_j·y‖₂` because the running-QR
    stream reduced that problem to `R·y = s` (norm-preservation under the unitary
    rotation stream — the L2 entry's residual-exposure law,
-   `L2/incremental-least-squares.md:225-232`).
+   `L2/incremental_least_squares.md:225-232`).
 
 2. **Linearity in the RHS.** `back_solve(R, α·s₁ + β·s₂) = α·back_solve(R, s₁)
    + β·back_solve(R, s₂)` for scalars `α, β`. Holds because for fixed
@@ -240,7 +240,7 @@ Laws that explicitly **do not** hold:
   callers do not treat the summation order as a free choice. (Jointly with the
   running-QR rotation order that produced `R`/`s`, this pins the GMRES
   finite-precision solution path; see the L2 entry's rotation-stream
-  non-associativity non-law, `L2/incremental-least-squares.md:278-285`.)
+  non-associativity non-law, `L2/incremental_least_squares.md:278-285`.)
 - **Linearity / any structure in the coefficient `R`.** `back_solve(·, s)` is
   **not** linear in `R` (`back_solve(R₁ + R₂, s) ≠ back_solve(R₁, s) +
   back_solve(R₂, s)` — matrix inversion is nonlinear). Recorded so the
@@ -283,7 +283,7 @@ sparse-iterative-field representation/cost distinction (the L1 §Semantics motif
 `L1/index.md:25`).
 
 `back_solve` is the per-restart-cycle back-solve atom that the L2
-[`incremental-least-squares`](../L2/incremental-least-squares.md) named composition's
+[`incremental_least_squares`](../L2/incremental_least_squares.md) named composition's
 terminal `back_solve` projection depends on (the running-QR stream triangularises;
 this leaf finishes the least-squares solve). The lift of its output `y` into the
 field-space correction is a [`linear_combination`](../L2/linear_combination.md) of
@@ -314,7 +314,7 @@ axis — back-substitution is the only kernel for an already-triangular matrix).
   (`iterative.cpp:652-660` ≡ `:831-840`); the basis is read only by the downstream
   `linear_combination` reconstruction (`:666` `V` vs `:843` `Z`), not by this leaf.
   This is the consuming L2 composition's `op.basis_kind` axis
-  (`L2/incremental-least-squares.md:265-271` law 6); it is invisible at this leaf and
+  (`L2/incremental_least_squares.md:265-271` law 6); it is invisible at this leaf and
   recorded here only to make the no-structural-variant explicit (law 6).
 - **restart dimension `j+1`** (parameterised, absorbed-as-form): the small coordinate
   dimension (number of accumulated Arnoldi columns this restart cycle), `j+1` ≤ the
@@ -398,12 +398,12 @@ is fixed and load-bearing (the reduction-order non-law), not a selectable strate
   register `cs` always `RealType` (the element-type split underwriting the
   real/complex axis; not directly consumed by the back-solve but completes the
   register-type picture).
-- `book/src/L2/incremental-least-squares.md` — the firm L2 named composition;
+- `book/src/L2/incremental_least_squares.md` — the firm L2 named composition;
   this leaf is its terminal `back_solve` projection (`:81-83`); the
   running-QR stream that produces the R-factor `R` and RHS `s` this leaf consumes;
   the rotation-stream non-associativity non-law (`:278-285`) that this leaf's
   reduction-order non-law composes with. (`:412` and
-  `concepts/incremental-least-squares.md:14` bind the slug `ls_update_column` to the
+  `concepts/incremental_least_squares.md:14` bind the slug `ls_update_column` to the
   DISTINCT per-column streaming update step `ls_update_column(K,j,h_new)→K'`, not
   this terminal back-solve — hence this leaf is `back_solve`, not `ls_update_column`.)
 - `book/src/concepts/givens.md` — the cross-cutting concept page;

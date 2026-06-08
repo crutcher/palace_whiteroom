@@ -1,11 +1,11 @@
 ---
 # Lowering theme (L1>L0). Per graded-stack scheme §5: rank = min(endpoint ranks). The L1
-# endpoint (divfree-projector) is firm (rank 3); the L0 endpoint is rank-terminal ground
+# endpoint (divfree_projector) is firm (rank 3); the L0 endpoint is rank-terminal ground
 # truth. So the theme is firm and rank(theme) <= min(endpoints) holds for free.
 rank: firm
 edges:
   depends-on:
-    - target: L1/divfree-projector
+    - target: L1/divfree_projector
       kind: lowers-to             # the L1 source gate this theme lowers
     - target: palace/linalg/divfree.cpp:155-187
       kind: cites-evidence        # DivFreeSolver<VecType>::Mult — the in-place four-step apply
@@ -21,7 +21,7 @@ edges:
 # divfree-projector-mutation-rotation
 
 The mutation rotation for the divergence-free projector apply. Lowers the pure
-L1 form [`divfree_project`](../L1/divfree-projector.md) —
+L1 form [`divfree_project`](../L1/divfree_projector.md) —
 `y' = divfree_project(P, y) = y + P.Grad · K⁻¹( Z_{P.bdr_eff}( P.WeakDiv · y ) )`
 — into Palace's in-place L0 `DivFreeSolver<VecType>::Mult(VecType &y)` member
 method, plus the construction-bound `DivFreeSolver(...)` constructor that
@@ -46,7 +46,7 @@ fresh divergence-free field over an opaque constructed projector `P`
          where K solves  P.M · ψ = rhs  via P.ksp
 
 The four composed steps at L1 (see
-[`L1/divfree-projector`](../L1/divfree-projector.md) §Semantics):
+[`L1/divfree_projector`](../L1/divfree_projector.md) §Semantics):
 
 1. `rhs = P.WeakDiv · y`              — weak-divergence residual (Nedelec → H1)
 2. `rhs = Z_{P.bdr_eff}(rhs)`         — zero on the essential H1 boundary dofs
@@ -301,7 +301,7 @@ branches); the inner `ksp->Mult` is a single solve on the `ComplexOperator`-type
 system whose CG recursion is component-blind. There is no cross-coupling between
 real and imaginary parts. At L1 this is the parametric variant absorbed by
 polymorphism over the field element type
-([`L1/divfree-projector`](../L1/divfree-projector.md) §Signature, `y` element-type
+([`L1/divfree_projector`](../L1/divfree_projector.md) §Signature, `y` element-type
 note — block-diagonal complex action `P·(u + iv) = (P·u) + i(P·v)`).
 
 Justification kind: **structural** — the `VecType` template parameter and the
@@ -382,7 +382,7 @@ sites).
 
 ## Speculative L1 operators
 
-None. The L1 anchor [`L1/divfree-projector`](../L1/divfree-projector.md) is firm,
+None. The L1 anchor [`L1/divfree_projector`](../L1/divfree_projector.md) is firm,
 and all its sub-dependencies are firm L1 operators / firm concepts:
 [`apply_linop`](../L1/apply_linop.md) (the `WeakDiv·y` and `Grad·ψ` applies),
 [`axpy`](../L1/axpy.md) (the `y + Grad·ψ` accumulate, fused as
@@ -435,7 +435,7 @@ L0 evidence ranges:
 
 L1 anchor:
 
-- `book/src/L1/divfree-projector.md` — the firm L1 operator all four
+- `book/src/L1/divfree_projector.md` — the firm L1 operator all four
   sub-patterns lower from.
 
 ## Open questions / caveats

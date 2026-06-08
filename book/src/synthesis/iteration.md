@@ -8,14 +8,14 @@ edges:
   reference:
     - L4/iteration-combinators-intro
     - L4/chebyshev
-    - L4/iterate-while
-    - L4/iterate-while-with-prev
-    - L4/krylov-step
+    - L4/iterate_while
+    - L4/iterate_while_with_prev
+    - L4/krylov_step
     - concepts/krylov
-    - concepts/step-outputs
-    - concepts/prev-carry
-    - concepts/sim-state
-    - concepts/op-params
+    - concepts/StepOutputs
+    - concepts/PrevCarry
+    - concepts/SimState
+    - concepts/OpParams
     - concepts/solve-monad
     - concepts/first-iteration-unrolling
     - concepts/derived-view-hoisting
@@ -31,14 +31,14 @@ The synthesized rendering of the L4 [Iteration & step combinators](../L4/iterati
 
 A def appears after everything it uses:
 
-1. [`iterate-while`](../L4/iterate-while.md) — value-threaded tail-recursive loop with demand-pruned trajectory; the canonical iteration primitive (everything below uses it).
-2. [`iterate-while-with-prev`](../L4/iterate-while-with-prev.md) — carry-bootstrapped variant threading a `PrevCarry` closure; degenerates to `iterate-while` when `β = ()`.
-3. [`krylov-step`](../L4/krylov-step.md) — the typed-wrapper Krylov step kernel; Form A consumes `iterate-while`, Form B consumes `iterate-while-with-prev`.
-4. [`chebyshev`](../L4/chebyshev.md) — the fixed-degree polynomial smoother; both bounded loops are `iterate-while` folds with step-count predicates.
+1. [`iterate_while`](../L4/iterate_while.md) — value-threaded tail-recursive loop with demand-pruned trajectory; the canonical iteration primitive (everything below uses it).
+2. [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md) — carry-bootstrapped variant threading a `PrevCarry` closure; degenerates to `iterate_while` when `β = ()`.
+3. [`krylov_step`](../L4/krylov_step.md) — the typed-wrapper Krylov step kernel; Form A consumes `iterate_while`, Form B consumes `iterate_while_with_prev`.
+4. [`chebyshev`](../L4/chebyshev.md) — the fixed-degree polynomial smoother; both bounded loops are `iterate_while` folds with step-count predicates.
 
 ## Clustering types (rendered before the group)
 
-Per the [type-placement rule](./index.md#type-placement--cluster-a-type-with-its-api-group), the iteration-clustering state carriers — [`Krylov`](../concepts/krylov.md), [`StepOutputs`](../concepts/step-outputs.md), [`PrevCarry`](../concepts/prev-carry.md) — are rendered **immediately before** the operator group, bundled with their utility API (constructors / accessors / predicates). Their consumer methods stay in the group AFTER the type+utility block. The cross-cutting `SimState` / `OpParams` are shared and live in [`types`](./types.md), not here.
+Per the [type-placement rule](./index.md#type-placement--cluster-a-type-with-its-api-group), the iteration-clustering state carriers — [`Krylov`](../concepts/krylov.md), [`StepOutputs`](../concepts/StepOutputs.md), [`PrevCarry`](../concepts/PrevCarry.md) — are rendered **immediately before** the operator group, bundled with their utility API (constructors / accessors / predicates). Their consumer methods stay in the group AFTER the type+utility block. The cross-cutting `SimState` / `OpParams` are shared and live in [`types`](./types.md), not here.
 
 ## Rendering conventions
 
@@ -88,10 +88,10 @@ type Krylov_GMRES = {
 
 ## `StepOutputs` — the demand-prunable per-step readout
 
-The result-side record carrying the observations a step makes about itself (residual proxy, LS residual, breakdown signal), so the outer driver reads them without inspecting `Krylov` internals. Every field is a pure derived view of the post-step `Krylov` bundle and is demand-prunable (the [`derived-view-hoisting`](../concepts/derived-view-hoisting.md) Law 1). Authoritative schema: [`step-outputs`](../concepts/step-outputs.md).
+The result-side record carrying the observations a step makes about itself (residual proxy, LS residual, breakdown signal), so the outer driver reads them without inspecting `Krylov` internals. Every field is a pure derived view of the post-step `Krylov` bundle and is demand-prunable (the [`derived-view-hoisting`](../concepts/derived-view-hoisting.md) Law 1). Authoritative schema: [`StepOutputs`](../concepts/StepOutputs.md).
 
 ```text
--- result-side, per-step, derived; reborn each step. Authoritative: concepts/step-outputs.md
+-- result-side, per-step, derived; reborn each step. Authoritative: concepts/StepOutputs.md
 type StepOutputs = {
   residual_norm    : Scalar,        -- ‖r‖ proxy this step (CG: sqrt|beta|); always present
   ls_residual?     : Scalar,        -- GMRES/FGMRES LS residual estimate |s[j+1]|
@@ -107,11 +107,11 @@ type BreakdownTag = Ok | NotPositiveDefinite | NotFinite   -- slice-specific (th
 
 ## `PrevCarry` — the Form-B closure-threaded recurrence carry
 
-The closure-threaded recurrence carry the [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md) rotation moves *out of* the steady-state schema and threads through the loop driver as a closure argument. Appears only in **Form B** of `krylov-step`. It has no L0 struct — it is a constructive artifact of the unrolling (Palace keeps the in-loop `if it==0` branch). Authoritative schema: [`prev-carry`](../concepts/prev-carry.md).
+The closure-threaded recurrence carry the [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md) rotation moves *out of* the steady-state schema and threads through the loop driver as a closure argument. Appears only in **Form B** of `krylov_step`. It has no L0 struct — it is a constructive artifact of the unrolling (Palace keeps the in-loop `if it==0` branch). Authoritative schema: [`PrevCarry`](../concepts/PrevCarry.md).
 
 ```text
 -- carry-stratum (threaded across steps after the first, reborn per solve); no L0 struct.
--- Authoritative schema + negative L0 anchoring: concepts/prev-carry.md
+-- Authoritative schema + negative L0 anchoring: concepts/PrevCarry.md
 type PrevCarry = { <recurrence-variable> }     -- slice-specific single-slot carry
 -- CG / PCG:  PrevCarry = { beta_prev : Scalar }   -- β_{k-1} = (Br, r)_{k-1}
 -- GMRES:     PrevCarry = { H_prev    : Scalar }   -- H_{k,k-1} sub-diagonal Hessenberg entry
@@ -125,7 +125,7 @@ The four iteration & step combinators, in topological order. Each is the synthes
 
 ## `iterate_while` — canonical value-threaded loop
 
-The tail-recursive value-threading loop combinator: folds a step over an initial carry, threading the carry forward and accumulating per-step extras into a trajectory, until the predicate returns `False`. The canonical iteration primitive — every iterative algorithm reduces to one or more `iterate_while` folds. Authoritative def + laws (incl. the demand-pruning Law 1): [`iterate-while`](../L4/iterate-while.md).
+The tail-recursive value-threading loop combinator: folds a step over an initial carry, threading the carry forward and accumulating per-step extras into a trajectory, until the predicate returns `False`. The canonical iteration primitive — every iterative algorithm reduces to one or more `iterate_while` folds. Authoritative def + laws (incl. the demand-pruning Law 1): [`iterate_while`](../L4/iterate_while.md).
 
 ```text
 -- # Arguments
@@ -160,7 +160,7 @@ iterate_while_pure a cont f =
 
 ## `iterate_while_with_prev` — carry-bootstrapped variant
 
-The bootstrap-then-tail-recurse variant: fires a `bootstrap_step` once to produce the initial `prev` closure value, then threads `prev` (the prior step's recurrence variable) through each `steady_step` as a positional argument. Used exactly where [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md) has hoisted a `_prev` field out of the steady carry. Degenerates to `iterate_while` when `β = ()`. Authoritative def + laws: [`iterate-while-with-prev`](../L4/iterate-while-with-prev.md).
+The bootstrap-then-tail-recurse variant: fires a `bootstrap_step` once to produce the initial `prev` closure value, then threads `prev` (the prior step's recurrence variable) through each `steady_step` as a positional argument. Used exactly where [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md) has hoisted a `_prev` field out of the steady carry. Degenerates to `iterate_while` when `β = ()`. Authoritative def + laws: [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md).
 
 ```text
 -- # Arguments
@@ -171,7 +171,7 @@ The bootstrap-then-tail-recurse variant: fires a `bootstrap_step` once to produc
 -- # Returns
 --   Solve { final_state: α, trajectory: [{ ...e }] }       -- trajectory includes boot's extras first
 -- # Shape contract
---   α carry, β prev-carry, e extras — all arbitrary L4 types. The argument order
+--   α carry, β PrevCarry, e extras — all arbitrary L4 types. The argument order
 --   boot/init/steady/cont and the (carry-first, prev-second) steady closure order
 --   are canonical (match the CG v0.5 call site).
 
@@ -198,9 +198,9 @@ iterate_while_with_prev boot a0 steady cont = do
           pure { final_state: a, trajectory: [] }
 ```
 
-## `krylov-step` — the typed-wrapper Krylov step kernel
+## `krylov_step` — the typed-wrapper Krylov step kernel
 
-The per-step kernel of an iterative Krylov-shaped solve, embedded in the `Solve` monad against the three-stratum state typing. The body folded by `iterate_while` (Form A) / `iterate_while_with_prev` (Form B). The kernel's sole monadic effect is the `SimState.it` counter increment; the iterate `SimState.x` is written at restart-cycle boundaries, not per step. The per-step bundle update `krylov_update` and the optional auxiliary stage `op.orthog` cross to the L2 named compositions ([`L2/krylov-step`](../L2/krylov-step.md) §Semantics; [`L2/orthogonalize`](../L2/orthogonalize.md)) — rendered here as the L4-chapter dataflow, not lifted. Authoritative def + laws: [`krylov-step`](../L4/krylov-step.md).
+The per-step kernel of an iterative Krylov-shaped solve, embedded in the `Solve` monad against the three-stratum state typing. The body folded by `iterate_while` (Form A) / `iterate_while_with_prev` (Form B). The kernel's sole monadic effect is the `SimState.it` counter increment; the iterate `SimState.x` is written at restart-cycle boundaries, not per step. The per-step bundle update `krylov_update` and the optional auxiliary stage `op.orthog` cross to the L2 named compositions ([`L2/krylov_step`](../L2/krylov_step.md) §Semantics; [`L2/orthogonalize`](../L2/orthogonalize.md)) — rendered here as the L4-chapter dataflow, not lifted. Authoritative def + laws: [`krylov_step`](../L4/krylov_step.md).
 
 ```text
 -- # Arguments (Form A — branch-in-body, default; CG v0.4-shape)
@@ -227,7 +227,7 @@ krylov_step op K = \s -> do
   --   CG:            no-op
   let K_aux = optionally_apply_auxiliary op K w
   -- Krylov-bundle update (pure on K; the L1 iterate/scalar primitives — axpy / axpby
-  -- / axpbypcz / dot / nrm2 / scal — staged in the dataflow-forced order of L2/krylov-step)
+  -- / axpbypcz / dot / nrm2 / scal — staged in the dataflow-forced order of L2/krylov_step)
   let K'    = krylov_update K_aux op w
   -- derived view of the post-step bundle (demand-pruned per derived-view-hoisting)
   let outputs = derived_views K' op        -- residual_norm; GMRES ls_residual; breakdown_token
@@ -314,7 +314,7 @@ type Variant = Kind4 | Kind1   -- consumed only by setup; S = Unit (4th) | { rho
 
 -- # setup — constructs the readonly ChebOp closure (a Solve action: issues a spectrum-estimate sub-solve)
 -- # Arguments: A (SPD operator); p (SetupParams: order, pc_it, sf_max, sf_min); variant
--- # Returns: Solve s (ChebOp E S) — an immutable operator closure, not new sim-state
+-- # Returns: Solve s (ChebOp E S) — an immutable operator closure, not new SimState
 setup :: LinOp[E] -> SetupParams -> Variant -> Solve s (ChebOp E S)
 setup A p variant = do
   let dinv = recip (extractDiagonal A)
@@ -334,7 +334,7 @@ setup A p variant = do
 
 -- # apply — pc_it Richardson sweeps of a degree-order matrix polynomial of D⁻¹A
 -- # Arguments: op (the readonly ChebOp); initial_guess (Bool; degenerate-case absorption)
--- # Returns: Solve (ChebSim E) ()  — the only product is the sim-state transition (accumulated y)
+-- # Returns: Solve (ChebSim E) ()  — the only product is the SimState transition (accumulated y)
 apply :: ChebOp E S -> Bool -> Solve (ChebSim E) ()
 apply op initial_guess = do
   x <- readX
@@ -380,4 +380,4 @@ This library has **no `#extern` kernel** of its own: the iteration combinators a
 
 ## Status
 
-`navigational-container` (rendered library chapter). Holds the synthesized def bodies of the four iteration & step combinators (`iterate_while` / `iterate_while_pure`, `iterate_while_with_prev`, `krylov-step` Form A + Form B, `chebyshev`) plus the three iteration-clustering type renderings (`Krylov`, `StepOutputs`, `PrevCarry`). The rendered bodies are faithful transcriptions of the authoritative L4 chapter bodies (linked per def; lowering-verifier may audit the correspondence); the laws/semantics live in those chapters. Implementation VIEW — `reference`-class links only, no `depends-on` edge, no rank claim on any rendered form.
+`navigational-container` (rendered library chapter). Holds the synthesized def bodies of the four iteration & step combinators (`iterate_while` / `iterate_while_pure`, `iterate_while_with_prev`, `krylov_step` Form A + Form B, `chebyshev`) plus the three iteration-clustering type renderings (`Krylov`, `StepOutputs`, `PrevCarry`). The rendered bodies are faithful transcriptions of the authoritative L4 chapter bodies (linked per def; lowering-verifier may audit the correspondence); the laws/semantics live in those chapters. Implementation VIEW — `reference`-class links only, no `depends-on` edge, no rank claim on any rendered form.

@@ -10,7 +10,7 @@ edges:
       kind: folds
     - target: L1/participation_ratio
       kind: folds
-    - target: L1/matrix-weighted-norm
+    - target: L1/matrix_weighted_norm
       kind: folds
     - target: palace/models/postoperator.cpp:1021-1077
       kind: cites-evidence
@@ -72,7 +72,7 @@ One composed reduction stage, fed by a field-bearing driver column's solution fi
    (**firm**). The L4 per-domain energy-table reduction combinator
    `domain_energy_reduce doms field e_total` maps each configured domain attribute `idx` to its
    `DomainData` row: the **per-domain energy** `energyᵢ = ½⟨field, M_idx field⟩` (the
-   domain-restricted SPD energy form — the [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
+   domain-restricted SPD energy form — the [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)
    squared radicand `⟨x, B x⟩` with `B = M_idx` the operator restricted to one domain attribute),
    and the **participation ratio** `pᵢ = energyᵢ / e_total` (the firm
    [`participation_ratio`](../L1/participation_ratio.md) with the per-domain energy numerator over
@@ -86,7 +86,7 @@ One composed reduction stage, fed by a field-bearing driver column's solution fi
 
 The whole-domain totals `e_total` (`GetElectricFieldEnergy` / `GetMagneticFieldEnergy`,
 `postoperator.cpp:1033, 1058`) are the un-restricted energy form (the same
-[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared over the full operator), supplied
+[`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)-squared over the full operator), supplied
 as the denominator — they are the field's total energy, NOT part of the per-domain map.
 
 ## Record definition
@@ -146,7 +146,7 @@ products:
   the do-NOT-over-unify guard).
 - The reduction is [`domain_energy_reduce`](../L4/domain_energy_reduce.md) (**firm**), a **per-domain scalar
   map** folding two scalar projections per domain: the domain-restricted energy form
-  (`matrix-weighted-norm`-squared, **firm**) and the participation ratio (firm
+  (`matrix_weighted_norm`-squared, **firm**) and the participation ratio (firm
   [`participation_ratio`](../L1/participation_ratio.md)).
 - The reduction is driver-agnostic — the SAME per-domain energy table reduces any field-bearing
   driver's field, which is why it is its own output-product column rather than a per-driver
@@ -157,7 +157,7 @@ The whole output product therefore lowers cleanly outward to the L4 backend surf
 field-bearing driver column. Under the **OWN-COMPOSITION rule** a column promotes off `seed` when
 its OWN directly-owned constituents are firm; this column is **firm** because its OWN composition is
 all-firm: its OWN reduce verb [`domain_energy_reduce`](../L4/domain_energy_reduce.md), its OWN folded
-domain-restricted energy form [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md), and the
+domain-restricted energy form [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md), and the
 [`participation_ratio`](../L1/participation_ratio.md) half — all three directly-owned constituents
 firm. The field-bearing driver columns are SIBLING references, NOT blockers — energy-fields is
 driver-agnostic (a shared postprocess all field-bearing drivers point at).
@@ -168,7 +168,7 @@ driver-agnostic (a shared postprocess all field-bearing drivers point at).
 |---|---|---|---|
 | producing field (any field-bearing driver) | [`electrostatic.L4`](./electrostatic.L4.md) / [`magnetostatic.L4`](./magnetostatic.L4.md) / … | firm | `postoperator.cpp:1032, 1057` |
 | per-domain energy-table reduction | [`domain_energy_reduce`](../L4/domain_energy_reduce.md) | firm | `postoperator.cpp:1036-1042, 1061-1066` |
-| per-domain energy form (folded) | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared (domain-restricted `M_i`) | firm | `domainpostoperator.cpp:255-275, 277-298` |
+| per-domain energy form (folded) | [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)-squared (domain-restricted `M_i`) | firm | `domainpostoperator.cpp:255-275, 277-298` |
 | participation ratio (folded) | [`participation_ratio`](../L1/participation_ratio.md) | firm | `postoperator.cpp:1039, 1064` |
 
 ## Promotion basis
@@ -179,7 +179,7 @@ Gram/port-projection products [capacitance](./capacitance.L4.md) / [inductance](
 [sparameters](./sparameters.L4.md). Under the OWN-COMPOSITION rule (a column is firm when its OWN
 composition + directly-owned constituents are firm; cross-linked sibling columns are references, NOT
 blockers), this column is firm: its OWN reduce verb `domain_energy_reduce`, its OWN folded
-domain-restricted energy form `matrix-weighted-norm`, and the `participation_ratio` half are all
+domain-restricted energy form `matrix_weighted_norm`, and the `participation_ratio` half are all
 firm. The field-bearing driver columns are SIBLING references (a driver-agnostic shared
 postprocess), NOT blockers. This chapter carries the *compositional* claim (the domain energy table
 = the per-domain energy reduction over a field-bearing driver's field), NOT the constituents' per-op

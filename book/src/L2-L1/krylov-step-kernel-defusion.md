@@ -1,14 +1,14 @@
 # krylov-step-kernel-defusion
 
 The per-step-kernel de-fusion. Lowers the firm L2 named composition
-[`krylov-step`](../L2/krylov-step.md) — the fold-kernel `(op, s) -> { state', outputs }`
+[`krylov_step`](../L2/krylov_step.md) — the fold-kernel `(op, s) -> { state', outputs }`
 that every Krylov-shaped slice in the corpus factors into — into its L1 form by **expanding
 the five-primitive-group step body into the explicit sequence of seven firm L1 leaves**
 ([`apply_linop`](../L1/apply_linop.md), [`axpy`](../L1/axpy.md), [`axpby`](../L1/axpby.md),
 [`axpbypcz`](../L1/axpbypcz.md), [`dot`](../L1/dot.md), [`nrm2`](../L1/nrm2.md),
-[`scal`](../L1/scal.md) — the firm dependency list at `book/src/L2/krylov-step.md:96`) under
+[`scal`](../L1/scal.md) — the firm dependency list at `book/src/L2/krylov_step.md:96`) under
 an outer fold, **plus the in-place→out-of-place buffer rotation** that the L2 entry deferred
-here (variant-axis 6, `book/src/L2/krylov-step.md:121`). Narrated forward (L2→L1): the one
+here (variant-axis 6, `book/src/L2/krylov_step.md:121`). Narrated forward (L2→L1): the one
 named L2 kernel composition **fans down** into Palace's dataflow-forced primitive sequence —
 exactly one `apply_linop`, an optional absorbed auxiliary stage, an iterate-stratum
 `axpy`/`axpby`/`axpbypcz` chain, a scalar-stratum `dot`/`nrm2` chain, and a demand-pruned
@@ -29,12 +29,12 @@ numerical re-association).
 
 ## L2 form (LHS)
 
-The L2 form is the firm fold-kernel composition ([`krylov-step`](../L2/krylov-step.md)
+The L2 form is the firm fold-kernel composition ([`krylov_step`](../L2/krylov_step.md)
 §Signature, §Semantics):
 
-    krylov-step :: (op: OpParams, s: IterState) -> { state: IterState', outputs: StepOutputs }
+    krylov_step :: (op: OpParams, s: IterState) -> { state: IterState', outputs: StepOutputs }
 
-    krylov-step op s =
+    krylov_step op s =
       let w         = apply_linop op.T s.<input_field>             -- field-side operator apply
       let s_aux     = optionally apply op.orthog (V_prefix, w)     -- absorbed orthogonalize / project
                       or       apply op.scalars (k, scalar_state)  -- absorbed scalar generator
@@ -51,7 +51,7 @@ are named-but-not-spelled** (the entry says "one or more `axpy`/`axpby`/`axpbypc
 "one or more `dot`/`nrm2` calls" — the exact sequence is slice-specific and left to the
 lowering). The kernel is **stateless across calls** (`op` closed over; `s'` a fresh record —
 L2 entry §Semantics), **uniformly out-of-place** in its buffer convention (variant-axis 6,
-`book/src/L2/krylov-step.md:121`, "the L2 form is uniformly out-of-place, with the in-place
+`book/src/L2/krylov_step.md:121`, "the L2 form is uniformly out-of-place, with the in-place
 specialisation reappearing in the L2>L1 lowering"), and carries its variant axes
 **absorbed at construction** (`op.T`, `op.orthog?`, `op.scalars?` — L2 entry §Variant axes,
 not re-dispatched here).
@@ -60,7 +60,7 @@ not re-dispatched here).
 
 The L1 form is the **explicit sequence of seven firm L1 leaves** under the outer fold, with
 the buffer convention rotated to its in-place L0-faithful form. The seven leaves are the firm
-L2 dependency list (`book/src/L2/krylov-step.md:96`); their L1 signatures
+L2 dependency list (`book/src/L2/krylov_step.md:96`); their L1 signatures
 ([`L1/apply_linop`](../L1/apply_linop.md), [`L1/axpy`](../L1/axpy.md), etc.). At this RHS the
 operands are the **concrete Palace `Vector`s** — genuinely flat rank-1 dof-vectors of length
 `N`, and the operator a flat square `LinearOperator[N,N]` — so the `Tensor[N]` /
@@ -80,7 +80,7 @@ The de-fusion writes each L2 primitive-group as a fixed sequence of these leaves
 **CG specialisation** (the firm L0 home is `book/src/L1-L0/ksp-solve-mutation-rotation.md`
 Sub-pattern B; the per-step kernel for-loop `iterative.cpp:427-464`):
 
-    krylov-step op s =                                              -- L1 de-fused (CG specialisation)
+    krylov_step op s =                                              -- L1 de-fused (CG specialisation)
       let p'  = if s.it == 0 then s.z                               -- first-iteration branch (variant-axis 4)
                 else axpby 1.0 s.z (s.β / s.β_prev) s.p             -- AXPBY(1.0, z, beta/beta_prev, p)  :440
       let z'  = apply_linop op.T p'                                 -- A->Mult(p, z)                    :443
@@ -230,13 +230,13 @@ the load-bearing content) — the kernel's only carried numerical residue is the
 ## Speculative L1 operators
 
 **None.** All seven L1 RHS leaves are firm (the firm list at
-`book/src/L2/krylov-step.md:96`):
+`book/src/L2/krylov_step.md:96`):
 
 - [`apply_linop`](../L1/apply_linop.md), [`axpy`](../L1/axpy.md), [`axpby`](../L1/axpby.md),
   [`axpbypcz`](../L1/axpbypcz.md), [`dot`](../L1/dot.md), [`nrm2`](../L1/nrm2.md),
   [`scal`](../L1/scal.md) — all firm.
 
-The LHS [`krylov-step`](../L2/krylov-step.md) is firm (the canonical
+The LHS [`krylov_step`](../L2/krylov_step.md) is firm (the canonical
 fold-kernel shape). This theme proposes **no new operators** — it is the lowering edge between
 firm vocabulary on both sides. The optional auxiliary stage's `op.orthog` composition is the
 firm sibling theme [`orthogonalize-composition-lowering`](./orthogonalize-composition-lowering.md)
@@ -270,7 +270,7 @@ L0 evidence ranges (paths relative to `reference/`):
 
 L2 / L1 / cross-theme anchors (firm on every side):
 
-- `book/src/L2/krylov-step.md` — the firm L2 named composition (LHS); §Signature (the
+- `book/src/L2/krylov_step.md` — the firm L2 named composition (LHS); §Signature (the
   fold-kernel shape), §Semantics (the five-primitive-group body the de-fusion expands), `:96`
   (the seven-leaf firm dependency list), `:121` (variant-axis-6, the in-place/out-of-place
   buffer axis this theme resolves), `:129-132` (the L2-vs-L1 distinction — context, not the
@@ -298,7 +298,7 @@ L2 / L1 / cross-theme anchors (firm on every side):
 
 ## Status
 
-`firm` — the LHS [`krylov-step`](../L2/krylov-step.md) and all seven L1 RHS leaves are firm
+`firm` — the LHS [`krylov_step`](../L2/krylov_step.md) and all seven L1 RHS leaves are firm
 (the firm dependency list `:96`), and the de-fusion rule IS the syntactic expansion of the L2
 §Semantics five-primitive-group body into the slice-pinned L1 leaf sequence — read straight off
 the L2 entry text and the CG L0 specialisation (`iterative.cpp:427-464`). The group→leaf map, the

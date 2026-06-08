@@ -8,7 +8,7 @@ edges:
   depends-on:
     - target: L1/participation_ratio
       kind: folds
-    - target: L1/matrix-weighted-norm
+    - target: L1/matrix_weighted_norm
       kind: folds
     - target: palace/models/postoperator.cpp:1021-1077
       kind: cites-evidence
@@ -55,7 +55,7 @@ lifted to a value-returning per-domain map per the L1>L0 mutation rotation).
 2. **The per-domain pure readout → the energy table** — a pure list comprehension over the
    configured domain-attribute set, mapping each domain to its `DomainData` row:
    - the per-domain energy `energyᵢ = ½⟨field, M_idx field⟩`, the domain-restricted SPD energy form
-     (the [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) squared radicand `⟨x, B x⟩` with
+     (the [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) squared radicand `⟨x, B x⟩` with
      `B = M_idx`). L0: `GetDomainElectricFieldEnergy` returns `0.5 * dot` where
      `dot = LocalDot(E.Real(), M_i·E.Real())` + imag (`domainpostoperator.cpp:255-275`); the
      magnetic sibling `:277-298`.
@@ -111,7 +111,7 @@ composition (high→low discipline).
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
 | producing field (field-bearing driver) | [`electrostatic.L1`](./electrostatic.L1.md) (driver feature column) | firm | `postoperator.cpp:1032, 1057` |
-| per-domain energy form | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared (domain-restricted `M_i`) | firm | `domainpostoperator.cpp:255-275, 277-298` |
+| per-domain energy form | [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)-squared (domain-restricted `M_i`) | firm | `domainpostoperator.cpp:255-275, 277-298` |
 | participation ratio | [`participation_ratio`](../L1/participation_ratio.md) | firm | `postoperator.cpp:1039, 1064` |
 
 ## Promotion basis
@@ -119,7 +119,7 @@ composition (high→low discipline).
 Under the **OWN-COMPOSITION rule** (a column promotes off `seed` when its OWN directly-owned
 constituents are firm; cross-linked sibling columns are references, NOT blockers), this column is
 firm: its OWN reduce verb's L4 home `domain_energy_reduce` is firm, its OWN folded domain energy
-form is the firm `matrix-weighted-norm`, and the [`participation_ratio`](../L1/participation_ratio.md)
+form is the firm `matrix_weighted_norm`, and the [`participation_ratio`](../L1/participation_ratio.md)
 half is firm — all three directly-owned constituents firm. The field-bearing driver columns are
 SIBLING references (a driver-agnostic shared postprocess), NOT blockers. The chapter carries the
 compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0

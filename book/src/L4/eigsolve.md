@@ -26,7 +26,7 @@ L4's job is to write algorithms in a graph-evaluation calculus that makes lifeti
 The load-bearing structural fact, carried forward from L3: **`eigsolve` has a lifting per-step body and a non-lifting loop, and the loop's non-lift is because Palace authors no loop.** Two consequences at the cap level:
 
 - The **body** — the per-step shift-invert spectral-transform application `apply_shift_invert = apply_linop(op.operand) ▷ ksp_solve(op.inv) ▷ scale_untransform [▷ project]` — is a clean whole-tensor composition; it is identity-in-form across the L3↔L2 edge (per [`L3/eigsolve`](../L3/eigsolve.md) §"Lowers to" and the firm [`L2/eigsolve`](../L2/eigsolve.md) `apply_shift_invert` body). At L4 the body is what an *imagined* Palace-authored `iterate_while` fold would step.
-- The **loop** — the Krylov-Schur restart, Arnoldi/Lanczos basis extension, Rayleigh-Ritz extraction, convergence test — is entirely **opaque-library-owned**, a witnessed [`sequential-obstruction`](../concepts/sequential-obstruction.md) rooted in opaque-library-ownership. There is **no Palace-authored eigen-step kernel / eigen-iteration driver pair** analogous to `(krylov-step, ksp_solve)`. So the cap **cannot** render the loop as `solve_loop` recursing a Palace `restart_cycle`; it names the fold by role (`eigen_iterate`) and marks the obstruction.
+- The **loop** — the Krylov-Schur restart, Arnoldi/Lanczos basis extension, Rayleigh-Ritz extraction, convergence test — is entirely **opaque-library-owned**, a witnessed [`sequential-obstruction`](../concepts/sequential-obstruction.md) rooted in opaque-library-ownership. There is **no Palace-authored eigen-step kernel / eigen-iteration driver pair** analogous to `(krylov_step, ksp_solve)`. So the cap **cannot** render the loop as `solve_loop` recursing a Palace `restart_cycle`; it names the fold by role (`eigen_iterate`) and marks the obstruction.
 
 The relationship to the inner kernel is therefore **NOT** the clean driver-to-kernel pairing the `ksp_solve` cap has. There is no Palace-authored eigen-step body for the cap to fold; the body it *would* fold (`apply_shift_invert`) is handed to the library as an `ApplyOp` / `__pc_apply_EPS` callback, and the library owns the surrounding iteration. The cap's `solve_loop` analog is therefore a **single opaque library step** (`do { o <- eigen_iterate op inp; pure () }`), not a tail-recursion over Palace-authored cycles. This is stated explicitly because it is the central honest fact of the entry.
 
@@ -138,7 +138,7 @@ L4 row dependencies:
 
 - `EigOutcome` — the richer termination sum the cap produces and classifies (the eigsolve-specific extension of `Outcome`; registered as this cap's own L4 dep-map row).
 - [`ksp_solve`](./ksp_solve.md) — the sibling cap, and the **inner solver** `op.inv` the per-step body `apply_shift_invert` invokes (the construction-bound `ksp_solve` inverting the shifted operator). The cap composes two layers of solver-as-operator: the eigsolve cap drives an opaque library iteration whose per-step body itself folds a `ksp_solve`.
-- [`iterate-while`](./iterate-while.md) — referenced by *role contrast only*: the combinator an *imagined* Palace-authored eigen-iteration loop would use (per `book/src/semantics/index.md`). Since the loop is library-owned, the cap does **not** consume `iterate-while` substantively — it marks the obstruction instead.
+- [`iterate_while`](./iterate_while.md) — referenced by *role contrast only*: the combinator an *imagined* Palace-authored eigen-iteration loop would use (per `book/src/semantics/index.md`). Since the loop is library-owned, the cap does **not** consume `iterate_while` substantively — it marks the obstruction instead.
 
 L4 concept references:
 
@@ -196,7 +196,7 @@ The pattern is well-attested: the `partial-obstruction` L3 parent ([`L3/eigsolve
 - `book/src/L2/eigsolve.md` (firm) — the named `apply_shift_invert` composition the cap's body law restates; the L2↔L1 non-identity edge.
 - `book/src/L1/eigsolve.md` (firm) — the opaque collapse; the `EigStatus` sum (`:51`), the partial-success arm (`:78` — the distinguishing feature with no `ksp_solve` analog), the `LinearSolveFailed` L1-constructive arm (`:54`), the `EigResult` readout (`:32-49`) the cap's `EigState` terminal lifts, the five fixed-point laws the cap restates as terminal laws.
 - `book/src/L4/ksp_solve.md` — the sibling clean-fold cap; the structural contrast (Palace-authored `restart_cycle` fold vs this cap's opaque-library obstruction marker); the shared `solve-monad` vocabulary + the `Outcome` pattern this cap's `EigOutcome` extends.
-- `book/src/L4/krylov-step.md` (firm) — the L4 chapter altitude/structure precedent.
+- `book/src/L4/krylov_step.md` (firm) — the L4 chapter altitude/structure precedent.
 - `book/src/concepts/solve-monad.md:1-68` — the outer-driver pattern: §Shape (`:5-17`), §"Termination as a sum type" (`:58-68`, the `Outcome` classify-once / fold-uniformly law this cap extends to `EigOutcome`).
 - `book/src/concepts/sequential-obstruction.md` — the opaque-library eigen-iteration obstruction the cap marks (the load-bearing concept).
 - `book/src/semantics/index.md` — L4 strawman; §3.3–3.4 (monad / state-effect laws), §3.7 (`iterate_while` — the loop the eigen-iteration would fold *if* Palace authored it; library-owned, so the cap marks the obstruction instead).

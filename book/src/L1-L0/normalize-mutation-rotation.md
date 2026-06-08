@@ -293,7 +293,7 @@ NOT a speculative operator of this theme, for the reasons the L1 entry gives
   `vector.hpp:264`. **However, the fused B-Normalize is uncalled**: a grep across
   `palace/` for 4-arg `Normalize(comm, x, B, Bx)` invocations finds **zero**
   callsites. So the fused operator is defined-but-dead. The B-weighted *reduction*
-  `linalg::Norml2(comm, x, B, Bx)` ([`matrix-weighted-norm`](../L1/matrix-weighted-norm.md),
+  `linalg::Norml2(comm, x, B, Bx)` ([`matrix_weighted_norm`](../L1/matrix_weighted_norm.md),
   `palace/linalg/operator.cpp:599-619`) IS used at error-norm / eigenvector-norm
   callsites (`arpack.cpp:438`, `slepc.cpp:475`, `nleps.cpp:114`) but they feed
   residual ratios and do **not** rescale. The `Normalize`-with-`B` consumer site of
@@ -302,7 +302,7 @@ NOT a speculative operator of this theme, for the reasons the L1 entry gives
   the *definition* of the B-weighted fused shape, not a callsite. So `normalize_B`
   has **no live consumer in the tree**: definition exists, callsite does not.
 - **No remaining constituent-maturity gate.** `normalize_B`'s norm constituent
-  [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) is `firm`, so the earlier inherited
+  [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) is `firm`, so the earlier inherited
   test-coverage bound is discharged. `normalize_B` nonetheless stays a rough-in note on the
   **no-live-consumer** ground above (the fused B-Normalize is defined-but-dead), not on any
   constituent-maturity ground.
@@ -311,7 +311,7 @@ If/when a positive *callsite* of the fused B-Normalize surfaces — either a dir
 4-arg `Normalize(comm, v, B, Bv)` invocation OR an inline B-weighted-rescale shape
 (`scale = Norml2(comm, v, B, Bv); v *= 1.0/scale`, distinct from the unweighted
 `nleps.cpp:610-611`) — `normalize_B` would promote to a firm sibling inheriting the
-`matrix-weighted-norm` promotion gate. The mere *existence* of the fused free function
+`matrix_weighted_norm` promotion gate. The mere *existence* of the fused free function
 at `palace/linalg/operator.hpp:378` does NOT promote it: a defined-but-dead operator
 has no live algebraic-law evidence beyond the syntactic identity to the unweighted core.
 Until a callsite surfaces, `normalize_B` is tracked as a queued candidate, not part of

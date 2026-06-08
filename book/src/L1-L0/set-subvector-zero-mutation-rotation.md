@@ -238,7 +238,7 @@ L0 evidence ranges:
   `XR`/`XI` `:483-484`, per-index writes `XR[id] = sr` `:489` AND `XI[id] = 0.0` `:490`. Grounds
   the whole-complex-dof zeroing.
 - `palace/linalg/divfree.cpp:173` — `linalg::SetSubVector(rhs, *bdr_tdof_list_M, 0.0);` — the
-  divfree-projector use-site (Sub-pattern C).
+  divfree_projector use-site (Sub-pattern C).
 - `palace/linalg/gmg.cpp:194` — `linalg::SetSubVector(X[l - 1], *dbc_tdof_lists[l - 1], 0.0);` —
   the geometric-multigrid restriction-residual zeroing (Sub-pattern C).
 - `palace/linalg/distrelaxation.cpp:114` — `linalg::SetSubVector(x_G, *dbc_tdof_list_G, 0.0);` —

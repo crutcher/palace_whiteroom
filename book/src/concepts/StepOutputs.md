@@ -12,18 +12,18 @@ edges:
     - target: palace/linalg/iterative.hpp:26-115
       kind: cites-evidence            # persistent home of the readouts: mutable final_res statistic (:54)
   reference:
-    - L4/krylov-step
+    - L4/krylov_step
     - concepts/derived-view-hoisting
     - concepts/solve-monad
     - concepts/state-stratification
-    - concepts/solve-result
-    - concepts/sim-state
+    - concepts/SolveResult
+    - concepts/SimState
     - concepts/krylov
 ---
 
-# step-outputs
+# StepOutputs
 
-`StepOutputs` is the **demand-prunable per-step readout bundle** returned by the L4 [`krylov-step`](../L4/krylov-step.md) kernel alongside the next `SimState` and `Krylov` values. It is a *record definition*: this page defines the data shape — its fields, their types, their meaning, and the L0 source the fields mirror — not the algebra of the operator that produces it (that lives in [`krylov-step`](../L4/krylov-step.md) and its [`derived-view-hoisting`](./derived-view-hoisting.md) demand-pruning law).
+`StepOutputs` is the **demand-prunable per-step readout bundle** returned by the L4 [`krylov_step`](../L4/krylov_step.md) kernel alongside the next `SimState` and `Krylov` values. It is a *record definition*: this page defines the data shape — its fields, their types, their meaning, and the L0 source the fields mirror — not the algebra of the operator that produces it (that lives in [`krylov_step`](../L4/krylov_step.md) and its [`derived-view-hoisting`](./derived-view-hoisting.md) demand-pruning law).
 
 It is a **result-side** record: it carries the *observations a step makes about itself* — the residual proxy, the least-squares residual estimate, and any breakdown signal — so that the outer driver (`iterate_while`'s predicate, `solve_loop`'s `Outcome` classifier) can read them without inspecting `Krylov` internals. Every field is **derived** from the post-step `Krylov` bundle by a pure function and is **demand-prunable**: if no downstream consumer reads a field, the kernel is free to skip computing it (the [`derived-view-hoisting`](./derived-view-hoisting.md) Law 1 distributivity-over-trajectory). The record exists precisely to make that pruning structural — the derived views are typed separately from the `Krylov` state they are derived from.
 
@@ -51,7 +51,7 @@ It is a **result-side** record: it carries the *observations a step makes about 
 
 - **`residual_norm`** — Palace's PCG loop computes `res = std::sqrt(std::abs(beta))` from `beta = (Br, r)` each step (`palace/linalg/iterative.cpp:395-397`); the value flows into the persisted `final_res` statistic at loop exit (`iterative.cpp:484`). The persisted home is the solve-statistics field `mutable double final_res` (`palace/linalg/iterative.hpp:54`).
 - **`ls_residual`** — GMRES computes `beta = std::abs(s[j + 1])` after the Givens plane-rotation update of the LS RHS (`palace/linalg/iterative.cpp:642`); this is the cheap LS residual estimate the convergence test reads (`converged = (beta < eps)`, `iterative.cpp:644`).
-- **`breakdown_token`** — the `CheckDot` partial-function guard (`palace/linalg/iterative.cpp:21-31`; a templated `MFEM_ASSERT(std::isfinite(dot) && dot >= 0.0, ...)`) is invoked at each guarded dot site (e.g. `iterative.cpp:396` PCG, `iterative.cpp:643` GMRES). At L0 the guard *aborts* on failure; at L4 the failure is reified as a `breakdown_token` slot routed to the outer driver (see [`krylov-step`](../L4/krylov-step.md) §Semantics, "Breakdown signals propagate through `outputs`").
+- **`breakdown_token`** — the `CheckDot` partial-function guard (`palace/linalg/iterative.cpp:21-31`; a templated `MFEM_ASSERT(std::isfinite(dot) && dot >= 0.0, ...)`) is invoked at each guarded dot site (e.g. `iterative.cpp:396` PCG, `iterative.cpp:643` GMRES). At L0 the guard *aborts* on failure; at L4 the failure is reified as a `breakdown_token` slot routed to the outer driver (see [`krylov_step`](../L4/krylov_step.md) §Semantics, "Breakdown signals propagate through `outputs`").
 
 The L0 form **mixes** these three readouts into the loop body and the persistent solve-statistics fields (`converged` / `initial_res` / `final_res` / `final_it`, `iterative.hpp:53-55`); the L4 `StepOutputs` record *un-mixes* the per-step derived observations from the persistent `SimState` statistics, which is what makes the demand-pruning law statable.
 
@@ -62,12 +62,12 @@ The L0 form **mixes** these three readouts into the loop body and the persistent
 
 ## See also
 
-- [`krylov-step`](../L4/krylov-step.md) — the L4 kernel returning `{ sim, krylov, outputs }`; defines the behaviour producing this record.
+- [`krylov_step`](../L4/krylov_step.md) — the L4 kernel returning `{ sim, krylov, outputs }`; defines the behaviour producing this record.
 - [`derived-view-hoisting`](./derived-view-hoisting.md) — the demand-pruning law (Law 1) that the `StepOutputs` typing makes structural.
 - [`solve-monad`](./solve-monad.md) — the outer driver whose `Outcome` classifier reads `outputs.breakdown_token` / `outputs.residual_norm`.
 - [`state-stratification`](./state-stratification.md) — the three-stratum split `StepOutputs` is *not* part of (it is a fourth, result-side bundle).
-- [`solve-result`](./solve-result.md) — the enclosing return record `{ sim, krylov, outputs[, carry] }` of which `StepOutputs` is the `outputs` field.
+- [`SolveResult`](./SolveResult.md) — the enclosing return record `{ sim, krylov, outputs[, carry] }` of which `StepOutputs` is the `outputs` field.
 
 ## Signatures that name this record
 
-- `krylov-step :: OpParams -> Krylov -> (SimState -> Solve { sim, krylov, outputs: StepOutputs })` (Form A) and the Form B `first_step` / `steady_step` pair — [`krylov-step`](../L4/krylov-step.md) §Signature.
+- `krylov_step :: OpParams -> Krylov -> (SimState -> Solve { sim, krylov, outputs: StepOutputs })` (Form A) and the Form B `first_step` / `steady_step` pair — [`krylov_step`](../L4/krylov_step.md) §Signature.

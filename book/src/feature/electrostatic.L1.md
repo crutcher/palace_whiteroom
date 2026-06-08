@@ -10,9 +10,9 @@ edges:
       kind: composes
     - target: L1/ksp_solve
       kind: composes
-    - target: L1/matrix-weighted-norm
+    - target: L1/matrix_weighted_norm
       kind: folds
-    - target: L1/bilinear-form
+    - target: L1/bilinear_form
       kind: folds
     - target: palace/drivers/electrostaticsolver.cpp:21-98
       kind: cites-evidence
@@ -41,10 +41,10 @@ At L1 the electrostatic feature is a pure function `config → capacitance matri
 
 2. **Per-terminal pure solve** — [`ksp_solve`](../L1/ksp_solve.md) (**firm**), applied once per terminal source. Each call is the mutation-lifted pure solve `vᵢ = ksp_solve(K, rhsᵢ)` — the L1 form of the L0 `ksp.Mult(RHS, V[step])` (the destination-buffer write lifted to a value-returning solve). The per-terminal RHS `rhsᵢ` is the excitation vector for terminal `idx` (L0 `laplace_op.GetExcitationVector(idx, *K, V[step], RHS)`, `:68`). The fixed-operator reuse (the same `K` across all terminals) is explicit in the composition: `K` is bound once in the `let` and read by every `ksp_solve`. L0: the loop `:59`, the per-element solve `:69`.
 
-3. **Capacitance-matrix reduction** — the symmetric matrix `Cᵢⱼ = Vⱼᵀ K Vᵢ`, built from L1 bilinear-form evaluations (firm diagonal + firm off-diagonal):
-   - diagonal `Cᵢᵢ = Vᵢᵀ K Vᵢ` — the operator-weighted self-form, the now-firm [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) squared (`matrix_weighted_norm(Vᵢ, K)² = Vᵢᵀ K Vᵢ`; the L0 source builds it directly as `M_elec->Mult(V_gf, D_gf)` then `linalg::Dot(V_gf, D_gf)`, `:118-119`).
-   - off-diagonal `Cᵢⱼ = Vⱼᵀ K Vᵢ` — the operator-weighted cross-pairing, the firm [`bilinear-form`](../L1/bilinear-form.md) `α = xᴴ M y` instantiated `⟨Vⱼ, K Vᵢ⟩` (L0 `:122-127`, the same `Mult`/`Dot` with the `j` grid function).
-   The result is the symmetric `C` (and its LAPACK inverse `Cinv`, `:139-140`). This stage is a pure fold of bilinear-form evaluations over the solution-family pair grid — no L1 operator is *new* here; the reduction composes [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm) + [`bilinear-form`](../L1/bilinear-form.md) (firm).
+3. **Capacitance-matrix reduction** — the symmetric matrix `Cᵢⱼ = Vⱼᵀ K Vᵢ`, built from L1 bilinear_form evaluations (firm diagonal + firm off-diagonal):
+   - diagonal `Cᵢᵢ = Vᵢᵀ K Vᵢ` — the operator-weighted self-form, the now-firm [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) squared (`matrix_weighted_norm(Vᵢ, K)² = Vᵢᵀ K Vᵢ`; the L0 source builds it directly as `M_elec->Mult(V_gf, D_gf)` then `linalg::Dot(V_gf, D_gf)`, `:118-119`).
+   - off-diagonal `Cᵢⱼ = Vⱼᵀ K Vᵢ` — the operator-weighted cross-pairing, the firm [`bilinear_form`](../L1/bilinear_form.md) `α = xᴴ M y` instantiated `⟨Vⱼ, K Vᵢ⟩` (L0 `:122-127`, the same `Mult`/`Dot` with the `j` grid function).
+   The result is the symmetric `C` (and its LAPACK inverse `Cinv`, `:139-140`). This stage is a pure fold of bilinear_form evaluations over the solution-family pair grid — no L1 operator is *new* here; the reduction composes [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) (firm) + [`bilinear_form`](../L1/bilinear_form.md) (firm).
 
 ## Inputs / outputs (the feature surface)
 
@@ -65,9 +65,9 @@ The L1→L0 direction (how each pure operator lowers to the in-place driver writ
 |---|---|---|---|
 | assemble K once | [`fe_assemble`](../L1/fe_assemble.md) | firm | `electrostaticsolver.cpp:30` |
 | per-terminal solve | [`ksp_solve`](../L1/ksp_solve.md) | firm | `electrostaticsolver.cpp:59, 68-69` |
-| diagonal Vᵢᵀ K Vᵢ | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) | firm | `electrostaticsolver.cpp:118-119` |
-| off-diagonal Vⱼᵀ K Vᵢ | [`bilinear-form`](../L1/bilinear-form.md) | firm | `electrostaticsolver.cpp:122-127` |
+| diagonal Vᵢᵀ K Vᵢ | [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) | firm | `electrostaticsolver.cpp:118-119` |
+| off-diagonal Vⱼᵀ K Vᵢ | [`bilinear_form`](../L1/bilinear_form.md) | firm | `electrostaticsolver.cpp:122-127` |
 
 ## Structural fact
 
-All four composed L1 operators are firm — [`fe_assemble`](../L1/fe_assemble.md), [`ksp_solve`](../L1/ksp_solve.md), and the two capacitance-reduction primitives, the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) and the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) (its `α = xᴴ M y` signature covers the cross-pairing). **Under the OWN-COMPOSITION rule a column is firm when its OWN directly-owned constituents are firm; this column is firm because all four are.** The cross-linked output-product column [`capacitance.L1`](./capacitance.L1.md) is a SIBLING reference, not a blocker. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters.
+All four composed L1 operators are firm — [`fe_assemble`](../L1/fe_assemble.md), [`ksp_solve`](../L1/ksp_solve.md), and the two capacitance-reduction primitives, the diagonal [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) and the off-diagonal [`bilinear_form`](../L1/bilinear_form.md) (its `α = xᴴ M y` signature covers the cross-pairing). **Under the OWN-COMPOSITION rule a column is firm when its OWN directly-owned constituents are firm; this column is firm because all four are.** The cross-linked output-product column [`capacitance.L1`](./capacitance.L1.md) is a SIBLING reference, not a blocker. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters.

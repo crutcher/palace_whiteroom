@@ -1,6 +1,6 @@
 ---
 layer: L1
-operator: eigenvalue-untransform
+operator: eigenvalue_untransform
 firmness: firm
 depends_on: []
 variant_axes:
@@ -8,7 +8,7 @@ variant_axes:
   - element-type (the eigenvalue and ω are both `std::complex<double>`; the map is complex-valued — the eigenfrequency `f = Re ω` projection is the consumer's, not this primitive's)
 ---
 
-# eigenvalue-untransform
+# eigenvalue_untransform
 
 The L1 **eigenvalue→ω un-transform primitive**: the per-mode scalar map that recovers the
 physical angular frequency `ω` from the raw eigenvalue the eigensolver returns, inverting the
@@ -18,7 +18,7 @@ problem-specific spectral transformation the eigensolver solved under,
       = √μ        when degree = linear-EVP     (μ = -λ² = ω², the squared eigenvalue)
       = λ / i     when degree = quadratic-EVP  (λ = iω)
 
-`eigenvalue-untransform` is the **second per-mode scalar building block** that the L4 eigenmode
+`eigenvalue_untransform` is the **second per-mode scalar building block** that the L4 eigenmode
 reduction [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) folds: the
 `untransform : EvpDegree -> Complex -> Complex` map the combinator applies to each eigenvalue
 before taking `f = Re ω` (`eigenfreq_qfactor_reduce.md:73,80-81`). It is the sibling of the firm
@@ -33,7 +33,7 @@ returns each converged eigenvalue in the coordinates of whatever spectral transf
 under — the **squared** angular frequency `μ = ω²` for the symmetric linear generalized EVP, or the
 **imaginary-scaled** `λ = iω` for the quadratic (damped / nonlinear) polynomial EVP. The readout
 loop un-transforms each eigenvalue back to the physical `ω` with a two-way branch before any
-downstream measurement (`eigensolver.cpp:430-439`). `eigenvalue-untransform` names that branch as
+downstream measurement (`eigensolver.cpp:430-439`). `eigenvalue_untransform` names that branch as
 one pure scalar function.
 
 The operator is defined **in L1 vocabulary** (high→low discipline): its semantics, signature, and
@@ -176,7 +176,7 @@ recovery `B = -1/(iω)∇×E` (`eigensolver.cpp:449`), and the Floquet B-correct
 
 ## No L2 entry (by warrant)
 
-`eigenvalue-untransform` is a bare per-mode scalar branch (two closed-form
+`eigenvalue_untransform` is a bare per-mode scalar branch (two closed-form
 inverses keyed on a binary axis). An L2 mirror would be an identity-in-named-terms re-statement — the
 degenerate-mirror smell the vocabulary-shift redirect names; there is no fusion content,
 no iteration, no base-primitive composition to unfold at L2. It stops at L1 as a leaf (the

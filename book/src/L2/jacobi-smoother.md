@@ -12,7 +12,7 @@ variant_axes:
     - element-type (real | complex; collapsed into the opaque JacobiSmoother closure)
     - damping-mode (default ω=1.0 | fixed ω≠0 | estimated ω=0; collapsed into op.dinv's committed value at setup)
   absorbed:
-    - operator-representation (sparse-CSR | matrix-free-Nedelec | parallel-wrapped | complex-wrapped; collapsed at setup through assemble-diagonal's own representation-axis absorption)
+    - operator-representation (sparse-CSR | matrix-free-Nedelec | parallel-wrapped | complex-wrapped; collapsed at setup through assemble_diagonal's own representation-axis absorption)
 ---
 
 # jacobi-smoother
@@ -64,7 +64,7 @@ as same-named floors vs fold-only); it does **not** reach `jacobi-smoother`,
 which is a constructed-operator gate with no fold-parent on either codomain.
 
 It is the **thinnest** such gate — unlike `ksp_solve` (an outer-driver fold over
-the `krylov-step` kernel) and `eigsolve` (a named shift-invert composition over a
+the `krylov_step` kernel) and `eigsolve` (a named shift-invert composition over a
 constructed inverse solver), `jacobi_smoother`'s per-call action is **one
 elementwise product**. The closely-parallel sibling is
 [`chebyshev-iteration`](./chebyshev-iteration.md): both lift the same
@@ -145,7 +145,7 @@ The apply is **inner-product-free, iteration-free, and reduction-free**: it is a
 **single elementwise multiplication** `dinv ⊙ x` — no `apply_linop` call, no
 residual recomputation, no `dot` / `nrm2` reduction, no sweep. This is the gate's
 defining communication profile: linear-cost, embarrassingly parallel, zero
-collective. Where `ksp_solve` folds `krylov-step` over a convergence-tested
+collective. Where `ksp_solve` folds `krylov_step` over a convergence-tested
 trajectory and `chebyshev-iteration` runs an inner `k`-recurrence over an outer
 `pc_it` sweep, the Jacobi apply is one base field operation.
 
@@ -223,7 +223,7 @@ authoritative on every factual claim about the Palace surface.
    x = reciprocal(assemble_diagonal(A)) ⊙ x = D⁻¹ ⊙ x`. Witnessed by the setup
    chain `op.AssembleDiagonal(dinv); dinv.Reciprocal();`
    (`palace/linalg/jacobi.cpp:79-80`). Composes
-   [`assemble-diagonal`](../L1/assemble-diagonal.md)'s diagonal-recovery law with
+   [`assemble_diagonal`](../L1/assemble_diagonal.md)'s diagonal-recovery law with
    the elementwise reciprocal; the law that names `jacobi_smoother` as the
    explicit realization of the `assemble_diagonal → reciprocal →
    elementwise_product` diagonal-preconditioner-apply chain. (The `reciprocal`
@@ -281,7 +281,7 @@ Laws that explicitly **do not** hold (inherited unchanged from L1):
   bare L2 gate is the preconditioner action, not the iteration.
 
 - **Bit-determinism across operator representations.** Inherited from
-  [`assemble-diagonal`](../L1/assemble-diagonal.md): a matrix-free high-order
+  [`assemble_diagonal`](../L1/assemble_diagonal.md): a matrix-free high-order
   Nedelec `A` yields a value-approximate `dinv` (face-dof sharing in 3D), so the
   apply value differs from the assembled-`A` case. Load-bearing per CLAUDE.md
   §"Optimization tricks vs. base algebra"; the L2 algebraic laws hold, but their
@@ -294,7 +294,7 @@ apply: the entire algebraic profile (laws + non-laws) transports unchanged.
 ## Dependencies
 
 **Same-layer (L2)**: the per-call apply has **no L2 operator dependencies** — it
-is one elementwise product. Where `ksp_solve` lists `krylov-step` as a direct
+is one elementwise product. Where `ksp_solve` lists `krylov_step` as a direct
 dependency, `eigsolve` lists `ksp_solve` + `apply_linop`, and
 `chebyshev-iteration` lists `apply_linop` / `axpby` / `scal` + the elementwise
 diagonal action, `jacobi-smoother`'s apply lists **none**. The single elementwise
@@ -308,7 +308,7 @@ this entry's body becomes the single call `elementwise_product(op.dinv, x)`; the
 forward-reference is recorded as an open question, not a live link (the target
 file does not exist — `rough-in-forward-reference-must-be-plain-text-not-live-link`).
 
-The setup-side dependencies ([`assemble-diagonal`](../L1/assemble-diagonal.md)
+The setup-side dependencies ([`assemble_diagonal`](../L1/assemble_diagonal.md)
 for the `op.AssembleDiagonal(dinv)` step, elementwise `reciprocal` for
 `dinv.Reciprocal()`, and the opaque `spectrum_estimate` for the `ω = 0` path) are
 L1-entry concerns, not part of the L2 apply — they are consumed once at
@@ -382,7 +382,7 @@ Absorbed axis:
 
 - **operator-representation** (`sparse-CSR | matrix-free-Nedelec |
   parallel-wrapped | complex-wrapped`) — **collapsed at setup** through the
-  [`assemble-diagonal`](../L1/assemble-diagonal.md) operator's own
+  [`assemble_diagonal`](../L1/assemble_diagonal.md) operator's own
   representation-axis absorption. By the time `dinv` is committed to the closure,
   the representation distinction has been erased; the matrix-free-Nedelec
   approximation propagates as a non-law (the bit-determinism non-law above), not

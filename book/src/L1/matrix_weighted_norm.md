@@ -1,29 +1,29 @@
 ---
 layer: L1
-operator: matrix-weighted-norm
+operator: matrix_weighted_norm
 rank: firm
 edges:
   depends-on:
     - L1/dot
     - L1/apply_linop
   reference:
-    - L1/bilinear-form
+    - L1/bilinear_form
     - L1-L0/matrix-weighted-norm-mutation-rotation
 ---
 
-# matrix-weighted-norm
+# matrix_weighted_norm
 
 Mutation-free operator-weighted vector norm: `α = ‖x‖_B = √(xᴴ B x)` for an SPD operator `B`. The energy-norm primitive at L1; the workhorse of M-orthonormal eigenvector normalisation in the generalised eigenvalue problem (`A x = λ B x`) and the natural metric in B-conjugate-gradient methods.
 
 ## Context
 
-`matrix-weighted-norm` lifts the free-function templates `linalg::Norml2(comm, x, B, Bx)` (declared at `palace/linalg/operator.hpp:372-374`; specialized for `Vector` and `ComplexVector` at `palace/linalg/operator.cpp:599-619`) to a single pure-functional energy-norm operator. The two L0 specializations differ only in element-type plumbing — the complex specialization splits `B.Mult` into real/imaginary calls (since the L0 `B : Operator` is real-only by signature, even though the input vector may be complex) and adds the assertion that the resulting Hermitian self-bilinear is real to within `1e-9`. At L1 these collapse to one operator parameterised by element type, with the SPD precondition on `B` made an explicit applicability condition.
+`matrix_weighted_norm` lifts the free-function templates `linalg::Norml2(comm, x, B, Bx)` (declared at `palace/linalg/operator.hpp:372-374`; specialized for `Vector` and `ComplexVector` at `palace/linalg/operator.cpp:599-619`) to a single pure-functional energy-norm operator. The two L0 specializations differ only in element-type plumbing — the complex specialization splits `B.Mult` into real/imaginary calls (since the L0 `B : Operator` is real-only by signature, even though the input vector may be complex) and adds the assertion that the resulting Hermitian self-bilinear is real to within `1e-9`. At L1 these collapse to one operator parameterised by element type, with the SPD precondition on `B` made an explicit applicability condition.
 
-The L0 file layout — the matrix-weighted `linalg::` free-function block at the bottom of `operator.hpp` — is detailed in [`L0/linalg-operator-file`](../L0/linalg-operator-file.md) "linalg:: free functions". The workspace-internal-allocation pattern is not used here (caller supplies `Bx`); the related operator `Dot(comm, x, A, y)` uses Category 1 of [`L0/mutable-workspace-pattern`](../L0/mutable-workspace-pattern.md) (operator-composition workspace, holding the `A·x` intermediate between the apply and the reduction) — `matrix-weighted-norm`'s `Bx` is a *caller-owned* workspace, sliding it across the bilinear-form sibling boundary.
+The L0 file layout — the matrix-weighted `linalg::` free-function block at the bottom of `operator.hpp` — is detailed in [`L0/linalg-operator-file`](../L0/linalg-operator-file.md) "linalg:: free functions". The workspace-internal-allocation pattern is not used here (caller supplies `Bx`); the related operator `Dot(comm, x, A, y)` uses Category 1 of [`L0/mutable-workspace-pattern`](../L0/mutable-workspace-pattern.md) (operator-composition workspace, holding the `A·x` intermediate between the apply and the reduction) — `matrix_weighted_norm`'s `Bx` is a *caller-owned* workspace, sliding it across the bilinear_form sibling boundary.
 
 At L0, the caller-supplied workspace `Bx` is overwritten with `B · x` (it is a *destination* buffer, not just scratch), and the in-place destination for the return is the return register / a stack scalar. There is no destination buffer for the result. The L1 form drops both: the operator consumes `x` and `B`, produces a fresh scalar; the `Bx` workspace disappears. Workspace ownership and lifetime become an L1>L0 lowering concern (the `matrix-weighted-norm-mutation-rotation` theme, not yet authored).
 
-The unweighted `nrm2` operator ([`nrm2`](./nrm2.md)) flags this operator as a sibling boundary in its Context section. Both operators share the structural shape `√(quadratic form of x)` but differ in the form: `nrm2` is `√⟨x, x⟩`; `matrix-weighted-norm` is `√⟨B·x, x⟩` (equivalently `√⟨x, B·x⟩` for Hermitian `B`). At L1 these are **distinct operators**, not variants of one operator — the algebraic laws differ (the unweighted norm is unconditionally a norm; the weighted form is a norm iff `B` is SPD, and degrades to a seminorm if `B` is SPSD).
+The unweighted `nrm2` operator ([`nrm2`](./nrm2.md)) flags this operator as a sibling boundary in its Context section. Both operators share the structural shape `√(quadratic form of x)` but differ in the form: `nrm2` is `√⟨x, x⟩`; `matrix_weighted_norm` is `√⟨B·x, x⟩` (equivalently `√⟨x, B·x⟩` for Hermitian `B`). At L1 these are **distinct operators**, not variants of one operator — the algebraic laws differ (the unweighted norm is unconditionally a norm; the weighted form is a norm iff `B` is SPD, and degrades to a seminorm if `B` is SPSD).
 
 ## Signature
 
@@ -53,20 +53,20 @@ The form `xᴴ B x` is the *energy* (or *B-quadratic*) form of `x` with respect 
 
 The complex-input / real-operator structure (the L0 specialization signature `Norml2(comm, ComplexVector &x, Operator &B, ComplexVector &Bx)` — note `B` is real even though `x` is complex) reflects Palace's L0 convention that mass-like operators (the typical `B`) are real-valued operators applied componentwise to the real and imaginary parts of complex vectors. At L1 this distinction is absorbed by `apply_linop`'s element-type variant axis: the L1 operator just requires `B : LinearOperator[N, N]` with element type matching some inner-product compatibility rule, and the real-`B`-applied-to-complex-`x` case is admitted as a uniform treatment, not a distinct variant.
 
-Reduction-tree non-associativity is **load-bearing** — inherited from the inner `dot(B·x, x)` via the same chain as `nrm2`. The outer `sqrt` is deterministic IEEE-754. Additionally, `apply_linop(B, x)` is itself subject to representation-aware non-associativity (per `apply_linop` Semantics — matrix-free representations of `B` introduce summation-order non-associativity). So `matrix-weighted-norm` accumulates non-associativity from **two** sources: the inner-product reduction and the operator-application's internal kernel.
+Reduction-tree non-associativity is **load-bearing** — inherited from the inner `dot(B·x, x)` via the same chain as `nrm2`. The outer `sqrt` is deterministic IEEE-754. Additionally, `apply_linop(B, x)` is itself subject to representation-aware non-associativity (per `apply_linop` Semantics — matrix-free representations of `B` introduce summation-order non-associativity). So `matrix_weighted_norm` accumulates non-associativity from **two** sources: the inner-product reduction and the operator-application's internal kernel.
 
 The MPI collective is **not** in the L1 signature. The L0 `linalg::Norml2(comm, x, B, Bx)` folds an `MPI_Allreduce` inside the inner `Dot`; single-rank is in scope (per `CLAUDE.md` "Scope"). The L1>L0 lowering reintroduces the local-then-collective two-step and the bit-deterministic-reduction-order trade-offs already recorded for `dot` and `apply_linop`.
 
 ## Algebraic laws
 
-The laws below hold **conditional on `B` being SPD**, for both real and complex element-types of `x`; absences are deliberate. The SPD precondition is what makes `matrix-weighted-norm` a norm rather than just a quadratic form. Where a weaker condition suffices (e.g. SPSD for non-negativity), it is noted.
+The laws below hold **conditional on `B` being SPD**, for both real and complex element-types of `x`; absences are deliberate. The SPD precondition is what makes `matrix_weighted_norm` a norm rather than just a quadratic form. Where a weaker condition suffices (e.g. SPSD for non-negativity), it is noted.
 
 1. **Non-negativity (SPSD sufficient)**: `matrix_weighted_norm(x, B) ≥ 0` for all `x` and any SPSD `B`. The full SPD condition is needed only for separation (law 2).
 2. **Positive-definite (separation; SPD required)**: `matrix_weighted_norm(x, B) = 0` iff `x = 0` (in exact arithmetic), for SPD `B`. For SPSD `B` (positive semi-definite, possibly singular), the operator is a **seminorm**: `matrix_weighted_norm(x, B) = 0` for `x` in the null space of `B`, even when `x ≠ 0`.
 3. **Positive homogeneity (absolute scalar)**: `matrix_weighted_norm(α·x, B) = |α|·matrix_weighted_norm(x, B)` for any scalar `α` (real or complex). Follows from `apply_linop`'s linearity in `x` (law 1) and `dot`'s conjugate-linearity in the first argument (law 7) — the conjugate-on-the-left cancels the linearity-on-the-right, leaving `|α|²` inside the square root, hence `|α|` outside.
 4. **Triangle inequality (SPSD sufficient)**: `matrix_weighted_norm(x + y, B) ≤ matrix_weighted_norm(x, B) + matrix_weighted_norm(y, B)`. The inner-product structure inherited from `dot` plus SPSD `B` (so `xᴴ B x ≥ 0`) is sufficient — full SPD is not required for sub-additivity.
 5. **Reverse triangle inequality**: `|matrix_weighted_norm(x, B) − matrix_weighted_norm(y, B)| ≤ matrix_weighted_norm(x − y, B)`. (Follows from law 4.)
-6. **Cauchy–Schwarz in the B-inner-product**: for the bilinear form `⟨x, y⟩_B := xᴴ B y` (a separate L1 operator, queued as `bilinear-form`): `|⟨x, y⟩_B| ≤ matrix_weighted_norm(x, B) · matrix_weighted_norm(y, B)`, with equality iff `x` and `y` are linearly dependent modulo the null space of `B` (in exact arithmetic).
+6. **Cauchy–Schwarz in the B-inner-product**: for the bilinear form `⟨x, y⟩_B := xᴴ B y` (a separate L1 operator, queued as `bilinear_form`): `|⟨x, y⟩_B| ≤ matrix_weighted_norm(x, B) · matrix_weighted_norm(y, B)`, with equality iff `x` and `y` are linearly dependent modulo the null space of `B` (in exact arithmetic).
 7. **Parallelogram identity (SPSD sufficient)**: `matrix_weighted_norm(x + y, B)² + matrix_weighted_norm(x − y, B)² = 2·matrix_weighted_norm(x, B)² + 2·matrix_weighted_norm(y, B)²`. Characterises norms induced by an inner product; for SPD `B` the B-inner-product `⟨x, y⟩_B` is a genuine inner product, but the identity itself is purely algebraic and holds for any semi-inner-product (SPSD `B` suffices — non-degeneracy is not required).
 8. **Self-bilinear identity**: `matrix_weighted_norm(x, B)² = xᴴ B x`. The defining identity, restated. Used directly by the L0 source (the implementation factors as `B.Mult(x, Bx); dot = Dot(comm, Bx, x); return std::sqrt(dot)` — `palace/linalg/operator.cpp:602-606`).
 9. **Identity-operator collapse**: `matrix_weighted_norm(x, I) = nrm2(x)` for the identity operator `I : V → V`. The two operators agree exactly on the identity weight; this is the algebraic statement that ties this entry to its sibling [`nrm2`](./nrm2.md).
@@ -76,8 +76,8 @@ The laws below hold **conditional on `B` being SPD**, for both real and complex 
 
 Laws that explicitly **do not** hold:
 
-- **B-linearity**: `matrix_weighted_norm(x, B₁ + B₂) ≠ matrix_weighted_norm(x, B₁) + matrix_weighted_norm(x, B₂)`. The square-root breaks operator-side additivity. What does hold (and is queued at the bilinear-form sibling) is the *squared* form `‖x‖²_{B₁+B₂} = ‖x‖²_{B₁} + ‖x‖²_{B₂}`, which follows from `apply_linop`'s operator-side linearity (law 5) and `dot`'s bilinearity. Not part of `matrix-weighted-norm` itself.
-- **Vector-side linearity in x**: `matrix_weighted_norm(α·x + β·y, B) ≠ α·matrix_weighted_norm(x, B) + β·matrix_weighted_norm(y, B)` in general. `matrix-weighted-norm` is sub-additive (law 4), not additive. This is the defining feature that distinguishes a norm from a linear functional — same caveat as `nrm2`.
+- **B-linearity**: `matrix_weighted_norm(x, B₁ + B₂) ≠ matrix_weighted_norm(x, B₁) + matrix_weighted_norm(x, B₂)`. The square-root breaks operator-side additivity. What does hold (and is queued at the bilinear_form sibling) is the *squared* form `‖x‖²_{B₁+B₂} = ‖x‖²_{B₁} + ‖x‖²_{B₂}`, which follows from `apply_linop`'s operator-side linearity (law 5) and `dot`'s bilinearity. Not part of `matrix_weighted_norm` itself.
+- **Vector-side linearity in x**: `matrix_weighted_norm(α·x + β·y, B) ≠ α·matrix_weighted_norm(x, B) + β·matrix_weighted_norm(y, B)` in general. `matrix_weighted_norm` is sub-additive (law 4), not additive. This is the defining feature that distinguishes a norm from a linear functional — same caveat as `nrm2`.
 - **Norm contract for indefinite `B`**: if `B` is indefinite (has both positive and negative eigenvalues), the construct `xᴴ B x` can be negative, and `√(xᴴ B x)` is complex / undefined. Recorded as an absence: the L0 source's `MFEM_ASSERT(dot > 0.0)` *fails* for indefinite `B`; the L1 form requires SPD (or SPSD with seminorm caveat) as an applicability condition, not a soft guard.
 - **Strict Cauchy–Schwarz in floating point**: law 6 can fail by ULP-level amounts due to the compound non-associativity (inner `dot` + inner `apply_linop`). Same caveat as `nrm2` plus an additional contribution from `apply_linop`.
 - **Bit-determinism across operator representations of `B`**: same load-bearing caveat as `apply_linop` — a sparse-matrix realisation of `B` and a matrix-free realisation of the *same* SPD operator produce results that agree mathematically but may differ at the bit level.
@@ -97,16 +97,16 @@ The L0 implementation factors as `B.Mult(x, Bx); dot = Dot(comm, Bx, x); return 
 
 ## Dependencies
 
-- [`dot`](./dot.md) — the inner reduction `xᴴ (B·x)`. Used in the **closed-form definition** of `matrix-weighted-norm` (law 8: `matrix_weighted_norm(x, B)² = xᴴ B x` is interpretable as `dot(B·x, x)` via dot's Hermitian-sesquilinear law). The L1 dependency is structural; it appears in the L1>L0 lowering as the second of the three composed primitives.
+- [`dot`](./dot.md) — the inner reduction `xᴴ (B·x)`. Used in the **closed-form definition** of `matrix_weighted_norm` (law 8: `matrix_weighted_norm(x, B)² = xᴴ B x` is interpretable as `dot(B·x, x)` via dot's Hermitian-sesquilinear law). The L1 dependency is structural; it appears in the L1>L0 lowering as the second of the three composed primitives.
 - [`apply_linop`](./apply_linop.md) — the operator-application primitive supplying `B · x`. Used in the closed-form via the `B·x` inside `xᴴ B x`. The L1 dependency is structural; it appears in the L1>L0 lowering as the first of the three composed primitives.
 
 Not a leaf — two L1 dependencies. The factoring is parallel to `nrm2`'s factoring through `dot` (one dependency, one composition), but with the extra `apply_linop` step required to introduce the weight: an L2-style construct (energy norm) factored cleanly through L1 leaves.
 
-The sibling operator [`bilinear-form`](./bilinear-form.md) depends on the same two L1 primitives but with a different composition `dot(apply_linop(A, x), y)` — the energy norm is the diagonal case `y = x` plus the outer square root, and the SPD applicability condition.
+The sibling operator [`bilinear_form`](./bilinear_form.md) depends on the same two L1 primitives but with a different composition `dot(apply_linop(A, x), y)` — the energy norm is the diagonal case `y = x` plus the outer square root, and the SPD applicability condition.
 
 ## Variant axes
 
-`matrix-weighted-norm` has two orthogonal variant axes at L1:
+`matrix_weighted_norm` has two orthogonal variant axes at L1:
 
 - **element-type**: `real` | `complex`. At L0 these are template specializations of `linalg::Norml2<VecType>` (`VecType ∈ {Vector, ComplexVector}`, `palace/linalg/operator.cpp:599-619`). At L1 these **collapse to a single operator** with the same signature `(x: Tensor[N], B: LinearOperator[N, N]) → Scalar(real)`, because the result is real-valued regardless of input element type (the SPD precondition guarantees `xᴴ B x ∈ ℝ_{≥0}`) and all the algebraic laws hold uniformly. The complex specialization's per-component `B.Mult(x.Real(), Bx.Real()); B.Mult(x.Imag(), Bx.Imag())` plumbing (lines 613-614) reflects an L0 convention that `B` is real-valued even when `x` is complex; at L1 this is absorbed by `apply_linop`'s element-type variant axis.
 - **output-arg vs return-value pattern**: at L0 the workspace `Bx` is a caller-supplied destination buffer; the L0 caller pre-allocates `Bx` and reuses it across calls (e.g. `palace/linalg/arpack.cpp:438` reuses `Bx` across each eigenvector). At L1 this distinction is erased — the operator returns a fresh scalar with no destination buffer. The `Bx`-as-workspace lifetime, allocation, and reuse become an L1>L0 lowering concern.
@@ -135,7 +135,7 @@ The output-arg vs return-value axis is L1-level (the L1 form picks return-value 
 - `palace/linalg/slepc.cpp:505` — analogous `xscale` computation in SLEPc.
 - `palace/linalg/nleps.cpp:109-119` — `NonLinearEigenvalueSolver::GetEigenvectorNorm`: identical pattern (NLEPS backend). Three-backend consistency confirms the operator's role as the M-orthonormalisation norm primitive.
 - `palace/linalg/nleps.cpp:146` — analogous `xscale` computation in NLEPS.
-- `book/src/L0/linalg-operator-file.md:30-33` — the L0 chapter naming the `linalg::` free-function block, including the SPD-weighted `Norml2(comm, x, B, Bx)` and the (sibling) bilinear-form `Dot(comm, x, A, y)`.
+- `book/src/L0/linalg-operator-file.md:30-33` — the L0 chapter naming the `linalg::` free-function block, including the SPD-weighted `Norml2(comm, x, B, Bx)` and the (sibling) bilinear_form `Dot(comm, x, A, y)`.
 - `book/src/L1/nrm2.md:13` — sibling-boundary statement: "The B-weighted overload `linalg::Norml2(comm, x, B, Bx)` at `palace/linalg/operator.cpp:600-619` is **not** part of this operator. ... It is a separate L1 operator candidate (forthcoming) that depends on both `dot` and the operator-application primitive `apply_linop`." Direct precedent / motivating reference.
 - `book/src/L1/nrm2.md:100` — the same boundary statement reiterated in the Evidence section ("declaration of the B-weighted overload `Norml2(comm, x, B, Bx) → double`. Recorded here to mark the boundary").
 - `book/src/L1/dot.md:43-49`, `book/src/L1/apply_linop.md:46-57` — algebraic-law dependencies (`dot`'s Hermitian-sesquilinear laws 7-9; `apply_linop`'s linearity law 1) that underwrite the closed-form `√(xᴴ B x)` derivation in this entry.

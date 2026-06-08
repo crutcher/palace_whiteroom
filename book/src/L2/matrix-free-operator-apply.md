@@ -133,7 +133,7 @@ verbs:
   length / term axis to a scalar or `Tensor[N]`; this is a *fixed five-stage contraction pipeline*, not
   a variadic reduction.
 - NOT a **named composition** (`orthogonalize` / `ksp_solve` / `eigsolve` / `deflate` /
-  `incremental-least-squares`): those compose Krylov / solver verbs over flat vectors; this composes
+  `incremental_least_squares`): those compose Krylov / solver verbs over flat vectors; this composes
   *element-local FE contraction verbs* over the element-local-tensor shapes — a different vocabulary.
 - NOT an **elementwise / gate floor**: it is a genuine multi-stage composition, not a thin
   identity-in-form floor.

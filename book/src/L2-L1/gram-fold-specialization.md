@@ -3,7 +3,7 @@
 The all-pairs lift of the BLAS-1 reduce-to-scalar conjugation rotation. Lowers the L2 all-pairs
 fold [`gram`](../L2/gram.md) (`book/src/L2/gram.md`) into a **`k×k` grid of L1
 per-cell leaves** — each cell a [`dot`](../L1/dot.md) (canonical Hermitian hook) or a
-[`bilinear-form`](../L1/bilinear-form.md) (`xᴴ M y`, the B-weighted hook) — by **materializing
+[`bilinear_form`](../L1/bilinear_form.md) (`xᴴ M y`, the B-weighted hook) — by **materializing
 the all-pairs definition law as a double loop over the two basis index axes and dispatching each
 cell on the hook's conjugation/weight exactly as the sibling scalar theme does**. Narrated
 forward: the one L2 matrix-valued fold **re-fuses** downward into Palace's nested `for i { for j {
@@ -65,7 +65,7 @@ non-orthonormal-basis consumer `deflate` (`L2/gram` §Signature, `book/src/L2/gr
 
 The L1 form is a **`k×k` grid of per-cell leaves**, each cell one of the same three leaves the
 sibling scalar theme dispatches over (the conjugation axis at [`dot`](../L1/dot.md), which
-co-defines `dot`/`tdot`; the M-weighted member at [`bilinear-form`](../L1/bilinear-form.md)). At
+co-defines `dot`/`tdot`; the M-weighted member at [`bilinear_form`](../L1/bilinear_form.md)). At
 this RHS the per-cell operands are the **concrete Palace `Vector`s** — genuinely flat rank-1
 dof-vectors of length `N` (and `M` for `bilinear_form`'s domain) — so the `Tensor[N]` /
 `LinearOperator[M, N]` rendering here is the literal L0/L1 call shape, NOT the shape-generic
@@ -87,7 +87,7 @@ filled by the `:525-531` double loop. At L1 the per-cell conjugation and weight 
 leaf** (`dot` Hermitian, `tdot` unconjugated, `bilinear_form` M-weighted), each mirroring Palace's
 L0 reduction surface one-to-one — identical to the sibling scalar theme's RHS, just invoked `k²`
 times. The leaves adopt the **same arg-1-conjugated convention** as the L2 fold
-([`dot`](../L1/dot.md):43; [`bilinear-form`](../L1/bilinear-form.md):63), so the per-cell
+([`dot`](../L1/dot.md):43; [`bilinear_form`](../L1/bilinear_form.md):63), so the per-cell
 LHS→RHS dispatch is convention-preserving at the representation level; the per-cell value-level
 re-order against the Palace L0 source is §"The per-cell conjugate-pair re-order" below.
 
@@ -243,7 +243,7 @@ The dispatch lowering preserves the L2 Gram value when:
    shares one length axis `N`; each cell's leaf strides over that one axis (Palace's
    `MFEM_ASSERT(x.Size() == y.Size())`, `palace/linalg/vector.cpp:668`, per cell). For the
    B-weighted hook, additionally `B`'s codomain matches the conjugated-column axis and `B`'s
-   domain matches the linear-column axis (`bilinear-form` §Applicability conditions).
+   domain matches the linear-column axis (`bilinear_form` §Applicability conditions).
 
 2. **Hook fixed across the whole matrix.** `gram`'s `dot` hook is a single field; all `k²` cells
    dispatch to the same leaf (conjugation + weight selected once from the hook). Selecting the
@@ -298,7 +298,7 @@ reduction-tree split is the load-bearing residue recorded in §"Per-cell summati
 - LHS [`gram`](../L2/gram.md) is **firm** (all-pairs `inner_product` syntactic-identity
   laws on the positive Gram-build site `palace/linalg/nleps.cpp:524-531`).
 - RHS leaves are the sibling scalar theme's leaves: [`dot`](../L1/dot.md) (firm; co-defines `dot`
-  + `tdot`) and [`bilinear-form`](../L1/bilinear-form.md) (firm; the B-weighted hook member).
+  + `tdot`) and [`bilinear_form`](../L1/bilinear_form.md) (firm; the B-weighted hook member).
 
 This theme proposes no new operators — it is the matrix-lift lowering edge between existing
 vocabulary on both sides, built by lifting the sibling scalar theme's dispatch over the two basis
@@ -313,7 +313,7 @@ theme — the *dispatch structure* is firm):
   but behaviorally unexercised. The theme's behavioral weight is on the `dot` (Hermitian — the
   NLEPS deflation Gram) arm.
 
-- **`bilinear-form` is firm at L1.** The B-weighted-hook Gram
+- **`bilinear_form` is firm at L1.** The B-weighted-hook Gram
   arm (`G = XᴴBX`) is firm: each cell is the
   composition `inner_product (apply_linop B X[i]) X[j]` lowering to `Dot(comm, B·X[i], X[j])`,
   directly verified at the scalar level. NLEPS uses the canonical hook only; the B-weighted Gram
@@ -375,13 +375,13 @@ L2 / L1 anchors:
   theme is one instance of that theme.
 - `book/src/L1/dot.md` — the firm Hermitian / unconjugated per-cell leaf (RHS): `dot`/`tdot`
   (`:33-35`), the arg-1-conjugated convention (`:43`), the self-dot trick (`:49`).
-- `book/src/L1/bilinear-form.md` — the firm B-weighted per-cell leaf (RHS): `xᴴ M y` (`:63`).
+- `book/src/L1/bilinear_form.md` — the firm B-weighted per-cell leaf (RHS): `xᴴ M y` (`:63`).
 - `book/src/L2/inner_product.md` — the scalar parent (`L2/gram` lifts it): the pinned conjugation
   convention §"Conjugation convention (pinned)" (`:46-102`).
 
 ## Status
 
-`firm` — the L2 LHS [`gram`](../L2/gram.md) and the RHS leaves (`dot`/`tdot`; `bilinear-form` and
+`firm` — the L2 LHS [`gram`](../L2/gram.md) and the RHS leaves (`dot`/`tdot`; `bilinear_form` and
 its B-weighted-hook dispatch arm) are firm, and the dispatch rule IS the `gram` all-pairs definition
 law (`L2/gram` law 1) read as a lowering, composed pointwise with the sibling scalar theme
 [`inner-product-fold-specialization`](./inner-product-fold-specialization.md). The matrix-specific

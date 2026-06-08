@@ -9,16 +9,16 @@ edges:
       kind: cites-evidence            # GMRES H_prev backing: sub-diagonal Hessenberg entry in the Arnoldi/plane-rotation sequence
   reference:
     - concepts/first-iteration-unrolling
-    - L4/krylov-step
+    - L4/krylov_step
     - concepts/state-stratification
-    - concepts/solve-result
+    - concepts/SolveResult
     - concepts/krylov
-    - concepts/step-outputs
+    - concepts/StepOutputs
 ---
 
-# prev-carry
+# PrevCarry
 
-`PrevCarry` is the **closure-threaded recurrence carry** that the [`first-iteration-unrolling`](./first-iteration-unrolling.md) rotation moves *out of* the steady-state iteration schema and threads through the loop driver as a closure argument. It appears only in **Form B** (first-iteration-unrolled) of the L4 [`krylov-step`](../L4/krylov-step.md) kernel. This page defines the data shape — what the carry holds, its type, its stratum, and its L0 backing — not the rotation that produces it (that is [`first-iteration-unrolling`](./first-iteration-unrolling.md)).
+`PrevCarry` is the **closure-threaded recurrence carry** that the [`first-iteration-unrolling`](./first-iteration-unrolling.md) rotation moves *out of* the steady-state iteration schema and threads through the loop driver as a closure argument. It appears only in **Form B** (first-iteration-unrolled) of the L4 [`krylov_step`](../L4/krylov_step.md) kernel. This page defines the data shape — what the carry holds, its type, its stratum, and its L0 backing — not the rotation that produces it (that is [`first-iteration-unrolling`](./first-iteration-unrolling.md)).
 
 The defining property of `PrevCarry` is its **placement**: per [`first-iteration-unrolling`](./first-iteration-unrolling.md) §"The rotation", it is a *closure parameter of the loop driver*, **not** a *state field of the iteration*. The steady-state schema is one slot lighter for having moved the recurrence variable out into the carry; the `steady_step` body becomes branch-free because the `if it == 0` base-case branch is discharged by construction (`steady_step` is only ever called after `first_step` has produced a well-defined carry).
 
@@ -47,19 +47,19 @@ So the L0 home is the **loop-local recurrence value**, not a struct field. `Prev
 
 ## Distinct from neighbouring records
 
-- **Not `Krylov`.** In Form A (branch-in-body), the recurrence variable lives *inside* the `Krylov` bundle as a `_prev` field; Form B's whole point is that it is **removed** from `Krylov` and re-typed as `PrevCarry`. The Form B `Krylov` schema is one slot lighter (see [`krylov-step`](../L4/krylov-step.md) §Semantics).
+- **Not `Krylov`.** In Form A (branch-in-body), the recurrence variable lives *inside* the `Krylov` bundle as a `_prev` field; Form B's whole point is that it is **removed** from `Krylov` and re-typed as `PrevCarry`. The Form B `Krylov` schema is one slot lighter (see [`krylov_step`](../L4/krylov_step.md) §Semantics).
 - **Not `StepOutputs`.** `StepOutputs` is the demand-prunable readout *consumed by the outer driver*; `PrevCarry` is *threaded back into the next step* as input. They are the two distinct result-side slots of Form B's return record `{ sim, krylov, carry, outputs }`.
 
 ## See also
 
 - [`first-iteration-unrolling`](./first-iteration-unrolling.md) — the rotation that creates `PrevCarry`; the authoritative home for *why* and *when* the carry is extracted.
-- [`krylov-step`](../L4/krylov-step.md) — Form B `first_step` / `steady_step` signatures that name `carry: PrevCarry`.
+- [`krylov_step`](../L4/krylov_step.md) — Form B `first_step` / `steady_step` signatures that name `carry: PrevCarry`.
 - [`state-stratification`](./state-stratification.md) — the carry / "fourth stratum" lifetime category `PrevCarry` belongs to.
-- [`solve-result`](./solve-result.md) — the Form-B return record `{ sim, krylov, outputs, carry }` of which `PrevCarry` is the `carry` field.
+- [`SolveResult`](./SolveResult.md) — the Form-B return record `{ sim, krylov, outputs, carry }` of which `PrevCarry` is the `carry` field.
 
 ## Signatures that name this record
 
 - `first_step :: OpParams -> Krylov -> (SimState -> Solve { sim, krylov, carry: PrevCarry, outputs })`
 - `steady_step :: OpParams -> Krylov -> (PrevCarry -> SimState -> Solve { sim, krylov, carry: PrevCarry', outputs })`
 
-both in [`krylov-step`](../L4/krylov-step.md) §Signature (Form B).
+both in [`krylov_step`](../L4/krylov_step.md) §Signature (Form B).

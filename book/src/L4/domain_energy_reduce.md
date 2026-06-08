@@ -5,7 +5,7 @@ rank: firm
 edges:
   depends-on:
     - L1/participation_ratio
-    - L1/matrix-weighted-norm
+    - L1/matrix_weighted_norm
   reference:
     - L4/eigenfreq_qfactor_reduce
     - L4/gram_reduce
@@ -55,7 +55,7 @@ table is driver-AGNOSTIC, the same reduction regardless of producer) and the con
 domain-operator map, and maps each configured domain attribute `idx` to its table row:
 
 - the per-domain energy `energyᵢ = ½⟨field, M_idx field⟩`, the domain-restricted SPD energy form (the
-  [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) squared radicand `⟨x, B x⟩` with `B = M_idx`
+  [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) squared radicand `⟨x, B x⟩` with `B = M_idx`
   the operator restricted to one domain attribute);
 - the participation ratio `pᵢ = energyᵢ / e_total`, the firm
   [`participation_ratio`](../L1/participation_ratio.md) with the per-domain energy numerator over the
@@ -94,7 +94,7 @@ Shape contract (bunsen-style; named shape groups per
   electric table, `A`/`B` for the magnetic table; `postoperator.cpp:1032, 1057`). Read-only. May be complex
   (the energy form sums the real + imaginary radicand contributions, `domainpostoperator.cpp:267-272`).
 - `e_total : Scalar` — the whole-domain total energy of the same field (the un-restricted
-  [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared over the full operator; the
+  [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)-squared over the full operator; the
   `GetElectricFieldEnergy` / `GetMagneticFieldEnergy` result, `postoperator.cpp:1033, 1058`). Real ≥ 0.
   Read-only. The shared denominator — computed ONCE, divided into each per-domain numerator.
 - result `[DomainData]` — the per-domain energy table (one `DomainData` row per configured domain), each
@@ -109,12 +109,12 @@ The shape contract makes structural what is conventional in the C++ readout loop
    `:1061-1066` magnetic loop — neither carries an inter-domain accumulator).
 2. **The folded numerator is a per-domain RESTRICTED energy**, not a pre-reduced scalar — the load-bearing
    distinction from a bare `participation_ratio` fold: the verb computes `energyᵢ` (a domain-restricted
-   `matrix-weighted-norm`-squared) AND the quotient, two folded primitives per row.
+   `matrix_weighted_norm`-squared) AND the quotient, two folded primitives per row.
 
 ## Semantics
 
 `domain_energy_reduce doms field e_total` maps each configured domain to its `(energyᵢ, pᵢ)` row: compute
-the domain-restricted energy `energyᵢ = ½⟨field, M_idx field⟩` (the `matrix-weighted-norm`-squared
+the domain-restricted energy `energyᵢ = ½⟨field, M_idx field⟩` (the `matrix_weighted_norm`-squared
 restricted to domain `idx`), then form the participation `pᵢ = energyᵢ / e_total` (with the
 `e_total = 0 ⇒ pᵢ = 0` total-guard). It is a `map`-then-collect with no `Solve` effect — a pure function
 `(doms, field, e_total) -> [DomainData]`.
@@ -150,8 +150,8 @@ Every law is a **syntactic identity on the per-domain map structure**, read off 
    only on its own domain's `(idx, M_idx)`; no inter-domain state. Embarrassingly parallel over domains
    (the `eigenfreq_qfactor_reduce` / `gram_reduce` grid-map homomorphism), read off the per-domain
    `emplace_back` loop (`postoperator.cpp:1036-1042`) carrying no accumulator.
-2. **Per-domain energy is a domain-restricted `matrix-weighted-norm`-squared.**
-   `energyᵢ = ½⟨field, M_idx field⟩` is the [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
+2. **Per-domain energy is a domain-restricted `matrix_weighted_norm`-squared.**
+   `energyᵢ = ½⟨field, M_idx field⟩` is the [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)
    squared radicand `⟨x, B x⟩` at `B = M_idx`, halved — `0.5 * LocalDot(field, M_idx·field)`
    (`domainpostoperator.cpp:262-274` electric / `:284-296` magnetic). Real ≥ 0 for SPD `M_idx`. This is
    the second folded primitive the bare-`participation_ratio` fold could not absorb.
@@ -207,7 +207,7 @@ report's Open questions for a possible `problems/` drive-by).
 - [`participation_ratio`](../L1/participation_ratio.md) (firm) — the per-domain participation quotient
   `pᵢ = energyᵢ / e_total` this reduction folds (the second of the two folded primitives; the firm L1 home
   for the quotient half).
-- [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm) — the
+- [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) (firm) — the
   domain-restricted SPD energy form `½⟨field, M_idx field⟩` this reduction folds as the per-domain
   numerator (the first folded primitive). Both folded primitives are firm.
 
@@ -273,7 +273,7 @@ discipline; it does not author a theme.
 `MeasureDomainFieldEnergy` per-domain loop (`postoperator.cpp:1021-1099`) — the per-domain map, the
 domain-restricted energy form, the participation quotient, the shared denominator — and every map law
 (§Algebraic laws) is a syntactic identity on that per-domain map over two firm folded primitives:
-the per-domain numerator is the firm [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (restricted
+the per-domain numerator is the firm [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) (restricted
 to one domain attribute, `B = M_idx`) and the participation half is the firm
 [`participation_ratio`](../L1/participation_ratio.md). The `(energyᵢ, pᵢ)` assembly is bare scalar
 arithmetic over two firm halves with no inner-product-axiom content of its own (the same disposition as
@@ -286,7 +286,7 @@ firming basis).
 The structural contrast is the rank-2 family-PAIR [`gram_reduce`](./gram_reduce.md), also firm: the
 standing distinction is SHAPE, not maturity — `domain_energy_reduce` folds two scalar primitives per row
 over a single field (rank-1 per-domain table), whereas `gram_reduce` folds an off-diagonal
-[`bilinear-form`](../L1/bilinear-form.md) `xⱼᵀ K xᵢ` over a family-PAIR grid (rank-2, with the
+[`bilinear_form`](../L1/bilinear_form.md) `xⱼᵀ K xᵢ` over a family-PAIR grid (rank-2, with the
 `symmetric_from_upper` mirror) — the do-NOT-over-unify guard, a permanent shape distinction independent of
 either verb's firmness.
 
@@ -323,7 +323,7 @@ per-domain sibling of the per-mode [`eigenfreq_qfactor_reduce`](./eigenfreq_qfac
   contributes 0), `:266` (`it->second.first->Mult(E.Real(), D)` — the `M_idx·field` application), `:267`
   (`double dot = linalg::LocalDot(E.Real(), D)` — the `⟨field, M_idx field⟩` inner product), `:268-272`
   (the imaginary radicand contribution for complex fields — `if (E.HasImag()) { … dot += LocalDot(E.Imag(),D) }`),
-  `:274` (`return 0.5 * dot` — the `½⟨field, M_idx field⟩` energy form, the `matrix-weighted-norm`-squared
+  `:274` (`return 0.5 * dot` — the `½⟨field, M_idx field⟩` energy form, the `matrix_weighted_norm`-squared
   restricted to domain `idx`); magnetic counterpart `GetDomainMagneticFieldEnergy` `:277-297` (same shape,
   `it->second.second` the magnetic operator, `:296` the `return 0.5 * dot`).
 - **`DomainOpMap` record (the input map):** `palace/models/domainpostoperator.hpp:42`
@@ -331,7 +331,7 @@ per-domain sibling of the per-mode [`eigenfreq_qfactor_reduce`](./eigenfreq_qfac
   `{idx → (M_elec, M_mag)}` domain-operator map).
 - **Whole-domain total `e_total` (the un-restricted energy, the shared denominator):**
   `palace/models/postoperator.cpp:1033` (`GetElectricFieldEnergy(field)`), `:1058`
-  (`GetMagneticFieldEnergy(field)`) — the un-restricted [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared
+  (`GetMagneticFieldEnergy(field)`) — the un-restricted [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)-squared
   over the full operator, supplied as the denominator (NOT part of the per-domain map; a separate upstream
   energy reduction).
 - **Supporting test (L0-equivalent, the energy-form constituent):**
@@ -343,7 +343,7 @@ per-domain sibling of the per-mode [`eigenfreq_qfactor_reduce`](./eigenfreq_qfac
   (redundant under the firm-on-positive-structure escape).
 - **Folded L1 primitives:** [`participation_ratio`](../L1/participation_ratio.md) (firm — the
   `energyᵢ/e_total` quotient half; :188-191 disclaims the numerator-energy reduction as "named not authored"
-  = THIS verb), [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm — the
+  = THIS verb), [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) (firm — the
   `½⟨field, M field⟩` energy-form half).
 - **Sibling-combinator grounding:** [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md) (the
   per-MODE rank-1 scalar-table sibling), [`gram_reduce`](./gram_reduce.md) (the rank-2 over-unification

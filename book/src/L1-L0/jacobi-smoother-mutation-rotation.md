@@ -76,7 +76,7 @@ materialises:
 - `op.dinv` ← `AssembleDiagonal(dinv); dinv.Reciprocal()` — assemble
   `diag(A)` into `dinv`, then elementwise-reciprocate to `1 / diag(A)`. The
   diagonal-extraction step reuses the L1
-  [`assemble-diagonal`](../L1/assemble-diagonal.md) operator via its L1>L0
+  [`assemble_diagonal`](../L1/assemble_diagonal.md) operator via its L1>L0
   lowering [`assemble-diagonal-mutation-rotation`](./assemble-diagonal-mutation-rotation.md);
   the reciprocal step is the elementwise [`reciprocal`](../L1/reciprocal.md)
   primitive (firm L1 leaf).
@@ -424,7 +424,7 @@ rule, the consumer sites).
 
 None new for this theme — both the L1 anchor
 ([`L1/jacobi-smoother`](../L1/jacobi-smoother.md)) and the dependency
-[`L1/assemble-diagonal`](../L1/assemble-diagonal.md) are already firm. The
+[`L1/assemble_diagonal`](../L1/assemble_diagonal.md) are already firm. The
 sub-pattern A diagonal-prep chain references two forward-referenced L1
 primitives:
 
@@ -435,7 +435,7 @@ primitives:
   `ComplexVector::Reciprocal()` (`palace/linalg/vector.cpp:248-261`, the full
   complex `1/(a+bi) = (a−bi)/|a+bi|²`). Companion to `assemble_diagonal` in
   the L1 diagonal-preconditioner-apply chain
-  [`assemble-diagonal`](../L1/assemble-diagonal.md) →
+  [`assemble_diagonal`](../L1/assemble_diagonal.md) →
   [`reciprocal`](../L1/reciprocal.md) →
   [`elementwise_product`](../L1/elementwise_product.md).
 - [`elementwise_product`](../L1/elementwise_product.md) — the elementwise
@@ -444,13 +444,13 @@ primitives:
   for real, `:52-60` for complex). The shared `concepts/elementwise-product.md`
   concept page defines the data shape.
 
-Both are named in [`L1/assemble-diagonal`](../L1/assemble-diagonal.md)
+Both are named in [`L1/assemble_diagonal`](../L1/assemble_diagonal.md)
 §Dependencies and [`L1/jacobi-smoother`](../L1/jacobi-smoother.md)
 §Dependencies as firm L1 leaves.
 
 The `spectrum_estimate` setup sub-action (the `SpectralNorm`
 power-iteration sibling) is the same *existing* open L1 candidate named in
-the `chebyshev-smoother` and `matrix-weighted-norm` residual-cohort open
+the `chebyshev-smoother` and `matrix_weighted_norm` residual-cohort open
 question (`scaffolding/open-questions.md`,
 `matrix-weighted-norm-and-bilinear-form`); promotion is out of scope for
 this entry and treated as opaque (same handling as the chebyshev sibling

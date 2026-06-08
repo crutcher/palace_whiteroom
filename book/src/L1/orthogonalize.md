@@ -197,7 +197,7 @@ this operator — they are the caller's normalisation step (`arnoldi_step`), exc
 header's "does not normalize the output" contract.
 
 The reverse direction (consumers): [`ksp_solve`](./ksp_solve.md) via the GMRES/FGMRES Arnoldi
-inner loop; the ROM basis-extension path; the L2 [`krylov-step`](../L2/krylov-step.md)
+inner loop; the ROM basis-extension path; the L2 [`krylov_step`](../L2/krylov_step.md)
 composition surface references `orthogonalization` as an all-three-level-absorbed
 (residual-axis-disclosed; the residual is the per-variant collective shape) component.
 
@@ -230,7 +230,7 @@ composition surface references `orthogonalization` as an all-three-level-absorbe
   `IdentityInnerProduct`); the SLEPc/ROM paths substitute a `B`-weighted dot
   (`romoperator.cpp:59-65`, `test-orthog.cpp:276-389` weighted cases). At L1 this is a
   substitution of the [`dot`](./dot.md) used for `H[j]` (and equivalently a
-  [`matrix-weighted-norm`](./matrix-weighted-norm.md)-flavoured inner product); the
+  [`matrix_weighted_norm`](./matrix_weighted_norm.md)-flavoured inner product); the
   orthogonality contract becomes `⟨w', V[i]⟩_B = 0`. The operator's shape and laws are
   unchanged under the substitution; only the inner-product realisation differs.
 

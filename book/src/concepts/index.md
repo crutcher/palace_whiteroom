@@ -4,8 +4,8 @@ kind: navigational-container (concepts library index)
 # claim, not in the total order), only `reference` edges to the concept pages
 # it indexes (carry no liveness, constrain no rank — scheme §4/§5; SAME
 # convention WAVE-1 D5 fixed for the layer/lowering indexes). The record-
-# definition concept pages it lists (config-record / dofset / krylov / op-params
-# / sim-state / step-outputs / prev-carry / solve-result) ARE DAG nodes — but a
+# definition concept pages it lists (config-record / dofset / krylov / OpParams
+# / SimState / StepOutputs / PrevCarry / SolveResult) ARE DAG nodes — but a
 # member being a node does not make the index a node (an index references its
 # members; it does not depend-on them).
 edges:
@@ -37,29 +37,29 @@ edges:
     - concepts/givens_apply
     - concepts/givens_generate
     - concepts/gmres
-    - concepts/incremental-least-squares
+    - concepts/incremental_least_squares
     - concepts/krylov
     - concepts/ksp_solve
     - concepts/mesh
     - concepts/negative-result-slice
     - concepts/nested-constructed-operator-gate
     - concepts/nrm2
-    - concepts/op-params
+    - concepts/OpParams
     - concepts/orthogonalization
     - concepts/plane-rotation-stream
-    - concepts/prev-carry
+    - concepts/PrevCarry
     - concepts/rotation
     - concepts/scal
     - concepts/scalar-promotion
     - concepts/scope-out-obstruction
     - concepts/sequential-obstruction
     - concepts/set_subvector_zero
-    - concepts/sim-state
+    - concepts/SimState
     - concepts/solve-monad
-    - concepts/solve-result
+    - concepts/SolveResult
     - concepts/solver-as-operator
     - concepts/state-stratification
-    - concepts/step-outputs
+    - concepts/StepOutputs
     - concepts/tensor-field-lift
     - concepts/trsv
     - concepts/two_operator_split
@@ -78,8 +78,8 @@ record-definition pages referenced across **multiple chapters** of the layered s
 - Layer patterns naming how the rotations work: `state-stratification`, `solve-monad`, `tensor-field-lift`, `constructed-operators`, …
 - Methodology concepts accumulated from cross-cycle friction: `rotation`, `variant-absorption`, `sequential-obstruction`, …
 - **Record-definition pages** (the record-definition obligation, directive-2): the fields / types / meaning /
-  construction-vs-run-time stratum / L0 backing home of a record named across ≥2 chapters (`krylov`, `op-params`,
-  `sim-state`, `step-outputs`, `prev-carry`, `solve-result`, `config-record`).
+  construction-vs-run-time stratum / L0 backing home of a record named across ≥2 chapters (`krylov`, `OpParams`,
+  `SimState`, `StepOutputs`, `PrevCarry`, `SolveResult`, `config-record`).
 
 A concept page defines the **data shape / shared vocabulary** in itself; the per-operator chapters (in the L_n Parts)
 define the *behavior over it*. A concept page does NOT restate the operators' algebra — the authoritative algebra lives
@@ -143,7 +143,7 @@ Maintained by the integrator: a new `concepts/<name>.md` page lands as an alpha-
 
 **Kind values**:
 - `methodology` — concepts about the dissection process itself (rotation, variant-absorption, …).
-- `algorithm` — algorithmic patterns above the leaf primitives (chebyshev-iteration, orthogonalization, incremental-least-squares, …).
+- `algorithm` — algorithmic patterns above the leaf primitives (chebyshev-iteration, orthogonalization, incremental_least_squares, …).
 - `primitive` — base tensor/linear-algebra operations (axpy, dot, apply_linop, …).
 - `layer-pattern` — concepts naming how L1/L2/L3/L4 work (state-stratification, solve-monad, tensor-field-lift, …).
 - `auxiliary` — supporting concepts that don't fit the other categories.
@@ -177,29 +177,29 @@ Maintained by the integrator: a new `concepts/<name>.md` page lands as an alpha-
 | [givens_apply](./givens_apply.md) | primitive |
 | [givens_generate](./givens_generate.md) | primitive |
 | [gmres](./gmres.md) | algorithm |
-| [incremental-least-squares](./incremental-least-squares.md) | algorithm |
+| [incremental_least_squares](./incremental_least_squares.md) | algorithm |
 | [krylov](./krylov.md) | record |
 | [ksp_solve](./ksp_solve.md) | layer-pattern |
 | [Mesh](./mesh.md) | record |
 | [negative-result-slice](./negative-result-slice.md) | methodology |
 | [nested-constructed-operator-gate](./nested-constructed-operator-gate.md) | layer-pattern |
 | [nrm2](./nrm2.md) | primitive |
-| [op-params](./op-params.md) | record |
+| [OpParams](./OpParams.md) | record |
 | [orthogonalization](./orthogonalization.md) | algorithm |
 | [plane-rotation-stream](./plane-rotation-stream.md) | layer-pattern |
-| [prev-carry](./prev-carry.md) | record |
+| [PrevCarry](./PrevCarry.md) | record |
 | [rotation](./rotation.md) | methodology |
 | [scal](./scal.md) | primitive |
 | [scalar-promotion](./scalar-promotion.md) | methodology |
 | [scope-out-obstruction](./scope-out-obstruction.md) | methodology |
 | [sequential-obstruction](./sequential-obstruction.md) | layer-pattern |
 | [set_subvector_zero](./set_subvector_zero.md) | primitive |
-| [sim-state](./sim-state.md) | record |
+| [SimState](./SimState.md) | record |
 | [solve-monad](./solve-monad.md) | layer-pattern |
-| [solve-result](./solve-result.md) | record |
+| [SolveResult](./SolveResult.md) | record |
 | [solver-as-operator](./solver-as-operator.md) | layer-pattern |
 | [state-stratification](./state-stratification.md) | layer-pattern |
-| [step-outputs](./step-outputs.md) | record |
+| [StepOutputs](./StepOutputs.md) | record |
 | [tensor-field-lift](./tensor-field-lift.md) | layer-pattern |
 | [trsv](./trsv.md) | primitive |
 | [two_operator_split](./two_operator_split.md) | methodology |

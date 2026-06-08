@@ -9,7 +9,7 @@ edges:
     - L4-L3/ksp-solve-driver-dissolution
     - L3/ksp_solve
   reference:
-    - L4/iterate-while
+    - L4/iterate_while
     - L4-L3/iterate-while-dissolution
     - L4-L3/krylov-step-typed-wrapper-dissolution
     - concepts/state-stratification
@@ -31,7 +31,7 @@ The L4>L3 lowering theme for the [`solve_family`](../L4/solve_family.md) **outer
 
 The L4>L3 hop for the iterative-solve family is now **stratified across the coordination shells**, each shell a dedicated theme one level out from the last:
 
-- [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) (firm) — the **per-step body**: the L4 `krylov-step` typed wrapper → the L3 value-threaded kernel `(op, K, s) -> (K', s', outputs)`.
+- [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) (firm) — the **per-step body**: the L4 `krylov_step` typed wrapper → the L3 value-threaded kernel `(op, K, s) -> (K', s', outputs)`.
 - [`iterate-while-dissolution`](./iterate-while-dissolution.md) (firm) — the **inner-fold combinator**: the L4 `iterate_while` → the L3 `iterate_while_L3` tail-recursive worker the inner solve-loop invokes.
 - [`ksp-solve-driver-dissolution`](./ksp-solve-driver-dissolution.md) (firm) — the **per-solve outer driver**: the L4 `solve_loop` / `restart_cycle` / `Outcome` coordination of *one* solve → the L3 value-threaded outer-driver fold [`L3/ksp_solve`](../L3/ksp_solve.md) `(op, K_0, s_0) -> (s_final, result)`.
 - `solve-family-map-dissolution` (this theme) — the **family map shell**: the L4 `map` of the `ksp_solve` cap over a *family* of RHSs, with the once-captured shared operator → the L3 explicit positional accumulating `for` over the family-index set, the operator construction hoisted outside the loop, each member written into a pre-sized collection slot.
@@ -150,7 +150,7 @@ The rewrite is valid when all four of the following hold (the first three are th
 
 ## Speculative L4 operators
 
-None. This theme lowers an already-authored L4 combinator ([`solve_family`](../L4/solve_family.md), firm) assembled from the already-firm [`ksp_solve`](../L4/ksp_solve.md) cap mapped via the already-firm [`iterate-while`](../L4/iterate-while.md) family. No new speculative operator is introduced.
+None. This theme lowers an already-authored L4 combinator ([`solve_family`](../L4/solve_family.md), firm) assembled from the already-firm [`ksp_solve`](../L4/ksp_solve.md) cap mapped via the already-firm [`iterate_while`](../L4/iterate_while.md) family. No new speculative operator is introduced.
 
 ## Evidence
 
@@ -158,7 +158,7 @@ L4 source (the LHS of this rewrite):
 
 - `book/src/L4/solve_family.md` (firm) — the L4 map-over-RHS-family combinator: §Signature (the `solve_family` / `map (\inp -> ksp_solve op inp) rhss` shape + the pure-map degenerate rendering), §Semantics (the direct-map form + the operator-capture-once structural payoff), §"Algebraic laws" (Law 1 concatenation-homomorphism, Law 2 operator-capture-once / `SetOperators`-hoist, Law 3 element-independence / order-preservation — the load-bearing transported properties), §"Lowers to" (the in-line rotation-direction record this theme realizes), §Specializations (the two fixed-operator sweeps), §Variant axes (the operator-capture scope boundary, the absorbed family-index / collection-shape axes).
 - `book/src/L4/ksp_solve.md` (firm) — the per-member cap the map runs (the per-element solve, delegated to its own theme).
-- `book/src/L4/iterate-while.md` (firm) — the §3.7 family whose pure-map degenerate the combinator IS (the alternate LHS rendering).
+- `book/src/L4/iterate_while.md` (firm) — the §3.7 family whose pure-map degenerate the combinator IS (the alternate LHS rendering).
 
 L3 source (the RHS of this rewrite):
 

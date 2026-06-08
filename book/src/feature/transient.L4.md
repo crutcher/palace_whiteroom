@@ -18,7 +18,7 @@ edges:
       kind: cites-evidence
     - target: concepts/config-record
       kind: uses-record               # input signature: transient :: TransientConfig -> FieldTrajectory (the IoData surface)
-    - target: concepts/op-params
+    - target: concepts/OpParams
       kind: uses-record               # composition body: op : OpParams (the captured ODE operator, feature/transient.L4.md:38)
 ---
 

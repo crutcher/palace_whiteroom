@@ -6,7 +6,7 @@ edges:
   reference:
     - concepts/state-stratification
     - L4/preconditioning-framework
-    - L3/krylov-step
+    - L3/krylov_step
 ---
 # counter-update
 

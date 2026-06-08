@@ -1,4 +1,4 @@
-# floquet-correction
+# floquet_correction
 
 Mutation-lifted floquet-periodicity B-field correction primitive: a pure-functional
 linear map `y = floquet_correction(F, x)` that consumes a Nedelec-space (H(curl))
@@ -32,7 +32,7 @@ the signature; the apply-and-accumulate is realised at L1 by composition with
 `floquet_correction` is a **constructed-operator gate** at L1, in the family of
 [`ksp_solve`](./ksp_solve.md), [`eigsolve`](./eigsolve.md),
 [`chebyshev-smoother`](./chebyshev-smoother.md),
-[`divfree-projector`](./divfree-projector.md), and
+[`divfree_projector`](./divfree_projector.md), and
 [`jacobi-smoother`](./jacobi-smoother.md): its primary argument `F` is a
 structured opaque value assembled once at solver setup
 (`palace/linalg/floquetcorrection.cpp:20-71`), carrying the RT mass operator
@@ -44,7 +44,7 @@ a fixed linear map on its single field argument (like `divfree_project`); unlike
 iteration to the construction-time rel/abs tolerances and iteration cap). The
 construction-time integrator assemblies (`VectorFEMassIntegrator` for both `M_RT`
 and `Cross`) and the BoomerAMG-free single-level smoother choice
-(`JacobiSmoother`, not the divfree-projector's BoomerAMG-or-GMG-wrapping
+(`JacobiSmoother`, not the divfree_projector's BoomerAMG-or-GMG-wrapping
 preconditioner) are absorbed inside `F` and do not appear in the apply signature.
 
 The class is templated on `VecType` but is **instantiated only for
@@ -56,7 +56,7 @@ complex-valued phase-modulated fields), and only the driven + eigenmode
 post-processing pipelines (both built on `ComplexVector`) call it. The
 parametric `<VecType>` template existing in the class declaration is dead-code
 in any hypothetical real-only client — this is **not** a variant axis at the L1
-signature (the closure is complex-only). Contrast `divfree-projector` (real and
+signature (the closure is complex-only). Contrast `divfree_projector` (real and
 complex both instantiated) and `jacobi-smoother` (real and complex both
 instantiated) — `floquet_correction` is the **first L1 constructed-operator gate
 to carry a deliberately-narrowed element-type scope**.
@@ -67,8 +67,8 @@ shape: `F.ksp : Solver[F.M_RT]` is a constructed-operator sub-field carrying its
 own CG iteration, JacobiSmoother preconditioner, tolerance, and iteration cap.
 The CG iteration is interior to [`ksp_solve`](./ksp_solve.md) and does not leak
 into `floquet_correction` (the concept's cross-layer fidelity rule). Structurally
-isomorphic to `divfree-projector`'s `P.ksp : Solver[P.M]`; thinner than
-`divfree-projector` (no boundary-zeroing step, no gradient-correction step, no
+isomorphic to `divfree_projector`'s `P.ksp : Solver[P.M]`; thinner than
+`divfree_projector` (no boundary-zeroing step, no gradient-correction step, no
 empty-boundary nullspace pin).
 
 ## Signature
@@ -103,7 +103,7 @@ Shape contract (bunsen-style; named axes):
   - `F.ksp : Solver[F.M_RT]` — a CG solver bound to `F.M_RT` as both operator
     and preconditioner-target, preconditioned by a `JacobiSmoother` (the
     diagonal-only preconditioner — RT mass is well-conditioned so JacobiSmoother
-    is sufficient; contrast `divfree-projector` which needs BoomerAMG-or-GMG),
+    is sufficient; contrast `divfree_projector` which needs BoomerAMG-or-GMG),
     configured with the construction-time tolerance, machine-epsilon absolute
     tolerance, and iteration cap (`palace/linalg/floquetcorrection.cpp:60-66`).
     The inner constructed-operator gate. See [`ksp_solve`](./ksp_solve.md).
@@ -121,7 +121,7 @@ is real per attribute, `palace/models/materialoperator.cpp:358`); the
 `ComplexParOperator` wraps a real `ParOperator` (with `nullptr` imaginary part,
 `palace/linalg/floquetcorrection.cpp:33,50`). Algebraically `F.M_RT`/`F.Cross`
 act on the real and imaginary parts of `x` independently — the same
-block-diagonal real-on-complex action as `divfree-projector`.
+block-diagonal real-on-complex action as `divfree_projector`.
 
 MPI is single-rank in scope (per CLAUDE.md "Scope"): the construction reads
 `rt_fespace.GetComm()` to bind the CG solver's communicator
@@ -242,7 +242,7 @@ through the correction.
   cross-product is anti-symmetric, mapping back into Nedelec via embedding
   would yield `(M_RT⁻¹ · [kp ×])²` which composes two different-space operations
   through an implicit embedding. The L1 contract is a *linear map*, not a
-  projection — the **divfree-projector**'s `P∘P = P` law has no analog here.
+  projection — the **divfree_projector**'s `P∘P = P` law has no analog here.
 
 ## Dependencies
 

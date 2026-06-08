@@ -2,7 +2,7 @@
 edges:
   reference:
     - concepts/constructed-operators  # parent concept (apply_BA IS a constructed operator)
-    - L2/krylov-step               # use-site (per-Arnoldi-step operator, absorbs side/flexible)
+    - L2/krylov_step               # use-site (per-Arnoldi-step operator, absorbs side/flexible)
 ---
 
 # Concept: `apply_BA` (preconditioner-side constructed operator)
@@ -43,5 +43,5 @@ apply_BA.apply(v) → (w, z?)        // z present when flexible or side=RIGHT
 
 ## Slices that use this primitive
 
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — the per-Arnoldi-step operator;
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — the per-Arnoldi-step operator;
   absorbs the `side` and `flexible` variant axes.

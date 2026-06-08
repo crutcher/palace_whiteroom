@@ -23,7 +23,7 @@ same index set (the index set indexes degrees of freedom, not real numbers).
 ## Role in the vocabulary
 
 The canonical primitive for **essential boundary-condition enforcement on a
-residual or RHS**: after assembling a bilinear-form residual that does not
+residual or RHS**: after assembling a bilinear_form residual that does not
 know about Dirichlet/essential dofs, zero those dofs to project onto the
 free-dof subspace before passing to a solver. Distinct from
 `set_subvector(x, idx, value)` (the more general form) — the

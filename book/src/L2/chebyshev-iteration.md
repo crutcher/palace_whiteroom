@@ -32,10 +32,10 @@ polynomial is realised as a parameterised three-term recurrence
 
 where `(α₀, sd_k, sr_k)` come from the variant scalar generator and `dinv ⊙ r`
 is the elementwise diagonal action. This is the canonical **polynomial-recurrence**
-shape — the same kernel-plus-driver shape the L2 [`krylov-step`](./krylov-step.md)
-catalogs as one of its five pattern instances (`krylov-step.md:7`, citing
+shape — the same kernel-plus-driver shape the L2 [`krylov_step`](./krylov_step.md)
+catalogs as one of its five pattern instances (`krylov_step.md:7`, citing
 `book/src/L4/chebyshev.md` §Semantics `innerStep`). `chebyshev-iteration` is the concrete L2 entry that the
-`krylov-step` variant-axis (3) (polynomial-kind, `op.scalars`) points at.
+`krylov_step` variant-axis (3) (polynomial-kind, `op.scalars`) points at.
 
 The HPC element-fused kernels in the L0 source — `ApplyOrder0` (one elementwise
 pass computing `d = sr · dinv · r`) and `ApplyOrderK` (one elementwise pass
@@ -126,7 +126,7 @@ of L1 leaf primitives:
   next scalar state. 4th-kind is stateless closed form; 1st-kind threads `ρ`.
 
 This is the **polynomial-recurrence** primitive composition — the L2 building
-block that `krylov-step`'s polynomial-method instances factor into.
+block that `krylov_step`'s polynomial-method instances factor into.
 
 ## Algebraic laws
 
@@ -206,9 +206,9 @@ Laws that explicitly **do not** hold:
   degenerate-residual branch).
 - L1 sibling: [`chebyshev-smoother`](../L1/chebyshev-smoother.md) — the
   closed-form L1 action this entry unfolds (law 1).
-- L2 sibling: [`krylov-step`](./krylov-step.md) — `chebyshev-iteration` is the
-  concrete L2 entry behind `krylov-step`'s polynomial-method variant-axis (3);
-  its `op.scalars` closure is `krylov-step`'s `op.scalars?` field.
+- L2 sibling: [`krylov_step`](./krylov_step.md) — `chebyshev-iteration` is the
+  concrete L2 entry behind `krylov_step`'s polynomial-method variant-axis (3);
+  its `op.scalars` closure is `krylov_step`'s `op.scalars?` field.
 
 ## Variant axes
 
@@ -262,6 +262,6 @@ syntactic-identity laws — same justification as the L1 entry.
   final `y += d`.
 - `palace/linalg/chebyshev.cpp:215-217` — 4th-kind `sd` / `sr` closed forms.
 - `palace/linalg/chebyshev.cpp:286-288` — 1st-kind `rho` / `sd` / `sr` recurrence.
-- `book/src/L2/krylov-step.md:7` — catalogs `book/src/L4/chebyshev.md`
+- `book/src/L2/krylov_step.md:7` — catalogs `book/src/L4/chebyshev.md`
   §Semantics `innerStep` as one of the five polynomial-recurrence pattern
-  instances `krylov-step` factors.
+  instances `krylov_step` factors.

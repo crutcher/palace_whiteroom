@@ -1,4 +1,4 @@
-# incremental-least-squares
+# incremental_least_squares
 
 The L2 first-class composition naming the GMRES / FGMRES **running-QR /
 Givens-rotation stream**: the incremental triangularisation of the growing
@@ -19,7 +19,7 @@ last partial restart cycle's correction into the running iterate `s.x`.
 ## Context
 
 At L1 this is a single opaque operation (`ls_update_column`, per the
-[`concepts/incremental-least-squares`](../concepts/incremental-least-squares.md)
+[`concepts/incremental_least_squares`](../concepts/incremental_least_squares.md)
 contract): a `Krylov` bundle carrying the rotation registers `(cs, sn)`, the RHS
 `s`, and the LS-residual proxy `β` advances by one column. L2 is the
 fusion-rotation layer (`book/src/L2/index.md`): "Batched specialized BLAS calls
@@ -41,16 +41,16 @@ composition) and the firm [`linear_combination`](./linear_combination.md)
 the laws that hold *at the composition level*, do not re-derive the laws of the
 constituent L1 primitives.
 
-**Relation to `krylov-step` (the borderline, resolved).** This composition is **not**
-a [`krylov-step`](./krylov-step.md) instance. `krylov-step` is the iterative-method
+**Relation to `krylov_step` (the borderline, resolved).** This composition is **not**
+a [`krylov_step`](./krylov_step.md) instance. `krylov_step` is the iterative-method
 step kernel that builds and orthogonalises a new length-`N` basis vector;
-`incremental-least-squares` operates on the **small-dense** `(j+2)×(j+1)` Hessenberg
+`incremental_least_squares` operates on the **small-dense** `(j+2)×(j+1)` Hessenberg
 matrix and the length-`(j+2)` RHS — its work is `O(j)` scalar rotations per step,
 independent of the field dimension `N`. It is *folded by* the GMRES step (the
 column produced by `orthogonalize` + the `Norml2` sub-diagonal is the input column
 `H̄[:,j]`), but it is a distinct composition consumed within the step, not a step
 variant. The decision closes the `gmres-givens-stream-as-step-kernel-borderline` OQ:
-the Givens-stream is a separate named composition, not a `krylov-step` axis.
+the Givens-stream is a separate named composition, not a `krylov_step` axis.
 
 The composition is **value-producing and incremental-stateful** (it threads the
 rotation registers `(cs, sn)` and the rotated RHS `s` across columns), but it is
@@ -58,12 +58,12 @@ rotation registers `(cs, sn)` and the rotated RHS `s` across columns), but it is
 convergence predicate inside it; it produces one updated triangular factor + one
 new residual norm per column, and the convergence test reads `β` from the result.
 The *outer* Arnoldi loop that calls it column-by-column is the iteration-structural
-part, which lives in [`krylov-step`](./krylov-step.md) + L4's driver, not here. The
+part, which lives in [`krylov_step`](./krylov_step.md) + L4's driver, not here. The
 LS residual exposure `β = |s[j+1]|` is the side-output that the
 [`ksp_solve`](./ksp_solve.md) convergence predicate consumes.
 
 A cross-cutting prose treatment lives at
-[`concepts/incremental-least-squares`](../concepts/incremental-least-squares.md);
+[`concepts/incremental_least_squares`](../concepts/incremental_least_squares.md);
 the scalar Givens kernel pair is at [`concepts/givens`](../concepts/givens.md)
 (generate + apply), with [`concepts/givens_generate`](../concepts/givens_generate.md)
 and [`concepts/givens_apply`](../concepts/givens_apply.md) the per-kernel pages.
@@ -284,7 +284,7 @@ Laws that explicitly **do NOT** hold:
   **not** fusible into this composition — `incremental_least_squares` produces one `β`
   per column and the fold/restart logic lives in `ksp_solve` (the outer driver). The
   composition is the kernel's LS-update half, not the loop.
-- **`krylov-step` membership.** This is **not** a [`krylov-step`](./krylov-step.md)
+- **`krylov_step` membership.** This is **not** a [`krylov_step`](./krylov_step.md)
   variant (the borderline OQ, resolved): it works on the `(j+2)×(j+1)` small-dense
   Hessenberg, not the length-`N` field; it is folded *by* the step, not a step axis.
 
@@ -293,7 +293,7 @@ Laws that explicitly **do NOT** hold:
 L2 dependencies (other L2 vocabulary or below):
 
 - L1 leaf it lifts: the `ls_update_column` operation per
-  [`concepts/incremental-least-squares`](../concepts/incremental-least-squares.md)
+  [`concepts/incremental_least_squares`](../concepts/incremental_least_squares.md)
   (the single-column running-QR update; the L1 leaf is forthcoming — this entry is
   the form it is *named as* at L2).
 - Scalar kernels the composition's sub-steps compose: the Givens generate/apply pair
@@ -304,13 +304,13 @@ L2 dependencies (other L2 vocabulary or below):
   `(j+1)×(j+1)` block; an L1 `trsv` leaf is the natural lowering target, forthcoming).
 - Producer of the input column `h_new`: [`orthogonalize`](./orthogonalize.md) (the
   `coeffs` are the column's `0..j` Arnoldi entries) followed by the caller's `Norml2`
-  sub-diagonal (`iterative.cpp:631`). `orthogonalize` and `incremental-least-squares`
+  sub-diagonal (`iterative.cpp:631`). `orthogonalize` and `incremental_least_squares`
   are siblings folded by the same GMRES step: orthogonalize produces the column,
-  incremental-least-squares triangularises it.
+  incremental_least_squares triangularises it.
 
 Concept references (cross-cutting; do not duplicate):
 
-- [`concepts/incremental-least-squares`](../concepts/incremental-least-squares.md) —
+- [`concepts/incremental_least_squares`](../concepts/incremental_least_squares.md) —
   the narrative cross-cut (the role: incremental triangularisation with residual as a
   free byproduct; reuse across GMRES / FGMRES / MINRES / LSQR / LSMR).
 - [`concepts/givens`](../concepts/givens.md) — the scalar kernel pair and the
@@ -318,9 +318,9 @@ Concept references (cross-cutting; do not duplicate):
 
 Consumers (the L2/L4 surfaces that fold or call this composition):
 
-- [`krylov-step`](./krylov-step.md) — folds this composition inside the GMRES /
+- [`krylov_step`](./krylov_step.md) — folds this composition inside the GMRES /
   FGMRES step (the column produced by `orthogonalize` + `Norml2` is fed in; the
-  byproduct `β` is the step's residual-norm output). Named by `krylov-step`'s
+  byproduct `β` is the step's residual-norm output). Named by `krylov_step`'s
   §"L2 vs L1 distinction" as a future L2 candidate; this entry is that candidate.
 - [`ksp_solve`](./ksp_solve.md) — §Semantics phase-3 `materialise_iterate` folds the
   last partial restart cycle's correction `V·y` / `Z·y` (this composition's back-solve
@@ -376,12 +376,12 @@ composition-level fact or a standard running-QR invariant; firm-on-positive-stru
 (syntactic / unitarity identities on fully-read positive source, no dedicated unit test
 required). The variant axes are closed at two parametric axes (`op.basis_kind` `V`/`Z` +
 `op.variant` real/complex). The `gmres-givens-stream-as-step-kernel-borderline` OQ is
-resolved in the negative: a distinct named composition, not a `krylov-step` axis.
+resolved in the negative: a distinct named composition, not a `krylov_step` axis.
 
 ## L2 vs L1 distinction
 
 - **L1**: the single opaque leaf `ls_update_column(K, j, h_new) → K'` (per
-  [`concepts/incremental-least-squares`](../concepts/incremental-least-squares.md)),
+  [`concepts/incremental_least_squares`](../concepts/incremental_least_squares.md)),
   advancing the `Krylov` bundle by one column — the running-QR sub-steps and the
   residual-exposure mechanism are hidden as a single "incremental triangularisation
   with residual side-output" leaf.
@@ -393,7 +393,7 @@ resolved in the negative: a distinct named composition, not a `krylov-step` axis
   composition-level laws: the residual-exposure-by-unitarity contract, the
   replay-ordering non-commutativity, the norm-preservation decomposition, and the
   back-solve become first-class L2 content, where at L1 they were a leaf and a side
-  effect. This is the surface `krylov-step` folds and `ksp_solve` consumes.
+  effect. This is the surface `krylov_step` folds and `ksp_solve` consumes.
 
 ## Evidence
 
@@ -447,7 +447,7 @@ resolved in the negative: a distinct named composition, not a `krylov-step` axis
   `mutable std::vector<ScalarType> s, sn;` (`:193`) / `mutable std::vector<RealType>
   cs;` (`:194`) — the element-type split (`s`, `sn` `ScalarType`; `cs` always
   `RealType`) underwriting the `op.variant` real/complex axis.
-- `book/src/concepts/incremental-least-squares.md` — the cross-cutting concept page
+- `book/src/concepts/incremental_least_squares.md` — the cross-cutting concept page
   (the role: incremental triangularisation with residual byproduct; the L1
   `ls_update_column` contract; cross-method reuse).
 - `book/src/concepts/givens.md` — the scalar kernel pair + the replay-order contract
@@ -455,7 +455,7 @@ resolved in the negative: a distinct named composition, not a `krylov-step` axis
   `book/src/concepts/givens_apply.md` per-kernel pages.
 - `book/src/L2/orthogonalize.md` — the sibling firm L2 named composition (the
   structural template; produces the input column `h_new[0..j]`).
-- `book/src/L2/krylov-step.md` — the consumer folding this composition; §"L2 vs L1
+- `book/src/L2/krylov_step.md` — the consumer folding this composition; §"L2 vs L1
   distinction" (`:132`) forecasts this exact entry.
 - `book/src/L2/ksp_solve.md` — the outer-driver consumer; §Semantics phase-3
   `materialise_iterate` (`:63`, `:83`) folds this composition's restart-cycle

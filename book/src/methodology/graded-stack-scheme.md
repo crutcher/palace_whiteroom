@@ -252,7 +252,7 @@ entries, all concept pages. How each acquires a `rank:`:
     `lowers-to` points operator → the next **operator**, never at the theme — so the L2-L1 theme
     is only ever a `reference` target and stays off the `depends-on` spine. The bounded fix per
     affected theme is one edge: add `L2/<op> lowers-to L2-L1/<op>-theme` to the upper-endpoint op
-    that already carries scheme frontmatter (mirroring the cycle-108 `L2/divfree-projector` edit).
+    that already carries scheme frontmatter (mirroring the cycle-108 `L2/divfree_projector` edit).
 
 - **Index pages + group-intro pages + the dependency-map page → `kind: navigational-container`
   (RATIFIED batch-33 meta-phase, post-cycle-105).** An `L_n/index.md`, a `*-intro` group page,

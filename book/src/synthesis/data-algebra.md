@@ -290,7 +290,7 @@ assemble_frequency_operator fam omega =
 
 ### `gram_reduce` — operator-weighted symmetric-Gram reduce-to-matrix
 
-Renders [`L4/gram_reduce`](../L4/gram_reduce.md). The operator-weighted symmetric Gram reduction over a solution family: `Gᵢⱼ = w(i,j)·(xⱼᵀ K xᵢ)`, computed on the upper triangle and mirrored. The diagonal is the `matrix-weighted-norm` radicand (the `xⱼ = xᵢ` specialization — a consumer, not a separate fold); `gram_inverse` is a downstream consumer kept OUT.
+Renders [`L4/gram_reduce`](../L4/gram_reduce.md). The operator-weighted symmetric Gram reduction over a solution family: `Gᵢⱼ = w(i,j)·(xⱼᵀ K xᵢ)`, computed on the upper triangle and mirrored. The diagonal is the `matrix_weighted_norm` radicand (the `xⱼ = xᵢ` specialization — a consumer, not a separate fold); `gram_inverse` is a downstream consumer kept OUT.
 
 ```text
 -- The operator-weighted symmetric-Gram reduce-to-matrix over a solution family-pair grid.
@@ -320,7 +320,7 @@ gram_inverse :: Matrix[m, m] -> Matrix[m, m]            -- = inv (LAPACK); the C
 
 ### `domain_energy_reduce` — per-domain energy-table reduction
 
-Renders [`L4/domain_energy_reduce`](../L4/domain_energy_reduce.md). The per-domain `(energyᵢ, pᵢ)` table over a configured domain-operator map; the per-domain numerator is itself a domain-restricted SPD energy (the `matrix-weighted-norm`-squared), folded alongside the participation quotient. Driver-agnostic.
+Renders [`L4/domain_energy_reduce`](../L4/domain_energy_reduce.md). The per-domain `(energyᵢ, pᵢ)` table over a configured domain-operator map; the per-domain numerator is itself a domain-restricted SPD energy (the `matrix_weighted_norm`-squared), folded alongside the participation quotient. Driver-agnostic.
 
 ```text
 -- The per-domain energy-table reduction over a solved field against a domain-operator map.

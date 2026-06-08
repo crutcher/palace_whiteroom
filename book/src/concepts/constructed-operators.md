@@ -4,7 +4,7 @@ edges:
     - concepts/rotation
     - concepts/variant-absorption
     - concepts/apply_BA
-    - L2/krylov-step
+    - L2/krylov_step
 ---
 # constructed operators
 
@@ -130,7 +130,7 @@ Constructed operators absorb variants when the variant is **bound once at constr
 
 ### The fix: threaded state, not just constructed state
 
-For per-step variants, the **threaded state itself** must change — the variant becomes part of the sim-state schema, not the operator-internal-parameters schema. Concretely for FGMRES:
+For per-step variants, the **threaded state itself** must change — the variant becomes part of the SimState schema, not the operator-internal-parameters schema. Concretely for FGMRES:
 
 - **Standard GMRES L1 state**: `{x, V, H, s, cs, sn, …}`. The preconditioner lives in the constructed `op`.
 - **FGMRES L1 state**: `{x, V, H, s, cs, sn, Z, …}`. The per-step preconditioned basis `Z` is threaded because each `Z[j] = M_j · V[j]` may use a different `M_j`. The L4 ownership category for `Z` is **sim state** (evolves per step), not operator-internal-parameters.
@@ -143,7 +143,7 @@ When considering a constructed-operator absorption for a variant:
 
 1. **Is the variant bound at construction or per-step?**
 2. If **construction**: constructed-operator pattern works; proceed.
-3. If **per-step**: constructed-operator pattern fails. The variant must enter the threaded sim-state schema. Add the per-step value (e.g., the `Z` basis) to L1 state, and document it as sim state in L4 ownership categories.
+3. If **per-step**: constructed-operator pattern fails. The variant must enter the threaded SimState schema. Add the per-step value (e.g., the `Z` basis) to L1 state, and document it as sim state in L4 ownership categories.
 
 Mixed cases (some parameters at construction, others per-step) are common — the construction-side absorbs what it can; the threaded state carries the rest.
 
@@ -225,8 +225,8 @@ every Arnoldi step, every residual computation, and every correction.
 The [`apply_BA`](./apply_BA.md) constructed operator absorbs the
 three-way choice at solve start; the per-step procedure invokes
 `apply_BA.apply(v_j)` once, getting back `(w, z?)`, and never
-re-inspects `side`. See the firm [`krylov-step` (GMRES instance)](../L2/krylov-step.md).
+re-inspects `side`. See the firm [`krylov_step` (GMRES instance)](../L2/krylov_step.md).
 
 ## Slices that use this methodology
 
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — preconditioner side via `apply_BA`.
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — preconditioner side via `apply_BA`.

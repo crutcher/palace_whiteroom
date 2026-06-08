@@ -5,8 +5,8 @@ kind: navigational-container (group intro)
 # indexes (carry no liveness, constrain no rank — scheme §4/§5, OQ resolved D5).
 edges:
   reference:
-    - L2/assemble-diagonal
-    - L2/divfree-projector
+    - L2/assemble_diagonal
+    - L2/divfree_projector
     - L2/elementwise_product
     - L2/jacobi-smoother
     - L2/normalize
@@ -18,7 +18,7 @@ edges:
 Standalone same-named L2 entries under firm L3 entries with **NO fold combinator** to defer
 to: standalone elementwise leaves, a fused norm-then-rescale composite, and constructed-operator
 / operator-to-data gates. Having no fold-parent, each stays a **full standalone entry** (no
-specialization-stub reduction applies). Most are thin identity-in-form floors; `divfree-projector`
+specialization-stub reduction applies). Most are thin identity-in-form floors; `divfree_projector`
 carries one genuine `AddMult` apply-accumulate de-fusion.
 
 Elementwise leaves / composite (no fold-parent):
@@ -33,13 +33,13 @@ Elementwise leaves / composite (no fold-parent):
 
 Constructed-operator / operator-to-data gates:
 
-- [`assemble-diagonal`](./assemble-diagonal.md) — the operator-to-data diagonal-extraction
+- [`assemble_diagonal`](./assemble_diagonal.md) — the operator-to-data diagonal-extraction
   primitive (`A → diag(A)`); the operator-to-data sibling of `apply_linop` (NOT a variant);
   the load-bearing matrix-free high-order-Nedelec approximate-diagonal non-law is preserved
   through the floor.
 - [`jacobi-smoother`](./jacobi-smoother.md) — the **thinnest** constructed-operator gate
   (apply `op.dinv ⊙ x`, one elementwise product); the fusion rotation is **negative**.
-- [`divfree-projector`](./divfree-projector.md) — the divergence-free Helmholtz-projection
+- [`divfree_projector`](./divfree_projector.md) — the divergence-free Helmholtz-projection
   gate (fixed four-step `WeakDiv → Z_{bdr_eff} → ksp_solve → Grad`); the one genuine
   `AddMult` apply-accumulate de-fusion; direct L2 dep `ksp_solve` carrying its
   `sequential-obstruction` by reference.

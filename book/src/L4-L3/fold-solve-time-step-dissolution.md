@@ -10,7 +10,7 @@ The L4>L3 lowering theme for the [`fold_solve`](../L4/fold_solve.md) **state-thr
 
 [`fold_solve`](../L4/fold_solve.md) is the L4 **state-threaded fold outer-driver combinator**, one coordination shell *above* an opaque per-step solve. The combinator's own §"Lowers to" names the dissolution to L3 as **substantive** (not identity-in-form) and records the rotation *direction* in-line per the high→low discipline, deferring the theme itself to this chapter (canonical slug `fold-solve-time-step-dissolution`).
 
-`fold_solve` and [`solve_family`](../L4/solve_family.md) are the two children of the strawman §3.7 [`iterate-while`](../L4/iterate-while.md) family: a **map is the degenerate fold whose step ignores the accumulator**, `fold_solve` is the **non-degenerate** member that threads it. Their two L4>L3 dissolutions are correspondingly siblings, and this theme is **structurally parallel** to [`solve-family-map-dissolution`](./solve-family-map-dissolution.md) — but the load-bearing difference between the two RHS images IS the map/fold axis:
+`fold_solve` and [`solve_family`](../L4/solve_family.md) are the two children of the strawman §3.7 [`iterate_while`](../L4/iterate_while.md) family: a **map is the degenerate fold whose step ignores the accumulator**, `fold_solve` is the **non-degenerate** member that threads it. Their two L4>L3 dissolutions are correspondingly siblings, and this theme is **structurally parallel** to [`solve-family-map-dissolution`](./solve-family-map-dissolution.md) — but the load-bearing difference between the two RHS images IS the map/fold axis:
 
 - [`solve-family-map-dissolution`](./solve-family-map-dissolution.md) — the L4 `map` over an independent RHS family → an L3 positional accumulating `for` that writes each member into its own collection slot. The family loop carries **NO `sequential-obstruction`** (the members are independent — an embarrassingly-parallel sweep written sequentially).
 - `fold-solve-time-step-dissolution` (this theme) — the L4 `foldl` of a state-threaded march → an L3 positional `for` that threads the field-state `sol` **in place**, each step reading the prior step's output. The loop carries a **genuine `sequential-obstruction`** (the carry-threading cannot reorder) AND an **opaque-library per-step leaf** (the `ode->Step` integrator boundary). This is the structural contrast the harvester named: the map's RHS is independent-parallel; the fold's RHS is sequential-with-an-opaque-leaf.
@@ -136,14 +136,14 @@ The rewrite is valid when all four of the following hold (the first three are th
 
 ## Speculative L4 operators
 
-None. This theme lowers an already-firm L4 combinator ([`fold_solve`](../L4/fold_solve.md)) assembled from the already-firm [`iterate-while`](../L4/iterate-while.md) §3.7 family. The per-step `time_step_op` and the `TimeState` carry are speculative rough-in sub-operators already named in the firm cap's §Dependencies (not introduced here); the per-step `time_step_op` is recorded as the opaque-library obstruction sub-leaf at L0 (`timeoperator.cpp:410`). No new speculative operator is introduced.
+None. This theme lowers an already-firm L4 combinator ([`fold_solve`](../L4/fold_solve.md)) assembled from the already-firm [`iterate_while`](../L4/iterate_while.md) §3.7 family. The per-step `time_step_op` and the `TimeState` carry are speculative rough-in sub-operators already named in the firm cap's §Dependencies (not introduced here); the per-step `time_step_op` is recorded as the opaque-library obstruction sub-leaf at L0 (`timeoperator.cpp:410`). No new speculative operator is introduced.
 
 ## Evidence
 
 L4 source (the LHS of this rewrite):
 
 - `book/src/L4/fold_solve.md` — the L4 state-threaded fold combinator: §Signature (the `fold_solve` / `foldl (\s t -> time_step_op op s t) s0 schedule` shape + the §3.7 carry-form rendering), §Semantics (the direct-fold form + the §3.7 non-degenerate-member rendering), §"Algebraic laws" (Law 1 fold-threading associativity / schedule-split, Law 2 operator-capture-once / construction-hoist, Law 3 seed left-identity, and the load-bearing NON-law: no commutativity / distribution — the map/fold distinction — the transported properties), §"Lowers to" (the in-line rotation-direction record this theme realizes), §Specializations (the two state-threaded sweeps — transient fixed-schedule + SweepAdaptive state-generated), §"The opaque per-step body" (the `obstruction (opaque-library-ownership)` deferral this theme realizes).
-- `book/src/L4/iterate-while.md` — the §3.7 family whose non-degenerate carry-threading member the combinator IS (the alternate LHS rendering).
+- `book/src/L4/iterate_while.md` — the §3.7 family whose non-degenerate carry-threading member the combinator IS (the alternate LHS rendering).
 - `book/src/L4/solve_family.md` — the **map sibling** whose dissolution this theme is structurally parallel to (operator-capture hoist shared; the carry/no-carry axis the load-bearing difference).
 
 L3 source (the RHS of this rewrite):

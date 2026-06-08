@@ -1,6 +1,6 @@
 # ksp_solve
 
-Mutation-lifted preconditioned Krylov solve: `(x, status) = ksp_solve(K, b)` where `K` is a construction-bound Krylov-solver value carrying its system operator, preconditioner, tolerances, and iteration budget. The constructed-operator gate at L1 — the bridge from BLAS-1 vocabulary (`axpy`, `dot`, `nrm2`, `apply_linop`) to the L2 `krylov-step` vocabulary; the canonical realisation of the *solver-as-operator* type rotation.
+Mutation-lifted preconditioned Krylov solve: `(x, status) = ksp_solve(K, b)` where `K` is a construction-bound Krylov-solver value carrying its system operator, preconditioner, tolerances, and iteration budget. The constructed-operator gate at L1 — the bridge from BLAS-1 vocabulary (`axpy`, `dot`, `nrm2`, `apply_linop`) to the L2 `krylov_step` vocabulary; the canonical realisation of the *solver-as-operator* type rotation.
 
 ## Context
 
@@ -52,7 +52,7 @@ Reduction-tree non-associativity is **load-bearing** in the CLAUDE.md sense, inh
 
 A second load-bearing non-determinism source is **per-method iteration-step ordering** for non-symmetric Krylov methods (GMRES / FGMRES): the orthogonalisation method (MGS vs CGS vs CGS2 — see `palace/linalg/iterative.hpp:184`) changes the per-step floating-point arithmetic. This is collapsed into `K`'s opaque state at L1 (the orthogonalisation method is bound at construction), but the choice affects the bit-level result. Algorithmic correctness is preserved across choices; bit-determinism is not.
 
-Per-method variants (CG / GMRES / FGMRES) are **not** separate L1 operators (per the Variant axes section below). The L1 form collapses across all three; the L1>L0 lowering theme reintroduces the per-method body (see [`L2/krylov-step`](../L2/krylov-step.md), the upstream layer that exposes the per-iteration body as a distinct primitive).
+Per-method variants (CG / GMRES / FGMRES) are **not** separate L1 operators (per the Variant axes section below). The L1 form collapses across all three; the L1>L0 lowering theme reintroduces the per-method body (see [`L2/krylov_step`](../L2/krylov_step.md), the upstream layer that exposes the per-iteration body as a distinct primitive).
 
 ## Algebraic laws
 
@@ -78,9 +78,9 @@ Laws that explicitly **do not** hold:
 At L1, `ksp_solve` depends on a single primitive plus three transitively-used BLAS-1 leaves:
 
 - [`apply_linop`](./apply_linop.md) — the system-operator action `A · x` is the per-step matrix-vector product inside every Krylov method (CG at `palace/linalg/iterative.cpp:379, 443`; GMRES at `iterative.cpp:544-705`). The preconditioner application `M⁻¹ · r` is also an `apply_linop` call (via the [`solver-as-operator`](../concepts/solver-as-operator.md) type rotation: `Solver<OperType>` inherits from `OperType`, so a preconditioner is-an operator). Direct dependency.
-- [`dot`](./dot.md), [`nrm2`](./nrm2.md), [`axpy`](./axpy.md) — transitively present in every Krylov iteration (orthogonalisation coefficients, residual norms, basis updates). Recorded as transitive rather than direct because they appear inside the per-method body the L1 `ksp_solve` opaquely wraps; the L2 `krylov-step` operator is the layer at which they become direct dependencies.
+- [`dot`](./dot.md), [`nrm2`](./nrm2.md), [`axpy`](./axpy.md) — transitively present in every Krylov iteration (orthogonalisation coefficients, residual norms, basis updates). Recorded as transitive rather than direct because they appear inside the per-method body the L1 `ksp_solve` opaquely wraps; the L2 `krylov_step` operator is the layer at which they become direct dependencies.
 
-`ksp_solve` is the **gate from BLAS-1 to constructed-operator vocabulary** at L1 — it is the first L1 operator whose primary argument is itself a structured value (`Solver[A]`) rather than a raw tensor or scalar. The construction of `Solver[A]` from a system operator, preconditioner, and convergence-control parameters is the [`constructed-operator-factory`](../concepts/constructed-operator-factory.md) concept; the absorption of per-method variants into the opaque type is the [`variant-absorption`](../concepts/variant-absorption.md) concept; the L2 layer that unfolds the per-step body inside `Solver[A]` is [`L2/krylov-step`](../L2/krylov-step.md).
+`ksp_solve` is the **gate from BLAS-1 to constructed-operator vocabulary** at L1 — it is the first L1 operator whose primary argument is itself a structured value (`Solver[A]`) rather than a raw tensor or scalar. The construction of `Solver[A]` from a system operator, preconditioner, and convergence-control parameters is the [`constructed-operator-factory`](../concepts/constructed-operator-factory.md) concept; the absorption of per-method variants into the opaque type is the [`variant-absorption`](../concepts/variant-absorption.md) concept; the L2 layer that unfolds the per-step body inside `Solver[A]` is [`L2/krylov_step`](../L2/krylov_step.md).
 
 ## Variant axes
 
@@ -92,7 +92,7 @@ At L1, `ksp_solve` depends on a single primitive plus three transitively-used BL
 
 Collapsed (absorbed) axis:
 
-- **krylov-method**: `CG` | `GMRES` | `FGMRES`. At L0 these are the three implemented arms of the `KrylovSolver` enum dispatch at `palace/linalg/ksp.cpp:34-58`, realised by separate `IterativeSolver` subclasses (`CgSolver`, `GmresSolver`, `FgmresSolver` at `palace/linalg/iterative.hpp:118-275`) with disjoint per-method workspace layouts (CG: `r, z, p`; GMRES: `V, r, H, s, sn, cs`; FGMRES adds `Z`). At L1 these **collapse to a single `Solver[A]` opaque type** — the L1 contract sees only the construction-bound solver and its convergence semantics; the per-method body is an L0 (and L2-`krylov-step`) concern that surfaces only in the L1>L0 lowering theme and in load-bearing numerical caveats (orthogonalisation-method bit-determinism for GMRES / FGMRES). This is the canonical *variant absorption* application for the constructed-operator vocabulary (per [`concepts/variant-absorption`](../concepts/variant-absorption.md) and [`concepts/constructed-operators`](../concepts/constructed-operators.md)).
+- **krylov-method**: `CG` | `GMRES` | `FGMRES`. At L0 these are the three implemented arms of the `KrylovSolver` enum dispatch at `palace/linalg/ksp.cpp:34-58`, realised by separate `IterativeSolver` subclasses (`CgSolver`, `GmresSolver`, `FgmresSolver` at `palace/linalg/iterative.hpp:118-275`) with disjoint per-method workspace layouts (CG: `r, z, p`; GMRES: `V, r, H, s, sn, cs`; FGMRES adds `Z`). At L1 these **collapse to a single `Solver[A]` opaque type** — the L1 contract sees only the construction-bound solver and its convergence semantics; the per-method body is an L0 (and L2-`krylov_step`) concern that surfaces only in the L1>L0 lowering theme and in load-bearing numerical caveats (orthogonalisation-method bit-determinism for GMRES / FGMRES). This is the canonical *variant absorption* application for the constructed-operator vocabulary (per [`concepts/variant-absorption`](../concepts/variant-absorption.md) and [`concepts/constructed-operators`](../concepts/constructed-operators.md)).
 
 Out of scope for this operator (deliberate exclusions):
 
@@ -124,7 +124,7 @@ Out of scope for this operator (deliberate exclusions):
 - `palace/linalg/iterative.hpp:221-275` — `FgmresSolver<OperType>` declaration extending `GmresSolver` with additional workspace `Z` (line 256), default-right preconditioning (line 265).
 - `palace/linalg/iterative.cpp:361-486` — `CgSolver<OperType>::Mult` definition: full per-step CG body. Direct evidence of the per-method workspace allocation (`r.SetSize`, `z.SetSize`, `p.SetSize` at lines 369-371), the initial-guess threading (lines 377-386), the residual-proxy convergence test (line 417-419 short-circuit at zero residual), and the per-step `apply_linop` / `dot` / `axpy` use.
 - `palace/linalg/iterative.cpp:544-705` — `GmresSolver<OperType>::Mult` definition: full per-step GMRES body with Arnoldi orthogonalisation, restart logic, and Hessenberg-update / Givens-rotation least-squares residual proxy.
-- `palace/linalg/divfree.cpp:175` — `ksp->Mult(rhs, psi)` call site inside `DivFreeSolver<VecType>::Mult` — direct L0 evidence of the use pattern; the L2 form lifts this to `psi = ksp_solve(self.ksp, rhs)` (the projected H1 solve, step 3 of [`divfree-projector`](./divfree-projector.md)).
+- `palace/linalg/divfree.cpp:175` — `ksp->Mult(rhs, psi)` call site inside `DivFreeSolver<VecType>::Mult` — direct L0 evidence of the use pattern; the L2 form lifts this to `psi = ksp_solve(self.ksp, rhs)` (the projected H1 solve, step 3 of [`divfree_projector`](./divfree_projector.md)).
 - `palace/drivers/electrostaticsolver.cpp:69` — `ksp.Mult(RHS, V[step])` call site inside the per-terminal loop. Direct L0 evidence of the driver-side use pattern.
 - `palace/drivers/magnetostaticsolver.cpp:77` — `ksp.Mult(RHS, A[step])` call site (analogous).
 - `palace/drivers/drivensolver.cpp:196` — `ksp.Mult(RHS, E)` call site (analogous, complex path).
@@ -135,8 +135,8 @@ Out of scope for this operator (deliberate exclusions):
 - `book/src/concepts/solve-monad.md` — L4-bound monadic coordination layer the L1 form anchors.
 - `book/src/concepts/solver-as-operator.md` — the type-level rotation underwriting the L1 form's treatment of `K` as substitutable for an `apply_linop`-style primitive.
 - `book/src/concepts/constructed-operators.md`, `concepts/variant-absorption.md`, `concepts/constructed-operator-factory.md` — the three methodology concepts the L1 entry's variant-axis collapse and opaque-type treatment rest on.
-- `book/src/L2/krylov-step.md` — the upstream L2 layer that unfolds the per-method body the L1 `ksp_solve` opaquely wraps.
-- `book/src/L1/divfree-projector.md` — the firm L1 consumer of `ksp_solve`: the projected H1 solve `M·ψ = rhs` (`palace/linalg/divfree.cpp:175`) is its constructed-operator inner solve.
+- `book/src/L2/krylov_step.md` — the upstream L2 layer that unfolds the per-method body the L1 `ksp_solve` opaquely wraps.
+- `book/src/L1/divfree_projector.md` — the firm L1 consumer of `ksp_solve`: the projected H1 solve `M·ψ = rhs` (`palace/linalg/divfree.cpp:175`) is its constructed-operator inner solve.
 
 ## Status
 

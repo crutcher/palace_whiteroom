@@ -6,8 +6,8 @@ status: roadmap_goal
 rank: roadmap_goal
 edges:
   depends-on:
-    - target: L3/krylov-step
-      kind: specializes                 # lanczos_step IS krylov-step with the orthogonalization-variant axis collapsed to the symmetric band-3 (three-term) recurrence; same per-step shape, narrowed auxiliary stage (firm)
+    - target: L3/krylov_step
+      kind: specializes                 # lanczos_step IS krylov_step with the orthogonalization-variant axis collapsed to the symmetric band-3 (three-term) recurrence; same per-step shape, narrowed auxiliary stage (firm)
     - target: L3/apply_linop
       kind: composes                    # the symmetric operator-apply A·v_curr (firm)
     - target: L1/dot
@@ -37,7 +37,7 @@ variant_axes:
 
 ## Intent
 
-What this becomes: a `firm` L3 operator `lanczos_step` — `krylov-step` with the `op.orthog` orthogonalization-variant axis **collapsed to the symmetric band-3 (three-term) recurrence**. Where Arnoldi (`krylov-step`'s non-Hermitian form) orthogonalizes the new basis column against ALL prior columns (full upper-Hessenberg `H`), the Hermitian case needs only the previous TWO columns — the projection onto the rest is zero by symmetry. This produces a **tridiagonal** `H` (the symmetric Lanczos `T` matrix), the structural saving the Hermitian eigensolve exploits.
+What this becomes: a `firm` L3 operator `lanczos_step` — `krylov_step` with the `op.orthog` orthogonalization-variant axis **collapsed to the symmetric band-3 (three-term) recurrence**. Where Arnoldi (`krylov_step`'s non-Hermitian form) orthogonalizes the new basis column against ALL prior columns (full upper-Hessenberg `H`), the Hermitian case needs only the previous TWO columns — the projection onto the rest is zero by symmetry. This produces a **tridiagonal** `H` (the symmetric Lanczos `T` matrix), the structural saving the Hermitian eigensolve exploits.
 
 ## kernel-impl form (the constructive realization)
 
@@ -64,19 +64,19 @@ lanczos_step A v_prev v_curr β_prev =
   in (v_next, α_j, β_j)
 ```
 
-This is **exactly [`krylov-step`](./krylov-step.md) with `op.orthog` = the band-3 form**: the kernel-api / `eigsolve-impl` per-step body `apply_shift_invert` produces `w0` (here `A` is the already-shift-inverted action `op.operand ▷ op.inv ▷ scale_untransform`), and the orthogonalize stage — which for full Arnoldi is MGS/CGS/CGS2 against all of `BV[0..j]` — collapses to the two `axpy` subtractions against `v_curr` and `v_prev` only. The `(α_j, β_j)` are the tridiagonal `T`-matrix entries `eigsolve-impl`'s Rayleigh-Ritz solves.
+This is **exactly [`krylov_step`](./krylov_step.md) with `op.orthog` = the band-3 form**: the kernel-api / `eigsolve-impl` per-step body `apply_shift_invert` produces `w0` (here `A` is the already-shift-inverted action `op.operand ▷ op.inv ▷ scale_untransform`), and the orthogonalize stage — which for full Arnoldi is MGS/CGS/CGS2 against all of `BV[0..j]` — collapses to the two `axpy` subtractions against `v_curr` and `v_prev` only. The `(α_j, β_j)` are the tridiagonal `T`-matrix entries `eigsolve-impl`'s Rayleigh-Ritz solves.
 
-## Relationship to `krylov-step`
+## Relationship to `krylov_step`
 
-`lanczos_step` `specializes` [`krylov-step`](./krylov-step.md): same `(op, K, s) -> (K', ...)` per-step iteration-rotation shape, with two narrowings — (1) the orthogonalization-variant axis (`{MGS, CGS, CGS2}`) collapses to the symmetric band-3 recurrence (orthogonality against only the prior two columns, exact in infinite precision by Hermitian symmetry); (2) the recurrence coefficients `(α_j, β_j)` are the tridiagonal entries vs Arnoldi's full Hessenberg column. The L2 [`krylov-step`](../L2/krylov-step.md) note (`book/src/L2/krylov-step.md:187`) already records this: *"MINRES is the symmetric specialisation of `arnoldiStep`; its `lanczos_step` would specialise `krylov-step`'s orthogonalization-variant axis to a band-3 form."* The `L1/index.md:202` rough-in dep-map row carries the matching signature `(A, B?, V_prev, V_curr) → (V_next, alpha, beta)` (constituents `apply_linop, dot, axpy, nrm2`). This chapter is that specialization, constructed (band-3, with the normalize `scal` made explicit).
+`lanczos_step` `specializes` [`krylov_step`](./krylov_step.md): same `(op, K, s) -> (K', ...)` per-step iteration-rotation shape, with two narrowings — (1) the orthogonalization-variant axis (`{MGS, CGS, CGS2}`) collapses to the symmetric band-3 recurrence (orthogonality against only the prior two columns, exact in infinite precision by Hermitian symmetry); (2) the recurrence coefficients `(α_j, β_j)` are the tridiagonal entries vs Arnoldi's full Hessenberg column. The L2 [`krylov_step`](../L2/krylov_step.md) note (`book/src/L2/krylov_step.md:187`) already records this: *"MINRES is the symmetric specialisation of `arnoldiStep`; its `lanczos_step` would specialise `krylov_step`'s orthogonalization-variant axis to a band-3 form."* The `L1/index.md:202` rough-in dep-map row carries the matching signature `(A, B?, V_prev, V_curr) → (V_next, alpha, beta)` (constituents `apply_linop, dot, axpy, nrm2`). This chapter is that specialization, constructed (band-3, with the normalize `scal` made explicit).
 
 ## Justification kind
 
-`structural` — a shape-driven narrowing of the firm `krylov-step` per-step body. `reduction-chain` (secondary) — the three-term recurrence small-step is the content.
+`structural` — a shape-driven narrowing of the firm `krylov_step` per-step body. `reduction-chain` (secondary) — the three-term recurrence small-step is the content.
 
 ## Status
 
-`roadmap_goal` (rank 0) — `kernel-impl-constituent` role. Claim-free intent node for the symmetric Lanczos basis-extension step. Rests on firm `L3/krylov-step` (specializes) + `L3/apply_linop` + `L1/dot` + `L1/nrm2` + `L1/axpy` + `L1/scal`. Pulled by [`eigsolve-impl`](./eigsolve-impl.md) (advancing this node fires that consumer's `roadmap_goal → stub` promotion condition).
+`roadmap_goal` (rank 0) — `kernel-impl-constituent` role. Claim-free intent node for the symmetric Lanczos basis-extension step. Rests on firm `L3/krylov_step` (specializes) + `L3/apply_linop` + `L1/dot` + `L1/nrm2` + `L1/axpy` + `L1/scal`. Pulled by [`eigsolve-impl`](./eigsolve-impl.md) (advancing this node fires that consumer's `roadmap_goal → stub` promotion condition).
 
 **Why this STAYS `roadmap_goal` (the redirect-correct floor — a finding, not a failure).** There is **no positive Palace site** to ground it to `stub`/`rough-in`. The symmetric three-term recurrence is **literature-anchored** (Paige–Saunders 1975), NOT read from a Palace L0 implementation: its L0 home [`minres-iteration`](../L1-L0/minres-iteration.md) is an `obstruction (enum-only-stub)` with an **empty L0 RHS** — `KrylovSolver::MINRES` routes to `MFEM_ABORT` (`palace/linalg/ksp.cpp:53-57`), there is no `MinresSolver<OperType>` class under `palace/linalg/`, and no test linkage (`minres-iteration.md:41-59,128-140`). Per DIRECTIVE-3 (no constructive impl is manufactured into a positive claim absent a positive site) + the no-forced-rectangular-pull-up redirect, the node holds at `roadmap_goal`. The constructive band-3 form below is a **speculative reconstruction in our firm vocabulary**, not a Palace-source claim.
 
@@ -89,8 +89,8 @@ This is **exactly [`krylov-step`](./krylov-step.md) with `op.orthog` = the band-
 
 > All Palace citations are to the symmetric-eigensolve sites the recurrence realizes (the library-owned Lanczos is inside SLEPc/ARPACK); NOT positive source for the reconstruction.
 
-- `book/src/L3/krylov-step.md` (firm) — the operator this specializes; §Variant-axes axis 2 (orthogonalization-variant, the axis that collapses to band-3), §Semantics (the `op.orthog` auxiliary stage).
-- `book/src/L2/krylov-step.md:187` — the standing note that `lanczos_step` specializes `krylov-step`'s orthogonalization axis to band-3 (the MINRES symmetric-specialization).
+- `book/src/L3/krylov_step.md` (firm) — the operator this specializes; §Variant-axes axis 2 (orthogonalization-variant, the axis that collapses to band-3), §Semantics (the `op.orthog` auxiliary stage).
+- `book/src/L2/krylov_step.md:187` — the standing note that `lanczos_step` specializes `krylov_step`'s orthogonalization axis to band-3 (the MINRES symmetric-specialization).
 - `book/src/L1/index.md:202` — the `lanczos_step` rough-in dep-map row `(A, B?, V_prev, V_curr) → (V_next, alpha, beta)` (`rough-in (obstruction, …)`; the signature this chapter realizes) + its constituent list `apply_linop, dot, axpy, nrm2`.
 - `book/src/L1-L0/minres-iteration.md` — the MINRES `obstruction (enum-only-stub)` theme; the symmetric-Lanczos kernel home (the literature-anchored form the firming would draw on).
 - `palace/linalg/slepc.cpp:607,613` — `EPS_HEP` / `EPS_GHEP`: the Hermitian / generalized-Hermitian problem types that select the symmetric Lanczos recurrence (the `matrix-pencil` variant axis).

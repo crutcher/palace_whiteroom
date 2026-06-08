@@ -215,7 +215,7 @@ body recur in all three methods and rewrite in the same way:
   [`L1/ksp_solve`](../L1/ksp_solve.md) Algebraic laws).
 
 - **Per-step inner kernel + convergence test** (`iterative.cpp:427-464`):
-  the for-loop is the L2 [`krylov-step`](../L2/krylov-step.md) kernel
+  the for-loop is the L2 [`krylov_step`](../L2/krylov_step.md) kernel
   instantiation for CG, built from one `A->Mult(p, z)` per step (the
   `apply_linop` invocation), two `dot` calls (`linalg::Dot(comm, z, p)`
   at line 444; `linalg::Dot(comm, z, r)` at line 460), two

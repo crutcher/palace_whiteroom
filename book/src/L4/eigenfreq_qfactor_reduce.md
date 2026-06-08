@@ -6,7 +6,7 @@ edges:
   depends-on:
     - L4/eigsolve
   reference:
-    - L1/eigenvalue-untransform
+    - L1/eigenvalue_untransform
     - L1/participation_ratio
 variant_axes:
   - problem-type (linear-EVP | quadratic-EVP | nonlinear-EVP — THE load-bearing axis; selects the eigenvalue→ω un-transform; absorbed into the untransform dispatch)
@@ -176,7 +176,7 @@ substantive downward content (the C++ readout loop, the problem-type un-transfor
 `eigensolver.cpp:430-439`, the κ computation `postoperator.cpp:1188-1203`) lives in the
 eigenmode driver / postoperator L0 and the firm L1 scalar-map primitives. **Both scalar-map
 halves now have firm L1 homes:** the eigenvalue un-transform `√μ`/`λ/i` →
-[`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) (firm); the κ participation
+[`eigenvalue_untransform`](../L1/eigenvalue_untransform.md) (firm); the κ participation
 ratio `½R|I|²/E` → [`participation_ratio`](../L1/participation_ratio.md) (firm). This entry
 records the rotation direction in-line per high→low discipline; it does not author a theme.
 
@@ -187,13 +187,13 @@ directly off the two positive readout sites — the eigenvalue→ω un-transform
 (`eigensolver.cpp:424-439`) and the Q-factor body (`postoperator.cpp:1185-1203`) — and every law
 (§Algebraic laws) is a syntactic identity on the per-mode map: law 1 (concatenation-homomorphism) reads
 off the inter-mode-stateless readout loop; law 2 (un-transform purity) folds the firm L1
-[`eigenvalue-untransform`](../L1/eigenvalue-untransform.md) then a bare `.real()`; law 3 (Q is a scalar
+[`eigenvalue_untransform`](../L1/eigenvalue_untransform.md) then a bare `.real()`; law 3 (Q is a scalar
 ratio) folds the firm L1 [`participation_ratio`](../L1/participation_ratio.md) into the bare `f/|κ|`
 quotient (`:1200-1202`); law 4 (lossless totality `κ=0 ⇒ Q=∞`) reads literally off the
 `(κ == 0.0) ? mfem::infinity() :` branch. The eigenpair→`(f,Q)` assembly
 (`quality_factor = freq_re / std::abs(mode_port_kappa)`, `:1202`) is bare scalar arithmetic composing
 two firm halves, carrying no axiom requiring an unverified mathematical property. (Contrast the SIBLING
-[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) audit, which RULED OUT the escape because its
+[`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) audit, which RULED OUT the escape because its
 norm-axiom laws are theorems conditional on an inner-product structure the L0 source only numerically
 asserts; no such theorem-needing-proof exists in this verb's assembly.) The Palace corpus contains no
 positive assembly test (only output-round-trip-invariance tests), so the missing dedicated test does not
@@ -216,7 +216,7 @@ does not apply — this is a single-pipeline output-product verb by design (like
   std::sqrt(omega)` — linear EVP `μ = -λ² = ω²`), `:435-439` (`omega /= 1i` — quadratic EVP
   `λ = iω`), `:458` (`post_op.MeasureAndPrintAll(i, E, B, omega, …)` — the per-mode
   measure+record), `:471` (loop close), `:472-475` (`MFEM_VERIFY(num_conv >= …n)`). Firm L1 home:
-  [`eigenvalue-untransform`](../L1/eigenvalue-untransform.md).
+  [`eigenvalue_untransform`](../L1/eigenvalue_untransform.md).
 - **Quality-factor body (positive site 2):** `palace/models/postoperator.cpp:1171-1172`
   (`void PostOperator<solver_t>::MeasureLumpedPortsEig() const` def), `:1177` (`auto freq_re
   = measurement_cache.freq.real()` — `f = Re ω`), `:1188-1191` (the `κ_mj = ½R_j I_mj²/E_m`

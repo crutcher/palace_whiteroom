@@ -1,7 +1,7 @@
 # matrix-weighted-norm-mutation-rotation
 
 The mutation rotation for the operator-weighted (energy) norm. Lowers the pure L1 form
-`matrix_weighted_norm(x, B) = √(xᴴ B x)` ([`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md),
+`matrix_weighted_norm(x, B) = √(xᴴ B x)` ([`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md),
 firm) into Palace's L0 `linalg::Norml2(comm, x, B, Bx)` three-step composition
 `B.Mult(x, Bx); dot = Dot(comm, Bx, x); return std::sqrt(dot)` (`palace/linalg/operator.cpp:599-619`). It is the
 **weighted relative** of [`nrm2-mutation-rotation`](./nrm2-mutation-rotation.md): where `nrm2`
@@ -23,7 +23,7 @@ the outer `std::sqrt`, and the **`MFEM_ASSERT(dot > 0.0)` SPD run-time guard** (
 
 The pure-functional energy norm consumes a read-only vector and a read-only SPD operator and
 produces a fresh non-negative real scalar; nothing is mutated, and there is no workspace in the
-signature. The LHS shape (firm; see [`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md)):
+signature. The LHS shape (firm; see [`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md)):
 
     alpha = matrix_weighted_norm(x, B)     -- alpha = √(xᴴ B x), always real, non-negative
                                            -- (real x:    √(xᵀ B x) = √Σ x[i]·(B·x)[i])
@@ -41,7 +41,7 @@ destination buffer.
 
 The SPD precondition on `B` is an explicit L1 **applicability condition** (the L1 form is a norm
 iff `B` is SPD; a seminorm if SPSD; ill-defined if indefinite), not a soft guard — see
-[`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md) §Applicability conditions.
+[`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md) §Applicability conditions.
 
 ## L0 form (RHS)
 
@@ -132,7 +132,7 @@ Structurally identical to Sub-pattern A, with two element-type differences:
   apply (`apply_linop` §Applicability condition 3, the `complex-from-real-lift`). At L1 this split
   is absorbed by `apply_linop`'s element-type variant axis: the L1 form is just
   `apply_linop(B, x)`. **(Variant-axis note: this real-`B`-on-complex-`x` case is the
-  promotion-gate question flagged at [`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
+  promotion-gate question flagged at [`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md)
   §Variant axes — whether L1 admits it as a distinct variant or a uniform rule. This theme records
   it faithfully as the L0 surface; the L1-side resolution is upstream.)**
 - **The guard is two-part** (`:616-617`): `dot.real() > 0.0` (the SPD positivity, as in the real
@@ -141,7 +141,7 @@ Structurally identical to Sub-pattern A, with two element-type differences:
   round-off only). The return is `std::sqrt(dot.real())` (`:618`) — the imaginary part is
   **discarded**, not folded, because the assertion has confirmed it is round-off. This confirms the
   L1 "result is always real" rule is a direct algebraic consequence of `B` being SPD
-  ([`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md) §Signature).
+  ([`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md) §Signature).
 
 At L1 Sub-patterns A and B **collapse to one operator** (element-type variant axis absorbed): the
 result is real-valued regardless of input element type, and all L1 laws hold uniformly.
@@ -191,7 +191,7 @@ materialized `B·x` to feed the inner `Dot`. At L0 this is a **caller-supplied**
 `VecType &Bx`, and it is a **destination** buffer (step 1 overwrites it entirely), not transient
 scratch:
 
-- **It is caller-owned, not internally allocated.** Contrast the sibling bilinear-form
+- **It is caller-owned, not internally allocated.** Contrast the sibling bilinear_form
   `linalg::Dot(comm, x, A, y)` (`palace/linalg/operator.hpp:386-389`, `palace/linalg/operator.cpp:621-639`), which allocates
   its workspace `Ax` internally (`ComplexVector Ax(A.Height())`). `Norml2` instead requires the
   caller to pass `Bx` so it can be **reused across calls** without per-call allocation — the live
@@ -213,7 +213,7 @@ scratch:
   (inherited from `dot-mutation-rotation` applicability condition 2) forces `B.Height() == N`.
 
 This is the workspace-ownership boundary the stub's "Implied by" provenance named (the three
-in-file references in [`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md) deferring the
+in-file references in [`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md) deferring the
 `Bx`-ownership unfold to this theme). It is **resolved**: `Bx` is a caller-owned destination buffer,
 materialized in the lowering, erased at L1.
 
@@ -252,7 +252,7 @@ trick; consistent with the `nrm2` abs-guard classification and the
 ## Reduction tree — load-bearing-numerical recording
 
 The weighted norm accumulates non-associativity from **two** inherited sources (per
-[`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md) §Semantics):
+[`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md) §Semantics):
 
 1. **`apply_linop(B, x)`'s internal kernel** — a sparse-matrix realisation of `B` and a
    matrix-free realisation of the *same* SPD operator produce bit-different `B·x` (the
@@ -313,21 +313,21 @@ reconstruction, no literature inference, no speculative operator), hence `firm` 
 
 ## Speculative L1 operators
 
-**None.** This theme lowers the existing L1 [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
+**None.** This theme lowers the existing L1 [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)
 operator (firm) into existing firm L1 vocabulary — `apply_linop` for the
 `B·x` step, `dot` for the inner reduction, `scal` for the `Normalize` consumer. It proposes no new
-L1 vocabulary. The sibling **bilinear-form** `linalg::Dot(comm, x, A, y) = yᴴ A x`
+L1 vocabulary. The sibling **bilinear_form** `linalg::Dot(comm, x, A, y) = yᴴ A x`
 (`palace/linalg/operator.hpp:386-389`, `palace/linalg/operator.cpp:621-639`) shares the L0 file block and the same two L1
 primitives but with the diagonal restriction lifted (`y ≠ x`) and **internally-allocated** workspace
 `Ax` (Category-4 synthetic workspace) rather than caller-supplied `Bx`; it is a **different
-operator** ([`L1/bilinear-form`](../L1/bilinear-form.md)) and the subject of a separate forthcoming
+operator** ([`L1/bilinear_form`](../L1/bilinear_form.md)) and the subject of a separate forthcoming
 theme `bilinear-form-mutation-rotation`. It is named here only to mark the boundary; it is **not**
 part of this theme. (The energy norm is the diagonal case `y = x` of the bilinear form, plus the
 outer `√` and the SPD applicability condition.)
 
 ## Variant axes
 
-`matrix-weighted-norm` has two orthogonal variant axes at the L1>L0 edge (per
+`matrix_weighted_norm` has two orthogonal variant axes at the L1>L0 edge (per
 `classify-variant-axis`), plus one degenerate collapse:
 
 - **element-type**: `real` | `complex`. At L0 these are the two template specializations of
@@ -364,7 +364,7 @@ caller-owned workspace `Bx`".
 
 ## Additional cited L0 ranges
 
-- `palace/linalg/operator.cpp:624` — the sibling bilinear-form `Dot(comm, x, A, y)`'s
+- `palace/linalg/operator.cpp:624` — the sibling bilinear_form `Dot(comm, x, A, y)`'s
   internally-allocated workspace `ComplexVector Ax(A.Height())` (the boundary contrast with the
   caller-supplied `Bx`).
 - `palace/linalg/arpack.cpp:433-444` / `palace/linalg/slepc.cpp:470-481` /

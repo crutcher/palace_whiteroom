@@ -26,7 +26,7 @@ to L1 [`reciprocal`](../L1/reciprocal.md) (the mutation-lifted form of the same
 [`reciprocal`](../L3/reciprocal.md) (the iteration-rotation rendering); the rotation
 L1 ↔ L2 is identity-in-form because `reciprocal` is a leaf field operation with no kernel
 fusion to unfold. The elementwise leaf that, composed with `assemble_diagonal`
-([`assemble-diagonal`](../L2/assemble-diagonal.md)), produces the inverse
+([`assemble_diagonal`](../L2/assemble_diagonal.md)), produces the inverse
 diagonal `D⁻¹` consumed by the diagonal-preconditioner-apply chain (Jacobi, Chebyshev).
 
 ## Context
@@ -259,13 +259,13 @@ self-map, not a reduction term. The leaf-vs-fold design fork (`book/src/L2/index
   candidate not yet authored, referenced here as plain text. The two together — `reciprocal`
   and `elementwise_product` — complete the diagonal-preconditioner-apply chain
   `assemble_diagonal → reciprocal → elementwise_product` named at L1
-  [`assemble-diagonal`](../L1/assemble-diagonal.md) §Dependencies. `elementwise_product` is a
+  [`assemble_diagonal`](../L1/assemble_diagonal.md) §Dependencies. `elementwise_product` is a
   *sibling* elementwise leaf (also fold-parent-free), not a dependency of `reciprocal`.
 
 **Consumers (L2)** (cross-reference, not reverse-dependencies) — the
 diagonal-preconditioner-apply fan-out:
 
-- [`krylov-step`](./krylov-step.md) — the Jacobi / Chebyshev smoother setup chain
+- [`krylov_step`](./krylov_step.md) — the Jacobi / Chebyshev smoother setup chain
   `dinv = reciprocal(assemble_diagonal(A))` feeds the per-step preconditioner-apply the
   kernel folds (`palace/linalg/jacobi.cpp:80`; `palace/linalg/chebyshev.cpp:178, :241`). The
   damping fold `dinv *= omega` (`palace/linalg/jacobi.cpp:92`) is the only post-`reciprocal`
@@ -409,7 +409,7 @@ to this L2 entry (paths relative to `reference/palace/`):
   multiplicity-averaging step (a non-preconditioner consumer of the same elementwise-reciprocal
   primitive).
 - *Negative anchor*: no dedicated `Reciprocal` test under `reference/palace/test/unit/`. Per the
-  firm-on-positive-structure precedent (`apply_linop`, `dot`, `scal`, `assemble-diagonal`, the
+  firm-on-positive-structure precedent (`apply_linop`, `dot`, `scal`, `assemble_diagonal`, the
   BLAS-1 leaves), the firm judgement does not require a dedicated test — every law is a syntactic
   identity on the positive complex-elementwise kernel body.
 

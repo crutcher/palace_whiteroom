@@ -116,7 +116,7 @@ The `Mpi::Print` / `Mpi::Printf` / `Mpi::Warning` formatters have no direct test
 
 - [`L0/par-types-single-rank-reading`](./par-types-single-rank-reading.md) — convention chapter; this file is the file-level companion to its "MPI collectives" section.
 - [`L0/linalg-vector-file`](./linalg-vector-file.md) — file-overview that downstream cites `Mpi::GlobalSum` as the implementation primitive behind `linalg::Dot` / `linalg::Norml2`.
-- Higher-layer L1 / L2 / L4 entries: every L1 operator that performs a global reduction ([`dot`](../L1/dot.md), [`nrm2`](../L1/nrm2.md), `axpy`-chained reductions, and the matrix-weighted [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) / [`bilinear-form`](../L1/bilinear-form.md)) anchors here for the L0 implementation primitive.
+- Higher-layer L1 / L2 / L4 entries: every L1 operator that performs a global reduction ([`dot`](../L1/dot.md), [`nrm2`](../L1/nrm2.md), `axpy`-chained reductions, and the matrix-weighted [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) / [`bilinear_form`](../L1/bilinear_form.md)) anchors here for the L0 implementation primitive.
 
 ## Evidence (representative)
 

@@ -38,13 +38,13 @@ Current members (alpha-within-this-kind):
 
 - [**geometric-multigrid preconditioner**](./geometric-multigrid-preconditioner.L4.md) — the
   V-cycle preconditioner every multi-level Krylov solve (and the firm
-  [`divfree-projector`](../L1/divfree-projector.md)) hangs under; the DIRECTIVE-2 grounded
+  [`divfree_projector`](../L1/divfree_projector.md)) hangs under; the DIRECTIVE-2 grounded
   consumer-(1) that GROUNDS RE9/RE1/RE5/RE7 by composing the prolongation level-stack +
   smoother leg + diagonal-preconditioner chains by name. (firm.)
 - [**krylov-iteration**](./krylov-iteration.L4.md) — the Krylov / Arnoldi **iteration spine**
   every iterative solve hangs under; the iteration-rotation parallel of the GMG column. The
   DIRECTIVE-2 item-4b grounded consumer that DISCHARGES RE2 (`L3/orthogonalize`) and RE8
-  (`L3/krylov-step`, `L3/fold_solve`) by composing the L3 iteration-rotation form BY NAME via
+  (`L3/krylov_step`, `L3/fold_solve`) by composing the L3 iteration-rotation form BY NAME via
   blocking `depends-on (composes)` edges (a genuine depends-on reachability flip). (rough-in —
   capped at partial-obstruction by its `fold_solve` / `orthogonalize` iteration-views, the
   body-lifts-loop-doesn't honesty; coupled to the roadmap_goal

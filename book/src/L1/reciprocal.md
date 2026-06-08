@@ -1,6 +1,6 @@
 # reciprocal
 
-Mutation-lifted elementwise multiplicative-inverse: `result[i] = 1/x[i]`. The L1 lift of the `Vector::Reciprocal()` / `ComplexVector::Reciprocal()` member-method pair — the elementwise-reciprocal BLAS-1-shape leaf that, composed with [`assemble-diagonal`](./assemble-diagonal.md), produces the inverse diagonal `D⁻¹` consumed by the diagonal-preconditioner-apply chain (Jacobi, Chebyshev). One of the two elementwise primitives ([`reciprocal`](./reciprocal.md) and [`elementwise_product`](./elementwise_product.md)) the `assemble-diagonal` §Dependencies and `jacobi-smoother` §Dependencies blocks reference.
+Mutation-lifted elementwise multiplicative-inverse: `result[i] = 1/x[i]`. The L1 lift of the `Vector::Reciprocal()` / `ComplexVector::Reciprocal()` member-method pair — the elementwise-reciprocal BLAS-1-shape leaf that, composed with [`assemble_diagonal`](./assemble_diagonal.md), produces the inverse diagonal `D⁻¹` consumed by the diagonal-preconditioner-apply chain (Jacobi, Chebyshev). One of the two elementwise primitives ([`reciprocal`](./reciprocal.md) and [`elementwise_product`](./elementwise_product.md)) the `assemble_diagonal` §Dependencies and `jacobi-smoother` §Dependencies blocks reference.
 
 ## Context
 
@@ -15,7 +15,7 @@ The four Palace call sites are all on the **diagonal-preconditioner-apply** chai
 - `palace/linalg/chebyshev.cpp:241` — `dinv.Reciprocal();` (inside `ChebyshevSmoother1stKind::SetOperator`; the 1st-kind Chebyshev inverse diagonal).
 - `palace/fem/bilinearform.cpp:278` — `test_multiplicity.Reciprocal();` (FE-assembly: after accumulating per-true-dof contribution counts in `test_multiplicity`, the reciprocal converts each count `c[i]` into the averaging weight `1/c[i]` consumed by `SetDofMultiplicity` — the dof-shared-element averaging primitive).
 
-The three preconditioner sites realize the `assemble_diagonal → reciprocal → elementwise_product` chain [`assemble-diagonal`](./assemble-diagonal.md) §Dependencies names. The bilinearform site is a different consumer pattern (multiplicity averaging, not preconditioning) that nonetheless reuses the same elementwise-reciprocal primitive.
+The three preconditioner sites realize the `assemble_diagonal → reciprocal → elementwise_product` chain [`assemble_diagonal`](./assemble_diagonal.md) §Dependencies names. The bilinearform site is a different consumer pattern (multiplicity averaging, not preconditioning) that nonetheless reuses the same elementwise-reciprocal primitive.
 
 ## Signature
 
@@ -76,12 +76,12 @@ None at L1. `reciprocal` is a **leaf primitive** at L1 — element-local, reduct
 
 Sibling on the elementwise-primitives axis (not dependency):
 
-- [`elementwise_product`](./elementwise_product.md) `:: (x: Tensor[N], y: Tensor[N]) -> Tensor[N]` — the binary elementwise multiply. The two together — `reciprocal` and `elementwise_product` — complete the diagonal-preconditioner-apply chain `assemble_diagonal → reciprocal → elementwise_product` that [`assemble-diagonal`](./assemble-diagonal.md) §Dependencies and [`jacobi-smoother`](./jacobi-smoother.md) §Dependencies reference.
+- [`elementwise_product`](./elementwise_product.md) `:: (x: Tensor[N], y: Tensor[N]) -> Tensor[N]` — the binary elementwise multiply. The two together — `reciprocal` and `elementwise_product` — complete the diagonal-preconditioner-apply chain `assemble_diagonal → reciprocal → elementwise_product` that [`assemble_diagonal`](./assemble_diagonal.md) §Dependencies and [`jacobi-smoother`](./jacobi-smoother.md) §Dependencies reference.
 
 Downstream consumers at L1 (cross-reference, not reverse-dependencies):
 
 - [`jacobi-smoother`](./jacobi-smoother.md) — `dinv = reciprocal(assemble_diagonal(A))` in the setup chain (`palace/linalg/jacobi.cpp:80`). The damping fold `dinv *= omega` (`palace/linalg/jacobi.cpp:92`) is the only post-`reciprocal` step; the apply itself is `(ω · D⁻¹) ⊙ x`.
-- [`assemble-diagonal`](./assemble-diagonal.md) — names the `assemble_diagonal → reciprocal → elementwise_product` chain as its principal §Dependencies forward-reference; the L1 entry exists in part to satisfy that reference.
+- [`assemble_diagonal`](./assemble_diagonal.md) — names the `assemble_diagonal → reciprocal → elementwise_product` chain as its principal §Dependencies forward-reference; the L1 entry exists in part to satisfy that reference.
 - `chebyshev-smoother` (Chebyshev 4th-kind via `palace/linalg/chebyshev.cpp:178`; 1st-kind via `:241`) — the same `op.AssembleDiagonal(dinv); dinv.Reciprocal();` setup chain consumed by the diagonally-scaled polynomial smoother.
 - FE-assembly multiplicity averaging — `test_multiplicity.Reciprocal()` at `palace/fem/bilinearform.cpp:278`, converting the per-test-dof contribution count (accumulated as `h_mult[k] += 1.0` over assembly-loop iterations) into the averaging weight `1/c[i]` for `SetDofMultiplicity`. A non-preconditioner consumer of the same elementwise-reciprocal primitive.
 
@@ -125,7 +125,7 @@ Non-axes (recorded for disambiguation):
 - `palace/linalg/chebyshev.cpp:241` — consumer: `dinv.Reciprocal();` inside `ChebyshevSmoother1stKind<OperType>::SetOperator`. Same chain (1st-kind).
 - `palace/fem/bilinearform.cpp:278` — consumer: `test_multiplicity.Reciprocal();` — FE-assembly multiplicity-averaging step (the per-true-dof contribution count `c[i]` accumulated by atomic adds is converted to the per-dof averaging weight `1/c[i]` for `SetDofMultiplicity`). A non-preconditioner consumer of the same elementwise-reciprocal primitive; witnesses the operator's role beyond the diagonal-preconditioner-apply chain.
 - *Negative anchor*: no dedicated `Reciprocal` test under `reference/palace/test/unit/`. Per the BLAS-1-leaf firm-on-positive-structure precedent ([`axpy`](./axpy.md), [`dot`](./dot.md), [`nrm2`](./nrm2.md), [`scal`](./scal.md)) and the derived-construct precedent ([`apply_linop`](./apply_linop.md), [`chebyshev-smoother`](./chebyshev-smoother.md), [`jacobi-smoother`](./jacobi-smoother.md)), the firm-on-positive-structure judgement does not require a dedicated test — every law is a syntactic identity on the positive complex-elementwise kernel body.
-- `book/src/L1/assemble-diagonal.md` — its §Dependencies block names the `assemble_diagonal → reciprocal → elementwise_product` chain that this entry's `reciprocal` half (with `elementwise_product`) completes.
+- `book/src/L1/assemble_diagonal.md` — its §Dependencies block names the `assemble_diagonal → reciprocal → elementwise_product` chain that this entry's `reciprocal` half (with `elementwise_product`) completes.
 - `book/src/L1/jacobi-smoother.md` — §Dependencies names `reciprocal` and `elementwise_product` as the L1-primitive constituents of the diagonal-preconditioner-apply chain.
 - `book/src/L1/scal.md`, `book/src/L1/nrm2.md` — sibling BLAS-1-leaf style precedent (the firm-on-positive-structure framing and the no-MPI / element-local language).
 - `book/src/L1/normalize.md` — sibling partial-operator precedent for the `x ≠ 0` precondition framing.

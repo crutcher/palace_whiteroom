@@ -54,7 +54,7 @@ The capacitance product is the cleanest output-product composition root because 
 - The reduction is [`gram_reduce`](../L4/gram_reduce.md) at the **multiplicative-identity weight** `w = 1` (the simplest member of the normalization-weight axis; the magnetostatic inductance product is the non-trivial `w = 1/(Iᵢ Iⱼ)` sibling).
 - The inverse `Cinv` is the `gram_inverse` consumer, kept OUT of the reduction (the `nrm2`-style consumer split, `gram_reduce` §Algebraic-laws).
 
-The whole output product therefore lowers cleanly outward to the L4 backend surface: `capacitance = gram_reduce (w ≡ 1) ∘ electrostatic_family` — a one-reduction tail on the electrostatic driver column. Under the **OWN-COMPOSITION rule** a column promotes off `seed` when its OWN directly-owned constituents are firm; this column is **firm** because its OWN reduce verb [`gram_reduce`](../L4/gram_reduce.md) is firm (both its folded primitives — the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) and the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) — are firm). The cross-link to the [`electrostatic.L4`](./electrostatic.L4.md) producing driver column is a SIBLING reference, NOT a constituent — it does not gate this column's rank.
+The whole output product therefore lowers cleanly outward to the L4 backend surface: `capacitance = gram_reduce (w ≡ 1) ∘ electrostatic_family` — a one-reduction tail on the electrostatic driver column. Under the **OWN-COMPOSITION rule** a column promotes off `seed` when its OWN directly-owned constituents are firm; this column is **firm** because its OWN reduce verb [`gram_reduce`](../L4/gram_reduce.md) is firm (both its folded primitives — the diagonal [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) and the off-diagonal [`bilinear_form`](../L1/bilinear_form.md) — are firm). The cross-link to the [`electrostatic.L4`](./electrostatic.L4.md) producing driver column is a SIBLING reference, NOT a constituent — it does not gate this column's rank.
 
 ## Constituent down-links
 
@@ -62,7 +62,7 @@ The whole output product therefore lowers cleanly outward to the L4 backend surf
 |---|---|---|---|
 | producing driver column | [`electrostatic.L4`](./electrostatic.L4.md) (driver feature column; sibling reference) | firm | `electrostaticsolver.cpp:21-98` |
 | symmetric-Gram reduction (w = 1) | [`gram_reduce`](../L4/gram_reduce.md) | firm | `electrostaticsolver.cpp:100-140` |
-| diagonal Vᵢᵀ K Vᵢ (folded) | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) | firm | `electrostaticsolver.cpp:118-119` |
-| off-diagonal Vⱼᵀ K Vᵢ (folded) | [`bilinear-form`](../L1/bilinear-form.md) | firm | `electrostaticsolver.cpp:126` |
+| diagonal Vᵢᵀ K Vᵢ (folded) | [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) | firm | `electrostaticsolver.cpp:118-119` |
+| off-diagonal Vⱼᵀ K Vᵢ (folded) | [`bilinear_form`](../L1/bilinear_form.md) | firm | `electrostaticsolver.cpp:126` |
 
 This chapter carries the *compositional* claim (capacitance = the `w = 1` Gram reduction over the electrostatic driver's solution family), not the constituents' per-op algebraic claims (those live in [`gram_reduce`](../L4/gram_reduce.md) and the linked L1 primitives).

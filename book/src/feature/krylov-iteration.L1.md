@@ -26,7 +26,7 @@ edges:
       kind: cites-evidence            # GmresSolver::Mult restart + inner Arnoldi/orthogonalize
   reference:
     - feature/krylov-iteration.L4
-    - L3/krylov-step
+    - L3/krylov_step
     - L3/fold_solve
     - L3/orthogonalize
     - concepts/sequential-obstruction
@@ -68,7 +68,7 @@ For GMRES the per-step body additionally runs the [`orthogonalize`](../L1/orthog
 against the stored basis prefix (`iterative.cpp:615-632`) and normalizes via
 [`nrm2`](../L1/nrm2.md) + [`scal`](../L1/scal.md). The body **lifts** — every primitive is a pure
 whole-vector L1 op; the sequentiality is in the *outer fold over the body* (the carry-threading),
-not the body itself. This is the L1 pure-function image of the firm [`krylov-step`](../L3/krylov-step.md)
+not the body itself. This is the L1 pure-function image of the firm [`krylov_step`](../L3/krylov_step.md)
 iteration-view (the L3>L2>L1 body identity-in-form chain).
 
 ## The outer fold

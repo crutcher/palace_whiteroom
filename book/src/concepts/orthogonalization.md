@@ -7,7 +7,7 @@ edges:
     - L1/axpy
     - L2/orthogonalize
     - L3/orthogonalize
-    - L2/krylov-step
+    - L2/krylov_step
     - concepts/sequential-obstruction
     - concepts/variant-absorption
 ---
@@ -105,8 +105,8 @@ are unchanged (the orthogonality contract becomes `⟨w', V[i]⟩_B = 0`).
 
 ## Consumers
 
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — orthogonalising the new Arnoldi vector against the
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — orthogonalising the new Arnoldi vector against the
   existing basis; the variant axis is absorbed at this primitive's contract.
 - The ROM basis-extension path (`romoperator.cpp`).
-- The L2 [`krylov-step`](../L2/krylov-step.md) composition references `orthogonalization` as
+- The L2 [`krylov_step`](../L2/krylov_step.md) composition references `orthogonalization` as
   an all-three-level-absorbed (residual-axis-disclosed) component.

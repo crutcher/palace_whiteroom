@@ -10,7 +10,7 @@ edges:
 
 # apply_linop
 
-Mutation-lifted linear-operator application: `y = A · x` for an abstract linear operator `A`. The opaque-operator primitive at L1; the unit of operator-cost accounting for iterative solvers and the gate to the L2 `krylov-step` vocabulary.
+Mutation-lifted linear-operator application: `y = A · x` for an abstract linear operator `A`. The opaque-operator primitive at L1; the unit of operator-cost accounting for iterative solvers and the gate to the L2 `krylov_step` vocabulary.
 
 ## Context
 
@@ -76,7 +76,7 @@ Laws that explicitly **do not** hold:
 
 None at L1. `apply_linop` is a leaf primitive at L1 — alongside `axpy`, `axpby`, `dot`, and `nrm2`, it is one of the foundational L1 operators. Its sub-operations are the operator's internal evaluation (element-local kernels, SpMV inner loops, multigrid V-cycles, etc.) — all below the L1 layer's resolution and visible only in the L1>L0 lowering.
 
-`apply_linop` is the operator-application primitive the L2 `krylov-step` depends on. At L2, the operator-application count is the standard cost metric for iterative solvers; each L2 step (CG inner iteration, GMRES Arnoldi step, MGS orthogonalisation pass) is characterised by its number of `apply_linop` calls. The L2 vocabulary names these as opaque primitives rather than unfolding them into per-element loops — see [`concepts/apply_linop`](../concepts/apply_linop.md) "Role in the L2 vocabulary".
+`apply_linop` is the operator-application primitive the L2 `krylov_step` depends on. At L2, the operator-application count is the standard cost metric for iterative solvers; each L2 step (CG inner iteration, GMRES Arnoldi step, MGS orthogonalisation pass) is characterised by its number of `apply_linop` calls. The L2 vocabulary names these as opaque primitives rather than unfolding them into per-element loops — see [`concepts/apply_linop`](../concepts/apply_linop.md) "Role in the L2 vocabulary".
 
 The accumulating form `AddMult(A, x, a, y) → y + a · A · x` is **not** a separate L1 operator (per the Semantics section): it is the L1 composition `axpby(a, apply_linop(A, x), 1, y)` — a sibling-leaf composition, not a dependency. The L0 source provides `AddMult` as a fused method for performance; the L1>L0 lowering reintroduces the fusion as a transparent performance trick.
 

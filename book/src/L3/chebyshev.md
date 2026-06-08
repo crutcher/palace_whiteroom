@@ -32,16 +32,16 @@ tensor-field form, L3 captures it; where no global form exists, the
 at L3 is the canonical **partial-obstruction** case: the body lifts, the loop
 does not.
 
-Unlike L3 [`krylov-step`](./krylov-step.md), `chebyshev` is **not** a Krylov
+Unlike L3 [`krylov_step`](./krylov_step.md), `chebyshev` is **not** a Krylov
 method — it is **inner-product-free** (no `dot` / `nrm2` reduction appears in
 the body; the coefficients are closed forms of the step index `k` and the
 spectral bounds, computed without inspecting the iterate) and has **no
 convergence test** (it applies a fixed-degree polynomial `pc_it` times; the loop
 bounds are static, not predicate-driven). It is therefore defined here as its
-own L3 operator in L3 vocabulary, not as a specialisation of `krylov-step`. The
+own L3 operator in L3 vocabulary, not as a specialisation of `krylov_step`. The
 two share the L3 whole-tensor field-operation vocabulary (`apply_linop`,
 `axpby`, `axpbypcz`, `scal`, [`elementwise-product`](../concepts/elementwise-product.md))
-but differ in their iteration structure: `krylov-step`'s outer loop is a
+but differ in their iteration structure: `krylov_step`'s outer loop is a
 convergence-predicate-driven `iterate_while` fold; `chebyshev`'s loops are two
 nested **step-count-predicate** `iterate_while_pure` folds (outer `pc_it`
 Richardson sweep `s.it <= op.pc_it`, inner `k`-recurrence `c.k <= op.order - 1`),
@@ -62,7 +62,7 @@ The relationship to the adjacent layers:
   L4 `modifyY (\y -> y .+. dN)` dissolves to the explicit `let y' = y + dN`
   binding. There is no `book/src/L4-L3/` theme file — the
   dissolution is value-thread-isomorphic on the body and the wrapper rewrite is
-  the same shape the krylov-step typed-wrapper-dissolution theme catalogs
+  the same shape the krylov_step typed-wrapper-dissolution theme catalogs
   (`book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md`).
 - **Downward** to L2: [`chebyshev-iteration`](../L2/chebyshev-iteration.md) is
   the same body as a base-algebra primitive composition with the iteration view
@@ -76,7 +76,7 @@ The relationship to the adjacent layers:
   threading into its `for k in 1 .. order-1` loop with `op.scalars(k, st)`
   state. This is information-preserving. The **body identity-in-form** annotation
   lives in-line here per the non-adjacent-identity convention
-  (precedent: `book/src/L3/krylov-step.md` §Downward); the **substantive
+  (precedent: `book/src/L3/krylov_step.md` §Downward); the **substantive
   nested-loop erasure** (the two `iterate_while_pure_L3` tail recursions dissolving
   into the L2 loop-as-driver + role reference, with the inner-`k` + outer-`pc_it`
   `sequential-obstruction`s erased to the L2 non-laws) is the dedicated L3>L2 theme
@@ -148,7 +148,7 @@ monadic effect; the field shape group `S` and the square operator form
 
 There is **no `outputs` record** in the signature: `chebyshev` is
 inner-product-free and convergence-test-free, so no residual-norm / breakdown
-readout is produced per step (contrast L3 [`krylov-step`](./krylov-step.md),
+readout is produced per step (contrast L3 [`krylov_step`](./krylov_step.md),
 whose `(K', s', outputs)` carries a demand-prunable readout). The smoother's
 only product is the accumulator `y'`.
 
@@ -246,7 +246,7 @@ chebyshev op x y initial_guess =
 
 The two `if k >= op.order` / `if it > op.pc_it` tail recursions are the L3
 rendering of the L4 [`chebyshev`](../L4/chebyshev.md)'s two nested
-[`iterate_while_pure`](../L4/iterate-while.md) folds over **step-count
+[`iterate_while_pure`](../L4/iterate_while.md) folds over **step-count
 predicates** (`c.k <= op.order - 1` inner, `s.it <= op.pc_it` outer) — the
 `iterate_while_pure_L3` tail-recursion lowering image of those bounded folds (per
 L4 `chebyshev` §"L4 > L3"), the iteration view that L3 makes load-bearing. The
@@ -381,7 +381,7 @@ with no element loop exposed):
 
 `chebyshev` does **not** depend on the L3 reductions [`dot`](./inner_product.md#specializations) /
 [`nrm2`](./inner_product.md#consumer-nrm2-and-matrix-weighted-norm) — it is inner-product-free. This is the structural
-distinction from L3 [`krylov-step`](./krylov-step.md).
+distinction from L3 [`krylov_step`](./krylov_step.md).
 
 **Cross-cutting concepts:**
 
@@ -436,7 +436,7 @@ they do not select among operators. The **spectral-bound-estimation method**
 (power iteration vs SLEPc) is a setup-side concern absorbed into the opaque
 spectrum-estimate sub-action; it does not surface at the smoother-action
 signature. There is **no first-iteration-unrolled-vs-branch-in-body axis** as a
-*variant* (contrast `krylov-step` axis 4): the `initial_guess` branch is a
+*variant* (contrast `krylov_step` axis 4): the `initial_guess` branch is a
 degenerate-case absorption controlled by a `Bool` argument, and the
 initial-direction / final-accumulate boundary is a fixed loop-unrolling, not a
 selectable form.
@@ -472,7 +472,7 @@ The L3>L2 hop erases the explicit iteration view (the tail recursions collapse
 to L2's loop-as-composition-driver) and leaves the body identity-in-form. The
 **body** identity-in-form annotation lives in-line here (per the
 non-adjacent-identity convention; precedent
-`book/src/L3/krylov-step.md`); the **substantive loop erasure** is the dedicated
+`book/src/L3/krylov_step.md`); the **substantive loop erasure** is the dedicated
 L3>L2 theme [`chebyshev-nested-recurrence`](../L3-L2/chebyshev-nested-recurrence.md).
 
 ## L3 vs L4 distinction
@@ -521,7 +521,7 @@ L3>L2 theme [`chebyshev-nested-recurrence`](../L3-L2/chebyshev-nested-recurrence
   are the L3 loop-structure obstructions.
 - `book/src/L1/chebyshev-smoother.md` (firm) — the L1 closed-form
   action the body is value-thread-isomorphic to (transitively, in-line).
-- `book/src/L3/krylov-step.md` (firm) — the template for the
+- `book/src/L3/krylov_step.md` (firm) — the template for the
   identity-lowering backfill (§Upward/§Downward in-line annotation) and the
   contrast operator (Krylov, predicate-driven loop, inner-product-bearing) vs
   this fixed-degree, inner-product-free, static-range smoother.

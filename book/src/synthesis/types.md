@@ -8,8 +8,8 @@ kind: navigational-container (synthesis library — types)
 edges:
   reference:
     - concepts/config-record
-    - concepts/sim-state
-    - concepts/op-params
+    - concepts/SimState
+    - concepts/OpParams
     - synthesis/index
 ---
 
@@ -52,11 +52,11 @@ IoData = {
 
 ## `OpParams` — operator-internal parameters (construction-time, readonly)
 
-Shared across `iteration` (the `krylov-step` kernel reads it through closed-over surfaces) and `coordination` (`ksp_solve` / `solve_family` / `fold_solve` capture it once at solve construction). The readonly variant-selector + constructed-operator-surface closure, fixed across the whole `Mult` call. Authoritative field schema: [`op-params`](../concepts/op-params.md).
+Shared across `iteration` (the `krylov_step` kernel reads it through closed-over surfaces) and `coordination` (`ksp_solve` / `solve_family` / `fold_solve` capture it once at solve construction). The readonly variant-selector + constructed-operator-surface closure, fixed across the whole `Mult` call. Authoritative field schema: [`OpParams`](../concepts/OpParams.md).
 
 ```text
 -- readonly; captured once at solve construction, never re-inspected per step.
--- Authoritative schema + field strata + L0 home: concepts/op-params.md
+-- Authoritative schema + field strata + L0 home: concepts/OpParams.md
 OpParams = {
   -- constructed-operator surfaces (the kernel touches OpParams ONLY through these)
   T          : ConstructedOp,        -- the apply surface (preconditioned operator)
@@ -79,14 +79,14 @@ OpParams = {
 }
 ```
 
-## `SimState` — sim-state stratum (run-time-evolved)
+## `SimState` — SimState stratum (run-time-evolved)
 
-Shared across `iteration` (the `krylov-step` kernel's monadic effect *is* the `SimState` transition) and `coordination` (the `Solve = StateT SimState Identity` caps thread it; `solve_family` collects it). The externally-visible quantities a Krylov-shaped solve evolves and reports; **uniform across all slices** (CG / GMRES / FGMRES / Chebyshev share this exact five-field shape). Authoritative field schema: [`sim-state`](../concepts/sim-state.md).
+Shared across `iteration` (the `krylov_step` kernel's monadic effect *is* the `SimState` transition) and `coordination` (the `Solve = StateT SimState Identity` caps thread it; `solve_family` collects it). The externally-visible quantities a Krylov-shaped solve evolves and reports; **uniform across all slices** (CG / GMRES / FGMRES / Chebyshev share this exact five-field shape). Authoritative field schema: [`SimState`](../concepts/SimState.md).
 
 ```text
 -- the value threaded by `Solve a = StateT SimState Identity a`; every field run-time.
 -- the iterate `x` is named with shape group S (semantics/index.md §1.2.1), not a rank-1 axis.
--- Authoritative schema + field strata + L0 home: concepts/sim-state.md
+-- Authoritative schema + field strata + L0 home: concepts/SimState.md
 SimState = {
   x           : Tensor[(S: ...)],   -- the current iterate (the solve's primary product)
   it          : Int,                -- iteration count

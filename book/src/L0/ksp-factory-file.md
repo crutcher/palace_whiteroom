@@ -53,7 +53,7 @@ For the three implemented branches (`CG`, `GMRES`, `FGMRES`), the factory:
 - For GMRES / FGMRES, calls `SetRestartDim(linear.max_size)` (lines 42, 49) — the restart parameter.
 - For GMRES / FGMRES, downstream of the switch, configures preconditioner side (lines 73–86) and orthogonalisation method (lines 92–94).
 
-The solver classes themselves (`CgSolver`, `GmresSolver`, `FgmresSolver`) live in `palace/linalg/iterative.{hpp,cpp}` and are the L0 anchors for the firm [`L2/krylov-step`](../L2/krylov-step.md) kernel + [`L1/ksp_solve`](../L1/ksp_solve.md) / [`L2/ksp_solve`](../L2/ksp_solve.md) outer driver.
+The solver classes themselves (`CgSolver`, `GmresSolver`, `FgmresSolver`) live in `palace/linalg/iterative.{hpp,cpp}` and are the L0 anchors for the firm [`L2/krylov_step`](../L2/krylov_step.md) kernel + [`L1/ksp_solve`](../L1/ksp_solve.md) / [`L2/ksp_solve`](../L2/ksp_solve.md) outer driver.
 
 ## Referenced from
 

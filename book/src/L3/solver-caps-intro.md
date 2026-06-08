@@ -7,7 +7,7 @@ edges:
   reference:
     - L3/eigsolve
     - L3/fold_solve
-    - L3/krylov-step
+    - L3/krylov_step
     - L3/ksp_solve
     - L3/orthogonalize
 ---
@@ -16,8 +16,8 @@ edges:
 
 The step-kernel / driver-fold cohort — **field transitions** expressed as `state' = f(state, params)` over a single algorithmic step, plus the outer-driver folds that thread them. This cohort carries the richest part of the L3 obstruction-profile spectrum (`index.md` §Semantics): the four `partial-obstruction` operators and the obstruction-authoring drivers live here.
 
-- [`krylov-step`](./krylov-step.md) — the canonical field transition: the value-threaded per-step kernel `(op, K, s) -> (K', s', outputs)` built from the BLAS-1 whole-tensor field operations. Firm per-step kernel.
-- [`ksp_solve`](./ksp_solve.md) — the value-threaded outer-driver fold over `krylov-step` (`iterate_while_L3 (krylov-step op)`); renders the outer convergence-test loop as an explicit tail recursion (the outer loop IS a `sequential-obstruction`, but Palace authors it, so it renders). The driver-half complement of the `krylov-step` kernel.
+- [`krylov_step`](./krylov_step.md) — the canonical field transition: the value-threaded per-step kernel `(op, K, s) -> (K', s', outputs)` built from the BLAS-1 whole-tensor field operations. Firm per-step kernel.
+- [`ksp_solve`](./ksp_solve.md) — the value-threaded outer-driver fold over `krylov_step` (`iterate_while_L3 (krylov_step op)`); renders the outer convergence-test loop as an explicit tail recursion (the outer loop IS a `sequential-obstruction`, but Palace authors it, so it renders). The driver-half complement of the `krylov_step` kernel.
 - [`eigsolve`](./eigsolve.md) — `partial-obstruction`; the body `apply_shift_invert = apply_linop ▷ ksp_solve [▷ project]` lifts whole-tensor, but the eigen-iteration loop is an **opaque-library-ownership** `sequential-obstruction` (SLEPc `EPSSolve` / ARPACK `naupd` RCI own the loop — Palace authors no loop). The canonical opaque-library case.
 - [`fold_solve`](./fold_solve.md) — `partial-obstruction`; the per-step body is one opaque whole-state advance (MFEM `ode->Step` leaf), the outer time-sweep does not lift for a **combined** reason: a carry-threading `sequential-obstruction` (in-place `sol` write) PLUS an opaque-per-step leaf. Palace authors the sweep, so it renders (unlike `eigsolve`). The fold-image of the L4 `fold_solve` combinator.
 - [`orthogonalize`](./orthogonalize.md) — `partial-obstruction`; the per-step body lifts and CGS/CGS2 lift entirely to the batched `H = Vᴴw` / `w' = w − VH` global statements, but the MGS branch of the `gs_orthog` axis is a **variant-conditional** numerical-stability `sequential-obstruction` — the verdict SPLITS along the variant axis (a structure neither `chebyshev` nor `eigsolve` exhibits).

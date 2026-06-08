@@ -18,7 +18,7 @@ Mutation-free **linear-functional projection of a field onto a port mode**:
 (an element of the finite-element dual space) with a field `E`. The
 field-onto-port-mode projection that the S-parameter reduction folds — the
 **covector / linear-functional** primitive at L1, distinct from the
-matrix-weighted two-vector [`bilinear-form`](./bilinear-form.md) (`xᴴ M y`) and
+matrix-weighted two-vector [`bilinear_form`](./bilinear_form.md) (`xᴴ M y`) and
 the co-spatial-vector Hermitian reduction [`dot`](./dot.md) (`⟨x, y⟩`).
 
 ## Context
@@ -36,13 +36,13 @@ built once at port setup (`LumpedPortData::InitializeLinearForms`,
 `E` is the runtime field argument. This is the structural reason `port_projection`
 is **its own verb** and not a specialization of a co-spatial inner product:
 
-- It is **not** [`bilinear-form`](./bilinear-form.md): that operator is the
+- It is **not** [`bilinear_form`](./bilinear_form.md): that operator is the
   two-vector matrix-weighted reduction `xᴴ M y` with `M` a runtime
   `LinearOperator[M, N]`. A port mode `s` is a covector, not an operator;
   re-expressing `⟨s, E⟩` as `bilinear_form(s, I, E)` would invent both a fake
   identity weight and a fake second vector, and would attach the wrong
   (conjugate-linear, Hermitian-symmetric) algebra. The covector is **fixed at
-  assembly time**, which `bilinear-form`'s two-runtime-vector signature does not
+  assembly time**, which `bilinear_form`'s two-runtime-vector signature does not
   model.
 - It is **not** [`dot`](./dot.md): `dot` is the Hermitian (conjugate-linear in
   the first argument) reduction of two co-spatial vectors; `tdot` is its
@@ -146,7 +146,7 @@ per-element kernel: the underlying contraction `LinearForm::operator*` is always
 real; complexity enters by combining real pairings on the real/imag components.
 This is the load-bearing distinction from [`dot`](./dot.md) (whose complex form is
 a Hermitian per-element kernel `conj(x[i])·y[i]`) and from
-[`bilinear-form`](./bilinear-form.md) (a two-vector matrix-weighted form).
+[`bilinear_form`](./bilinear_form.md) (a two-vector matrix-weighted form).
 
 **Reduction-tree non-associativity is load-bearing** in the same CLAUDE.md sense
 as [`dot`](./dot.md): the underlying scalar contraction `Σᵢ sᵢ Eᵢ` is the same
@@ -315,7 +315,7 @@ field transfer onto the port space, and the `Mpi::GlobalSum` collective.
 - `book/src/L4/sparameter_reduce.md:86,197-202,255-259` — the L4 driven reduction
   that folds this projection (`project sᵢ E = sᵢ·E`); this entry is its per-port
   projection L1 home.
-- `book/src/L1/bilinear-form.md:62-94` — the candidate-subsume verb (`xᴴ M y`,
+- `book/src/L1/bilinear_form.md:62-94` — the candidate-subsume verb (`xᴴ M y`,
   matrix-weighted two-vector); the load-bearing question resolved NON-MATCH (a
   covector is not an `Operator`).
 - `book/src/L1/dot.md` lines 34, 63-75 — the co-spatial Hermitian reduction sibling

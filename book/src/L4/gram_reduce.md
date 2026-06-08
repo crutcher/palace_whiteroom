@@ -5,8 +5,8 @@ firmness: firm
 rank: firm
 edges:
   depends-on:
-    - L1/matrix-weighted-norm
-    - L1/bilinear-form
+    - L1/matrix_weighted_norm
+    - L1/bilinear_form
     - L4/solve_family
   reference:
     - L4/inner_product
@@ -54,15 +54,15 @@ fixed-operator map's `[SimState.x]` output), folding each family-pair through th
 operator-weighted bilinear primitives:
 
 - the diagonal entry `xᵢᵀ K xᵢ` is the **firm** L1
-  [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (`√` dropped — `gram_reduce`
-  reduces to the *squared* energy `xᵢᵀ K xᵢ = 2Uₑ/ₘ(xᵢ)`, the matrix-weighted-norm's
+  [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) (`√` dropped — `gram_reduce`
+  reduces to the *squared* energy `xᵢᵀ K xᵢ = 2Uₑ/ₘ(xᵢ)`, the matrix_weighted_norm's
   radicand);
 - the off-diagonal entry `xⱼᵀ K xᵢ` is the **firm** L1
-  [`bilinear-form`](../L1/bilinear-form.md) (`xᴴ M y` at `M = K`).
+  [`bilinear_form`](../L1/bilinear_form.md) (`xᴴ M y` at `M = K`).
 
 The diagonal is the `xⱼ = xᵢ` specialization of the off-diagonal bilinear
 (`matrix_weighted_norm x K = bilinear_form x K x` modulo the `√`), so
-`matrix-weighted-norm` is the diagonal **consumer**, not a second fold — the do-NOT-merge
+`matrix_weighted_norm` is the diagonal **consumer**, not a second fold — the do-NOT-merge
 over-unification guard (the `nrm2`-consumes-`inner_product` pattern,
 `concepts/black-box-vs-accelerated-kernels.md` §2).
 
@@ -88,8 +88,8 @@ gram_reduce k xs w =
   where
     m              = length xs
     entry k xs i j
-      | i == j     = matrix_weighted_norm (xs!!i) k     -- diagonal: xᵢᵀ K xᵢ   (L1 matrix-weighted-norm radicand)
-      | otherwise  = bilinear_form (xs!!j) k (xs!!i)    -- off-diag: xⱼᵀ K xᵢ   (L1 bilinear-form)
+      | i == j     = matrix_weighted_norm (xs!!i) k     -- diagonal: xᵢᵀ K xᵢ   (L1 matrix_weighted_norm radicand)
+      | otherwise  = bilinear_form (xs!!j) k (xs!!i)    -- off-diag: xⱼᵀ K xᵢ   (L1 bilinear_form)
 
 -- the alternate Maxwell form is the inverse (a CONSUMER, not part of the reduction):
 gram_inverse :: Matrix[m, m] -> Matrix[m, m]            -- = inv (LAPACK); the Cinv / Minv tail
@@ -123,9 +123,9 @@ The shape contract makes structural what is conventional in the C++ double loop:
 
 `gram_reduce K xs w` evaluates the operator-weighted bilinear form at each
 upper-triangle family-pair, scales by the per-entry weight, and mirrors to a symmetric
-matrix. The diagonal uses the self-bilinear ([`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
+matrix. The diagonal uses the self-bilinear ([`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)
 radicand `xᵢᵀ K xᵢ`); the off-diagonal uses the cross-bilinear
-([`bilinear-form`](../L1/bilinear-form.md) `xⱼᵀ K xᵢ`). It is a `map`-then-`reduce`
+([`bilinear_form`](../L1/bilinear_form.md) `xⱼᵀ K xᵢ`). It is a `map`-then-`reduce`
 with no `Solve` effect — a pure function `(K, xs, w) -> Matrix[m, m]`.
 
 The combinator's structural payoff: the electrostatic capacitance reduction and the
@@ -147,7 +147,7 @@ PostprocessTerminals loops.
 2. **Diagonal-is-self-bilinear** (the do-NOT-merge structural identity). `entry K xs i
    i = matrix_weighted_norm (xs!!i) K = bilinear_form (xs!!i) K (xs!!i)` (modulo the
    `√` the norm takes and `gram_reduce` does not) — the diagonal is the `xⱼ = xᵢ`
-   specialization of the off-diagonal, so `matrix-weighted-norm` is the diagonal
+   specialization of the off-diagonal, so `matrix_weighted_norm` is the diagonal
    *consumer*, NOT a separate fold.
 3. **Weight factoring / bilinearity.** `w(i,j)` factors out of each entry; `xⱼᵀ K xᵢ`
    is bilinear in `(xᵢ, xⱼ)`. The voltage form `w ≡ 1` is the multiplicative-identity
@@ -198,9 +198,9 @@ See OQ `gram-reduce-third-witness-probe-eigenmode-driven-postprocess` (CLOSED-NE
 
 L1 rows this combinator folds:
 
-- [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm) — the diagonal
+- [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) (firm) — the diagonal
   self-bilinear (radicand); the diagonal consumer.
-- [`bilinear-form`](../L1/bilinear-form.md) (firm) — the off-diagonal cross-bilinear;
+- [`bilinear_form`](../L1/bilinear_form.md) (firm) — the off-diagonal cross-bilinear;
   the fold element.
 
 L4 rows:
@@ -218,9 +218,9 @@ Sibling data-algebra combinators (the L4 algebra-of-folds family):
 
 ## Lowers to
 
-`gram_reduce` lowers by **identity-in-form on the body** to the L1 bilinear-form
-evaluations it folds (the reduction is a plain fold of `matrix-weighted-norm` /
-`bilinear-form` over the family-pair grid — there is no intervening L3/L2 absorption
+`gram_reduce` lowers by **identity-in-form on the body** to the L1 bilinear_form
+evaluations it folds (the reduction is a plain fold of `matrix_weighted_norm` /
+`bilinear_form` over the family-pair grid — there is no intervening L3/L2 absorption
 that reshapes the fold). No dedicated L4>L3 theme file — the in-line-marker route (the
 [`inner_product`](./inner_product.md) / [`linear_combination`](./linear_combination.md)
 pattern); the substantive downward content (the C++ double loop, the symmetric mirror,
@@ -236,8 +236,8 @@ NON-MATCH candidates (§Specialization), not in scope. The combinator's structur
 read off the two skeleton-identical positive PostprocessTerminals loops (electrostatic
 `:100-140` + magnetostatic `:110-152`), and every law (§Algebraic laws) is a syntactic
 identity on that fold over the two firm folded primitives (diagonal
-[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md), off-diagonal
-[`bilinear-form`](../L1/bilinear-form.md)). `gram_reduce` shares the
+[`matrix_weighted_norm`](../L1/matrix_weighted_norm.md), off-diagonal
+[`bilinear_form`](../L1/bilinear_form.md)). `gram_reduce` shares the
 firm-on-positive-structure disposition of its reduce-verb siblings
 [`domain_energy_reduce`](./domain_energy_reduce.md),
 [`eigenfreq_qfactor_reduce`](./eigenfreq_qfactor_reduce.md), and

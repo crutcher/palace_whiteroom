@@ -1,7 +1,7 @@
 ---
 edges:
   reference:
-    - L2/incremental-least-squares
+    - L2/incremental_least_squares
 ---
 
 # givens
@@ -43,7 +43,7 @@ In the GMRES inner step (`palace/linalg/iterative.cpp:634-640`), the `ls_update_
 
 In primitive composition (L2), the two `givens` primitives compose
 as an **incremental QR stream** — see
-[`incremental-least-squares`](../L2/incremental-least-squares.md)
+[`incremental_least_squares`](../L2/incremental_least_squares.md)
 for the canonical firm use site. The stream pattern is:
 
 - `gen` produces one new rotation scalar pair `(c[j], s[j])` per

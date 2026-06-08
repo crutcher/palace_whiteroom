@@ -6,7 +6,7 @@ edges:
   depends-on:
     - L4/assemble_frequency_operator
     - L4/ksp_solve
-    - L4/iterate-while
+    - L4/iterate_while
     - target: L4-L3/frequency-sweep-dissolution
       kind: lowers-to
   reference:
@@ -70,7 +70,7 @@ is `fixed` (op captured once, hoisted), `frequency_sweep` is `per-element` (op
 rebuilt per member, inside the map). This is the named `per-element` value that the
 firm [`solve_family`](./solve_family.md) entry records as out-of-scope and
 batch-17-gated (`L4/solve_family.md:137,146,163`). It reuses the firm
-[`iterate-while`](./iterate-while.md) family rather than introducing a new iteration
+[`iterate_while`](./iterate_while.md) family rather than introducing a new iteration
 primitive — the same route [`chebyshev`](./chebyshev.md) and
 [`solve_family`](./solve_family.md) took.
 
@@ -78,7 +78,7 @@ The combinator is defined **in L4 vocabulary** (high→low discipline, CLAUDE.md
 §Methodology invariants): its semantics, signature, and laws are stated in terms of
 the [`assemble_frequency_operator`](./assemble_frequency_operator.md) operand verb,
 the [`ksp_solve`](./ksp_solve.md) per-member cap, the
-[`iterate-while`](./iterate-while.md) family, and the
+[`iterate_while`](./iterate_while.md) family, and the
 [`state-stratification`](../concepts/state-stratification.md) operator stratum —
 NOT in terms of L3 value-threading or the L0 C++ frequency loop. The L4>L3
 dissolution (the `map` collapsing to an L3 explicit per-ω `for`-loop with the
@@ -191,7 +191,7 @@ presentations (the §Signature renders both):
    frequency, rebuilds the operator, runs one [`ksp_solve`](./ksp_solve.md), and the
    per-member `extras` is the solution. By §3.7 the trajectory of extras is exactly
    `[ ksp_solve (asm fam w) (rhs_at fam w) | w <- omegas ]` — the collected family.
-   This presentation reuses the firm [`iterate-while`](./iterate-while.md) family
+   This presentation reuses the firm [`iterate_while`](./iterate_while.md) family
    rather than introducing a new iteration vocabulary (the
    [`solve_family`](./solve_family.md) / [`chebyshev`](./chebyshev.md) route,
    `L4/index.md:37`); the choice between the two presentations is a presentation
@@ -221,7 +221,7 @@ family map does not introduce a new monadic effect — each
 `SimState`s. The combinator is therefore a **pure function** `(fam, omegas) ->
 [SimState]` (modulo the per-member non-determinism each
 [`ksp_solve`](./ksp_solve.md) inherits transitively through
-[`krylov-step`](./krylov-step.md); the map introduces no additional non-determinism).
+[`krylov_step`](./krylov_step.md); the map introduces no additional non-determinism).
 
 ### The per-member operand verb
 
@@ -390,7 +390,7 @@ L4 rows this combinator consumes:
 - [`ksp_solve`](./ksp_solve.md) — the per-member solve cap mapped (one rebuilt
   `(op_w, rhs_w)` → one `SimState`). `frequency_sweep` consumes it as its mapped
   function; one shell out from it.
-- [`iterate-while`](./iterate-while.md) — the §3.7 family whose **pure-map degenerate**
+- [`iterate_while`](./iterate_while.md) — the §3.7 family whose **pure-map degenerate**
   the combinator IS (each member independent, no carry; the trajectory is the
   collected family). Reused rather than introducing a new iteration vocabulary, the
   [`solve_family`](./solve_family.md) / [`chebyshev`](./chebyshev.md) route.

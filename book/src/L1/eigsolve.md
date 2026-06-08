@@ -177,7 +177,7 @@ Out of scope for this operator (deliberate exclusions):
 
 ## Relationship to the L2/L3 eigsolve entries
 
-This L1 entry is the anchor the L2 `eigsolve` entry and the L3 backfill rest on. The L3 form is a `partial-obstruction` (or full sequential-obstruction) for the linear-EVP path: the SLEPc-EPS / ARPACK-EPS eigen-iteration is opaque-library-owned (no Palace-authored kernel/driver pair analogous to `krylov-step`), so while the per-step body lifts (it is the `apply_linop` + inner `ksp_solve` composition documented here), the eigen-iteration loop itself does not lift to a global tensor-field expression. That is an L3 judgment about the *loop*, NOT about this L1 operator's input/output + laws (which are firm).
+This L1 entry is the anchor the L2 `eigsolve` entry and the L3 backfill rest on. The L3 form is a `partial-obstruction` (or full sequential-obstruction) for the linear-EVP path: the SLEPc-EPS / ARPACK-EPS eigen-iteration is opaque-library-owned (no Palace-authored kernel/driver pair analogous to `krylov_step`), so while the per-step body lifts (it is the `apply_linop` + inner `ksp_solve` composition documented here), the eigen-iteration loop itself does not lift to a global tensor-field expression. That is an L3 judgment about the *loop*, NOT about this L1 operator's input/output + laws (which are firm).
 
 ## L1 vs L0 distinction
 

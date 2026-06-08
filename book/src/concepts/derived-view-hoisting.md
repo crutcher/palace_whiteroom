@@ -1,7 +1,7 @@
 ---
 edges:
   reference:
-    - L2/krylov-step
+    - L2/krylov_step
     - concepts/variant-absorption
     - concepts/rotation
     - concepts/tensor-field-lift
@@ -22,7 +22,7 @@ Storing `v` as a state field creates a *redundant invariant* the step body must 
 
 ## Worked example: CG residual norm
 
-In the firm [`krylov-step` (CG instance)](../L2/krylov-step.md) the residual norm `res = sqrt|beta|` is a derived view of the iteration's stored inner product `beta`. Two design choices:
+In the firm [`krylov_step` (CG instance)](../L2/krylov_step.md) the residual norm `res = sqrt|beta|` is a derived view of the iteration's stored inner product `beta`. Two design choices:
 
 - **Bad**: `CgState` includes both `beta: Scalar` and `res: Scalar`. Every step must compute `res` to maintain the invariant, even when residual history is never read. The §3.8 pruning property is defeated by the state schema.
 - **Good** (v0.4 revision): `CgState` includes only `beta`. The step body computes `res = sqrt|beta|` as a local binding and returns it in the step-output record `{ state, residual_norm }`. `iterate_while` accumulates `residual_norm`s into a trajectory; consumers reading only `.final_state` cause the residual computation to be pruned.

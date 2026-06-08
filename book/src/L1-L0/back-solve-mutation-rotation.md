@@ -318,7 +318,7 @@ Citations:
 The distinguishing feature of this theme — what the rotation rotates — is the
 **collapse of the L1 separate-value pair `(R, s) → y` into a single in-place
 register update** where the destination `y` *is* the RHS argument `s`. Unlike
-`apply_linop`/`matrix-weighted-norm` (caller-owned destination buffer `Bx`
+`apply_linop`/`matrix_weighted_norm` (caller-owned destination buffer `Bx`
 distinct from inputs) or `axpby`/`scal` (in-place rescale of the receiver but
 with no separate result tensor at L1), `back_solve` has a fresh L1 result `y`
 that the L0 source writes **back into the RHS slot `s`**:
@@ -385,7 +385,7 @@ the stride pointer `Hi`:
 - **Why column-major and not row-major.** The running-QR stream that produced
   `R` and `s` processed *one column at a time* (each arriving Arnoldi column
   is a new R column, replayed through stored rotations then triangularised
-  by a fresh rotation; see [`L2/incremental-least-squares`](../L2/incremental-least-squares.md)).
+  by a fresh rotation; see [`L2/incremental_least_squares`](../L2/incremental_least_squares.md)).
   Column-major storage gives the stream contiguous writes per arriving
   column. The back-solve then reads *columns* of `R` (one outer iteration =
   one column), so column-major also gives contiguous reads here.
@@ -441,8 +441,8 @@ floating-point error is order-dependent. Per CLAUDE.md "Optimization tricks
 vs. base algebra" this is a **load-bearing numerical** detail — the rewrite
 preserves the exact-arithmetic value (the rotation is valid) but pins a
 specific finite-precision summation path. Composed with the L2
-`incremental-least-squares` rotation-stream non-associativity that produced
-`R` and `s` (`L2/incremental-least-squares.md:278-285`), this fixes the
+`incremental_least_squares` rotation-stream non-associativity that produced
+`R` and `s` (`L2/incremental_least_squares.md:278-285`), this fixes the
 bit-exact reproducibility chain for GMRES / FGMRES solutions.
 
 There is **no MPI collective in the back-solve**: `R` (in `H`) and `s` are
@@ -468,7 +468,7 @@ The rewrite preserves semantics when:
    transported through `j+1` Givens rotations — they live only inside the
    restart cycle and are conceptually consumed by the back-solve.)
 2. **`R` square, upper-triangular, non-singular.** Established by the
-   upstream [`L2/incremental-least-squares`](../L2/incremental-least-squares.md)
+   upstream [`L2/incremental_least_squares`](../L2/incremental_least_squares.md)
    running-QR stream (every sub-diagonal annihilated; non-singularity holds
    unless Arnoldi breaks down). The L0 source does NOT structurally check —
    instead the convergence test at `:644` exits the outer loop before the
@@ -559,7 +559,7 @@ precedent).
 ranges. It proposes no new L1 vocabulary and no new L0 conventions. The
 downstream `linear_combination` consumer (Sub-pattern C boundary) is handled
 by [`linear-combination-fold-specialization`](../L2-L1/linear-combination-fold-specialization.md)
-(an L2>L1 theme, distinct edge); the upstream `incremental-least-squares`
+(an L2>L1 theme, distinct edge); the upstream `incremental_least_squares`
 producer (which materialises `R` and `s` in the flat register `H`) is
 handled by
 [`incremental-least-squares-composition-lowering`](../L2-L1/incremental-least-squares-composition-lowering.md)
@@ -699,7 +699,7 @@ L1 / cross-theme anchors:
   the dense-small coordinate-space direct-solve sibling on the same "small-
   dense in-place RHS overwrite" axis; this theme's back-substitution-only
   case differs by R already being upper-triangular (no factorisation).
-- [`L2/incremental-least-squares`](../L2/incremental-least-squares.md) —
+- [`L2/incremental_least_squares`](../L2/incremental_least_squares.md) —
   the firm L2 composition that produces `R` and `s` in the flat register
   `H` via the running-QR stream; the L2>L1
   `incremental-least-squares-composition-lowering` theme is its forward-edge

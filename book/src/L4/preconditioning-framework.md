@@ -37,7 +37,7 @@ variant_axes:
 The L4 **composition framework** that binds a constructed Krylov solver to a constructed
 preconditioner and holds the two-operator `(op, pc_op)` binding the [`ksp_solve`](./ksp_solve.md)
 cap iterates against. Where `ksp_solve` is the outer-driver cap (the `Solve`-monadic *coordination*
-that folds [`krylov-step`](./krylov-step.md) to convergence), `preconditioning-framework` is the
+that folds [`krylov_step`](./krylov_step.md) to convergence), `preconditioning-framework` is the
 **construction-and-binding surface one shell outside it**: the `buildKspSolver` constructor that
 assembles the `(ksp, pc)` pair via constructed-operator factories and the `setOperators` bind that
 attaches the true operator and the (possibly distinct) preconditioner-assembly operator. It is the
@@ -126,7 +126,7 @@ type Counters = {
 type BaseKspSolver<E> = {
   ksp:      Ksp<E>,                       // construction-stratum (readonly after build)
   pc:       Pc<E>,                        // construction-stratum (readonly after build)
-  binding:  OpBinding<E> | null,          // sim-state; null before setOperators (the bind precondition)
+  binding:  OpBinding<E> | null,          // SimState; null before setOperators (the bind precondition)
   counters: Counters,                     // run-time bookkeeping
 };
 ```
@@ -137,7 +137,7 @@ type BaseKspSolver<E> = {
 | `PcParams<E>` | construction (readonly) | preconditioner-type + multigrid + scalar-field config; the pc-type/multigrid variant absorbed here | consumed by `ConfigurePreconditionerSolver` (`palace/linalg/ksp.cpp:125-235`) |
 | `Ksp<E>` | construction (readonly) | the constructed iterative solver handle (internal Krylov state opaque) | the `unique_ptr<IterativeSolver<OperType>> ksp` member (`palace/linalg/ksp.hpp:40`) |
 | `Pc<E>` | construction (readonly) | the constructed preconditioner handle (internal factorisation opaque) | the `unique_ptr<Solver<OperType>> pc` member (`palace/linalg/ksp.hpp:41`) |
-| `OpBinding<E>` | sim-state (set-once) | the `(op, pc_op)` operators the solver is bound to; null until `setOperators` | set by `BaseKspSolver::SetOperators` (`palace/linalg/ksp.cpp:276-293`) |
+| `OpBinding<E>` | SimState (set-once) | the `(op, pc_op)` operators the solver is bound to; null until `setOperators` | set by `BaseKspSolver::SetOperators` (`palace/linalg/ksp.cpp:276-293`) |
 | `Counters` | run-time | per-solve telemetry (call count + cumulative iterations) — the only mutable cross-call state | the `mutable int ksp_mult, ksp_mult_it` members (`palace/linalg/ksp.hpp:46`); accumulated in `Mult` (`palace/linalg/ksp.cpp:296-310`) |
 | `BaseKspSolver<E>` | mixed | the full bundle: two readonly constructed handles + the set-once binding + run-time counters | the `BaseKspSolver` class (`palace/linalg/ksp.hpp:30-76`) |
 

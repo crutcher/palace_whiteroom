@@ -79,7 +79,7 @@ Laws that explicitly **do not** hold:
 
 The nonlinear closure `A2 : Real -> LinearOperator[N, N]` is an **opaque leaf** at L1 — its internal assembly (frequency-dependent surface impedance, lumped-port admittance, Newton-polynomial interpolation via `NewtonInterpolationOperator`) is below the L1 resolution and surfaces only in the L1>L0 lowering and in the `A2`-construction follow-up.
 
-`apply_nonlinear_pencil` is the per-step operator-cost atom of the L2 NEP-Newton vocabulary (the deflated quasi-Newton step, and the `deflate`/`gram` L2 combinator), exactly as `apply_linop` is the per-step atom of `krylov-step`.
+`apply_nonlinear_pencil` is the per-step operator-cost atom of the L2 NEP-Newton vocabulary (the deflated quasi-Newton step, and the `deflate`/`gram` L2 combinator), exactly as `apply_linop` is the per-step atom of `krylov_step`.
 
 ## Variant axes
 

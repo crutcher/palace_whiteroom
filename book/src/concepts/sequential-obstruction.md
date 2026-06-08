@@ -5,7 +5,7 @@ edges:
     - concepts/rotation
     - L3/orthogonalize
     - L1-L0/triangular-solve-obstruction
-    - L1/ls-update-column
+    - L1/ls_update_column
     - concepts/apply_linop
     - concepts/ksp_solve
 ---
@@ -95,7 +95,7 @@ chain.
 
 ## Worked example: Givens-stream replay-prefix (GMRES least-squares update)
 
-The GMRES least-squares column update ([`ls-update-column`](../L1/ls-update-column.md))
+The GMRES least-squares column update ([`ls_update_column`](../L1/ls_update_column.md))
 replays a stream of stored Givens rotations on each new Hessenberg
 column — a clean class-(a) obstruction. The L0 site is the GMRES inner
 loop (`palace/linalg/iterative.cpp:634-637` replay-prefix; `:638-640`

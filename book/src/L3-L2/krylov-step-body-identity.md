@@ -1,6 +1,6 @@
 # krylov-step-body-identity
 
-The L3>L2 lowering theme for the `krylov-step` body's primitive sequence. The rewrite is **identity-in-form on the kernel body** — every primitive call in the L3 let-chain maps to the same primitive call in the L2 let-chain, at the same position, in the same dataflow-forced order — with **two state-hiding / abstraction-by-role rotations at the wrapper around the body**: the L3 `(op, K, s)` positional tuple consolidates into the L2 unified `IterState` record (state-hiding), and the L3 tail-recursive outer loop `iterate_while_L3` collapses to the L2 outer-driver-by-role reference (abstraction-by-role). The body is the identity; the wrapper carries the rotation. This theme completes the [`krylov-step`](../L2/krylov-step.md) lowering chain (L4 → L3 → L2) by ratifying the combinator-miner identity-in-form assertion, audited and confirmed-with-refinement.
+The L3>L2 lowering theme for the `krylov_step` body's primitive sequence. The rewrite is **identity-in-form on the kernel body** — every primitive call in the L3 let-chain maps to the same primitive call in the L2 let-chain, at the same position, in the same dataflow-forced order — with **two state-hiding / abstraction-by-role rotations at the wrapper around the body**: the L3 `(op, K, s)` positional tuple consolidates into the L2 unified `IterState` record (state-hiding), and the L3 tail-recursive outer loop `iterate_while_L3` collapses to the L2 outer-driver-by-role reference (abstraction-by-role). The body is the identity; the wrapper carries the rotation. This theme completes the [`krylov_step`](../L2/krylov_step.md) lowering chain (L4 → L3 → L2) by ratifying the combinator-miner identity-in-form assertion, audited and confirmed-with-refinement.
 
 ## Slug
 
@@ -8,13 +8,13 @@ The L3>L2 lowering theme for the `krylov-step` body's primitive sequence. The re
 
 ## Context
 
-The `krylov-step` lowering chain stretches across four layer-edges:
+The `krylov_step` lowering chain stretches across four layer-edges:
 
-- **L4 firm** ([`L4/krylov-step`](../L4/krylov-step.md)) — typed wrapper around the primitive composition, in the state-stratification idiom with `Solve` monad coordination.
+- **L4 firm** ([`L4/krylov_step`](../L4/krylov_step.md)) — typed wrapper around the primitive composition, in the state-stratification idiom with `Solve` monad coordination.
 - **L4>L3 firm** ([`L4-L3/krylov-step-typed-wrapper-dissolution`](../L4-L3/krylov-step-typed-wrapper-dissolution.md)) — dissolves the L4 wrapper machinery (typed records → positional tuples, `StateT SimState Identity` → explicit `s`-argument / `s'`-return, `OpParams` `readonly` → documented invariant, Form-A/B presentation → carry-threading). The kernel body's primitive sequence is unchanged across the wrapper-dissolution; the rotation is at the surface around the body.
-- **L3 form** ([`L3/krylov-step`](../L3/krylov-step.md), firm) — value-threaded shape `(op, K, s) -> (K', s', outputs)` with the same five primitive groups as L2 in the same dataflow-forced order, plus an explicit `s' = s { it = s.it + 1 }` record-update line that is the dissolved `modify`. Per the CLAUDE.md §Methodology invariants bullet **Identity-lowerings still require both L levels**, the L3 entry is a layer-coherence anchor — the body is value-thread-isomorphic to the L4 body, but each layer is coherent within itself and the L3 reader must find `krylov-step` defined in L3 vocabulary at L3. The L3 entry is the LHS of this theme; the rewrite mapping in §"Rewrite shape" is unchanged.
+- **L3 form** ([`L3/krylov_step`](../L3/krylov_step.md), firm) — value-threaded shape `(op, K, s) -> (K', s', outputs)` with the same five primitive groups as L2 in the same dataflow-forced order, plus an explicit `s' = s { it = s.it + 1 }` record-update line that is the dissolved `modify`. Per the CLAUDE.md §Methodology invariants bullet **Identity-lowerings still require both L levels**, the L3 entry is a layer-coherence anchor — the body is value-thread-isomorphic to the L4 body, but each layer is coherent within itself and the L3 reader must find `krylov_step` defined in L3 vocabulary at L3. The L3 entry is the LHS of this theme; the rewrite mapping in §"Rewrite shape" is unchanged.
 - **L3>L2 firm — this theme.** Ratifies the identity-in-form audit: the combinator-miner claim is correct as stated for the body's L3>L2 edge — the L2 vocabulary (`apply_linop`, `axpy`/`axpby`/`axpbypcz`, `dot`/`nrm2`/`scal`, plus the slice-level `op.orthog`/`op.scalars` closures) is L3-native by inspection of each primitive's signature shape.
-- **L2 firm** ([`L2/krylov-step`](../L2/krylov-step.md)) — the named composition of the five primitive groups in their dataflow-forced order.
+- **L2 firm** ([`L2/krylov_step`](../L2/krylov_step.md)) — the named composition of the five primitive groups in their dataflow-forced order.
 
 The audit's verdict is the theme's substantive content. The audit is reproduced and ratified here for citation-grounded completeness — the L3>L2 hop deserves an entry in `book/src/L3-L2/` independent of the L4>L3 theme, both for symmetric coverage of the lowering chain and so that future lowering-verifier or refinement dispatches have a stable anchor.
 
@@ -48,10 +48,10 @@ The body shape (the let-chain content) is identical between Form A and the two F
 
 ## L2 form (RHS)
 
-The L2 form is reproduced from [`L2/krylov-step`](../L2/krylov-step.md) §Semantics:
+The L2 form is reproduced from [`L2/krylov_step`](../L2/krylov_step.md) §Semantics:
 
 ```text
-krylov-step op s =
+krylov_step op s =
   let w         = apply_linop op.T s.<input_field>             -- field-side operator apply
   let s_aux     = optionally apply op.orthog (V_prefix, w)     -- absorbed orthogonalize / project
                   or       apply op.scalars (k, scalar_state)  -- absorbed scalar generator
@@ -71,7 +71,7 @@ The rewrite is the **identity on the per-step body's primitive sequence**, with 
 
 1. **The L3 `(op, K, s)` positional tuple consolidates into the L2 `(op, s)` signature.** L2's `IterState` (the `s` argument) is the unified record containing all three strata; the L3>L2 collapse merges `K` (the ephemeral bundle) and `s` (the externally-visible state) into a single `IterState` record. The merge is positional: `s.<input_field>` at L2 reads the same value that `K.<input_field>` reads at L3; `s.it` at L2 reads the same value that `s.it` reads at L3 (the counter is in `SimState` at L3, retained as a field of `IterState` at L2). **The merge is information-preserving** — no field is added, no field is dropped, no field's interpretation changes — but it does erase the L3 ephemeral-vs-persistent typing distinction. At L2 the three strata are recorded by the stratification discipline (per [`state-stratification`](../concepts/state-stratification.md)) as a documented partition over the `IterState` record's fields, not as a structural separation into three records.
 
-2. **The L3 outer tail-recursive `iterate_while_L3` collapses into L2's outer-driver framing.** L2's `krylov-step` is described as the body of a fold consumed by an outer driver; L2 does not name the driver (it is L4 vocabulary). The L3 form has the tail-recursive loop visible (per the L4-L3 theme's §"What the L3 form for `iterate_while` looks like" subsection); at L2 the loop is referred-to-by-role. This is a **wrapper change, not a body change** — the body inside the loop is the same.
+2. **The L3 outer tail-recursive `iterate_while_L3` collapses into L2's outer-driver framing.** L2's `krylov_step` is described as the body of a fold consumed by an outer driver; L2 does not name the driver (it is L4 vocabulary). The L3 form has the tail-recursive loop visible (per the L4-L3 theme's §"What the L3 form for `iterate_while` looks like" subsection); at L2 the loop is referred-to-by-role. This is a **wrapper change, not a body change** — the body inside the loop is the same.
 
 The body's let-chain itself maps line-for-line:
 
@@ -90,9 +90,9 @@ The mapping is total and bijective on the kernel-body content: every L3 binding 
 
 The rewrite is valid when all four of the following hold (which they do for the firm L3 form by construction — the L4-L3 wrapper-dissolution theme was authored with these conditions in mind):
 
-1. **The L3 form is the output of `krylov-step-typed-wrapper-dissolution` applied to a firm L4 `krylov-step` entry.** The L3 form's specific shape (the let-chain content, the consolidated `K_aux` carrier, the explicit `s' = s { it = s.it + 1 }` line) is the audit's RHS. If a future variant of `krylov-step` is added at L4 whose body shape differs (e.g., a method with two `apply_linop` calls per step), the wrapper-dissolution theme would produce a different L3 form, and the identity-in-form claim on the L3>L2 body edge would need re-verification on the new form. The existing five Krylov slices all factor into the same body shape; the condition is satisfied.
+1. **The L3 form is the output of `krylov-step-typed-wrapper-dissolution` applied to a firm L4 `krylov_step` entry.** The L3 form's specific shape (the let-chain content, the consolidated `K_aux` carrier, the explicit `s' = s { it = s.it + 1 }` line) is the audit's RHS. If a future variant of `krylov_step` is added at L4 whose body shape differs (e.g., a method with two `apply_linop` calls per step), the wrapper-dissolution theme would produce a different L3 form, and the identity-in-form claim on the L3>L2 body edge would need re-verification on the new form. The existing five Krylov slices all factor into the same body shape; the condition is satisfied.
 
-2. **The L2 form's `IterState` record subsumes the L3 form's `(K, s)` pair.** The (1) surface adjustment in §"Rewrite shape" relies on the L2 `IterState` having fields for both the ephemeral-bundle content (`K.<input_field>`, `K.V_prefix`, `K.scalar_state`, `K.k`) and the persistent content (`s.it`, `s.x`). The L2 entry's §Signature confirms this — the three-stratum partition is documented at the field level of the unified `IterState` record. If a future L2 `krylov-step` variant moved any field out of `IterState` (e.g., factored `K.V` into a separate parameter), the rewrite would need adjustment. Currently satisfied.
+2. **The L2 form's `IterState` record subsumes the L3 form's `(K, s)` pair.** The (1) surface adjustment in §"Rewrite shape" relies on the L2 `IterState` having fields for both the ephemeral-bundle content (`K.<input_field>`, `K.V_prefix`, `K.scalar_state`, `K.k`) and the persistent content (`s.it`, `s.x`). The L2 entry's §Signature confirms this — the three-stratum partition is documented at the field level of the unified `IterState` record. If a future L2 `krylov_step` variant moved any field out of `IterState` (e.g., factored `K.V` into a separate parameter), the rewrite would need adjustment. Currently satisfied.
 
 3. **Every primitive in the let-chain is in the firm L1 vocabulary, and each primitive is L3-native by its signature shape.** The seven L1 primitives used (`apply_linop`, `axpy`, `axpby`, `axpbypcz`, `dot`, `nrm2`, `scal`) are firm; each operates on whole-tensor inputs with no element-loop exposed at L2. This is what makes the L3>L2 rotation identity-in-form rather than requiring a decomposition step (each L1 primitive is *also* L3-native because its signature has no per-element loop visible). The combinator-miner argument (preserved verbatim in this theme's §Evidence bullet 1) is the original observation, re-confirmed by audit. Currently satisfied.
 
@@ -114,16 +114,16 @@ If a future Krylov-shaped slice (e.g., MINRES, BiCGStab — currently obstructio
 
 ## Speculative L3 operators
 
-**None.** This theme is the identity rotation; no new L3 vocabulary is introduced. The L3 form referenced in the LHS is the RHS of the firm `krylov-step-typed-wrapper-dissolution` theme; the L2 form referenced in the RHS is the firm `L2/krylov-step` entry. Both endpoints exist in the artifact already; the theme ratifies their identity-in-form relationship.
+**None.** This theme is the identity rotation; no new L3 vocabulary is introduced. The L3 form referenced in the LHS is the RHS of the firm `krylov-step-typed-wrapper-dissolution` theme; the L2 form referenced in the RHS is the firm `L2/krylov_step` entry. Both endpoints exist in the artifact already; the theme ratifies their identity-in-form relationship.
 
-The L4 `iterate_while` / `iterate_while_with_prev` operators are firm at `book/src/L4/iterate-while.md` and `book/src/L4/iterate-while-with-prev.md`. They belong to the loop combinator, not the kernel body; this theme does not interact with them — the kernel body's rotation is independent of the loop combinator's anchoring.
+The L4 `iterate_while` / `iterate_while_with_prev` operators are firm at `book/src/L4/iterate_while.md` and `book/src/L4/iterate_while_with_prev.md`. They belong to the loop combinator, not the kernel body; this theme does not interact with them — the kernel body's rotation is independent of the loop combinator's anchoring.
 
 ## Evidence
 
 Audit evidence (the substantive verification):
 
-- **The combinator-miner Claim 2 ("step body lifts as identity") — terminal firm home: THIS entry.** The claim reads verbatim: *"The L2→L3 rotation on the step body is therefore the **identity in form**: no unfolding, no global lift, no schema change."* with the justification that L2's primitive vocabulary is already L3-native by signature shape. This bullet is the **terminal firm home** of the CG body-identity evidence — the upstream `L4-L3/krylov-step-typed-wrapper-dissolution.md` identity-in-form audit section and the firm `L3/krylov-step.md` §dep-map both point at this bullet as the anchor. Audit confirmed.
-- Arnoldi step L2>L3 lift (combinator-miner evidence; firm L0 home `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C inner Arnoldi loop). The three uncontested primitives (`apply_BA`, `subdiag_norm`, `normalize`) lift as identity; the fourth (`orthogonalize` under MGS) carries a [sequential-obstruction](../concepts/sequential-obstruction.md) (firm at its §"MGS as sequential-obstruction"). **The obstruction is below the kernel body** — it is a property of the `op.orthog` primitive under the MGS variant, not of the `krylov-step` body that calls `op.orthog` as an opaque closure. The body's identity-in-form claim survives the obstruction.
+- **The combinator-miner Claim 2 ("step body lifts as identity") — terminal firm home: THIS entry.** The claim reads verbatim: *"The L2→L3 rotation on the step body is therefore the **identity in form**: no unfolding, no global lift, no schema change."* with the justification that L2's primitive vocabulary is already L3-native by signature shape. This bullet is the **terminal firm home** of the CG body-identity evidence — the upstream `L4-L3/krylov-step-typed-wrapper-dissolution.md` identity-in-form audit section and the firm `L3/krylov_step.md` §dep-map both point at this bullet as the anchor. Audit confirmed.
+- Arnoldi step L2>L3 lift (combinator-miner evidence; firm L0 home `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C inner Arnoldi loop). The three uncontested primitives (`apply_BA`, `subdiag_norm`, `normalize`) lift as identity; the fourth (`orthogonalize` under MGS) carries a [sequential-obstruction](../concepts/sequential-obstruction.md) (firm at its §"MGS as sequential-obstruction"). **The obstruction is below the kernel body** — it is a property of the `op.orthog` primitive under the MGS variant, not of the `krylov_step` body that calls `op.orthog` as an opaque closure. The body's identity-in-form claim survives the obstruction.
 - `book/src/L4/chebyshev.md` §Semantics `innerStep` — the Chebyshev `innerStep` body (firm). The five-primitive-group shape is the same as the L2 entry's; no rewrite needed for the L3>L2 rotation.
 - GMRES `inner_loop` body (firm L0 home `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C, `iterative.cpp:543-705`). Same kernel-body pattern modulo the `op.orthog` variant absorption; same identity-in-form rotation on the body.
 
@@ -134,7 +134,7 @@ L4 / L3 evidence (the LHS):
 
 L2 sink (the RHS):
 
-- `book/src/L2/krylov-step.md` §Semantics — the L2 form this theme references as RHS (firm); the body shape is the per-step kernel's five-primitive-group composition.
+- `book/src/L2/krylov_step.md` §Semantics — the L2 form this theme references as RHS (firm); the body shape is the per-step kernel's five-primitive-group composition.
 
 Cross-cutting concept references (consumed unchanged across the rotation):
 
@@ -146,13 +146,13 @@ Cross-cutting concept references (consumed unchanged across the rotation):
 
 ## Status
 
-`firm` — the audit verdict is complete and citation-grounded; the body's identity-in-form mapping is total and bijective per the §"Rewrite shape" line-by-line table; the surface adjustments (L3 `(op, K, s)` consolidation into L2 `(op, s)`; L3 tail-recursive outer-loop into L2 outer-driver-by-role) are wrapper-level and explicitly delimited; no speculative L3 vocabulary is introduced; the four applicability conditions are stated and confirmed satisfied for the existing five-slice corpus. Both layer endpoints are themselves firm: the L3 LHS form is referenced from the upstream `krylov-step-typed-wrapper-dissolution` theme; the L2 RHS form is referenced from the firm `L2/krylov-step` entry.
+`firm` — the audit verdict is complete and citation-grounded; the body's identity-in-form mapping is total and bijective per the §"Rewrite shape" line-by-line table; the surface adjustments (L3 `(op, K, s)` consolidation into L2 `(op, s)`; L3 tail-recursive outer-loop into L2 outer-driver-by-role) are wrapper-level and explicitly delimited; no speculative L3 vocabulary is introduced; the four applicability conditions are stated and confirmed satisfied for the existing five-slice corpus. Both layer endpoints are themselves firm: the L3 LHS form is referenced from the upstream `krylov-step-typed-wrapper-dissolution` theme; the L2 RHS form is referenced from the firm `L2/krylov_step` entry.
 
 **Future re-audit trigger**: if a future slice (MINRES, BiCGStab, LOBPCG, etc.) is firmed at L2 with a body shape that does not match the existing pattern, this theme would need re-audit against the new shape — a parallel lowering-verifier on this theme's L3>L2 hop would extend the L4>L3 trajectory-collapse coverage to per-slice body-shape verification.
 
 ## L3>L2 vs L4>L3 distinction
 
-The two themes in the `krylov-step` lowering chain divide labour cleanly:
+The two themes in the `krylov_step` lowering chain divide labour cleanly:
 
 - **L4>L3 (`krylov-step-typed-wrapper-dissolution`)**: substantive rotation at the **wrapper** (typed records, monad, readonly typing, Form-A/B presentation). Identity-in-form on the body.
 - **L3>L2 (this theme; `krylov-step-body-identity`)**: identity-in-form on the body. Two **surface adjustments at the wrapper** ((K, s) → unified IterState; outer-loop tail-recursion → outer-driver-by-role reference) that are information-preserving and do not touch the primitive sequence.

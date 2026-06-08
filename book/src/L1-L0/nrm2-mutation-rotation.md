@@ -204,7 +204,7 @@ None. This theme lowers the already-firm L1 `nrm2` operator; it proposes no new 
 vocabulary. The B-weighted overload `linalg::Norml2(comm, x, B, Bx) = √(xᴴ B x)`
 (`operator.cpp:600-619`, declared `operator.hpp:372-374`) shares the L0 symbol via
 overloading but is a **different operator** with a different L1 referent
-([`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)) — it requires the operator-
+([`matrix_weighted_norm`](../L1/matrix_weighted_norm.md)) — it requires the operator-
 application primitive and a workspace `Bx`, and is the subject of a separate forthcoming
 theme `matrix-weighted-norm-mutation-rotation`. It is named here only to mark the boundary;
 it is **not** part of this theme.

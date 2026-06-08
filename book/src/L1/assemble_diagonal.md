@@ -1,4 +1,4 @@
-# assemble-diagonal
+# assemble_diagonal
 
 Mutation-lifted **operator-to-data** extraction: `d = diag(A)`, the main diagonal of a square linear operator materialised as a vector. The diagonal-introspection primitive at L1 — distinct from [`apply_linop`](./apply_linop.md) (which applies the operator to a vector); `assemble_diagonal` consumes only the operator and produces operator-derived data. The gate to diagonally-scaled preconditioners (Jacobi, Chebyshev, block-Jacobi, polynomial).
 

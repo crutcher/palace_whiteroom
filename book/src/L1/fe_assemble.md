@@ -13,7 +13,7 @@ edges:
     - target: L1-L0/fe-operator-assemble-mutation-rotation
       kind: lowers-to             # the L1>L0 mutation-rotation theme
   reference:
-    - L1/bilinear-form             # slug-collision sibling (a DIFFERENT object; do NOT conflate — §Slug-collision)
+    - L1/bilinear_form             # slug-collision sibling (a DIFFERENT object; do NOT conflate — §Slug-collision)
 ---
 
 # fe_assemble
@@ -25,16 +25,16 @@ assemble C++ class — the entry point of the FE-assembly sub-spine (in scope pe
 
 ## Slug-collision (load-bearing — do NOT conflate)
 
-`fe_assemble` is **not** [`bilinear-form`](./bilinear-form.md). They are different L1 objects that
+`fe_assemble` is **not** [`bilinear_form`](./bilinear_form.md). They are different L1 objects that
 share only the math phrase "bilinear form":
 
 - `fe_assemble` is an **assembly constructor**: it *produces* a global linear operator `K` from a
   space + term list. The C++ source is the `BilinearForm` *class* (`palace/fem/bilinearform.hpp:25-91`).
-- `bilinear-form` is a **scalar reduction** `α = xᴴ M y`: it *consumes* an already-assembled
+- `bilinear_form` is a **scalar reduction** `α = xᴴ M y`: it *consumes* an already-assembled
   operator `M` and two vectors, producing a scalar. The C++ source is `linalg::Dot(comm, x, A, y)`
   (`palace/linalg/operator.cpp:621-639`).
 
-A downstream producer must route FE-assembly work to `fe_assemble`, never to `bilinear-form`.
+A downstream producer must route FE-assembly work to `fe_assemble`, never to `bilinear_form`.
 
 ## Context
 
@@ -265,7 +265,7 @@ laws.)
 - `book/src/L0/fem-bilinearform-file.md` — firm L0 navigation: independently names the
   integrator-fold insight ("BilinearForm is fundamentally a fold over integrators") + the
   PA/FA-collapses-at-L1 absorption.
-- `book/src/L1/bilinear-form.md` — the slug-collision source (BLAS-2 `xᴴMy`, a DIFFERENT object).
+- `book/src/L1/bilinear_form.md` — the slug-collision source (BLAS-2 `xᴴMy`, a DIFFERENT object).
 - `test/unit/test-libceed.cpp` — `TestCeedOperatorFullAssemble` (L0-equivalent: assembled matrix
   matches MFEM reference to 1e-12; future `empirical-match` evidence for `A`'s faithfulness).
 

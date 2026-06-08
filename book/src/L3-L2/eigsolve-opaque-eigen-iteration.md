@@ -150,7 +150,7 @@ marker, shadowing it to the L2 non-laws.
    fold at L2" + "Fold-merge / restart associativity"). The L2 entry itself states the handoff
    explicitly (§Semantics phase 2 / §Status): "the **eigen-iteration loop does not lift** — it is
    opaque-library-owned … with **no Palace-authored eigen-step kernel / eigen-iteration driver pair**
-   analogous to the `(krylov-step, ksp_solve)` pair … the L3 judgment is about the *loop* (a
+   analogous to the `(krylov_step, ksp_solve)` pair … the L3 judgment is about the *loop* (a
    `sequential-obstruction` rooted in library-ownership)." This theme is the forward narration of that
    handoff: **obstruction marker named-at-the-library-boundary at L3 → marker erased to its non-law
    shadow at L2.**
@@ -283,7 +283,7 @@ in **scope of the erasure** — the taxonomy axis the L3-L2 §Working-Notes flag
 | | [`ksp-solve-outer-driver`](./ksp-solve-outer-driver.md) | [`orthogonalize-variant-split`](./orthogonalize-variant-split.md) | `eigsolve-opaque-eigen-iteration` (this theme) |
 |---|---|---|---|
 | L3 form | explicit `iterate_while_L3` tail recursion + named outer-loop `sequential-obstruction` | `case op.variant`: CGS/CGS2 global statements + explicit MGS `jloop` tail recursion + named MGS `sequential-obstruction` | `eigen_iterate` named-by-role **with obstruction marker** (NOT a tail recursion — Palace authors no loop) |
-| L2 form | `iterate_while (krylov-step op) …` named-by-role; obstruction erased | `project ▷ subtract` per-variant-sequenced; iteration view erased; difference disclosed as residual axis | `eigen_iterate` named-by-role only; obstruction marker erased |
+| L2 form | `iterate_while (krylov_step op) …` named-by-role; obstruction erased | `project ▷ subtract` per-variant-sequenced; iteration view erased; difference disclosed as residual axis | `eigen_iterate` named-by-role only; obstruction marker erased |
 | substantive content | iteration view erased; obstruction shadows to L2 fold non-laws | **MGS branch only:** iteration view erased; obstruction shadows to column-order non-law + `m×1` residual axis | obstruction **marker** erased; shadows to "Opening of the eigen-iteration fold at L2" + "Fold-merge / restart associativity" non-laws |
 | erasure scope | **unconditional** — the whole operator IS a Palace-authored loop | **variant-conditional** — one Palace-authored MGS branch; CGS/CGS2 clean lifts | **opaque-library** — the loop lives *entirely outside Palace* (SLEPc `EPSSolve` / ARPACK RCI) |
 | does L3 *render* the loop? | yes — explicit tail recursion | yes (MGS branch) — explicit `jloop` tail recursion | **no** — Palace authors no recurrence; L3 attaches an obstruction marker at the library boundary |

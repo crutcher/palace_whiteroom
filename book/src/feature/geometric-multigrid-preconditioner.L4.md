@@ -41,7 +41,7 @@ binds, and links DOWN to each composed piece. (Sub-kind: **driver-agnostic infra
 [`energy-fields`](./energy-fields.L4.md) is the driver-agnostic output product, but on the
 *solve* side rather than the *postprocess* side.)
 
-GMG is a **spine dependency**: the firm [`divfree-projector`](../L1/divfree-projector.md)
+GMG is a **spine dependency**: the firm [`divfree_projector`](../L1/divfree_projector.md)
 builds a `GeometricMultigridSolver` as its preconditioner (`palace/linalg/divfree.cpp:128`),
 and every driver's [`ksp_solve`](../L4/ksp_solve.md) selects GMG as the preconditioner when
 the FE-space hierarchy has more than one level (`palace/linalg/ksp.cpp:207-234`). Building
@@ -130,7 +130,7 @@ Three composed stages, each a link DOWN to firm vocabulary:
 
 - **Input — config + the operator hierarchy.** `MultigridConfig`: the FE-space hierarchy
   (mesh + order schedule → [`fe_space_hierarchy`](../L1/fe_space_hierarchy.md)), the
-  per-level operators `A[l]` (the geometrically-coarsened bilinear-form operators, built by
+  per-level operators `A[l]` (the geometrically-coarsened bilinear_form operators, built by
   the spaceoperator), the smoother configuration (`mg_smooth_it` / `mg_smooth_order` /
   `mg_smooth_sf_max` / `mg_smooth_sf_min` / `mg_smooth_cheby_4th`), and the coarse-level
   solver. All `readonly` construction-stratum inputs. L0: the

@@ -1,17 +1,17 @@
 ---
 layer: L2
-operator: divfree-projector
+operator: divfree_projector
 firmness: firm
 rank: firm
 edges:
   depends-on:
-    - target: L1/divfree-projector
+    - target: L1/divfree_projector
       kind: lowers-to             # the L1 mutation-rotation gate this L2 floor lowers to
     - target: L2-L1/divfree-projector-leaf-identity
       kind: lowers-to             # the L2>L1 lowering theme this floor lowers through (mirrors how L1 ops reach their L1>L0 theme)
     - L2/ksp_solve                # the inner projected-H1 solve (step 3); nested-gate inner gate
   reference:
-    - L3/divfree-projector        # the L3 consumer this floor parents
+    - L3/divfree_projector        # the L3 consumer this floor parents
     - L1/apply_linop              # step-1 / step-4 apply (L1 anchor; no L2 chapter)
     - L1/axpy                     # step-4 accumulate (L1 anchor; no L2 chapter)
     - concepts/set_subvector_zero
@@ -19,16 +19,16 @@ edges:
     - concepts/sequential-obstruction
 ---
 
-# divfree-projector
+# divfree_projector
 
 The divergence-free Helmholtz-projection **constructed-operator gate** at the fusion-rotation
 layer: the mutation-free linear projection `y' = divfree_project(P, y)` that maps an H(curl)
 (Nedelec) field to its **divergence-free component** by removing the irrotational
 (discrete-gradient) part. This is the **L2 floor** under the firm L3
-[`divfree-projector`](../L3/divfree-projector.md) constructed-operator gate — present so the
+[`divfree_projector`](../L3/divfree_projector.md) constructed-operator gate — present so the
 L3 gate rests on an adjacent L2 parent per the **Identity-lowerings still require both L
 levels** invariant, rather than skipping a layer down to the firm L1
-[`divfree-projector`](../L1/divfree-projector.md). It is a **standalone four-step gate with no
+[`divfree_projector`](../L1/divfree_projector.md). It is a **standalone four-step gate with no
 fold-parent** — fork-independent, in the constructed-operator-gate family with the firm L2
 [`ksp_solve`](./ksp_solve.md) and [`eigsolve`](./eigsolve.md), not a member of the
 `inner_product` / `linear_combination` fold cohort.
@@ -37,27 +37,27 @@ fold-parent** — fork-independent, in the constructed-operator-gate family with
 
 L2 is the fusion-rotation layer (`book/src/L2/index.md`): "Kernel fusion across multiple
 algebraic operations is unfolded into composition… Batched specialized BLAS calls are written
-as compositions of base primitives." `divfree-projector` at L2 is the divergence-free
+as compositions of base primitives." `divfree_projector` at L2 is the divergence-free
 projection rendered at that layer — a fixed four-step composition over an opaque constructed
 projector value, with the **one** kernel fusion in its body (the step-4 apply-and-accumulate)
 de-fused back into the base `apply_linop ▷ axpy` composition (see § "Fusion note").
 
 This entry is a **floor entry**. Its purpose is floor *presence*: the firm L3
-[`divfree-projector`](../L3/divfree-projector.md) (the iteration-rotation gate, consumed inside
+[`divfree_projector`](../L3/divfree_projector.md) (the iteration-rotation gate, consumed inside
 the eigensolver projection slot) and the firm L1
-[`divfree-projector`](../L1/divfree-projector.md) (the mutation-rotation gate) sandwich a layer
+[`divfree_projector`](../L1/divfree_projector.md) (the mutation-rotation gate) sandwich a layer
 at which the projector had no chapter. The L2 entry fills it so the lowering chain L3 → L2 → L1
 has a present chapter at every adjacent edge, and the L3 gate lowers to an adjacent L2 parent
 rather than non-adjacently to L1.
 
-`divfree-projector` is **defined in L2 vocabulary** here (high→low discipline): the signature,
+`divfree_projector` is **defined in L2 vocabulary** here (high→low discipline): the signature,
 semantics, and algebraic laws are stated at the L2 fusion-rotation resolution. The two adjacent
 rotations — how the L2 form lowers to L1 (where the in-place `Mult(VecType &y)` mutation idiom
 and the construction-bound `psi`/`rhs` scratch reappear) and how the L3 form lowers to L2 — are
-narrated by the separate lowering themes. This chapter does not define `divfree-projector` in
+narrated by the separate lowering themes. This chapter does not define `divfree_projector` in
 terms of L1 primitives.
 
-The L1 entry [`L1/divfree-projector`](../L1/divfree-projector.md) is authoritative on every
+The L1 entry [`L1/divfree_projector`](../L1/divfree_projector.md) is authoritative on every
 factual claim about the Palace surface (the construction chain, the empty-boundary
 synthetic single-dof pin, the `WeakDiv = -Gᵀ` sign convention, the complete L0 evidence list).
 This L2 entry adds **fusion-rotation framing** and does not duplicate those Palace-surface details.
@@ -67,7 +67,7 @@ This L2 entry adds **fusion-rotation framing** and does not duplicate those Pala
 Unlike the BLAS-1 floors ([`dot`](./inner_product.md#specializations) / [`nrm2`](./inner_product.md#consumer-nrm2-and-matrix-weighted-norm) /
 [`scal`](./linear_combination.md#arity-specializations)), which are leaves / consumers of the `inner_product` /
 `linear_combination` fold cohort and carry a load-bearing do-NOT-merge boundary,
-`divfree-projector` is **not a member of any fold cohort**. It is a **constructed-operator
+`divfree_projector` is **not a member of any fold cohort**. It is a **constructed-operator
 gate**: its primary argument `P` is a structured opaque value assembled once at solver setup
 (`palace/linalg/divfree.cpp:43-152`), and its apply is a fixed four-step composition over that
 value. There is no fold-parent to cite and no fold-cohort boundary to defend. Its L2 family is
@@ -92,7 +92,7 @@ no monadic state thread, no in-place mutation at the L2 surface):
   `P.WeakDiv : LinearOperator[N_nd, N_h1]`, the discrete gradient
   `P.Grad : LinearOperator[N_h1, N_nd]`, the essential-boundary dof subset
   `P.bdr_eff : DofSubset[N_h1]`, and the **inner solver** `P.ksp : Solver[P.M]` — is
-  authoritative at the L1 entry ([`L1/divfree-projector`](../L1/divfree-projector.md)
+  authoritative at the L1 entry ([`L1/divfree_projector`](../L1/divfree_projector.md)
   §Signature) and is not re-derived here. At L2 the contract sees only the projector-action
   interface and the two domain axes; the construction is a separate setup action.
 - **`y`** — `Tensor[N_nd]` — read-only; the input Nedelec field to project. (The L0 form
@@ -107,8 +107,8 @@ no monadic state thread, no in-place mutation at the L2 surface):
 primitive); `K⁻¹` denotes the **opaque inner [`ksp_solve`](./ksp_solve.md)** of `P.M · ψ = rhs`,
 **not** exact inversion and **not** spelled out at this entry's resolution.
 
-The L2 signature is identical in shape to the L1 [`divfree-projector`](../L1/divfree-projector.md)
-signature and the L3 [`divfree-projector`](../L3/divfree-projector.md) signature; the rotation
+The L2 signature is identical in shape to the L1 [`divfree_projector`](../L1/divfree_projector.md)
+signature and the L3 [`divfree_projector`](../L3/divfree_projector.md) signature; the rotation
 L2 → L1 is identity-in-form on the gate's apply (the fusion the L2 layer un-does lives in the
 step-4 apply-accumulate, recorded by the L2>L1 lowering theme, not in the signature).
 
@@ -183,14 +183,14 @@ that obstruction **by reference**:
 This is the [`nested-constructed-operator-gate`](../concepts/nested-constructed-operator-gate.md)
 **fidelity rule** at L2: the inner gate's iteration stays interior to `ksp_solve`'s own entry;
 at this entry's resolution `P.ksp->Mult(rhs, psi)` is an opaque field-to-field action. The
-firm L3 [`divfree-projector`](../L3/divfree-projector.md) §"Iteration-rotation marker" states
+firm L3 [`divfree_projector`](../L3/divfree_projector.md) §"Iteration-rotation marker" states
 the same carried-by-reference discipline at the iteration-rotation layer; the L2 floor honors
 it verbatim — the obstruction is **neither introduced nor erased here**, exactly as the firm L3
 entry requires.
 
 ## Fusion note
 
-`divfree-projector`'s apply contains **exactly one kernel fusion** at L2, and the L2 layer
+`divfree_projector`'s apply contains **exactly one kernel fusion** at L2, and the L2 layer
 un-folds it:
 
 - **Step 4 `Grad->AddMult(ψ, y, 1.0)`** is the MFEM **apply-and-accumulate** idiom: a single
@@ -225,7 +225,7 @@ The five laws that hold at L1/L3 transport unchanged to L2, because the construc
 apply is identity-in-form across the L2 rotation (the only fusion the L2 layer un-does — the
 step-4 apply-accumulate — is value-preserving). The two load-bearing non-laws also transport
 unchanged. Reproduced so the L2 reader does not have to reach to L1; the L1 entry
-([`L1/divfree-projector`](../L1/divfree-projector.md) §Algebraic laws) is authoritative on every
+([`L1/divfree_projector`](../L1/divfree_projector.md) §Algebraic laws) is authoritative on every
 factual claim about the Palace surface.
 
 1. **Linearity.** `divfree_project P (α·u + β·v) = α · divfree_project P u + β · divfree_project P v`.
@@ -286,8 +286,8 @@ new laws or non-laws, which is what makes the L2↔L1 hop identity-in-form on th
   (step 3, `palace/linalg/divfree.cpp:175`). **Direct, load-bearing dependency**: this is the
   nested-constructed-operator gate's inner gate. The CG iteration internal to `ksp_solve` is the
   standard outer-loop `sequential-obstruction`; it is interior to `ksp_solve` and **does not
-  leak** into `divfree-projector` (the fidelity rule). This is the structural fact that makes
-  `divfree-projector` obstruction-carrying-by-reference rather than obstruction-free.
+  leak** into `divfree_projector` (the fidelity rule). This is the structural fact that makes
+  `divfree_projector` obstruction-carrying-by-reference rather than obstruction-free.
 
 **Cross-layer constituents (no L2 chapter exists; L1 anchors):**
 
@@ -315,12 +315,12 @@ The setup-side dependencies (the construction-time assembly of `M`, `WeakDiv`, `
 concerns, not part of the L2 apply — they are consumed once at construction, before the gate is
 folded into any L2 expression.
 
-**No fold-parent.** `divfree-projector` is a standalone constructed-operator gate, not a member
+**No fold-parent.** `divfree_projector` is a standalone constructed-operator gate, not a member
 of the `inner_product` / `linear_combination` fold cohort; there is no fold-parent dependency
 and no do-NOT-merge boundary (contrast the BLAS-1 floors [`dot`](./inner_product.md#specializations) /
 [`nrm2`](./inner_product.md#consumer-nrm2-and-matrix-weighted-norm) / [`scal`](./linear_combination.md#arity-specializations)).
 
-**L1 anchor:** [`L1/divfree-projector`](../L1/divfree-projector.md) (firm) —
+**L1 anchor:** [`L1/divfree_projector`](../L1/divfree_projector.md) (firm) —
 authoritative on the Palace surface, the construction chain, the empty-boundary single-dof pin,
 the `WeakDiv` sign convention, and the complete L0 evidence list. The L2 entry does not
 duplicate those details.
@@ -354,7 +354,7 @@ Absorbed axis:
 The variant-axis profile (one orthogonal + one absorbed) matches the L1 and L3 entries exactly.
 **No new axes introduced by the L2 rendering; none merged or split.** (The inner `ksp_solve`'s
 own loop-shaping variant axes are interior to that gate, absorbed into `P.ksp` at construction;
-they are not `divfree-projector` axes.)
+they are not `divfree_projector` axes.)
 
 ## Stale-doc caveat
 
@@ -392,11 +392,11 @@ the constructed-operator-gate apply, modulo the one value-preserving step-4 de-f
 evidence is transitive through L1. Direct citations relevant to this L2 entry (paths relative to
 `reference/palace/`):
 
-- [`book/src/L1/divfree-projector.md`](../L1/divfree-projector.md) (firm) —
+- [`book/src/L1/divfree_projector.md`](../L1/divfree_projector.md) (firm) —
   authoritative on the Palace surface, the signature, the algebraic laws (inherited unchanged at
   L2), the variant axes (inherited unchanged at L2), the `WeakDiv` sign convention, and the
   complete L0 evidence list.
-- [`book/src/L3/divfree-projector.md`](../L3/divfree-projector.md) (firm) — the L3
+- [`book/src/L3/divfree_projector.md`](../L3/divfree_projector.md) (firm) — the L3
   consumer this floor goes under; the iteration-rotation gate whose adjacent L2 parent this entry
   supplies; the carried-by-reference obstruction discipline this entry honors.
 - [`book/src/L2/index.md`](./index.md) — the dep-map + the constructed-operator-gate / floor

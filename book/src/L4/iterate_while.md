@@ -1,6 +1,6 @@
-# iterate-while
+# iterate_while
 
-The tail-recursive value-threading loop combinator at L4. Folds a `Step` function over an initial `carry` value, threading the carry forward step-by-step and accumulating per-step readout records (extras) into a trajectory, until the loop predicate `cont` returns `False` on the current carry. The body of the [`solve-monad`](../concepts/solve-monad.md)'s `inner_loop`; the outer fold consumed by [`L4/krylov-step`](./krylov-step.md) (Form A). Companion to [`iterate-while-with-prev`](./iterate-while-with-prev.md), which carries an additional closure parameter for the previous-iteration recurrence carry.
+The tail-recursive value-threading loop combinator at L4. Folds a `Step` function over an initial `carry` value, threading the carry forward step-by-step and accumulating per-step readout records (extras) into a trajectory, until the loop predicate `cont` returns `False` on the current carry. The body of the [`solve-monad`](../concepts/solve-monad.md)'s `inner_loop`; the outer fold consumed by [`L4/krylov_step`](./krylov_step.md) (Form A). Companion to [`iterate_while_with_prev`](./iterate_while_with_prev.md), which carries an additional closure parameter for the previous-iteration recurrence carry.
 
 ## Context
 
@@ -8,7 +8,7 @@ L4's job is to write algorithms in a graph-evaluation calculus that makes iterat
 
 The L4 strawman (`book/src/semantics/index.md` §3.7) gives this combinator as the v0.3 generalisation of the v0.2 `iterate_while_pure` sketch — generalised to carry per-step extras (a `trajectory`) so that residual histories, monitoring metrics, and breakdown tokens can be returned uniformly through the same combinator. The §3.8 demand-pruning law (`index.md:186-213`) ensures that consumers reading only `.final_state` see the trajectory pruned away — the per-step extras are never computed when no downstream consumer reads them.
 
-This chapter is the L4-row anchor for the combinator that the firm L4 entry [`krylov-step`](./krylov-step.md) consumes structurally as the body-fold of `inner_loop`.
+This chapter is the L4-row anchor for the combinator that the firm L4 entry [`krylov_step`](./krylov_step.md) consumes structurally as the body-fold of `inner_loop`.
 
 `iterate_while` at L4 is a **methodology-level combinator**, not a Palace-source artefact — Palace's iteration loops at L0 are explicit `for`/`while` C++ constructs (e.g., the PCG main loop at `palace/linalg/iterative.cpp:427`, the GMRES inner Arnoldi at `palace/linalg/iterative.cpp:615`). The L4 form names the abstract shape those L0 loops realise. Palace evidence sits at L0; L4 cites the strawman §3.7 as its conventions source.
 
@@ -32,7 +32,7 @@ iterate_while
   -> { final_state: α, trajectory: [{ ...e }] }
 ```
 
-**Form (Solve-threaded, extras-carrying)** — the form consumed by [`krylov-step`](./krylov-step.md):
+**Form (Solve-threaded, extras-carrying)** — the form consumed by [`krylov_step`](./krylov_step.md):
 
 ```text
 iterate_while
@@ -42,7 +42,7 @@ iterate_while
   -> Solve { final_state: α, trajectory: [{ ...e }] }
 ```
 
-The three forms collapse into one another at the calculus level: `iterate_while_pure` is the special case where `e = ()` and the body is non-monadic; the pure extras-carrying form is the special case of the `Solve`-threaded form where the body's monadic action is `pure`. The `Solve`-threaded form is the load-bearing one for Krylov solvers, where the body increments `SimState.it` via `modify` (see [`krylov-step`](./krylov-step.md) §Semantics).
+The three forms collapse into one another at the calculus level: `iterate_while_pure` is the special case where `e = ()` and the body is non-monadic; the pure extras-carrying form is the special case of the `Solve`-threaded form where the body's monadic action is `pure`. The `Solve`-threaded form is the load-bearing one for Krylov solvers, where the body increments `SimState.it` via `modify` (see [`krylov_step`](./krylov_step.md) §Semantics).
 
 Shape contract (bunsen-style; named records; the `α`, `e` slots are arbitrary L4 types, instantiated per use):
 
@@ -87,7 +87,7 @@ $$
 \end{aligned}
 $$
 
-The `Solve` monad's `SimState` effect threads transparently through the `do`-block; the combinator does not read or write `SimState` directly. Any `SimState` interaction is the responsibility of `f`'s body — typically a `modify (\s -> s { it = s.it + 1 })` in Krylov step kernels (see [`krylov-step`](./krylov-step.md) §Semantics). The `Solve`-threaded form is equivalent to the pure form modulo the `Sim` effect being orthogonal to the value-threading.
+The `Solve` monad's `SimState` effect threads transparently through the `do`-block; the combinator does not read or write `SimState` directly. Any `SimState` interaction is the responsibility of `f`'s body — typically a `modify (\s -> s { it = s.it + 1 })` in Krylov step kernels (see [`krylov_step`](./krylov_step.md) §Semantics). The `Solve`-threaded form is equivalent to the pure form modulo the `Sim` effect being orthogonal to the value-threading.
 
 The `iterate_while_pure` sugar (`index.md:178-183`) is a closed-form definitional shortcut for the no-extras case:
 
@@ -148,7 +148,7 @@ The L4 laws are stated against the v0.3 strawman form. Absences are catalogued e
    \textsf{iterate\_while}\ b\ (p \circ g)\ f' \;\equiv\; \textsf{let}\ \{\textsf{final\_state}, \textsf{trajectory}\} = \textsf{iterate\_while}\ (g\ b)\ p\ f\ \textsf{in}\ \{\textsf{final\_state}: g^{-1}\_\textsf{like}(\textsf{final\_state}),\ \textsf{trajectory}\}
    $$
 
-   (where $g^{-1}\_\textsf{like}$ is the inverse-like map that reconstitutes the richer carry from the iteration carry plus the surrounding closure — formally the law is a bisimulation up to $g$.) This is a narrow law that holds because the combinator does not introspect the carry shape; it only threads it. The law is used informally by [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md) when moving `beta_prev` from a carry field (v0.4) to a closure parameter (v0.5) — see also [`iterate-while-with-prev`](./iterate-while-with-prev.md) Law 1.
+   (where $g^{-1}\_\textsf{like}$ is the inverse-like map that reconstitutes the richer carry from the iteration carry plus the surrounding closure — formally the law is a bisimulation up to $g$.) This is a narrow law that holds because the combinator does not introspect the carry shape; it only threads it. The law is used informally by [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md) when moving `beta_prev` from a carry field (v0.4) to a closure parameter (v0.5) — see also [`iterate_while_with_prev`](./iterate_while_with_prev.md) Law 1.
 
 Laws that explicitly **do not** hold:
 
@@ -174,8 +174,8 @@ L4 concept references (consumed structurally; concept-page links):
 
 L4 row dependencies (operators that consume this combinator):
 
-- [`krylov-step`](./krylov-step.md) at L4 — the typed-wrapper Krylov step kernel that `iterate_while` folds in the body of [`solve-monad`](../concepts/solve-monad.md)'s `inner_loop`. The Form A signature of `krylov-step` is exactly the step type of `iterate_while` (in its Solve-threaded form).
-- [`iterate-while-with-prev`](./iterate-while-with-prev.md) at L4 — the variant carrying an additional closure-threaded `PrevCarry`. Reduces definitionally to `iterate_while` when `PrevCarry = ()`; see Law 1 of the companion entry.
+- [`krylov_step`](./krylov_step.md) at L4 — the typed-wrapper Krylov step kernel that `iterate_while` folds in the body of [`solve-monad`](../concepts/solve-monad.md)'s `inner_loop`. The Form A signature of `krylov_step` is exactly the step type of `iterate_while` (in its Solve-threaded form).
+- [`iterate_while_with_prev`](./iterate_while_with_prev.md) at L4 — the variant carrying an additional closure-threaded `PrevCarry`. Reduces definitionally to `iterate_while` when `PrevCarry = ()`; see Law 1 of the companion entry.
 
 ## Lowers to
 
@@ -194,7 +194,7 @@ iterate_while_pure_L3 :: α -> (α -> Bool) -> (α -> α) -> α
 iterate_while_pure_L3 a p f = if p a then iterate_while_pure_L3 (f a) p f else a
 ```
 
-This L3 form is identity-in-form on the body (no primitive substitution), the same disposition that justifies `krylov-step` L3>L2 identity. The L3>L2 lowering for the loop combinator itself is *also* identity-in-form (the same tail-recursive shape is L2-native), so the full L4>L3>L2 chain for `iterate_while_pure` collapses to the L4>L3 wrapper dissolution alone.
+This L3 form is identity-in-form on the body (no primitive substitution), the same disposition that justifies `krylov_step` L3>L2 identity. The L3>L2 lowering for the loop combinator itself is *also* identity-in-form (the same tail-recursive shape is L2-native), so the full L4>L3>L2 chain for `iterate_while_pure` collapses to the L4>L3 wrapper dissolution alone.
 
 ## Variant axes
 
@@ -204,11 +204,11 @@ The combinator has **three variant axes**, all absorbed at the L4 form-level rat
 
 2. **Extras-carrying vs. no-extras.** Selected by whether the slice's step returns a non-empty `e` record. Slices that need per-step readouts (CG: `residual_norm`; GMRES: `residual_norm` + `breakdown_token`) carry extras and access `trajectory`. Slices with no readouts (LBM) use the `iterate_while_pure` sugar. The two are unified at the combinator level — `iterate_while_pure` is definitionally `iterate_while` with `e = ()` (and the no-extras case is the §3.8 trivial pruning).
 
-3. **Bootstrap-free vs. carry-bootstrapped.** Selected by which combinator the slice picks — `iterate_while` (this entry) for the bootstrap-free case; [`iterate-while-with-prev`](./iterate-while-with-prev.md) for the variant carrying a `PrevCarry` produced by a separate bootstrap step. The two combinators are not unifiable at the signature level (the `_with_prev` form has different arity), but they are unifiable at the *semantic* level via the carry-projection law (Law 4 of this entry, Law 1 of the companion entry) — `iterate_while_with_prev` with `PrevCarry = ()` reduces to `iterate_while` plus an outer identity step.
+3. **Bootstrap-free vs. carry-bootstrapped.** Selected by which combinator the slice picks — `iterate_while` (this entry) for the bootstrap-free case; [`iterate_while_with_prev`](./iterate_while_with_prev.md) for the variant carrying a `PrevCarry` produced by a separate bootstrap step. The two combinators are not unifiable at the signature level (the `_with_prev` form has different arity), but they are unifiable at the *semantic* level via the carry-projection law (Law 4 of this entry, Law 1 of the companion entry) — `iterate_while_with_prev` with `PrevCarry = ()` reduces to `iterate_while` plus an outer identity step.
 
 ## Status
 
-`firm` — small-step semantics inherited verbatim from the L4 strawman §3.7 (`index.md:164-171`); the demand-pruning law (Law 1) is the load-bearing property and is inherited from the strawman §3.8 (`index.md:186-213`) plus the `derived-view-hoisting` concept; three variant axes (Sim threading, extras carrying, bootstrap-free vs. carry-bootstrapped) are catalogued at the combinator level; the no-laws section catalogues five non-laws explicitly (including the predicate-on-extras anti-pattern and the do-while reordering non-equivalence). The combinator is consumed structurally by [`krylov-step`](./krylov-step.md) (Form A) and by every L4 slice's solve function (`cg.md:215-219` for v0.4 CG; `cg.md:441` for v0.5 CG with the with-prev variant; LBM at `index.md:382-385` via the pure sugar).
+`firm` — small-step semantics inherited verbatim from the L4 strawman §3.7 (`index.md:164-171`); the demand-pruning law (Law 1) is the load-bearing property and is inherited from the strawman §3.8 (`index.md:186-213`) plus the `derived-view-hoisting` concept; three variant axes (Sim threading, extras carrying, bootstrap-free vs. carry-bootstrapped) are catalogued at the combinator level; the no-laws section catalogues five non-laws explicitly (including the predicate-on-extras anti-pattern and the do-while reordering non-equivalence). The combinator is consumed structurally by [`krylov_step`](./krylov_step.md) (Form A) and by every L4 slice's solve function (`cg.md:215-219` for v0.4 CG; `cg.md:441` for v0.5 CG with the with-prev variant; LBM at `index.md:382-385` via the pure sugar).
 
 ## L4 vs L3 distinction
 
@@ -222,12 +222,12 @@ The two layers' entries share signature shape (modulo wrapper dissolution) and s
 - `book/src/semantics/index.md:151-184` — the L4 strawman's §3.7 `iterate_while` definition (v0.3 form with extras-carrying step and trajectory accumulator) plus the `iterate_while_pure` sugar. **Canonical reference**: the small-step rule in §Semantics is reproduced verbatim from `index.md:164-171`.
 - `book/src/semantics/index.md:186-228` — the §3.8 demand-pruning rule that underwrites Law 1. The pruning-as-graph-DCE framing is the calculus-level justification for the trajectory-pruning behaviour.
 - `book/src/semantics/index.md:374-386` — the LBM `run_lbm` example at the end of the strawman: `iterate_while_pure` consumed in production. Confirms the no-extras sugar's intended call shape.
-- `book/src/L4/krylov-step.md` (firm) — the L4 row consuming this combinator structurally as the body-fold of `inner_loop` (§Semantics, §"L4 vs L2 distinction").
+- `book/src/L4/krylov_step.md` (firm) — the L4 row consuming this combinator structurally as the body-fold of `inner_loop` (§Semantics, §"L4 vs L2 distinction").
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` (firm) — §"What the L3 form for iterate_while looks like" sketches the L3 tail-recursive form cited in §"Lowers to".
 - `book/src/concepts/derived-view-hoisting.md:14-29` — the demand-pruning algebra underwriting Law 1, with the CG residual-norm hoisting worked example as canonical evidence.
 - `book/src/concepts/solve-monad.md:1-69` — the `Solve a = StateT SimState Identity a` monad threaded through the Solve-threaded signature; §"What stays out of the monad" articulates the effect-localisation discipline this combinator honours.
-- `book/src/L4/krylov-step.md` §Semantics Form A — the canonical `iterate_while` call site at L4 v0.4 (`iterate_while s0' (\s -> s.it < config.max_it && not s.converged) (\s -> cg_step opA eps s)`, firm-homed there).
-- The L3↔L4 correspondence (firm-homed at `book/src/L4/krylov-step.md` + `book/src/L4-L3/iterate-while-dissolution.md`) explicitly maps Palace's `for (; it < max_it && !converged; it++)` to `iterate_while`. **L0 evidence**: `reference/palace/palace/linalg/iterative.cpp:427` (the PCG main-loop predicate-driven `for`-loop) is the canonical Palace iteration shape this combinator names.
+- `book/src/L4/krylov_step.md` §Semantics Form A — the canonical `iterate_while` call site at L4 v0.4 (`iterate_while s0' (\s -> s.it < config.max_it && not s.converged) (\s -> cg_step opA eps s)`, firm-homed there).
+- The L3↔L4 correspondence (firm-homed at `book/src/L4/krylov_step.md` + `book/src/L4-L3/iterate-while-dissolution.md`) explicitly maps Palace's `for (; it < max_it && !converged; it++)` to `iterate_while`. **L0 evidence**: `reference/palace/palace/linalg/iterative.cpp:427` (the PCG main-loop predicate-driven `for`-loop) is the canonical Palace iteration shape this combinator names.
 - `reference/palace/palace/linalg/iterative.cpp:427` — PCG outer loop. `for (; it < max_it && !converged; it++)` is the canonical Palace iterate_while pattern with bounded `max_it` and convergence flag in the predicate, both folded into the L4 `α` carry per the §Signature predicate discipline.
 - `reference/palace/palace/linalg/iterative.cpp:615` — GMRES inner Arnoldi loop. `for (;; j++, it++)` with break-on-converged at line 644 is the second Palace iteration shape; the predicate-in-body break corresponds at L4 to `s.converged` being a carry field set inside the step body and read by the predicate on the next iteration.
 

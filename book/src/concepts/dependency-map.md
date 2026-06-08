@@ -36,8 +36,8 @@ derived mirror, scheme §2/§4(b)):
 sits **outside the subject DAG** (scheme §2d, §5) — it is NOT a ranked node, and **every edge it emits is `reference`**
 (it points the reader at the firm L_n home; the blocking rank flows the OTHER way, carried by that L_n entry's own
 `depends-on` block, not by the concept page). So the overwhelming majority of edges below are `-.->|ref|`. The **only**
-concept pages that are DAG nodes are the **`record` Kind** pages (`config-record`, `dofset`, `krylov`, `op-params`,
-`sim-state`, `step-outputs`, `prev-carry`, `solve-result`); a record page is a leaf whose only **`depends-on`** edges
+concept pages that are DAG nodes are the **`record` Kind** pages (`config-record`, `dofset`, `krylov`, `OpParams`,
+`SimState`, `StepOutputs`, `PrevCarry`, `SolveResult`); a record page is a leaf whose only **`depends-on`** edges
 are `kind: cites-evidence` edges to its raw L0 backing struct (`palace/...:lines`) — those targets are OFF this
 concept-graph (L0 source, not concept pages), so a record node appears here as a **leaf** that layer-pattern pages
 `-.->|ref|` into.
@@ -114,11 +114,11 @@ graph BT
   orthogonalization -.->|ref| dot
   orthogonalization -.->|ref| axpy
   orthogonalization -.->|ref| nrm2
-  incremental-least-squares -.->|ref| orthogonalization
-  incremental-least-squares -.->|ref| givens
+  incremental_least_squares -.->|ref| orthogonalization
+  incremental_least_squares -.->|ref| givens
   plane-rotation-stream -.->|ref| givens_generate
   plane-rotation-stream -.->|ref| givens_apply
-  plane-rotation-stream -.->|ref| incremental-least-squares
+  plane-rotation-stream -.->|ref| incremental_least_squares
   plane-rotation-stream -.->|ref| trsv
   chebyshev-iteration -.->|ref| apply_linop
   chebyshev-iteration -.->|ref| axpy
@@ -142,7 +142,7 @@ All edges below are `reference` (`-.->|ref|`). The layer-pattern pages point at
 the primitives/peers they organize and at the **record** Kind pages they thread;
 none is a blocking `depends-on` from a concept page (the blocking edges live on
 the operator/feature chapters, scheme §2d/§5). The `record` nodes (`krylov`,
-`op-params`, `sim-state`, `step-outputs`, `prev-carry`, `solve-result`,
+`OpParams`, `SimState`, `StepOutputs`, `PrevCarry`, `SolveResult`,
 `config-record`, `dofset`) are DAG-node **leaves** here — their only `depends-on`
 edges are `kind: cites-evidence` to raw L0 source (off this concept-graph).
 
@@ -169,20 +169,20 @@ graph BT
   first-iteration-unrolling -.->|ref| derived-view-hoisting
   tensor-field-lift -.->|ref| apply_linop
   solve-monad -.->|ref| krylov
-  solve-monad -.->|ref| op-params
-  solve-monad -.->|ref| sim-state
-  ksp_solve -.->|ref| solve-result
-  state-stratification -.->|ref| op-params
-  state-stratification -.->|ref| sim-state
+  solve-monad -.->|ref| OpParams
+  solve-monad -.->|ref| SimState
+  ksp_solve -.->|ref| SolveResult
+  state-stratification -.->|ref| OpParams
+  state-stratification -.->|ref| SimState
   state-stratification -.->|ref| dofset
   build-time-vs-run-time-stratification -.->|ref| config-record
   build-time-vs-run-time-stratification -.->|ref| dofset
-  first-iteration-unrolling -.->|ref| prev-carry
-  krylov-step-record -.->|ref| step-outputs
+  first-iteration-unrolling -.->|ref| PrevCarry
+  krylov-step-record -.->|ref| StepOutputs
   eliminate-bc-consumers -.->|ref| dofset
 ```
 
-The `record` Kind pages (`krylov`, `op-params`, `sim-state`, `step-outputs`, `prev-carry`, `solve-result`,
+The `record` Kind pages (`krylov`, `OpParams`, `SimState`, `StepOutputs`, `PrevCarry`, `SolveResult`,
 `config-record`, `dofset`) are data-shape definitions — they sit at the leaves (a record is *defined by* its fields, it
 does not depend on the operators that thread it). **They are the only concept pages that are graded-stack DAG nodes**
 (scheme §5): each carries `rank:` (typically `firm` once its L0 backing struct is cited) and a `depends-on (kind:

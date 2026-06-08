@@ -22,7 +22,7 @@ The synthesized rendering of the L4 [Outer-driver caps & coordination combinator
 
 A def appears after everything it uses. The realized order — the coordination-clustering type block (the `Solve` monad surface, the termination sums, the state carriers) first; then the construction/binding framework; then the caps; then the combinators that map/fold over them:
 
-1. **Coordination type block** (placed BEFORE the group, bundled with utility API): the `Solve` monad surface + `execState`, the `Outcome` / `EigOutcome` termination sums, `EigState` (the eigsolve persistent stratum), the `StepReturn` accessor utility (the per-step return record, authoritatively named in [`solve-result`](../concepts/solve-result.md)).
+1. **Coordination type block** (placed BEFORE the group, bundled with utility API): the `Solve` monad surface + `execState`, the `Outcome` / `EigOutcome` termination sums, `EigState` (the eigsolve persistent stratum), the `StepReturn` accessor utility (the per-step return record, authoritatively named in [`SolveResult`](../concepts/SolveResult.md)).
 2. [`preconditioning-framework`](../L4/preconditioning-framework.md) — the `buildKspSolver` / `setOperators` construction-and-binding framework (the non-iteration construction surface the caps run against).
 3. [`ksp_solve`](../L4/ksp_solve.md) — the `Solve`-monadic outer-driver cap for preconditioned Krylov solves (folds `krylov_step` from the [`iteration`](./iteration.md) library).
 4. [`eigsolve`](../L4/eigsolve.md) — the `Solve`-monadic eigenproblem cap; the SLEPc EPS eigsolve loop renders **`#extern`** at the kernel-API boundary.
@@ -32,7 +32,7 @@ A def appears after everything it uses. The realized order — the coordination-
 
 ## Clustering types (placed BEFORE the group)
 
-Per the [type-placement rule](./index.md#type-placement--cluster-a-type-with-its-api-group): the coordination-clustering state carriers — `EigState` (the eigsolve persistent stratum) and the [`StepReturn`](../concepts/solve-result.md) return record — are rendered immediately before the group, bundled with their **utility API** (constructors / accessors / predicates) only; their **consumer methods stay in the group** (after the type block). The cross-cutting `SimState` / `OpParams` / `IoData` live in [`types`](./types.md). The `Solve = StateT SimState Identity` monad (the [`solve-monad`](../concepts/solve-monad.md) outer-driver vocabulary) and the `Outcome` / `EigOutcome` termination sums are rendered here as the coordination surface.
+Per the [type-placement rule](./index.md#type-placement--cluster-a-type-with-its-api-group): the coordination-clustering state carriers — `EigState` (the eigsolve persistent stratum) and the [`StepReturn`](../concepts/SolveResult.md) return record — are rendered immediately before the group, bundled with their **utility API** (constructors / accessors / predicates) only; their **consumer methods stay in the group** (after the type block). The cross-cutting `SimState` / `OpParams` / `IoData` live in [`types`](./types.md). The `Solve = StateT SimState Identity` monad (the [`solve-monad`](../concepts/solve-monad.md) outer-driver vocabulary) and the `Outcome` / `EigOutcome` termination sums are rendered here as the coordination surface.
 
 ## Rendering conventions
 
@@ -112,11 +112,11 @@ type EigState = {
 
 ### `StepReturn` — the per-step return record (accessor utility)
 
-The `krylov_step` kernel's return record, surfaced here for the cap's per-cycle classification reads. Authoritative field schema: [`solve-result`](../concepts/solve-result.md), where this record is named **`StepReturn`** (Form A) / `StepReturnB` (Form B). Rendered here under its authoritative name (link-don't-restate). (The record itself is produced by the `iteration` library's `krylov_step`; coordination consumes its `outputs`/`krylov` fields at the cycle boundary.)
+The `krylov_step` kernel's return record, surfaced here for the cap's per-cycle classification reads. Authoritative field schema: [`SolveResult`](../concepts/SolveResult.md), where this record is named **`StepReturn`** (Form A) / `StepReturnB` (Form B). Rendered here under its authoritative name (link-don't-restate). (The record itself is produced by the `iteration` library's `krylov_step`; coordination consumes its `outputs`/`krylov` fields at the cycle boundary.)
 
 ```text
 -- the record one krylov_step yields (Form A; Form B = StepReturnB adds a `carry` field).
--- Authoritative field schema + name: concepts/solve-result.md (StepReturn / StepReturnB).
+-- Authoritative field schema + name: concepts/SolveResult.md (StepReturn / StepReturnB).
 type StepReturn = {
   sim:     SimState,     -- the next externally-visible state (monadic-effect product)
   krylov:  Krylov,       -- the next solve-local working bundle (plain returned value)

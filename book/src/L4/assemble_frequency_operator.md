@@ -44,7 +44,7 @@ L4 form names that rebuild as a feature-surface verb so the driven feature
 (assemble-half) reaches L4 written against the backend's verb set.
 
 `assemble_frequency_operator` is **not** an iteration-structural combinator like
-[`iterate-while`](./iterate-while.md) / [`fold_solve`](./fold_solve.md): it
+[`iterate_while`](./iterate_while.md) / [`fold_solve`](./fold_solve.md): it
 threads no `SimState` carry, has no stopping predicate, no monadic `Solve`
 effect. It is a **pure value-producing combination** — the same data-algebra half
 of the L4 vocabulary its parent [`linear_combination`](./linear_combination.md)

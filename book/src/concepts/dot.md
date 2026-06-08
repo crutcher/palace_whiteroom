@@ -2,7 +2,7 @@
 edges:
   reference:
     - L1/dot                       # authoritative operator entry (definition); pointer-to, not blocking
-    - L2/krylov-step               # use-site cross-link (CG/GMRES inner-product role)
+    - L2/krylov_step               # use-site cross-link (CG/GMRES inner-product role)
 ---
 
 # dot
@@ -78,9 +78,9 @@ projection is caller-side, not built into `dot`.
 
 ## Slices that use this primitive
 
-- [`krylov-step` (CG instance)](../L2/krylov-step.md) — `⟨r, z⟩` (β numerator) and `⟨p, A p⟩` (α
+- [`krylov_step` (CG instance)](../L2/krylov_step.md) — `⟨r, z⟩` (β numerator) and `⟨p, A p⟩` (α
   denominator).
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — orthogonalization coefficients
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — orthogonalization coefficients
   `⟨v_i, w⟩` (CGS/MGS), at the L2 unfolding of `orthogonalize`.
 
 ## See also

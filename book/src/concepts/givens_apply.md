@@ -1,7 +1,7 @@
 ---
 edges:
   reference:
-    - L1/ls-update-column
+    - L1/ls_update_column
 ---
 
 # `givens_apply`
@@ -30,4 +30,4 @@ The "apply" half of the Givens rotation pair. Used both to apply a freshly-gener
 
 ## Used in
 
-- [`ls-update-column`](../L1/ls-update-column.md) — applied repeatedly per Arnoldi step: $k$ times to the new Hessenberg column (replay of stored rotations), once to the same column (new rotation), once to the $\bar{g}$ vector pair.
+- [`ls_update_column`](../L1/ls_update_column.md) — applied repeatedly per Arnoldi step: $k$ times to the new Hessenberg column (replay of stored rotations), once to the same column (new rotation), once to the $\bar{g}$ vector pair.

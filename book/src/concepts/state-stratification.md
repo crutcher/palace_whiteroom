@@ -4,7 +4,7 @@ edges:
     - concepts/solve-monad
     - concepts/constructed-operators
     - concepts/sequential-obstruction
-    - L2/krylov-step
+    - L2/krylov_step
 ---
 # state-stratification
 
@@ -33,7 +33,7 @@ The split makes two things structural that are merely conventional at L1–L3:
 
 ## Used by
 
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — `SimState` / `OpParams` / `Krylov` for restarted GMRES and FGMRES.
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — `SimState` / `OpParams` / `Krylov` for restarted GMRES and FGMRES.
 - (Pending) other Krylov slices (CG, BiCGStab) will share this template.
 
 ## See also

@@ -57,7 +57,7 @@ No `BiCGStabSolver` class exists in `palace/linalg/iterative.hpp`.
 
 All `rough-in (obstruction)` — harvester should not promote until either Palace gains BiCGStab or the MFEM-as-L0-substrate decision admits `mfem::BiCGSTAB`:
 
-- **`bicgstab_step`** — `(A, M, r̂₀, state) → state'` where `state = (x, r, p, v, ρ_prev, α_prev, ω_prev)`. Short-recurrence specialisation of the `krylov-step` pattern. Differs from `cg_step` / `gmres_step` in maintaining the second residual `r̂₀` and the half-step (`t`, `ω`) stabilisation.
+- **`bicgstab_step`** — `(A, M, r̂₀, state) → state'` where `state = (x, r, p, v, ρ_prev, α_prev, ω_prev)`. Short-recurrence specialisation of the `krylov_step` pattern. Differs from `cg_step` / `gmres_step` in maintaining the second residual `r̂₀` and the half-step (`t`, `ω`) stabilisation.
 - **`omega_update`** — `(t, r) → ⟨t,r⟩/⟨t,t⟩`. The signature scalar of BiCGStab — the `ω` Galerkin-coefficient that minimizes the residual norm over the new search direction `t`.
 - **`stabilisation_update`** — `(t, r, ẑ, h) → (x_new, r_new, ω)`. Composite half-step: computes `ω`, then updates iterate `x` and residual `r` via two `axpy` calls. Bundled because the three sub-steps share the `ω` value and are conceptually one stabilisation phase.
 

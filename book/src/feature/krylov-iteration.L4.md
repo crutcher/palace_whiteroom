@@ -6,18 +6,18 @@ feature_root: seed
 rank: rough-in
 edges:
   depends-on:
-    - target: L3/krylov-step
+    - target: L3/krylov_step
       kind: composes                  # the per-step Arnoldi/CG basis-extension body the iteration folds (firm); DISCHARGES RE8
     - target: L3/fold_solve
       kind: composes                  # the state-threaded fold outer-driver — the carry-threaded sweep spine (partial-obstruction); DISCHARGES RE8
     - target: L3/orthogonalize
       kind: composes                  # the basis-orthogonalization auxiliary stage (MGS/CGS/CGS2) keeping the Krylov basis orthonormal (partial-obstruction); DISCHARGES RE2
-    - target: L4/iterate-while
+    - target: L4/iterate_while
       kind: composes                  # the iteration combinator the outer driver IS (firm) — the L4 surface the L3 fold lowers from
     - target: L4/ksp_solve
       kind: composes                  # the Krylov-solve cap the iteration spine sits under (firm) — the consumer that drives the per-step fold
     - target: palace/linalg/iterative.cpp:421-464
-      kind: cites-evidence            # CgSolver::Mult outer loop `for (; it < max_it && !converged; it++)` (:427) folding the per-step krylov-step body
+      kind: cites-evidence            # CgSolver::Mult outer loop `for (; it < max_it && !converged; it++)` (:427) folding the per-step krylov_step body
     - target: palace/linalg/iterative.cpp:563-705
       kind: cites-evidence            # GmresSolver::Mult outer restart loop (:563) + inner Arnoldi/orthogonalize loop (:615) — the restart-shape outer fold over the basis-extension step
   reference:
@@ -49,7 +49,7 @@ producing driver, links generically to the set of drivers that compose it.)
 
 This is the DIRECTIVE-2 item-4b grounded consumer: it is the *future faithful feature column
 composing the L3 iteration-rotation form BY NAME* that the RE2 (`L3/orthogonalize`) and RE8
-(`L3/krylov-step`, `L3/fold_solve`) baseline-exceptions name as their EXACT discharge trigger.
+(`L3/krylov_step`, `L3/fold_solve`) baseline-exceptions name as their EXACT discharge trigger.
 Building this column GROUNDS RE2 / RE8 by composing those nodes by name.
 
 ## The composition
@@ -61,27 +61,27 @@ At L4 the iteration spine is the composition (Haskell-style; the semantic surfac
     -- output = the iterate trajectory's terminal carry (the converged solve / basis)
     krylov_iteration :: IterSpec -> Solve SimState (Krylov, SimState)
     krylov_iteration spec =
-      let step  = krylov_step_for spec      -- (1) the per-step basis-extension body   ── L3/krylov-step (firm)
+      let step  = krylov_step_for spec      -- (1) the per-step basis-extension body   ── L3/krylov_step (firm)
           aux   = orthogonalize_for spec    -- (2) the auxiliary orthogonalize stage    ── L3/orthogonalize (partial-obstruction)
-      in  fold_iteration step aux spec      -- (3) the outer fold over the step          ── L3/fold_solve / L4/iterate-while
+      in  fold_iteration step aux spec      -- (3) the outer fold over the step          ── L3/fold_solve / L4/iterate_while
 
     -- the outer fold is the iterate_while / foldl driver (NOT a new vocabulary op; the loop
     -- structure read off iterative.cpp:427 (CG) / :563 (GMRES restart) / :615 (inner Arnoldi)):
     fold_iteration step aux spec =
       iterate_while
         (\(K, s) -> not (converged s spec))     -- stopping predicate (the convergence test)
-        (\(K, s) -> let (K', s', _) = step (spec.op, K, s)   -- ONE basis-extension step (krylov-step)
+        (\(K, s) -> let (K', s', _) = step (spec.op, K, s)   -- ONE basis-extension step (krylov_step)
                     in  (aux_apply aux K', s'))               -- orthogonalize the new column against the basis
 
 Three composed stages, each a link DOWN to L3 iteration-rotation vocabulary:
 
-1. **The per-step basis-extension body** — [`krylov-step`](../L3/krylov-step.md) (**firm**).
+1. **The per-step basis-extension body** — [`krylov_step`](../L3/krylov_step.md) (**firm**).
    The value-threaded per-step kernel `(op, K, s) -> (K', s', outputs)`: one
    `apply_linop`, the optional auxiliary (orthogonalize / scalar-generate), the iterate-and-scalar
    update, the demand-prunable readout, the counter increment. The body **lifts** (every primitive
    is whole-tensor by signature shape); its outer-loop sequentiality is the documented
    [`sequential-obstruction`](../concepts/sequential-obstruction.md). **This is the named consumer
-   that DISCHARGES RE8** (the `L3/krylov-step` unconsumed iteration-view). L0: the CG step body
+   that DISCHARGES RE8** (the `L3/krylov_step` unconsumed iteration-view). L0: the CG step body
    `iterative.cpp:434-463` folded by the outer `for (; it < max_it && !converged; it++)` (`:427`).
 
 2. **The auxiliary orthogonalize stage** — [`orthogonalize`](../L3/orthogonalize.md)
@@ -93,7 +93,7 @@ Three composed stages, each a link DOWN to L3 iteration-rotation vocabulary:
    `iterative.cpp:615-632` (`OrthogonalizeIteration` + the caller's `Norml2`/`scal`).
 
 3. **The outer fold over the step** — [`fold_solve`](../L3/fold_solve.md)
-   (**partial-obstruction**) lowered from [`iterate-while`](../L4/iterate-while.md) (**firm**).
+   (**partial-obstruction**) lowered from [`iterate_while`](../L4/iterate_while.md) (**firm**).
    The state-threaded fold outer-driver: the carry-threaded sweep where each step's input is the
    prior step's output (the carry-threading `sequential-obstruction`; the schedule does not
    commute). **This is the named consumer that DISCHARGES RE8** (the `L3/fold_solve` unconsumed
@@ -124,7 +124,7 @@ Three composed stages, each a link DOWN to L3 iteration-rotation vocabulary:
 Under the well-foundedness invariant `rank(u) ≤ min(deps)` (CLAUDE.md §Methodology-invariants
 GRADED RESOLUTION LADDER), this column is **`rough-in`**, NOT firm:
 
-- The three composed **blocking** constituents are `L3/krylov-step` (**firm**),
+- The three composed **blocking** constituents are `L3/krylov_step` (**firm**),
   `L3/fold_solve` (**partial-obstruction**), `L3/orthogonalize` (**partial-obstruction**). So
   `rank(krylov-iteration) ≤ min(firm, partial-obstruction, partial-obstruction) =
   partial-obstruction (≈ rank 2.5)` — the column is at most as resolved as its least-resolved
@@ -132,7 +132,7 @@ GRADED RESOLUTION LADDER), this column is **`rough-in`**, NOT firm:
 - This is **faithful-or-finding, not a forced claim.** The iteration-rotation spine is *precisely*
   the surface where the body-lifts-loop-doesn't obstruction lives: the carry-threaded outer fold
   (`fold_solve`), the MGS `j`-loop (`orthogonalize`), and the outer Krylov sequential obstruction
-  (`krylov-step`'s outer loop). A column composing those views honestly INHERITS the
+  (`krylov_step`'s outer loop). A column composing those views honestly INHERITS the
   partial-obstruction — the iteration spine cannot be firm while its iteration-views carry
   witnessed sequential obstructions. The per-step bodies all lift (the composition is cleanly
   statable BY NAME), so the column is a real `rough-in` (it composes real on-disk firm/rankable
@@ -163,10 +163,10 @@ No MPI-associated version is lifted here.
 
 | Stage | Constituent | Status | discharges | L0 site |
 |---|---|---|---|---|
-| per-step basis-extension body | [`krylov-step`](../L3/krylov-step.md) | firm | RE8 | `iterative.cpp:434-463` folded by `:427` |
+| per-step basis-extension body | [`krylov_step`](../L3/krylov_step.md) | firm | RE8 | `iterative.cpp:434-463` folded by `:427` |
 | auxiliary orthogonalize stage | [`orthogonalize`](../L3/orthogonalize.md) | partial-obstruction | RE2 | `iterative.cpp:615-632` (GMRES Arnoldi) |
-| outer fold over the step | [`fold_solve`](../L3/fold_solve.md) / [`iterate-while`](../L4/iterate-while.md) | partial-obstruction / firm | RE8 | `iterative.cpp:427` (CG) / `:563` (GMRES restart) |
-| iterate combinator | [`iterate-while`](../L4/iterate-while.md) | firm | — | strawman §3.7 |
+| outer fold over the step | [`fold_solve`](../L3/fold_solve.md) / [`iterate_while`](../L4/iterate_while.md) | partial-obstruction / firm | RE8 | `iterative.cpp:427` (CG) / `:563` (GMRES restart) |
+| iterate combinator | [`iterate_while`](../L4/iterate_while.md) | firm | — | strawman §3.7 |
 | Krylov-solve cap (consumer) | [`ksp_solve`](../L4/ksp_solve.md) | firm | — | `ksp.cpp:296-310` |
 | constructive eigensolve consumer (reference) | [`eigsolve-impl`](../L3/eigsolve-impl.md) / [`lanczos_step`](../L3/lanczos_step.md) | roadmap_goal | — | — |
 
@@ -176,7 +176,7 @@ No MPI-associated version is lifted here.
 item-4b, the RE2/RE8 discharge). The GC-root marker `feature_root: seed` is preserved (root-role is
 permanent/categorical, a separate axis from the resolution ladder). **Why rough-in (not firm):**
 two of the three directly-owned **blocking** constituents are `partial-obstruction`
-(`L3/fold_solve`, `L3/orthogonalize`); `L3/krylov-step` is firm. The well-foundedness invariant
+(`L3/fold_solve`, `L3/orthogonalize`); `L3/krylov_step` is firm. The well-foundedness invariant
 `rank(u) ≤ min(deps) = partial-obstruction` caps the column below firm — the honest verdict, since
 the iteration-rotation spine is constitutively the surface where the body-lifts-loop-doesn't
 sequential obstruction lives (carry-threading + MGS recurrence + outer Krylov fold). The per-step
@@ -187,7 +187,7 @@ non-removable), so `rough-in` with the inherited sequential-obstruction recorded
 standing state. This chapter carries the *compositional* claim (the Krylov iteration spine = this
 composition of these iteration-view pieces, GROUNDING RE2/RE8 by name), not the constituents' per-op
 algebraic claims (those live in the linked chapters). **DISCHARGES RE2** (`L3/orthogonalize`
-reachable via the `depends-on (composes)` edge) **and RE8** (`L3/krylov-step`, `L3/fold_solve`
+reachable via the `depends-on (composes)` edge) **and RE8** (`L3/krylov_step`, `L3/fold_solve`
 reachable via `depends-on (composes)`). Evidence: `iterative.cpp:421-464` (CG outer fold) +
 `:563-705` (GMRES restart + inner Arnoldi) realizing the composition, plus the L3 iteration-view
 down-links.

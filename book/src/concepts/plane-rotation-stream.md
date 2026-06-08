@@ -4,8 +4,8 @@ edges:
     - concepts/givens_apply
     - concepts/givens_generate
     - concepts/sequential-obstruction
-    - L2/incremental-least-squares
-    - L2/krylov-step
+    - L2/incremental_least_squares
+    - L2/krylov_step
 ---
 
 # Plane-rotation stream
@@ -44,5 +44,5 @@ This invariance is what makes the stream a candidate shared concept across GMRES
 
 ## Used in
 
-- [`incremental-least-squares`](../L2/incremental-least-squares.md) — primary (canonical) firm dissection of the stream as it appears in GMRES/FGMRES.
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — consumer (per-step driver and back-solve).
+- [`incremental_least_squares`](../L2/incremental_least_squares.md) — primary (canonical) firm dissection of the stream as it appears in GMRES/FGMRES.
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — consumer (per-step driver and back-solve).

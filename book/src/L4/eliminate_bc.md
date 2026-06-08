@@ -122,7 +122,7 @@ Shape contract (named shape groups / operator shapes per [`l4_calculus`](../sema
 
 `restrict_essential` / `set_essential` are the essential-dof gather/scatter masking projections onto
 the essential-dof subspace (the general `set_subvector` write-mask, whose zeroing arm is the
-`set_subvector_zero` [`divfree-projector`](../L1/divfree-projector.md) §Dependencies names); they are
+`set_subvector_zero` [`divfree_projector`](../L1/divfree_projector.md) §Dependencies names); they are
 masking projections over `DofSet[N]`, not separate spine verbs.
 
 ## Record definition

@@ -10,9 +10,9 @@ edges:
       kind: composes
     - target: L1/ksp_solve
       kind: composes
-    - target: L1/matrix-weighted-norm
+    - target: L1/matrix_weighted_norm
       kind: folds
-    - target: L1/bilinear-form
+    - target: L1/bilinear_form
       kind: folds
     - target: palace/drivers/magnetostaticsolver.cpp:22-108
       kind: cites-evidence
@@ -41,10 +41,10 @@ At L1 the magnetostatic feature is a pure function `config → inductance matrix
 
 2. **Per-source pure solve** — [`ksp_solve`](../L1/ksp_solve.md) (**firm**), applied once per surface-current source. Each call is the mutation-lifted pure solve `aᵢ = ksp_solve(K, rhsᵢ)` — the L1 form of the L0 `ksp.Mult(RHS, A[step])` (the destination-buffer write lifted to a value-returning solve). The per-source RHS `rhsᵢ` is the excitation vector for surface-current source `idx` (L0 `curlcurl_op.GetExcitationVector(idx, RHS)`, `:76`). The fixed-operator reuse (the same `K` across all sources) is explicit in the composition: `K` is bound once in the `let` and read by every `ksp_solve`. L0: the loop `:66`, the per-element solve `:77`.
 
-3. **Inductance-matrix reduction** — the symmetric matrix `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)`, built from L1 bilinear-form evaluations (firm diagonal + firm off-diagonal), each normalized by the excitation currents:
-   - diagonal `Mᵢᵢ = (Aᵢᵀ K Aᵢ)/Iᵢ²` — the operator-weighted self-form normalized by the squared current, the now-firm [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) squared (`matrix_weighted_norm(Aᵢ, K)² = Aᵢᵀ K Aᵢ`; the L0 source builds it directly as `M_mag->Mult(A_gf, H_gf)` then `linalg::Dot(A_gf, H_gf)`, then `/ (I_inc[i]*I_inc[i])`, `:129-131`).
-   - off-diagonal `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)` — the operator-weighted cross-pairing normalized by the current product, the firm [`bilinear-form`](../L1/bilinear-form.md) `α = xᴴ M y` instantiated `⟨Aⱼ, K Aᵢ⟩` (L0 `:135-138`, the same `Mult`/`Dot` with the `j` grid function, then `/ (I_inc[i]*I_inc[j])`).
-   The result is the symmetric `M` (and its LAPACK inverse `Minv`, `:151-152`). This stage is a pure fold of current-normalized bilinear-form evaluations over the solution-family pair grid — no L1 operator is *new* here; the reduction composes [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm) + [`bilinear-form`](../L1/bilinear-form.md) (firm), with the current normalization a scalar weight on each entry.
+3. **Inductance-matrix reduction** — the symmetric matrix `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)`, built from L1 bilinear_form evaluations (firm diagonal + firm off-diagonal), each normalized by the excitation currents:
+   - diagonal `Mᵢᵢ = (Aᵢᵀ K Aᵢ)/Iᵢ²` — the operator-weighted self-form normalized by the squared current, the now-firm [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) squared (`matrix_weighted_norm(Aᵢ, K)² = Aᵢᵀ K Aᵢ`; the L0 source builds it directly as `M_mag->Mult(A_gf, H_gf)` then `linalg::Dot(A_gf, H_gf)`, then `/ (I_inc[i]*I_inc[i])`, `:129-131`).
+   - off-diagonal `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)` — the operator-weighted cross-pairing normalized by the current product, the firm [`bilinear_form`](../L1/bilinear_form.md) `α = xᴴ M y` instantiated `⟨Aⱼ, K Aᵢ⟩` (L0 `:135-138`, the same `Mult`/`Dot` with the `j` grid function, then `/ (I_inc[i]*I_inc[j])`).
+   The result is the symmetric `M` (and its LAPACK inverse `Minv`, `:151-152`). This stage is a pure fold of current-normalized bilinear_form evaluations over the solution-family pair grid — no L1 operator is *new* here; the reduction composes [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) (firm) + [`bilinear_form`](../L1/bilinear_form.md) (firm), with the current normalization a scalar weight on each entry.
 
 ## Inputs / outputs (the feature surface)
 
@@ -65,7 +65,7 @@ The L1→L0 direction (how each pure operator lowers to the in-place driver writ
 |---|---|---|---|
 | assemble K once | [`fe_assemble`](../L1/fe_assemble.md) | firm | `magnetostaticsolver.cpp:29` |
 | per-source solve | [`ksp_solve`](../L1/ksp_solve.md) | firm | `magnetostaticsolver.cpp:66, 76-77` |
-| diagonal Aᵢᵀ K Aᵢ / Iᵢ² | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) | firm | `magnetostaticsolver.cpp:129-131` |
-| off-diagonal Aⱼᵀ K Aᵢ / Iᵢ Iⱼ | [`bilinear-form`](../L1/bilinear-form.md) | firm | `magnetostaticsolver.cpp:135-138` |
+| diagonal Aᵢᵀ K Aᵢ / Iᵢ² | [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) | firm | `magnetostaticsolver.cpp:129-131` |
+| off-diagonal Aⱼᵀ K Aᵢ / Iᵢ Iⱼ | [`bilinear_form`](../L1/bilinear_form.md) | firm | `magnetostaticsolver.cpp:135-138` |
 
 The cross-linked output-product column [`inductance.L1`](./inductance.L1.md) is a SIBLING reference, not a blocker. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters.

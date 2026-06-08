@@ -22,7 +22,7 @@ sub-patterns.
 ## L1 form (LHS)
 
 The pure-functional operator-to-data diagonal extraction
-([`L1/assemble-diagonal`](../L1/assemble-diagonal.md)):
+([`L1/assemble_diagonal`](../L1/assemble_diagonal.md)):
 
     diag = assemble_diagonal(A)            -- diag[i] = Aᵢᵢ, A square N×N
 
@@ -382,7 +382,7 @@ L0 evidence ranges:
 
 L1 anchor:
 
-- `book/src/L1/assemble-diagonal.md` — the firm L1 operator that
+- `book/src/L1/assemble_diagonal.md` — the firm L1 operator that
   all four sub-patterns lower from.
 
 Sibling lowering theme:
@@ -406,7 +406,7 @@ set is exhaustive rather than illustrative.
 exhaustively cited across all four representation sub-patterns (sparse-CSR
 exact / matrix-free accumulation / parallel AMR abs-prolongation / complex
 split) + the partial-domain abort + the two consuming smoother families. The
-structural decomposition matches the firm L1 `assemble-diagonal` entry. The one
+structural decomposition matches the firm L1 `assemble_diagonal` entry. The one
 caveat — the matrix-free high-order-Nedelec approximate diagonal — is a
 **positively-anchored load-bearing non-law** (a Palace comment that names it
 + a test that relaxes its tolerance for it), carried verbatim from the L1

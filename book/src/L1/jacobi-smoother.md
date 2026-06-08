@@ -9,7 +9,7 @@ The thinnest constructed-operator gate at L1 — a single elementwise product, n
 sweep loop, no workspace. The diagonal-preconditioner-apply primitive of
 roadmap §Foundational; the simplest L1 realization of the
 `assemble_diagonal` → `reciprocal` → elementwise-product chain
-[`assemble-diagonal`](./assemble-diagonal.md) names as its downstream consumer.
+[`assemble_diagonal`](./assemble_diagonal.md) names as its downstream consumer.
 
 ## Context
 
@@ -25,7 +25,7 @@ signature.
 `jacobi_smoother` is a **constructed-operator gate** at L1, in the same family
 as [`ksp_solve`](./ksp_solve.md), [`eigsolve`](./eigsolve.md),
 [`chebyshev-smoother`](./chebyshev-smoother.md), and
-[`divfree-projector`](./divfree-projector.md): its primary argument `op` is a
+[`divfree_projector`](./divfree_projector.md): its primary argument `op` is a
 structured opaque value built once at solver setup (the `SetOperator` step,
 `palace/linalg/jacobi.cpp:74-97`), carrying the captured operator `A` only via
 its **assembled inverse diagonal** `dinv`, the damping factor `ω`, and the
@@ -177,13 +177,13 @@ The laws below hold; absences are deliberate.
    where `D = diag(A)`. Witnessed by the setup chain
    `op.AssembleDiagonal(dinv); dinv.Reciprocal();` (`palace/linalg/jacobi.cpp:79-80`).
    Composes the firm
-   [`assemble-diagonal`](./assemble-diagonal.md) law 5 (the diagonal of a
+   [`assemble_diagonal`](./assemble_diagonal.md) law 5 (the diagonal of a
    diagonal operator recovers its defining vector) with the elementwise
    reciprocal: `jacobi_smoother(jacobi_setup(Diag(d), 1.0, ·), x) = d⁻¹ ⊙ x`.
    This is the law that names `jacobi_smoother` as the explicit realization
    of the diagonal-preconditioner-apply chain
    `assemble_diagonal → reciprocal → elementwise_product` that the L1
-   `assemble-diagonal` chapter's §Dependencies block forward-references.
+   `assemble_diagonal` chapter's §Dependencies block forward-references.
 
 3. **Damping absorption (`omega`-into-`dinv`).** For any `ω ≠ 0`:
    `jacobi_setup(A, ω, sf_max) = scale(ω, jacobi_setup(A, 1.0, sf_max))`,
@@ -223,7 +223,7 @@ The laws below hold; absences are deliberate.
    diagonal was assembled exactly (sparse CSR) or approximately (matrix-free
    high-order Nedelec), the smoother applies the assembled `dinv` as-is. The
    load-bearing matrix-free-Nedelec approximation
-   ([`assemble-diagonal`](./assemble-diagonal.md) non-law)
+   ([`assemble_diagonal`](./assemble_diagonal.md) non-law)
    propagates *transparently* through the Jacobi apply: `dinv` may be an
    approximate inverse diagonal, but the smoother *as a preconditioner*
    tolerates this (`palace/linalg/jacobi.hpp:15-16` comment: "which allows
@@ -270,7 +270,7 @@ Laws that explicitly **do not** hold:
   `palace/linalg/ksp.cpp:199`, or as a level-smoother inside multigrid).
 
 - **Bit-determinism across operator representations.** Inherited from
-  [`assemble-diagonal`](./assemble-diagonal.md) non-law: a matrix-free
+  [`assemble_diagonal`](./assemble_diagonal.md) non-law: a matrix-free
   high-order Nedelec `A` yields a *value-approximate* `dinv` (face-dof
   sharing in 3D), so the apply value differs from the assembled-`A` case.
   Load-bearing per CLAUDE.md.
@@ -279,7 +279,7 @@ Laws that explicitly **do not** hold:
 
 `jacobi_smoother` depends (at L1) on:
 
-- [`assemble-diagonal`](./assemble-diagonal.md) — the
+- [`assemble_diagonal`](./assemble_diagonal.md) — the
   `op.AssembleDiagonal(dinv)` setup step (`palace/linalg/jacobi.cpp:79`).
   Reads the operator's main diagonal once at setup, then the operator `A`
   itself is **dropped** — the closure carries only `dinv`. This is the
@@ -288,7 +288,7 @@ Laws that explicitly **do not** hold:
 
 - [`reciprocal`](./reciprocal.md) and [`elementwise_product`](./elementwise_product.md)
   (the diagonal-preconditioner-apply chain in
-  [`assemble-diagonal`](./assemble-diagonal.md) §Dependencies). At L1 the apply *is* a
+  [`assemble_diagonal`](./assemble_diagonal.md) §Dependencies). At L1 the apply *is* a
   single elementwise multiply, so the operator's body is one elementwise-multiply call;
   the setup-side `dinv.Reciprocal()` (`palace/linalg/jacobi.cpp:80`) is one
   elementwise-reciprocal call.
@@ -362,7 +362,7 @@ unused.
 
 The **representation axis of the underlying `A`** (sparse-CSR /
 matrix-free / parallel-wrapped / complex-wrapped) is *collapsed at setup*
-through the [`assemble-diagonal`](./assemble-diagonal.md) operator's own
+through the [`assemble_diagonal`](./assemble_diagonal.md) operator's own
 representation-axis absorption — by the time `dinv` is committed to the
 closure, the representation distinction has been erased. The
 matrix-free-Nedelec approximation propagates as a non-law (law 6 above);
@@ -433,7 +433,7 @@ the variant absorption itself is inherited, not re-stated.
 - `palace/linalg/jacobi.cpp:74-97` — `JacobiSmoother<OperType>::SetOperator(op)`:
   the setup body. `dinv.SetSize(op.Height())` (line 77),
   `op.AssembleDiagonal(dinv)` (line 79), `dinv.Reciprocal()` (line 80) —
-  the [`assemble-diagonal`](./assemble-diagonal.md) consumption +
+  the [`assemble_diagonal`](./assemble_diagonal.md) consumption +
   elementwise reciprocal. Then on `omega == 0.0` (lines 84-89): `auto
   lambda_max = GetLambdaMax(comm, op, dinv); auto lambda_min = (sf_max -
   1.0) * lambda_max; omega = 2.0 / (lambda_min + lambda_max);` — the
@@ -488,10 +488,10 @@ the variant absorption itself is inherited, not re-stated.
   *identical* `GetLambdaMax` definition shared between
   `chebyshev.cpp` and `jacobi.cpp` — the same `spectrum_estimate` opaque
   sub-action.
-- `book/src/L1/assemble-diagonal.md` — the sibling firm L1 operator;
+- `book/src/L1/assemble_diagonal.md` — the sibling firm L1 operator;
   `jacobi-smoother` realizes the
   `assemble_diagonal → reciprocal → elementwise_product` chain that
-  `assemble-diagonal` §Dependencies forward-references.
+  `assemble_diagonal` §Dependencies forward-references.
 - `book/src/L1/chebyshev-smoother.md` — the sibling firm
   constructed-operator gate; the structural template for the L1 entry
   shape. The diagonally-scaled-polynomial-smoother sibling.

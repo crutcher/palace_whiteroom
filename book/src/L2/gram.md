@@ -243,7 +243,7 @@ the fold over columns), not a family of fixed-`k` specializations.
 - **L1 entry kernel:** [`dot`](../L1/dot.md) (firm; the canonical Hermitian hook) — the per-cell
   reduction kernel, with the arg-1-conjugated `⟨x,y⟩ = xᴴ y` convention `gram` inherits
   (`dot.md`:43). The `B`-weighted hook is the M-weighted [`inner_product`](./inner_product.md)
-  member (`bilinear-form` leaf).
+  member (`bilinear_form` leaf).
 - **Sibling (constituent-shared, do NOT merge):** [`orthogonalize`](./orthogonalize.md) (firm) —
   shares the `dot` hook axis and the "project a vector against a subspace `span(X)`" target, but
   `orthogonalize` is the **orthonormal-basis** Gram-Schmidt with **no Gram matrix and no solve**

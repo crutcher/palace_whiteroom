@@ -58,7 +58,7 @@ a single field-operation node in the L3 calculus.
 
 This entry adds **iteration-rotation framing** to the combinator: it names
 `inner_product` as an L3-native whole-tensor reduction consumed inside larger L3 forms
-(most notably the [`krylov-step`](./krylov-step.md) body — CG's `α`/`β` coefficients,
+(most notably the [`krylov_step`](./krylov_step.md) body — CG's `α`/`β` coefficients,
 GMRES orthogonalization coefficients — per the L3 `dot` consumption already recorded at
 `book/src/L3-L2/krylov-step-body-identity.md` §"Applicability conditions" point 3). It
 does not duplicate the combinator's algebraic-law derivations or its L0 evidence list —
@@ -77,7 +77,7 @@ state-threading or convergence predicate to dissolve across the edge. Under the
 vocabulary-shift redirect the combinator IS
 first-class L4 vocabulary that rises to the feature surface as a named verb. The
 combinator also appears inside other L4 composed entries (e.g.
-`book/src/L4/krylov-step.md` §Semantics) as a let-binding.
+`book/src/L4/krylov_step.md` §Semantics) as a let-binding.
 
 ## Signature
 
@@ -138,9 +138,9 @@ and a single-step whole-tensor reduction.
 
 The members are **not separate L3 chapters** — they are this field reduction read at
 fixed axis-values. Each is the combinator with one axis pinned; there is no co-equal
-`L3/dot` / `L3/bilinear-form` floor beside this entry as a *member-of-the-fold*
+`L3/dot` / `L3/bilinear_form` floor beside this entry as a *member-of-the-fold*
 (the firm L3 `dot` leaf is the Hermitian specialization re-expressed through this
-combinator, a specialization note pointing here; `bilinear-form`
+combinator, a specialization note pointing here; `bilinear_form`
 has no standalone L3 entry, it lives as the weighted member here):
 
 ```text
@@ -153,7 +153,7 @@ bilinear_form(x, M, y) = inner_product_M x M y                      -- M-weighte
   with `M = I`. The workhorse specialization (CG coefficients, orthogonalization, NLEPS).
   `dot` at L3 IS this specialization (no standalone leaf chapter — the residual
   `L3/dot` specialization-stub was eliminated, its conjugation
-  variant-axis + krylov-step consuming context folded into this section). The kept named
+  variant-axis + krylov_step consuming context folded into this section). The kept named
   L4 verb [`L4/dot`](../L4/dot.md) re-expresses through this combinator.
 - **`tdot`** — the conjugation axis at value *unconjugated bilinear* (complex-only).
   Co-defined with `dot` (no standalone L3 chapter); carried with the type-API-surface-only
@@ -161,8 +161,8 @@ bilinear_form(x, M, y) = inner_product_M x M y                      -- M-weighte
   from the L2 combinator §"tdot".
 - **`bilinear_form`** — the weight axis at value *general / SPD `M`* (`inner_product_M`),
   realized as the pre-application `inner_product (apply_linop M x) y`. It has no standalone
-  L3 chapter (its L1 leaf `bilinear-form` is firm — an identity-in-form L3 backfill candidate like
-  its `matrix-weighted-norm` cohort-sibling; see `book/src/L3/index.md`); at L3 it is
+  L3 chapter (its L1 leaf `bilinear_form` is firm — an identity-in-form L3 backfill candidate like
+  its `matrix_weighted_norm` cohort-sibling; see `book/src/L3/index.md`); at L3 it is
   this weighted-member note.
 
 The L3 entry differs from the L3 `dot`/`nrm2` leaves in **role**: the leaves mirror one
@@ -204,9 +204,9 @@ CLAUDE.md §Scope; ranks read as their single-rank equivalents); the local-then-
 two-step reappears only in the L1>L0 lowering.
 
 `inner_product` is **consumed inside** larger L3 forms — most notably the
-[`krylov-step`](./krylov-step.md) body (CG's `α = ⟨r, z⟩ / ⟨Ap, p⟩`; GMRES
+[`krylov_step`](./krylov_step.md) body (CG's `α = ⟨r, z⟩ / ⟨Ap, p⟩`; GMRES
 orthogonalization coefficients), where it appears as a per-step let-binding. At L3 it is a
-leaf reduction; the iteration view is what the surrounding `krylov-step` body provides.
+leaf reduction; the iteration view is what the surrounding `krylov_step` body provides.
 
 ## Algebraic laws
 
@@ -243,7 +243,7 @@ so the L3 reader does not have to reach up to L2; [`L2/inner_product`](../L2/inn
 5. **Positive semi-definiteness at the diagonal** (`y = x`): `inner_product x x ∈ ℝ` and
    `inner_product x x ≥ 0`, with equality iff `x = 0` (exact arithmetic); for the weighted
    member with SPD `M`, `inner_product_M x M x ∈ ℝ₊`. This is the law the `nrm2` /
-   `matrix-weighted-norm` **consumer** square-root rests on (§"Consumer"); it is confirmed
+   `matrix_weighted_norm` **consumer** square-root rests on (§"Consumer"); it is confirmed
    by the L0 source (`&x == &y` imag=0 elision; SPD-realness assertion) cited at the L2
    combinator §"Algebraic laws".
 
@@ -281,8 +281,8 @@ Laws that explicitly **do not** hold:
   inner_product (apply_linop M x) y`). The plain/Hermitian/unconjugated members have no
   same-layer L3 dependency (the per-element kernel and the shape-group `S` reduction are at or
   below the L3 layer's resolution).
-- **Consumers (L3)**: [`krylov-step`](./krylov-step.md) (CG/GMRES coefficients). The
-  do-NOT-merge consumers [`nrm2`](#consumer-nrm2-and-matrix-weighted-norm) / `matrix-weighted-norm` are
+- **Consumers (L3)**: [`krylov_step`](./krylov_step.md) (CG/GMRES coefficients). The
+  do-NOT-merge consumers [`nrm2`](#consumer-nrm2-and-matrix-weighted-norm) / `matrix_weighted_norm` are
   `√ ∘ abs ∘ inner_product` at `y=x` — see §"Consumer (NOT an instance)".
 - **Upward reference (L2)**: [`L2/inner_product`](../L2/inner_product.md) (firm) — authoritative on the algebraic laws,
   the conjugation reconciliation, and the L0 evidence list. The L3 form is identity-in-form
@@ -315,19 +315,19 @@ unchanged from the L2 combinator §"Variant axes":
    there is no `tdot_M`.
 
 **Diagonal degeneration (`y = x`) is NOT a variant axis — it is a consumer entry point**
-(collapses the reduction to the norm-squared consumed by `nrm2`/`matrix-weighted-norm`;
+(collapses the reduction to the norm-squared consumed by `nrm2`/`matrix_weighted_norm`;
 §"Consumer"). **Reduction tree is an L0 implementation detail, NOT an L3 variant axis** —
 transparent for value, load-bearing for bit-reproduction (the IEEE non-law); recorded in
 the L2>L1 lowering theme.
 
-## Consumer: nrm2 and matrix-weighted-norm
+## Consumer: nrm2 and matrix_weighted_norm
 
-`nrm2` and `matrix-weighted-norm` are `√ ∘ abs ∘ inner_product` at the diagonal (`y = x`),
+`nrm2` and `matrix_weighted_norm` are `√ ∘ abs ∘ inner_product` at the diagonal (`y = x`),
 **NOT fold/reduction members** — they are **consumers** of this combinator's output:
 
 ```text
 nrm2(x)                  = √ (abs (inner_product x x))         -- √ ∘ abs ∘ inner_product at y = x
-matrix-weighted-norm(x, B) = √ (inner_product_M x B x)        -- SPD B
+matrix_weighted_norm(x, B) = √ (inner_product_M x B x)        -- SPD B
 ```
 
 The `√ ∘ abs` post-step is a downstream scalar map; the norm is not a reduction and does
@@ -361,7 +361,7 @@ fusion-rotation framing names it the canonical fold the fused kernels unfold int
 *value thread is identical*). There is **no L3-L2 theme file** — the identity-in-form
 annotation lives in-line here, per the non-adjacent-identity convention (CLAUDE.md
 §Methodology invariants "Identity rotations across non-adjacent layers are annotated
-in-line"; precedent `book/src/L3/krylov-step.md`, and this entry's own §"Specializations"
+in-line"; precedent `book/src/L3/krylov_step.md`, and this entry's own §"Specializations"
 absorbing the former `L3/dot` leaf's "Downward to L2 (through inner_product)" framing). This section is the **home** the degenerate
 `dot-body-identity` L3>L2 identity-in-named-terms theme was demoted into ("L3>L2 is identity-in-named-terms — no rotation;
 `dot` is the Hermitian specialization of the `inner_product` combinator at both layers";
@@ -396,7 +396,7 @@ to this L3 entry:
 - [§"Specializations"](#specializations) — the
   Hermitian/unconjugated `dot` specialization (the residual standalone `L3/dot` leaf,
   firm, was eliminated; its conjugation variant-axis +
-  no-sequential-obstruction verdict + krylov-step consuming context are folded here).
+  no-sequential-obstruction verdict + krylov_step consuming context are folded here).
 - [§"Consumer (NOT an instance)"](#consumer-nrm2-and-matrix-weighted-norm) — the
   `√ ∘ abs ∘ inner_product` consumer `nrm2` (the residual standalone `L3/nrm2` leaf, firm
   was eliminated; do-NOT-merge boundary preserved — NOT a member).
@@ -420,7 +420,7 @@ to this L3 entry:
 - **L3**: the same reduce-to-scalar reduction rendered as a single whole-tensor
   field-operation node in the iteration-rotation calculus — no element loop, no sequential
   obstruction (parallel-clean in exact arithmetic), consumed inside larger L3 forms
-  (`krylov-step`). The combinator IS the L3 entry; the conjugation/element-type/weight
+  (`krylov_step`). The combinator IS the L3 entry; the conjugation/element-type/weight
   specializations are notes under it.
 
 The two layers' entries are **value-thread-isomorphic** on the reduction itself. The L3

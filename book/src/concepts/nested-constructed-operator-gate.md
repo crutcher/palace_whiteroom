@@ -7,8 +7,8 @@ edges:
     - concepts/ksp_solve
     - concepts/variant-absorption
     - L1/eigsolve
-    - L1/divfree-projector
-    - L1/floquet-correction
+    - L1/divfree_projector
+    - L1/floquet_correction
     - L1/jacobi-smoother
     - L1/chebyshev-smoother
     - L1/ksp_solve
@@ -41,7 +41,7 @@ The *nested* shape is one level up: the closure's sub-field is **itself a gate**
   (`chebyshev-smoother`), `apply_linop`'s operand argument. The field is applied as a
   matrix-vector product; there is no inner solve loop.
 - **gate field** → nesting. `E.linear : Solver[A]` (`eigsolve`), `P.ksp : Solver[P.M]`
-  (`divfree-projector`). The field is itself a construction-bound solver carrying its
+  (`divfree_projector`). The field is itself a construction-bound solver carrying its
   own iteration, preconditioner, tolerances, and variant absorption.
 
 The pattern is structural to the whole constructed-operator family — a solver
@@ -57,7 +57,7 @@ mutation-rotation theme lowers the outer gate, the inner gate's iteration **stay
 interior to the inner gate's OWN lowering theme** and does not leak into the outer
 theme. At the outer theme's resolution the inner gate is an **opaque action**:
 
-- `divfree-projector`'s `ksp->Mult(rhs, psi)` is the opaque `K⁻¹` action; its CG
+- `divfree_projector`'s `ksp->Mult(rhs, psi)` is the opaque `K⁻¹` action; its CG
   iteration is interior to [`ksp_solve`](./ksp_solve.md) and does not appear in the
   divfree theme (`book/src/L1-L0/divfree-projector-mutation-rotation.md:108-113`).
 - `eigsolve`'s ten `opInv->Mult(b, x)` call sites are each the opaque inner-solve
@@ -96,35 +96,35 @@ Three FIRM L1 operators exhibit the gate-carrying-gate shape; a fourth site is l
   source-anchored, so `eigsolve` is a clean FIRM instance of this shape independent of
   that caveat.
 
-- **`divfree-projector`** (firm) — **one** nested gate. The
+- **`divfree_projector`** (firm) — **one** nested gate. The
   closure `P` binds `P.ksp : Solver[P.M]` (a CG solver bound to the ε-weighted H1
   mass-like operator `P.M` as both operator and preconditioner target), materialised
   at construction (`book/src/L1-L0/divfree-projector-mutation-rotation.md:193-198`).
   Its per-call `ksp->Mult(rhs, psi)` is the opaque inner H1 solve
   (`book/src/L1-L0/divfree-projector-mutation-rotation.md:108-113`,
-  `book/src/L1/divfree-projector.md`).
+  `book/src/L1/divfree_projector.md`).
 
-- **`floquet-correction`** (firm) — **one** nested gate. The closure `F`
+- **`floquet_correction`** (firm) — **one** nested gate. The closure `F`
   binds `F.ksp : Solver[F.M_RT]` (a CG solver preconditioned by `JacobiSmoother`,
   bound to the RT vector-FE mass operator `F.M_RT` as both operator and
   preconditioner target), materialised at construction
   (`palace/linalg/floquetcorrection.cpp:60-67`). Its per-call `ksp->Mult(rhs, y)`
   is the opaque inner RT mass solve (`book/src/L1-L0/floquet-correction-mutation-rotation.md`
-  Sub-pattern A, `book/src/L1/floquet-correction.md`). Structurally isomorphic to
-  `divfree-projector` but strictly thinner (no boundary-zeroing, no gradient
+  Sub-pattern A, `book/src/L1/floquet_correction.md`). Structurally isomorphic to
+  `divfree_projector` but strictly thinner (no boundary-zeroing, no gradient
   correction, no empty-boundary nullspace pin). Element-type scope-out:
   `<ComplexVector>` only (the first L1 nested-gate instance with a
   deliberately-narrowed element-type scope).
 
 **Transitive nesting (three-deep) — two independent chains.** Both `eigsolve` and
-`floquet-correction` close a three-level nested chain, confirming the pattern is
+`floquet_correction` close a three-level nested chain, confirming the pattern is
 load-bearing across multiple pipelines (not eigsolve-incidental).
 
 **Chain 1 (eigsolve pipeline).** `E.projector : Maybe DivFreeSolver` means the
-`divfree-projector` gate is *itself* a sub-field of the `eigsolve` closure — so the
+`divfree_projector` gate is *itself* a sub-field of the `eigsolve` closure — so the
 eigsolve and divfree instances are not merely parallel, they are transitively nested:
 
-    eigsolve  ⊃  divfree-projector  ⊃  ksp_solve
+    eigsolve  ⊃  divfree_projector  ⊃  ksp_solve
       (E)            (E.projector)         (P.ksp)
 
 The eigsolve outer loop carries a divfree projector, which carries its own inner CG
@@ -134,7 +134,7 @@ solve.
 [`solver-as-operator`](./solver-as-operator.md) the JacobiSmoother is itself a firm
 L1 constructed-operator gate ([`jacobi-smoother`](../L1/jacobi-smoother.md)):
 
-    floquet-correction  ⊃  ksp_solve  ⊃  jacobi-smoother
+    floquet_correction  ⊃  ksp_solve  ⊃  jacobi-smoother
       (F)                    (F.ksp)        (F.ksp.preconditioner)
 
 The driver-side floquet correction carries an inner CG solve, which carries a

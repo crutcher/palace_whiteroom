@@ -3,7 +3,7 @@ edges:
   reference:
     - concepts/rotation              # peer methodology concept
     - concepts/constructed-operators # canonical full-absorption route
-    - L2/krylov-step                 # worked example slices (CG / GMRES variant axes)
+    - L2/krylov_step                 # worked example slices (CG / GMRES variant axes)
 ---
 
 # variant absorption
@@ -207,7 +207,7 @@ check #9 flags this.
 
 ## Slices that use this methodology
 
-- [`krylov-step` (CG instance)](../L2/krylov-step.md) — three axes all absorbed parametrically.
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — six axes; side absorbed via
+- [`krylov_step` (CG instance)](../L2/krylov_step.md) — three axes all absorbed parametrically.
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — six axes; side absorbed via
   constructed-operator, others parametric or via primitive-contract
   (orthogonalization variant).

@@ -160,7 +160,7 @@ This shape is load-bearing, and it follows three principles:
 > postprocess unit tests as L0-equivalent documentation — both `sparameter_reduce` and
 > `eigenfreq_qfactor_reduce` advanced to `rough-in (test-coverage-bounded)` this way, and a
 > fourth reduce verb (`domain_energy_reduce`, the per-domain energy-table fold) was authored;
-> a new firm L1 primitive `eigenvalue-untransform` (the per-mode eigenvalue→ω map) discharged
+> a new firm L1 primitive `eigenvalue_untransform` (the per-mode eigenvalue→ω map) discharged
 > the *structure*-side gate of `eigenfreq_qfactor_reduce`. The batch-25 reading was that the
 > verbs' *second* gate (full `firm`) needs a **positive assembly test** absent from the Palace
 > corpus, so the surface was at an in-scope ceiling. **Batch-26 showed that ceiling is
@@ -172,9 +172,9 @@ This shape is load-bearing, and it follows three principles:
 > over firm structure and the missing assembly test does not gate them (the same escape that
 > firms `apply_linop` / `participation_ratio`). The two-condition rule is sharp: it applies iff
 > (i) all folded primitives are firm and (ii) the assembly is axiom-free arithmetic. It does
-> NOT yet apply to `gram_reduce` / `domain_energy_reduce` — their folded `matrix-weighted-norm`
+> NOT yet apply to `gram_reduce` / `domain_energy_reduce` — their folded `matrix_weighted_norm`
 > energy/Gram forms are still rough-in (a reduction is as firm as its least-firm primitive),
-> gated behind the `matrix-weighted-norm` √-entry-point cascade whose norm-axiom laws genuinely
+> gated behind the `matrix_weighted_norm` √-entry-point cascade whose norm-axiom laws genuinely
 > ARE theorems the source only numerically asserts (the escape was ruled inapplicable there).
 > So the in-scope law-confidence route is now exhausted for the two all-primitives-firm verbs;
 > the remaining reduce-verb tail is foundation-gated on that one cascade.
@@ -215,12 +215,12 @@ This shape is load-bearing, and it follows three principles:
 > `gram_reduce` (rough-in), so they correctly STAY `seed` on a genuine own-constituent gate, not a
 > sibling blocker. Six columns stay `seed` on real own-constituent gates: `electrostatic` /
 > `magnetostatic` / `capacitance` / `inductance` (own `gram_reduce` rough-in), `energy-fields` (own
-> `domain_energy_reduce` + `matrix-weighted-norm` rough-in), `boundary-mode` (own waveguide-mode
+> `domain_energy_reduce` + `matrix_weighted_norm` rough-in), `boundary-mode` (own waveguide-mode
 > readout unhomed). A third firm-on-positive-structure promotion this arc (`solve_family`, c086 —
 > element-independence read off the `const BaseKspSolver::Mult` body, the escape now reaching the
 > solve-family combinator) narrowed `electrostatic`/`magnetostatic` from a two-constituent to a
 > single-constituent (`gram_reduce`) gate — but did not flip them. **The remaining lever at this
-> point in the arc was a single convergent foundation-blocker: the `matrix-weighted-norm`
+> point in the arc was a single convergent foundation-blocker: the `matrix_weighted_norm`
 > √-entry-point cascade** (since discharged-and-landed batch-29, see below), which
 > gated `gram_reduce` (→ four columns) AND `domain_energy_reduce` (→ energy-fields) — 5 of the 6
 > stay-seed columns converged on it. The in-scope law-confidence route is exhausted for the
@@ -230,7 +230,7 @@ This shape is load-bearing, and it follows three principles:
 > dischargeable at all, before any heavy ~30-file cascade wave.
 >
 > **Both norm-axiom law-sides discharged — the firm flip is now LICENSED (batch-28).** The two
-> scoped dischargeability probes the prior batch queued BOTH discharged the `matrix-weighted-norm`
+> scoped dischargeability probes the prior batch queued BOTH discharged the `matrix_weighted_norm`
 > norm-axiom law confidence. The **structure-side** (c088) showed the three inner-product-structure
 > laws (triangle / Cauchy–Schwarz / parallelogram) are inner-product-space THEOREMS that hold for
 > any inner-product-induced norm, with their SPD premise satisfied **provably-by-construction** at
@@ -247,7 +247,7 @@ This shape is load-bearing, and it follows three principles:
 > the same situation as the four prior firm-on-positive-structure escape promotions (`apply_linop`,
 > `eigenfreq_qfactor_reduce`, `sparameter_reduce`, `solve_family`). **The escape applies → the firm
 > flip is GO.** The full `firm` flip plus its ~30-file cross-reference cascade became the batch-29
-> LEAD (LANDED CLEAN c091, see below); firming `matrix-weighted-norm` was the convergent foundation-unblock for the downstream
+> LEAD (LANDED CLEAN c091, see below); firming `matrix_weighted_norm` was the convergent foundation-unblock for the downstream
 > `gram_reduce` / `domain_energy_reduce` reduce verbs and, through them, 5 of the 6 stay-`seed`
 > feature columns (`electrostatic` / `magnetostatic` / `capacitance` / `inductance` / `energy-fields`).
 > The arc illustrates the FLOW's load-bearing pattern: a heavy cascade wave is *gated on cheap
@@ -256,32 +256,32 @@ This shape is load-bearing, and it follows three principles:
 
 > **The √-cascade LANDED; the foundation-blocker tail is being worked off systematically
 > (batch-29).** The GO firm flip + cascade LANDED CLEAN (c091): a single 4-dispatch structural
-> wave flipped `matrix-weighted-norm` to `firm` and propagated the cascade across ~30 files,
-> yielding **three** firm promotions — the planned `matrix-weighted-norm` (L1) PLUS two bonus
+> wave flipped `matrix_weighted_norm` to `firm` and propagated the cascade across ~30 files,
+> yielding **three** firm promotions — the planned `matrix_weighted_norm` (L1) PLUS two bonus
 > cascade-yield promotions (`domain_energy_reduce`, the per-domain energy-table fold, to firm L4;
 > the `energy-fields` feature column to firm) — with the honest residual gates preserved at that
-> point (`gram_reduce` and `bilinear-form` were still `rough-in`; four columns still `seed`). The
-> long-held √-foundation-blocker is discharged. With the diagonal `matrix-weighted-norm` now firm,
-> the convergent foundation-blocker collapsed onto the SINGLE remaining primitive **`bilinear-form`**
+> point (`gram_reduce` and `bilinear_form` were still `rough-in`; four columns still `seed`). The
+> long-held √-foundation-blocker is discharged. With the diagonal `matrix_weighted_norm` now firm,
+> the convergent foundation-blocker collapsed onto the SINGLE remaining primitive **`bilinear_form`**
 > (the off-diagonal operator-weighted form, the sole residual gate on `gram_reduce`). The same
 > cheap-probe pattern was applied immediately (c092): a scoped dischargeability probe on
-> `bilinear-form` returned **DISCHARGE** — and materially CLEANER than `matrix-weighted-norm`
+> `bilinear_form` returned **DISCHARGE** — and materially CLEANER than `matrix_weighted_norm`
 > (laws 1-6 are pure-linearity syntactic read-offs over the firm `dot` + `apply_linop` +
-> `matrix-weighted-norm` constituents, with NO inner-product-norm theorem content needing a
+> `matrix_weighted_norm` constituents, with NO inner-product-norm theorem content needing a
 > structure-side probe; laws 7-8 are M-symmetry-conditional with both on-disk witnesses). The
-> `bilinear-form` firm flip + its cascade — a BIGGER fan-out than the `matrix-weighted-norm`
+> `bilinear_form` firm flip + its cascade — a BIGGER fan-out than the `matrix_weighted_norm`
 > cascade (four columns flip, not one) — was queued as the next gated wave, and **LANDED CLEAN at
 > cycle-095 (batch-30, see below).** The probe-then-wave playbook (now a named procedure, skill
 > `foundation-blocker-dischargeability-probe`) was run down the foundation tail one convergent
-> blocker at a time: `matrix-weighted-norm` discharged-and-landed (c091), `bilinear-form`
-> discharged-and-landed (c095). With the `bilinear-form` cascade landed, the convergent
+> blocker at a time: `matrix_weighted_norm` discharged-and-landed (c091), `bilinear_form`
+> discharged-and-landed (c095). With the `bilinear_form` cascade landed, the convergent
 > foundation-blocker tail of the reduce-verb cohort is **worked off**; this supersedes the prior
-> batches' "single convergent blocker is the `matrix-weighted-norm` √-cascade" framing entirely.
+> batches' "single convergent blocker is the `matrix_weighted_norm` √-cascade" framing entirely.
 
-> **The `bilinear-form` cascade LANDED + the artifact gained two mechanically-checkable health
+> **The `bilinear_form` cascade LANDED + the artifact gained two mechanically-checkable health
 > axes (batch-30 — the GRADED-STACK campaign).** Two arcs composed across cycles 094/095/096.
-> **(1) The `bilinear-form` cascade (c095).** The queued wave landed in a single 7-dispatch cycle:
-> `bilinear-form` (L1) → `firm` (the firm-on-positive-structure escape), clearing `gram_reduce`'s
+> **(1) The `bilinear_form` cascade (c095).** The queued wave landed in a single 7-dispatch cycle:
+> `bilinear_form` (L1) → `firm` (the firm-on-positive-structure escape), clearing `gram_reduce`'s
 > sole residual gate so `gram_reduce` (L4) → `firm`, propagating under the OWN-COMPOSITION rule to
 > **four output-product/driver feature columns** (`capacitance` / `inductance` / `electrostatic` /
 > `magnetostatic`) flipping `seed` → `firm` — the feature spine reaching 11-firm / 1-seed (only
@@ -314,7 +314,7 @@ This shape is load-bearing, and it follows three principles:
 >   campaign typed the feature-root closure + the high-fan-out frontier first (incremental, lazy
 >   tail), opened a **bounded baseline-exception ledger** for the pre-existing rank violations, and
 >   burned it down: the rank linter independently rediscovered the hand-tracked firm-rests-on-rough-in
->   cascade as **22 violations at the c094 baseline → 1 (c095, after the `bilinear-form` cascade
+>   cascade as **22 violations at the c094 baseline → 1 (c095, after the `bilinear_form` cascade
 >   cleared ~10 genuine gaps and the typed-frontmatter retyping cleared ~11 prose-parse false
 >   positives) → 0 (c096)** — the typed subset is now well-founded with zero rank gaps. The first
 >   `roadmap_goal`-adjacent vocabulary gap, the firm L4 `preconditioning-framework`, was authored;
@@ -328,7 +328,7 @@ This shape is load-bearing, and it follows three principles:
 > discharged (batch-31).** The campaign's last open phase, P2 corpus depopulation, completed across
 > cycles 097/098/099: the 9 Phase-1 slices were absorbed (each slice's load-bearing claims repointed
 > to firm non-slice homes citing L0 directly, the one genuinely-unlifted datum — the CG v0.5 worked
-> example — absorbed firm into `L4/krylov-step.md`) and **DELETED — the corpus went 9 → 0 and
+> example — absorbed firm into `L4/krylov_step.md`) and **DELETED — the corpus went 9 → 0 and
 > `book/src/spec/` no longer exists**. This eliminates the *frozen second source of truth* the
 > graded-stack model was built to dissolve: a slice was a representation NOT beholden to
 > combinator-refactoring or fusion, a brake on the very vocabulary-shift freedom the redirect grants
@@ -392,7 +392,7 @@ This shape is load-bearing, and it follows three principles:
 > With the linter now reading the true picture, cycles 106/107/108 drove reachability from 81 to **102** with
 > the rank invariant HELD at 0 and `unresolved_depends_on_targets` driven to 0: c106 landed the WAVE-3
 > op-chapter `uses-record` typing (the solve-kernel pair + `solve_family`/`fold_solve`/`eliminate_bc`),
-> rescuing five of the six internal solve records and making `krylov-step` root-reachable; c107 grounded the
+> rescuing five of the six internal solve records and making `krylov_step` root-reachable; c107 grounded the
 > firm-but-absorbed BC-elimination + divfree clusters from the feature-spine roots; c108 ran a systematic
 > `lowers-to` grounding pass down the BC + divfree lowering chains so the L1/L0 lowering homes became
 > reachable. The arc's load-bearing lesson is a **new disposition for the GC sweep** (a 2026-06-05 user
@@ -410,13 +410,13 @@ This shape is load-bearing, and it follows three principles:
 > **The grounding campaign ran to its faithful limit, and the residual garbage was named (batch-35).** Cycles
 > 109/110/111 drove reachability from 102 to **122** (rank invariant HELD at 0 throughout): c109 grounded the
 > four on-spine L2-L1 lowering themes; c110 grounded the reduce-to-scalar chain (`dot`/`nrm2`/`inner_product`)
-> and the orthogonalize leg with a *single* faithful `L4/krylov-step` body edit that cascaded the whole chain;
+> and the orthogonalize leg with a *single* faithful `L4/krylov_step` body edit that cascaded the whole chain;
 > c111 grounded the orthogonalize chain down to L0. The batch's load-bearing lesson is the **boundary of
 > grounding**: not every unreachable firm node *can* be grounded, because not every one has a faithful reachable
 > depender. The reduce/orthogonalize verbs *do* (the solve body genuinely calls them), so they were grounded.
 > But the chebyshev/jacobi preconditioner leg is *absorbed into the constructed `op.T`* (the kernel folds
 > `apply_linop op.T`, never naming a concrete preconditioner), the L3 orthogonalize iteration-view is composed
-> only at its L2 surface (krylov-step composes `L2/orthogonalize`, not the L3 view), and `L2/gram` is reached
+> only at its L2 surface (krylov_step composes `L2/orthogonalize`, not the L3 view), and `L2/gram` is reached
 > only through the demand-gated `deflate`. Forcing an edge for any of these would *invert a real dependency
 > direction or assert a constituent-use that does not exist* — the over-edge the priority order exists to
 > prevent. So the third disposition activated: these firm-but-absorbed/unconsumed nodes go into an explicit
@@ -503,7 +503,7 @@ This shape is load-bearing, and it follows three principles:
 > maps exhaustively to the ratified reachability baseline-exceptions; no in-scope coverage hole). The probe's
 > load-bearing finding was a **stale baseline-exception premise**: RE10 (the de-Rham `interpolator`) had been
 > ratified as "no faithful inbound consumer yet," but the now-firm `waveguide_mode_reduce` (and the firm
-> `divfree-projector`) *do* consume it by name — so a correct baseline-exception had silently become a missed
+> `divfree_projector`) *do* consume it by name — so a correct baseline-exception had silently become a missed
 > GROUND the moment its consumer firmed. The batch-38 meta-phase discharged RE10 (migrating the faithful grounding
 > to the next batch) and installed a new standing guard: the every-batch baseline-exception review must
 > re-verify each "no faithful consumer" premise against any consumer that firmed in the batch. The lesson the arc
@@ -807,7 +807,7 @@ the link constrains neither rank nor liveness. A reviewer reads both the black-b
 version side by side and checks they match; the `lowering-verifier` audits the correspondence. The founding kernels are
 the libCEED element-quadrature leaf (impl = matrix-free FE operator application as tensor contractions), the
 triangular-solve / GS-SSOR relaxation (impl behind the multigrid smoother), and the SLEPc eigsolve loop (impl =
-constructive Lanczos/Arnoldi/Krylov-Schur in the existing `lanczos_step` / `krylov-step` vocabulary).
+constructive Lanczos/Arnoldi/Krylov-Schur in the existing `lanczos_step` / `krylov_step` vocabulary).
 
 **Carve-out:** enum-only-stubs (config tokens routed to an abort, e.g. MINRES/BiCGStab) are *not* external-kernel
 callouts and are *not* spine dependencies — they stay single-node obstructions and get no implementation. The

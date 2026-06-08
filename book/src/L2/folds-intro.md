@@ -23,7 +23,7 @@ load-bearing and carried in both entries' dep-map rows:
 
 - [`inner_product`](./inner_product.md) — folds the **length axis** to a `Scalar`
   (`foldl (+) zero (zipWith kernel x y)`); the conjugation / element-type / weight family
-  of `dot` / `tdot` / `bilinear-form`.
+  of `dot` / `tdot` / `bilinear_form`.
 - [`linear_combination`](./linear_combination.md) — folds the **term axis**, keeping
   `Tensor[N]` (`foldl (\acc (a,t) -> acc + a·t) zeros pairs`); the arity family of
   `scal` / `axpy` / `axpby` / `axpbypcz`.

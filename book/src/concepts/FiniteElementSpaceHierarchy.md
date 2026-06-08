@@ -125,7 +125,7 @@ The ≥2-consumer evidence for the standalone page (producer + GMG column):
 
 **Further (non-blocking) fan-out** — the same `GeometricMultigridSolver` (hence the same
 hierarchy-prolongation consumption) is also constructed by the firm
-[`divfree-projector`](../L1/divfree-projector.md) (`palace/linalg/divfree.cpp:128`), the
+[`divfree_projector`](../L1/divfree_projector.md) (`palace/linalg/divfree.cpp:128`), the
 H(curl) mass-matrix solver (`palace/linalg/hcurl.cpp:101`), and the AMR flux-recovery error
 estimator (`palace/linalg/errorestimator.cpp:86`). These are additional driver-agnostic
 consumers of the hierarchy via the GMG infrastructure column; they corroborate the record's

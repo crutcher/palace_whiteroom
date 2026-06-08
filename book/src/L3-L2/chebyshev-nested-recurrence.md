@@ -292,7 +292,7 @@ non-laws in-line, not narrated here.
 vocabulary is introduced. The L3 form referenced in the LHS is the firm
 [`L3/chebyshev`](../L3/chebyshev.md) entry; the L2 form referenced in the RHS is the firm
 [`L2/chebyshev-iteration`](../L2/chebyshev-iteration.md) entry. The `iterate_while_pure_L3` /
-`iterate_while_pure` combinators are firm (`book/src/L4/iterate-while.md`); they are
+`iterate_while_pure` combinators are firm (`book/src/L4/iterate_while.md`); they are
 referenced, not introduced.
 
 ## Erasure-scope contrast
@@ -395,7 +395,7 @@ Strawman / combinator evidence (the reduction-chain backing):
 - `book/src/semantics/index.md` §3.7 — the `iterate_while` conventions source; each L3 tail recursion
   is the unfolded reduction sequence of the bounded `iterate_while_pure` combinator, the L2 driver/role
   reference is the folded form.
-- `book/src/L4/iterate-while.md` (firm) — the firm `iterate_while`/`iterate_while_pure`
+- `book/src/L4/iterate_while.md` (firm) — the firm `iterate_while`/`iterate_while_pure`
   combinators both forms reference (L3 explicit tail recursions / L2 loop-as-driver).
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` (firm) — publishes the L3
   tail-recursion rendering of a bounded loop; the conventions source the L3 form's explicit recursion

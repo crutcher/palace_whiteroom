@@ -7,7 +7,7 @@ edges:
   reference:
     - L2/deflate
     - L2/eigsolve
-    - L2/incremental-least-squares
+    - L2/incremental_least_squares
     - L2/ksp_solve
     - L2/orthogonalize
 ---
@@ -21,12 +21,12 @@ opaque parameter that selected a variant is turned into the visible per-variant 
 - [`orthogonalize`](./orthogonalize.md) — the Gram-Schmidt `project ▷ subtract` composition
   (`dot` ▷ `axpy`); names the `gs_orthog ∈ {MGS, CGS, CGS2}` parameter as the
   collective-shape residual axis. First named-composition exemplar.
-- [`incremental-least-squares`](./incremental-least-squares.md) — the GMRES / FGMRES
+- [`incremental_least_squares`](./incremental_least_squares.md) — the GMRES / FGMRES
   running-QR / Givens-stream small-dense LS update (`replay ▷ generate ▷ apply ▷ apply_rhs`
   ▷ back-solve); FIXED sub-step sequence (replay-before-generate non-commutative).
 - [`ksp_solve`](./ksp_solve.md) — the **outer-driver** wrap: the restart / convergence-test
-  `iterate_while` fold of the `krylov-step` kernel into a complete solve. Composes one tier
-  up (over `krylov-step`, not its L1 primitives); establishes the non-identity L2↔L1 hop.
+  `iterate_while` fold of the `krylov_step` kernel into a complete solve. Composes one tier
+  up (over `krylov_step`, not its L1 primitives); establishes the non-identity L2↔L1 hop.
 - [`eigsolve`](./eigsolve.md) — the shift-invert spectral-transform application
   `apply_linop(M) ▷ ksp_solve((K − σM)⁻¹)`; the per-step body the opaque-library
   eigen-iteration folds (the fold stays library-owned — load-bearing for the L3

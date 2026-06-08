@@ -47,7 +47,7 @@ Capability typing is *complementary* to [`variant-absorption`](./variant-absorpt
 
 ## Relation to state stratification
 
-Capability typing operates *within* a single stratum of [`state-stratification`](./state-stratification.md). The brands distinguish roles among same-stratum values (e.g., two sim-state operators); they do not stratify state by lifetime (build-time vs run-time) — that is state-stratification's job. The two disciplines compose: a state field can be (sim-state, role-A) vs (sim-state, role-B), or (build-time-params, role-A), etc.
+Capability typing operates *within* a single stratum of [`state-stratification`](./state-stratification.md). The brands distinguish roles among same-stratum values (e.g., two SimState operators); they do not stratify state by lifetime (build-time vs run-time) — that is state-stratification's job. The two disciplines compose: a state field can be (SimState, role-A) vs (SimState, role-B), or (build-time-params, role-A), etc.
 
 ## Background
 

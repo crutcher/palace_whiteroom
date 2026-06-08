@@ -2,7 +2,7 @@
 edges:
   reference:
     - L1/scal                      # authoritative operator entry (definition)
-    - L2/krylov-step               # use-site cross-link (basis normalization / search-dir rescale)
+    - L2/krylov_step               # use-site cross-link (basis normalization / search-dir rescale)
 ---
 
 # scal
@@ -41,7 +41,7 @@ scal(α, x)           // x ← α x; x mutated
 
 ## Slices that use this primitive
 
-- [`krylov-step` (CG instance)](../L2/krylov-step.md) — `p ← (β/β_prev) p` before adding `z`
+- [`krylov_step` (CG instance)](../L2/krylov_step.md) — `p ← (β/β_prev) p` before adding `z`
   (fused at L0 with the subsequent `p += z`).
-- [`krylov-step` (GMRES instance)](../L2/krylov-step.md) — basis normalization `v_{j+1} ←
+- [`krylov_step` (GMRES instance)](../L2/krylov_step.md) — basis normalization `v_{j+1} ←
   v_next / H[j+1, j]`.

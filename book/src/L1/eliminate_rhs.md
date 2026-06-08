@@ -179,7 +179,7 @@ Laws that explicitly **do not** hold:
   `dbc_tdof_list`. These are masking projections onto the essential-dof subspace: the gather (`:64`,
   writes `x`) and the `DIAG_ONE` pin (`:76`, writes the boundary data) are the **general**
   `set_subvector` write-mask, of which the `DIAG_ZERO` arm (`:80`, writes zero) is exactly the
-  zeroing special case `set_subvector_zero` that [`divfree-projector`](./divfree-projector.md)
+  zeroing special case `set_subvector_zero` that [`divfree_projector`](./divfree_projector.md)
   §Dependencies names (`concepts/set_subvector_zero.md`). Reused here as the essential-dof pin, they
   do not introduce a new spine operator.
 
@@ -211,7 +211,7 @@ term-list machinery.
 **existing firm-spine vocabulary** — [`apply_linop`](./apply_linop.md) for the operator action
 `K·x_bc`, [`axpy`](./axpy.md) for the RHS subtraction `b − K·x_bc`, and the already-named
 `set_subvector` essential-dof masking projection (shared with
-[`divfree-projector`](./divfree-projector.md)) for the gather/pin. The body needs **no vocabulary the
+[`divfree_projector`](./divfree_projector.md)) for the gather/pin. The body needs **no vocabulary the
 spine lacks**: the L0 prolongation/restriction round-trip is the assembled operator's own true-dof
 action (absorbed into `apply_linop`), and the diagonal-policy branch is a parameter on the
 essential-row pin, not a new primitive. Source line-by-line: `SetSubVector` gather `:64` →
@@ -220,7 +220,7 @@ prolongation `:65` → `A->Mult` (apply_linop) `:69` → restriction `:72` → `
 
 The only sub-step that is not a named spine operator is the essential-dof mask (`SetSubVector` over
 `dbc_tdof_list`). This is NOT a spine gap — it is the general `set_subvector` write-mask, whose
-zeroing special case `divfree-projector` names and uses as `set_subvector_zero`
+zeroing special case `divfree_projector` names and uses as `set_subvector_zero`
 (`concepts/set_subvector_zero.md`): the `DIAG_ZERO` pin arm is exactly that zeroing case, while the
 gather and the `DIAG_ONE` pin are its general (boundary-data-writing) form. Reusing it as the
 essential-dof pin introduces no new vocabulary.
@@ -264,7 +264,7 @@ of a dedicated `eliminate_rhs` unit test does not gate them.
   NOT part of the assembly fold — the upstream side of `eliminate_rhs` law 4.
 - `book/src/L1/apply_linop.md` — the operator-action dependency (`K·x_bc`).
 - `book/src/L1/axpy.md` — the RHS-subtraction dependency (`b − K·x_bc`).
-- `book/src/L1/divfree-projector.md` — the `set_subvector` essential-dof-mask concept reuse precedent.
+- `book/src/L1/divfree_projector.md` — the `set_subvector` essential-dof-mask concept reuse precedent.
 
 ## Downward to L0
 

@@ -31,7 +31,7 @@ edges:
     - target: concepts/constructed-operators
     - target: semantics/index           # §1.2.1–§1.2.2 named-shape-group convention; §3.7 iterate_while — USED + linked, not restated
 variant_axes:
-  - problem-symmetry (Hermitian = eigsolve-impl's lanczos_step arm / non-Hermitian = krylov-step arm — selects the linear-eigensolve seed recurrence; inherited via eigsolve-impl)
+  - problem-symmetry (Hermitian = eigsolve-impl's lanczos_step arm / non-Hermitian = krylov_step arm — selects the linear-eigensolve seed recurrence; inherited via eigsolve-impl)
   - deflation-cardinality k (variadic — grows by one converged column per eigenpair, nleps.cpp:613-619)
   - block-form (Schur-modified NLEPS S = λI − H / bare Galerkin S = I — inherited from L2/deflate's op.block axis)
   - convergence-target (eigenvalue-in-range vs out-of-range guess-index / nev increment, nleps.cpp:623-630)

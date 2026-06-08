@@ -1,7 +1,7 @@
 # incremental-least-squares-composition-lowering
 
 The fan-down rotation for the GMRES / FGMRES running-QR / Givens-rotation stream. Lowers the
-firm L2 named composition [`incremental-least-squares`](../L2/incremental-least-squares.md) — the
+firm L2 named composition [`incremental_least_squares`](../L2/incremental_least_squares.md) — the
 per-column `replay ▷ generate ▷ apply ▷ apply_rhs` pipeline with a terminal back-solve, threaded
 across the Arnoldi iteration so the growing upper-Hessenberg least-squares problem
 `min ‖β·e₁ − H̄·y‖₂` is triangularised incrementally and the residual norm `β = |s[j+1]|` falls out
@@ -13,7 +13,7 @@ running-QR update, opaque face) — equivalently, into the explicit scalar Given
 ([`linear_combination`](../L2/linear_combination.md)). This theme records which finite-precision
 reduction path each lowered variant pins (the **load-bearing rotation-stream non-associativity** the
 L2 entry deferred to "the forthcoming L2>L1 theme",
-[`incremental-least-squares`](../L2/incremental-least-squares.md) §Algebraic-laws non-law
+[`incremental_least_squares`](../L2/incremental_least_squares.md) §Algebraic-laws non-law
 (`:278-285`) / §Dependencies) and the **replay-before-generate ordering** that is the running-QR's
 structural invariant. Sibling to
 [`orthogonalize-composition-lowering`](./orthogonalize-composition-lowering.md) (the other
@@ -28,7 +28,7 @@ one-L2-composition-fans-into-L1-vocabulary theme.
 
 The L2 form is the named running-QR composition over the incremental factorisation state `st` and a
 freshly-arrived Hessenberg column `h_new`, parameterised by the basis-kind and Givens-element-type
-axes ([`incremental-least-squares`](../L2/incremental-least-squares.md) §Signature, §Semantics):
+axes ([`incremental_least_squares`](../L2/incremental_least_squares.md) §Signature, §Semantics):
 
     incremental_least_squares :: (op: LsqOp, st: LsqState, h_new: HessCol) -> { state: LsqState', beta: RealScalar }
 
@@ -66,8 +66,8 @@ factorisation state identically.
 
 ### Face 1 — the opaque single-column leaf (the fused face)
 
-The L1 column-streaming leaf [`ls_update_column`](../L1/ls-update-column.md) (the per-column running-QR update; per the
-[`concepts/incremental-least-squares`](../concepts/incremental-least-squares.md) contract `:14`),
+The L1 column-streaming leaf [`ls_update_column`](../L1/ls_update_column.md) (the per-column running-QR update; per the
+[`concepts/incremental_least_squares`](../concepts/incremental_least_squares.md) contract `:14`),
 mirroring Palace's per-column loop body one-to-one:
 
     ls_update_column :: (K: Krylov, j: Int, h_new: HessCol) -> Krylov'
@@ -77,7 +77,7 @@ mirroring Palace's per-column loop body one-to-one:
 At L1 the per-column running-QR sub-steps (replay / generate / apply / apply_rhs) and the
 residual-exposure mechanism are **hidden inside the leaf** as a single "incremental triangularisation
 with residual side-output" operation, exactly as the concept page's "What is *hidden* at L1" list
-states ([`concepts/incremental-least-squares`](../concepts/incremental-least-squares.md):22-27). The
+states ([`concepts/incremental_least_squares`](../concepts/incremental_least_squares.md):22-27). The
 L2 record `{ state, beta }` is the same value as the L1 leaf's advanced `Krylov'` bundle (its
 `K'.beta` is the L2 `beta`; its rotation registers + RHS + Hessenberg are the L2 `state`). The leaf's
 own lowering onto the L0 in-place free functions — the four `*PlaneRotation` calls at
@@ -85,8 +85,8 @@ own lowering onto the L0 in-place free functions — the four `*PlaneRotation` c
 [`ls_update_column-mutation-rotation`](../L1-L0/ls-update-column-mutation-rotation.md) theme;
 **this theme stops at the L1 leaf and does not re-derive that L0 in-place step** (the
 same boundary the sibling draws at the L1 `orthogonalize` leaf). The
-[`ls_update_column`](../L1/ls-update-column.md) column-streaming leaf is **firm**
-(`book/src/L1/ls-update-column.md`, firm-on-positive-structure per the running-QR loop body
+[`ls_update_column`](../L1/ls_update_column.md) column-streaming leaf is **firm**
+(`book/src/L1/ls_update_column.md`, firm-on-positive-structure per the running-QR loop body
 `iterative.cpp:634-640` / `:813-819`); the co-extensive **Face 2** below carries the same value via the
 de-fused scalar Givens kernel pair, so either face resolves the L1 RHS of this fan-down.
 
@@ -202,7 +202,7 @@ collective shape.
 
 This is the **load-bearing residue the L2 entry deferred to "the forthcoming L2>L1 theme"** (L2 entry
 §Algebraic-laws, the rotation-stream-non-associativity non-law
-`book/src/L2/incremental-least-squares.md:278-285`). The incremental running-QR agrees with a
+`book/src/L2/incremental_least_squares.md:278-285`). The incremental running-QR agrees with a
 from-scratch QR of the assembled `H̄_j` in exact arithmetic (L2 entry law 1) but differs at the bit
 level — the rotation order and the LAPACK-style scaling pin a specific finite-precision reduction
 path. Read off the verified `iterative.cpp` bodies (the scalar 2-vector kernel itself is the
@@ -304,7 +304,7 @@ L1>L0 theme; the back-solve's reduction-order non-law is delegated to the firm
 
 **None proposed by this theme.** The L1 RHS resolves to firm vocabulary:
 
-- Face 1 — the L1 column-streaming leaf **[`ls_update_column`](../L1/ls-update-column.md)**
+- Face 1 — the L1 column-streaming leaf **[`ls_update_column`](../L1/ls_update_column.md)**
   (the single-column running-QR update `(K, j, h_new) → K'`; **firm**,
   firm-on-positive-structure). The co-extensive firm **Face 2** carries the de-fused value, so either
   face resolves the L1 RHS.
@@ -316,7 +316,7 @@ L1>L0 theme; the back-solve's reduction-order non-law is delegated to the firm
   reconstruction stage is the firm [`linear_combination`](../L2/linear_combination.md) fold over the
   selected basis.
 
-The LHS [`incremental-least-squares`](../L2/incremental-least-squares.md) is firm. This
+The LHS [`incremental_least_squares`](../L2/incremental_least_squares.md) is firm. This
 theme proposes no new operators — it is the lowering edge between firm vocabulary (L2 LHS) and
 firm L1 leaves (Face 2 + `back_solve` + `linear_combination`), with the opaque Face-1 leaf a
 plain-text forward-reference. **Householder is scoped out** (Palace's L0 has no Householder path — L2
@@ -369,7 +369,7 @@ L0 evidence ranges (paths relative to `reference/`):
 
 L2 / L1 / concept / cross-theme anchors:
 
-- `book/src/L2/incremental-least-squares.md` — the firm L2 named composition (LHS); its
+- `book/src/L2/incremental_least_squares.md` — the firm L2 named composition (LHS); its
   §Semantics four-sub-step pipeline, §Algebraic-laws laws 1/2/3/6, the `back_solve` terminal-projection
   signature (`:81-83`), and the deferred rotation-stream-non-associativity non-law (`:278-285`) +
   §Dependencies forward-reference (`:334-340`) are this theme's dispatch rule and load-bearing residue.
@@ -377,7 +377,7 @@ L2 / L1 / concept / cross-theme anchors:
   the small-dense triangular back-solve `y = back_solve(R, s)`, its §"Why this is NOT a general `trsv`"
   argument (`:44-61`), its basis-lift-independence law (§Algebraic-laws law 6), and its reduction-order
   non-law. This theme's terminal-back-solve fan-down lowers onto this leaf.
-- `book/src/concepts/incremental-least-squares.md` — the `ls_update_column` L1 column-streaming-leaf
+- `book/src/concepts/incremental_least_squares.md` — the `ls_update_column` L1 column-streaming-leaf
   contract (`:14`) + the "What is hidden at L1" list (`:22-27`); the cross-method reuse rationale.
 - `book/src/concepts/plane-rotation-stream.md` — the stream §Shape (`:5-15`) + §"Sequential character"
   (`:21-23`, the replay-chain `sequential-obstruction` candidate at L3) + §"Variants the stream is
@@ -389,7 +389,7 @@ L2 / L1 / concept / cross-theme anchors:
 - `book/src/L2-L1/orthogonalize-composition-lowering.md` — the sibling firm L2>L1 named-composition
   theme (the structural template: two-face L1 RHS, dispatch-rule prose, reduction-path recording table,
   justification `algebraic`).
-- `book/src/L2/krylov-step.md`, `book/src/L2/ksp_solve.md` — the consumers that fold (krylov-step) /
+- `book/src/L2/krylov_step.md`, `book/src/L2/ksp_solve.md` — the consumers that fold (krylov_step) /
   consume the byproduct + back-solve correction (ksp_solve §Semantics phase-3 `materialise_iterate`).
 
 ## Status
@@ -403,7 +403,7 @@ vocabulary on the value-carrying faces: the de-fused **Face 2** is the firm scal
 ([`givens_generate`](../concepts/givens_generate.md) / [`givens_apply`](../concepts/givens_apply.md)),
 the terminal triangular solve **is the firm L1 [`back_solve`](../L1/back_solve.md) leaf**,
 and the reconstruction is the firm [`linear_combination`](../L2/linear_combination.md) fold. The opaque
-Face-1 [`ls_update_column`](../L1/ls-update-column.md) column-streaming leaf (firm) and the de-fused
+Face-1 [`ls_update_column`](../L1/ls_update_column.md) column-streaming leaf (firm) and the de-fused
 Face-2 are co-extensive presentations of the same value. The general `trsv` is a distinct,
 separately-blocked L3-inventory operator (`scaffolding/open-questions.md:24`), NOT this theme's
 back-solve target.

@@ -137,9 +137,9 @@ Laws that explicitly **do not** hold (deferred / category-distinct, NOT restated
    consume — `inner_product x x` is Hermitian-self).
 
 The **B-weighted overload** `linalg::Norml2(comm, x, B, Bx) = √(inner_product_M x B x)`
-for SPD `B` is **NOT part of this operator** — it is the `matrix-weighted-norm` consumer
+for SPD `B` is **NOT part of this operator** — it is the `matrix_weighted_norm` consumer
 of the combinator's weighted member `inner_product_M` (tracked rough-in at L1
-[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md), L1-promotion-gated). `nrm2`
+[`matrix_weighted_norm`](../L1/matrix_weighted_norm.md), L1-promotion-gated). `nrm2`
 pins the weight at `M = I` through the plain `inner_product` (the same pinning that makes
 `dot` the plain-weight named specialization).
 
@@ -193,7 +193,7 @@ convention (no `L4-L2`/`L4-L1` directory).
 Combinator + L3/L1 endpoints (firm; the value-isomorphism this L4 named verb rests on):
 
 - `book/src/L4/inner_product.md` (firm) — the L4 combinator this verb
-  consumes; §"Consumer (NOT an instance): nrm2 / matrix-weighted-norm" records
+  consumes; §"Consumer (NOT an instance): nrm2 / matrix_weighted_norm" records
   `nrm2(x) = √ (abs (inner_product x x))` at the diagonal as a consumer, NOT a member, with
   combinator law 5 (PSD) as the well-definedness witness.
 - [`L3/inner_product`](../L3/inner_product.md) §"Consumer (NOT an instance)" (the firm L3

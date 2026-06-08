@@ -1,7 +1,7 @@
 ---
 edges:
   reference:
-    - L1/ls-update-column
+    - L1/ls_update_column
 ---
 
 # `givens_generate`
@@ -30,4 +30,4 @@ Classical Givens rotation (Golub & Van Loan 2013, §5.1.8). The naive formula $r
 
 ## Used in
 
-- [`ls-update-column`](../L1/ls-update-column.md) — once per Arnoldi step, to generate the rotation that zeros the sub-diagonal of the new Hessenberg column.
+- [`ls_update_column`](../L1/ls_update_column.md) — once per Arnoldi step, to generate the rotation that zeros the sub-diagonal of the new Hessenberg column.

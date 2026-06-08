@@ -14,7 +14,7 @@ edges:
   reference:
     - L1/apply_linop              # the produced LinOp is applied via apply_linop (consumed-by, not a build dep)
     - L1/fe_space                 # the trial/test FiniteElementSpace operands (operates-on)
-    - L1/divfree-projector        # consumer: the Grad discrete-gradient interpolator
+    - L1/divfree_projector        # consumer: the Grad discrete-gradient interpolator
     - concepts/constructed-operators
 ---
 
@@ -80,7 +80,7 @@ direction".
 A cross-cutting note: `interpolator` is the construction-time sibling of
 [`apply_linop`](./apply_linop.md), not a variant of it — `apply_linop` *applies*
 an opaque `LinOp`; `interpolator` *constructs* the specific de-Rham `LinOp` that
-is then applied. The `Grad` step inside [`divfree-projector`](./divfree-projector.md)
+is then applied. The `Grad` step inside [`divfree_projector`](./divfree_projector.md)
 is exactly this constructed `LinOp` (`palace/linalg/divfree.cpp:117`).
 
 ## Signature
@@ -257,7 +257,7 @@ to *build* `G` — the assembly is the MFEM-owned interpolator kernel marshalled
 Palace-owned `DiscreteLinearOperator` builder. The produced value is *consumed* via
 [`apply_linop`](./apply_linop.md) (a consumed-by/reference relation, not a build
 dependency), operates-on two [`fe_space`](./fe_space.md) values, and is consumed by
-[`divfree-projector`](./divfree-projector.md) (the `Grad` step). The discrete-curl
+[`divfree_projector`](./divfree_projector.md) (the `Grad` step). The discrete-curl
 edge is the operator behind the boundary-mode `Bz` readout.
 
 The construction lowers to L0 via the firm

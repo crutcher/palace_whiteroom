@@ -23,7 +23,7 @@ columns the leading `(j+1)×(j+1)` block is an upper-triangular factor `R`, and 
 rotated RHS `s` (initialised `s = β₀·e₁`) carries the least-squares residual in its
 tail entry `s[j+1]`. This per-column update — `replay ▷ generate ▷ apply ▷
 apply_rhs` — is the **L2 named composition**
-[`incremental-least-squares`](../L2/incremental-least-squares.md);
+[`incremental_least_squares`](../L2/incremental_least_squares.md);
 the fan-down of that composition onto the L1 leaves is the firm theme
 [`incremental-least-squares-composition-lowering`](../L2-L1/incremental-least-squares-composition-lowering.md).
 
@@ -34,7 +34,7 @@ identical) and hides the four per-column sub-steps (replay / generate / apply /
 apply_rhs) and the residual-exposure mechanism inside the leaf as a single
 "incremental triangularisation with residual side-output" operation, exactly as
 the concept page's "What is *hidden* at L1" list states
-(`book/src/concepts/incremental-least-squares.md:22-27`). The co-extensive
+(`book/src/concepts/incremental_least_squares.md:22-27`). The co-extensive
 **de-fused Face 2** in the L2>L1 theme spells the same value out into the explicit
 scalar Givens kernel pair ([`givens_generate`](../concepts/givens_generate.md) /
 [`givens_apply`](../concepts/givens_apply.md)); the two faces advance the
@@ -69,7 +69,7 @@ not a length-`N` field application of an opaque operator) and **not** a
 solve; this leaf produces the triangular factor the back-solve consumes). Its
 closest structural sibling at L1 is [`orthogonalize`](./orthogonalize.md) — both
 are column-streaming Krylov-state advance primitives, each invoked once per Arnoldi
-column inside the [`krylov-step`](../L2/krylov-step.md) inner loop; both consume
+column inside the [`krylov_step`](../L2/krylov_step.md) inner loop; both consume
 the candidate column and the stored side-state and advance it; they differ in
 what they advance (`orthogonalize` advances the *basis* and produces the
 orthogonalisation coefficients that become the Hessenberg column `h_new`;
@@ -156,7 +156,7 @@ of overflow — `iterative.cpp:617`).
 
 The lift of the bundle state forward (the next call's `cs`/`sn`/`s` are this
 call's outputs spliced in) is performed by the caller (the L2
-[`incremental-least-squares`](../L2/incremental-least-squares.md) named composition
+[`incremental_least_squares`](../L2/incremental_least_squares.md) named composition
 that threads the column index across the inner loop). This leaf produces only the
 per-column updates and the residual byproduct; the state-threading is invisible
 here.
@@ -217,7 +217,7 @@ generated (the `for k=0..j-1` loop at `iterative.cpp:634` strictly precedes the
 annihilate against the wrong diagonal and produce a non-triangular running factor.
 This is the running-QR's **structural invariant**, inherited from the
 [`givens`](../concepts/givens.md) §Contract replay-order rule and recorded as the
-L2 entry's law 2 (`incremental-least-squares.md` §Algebraic-laws law 2). The leaf
+L2 entry's law 2 (`incremental_least_squares.md` §Algebraic-laws law 2). The leaf
 is **not** order-invariant in this sub-step.
 
 **(2) Residual exposure is a unitary byproduct, not an explicit norm computation.**
@@ -233,7 +233,7 @@ reads it directly: `beta = std::abs(s[j+1])` (`iterative.cpp:642`); `converged =
 **(3) The replay chain is bit-level non-commutative; the in-kernel reduction is
 element-local.** The length-`j` ordered chain of 2-vector updates pins a specific
 finite-precision composition (the L2 entry's law 2 / rotation-stream
-non-associativity non-law, `book/src/L2/incremental-least-squares.md:278-285`);
+non-associativity non-law, `book/src/L2/incremental_least_squares.md:278-285`);
 reordering the stored rotations would produce the same exact-arithmetic factor
 but a bit-different finite-precision factor. Per the CLAUDE.md numerical-trick
 taxonomy this is a **load-bearing numerical** detail — recorded as a non-law so
@@ -386,12 +386,12 @@ It is the column-streaming **producer** sibling of [`back_solve`](./back_solve.m
 once-per-restart and by produces-R/s vs consumes-R/s. It is the
 factorisation-streaming sibling of [`orthogonalize`](./orthogonalize.md) (the
 basis-streaming column-update) on the Krylov-state-advance axis — both are invoked
-once per Arnoldi column inside [`krylov-step`](../L2/krylov-step.md), and
+once per Arnoldi column inside [`krylov_step`](../L2/krylov_step.md), and
 `orthogonalize`'s output **is** this leaf's `h_new` input (the Hessenberg column
 the basis-streaming produces).
 
 `ls_update_column` is the per-column streaming atom that the L2
-[`incremental-least-squares`](../L2/incremental-least-squares.md) named
+[`incremental_least_squares`](../L2/incremental_least_squares.md) named
 composition's Face-1 (opaque-leaf) projection depends on, and the L2>L1 theme
 [`incremental-least-squares-composition-lowering`](../L2-L1/incremental-least-squares-composition-lowering.md)
 forward-references as Face 1 (the de-fused Face 2 is the alternative presentation,
@@ -411,7 +411,7 @@ Concept references (cross-cutting; do not duplicate):
   the §"Sequential character" `:21-23` flagging the replay chain as a
   `sequential-obstruction` candidate at L3 (forward note for the iteration
   rotation).
-- [`concepts/incremental-least-squares`](../concepts/incremental-least-squares.md) —
+- [`concepts/incremental_least_squares`](../concepts/incremental_least_squares.md) —
   the `ls_update_column` slug contract `:14` and the "What is hidden at L1" list
   `:22-27` characterising the leaf's hiding boundary.
 
@@ -551,7 +551,7 @@ non-laws, not a status reduction.
   the cosine register `cs` always `RealType` (the element-type split
   underwriting the real/complex variant axis; cs is always real per the
   generate kernel's contract `iterative.cpp:118`).
-- `book/src/L2/incremental-least-squares.md` — the firm L2 named composition;
+- `book/src/L2/incremental_least_squares.md` — the firm L2 named composition;
   this leaf is its Face-1 single-column projection (the
   composition's per-column body collapses into one `ls_update_column` call).
   The L2 entry's laws 1, 2, 3, 6 (residual exposure, replay ordering, unitary
@@ -567,7 +567,7 @@ non-laws, not a status reduction.
   firm-on-positive-structure with no dedicated test, recorded reduction-order
   non-law) and the slug-naming precedent (`back_solve` distinct from the
   general `trsv`; this leaf `ls_update_column` distinct from `back_solve`).
-- `book/src/concepts/incremental-least-squares.md:14` — the `ls_update_column`
+- `book/src/concepts/incremental_least_squares.md:14` — the `ls_update_column`
   slug contract (`ls_update_column(K, j, h_new) → K'`); the cross-method reuse
   rationale and the "What is hidden at L1" list `:22-27` characterising the
   leaf's hiding boundary.

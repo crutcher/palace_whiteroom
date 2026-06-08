@@ -21,7 +21,7 @@ orthogonalisation loop in the Arnoldi step is replaced by two `dot+axpy`
 pairs against `V[j-1]` and `V[j]` only). The outer least-squares update
 acts on a band of width 3 rather than a dense Hessenberg column, but the
 running-QR / Givens-rotation structure of
-[`incremental-least-squares`](../concepts/incremental-least-squares.md)
+[`incremental_least_squares`](../concepts/incremental_least_squares.md)
 is reused unchanged.
 
 Speculative L1 per-step form (rough-in operators below):
@@ -119,7 +119,7 @@ implementation or an explicit decision to treat MFEM as L0 substrate.
   iteration.
 - `givens_apply_with_residual_min` — rough-in. The band-width-3
   specialisation of the running-QR step in
-  [`incremental-least-squares`](../concepts/incremental-least-squares.md);
+  [`incremental_least_squares`](../concepts/incremental_least_squares.md);
   the LS residual `|s|` falls out of the Givens cascade as for GMRES,
   but only the last 3 entries of `s` are touched per step.
 
@@ -145,7 +145,7 @@ Structural sibling (affirmative L1 evidence the rewrite would parallel):
   `book/src/L1-L0/ksp-solve-mutation-rotation.md` Sub-pattern C inner Arnoldi loop)
   is the structural parent of the Lanczos three-term recurrence; one-line variant axis
   (`gs_orthog` → fixed-to-symmetric) collapses Arnoldi to Lanczos.
-- `book/src/concepts/incremental-least-squares.md` — the running-QR
+- `book/src/concepts/incremental_least_squares.md` — the running-QR
   pattern; MINRES is the band-3 specialisation.
 
 ## Status

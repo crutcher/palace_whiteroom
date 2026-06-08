@@ -44,10 +44,10 @@ L4 against the backend's verb set. `inner_product` is the **data-algebra half** 
 the L4 vocabulary alongside its sibling [`linear_combination`](./linear_combination.md):
 the half the iteration-structural combinators *consume* in their step bodies (the
 CG `α`/`β` coefficients and GMRES orthogonalization coefficients inside
-[`krylov-step`](./krylov-step.md)'s body are `inner_product` let-bindings).
+[`krylov_step`](./krylov_step.md)'s body are `inner_product` let-bindings).
 
 `inner_product` is **not** an iteration-structural combinator like
-[`iterate-while`](./iterate-while.md) / [`solve_family`](./solve_family.md) /
+[`iterate_while`](./iterate_while.md) / [`solve_family`](./solve_family.md) /
 [`fold_solve`](./fold_solve.md). Those thread a `SimState` carry through a stopping
 predicate or schedule; `inner_product` is a **pure value-producing data-parallel
 reduction** over the shape group `S` — no control-flow, no monadic `Solve` effect,
@@ -191,17 +191,17 @@ because the rotation is identity-in-form and laws about the value are unchanged.
    scoped out (Palace exposes no unconjugated weighted member — no `tdot_M`).
 
 **Diagonal degeneration (`y = x`) is NOT a variant axis — it is a consumer entry
-point** (collapses to the norm-squared `nrm2`/`matrix-weighted-norm` consume; see
+point** (collapses to the norm-squared `nrm2`/`matrix_weighted_norm` consume; see
 §"Consumer"). **Reduction tree is a below-L3 implementation detail, NOT an L4
 variant axis** (the IEEE non-law); the backend owns it.
 
-## Consumer (NOT an instance): nrm2 / matrix-weighted-norm
+## Consumer (NOT an instance): nrm2 / matrix_weighted_norm
 
-`nrm2` and `matrix-weighted-norm` are `√ ∘ abs ∘ inner_product` at the diagonal
+`nrm2` and `matrix_weighted_norm` are `√ ∘ abs ∘ inner_product` at the diagonal
 (`y = x`) — **consumers** of this combinator's output, NOT reduction members:
 
     nrm2(x)                    = √ (abs (inner_product x x))   -- √ ∘ abs ∘ inner_product at y = x
-    matrix-weighted-norm(x, B) = √ (inner_product_M x B x)     -- SPD B
+    matrix_weighted_norm(x, B) = √ (inner_product_M x B x)     -- SPD B
 
 The `√ ∘ abs` post-step is a downstream scalar map; the norm is not a reduction and
 does not enter this entry's signature. Merging `nrm2` into `inner_product` would be

@@ -3,7 +3,7 @@
 The mutation rotation for the GMRES / FGMRES per-column running-QR update.
 Lowers the pure L1 form `{h_out, cs_j, sn_j, s_j, s_jp1, beta} =
 ls_update_column(variant, cs, sn, s, j, h_new)`
-([`L1/ls_update_column`](../L1/ls-update-column.md), firm) into the
+([`L1/ls_update_column`](../L1/ls_update_column.md), firm) into the
 in-place four-`*PlaneRotation`-call sequence at
 `palace/linalg/iterative.cpp:634-640` (GMRES) and its **byte-identical** FGMRES
 twin at `:813-819`: the rewrite consists of (1) the **strict-order replay loop**
@@ -25,7 +25,7 @@ restart-cycle terminal consumer): both lower a small-dense coordinate-space
 operator whose destination *is* the register the L1 form names as input; this
 theme is the per-column-incremental producer, the sibling is the terminal
 consumer. It proposes **no new L1 vocabulary**; the L1 leaf
-[`ls_update_column`](../L1/ls-update-column.md) is firm.
+[`ls_update_column`](../L1/ls_update_column.md) is firm.
 
 ## Slug
 
@@ -34,7 +34,7 @@ consumer. It proposes **no new L1 vocabulary**; the L1 leaf
 ## L1 form (LHS)
 
 The pure-functional per-column running-QR update (firm; see
-[`L1/ls_update_column`](../L1/ls-update-column.md)) consumes read-only
+[`L1/ls_update_column`](../L1/ls_update_column.md)) consumes read-only
 rotation registers `(cs, sn)`, a read-only RHS register `s`, the column index
 `j`, and the read-only newly-arrived Hessenberg column `h_new`, producing a
 fresh six-tuple value bundle; nothing is mutated and there is no destination
@@ -58,7 +58,7 @@ column-index axes are absorbed per `classify-variant-axis`):
         -- result beta  : RealScalar = |s_jp1|     (LS residual byproduct, load-bearing)
 
 The defining identities (the L1 leaf's algebraic laws,
-[`L1/ls_update_column`](../L1/ls-update-column.md) §Algebraic-laws):
+[`L1/ls_update_column`](../L1/ls_update_column.md) §Algebraic-laws):
 
 - Law 1 — sub-diagonal annihilation: `h_out[j+1] = 0` exactly.
 - Law 2 — replay non-commutativity (a structural law, **not** a non-law): the
@@ -447,9 +447,9 @@ pinned finite-precision computation. The L1 leaf's law 2 holds in exact
 arithmetic (the rotation product `Qⱼ` is what the chain computes, and `Qⱼ`
 is order-sensitive), AND the chain is bit-different at finite-precision even
 when rotations approximately commute (the L1 leaf §Algebraic-laws non-law).
-Composed with the L2 `incremental-least-squares` rotation-stream
+Composed with the L2 `incremental_least_squares` rotation-stream
 non-associativity that the leaf's law 2 implements
-(`book/src/L2/incremental-least-squares.md:278-285`) and with the sibling
+(`book/src/L2/incremental_least_squares.md:278-285`) and with the sibling
 `back-solve-mutation-rotation`'s descending column-oriented eager-subtraction
 order, this fixes the bit-exact reproducibility chain for GMRES / FGMRES
 solutions end-to-end.
@@ -554,7 +554,7 @@ rotation` precedent).
 ## Speculative L1 operators
 
 **None.** This theme lowers the already-firm L1
-[`ls_update_column`](../L1/ls-update-column.md) operator into existing positive
+[`ls_update_column`](../L1/ls_update_column.md) operator into existing positive
 L0 source ranges. It proposes no new L1 vocabulary and no new L0 conventions.
 
 The four scalar Givens kernels (`GeneratePlaneRotation` real `:73-108` /
@@ -620,7 +620,7 @@ selectable strategy).
 
 L1 / cross-theme anchors:
 
-- [`L1/ls_update_column`](../L1/ls-update-column.md) — the firm L1 operator
+- [`L1/ls_update_column`](../L1/ls_update_column.md) — the firm L1 operator
   this theme lowers; the four-sub-step semantics `replay ▷ generate ▷ apply ▷
   apply_rhs`, the seven algebraic laws (esp. law 1 sub-diagonal annihilation,
   law 2 replay non-commutativity, law 3 residual exposure, law 4 unitarity
@@ -635,7 +635,7 @@ L1 / cross-theme anchors:
 - [`nrm2-mutation-rotation`](./nrm2-mutation-rotation.md) — the upstream
   producer of `h_new[j+1]` (the orthogonalisation residual nrm2 at `:631`);
   boundary marker, NOT part of this leaf.
-- [`L2/incremental-least-squares`](../L2/incremental-least-squares.md) — the
+- [`L2/incremental_least_squares`](../L2/incremental_least_squares.md) — the
   firm L2 named composition; this leaf is its Face-1 single-column projection.
   L2 laws 1/2/3/6 read as L1 leaf laws 3/2/4/6 and as this theme's
   load-bearing-structural ingredients.

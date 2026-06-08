@@ -1,19 +1,19 @@
 ---
 layer: L3
-operator: assemble-diagonal
+operator: assemble_diagonal
 firmness: firm
 edges:
   depends-on:
-    - target: L2/assemble-diagonal
+    - target: L2/assemble_diagonal
       kind: lowers-to
 variant_axes:
   - element-type (real | complex; collapsed to a single parameterised operator)
   - operator-representation (sparse-CSR | matrix-free | parallel-wrapped | complex-wrapped; absorbed into the opaque LinearOperator type)
 ---
 
-# assemble-diagonal
+# assemble_diagonal
 
-Whole-operator **operator-to-data** extraction at L3: `d = diag(A)`, the main diagonal of a square linear operator materialised as a vector. The diagonal-introspection primitive at L3 — the operator-to-data sibling of [`apply_linop`](./apply_linop.md) on the opaque-`LinearOperator` side of the L3 vocabulary, and the iteration-rotation rendering of the same diagonal-extraction map that L1 [`assemble-diagonal`](../L1/assemble-diagonal.md) provides. The gate to diagonally-scaled preconditioners (Jacobi, Chebyshev, block-Jacobi, polynomial) at the iteration-rotation layer.
+Whole-operator **operator-to-data** extraction at L3: `d = diag(A)`, the main diagonal of a square linear operator materialised as a vector. The diagonal-introspection primitive at L3 — the operator-to-data sibling of [`apply_linop`](./apply_linop.md) on the opaque-`LinearOperator` side of the L3 vocabulary, and the iteration-rotation rendering of the same diagonal-extraction map that L1 [`assemble_diagonal`](../L1/assemble_diagonal.md) provides. The gate to diagonally-scaled preconditioners (Jacobi, Chebyshev, block-Jacobi, polynomial) at the iteration-rotation layer.
 
 ## Context
 
@@ -25,7 +25,7 @@ The relationship to the adjacent layers:
 
 - **Upward** to L4: there is **no standalone L4 entry** for `assemble_diagonal`. It is a leaf operator-introspection primitive carrying no monadic effect, no state-stratification typing, no novel calculus content at L4 — the same `CONFIRMED-NOT-NEEDED` disposition as `apply_linop` and the BLAS-1 cohort. At L4 it appears (where consumed) inside operator bodies as a let-binding feeding the diagonal-preconditioner-apply chain, not as first-class L4 vocabulary. Per CLAUDE.md §Methodology invariants "Layers are defined high→low", the absence of an L4 entry is a deliberate scoping verdict, not a gap.
 
-- **Downward** to L2/L1: `assemble_diagonal` lowers to the **present adjacent L2 floor** [`assemble-diagonal`](../L2/assemble-diagonal.md) as **identity-in-form on the primitive's signature**, recorded as the in-line §"Downward to L2" note below (NOT a dedicated L3>L2 theme — the edge is a degenerate identity-in-named-terms lowering demoted to an in-line note per the 2026-06-01 vocabulary-shift redirect), and onward to L1 [`assemble-diagonal`](../L1/assemble-diagonal.md). The rotation is **identity-in-form on the primitive's signature** — L3 and L2 see `assemble_diagonal :: LinOp[(S: ...), $S] -> Tensor[$S]` and L1 sees its rank-1 realization `LinearOperator[N, N] -> Tensor[N]` (the concrete flat dof-vector length), with the same shape contract, the same six algebraic laws, the same non-law set (including the load-bearing exact-vs-approximate caveat), and the same variant-axis profile (one orthogonal element-type axis + one absorbed operator-representation axis). The L2 floor is the standalone (fork-independent) operator-to-data sibling of `apply_linop`. The transitive L3>L1 identity remains in-line, with no non-adjacent `L3-L1/` lowering directory created.
+- **Downward** to L2/L1: `assemble_diagonal` lowers to the **present adjacent L2 floor** [`assemble_diagonal`](../L2/assemble_diagonal.md) as **identity-in-form on the primitive's signature**, recorded as the in-line §"Downward to L2" note below (NOT a dedicated L3>L2 theme — the edge is a degenerate identity-in-named-terms lowering demoted to an in-line note per the 2026-06-01 vocabulary-shift redirect), and onward to L1 [`assemble_diagonal`](../L1/assemble_diagonal.md). The rotation is **identity-in-form on the primitive's signature** — L3 and L2 see `assemble_diagonal :: LinOp[(S: ...), $S] -> Tensor[$S]` and L1 sees its rank-1 realization `LinearOperator[N, N] -> Tensor[N]` (the concrete flat dof-vector length), with the same shape contract, the same six algebraic laws, the same non-law set (including the load-bearing exact-vs-approximate caveat), and the same variant-axis profile (one orthogonal element-type axis + one absorbed operator-representation axis). The L2 floor is the standalone (fork-independent) operator-to-data sibling of `apply_linop`. The transitive L3>L1 identity remains in-line, with no non-adjacent `L3-L1/` lowering directory created.
 
 This L3 entry is the **layer-coherence anchor**: a reader navigating L3 (the iteration-rotation layer that composes whole-operator and whole-tensor primitives into smoother / solver bodies) can find `assemble_diagonal` here, in L3 vocabulary, without having to reach down to L1 to recover the signature. It enacts the methodology invariant **Identity-lowerings still require both L levels** (CLAUDE.md §Methodology invariants): an **(A) identity-in-form** L3 backfill, structurally identical to the firm `apply_linop` opaque-operator-gate precedent, with the exact-vs-approximate caveat absorbed as a representation-aware L1>L0 non-law (`book/src/L3/index.md:46`).
 
@@ -45,7 +45,7 @@ The **square requirement** (range group ≡ domain group) is intrinsic: a diagon
 
 `LinOp[(S: ...), $S]` is an **opaque type** at L3: its internal representation (sparse CSR / matrix-free / parallel-wrapped / complex-wrapped) is not part of the L3 signature; the L3 contract sees only "extract the diagonal of this square operator". The operator is guaranteed to expose a diagonal — the base `ComplexOperator::AssembleDiagonal` aborts (`palace/linalg/operator.cpp:25-28`), so the operator's L3 domain is the diagonal-capable subclasses (a precondition, not a variant — see Variant axes).
 
-No L4 wrapper machinery is needed at L3: `assemble_diagonal` is a leaf operator-introspection field operation, not a step body, and the L4 monadic / typed-record / `readonly`-typing apparatus (which serves wrapper-bearing operators like `krylov-step`) does not apply to leaf primitives — the same discipline the L3 `apply_linop` and `scal` entries record.
+No L4 wrapper machinery is needed at L3: `assemble_diagonal` is a leaf operator-introspection field operation, not a step body, and the L4 monadic / typed-record / `readonly`-typing apparatus (which serves wrapper-bearing operators like `krylov_step`) does not apply to leaf primitives — the same discipline the L3 `apply_linop` and `scal` entries record.
 
 ## Semantics
 
@@ -63,7 +63,7 @@ A subtle below-the-surface caveat: for **matrix-free high-order Nedelec (H(curl)
 
 ## Algebraic laws
 
-The six laws that hold at L1 (per `book/src/L1/assemble-diagonal.md` §"Algebraic laws") transport **unchanged** to L3, because the L3 form is value-thread-isomorphic to the L1 form. These are operator-introspection laws — they relate the diagonal of a *constructed* operator to the diagonals/entries of its parts, not laws of a vector update. The laws are reproduced here so the L3 reader does not have to reach to L1 for the listing.
+The six laws that hold at L1 (per `book/src/L1/assemble_diagonal.md` §"Algebraic laws") transport **unchanged** to L3, because the L3 form is value-thread-isomorphic to the L1 form. These are operator-introspection laws — they relate the diagonal of a *constructed* operator to the diagonals/entries of its parts, not laws of a vector update. The laws are reproduced here so the L3 reader does not have to reach to L1 for the listing.
 
 1. **Linearity over operator scaling**: `assemble_diagonal (α·A) = α · assemble_diagonal A` for any scalar `α`. The diagonal of a scaled operator is the scaled diagonal (`(α·A)ᵢᵢ = α·Aᵢᵢ`).
 2. **Linearity over operator sum**: `assemble_diagonal (A + B) = assemble_diagonal A + assemble_diagonal B` for square `A`, `B` sharing shape group `S` (`(A + B)ᵢᵢ = Aᵢᵢ + Bᵢᵢ`). Witnessed structurally by `ComplexWrapperOperator::AssembleDiagonal` (`palace/linalg/operator.cpp:85-96`), which assembles real and imaginary parts independently after `diag = 0.0`.
@@ -95,13 +95,13 @@ It is **not** factored through `apply_linop` despite the algebraic specification
 
 The `reciprocal` and `elementwise_product` that complete the diagonal-preconditioner apply are themselves firm L3 entries.
 
-**L1 anchor**: [`L1/assemble-diagonal`](../L1/assemble-diagonal.md) (firm) — authoritative on the Palace surface details (the abstract decls + concrete realisations across sparse/matrix-free/parallel/complex-wrapped representations, the consuming smoother call sites, the libCEED diagonal-assembly unit test), the square-precondition enforcement sites, the Dirichlet `DiagonalPolicy` BC post-step, and the complete L0 evidence list. This L3 entry does not duplicate those details; the L3>L1 rotation is identity-in-form on the primitive itself.
+**L1 anchor**: [`L1/assemble_diagonal`](../L1/assemble_diagonal.md) (firm) — authoritative on the Palace surface details (the abstract decls + concrete realisations across sparse/matrix-free/parallel/complex-wrapped representations, the consuming smoother call sites, the libCEED diagonal-assembly unit test), the square-precondition enforcement sites, the Dirichlet `DiagonalPolicy` BC post-step, and the complete L0 evidence list. This L3 entry does not duplicate those details; the L3>L1 rotation is identity-in-form on the primitive itself.
 
 **Strawman reference**: `book/src/semantics/index.md` is the L4/L3 conventions source; this L3 entry follows the strawman's Haskell `::` signature notation. `assemble_diagonal` does not get its own L4 entry.
 
 ## Variant axes
 
-`assemble_diagonal` has **one orthogonal variant axis at L3, plus one collapsed-and-absorbed axis** — the same framing as L1 (`book/src/L1/assemble-diagonal.md` §"Variant axes"), transported unchanged.
+`assemble_diagonal` has **one orthogonal variant axis at L3, plus one collapsed-and-absorbed axis** — the same framing as L1 (`book/src/L1/assemble_diagonal.md` §"Variant axes"), transported unchanged.
 
 One orthogonal axis:
 
@@ -121,7 +121,7 @@ The variant-axis profile (one orthogonal + one absorbed) matches the L1 entry ex
 
 ## Lowers to
 
-L3 `assemble_diagonal` lowers to the **present adjacent L2 floor** [`assemble-diagonal`](../L2/assemble-diagonal.md) as **identity-in-form on the primitive's signature**, recorded by the in-line §"Downward to L2 (in-line note)" below, and onward to L1 [`assemble-diagonal`](../L1/assemble-diagonal.md). L3 and L2 see `assemble_diagonal :: LinOp[(S: ...), $S] -> Tensor[$S]` and L1 its rank-1 realization `LinearOperator[N, N] -> Tensor[N]` (the concrete flat dof-vector length), with the same shape contract, the same six algebraic laws, the same non-law set (including the load-bearing exact-vs-approximate caveat), and the same variant-axis profile (one orthogonal + one absorbed). The L2 floor is the standalone (fork-independent) operator-to-data sibling of `apply_linop`, so the L3>L2 hop passes through the adjacent floor rather than skipping a layer to L1, per **Identity-lowerings still require both L levels**.
+L3 `assemble_diagonal` lowers to the **present adjacent L2 floor** [`assemble_diagonal`](../L2/assemble_diagonal.md) as **identity-in-form on the primitive's signature**, recorded by the in-line §"Downward to L2 (in-line note)" below, and onward to L1 [`assemble_diagonal`](../L1/assemble_diagonal.md). L3 and L2 see `assemble_diagonal :: LinOp[(S: ...), $S] -> Tensor[$S]` and L1 its rank-1 realization `LinearOperator[N, N] -> Tensor[N]` (the concrete flat dof-vector length), with the same shape contract, the same six algebraic laws, the same non-law set (including the load-bearing exact-vs-approximate caveat), and the same variant-axis profile (one orthogonal + one absorbed). The L2 floor is the standalone (fork-independent) operator-to-data sibling of `apply_linop`, so the L3>L2 hop passes through the adjacent floor rather than skipping a layer to L1, per **Identity-lowerings still require both L levels**.
 
 ### Downward to L2 (in-line note)
 
@@ -167,10 +167,10 @@ The L3>L2 identity rotation is recorded by the §"Downward to L2 (in-line note)"
 
 The L3 form is value-thread-isomorphic to the L1 form (identity-in-form on the primitive's signature); all L0 evidence is transitive through L1. Direct citations relevant to this L3 entry:
 
-- `book/src/L1/assemble-diagonal.md` (firm) — the L1 entry whose signature, semantics, six algebraic laws, variant axes (one orthogonal + one absorbed), and complete L0 evidence chain are transported unchanged to L3. The laws and non-laws cited above are reproduced from the L1 entry's §"Algebraic laws".
+- `book/src/L1/assemble_diagonal.md` (firm) — the L1 entry whose signature, semantics, six algebraic laws, variant axes (one orthogonal + one absorbed), and complete L0 evidence chain are transported unchanged to L3. The laws and non-laws cited above are reproduced from the L1 entry's §"Algebraic laws".
 - `book/src/L3/apply_linop.md` (firm) — the opaque-operator-gate L3 backfill precedent; `assemble_diagonal` is the operator-to-data sibling on the same opaque-`LinearOperator` side of the L3 vocabulary. The L3>L1 identity-in-form discipline, the no-L2-entry / no-theme-file rotation shape, and the variant-absorption framing are inherited from this sibling.
 - `book/src/L3/index.md:12` — the L3 vocabulary inventory ("Whole-tensor field operations — primitives that act on whole tensors with no element loop exposed at the layer's vocabulary, L3-native by signature shape"); `assemble_diagonal` is the operator-to-data field operation this entry adds to the inventory.
-- `book/src/L3/index.md:45-50` — line 46 classifies `assemble-diagonal` as **(A) identity-in-form L3 backfill** ("structurally identical to the firm `apply_linop` opaque-operator-gate precedent, with the exact-vs-approximate caveat absorbed as a representation-aware L1>L0 non-law").
+- `book/src/L3/index.md:45-50` — line 46 classifies `assemble_diagonal` as **(A) identity-in-form L3 backfill** ("structurally identical to the firm `apply_linop` opaque-operator-gate precedent, with the exact-vs-approximate caveat absorbed as a representation-aware L1>L0 non-law").
 
 **Transitive L0 evidence (via the L1 entry; not duplicated in detail)**:
 

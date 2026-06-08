@@ -33,7 +33,7 @@ on the orthogonalization enum into three distinct loop-structures; L2 unfolds th
 dispatch into the canonical composition `(project against V) then (subtract)`, with the
 variant's load-bearing difference disclosed as the **collective-shape residual axis** (`m`
 reductions of size 1 vs 1 of size `m` vs 2 of size `m`). This is the level-(b)-absorbed
-`op.orthog` surface that [`krylov-step`](./krylov-step.md) folds, and the composition
+`op.orthog` surface that [`krylov_step`](./krylov_step.md) folds, and the composition
 GMRES / FGMRES / Arnoldi / eigenmode-ROM basis-extension all consume.
 
 ## Context
@@ -52,7 +52,7 @@ exist).
 
 This entry is a **named composition**, the structural sibling of the firm
 [`linear_combination`](./linear_combination.md) (the BLAS-1 arity-family fold) and of
-[`krylov-step`](./krylov-step.md) (the iterative-method step kernel): it names the
+[`krylov_step`](./krylov_step.md) (the iterative-method step kernel): it names the
 composition, lists its variant axes, and states the laws that hold *at the composition
 level*, without re-deriving the laws of the constituent L1 primitives. It does
 **not** replace the L1 leaf; the leaf stays firm and is the form this composition lowers
@@ -62,7 +62,7 @@ The composition is **value-producing and stateless**, not iteration-structural: 
 fixed-size basis prefix into one residual-plus-coefficients pair, with no convergence
 predicate and no monadic state threading. It therefore belongs with the tensor algebra at
 L2, not with L4's `iterate_while`. (The *outer* Arnoldi loop that calls it repeatedly is the
-iteration-structural part, and that lives in `krylov-step` + L4's driver, not here.)
+iteration-structural part, and that lives in `krylov_step` + L4's driver, not here.)
 
 A cross-cutting prose treatment lives at
 [`concepts/orthogonalization`](../concepts/orthogonalization.md); the MGS sequential-batching
@@ -82,7 +82,7 @@ orthogonalize :: (op: OrthogOp, w: Tensor[(S: ...)], V: Basis[N, m]) -> { residu
 Shape contract (bunsen-style; named axes; the vector shape group `S` follows the named-shape-group convention of [`l4_calculus`](../semantics/index.md) §1.2.1; the basis `Basis[N, m]` is a genuine 2-D `m`-column basis and the coefficient vector `coeffs : Tensor[m]` is genuinely 1-D — both KEEP their concrete length axes):
 
 - `op` — `OrthogOp` — the closed-over orthogonalization surface, bound once at solve setup
-  (the level-(b)/(c) absorbed surface `krylov-step` carries as `op.orthog`). A record:
+  (the level-(b)/(c) absorbed surface `krylov_step` carries as `op.orthog`). A record:
   - `op.variant : GSVariant ∈ {MGS, CGS, CGS2}` — the orthogonalization variant; inspected
     exactly once at dispatch, never re-branched per column.
   - `op.dot : (Tensor[(S: ...)], Tensor[$S]) -> Scalar` — the inner-product hook. The canonical
@@ -102,7 +102,7 @@ Shape contract (bunsen-style; named axes; the vector shape group `S` follows the
     the leading `m` entries of the Arnoldi/Hessenberg column. Element type matches `w` / `V`.
 
 The result is **record-shaped** (rather than the L1 leaf's bare tuple) to match the
-[`krylov-step`](./krylov-step.md) `op.orthog (V_prefix, w)` call-shape: `krylov-step`'s
+[`krylov_step`](./krylov_step.md) `op.orthog (V_prefix, w)` call-shape: `krylov_step`'s
 auxiliary stage consumes a `{ residual, coeffs }` and rebinds the basis-column field with
 `residual` and writes `coeffs` into the Hessenberg column. The record naming is the L2
 composition-surface convention; the L1 leaf's `(w', H)` is the same value-pair.
@@ -211,7 +211,7 @@ input basis; floating-point caveats are recorded as explicit non-laws.
 4. **Variant agreement (exact).** MGS, CGS, and CGS2 produce the *same* `{ residual, coeffs }`
    in exact arithmetic with exactly orthonormal `V`. At the exact-arithmetic level the three
    compositions are one composition; they diverge only in finite precision and in collective
-   shape. **This is the substitutability law** that lets `krylov-step` carry the variant as a
+   shape. **This is the substitutability law** that lets `krylov_step` carry the variant as a
    level-(b)-absorbed closure without per-column branching.
 
 5. **Idempotence on the residual (exact).** `orthogonalize op residual V` returns
@@ -287,7 +287,7 @@ Concept references (cross-cutting; do not duplicate):
 
 Consumers (the L2/L4 surfaces that fold or call this composition):
 
-- [`krylov-step`](./krylov-step.md) — absorbs `orthogonalize` at level-(b) as the optional
+- [`krylov_step`](./krylov_step.md) — absorbs `orthogonalize` at level-(b) as the optional
   `op.orthog (V_prefix, w)` auxiliary stage (GMRES / Arnoldi). The `{ residual, coeffs }`
   record is the auxiliary stage's output; the basis-column field is rebound with `residual`
   and `coeffs` is written into the Hessenberg column.
@@ -355,7 +355,7 @@ distinct compositions at L2. All parametric tests cover both element types
   canonical composition and surface its composition-level laws: the batched-vs-interleaved
   primitive sequences (MGS `[dot,axpy]×m` / CGS `[dot×m, allreduce, axpy×m]` / CGS2 `[CGS]×2`)
   and the collective-shape residual axis become first-class L2 content, where at L1 they were
-  a parameter and a note. This is the surface `krylov-step` folds at level-(b).
+  a parameter and a note. This is the surface `krylov_step` folds at level-(b).
 
 ## Evidence
 
@@ -418,7 +418,7 @@ distinct compositions at L2. All parametric tests cover both element types
   coefficient/normalisation boundary and the variant-axis contract are inherited from it.
 - `book/src/L2/linear_combination.md` (firm precedent) — the structural precedent for a firm L2
   named-composition entry over firm L1 leaves.
-- `book/src/L2/krylov-step.md` — the consumer that absorbs this composition at level-(b)
+- `book/src/L2/krylov_step.md` — the consumer that absorbs this composition at level-(b)
   (`op.orthog`); §"L2 vs L1 distinction" forecasts this exact entry.
 - `book/src/concepts/variant-absorption.md:131` — the residual-axis-disclosure ground for the
   collective-shape axis and the Householder scope-out.

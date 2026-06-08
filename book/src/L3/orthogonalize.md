@@ -5,7 +5,7 @@ operator: orthogonalize
 # three variants AND the CGS/CGS2 loop lifts, but the MGS `j`-loop is a witnessed
 # `sequential-obstruction` (§Status). The lifted body is firm (syntactic identities on the
 # `orthog.hpp` source, inherited from the firm L1/L2 entries) → obstruction_resolution: firm.
-# RE2 baseline-exception: `L4/krylov-step` composes the L2 surface directly, not the L3
+# RE2 baseline-exception: `L4/krylov_step` composes the L2 surface directly, not the L3
 # iteration-view, so there is no faithful reachable inbound depender (no forced inbound edge added).
 rank: partial-obstruction
 obstruction_resolution: firm
@@ -94,7 +94,7 @@ row after `chebyshev` and `eigsolve`").
 The relationship to the adjacent layers:
 
 - **Upward** to L4: no firm L4 `orthogonalize` entry exists (the `L4/orthogonalize.md` chapter
-  is not yet authored). The L2 [`krylov-step`](../L2/krylov-step.md) consumer absorbs
+  is not yet authored). The L2 [`krylov_step`](../L2/krylov_step.md) consumer absorbs
   `orthogonalize` at level-(b) as the optional `op.orthog (V_prefix, w)` auxiliary stage; an
   imagined L4 form would thread the `{ residual, coeffs }` record through the Arnoldi-step
   monad, but that surface is a future dispatch. This entry lifts from L2 only.
@@ -331,7 +331,7 @@ floating-point caveats are recorded as explicit non-laws.
 4. **Variant agreement (exact).** MGS, CGS, and CGS2 produce the *same* `{ residual, coeffs }`
    in exact arithmetic with exactly orthonormal `V`. At the exact-arithmetic level the three are
    one operator; they diverge only in finite precision and in **iteration structure** (the L3
-   lift verdict). This is the substitutability law that lets `krylov-step` carry the variant as
+   lift verdict). This is the substitutability law that lets `krylov_step` carry the variant as
    a level-(b)-absorbed closure.
 
 5. **Per-step body identity-in-form across the L3↔L2↔L1 chain.** The L3 per-step tensor-field
@@ -588,7 +588,7 @@ first substantive — non-identity — `L3-L2/` theme).
 ## Open questions / caveats
 
 - **No firm L4 `orthogonalize`.** The `L4/orthogonalize.md` chapter is unauthored; the natural
-  L4 target is the Arnoldi-step-monad auxiliary stage that `krylov-step` carries as `op.orthog`.
+  L4 target is the Arnoldi-step-monad auxiliary stage that `krylov_step` carries as `op.orthog`.
   This entry lifts from L2 only and notes the L4 surface as a future direction.
 - **MGS-obstruction-root parallel with `chebyshev` (not `eigsolve`).** The MGS obstruction is
   numerical-stability-rooted (Palace authors the serial recurrence to buy roundoff-orthogonality)

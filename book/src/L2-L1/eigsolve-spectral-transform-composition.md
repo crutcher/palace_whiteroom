@@ -23,7 +23,7 @@ This theme covers the **per-step spectral-transform-apply composition only**. Th
 Rayleigh-Ritz extraction, convergence test) is **out of scope**: it is the witnessed
 opaque-library [`sequential-obstruction`](../concepts/sequential-obstruction.md) — SLEPc
 `EPSSolve` / ARPACK `naupd` RCI, with **no Palace-authored eigen-step kernel / eigen-iteration
-driver pair** analogous to the `(krylov-step, ksp_solve)` pair — documented at L3
+driver pair** analogous to the `(krylov_step, ksp_solve)` pair — documented at L3
 [`eigsolve`](../L3/eigsolve.md) (`partial-obstruction`). That obstruction is this
 theme's **boundary**, referenced, not re-derived.
 
@@ -195,7 +195,7 @@ witnessed [`sequential-obstruction`](../concepts/sequential-obstruction.md) root
 **opaque-library-ownership**: it is entirely inside SLEPc `EPSSolve(eps)`
 (`palace/linalg/slepc.cpp:694`) / ARPACK `naupd`/`neupd` RCI (`palace/linalg/arpack.cpp:263-358`),
 with **no Palace-authored eigen-step kernel / eigen-iteration driver pair** analogous to the
-`(krylov-step, ksp_solve)` pair. This theme lowers only the **fold body** (the per-step composition
+`(krylov_step, ksp_solve)` pair. This theme lowers only the **fold body** (the per-step composition
 Palace DOES author, in `ApplyOp` / `__pc_apply_EPS`); the fold itself is named by role at L2 and is
 the load-bearing obstruction documented at L3 [`eigsolve`](../L3/eigsolve.md) (`partial-obstruction`
 — the per-step body lifts identity-in-form, the loop does not lift). **This theme references

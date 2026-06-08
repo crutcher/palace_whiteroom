@@ -5,7 +5,7 @@ rank: firm
 edges:
   depends-on:
     - L1/dot
-    - L1/bilinear-form
+    - L1/bilinear_form
     - L1/apply_linop
     - target: L2-L1/inner-product-fold-specialization
       kind: lowers-to             # UPGRADED from reference: faithful L2>L1 lowering theme edge (does NOT flip reachable yet — L2/inner_product is itself unreachable)
@@ -40,7 +40,7 @@ the fold's seed-and-accumulate.
 
 At L1, the inner-product leaves mirror Palace's L0 reduction surface: `dot`/`tdot`
 share [`dot`](../L1/dot.md) (the conjugation axis at one chapter), and the
-M-weighted reduction is the separate leaf [`bilinear-form`](../L1/bilinear-form.md).
+M-weighted reduction is the separate leaf [`bilinear_form`](../L1/bilinear_form.md).
 Those leaves stay firm at **L1** (the mutation-rotation layer, where each mirrors one
 Palace L0 call surface one-to-one). **At L2, `inner_product` is the entry** — it does
 not stand beside same-named L2 leaf chapters; the conjugation / weight specializations
@@ -84,7 +84,7 @@ $$ \text{inner\_product\_M}(x, M, y) = x^{\mathsf H} M y . $$
 
 This is the convention the L1 leaves it fuses up from already adopt
 ([`dot`](../L1/dot.md) §Semantics, "conjugate-linear in the **first** argument";
-[`bilinear-form`](../L1/bilinear-form.md) §Signature, `bilinear_form(x, M, y) = xᴴ M y`).
+[`bilinear_form`](../L1/bilinear_form.md) §Signature, `bilinear_form(x, M, y) = xᴴ M y`).
 The L2 entry inherits it unchanged so the fold and its leaves agree.
 
 **Reconciliation against the Palace source — the deliberate L1 re-order.** Palace's
@@ -113,9 +113,9 @@ So **Palace = `yᴴ x` (arg-2 conjugated); the L1/L2 representation = `xᴴ y`
 mutation-rotation choice** recorded at [`dot`](../L1/dot.md) §Semantics — the L1 form
 erases the method `receiver.Dot(arg)` / free-function `Dot(comm,x,y)` asymmetry and
 fixes arg-1 as the conjugated operand "by convention". It is **not** a defect: the
-`bilinear-form` entry independently verified the L0 source is self-consistent and
+`bilinear_form` entry independently verified the L0 source is self-consistent and
 retracted an earlier draft's alleged comment-vs-implementation disagreement
-([`bilinear-form`](../L1/bilinear-form.md):50-53; OQ
+([`bilinear_form`](../L1/bilinear_form.md):50-53; OQ
 `bilinear-form-conjugation-convention-anchor`). The L2 entry pins arg-1 to stay
 consistent with both leaves; the **value-level effect of the re-order** (Palace's
 `yᴴ x` vs the representation's `xᴴ y`) is a conjugation that the L2>L1 lowering theme
@@ -167,8 +167,8 @@ Per-element kernel (the conjugation × element-type axes):
 
 The members are **not separate L2 chapters** — they are this fold read at fixed
 axis-values. Each row is the combinator with one axis pinned; there is no co-equal
-`L2/dot` / `L2/bilinear-form` floor beside this entry (the standalone `L2/dot.md` is
-collapsed into this note per the 2026-06-01 redirect; `bilinear-form` never had a
+`L2/dot` / `L2/bilinear_form` floor beside this entry (the standalone `L2/dot.md` is
+collapsed into this note per the 2026-06-01 redirect; `bilinear_form` never had a
 standalone L2 chapter — it lives only as the L1 leaf and as the weighted member here):
 
 ```text
@@ -185,11 +185,11 @@ bilinear_form(x, M, y) = inner_product_M x M y                      -- M-weighte
   defined with `dot` at L1; carried here with the type-API-surface-only caveat (§"tdot").
 - **`bilinear_form`** — the weight axis at value *general / SPD `M`* (`inner_product_M`),
   realized as the pre-application `inner_product (apply_linop M x) y`. Its L1 leaf is
-  [`bilinear-form`](../L1/bilinear-form.md) (firm).
+  [`bilinear_form`](../L1/bilinear_form.md) (firm).
 
 The L2 entry differs from the L1 leaves in **resolution**, along the
 conjugation-convention / weight-presence axes: L1 sees `dot`/`tdot` (the conjugation
-axis at one chapter) and `bilinear-form` (the separate M-weighted chapter); L2 sees one
+axis at one chapter) and `bilinear_form` (the separate M-weighted chapter); L2 sees one
 fold whose `kernel` and optional pre-`apply_linop M` recover each member as a note. The
 element-type sub-axis is identical to the leaves' (inherited, not re-derived).
 
@@ -263,7 +263,7 @@ The laws below hold; absences are deliberate.
 5. **Positive semi-definiteness at the diagonal** (`y = x`): `inner_product x x ∈ ℝ`
    and `inner_product x x ≥ 0`, with equality iff `x = 0` (exact arithmetic). For the
    weighted member with SPD `M`, `inner_product_M x M x ∈ ℝ₊`. This is the law
-   `nrm2` / `matrix-weighted-norm` square-root (those are `√ ∘ inner_product` at `y=x` —
+   `nrm2` / `matrix_weighted_norm` square-root (those are `√ ∘ inner_product` at `y=x` —
    see § "Consumer"); it is **confirmed by the implementation** returning imaginary part
    `0.0` exactly when `&x == &y` (`palace/linalg/vector.cpp:266`,
    `palace/linalg/vector.cpp:679`) and by the SPD-norm assertion
@@ -279,7 +279,7 @@ The laws below hold; absences are deliberate.
    (weighted ≡ pre-apply `M` to arg-1, then plain). The conjugation lands on the M-applied
    operand: `inner_product_M x M y = (Mx)ᴴ y = xᴴ Mᴴ y` for the value, pinned to
    `xᴴ M y` in the representation per § "Conjugation convention (pinned)". (Matches
-   [`bilinear-form`](../L1/bilinear-form.md) §"Specialisation to `dot`".)
+   [`bilinear_form`](../L1/bilinear_form.md) §"Specialisation to `dot`".)
 
 Laws that explicitly **do not** hold:
 
@@ -325,9 +325,9 @@ declaration (`palace/linalg/vector.hpp:112`) and the definition
 (`palace/linalg/vector.cpp:269`), no callers. Its evidentiary weight as a family member
 is **type-API-surface-only**, not behavioral. The firm-up therefore leans its positive
 behavioral anchors on `dot` (Hermitian — numerous CG/orthogonalization/NLEPS call sites)
-and the M-weighted `bilinear-form` (Poynting-power and cross-coupling call sites), both
+and the M-weighted `bilinear_form` (Poynting-power and cross-coupling call sites), both
 of which are exercised; `tdot` is carried as the complete-the-conjugation-axis member
-with this caveat recorded (the same posture as `bilinear-form`'s narrow-coverage note).
+with this caveat recorded (the same posture as `bilinear_form`'s narrow-coverage note).
 This caveat is at the **member** granularity and does not gate the entry's `firm` status:
 the *fold structure* is firm (the conjugation axis is one of three, and the other two are
 exercised), and `tdot` is a defined kernel differing from `dot` by one sign — the
@@ -337,7 +337,7 @@ structural claim it is a family member is firm; only its *behavioral* weight is 
 
 - L1 leaves the specializations rest on (each member is this fold at a fixed axis-value —
   see §"Specializations"): [`dot`](../L1/dot.md) (the Hermitian / symmetric member, and
-  `tdot` the unconjugated member, co-defined there), [`bilinear-form`](../L1/bilinear-form.md)
+  `tdot` the unconjugated member, co-defined there), [`bilinear_form`](../L1/bilinear_form.md)
   (the M-weighted member). These stay firm/rough-in **L1** leaves (the mutation-rotation
   layer, one per Palace L0 call surface); at **L2** `inner_product` is the single entry and
   they are specialization notes under it — there is no separate same-named L2 leaf chapter.
@@ -351,7 +351,7 @@ structural claim it is a family member is firm; only its *behavioral* weight is 
   (reduce-to-`Tensor[N]`) — see § "Sibling fold".
 - L2>L1 lowering theme [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md):
   how the L2 fold lowers into the L1 leaves (conjugation/weight dispatch: Hermitian → `dot`,
-  unconjugated → `tdot`, weighted → `bilinear-form`; element-type → real Hypre kernel vs complex
+  unconjugated → `tdot`, weighted → `bilinear_form`; element-type → real Hypre kernel vs complex
   four-real-dot lift), where the value-level conjugation re-order (`xᴴ y` ↔ `yᴴ x`)
   reappears, and which L0 reduction tree each lowered call pins (the load-bearing content
   of the IEEE non-law).
@@ -375,14 +375,14 @@ axis), so the remaining axes are orthogonal to it:
    componentwise. (Concept-page sibling axis to `linear_combination`'s `scalar-promotion`;
    carried at [`dot`](../concepts/dot.md).)
 3. **Weight presence** — `M = I` (plain `inner_product`) vs general / SPD `M` pre-applied
-   to arg-1 (`inner_product_M`, the [`bilinear-form`](../L1/bilinear-form.md) member). At
+   to arg-1 (`inner_product_M`, the [`bilinear_form`](../L1/bilinear_form.md) member). At
    L0: `linalg::Dot(comm,x,y)` vs `linalg::Dot(comm,x,A,y)`
    (`palace/linalg/operator.cpp:621-638`). Orthogonal to conjugation: the weighted member
    is itself conjugate-linear in its (M-applied) arg-1.
 
 **Diagonal degeneration (`y = x`) is NOT a variant axis — it is a consumer entry point.**
 `y = x` collapses the fold to the norm-squared (consumed by `nrm2` /
-`matrix-weighted-norm`, which compose a `√` post-step) and triggers the `&x == &y`
+`matrix_weighted_norm`, which compose a `√` post-step) and triggers the `&x == &y`
 self-inner-product fast path (transparent trick, `palace/linalg/vector.cpp:266,272-273`).
 The fast path is an L0 implementation detail, NOT an L2 axis.
 
@@ -436,14 +436,14 @@ the reciprocal boundary at its own §"Sibling fold: dot is not subsumed" — tha
 D1's refactor scope this batch; this note is the `inner_product`-side half of the
 two-combinator boundary and is edited here only.)
 
-## Consumer: nrm2 and matrix-weighted-norm
+## Consumer: nrm2 and matrix_weighted_norm
 
-`nrm2` and `matrix-weighted-norm` are `√ ∘ inner_product` at the diagonal (`y = x`), NOT
+`nrm2` and `matrix_weighted_norm` are `√ ∘ inner_product` at the diagonal (`y = x`), NOT
 fold members:
 
 - `nrm2(x) = √ inner_product x x` — `palace/linalg/vector.hpp:256-260`
   (`Norml2(comm, x) = √|Dot(comm, x, x)|`).
-- `matrix-weighted-norm(x, B) = √ inner_product_M x B x` for SPD `B` —
+- `matrix_weighted_norm(x, B) = √ inner_product_M x B x` for SPD `B` —
   `palace/linalg/operator.cpp:598-617` (`Norml2(comm, x, B, Bx) = √ Dot(comm, Bx, x)`,
   with the SPD-realness assertion confirming law 5).
 
@@ -456,7 +456,7 @@ the boundary, not to claim subsumption.)
 
 - **L1**: `dot`/`tdot` at one chapter (the conjugation axis below L1 resolution is the
   per-element kernel; the two are distinct operators because their laws differ — `dot` is
-  PSD-at-diagonal, `tdot` is not) plus the separate `bilinear-form` chapter (the M-weighted
+  PSD-at-diagonal, `tdot` is not) plus the separate `bilinear_form` chapter (the M-weighted
   reduction); each mirrors Palace's L0 reduction surface. The conjugation and weight axes
   are fixed per L1 operator.
 - **L2**: one fold `inner_product` over `(Tensor[(S: ...)], Tensor[$S])` with an optional pre-
@@ -499,7 +499,7 @@ the boundary, not to claim subsumption.)
 - `palace/linalg/operator.cpp:598-617` — `Norml2(comm, x, B, Bx)` real + complex: the
   B-weighted norm `√ Dot(comm, Bx, x)`, with the SPD-realness assertion
   (`dot.real() > 0 && |dot.imag()| < 1e-9·dot.real()`) at `:615-616` and the comment
-  "For SPD B, xᴴ B x is real" at `:611`. The `matrix-weighted-norm` consumer +
+  "For SPD B, xᴴ B x is real" at `:611`. The `matrix_weighted_norm` consumer +
   law-5 confirmation.
 - `palace/linalg/operator.hpp:386,391` — the two weighted `Dot(comm, x, A, y)` declarations,
   comment `// Compute the bilinear form inner product yᴴ A x`.
@@ -516,7 +516,7 @@ the boundary, not to claim subsumption.)
   CHECK_THAT(dot, WithinRel(32.0))` (`1·4+2·5+3·6=32`). Direct value-asserting test for the
   real member.
 - Artifact cross-references: `book/src/L1/dot.md` (the `dot`/`tdot`
-  leaves + arg-1-conjugated L1 convention at `:34,:43`), `book/src/L1/bilinear-form.md`
+  leaves + arg-1-conjugated L1 convention at `:34,:43`), `book/src/L1/bilinear_form.md`
   (the M-weighted leaf, `xᴴ M y` at `:19,:63`, conjugation-anchor resolution at `:50-53`),
   `book/src/L2/linear_combination.md` (the sibling fold),
   `book/src/L2/index.md` (the dep-map row),

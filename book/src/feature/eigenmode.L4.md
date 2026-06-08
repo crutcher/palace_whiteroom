@@ -10,8 +10,8 @@ edges:
       kind: composes
     - target: L4/eigsolve
       kind: composes
-    - target: L3/divfree-projector
-      kind: constrains-eigvec           # the eigenmode driver wires the divergence-free projector into the eigensolver (`eigen->SetDivFreeProjector(*divfree)` eigensolver.cpp:233; the initial starting vector projected `divfree->Mult(v0)` :262) to keep eigenvectors in the divergence-free subspace — a directly-wired absorbed constituent of this pipeline (highest entry L3). Grounds the firm-but-absorbed divfree-projector cluster (and its set_subvector_zero) from this root.
+    - target: L3/divfree_projector
+      kind: constrains-eigvec           # the eigenmode driver wires the divergence-free projector into the eigensolver (`eigen->SetDivFreeProjector(*divfree)` eigensolver.cpp:233; the initial starting vector projected `divfree->Mult(v0)` :262) to keep eigenvectors in the divergence-free subspace — a directly-wired absorbed constituent of this pipeline (highest entry L3). Grounds the firm-but-absorbed divfree_projector cluster (and its set_subvector_zero) from this root.
     - target: palace/drivers/eigensolver.cpp:32-477
       kind: cites-evidence
     - target: concepts/config-record

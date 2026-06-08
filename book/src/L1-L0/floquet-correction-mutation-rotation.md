@@ -1,7 +1,7 @@
 # floquet-correction-mutation-rotation
 
 The mutation rotation for the Floquet B-field correction apply. Lowers the pure
-L1 form [`floquet_correction`](../L1/floquet-correction.md) —
+L1 form [`floquet_correction`](../L1/floquet_correction.md) —
 `y = floquet_correction(F, x) = F.M_RT⁻¹ · F.Cross · x` — into Palace's L0
 `FloquetCorrSolver<ComplexVector>::Mult(const VecType &x, VecType &y)` member
 method, plus the apply-and-accumulate `AddMult(const VecType &x, VecType &y,
@@ -28,7 +28,7 @@ produces a fresh RT-space field over an opaque constructed corrector `F`
         and   rhs = F.Cross · x
 
 The two composed steps at L1 (see
-[`L1/floquet-correction`](../L1/floquet-correction.md) §Semantics):
+[`L1/floquet_correction`](../L1/floquet_correction.md) §Semantics):
 
 1. `rhs = F.Cross · x`                — cross-product action (Nedelec → RT)
 2. `y   = M_RT⁻¹ · rhs`, i.e. solve `F.M_RT · y = rhs` via `F.ksp`
@@ -76,7 +76,7 @@ facts the L1 form erases:
   once in the constructor (`palace/linalg/floquetcorrection.cpp:69-70`),
   written every call, carrying no value across calls. At L1 it vanishes — the
   correction is a single value-producing action. **Thinner than
-  `divfree-projector`'s two-scratch (`psi`, `rhs`)** — only one buffer because
+  `divfree_projector`'s two-scratch (`psi`, `rhs`)** — only one buffer because
   no boundary-zeroing intermediate and no gradient-correction post-step are
   needed.
 - **Construction-bound operators.** `Cross`, `ksp`, `M` are `std::unique_ptr`
@@ -130,7 +130,7 @@ Citations:
 
 The L0 `AddMult` body realises `y_new = y + a · (M_RT⁻¹ · [kp ×] · x)`. The L1
 equivalent decomposes into the firm
-[`floquet_correction`](../L1/floquet-correction.md) + [`axpy`](../L1/axpy.md)
+[`floquet_correction`](../L1/floquet_correction.md) + [`axpy`](../L1/axpy.md)
 pair:
 
     y_new = axpy(a, floquet_correction(F, x), y)
@@ -240,7 +240,7 @@ materialises (`palace/linalg/floquetcorrection.cpp:20-71`):
   is sufficient), with the construction-time rel-tol, abs-tol = machine
   epsilon, and iteration cap (`palace/linalg/floquetcorrection.cpp:60-67`). The
   inner constructed-operator gate; see [`ksp_solve`](../L1/ksp_solve.md). **Key
-  contrast with `divfree-projector`'s ksp setup**: divfree uses BoomerAMG (or
+  contrast with `divfree_projector`'s ksp setup**: divfree uses BoomerAMG (or
   GMG-wrapping-BoomerAMG) preconditioner; floquet uses JacobiSmoother. Both are
   CG; both bind operator-and-preconditioner-target to the same `M`. Captured
   at L1 as different `Solver[...]` closures with different per-instance content.
@@ -253,7 +253,7 @@ constructed-operator-gate construction step (same family as the
 [`ksp-solve`](./ksp-solve-mutation-rotation.md) /
 [`chebyshev-smoother`](./chebyshev-smoother-mutation-rotation.md) /
 [`eigsolve`](./eigsolve-mutation-rotation.md) /
-[`divfree-projector`](./divfree-projector-mutation-rotation.md) /
+[`divfree_projector`](./divfree-projector-mutation-rotation.md) /
 [`jacobi-smoother`](./jacobi-smoother-mutation-rotation.md) setup sites): the
 L1 closure `F` is a pure function of the setup inputs `(mat_op, nd_fespace,
 rt_fespace, tol, max_it, print)` modulo the opaque assembly/preconditioner-setup
@@ -309,7 +309,7 @@ and `real` paths textually, but only the complex path is reachable under the
 
 The L1 signature reflects this directly: `x` and the result are both
 `Field[N_nd, Complex]` / `Field[N_rt, Complex]`; there is no real-only mode.
-**Contrast with `divfree-projector`** (real *and* complex both instantiated,
+**Contrast with `divfree_projector`** (real *and* complex both instantiated,
 `palace/linalg/divfree.cpp:189-190`) and with `jacobi-smoother` (real *and*
 complex both instantiated, `palace/linalg/jacobi.cpp` instantiations). The
 `floquet_correction` is the **first L1 constructed-operator gate with a
@@ -365,7 +365,7 @@ The rewrite preserves semantics when:
    with `initial_guess == true` (the if-branch `:377-381`, which computes
    `A->Mult(x, r)` and reads `x` first) breaks the AddMult fusion under
    aliasing.** This condition is **specific to this theme** (the
-   divfree-projector AddMult-free apply does not have this concern) and its
+   divfree_projector AddMult-free apply does not have this concern) and its
    safety rests on the `SetInitialGuess(0)` construction-time choice.
 3. **No observer of prior `y` after the in-place call.** `Mult(x, y)` writes
    `y` (the destination is overwritten with the new value); `AddMult` reads
@@ -428,7 +428,7 @@ sites, all three construction sites).
 
 ## Speculative L1 operators
 
-None. The L1 anchor [`L1/floquet-correction`](../L1/floquet-correction.md) is
+None. The L1 anchor [`L1/floquet_correction`](../L1/floquet_correction.md) is
 firm, and all its sub-dependencies are firm L1 operators / firm concepts:
 [`apply_linop`](../L1/apply_linop.md) (the `Cross · x` step),
 [`ksp_solve`](../L1/ksp_solve.md) (the inner RT mass solve),
@@ -485,7 +485,7 @@ L0 evidence ranges:
 
 L1 anchor:
 
-- `book/src/L1/floquet-correction.md` — the firm L1 operator all four
+- `book/src/L1/floquet_correction.md` — the firm L1 operator all four
   sub-patterns lower from.
 
 ## Structural notes / caveats

@@ -1,6 +1,6 @@
 # iterate-while-with-prev-dissolution
 
-The L4>L3 lowering theme for the [`iterate-while-with-prev`](../L4/iterate-while-with-prev.md) combinator — the carry-bootstrapped (first-iteration-unrolled) sister of [`iterate-while`](../L4/iterate-while.md). It folds a `steady_step` over an initial carry while threading an additional `PrevCarry` closure parameter (the prior iteration's recurrence variable: CG's `beta_prev`, GMRES Hessenberg's `H_{k,k-1}`, Chebyshev's `x_{k-1}`), produced by an explicit `bootstrap_step` that fires exactly once before the steady loop. The theme dissolves the same L4 wrapper machinery as the no-prev dissolution (the `Solve` monad, the row-polymorphic `{ state: α, prev: β, ...e }` step return, the demand-prunable `trajectory` accumulator) **plus a fourth piece specific to this combinator**: the `prev` closure parameter dissolves into a positional argument of the L3 tail-recursive worker, and the bootstrap step becomes a non-recursive first call. It is the **dedicated home** for a Form-B rewrite also expressed as the firm L4 cap's own §"Lowers to" sketch (`iterate-while-with-prev.md:182-198`) plus a sub-component of [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) §"L3 form (RHS)" point 4 (`krylov-step-typed-wrapper-dissolution.md:74-89`).
+The L4>L3 lowering theme for the [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md) combinator — the carry-bootstrapped (first-iteration-unrolled) sister of [`iterate_while`](../L4/iterate_while.md). It folds a `steady_step` over an initial carry while threading an additional `PrevCarry` closure parameter (the prior iteration's recurrence variable: CG's `beta_prev`, GMRES Hessenberg's `H_{k,k-1}`, Chebyshev's `x_{k-1}`), produced by an explicit `bootstrap_step` that fires exactly once before the steady loop. The theme dissolves the same L4 wrapper machinery as the no-prev dissolution (the `Solve` monad, the row-polymorphic `{ state: α, prev: β, ...e }` step return, the demand-prunable `trajectory` accumulator) **plus a fourth piece specific to this combinator**: the `prev` closure parameter dissolves into a positional argument of the L3 tail-recursive worker, and the bootstrap step becomes a non-recursive first call. It is the **dedicated home** for a Form-B rewrite also expressed as the firm L4 cap's own §"Lowers to" sketch (`iterate_while_with_prev.md:182-198`) plus a sub-component of [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) §"L3 form (RHS)" point 4 (`krylov-step-typed-wrapper-dissolution.md:74-89`).
 
 This is the **carry-bootstrapped sister** of the companion theme `iterate-while-dissolution`. The two themes share the entire wrapper-dissolution body; this chapter adds **only the `prev`-positional delta** (the bootstrap call + the closure-threaded `prev` becoming a positional tuple slot).
 
@@ -10,15 +10,15 @@ This is the **carry-bootstrapped sister** of the companion theme `iterate-while-
 
 ## Context
 
-[`iterate-while`](../L4/iterate-while.md) and [`iterate-while-with-prev`](../L4/iterate-while-with-prev.md) are firm L4 rows. The with-prev combinator's L4>L3 lowering also appears as (a) the firm L4 cap's own §"Lowers to" L3 sketch (`iterate-while-with-prev.md:182-198`) and (b) implicitly inside the Form-B treatment of [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) point 4 (`krylov-step-typed-wrapper-dissolution.md:74-89`) — but neither is the combinator's **home**. This chapter is the standalone theme: the bootstrap-then-tail-recursive L3 form, the §3.8 collapse rule, and the identity-in-form-on-body verdict, with the layer-coherent framing — narrating the combinator's own L4→L3 dissolution forward and isolating the **`prev`-positional delta** as the only difference from the companion `iterate-while-dissolution` theme.
+[`iterate_while`](../L4/iterate_while.md) and [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md) are firm L4 rows. The with-prev combinator's L4>L3 lowering also appears as (a) the firm L4 cap's own §"Lowers to" L3 sketch (`iterate_while_with_prev.md:182-198`) and (b) implicitly inside the Form-B treatment of [`krylov-step-typed-wrapper-dissolution`](./krylov-step-typed-wrapper-dissolution.md) point 4 (`krylov-step-typed-wrapper-dissolution.md:74-89`) — but neither is the combinator's **home**. This chapter is the standalone theme: the bootstrap-then-tail-recursive L3 form, the §3.8 collapse rule, and the identity-in-form-on-body verdict, with the layer-coherent framing — narrating the combinator's own L4→L3 dissolution forward and isolating the **`prev`-positional delta** as the only difference from the companion `iterate-while-dissolution` theme.
 
 ### Companion theme — `iterate-while-dissolution`
 
-This theme is the carry-bootstrapped specialisation of the companion theme `iterate-while-dissolution` (`book/src/L4-L3/iterate-while-dissolution.md`). The companion covers the no-prev `iterate_while` dissolution; this theme is that pattern **plus** the `prev`-positional addition. The two are related by **Law 1 of [`iterate-while-with-prev`](../L4/iterate-while-with-prev.md)** (`iterate-while-with-prev.md:129-135`): when `PrevCarry = ()` (`β = ()`), this combinator definitionally degenerates to `iterate_while` preceded by an outer identity bootstrap-step, so this theme's L3 form degenerates to the companion theme's L3 form. The companion is the `β = ()` specialisation; this theme is the strict generalisation.
+This theme is the carry-bootstrapped specialisation of the companion theme `iterate-while-dissolution` (`book/src/L4-L3/iterate-while-dissolution.md`). The companion covers the no-prev `iterate_while` dissolution; this theme is that pattern **plus** the `prev`-positional addition. The two are related by **Law 1 of [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md)** (`iterate_while_with_prev.md:129-135`): when `PrevCarry = ()` (`β = ()`), this combinator definitionally degenerates to `iterate_while` preceded by an outer identity bootstrap-step, so this theme's L3 form degenerates to the companion theme's L3 form. The companion is the `β = ()` specialisation; this theme is the strict generalisation.
 
 ## L4 form (LHS)
 
-The L4 `iterate_while_with_prev` — the carry-bootstrapped, extras-carrying, `Solve`-threaded combinator consumed by [`krylov-step`](../L4/krylov-step.md) Form B (`iterate-while-with-prev.md:41-50`). This is the firm L4 row's `Solve`-threaded signature:
+The L4 `iterate_while_with_prev` — the carry-bootstrapped, extras-carrying, `Solve`-threaded combinator consumed by [`krylov_step`](../L4/krylov_step.md) Form B (`iterate_while_with_prev.md:41-50`). This is the firm L4 row's `Solve`-threaded signature:
 
     iterate_while_with_prev
       :: (α -> Solve { state: α, prev: β, ...e })        -- bootstrap_step
@@ -27,7 +27,7 @@ The L4 `iterate_while_with_prev` — the carry-bootstrapped, extras-carrying, `S
       -> (α -> Bool)                                      -- cont
       -> Solve { final_state: α, trajectory: [{ ...e }] }
 
-The argument order is `bootstrap_step` first, `init` second, `steady_step` third, `cont` fourth (`iterate-while-with-prev.md:52`). The small-step semantics are the bootstrap-then-tail-recurse rule from the firm L4 row's §Semantics (`iterate-while-with-prev.md:74-93`): fire the bootstrap once to produce the initial `prev` (`β_0`) and the bootstrap-stepped carry (`a_1`), then enter the steady tail recursion `steady_loop` (identical to `iterate_while`'s recursion modulo the `prev` threading):
+The argument order is `bootstrap_step` first, `init` second, `steady_step` third, `cont` fourth (`iterate_while_with_prev.md:52`). The small-step semantics are the bootstrap-then-tail-recurse rule from the firm L4 row's §Semantics (`iterate_while_with_prev.md:74-93`): fire the bootstrap once to produce the initial `prev` (`β_0`) and the bootstrap-stepped carry (`a_1`), then enter the steady tail recursion `steady_loop` (identical to `iterate_while`'s recursion modulo the `prev` threading):
 
 $$
 \begin{aligned}
@@ -48,28 +48,28 @@ $$
 \end{aligned}
 $$
 
-The three load-bearing L4 properties the lowering must transport (`iterate-while-with-prev.md:97-103`):
+The three load-bearing L4 properties the lowering must transport (`iterate_while_with_prev.md:97-103`):
 
 1. **The bootstrap always runs** exactly once, before the predicate's first test — structural, because the predicate's first call needs a `prev`-threaded carry to inspect.
 2. **The predicate fires after the bootstrap, before any steady step**, and reads the carry `α` only (never `prev`).
 3. **The `prev` value is threaded as a closure parameter of the loop, not a field of the carry** — the load-bearing schema-narrowing the first-iteration-unrolling rotation buys.
 
-The load-bearing demand-pruning property is **Law 2 — trajectory-pruning demand-rule** (`iterate-while-with-prev.md:137-147`, inherited from [`iterate-while`](../L4/iterate-while.md) Law 1 `iterate-while.md:123-133` and the strawman §3.8): when a consumer reads only `final_state`, the §3.8 rule rewrites **both** `bootstrap_step` and `steady_step` to the subgraphs computing only the `{ state, prev }` fields, omitting the extras. (This is Law 1's single-body rule lifted to two step bodies.)
+The load-bearing demand-pruning property is **Law 2 — trajectory-pruning demand-rule** (`iterate_while_with_prev.md:137-147`, inherited from [`iterate_while`](../L4/iterate_while.md) Law 1 `iterate_while.md:123-133` and the strawman §3.8): when a consumer reads only `final_state`, the §3.8 rule rewrites **both** `bootstrap_step` and `steady_step` to the subgraphs computing only the `{ state, prev }` fields, omitting the extras. (This is Law 1's single-body rule lifted to two step bodies.)
 
 The wrapper machinery this theme dissolves is **four** pieces (the three of the no-prev dissolution plus the `prev` closure thread):
 
-1. **The `Solve` monad** — `Solve = StateT SimState Identity` (`book/src/concepts/solve-monad.md:1-68`). Both the bootstrap and each steady step discharge as `do`-blocks carrying the `SimState` `it` counter (`iterate-while-with-prev.md:105`).
+1. **The `Solve` monad** — `Solve = StateT SimState Identity` (`book/src/concepts/solve-monad.md:1-68`). Both the bootstrap and each steady step discharge as `do`-blocks carrying the `SimState` `it` counter (`iterate_while_with_prev.md:105`).
 2. **The row-polymorphic step return `{ state: α, prev: β, ...e }`** — a TypeScript-style record with a generic extras spread `...e`. L3 has no row-polymorphic record spread.
 3. **The demand-prunable `trajectory: [{ ...e }]` accumulator** — the syntactic site where Law 2 fires; the bootstrap's extras are the first trajectory element.
 4. **The `prev` closure parameter** — threaded by the combinator (not the slice) as a positional argument of `steady_step`, with the bootstrap producing its initial value. This is the **delta over the no-prev dissolution**.
 
 ## L3 form (RHS)
 
-The L4>L3 dissolution produces a **bootstrap call followed by a tail-recursive value-threaded loop** with the `Solve` monad dissolved to an explicit positional `sim` thread, the record-spread step return dissolved to a positional tuple, and the `prev` closure parameter dissolved to a positional tuple slot. Two L3 forms arise from the **same** L4 invocation under different consumer demands; both share the bootstrap-then-loop shape extracted from the firm cap's §"Lowers to" (`iterate-while-with-prev.md:182-198`).
+The L4>L3 dissolution produces a **bootstrap call followed by a tail-recursive value-threaded loop** with the `Solve` monad dissolved to an explicit positional `sim` thread, the record-spread step return dissolved to a positional tuple, and the `prev` closure parameter dissolved to a positional tuple slot. Two L3 forms arise from the **same** L4 invocation under different consumer demands; both share the bootstrap-then-loop shape extracted from the firm cap's §"Lowers to" (`iterate_while_with_prev.md:182-198`).
 
 ### Unpruned form — the trajectory-keeping ground form
 
-The direct value-threaded dissolution when a downstream consumer reads `.trajectory` (no §3.8 collapse fires; the `[e₀] ++ trajectory` accumulator the firm L4 Law 2 keeps is materialised at L3). This is the **ground form** — the faithful L3 image of the bootstrap-then-`steady_loop` small-step rule with the trajectory preserved (extracted from `iterate-while-with-prev.md:182-198`; `sim` threading made positional, trajectory consed in iteration order):
+The direct value-threaded dissolution when a downstream consumer reads `.trajectory` (no §3.8 collapse fires; the `[e₀] ++ trajectory` accumulator the firm L4 Law 2 keeps is materialised at L3). This is the **ground form** — the faithful L3 image of the bootstrap-then-`steady_loop` small-step rule with the trajectory preserved (extracted from `iterate_while_with_prev.md:182-198`; `sim` threading made positional, trajectory consed in iteration order):
 
     iterate_while_with_prev_L3 f_boot a₀ f_steady p sim₀ =
       let (a₁, β₀, e₀, sim₁) = f_boot (a₀, sim₀)              -- bootstrap fires once
@@ -95,7 +95,7 @@ The §3.8-collapsed shape that arises when the consumer observes only `final_sta
                       in go (a', β', sim')
          in go (a₁, β₀, sim₁)
 
-where `f_boot_sp` / `f_steady_sp` are the §3.8-pruned `{state, prev}`-subgraphs of `f_boot` / `f_steady` — the bootstrap and steady bodies with the extras computation eliminated **as dead code at the call site** (not merely unused at runtime). The L3-side `f_steady_sp` has shape `(carry, prev, sim) -> (carry', prev', sim')` — the positional-tuple image of the L4-side `steady_step^{stateprev}` of Law 2 (`iterate-while-with-prev.md:137-147`), with the `sim` thread surfacing positionally because the `Solve` monad has dissolved, and `prev` surfacing as the dedicated positional slot. The trajectory is dropped entirely (no seed, no cons, no `reverse`).
+where `f_boot_sp` / `f_steady_sp` are the §3.8-pruned `{state, prev}`-subgraphs of `f_boot` / `f_steady` — the bootstrap and steady bodies with the extras computation eliminated **as dead code at the call site** (not merely unused at runtime). The L3-side `f_steady_sp` has shape `(carry, prev, sim) -> (carry', prev', sim')` — the positional-tuple image of the L4-side `steady_step^{stateprev}` of Law 2 (`iterate_while_with_prev.md:137-147`), with the `sim` thread surfacing positionally because the `Solve` monad has dissolved, and `prev` surfacing as the dedicated positional slot. The trajectory is dropped entirely (no seed, no cons, no `reverse`).
 
 ### The collapse rule
 
@@ -109,11 +109,11 @@ $$
 }
 $$
 
-This is exactly the L3-side image of **Law 2** of [`iterate-while-with-prev`](../L4/iterate-while-with-prev.md) (`iterate-while-with-prev.md:137-147`) — the L4 demand-pruning law **transports through** the L4>L3 wrapper dissolution because the dissolution is value-thread-isomorphic on **both** step bodies (the parent theme's §"Audit of cycle-002 identity-in-form claim", `krylov-step-typed-wrapper-dissolution.md:202-213`, establishes the body-identity that licenses the transport; the bootstrap and steady bodies are the Form-B first/steady pair audited there). The unpruned `iterate_while_with_prev_L3` is the ground form; the pruned `iterate_while_with_prev_L3_pruned` is its collapse-rule image; the rule above is the rewrite between them. **Framing** (identical to the companion theme): the pruned form is NOT a contradiction of the firm L4 Law 2 (which keeps the trajectory in its general statement) — it is the *consequence* of Law 2's collapse rule fired under a `final_state`-only consumer.
+This is exactly the L3-side image of **Law 2** of [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md) (`iterate_while_with_prev.md:137-147`) — the L4 demand-pruning law **transports through** the L4>L3 wrapper dissolution because the dissolution is value-thread-isomorphic on **both** step bodies (the parent theme's §"Audit of cycle-002 identity-in-form claim", `krylov-step-typed-wrapper-dissolution.md:202-213`, establishes the body-identity that licenses the transport; the bootstrap and steady bodies are the Form-B first/steady pair audited there). The unpruned `iterate_while_with_prev_L3` is the ground form; the pruned `iterate_while_with_prev_L3_pruned` is its collapse-rule image; the rule above is the rewrite between them. **Framing** (identical to the companion theme): the pruned form is NOT a contradiction of the firm L4 Law 2 (which keeps the trajectory in its general statement) — it is the *consequence* of Law 2's collapse rule fired under a `final_state`-only consumer.
 
 ### Degeneracy to the companion dissolution
 
-When `PrevCarry = ()` (`β = ()`), this combinator definitionally reduces to `iterate_while` preceded by an outer identity bootstrap (Law 1 of [`iterate-while-with-prev`](../L4/iterate-while-with-prev.md), `iterate-while-with-prev.md:129-135`). At L3 this means: the `β` positional slot carries no information, the bootstrap call collapses to a pure carry-shift, and `iterate_while_with_prev_L3` degenerates to the companion theme's `iterate_while_L3` (`book/src/L4-L3/iterate-while-dissolution.md` §"L3 form (RHS)"), with the bootstrap's extras `[e₀]` becoming the trajectory's first element. This is the L3-side image of the L4 degeneracy law and is what makes the two themes a **family**: this theme is the strict generalisation, the companion is the `β = ()` specialisation.
+When `PrevCarry = ()` (`β = ()`), this combinator definitionally reduces to `iterate_while` preceded by an outer identity bootstrap (Law 1 of [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md), `iterate_while_with_prev.md:129-135`). At L3 this means: the `β` positional slot carries no information, the bootstrap call collapses to a pure carry-shift, and `iterate_while_with_prev_L3` degenerates to the companion theme's `iterate_while_L3` (`book/src/L4-L3/iterate-while-dissolution.md` §"L3 form (RHS)"), with the bootstrap's extras `[e₀]` becoming the trajectory's first element. This is the L3-side image of the L4 degeneracy law and is what makes the two themes a **family**: this theme is the strict generalisation, the companion is the `β = ()` specialisation.
 
 ### What does NOT change in the rotation
 
@@ -123,21 +123,21 @@ The **outer-loop `sequential-obstruction`** survives at L3: both L3 forms name t
 
 ### What this lowering does NOT cover
 
-- **The L3>L2 hop on the loop combinator itself**, which is *also* identity-in-form (`iterate-while-with-prev.md:202`), the same tail-recursive shape being L2-native. The full L4>L3>L2 chain for the no-extras `iterate_while_with_prev_pure` collapses to the L4>L3 wrapper dissolution alone; the L3>L2 completion is the trivial identity step, not duplicated here.
+- **The L3>L2 hop on the loop combinator itself**, which is *also* identity-in-form (`iterate_while_with_prev.md:202`), the same tail-recursive shape being L2-native. The full L4>L3>L2 chain for the no-extras `iterate_while_with_prev_pure` collapses to the L4>L3 wrapper dissolution alone; the L3>L2 completion is the trivial identity step, not duplicated here.
 - **The no-prev `iterate_while` dissolution** — that is the companion theme `iterate-while-dissolution` (`book/src/L4-L3/iterate-while-dissolution.md`), which this theme generalises. When `β = ()` this theme degenerates to it (Law 1; see §"Degeneracy to the companion dissolution").
-- **The slice-specialised dissolutions** — the GMRES / FGMRES inner-loop themes ([`gmres-inner-loop-iterate-while-migration`](./gmres-inner-loop-iterate-while-migration.md), [`fgmres-inner-loop-iterate-while-migration`](./fgmres-inner-loop-iterate-while-migration.md)) specialise the no-prev `iterate_while` dissolution (those use Form A). The Form-B `iterate_while_with_prev` consumer is CG v0.5 (firm-homed at `book/src/L4/krylov-step.md` Form B); a CG-Form-B dissolution would instantiate this theme's pruned form under the CG four-scalar consumer, but is not re-derived here.
+- **The slice-specialised dissolutions** — the GMRES / FGMRES inner-loop themes ([`gmres-inner-loop-iterate-while-migration`](./gmres-inner-loop-iterate-while-migration.md), [`fgmres-inner-loop-iterate-while-migration`](./fgmres-inner-loop-iterate-while-migration.md)) specialise the no-prev `iterate_while` dissolution (those use Form A). The Form-B `iterate_while_with_prev` consumer is CG v0.5 (firm-homed at `book/src/L4/krylov_step.md` Form B); a CG-Form-B dissolution would instantiate this theme's pruned form under the CG four-scalar consumer, but is not re-derived here.
 
 ## Applicability conditions
 
 The rewrite is valid when all five of the following hold (the four inherited from `krylov-step-typed-wrapper-dissolution.md` §"Applicability conditions" plus the `prev`-threading condition specific to this combinator):
 
-1. **The L4 `Solve` monad's effect domain is exactly `SimState`.** The only `modify` in either body is the `it` counter increment; no carry or `prev` field is monad-touched. This lets the monad dissolve to a single positional `sim` argument threaded through both the bootstrap and steady calls (`iterate-while-with-prev.md:105`, `solve-monad.md` §"What stays out of the monad").
+1. **The L4 `Solve` monad's effect domain is exactly `SimState`.** The only `modify` in either body is the `it` counter increment; no carry or `prev` field is monad-touched. This lets the monad dissolve to a single positional `sim` argument threaded through both the bootstrap and steady calls (`iterate_while_with_prev.md:105`, `solve-monad.md` §"What stays out of the monad").
 
-2. **The predicate is pure on the carry** (`cont :: α -> Bool`, `iterate-while-with-prev.md:59`). No reads of `SimState`, `OpParams`, the per-step extras, or **the `prev` value** (the predicate-on-prev anti-pattern, `iterate-while-with-prev.md:115-123`). This is what lets the L3 branch test `not (p a)` read only the positional `carry` argument. Slices whose termination needs a `prev`-derived quantity fold it into the carry inside `steady_step` (CG v0.5: `s.converged` is set inside `cg_steady_step` from the freshly-computed `res'`; `beta_prev` is the `prev` parameter but is never read by the predicate; the predicate-on-carry-only + the `beta_prev`-as-`prev`-parameter pattern is firm-homed at `book/src/L4/krylov-step.md` Form B).
+2. **The predicate is pure on the carry** (`cont :: α -> Bool`, `iterate_while_with_prev.md:59`). No reads of `SimState`, `OpParams`, the per-step extras, or **the `prev` value** (the predicate-on-prev anti-pattern, `iterate_while_with_prev.md:115-123`). This is what lets the L3 branch test `not (p a)` read only the positional `carry` argument. Slices whose termination needs a `prev`-derived quantity fold it into the carry inside `steady_step` (CG v0.5: `s.converged` is set inside `cg_steady_step` from the freshly-computed `res'`; `beta_prev` is the `prev` parameter but is never read by the predicate; the predicate-on-carry-only + the `beta_prev`-as-`prev`-parameter pattern is firm-homed at `book/src/L4/krylov_step.md` Form B).
 
 3. **Both step bodies' primitive sequences are L3-native or carry their own L3 classification.** Each bootstrap/steady-body primitive is either a whole-tensor global op (L3-native by signature) or carries a documented body-level obstruction. The wrapper dissolution does not change either body's L3 classification — they survive in form.
 
-4. **The bootstrap produces the initial `prev` and `sim`-threads exactly once.** The bootstrap call is non-recursive and runs before the predicate's first test (`iterate-while-with-prev.md:99` — "The bootstrap always runs"); the L3 form renders it as the let-bound prefix `(a₁, β₀, [e₀], sim₁) = f_boot (a₀, sim₀)`. If a consumer needs an "already-converged-before-first-step" guard, it lives outside the combinator (CG v0.5's outer initial-convergence test, firm-homed at `book/src/L4/krylov-step.md` Form B) and outside this lowering.
+4. **The bootstrap produces the initial `prev` and `sim`-threads exactly once.** The bootstrap call is non-recursive and runs before the predicate's first test (`iterate_while_with_prev.md:99` — "The bootstrap always runs"); the L3 form renders it as the let-bound prefix `(a₁, β₀, [e₀], sim₁) = f_boot (a₀, sim₀)`. If a consumer needs an "already-converged-before-first-step" guard, it lives outside the combinator (CG v0.5's outer initial-convergence test, firm-homed at `book/src/L4/krylov_step.md` Form B) and outside this lowering.
 
 5. **Trajectory-pruning selection** (selects unpruned vs pruned form). When the downstream consumer reads `.trajectory` (or any per-step extras, including the bootstrap's), the **unpruned** `iterate_while_with_prev_L3` form is the rendered L3 shape. When the consumer observes only `final_state`-equivalent quantities, the **pruned** `iterate_while_with_prev_L3_pruned` form is the rendered shape (per the collapse rule above). For Palace's actual KSP consumer surface (the four-scalar consumer at `reference/palace/palace/linalg/iterative.hpp:52-55`, consumed solely at `reference/palace/palace/linalg/ksp.cpp:296-310`), the pruned form is the rendered shape; for a monitoring consumer that reads the residual history, the unpruned form is rendered.
 
@@ -152,20 +152,20 @@ The rewrite is valid when all five of the following hold (the four inherited fro
 
 ## Speculative L4 operators
 
-None. This theme is an extraction of an already-firm form; the L4 cap it lowers ([`iterate-while-with-prev`](../L4/iterate-while-with-prev.md)) is a firm L4 row, and the companion no-prev combinator ([`iterate-while`](../L4/iterate-while.md)) is firm. No new speculative operator is introduced.
+None. This theme is an extraction of an already-firm form; the L4 cap it lowers ([`iterate_while_with_prev`](../L4/iterate_while_with_prev.md)) is a firm L4 row, and the companion no-prev combinator ([`iterate_while`](../L4/iterate_while.md)) is firm. No new speculative operator is introduced.
 
 ## Verified-against
 
 L4 source (the LHS of this rewrite):
 
-- `book/src/L4/iterate-while-with-prev.md:41-50` — the firm L4 `iterate_while_with_prev` `Solve`-threaded signature (the LHS); `:52` the argument order; `:74-93` the §Semantics bootstrap-then-`steady_loop` small-step rules; `:97-103` the three semantic points (bootstrap always runs / predicate after bootstrap / `prev` as closure parameter); `:129-135` Law 1 (degeneracy to `iterate-while` when `β = ()`); `:137-147` Law 2 (trajectory-pruning, the load-bearing transported property); `:182-198` the firm §"Lowers to" L3 form (`iterate_while_with_prev_L3` + `steady_loop_L3`) extracted as the RHS; `:202` the L3>L2 identity-in-form note; `:200` the standalone-pending deferral and `:223` the §"L4 vs L3 distinction" deferral, both re-anchored by this dispatch.
-- `book/src/L4/iterate-while.md:123-133` — the companion Law 1 (single-body demand-pruning) that Law 2 lifts to two bodies; the rule transported through the dissolution.
+- `book/src/L4/iterate_while_with_prev.md:41-50` — the firm L4 `iterate_while_with_prev` `Solve`-threaded signature (the LHS); `:52` the argument order; `:74-93` the §Semantics bootstrap-then-`steady_loop` small-step rules; `:97-103` the three semantic points (bootstrap always runs / predicate after bootstrap / `prev` as closure parameter); `:129-135` Law 1 (degeneracy to `iterate_while` when `β = ()`); `:137-147` Law 2 (trajectory-pruning, the load-bearing transported property); `:182-198` the firm §"Lowers to" L3 form (`iterate_while_with_prev_L3` + `steady_loop_L3`) extracted as the RHS; `:202` the L3>L2 identity-in-form note; `:200` the standalone-pending deferral and `:223` the §"L4 vs L3 distinction" deferral, both re-anchored by this dispatch.
+- `book/src/L4/iterate_while.md:123-133` — the companion Law 1 (single-body demand-pruning) that Law 2 lifts to two bodies; the rule transported through the dissolution.
 - `book/src/semantics/index.md:150-184` — the strawman §3.7 `iterate_while` small-step rule the bootstrap-then-loop semantics generalise (`:164-171` the rule block, `:179-182` the `iterate_while_pure` sugar).
 - `book/src/semantics/index.md:186-213` — the strawman §3.8 demand-driven pruning rule that underwrites Law 2.
 
 L3 source (the RHS of this rewrite; extracted from the firm cap + firm sub-component):
 
-- `book/src/L4/iterate-while-with-prev.md:182-198` — the firm L4 cap's own §"Lowers to" L3 form (`iterate_while_with_prev_L3` + `steady_loop_L3`), the bootstrap-then-tail-recursive ground shape extracted here.
+- `book/src/L4/iterate_while_with_prev.md:182-198` — the firm L4 cap's own §"Lowers to" L3 form (`iterate_while_with_prev_L3` + `steady_loop_L3`), the bootstrap-then-tail-recursive ground shape extracted here.
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:74-89` — the Form-B-in-L3 dissolution (`krylov-step-L3-first`/`krylov-step-L3-steady`, point 4): the `PrevCarry`-as-positional-value-in-the-threaded-tuple framing, extracted as the `prev`-positional delta.
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:150-154` — the `iterate_while_with_prev` speculative-operator signature the Form-B body consumes (the bootstrap-step / steady-step split this theme renders positionally).
 - `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md:202-213` — the §"Audit of cycle-002 identity-in-form claim" verdict that establishes the body-identity licensing the Law-2 transport for both bodies.
@@ -177,7 +177,7 @@ L0 consumer-surface evidence (selects the pruned form for Palace's KSP case, Con
 
 Slice evidence (the Form-B consumer):
 
-- `book/src/L4/krylov-step.md` Form B — the canonical CG form using `iterate_while_with_prev` (the call site); the `cg_first_step` / `cg_steady_step` split is the prototypical bootstrap/steady pair, with the predicate-on-carry-only + `beta_prev`-as-`prev`-parameter pattern.
+- `book/src/L4/krylov_step.md` Form B — the canonical CG form using `iterate_while_with_prev` (the call site); the `cg_first_step` / `cg_steady_step` split is the prototypical bootstrap/steady pair, with the predicate-on-carry-only + `beta_prev`-as-`prev`-parameter pattern.
 
 Concept-page references:
 
@@ -188,7 +188,7 @@ Concept-page references:
 
 ## Status
 
-`firm` — extraction of the form (the firm L4 cap's own §"Lowers to" `iterate-while-with-prev.md:182-198` + the sub-component `krylov-step-typed-wrapper-dissolution.md:74-89` point 4) into a dedicated layer-coherent chapter. The L4 cap it lowers ([`iterate-while-with-prev`](../L4/iterate-while-with-prev.md)) and the companion combinator ([`iterate-while`](../L4/iterate-while.md)) are firm L4 rows; the two L3 forms, the §3.8 collapse rule, the bootstrap-prefix shape, and the identity-in-form-on-bodies verdict are cited against the strawman §3.7/§3.8, the firm L4 Law 1 / Law 2, and the parent theme's body-identity audit. Justification is `structural` + secondary `reduction-chain`.
+`firm` — extraction of the form (the firm L4 cap's own §"Lowers to" `iterate_while_with_prev.md:182-198` + the sub-component `krylov-step-typed-wrapper-dissolution.md:74-89` point 4) into a dedicated layer-coherent chapter. The L4 cap it lowers ([`iterate_while_with_prev`](../L4/iterate_while_with_prev.md)) and the companion combinator ([`iterate_while`](../L4/iterate_while.md)) are firm L4 rows; the two L3 forms, the §3.8 collapse rule, the bootstrap-prefix shape, and the identity-in-form-on-bodies verdict are cited against the strawman §3.7/§3.8, the firm L4 Law 1 / Law 2, and the parent theme's body-identity audit. Justification is `structural` + secondary `reduction-chain`.
 
 ## L4 vs L3 distinction
 

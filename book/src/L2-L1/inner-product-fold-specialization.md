@@ -4,7 +4,7 @@ The conjugation-convention rotation for the BLAS-1 reduce-to-scalar inner-produc
 Lowers the L2 reduce-to-scalar fold `inner_product` (`book/src/L2/inner_product.md`,
 firm) into its L1 leaf — [`dot`](../L1/dot.md) (Hermitian), the unconjugated `tdot`
 (co-defined in [`dot`](../L1/dot.md)), or the M-weighted member realized by
-[`bilinear-form`](../L1/bilinear-form.md) (`xᴴ M y`) — by **dispatching on the fold's
+[`bilinear_form`](../L1/bilinear_form.md) (`xᴴ M y`) — by **dispatching on the fold's
 per-element kernel (conjugated vs unconjugated), its element type (real vs complex), and
 its weight presence (`M = I` vs general / SPD `M`)**. Narrated forward: the one L2 fold
 **re-fuses** downward into Palace's bounded family of distinct reduction call shapes
@@ -66,7 +66,7 @@ length `N` (Palace's `MFEM_ASSERT(x.Size() == y.Size())`,
 The L1 form is the **three distinct leaf primitives**, each mirroring one Palace L0
 reduction surface. The conjugation axis lives at one chapter ([`dot`](../L1/dot.md), which
 co-defines `dot` and `tdot`); the M-weighted member is the separate
-[`bilinear-form`](../L1/bilinear-form.md) chapter. At this RHS the operands are the
+[`bilinear_form`](../L1/bilinear_form.md) chapter. At this RHS the operands are the
 **concrete Palace `Vector`s** — genuinely flat rank-1 dof-vectors of length `N` (and `M`
 for `bilinear_form`'s domain) — so the `Tensor[N]` / `LinearOperator[M, N]` rendering here
 is the literal L0/L1 call shape, NOT the shape-generic `(S: ...)` of the L2 fold above (the
@@ -83,15 +83,15 @@ bilinear_form(x, M, y) = xᴴ M y              -- M-weighted; ≡ dot(x, apply_l
 ```
 
 At L1 the conjugation value and the weight presence are **fixed per operator**: `dot` is
-Hermitian, `tdot` is unconjugated, `bilinear-form` is M-weighted; each mirrors Palace's L0
+Hermitian, `tdot` is unconjugated, `bilinear_form` is M-weighted; each mirrors Palace's L0
 reduction surface one-to-one (`dot` ← `ComplexVector::Dot` / real `LocalDot`; `tdot` ←
-`ComplexVector::TransposeDot`; `bilinear-form` ← `linalg::Dot(comm, x, A, y)`). The
+`ComplexVector::TransposeDot`; `bilinear_form` ← `linalg::Dot(comm, x, A, y)`). The
 conjugation axis over which L1 has `dot`/`tdot` (and the weight axis over which it has
-`dot` vs `bilinear-form`) is exactly the axis the single L2 fold unifies.
+`dot` vs `bilinear_form`) is exactly the axis the single L2 fold unifies.
 
 The L1 leaves adopt the **same arg-1-conjugated convention** as the L2 fold
 ([`dot`](../L1/dot.md) §Semantics, "conjugate-linear in the **first** argument", `:43`;
-[`bilinear-form`](../L1/bilinear-form.md) §Signature, `bilinear_form(x, M, y) = xᴴ M y`,
+[`bilinear_form`](../L1/bilinear_form.md) §Signature, `bilinear_form(x, M, y) = xᴴ M y`,
 `:63`), so the LHS→RHS dispatch is convention-preserving at the L1/L2 representation level;
 the *value-level* re-order against the Palace L0 source is §"The conjugate-pair re-order"
 below.
@@ -148,7 +148,7 @@ At L2 the weighted member is the clean composition `inner_product (apply_linop M
 that the L0 weighted `Dot` allocates (`ComplexVector Ax(A.Height())`,
 `palace/linalg/operator.cpp:624,634`) — the Category-4 "synthetic workspace" instance of
 [`mutable-workspace-pattern`](../L0/mutable-workspace-pattern.md) recorded at
-[`bilinear-form`](../L1/bilinear-form.md):39-43. The workspace disappears at L2 (pure
+[`bilinear_form`](../L1/bilinear_form.md):39-43. The workspace disappears at L2 (pure
 threading) and reappears here as the M-application buffer; it is invisible to the L2 value.
 
 ### The diagonal degeneration (`y = x`) — a consumer entry, not a dispatch key
@@ -158,7 +158,7 @@ fast path (transparent trick: `palace/linalg/vector.cpp:266` returns imag = `0.0
 Hermitian form; `:272-273` returns `2·Im·Re` for `tdot`; `:679` returns imag = `0.0` for
 the complex local fold). The fast path is an L0 implementation detail the lowering elides
 (algebraically `xᴴ x` is exactly real). The diagonal is the entry point for the
-`nrm2` / `matrix-weighted-norm` consumers (`√ ∘ inner_product` at `y = x`,
+`nrm2` / `matrix_weighted_norm` consumers (`√ ∘ inner_product` at `y = x`,
 `palace/linalg/operator.cpp:598-618`), which compose an outer `√` post-step — that
 composition is downstream of this lowering, not a dispatch within it.
 
@@ -201,7 +201,7 @@ weighted member, Palace's own shape is `Dot(comm, A·x, y) = yᴴ A x`; recoveri
 `xᴴ M y` requires the same swap/conj (and, for a Hermitian `M`, `yᴴ M x = conj(xᴴ M y)`,
 so the outer `conj` recovers it; for non-Hermitian `M` the operand-swap form is the
 faithful one). This is exactly the conjugation-asymmetry reconciliation
-[`bilinear-form`](../L1/bilinear-form.md):119-145 records at L1.
+[`bilinear_form`](../L1/bilinear_form.md):119-145 records at L1.
 
 **Where the re-order is invisible (and why the two conventions coexist harmlessly in
 Palace).** Algorithms that take a **real projection** of the result — `std::real`,
@@ -266,7 +266,7 @@ The dispatch lowering preserves the L2 value when:
    Palace enforces it with `MFEM_ASSERT(x.Size() == y.Size())`
    (`palace/linalg/vector.cpp:668`). For the weighted member, additionally `M`'s codomain
    matches `x`'s axis and `M`'s domain matches `y`'s axis
-   ([`bilinear-form`](../L1/bilinear-form.md) §Applicability conditions).
+   ([`bilinear_form`](../L1/bilinear_form.md) §Applicability conditions).
 
 2. **Conjugation key matches the algorithm's intent.** Selecting `dot` (Hermitian) vs
    `tdot` (unconjugated) is value-bearing for complex element type — the two leaves have
@@ -367,7 +367,7 @@ residue recorded in §"Summation-order recording".
 
 **None.** All three RHS leaves are existing vocabulary:
 [`dot`](../L1/dot.md) (firm; co-defines `dot` + `tdot`) and
-[`bilinear-form`](../L1/bilinear-form.md) (firm; the M-weighted member). The LHS
+[`bilinear_form`](../L1/bilinear_form.md) (firm; the M-weighted member). The LHS
 `L2/inner_product` is firm. This theme proposes no new
 operators — it is the lowering edge between existing vocabulary on both sides.
 
@@ -380,10 +380,10 @@ theme — the *dispatch structure* is firm):
   (`palace/linalg/vector.cpp:269`), no callers. The unconjugated
   dispatch arm is therefore structurally firm (a defined kernel differing from `dot` by one
   sign) but behaviorally unexercised; the theme's behavioral weight leans on the `dot`
-  (Hermitian — CG / orthogonalization / NLEPS sites) and `bilinear-form` (Poynting +
+  (Hermitian — CG / orthogonalization / NLEPS sites) and `bilinear_form` (Poynting +
   cross-coupling sites) arms, both exercised. Mirrors `L2/inner_product` §"tdot".
 
-- **`bilinear-form` is firm at L1** (its two surfaced use sites are both complex-`x`-complex-`y`).
+- **`bilinear_form` is firm at L1** (its two surfaced use sites are both complex-`x`-complex-`y`).
   The M-weighted dispatch arm is firm: the composition `inner_product (apply_linop M x) y` lowering
   to `Dot(comm, A·x, y)` is clean and directly verified.
 
@@ -420,7 +420,7 @@ L0 evidence ranges (paths relative to `reference/`):
 - `palace/linalg/operator.cpp:598-618` — `Norml2(comm, x, B, Bx)` real (`:599-606`) +
   complex (`:608-618`): the B-weighted norm `√ Dot(comm, Bx, x)`, with the SPD assertion
   `dot.real() > 0.0 && |dot.imag()| < 1e-9·dot.real()` (`:616`, comment "For SPD B,
-  xᴴ B x is real" at `:612`). The `matrix-weighted-norm` consumer + law-5/diagonal
+  xᴴ B x is real" at `:612`). The `matrix_weighted_norm` consumer + law-5/diagonal
   confirmation.
 - `palace/linalg/iterative.cpp:393-396` — `beta = linalg::Dot(comm, z, r)` (`:395`): CG's
   preconditioned `(Br, r)` coefficient — the workhorse Hermitian-member live call site
@@ -442,12 +442,12 @@ L2 / L1 anchors:
 - `book/src/L1/dot.md` — the firm Hermitian / unconjugated leaf (RHS): `dot` (`:33-34`),
   `tdot` (`:35`), the arg-1-conjugated L1 convention (`:43-44`), the self-dot trick
   (`:49`).
-- `book/src/L1/bilinear-form.md` — the firm M-weighted leaf (RHS): `xᴴ M y` (`:63`),
+- `book/src/L1/bilinear_form.md` — the firm M-weighted leaf (RHS): `xᴴ M y` (`:63`),
   the conjugation-asymmetry reconciliation (`:119-145`), the workspace `Ax` (`:39-43`).
 
 ## Status
 
-`firm` — the L2 LHS and the L1 RHS leaves (`dot`/`tdot`; `bilinear-form` and its M-weighted-member
+`firm` — the L2 LHS and the L1 RHS leaves (`dot`/`tdot`; `bilinear_form` and its M-weighted-member
 dispatch arm) are firm, and the dispatch rule IS the L2 entry's already-firm laws (law 7
 weight specialization + the conjugation/element-type kernel keys) read as a lowering. The
 **conjugate-pair re-order** (`xᴴ y = conj(yᴴ x)`) and the per-call reduction trees are read

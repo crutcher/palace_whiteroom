@@ -1,13 +1,13 @@
 ---
 layer: L1
-operator: bilinear-form
+operator: bilinear_form
 firmness: firm
 rank: firm
 edges:
   depends-on:
     - L1/dot
     - L1/apply_linop
-    - L1/matrix-weighted-norm
+    - L1/matrix_weighted_norm
   reference:
     - L1-L0/bilinear-form-mutation-rotation
 variant_axes:
@@ -17,7 +17,7 @@ variant_axes:
   - parallel-wrapper
 ---
 
-# bilinear-form
+# bilinear_form
 
 Mutation-free matrix-weighted inner-product reduction: `α = xᴴ M y` for a
 vector `x`, a linear operator `M`, and a vector `y`. The matrix-weighted
@@ -27,7 +27,7 @@ denominators in nonlinear eigenvalue methods.
 
 ## Context
 
-`bilinear-form` lifts Palace's `linalg::Dot(comm, x, A, y)` free-function
+`bilinear_form` lifts Palace's `linalg::Dot(comm, x, A, y)` free-function
 overload pair (declared at `palace/linalg/operator.hpp:386-394`, defined at
 `palace/linalg/operator.cpp:621-639`) to a single pure-functional
 matrix-weighted reduction operator. The L0 declaration set names two overloads
@@ -47,7 +47,7 @@ threading); the L1>L0 lowering theme reintroduces it.
 
 The structural
 signature is well-anchored at L0 and the algebraic laws are inherited cleanly
-from the firm L1 dependencies `dot`, `apply_linop`, and `matrix-weighted-norm`.
+from the firm L1 dependencies `dot`, `apply_linop`, and `matrix_weighted_norm`.
 The two surfaced use sites are the only matrix-weighted `Dot` call sites in the
 tree, and the one unexercised shape — real-`M`-real-`y` `xᵀ M y` — is not
 surfaced by Palace at all.
@@ -99,10 +99,10 @@ return value.
 **Specialisation to `dot`**: when `M` is the identity operator `I` (axis
 `N = M`), `bilinear_form(x, I, y) = xᴴ I y = xᴴ y = dot(x, y)`. This is
 the algebraic statement that `dot` is the special case `M = I` of
-`bilinear-form`. In the dep-map, both `dot` and `bilinear-form` are siblings
+`bilinear_form`. In the dep-map, both `dot` and `bilinear_form` are siblings
 at L1; the specialisation is captured by this algebraic identity (per the L1
 overlay invariant "Subsumption-as-identity rather than dependency"), not by a
-dep-map edge from `bilinear-form` to `dot`.
+dep-map edge from `bilinear_form` to `dot`.
 
 **Composition into `apply_linop` + `dot` (informational)**: as an L1>L0
 lowering preview only, the natural unfolding `bilinear_form(x, M, y) =
@@ -192,8 +192,8 @@ in `y`, linear in `M`).
    is the zero operator. Follows from law 3 with `α = 0` and `M₂ = 0`.
 6. **Identity-weight specialisation**: `bilinear_form(x, I, y) = dot(x, y)`
    for `I : V → V` the identity on a space with axis `N = M`. This is the
-   *defining* relationship between `bilinear-form` and `dot` — the operator
-   is named "bilinear-form" precisely because it is the matrix-weighted
+   *defining* relationship between `bilinear_form` and `dot` — the operator
+   is named "bilinear_form" precisely because it is the matrix-weighted
    generalisation of `dot`.
 
 **Symmetry laws (depend on `M`-symmetry — see Variant axes):**
@@ -243,13 +243,13 @@ call followed by one `dot` call; the workspace-internal-allocation pattern at
 L0 (Category 4 of [`mutable-workspace-pattern`](../L0/mutable-workspace-pattern.md))
 is the operator-applied intermediate `Ax`.
 
-The `nrm2_B`-weighted energy-norm operator depends on `bilinear-form` via
+The `nrm2_B`-weighted energy-norm operator depends on `bilinear_form` via
 `nrm2_B(x, B) = √bilinear_form(x, B, x)` when `B` is SPD (law 8). That is the
 L1 statement of the energy norm.
 
 ## Variant axes
 
-`bilinear-form` has four orthogonal variant axes at L1:
+`bilinear_form` has four orthogonal variant axes at L1:
 
 - **precision-mode**: the working precision of the underlying reductions.
   Inherited from `dot` and `apply_linop`. Palace exposes one precision
@@ -259,7 +259,7 @@ L1 statement of the energy norm.
 - **output-arg-pattern**: at L0, `linalg::Dot(comm, x, A, y)` returns its
   result by value (return register / scalar). There is no "output-arg" form
   in Palace's matrix-weighted surface — unlike `apply_linop` (which has both
-  `Mult` and `AddMult` accumulating variants), `bilinear-form` has only the
+  `Mult` and `AddMult` accumulating variants), `bilinear_form` has only the
   return-by-value form. The axis is recorded for parallel-structure with
   other L1 operators; at L1 the only realised mode is `return`.
 - **M-symmetry-property**: `hermitian` | `non-symmetric`. This axis is
@@ -302,7 +302,7 @@ Collapsed (absorbed) axes:
 - **No SPD requirement on `M`.** The operator is well-defined for any linear
   `M`. Algebraic laws 7 (Hermitian symmetry) and 8 (positive semi-definiteness
   at `y = x`) hold *conditionally* on `M`'s symmetry properties; the operator
-  itself does not require them. This distinguishes `bilinear-form` from the
+  itself does not require them. This distinguishes `bilinear_form` from the
   `nrm2_B`-weighted energy-norm operator, which requires `B` SPD because the
   square-root step demands a non-negative real argument.
 - The element types of `x`, `M`, and `y` must be compatible per the table in
@@ -341,7 +341,7 @@ Collapsed (absorbed) axes:
 ## Evidence
 
 - `palace/linalg/operator.hpp:385-394` — two `linalg::Dot` overload
-  declarations for the matrix-weighted bilinear-form inner product (real-`A`
+  declarations for the matrix-weighted bilinear_form inner product (real-`A`
   weight at line 388-389, complex-`A` weight at line 393-394). Comment at
   line 386 documents the intended form as `yᴴ A x` for both overloads.
 - `palace/linalg/operator.cpp:621-629` — real-`A` overload implementation:
@@ -377,8 +377,8 @@ Collapsed (absorbed) axes:
 - `book/src/L0/linalg-operator-file.md` §"linalg:: free functions" (lines
   30-35) and §"Why this file pair matters" (line 73) — L0 chapter naming
   the matrix-weighted `Dot` overloads as the natural L0 anchor for an L1
-  matrix-weighted bilinear-form operator. The L0 chapter and this entry both
-  use the slug `bilinear-form`.
+  matrix-weighted bilinear_form operator. The L0 chapter and this entry both
+  use the slug `bilinear_form`.
 - `book/src/L1/dot.md` — the firm dependency for the final inner-product
   step; defines the conjugation convention this entry inherits.
 - `book/src/L1/apply_linop.md` — the firm dependency for the matrix-weight

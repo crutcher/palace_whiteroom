@@ -11,7 +11,7 @@ edges:
     - L4/gram_reduce
     - L4/ksp_solve
     - L4/fold_solve
-    - L4/krylov-step
+    - L4/krylov_step
     - L2/gram
 intent: >
   The sharding-as-decomposition-abstraction MATH: a rank-agnostic
@@ -78,7 +78,7 @@ restrict_op_to_block :: IndexBlock                       -- a block b of a parti
 
 -- SPECULATIVE (roadmap_goal) — the decomposed solve over a partition P = {b₀, b₁, …}:
 subdomain_solve :: (LinOp[(Sb: ...), $Sb] -> Tensor[(Sb: ...)] -> Solve (Tensor[$Sb]))
-                                                         -- a firm solve verb (ksp_solve / fold_solve / krylov-step)
+                                                         -- a firm solve verb (ksp_solve / fold_solve / krylov_step)
                  -> Partition                            -- P : a partition of the index set into blocks
                  -> LinOp[(S: ...), $S]                  -- the global system operator A
                  -> Tensor[(S: ...)]                     -- the global RHS
@@ -93,7 +93,7 @@ i.e. **`subdomain_solve = compose_partition ∘ map (solve ∘ restrict-to-block
 sub-problem, and recompose the per-block solutions across the partition. The `solve` argument is the
 firm solve verb the invocation closes over — [`ksp_solve`](./ksp_solve.md) (the preconditioned-Krylov
 outer solve), [`fold_solve`](./fold_solve.md) (the iteration-fold driver), or
-[`krylov-step`](./krylov-step.md) (one Krylov step) — each composed BY NAME, none re-rooted.
+[`krylov_step`](./krylov_step.md) (one Krylov step) — each composed BY NAME, none re-rooted.
 
 This is the structural shape of **additive-Schwarz domain decomposition** read as a pure
 decomposition-abstraction: the partition `P` supplies the sub-domains, `restrict_op_to_block` /
@@ -124,7 +124,7 @@ gated behind a hard non-destabilization probe that CLEARED on both arms:
   abstraction does not re-root the spine: the firm [`domain_energy_reduce`](./domain_energy_reduce.md)
   is the structural PRECEDENT — it is *itself a firm domain-RESTRICTED reduce composing firm
   primitives* (its per-domain numerator `energyᵢ = ½⟨field, M_idx field⟩` is the
-  `matrix-weighted-norm`-squared *restricted to one domain attribute*, mapped over the
+  `matrix_weighted_norm`-squared *restricted to one domain attribute*, mapped over the
   configured domain set with no inter-domain state;
   `domain_energy_reduce.md:21-27,147-152`). `subdomain_reduce` is the rank-agnostic
   generalization of exactly that shape: restrict, reduce per block, compose.
@@ -181,7 +181,7 @@ over blocks, the same map-independence the reduce case has), but the global RECO
 config-conditional on the operator's block structure: exact for a block-diagonal operator, approximate
 (an additive-Schwarz preconditioner / iteration leg) for a coupled operator. `subdomain_solve` sits
 ON TOP of the firm solve verbs as an OUTER combinator over the partition — it reshapes none of them; it
-calls `ksp_solve` / `fold_solve` / `krylov-step` per block exactly as written, and supplies only the
+calls `ksp_solve` / `fold_solve` / `krylov_step` per block exactly as written, and supplies only the
 restrict/compose wrapper. That is the whole-point of the gate-CLEAR: the solve-generalization adds an
 outer decomposition layer, NOT new solve algebra inside the firm verbs.
 
@@ -260,7 +260,7 @@ its partition-coverage non-law:
     one-shot exact solve. The abstraction makes NO exact-solve claim for a coupled operator; the
     convergent recovery is the eventual *mechanism* (the outer Schwarz/Krylov iteration wrapping the
     per-block solves — itself one of the firm [`fold_solve`](./fold_solve.md) /
-    [`krylov-step`](./krylov-step.md) drivers at the OUTER level), NOT a structural law of the bare
+    [`krylov_step`](./krylov_step.md) drivers at the OUTER level), NOT a structural law of the bare
     decomposition.
   - **Overlapping blocks ⇒ partition-of-unity weighting required.** For an OVERLAPPING domain
     decomposition (additive Schwarz proper, where blocks share a halo region for stability), the
@@ -323,7 +323,7 @@ higher rank and the well-foundedness invariant is re-checked at that rank):
   restrict/compose shape generalizes from reduce to solve as **`subdomain_solve = compose_partition ∘
   map (solve ∘ restrict-to-block-operator+rhs)`** — additive-Schwarz-style domain decomposition (see
   the §"The SOLVE generalization" combinator above), composing the firm solve verbs
-  [`ksp_solve`](./ksp_solve.md) / [`fold_solve`](./fold_solve.md) / [`krylov-step`](./krylov-step.md)
+  [`ksp_solve`](./ksp_solve.md) / [`fold_solve`](./fold_solve.md) / [`krylov_step`](./krylov_step.md)
   BY NAME. The firm homomorphism law in hand today gives the REDUCTION case a free exact recovery; the
   solve case's recovery is config-conditional (block-diagonal ⇒ exact; coupled ⇒ an approximate
   additive-Schwarz preconditioner needing the outer iteration; overlapping ⇒ needs partition-of-unity
@@ -357,7 +357,7 @@ explicitly config-conditional (block-diagonal exact; coupled ⇒ additive-Schwar
 overlapping ⇒ partition-of-unity weighted), carried as a NON-law in the exact shape
 [`domain_energy_reduce`](./domain_energy_reduce.md) carries `Σ pᵢ = 1`. It composes the firm reduce AND
 solve roots ([`ksp_solve`](./ksp_solve.md) / [`fold_solve`](./fold_solve.md) /
-[`krylov-step`](./krylov-step.md) BY NAME) under `reference:` ONLY — NEVER `depends-on` — so it
+[`krylov_step`](./krylov_step.md) BY NAME) under `reference:` ONLY — NEVER `depends-on` — so it
 manufactures no rank violation (the graded-stack rank linter enforces `rank(u) ≤ min(deps)` over
 `depends-on` edges only, and a `reference` edge carries no rank constraint). The deferred
 MPI/distributed mechanism (and the deferred Schwarz outer-iteration / partition-of-unity mechanism) is
@@ -396,7 +396,7 @@ The book cross-references are to firm sibling chapters' standing laws.
   [`ksp_solve`](./ksp_solve.md) (firm — the preconditioned-Krylov outer solve, the per-block solve
   verb and the outer Schwarz-iteration driver), [`fold_solve`](./fold_solve.md) (firm — the
   iteration-fold solve driver, the outer-iteration leg for the coupled-operator approximate recovery),
-  [`krylov-step`](./krylov-step.md) (firm — one Krylov step, the innermost solve primitive). These are
+  [`krylov_step`](./krylov_step.md) (firm — one Krylov step, the innermost solve primitive). These are
   referenced (NOT depended-on) — the rank-0 node composes them as an outer decomposition combinator and
   re-roots none of them.
 - **No native Palace DD-preconditioner (the genuine-abstraction confirmation):** codemap search for

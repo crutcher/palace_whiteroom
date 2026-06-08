@@ -6,9 +6,9 @@ feature_root: seed
 rank: firm
 edges:
   depends-on:
-    - target: L1/matrix-weighted-norm
+    - target: L1/matrix_weighted_norm
       kind: folds
-    - target: L1/bilinear-form
+    - target: L1/bilinear_form
       kind: folds
     - target: palace/drivers/magnetostaticsolver.cpp:110-152
       kind: cites-evidence
@@ -42,9 +42,9 @@ At L1 the inductance output product is a pure function `(solution family, curren
 1. **The magnetostatic driver column produces the solution family** — [`magnetostatic.L1`](./magnetostatic.L1.md) (**firm**, sibling reference). The upstream pure-function composition root assembles `K` once and solves the per-source family `as = [Aᵢ]`. This output-product column consumes that `(k, as)` pair. L0: the `Solve` body (`palace/drivers/magnetostaticsolver.cpp:29`, `:66`, `:77`); the family + currents handed to `PostprocessTerminals` (`:105`).
 
 2. **The current-normalized bilinear reduction** — built from two firm L1 operators, each normalized by the excitation currents:
-   - diagonal `Mᵢᵢ = (Aᵢᵀ K Aᵢ)/Iᵢ²` — the operator-weighted self-form normalized by the squared current, the now-firm [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) squared (`matrix_weighted_norm(Aᵢ, K)² = Aᵢᵀ K Aᵢ`; L0 builds it as `post_op.GetDomainPostOp().M_mag->Mult(A_gf, H_gf)` then `linalg::Dot<Vector>(..., A_gf, H_gf) / (I_inc[i]*I_inc[i])`, `magnetostaticsolver.cpp:129-131`).
-   - off-diagonal `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)` — the operator-weighted cross-pairing normalized by the current product, the firm [`bilinear-form`](../L1/bilinear-form.md) `α = xᴴ M y` instantiated `⟨Aⱼ, K Aᵢ⟩` (L0 the same energy-form `Mult`/`Dot` against the `j` grid function then `/ (I_inc[i]*I_inc[j])`, `:135-138`).
-   The result is the symmetric `M` (upper triangle computed, lower mirrored, `:140-149`) and its LAPACK inverse `Minv` (`:151-152`). This stage is a pure fold of current-normalized bilinear-form evaluations over the solution-family pair grid — no L1 operator is *new* here; it composes [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) + [`bilinear-form`](../L1/bilinear-form.md), with the current normalization a scalar weight on each entry.
+   - diagonal `Mᵢᵢ = (Aᵢᵀ K Aᵢ)/Iᵢ²` — the operator-weighted self-form normalized by the squared current, the now-firm [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) squared (`matrix_weighted_norm(Aᵢ, K)² = Aᵢᵀ K Aᵢ`; L0 builds it as `post_op.GetDomainPostOp().M_mag->Mult(A_gf, H_gf)` then `linalg::Dot<Vector>(..., A_gf, H_gf) / (I_inc[i]*I_inc[i])`, `magnetostaticsolver.cpp:129-131`).
+   - off-diagonal `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)` — the operator-weighted cross-pairing normalized by the current product, the firm [`bilinear_form`](../L1/bilinear_form.md) `α = xᴴ M y` instantiated `⟨Aⱼ, K Aᵢ⟩` (L0 the same energy-form `Mult`/`Dot` against the `j` grid function then `/ (I_inc[i]*I_inc[j])`, `:135-138`).
+   The result is the symmetric `M` (upper triangle computed, lower mirrored, `:140-149`) and its LAPACK inverse `Minv` (`:151-152`). This stage is a pure fold of current-normalized bilinear_form evaluations over the solution-family pair grid — no L1 operator is *new* here; it composes [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) + [`bilinear_form`](../L1/bilinear_form.md), with the current normalization a scalar weight on each entry.
 
 ## Inputs / outputs (the feature surface)
 
@@ -57,15 +57,15 @@ The L1 and L4 composition roots express the **same output product**; they differ
 - **L1** (this chapter): an explicit upper-triangle comprehension over per-pair pure bilinear evaluations (`matrix_weighted_norm` on the diagonal, `bilinear_form` off-diagonal), each scaled by an inline current weight, mirrored to symmetric.
 - **L4** ([`inductance.L4`](./inductance.L4.md)): the per-pair bilinear grid is the [`gram_reduce`](../L4/gram_reduce.md) combinator (the symmetric-Gram reduction made *structural*), and the current normalization is the combinator's `w = 1/(IᵢIⱼ)` weight closure — the current-normalized specialization, the sibling of capacitance's unit weight. The L4 form is the one the outward backend consumes; the L1 form is the pure-function decomposition the `gram_reduce` combinator names.
 
-The L1→L0 direction (how each bilinear evaluation lowers to the in-place energy-form driver writes) is the per-operator L1>L0 mutation-rotation themes of [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) / [`bilinear-form`](../L1/bilinear-form.md); this output-product column records only the L1 composition (high→low discipline).
+The L1→L0 direction (how each bilinear evaluation lowers to the in-place energy-form driver writes) is the per-operator L1>L0 mutation-rotation themes of [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) / [`bilinear_form`](../L1/bilinear_form.md); this output-product column records only the L1 composition (high→low discipline).
 
 ## Constituent down-links
 
 | Stage | L1 operator | Status | L0 site |
 |---|---|---|---|
 | solution family [Aᵢ] | [`magnetostatic.L1`](./magnetostatic.L1.md) (driver column; sibling reference) | firm | `magnetostaticsolver.cpp:29, 66, 77` |
-| diagonal Aᵢᵀ K Aᵢ / Iᵢ² | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) | firm | `magnetostaticsolver.cpp:129-131` |
-| off-diagonal Aⱼᵀ K Aᵢ / Iᵢ Iⱼ | [`bilinear-form`](../L1/bilinear-form.md) | firm | `magnetostaticsolver.cpp:135-138` |
+| diagonal Aᵢᵀ K Aᵢ / Iᵢ² | [`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) | firm | `magnetostaticsolver.cpp:129-131` |
+| off-diagonal Aⱼᵀ K Aᵢ / Iᵢ Iⱼ | [`bilinear_form`](../L1/bilinear_form.md) | firm | `magnetostaticsolver.cpp:135-138` |
 
 ## Promotion basis
 
@@ -74,8 +74,8 @@ current-normalized sibling of the [capacitance.L1](./capacitance.L1.md) unit-wei
 Under the OWN-COMPOSITION rule (a column promotes off `seed` when its OWN directly-owned
 constituents are firm; cross-linked sibling columns are references, NOT blockers), this column is
 firm: both its directly-owned bilinear primitives are firm — the diagonal
-[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) and the off-diagonal
-[`bilinear-form`](../L1/bilinear-form.md) (its `α = xᴴ M y` signature covers the cross-pairing) — so
+[`matrix_weighted_norm`](../L1/matrix_weighted_norm.md) and the off-diagonal
+[`bilinear_form`](../L1/bilinear_form.md) (its `α = xᴴ M y` signature covers the cross-pairing) — so
 the L4 home `gram_reduce` is firm. The [`magnetostatic.L1`](./magnetostatic.L1.md) producing driver
 column is a SIBLING reference, not a constituent. The chapter carries the compositional claim only;
 per-op algebraic claims live in the linked chapters. Evidence: `PostprocessTerminals` realizing the

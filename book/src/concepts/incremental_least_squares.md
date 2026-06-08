@@ -1,7 +1,7 @@
 ---
 edges:
   reference:
-    - L1/ls-update-column
+    - L1/ls_update_column
     - concepts/givens
     - concepts/orthogonalization
 ---

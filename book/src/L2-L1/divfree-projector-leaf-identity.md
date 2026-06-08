@@ -1,13 +1,13 @@
 ---
 # Lowering theme (L2>L1). Per graded-stack scheme §5: rank = min(endpoint ranks). Both
-# endpoints (L2 + L1 divfree-projector) are firm (rank 3); so the theme is firm and
+# endpoints (L2 + L1 divfree_projector) are firm (rank 3); so the theme is firm and
 # rank(theme) <= min(endpoints) holds for free.
 rank: firm
 edges:
   depends-on:
-    - target: L2/divfree-projector
+    - target: L2/divfree_projector
       kind: lifts-from            # the L2 fusion-rotation floor (LHS)
-    - target: L1/divfree-projector
+    - target: L1/divfree_projector
       kind: lowers-to             # the L1 mutation-rotation gate (RHS)
   reference:
     - L2/ksp_solve                # the inner-solve obstruction carried by reference
@@ -16,10 +16,10 @@ edges:
 
 # divfree-projector-leaf-identity
 
-The L2>L1 lowering theme for the `divfree-projector` constructed-operator gate. The rewrite is
+The L2>L1 lowering theme for the `divfree_projector` constructed-operator gate. The rewrite is
 **mostly identity-in-form on the gate, with exactly one genuine fusion rotation**: the L2
-[`divfree-projector`](../L2/divfree-projector.md) fusion-rotation floor lowers to the L1
-[`divfree-projector`](../L1/divfree-projector.md) mutation-rotation gate with the same signature,
+[`divfree_projector`](../L2/divfree_projector.md) fusion-rotation floor lowers to the L1
+[`divfree_projector`](../L1/divfree_projector.md) mutation-rotation gate with the same signature,
 the same four-step composition `WeakDiv → Z_{bdr_eff} → ksp_solve → Grad`, the same five algebraic
 laws (plus two non-laws), and the same variant-axis profile — **except** for step 4, where the L2
 form's de-fused `apply_linop(P.Grad, ψ) ▷ axpy(1.0, ·, y)` composition **re-fuses** into the L1
@@ -40,17 +40,17 @@ fold theme.
 
 ## Context
 
-`divfree-projector` at L2 is the **fusion-rotation floor** (`book/src/L2/divfree-projector.md`):
+`divfree_projector` at L2 is the **fusion-rotation floor** (`book/src/L2/divfree_projector.md`):
 the divergence-free Helmholtz-projection constructed-operator gate
 rendered at the fusion-rotation layer, present so the firm L3
-[`divfree-projector`](../L3/divfree-projector.md) gate rests on an adjacent L2 parent (per CLAUDE.md
+[`divfree_projector`](../L3/divfree_projector.md) gate rests on an adjacent L2 parent (per CLAUDE.md
 §Methodology invariants **Identity-lowerings still require both L levels**) rather than skipping a
 layer to L1. This theme is the L2>L1 edge of that floor.
 
 The edge is the **mostly-identity-in-form** case with **one genuine fusion rotation**. This is the
 sibling of the L3>L2 identity-in-form rotation — the degenerate `divfree-projector-body-identity`
 relationship recorded as an in-line §"Downward to L2" note on the L3 entry
-[`divfree-projector`](../L3/divfree-projector.md) (above it). The two edges split the projector's
+[`divfree_projector`](../L3/divfree_projector.md) (above it). The two edges split the projector's
 lowering story:
 
 - the **L3>L2** edge is pure identity-in-form (the four-step composition is explicit at both layers;
@@ -59,18 +59,18 @@ lowering story:
   `AddMult` apply-accumulate — as a re-fusion rotation.
 
 **Why the one rotation is here and not at the L3>L2 edge.** The L2 floor is a **moderate floor**, not
-a pure-thin one (`L2/divfree-projector` §"Fusion note"): it carries exactly one genuine fusion-rotation
+a pure-thin one (`L2/divfree_projector` §"Fusion note"): it carries exactly one genuine fusion-rotation
 claim — the step-4 `Grad->AddMult(ψ, y, 1.0)` apply-and-accumulate de-fused into
 `apply_linop(P.Grad, ψ) ▷ axpy(1.0, ·, y)`. That de-fusion is the **defining L2-layer work** (kernel
 fusion is unfolded at L2); so lowering L2 → L1 is where the de-fused pair **re-fuses** back into the
 single fused apply-accumulate call. The L3>L2 edge sits above the fusion layer and is untouched by it:
 the L3 form already writes step 4 as "`apply_linop`-shaped apply fused with an `axpy`-shaped
-accumulate" (`book/src/L3/divfree-projector.md` §Semantics step 4), so the L3>L2 rotation is identity
+accumulate" (`book/src/L3/divfree_projector.md` §Semantics step 4), so the L3>L2 rotation is identity
 on the node and the fusion treatment falls entirely on this L2>L1 edge.
 
 ## L2 form (LHS)
 
-The L2 form is the `divfree-projector` fusion-rotation floor (`book/src/L2/divfree-projector.md`
+The L2 form is the `divfree_projector` fusion-rotation floor (`book/src/L2/divfree_projector.md`
 §Signature) — the mutation-free four-step Helmholtz projection with the
 **step-4 fusion de-fused** into base primitives:
 
@@ -87,7 +87,7 @@ The load-bearing L2-layer fact is that step 4 is **two base primitives** at L2: 
 [`apply_linop`](../L1/apply_linop.md) producing the gradient correction `g = P.Grad · ψ`, followed by
 an [`axpy`](../L1/axpy.md) accumulating it into `y` with coefficient `1.0`. The L2 floor de-fuses the
 MFEM apply-and-accumulate idiom into this pair, exposing the intermediate `g = P.Grad · ψ`
-(`book/src/L2/divfree-projector.md` §"Fusion note"). Steps 1/2/3 are each a single primitive at L2
+(`book/src/L2/divfree_projector.md` §"Fusion note"). Steps 1/2/3 are each a single primitive at L2
 (no multi-operation fusion); step 3 is the **opaque inner** [`ksp_solve`](../L2/ksp_solve.md), not
 spelled out at this resolution.
 
@@ -98,8 +98,8 @@ binding are NOT in the L2 signature — they reappear only at the L1>L0 lowering
 
 ## L1 form (RHS)
 
-The L1 form is the firm `divfree-projector` constructed-operator gate
-(`book/src/L1/divfree-projector.md` §Signature) — identical in signature, semantics,
+The L1 form is the firm `divfree_projector` constructed-operator gate
+(`book/src/L1/divfree_projector.md` §Signature) — identical in signature, semantics,
 and laws, with the **step-4 fusion present** (the apply-and-accumulate idiom named at L1 as an
 `axpy`-fused accumulate):
 
@@ -109,7 +109,7 @@ and laws, with the **step-4 fusion present** (the apply-and-accumulate idiom nam
                             where K solves  P.M · ψ = rhs  via P.ksp
 
 The L1 entry's §Dependencies names step 4 as `axpy` "fused as `Grad->AddMult(ψ, y, 1.0)`, the
-apply-and-accumulate idiom" (`book/src/L1/divfree-projector.md` §Dependencies, the `axpy` bullet) — the
+apply-and-accumulate idiom" (`book/src/L1/divfree_projector.md` §Dependencies, the `axpy` bullet) — the
 **fused** form. The L1 entry is the mutation-rotation rendering: it already erases the L0 destination
 buffer from the apply signature (the L1 form returns the projected field) and folds the construction
 into `P`. The L1 entry is authoritative on every Palace-surface fact (the `WeakDiv = -Gᵀ` sign
@@ -121,7 +121,7 @@ does not duplicate them.
 The rewrite is the **identity on the gate, modulo the single step-4 re-fusion**. Every L2 binding maps
 to the same L1 binding at the same position, except step 4, where the de-fused pair re-fuses:
 
-    | L2 floor (`L2/divfree-projector`)              | L1 gate (`L1/divfree-projector`)        | Mapping  |
+    | L2 floor (`L2/divfree_projector`)              | L1 gate (`L1/divfree_projector`)        | Mapping  |
     |------------------------------------------------|-----------------------------------------|----------|
     | `divfree_project :: (P, y) -> Tensor[N_nd]`    | `divfree_project :: (P, y) -> Field[N_nd]` | Identity. Same signature shape (the `Tensor`/`Field` spelling is notational). |
     | step 1 `apply_linop(P.WeakDiv, y)`             | step 1 `P.WeakDiv · y`                  | Identity. Same single operator apply (H1-side divergence residual). |
@@ -149,14 +149,14 @@ projector's own four-step body is a fixed straight-line composition with no proj
 **nor erases the inner one** (the CG iteration interior to `P.ksp` remains an un-lifting fold whose
 home is the `ksp_solve` entry) — the [`nested-constructed-operator-gate`](../concepts/nested-constructed-operator-gate.md)
 fidelity rule, honored verbatim at this edge, exactly as the firm L3
-[`divfree-projector`](../L3/divfree-projector.md) §"Iteration-rotation marker" requires. The
+[`divfree_projector`](../L3/divfree_projector.md) §"Iteration-rotation marker" requires. The
 obstruction's home stays the firm [`ksp_solve`](../L2/ksp_solve.md) entry.
 
 ## Applicability conditions
 
 The mostly-identity rewrite (modulo the one step-4 re-fusion) is valid when:
 
-1. **The L2 `divfree-projector` is the fusion-rotation floor** (`book/src/L2/divfree-projector.md`, the
+1. **The L2 `divfree_projector` is the fusion-rotation floor** (`book/src/L2/divfree_projector.md`, the
    moderate floor under the firm L3 gate) with step 4 **de-fused** into `apply_linop ▷ axpy`. The L2
    form's step-4 de-fusion is what the L1 form re-fuses; if the L2 floor did NOT de-fuse step 4 (e.g.
    if it were a pure-thin floor carrying the fused `AddMult` unchanged), the edge would be the full
@@ -165,14 +165,14 @@ The mostly-identity rewrite (modulo the one step-4 re-fusion) is valid when:
 
 2. **The gate is value-thread-isomorphic across the edge on steps 1/2/3 and the algebraic profile.**
    The L2 floor and the L1 gate share the signature, the four-step composition, the five algebraic laws,
-   the two non-laws, and the variant-axis profile: `L2/divfree-projector` is
-   a moderate floor whose laws are inherited unchanged from `L1/divfree-projector`
-   (`L2/divfree-projector` §"Algebraic laws").
+   the two non-laws, and the variant-axis profile: `L2/divfree_projector` is
+   a moderate floor whose laws are inherited unchanged from `L1/divfree_projector`
+   (`L2/divfree_projector` §"Algebraic laws").
 
 3. **The step-4 fusion is value-preserving** (transparent performance trick — no intermediate
    allocation, but algebraically the apply-then-add). The re-fusion does not change the projected value,
    so it does not perturb the algebraic profile; this is what keeps steps 1/2/3 + the laws identity-in-form
-   while step 4 carries the single rotation (`L2/divfree-projector` §"Fusion note").
+   while step 4 carries the single rotation (`L2/divfree_projector` §"Fusion note").
 
 4. **The inner-solve obstruction is carried by reference, not re-expressed.** Step 3's
    `ksp_solve` obstruction stays interior to the `ksp_solve` gate (the fidelity rule); the rewrite at
@@ -180,7 +180,7 @@ The mostly-identity rewrite (modulo the one step-4 re-fusion) is valid when:
    loop at the projector resolution, the carried-by-reference structure (and this theme) would need
    re-audit — no such flattening exists in the current surface.
 
-If a future L2 `divfree-projector` floor introduced an additional kernel fusion (beyond the one step-4
+If a future L2 `divfree_projector` floor introduced an additional kernel fusion (beyond the one step-4
 `AddMult`), the "one rotation" claim would need re-audit — none exists in the current surface (exactly
 one fusion: no cache-blocking, no SIMD, no packed-format, no batched-BLAS trick in
 the projector body; the inner solve's fused Krylov kernels are interior to `ksp_solve`).
@@ -199,7 +199,7 @@ content (kernel fusion is unfolded at L2, re-fused at L1), and it lives on exact
 carries a fused MFEM idiom.
 
 **Empirical-match (secondary)**: the L1 gate is firm on direct Palace evidence
-(`L1/divfree-projector` §Evidence — the four-step apply at `palace/linalg/divfree.cpp:155-187`, the
+(`L1/divfree_projector` §Evidence — the four-step apply at `palace/linalg/divfree.cpp:155-187`, the
 defining condition at `palace/linalg/divfree.hpp:28-31`, the `WeakDiv` sign positively anchored,
 cross-validated against MFEM at `test/unit/test-libceed.cpp:905-916`),
 and the L2 floor is value-thread-isomorphic to it; the two forms agree on every law and every
@@ -209,8 +209,8 @@ re-fuse pair at both endpoints.
 ## Speculative L1 operators
 
 **None.** Both endpoints are existing firm vocabulary: the L2 LHS is the
-`divfree-projector` fusion-rotation floor, the L1 RHS is the firm
-`divfree-projector` gate. The step-4 de-fusion's two constituents are existing firm L1
+`divfree_projector` fusion-rotation floor, the L1 RHS is the firm
+`divfree_projector` gate. The step-4 de-fusion's two constituents are existing firm L1
 primitives ([`apply_linop`](../L1/apply_linop.md), [`axpy`](../L1/axpy.md) — no L2 chapter exists for
 either, so the L1 anchors are cited), and the inner solve is the firm [`ksp_solve`](../L2/ksp_solve.md).
 This theme is the mostly-identity edge (with one re-fusion) between existing chapters; it proposes no new
@@ -230,16 +230,16 @@ structure is firm):
 
 L2 / L1 anchors (the two endpoints):
 
-- `book/src/L2/divfree-projector.md` (firm) — the L2 fusion-rotation floor (LHS):
+- `book/src/L2/divfree_projector.md` (firm) — the L2 fusion-rotation floor (LHS):
   the moderate floor under the firm L3 gate, value-thread-isomorphic to the L1 gate on steps 1/2/3 + the
   algebraic profile, with step 4 **de-fused** into `apply_linop(P.Grad, ψ) ▷ axpy` (its §"Fusion note"
   is the source of the de-fusion claim this theme re-fuses).
-- `book/src/L1/divfree-projector.md` (firm) — the L1 constructed-operator gate (RHS):
+- `book/src/L1/divfree_projector.md` (firm) — the L1 constructed-operator gate (RHS):
   signature (§Signature), the four-step apply (§Semantics), step 4 named as `axpy` "fused as
   `Grad->AddMult(ψ, y, 1.0)`, the apply-and-accumulate idiom" (§Dependencies, the `axpy` bullet), the
   five algebraic laws + two non-laws (§Algebraic laws), the complete L0 evidence list (§Evidence).
   Authoritative on every Palace-surface fact.
-- `book/src/L3/divfree-projector.md` (firm) — the firm L3 gate whose §"Iteration-rotation
+- `book/src/L3/divfree_projector.md` (firm) — the firm L3 gate whose §"Iteration-rotation
   marker" states the carried-by-reference obstruction discipline this edge honors.
 - `book/src/L2/ksp_solve.md` (firm) — the inner gate step 3 delegates to; the home of the
   carried `sequential-obstruction`.
