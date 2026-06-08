@@ -6,13 +6,13 @@ rank: firm
 edges:
   depends-on:
     - target: L2/krylov-step
-      kind: lowers-to                 # the firm L2 primitive-composition row this L4 typed-wrapper lowers to (via the L4>L3>L2 chain); lowering edge = depends-on on both endpoints (scheme §5)
+      kind: lowers-to                 # the firm L2 primitive-composition row this L4 typed-wrapper lowers to (via the L4>L3>L2 chain)
     - target: L4/dot
-      kind: composes                  # the body's scalar-stratum reduce verb: `dot Ap p'` / `dot r' r'` (§Semantics Form-B :142,:145,:158,:161); the CG α/β coefficients are L4 dot let-bindings (L4/inner_product.md:44-47)
+      kind: composes                  # the body's scalar-stratum reduce verb (`dot Ap p'` / `dot r' r'`); the CG α/β coefficients are dot let-bindings
     - target: L4/nrm2
-      kind: composes                  # the body's residual-norm readout `res' = sqrt (abs beta')` = nrm2 of the residual (§Semantics :104 derived_views residual_norm; Form-B :146,:162); the Euclidean-norm verb the step's output readout computes
+      kind: composes                  # the body's residual-norm readout (`res' = sqrt (abs beta')` = nrm2 of the residual)
     - target: L2/orthogonalize
-      kind: composes                  # the optional auxiliary orthogonalize stage `op.orthog (V_prefix, w)` GMRES/Arnoldi fold (§Semantics :94); no L4 orthogonalize op exists, so the body edge crosses to the L2 named composition the kernel folds (L2/orthogonalize.md:11 "the op.orthog surface krylov-step folds")
+      kind: composes                  # the optional auxiliary orthogonalize stage (`op.orthog (V_prefix, w)`, GMRES/Arnoldi); no L4 orthogonalize op exists, so the body edge crosses to the L2 named composition
     - target: concepts/op-params
       kind: uses-record               # OpParams readonly operator-internal config record in the kernel signature (krylov-step :: OpParams -> Krylov -> (SimState -> Solve {...})); see §Signature shape contract
     - target: concepts/krylov
@@ -42,16 +42,13 @@ Typed-wrapper step kernel for iterative Krylov-shaped solvers, expressed in the 
 
 ## Context
 
-L4's job is to write algorithms in a graph-evaluation calculus that makes lifetimes, dispatch sites, and effect placement structural. `krylov-step` at L4 is the typed shape that the L4 concepts `solve-monad`, `state-stratification`, and `first-iteration-unrolling` already reference in prose without a dep-map anchor (per the cycle-005 cross-cutter report, `solve-monad.md:13-17` writes an implicit step-fold via `solve_loop`'s `restart_cycle` recursion, `state-stratification.md:11` references step-local ephemeral state, `first-iteration-unrolling.md:21-23` already names `first_step` and `steady_step` signatures). This chapter is the missing anchor.
+L4's job is to write algorithms in a graph-evaluation calculus that makes lifetimes, dispatch sites, and effect placement structural. `krylov-step` at L4 is the typed shape referenced by the L4 concepts [`solve-monad`](../concepts/solve-monad.md), [`state-stratification`](../concepts/state-stratification.md), and [`first-iteration-unrolling`](../concepts/first-iteration-unrolling.md): `solve-monad` writes an implicit step-fold via `solve_loop`'s `restart_cycle` recursion, `state-stratification` references step-local ephemeral state, and `first-iteration-unrolling` names the `first_step`/`steady_step` signatures. This chapter is their shared anchor.
 
-The relationship to L2 `krylov-step` is **typed-wrapper-to-primitive-composition**:
+The relationship to L2 `krylov-step` is **typed-wrapper-to-primitive-composition** (see [§L4 vs L2 distinction](#l4-vs-l2-distinction)).
 
-- L2 names the algebraic composition: at most five primitive groups (apply, optional auxiliary, iterate-update, scalar-update, output-readout) per step.
-- L4 names the typed wrapper: the same kernel, re-typed against the three-stratum state record, with the consumed-by surfaces (`iterate_while`, `solve-monad`, `convergence-test`) and the optional first-iteration unrolling rendered at the calculus level.
+The L4>L2 lowering is **not identity-in-form**: L4 carries the `SimState` / `OpParams` / `Krylov` typing and the optional `(first_step, steady_step)` split, both of which collapse to value-threading on the way down. The intermediate L3 lowering is identity-in-form on the kernel body itself ([`krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md)); the L4>L3 transition carries the substantive rotation.
 
-The L4>L2 lowering is **not identity-in-form**: L4 carries the `SimState` / `OpParams` / `Krylov` typing and the optional `(first_step, steady_step)` split, both of which collapse to value-threading on the way down. The intermediate L3 lowering is plausibly identity-in-form on the kernel body itself (per the combinator-miner cycle-002 assertion, now firm in [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md) §Verified-against and co-anchored by the live `arnoldi_step.md:185-188`; the original CG evidence at `cg.md:352-362` was lifted into that firm theme per the cycle-009 corpus reduction), with the L4>L3 transition carrying the substantive rotation; this is the rotation that the cycle-006 wave-2 abstractor dispatch is auditing. If the abstractor finds non-identity rotation at L3, an L3 `krylov-step` row will follow in cycle-007.
-
-`krylov-step` at L4 is a **methodology-level concept**, not a Palace-source artefact — there is no L0 source range that "is" the L4 `krylov-step`. The Palace evidence sits at L2 (and at the slice corpus); L4 cites the L2 entry as its evidence base.
+`krylov-step` at L4 is a **methodology-level concept**, not a Palace-source artefact — there is no L0 source range that "is" the L4 `krylov-step`. The Palace evidence sits at L2; L4 cites the L2 entry as its evidence base.
 
 ## Signature
 
@@ -220,7 +217,7 @@ The kernel is **stateless across calls** in the same sense as L2: no in-step mut
 
 The L4 laws are the same three that hold at L2, sharpened by the typing where the typing tightens them. Absences are catalogued explicitly to prevent decoration drift.
 
-1. **Output-extras distributivity over trajectory** (the load-bearing law; inherited from [`derived-view-hoisting`](../concepts/derived-view-hoisting.md)). For any `StepOutputs`-typed field `f` such that `f = g(krylov')` for a pure function `g` of the post-step `Krylov` bundle, the trajectory observation `(iterate_while (krylov-step op) K₀ cond).trajectory.map(.outputs.f)` is equal to `(iterate_while (krylov-step op) K₀ cond).trajectory.map(.krylov).map(g)`. **Consequence**: if no downstream consumer reads `.outputs.f`, the kernel is free to skip the `g` computation — the trajectory's `krylov` projection is unchanged. This is the demand-pruning law underwriting the residual-norm hoisting documented in the firm [`derived-view-hoisting`](../concepts/derived-view-hoisting.md) §"Worked example: CG residual norm" (lines 14-19; the original CG evidence at `cg.md:325-339` was lifted into that concept page per the cycle-009 corpus reduction, which the reduced slice's stub header names as the supersessor) and the LS-residual proxy at `gmres.md:471-489`. At L4 the law is statable directly because `Krylov` and `StepOutputs` are typed separately and the `g` derivation is visible as a pure binding; at L2 the same law holds but requires extracting the derivation from the kernel-body description.
+1. **Output-extras distributivity over trajectory** (the load-bearing law; inherited from [`derived-view-hoisting`](../concepts/derived-view-hoisting.md)). For any `StepOutputs`-typed field `f` such that `f = g(krylov')` for a pure function `g` of the post-step `Krylov` bundle, the trajectory observation `(iterate_while (krylov-step op) K₀ cond).trajectory.map(.outputs.f)` is equal to `(iterate_while (krylov-step op) K₀ cond).trajectory.map(.krylov).map(g)`. **Consequence**: if no downstream consumer reads `.outputs.f`, the kernel is free to skip the `g` computation — the trajectory's `krylov` projection is unchanged. This is the demand-pruning law underwriting the residual-norm hoisting documented in the firm [`derived-view-hoisting`](../concepts/derived-view-hoisting.md) §"Worked example: CG residual norm" (lines 14-19), grounded in the CG residual body [`ksp-solve-mutation-rotation`](../L1-L0/ksp-solve-mutation-rotation.md) §"Sub-pattern B". At L4 the law is statable directly because `Krylov` and `StepOutputs` are typed separately and the `g` derivation is visible as a pure binding; at L2 the same law holds but requires extracting the derivation from the kernel-body description.
 
 2. **Primitive-count invariance under reformulation**. The number of `apply_linop` calls per step is a structural invariant of the slice's variant-axis profile — Form A and Form B of the kernel have the same per-step `apply_linop` count (the `first_step` / `steady_step` split moves the branch, not the apply). Any reformulation that changes the count is a *different algorithm*. (CG: 1 per step. GMRES inner Arnoldi: 1 per step. Chebyshev inner k-loop: 1 per k. Arnoldi step: 1.) The L4 form preserves the count by the same dataflow argument as L2 — there is no L4 calculus rewrite that introduces or elides an `apply_linop`. Inherited from the L2 entry.
 
@@ -238,7 +235,7 @@ Laws that explicitly **do not** hold:
 
 ## Dependencies
 
-L4 concept references (per the cycle-006 caveat 1, these are concept-page links — see Open Questions for the L4-row-vs-concept dependency question):
+L4 concept references (concept-page links):
 
 - [`state-stratification`](../concepts/state-stratification.md) — the three-stratum (`SimState` / `OpParams` / `Krylov`) typing.
 - [`solve-monad`](../concepts/solve-monad.md) — the `Solve a = StateT SimState Identity a` outer driver that consumes `krylov-step` as its fold body.
@@ -246,7 +243,7 @@ L4 concept references (per the cycle-006 caveat 1, these are concept-page links 
 - [`derived-view-hoisting`](../concepts/derived-view-hoisting.md) — the demand-pruning algebra underwriting Law 1.
 - [`convergence-test`](../concepts/convergence-test.md) — the stopping-predicate surface consumed by the outer `iterate_while`-style driver (not by the kernel itself, but referenced for the placement discipline).
 - [`variant-absorption`](../concepts/variant-absorption.md) — the absorption discipline making the six variant axes structural via the `OpParams` `readonly` typing.
-- [`sequential-obstruction`](../concepts/sequential-obstruction.md) — the L3-edge classification recording why the L3>L2 step lowering is plausibly identity-in-form (per the combinator-miner cycle-002 assertion).
+- [`sequential-obstruction`](../concepts/sequential-obstruction.md) — the L3-edge classification recording why the L3>L2 step lowering is identity-in-form.
 
 L2 dependencies (the underlying primitive-composition row):
 
@@ -256,8 +253,8 @@ L2 dependencies (the underlying primitive-composition row):
 
 L4 `krylov-step` lowers to L2 `krylov-step` via the L4>L3>L2 chain:
 
-- **L4 > L3** (substantive rotation): typed-wrapper-with-state-monad → value-threaded form. The `Solve a = StateT SimState Identity a` threading collapses to a `SimState` value passed explicitly between calls; the `Krylov` bundle, already a plain value, is unchanged; the `OpParams` `readonly` typing collapses to an "the variant selectors are not read in the body" invariant that is documented but no longer typed. The first-iteration-unrolling Form-A-vs-Form-B distinction (if Form B is in use) similarly collapses to value-threading of `PrevCarry`. **Cycle-006 wave-2 abstractor dispatch** is authoring this theme at `book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md` (per `reports/2026-05-27T081913Z-abstractor-L4-L3-krylov-step-lowering/CYCLE.md`; updated by repairer from the original placeholder `krylov-step-state-thread.md`).
-- **L3 > L2** (plausibly identity-in-form on the kernel body): per the combinator-miner cycle-002 assertion (now firm in [`L3-L2/krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md) §Verified-against, co-anchored by the live `arnoldi_step.md:185-188`; the original CG evidence at `cg.md:352-362` was lifted into that firm theme per the cycle-009 corpus reduction), the L3 kernel body and the L2 kernel body are isomorphic — the L3 form is the value-threaded body with the outer loop's `sequential-obstruction` made explicit at L3, but the body itself does not change. The cycle-006 abstractor's audit landed the firm L3>L2 body-identity theme (the firm L3 `krylov-step` row was subsequently promoted cycle-010 per the identity-lowerings-still-require-both-L-levels directive).
+- **L4 > L3** (substantive rotation): typed-wrapper-with-state-monad → value-threaded form. The `Solve a = StateT SimState Identity a` threading collapses to a `SimState` value passed explicitly between calls; the `Krylov` bundle, already a plain value, is unchanged; the `OpParams` `readonly` typing collapses to a documented-but-no-longer-typed "the variant selectors are not read in the body" invariant. The first-iteration-unrolling Form-A-vs-Form-B distinction (if Form B is in use) similarly collapses to value-threading of `PrevCarry`. This theme is authored at [`krylov-step-typed-wrapper-dissolution`](../L4-L3/krylov-step-typed-wrapper-dissolution.md).
+- **L3 > L2** (identity-in-form on the kernel body): the L3 kernel body and the L2 kernel body are isomorphic — the L3 form is the value-threaded body with the outer loop's `sequential-obstruction` made explicit at L3, but the body itself does not change. Firm in [`krylov-step-body-identity`](../L3-L2/krylov-step-body-identity.md).
 
 ## Variant axes
 
@@ -274,30 +271,24 @@ The L4 typing makes axes (1), (2), (3), and (5) **structurally absorbed**: the `
 
 The variant-axis count of six matches the L2 entry exactly. No new axes are introduced by the L4 typing; no axes are merged or split.
 
-## Status
-
-`firm` — typed-wrapper signature is the canonical fold-body shape for the `solve-monad`'s inner driver; algebraic laws are inherited from the L2 entry (with state-stratum independence sharpened by the typing) and reduced to one non-trivial property (the demand-pruning law) plus two structural invariants; non-laws are catalogued explicitly, including the form-equivalence non-law for Form A vs Form B; variant-axis profile is closed at six, inherited unchanged from L2. The pattern is well-attested at the L4 level across four slices' explicit L4 sections (CG L4 Form A `cg_step` and L4-v0.5 Form B `cg_first_step`/`cg_steady_step` — lifted into the firm `book/src/L2/krylov-step.md` §Evidence registry, line 138, per the cycle-009 corpus reduction, with the CG-concrete Form B v0.5 bodies now worked inline in §Semantics §"Worked example — CG Form B"; gmres.md:459-471; arnoldi_step.md:285-298), and the slot is the consumed-by surface for the L4 concepts `solve-monad`, `state-stratification`, and `first-iteration-unrolling`, which previously referenced "step" without a vocabulary anchor.
-
 ## L4 vs L2 distinction
 
 - **L2**: names the *primitive composition* — at most five primitive groups (apply, optional auxiliary, iterate-update, scalar-update, output-readout) in a dataflow-forced sequence. The L2 form is the algebraic decomposition into L1 primitives plus L2-composition surfaces (`apply_BA`, `orthogonalization`); state threading is by explicit value semantics; no monadic structure; variant absorption is a discipline.
 - **L4**: names the *typed wrapper* — the same composition, re-typed against the three-stratum state record, with the `Solve` monad threading `SimState`, the `Krylov` bundle threaded as a plain ephemeral value, and `OpParams` `readonly`. Variant absorption becomes structural (typing-enforced rather than discipline-enforced). The optional `(first_step, steady_step)` split per `first-iteration-unrolling` is named at the calculus level.
 
-The two layers' entries share variant-axis count, primitive-call count, and the cited slice corpus. They differ in **typing and effect placement**. The L4>L2 lowering (via the cycle-006 wave-2 abstractor theme) erases the typing and the monadic effect, recovering the L2 form.
+The two layers' entries share variant-axis count and primitive-call count. They differ in **typing and effect placement**. The L4>L2 lowering erases the typing and the monadic effect, recovering the L2 form.
 
 ## Evidence
 
-- `book/src/L2/krylov-step.md` (cycle-005 firm) — the L2 row whose primitive composition this L4 entry wraps. All L1 primitive calls, L2-composition surfaces (`apply_BA`, `orthogonalization`), pattern-instance citations (five slices), L0 source ranges (`iterative.cpp:244-250` for `CheckDot`; the test corpus at `test/unit/test-orthog.cpp:80-170, :234-280`), and cycle-004 obstruction-theme guidance (MINRES, BiCGStab) are cited there and inherited by reference.
+- `book/src/L2/krylov-step.md` — the L2 row whose primitive composition this L4 entry wraps. All L1 primitive calls, L2-composition surfaces (`apply_BA`, `orthogonalization`), pattern-instance citations, L0 source ranges (`palace/linalg/iterative.cpp:244-250` for `CheckDot`; tests `palace/test/unit/test-orthog.cpp:80-170, :234-280`), and the MINRES/BiCGStab obstruction-theme guidance are cited there and inherited.
 - `book/src/concepts/solve-monad.md:1-69` — the L4 outer-driver pattern; `solve_loop`, `restart_cycle`, `inner_loop`, `Outcome` classifier all named here. The worked-example GMRES section (`:47-68`) shows `krylov-step` consumed exactly as this entry describes.
 - `book/src/concepts/state-stratification.md:1-45` — the three-stratum typing; the GMRES worked example (`:37-45`) shows `OpParams` / `SimState` / `Krylov` instantiated for restarted GMRES, with the same `readonly` and ephemeral-bundle treatment this entry adopts.
 - `book/src/concepts/first-iteration-unrolling.md:21-37` — the `(first_step, steady_step)` signatures (Form B) named here; this entry adopts them verbatim.
 - `book/src/concepts/derived-view-hoisting.md:14-19` — the demand-pruning property underwriting Law 1; the CG residual-norm worked example is the canonical evidence.
 - `book/src/concepts/convergence-test.md:7-26` — the `Convergence` value and its `build_convergence(op, b, β, prior_initial_res) -> Convergence` constructor; placement discipline (convergence-test lives in the outer driver, not the kernel) cited from here.
-- Four explicit L4 slice sections in the corpus (cited transitively via the L2 entry, not re-anchored here):
-  - CG L4 `cg_step` (Form A) — lifted into firm `book/src/L2/krylov-step.md` §Evidence (line 138, the narrative registry carrying the CG L4 Form A step-body instance) per the cycle-009 corpus reduction; the firm `book/src/L4/krylov-step.md` Form A typing (this entry) is the L4 supersessor named in the reduced slice's stub header. (Original pre-reduction range: `cg.md:172-188`.)
-  - CG L4 v0.5 `cg_first_step` / `cg_steady_step` split (Form B) — worked inline in this chapter's §Semantics §"Worked example — CG Form B (v0.5 first-iteration-unrolling)"; the canonical CG instantiation of the abstract rotation in `concepts/first-iteration-unrolling.md`, also registered in firm `book/src/L2/krylov-step.md` §Evidence (line 138). The L0 ground is the same CG body as Form A: [`ksp-solve-mutation-rotation`](../L1-L0/ksp-solve-mutation-rotation.md) §"Sub-pattern B" (`palace/linalg/iterative.cpp:360-486`; per-step for-loop `:427-464`; first-iteration branch `:434-441`). (This material was previously retained live in the reduced slice at `book/src/spec/slices/cg.md:27-141`, absorbed here in cycle-099 so the slice is clear-to-delete; original pre-reduction range was `cg.md:393-425`.)
-  - GMRES L4 `inner_loop` body (Form A; Arnoldi-step + LS-update + counter-increment + convergence-test) — absorbed into this entry's Form A typing; L0 ground is [`ksp-solve-mutation-rotation`](../L1-L0/ksp-solve-mutation-rotation.md) §"Sub-pattern C — inner GMRES body" (`palace/linalg/iterative.cpp:543-705`), the loop-migration L4>L3 home being [`gmres-inner-loop-iterate-while-migration`](../L4-L3/gmres-inner-loop-iterate-while-migration.md). (Previously rendered in the now-deleted Phase-1 slice `gmres.md:459-471`, deleted cycle-099 graded-stack P2; git history is the record.)
-  - L4 `arnoldiStep` monadic form (Form A) — absorbed into this entry's Form A typing; its orthogonalization constituent's L0 ground is [`orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md) (`palace/linalg/orthog.hpp:41-88` — the full orthogonalization span: MGS `41-53` + CGS `57-74` + the `refine` block `75-88`). (Previously rendered in the now-deleted Phase-1 slice `arnoldi_step.md:285-298`, deleted cycle-099 graded-stack P2; git history is the record.)
-- Cross-cutter motivating report: `reports/2026-05-27T025354Z-cross-layer-cross-cutter-krylov-step-placement/CYCLE.md` — the dual-placement recommendation this entry implements.
+- L0 grounds for the worked step instances (transitive through the L2 entry):
+  - CG body (Form A `cg_step` and Form B `cg_first_step`/`cg_steady_step`) — [`ksp-solve-mutation-rotation`](../L1-L0/ksp-solve-mutation-rotation.md) §"Sub-pattern B" (`palace/linalg/iterative.cpp:360-486`; per-step for-loop `:427-464`; first-iteration branch `:434-441`). The CG-concrete Form B v0.5 bodies are worked inline in §Semantics §"Worked example — CG Form B".
+  - GMRES inner-loop body (Arnoldi-step + LS-update + counter-increment + convergence-test) — [`ksp-solve-mutation-rotation`](../L1-L0/ksp-solve-mutation-rotation.md) §"Sub-pattern C — inner GMRES body" (`palace/linalg/iterative.cpp:543-705`); the loop-migration L4>L3 home is [`gmres-inner-loop-iterate-while-migration`](../L4-L3/gmres-inner-loop-iterate-while-migration.md).
+  - Orthogonalization constituent — [`orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md) (`palace/linalg/orthog.hpp:41-88`: MGS `41-53` + CGS `57-74` + the `refine` block `75-88`).
 
 No L0 Palace source ranges are cited directly. The `krylov-step` at L4 is a methodology-level naming of a typed shape; Palace's C++ source does not realise the L4 form. All L0 evidence is transitive through the L2 entry.
