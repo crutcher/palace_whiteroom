@@ -4,7 +4,7 @@ invoked_at: 2026-06-08T180000Z
 scope: L4 land-clean citation dir-prefix hygiene — sharding-decompose-reduce-citation-prefix-hygiene
 status: integrated
 integrated_at: 2026-06-08T181500Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 9ae9dbc840c43dc12f51f623ed1362c3b74c7d99
 integration_notes: |
   Applied clean by integrator-per-report (cycle-141 staging row 1/1). Finalize (cycle-141) rebuilt book (cargo make book EXIT 0, 0 build-repairs), step-5c KaTeX $-sigil assertion PASS (class=katex in <pre> = 0 across 392 HTML), step-5b graded-stack linters both block-conditions PASS (rank_violations 0, no newly-orphaned node), all graded-stack totals HELD EXACTLY vs c140 by design (body-prose citation-prefix text edit + within-chapter verified_against yaml append moves no node/edge/rank). Node STAYS rank-0 roadmap_goal. DISCHARGES the c140-flagged below-bar citation-prefix-hygiene caveat. BATCH-CLOSING 3/3 of meta-batch-45; the batch-45 meta-phase fires next (separate dispatch/commit).
 inputs:
