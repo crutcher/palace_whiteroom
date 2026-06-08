@@ -323,7 +323,7 @@ higher rank and the well-foundedness invariant is re-checked at that rank):
   `...solve-generalization-promotion-pull` OQ, which STAYS DEFERRED (no such consumer in flight this
   cycle; this extension is the gated, exploratory MATH-only sketch). Palace ships NO native
   additive-Schwarz / domain-decomposition preconditioner (the only `subdomain`/`overlap` source sites
-  are the MPI mesh-partitioning `geodata.cpp:3242` and the wave-port ROM overlap `romoperator.cpp:586`,
+  are the MPI mesh-partitioning `palace/utils/geodata.cpp:3242` and the wave-port ROM overlap `palace/models/romoperator.cpp:586`,
   neither a DD solver) — so this solve-generalization is a genuine decomposition-abstraction sketch,
   NOT a lift of existing Palace solver code.
 - **Open: the sharding-into-component-blocks future GOAL.** The batch-43 (C) directive records
@@ -391,8 +391,8 @@ are to firm sibling chapters' standing laws.
   re-roots none of them.
 - **No native Palace DD-preconditioner (the genuine-abstraction confirmation):** codemap search for
   `Schwarz|overlap|partition.of.unity|subdomain` returns only the MPI mesh-partitioning
-  (`geodata.cpp:3242` "partitioning mesh into N subdomains") and the wave-port ROM overlap
-  (`romoperator.cpp:586` "ports don't have any overlap") — neither a domain-decomposition solver. The
+  (`palace/utils/geodata.cpp:3242` "partitioning mesh into N subdomains") and the wave-port ROM overlap
+  (`palace/models/romoperator.cpp:586` "ports don't have any overlap") — neither a domain-decomposition solver. The
   solve-generalization is therefore a genuine decomposition-abstraction MATH sketch, not a lift of
   existing Palace solver code.
 - **Deferred MPI/distributed MECHANISM (cited as eventual realization path, NOT lifted —
@@ -482,4 +482,20 @@ verified_against:
     verdict: partially-supports
     audited_at: 2026-06-08T172000Z
     note: no-native-DD-preconditioner claim confirmed (no Schwarz anywhere in palace; only overlap site is the wave-port ROM check); chapter cites bare romoperator.cpp:586 omitting the models/ dir prefix — content correct, path under-qualified
+```
+
+```yaml
+verified_against:
+  - citation: book/src/L4/sharding-decompose-reduce.md:326,394,395
+    verdict: supports
+    audited_at: 2026-06-08T180000Z
+    note: c141 land-clean dir-prefix hygiene — the 3 body-prose bare-basename citations (geodata.cpp:3242 / romoperator.cpp:586) re-anchored to the chapter's full palace/-prefixed body convention (palace/utils/geodata.cpp:3242, palace/models/romoperator.cpp:586), matching :295/:297/:400; discharges the c140 :484 path-under-qualified note
+  - citation: reference/palace/palace/utils/geodata.cpp:3242
+    verdict: supports
+    audited_at: 2026-06-08T180000Z
+    note: citecheck --anchor "partitioning mesh" ok — anchor exact at :3242 (Mpi::Print N-subdomain partition-finished site); confirms re-anchored path resolves on disk
+  - citation: reference/palace/palace/models/romoperator.cpp:586
+    verdict: supports
+    audited_at: 2026-06-08T180000Z
+    note: citecheck --anchor "overlap" ok — anchor exact at :586 (the wave-port ROM "ports don't have any overlap" check comment); confirms re-anchored path resolves on disk
 ```
