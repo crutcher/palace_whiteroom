@@ -6,7 +6,7 @@ batch_cycle_ids: [cycle-145, cycle-146, cycle-147]
 batch_position: MIDDLE 2/3 of meta-batch-48
 timestamp: 2026-06-08T232600Z
 zero_dispatch: true
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b03e4a6
 ---
 
 # Cycle-146 — integrator-finalize batch CYCLE.md
