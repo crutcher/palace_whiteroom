@@ -60,12 +60,10 @@ The relationship to the adjacent layers:
   kernel body's primitive sequence is **value-thread-isomorphic** between the
   L4 form and this L3 form. The L4 `do`-block dissolves to a `let`-chain; the
   L4 `modifyY (\y -> y .+. dN)` dissolves to the explicit `let y' = y + dN`
-  binding. No `book/src/L4-L3/` theme file is authored by this dispatch — the
+  binding. There is no `book/src/L4-L3/` theme file — the
   dissolution is value-thread-isomorphic on the body and the wrapper rewrite is
   the same shape the krylov-step typed-wrapper-dissolution theme catalogs
-  (`book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md`); a thin L4>L3
-  chebyshev identity-theme is an Open Question follow-up if the
-  lowering-verifier wants a dedicated audit anchor.
+  (`book/src/L4-L3/krylov-step-typed-wrapper-dissolution.md`).
 - **Downward** to L2: [`chebyshev-iteration`](../L2/chebyshev-iteration.md) is
   the same body as a base-algebra primitive composition with the iteration view
   erased (the outer driver referenced by role only). The L3>L2 rotation on the
@@ -77,13 +75,12 @@ The relationship to the adjacent layers:
   threaded by the explicit tail recursion, whereas L2 consolidates the same
   threading into its `for k in 1 .. order-1` loop with `op.scalars(k, st)`
   state. This is information-preserving. The **body identity-in-form** annotation
-  lives in-line here per the cycle-012 meta-phase non-adjacent-identity convention
+  lives in-line here per the non-adjacent-identity convention
   (precedent: `book/src/L3/krylov-step.md` §Downward); the **substantive
   nested-loop erasure** (the two `iterate_while_pure_L3` tail recursions dissolving
   into the L2 loop-as-driver + role reference, with the inner-`k` + outer-`pc_it`
   `sequential-obstruction`s erased to the L2 non-laws) is the dedicated L3>L2 theme
-  [`chebyshev-nested-recurrence`](../L3-L2/chebyshev-nested-recurrence.md)
-  (cycle-045) — the loop surface exceeds the identity-only convention, the same
+  [`chebyshev-nested-recurrence`](../L3-L2/chebyshev-nested-recurrence.md) — the loop surface exceeds the identity-only convention, the same
   body-identity-in-line / loop-erasure-as-theme division `ksp_solve` makes
   (`krylov-step-body-identity` + `ksp-solve-outer-driver`).
 
@@ -98,7 +95,7 @@ value-thread-isomorphic to the L1 [`chebyshev-smoother`](../L1/chebyshev-smoothe
 action as well, at the body level. That non-adjacent relationship is the
 **transitive consequence of the two adjacent-edge identities** and is annotated
 **in-line** here (and in the dep-map), citing the existing adjacent entries; **no
-`book/src/L3-L1/` directory is created** (per the cycle-012 meta-phase decision
+`book/src/L3-L1/` directory is created** (per the non-adjacent-identity convention
 `l3-l1-inline-identity-rotation-convention`, lowering directories are
 per-adjacent-edge only). Note the caveat below: the L1↔L2 identity is on the
 **body**; it does not erase the L3 loop-structure obstruction, which is a
@@ -447,23 +444,16 @@ selectable form.
 ## Status
 
 `partial-obstruction` — the per-inner-step body lifts cleanly to a global
-tensor-field expression (every line is whole-tensor by signature shape; verified
-against the L2 `sweep` body and the L0 `Mult2` bodies); the inner `k`-recurrence
+tensor-field expression (every line is whole-tensor by signature shape; matches
+the L2 `sweep` body and the L0 `Mult2` bodies); the inner `k`-recurrence
 and the outer `pc_it` Richardson sweep are **witnessed sequential obstructions**
 with a cited non-removability reason (Phillips & Fischer 2022 §2: recurrence
-form chosen for numerical stability). This is the canonical partial-obstruction
-case (body lifts, loop does not), distinct from the firm-body / non-lifting-fold
-shape of L3 [`krylov-step`](./krylov-step.md) in that `chebyshev`'s loops are
-bounded static ranges (no convergence predicate, no inner-product reduction).
-The body's algebraic laws are syntactic identities on the source (inherited from
-the cycle-012 firm L1/L2 entries); the obstruction structure is explicit and
-cited. **Caveat (not a status reduction)**: no dedicated unit test under
+form chosen for numerical stability). The status reflects the **loop structure**,
+not the body. The body's algebraic laws are syntactic identities on the source
+(inherited from the firm L1/L2 entries). No dedicated unit test under
 `reference/palace/test/unit/` — behaviour is exercised only through multigrid
-integration (`gmg.cpp`, `distrelaxation.cpp`); same justification as the firm
-L1/L2 entries (every body law is a syntactic identity on fully-specified C++
-source). The `partial-obstruction` status reflects the **loop structure**, not
-the body — it is the honest L3 verdict for a fixed-degree polynomial smoother and
-does not impeach the firm L1/L2 rows.
+integration (`gmg.cpp`, `distrelaxation.cpp`); the body laws are syntactic
+identities on fully-specified C++ source, so the missing test does not gate.
 
 ## L3 vs L2 distinction
 
@@ -480,11 +470,10 @@ does not impeach the firm L1/L2 rows.
 
 The L3>L2 hop erases the explicit iteration view (the tail recursions collapse
 to L2's loop-as-composition-driver) and leaves the body identity-in-form. The
-**body** identity-in-form annotation lives in-line here (per the cycle-012
-meta-phase non-adjacent-identity convention; precedent
+**body** identity-in-form annotation lives in-line here (per the
+non-adjacent-identity convention; precedent
 `book/src/L3/krylov-step.md`); the **substantive loop erasure** is the dedicated
-L3>L2 theme [`chebyshev-nested-recurrence`](../L3-L2/chebyshev-nested-recurrence.md)
-(cycle-045).
+L3>L2 theme [`chebyshev-nested-recurrence`](../L3-L2/chebyshev-nested-recurrence.md).
 
 ## L3 vs L4 distinction
 
@@ -504,46 +493,36 @@ L3>L2 theme [`chebyshev-nested-recurrence`](../L3-L2/chebyshev-nested-recurrence
 
 ## Evidence
 
-- `palace/linalg/chebyshev.cpp:191-220` — 4th-kind `Mult2` body (verified via
-  codemap): the `pc_it` outer sweep; `r = x − A·y` (via `ApplyOp(*A, y, r);
+- `palace/linalg/chebyshev.cpp:191-220` — 4th-kind `Mult2` body: the `pc_it` outer sweep; `r = x − A·y` (via `ApplyOp(*A, y, r);
   AXPBY(1, x, -1, r)`) or `r = x; y = 0` on first sweep without initial guess;
   `ApplyOrder0(4/(3·λ_max), dinv, r, d)`; the `k`-loop with `y += d`,
   `ApplyOp(*A, d, r, -1.0)`, `sd = (2k−1)/(2k+3)`, `sr = (8k+4)/((2k+3)·λ_max)`,
   `ApplyOrderK(sd, sr, dinv, r, d)`; final `y += d`. The body whose three-line
   inner update this L3 entry lifts to tensor-field form.
-- `palace/linalg/chebyshev.cpp:261-293` — 1st-kind `Mult2` body (verified via
-  codemap): identical sweep scaffold; `ApplyOrder0(1/theta, dinv, r, d)`;
+- `palace/linalg/chebyshev.cpp:261-293` — 1st-kind `Mult2` body: identical sweep scaffold; `ApplyOrder0(1/theta, dinv, r, d)`;
   `rhop = delta/theta`; the `k`-loop with `rho = 1/(2·theta/delta − rhop)`,
   `sd = rho·rhop`, `sr = 2·rho/delta`, `rhop = rho`; final `y += d`. The
   variant-invariant body sequence (law 5) is witnessed by the identical sweep
   scaffold across the two bodies.
 - `palace/linalg/chebyshev.hpp:14-23` — `ChebyshevSmoother` (4th-kind) class doc
-  + decl (verified via codemap): "Matrix-free diagonally-scaled Chebyshev
+  + decl: "Matrix-free diagonally-scaled Chebyshev
   smoothing … 4th-kind … Phillips and Fischer, arXiv:2210.03179v1 (2022)."
 - `palace/linalg/chebyshev.hpp:72-75` — `MultTranspose2(x, y, r) { Mult2(x, y,
-  r); }` (verified via codemap) — the symmetry alias witnessing law 3.
+  r); }` — the symmetry alias witnessing law 3.
 - `palace/linalg/chebyshev.hpp:80-114` — `ChebyshevSmoother1stKind` class doc +
-  decl (verified via codemap): "standard 1st-kind Chebyshev polynomials … Adams
+  decl: "standard 1st-kind Chebyshev polynomials … Adams
   et al., JCP (2003)"; `double theta, delta, sf_max, sf_min;`.
-- `palace/linalg/chebyshev.hpp:37` — `VecType dinv; // … real-valued for now`
-  (verified via codemap) — the element-type variant-axis note.
-- `book/src/L2/chebyshev-iteration.md` (cycle-012 firm) — the L2
+- `palace/linalg/chebyshev.hpp:37` — `VecType dinv; // … real-valued for now` — the element-type variant-axis note.
+- `book/src/L2/chebyshev-iteration.md` (firm) — the L2
   primitive-composition form this entry's body is identity-in-form to; §Semantics
   `sweep` is exactly this body with the field-algebra operators spelled as their
   L1-primitive names. Laws 1/2/3 (L2) are the body-equivalence and fusion-
   transparency anchors; the L2 non-laws (step-reordering, `pc_it`-non-commutativity)
   are the L3 loop-structure obstructions.
-- `book/src/L1/chebyshev-smoother.md` (cycle-012 firm) — the L1 closed-form
+- `book/src/L1/chebyshev-smoother.md` (firm) — the L1 closed-form
   action the body is value-thread-isomorphic to (transitively, in-line).
-- `book/src/L3/krylov-step.md` (cycle-010 firm) — the template for the
+- `book/src/L3/krylov-step.md` (firm) — the template for the
   identity-lowering backfill (§Upward/§Downward in-line annotation) and the
   contrast operator (Krylov, predicate-driven loop, inner-product-bearing) vs
   this fixed-degree, inner-product-free, static-range smoother.
-- Provenance: the cycle-001-era §L3 "tensor-field form (partial obstruction)"
-  this entry promotes (the tensor-field body, the `k` and `pc_it` sequential
-  obstructions, the what-lifts-vs-what-does-not table) was lifted from the
-  cycle-001-era Phase-1 chebyshev §L3 (439-line form), reduced cycle-015 once its
-  material became authoritative here and deleted cycle-099 (graded-stack P2; git
-  history is the record per CLAUDE.md §Methodology invariants "Phase 1 corpus was
-  lifted and deleted").
 - `book/src/concepts/chebyshev-iteration.md` — narrative.

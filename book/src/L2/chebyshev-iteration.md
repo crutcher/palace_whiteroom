@@ -34,8 +34,7 @@ where `(α₀, sd_k, sr_k)` come from the variant scalar generator and `dinv ⊙
 is the elementwise diagonal action. This is the canonical **polynomial-recurrence**
 shape — the same kernel-plus-driver shape the L2 [`krylov-step`](./krylov-step.md)
 catalogs as one of its five pattern instances (`krylov-step.md:7`, citing
-`book/src/L4/chebyshev.md` §Semantics `innerStep`; firm cycle-015, absorbing the
-former `chebyshev.md:354-362` slice §L4). `chebyshev-iteration` is the concrete L2 entry that the
+`book/src/L4/chebyshev.md` §Semantics `innerStep`). `chebyshev-iteration` is the concrete L2 entry that the
 `krylov-step` variant-axis (3) (polynomial-kind, `op.scalars`) points at.
 
 The HPC element-fused kernels in the L0 source — `ApplyOrder0` (one elementwise
@@ -228,17 +227,9 @@ bodies (`palace/linalg/chebyshev.cpp:190-220, :261-293`), with the
 element-fused `ApplyOrder0` / `ApplyOrderK` kernels unfolded into base algebra
 and the fusion classified as transparent. The scalar recurrences are exact
 closed forms from the source (4th-kind `:215-217`; 1st-kind `:286-288`). Every
-algebraic law is a syntactic identity on the source. **Caveat (not a status
-reduction)**: no dedicated unit test (multigrid-integration coverage only) —
-same justification as the L1 entry.
-
-> **Firm-promotion ratified (cycle-012 integrator).** Inherits the L1 entry's
-> firm-without-dedicated-test ratification: kept firm against the
-> constructed-operator-gate firm-bar (source-transcription confidence +
-> integration coverage + closed-form fixed-degree action) in lockstep with the
-> L1 `chebyshev-smoother` ratification. The `eigsolve` rough-in precedent was
-> judged not to bind (its rough-in was driven by literature-inferred convergence
-> semantics absent here).
+algebraic law is a syntactic identity on the source. The absence of a dedicated
+unit test (multigrid-integration coverage only) does not gate the
+syntactic-identity laws — same justification as the L1 entry.
 
 ## L2 vs L1 distinction
 
@@ -268,15 +259,9 @@ same justification as the L1 entry.
 - `palace/linalg/chebyshev.cpp:264-292` — 1st-kind sweep body: residual,
   `ApplyOrder0(1/theta, …)`, `rhop = delta/theta`, the `k`-loop (`rho =
   1/(2·theta/delta − rhop)`; `sd = rho·rhop`; `sr = 2·rho/delta`; `rhop = rho`),
-  final `y += d`. (The slice §L2 line 160 `delta/(2·theta)` is in error vs. this
-  source `delta/theta`.)
+  final `y += d`.
 - `palace/linalg/chebyshev.cpp:215-217` — 4th-kind `sd` / `sr` closed forms.
 - `palace/linalg/chebyshev.cpp:286-288` — 1st-kind `rho` / `sd` / `sr` recurrence.
 - `book/src/L2/krylov-step.md:7` — catalogs `book/src/L4/chebyshev.md`
   §Semantics `innerStep` as one of the five polynomial-recurrence pattern
   instances `krylov-step` factors.
-- Provenance: the cycle-001-era L2 content this entry promotes was lifted from the
-  Phase-1 chebyshev §L2 (439-line form), reduced cycle-015 once its material became
-  authoritative here and deleted cycle-099 (graded-stack P2; git history is the
-  record per CLAUDE.md §Methodology invariants "Phase 1 corpus was lifted and
-  deleted").

@@ -4,10 +4,7 @@ operator: scal
 rank: firm
 edges:
   depends-on:
-    # Per the c108 §5 L1-op→theme grounding convention, a firm L1 operator's L1>L0 lowering
-    # theme is a blocking depends-on (kind: lowers-to), routing liveness DOWN to the theme.
-    # The theme `scal-mutation-rotation` is firm (rank 3), so rank(op=3) ≤ rank(theme=3) holds.
-    - kind: lowers-to
+    - kind: lowers-to        # the L1>L0 mutation-rotation theme
       target: L1-L0/scal-mutation-rotation
   reference:
     - L1/axpby
@@ -77,7 +74,7 @@ None at L1. `scal` is a leaf primitive — the fourth and last of the BLAS-1 flo
 
 Sibling subsumption (not dependency):
 - `scal(α, x) = axpby(α, x, 0, y) = axpby(0, y, α, x)` for any `y`. Per `axpby` laws 2 and 3 at `book/src/L1/axpby.md`. `scal` and `axpby` stay in the L1 dep-map as siblings.
-- `Normalize(x) = scal(1 / nrm2(x), x)` paired with the returned norm. The free-function `linalg::Normalize` at `palace/linalg/vector.hpp:262-270` is a fused `nrm2 + scal` construct; at L1 it currently factors as the composition `scal(1/nrm2(x), x)`. Whether to harvest a fused `normalize` L1 primitive is an open question.
+- `Normalize(x) = scal(1 / nrm2(x), x)` paired with the returned norm. The free-function `linalg::Normalize` at `palace/linalg/vector.hpp:262-270` is a fused `nrm2 + scal` construct; at L1 it factors as the composition `scal(1/nrm2(x), x)`, and is the firm fused operator [`normalize`](./normalize.md) (which carries the returned norm as a first-class output).
 
 Downstream consumers at L1 (cross-reference, not reverse-dependencies): GMRES Arnoldi basis-normalisation `w ← w / Hj[j+1]` (`iterative.cpp:632, 811`), CG search-direction rescaling `p ← (β/β_prev) p` (per `concepts/scal.md`), eigenvector normalisation (`nleps.cpp:486-491`, `operator.cpp:661, 673` via `Normalize`).
 
@@ -90,14 +87,10 @@ Downstream consumers at L1 (cross-reference, not reverse-dependencies): GMRES Ar
 
 No other variant axes — `scal` is unconditionally pure, element-local, reduction-free, and rank-local across all variants. Unlike `axpy` (which has the real-path `α == 1.0` constant-folding specialisation at L0) and like `axpby` (which has no constant-folding), `scal` has no L0 constant-folding branches on `α` — the branch in `ComplexVector::operator*=` is a complex-scalar-shape branch (`imag == 0`), not a scalar-value branch.
 
-## Status
-
-`firm` — signature is canonical (matches BLAS-1 `dscal` / `zscal` and the Palace `operator*=` surface exactly), evidence is direct from `palace/linalg/vector.{hpp,cpp}` and inlined call sites, and the nine algebraic laws listed are standard scalar-vector-multiplication facts (axioms of a module over the scalar field, plus the field-commutativity inherited rule).
-
 ## L1 vs L0 distinction
 
 - **L0**: mutating member methods. `x *= s` on `mfem::Vector` (real, MFEM); `x *= s` on `ComplexVector` (complex, Palace). Writes through `x`. The complex case branches on `imag(s) == 0.0` to a simpler path; that branch is a transparent shape-specialisation. No free-function `linalg::Scal` or `linalg::Scale` symbol exists.
-- **L1**: pure functional update. `x_new = scal(α, x_old)`. No destination buffer in the signature. Algebraic laws apply directly. The L0 in-place mutation, the L0 real-imag-shape branch, and the call-site fusion with `nrm2` inside `Normalize` are all L1>L0 lowering concerns, not L1 concerns. The fused `Normalize` construct factors at L1 as `scal(1/nrm2(x), x)` — to be unified into a single operator only if a future harvester proposes a fused `normalize` L1 primitive.
+- **L1**: pure functional update. `x_new = scal(α, x_old)`. No destination buffer in the signature. Algebraic laws apply directly. The L0 in-place mutation, the L0 real-imag-shape branch, and the call-site fusion with `nrm2` inside `Normalize` are all L1>L0 lowering concerns, not L1 concerns. The fused `Normalize` construct factors at L1 as `scal(1/nrm2(x), x)`, and is the firm fused operator [`normalize`](./normalize.md).
 
 ## Evidence
 
@@ -109,6 +102,6 @@ No other variant axes — `scal` is unconditionally pure, element-local, reducti
 - `palace/linalg/iterative.cpp:222` — `cs *= w;` — *scalar-scalar* `*=` (not a vector `scal`). Recorded as a *non*-instance for disambiguation.
 - `palace/linalg/operator.cpp:661, 673` — `Normalize(comm, u)` and `l = Normalize(comm, u);` call sites in operator-side normalisation flows.
 - `palace/linalg/nleps.cpp:486-491` — eigenvector normalisation call sites in nonlinear-EVP code.
-- Cycle-003 firm `axpby` entry at `book/src/L1/axpby.md` — laws 2 and 3 establish the subsumption `scal(α, x) = axpby(α, x, 0, y) = axpby(0, y, α, x)`.
-- Cycle-003 firm `nrm2` entry at `book/src/L1/nrm2.md` — the `Normalize` construct's `1/nrm2(x)` scalar argument is sourced here.
+- Firm `axpby` entry at `book/src/L1/axpby.md` — laws 2 and 3 establish the subsumption `scal(α, x) = axpby(α, x, 0, y) = axpby(0, y, α, x)`.
+- Firm `nrm2` entry at `book/src/L1/nrm2.md` — the `Normalize` construct's `1/nrm2(x)` scalar argument is sourced here.
 - `book/src/concepts/scal.md` — pre-existing cross-cutting prose treatment; consistent with this L1 entry.

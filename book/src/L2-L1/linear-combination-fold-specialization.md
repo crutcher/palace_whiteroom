@@ -239,40 +239,38 @@ summation-order split is the load-bearing-numerical residue recorded above.
 `axpby-as-primitive` decision
 ([`scaffolding/decisions/axpby-as-primitive.md`](../../../scaffolding/decisions/axpby-as-primitive.md))
 keeps each as a leaf (fuse, don't decompose). The LHS
-[`linear_combination`](../L2/linear_combination.md) is firm (harvested this cycle). This
+[`linear_combination`](../L2/linear_combination.md) is firm. This
 theme proposes no new operators — it is the lowering edge between firm vocabulary on
 both sides.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `palace-codemap` read_range this invocation —
-producer-citation-drift discipline, `verify-citation-range` producer-self-verification):
+L0 evidence ranges:
 
 - `palace/linalg/vector.cpp:702-712` — `AXPY(double, const Vector &, Vector &)`: the
   `α == 1.0` fast-path (`y += x`) vs the general `y.Add(alpha, x)`. The arity-2-coeff-1
-  (`axpy`) leaf and its pinned order. **Self-verified.**
+  (`axpy`) leaf and its pinned order.
 - `palace/linalg/vector.cpp:726-730` — `AXPBY(double, const Vector &, double, Vector &)`
   → `add(alpha, x, beta, y, y)`: the single fused aligned in-place linear-combine
-  (the arity-2 `axpby` leaf; the fused-pass summation order). **Self-verified.**
+  (the arity-2 `axpby` leaf; the fused-pass summation order).
 - `palace/linalg/vector.cpp:745-758` — the real-real `AXPBYPCZ` body with the
   `if (gamma == 0.0) { add(alpha, x, beta, y, z); }` fast-path (`:749-751`, the arity-3 →
   arity-2 collapse / law-5 witness) and the `else { AXPBY(alpha, x, gamma, z);
   z.Add(beta, y); }` two-pass split (`:753-756`, the general-arity-3 pinned summation
-  order). **Self-verified.**
+  order).
 - `palace/linalg/vector.hpp:305-316` — the `AXPY` / `AXPBY` / `AXPBYPCZ` free-function
   template declarations with their `// Addition …` comments; the bounded-arity surface
   (ceiling at `AXPBYPCZ` — no arity-4 fused kernel) the fold lowers into.
-  **Self-verified.**
 - `palace/linalg/nleps.cpp:343-344` — `AXPBYPCZ(y(j).real(), X[j].Real(), -y(j).imag(),
   X[j].Imag(), 1.0, z.Real())` and the `.imag()` line: the `γ=1` accumulate-two-terms-
-  into-output, the live witness of the arity-≥4 iterated chain (eigenvector synthesis).
-  **Self-verified** (the `z = 0.0` seed is at `:340`; the loop runs over `j`).
+  into-output, the live witness of the arity-≥4 iterated chain (eigenvector synthesis;
+  the `z = 0.0` seed is at `:340`; the loop runs over `j`).
 - `palace/models/romoperator.cpp:188-189` — `AXPBYPCZ(y(j).real(), V[j],
   y(j + 1).real(), V[j + 1], 1.0, u.Real())` and `u.Imag()`: ROM solution reconstruction,
-  the same accumulate-two-terms-into-`u` `γ=1` iterated-chain shape. **Self-verified.**
+  the same accumulate-two-terms-into-`u` `γ=1` iterated-chain shape.
 - `palace/models/timeoperator.cpp:217` — `AXPBYPCZ(1.0, RHS2, dt, k1, 0.0, k2)`: RK
   stage, the `γ=0` collapse to the fused arity-2 `axpby` (`k2 ← RHS2 + dt·k1`); live
-  witness of the arity-3 → arity-2 fall-through. **Self-verified.**
+  witness of the arity-3 → arity-2 fall-through.
 
 L2 / L1 anchors (firm both sides):
 
@@ -283,18 +281,11 @@ L2 / L1 anchors (firm both sides):
 
 ## Status
 
-`firm` — the L2 LHS is firm (harvested this cycle), all four L1 RHS leaves are firm, and
-the fusion-selection rule IS the L2 entry's already-firm laws 6 (specialization
-identities) + 2 (concatenation-homomorphism) read as a lowering. The arity-3 → arity-2
-fall-through and the per-call summation orders are read straight off the **verified**
-`vector.cpp` bodies (the `γ==0` branch `:749-751`; the two-pass `else` `:753-756`; the
-`AXPBY` fused pass `:726-730`; the `AXPY` fast-path `:702-712`), with three live
-iterated-chain / collapse witnesses (`nleps.cpp:343-344`, `romoperator.cpp:188-189`,
-`timeoperator.cpp:217`). No literature inference, no negative-anchor reconstruction, no
-speculative operator. This is the second chapter under the `book/src/L2-L1/` Part
-(after [`chebyshev-iteration-fusion`](./chebyshev-iteration-fusion.md)); a
-`lowering-verifier` audit confirming the selection rule + summation-order table against
-the L0 source is the standard follow-up, not a status reduction.
+`firm` — the L2 LHS and all four L1 RHS leaves are firm, and the fusion-selection rule IS
+the L2 entry's laws 6 (specialization identities) + 2 (concatenation-homomorphism) read as
+a lowering. The arity-3 → arity-2 fall-through and the per-call summation orders are read
+off the `vector.cpp` bodies; no literature inference, no negative-anchor reconstruction, no
+speculative operator.
 
 ## Open questions / caveats
 
@@ -328,7 +319,5 @@ the L0 source is the standard follow-up, not a status reduction.
 - **`inner_product` sibling fold (out of scope, forward-ref).** The L2 entry's
   `dot`-distinction §note points at OQ `inner-product-fold-sibling-candidate` (a separate
   reduce-to-scalar fold, axis = conjugation-convention, not arity). It has no
-  linear-combination-style fixed-arity L1 family, so it gets its own (future) lowering
-  theme, not this one. This cycle's combinator-miner-on-inner-product
-  (`reports/2026-05-28T231046Z-combinator-miner-inner-product-fold/`) is the parallel
-  track; this theme does not depend on it.
+  linear-combination-style fixed-arity L1 family, so it gets its own lowering
+  theme, not this one; this theme does not depend on it.

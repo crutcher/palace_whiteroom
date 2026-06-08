@@ -59,7 +59,7 @@ vector and the basis is the 2-D `Basis[N, m]` — both kept as written.
 
 ### Face 1 — the opaque parameterised leaf (the fused face)
 
-The firm L1 leaf [`orthogonalize`](../L1/orthogonalize.md) (cycle-012), mirroring Palace's
+The firm L1 leaf [`orthogonalize`](../L1/orthogonalize.md), mirroring Palace's
 single dispatch wrapper one-to-one ([`L1/orthogonalize`](../L1/orthogonalize.md) §Signature):
 
 ```text
@@ -75,7 +75,7 @@ The L2 record `{ residual, coeffs }` is the same value-pair as the L1 leaf's tup
 let (w', H) = L1.orthogonalize w V variant in { residual = w', coeffs = H }`). The leaf's own
 lowering onto the L0 in-place free functions is the firm
 [`orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md) L1>L0 theme
-(audited cycle-014) — **this theme stops at the L1 leaf and does not re-derive that L0 step.**
+— **this theme stops at the L1 leaf and does not re-derive that L0 step.**
 
 ### Face 2 — the de-fused `dot`-fold ▷ `axpy`-fold (the spelled-out face)
 
@@ -97,7 +97,7 @@ primitive sequence** — exactly what the L2 composition surfaces. The `op.dot` 
 substitution (canonical → B-weighted), not a structural change (L2 entry law 7). The inner
 product's own L0 surface — the unfused `LocalDot` + (per-variant) batched `Mpi::GlobalSum` —
 is **already covered by [`dot-mutation-rotation`](../L1-L0/dot-mutation-rotation.md)
-§Sub-pattern D** (cycle-021); see §"Inner-product realisation". The `axpy` residual update's
+§Sub-pattern D**; see §"Inner-product realisation". The `axpy` residual update's
 own L0 surface — the in-place `w.Add(-H[j], V[j])` overwrite — is covered by the firm
 [`orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md) L1>L0 theme.
 
@@ -160,7 +160,7 @@ The `project` stage's per-column inner product is the firm L1 [`dot`](../L1/dot.
 (conjugate-linear arg-1; the `op.dot` hook is a `dot` substitution, L2 entry law 7). Its L0
 surface — the **unfused `LocalDot` + (per-variant) batched `Mpi::GlobalSum`** — is **already
 covered in full by [`dot-mutation-rotation`](../L1-L0/dot-mutation-rotation.md) §Sub-pattern
-D** (cycle-021, `book/src/L1-L0/dot-mutation-rotation.md:146-187`). Sub-pattern D records that
+D** (`book/src/L1-L0/dot-mutation-rotation.md:146-187`). Sub-pattern D records that
 Palace's Gram-Schmidt routines do **not** call the fused `linalg::Dot` (Sub-pattern A); they
 reach the same `yᴴ x` reduction through the `InnerProductHelper` template hook whose canonical
 `IdentityInnerProduct::operator()` returns `LocalDot(x, y)` (`palace/linalg/orthog.hpp:35`),
@@ -176,10 +176,7 @@ This is the **same per-variant collective-shape distinction** this theme records
 arity/pass-count level (`m×1` / `1×m` / `2×m`) — Sub-pattern D is its L1>L0 leaf-level
 realisation. **This theme does NOT re-derive the unfused LocalDot+GlobalSum chain**; it cites
 Sub-pattern D as the inner-product realisation and confines itself to the L2>L1 stage-selection
-content. (OQ `orthogonalize-mutation-rotation-l1-l0-theme-should-cite-dot-subpattern-d`
-discharged on this side: the L2>L1 theme cites Sub-pattern D for `project`; the L1>L0
-`orthogonalize-mutation-rotation` theme is the per-leaf in-place lowering that Sub-pattern D's
-observability note already cross-links.)
+content.
 
 The B-weighted hook (`op.dot = λ x y. W.InnerProduct(x, y, r)`, the SLEPc/ROM substitution,
 `palace/models/romoperator.cpp:636`) is the same `dot` substitution through the identical
@@ -283,64 +280,58 @@ inner-product fusion is delegated to Sub-pattern D.
 
 **None.** Both faces of the L1 RHS are firm:
 
-- Face 1 — the L1 leaf [`orthogonalize`](../L1/orthogonalize.md) (firm, cycle-012).
-- Face 2 — [`dot`](../L1/dot.md) (the `project` stage's inner product; firm post-cycle-002,
+- Face 1 — the L1 leaf [`orthogonalize`](../L1/orthogonalize.md) (firm).
+- Face 2 — [`dot`](../L1/dot.md) (the `project` stage's inner product; firm,
   the `op.dot` hook is a substitution) and [`axpy`](../L1/axpy.md) (the `subtract` stage's
-  rank-1 update `w ← w − coeffs[j]·V[j] = axpy(-coeffs[j], V[j], w)`; firm post-cycle-002).
+  rank-1 update `w ← w − coeffs[j]·V[j] = axpy(-coeffs[j], V[j], w)`; firm).
 
-The LHS [`orthogonalize`](../L2/orthogonalize.md) is firm (cycle-019). This theme proposes no
+The LHS [`orthogonalize`](../L2/orthogonalize.md) is firm. This theme proposes no
 new operators — it is the lowering edge between firm vocabulary on both sides. **Householder is
 scoped out** (it threads a reflector sequence, fundamentally different state; Palace's L0 has
 no Householder path — L2 entry §Variant axes; CLAUDE.md unimplemented-component policy).
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `palace-codemap` read_range + `tools/citecheck/`
-anchor-drift checks this invocation — producer-citation self-verification,
-`verify-citation-range` producer-self-verification):
+L0 evidence ranges:
 
 - `palace/linalg/orthog.hpp:18-23` — header scope contract: "Assumes that the input vectors
   are normalized, but does not normalize the output vectors!" — the no-output-normalisation
-  contract (applicability condition 2). **Self-verified.**
+  contract (applicability condition 2).
 - `palace/linalg/orthog.hpp:29-36` — `IdentityInnerProduct` / `InnerProductHelper`: the
   `op.dot` template hook; `return LocalDot(x, y)` at `:35`. The inner-product realisation
-  pointer (Sub-pattern D). **Self-verified (anchor at :35).**
+  pointer (Sub-pattern D).
 - `palace/linalg/orthog.hpp:41-53` — `OrthogonalizeColumnMGS`: the single interleaved `j`-loop;
   `H[j] = dot_op(w, V[j])` at `:49`, `Mpi::GlobalSum(1, &H[j], comm)` at `:50`,
   `w.Add(-H[j], V[j])` at `:51`. The MGS `[dot, axpy] × m` interleaved sequence (`m` size-1
-  reductions). **Self-verified (def at :41; dot at :49; w.Add at :51).**
+  reductions).
 - `palace/linalg/orthog.hpp:55-89` — `OrthogonalizeColumnCGS`: empty-basis early return
   `if (m == 0)` at `:62`; `m` batched local dots; single `Mpi::GlobalSum(m, H, comm)` at `:70`;
   `m` batched `w.Add`s; the `if (refine)` block at `:75` with `H[j] += dH[j]` accumulate at
   `:85` and second `Mpi::GlobalSum`. The CGS `[dot×m, reduce, axpy×m]` and CGS2 `[CGS]×2`
-  sequences. **Self-verified (def at :57; m==0 at :62; GlobalSum(m,H) at :70; refine at :75;
-  accumulate at :85).**
+  sequences.
 - `palace/linalg/iterative.cpp:308-325` — `OrthogonalizeIteration`: the runtime variant
   dispatch (`switch (type)` over `MGS / CGS / CGS2`; `CGS2 = OrthogonalizeColumnCGS(..., true)`
   at `:322`); the variant is bound once and dispatched once, against the leading `j + 1`
-  columns. **Self-verified (CGS2 `true` at :322).**
+  columns.
 - `palace/models/romoperator.cpp:51-66` — the ROM `OrthogonalizeColumn` sibling dispatch:
   switches on `Orthogonalization`, forwards the `dot_op` hook (CGS2 = `refine=true`). The
-  second dispatch surface. **Self-verified.**
+  second dispatch surface.
 - `palace/models/romoperator.cpp:631-646` — the B-weighted hook consumer: the lambda
   `[&W, &r](const Vector &x, const Vector &y){ return W.InnerProduct(x, y, r.Real()); }`
   (`W.InnerProduct` at `:636`) — the `op.dot` B-weighted substitution (inner-product-hook
-  variant axis). **Self-verified (W.InnerProduct at :636).**
+  variant axis).
 - `palace/linalg/iterative.cpp:630-632` — GMRES Arnoldi consumer: `OrthogonalizeIteration(...)`
   immediately followed by `Norml2` + `*= 1.0/Hj[j+1]` — normalisation is the caller's
-  (applicability condition 2). **Self-verified.**
+  (applicability condition 2).
 - `palace/linalg/iterative.cpp:809-811` — FGMRES Arnoldi consumer: identical dispatch +
-  `Norml2` + `scal` sequence. **Self-verified.**
+  `Norml2` + `scal` sequence.
 - `test/unit/test-orthog.cpp:99-120` — empty-prefix edge ("OrthogonalizeColumn - Real Empty"):
   all three variants leave `w` unchanged at `m = 0` (law 3, the empty-prefix identity).
-  **Self-verified.**
 - `test/unit/test-orthog.cpp:123-160` — parametric real test: all three variants pass
   `⟨residual, V[i]⟩ ≈ 0` to `1e-12` (the substitutability / variant-agreement witness; the
   `CHECK_THAT(dot, WithinAbs(0.0, 1e-12))` at `:158`, inside the check loop `:154-159`).
-  **Self-verified (WithinAbs assertion at :158).**
 - `test/unit/test-orthog.cpp:276, 333` — weighted-real-1 (`:276`) / weighted-complex-1 (`:333`)
-  parametrisations: the B-weighted `op.dot` variant axis witnesses. **Self-verified (TEST_CASE
-  boundary lines).**
+  parametrisations: the B-weighted `op.dot` variant axis witnesses.
 
 L2 / L1 / cross-theme anchors (firm on every side):
 
@@ -351,11 +342,11 @@ L2 / L1 / cross-theme anchors (firm on every side):
   primitive this composition lowers into.
 - `book/src/L1/dot.md`, `book/src/L1/axpy.md` — the firm L1 leaves the de-fused Face 2 composes
   (`project` = `dot`-fold, `subtract` = `axpy`-fold).
-- `book/src/L1-L0/dot-mutation-rotation.md:146-187` — §Sub-pattern D (cycle-021): the unfused
+- `book/src/L1-L0/dot-mutation-rotation.md:146-187` — §Sub-pattern D: the unfused
   `LocalDot` + batched `Mpi::GlobalSum` inner-product surface — **cited as the `project`
   stage's L0 realisation, not re-derived** (the load-bearing reuse instruction).
-- `book/src/L1-L0/orthogonalize-mutation-rotation.md` — the firm L1>L0 leaf lowering (audited
-  cycle-014): how Face 1's leaf lowers to the in-place L0 free functions; this theme stops at
+- `book/src/L1-L0/orthogonalize-mutation-rotation.md` — the firm L1>L0 leaf lowering:
+  how Face 1's leaf lowers to the in-place L0 free functions; this theme stops at
   the L1 leaf and defers the `w.Add` in-place step to it.
 - `book/src/L2-L1/linear-combination-fold-specialization.md`,
   `book/src/L2-L1/inner-product-fold-specialization.md` — the sibling L2>L1 themes (structural
@@ -363,23 +354,14 @@ L2 / L1 / cross-theme anchors (firm on every side):
 
 ## Status
 
-`firm` — the L2 LHS is firm (cycle-019), both L1 RHS faces are firm (the leaf cycle-012; `dot`
-+ `axpy` post-cycle-002), and the variant-dispatch rule IS the L2 entry's already-firm laws 4
-(variant agreement) + 5 (idempotence-as-CGS2) read as a lowering, with the Face-1 lowering the
-identity-in-value specialization onto the parameterised leaf. The three `[dot, axpy]` sequences
-and their collective shapes (`m×1` / `1×m` / `2×m`) are read straight off the **self-verified**
-`orthog.hpp` bodies (MGS `:41-53`, CGS `:57-74`, CGS2 `:75-88`), the dispatch wrappers are
-read in full (`iterative.cpp:308-325`, `romoperator.cpp:51-66`), and all consumer call sites
-are verified (`iterative.cpp:630, 809`; `romoperator.cpp:636`). The inner-product realisation
-is delegated to the firm [`dot-mutation-rotation`](../L1-L0/dot-mutation-rotation.md)
-§Sub-pattern D (no re-derivation), and the in-place `w.Add` step is delegated to the firm
-[`orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md) L1>L0 theme.
-No literature inference, no negative-anchor reconstruction, no speculative operator — so `firm`
-(matching the sibling [`linear-combination-fold-specialization`](./linear-combination-fold-specialization.md)
-and [`inner-product-fold-specialization`](./inner-product-fold-specialization.md) firmness
-bar). A `lowering-verifier` audit attaching the `verified_against:` block (confirming the
-per-variant sequence selection + collective-shape table against the L0 source, and the
-Sub-pattern D delegation boundary) is the standard follow-up, not a status reduction.
+`firm` — the L2 LHS and both L1 RHS faces are firm, and the variant-dispatch rule IS the L2
+entry's laws 4 (variant agreement) + 5 (idempotence-as-CGS2) read as a lowering, with the
+Face-1 lowering the identity-in-value specialization onto the parameterised leaf. The three
+`[dot, axpy]` sequences and their collective shapes (`m×1` / `1×m` / `2×m`) are read off the
+`orthog.hpp` bodies (MGS `:41-53`, CGS `:57-74`, CGS2 `:75-88`); the inner-product realisation
+is delegated to [`dot-mutation-rotation`](../L1-L0/dot-mutation-rotation.md) §Sub-pattern D and
+the in-place `w.Add` step to [`orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md).
+No literature inference, no negative-anchor reconstruction, no speculative operator.
 
 ## Open questions / caveats
 
@@ -392,14 +374,6 @@ Sub-pattern D delegation boundary) is the standard follow-up, not a status reduc
   GlobalSum); and the L1>L0 `orthogonalize-mutation-rotation` theme owns the **in-place `w.Add`
   candidate-buffer rebinding**. No content should be duplicated across the three.
 
-- **OQ discharge.** This theme discharges OQ `orthogonalize-composition-lowering-l2-l1-theme`
-  (the carry-forward from cycle-019, which was blocked on the L2 anchor — now firm). The
-  companion OQ `orthogonalize-mutation-rotation-l1-l0-theme-should-cite-dot-subpattern-d` is
-  discharged on the L2>L1 side here (the `project` stage cites Sub-pattern D); the L1>L0
-  `orthogonalize-mutation-rotation` theme already cross-links Sub-pattern D via that theme's
-  observability note (`dot-mutation-rotation.md:170-177`), so no edit to the L1>L0 theme is
-  proposed by this dispatch (that would be a separate lifter/lowering-verifier scope).
-
 - **No dedicated L1↔L2 equivalence test (inherited caveat, not a status reduction).** The
   variant-agreement substitutability is witnessed at the L0 level
   (`test/unit/test-orthog.cpp:123-160`, all three variants pass `⟨residual, V[i]⟩ ≈ 0`); a
@@ -408,83 +382,3 @@ Sub-pattern D delegation boundary) is the standard follow-up, not a status reduc
   L1↔L2-test bar carries through from the sibling
   [`linear-combination-fold-specialization`](./linear-combination-fold-specialization.md)
   (which records the same inherited caveat).
-
-```yaml
-verified_against:
-  # L0 source — orthog.hpp (header-only; orthog.cpp does not exist)
-  - citation: palace/linalg/orthog.hpp:18-23
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: no-output-normalisation scope contract (applicability condition 2); text at :22.
-  - citation: palace/linalg/orthog.hpp:29-36
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: IdentityInnerProduct hook; return LocalDot(x, y) at :35 (NOT :34 — line 34 is the brace). Sub-pattern D pointer.
-  - citation: palace/linalg/orthog.hpp:41-53
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: OrthogonalizeColumnMGS; dot :49, Mpi::GlobalSum(1,&H[j]) :50, w.Add :51 — one interleaved j-loop, m size-1 reductions.
-  - citation: palace/linalg/orthog.hpp:57-74
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: OrthogonalizeColumnCGS non-refine; if(m==0) :62, m local dots, Mpi::GlobalSum(m,H) :70, m w.Adds — 1 size-m reduction.
-  - citation: palace/linalg/orthog.hpp:75-88
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: CGS2 if(refine) block :75; H[j] += dH[j] accumulate :85; second size-m reduction — [CGS]x2, non-fusible.
-  # L0 dispatch + consumers
-  - citation: palace/linalg/iterative.cpp:308-325
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: OrthogonalizeIteration switch(type); CGS2 = OrthogonalizeColumnCGS(...,true) at :322; variant bound+dispatched once.
-  - citation: palace/models/romoperator.cpp:51-66
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: ROM OrthogonalizeColumn sibling; threads dot_op hook through all 3 cases; CGS2 = refine=true at :65.
-  - citation: palace/models/romoperator.cpp:631-646
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: B-weighted op.dot substitution; W.InnerProduct(x,y,r.Real()) at :636 (L2 law 7 hook-invariance witness).
-  - citation: palace/linalg/iterative.cpp:630-632
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: GMRES consumer; OrthogonalizeIteration :630 then Norml2 :631 + scal :632 — normalisation is the caller's (condition 2).
-  - citation: palace/linalg/iterative.cpp:809-811
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: FGMRES consumer; byte-identical OrthogonalizeIteration + Norml2 + scal pattern.
-  - citation: palace/models/romoperator.cpp:224-226
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: ROM consumer; OrthogonalizeColumn :224 then Norml2 :225 + scal :226.
-  # L0 tests (L0-equivalent)
-  - citation: test/unit/test-orthog.cpp:99-120
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: empty-prefix edge; GENERATE(MGS,CGS,CGS2), m=0, CHECK_THAT(w, RangeEquals(w_orig)) :120 — law 3 across all variants.
-  - citation: test/unit/test-orthog.cpp:123-160
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: parametric real; GENERATE(MGS,CGS,CGS2); orthogonality assertion CHECK_THAT(dot, WithinAbs(0.0,1e-12)) :158, loop :154-159 — variant-agreement witness.
-  - citation: test/unit/test-orthog.cpp:276
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: weighted-real-1 TEST_CASE boundary — B-weighted op.dot variant witness.
-  - citation: test/unit/test-orthog.cpp:333
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: weighted-complex-1 TEST_CASE boundary — B-weighted op.dot variant witness.
-  # Cross-theme delegation boundaries (the three-way partition — clean, no overlap/gap)
-  - citation: book/src/L1-L0/dot-mutation-rotation.md:146-187
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: §Sub-pattern D — inner-product collective unfusing; cited not re-derived (boundary 2). Clean partition vs stage-selection orchestration. SEE carry-forward — Sub-pattern D's own :34 anchor for LocalDot is stale (should be :35); that is the cited theme's defect, not this theme's.
-  - citation: book/src/L1-L0/orthogonalize-mutation-rotation.md
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: L1>L0 in-place w.Add candidate-buffer rebinding (boundary 3); cited not re-derived. Owns the in-place mechanics (its :59/:94/:133, aliasing condition :177).
-  - citation: book/src/L2/orthogonalize.md:166-220
-    verdict: supports
-    audited_at: 2026-05-29T092943Z
-    note: laws 4 (variant agreement) + 5 (idempotence-as-CGS2) + 7 (hook invariance) + floating-point non-law — all hold; the dispatch rule IS these laws read-as-lowering.
-```

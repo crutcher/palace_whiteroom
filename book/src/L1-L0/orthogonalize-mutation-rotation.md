@@ -208,9 +208,9 @@ operators; it is a pure lowering of an existing firm operator onto existing firm
 the firm `dot` dependency, not a new operator; see the L1 entry's "inner-product hook"
 variant axis.)
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (all read in full via codemap, positive source sites):
+L0 evidence ranges (positive source sites):
 
 - `palace/linalg/orthog.hpp:18-23` — header scope contract (assumes normalised input, does
   NOT normalise output).
@@ -235,10 +235,13 @@ L0 evidence ranges (all read in full via codemap, positive source sites):
 - `test/unit/test-orthog.cpp:99-120` — empty-basis edge: all three variants leave `w`
   unchanged at `m = 0` (sub-pattern B's `if (m == 0) return;` + the zero-iteration loops).
 
+- `palace/utils/labels.hpp:165-170` — `enum Orthogonalization {MGS, CGS, CGS2}` — the
+  recognition set is provably exhaustive (exactly 3 variants).
+
 L1 anchor:
 
-- `book/src/L1/orthogonalize.md` — the firm L1 operator (cycle-012) that all three
-  sub-patterns lower from.
+- `book/src/L1/orthogonalize.md` — the firm L1 operator that all three sub-patterns lower
+  from.
 
 ## Status
 
@@ -249,59 +252,5 @@ their collective shapes (m×1 / 1×m / 2×m) are read off the function bodies �
 reconstructed from negative anchors or literature. The `structural` justification is the
 buffer-rebinding of the L1 pair `(w', H)` into in-place `w` + raw-pointer `H`; the CGS2
 algebraic sub-rule (`H_returned = H + dH`) is grounded in the explicit `H[j] += dH[j]`
-accumulate at `orthog.hpp:85`. A future `lowering-verifier` audit should confirm the
-sub-pattern recognition is exhaustive against the L0 corpus (the dispatch wrappers are the
-only two call-site families; the free functions are not called directly elsewhere — see
-codemap `get_call_sites` results in this report's Supporting evidence).
-
-**Audit (cycle-014, lowering-verifier): CONFIRMS-WITH-REFINEMENT — `firm` upheld.** Every
-cited range was independently re-read via `palace-codemap` (`get_symbol_def` bounds +
-targeted `read_range`); all support their claims, the MGS/CGS/CGS2 recognition set is
-provably exhaustive (enum has exactly 3 variants; `get_call_sites` = 3 MGS + 6 CGS, all
-inside the two dispatch switches + the test harness), and the m×1 / 1×m / 2×m collective
-shapes are read directly off the bodies. Refinement R1 applied: the CGS2 dispatch citation
-tightened from the enclosing `iterative.cpp:321-323` to the precise `:322`.
-
-```yaml
-verified_against:
-  - citation: palace/linalg/orthog.hpp:41-53
-    verdict: supports
-    audited_at: 2026-05-28T19:33:06Z
-    note: OrthogonalizeColumnMGS single interleaved loop; def spans 41-53 per get_symbol_def
-  - citation: palace/linalg/orthog.hpp:48
-    verdict: supports
-    audited_at: 2026-05-28T19:33:06Z
-    note: complex-order comment; cycle-013 line-drift repaired, re-verifies clean
-  - citation: palace/linalg/orthog.hpp:57-74
-    verdict: supports
-    audited_at: 2026-05-28T19:33:06Z
-    note: CGS refine=false; m==0 early return at 62-65, single GlobalSum(m) at 70
-  - citation: palace/linalg/orthog.hpp:75-88
-    verdict: supports
-    audited_at: 2026-05-28T19:33:06Z
-    note: CGS2 refine block; H[j]+=dH[j] at 85, signedness loop at 78, 2x GlobalSum(m)
-  - citation: palace/linalg/iterative.cpp:307-325
-    verdict: supports
-    audited_at: 2026-05-28T19:33:06Z
-    note: OrthogonalizeIteration dispatch; CGS2=...(true) precise line is 322 (R1)
-  - citation: palace/linalg/iterative.cpp:629-632
-    verdict: supports
-    audited_at: 2026-05-28T19:33:06Z
-    note: GMRES Arnoldi; w=V[j+1] at 622, dispatch 630, normalise 631-632
-  - citation: palace/linalg/iterative.cpp:808-811
-    verdict: supports
-    audited_at: 2026-05-28T19:33:06Z
-    note: FGMRES Arnoldi; same dispatch-then-normalise pattern, exact
-  - citation: palace/models/romoperator.cpp:51-66
-    verdict: supports
-    audited_at: 2026-05-28T19:33:06Z
-    note: ROM sibling dispatch; forwards j (not j+1) and threads dot_op hook
-  - citation: palace/utils/labels.hpp:165-170
-    verdict: supports
-    audited_at: 2026-05-28T19:33:06Z
-    note: enum Orthogonalization {MGS,CGS,CGS2} — recognition set provably exhaustive
-  - citation: test/unit/test-orthog.cpp:99-120
-    verdict: supports
-    audited_at: 2026-05-28T19:33:06Z
-    note: empty-basis edge; all 3 variants leave w unchanged at m=0
-```
+accumulate at `orthog.hpp:85`. The MGS/CGS/CGS2 recognition set is exhaustive (the enum has
+exactly 3 variants; the dispatch wrappers are the only two call-site families).

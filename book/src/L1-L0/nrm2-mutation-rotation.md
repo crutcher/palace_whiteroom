@@ -1,19 +1,13 @@
 ---
-# Lowering theme (L1>L0), cycle-115 D2 hygiene: previously NO frontmatter (rank prose-inferred
-# from `## Status` `firm`). Per graded-stack scheme §5, theme rank = min(endpoint ranks); the L1
-# endpoint (`L1/nrm2`) is firm (rank 3), L0 endpoint rank-terminal, so the theme is firm. The
-# op->theme edge (`L1/nrm2 →lowers-to→ this theme`, c114) lives on the op side and is NOT re-added.
-# This theme carries its OWN outbound `cites-evidence` edges to the L0 `Norml2` one-line
-# composition it lowers to (and the `Dot` leaf + collective the chain bottoms out in — the
-# inherited dot sub-theme, recorded here as the cited evidence of nrm2's own L0 surface).
-# All ranges self-verified on disk via citecheck --anchor this invocation.
+# Lowering theme (L1>L0). Theme rank = min(endpoint ranks); the L1 endpoint (`L1/nrm2`) is firm,
+# the L0 endpoint is rank-terminal, so the theme is firm.
 rank: firm
 edges:
   depends-on:
     - target: palace/linalg/vector.hpp:254-259
-      kind: cites-evidence        # Norml2(comm,x) template body = std::sqrt(std::abs(Dot(comm,x,x))) (Sub-pattern A; the load-bearing line)
+      kind: cites-evidence        # Norml2(comm,x) template body = std::sqrt(std::abs(Dot(comm,x,x)))
     - target: palace/linalg/vector.hpp:246-253
-      kind: cites-evidence        # the Dot leaf = LocalDot + Mpi::GlobalSum the chain bottoms out in (inherited dot sub-theme)
+      kind: cites-evidence        # the Dot leaf = LocalDot + Mpi::GlobalSum the chain bottoms out in
     - target: palace/utils/communication.hpp:266-270
       kind: cites-evidence        # Mpi::GlobalSum(len,buff,comm) → GlobalOp(...,MPI_SUM,...)
     - target: palace/utils/communication.hpp:246-249
@@ -202,9 +196,7 @@ The rewrite preserves semantics when:
 
 The theme as a whole is `structural`, resting on one algebraic identity (L1 law 8,
 `nrm2(x) = √dot(x,x)`) and one load-bearing-trick classification (the `std::abs` guard,
-above). A `lowering-verifier` audit in a later cycle should attach the `verified_against:`
-block (per the axpby-theme convention) confirming the surface-form recognition matches the
-L0 corpus and that no fourth surface form (e.g. an un-cited overload) is missed.
+above).
 
 ## Speculative L1 operators
 
@@ -217,9 +209,9 @@ application primitive and a workspace `Bx`, and is the subject of a separate for
 theme `matrix-weighted-norm-mutation-rotation`. It is named here only to mark the boundary;
 it is **not** part of this theme.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified against source 2026-05-29 before emit):
+L0 evidence ranges:
 
 - `palace/linalg/vector.hpp:254-259` — `Norml2` template; body line 259
   `std::sqrt(std::abs(Dot(comm, x, x)));`.
@@ -241,15 +233,3 @@ L1 anchor:
 
 - `book/src/L1/nrm2.md` — the firm L1 operator this theme lowers (algebraic law 8 is the
   identity the rewrite rests on).
-
-## Status
-
-`firm` — the rewrite is the structural expansion of the one-line L0 `Norml2` definition,
-exhaustively pinned by direct evidence (`vector.hpp:259` is a single load-bearing line, inside
-the L1 entry's already-correct `255-260` range). The
-four-stage chain, the three surface forms, and the variant-axis collapse are all directly
-cited. The `std::abs` guard is classified (load-bearing defensive) with the property it
-buys stated. No constructive sub-part (no negative-anchor reconstruction): the theme makes
-only positively-anchored claims, so `firm` rather than `partly-constructive`. The
-`verified_against:` audit block is deferred to a `lowering-verifier` cycle (its authorship,
-not the abstractor's).

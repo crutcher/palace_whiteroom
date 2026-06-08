@@ -27,7 +27,7 @@ element-local family rather than the flat global dof-vector — the genuine voca
 - [`matrix-free-operator-apply`](./matrix-free-operator-apply.md) — the named contraction-chain
   combinator for matrix-free FE operator application `A = Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G`, the L2 home of
   the five-stage pipeline the L1 [`libceed-quadrature-kernel-impl`](../L1/libceed-quadrature-kernel-impl.md)
-  realizes and the [`fe_assemble`](../L1/fe_assemble.md) fold sums per-term. (Firm cycle-125 D2.)
+  realizes and the [`fe_assemble`](../L1/fe_assemble.md) fold sums per-term. (Firm.)
 
 Future members would join here as the element-local composition vocabulary deepens (e.g. an L2
 term-fold of `fe_assemble`, a named sum-factorized basis-application sub-combinator, or the L4

@@ -37,7 +37,7 @@ variant_axes:
 
 > **⟢ kernel-impl (DIRECTIVE-3, role-label `kernel-impl`).** This is the **constructive realization** of the eigensolve kernel in our firm Krylov vocabulary — the from-our-primitives version a reviewer reads ALONGSIDE the opaque kernel-API contract ([`L3/eigsolve`](./eigsolve.md), `kernel-api`). It is **NOT** a claim about Palace source: Palace authors no eigen-iteration loop (the loop is inside SLEPc/ARPACK; see the kernel-api's `sequential-obstruction`). This chapter constructs the loop Palace defers to the library, from `krylov-step` / `lanczos_step` / `ksp_solve` / `orthogonalize`. It does **not** downgrade or replace the kernel-api; the two stand side-by-side, linked by the `realizes-kernel-api` `reference` edge, and the `lowering-verifier` audits that they compute the same eigenpairs.
 
-> **⟢ roadmap_goal (rank 0) — claim-free intent.** This chapter carries **no positive Palace-source claim**. It is the *intent* node for the constructive eigsolve impl: a real, refactorable, link-resolving home for the speculative realization, pulled by the eigenmode driver root (see §Pulled-by) and the c122 deflate/krylov-iteration consumers. Its constituent `lanczos_step` is itself a co-cycle `roadmap_goal` (not yet on disk). Promotion `roadmap_goal → stub → rough-in` fires when (a) a blocking `depends-on` consumer wires in (RE3 deflate / RE8 krylov-iteration view), and (b) `lanczos_step` materializes against positive structure (the MINRES/symmetric-Lanczos L0). Everything asserted below about correspondence to the kernel-api is **speculative reconstruction**, flagged as such.
+> **⟢ roadmap_goal (rank 0) — claim-free intent.** This chapter carries **no positive Palace-source claim**. It is the *intent* node for the constructive eigsolve impl: a real, refactorable, link-resolving home for the speculative realization, pulled by the eigenmode driver root (see §Pulled-by) and the deflate/krylov-iteration consumers. Its constituent `lanczos_step` is itself a `roadmap_goal` (not yet on disk). Promotion `roadmap_goal → stub → rough-in` fires when (a) a blocking `depends-on` consumer wires in (RE3 deflate / RE8 krylov-iteration view), and (b) `lanczos_step` materializes against positive structure (the MINRES/symmetric-Lanczos L0). Everything asserted below about correspondence to the kernel-api is **speculative reconstruction**, flagged as such.
 
 The L3 [`eigsolve`](./eigsolve.md) kernel-api records that the eigen-iteration loop is a witnessed [`sequential-obstruction`](../concepts/sequential-obstruction.md) rooted in **opaque-library-ownership**: *"there is no Palace-authored eigen-step kernel / eigen-iteration driver pair analogous to `(krylov-step, ksp_solve)` — the iteration is entirely library-internal."* This chapter is that missing pair, constructed. The kernel-api opens the per-step **body** (`apply_shift_invert`); this impl wraps it in the **loop** the api leaves opaque, using exactly the firm `(krylov-step, ksp_solve)` machinery the api names as the shape the loop *would* have.
 
@@ -112,7 +112,7 @@ The impl **preserves the obstruction the api records** — it does not dissolve 
 
 ## Justification kind
 
-`structural` (primary) — the construction is a shape-driven decomposition of the eigensolve into the firm `(krylov-step, ksp_solve)` kernel/driver pair the kernel-api explicitly names as the analog. `reduction-chain` (secondary) — the small-step iteration semantics (basis-extension recurrence, Rayleigh-Ritz, thick-restart) are the load-bearing content. `empirical-match` is **deferred** — confirming the impl computes the same eigenpairs as the api (modulo tolerance + the four non-determinism sources the L1 entry catalogs) is the `lowering-verifier`'s c122 audit, not asserted here.
+`structural` (primary) — the construction is a shape-driven decomposition of the eigensolve into the firm `(krylov-step, ksp_solve)` kernel/driver pair the kernel-api explicitly names as the analog. `reduction-chain` (secondary) — the small-step iteration semantics (basis-extension recurrence, Rayleigh-Ritz, thick-restart) are the load-bearing content. `empirical-match` is **deferred** — confirming the impl computes the same eigenpairs as the api (modulo tolerance + the four non-determinism sources the L1 entry catalogs) is the `lowering-verifier`'s audit, not asserted here.
 
 ## Pulled-by (reachability provenance)
 
@@ -120,9 +120,9 @@ This `roadmap_goal` is reachable from a feature root (the proliferation/liveness
 
 - **Primary root chain:** [`feature/eigenmode.L4`](../feature/eigenmode.L4.md) (`feature_root: seed`, the GC-root) `composes` → [`L4/eigsolve`](../L4/eigsolve.md) `lowers-to` → [`L3/eigsolve`](./eigsolve.md) (the kernel-api) ← `realizes-kernel-api` ← **this impl**. NOTE: the `realizes-kernel-api` edge is `reference`-class (free), so it does NOT itself carry liveness — the impl's reachability is provided by the **blocking** consumer edges below.
 - **Blocking consumers (the actual liveness edges — to wire as they land):**
-  - **RE3 deflate / NLEPS-deflated eigensolve** (c122 consumer) — deflation extends the thick-restart basis with locked converged vectors; the NLEPS-deflated eigensolve IS this fold with a deflation-projection stage. The natural primary blocking `depends-on` consumer. (Coupling NOTED, edge NOT forced this cycle.)
-  - **RE8 krylov-iteration view** (c122 consumer) — a feature column composing the iteration-rotation eigensolve BY NAME would `depends-on` this impl.
-  Until a blocking consumer wires in, this node's liveness rests on the **grounding disposition** ([[feedback_gc_ground_dont_remove_future_deps]]): it is a genuinely-wanted future dep of the eigenmode root, sketched into a roadmap_goal rather than left stranded. If c122 fails to wire a consumer, the GC sweep flags it — that is the correct accountability, not a defect to pre-empt.
+  - **RE3 deflate / NLEPS-deflated eigensolve** consumer — deflation extends the thick-restart basis with locked converged vectors; the NLEPS-deflated eigensolve IS this fold with a deflation-projection stage. The natural primary blocking `depends-on` consumer.
+  - **RE8 krylov-iteration view** consumer — a feature column composing the iteration-rotation eigensolve BY NAME would `depends-on` this impl.
+  Until a blocking consumer wires in, this node's liveness rests on the **grounding disposition** ([[feedback_gc_ground_dont_remove_future_deps]]): it is a genuinely-wanted future dep of the eigenmode root, sketched into a roadmap_goal rather than left stranded.
 
 ## Speculative L3 operators proposed
 
@@ -133,22 +133,23 @@ This `roadmap_goal` is reachable from a feature root (the proliferation/liveness
 
 ## Status
 
-`roadmap_goal` (rank 0) — `kernel-impl` role-label. Claim-free intent node for the constructive Krylov-Schur eigensolve realization. Rests on firm `L3/krylov-step` + `L3/ksp_solve` + `L3/apply_linop` + `L2/orthogonalize` and the co-cycle roadmap_goal `L3/lanczos_step` (rank-0 may rest on rank-0). Linked `realizes-kernel-api` (`reference`-class) to the KEPT kernel-api [`L3/eigsolve`](./eigsolve.md) (partial-obstruction, undowngraded) + [`L4/eigsolve`](../L4/eigsolve.md). Promotion route: `roadmap_goal → stub` when a blocking `depends-on` consumer (RE3 deflate / RE8 krylov-iteration) wires in; `stub → rough-in → firm` as `lanczos_step` materializes against positive structure and the lowering-verifier audits the impl↔api eigenpair correspondence. This is the DIRECTIVE-3 item-2c constructive-kernel frontier opener — the SLEPc-EPS eigsolve kernel now has BOTH surfaces (opaque api + constructive impl), reviewably linked.
+`roadmap_goal` (rank 0) — `kernel-impl` role-label. Claim-free intent node for the constructive Krylov-Schur eigensolve realization. Rests on firm `L3/krylov-step` + `L3/ksp_solve` + `L3/apply_linop` + `L2/orthogonalize` and the roadmap_goal `L3/lanczos_step` (rank-0 may rest on rank-0). Linked `realizes-kernel-api` (`reference`-class) to the kernel-api [`L3/eigsolve`](./eigsolve.md) (partial-obstruction) + [`L4/eigsolve`](../L4/eigsolve.md). Promotion route: `roadmap_goal → stub` when a blocking `depends-on` consumer (RE3 deflate / RE8 krylov-iteration) wires in; `stub → rough-in → firm` as `lanczos_step` materializes against positive structure and the lowering-verifier audits the impl↔api eigenpair correspondence. Under DIRECTIVE-3, the SLEPc-EPS eigsolve kernel has BOTH surfaces (opaque api + constructive impl), reviewably linked.
 
 ## Evidence
 
-The constituents are firm chapters; the Palace anchors are the kernel-api's loop sites (cited to show the impl realizes exactly the opaque loop the api leaves un-rendered — NOT cited as positive source FOR the impl construction, which is our reconstruction). All Palace citations self-verified this dispatch via codemap `read_range` + `citecheck --anchor` against the on-disk file.
+The constituents are firm chapters; the Palace anchors are the kernel-api's loop sites (cited to show the impl realizes exactly the opaque loop the api leaves un-rendered — NOT cited as positive source FOR the impl construction, which is our reconstruction).
 
 - `palace/linalg/slepc.cpp:630-654` — `SlepcEPSSolverBase::SetType`: `EPSSetType(eps, EPSKRYLOVSCHUR)` (`:635`), with `EPSPOWER` (`:638`), `EPSSUBSPACE` (`:641`), `EPSJD` (`:644`); the TOAR/STOAR/QARNOLDI/SLP/NLEIGS arm `MFEM_ABORT` (`:648-653`). The decisive evidence that the default opaque eigen-iteration IS Krylov-Schur — the algorithm this impl reconstructs (the `eigen-algorithm` variant axis source).
 - `palace/linalg/slepc.cpp:687-709` — `SlepcEPSSolverBase::Solve`: `Customize()` (`:693`), the entire opaque iteration `EPSSolve(eps)` (`:694`), `EPSGetConverged(eps, &num_conv)` (`:695`), `RescaleEigenvectors(num_conv)` (`:707`). The kernel-api's "no Palace loop" anchor — what the impl's outer driver realizes.
 - `palace/linalg/slepc.cpp:731-736` — `SlepcEPSSolverBase::GetBV`: `EPSGetBV(eps, &bv)` (`:734`). The SLEPc Krylov-basis-vectors object — the impl's `BV` carry.
 - `palace/linalg/slepc.cpp:602-628` — `SlepcEPSSolverBase::SetProblemType`: `EPS_HEP` (`:607`), `EPS_NHEP` (`:610`), `EPS_GHEP` (`:613`), `EPS_GHIEP` (`:616`), `EPS_GNHEP` (`:619`). The `problem-symmetry` axis source — selects `lanczos_step` (Hermitian) vs `krylov-step` (non-Hermitian).
 - `palace/linalg/arpack.cpp:318` — `naupd(fcomm, ido, ...)`: the ARPACK Arnoldi/Lanczos basis-iteration RCI driver — the impl's inner basis-extension loop, library-owned in Palace.
+- `palace/linalg/arpack.cpp:315-339` — the ARPACK RCI loop: `while(true)` (`:315`), `naupd` (`:318`), `ApplyOp` dispatch on `ido==1||-1` (`:323-326`), `ApplyOpB` on `ido==2` (`:327-330`), break on `ido==99` (`:331-334`). The library-owned inner basis-extension loop the impl reconstructs.
 - `palace/linalg/arpack.cpp:270` — `iparam[2] = (a_int)arpack_it; // Maximum number of Arnoldi iterations`: the basis-extension iteration bound; `arpack.cpp:273` — `iparam[6] = sinvert ? 3 : 1; // Problem mode` (mode-3 shift-invert); `arpack.cpp:278` — `which::largest_magnitude` (the dominant-θ selection the Rayleigh-Ritz extraction realizes).
 - `palace/linalg/arpack.cpp:369` — `neupd(fcomm, rvec, ...)`: the ARPACK post-iteration eigenpair extraction — the impl's `rayleigh_ritz` + `extract_eigpairs`; `arpack.cpp:342` — `int num_it = (int)iparam[2]` (the iteration-count readout).
 - `book/src/L3/eigsolve.md` — the **kernel-API surface** this impl realizes (partial-obstruction; role-labeled `kernel-api` by the D5-paired finalize this cycle). §Signature (the `apply_shift_invert` body the impl folds verbatim), §Semantics phase 2 (the opaque loop the impl constructs), §"Iteration-rotation marker" (the `(krylov-step, ksp_solve)`-analog shape this impl IS).
-- `book/src/L3/krylov-step.md` (firm, cycle-010) — the per-step Arnoldi basis-extension body the impl's non-Hermitian inner loop folds. §Signature (the `(op, K, s) -> (K', s', outputs)` value-threaded form), §Semantics (the five primitive groups; the `op.orthog` MGS/CGS/CGS2 auxiliary stage).
-- `book/src/L4/krylov-step.md` (firm, cycle-006) — the typed-wrapper companion; the Form-A/B distinction the impl inherits at the basis-extension step.
+- `book/src/L3/krylov-step.md` (firm) — the per-step Arnoldi basis-extension body the impl's non-Hermitian inner loop folds. §Signature (the `(op, K, s) -> (K', s', outputs)` value-threaded form), §Semantics (the five primitive groups; the `op.orthog` MGS/CGS/CGS2 auxiliary stage).
+- `book/src/L4/krylov-step.md` (firm) — the typed-wrapper companion; the Form-A/B distinction the impl inherits at the basis-extension step.
 - `book/src/L3/ksp_solve.md` (firm) — the inner shifted-operator solve `(K − σM)⁻¹` the basis-extension step composes (the kernel-api's `apply_shift_invert` stage 2).
 - `book/src/L3/apply_linop.md` (firm) — the whole-tensor operator-apply (kernel-api stage 1; Rayleigh-Ritz back-projection).
 - `book/src/L2/orthogonalize.md` (firm) — the basis-orthogonalization stage keeping `BV` orthonormal (the `op.orthog` surface; collapses to the band-3 form for `lanczos_step`).
@@ -157,71 +158,3 @@ The constituents are firm chapters; the Palace anchors are the kernel-api's loop
 - `book/src/methodology/resolution-ladder.md` — the `roadmap_goal` rank-0 discipline + reachability/pulled-by requirement this node satisfies.
 - `book/src/concepts/sequential-obstruction.md` — the classification preserved on the impl's basis-extension + thick-restart loops.
 - `book/src/semantics/index.md` §1.2.1–§1.2.2 (named-shape-group convention, the `BV : Tensor[(B: ncv), (S: ...), complex]` form), §3.7 (`iterate_while`), §3.8 (demand-pruning) — USED + linked, not restated.
-
-```yaml
-verified_against:
-  - citation: book/src/L3/eigsolve.md
-    verdict: realizes-kernel-api-faithful
-    audited_at: 2026-06-07T093000Z
-    note: STRUCTURAL correspondence audit (impl is roadmap_goal; empirical-match deferred to firming). The thick-restart Krylov-Schur driver + inner basis-extension loop + Rayleigh-Ritz extraction faithfully realizes the kernel-api opaque eigen-iteration; the per-step body is the same apply_linop ▷ ksp_solve ▷ scale_untransform composition. Obstruction PRESERVED (impl constructs the loop the library owns, does not dissolve it). realizes-kernel-api edge confirmed reference-class (NOT depends-on); API stays partial-obstruction, undowngraded.
-  - citation: reference/palace/palace/linalg/slepc.cpp:630-654
-    verdict: supports
-    audited_at: 2026-06-07T093000Z
-    note: DECISIVE — SlepcEPSSolverBase::SetType; :635 EPSSetType(eps, EPSKRYLOVSCHUR) lands EXACTLY (zero drift). The default opaque eigen-iteration IS Krylov-Schur, the algorithm this impl reconstructs; EPSPOWER :638, EPSSUBSPACE :641, EPSJD :644, MFEM_ABORT arm :652.
-  - citation: reference/palace/palace/linalg/slepc.cpp:687-709
-    verdict: supports
-    audited_at: 2026-06-07T093000Z
-    note: SlepcEPSSolverBase::Solve — the opaque library iteration EPSSolve(eps) :694, Customize() :693, EPSGetConverged :695, RescaleEigenvectors :707; the no-Palace-loop anchor the impl's outer driver realizes; exact.
-  - citation: reference/palace/palace/linalg/slepc.cpp:602-628
-    verdict: supports
-    audited_at: 2026-06-07T093000Z
-    note: SetProblemType — EPS_HEP :607 / EPS_NHEP :610 / EPS_GHEP :613 / EPS_GHIEP :616 / EPS_GNHEP :619; the problem-symmetry axis selecting lanczos_step (Hermitian) vs krylov-step (non-Hermitian); exact.
-  - citation: reference/palace/palace/linalg/slepc.cpp:731-736
-    verdict: supports
-    audited_at: 2026-06-07T093000Z
-    note: GetBV — EPSGetBV(eps, &bv) :734; the SLEPc Krylov-basis-vectors object the impl's BV carry realizes; exact.
-  - citation: reference/palace/palace/linalg/arpack.cpp:315-339
-    verdict: supports
-    audited_at: 2026-06-07T093000Z
-    note: ARPACK RCI loop — while(true) :315, naupd :318, ApplyOp dispatch on ido==1||-1 :323-326, ApplyOpB on ido==2 :327-330, break on ido==99 :331-334 (break at :333). The library-owned inner basis-extension loop the impl reconstructs. NOTE the eigsolve.md/impl framing cites the ido==99 break as :330-333 — off-by-one on the range start (:330 is the ido==2 close-brace); break IS in-range; carry-forward to :331-334 for a future lifter (non-load-bearing).
-  - citation: reference/palace/palace/linalg/arpack.cpp:369
-    verdict: supports
-    audited_at: 2026-06-07T093000Z
-    note: neupd(...) post-iteration eigenpair extraction (:369) — the impl's rayleigh_ritz + extract_eigpairs; num_it = iparam[2] :342; iparam[2] arpack_it :270; iparam[6] = sinvert?3:1 :273; which::largest_magnitude :278; exact.
-  - citation: book/src/L3/nleps-deflated-eigensolve.md
-    verdict: realizes-kernel-api-faithful
-    audited_at: 2026-06-07T120000Z
-    note: c124-D2 follow-up — the new nleps-deflated-eigensolve consumer (c124-D1) wires the FIRST blocking depends-on edge to this impl (the linear-eigensolve seed, nleps.cpp:470-474). The seed edge is faithful (the NEP loop genuinely averages eigenvectors[] linear-eigensolve outputs at :471). This grounds eigsolve-impl off the RE11 reference-only-reachable cohort — the intended RE11-discharge disposition, NOT decay. The realizes-kernel-api edges to L3/eigsolve + L4/eigsolve stay reference-class (re-confirmed on disk); no mistype to depends-on. The impl stays roadmap_goal (D1 did not promote); the prior c122 structural correspondence audit (above) is unaffected.
-  - citation: book/src/L3/eigsolve.md:189-195
-    verdict: realizes-kernel-api-faithful
-    audited_at: 2026-06-08T053000Z
-    note: c139-wave2 re-audit of the Hermitian inner-loop arm. (1) realizes-kernel-api edge eigsolve-impl -> eigsolve CONFIRMED reference-class on disk (eigsolve-impl.md:19-21 under reference:, NOT depends-on); no mistype, no manufactured rank constraint. (2) kernel-api status STAYS partial-obstruction + kernel-api role-label (eigsolve.md:4 firmness, :191 Status); UNDOWNGRADED by the impl existing. (3) No semantic restatement -- impl LINKS semantics/index.md sec3.7/3.8 + the L2/L3 laws, does not re-state. (4) Hermitian arm internally consistent with lanczos staying roadmap_goal -- op.hermitian -> lanczos_step (eigsolve-impl.md:81-82), problem-symmetry axis EPS_HEP/EPS_GHEP -> lanczos_step (:30), folds depends-on rank-0-on-rank-0 well-founded (:11-12). Obstruction PRESERVED.
-  - citation: book/src/L3/lanczos_step.md:5
-    verdict: supports
-    audited_at: 2026-06-08T053000Z
-    note: lanczos_step on-disk status roadmap_goal / rank roadmap_goal (NOT advanced off roadmap_goal -- the c139 D2 advance is in-place sharpening only). Therefore eigsolve-impl roadmap_goal->stub promotion condition does NOT fire this cycle; impl stays roadmap_goal; rank-0-on-rank-0 dependency well-founded.
-  - citation: reference/palace/palace/linalg/slepc.cpp:607
-    verdict: supports
-    audited_at: 2026-06-08T053000Z
-    note: EPS_HEP lands exact (citecheck --anchor OK). The Hermitian problem-symmetry token that selects the lanczos_step three-term arm.
-  - citation: reference/palace/palace/linalg/slepc.cpp:613
-    verdict: supports
-    audited_at: 2026-06-08T053000Z
-    note: EPS_GHEP lands exact (citecheck --anchor OK). The generalized-Hermitian token, the second lanczos_step-selecting pencil.
-  - citation: reference/palace/palace/linalg/slepc.cpp:635
-    verdict: supports
-    audited_at: 2026-06-08T053000Z
-    note: EPSKRYLOVSCHUR lands exact (citecheck --anchor OK). The default opaque eigen-iteration algorithm the impl reconstructs (thick-restart driver).
-  - citation: reference/palace/palace/linalg/slepc.cpp:694
-    verdict: supports
-    audited_at: 2026-06-08T053000Z
-    note: EPSSolve lands exact (citecheck --anchor OK). The opaque library iteration the kernel-api records as un-renderable; the impl's outer driver is the constructed equivalent.
-  - citation: reference/palace/palace/linalg/arpack.cpp:318
-    verdict: supports
-    audited_at: 2026-06-08T053000Z
-    note: naupd lands exact (citecheck --anchor OK). The ARPACK RCI inner basis-extension driver, library-owned in Palace.
-  - citation: reference/palace/palace/linalg/arpack.cpp:369
-    verdict: supports
-    audited_at: 2026-06-08T053000Z
-    note: neupd lands exact (citecheck --anchor OK). The post-iteration eigenpair extraction the impl's rayleigh_ritz/extract_eigpairs realizes.
-```

@@ -7,7 +7,7 @@ edges:
     - target: L2/divfree-projector
       kind: lowers-to
     - target: L1/set_subvector_zero
-      kind: uses                        # GROUNDING edge (c107): step-2 essential-BC zeroing `Z_{bdr_eff}(rhs)` IS the set_subvector_zero primitive (divfree.cpp:171-174; §Semantics step 2). The firm L1 operator is the authoritative home; this depends-on gives the firm-but-absorbed set_subvector_zero cluster root-reachability via this (now-grounded) projector.
+      kind: uses                        # step-2 essential-BC zeroing `Z_{bdr_eff}(rhs)` IS the set_subvector_zero primitive (divfree.cpp:171-174; §Semantics step 2). The firm L1 operator is the authoritative home; this depends-on gives the firm-but-absorbed set_subvector_zero cluster root-reachability via this projector.
     - target: concepts/set_subvector_zero
       kind: uses                        # the cross-cutting concept page for the same step-2 primitive (the §Dependencies prose pointer, now a typed liveness edge).
   reference:
@@ -93,8 +93,8 @@ The relationship to the adjacent layers:
   "Layers are defined high→low", the absence of an L4 entry is a deliberate scoping
   verdict, not a gap.
 
-- **Downward** to L2/L1: `divfree-projector` lowers to the **present adjacent L2 floor**
-  [`divfree-projector`](../L2/divfree-projector.md) (cycle-042) and onward to L1
+- **Downward** to L2/L1: `divfree-projector` lowers to the adjacent L2 floor
+  [`divfree-projector`](../L2/divfree-projector.md) and onward to L1
   [`divfree-projector`](../L1/divfree-projector.md). The L3>L2 rotation is a **degenerate
   identity-in-named-terms lowering**, annotated in-line here (no dedicated L3>L2 theme file):
   L1, L2, and L3 all see
@@ -103,13 +103,9 @@ The relationship to the adjacent layers:
   non-laws), and the same element-type variant axis. The four-step composition
   `WeakDiv → Z_{bdr_eff} → ksp_solve → Grad` is **explicit and value-thread-isomorphic at
   BOTH L3 and L2** (the composition is not exposed at one layer and collapsed at the other —
-  there is no vocabulary shift across the L3>L2 edge to rotate). The L2 floor is the
-  same-named floor under the firm L3 gate (cycle-042); the L3>L2 hop passes through the
+  there is no vocabulary shift across the L3>L2 edge to rotate). The L3>L2 hop passes through the
   adjacent floor rather than skipping a layer to L1, per **Identity-lowerings still require
-  both L levels**. (The former `divfree-projector-body-identity` L3>L2 theme file was demoted
-  to this in-line identity note cycle-051 under the 2026-06-01 VOCABULARY-SHIFT REDIRECT
-  `METHODOLOGY-REDIRECT.md`; cycle-050 D8 verify-body audit DEMOTE-OK,
-  `reports/2026-06-01T195100Z-cross-layer-cross-cutter-verify-divfree-jacobi/CYCLE.md`.)
+  both L levels**.
   **The ONE genuine fusion rotation in the whole projector chain lives on the L2>L1 edge,
   NOT this one**: the step-4 gradient correction de-fuses at L2 into
   `apply_linop(P.Grad, ψ) ▷ axpy` and re-fuses at L1 into the single fused
@@ -123,22 +119,20 @@ The relationship to the adjacent layers:
   [`divfree-projector-mutation-rotation`](../L1-L0/divfree-projector-mutation-rotation.md).
   The L3>L2 hop is a layer-coherence identity (each layer is coherent within itself), not an
   algebraic one; with no non-adjacent `L3-L1/` directory created — the transitive L3>L1
-  identity is annotated in-line per the cycle-012 non-adjacent-identity convention (precedent:
+  identity is annotated in-line per the non-adjacent-identity convention (precedent:
   the firm L3 `jacobi-smoother` / `apply_linop` / `dot` / `scal` cohort, all of which note
   their identity rotations in-line).
 
 This L3 entry is the **layer-coherence anchor**: a reader at L3 can find
 `divfree-projector` here, in L3 vocabulary, without having to reach down to L1 to
 recover the constructed-operator-gate apply, and without having to consult a
-consuming eigensolver's projection slot to see the gate in use. The backfill is the
-cycle-038 enactment of the methodology invariant **Identity-lowerings still require
-both L levels** (CLAUDE.md §Methodology invariants, cycle-009 meta-phase
-codification; the firm L3 `krylov-step` cycle-010 backfill is the codified
-precedent, the firm L3 `ksp_solve` cycle-020 + `jacobi-smoother` cycle-037 the
-constructed-operator-gate siblings). The cycle-036 D2 cross-layer-cross-cutter audit
-(`book/src/L3/index.md:46`) classified this backfill as one of the six (A) firm
-identity-in-form L3 candidates, naming it "constructed-operator gate, like firm-L3
-`ksp_solve`".
+consuming eigensolver's projection slot to see the gate in use. It enacts the
+methodology invariant **Identity-lowerings still require
+both L levels** (CLAUDE.md §Methodology invariants; the firm L3 `krylov-step` backfill is the
+precedent, the firm L3 `ksp_solve` + `jacobi-smoother` the
+constructed-operator-gate siblings), and is one of the six (A) firm
+identity-in-form L3 candidates ("constructed-operator gate, like firm-L3
+`ksp_solve`").
 
 ## Signature
 
@@ -332,8 +326,7 @@ Laws that explicitly **do not** hold (inherited unchanged from L1, both load-bea
   `palace/fem/integ/mixedvecgrad.cpp:202` (versus the non-negated
   `MixedVectorGradientIntegrator`, `palace/fem/integ/mixedvecgrad.cpp:142`). A flipped
   L0 sign would invert the correction direction. Property of the constructed `WeakDiv`
-  operator, honoured verbatim at L3 and positively re-derived from Palace source
-  (cycle-014 lowering-verifier audit).
+  operator, honoured verbatim at L3 and positively re-derived from Palace source.
 
 - **Step ordering.** The essential-BC zeroing `Z_{bdr_eff}` must compose *after*
   `WeakDiv·y` and *before* the inner `ksp_solve` (`palace/linalg/divfree.cpp:159-175`).
@@ -435,26 +428,9 @@ The variant-axis profile (one orthogonal + one absorbed) matches the L1 entry ex
 etc. — are interior to that gate, absorbed into `P.ksp` at construction; they are not
 `divfree-projector` axes.)
 
-## Status
+## Caveats
 
-`firm` — the L3 form is value-thread-isomorphic to the firm L1 form on the
-constructed-operator-gate apply (identity-in-form rotation); the algebraic laws are the
-same five that hold at L1 (linearity, idempotence, range, M-orthogonality,
-real-linearity/block-diagonal-complex) plus the two load-bearing non-laws (the `WeakDiv`
-sign convention and the step ordering); the variant-axis profile is one orthogonal +
-one absorbed, inherited unchanged. The constructed-operator-gate framing matches the
-firm L3 [`ksp_solve`](./ksp_solve.md) / [`jacobi-smoother`](./jacobi-smoother.md)
-precedents — opaque-operator gate, operator-representation absorbed, no L4 entry needed
-— with the **distinguishing fact** that this gate is **obstruction-carrying by
-reference** (its inner `ksp_solve` carries a `sequential-obstruction`), unlike the
-obstruction-free leaf `jacobi-smoother`. The gate does **not** introduce a new
-obstruction (its four-step body is a fixed straight-line composition) and does **not**
-erase the inner one (the CG iteration stays interior to `ksp_solve` per the
-nested-constructed-operator-gate fidelity rule).
-
-The firm-on-positive-structure precedent (the firm L1 `divfree-projector`, whose
-previously sign-contingent idempotence sub-law was positively anchored by the cycle-014
-lowering-verifier audit and promoted to firm cycle-015) governs the absence of a
+The firm-on-positive-structure basis governs the absence of a
 dedicated `test-divfree.cpp` under `reference/palace/test/unit/`: every L3 law is a
 syntactic identity transported from the firm L1 entry, whose laws read off positive
 source (the four-step apply at `palace/linalg/divfree.cpp:155-187`; the defining
@@ -466,15 +442,7 @@ is exercised through integration paths only — the eigensolver projection call 
 (`palace/drivers/eigensolver.cpp:260-262`; the per-iteration `opProj->Mult(...)` sites in
 `arpack.cpp` / `slepc.cpp`).
 
-This dispatch (cycle-038) is the **layer-coherence backfill** — the L3 form was
-previously implicit only in the L1 entry; it now has its own L3 entry per the
-methodology invariant **Identity-lowerings still require both L levels** (CLAUDE.md,
-cycle-009 meta-phase). It is one of the six (A) firm identity-in-form L3 backfill
-candidates the cycle-036 D2 cross-layer-cross-cutter audit named at
-`book/src/L3/index.md:46` ("constructed-operator gate, like firm-L3 `ksp_solve`"), under
-OQ `l3-cohort-growth-audit-c036-verdict`.
-
-**Caveats (not status reductions):**
+Caveats (not status reductions):
 
 - The inner `ksp_solve`'s outer-loop `sequential-obstruction` is carried by reference;
   it is **not** an algebraic non-law of this gate. The projector's own apply is a fixed
@@ -490,8 +458,8 @@ OQ `l3-cohort-growth-audit-c036-verdict`.
 
 ## Lowers to
 
-L3 `divfree-projector` lowers to the **present adjacent L2 floor**
-[`divfree-projector`](../L2/divfree-projector.md) (cycle-042) and onward to L1
+L3 `divfree-projector` lowers to the adjacent L2 floor
+[`divfree-projector`](../L2/divfree-projector.md) and onward to L1
 [`divfree-projector`](../L1/divfree-projector.md) — **no non-adjacent L3-L1 directory**.
 The L3>L2 rotation is a **degenerate identity-in-named-terms lowering**, annotated in-line
 here rather than as a dedicated L3>L2 theme file: L1, L2, and L3 all see
@@ -499,23 +467,18 @@ here rather than as a dedicated L3>L2 theme file: L1, L2, and L3 all see
 with the same shape contract, the same five algebraic laws, the same two-non-law set, and
 the same one-orthogonal-plus-one-absorbed variant profile. The four-step composition
 `WeakDiv → Z_{bdr_eff} → ksp_solve → Grad` is explicit and value-thread-isomorphic at BOTH
-L3 and L2 — no vocabulary shift across the edge to rotate. The L2 floor is the same-named
-floor under the firm L3 gate (cycle-042); the L3>L2 hop passes through the adjacent floor
+L3 and L2 — no vocabulary shift across the edge to rotate. The L3>L2 hop passes through the adjacent floor
 rather than skipping a layer to L1, per **Identity-lowerings still require both L levels**.
-(The former `divfree-projector-body-identity` L3>L2 theme file was demoted to this in-line
-identity note cycle-051 under the 2026-06-01 VOCABULARY-SHIFT REDIRECT
-`METHODOLOGY-REDIRECT.md`; cycle-050 D8 verify-body audit DEMOTE-OK,
-`reports/2026-06-01T195100Z-cross-layer-cross-cutter-verify-divfree-jacobi/CYCLE.md`.)
 **The ONE genuine fusion rotation in the projector chain lives on the L2>L1 edge, not this
 one**: the step-4 `Grad->AddMult` apply-accumulate (`palace/linalg/divfree.cpp:185` real /
 `:180-181` complex) de-fuses at L2 into `apply_linop(P.Grad, ψ) ▷ axpy` and re-fuses at L1,
-captured by the KEPT firm theme
+captured by the firm theme
 [`divfree-projector-leaf-identity`](../L2-L1/divfree-projector-leaf-identity.md) — reachable
 directly from this L3 entry via the live link above (not via the L2 floor, which carries no
-live link to the KEPT theme), so not orphaned by this demotion. The L3>L2 hop is a layer-coherence
+live link to the kept theme). The L3>L2 hop is a layer-coherence
 identity (each layer is coherent within itself), not an algebraic one; the transitive L3>L1
 identity is annotated in-line here (precedent: the firm L3 `jacobi-smoother` / `apply_linop`
-/ `dot` / `scal` cohort, all of which note their identity rotations in-line; cycle-012
+/ `dot` / `scal` cohort, all of which note their identity rotations in-line; the
 non-adjacent-identity convention).
 
 The **substantive** rotation in the chain is the L1>L0 leaf-mutation rotation, not the
@@ -546,9 +509,9 @@ The L3 form is value-thread-isomorphic to the firm L1 form on the gate's apply; 
 exists for layer-coherence reasons — a reader navigating L3 (whose index advertises
 whole-tensor field operations and constructed-operator gates as L3 vocabulary) must find
 `divfree-projector` defined in L3 vocabulary, not have to reach down to L1 to recover the
-constructed-operator-gate apply. The firm L3 `krylov-step` backfill (cycle-010) is the
+constructed-operator-gate apply. The firm L3 `krylov-step` backfill is the
 structural precedent for the constructed-operator-shaped layer-coherence backfill; the
-firm L3 `ksp_solve` (cycle-020) and `jacobi-smoother` (cycle-037) are the
+firm L3 `ksp_solve` and `jacobi-smoother` are the
 constructed-operator-gate siblings — `ksp_solve` the obstruction-authoring inner gate this
 projector delegates to, `jacobi-smoother` the obstruction-free contrast.
 
@@ -556,44 +519,37 @@ projector delegates to, `jacobi-smoother` the obstruction-free contrast.
 
 The L3 form is value-thread-isomorphic to the firm L1 form (per the identity-in-form
 rotation on the constructed-operator-gate apply); all L0 evidence is transitive through
-L1. Direct citations relevant to this L3 entry (self-verified via
-`tools/citecheck/citecheck.py --anchor` this invocation against
-`reference/palace/palace/linalg/divfree.{hpp,cpp}` and the consumer call sites):
+L1. Direct citations relevant to this L3 entry:
 
 - `book/src/L1/divfree-projector.md` (firm) — the L1 entry whose signature, semantics,
   five algebraic laws, two non-laws, one-orthogonal-plus-one-absorbed variant profile, and
   complete L0 evidence list are transported unchanged to L3. Authoritative on every
   Palace-surface factual claim.
-- `book/src/L3/index.md:46` — the cycle-036 D2 cross-layer-cross-cutter audit verdict
+- `book/src/L3/index.md:46` — the L3-cohort-growth audit verdict
   naming `divfree-projector` as one of the six (A) firm identity-in-form L3 backfill
-  candidates ("constructed-operator gate, like firm-L3 `ksp_solve`"). This entry is the
-  enactment.
+  candidates ("constructed-operator gate, like firm-L3 `ksp_solve`").
 - `palace/linalg/divfree.cpp:155-187` — `DivFreeSolver<VecType>::Mult(VecType &y)`: the
   four-step apply the L3 whole-tensor composition lowers to. Step 1 `WeakDiv->Mult`
   (`:159-168`, complex Re/Im at `:162-163`, real at `:167`); step 2 `SetSubVector` zeroing
   (`:171-174`); step 3 the inner `ksp->Mult(rhs, psi)` (`:175`); step 4 `Grad->AddMult`
-  (`:177-186`, complex at `:180-181`, real at `:185`). Self-verified — anchor `Mult` at
-  lines [155, 162, 163, 167, 175, 180, 181, 185].
+  (`:177-186`, complex at `:180-181`, real at `:185`).
 - `palace/linalg/divfree.cpp:175` — `ksp->Mult(rhs, psi);` — the opaque inner
   [`ksp_solve`](./ksp_solve.md) action (step 3); the nested-gate inner-solve invocation
-  carrying the `sequential-obstruction` by reference. Self-verified — anchor `ksp`.
+  carrying the `sequential-obstruction` by reference.
 - `palace/linalg/divfree.cpp:43-152` — the construction body building `M`, `WeakDiv`,
   `Grad`, `bdr_eff`, and the inner `ksp` solver into the opaque `DivFreeProjector` closure
-  (setup, not L3 apply content; the `ksp` setup at `:121-149`, self-verified anchor `ksp`).
+  (setup, not L3 apply content; the `ksp` setup at `:121-149`).
 - `palace/linalg/divfree.cpp:189-190` — `template class DivFreeSolver<Vector>;` /
-  `<ComplexVector>;` — the element-type variant axis instantiation. Self-verified — anchor
-  `DivFreeSolver`.
+  `<ComplexVector>;` — the element-type variant axis instantiation.
 - `palace/linalg/divfree.hpp:28-31` — class doc: the defining divergence-free condition
-  `Gᵀ M x = 0`, the range, and the kernel (gradient nullspace). Self-verified — anchor
-  `divergence`. The source of laws 2/3/4.
+  `Gᵀ M x = 0`, the range, and the kernel (gradient nullspace). The source of laws 2/3/4.
 - `palace/linalg/divfree.cpp:119` — `// ... real and SPD.` — `P.M` SPD, justifying the
   M-inner-product / M-orthogonality (law 4).
 - `palace/fem/integrator.hpp:217` + `palace/fem/integ/mixedvecgrad.cpp:202` (the `-1.0`)
   vs `:142` (non-negated sibling) — the `WeakDiv` sign-convention non-law, positively
-  anchored (cycle-014 lowering-verifier audit), inherited unchanged from L1.
+  anchored, inherited unchanged from L1.
 - `palace/drivers/eigensolver.cpp:260-262` — the `divfree->Mult(v0)` initial-vector
-  projection call site (the integration-path behaviour exercise). Self-verified — anchor
-  `Mult`.
+  projection call site (the integration-path behaviour exercise).
 - `book/src/L1-L0/divfree-projector-mutation-rotation.md` (firm) — the L1>L0 leaf-mutation
   rotation the four-step apply lowers through (the substantive rotation in the chain; not
   L3 content; its inner-solve step delegates to `ksp-solve-mutation-rotation` per the
@@ -602,10 +558,10 @@ L1. Direct citations relevant to this L3 entry (self-verified via
   instantiates at L3; the firm-instances list names `divfree-projector` (one nested gate)
   and the transitive chain `eigsolve ⊃ divfree-projector ⊃ ksp_solve`; the fidelity rule
   this entry follows.
-- `book/src/L3/ksp_solve.md` (firm cycle-020) — the inner gate this projector delegates to;
+- `book/src/L3/ksp_solve.md` (firm) — the inner gate this projector delegates to;
   the home of the carried `sequential-obstruction`.
-- `book/src/L3/jacobi-smoother.md` (firm cycle-037), `book/src/L3/krylov-step.md` (firm
-  cycle-010), `book/src/L3/apply_linop.md` (firm cycle-011) — the L3 identity-in-form /
+- `book/src/L3/jacobi-smoother.md` (firm), `book/src/L3/krylov-step.md` (firm),
+  `book/src/L3/apply_linop.md` (firm) — the L3 identity-in-form /
   constructed-operator-gate backfill precedents this entry follows; `jacobi-smoother` the
   obstruction-free contrast.
 

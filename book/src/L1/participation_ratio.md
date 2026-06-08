@@ -26,9 +26,8 @@ All three are **one quotient of a sub-energy over a total energy**; they differ 
 It is the **per-mode `κ` / `p` scalar building block** that the L4 eigenmode reduction
 [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) folds: the loss-rate closure
 `κ : Mode -> Scalar` that combinator takes as a parameter IS a `participation_ratio` with the
-resistive-self-energy numerator (`eigenfreq_qfactor_reduce.md:54-56,87-89`). This entry firms
-the first of that combinator's two rough-in gates — the `½X|I|²/E` per-mode energy-ratio gate
-(OQ `participation-ratio-l1-primitive-as-eigenfreq-qfactor-firming-route`, c075 D3).
+resistive-self-energy numerator (`eigenfreq_qfactor_reduce.md:54-56,87-89`). This entry is the
+first of that combinator's two rough-in gates — the `½X|I|²/E` per-mode energy-ratio gate.
 
 ## Context
 
@@ -168,41 +167,17 @@ The numerator-energy and total-energy computations are candidates for their own 
 primitives (an energy-reduction cohort — `domain_E_field_energy`, the `½X|I|²` self-energy, the
 surface-integral energy); those are the eigenmode/energy-fields output-product column's separate
 energy-readout vocabulary, NOT this quotient. They are named here as the upstream producers, not
-authored (the `energy-fields-output-product-column` plan item, CYCLE-076 #5).
+authored (the `energy-fields-output-product-column` plan item).
 
-## Status
+## Relationship to `eigenfreq_qfactor_reduce`
 
-`firm`. **Reasoning (firm-on-positive-structure):** the quotient structure is read directly off
-three positive Palace sites — the resistive κ (`postoperator.cpp:1188-1203`), the inductive EPR
-(`:1215-1219`), and the surface-dielectric `p` (`:1346-1373`) — establishing the ≥2-member
-cohort (three witnesses). Every law (§Algebraic laws) is a **syntactic identity on the scalar
-quotient** (a bare division plus an optional `copysign`), not a convergence/numerical claim. Per
-the `apply_linop` / `jacobi-smoother` / `eigsolve` (cycle-022) firm-on-positive-structure
-precedent, the **absence of a dedicated unit test** for the eigenmode participation postprocess
-(the `MeasureLumpedPortsEig` / `MeasureInterfaceEFieldEnergy` bodies are integration-level,
-exercised only through the full eigenmode `Solve(mesh)` driver — no `test/unit/` coverage) does
-**not** gate firm: syntactic-identity quotient laws are not test-gated (the `eigsolve`-rough-in
-case was driven by literature-inferred convergence semantics, absent here — this is bare
-arithmetic on positive source).
-
-The numerator-energy and total-mode-energy computations BELOW the quotient are deliberately
-out of this primitive's scope (separate energy-reduction vocabulary, named not authored); their
-absence does not gate this entry — `participation_ratio` is firm *as the quotient*, the way
-`reciprocal` is firm as the bare `1/x` independent of what produces `x`.
-
-**Coupled re-check (NOTE, not enacted this cycle):** firming `participation_ratio` discharges
-**gate-a** of the L4 [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) rough-in
-(its κ-participation closure now has a firm L1 home). That combinator's promotion is
-**double-gated** (firm L1 home AND a dedicated eigenmode-postprocess reduction test, or a
-lowering-verifier law-confidence pass) and remains `rough-in` until the second gate is
-addressed; re-anchoring `eigenfreq_qfactor_reduce` (and the eigenfrequency-qfactor feature
-column) is a coupled-column pass for a later cycle, NOT done here (OQ
-`eigenfreq-qfactor-reduce-status-promotion-double-gated`).
+`participation_ratio` is the firm L1 home of **gate-a** of the L4
+[`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) reduction — its κ-participation
+closure. That combinator's promotion is **double-gated** (firm L1 home AND a dedicated
+eigenmode-postprocess reduction test, or a lowering-verifier law-confidence pass) and remains
+`rough-in` until the second gate is addressed.
 
 ## Evidence
-
-All L0 citations self-verified on-disk this dispatch via the codemap
-(`mcp__palace-codemap__read_range` + `search_text` line pinpoints against `reference/palace/`).
 
 - **Resistive lumped-port loss rate κ (witness 1):** `palace/models/postoperator.cpp:1188-1191`
   (the `κ_mj = ½R_j I_mj²/E_m` + `Q_mj = ω_m/κ_mj` formula comment), `:1196-1197`
@@ -238,14 +213,8 @@ All L0 citations self-verified on-disk this dispatch via the codemap
 - **Sibling-primitive grounding:** `book/src/L1/reciprocal.md` (the bare-elementwise-arithmetic
   firm-on-positive-structure precedent for a non-reducing scalar primitive),
   `book/src/L1/nrm2.md` (the elementary `√·`-post-reduction analog), `book/src/L1/index.md:56`
-  (the `reciprocal` firm-on-positive-structure no-dedicated-test precedent cited here).
+  (the `reciprocal` firm-on-positive-structure no-dedicated-test precedent).
 - **No dedicated test** exercises the eigenmode participation postprocess (the
   `MeasureLumpedPortsEig` / `MeasureInterfaceEFieldEnergy` bodies are integration-level under the
   eigenmode `Solve(mesh)` driver; no `reference/palace/test/unit/` coverage) — non-gating for the
   syntactic-identity quotient laws (firm-on-positive-structure).
-- **Provenance:** harvested cycle-077 D4 from the c075 D3 OQ
-  `participation-ratio-l1-primitive-as-eigenfreq-qfactor-firming-route`; three witnesses
-  established by this dispatch (resistive κ + inductive EPR + surface-dielectric p, all the
-  `½X|I|²/E` / `energy/E_total` quotient shape). WARRANT verdict: genuine firm L1 entry (the
-  shared participation-ratio quotient, the κ-participation building block of
-  `eigenfreq_qfactor_reduce`, firming its gate-a).

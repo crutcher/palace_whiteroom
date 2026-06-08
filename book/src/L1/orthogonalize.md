@@ -1,13 +1,6 @@
 ---
 layer: L1
 operator: orthogonalize
-# Graded-stack scheme (cycle-111, D1): firm L1 Gram-Schmidt leaf — the L0 implementation is
-# read in full (header-only inline `orthog.hpp:18-90`) and the laws are standard Gram-Schmidt
-# facts modulo recorded FP caveats (the firm-on-positive-structure escape; matches the BLAS-1
-# floor `dot`/`nrm2`/`axpy`/`scal`). The blocking depends-on is the rank-terminal POSITIVE L0
-# SOURCE (cites-evidence) — the three Gram-Schmidt kernel bodies + the runtime dispatch wrapper
-# — which is what makes the `firm` rank well-founded. The lowers-to edge points at the firm
-# L1>L0 mutation-rotation theme (the in-place `w` overwrite + raw-pointer `H` write home).
 rank: firm
 edges:
   depends-on:
@@ -197,8 +190,9 @@ Laws that explicitly **do not** hold:
 
 These two are the leaf BLAS-1 primitives the operator composes; the composition itself (the
 per-variant sequencing and batching of `dot` and `axpy`) is L1>L0 / L2 territory and is not
-restated here (it lives in the `orthog` slice's retained L2/L3/L4 sections and the forthcoming
-L1>L0 orthogonalize-mutation-rotation theme). `nrm2` and `scal` are **not** dependencies of
+restated here (it lives in `L2/orthogonalize.md`, `L3/orthogonalize.md`, and the
+L1>L0 [`orthogonalize-mutation-rotation`](../L1-L0/orthogonalize-mutation-rotation.md) theme).
+`nrm2` and `scal` are **not** dependencies of
 this operator — they are the caller's normalisation step (`arnoldi_step`), excluded by the
 header's "does not normalize the output" contract.
 
@@ -245,16 +239,6 @@ templated over `VecType ∈ {Vector, ComplexVector}`); it does not produce disti
 at L1 — the conjugation is absorbed by the [`dot`](./dot.md) dependency, exactly as for
 `nrm2`. All parametric tests cover both element types
 (`test-orthog.cpp:123, 234` real/complex).
-
-## Status
-
-`firm` — the L0 implementation is read in full (header-only inline, `orthog.hpp:18-90`), the
-dispatch wrapper is read in full (`iterative.cpp:308-325`), all three variants carry dedicated
-parametric test coverage across real / complex / B-weighted element types plus the empty-basis
-edge case and a direct substitutability assertion (`⟨w', V[i]⟩ ≈ 0`,
-`test-orthog.cpp:99-160, 234-389`), and the algebraic laws are standard Gram-Schmidt facts
-modulo the explicitly-recorded floating-point caveats. This matches the firmness bar of the
-BLAS-1 floor operators (`dot`, `nrm2`, `axpy`, `scal`).
 
 ## L1 vs L0 distinction
 
@@ -321,46 +305,17 @@ BLAS-1 floor operators (`dot`, `nrm2`, `axpy`, `scal`).
 - `book/src/concepts/sequential-obstruction.md:37-48` — the MGS-as-sequential-obstruction
   structural argument (an L3 property of the MGS variant; recorded here as the
   column-order-non-commutativity non-law and the variant-axis note).
-- Cycle-002 firm [`dot`](./dot.md), cycle-002 firm [`axpy`](./axpy.md) — the two L1
-  dependencies.
+- Firm [`dot`](./dot.md), firm [`axpy`](./axpy.md) — the two L1 dependencies.
 
-## Supporting evidence
+## Conventions
 
-- **Provenance.** This firm L1 entry was the lift target of the Phase-1 `orthog` slice
-  (cycle-011 partial reduction → fully reduced and deleted cycle-098, graded-stack P2
-  slice-deletion campaign; git history is the record). With this entry, the L2/L3/L4 dissections it
-  retained (per-pass primitive sequences + transparent-vs-load-bearing classification; CGS/CGS2
-  projector form + MGS sequential-obstruction; Solve-monad state stratification) are firm at
-  `L2/orthogonalize.md`, `L3/orthogonalize.md`, and `concepts/orthogonalization.md`; its L0
-  ground truth is cited directly there (`palace/linalg/orthog.hpp:18-90`).
-- The (now-deleted) `arnoldi_step` slice named "a firm `L1/orthogonalize` (or
-  `L1/orthogonalize-column`)" as a pending-lift prerequisite; this entry satisfies it. The
-  `arnoldi_step` L1 procedure's `project(w, V[0..j]; gs_orthog)` step is now `orthogonalize(w,
-  V[0..j], gs_orthog)`.
-- OQ `l1-orthogonalize-promotion-from-arnoldi-step-and-orthog` (cycle-010, HIGH) is answered by
-  this dispatch.
-
-## Open questions / caveats
-
-- **Naming: `orthogonalize` vs `orthogonalize-column`.** `arnoldi_step.md:5` floats both names.
-  I chose `orthogonalize` (matches `concepts/orthogonalization.md`'s canonical signature and the
-  dispatch wrapper's verb `OrthogonalizeIteration`). The L0 functions are
+- **Naming: `orthogonalize` vs `orthogonalize-column`.** The L0 functions are
   `OrthogonalizeColumn{MGS,CGS}` (column-specific), but at L1 the "column" qualifier is an L0
   storage detail (the coefficients land in a Hessenberg *column*); the operator orthogonalises a
-  *vector* against a *basis*, so the unqualified verb is the right L1 name. Flagging in case a
-  future cross-cutter prefers the L0-faithful name.
-- **L1>L0 lowering theme not yet authored.** This entry firms the L1 operator; the
-  `orthogonalize-mutation-rotation` L1>L0 theme (in-place `w` overwrite + raw-pointer `H` write
-  + per-variant collective shape, narrated forward from L1 to L0) is abstractor territory and is
-  not part of this dispatch. The slice's retained L2 section is the raw material. Recommend the
-  cycle-012+ planner queue it.
+  *vector* against a *basis*, so the unqualified verb is the L1 name (matching
+  `concepts/orthogonalization.md`'s canonical signature and the dispatch wrapper's verb
+  `OrthogonalizeIteration`).
 - **Coefficient sign / Hessenberg convention.** This entry returns `H[j] = ⟨w, V[j]⟩` (positive
   projection coefficient); the residual is `w − Σ H[j] V[j]`. Palace stores exactly these `H[j]`
   into the Hessenberg column (no sign flip), so the Arnoldi relation `T·V[j] = Σ H[i,j] V[i]`
-  consumes them directly. No caveat — recording the convention explicitly so a downstream L2
-  `krylov-step` lift does not re-derive a sign.
-- **`concepts/orthogonalization.md` coefficient/normalisation drift.** The concept page describes
-  the output as `(w', h)` with `h_{j+1} = ‖w'‖` folded in — that conflates this operator's `H`
-  (length `m`) with the caller's `nrm2` sub-diagonal. Not in scope to edit here (one-operator
-  discipline + concept pages are layer-intro-author territory); flagging for a future
-  concept-page refresh. No layer-intro refresh is otherwise needed.
+  consumes them directly.

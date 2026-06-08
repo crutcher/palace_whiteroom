@@ -3,10 +3,10 @@ layer: L2
 operator: jacobi-smoother
 firmness: firm
 lowers_to:
-  - book/src/L1/jacobi-smoother.md (identity-in-form on the constructed-operator-gate apply; the apply is a single whole-tensor elementwise product with no kernel fusion to unfold — the L2>L1 rotation is a degenerate identity-in-named-terms lowering annotated in-line in §"Lowers to", no dedicated theme file as of cycle-051 demotion; the substantive leaf-mutation rotation lives at L1>L0 reciprocal-elementwise-product-mutation-rotation sub-pattern B + jacobi-smoother-mutation-rotation)
+  - book/src/L1/jacobi-smoother.md (identity-in-form on the constructed-operator-gate apply; the apply is a single whole-tensor elementwise product with no kernel fusion to unfold — the L2>L1 rotation is a degenerate identity-in-named-terms lowering annotated in-line in §"Lowers to"; the substantive leaf-mutation rotation lives at L1>L0 reciprocal-elementwise-product-mutation-rotation sub-pattern B + jacobi-smoother-mutation-rotation)
 lifts_from:
-  - book/src/L3/jacobi-smoother.md (firm cycle-037; value-thread-isomorphic on the gate apply; the L3 iteration-rotation rendering this L2 floor sits beneath — identity-in-form, no L3-L2 theme, in-line annotation per cycle-012 non-adjacent-identity convention)
-fold_parent: none (standalone constructed-operator gate; NOT a member of the linear_combination / inner_product fold cohort — fork-INDEPENDENT, the cycle-041 dot-l2-leaf-floor-vs-fold-only-design fork does not apply)
+  - book/src/L3/jacobi-smoother.md (value-thread-isomorphic on the gate apply; the L3 iteration-rotation rendering this L2 floor sits beneath — identity-in-form, no L3-L2 theme, in-line annotation)
+fold_parent: none (standalone constructed-operator gate; NOT a member of the linear_combination / inner_product fold cohort)
 variant_axes:
   orthogonal:
     - element-type (real | complex; collapsed into the opaque JacobiSmoother closure)
@@ -59,9 +59,7 @@ It is a constructed-operator gate in the same family as the firm
 argument `op` is a structured opaque value built once at solver setup (the
 `SetOperator` step), carrying the captured operator `A` only via its assembled
 inverse diagonal `dinv`, the damping factor `ω`, and the spectral-bound scaling
-`sf_max`. The cycle-041 leaf-vs-fold design fork
-(`dot-l2-leaf-floor-vs-fold-only-design`, `book/src/L2/index.md`,
-pending the batch-12 meta-phase) is **about the BLAS-1 leaves** (`dot` / `scal`
+`sf_max`. The leaf-vs-fold design fork is **about the BLAS-1 leaves** (`dot` / `scal`
 as same-named floors vs fold-only); it does **not** reach `jacobi-smoother`,
 which is a constructed-operator gate with no fold-parent on either codomain.
 
@@ -85,17 +83,11 @@ polynomial action, and the unification would obscure the apply's identity with
 the underlying elementwise-product field operation.
 
 This is a thin **floor presence** entry. It exists so the firm L3
-[`jacobi-smoother`](../L3/jacobi-smoother.md) (cycle-037) rests on a present
+[`jacobi-smoother`](../L3/jacobi-smoother.md) rests on a present
 adjacent L2 parent, per the methodology invariant **Identity-lowerings still
-require both L levels** (CLAUDE.md §Methodology invariants, cycle-009
-codification): each layer is coherent within itself, and a reader at L2 must
-find `jacobi-smoother` defined in L2 vocabulary without reaching down to L1 or up
-to L3. The foundation-first directive `l2-floor-under-l3-jacobi-smoother`
-(2026-05-31) names exactly this gap — the L3 constructed-operator-gate cohort
-(`jacobi-smoother`, `divfree-projector`, and the obstruction-carrying
-`ksp_solve` / `eigsolve`) was backfilled to L3 across cycles 020/037/038 with the
-`jacobi-smoother` L3 entry resting on the L1 entry directly, skipping the L2
-floor. This dispatch floors `jacobi-smoother`.
+require both L levels** (CLAUDE.md §Methodology invariants): each layer is coherent
+within itself, and a reader at L2 must find `jacobi-smoother` defined in L2
+vocabulary without reaching down to L1 or up to L3.
 
 ## Signature
 
@@ -307,9 +299,8 @@ dependency, `eigsolve` lists `ksp_solve` + `apply_linop`, and
 `chebyshev-iteration` lists `apply_linop` / `axpby` / `scal` + the elementwise
 diagonal action, `jacobi-smoother`'s apply lists **none**. The single elementwise
 product `op.dinv ⊙ x` would be the L2 `elementwise_product` primitive — but
-**no L2 `elementwise_product` (nor `reciprocal`) floor entry exists yet**: both
-are firm at L1 and at L3 (cycle-038) but the L2 floor for the elementwise
-primitives has not been built. At L2 the Jacobi apply is therefore a single base
+the single elementwise
+product is below the layer's current resolution in this entry. At L2 the Jacobi apply is therefore a single base
 field operation below the layer's current resolution (the same situation as the
 L3 entry, where the elementwise product is below L3's resolution and the apply
 lists no L3-operator dependency). Once the L2 `elementwise_product` floor lands,
@@ -325,11 +316,8 @@ construction, before the gate is folded into any L2 expression.
 
 **Fold-parent**: **none.** `jacobi-smoother` is a standalone constructed-operator
 gate, NOT a member of the `linear_combination` (reduce-to-`Tensor[N]`) or
-`inner_product` (reduce-to-`Scalar`) fold cohort. This is the explicit
-fork-independence fact: the cycle-041 `dot-l2-leaf-floor-vs-fold-only-design`
-leaf-vs-fold fork (pending the batch-12 meta-phase) governs whether the BLAS-1
-leaves get same-named L2 floors or fold-only treatment; it does not reach this
-gate, which has no fold-parent on either codomain.
+`inner_product` (reduce-to-`Scalar`) fold cohort. The BLAS-1 leaf-vs-fold fork
+does not reach this gate, which has no fold-parent on either codomain.
 
 **Cross-cutting concepts**:
 
@@ -348,12 +336,11 @@ Hermitian kernel caveat, and the complete L0 evidence list. This L2 entry does
 not duplicate those details; the L2↔L1 rotation is identity-in-form on the gate's
 apply.
 
-**L3 consumer**: [`L3/jacobi-smoother`](../L3/jacobi-smoother.md) (firm
-cycle-037) — the iteration-rotation rendering this L2 floor sits beneath. The
-L3↔L2 rotation is identity-in-form (the apply is a single whole-tensor field
-operation at both layers); no `L3-L2/jacobi-smoother` theme file is needed (the
-identity annotation lives in-line per the cycle-012 non-adjacent-identity
-convention).
+**L3 consumer**: [`L3/jacobi-smoother`](../L3/jacobi-smoother.md) (firm) — the
+iteration-rotation rendering this L2 floor sits beneath. The L3↔L2 rotation is
+identity-in-form (the apply is a single whole-tensor field operation at both
+layers); no `L3-L2/jacobi-smoother` theme file is needed (the identity annotation
+lives in-line per the non-adjacent-identity convention).
 
 **Sibling (cited, NOT a dependency)**:
 [`chebyshev-iteration`](./chebyshev-iteration.md) — the degree-`≥1` member of the
@@ -405,61 +392,6 @@ The variant-axis profile (two orthogonal + one absorbed) matches the L1 and L3
 entries exactly. **No new axes introduced by the L2 rendering; no axes merged or
 split.**
 
-## Status
-
-`firm` — the L2 form is value-thread-isomorphic to the firm L1 form on the
-constructed-operator-gate apply (identity-in-form rotation), and equally to the
-firm L3 form above it; the algebraic laws are the same six that hold at L1
-(linearity, zero-vector annihilation, the `assemble_diagonal` round-trip, damping
-absorption, the estimated-damping degenerate case, self-transpose under symmetric
-wiring); the non-laws are catalogued explicitly (the dead-code Hermitian-transpose
-non-realisation, the no-fusion-identity absence, the no-iteration non-equivalence,
-and the representation-dependent bit-determinism non-law); the variant-axis
-profile is two orthogonal + one absorbed, inherited unchanged. The
-constructed-operator-gate framing matches the firm L2
-[`ksp_solve`](./ksp_solve.md) / [`eigsolve`](./eigsolve.md) precedents — opaque
-constructed-operator argument, operator-representation absorbed.
-
-**Firm-on-positive-structure.** The firm-on-positive-structure precedent (the firm
-L1 `jacobi-smoother` / `apply_linop` / `chebyshev-smoother`) governs the absence
-of a dedicated `test-jacobi.cpp` under `reference/palace/test/unit/`: every L2 law
-is a syntactic identity readable straight off positive source — elementwise
-multiply at `palace/linalg/jacobi.cpp:38`; setup chain at `:79-93`; transpose
-alias at `palace/linalg/jacobi.hpp:43`; instantiations at
-`palace/linalg/jacobi.cpp:106-107` — not literature-inferred convergence claims,
-so the missing dedicated test does not gate firm. Behaviour is exercised through
-integration paths only (`palace/linalg/ksp.cpp:198-200`, the principal Jacobi
-consumer; four further consumer sites per the L1 entry —
-`errorestimator.cpp:75-77`, `floquetcorrection.cpp:65`, `spaceoperator.cpp:640`,
-`timeoperator.cpp:85`).
-
-This dispatch (cycle-042 D5) is the **L2 floor backfill** under the
-foundation-first directive `l2-floor-under-l3-jacobi-smoother`: the L2 form was
-previously implicit only in the L1 and L3 entries; it now has its own L2 entry per
-**Identity-lowerings still require both L levels**, so the firm L3
-[`jacobi-smoother`](../L3/jacobi-smoother.md) (cycle-037) rests on a present
-adjacent L2 parent rather than skipping a layer down to L1. It is **fork-INDEPENDENT** —
-a standalone constructed-operator gate with no fold-parent, not subject to the
-cycle-041 leaf-vs-fold design fork.
-
-**Caveats (not status reductions):**
-
-- The complex `Apply<Transpose=true>` Hermitian kernel
-  (`palace/linalg/jacobi.cpp:61-69`) is dead code under symmetric wiring —
-  `MultTranspose` aliases `Mult`, not `Apply<true>`. The conjugate-`dinv`
-  Hermitian-transpose law is therefore *not realized* by the Palace surface even
-  though the source contains the machinery. Inherited from the L1 entry's caveat;
-  recorded as a non-law (above) and as the open question
-  `reciprocal-elementwise-product-mr-dead-code-transpose-consumer-branch`.
-- The `ω = 0.0` estimated-damping mode's setup-time correctness depends on the
-  opaque `spectrum_estimate` sub-action (out-of-scope at L2), but the per-call
-  apply law is identical regardless of damping mode (law 1 with the substituted
-  `ω`).
-- No L2 `elementwise_product` / `reciprocal` floor entry exists yet; the apply is
-  recorded as a single base field operation below the layer's current resolution
-  (forward-reference plain-text, open question below). This does not gate firm —
-  the L2 form is identity-in-form to L1 regardless.
-
 ## Lowers to
 
 L2 `jacobi-smoother` lowers to L1 [`jacobi-smoother`](../L1/jacobi-smoother.md)
@@ -470,13 +402,10 @@ concrete rank-1 `Tensor[N]` spelling of the same gate, with the same shape contr
 the same six algebraic laws, the same non-law set, and the same
 two-orthogonal-plus-one-absorbed variant profile. There is **no kernel fusion to
 unfold** — the apply is a single elementwise product (the negative fusion
-observation above), so there is no vocabulary shift across the edge to rotate.
-(The former `jacobi-smoother-leaf-identity` L2>L1 theme file was demoted to this
-in-line note cycle-051 under the 2026-06-01 VOCABULARY-SHIFT REDIRECT
-`METHODOLOGY-REDIRECT.md` — a degenerate identity-in-named-terms lowering, the §1d
-smell the redirect names; cycle-050 D8 verify-body audit DEMOTE-OK,
-`reports/2026-06-01T195100Z-cross-layer-cross-cutter-verify-divfree-jacobi/CYCLE.md`.)
-This follows the `scal` / `dot` / `nrm2` L2-floor precedent for in-line
+observation above), so there is no vocabulary shift across the edge to rotate. A
+degenerate identity-in-named-terms lowering carries no dedicated theme file (the
+§1d smell the VOCABULARY-SHIFT REDIRECT `METHODOLOGY-REDIRECT.md` names); it is
+annotated in-line, following the BLAS-1 L2-floor precedent for in-line
 identity-rotation annotation.
 
 The **substantive** rotation in the chain is the L1>L0 leaf-mutation rotation, not
@@ -494,7 +423,7 @@ form sees a single base elementwise product.
 
 ## Lifts from
 
-L3 `jacobi-smoother` (firm cycle-037) lifts to this L2 entry — equivalently, this
+L3 `jacobi-smoother` (firm) lifts to this L2 entry — equivalently, this
 L2 floor sits beneath the firm L3 entry — via the **value-thread-isomorphic**
 identity rotation: the L3 form's signature has no element loop exposed, no
 destination buffer, no MPI collective, and no kernel fusion — exactly the
@@ -503,71 +432,62 @@ L2 entry exists for layer-coherence reasons: a reader navigating L2 (whose index
 advertises base primitive operations and constructed-operator gates as L2
 vocabulary) must find `jacobi-smoother` defined in L2 vocabulary, not have to
 reach down to L1 or up to L3 to recover the constructed-operator-gate apply. The
-firm L2 `scal` floor backfill (cycle-041) is the structural precedent for the
-identity-in-form L2-floor-under-L3 backfill; the firm L2 `ksp_solve` (cycle-021)
-and `eigsolve` (cycle-023) are the constructed-operator-gate siblings.
+firm L2 [`ksp_solve`](./ksp_solve.md) and [`eigsolve`](./eigsolve.md) are the
+constructed-operator-gate siblings.
 
 ## Evidence
 
 The L2 form is value-thread-isomorphic to the firm L1 form (per the
 identity-in-form rotation on the constructed-operator-gate apply) and to the firm
 L3 form above it; all L0 evidence is transitive through L1. Direct citations
-relevant to this L2 entry (self-verified via `tools/citecheck/citecheck.py
---anchor` against on-disk `reference/palace/palace/linalg/jacobi.{hpp,cpp}` /
-`ksp.cpp` / `errorestimator.cpp`, 2026-06-01):
+relevant to this L2 entry:
 
 - `book/src/L1/jacobi-smoother.md` (firm) — the L1 entry whose signature,
   semantics, six algebraic laws, non-laws, two-orthogonal-plus-one-absorbed
   variant profile, and complete L0 evidence list are transported unchanged to L2.
   Authoritative on every Palace-surface factual claim.
-- `book/src/L3/jacobi-smoother.md` (firm cycle-037) — the L3 iteration-rotation
+- `book/src/L3/jacobi-smoother.md` (firm) — the L3 iteration-rotation
   rendering this L2 floor sits beneath; identical signature, laws, and variant
   axes (the L3↔L2 hop is identity-in-form).
-- `book/src/L2/scal.md` (firm cycle-041 D3) — the L2-floor-under-L3 structural
-  precedent (identity-in-form floor; in-line identity-rotation annotation).
-- `book/src/L2/chebyshev-iteration.md` (firm cycle-012) — the degree-`≥1`
+- `book/src/L2/chebyshev-iteration.md` (firm) — the degree-`≥1`
   polynomial sibling; the genuine fusion-rotation entry (`ApplyOrder0` /
   `ApplyOrderK` de-fusion) against which the Jacobi apply's no-fusion fact is the
   degree-zero contrast.
 - `palace/linalg/jacobi.cpp:30-39` — real `Apply<Transpose>(dinv, x, y)`:
   `mfem::forall_switch(use_dev, N, [=] (int i) { Y[i] = DI[i] * X[i]; });` — the
   single elementwise-multiply kernel that realises the apply (law 1 witness; the
-  body the L2 elementwise product is). Self-verified — anchor `Y[i] = DI[i] *
-  X[i]` at `:38`.
+  body the L2 elementwise product is).
 - `palace/linalg/jacobi.cpp:41-70` — complex `Apply<Transpose>(dinv, x, y)`: the
   forward branch (`:52-60`) realises the four-multiply componentwise complex
   product (a single elementwise complex product, not a fused composition); the
   `Transpose = true` branch (`:61-69`) computes the conjugate-`dinv` apply (dead
-  code under symmetric wiring; the non-law witness). Self-verified.
+  code under symmetric wiring; the non-law witness).
 - `palace/linalg/jacobi.cpp:74-97` — `JacobiSmoother<OperType>::SetOperator(op)`:
   the setup body. `op.AssembleDiagonal(dinv)` (`:79`), `dinv.Reciprocal()`
   (`:80`) — the `assemble_diagonal → reciprocal` chain (law 3); the `ω = 0`
   optimal-damping computation (`:84-89`, law 5); the `ω`-fold `dinv *= omega;`
-  (`:90-93`, anchor at `:92`, law 4). Self-verified — anchors `AssembleDiagonal`
-  at `:79`, `Reciprocal` at `:80`, `dinv *= omega` at `:92`.
+  (`:90-93`, anchor at `:92`, law 4).
 - `palace/linalg/jacobi.cpp:99-104` — `JacobiSmoother<OperType>::Mult(x, y)
   const`: the apply entry; `MFEM_ASSERT(!this->initial_guess, ...)` (`:102`) —
   the no-initial-guess precondition; `Apply(dinv, x, y);` (`:103`) — the single
-  dispatch that is the entire per-call action. Self-verified — anchors
-  `initial_guess` at `:102`, `Apply(dinv, x, y)` at `:103`.
+  dispatch that is the entire per-call action.
 - `palace/linalg/jacobi.hpp:19` — `class JacobiSmoother : public Solver<OperType>`
-  — the class declaration. Self-verified.
+  — the class declaration.
 - `palace/linalg/jacobi.hpp:28` — `VecType dinv;` — the inverse-diagonal member
-  (`VecType = Vector` for real, `= ComplexVector` for complex). Self-verified.
+  (`VecType = Vector` for real, `= ComplexVector` for complex).
 - `palace/linalg/jacobi.hpp:43` — `void MultTranspose(...) const override {
   Mult(x, y); }` — the transpose self-alias (law 6) and the source of the
-  dead-code Hermitian caveat. Self-verified.
+  dead-code Hermitian caveat.
 - `palace/linalg/jacobi.cpp:106-107` — `template class JacobiSmoother<Operator>;
   template class JacobiSmoother<ComplexOperator>;` — the element-type variant axis
-  instantiation. Self-verified — anchor `JacobiSmoother<Operator>` at `:106`.
+  instantiation.
 - `palace/linalg/ksp.cpp:198-200` — the principal consumer: `case
   LinearSolver::JACOBI: pc = std::make_unique<JacobiSmoother<OperType>>(comm);
   break;` — the default-damping preconditioner-instantiation site inside
-  `ConfigurePreconditioner`. Self-verified — anchor `JACOBI` at `:198`.
+  `ConfigurePreconditioner`.
 - `palace/linalg/errorestimator.cpp:75-77` — the only `ω = 0.0` estimated-damping
   call site ("Use eigenvalue estimate to compute optimal Jacobi damping
-  parameter."); the third value of the damping-mode variant axis. Self-verified —
-  anchor `JacobiSmoother` at `:76`.
+  parameter."); the third value of the damping-mode variant axis.
 - `palace/linalg/chebyshev.cpp:177-178` — sibling-precedent: the *identical*
   `op.AssembleDiagonal(dinv); dinv.Reciprocal();` setup chain inside
   `ChebyshevSmoother::SetOperator` — establishes `jacobi-smoother` as the
@@ -579,8 +499,8 @@ relevant to this L2 entry (self-verified via `tools/citecheck/citecheck.py
   content (referenced forward for the downward narrative).
 - `book/src/L1-L0/jacobi-smoother-mutation-rotation.md` (firm) — the
   constructed-operator-closure L1>L0 theme.
-- `book/src/L2/ksp_solve.md` (firm cycle-021), `book/src/L2/eigsolve.md` (firm
-  cycle-023) — the L2 constructed-operator-gate siblings this entry follows in
+- `book/src/L2/ksp_solve.md` (firm), `book/src/L2/eigsolve.md` (firm) — the L2
+  constructed-operator-gate siblings this entry follows in
   framing.
 
 ## L2 vs L1 distinction

@@ -86,7 +86,7 @@ Justification kind: **structural** (inherited reduction expansion).
 Citations:
 - `palace/linalg/vector.hpp:266` — `auto norm = Norml2(comm, x);` (the reduction binding).
 - `palace/linalg/vector.hpp:259` — `Norml2` body `std::sqrt(std::abs(Dot(comm, x, x)))`
-  (the chain `nrm2-mutation-rotation` Sub-pattern A expands). [inherited — see Verified-against]
+  (the chain `nrm2-mutation-rotation` Sub-pattern A expands). [inherited — see Evidence]
 
 ### Sub-pattern B — the in-place rescale (inherited from `scal-mutation-rotation` Sub-pattern A)
 
@@ -111,7 +111,7 @@ reciprocal form as a transparent-trick sub-note.
 
 Citations:
 - `palace/linalg/vector.hpp:268` — `x *= 1.0 / norm;` (the in-place rescale; `scal`
-  Sub-pattern A real path). [inherited — see Verified-against]
+  Sub-pattern A real path). [inherited — see Evidence]
 
 ### Sub-pattern C — the load-bearing returned norm (the reason `normalize` is a named primitive)
 
@@ -302,10 +302,10 @@ NOT a speculative operator of this theme, for the reasons the L1 entry gives
   the *definition* of the B-weighted fused shape, not a callsite. So `normalize_B`
   has **no live consumer in the tree**: definition exists, callsite does not.
 - **No remaining constituent-maturity gate.** `normalize_B`'s norm constituent
-  [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) is now `firm` (promoted cycle-091),
-  so the earlier inherited test-coverage bound is discharged. `normalize_B` nonetheless stays a
-  rough-in note on the **no-live-consumer** ground above (the fused B-Normalize is defined-but-dead),
-  not on any constituent-maturity ground.
+  [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) is `firm`, so the earlier inherited
+  test-coverage bound is discharged. `normalize_B` nonetheless stays a rough-in note on the
+  **no-live-consumer** ground above (the fused B-Normalize is defined-but-dead), not on any
+  constituent-maturity ground.
 
 If/when a positive *callsite* of the fused B-Normalize surfaces — either a direct
 4-arg `Normalize(comm, v, B, Bv)` invocation OR an inline B-weighted-rescale shape
@@ -335,41 +335,31 @@ by construction since `norm > 0`). No reduction-order variant beyond the one inh
 **partiality** at `x = 0` (the `MFEM_ASSERT`), which is uniform across element types and is
 the guard classified above, not a variant axis.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `tools/citecheck/citecheck.py --anchor` against on-disk
-`reference/palace/` this invocation — producer-citation self-verification, `verify-citation-range`;
-the on-disk `vector.hpp` was confirmed authoritative against the Read tool, and the `Normalize`
-def line is `264`, the `MFEM_ASSERT` `267`, the rescale `268`, the `return norm` `269`, all
-within the cited `262-270` range):
+L0 evidence ranges:
 
 - `palace/linalg/vector.hpp:262-270` — `linalg::Normalize` template: `auto norm = Norml2(comm, x);`
   (`:266`), `MFEM_ASSERT(norm > 0.0, "Zero vector norm in normalization!")` (`:267`),
   `x *= 1.0 / norm;` (`:268`), `return norm;` (`:269`). The positive source site — `normalize`
-  verbatim, returning the norm. **Self-verified** (`--anchor 'Normalize'` → 262/264 def in range;
-  `--anchor 'MFEM_ASSERT'` → 267; `--anchor '1.0 / norm'` → 268; `--anchor 'return norm'` → 269;
-  `--anchor 'Norml2'` → 266).
+  verbatim, returning the norm.
 - `palace/linalg/vector.hpp:259` — `Norml2` body `std::sqrt(std::abs(Dot(comm, x, x)))` (the
   reduction chain Sub-pattern A inherits from `nrm2-mutation-rotation`). [inherited boundary]
 - `palace/linalg/iterative.cpp:631-632` — GMRES Arnoldi: `Hj[j + 1] = linalg::Norml2(comm, w);
   w *= 1.0 / Hj[j + 1];` (returned norm → Hessenberg sub-diagonal AND rescale divisor; the inline
-  un-fused `normalize` with both outputs consumed). **Self-verified** (`--anchor 'Hj[j + 1] =
-  linalg::Norml2'` → 631; `--anchor '1.0 / Hj'` → 632).
+  un-fused `normalize` with both outputs consumed).
 - `palace/linalg/iterative.cpp:810-811` — second analogous GMRES Arnoldi path:
-  `Hj[j + 1] = linalg::Norml2(comm, w); w *= 1.0 / Hj[j + 1];`. **Audited** (`--anchor 'Hj[j + 1] = linalg::Norml2'` → 810; `--anchor 'w *= 1.0 / Hj[j + 1]'` → 811).
+  `Hj[j + 1] = linalg::Norml2(comm, w); w *= 1.0 / Hj[j + 1];`.
 - `palace/linalg/operator.cpp:660-661` — `SetRandom(comm, u); Normalize(comm, u);` (power-iteration
-  seed normalise; returned norm discarded — the `snd ∘ normalize` shape). **Self-verified**
-  (`--anchor 'SetRandom(comm, u)'` → 660).
+  seed normalise; returned norm discarded — the `snd ∘ normalize` shape).
 - `palace/linalg/operator.cpp:673` — `l = Normalize(comm, u);` (returned norm IS the
-  dominant-eigenvalue estimate). **Self-verified** (`--anchor 'l = Normalize'` → 673).
+  dominant-eigenvalue estimate).
 - `palace/linalg/operator.cpp:676` — `res = std::abs(l - l0) / l0;` (convergence test consuming the
-  returned norm `l` — direct evidence the returned scalar is load-bearing). **Self-verified**
-  (`--anchor 'res = std::abs(l - l0)'` → 676).
+  returned norm `l` — direct evidence the returned scalar is load-bearing).
 - `palace/linalg/nleps.cpp:610-611` — NEP deflation: `const auto scale = linalg::Norml2(GetComm(), v);
-  v *= 1.0 / scale;` (inline unweighted normalise). **Self-verified** (`--anchor 'Norml2(GetComm(), v)'`
-  → 610; `--anchor '1.0 / scale'` → 611).
+  v *= 1.0 / scale;` (inline unweighted normalise).
 - `palace/linalg/nleps.cpp:617` — `H.col(k).head(k) = v2 / scale;` (returned norm reused to rescale
-  the coordinate companion — doubly load-bearing). **Self-verified** (`--anchor 'v2 / scale'` → 617).
+  the coordinate companion — doubly load-bearing).
 
 L1 / cross-theme anchors:
 
@@ -399,94 +389,15 @@ Test evidence (L0-equivalent semantic documentation; inherited):
 
 ## Status
 
-`firm` — the rewrite is the structural expansion of the L0 `linalg::Normalize(comm, x)`
-four-step composition (reduction → guard → in-place rescale → returned norm), exhaustively
-pinned by direct, self-verified evidence from the positive source `vector.hpp:262-270`. The
-three sub-patterns (A `Norml2` reduction, B in-place rescale, C returned norm) **reuse** the
-firm sibling sub-themes (`nrm2-mutation-rotation`, `scal-mutation-rotation` Sub-pattern A)
-rather than restating them — following the cycle-026 `matrix-weighted-norm-mutation-rotation`
-precedent. The load-bearing returned norm (Sub-pattern C) — the reason `normalize` is a named
-primitive — is evidenced by three distinct, self-verified consumer shapes (GMRES Hessenberg
-`iterative.cpp:631-632`, power-iteration eigenvalue `palace/linalg/operator.cpp:673,676`, NEP deflation
+`firm` — the structural expansion of the L0 `linalg::Normalize(comm, x)` four-step composition
+(reduction → guard → in-place rescale → returned norm), pinned by positive source
+`vector.hpp:262-270`. The three sub-patterns (A `Norml2` reduction, B in-place rescale, C returned
+norm) **reuse** the firm sibling sub-themes (`nrm2-mutation-rotation`, `scal-mutation-rotation`
+Sub-pattern A) rather than restating them. The load-bearing returned norm (Sub-pattern C) — the
+reason `normalize` is a named primitive — is evidenced by three distinct consumer shapes (GMRES
+Hessenberg `iterative.cpp:631-632`, power-iteration eigenvalue `operator.cpp:673,676`, NEP deflation
 companion-scale `nleps.cpp:610-611,617`), each consuming the norm *after* the rescale. The one
 non-syntactic ingredient — the partiality at `x = 0` — is positively anchored to the L0
-`MFEM_ASSERT(norm > 0.0)` (`vector.hpp:267`); **no negative-anchor reconstruction, no literature
-inference, no speculative operator** — so `firm` rather than `partly-constructive`. The B-weighted
-sibling `normalize_B` is an in-chapter rough-in note (no live consumer of the fused Palace site;
-the `matrix-weighted-norm` test-coverage bound it formerly inherited is discharged at cycle-091),
-not part of the firm claim.
-
-A `lowering-verifier` audit attaching the `verified_against:` block (per the sibling-theme
-convention) confirming the surface-form recognition is exhaustive (the `linalg::Normalize`
-template is the sole fused-normalise overload; the inherited-sub-theme boundaries hold; the
-returned-norm consumer cohort is complete) is the standard follow-up, not a status reduction.
-This audit was performed cycle-028 (lowering-verifier); the `verified_against:` block below
-records the per-citation verdicts (fully-supported on the firm unweighted core).
-
-```yaml
-verified_against:
-  - citation: palace/linalg/vector.hpp:262-270
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "linalg::Normalize four-step composition read verbatim; def :264, reduction :266, guard :267, rescale :268, return :269 — all anchors land exactly on-disk (zero codemap drift)."
-  - citation: palace/linalg/vector.hpp:259
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "Norml2 body std::sqrt(std::abs(Dot(comm,x,x))) — inherited Sub-pattern A boundary; anchor at :259."
-  - citation: palace/linalg/vector.hpp:267
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "MFEM_ASSERT(norm > 0.0) partiality witness — positively anchored; the one non-syntactic ingredient; firm not partly-constructive confirmed."
-  - citation: palace/linalg/iterative.cpp:631-632
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "GMRES Arnoldi (first path): Hj[j+1]=Norml2 :631, w*=1.0/Hj[j+1] :632; beta feeds plane-rotation solve at :636-639 (GeneratePlaneRotation :638) — Hessenberg sub-diagonal consumer confirmed."
-  - citation: palace/linalg/iterative.cpp:810-811
-    verdict: partially-supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "Second GMRES path: the full two-line shape spans 810-811 (Hj[j+1]=Norml2 at :810, w*=1.0/Hj[j+1] at :811). Re-cited to 810-811 for parity with the first path (Edit 2). Both anchors land exactly on-disk."
-  - citation: palace/linalg/operator.cpp:660-661
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "Power-iteration seed: SetRandom :660, Normalize :661 (return discarded — snd-only projection shape)."
-  - citation: palace/linalg/operator.cpp:673
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "l = Normalize(comm, u) — returned norm IS the dominant-eigenvalue estimate; carrier u feeds next A.Mult(u,v) at :664."
-  - citation: palace/linalg/operator.cpp:676
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "res = std::abs(l - l0) / l0 — convergence test consuming the returned norm l; direct load-bearing evidence."
-  - citation: palace/linalg/nleps.cpp:610-611
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "NEP deflation: scale = Norml2(GetComm(), v) :610, v *= 1.0/scale :611 — inline unweighted normalise; :609 comment 'Update the invariant pair with normalization' confirms reading."
-  - citation: palace/linalg/nleps.cpp:617
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "H.col(k).head(k) = v2 / scale — returned norm reused to rescale coordinate companion v2; doubly load-bearing confirmed."
-  - citation: book/src/L1/normalize.md:50
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "Factorisation law 6 — the LHS the theme lowers; anchor at :50."
-  - citation: book/src/L1-L0/scal-mutation-rotation.md:48-58
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "scal Sub-pattern A names this Normalize site (Normalize token at :48 and :55) — inheritance boundary holds."
-  - citation: palace/test/unit/test-orthog.cpp:193
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "V[0] *= 1 / v0_norm — by-hand normalise empirical-match (real path); inherited test evidence."
-  - citation: palace/test/unit/test-orthog.cpp:208
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "V[1] *= 1 / v1_norm — second by-hand normalise instance."
-  - citation: palace/linalg/operator.hpp:377-384
-    verdict: supports
-    audited_at: 2026-05-30T01:01:18Z
-    note: "Refreshed cycle-030 after cycle-029 abstractor prose correction (commit e44896d) aligned the surrounding prose with the L0 source. Range correct; the c029-corrected prose at theme :286-303 (Speculative L1 operators rough-in note) and :51 (L0 form intro) accurately reads 'fused B-Normalize exists but is uncalled': definition at palace/linalg/operator.hpp:378 (def, reduction :380, guard :381, rescale :382, return :383 — all citecheck --anchor probes land within 377-384) is positively anchored; the 'uncalled' claim is grep-verified (zero 4-arg Normalize(comm, x, B, Bx) callsites across reference/palace/palace/). Affects only the normalize_B rough-in note, NOT the firm unweighted core. Prior c028 verdict does-not-support was against the WAS-prose; obsolete after c029."
-  - citation: palace/linalg/operator.cpp:599-619
-    verdict: supports
-    audited_at: 2026-05-29T19:45:58Z
-    note: "B-weighted Norml2 reduction (B.Mult(x,Bx) at :602) — the matrix-weighted-norm reduction; in-bounds. Note: it IS fused into palace/linalg/operator.hpp:378 (see palace/linalg/operator.hpp:377-384 row)."
-```
+`MFEM_ASSERT(norm > 0.0)` (`vector.hpp:267`), so `firm` rather than `partly-constructive`. The
+B-weighted sibling `normalize_B` is an in-chapter rough-in note (no live consumer of the fused
+Palace site), not part of the firm claim.

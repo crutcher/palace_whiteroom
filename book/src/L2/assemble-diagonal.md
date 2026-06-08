@@ -4,10 +4,9 @@ The **operator-to-data** diagonal-extraction primitive at the fusion-rotation la
 the mutation-free `d = diag(A)`, the main diagonal of a square linear operator
 materialised as a vector. This is the **L2 floor** under the firm L3
 [`assemble-diagonal`](../L3/assemble-diagonal.md) — present so the L3 field operation
-rests on an adjacent same-named L2 parent per the **Identity-lowerings still require
-both L levels** invariant, rather than skipping a layer down to L1. It is a
+rests on an adjacent same-named L2 parent, rather than skipping a layer down to L1. It is a
 **standalone operator-to-data primitive with NO fold-parent** (fork-independent): unlike
-the cycle-041 BLAS-1 floors `dot` / `nrm2` / `scal` — which are leaf-of / consumer-of /
+the BLAS-1 floors `dot` / `nrm2` / `scal` — which are leaf-of / consumer-of /
 member-of the `inner_product` / `linear_combination` folds — `assemble_diagonal` belongs
 to no fold cohort. It is **not** an [`apply_linop`](./krylov-step.md) variant either (the
 operator/data divide is load-bearing — see § "Not an `apply_linop` variant").
@@ -21,9 +20,7 @@ diagonal-introspection primitive at that layer — a pure value-producing map fr
 opaque square operator to its diagonal vector, with no control flow, no monadic state
 threading, and no convergence predicate.
 
-This entry is a **thin floor entry**, authored under the 2026-05-31 foundation-first
-directive `l2-floor-under-l3-leaf-cohort` (extended this cycle from the BLAS-1 leaf
-cohort to the operator-to-data primitive). Its purpose is floor *presence*: the firm L3
+This entry is a **thin floor entry**. Its purpose is floor *presence*: the firm L3
 [`assemble-diagonal`](../L3/assemble-diagonal.md) (the iteration-rotation rendering, the
 operator-to-data sibling of [`apply_linop`](../L3/apply_linop.md) consumed inside the
 diagonal-preconditioner-apply chain of the Jacobi / Chebyshev smoother bodies) and the
@@ -32,16 +29,13 @@ sandwich a layer at which `assemble_diagonal` had no chapter. The L2 entry fills
 lowering chain L3 → L2 → L1 has a present chapter at every adjacent edge, and the L3 form
 can lower to an adjacent L2 parent rather than non-adjacently to L1.
 
-`assemble_diagonal` is **defined in L2 vocabulary** here (high→low discipline, CLAUDE.md
-§Methodology invariants "Layers are defined high→low"): the signature, semantics, and
-algebraic laws are stated at the L2 fusion-rotation resolution. Both adjacent rotations
-are **degenerate identity-in-named-terms lowerings** (the vocabulary does not shift across
-either edge), so per the 2026-06-01 vocabulary-shift redirect each is recorded as an
-**in-line note rather than a dedicated theme**: how the L2 form lowers to L1 is the
-§"Downward to L1" note below (demoted from the former `assemble-diagonal-leaf-identity`
-L2>L1 theme cycle-050); how the L3 form lowers to L2 is the §"Downward to L2" in-line note
-on the L3 [`assemble-diagonal`](../L3/assemble-diagonal.md) entry (demoted from the former
-`assemble-diagonal-body-identity` L3>L2 theme cycle-050). This chapter does not define
+`assemble_diagonal` is **defined in L2 vocabulary** here (high→low discipline): the
+signature, semantics, and algebraic laws are stated at the L2 fusion-rotation resolution.
+Both adjacent rotations are **degenerate identity-in-named-terms lowerings** (the
+vocabulary does not shift across either edge), so each is recorded as an **in-line note
+rather than a dedicated theme**: how the L2 form lowers to L1 is the §"Downward to L1" note
+below; how the L3 form lowers to L2 is the §"Downward to L2" in-line note on the L3
+[`assemble-diagonal`](../L3/assemble-diagonal.md) entry. This chapter does not define
 `assemble_diagonal` in terms of L1 primitives or L0 mechanics.
 
 The L1 entry [`L1/assemble-diagonal`](../L1/assemble-diagonal.md) is authoritative on every
@@ -76,7 +70,7 @@ L3 entries' identical framing.
 ## No fold-parent (fork-independent)
 
 `assemble_diagonal` belongs to **no L2 fold cohort**. This distinguishes it from the
-cycle-041 BLAS-1 floor cohort, every member of which has a fold relationship to be disclaimed:
+BLAS-1 floor cohort, every member of which has a fold relationship to be disclaimed:
 `dot` is the conjugation-axis *leaf-of* [`inner_product`](./inner_product.md), `nrm2` is a
 *consumer-of* `inner_product`, `scal` is the arity-1 *member-of*
 [`linear_combination`](./linear_combination.md). `assemble_diagonal` has no such parent —
@@ -262,7 +256,7 @@ Laws that explicitly **do not** hold (inherited unchanged from L1):
   below the L2 layer's resolution and visible only in the L1>L0 lowering. It composes no other
   L2 operator.
 - **No fold-parent (fork-independent):** `assemble_diagonal` belongs to no L2 fold cohort —
-  unlike the cycle-041 BLAS-1 floors, it is neither leaf-of, consumer-of, nor member-of any
+  unlike the BLAS-1 floors, it is neither leaf-of, consumer-of, nor member-of any
   fold (`inner_product` / `linear_combination`). There is no do-NOT-merge boundary to police.
 - **Not factored through `apply_linop`:** despite the algebraic specification `result[i] =
   eᵢᵀ A eᵢ`, that is the mathematical definition, not the implementation (Palace forms no
@@ -277,7 +271,7 @@ Laws that explicitly **do not** hold (inherited unchanged from L1):
   block-Jacobi / polynomial preconditioners reuse the same chain. The `reciprocal` and
   element-wise product that complete the diagonal-preconditioner apply are themselves L2
   primitive candidates (`reciprocal` / `elementwise_product` — referenced here as plain text;
-  their L3 floors landed cycle-038, L2 floors not yet authored).
+  their L2 floors are not yet authored).
 - **L1 anchor:** [`L1/assemble-diagonal`](../L1/assemble-diagonal.md) (firm) — authoritative
   on the Palace surface (the abstract decls + concrete realisations across
   sparse/matrix-free/parallel/complex-wrapped representations, the square-precondition
@@ -285,7 +279,7 @@ Laws that explicitly **do not** hold (inherited unchanged from L1):
   sites, the libCEED diagonal-assembly unit test, the complete L0 evidence list). The L2 entry
   does not duplicate those details.
 - **L3 sibling this floor sits under:** [`L3/assemble-diagonal`](../L3/assemble-diagonal.md)
-  (firm cycle-037) — the iteration-rotation rendering; the operator-to-data field operation
+  (firm) — the iteration-rotation rendering; the operator-to-data field operation
   whose adjacent L2 parent this entry supplies.
 
 ## Variant axes
@@ -338,35 +332,14 @@ orthogonal-vs-absorbed framing is preserved.**
 
 ## Status
 
-`firm` — the L2 form is value-thread-isomorphic to the firm L1 leaf
+`firm` — a thin L2 floor entry, value-thread-isomorphic to the firm L1 leaf
 [`L1/assemble-diagonal`](../L1/assemble-diagonal.md) (identity-in-form rotation on the
-primitive); every algebraic law is a standard property of the matrix-diagonal map inherited
-unchanged (operator-scaling / sum linearity, identity, zero, diagonal round-trip, complex
-real/imag split), and every non-law is catalogued explicitly (diagonal-of-product,
-non-distinguishing transpose invariance, the **load-bearing exact-vs-approximate
-representation caveat preserved through the floor**, floating-point linearity strictness). The
-variant-axis profile is one orthogonal (element-type) + one absorbed (operator-representation),
-inherited unchanged from L1.
-
-This is a **thin floor entry** authored under the 2026-05-31 foundation-first directive
-`l2-floor-under-l3-leaf-cohort` (extended this cycle from the BLAS-1 leaf cohort to the
-operator-to-data primitive): its purpose is floor *presence* so the firm L3
-[`assemble-diagonal`](../L3/assemble-diagonal.md) field operation rests on an adjacent
-same-named L2 parent (per CLAUDE.md §Methodology invariants **Identity-lowerings still require
-both L levels**) rather than skipping a layer to L1. The fusion-rotation content is degenerate
-(no multi-operation kernel-fusion to unfold at the operator-to-data boundary; the L0
-representation's diagonal-extraction mechanics are absorbed into the representation axis and
-deferred to the L1>L0 lowering); this floor records it as one deferring note.
-
-The laws are syntactic identities on the matrix-diagonal map (operator-algebra on a read of
-the operator's stored / accumulated diagonal) — so the entry is `firm`, not `rough-in`: the
-missing dedicated unit test for the bare operator does not gate syntactic-identity laws (the
-`apply_linop`-style firm-on-positive-structure situation, not the `eigsolve`-convergence-
-semantics situation). The one caveat (matrix-free high-order-Nedelec approximate diagonal) is
-recorded as a non-law, not a status reduction: the structure is exhaustively cited at the L1
-home and the approximation is a documented, test-witnessed property of the matrix-free
-representation, not an unresolved gap — so this entry is `firm`, exactly as the L1 entry is
-(NOT `partly-constructive`).
+primitive). The laws are syntactic identities on the matrix-diagonal map (operator-algebra on
+a read of the operator's stored / accumulated diagonal), so the entry is firm-on-positive-
+structure (the missing dedicated unit test does not gate syntactic-identity laws). The one
+caveat — the matrix-free high-order-Nedelec approximate diagonal — is recorded as a non-law,
+not a status reduction: the structure is exhaustively cited at the L1 home and the
+approximation is a documented, test-witnessed property of the matrix-free representation.
 
 ## L2 vs L1 distinction
 
@@ -382,7 +355,7 @@ representation, not an unresolved gap — so this entry is `firm`, exactly as th
   representation-axis-absorbed L0 mechanics — there is no multi-operation kernel-fusion to
   de-fuse, so the fusion rotation is degenerate. The signature is identical to L1; the rotation
   L2 → L1 is identity-in-form on the primitive (what little the L2 layer un-does is at the
-  representation implementation, captured by the L2>L1 lowering theme — not in the signature).
+  representation implementation, captured by the §"Downward to L1" in-line note — not in the signature).
 
 The two layers' entries are value-thread-isomorphic on the primitive itself, sharing
 signature, algebraic laws (six), non-laws (four, including the load-bearing exact-vs-approximate
@@ -399,11 +372,10 @@ lowers to the L1 rank-1 realization `LinearOperator[N, N] -> Tensor[N]` (the con
 dof-vector length), same
 `assemble_diagonal A = diag(A)` extraction (`result[i] = Aᵢᵢ`), same intrinsic-square (range
 group ≡ domain group) precondition, same opaque-`LinearOperator` representation-axis absorption, same six laws + four
-non-laws. The vocabulary does not shift across the edge, so per the 2026-06-01 vocabulary-shift
-redirect this is recorded **as this in-line note, NOT as a dedicated L2>L1 theme** (the former
-`assemble-diagonal-leaf-identity.md` theme, demoted cycle-050).
+non-laws. The vocabulary does not shift across the edge, so this is recorded **as this
+in-line note, NOT as a dedicated L2>L1 theme**.
 
-There is **no fold-parent**: unlike the cycle-041 BLAS-1 floors (`dot` leaf-of `inner_product`,
+There is **no fold-parent**: unlike the BLAS-1 floors (`dot` leaf-of `inner_product`,
 `scal` member-of `linear_combination`), `assemble_diagonal` is the operator-to-data sibling of
 `apply_linop`, belonging to no fold cohort, so there is nothing to defer fusion to. The L2 layer's
 defining work — kernel-fusion de-fusion — is **degenerate** here: the operator-to-data boundary
@@ -436,40 +408,34 @@ non-tensor-basis case) — all transitive through the L1 home.
 
 The L2 form is value-thread-isomorphic to the L1 form (identity-in-form on the primitive's
 signature); all L0 evidence is transitive through the firm L1 leaf. Direct citations relevant
-to this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified via
-`tools/citecheck/citecheck.py --anchor` this invocation):
+to this L2 entry (paths relative to `reference/palace/`):
 
 - [`book/src/L1/assemble-diagonal.md`](../L1/assemble-diagonal.md) (firm) — authoritative on
   the Palace surface, the signature, the six algebraic laws (inherited unchanged at L2), the
   four non-laws (inherited unchanged, including the load-bearing exact-vs-approximate caveat),
   the variant axes (one orthogonal + one absorbed, inherited unchanged), and the complete L0
   evidence list.
-- [`book/src/L3/assemble-diagonal.md`](../L3/assemble-diagonal.md) (firm cycle-037) — the L3
+- [`book/src/L3/assemble-diagonal.md`](../L3/assemble-diagonal.md) (firm) — the L3
   consumer this floor goes under; the iteration-rotation rendering whose adjacent L2 parent
   this entry supplies; the operator-to-data sibling of [`L3/apply_linop`](../L3/apply_linop.md).
 - [`book/src/L2/index.md`](./index.md) §"Identity-in-form BLAS-1 floors" — the floor cohort
-  and the foundation-first directive `l2-floor-under-l3-leaf-cohort` this entry extends to the
-  operator-to-data primitive.
-- [`book/src/L2/dot.md`](./inner_product.md#specializations) (firm cycle-041) — the structural precedent: a thin
+  this entry extends to the operator-to-data primitive.
+- [`book/src/L2/dot.md`](./inner_product.md#specializations) (firm) — the structural precedent: a thin
   identity-in-form L2 floor entry. (`dot` is leaf-of a fold; this entry is fork-independent —
   the differences are noted in § "No fold-parent".)
 - `palace/linalg/operator.cpp:25-28` — `ComplexOperator::AssembleDiagonal` base
   `MFEM_ABORT("Base class ComplexOperator does not implement AssembleDiagonal!")` (the
   partial-domain non-axis; the operator's L2 domain is the diagonal-capable subclasses).
-  **Self-verified (anchor `MFEM_ABORT` at :27).**
 - `palace/linalg/operator.cpp:85-96` — `ComplexWrapperOperator::AssembleDiagonal`
   (`diag = 0.0; if (Ar) Ar->AssembleDiagonal(diag.Real()); if (Ai)
   Ai->AssembleDiagonal(diag.Imag());`) — witnesses laws 2 and 6 (sum / complex
-  real-imag-split linearity) and the `diag = 0.0` zero-init. **Self-verified (anchor
-  `ComplexWrapperOperator::AssembleDiagonal` at :85).**
+  real-imag-split linearity) and the `diag = 0.0` zero-init.
 - `palace/linalg/hypre.cpp:85-89` — `HypreCSRMatrix::AssembleDiagonal`
   (`hypre_CSRMatrixExtractDiagonal` at `:88`) — the **exact** sparse-CSR diagonal read.
-  **Self-verified (anchor `hypre_CSRMatrixExtractDiagonal` at :88).**
 - `palace/fem/libceed/operator.cpp:120` — `MFEM_VERIFY(diag.Size() == height, ...)` (the
   square precondition, matrix-free path); `:139` — `CeedOperatorLinearAssembleAddDiagonal`
   (the matrix-free element-local accumulating assembly; the source of the high-order-Nedelec
-  approximation). **Self-verified (anchors `diag.Size() == height` at :120,
-  `CeedOperatorLinearAssembleAddDiagonal` at :139).**
+  approximation).
 - `palace/linalg/rap.cpp:165-166` — `MFEM_VERIFY(&trial_fespace == &test_fespace, "Diagonal
   assembly is only available for square ParOperator!")` (the square precondition, AMR path;
   predicate at `:165`, message string at `:166`); `:163-164` — the AMR `|P|ᵀ dₗ`
@@ -477,20 +443,18 @@ to this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified
   `hP->AbsMultTranspose(1.0, lx, 0.0, diag)` (the abs-prolongation assembly); `:184-190` — the
   Dirichlet `DiagonalPolicy` `DIAG_ONE` / `DIAG_ZERO` BC post-step; `:467-479` —
   `ComplexParOperator::AssembleDiagonal` (complex parallel real-imag-split assembly; witnesses
-  law 6). **Self-verified (anchors `trial_fespace == &test_fespace` at :165,
-  `ComplexParOperator::AssembleDiagonal` at :467; convergent-diagonal note + `AbsMultTranspose`
-  at :174 + BC policy on-disk-confirmed).**
+  law 6).
 - `palace/linalg/jacobi.cpp:75-82` — `JacobiSmoother::SetOperator`'s `op.AssembleDiagonal(dinv);
   dinv.Reciprocal();` (the diagonal-preconditioner-apply consumer chain; `AssembleDiagonal` at
-  `:79`). **Self-verified (anchor `AssembleDiagonal` at :79).**
+  `:79`).
 - `palace/linalg/jacobi.hpp:15-16` — the Palace comment naming the matrix-free **approximate**
   diagonal ("...allows for (approximate) diagonal construction for matrix-free operators.") —
   the load-bearing caveat at the consumer.
 - `palace/linalg/chebyshev.cpp:170-178` — `ChebyshevSmoother::SetOperator`'s identical
   `op.AssembleDiagonal(dinv); dinv.Reciprocal();` setup (second consumer code path;
-  `AssembleDiagonal` at `:177`). **Self-verified (anchor `AssembleDiagonal` at :177).**
+  `AssembleDiagonal` at `:177`).
 - `test/unit/test-libceed.cpp:343-376` — the diagonal-assembly test: confirms `AssembleDiagonal`
   reproduces the assembled-matrix diagonal to `rtol = 1.0e-12` in general, relaxing `rtol` to
   `1.0` exactly for high-order 3D Nedelec non-tensor-basis spaces (`:367-376`) — the
   test-witnessed load-bearing approximation. L0-equivalent semantic documentation per CLAUDE.md
-  §"Tests as semantic supplement". **Self-verified (anchor `rtol` at :371,:375).**
+  §"Tests as semantic supplement".

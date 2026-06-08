@@ -63,10 +63,9 @@ inherited verbatim from the L2 [`deflate`](../L2/deflate.md) entry (`book/src/L2
   `lu_solve(XᴴX, c)` directly (a future linear-EVP deflation path, a preconditioner deflation, or a
   ROM Galerkin projection using the Gram inverse without the `S = λI − H` Schur wrapping). Until
   such a site is dissected, the Galerkin-core fan-down stays constructive and this theme stays
-  `partly-constructive`. Should `deflate` be scoped to the NLEPS Schur form only (a
-  `same-layer-cross-cutter` call, not this dispatch's), this theme would become `firm` on positive
-  structure with the Galerkin-core fan-down demoted to a literature note. **This theme does not make
-  that call and does not close the gate.**
+  `partly-constructive`. Should `deflate` be scoped to the NLEPS Schur form only, this theme would
+  become `firm` on positive structure with the Galerkin-core fan-down demoted to a literature note.
+  **This theme does not make that call and does not close the gate.**
 
 The promotion condition closes the *whole-theme* gate; the firm Schur-form fan-down is already firm
 and not blocked by it (per the CLAUDE.md `partly-constructive` invariant: the structural
@@ -277,10 +276,9 @@ silently assumes `XᴴX = I` and changes the algorithm ([`deflate`](../L2/deflat
 orthogonality non-law). They share Stages 1, 4, 5 (the `dot` extraction, the `X·` back-projection,
 the `axpy` subtraction); they differ at Stages 2–3.
 
-## Verified-against
+## Evidence
 
-All ranges `read_range`-verified via the `palace-codemap` MCP this dispatch (paths relative to
-`reference/`):
+L0 evidence ranges (paths relative to `reference/`):
 
 - `palace/linalg/nleps.cpp:505-537` — the positive `deflated_solve` block; the complete fan-down
   target. `auto deflated_solve =` at `:505`; closing `};` at `:537`.
@@ -313,124 +311,18 @@ All ranges `read_range`-verified via the `palace-codemap` MCP this dispatch (pat
   `Sv2 = S.fullPivLu().solve(v2)` at `:665`, `XSv2 = MatVecMult(X, Sv2)` at `:666`,
   `XSSv2 = MatVecMult(X, S.fullPivLu().solve(Sv2))` at `:667`) — Stages 3+4 reused with carried
   coordinates (no fresh Stage-1 `dot`).
-- `book/src/L2/deflate.md` (partly-constructive, this cycle) — the LHS L2 composition: signature
+- `book/src/L2/deflate.md` (partly-constructive) — the LHS L2 composition: signature
   (`:55-66`), coordinate-solve body (`:96-109`), semantics points 1–3 (`:146-169`), laws (`:171-246`),
   over-unification guard (`:248-276`), variant axes (`:326-360`), Status (`:362-415`).
-- `book/src/L1/lu_solve.md` (firm, cycle-022) — Stage 3 leaf: invertibility precondition (`:45`),
+- `book/src/L1/lu_solve.md` (firm) — Stage 3 leaf: invertibility precondition (`:45`),
   full-pivot kernel (`:47, :63`), RHS-linearity (`:56`), multi-RHS column-wise (`:58`),
   solve-composition (`:59`).
 - `book/src/L1/dot.md:43` — Stage 1 leaf: the arg-1-conjugated `⟨x,y⟩ = xᴴ y` convention.
-- `book/src/L2/gram.md` (firm, cycle-022) — Stage 2 leaf: the `XᴴX` builder (consumed whole; its own
+- `book/src/L2/gram.md` (firm) — Stage 2 leaf: the `XᴴX` builder (consumed whole; its own
   fan-down is `gram-fold-specialization`).
-- `book/src/L2/linear_combination.md` (firm, cycle-018) — Stage 4 leaf: the `X·y` back-projection
+- `book/src/L2/linear_combination.md` (firm) — Stage 4 leaf: the `X·y` back-projection
   fold (`MatVecMult` = length-`k` linear combination).
-- `book/src/L2-L1/orthogonalize-composition-lowering.md` (firm, cycle-019) — the related-but-distinct
+- `book/src/L2-L1/orthogonalize-composition-lowering.md` (firm) — the related-but-distinct
   Gram-Schmidt projector fan-down (over-unification guard, inherited).
-- `book/src/L1/nleps_deflated_residual.md` (firm, cycle-022) — the consumer reusing Stages 3+4 on a
+- `book/src/L1/nleps_deflated_residual.md` (firm) — the consumer reusing Stages 3+4 on a
   residual (`:60` non-orthonormal-basis fact; `:109` over-unification guard from the other direction).
-
-## Working notes (reverse-direction lifting; NOT chapter content)
-
-- **Lift L1→L2 (how the source block lifts to the named composition).** The source's fused Stage
-  3+4 expression (`:535`) is the first thing the lift must un-fuse: recognising `MatVecMult(X,
-  S.fullPivLu().solve(x2))` as `linear_combination ∘ lu_solve` rather than a monolithic op is the
-  load-bearing lift step. The `SS` buffer name aliasing (Gram, then Schur-modified Gram) at
-  `:524`→`:533` is the second: the lift must track that `SS` holds *two distinct L2 values* across
-  the in-place overwrite. Both are working-notes observations about the reverse direction; the
-  formal chapter narrates only forward (high→low).
-- **Galerkin-core promotion watch.** The promotion gate (positive bare-Gram-solve site) is the SAME
-  gate as the L2 entry's — this theme does not introduce a second gate. When a future linear-EVP /
-  preconditioner / ROM-Galerkin deflation site is dissected and exhibits `lu_solve(XᴴX, c)`
-  positively, BOTH the L2 entry and this theme promote together (a lowering-verifier UNBLOCK +
-  follow-up ENACT, per the partly-constructive promotion checklist). Recorded as OQ below.
-
-```yaml
-verified_against:
-  - citation: palace/linalg/nleps.cpp:505-537
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: firm Schur-form fan-down; every Stage 0-5 anchor zero-drift (citecheck --anchor)
-  - citation: palace/linalg/nleps.cpp:508-513
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: source block-elimination comment; :512 Schur complement, :513 back-projection
-  - citation: palace/linalg/nleps.cpp:515-518
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: Stage 0 k==0 short-circuit
-  - citation: palace/linalg/nleps.cpp:519-523
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: Stage 1 dot-fold; decisive :522 zero-drift
-  - citation: palace/linalg/nleps.cpp:524-531
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: Stage 2 Gram build; :524 materialization, :529 assignment zero-drift; SS buffer-aliasing confirmed
-  - citation: palace/linalg/nleps.cpp:532
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: Stage 3 Schur block S = eig_opInv*I - H
-  - citation: palace/linalg/nleps.cpp:533
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: Stage 3 multi-RHS solve SS = -S^-1(XHX) (lu_solve law 4)
-  - citation: palace/linalg/nleps.cpp:534
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: Stage 3 single-RHS solve c' = SS^-1 c
-  - citation: palace/linalg/nleps.cpp:535
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: Stage 3+4 fused MatVecMult(X, S^-1 c'); L2 un-fuse faithful
-  - citation: palace/linalg/nleps.cpp:536
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: Stage 5 in-place AXPY(-1, XSx2, x1)
-  - citation: palace/linalg/nleps.cpp:329-347
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: MatVecMult back-projection primitive (:329 sig, :347 close)
-  - citation: palace/linalg/nleps.cpp:354-362
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: literature anchors (Jarlebring-Koskela-Mele 2018 :354, SLEPc-NEP minimality :356, Effenberger 2013 :357)
-  - citation: palace/linalg/nleps.cpp:606-619
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: non-orthonormal precondition; only Norml2-normalization at :610-611, no orthonormalization
-  - citation: palace/linalg/nleps.cpp:562-563
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: residual-site reuse of Stages 3+4 (still Schur-wrapped)
-  - citation: palace/linalg/nleps.cpp:664-667
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: Jacobian reuse of Stages 3+4 with carried coordinates (still Schur-wrapped)
-  - citation: book/src/L2/deflate.md:343-348
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: negative anchor (no bare-Gram solve in Palace) re-confirmed complete by exhaustive *.cpp dense-solve search
-  - citation: book/src/L1/dot.md:43
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: arg-1-conjugated dot convention pinned at Stage 1
-  - citation: book/src/L1/lu_solve.md:58
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: multi-RHS column-wise law 4 (witnessed :533)
-  - citation: book/src/L1/lu_solve.md:59
-    verdict: supports
-    audited_at: 2026-05-29T15:19:15Z
-    note: solve-composition law 5 (witnessed nested :533-534)
-gate_verdict:
-  shared_gate: bare-Galerkin-core-positive-source-site
-  status: stays-gated-correctly
-  audited_at: 2026-05-29T15:19:15Z
-  finding: >-
-    Exhaustive codemap search of every dense .solve()/.inverse()/LU/LDLT/QR/Cholesky
-    site in palace/*.cpp found NO unwrapped bare-Gram (XHX)^-1 deflation solve. The
-    one near-candidate romoperator.cpp:757-765 solves against Ar = V^H A V (ROM-projected
-    system operator pencil, per romoperator.cpp:74 + :729-734), NOT a Gram matrix.
-    Negative anchor correct AND complete; NLEPS-scoped is acceptable; partly-constructive
-    correctly held across all 3 shared references.
-```

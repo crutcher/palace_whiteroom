@@ -5,10 +5,7 @@ rank: firm
 edges:
   depends-on:
     - L1/dot
-    # Per the c108 §5 L1-op→theme grounding convention, a firm L1 operator's L1>L0 lowering
-    # theme is a blocking depends-on (kind: lowers-to), routing liveness DOWN to the theme.
-    # The theme `nrm2-mutation-rotation` is firm (rank 3), so rank(op=3) ≤ rank(theme=3) holds.
-    - kind: lowers-to
+    - kind: lowers-to        # the L1>L0 mutation-rotation theme
       target: L1-L0/nrm2-mutation-rotation
 ---
 
@@ -77,7 +74,7 @@ Laws that explicitly **do not** hold:
 
 ## Dependencies
 
-- [`dot`](./dot.md) (firm, cycle-002) — `nrm2(x) = √dot(x, x)`. The dependency is direct and complete: the L0 source defines `Norml2` as a one-line composition `std::sqrt(std::abs(Dot(comm, x, x)))`. At L1 this is the **only** L1 operator that `nrm2` depends on; the outer `sqrt` and `abs` are scalar operations below the L1 layer's resolution (deterministic IEEE-754 primitives).
+- [`dot`](./dot.md) (firm) — `nrm2(x) = √dot(x, x)`. The dependency is direct and complete: the L0 source defines `Norml2` as a one-line composition `std::sqrt(std::abs(Dot(comm, x, x)))`. At L1 this is the **only** L1 operator that `nrm2` depends on; the outer `sqrt` and `abs` are scalar operations below the L1 layer's resolution (deterministic IEEE-754 primitives).
 
 Not a leaf — but only one level removed. The fact that `nrm2` factors so cleanly through `dot` is exactly the kind of compositional structure the L1 layer is meant to expose; the L0 form makes the composition syntactically explicit (one line of source), and the L1 form names it as the defining identity (algebraic law 8).
 
@@ -97,10 +94,6 @@ No other variant axes at L1:
 - **B-weighting**: not a variant of `nrm2` — it is a distinct operator (operator-weighted norm, `‖x‖_B = √(xᴴ B x)`) with its own L1 entry forthcoming. The L0 surface uses the same overloaded name `linalg::Norml2`, but the algebraic structure differs (requires an external `B`-application primitive, requires an SPD precondition on `B`, the workspace `Bx` is a load-bearing buffer at L0 even though it's pure at L1).
 - **Stability variants**: BLAS-style scaled-summation `nrm2` (which avoids overflow/underflow at the cost of extra arithmetic) is **not present** in Palace's `linalg::Norml2` — Palace uses the naive `√⟨x,x⟩` form. If scaling matters for a specific algorithm, that is a caller-side concern (no Palace use site is known to scale before calling `Norml2`); not a variant axis of the L1 operator.
 
-## Status
-
-`firm` — signature is canonical and tightly constrained by the one-line L0 definition, evidence is direct from `palace/linalg/vector.hpp:255-260`, and the algebraic laws listed are standard properties of the Euclidean norm induced by a Hermitian inner product (modulo the explicitly-recorded floating-point caveats inherited from `dot`).
-
 ## L1 vs L0 distinction
 
 - **L0**: free-function `linalg::Norml2(MPI_Comm, x)` (does `Dot` + `MPI_Allreduce` + `std::abs` + `std::sqrt`), method-form `Vector::Norml2()` (real, no MPI), or wrapper `ErrorIndicator::Norml2(comm)`. The B-weighted overload `Norml2(comm, x, B, Bx)` is a separately-named operator at L0 sharing the same symbol via overloading. The `std::abs` outer guard is present to defend against round-off-induced sub-zero `dot(x,x)` values.
@@ -118,4 +111,4 @@ No other variant axes at L1:
 - `palace/linalg/nleps.cpp:114, 118, 147, 610, 820` — nonlinear-EVP residual norms; B-weighted at l.114; plain at l.118; relative residual at l.147 (`GetResidualNorm(...) / linalg::Norml2(comm, x1)`); scale-extraction for normalisation at l.610; final residual norm at l.820.
 - `palace/linalg/slepc.cpp:475, 479, 507, 834, 976, 1329, 1776` — SLEPc Arnoldi residual norms (B-weighted and plain), confirming `nrm2` is the primary residual-norm primitive across all three eigensolver backends (ARPACK, SLEPc, NLEPS).
 - `test/unit/test-vector.cpp:209-211` — direct test: `double norm1 = vec1.Norml2(); CHECK_THAT(norm1, WithinRel(std::sqrt(14.0)));` for `vec1 = (1, 2, 3)`. Confirms `nrm2((1,2,3)) = √14` and confirms the return type is `double` (real) for real inputs. L0-equivalent semantic documentation per CLAUDE.md "Tests as semantic supplement".
-- Cycle-002 firm `dot` entry at `book/src/L1/dot.md` — provides laws 4 and 9 (Hermitian self-dot is non-negative real) on which `nrm2`'s real-valued result and positivity depend.
+- Firm `dot` entry at `book/src/L1/dot.md` — provides laws 4 and 9 (Hermitian self-dot is non-negative real) on which `nrm2`'s real-valued result and positivity depend.

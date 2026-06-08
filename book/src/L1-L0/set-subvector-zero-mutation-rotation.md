@@ -1,8 +1,7 @@
 ---
-# Lowering theme. Per graded-stack scheme §5: a theme's rank = min(endpoint ranks);
-# the lowering edge is a depends-on on BOTH endpoints. L1 endpoint is firm (rank 3,
-# c104); the L0 endpoint is rank-terminal ground truth. So this theme is firm (rank 3)
-# and rank(theme) ≤ min(endpoints) holds for free.
+# Lowering theme. Theme rank = min(endpoint ranks); the lowering edge is a depends-on on BOTH
+# endpoints. L1 endpoint is firm, the L0 endpoint is rank-terminal ground truth, so this theme
+# is firm.
 rank: firm
 edges:
   depends-on:
@@ -124,7 +123,7 @@ theme lowers). This grounds the L1 §Semantics "the whole complex dof is zeroed"
 
 The `s = 0.0` call form appears ~40× across the solver surface; each is an L0 surface witness of
 the same projector-application lowering. Representative cohort (all positively cited under
-*Verified-against*):
+*Evidence*):
 
 - `palace/linalg/divfree.cpp:173` — `linalg::SetSubVector(rhs, *bdr_tdof_list_M, 0.0);` — zero
   the H1 RHS on the boundary true-dofs before the inner `ksp->Mult(rhs, psi)`. Consumed by
@@ -215,125 +214,44 @@ absorbed by L0 template specialization. This is a clean syntactic-identity mutat
 ## Speculative L1 operators
 
 **None.** This theme lowers an already-firm L1 leaf
-([`L1/set_subvector_zero`](../L1/set_subvector_zero.md), landed c104); it proposes no new L1
+([`L1/set_subvector_zero`](../L1/set_subvector_zero.md)); it proposes no new L1
 vocabulary. A speculative `set_subvector(x, idx, s)` general index-set scalar-set (the `s ≠ 0`
 parent shape) is named in [`L1/set_subvector_zero`](../L1/set_subvector_zero.md) §Variant axes /
 §Context as the parent primitive (with the `s = 1.0` anchors `rap.cpp:186`,
 `waveportoperator.cpp:73`), but it is recorded as the parent shape, not authored here — it is a
 distinct (non-zeroing) operator and out of this theme's scope.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `tools/citecheck/citecheck.py --anchor` this invocation,
-plus a direct on-disk Read of the body close-brace boundaries `:474` / `:492` per the FE-source
-close-brace END-line guard):
+L0 evidence ranges:
 
 - `palace/linalg/vector.hpp:220-221` — the declaration
   `template <typename VecType> void SetSubVector(VecType &x, const mfem::Array<int> &rows,
   double s);` + doc-comment "Sets all entries of the vector corresponding to the given indices
-  to the given (real) value". Citecheck `--anchor 'SetSubVector'` → line 221, in-range
-  (zero-drift). The signature anchor.
+  to the given (real) value". The signature anchor.
 - `palace/linalg/vector.cpp:461-474` — the **real** body `SetSubVector(Vector &x, const
   mfem::Array<int> &rows, double s)`: `x.ReadWrite(use_dev)` destination `:467`, `rows.Read`
   gather `:466`, `forall_switch` `:468`, per-index write `X[id] = sr` `:472`. The `s = 0.0` case
-  is the zeroing. Citecheck `--anchor 'SetSubVector(Vector &x'` → line 461; `--anchor 'X[id] =
-  sr'` → line 472. Close brace `}` confirmed at `:474` by direct on-disk Read.
+  is the zeroing.
 - `palace/linalg/vector.cpp:476-492` — the **complex** body
   `SetSubVector(ComplexVector &x, const mfem::Array<int> &rows, double s)`: two-buffer threading
   `XR`/`XI` `:483-484`, per-index writes `XR[id] = sr` `:489` AND `XI[id] = 0.0` `:490`. Grounds
-  the whole-complex-dof zeroing. Citecheck `--anchor 'SetSubVector(ComplexVector &x'` → line 477
-  (in-range); `--anchor 'XR[id] = sr'` → line 489; `--anchor 'XI[id] = 0.0'` → line 490. Close
-  brace `}` confirmed at `:492` by direct on-disk Read.
+  the whole-complex-dof zeroing.
 - `palace/linalg/divfree.cpp:173` — `linalg::SetSubVector(rhs, *bdr_tdof_list_M, 0.0);` — the
-  divfree-projector use-site (Sub-pattern C). Confirmed via codemap read_range.
+  divfree-projector use-site (Sub-pattern C).
 - `palace/linalg/gmg.cpp:194` — `linalg::SetSubVector(X[l - 1], *dbc_tdof_lists[l - 1], 0.0);` —
-  the geometric-multigrid restriction-residual zeroing (Sub-pattern C). (Carried from the L1
-  entry's self-verified Evidence block, c104.)
+  the geometric-multigrid restriction-residual zeroing (Sub-pattern C).
 - `palace/linalg/distrelaxation.cpp:114` — `linalg::SetSubVector(x_G, *dbc_tdof_list_G, 0.0);` —
-  distributive-relaxation aux-correction zeroing (Sub-pattern C; also `:143`). (Carried from L1
-  entry, c104.)
+  distributive-relaxation aux-correction zeroing (Sub-pattern C; also `:143`).
 - `palace/models/spaceoperator.cpp:945` — `linalg::SetSubVector(RHS, nd_dbc_tdof_lists.back(),
-  0.0);` — driven per-ω assembled-RHS clean (Sub-pattern C; also `:959,:1031`). (Carried from L1
-  entry, c104.)
+  0.0);` — driven per-ω assembled-RHS clean (Sub-pattern C; also `:959,:1031`).
 - `palace/linalg/rap.cpp:186` — `linalg::SetSubVector(diag, dbc_tdof_list, 1.0);` — a **non-zero**
   scalar-set call (the parent general-scalar-set shape this theme's `s = 0.0` specialization sits
-  under; recorded to ground the zeroing-vs-general distinction in §Applicability cond. 4 and
-  §Speculative). (Carried from L1 entry, c104.)
-- `book/src/L1/set_subvector_zero.md` — the firm c104 L1 operator this theme lowers (the LHS
+  under; grounds the zeroing-vs-general distinction in §Applicability cond. 4 and §Speculative).
+- `book/src/L1/set_subvector_zero.md` — the firm L1 operator this theme lowers (the LHS
   endpoint; `depends-on kind: lowers-to`).
 
-```yaml
-verified_against:
-  - citation: palace/linalg/vector.hpp:220-221
-    verdict: supports
-    audited_at: 2026-06-05T092016Z
-    note: template SetSubVector(VecType, rows, double s) declaration + doc-comment; citecheck --anchor 'SetSubVector' -> line 221 in-range, zero-drift.
-  - citation: palace/linalg/vector.cpp:461-474
-    verdict: supports
-    audited_at: 2026-06-05T092016Z
-    note: real SetSubVector(Vector, rows, double s) body; anchor 'SetSubVector(Vector &x' -> :461; X[id]=sr (sr=0 zeroing) -> :472; ReadWrite destination :467; rows.Read gather :466; close brace } confirmed on-disk at :474.
-  - citation: palace/linalg/vector.cpp:476-492
-    verdict: supports
-    audited_at: 2026-06-05T092016Z
-    note: complex SetSubVector(ComplexVector, rows, double s) body; anchor 'SetSubVector(ComplexVector &x' -> :477; XR[id]=sr -> :489; XI[id]=0.0 (literal, whole-dof zero) -> :490; two-buffer XR/XI :483-484; close brace } confirmed on-disk at :492.
-  - citation: palace/linalg/divfree.cpp:173
-    verdict: supports
-    audited_at: 2026-06-05T092016Z
-    note: SetSubVector(rhs, *bdr_tdof_list_M, 0.0) divfree RHS boundary-zeroing use-site (Sub-pattern C); confirmed via codemap read_range.
-  - citation: palace/linalg/gmg.cpp:194
-    verdict: supports
-    audited_at: 2026-06-05T092016Z
-    note: SetSubVector(X[l-1], *dbc_tdof_lists[l-1], 0.0) gmg restriction-residual zeroing (Sub-pattern C); carried self-verified from L1/set_subvector_zero Evidence (c104).
-  - citation: palace/linalg/distrelaxation.cpp:114
-    verdict: supports
-    audited_at: 2026-06-05T092016Z
-    note: SetSubVector(x_G, *dbc_tdof_list_G, 0.0) distrelaxation aux-correction zeroing (Sub-pattern C); carried self-verified from L1 entry (c104).
-  - citation: palace/models/spaceoperator.cpp:945
-    verdict: supports
-    audited_at: 2026-06-05T092016Z
-    note: SetSubVector(RHS, nd_dbc_tdof_lists.back(), 0.0) driven per-omega RHS clean (Sub-pattern C, also :959/:1031); carried from L1 entry (c104).
-  - citation: palace/linalg/rap.cpp:186
-    verdict: supports
-    audited_at: 2026-06-05T092016Z
-    note: SetSubVector(diag, dbc_tdof_list, 1.0) NON-zero scalar-set — the parent general index-set scalar-set shape this s=0.0 theme specializes; grounds zeroing-vs-general distinction; carried from L1 entry (c104).
-  - citation: book/src/L1/set_subvector_zero.md
-    verdict: positive-cross-reference
-    audited_at: 2026-06-05T092016Z
-    note: the firm c104 L1 operator this theme lowers (LHS endpoint; depends-on kind lowers-to).
-```
-
-## Status
-
-`firm` — the rewrite is the structural expansion of the L1 pure-functional diagonal projector
-`Z_idx = I − P_idx` into its L0 in-place receiver-argument zeroing surface, exhaustively pinned
-by direct, self-verified positive evidence: the two `double`-valued `SetSubVector` bodies read in
-full (real `vector.cpp:461-474` with the per-index write `X[id] = sr` at `:472`; complex
-`:476-492` with `XR[id] = sr` `:489` and `XI[id] = 0.0` `:490`), the declaration
-`vector.hpp:220-221`, and the ~40-site `s = 0.0` consumer cohort (divfree `divfree.cpp:173`, gmg
-`gmg.cpp:194`, distrelaxation `distrelaxation.cpp:114,143`, spaceoperator
-`spaceoperator.cpp:945,959,1031`). Every claim is a **syntactic identity on fully-specified
-positive source** — the L0 kernel writes the literal projector definition verbatim, with no
-literature inference and no negative-anchor reconstruction, so `firm` rather than
-`partly-constructive`.
-
-Per the firm-on-positive-structure precedent (the BLAS-1 leaf thin-themes
-[`scal-mutation-rotation`](./scal-mutation-rotation.md),
-[`reciprocal-elementwise-product-mutation-rotation`](./reciprocal-elementwise-product-mutation-rotation.md),
-and the sibling BC operators), the absence of a dedicated `SetSubVector` unit test under
-`reference/palace/test/unit/` does **not** gate `firm`: the projector laws are syntactic
-identities, not iteration/convergence facts, so the missing test does not reduce
-law-confidence. Behaviour is exercised indirectly through the divfree / gmg / distrelaxation /
-driven consumer paths (Sub-pattern C). Hence `firm`, not `rough-in (test-coverage-bounded)`.
-
-**Well-foundedness (graded-stack rank invariant).** The theme's `depends-on` edges are: the L1
-source entry `L1/set_subvector_zero` (firm, rank 3, c104) via `kind: lowers-to`, and the L0
-sites via `kind: cites-evidence` (rank-terminal ground truth). Per the graded-stack §5
-lowering-theme rule, `rank(theme) = min(rank(L1-endpoint), rank(L0-endpoint)) = min(firm,
-terminal) = firm` (rank 3), and `rank(theme) ≤ min(endpoints)` holds for free. The L1 entry
-remains firm-grounded on its own positive L0 read (NOT on this theme — the lowering edge is a
-downward narration, not an upward rank-blocking dependency).
-
-**Caveats (not status reductions):**
+## Caveats
 
 - **Receiver-argument destination is a third destination-binding variant.** Unlike `scal`'s
   `*this` receiver (`x *= α`) or `apply_linop`'s separate `y` output-arg (`A.Mult(x, y)`), the
@@ -349,9 +267,6 @@ downward narration, not an upward rank-blocking dependency).
   `α == 1.0` skip.)
 - **No MPI collective at any layer.** Rank-local element-loops over disjoint dof-axis slices;
   MPI distribution out of scope per CLAUDE.md §Scope.
-- A `lowering-verifier` exhaustiveness audit (both element-type sub-patterns × the full `s = 0.0`
-  consumer cohort, confirming no consumer passes a non-zero scalar through this path) is the
-  standard follow-up, not a status reduction.
 
 ## Open questions / caveats
 
@@ -367,8 +282,6 @@ downward narration, not an upward rank-blocking dependency).
   no obstruction (the per-index writes are independent → the per-element form rotates directly to
   the global tensor-field form). That is a future L3 seed, annotated in-line in the L1 entry per
   the non-adjacent-identity-rotation convention; this L1>L0 theme does not author it.
-- **Consumer-theme edge retype.** [`divfree-projector-mutation-rotation`](./divfree-projector-mutation-rotation.md),
-  gmg, distrelaxation, and the driven RHS-clean themes (where authored) *use* this zeroing at
-  their BC-clean steps. With this theme landed, those consumer themes' references to the zeroing
-  become live-node references; an edge-retype follow-up (out of this one-theme scope) is flagged
-  for a future lifter/cross-cutter pass. (Same posture as the L1 entry's Dependencies note.)
+- **Consumer themes.** [`divfree-projector-mutation-rotation`](./divfree-projector-mutation-rotation.md),
+  gmg, distrelaxation, and the driven RHS-clean themes *use* this zeroing at their BC-clean steps;
+  their references to the zeroing resolve to this theme as a live node.

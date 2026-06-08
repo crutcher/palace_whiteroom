@@ -63,12 +63,7 @@ calls for (`book/src/semantics/index.md` §0.1; redirect §combinator-primary): 
 entries no longer each spell out "compute the residual, precondition it, add it back" — they
 state which `B` they plug into the shared step.
 
-The c121 D6 combinator-miner dispatch
-(`reports/2026-06-07T054924Z-combinator-miner-kernel-shared-substrate`) surfaced the pattern
-across the GMG / distributive-relaxation / Chebyshev / Jacobi sites and proposed the rough-in
-dep-map row (`book/src/L2/index.md:96`). This dispatch firms it.
-
-**Over-unification guards** (the explicit do-NOT-subsume boundary, carried from the c121 row):
+**Over-unification guards** (the explicit do-NOT-subsume boundary):
 
 - The **bare preconditioner apply** `Y = B·X` (e.g. the Jacobi `op.dinv ⊙ x` action read in
   isolation, [`jacobi-smoother`](./jacobi-smoother.md)) is NOT a `correction_step` — there is
@@ -183,7 +178,7 @@ is **`correction_step A (G·B_G·Gᵀ) x y`** — the conjugated `B` factored in
 (`Tᵀ`) ▷ inner-solve (`B'`) ▷ prolong (`T`). The coarse-grid correction (`gmg.cpp:189-200`:
 restrict residual `Pᵀ·R`, recurse `VCycle(l-1)`, prolong-and-add `Y += P·Y_{l-1}`) is the same
 shape with `T = P` and `B' = ` the recursive V-cycle solve. **This is why the one-operator form
-is sufficient** (settling the one-vs-two-operator OQ in the negative): the conjugated correction
+is sufficient**: the conjugated correction
 is a *choice of `B`*, closed under the LinOp interface — `T·B'·Tᵀ` is itself a LinOp — so no
 distinct `conjugated_correction_step` operator is needed. The conjugation is a specialization
 NOTE (law 6), not a second combinator.
@@ -200,8 +195,7 @@ being smoothed (equivalently `A = I` and there is no external `x`); the projecto
 gradient part of its own input. Annotated here as a borderline specialization NOTE so a reader
 sees the structural kinship, but `divfree-projector` is **kept out of the core `correction_step`
 roster** (it is a complementary-projector gate in its own right — firm
-[`L2/divfree-projector`](./divfree-projector.md)). Settles
-`correction-step-divfree-projector-borderline-7th-instance` in the negative.
+[`L2/divfree-projector`](./divfree-projector.md)).
 
 ## Algebraic laws
 
@@ -346,76 +340,42 @@ Absorbed:
 - **operator-representation** (`sparse-CSR | matrix-free-Nedelec | parallel-wrapped`) —
   collapsed into `A` and `B` at setup, via the operators' own representation-axis absorption.
 
-## Status
-
-`firm` — the combinator is a direct transcription of the residual-correction body Palace names
-**verbatim** at four positive source sites (`gmg.cpp:176`, `distrelaxation.cpp:104`,
-`chebyshev.cpp:193`, `chebyshev.cpp:264`), each spelling the contract `y + B·(x − A·y)` in the
-source's own comment AND realizing it with the all-linear-primitive body
-(`apply_linop` + `linalg::AXPBY`). The six algebraic laws are syntactic identities on that
-positive structure (linearity in `(x,y)` and in `B`; fixed-point at the exact solution; the
-zero-guess degeneracy; the exact-inverse one-step solve; the conjugation closure); the non-laws
-(step non-idempotence / `pc_it` sequentiality, stage non-commutativity, representation-dependent
-bit-determinism) are catalogued explicitly. The two parametric + two absorbed variant axes are
-exhaustive.
-
-**Firm-on-positive-structure.** No dedicated `test-correction-step.cpp` exists, and none is
-needed: every law is a syntactic identity readable straight off fully-present positive source —
-the contract comments name the algebra, the bodies realize it with named L1 primitives — not a
-literature-inferred convergence claim. (The *convergence* of the iterated step is the consumer's
-fold's property, gated at the smoother / V-cycle entries; the *step* itself is firm operator
-algebra.) This matches the `apply_linop` / `jacobi-smoother` / `chebyshev-iteration`
-firm-on-positive-structure precedents. Behaviour is exercised through every smoother integration
-path (the GMG / distributive-relaxation / Chebyshev / Jacobi consumers).
-
-Well-foundedness: both `depends-on` targets (`apply_linop`, `axpby`) are firm (rank 3); this
-node is firm (rank 3). The specialization edges to `jacobi-smoother` / `chebyshev-iteration` are
-`reference` (they cite this combinator as their entry; this combinator does not build-depend on
-them), so they do not constrain rank.
-
 ## Evidence
 
-Self-verified via `tools/citecheck/citecheck.py --anchor` against on-disk
-`reference/palace/palace/linalg/{gmg,distrelaxation,chebyshev,jacobi}.cpp`, 2026-06-07 (codemap
-`read_range` drifted +1 on the chebyshev comment lines; on-disk citecheck wins):
+Paths relative to `reference/palace/`:
 
 - `palace/linalg/gmg.cpp:174-176` — the V-cycle contract comment: "Important to note that the
   smoothers must respect the initial guess flag correctly (given X, Y, compute
-  **Y <- Y + B (X - A Y)**)." The verbatim `correction_step` contract. Self-verified — anchor
-  `Y <- Y + B (X - A Y)` at `:176`.
+  **Y <- Y + B (X - A Y)**)." The verbatim `correction_step` contract.
 - `palace/linalg/gmg.cpp:184-188` — the V-cycle pre-smooth `B[l]->Mult2(X, Y, R)` + residual
   `A[l]->Mult(Y, R); linalg::AXPBY(1.0, X, -1.0, R)` — the residual stage realized as
-  `apply_linop` ▷ `axpby`. Self-verified — anchor `AXPBY(1.0, X[l], -1.0, R[l])` at `:188`.
+  `apply_linop` ▷ `axpby`.
 - `palace/linalg/gmg.cpp:189-200` — coarse-grid correction (`B = P·B_c·Pᵀ`, law 6): restrict
   `RealMultTranspose(*P, R, X_{l-1})` (`:191`), recurse `VCycle(l-1)` (`:196`), prolong-and-add
-  `RealMult(*P, Y_{l-1}, R); Y += R` (`:199-200`). Self-verified — anchor `VCycle(l - 1, false)`
-  at `:196`.
+  `RealMult(*P, Y_{l-1}, R); Y += R` (`:199-200`).
 - `palace/linalg/distrelaxation.cpp:104` — the distributive sweep contract comment
-  "**y = y + B (x - A y)**" (the pre-smoother `B` leg). Self-verified — anchor at `:104`.
+  "**y = y + B (x - A y)**" (the pre-smoother `B` leg).
 - `palace/linalg/distrelaxation.cpp:108-117` — the conjugated auxiliary leg comment
   "**y = y + G B_G Gᵀ (x - A y)**" (`:108`) + body: residual `A->Mult(y,r); AXPBY(1.0, x, -1.0,
   r)` (`:109-110`), restrict `RealMultTranspose(*G, r, x_G)` (`:111`), inner-solve
   `B_G->Mult2(x_G, y_G, r_G)` (`:116`), prolong-add `RealAddMult(*G, y_G, y)` (`:117`) —
-  `correction_step A (G·B_G·Gᵀ) x y` (law 6, `T = G`). Self-verified — anchor `y = y + G B_G` at
-  `:108`.
+  `correction_step A (G·B_G·Gᵀ) x y` (law 6, `T = G`).
 - `palace/linalg/distrelaxation.cpp:102` — the consumer fold `for (int it = 0; it < pc_it;
   it++)` — the `pc_it`-sweep iterate_while driver above the step (NOT folded into the
-  combinator). Self-verified.
+  combinator).
 - `palace/linalg/chebyshev.cpp:193` — 4th-kind smoother sweep contract comment "Apply smoother:
-  **y = y + p(A) (x - A y)** ." — `correction_step A p_order(D⁻¹A) x y`. Self-verified — anchor
-  `y = y + p(A) (x - A y)` at `:193`.
+  **y = y + p(A) (x - A y)** ." — `correction_step A p_order(D⁻¹A) x y`.
 - `palace/linalg/chebyshev.cpp:196-199` — 4th-kind residual stage: `ApplyOp(*A, y, r);
-  linalg::AXPBY(1.0, x, -1.0, r)` (the `nonzero-guess` residual branch). Self-verified — anchor
-  `AXPBY(1.0, x, -1.0, r)` at `:199`.
+  linalg::AXPBY(1.0, x, -1.0, r)` (the `nonzero-guess` residual branch).
 - `palace/linalg/chebyshev.cpp:201-204` — the `zero-guess` degenerate branch
-  `else { r = x; y = 0.0; }` (law 4). Self-verified.
+  `else { r = x; y = 0.0; }` (law 4).
 - `palace/linalg/chebyshev.cpp:264` — 1st-kind smoother sweep contract comment "Apply smoother:
-  y = y + p(A) (x - A y) ." Self-verified — anchor `y = y + p(A) (x - A y)` at `:264`.
+  y = y + p(A) (x - A y) ."
 - `palace/linalg/chebyshev.cpp:270-271` — 1st-kind residual `ApplyOp(*A, y, r); AXPBY(1.0, x,
-  -1.0, r)`. Self-verified — anchor `AXPBY(1.0, x, -1.0, r)` at `:270`.
+  -1.0, r)`.
 - `palace/linalg/jacobi.cpp:90-93` — the Jacobi `B = ω·D⁻¹` slot setup (`dinv *= omega` at
   `:92`); the bare `B` apply is `jacobi-smoother`, consumed as the `B` slot of a
-  `correction_step` sweep. Self-verified — anchor `dinv *= omega` at `:92`.
+  `correction_step` sweep.
 - `book/src/L2/chebyshev-iteration.md` (firm) — the `B = p_order(D⁻¹A)` specialization; its sweep
   body §Semantics is `correction_step` with the polynomial filling the `B` slot.
 - `book/src/L2/jacobi-smoother.md` (firm) — the `B = ω·D⁻¹` (degree-zero, non-iterated)

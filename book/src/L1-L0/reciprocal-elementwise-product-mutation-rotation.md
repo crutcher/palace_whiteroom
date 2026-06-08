@@ -17,10 +17,9 @@ output argument for sub-pattern B). Sibling thin-theme to
 thin-theme; same one-theme-multiple-sub-patterns shape, but here the sub-patterns
 are *different L1 operators* sharing a destination-binding rewrite class, where
 the dot theme's sub-patterns were *different surface forms* of one operator).
-The composite framing follows the planner's recommended thin-theme decomposition
-(the two leaves co-occur in the same setup chain
-`assemble_diagonal → reciprocal → elementwise_product`, both witnessed line-for-line
-inside `JacobiSmoother::SetOperator` at `palace/linalg/jacobi.cpp:79-80,103`).
+The composite framing is a thin-theme decomposition: the two leaves co-occur in the same
+setup chain `assemble_diagonal → reciprocal → elementwise_product`, both witnessed
+line-for-line inside `JacobiSmoother::SetOperator` at `palace/linalg/jacobi.cpp:79-80,103`.
 
 ## Slug
 
@@ -90,7 +89,7 @@ cite Palace source, not vendored upstream." The behaviour is taken as given —
 elementwise `*x = 1/(*x)` in `ℝ` — and the lowering recognises the
 `x.Reciprocal()` Palace consumer-call as the L0 surface form of the L1
 `reciprocal(x)` operator. The four Palace consumer sites (cited under
-**Verified-against**) all use this aliased form on a real `Vector` or on a
+**Evidence**) all use this aliased form on a real `Vector` or on a
 complex `ComplexVector` — the dispatch is by static C++ type.
 
 #### A.2 — Complex path (Palace-defined, full closed-form)
@@ -449,39 +448,36 @@ inference and no negative-anchor reconstruction.
 
 **None.** This theme lowers two already-firm L1 leaves
 ([`L1/reciprocal`](../L1/reciprocal.md) and
-[`L1/elementwise_product`](../L1/elementwise_product.md), both landed
-cycle-033); it proposes no new L1 vocabulary. A speculative
+[`L1/elementwise_product`](../L1/elementwise_product.md)); it proposes no new L1
+vocabulary. A speculative
 `safe_reciprocal(x, ε)` operator with threshold zero-guard is named in
 [`L1/reciprocal`](../L1/reciprocal.md) §Variant axes (non-axes) as a future
 candidate but is not part of this theme — Palace has no zero-guarded
 kernel, so no L0 anchor exists. Open question
-`safe-reciprocal-threshold-l1-candidacy` (filed below) tracks it.
+`safe-reciprocal-threshold-l1-candidacy` tracks it.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `tools/citecheck/citecheck.py --anchor`
-this invocation against `reference/palace/palace/linalg/{vector,jacobi,operator}.{hpp,cpp}`):
+L0 evidence ranges:
 
 ### Sub-pattern A — `reciprocal` L0 anchors
 
 - `palace/linalg/vector.hpp:20` — `using Vector = mfem::Vector;` — the
-  real-path type alias. Self-verified.
+  real-path type alias.
 - `palace/linalg/vector.hpp:107` — `// Set all entries to their reciprocal.`
-  — complex method doc-comment. Self-verified.
+  — complex method doc-comment.
 - `palace/linalg/vector.hpp:108` — `void Reciprocal();` — complex method
-  declaration (void return, no args, mutating). Self-verified.
+  declaration (void return, no args, mutating).
 - `palace/linalg/vector.cpp:248-261` — `ComplexVector::Reciprocal()` body:
   signature `:248`, `use_dev` flag `:250`, `N = Size()` `:251`,
   `XR = Real().ReadWrite(use_dev)` `:252`, `XI = Imag().ReadWrite(use_dev)`
   `:253`, `forall_switch` kernel `:254-260` (`s = 1/(XR² + XI²)` at `:257`,
-  `XR *= s` at `:258`, `XI *= -s` at `:259`). Self-verified — anchor lit
-  'ComplexVector::Reciprocal' at line 248 within range 248-261.
+  `XR *= s` at `:258`, `XI *= -s` at `:259`).
 - `palace/linalg/jacobi.cpp:80` — primary consumer: `dinv.Reciprocal();`
   inside `JacobiSmoother<OperType>::SetOperator`, immediately after
-  `op.AssembleDiagonal(dinv)` at `:79`. Self-verified (the `SetOperator`
-  body at `:74-97` is verified in
-  `book/src/L1-L0/jacobi-smoother-mutation-rotation.md` Sub-pattern A; the
-  `Reciprocal()` call lives on line 80 of that body).
+  `op.AssembleDiagonal(dinv)` at `:79`. (The `SetOperator` body at `:74-97`
+  is in `book/src/L1-L0/jacobi-smoother-mutation-rotation.md` Sub-pattern A;
+  the `Reciprocal()` call lives on line 80 of that body.)
 - `palace/linalg/jacobi.cpp:16` — consumer-precondition source:
   `// Assumes A SPD (diag(A) > 0) to use Hermitian eigenvalue solver.`
   inside the `GetLambdaMax` helper; the operator-class-level Jacobi
@@ -499,31 +495,24 @@ this invocation against `reference/palace/palace/linalg/{vector,jacobi,operator}
 
 - `palace/linalg/operator.cpp:478-487` — real canonical
   `BaseDiagonalOperator<Operator>::Mult`; per-element body
-  `Y[i] = D[i] * X[i]` at `:486`. Self-verified — anchor lit
-  'BaseDiagonalOperator<Operator>::Mult' at line 479 within range 478-487.
+  `Y[i] = D[i] * X[i]` at `:486`.
 - `palace/linalg/operator.cpp:489-507` — complex canonical
   `BaseDiagonalOperator<ComplexOperator>::Mult`; complex multiply body at
-  `:504-505`. Self-verified — anchor lit
-  'BaseDiagonalOperator<ComplexOperator>::Mult' at line 490 within range
-  489-507.
+  `:504-505`.
 - `palace/linalg/operator.cpp:545-568` — complex conjugate-variant
   `DiagonalOperatorHelper<...>::MultHermitianTranspose`; three sign flips at
-  `:564-565`. Self-verified — anchor lit 'MultHermitianTranspose' at line
-  548 within range 545-568.
+  `:564-565`.
 - `palace/linalg/operator.hpp:279` — real `BaseDiagonalOperator<Operator>::MultTranspose`
   aliases to `Mult` (no conjugation-variant body on the real side).
   (Localizing-evidence; not load-bearing-anchor.)
 - `palace/linalg/jacobi.cpp:30-39` — real consumer-duplicate
   `Apply<Transpose>(dinv, x, y)`; per-element body `Y[i] = DI[i] * X[i]` at
-  `:38`. Self-verified — anchor lit 'Apply(const Vector' at line 31 within
-  range 30-39.
+  `:38`.
 - `palace/linalg/jacobi.cpp:41-69` — complex consumer-duplicate `Apply`;
   forward branch `:52-60` straight multiply; transpose branch `:61-69`
-  conjugate multiply (dead code under symmetric wiring). Self-verified —
-  anchor lit 'Apply(const ComplexVector' at line 42 within range 41-69.
+  conjugate multiply (dead code under symmetric wiring).
 - `palace/linalg/jacobi.cpp:99-104` — `JacobiSmoother::Mult(x, y) const`
-  entry; line `:103` `Apply(dinv, x, y)` dispatch. Self-verified — anchor
-  lit 'Apply(dinv, x, y)' at line 103 within range 99-104.
+  entry; line `:103` `Apply(dinv, x, y)` dispatch.
 - `palace/linalg/jacobi.hpp:43` — `void MultTranspose(...) const override
   { Mult(x, y); }` — the symmetric self-alias that strands
   `Apply<Transpose=true>` (jacobi.cpp:61-69) as dead code. (Recognition-rule
@@ -532,10 +521,9 @@ this invocation against `reference/palace/palace/linalg/{vector,jacobi,operator}
 ### L1 anchors
 
 - `book/src/L1/reciprocal.md` — the firm L1 operator sub-pattern A lowers
-  from (landed cycle-033). Closed-form complex law 5 + partiality
-  precondition.
+  from. Closed-form complex law 5 + partiality precondition.
 - `book/src/L1/elementwise_product.md` — the firm L1 operator sub-pattern B
-  lowers from (landed cycle-033). Conjugation sub-axis at §Variant axes;
+  lowers from. Conjugation sub-axis at §Variant axes;
   diagonal-operator-action identity at law 9.
 
 ### L1>L0 sibling precedents (structural template)
@@ -555,8 +543,8 @@ this invocation against `reference/palace/palace/linalg/{vector,jacobi,operator}
 - `book/src/L1-L0/apply-linop-mutation-rotation.md` — sibling output-arg
   thin-theme precedent for sub-pattern B's destination-arg shape
   (`A.Mult(x, y)` vs `BaseDiagonalOperator::Mult(x, y)`).
-- `book/src/L1-L0/jacobi-smoother-mutation-rotation.md` — the cycle-033
-  parent theme: its sub-pattern A forward-references both leaves; its
+- `book/src/L1-L0/jacobi-smoother-mutation-rotation.md` — the parent theme:
+  its sub-pattern A forward-references both leaves; its
   sub-pattern B forward-references the consumer-duplicate
   `Apply(dinv, x, y)` kernel. This thin-theme is what those references
   resolve to.
@@ -622,27 +610,16 @@ Non-axes (recorded for disambiguation):
 
 ## Status
 
-`firm` — the rewrite is the structural expansion of two L1 pure-functional
-leaves into their L0 in-place mutation surfaces, exhaustively pinned by
-direct, self-verified evidence (the complex `Reciprocal` body
-`vector.cpp:248-261`; the real and complex canonical
-`BaseDiagonalOperator::Mult` bodies `palace/linalg/operator.cpp:478-487` and
-`:489-507`; the canonical conjugate-variant body
-`MultHermitianTranspose` at `:545-568`; the consumer-duplicate `Apply`
-bodies `jacobi.cpp:30-39` real and `:41-69` complex including the
-dead-code transpose branch; the consumer-call sites
-`jacobi.cpp:79-80,103,178,241` and `bilinearform.cpp:278`). The
-canonical-vs-consumer-duplicate kernel equivalence (B.1 ↔ B.3 forward
-branch) is byte-level identity modulo variable rename. Both sub-patterns
-read straight off positively-cited source with no literature inference and
-no negative-anchor reconstruction, so `firm` rather than
-`partly-constructive`.
-
-The two L1 anchors are themselves firm (landed cycle-033) — the L1 algebraic
-laws this theme references (reciprocal law 5 for sub-pattern A's complex
-closed-form; elementwise_product laws 1/2/3/4/5/9 + the conjugation sub-axis
-for sub-pattern B) are all anchored in those entries with positive source
-citations.
+`firm` — the structural expansion of two L1 pure-functional leaves into their L0 in-place
+mutation surfaces, pinned by direct positive evidence (the complex `Reciprocal` body
+`vector.cpp:248-261`; the real and complex canonical `BaseDiagonalOperator::Mult` bodies
+`operator.cpp:478-487` and `:489-507`; the canonical conjugate-variant body
+`MultHermitianTranspose` at `:545-568`; the consumer-duplicate `Apply` bodies `jacobi.cpp:30-39`
+real and `:41-69` complex including the dead-code transpose branch; the consumer-call sites
+`jacobi.cpp:79-80,103,178,241` and `bilinearform.cpp:278`). The canonical-vs-consumer-duplicate
+kernel equivalence (B.1 ↔ B.3 forward branch) is byte-level identity modulo variable rename.
+Both sub-patterns read straight off positively-cited source, so `firm` rather than
+`partly-constructive`. The two L1 anchors are themselves firm.
 
 Per the firm-on-positive-structure precedent
 ([`apply_linop`](../L1/apply_linop.md) /
@@ -671,17 +648,12 @@ the FE-assembly multiplicity-averaging consumer
   chebyshev sibling's dead-code transpose kernels
   (`palace/linalg/chebyshev.cpp:101-110, :150-159`) and the dead-code
   caveat in [`jacobi-smoother-mutation-rotation`](./jacobi-smoother-mutation-rotation.md)
-  sub-pattern B. The cycle-034 D2 `lowering-verifier`-on-jacobi-smoother
-  audit (running in parallel with this dispatch) is auditing the
-  dead-code kernels system-wide; any harden-or-prune outcome from that
-  audit will refine this caveat in a follow-up cycle.
+  sub-pattern B.
 - **Real-path upstream-MFEM body (sub-pattern A).** `Vector::Reciprocal()`
   resolves to upstream `mfem::Vector::Reciprocal()`; per CLAUDE.md
   "Many symbols resolve into upstream libraries... Specialized agents cite
   Palace source, not vendored upstream." the real-path body behaviour is
-  taken as given (elementwise `1/x[i]` in ℝ). Any deeper upstream-MFEM
-  behavioural question (NaN policy specifics, device-kernel
-  implementation) is logged as an open question, not reconstructed.
+  taken as given (elementwise `1/x[i]` in ℝ).
 - **No constant-folding branches in either sub-pattern.** Special algebraic
   cases (`a = 𝟙`, `a = 𝟘`, `x = 𝟙`, etc.) are absorbed into L1 algebraic
   laws, not realised as runtime branches in the L0 source. The kernels are
@@ -689,47 +661,28 @@ the FE-assembly multiplicity-averaging consumer
 - **No MPI collective at any layer.** Both sub-patterns are rank-local
   element-loops; the L1 forms are agnostic to data placement. MPI
   distribution is out of scope per CLAUDE.md §Scope.
-- A `lowering-verifier` exhaustiveness audit (both sub-patterns × both
-  element-types × the conjugation sub-axis × all four consumer sites for
-  sub-pattern A and the consumer cohort for sub-pattern B) is the standard
-  follow-up, not a status reduction.
 
 ## Open questions / caveats
 
-- **Composite-vs-split decision recorded.** The theme is authored as a
-  single composite thin-theme covering both L1 leaves (sub-pattern A +
-  sub-pattern B) per the planner's recommendation. The decision rests on
-  three factors: (1) the two leaves share the in-place-mutation rewrite
-  class (destination-binding of an L1 pure-functional return); (2) they
-  co-occur line-for-line in `JacobiSmoother::SetOperator` (`jacobi.cpp:79-80`)
-  and `JacobiSmoother::Mult` (`jacobi.cpp:103`), so a single theme cohabits
-  with the diagonal-preconditioner setup-chain narrative; (3) splitting
-  into two themes would duplicate the BLAS-1-leaf shape boilerplate
-  (applicability, single-rank scope, firm-on-positive-structure status
-  argument) verbatim. The shared mutation-rewrite class is the
-  load-bearing factor, the same shape choice
-  [`ksp-solve-mutation-rotation`](./ksp-solve-mutation-rotation.md) made
-  for the L2>L1 thin-theme co-authoring precedent. No friction surfaced
-  during authoring — sub-patterns are independently citable and the
-  composite reads cleanly. A future split into two themes would not change
-  any L0 anchor or any L1 algebraic-law citation; it would only re-split
-  the theme prose.
-- **Dead-code complex transpose branch (`jacobi.cpp:61-69`).** Recorded as
-  a recognition rule in sub-pattern B and as a status caveat above; flagged
-  for the cycle-034 D2 `lowering-verifier`-on-jacobi-smoother audit. The
-  canonical `MultHermitianTranspose` at `palace/linalg/operator.cpp:545-568` is live; only
-  the consumer-duplicate copy is dead. (Filing OQ
-  `reciprocal-elementwise-product-mr-dead-code-transpose-consumer-branch`.)
+- **Composite-vs-split decision.** The theme is a single composite thin-theme covering both
+  L1 leaves (sub-pattern A + sub-pattern B). The decision rests on three factors: (1) the two
+  leaves share the in-place-mutation rewrite class (destination-binding of an L1
+  pure-functional return); (2) they co-occur line-for-line in `JacobiSmoother::SetOperator`
+  (`jacobi.cpp:79-80`) and `JacobiSmoother::Mult` (`jacobi.cpp:103`), so a single theme
+  cohabits with the diagonal-preconditioner setup-chain narrative; (3) splitting into two
+  themes would duplicate the BLAS-1-leaf shape boilerplate (applicability, single-rank scope,
+  firm-on-positive-structure status argument) verbatim. The shared mutation-rewrite class is
+  the load-bearing factor, the same shape choice
+  [`ksp-solve-mutation-rotation`](./ksp-solve-mutation-rotation.md) made for the L2>L1
+  thin-theme co-authoring precedent.
 - **`safe_reciprocal(x, ε)` L1 candidacy.** A speculative zero-guarded
   reciprocal operator (returning `0` or `1/ε` for `|x[i]| < ε`) is named in
   [`L1/reciprocal`](../L1/reciprocal.md) §Variant axes as a future
   candidate. Palace has no zero-guarded kernel, so no L0 anchor exists.
-  Filing OQ `safe-reciprocal-threshold-l1-candidacy` to track.
 - **Upstream `mfem::Vector::Reciprocal()` body.** The real-path body lives
   in upstream MFEM, not in Palace. The behaviour is documented (elementwise
   `1/x[i]`); any deeper question (NaN-on-zero specifics, device-kernel
-  realisation) is logged for upstream investigation. Filing OQ
-  `mfem-vector-reciprocal-upstream-body-investigation`.
+  realisation) is an upstream-investigation matter.
 - **L2 unification: `diagonal_preconditioner_apply` combinator.** The
   composition `elementwise_product(reciprocal(assemble_diagonal(A)), x)` is
   the L1 expression of the diagonal-preconditioner action. An L2
@@ -738,103 +691,16 @@ the FE-assembly multiplicity-averaging consumer
   `jacobi_smoother` apply and the per-step `chebyshev_smoother` inner step
   realise this L1 composition (line-for-line in `JacobiSmoother::Mult` at
   `jacobi.cpp:103` via the local `Apply` helper; ditto inside
-  `chebyshev.cpp`'s polynomial sweep). The unification is a candidate but
-  not pursued in this theme; recorded for future
-  `same-layer-cross-cutter` or `combinator-miner` attention.
+  `chebyshev.cpp`'s polynomial sweep). A candidate, not pursued in this theme.
 - **`assemble_diagonal → reciprocal → elementwise_product` setup-chain
   identity.** All three preconditioner sub-cases (Jacobi, Chebyshev 4th-kind,
   Chebyshev 1st-kind) carry the **identical** `op.AssembleDiagonal(dinv); dinv.Reciprocal();`
   prefix (`jacobi.cpp:79-80`; `chebyshev.cpp:177-178,240-241`). The L2>L1
   unification of this prefix is the same fan-out target as the previous
-  bullet's combinator candidate. (No new OQ — covered by the existing
+  bullet's combinator candidate. (Covered by the existing
   `polynomial_smoother` combinator candidate in
   [`jacobi-smoother-mutation-rotation`](./jacobi-smoother-mutation-rotation.md)
   §Open questions.)
 - **MPI / `MPI_Comm` placeholder.** Both sub-patterns are rank-local; the
-  `MPI_Comm` argument never appears in either operator's L0 surface. Under
-  MPI the disjoint-slice-per-rank decomposition is the standard parallel
-  shape (every element write is rank-local; no boundary exchange). Per
+  `MPI_Comm` argument never appears in either operator's L0 surface. Per
   CLAUDE.md §Scope, MPI distribution is out of scope; flagged once here.
-
-```yaml
-verified_against:
-  # Sub-pattern A — reciprocal L0 anchors
-  - citation: palace/linalg/vector.hpp:20
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: using Vector = mfem::Vector — real-path type alias; anchor lit at line 20 (citecheck OK).
-  - citation: palace/linalg/vector.hpp:107-108
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: doc-comment "Set all entries to their reciprocal." at :107 and void Reciprocal() declaration at :108; both confirmed in-range (citecheck OK).
-  - citation: palace/linalg/vector.cpp:248-261
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: ComplexVector::Reciprocal() body; anchor lit at line 248; closed-form s=1/|z|^2 at :257, XR*=s at :258, XI*=-s at :259 match theme transcription verbatim (citecheck OK).
-  - citation: palace/linalg/jacobi.cpp:79-80
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: op.AssembleDiagonal(dinv) at :79 then dinv.Reciprocal() at :80 — the setup-chain prefix; exact (citecheck OK).
-  - citation: palace/linalg/jacobi.cpp:16
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: SPD precondition comment "Assumes A SPD (diag(A) > 0)..." at :16 discharges the x[i] != 0 reciprocal partiality; exact (citecheck OK).
-  - citation: palace/linalg/chebyshev.cpp:178
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: second Reciprocal() consumer (4th-kind Chebyshev) dinv.Reciprocal() at :178; anchor lit confirmed (citecheck OK).
-  - citation: palace/linalg/chebyshev.cpp:241
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: third Reciprocal() consumer (1st-kind Chebyshev) dinv.Reciprocal() at :241; anchor lit confirmed (citecheck OK).
-  - citation: palace/fem/bilinearform.cpp:278
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: fourth (non-preconditioner) Reciprocal() consumer test_multiplicity.Reciprocal() at :278; anchor lit confirmed (citecheck OK).
-  # Sub-pattern B — elementwise_product L0 anchors
-  - citation: palace/linalg/operator.cpp:478-487
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: real canonical BaseDiagonalOperator<Operator>::Mult; anchor lit at line 479; per-element body Y[i]=D[i]*X[i] confirmed at :486 (citecheck OK).
-  - citation: palace/linalg/operator.cpp:489-507
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: complex canonical BaseDiagonalOperator<ComplexOperator>::Mult; anchor lit at line 490; complex multiply body at :504-505 matches theme verbatim (citecheck OK).
-  - citation: palace/linalg/operator.cpp:545-568
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: complex conjugate-variant DiagonalOperatorHelper<...>::MultHermitianTranspose; anchor lit at line 548; three sign flips at :564-565 match theme verbatim (citecheck OK). This is the LIVE conjugate kernel.
-  - citation: palace/linalg/operator.hpp:279
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: real MultTranspose aliases to Mult (one-liner { Mult(x, y); }) at :279 — confirms no real-side conjugate body; localizing-evidence, not load-bearing (citecheck OK).
-  - citation: palace/linalg/jacobi.cpp:30-39
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: real consumer-duplicate Apply<Transpose>(dinv, x, y); body Y[i]=DI[i]*X[i] at :38 is line-for-line identical to palace/linalg/operator.cpp:486 modulo D->DI rename (citecheck OK).
-  - citation: palace/linalg/jacobi.cpp:41-69
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: complex consumer-duplicate Apply; forward branch :52-60 (:57-58) identical to palace/linalg/operator.cpp:504-505; transpose branch :61-69 (:66-67) identical to palace/linalg/operator.cpp:564-565 modulo DI->DIR,DII rename (citecheck OK).
-  - citation: palace/linalg/jacobi.cpp:99-104
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: JacobiSmoother<OperType>::Mult entry; anchor lit at :100; line :103 dispatches Apply(dinv, x, y) with default Transpose=false — the sole call into the consumer-duplicate kernel (citecheck OK).
-  - citation: palace/linalg/jacobi.hpp:43
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: MultTranspose(...) override one-liner { Mult(x, y); } at :43 — the symmetric self-alias that strands Apply<Transpose=true> as dead code; recognition-rule citation, confirmed exact (citecheck OK).
-  # Dead-code transpose-kernel cross-reference anchors (chebyshev sibling)
-  - citation: palace/linalg/chebyshev.cpp:101-110
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: chebyshev sibling dead-code transpose else-branch with conjugate sign pattern (+DII*RI / -DII*RR) at :107-108; cross-reference for the dead-code caveat, confirmed in-range (citecheck OK).
-  - citation: palace/linalg/chebyshev.cpp:150-159
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: chebyshev sibling dead-code transpose else-branch (1st-kind) conjugate sign pattern at :152-153; cross-reference for the dead-code caveat, confirmed in-range (citecheck OK).
-  - citation: palace/linalg/chebyshev.cpp:177-178
-    verdict: supports
-    audited_at: 2026-05-31T19:32:58Z
-    note: chebyshev setup-chain prefix AssembleDiagonal+Reciprocal at :177-178 — sibling of the jacobi.cpp:79-80 chain; confirmed exact (citecheck OK).
-```

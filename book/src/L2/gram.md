@@ -84,8 +84,7 @@ conjugates **arg-2** (the deliberate L1 re-order recorded at `inner_product.md`:
 `inner_product(X[j], X[i])` in the representation convention, with column `j` conjugated. Pinning
 this once at `gram` (rather than re-deriving the `yᴴx`-vs-`xᴴy` reconciliation per Gram cell) is
 the simplification this lift buys; the diagonal `G[i,i] = X[i]ᴴ X[i]` is convention-invariant
-(real), the off-diagonal is the convention-sensitive part (cycle-020 dot-callers census, flagging
-`nleps.cpp:529` observable).
+(real), the off-diagonal is the convention-sensitive part (`nleps.cpp:529` observable).
 
 ## Semantics
 
@@ -266,114 +265,84 @@ the fold over columns), not a family of fixed-`k` specializations.
 
 ## Status
 
-`firm`.
+`firm` — the all-pairs lift of the firm L2 fold [`inner_product`](./inner_product.md):
+every algebraic law is a syntactic identity on the `inner_product` fold (firm-on-positive-structure
+on the literal Gram-build site `palace/linalg/nleps.cpp:524-531`).
 
-The structure is the all-pairs lift of the firm L2 reduce-to-scalar fold
-[`inner_product`](./inner_product.md): `gram dot X [i,j] = inner_product(X[j], X[i])`, with the
-sole literal Gram-build site `palace/linalg/nleps.cpp:524-531` (the SLEPc-NEP deflation Gram
-`SS(i,j) = linalg::Dot(GetComm(), X[i], X[j])`) read through the pinned arg-1-conjugated
-convention. **Every algebraic law is a syntactic identity on the firm `inner_product` fold**
-(all-pairs definition, empty-basis identity, Hermitian symmetry, PSD/PD-iff-full-rank, the
-concatenation/incremental-Gram block laws) — matrix-algebra facts about an `inner_product`-of-
-pairs, lifted pointwise over the two basis index axes; the IEEE per-cell reduction-tree
-associativity is paired as the inherited explicit non-law per the load-bearing-numerical-trick
-discipline. Per the cycle-021 status-tier codification ("an entry whose laws are syntactic
-identities on fully-specified positive source is `firm` even when the surrounding area has no
-test" — the `apply_nonlinear_pencil` / `apply_linop` situation, not the `eigsolve`-convergence-
-semantics situation), the **firm-on-positive-structure** route applies: the missing NLEPS test
-does not gate identity-on-`inner_product` laws.
-
-> **Coverage caveat (not a status reduction).** The literal `XᴴX` Gram-build appears at exactly
-> **one** site in the whole Palace tree — `palace/linalg/nleps.cpp:524-531` (`search_text`
-> `fullPivLu|Gram|deflat` over `palace/**/*.cpp` returns hits only in `nleps.cpp`; the ROM path
-> `palace/models/romoperator.cpp:757-765` does small-dense `ldlt`/`fullPivHouseholderQr` solves
-> on a *reduced operator* `Ar`, but enforces basis orthogonality via mass-weighted Gram-Schmidt
-> rather than building an explicit `XᴴX`, so it is not a `gram` instance). And there is **no
-> dedicated NLEPS/deflation unit test** (`search_text` over `palace/test/**` for
-> `nleps|deflat|MatVecMult|invariant pair` returns zero hits). The firmness rests on
-> (a) the laws being `inner_product`-identities (which `inner_product` itself anchors, with the
+> **Coverage caveat.** The literal unweighted `XᴴX` Gram-build appears at exactly **one** site in
+> the Palace tree — `palace/linalg/nleps.cpp:524-531` (the ROM path
+> `palace/models/romoperator.cpp:757-765` does small-dense solves on a *reduced operator* `Ar`, not
+> an explicit `XᴴX`, so it is not a `gram` instance) — and there is **no dedicated NLEPS/deflation
+> unit test**. Firmness rests on the laws being `inner_product`-identities (anchored by the
 > real-member value test `test/unit/test-vector.cpp:206-207` and the SPD-realness assertion
-> `palace/linalg/operator.cpp:615-616`), and (b) the single build site being read directly. The
-> single-algorithm concentration is the same posture as `inner_product`'s `tdot`-member coverage
-> caveat — recorded at the operator's coverage granularity, not a firmness gate. The caveat scopes
-> the **unweighted `XᴴX`** build (one site, `nleps.cpp:524-531`); the **`B`-weighted `XᴴKX`**
-> member by contrast now has **two** concrete witnesses (the capacitance/inductance energy
-> reductions, variant-axis 1 above), so the weighted axis is no longer witness-less. **Promotion of
-> the caveat to closed** would follow either a second Palace algorithm that builds an explicit
-> Gram, or a dedicated deflation unit test materializing — neither blocks the firm status of the
-> identity laws.
+> `palace/linalg/operator.cpp:615-616`) plus the single build site read directly. The **`B`-weighted
+> `XᴴKX`** member has two concrete witnesses (the capacitance/inductance energy reductions, variant-axis
+> 1 above).
 
 ## Evidence
 
-All ranges `read_range`-verified this invocation and bounds-checked via
-`tools/citecheck/citecheck.py` (14/14 ok); paths relative to `reference/`.
+Paths relative to `reference/`.
 
 - `palace/linalg/nleps.cpp:524-531` — **the sole literal Gram-build site.** `Eigen::MatrixXcd
   SS(k, k);` (`:524`) then the double-loop `for i { for j { SS(i, j) = linalg::Dot(GetComm(),
   X[i], X[j]); } }` (`:525-531`, the cell body `SS(i,j) = linalg::Dot(GetComm(), X[i], X[j])` on
   `:529`). The `k×k` deflation Gram `XᴴX`; cell `SS(i,j) = X[j]ᴴ X[i] = inner_product(X[j],
-  X[i])`. **Self-verified via `read_range`.**
+  X[i])`.
 - `palace/linalg/nleps.cpp:532-535` — the consumer (NOT a `gram` law): Schur-modify `S = eig_opInv
   ·I − H` (`:532`), `SS = -S.fullPivLu().solve(SS)` (`:533`), coord solve `x2 =
   SS.fullPivLu().solve(x2)` (`:534`), back-projection `XSx2 = MatVecMult(X, S.fullPivLu().
-  solve(x2))` (`:535`) — `deflate`'s use of the Gram `gram` builds. **Self-verified.**
+  solve(x2))` (`:535`) — `deflate`'s use of the Gram `gram` builds.
 - `palace/linalg/nleps.cpp:504-537` — `deflated_solve` lambda enclosing the Gram build, with the
-  block-system comment `SS = (B − A T⁻¹U) = −X*X S⁻¹` (`:512-513`). **Self-verified.**
+  block-system comment `SS = (B − A T⁻¹U) = −X*X S⁻¹` (`:512-513`).
 - `palace/linalg/nleps.cpp:515-518` — the `k == 0` early-return (no deflation subspace): the
-  empty-basis identity (law 2) realized as the deflation skip. **Self-verified.**
+  empty-basis identity (law 2) realized as the deflation skip.
 - `palace/linalg/nleps.cpp:520-523` — the coordinate-extraction loop `x2(j) = b2(j) −
   linalg::Dot(GetComm(), x1, X[j])`: the `Xᴴ·` half consumed alongside the Gram (the
-  arg-1-conjugated convention applied to a vector rather than a basis column). **Self-verified.**
+  arg-1-conjugated convention applied to a vector rather than a basis column).
 - `palace/linalg/nleps.cpp:561-569` — `compute_residual`'s deflation: `XSvv2 = MatVecMult(X,
   S.fullPivLu().solve(vv2))` (`:563`) + residual coords `rr2(j) = linalg::Dot(GetComm(), vv,
-  X[j])` (`:568`). A second consumer of the Gram-solve (not a fresh Gram build). **Self-verified.**
+  X[j])` (`:568`). A second consumer of the Gram-solve (not a fresh Gram build).
 - `palace/linalg/nleps.cpp:660-668` — the Jacobian deflation terms: `S = eig·I − H` (`:664`),
   `Sv2 = S.fullPivLu().solve(v2)` (`:665`), `XSv2 = MatVecMult(X, Sv2)` (`:666`), `XSSv2 =
-  MatVecMult(X, S.fullPivLu().solve(Sv2))` (`:667`). A third Gram-solve consumer. **Self-verified.**
+  MatVecMult(X, S.fullPivLu().solve(Sv2))` (`:667`). A third Gram-solve consumer.
 - `palace/linalg/nleps.cpp:329-347` — `MatVecMult(X, y)`: the `X·coords` reconstruction (a
   length-`k` `linear_combination` over the basis, `z = 0; for j: AXPBYPCZ(...) into z`); the
-  `deflate` consumer's back-projection half. **Self-verified.**
+  `deflate` consumer's back-projection half.
 - `palace/linalg/nleps.cpp:613-619` — deflation-basis growth `X.resize(k+1); X[k] = v;
   H.conservativeResizeLike(...); H(k,k) = eig; k++`: the incremental-Gram (rank-1 border) law 6
   realized — the basis grows one column per converged eigenpair, and `X` is the **raw normalized
   invariant-pair basis (NOT orthonormalized)** → Gram inversion required → the explicit `gram`
-  build is load-bearing. **Self-verified.**
+  build is load-bearing.
 - `palace/linalg/nleps.cpp:354-362` — the deflation-scheme literature anchors (Effenberger 2013
   successive eigenpair computation; Jarlebring/Koskela/Mele 2018 quasi-Newton; SLEPc-NEP
   minimality index 1) — the standard-scheme anchor for the oblique-Galerkin deflation Gram.
-  **Self-verified.**
+ 
 - `palace/linalg/nleps.cpp:542` — `deflated_solve(c, c2, w0, w2)`: a live call site of the lambda
-  enclosing the Gram build. **Self-verified.**
+  enclosing the Gram build.
 - `palace/models/romoperator.cpp:757-765` — the ROM small-dense solves `RHSr =
   Ar.ldlt().solve(RHSr)` / `Ar.selfadjointView<...>().ldlt().solve(...)` /
   `Ar.fullPivHouseholderQr().solve(...)`: a *non-instance* — small-dense solve on a reduced
   operator `Ar`, NOT an explicit `XᴴX` Gram build (the coverage caveat's "no second Gram-build
-  site" evidence). **Self-verified.**
+  site" evidence).
 - `palace/drivers/electrostaticsolver.cpp:111-137` — **first `B`-weighted `gram` witness
   (capacitance).** The double-loop `C(i,j) = linalg::Dot(V[j], D_gf)` with `D_gf = M_elec·V[i]`
   pinned once per outer `i` (`:118`), inner sweep `:124-130`, symmetry copy `:131-137`. Cell
   `C(i,j) = V[j]ᴴ M_elec V[i] = inner_product_M(V[j], M_elec, V[i])` — the single-set weighted
-  Gram. Palace's own comment names the shape: `// (Vⱼᵀ K Vᵢ)` (`:122`). Self-verified via
-  `read_range`.
+  Gram. Palace's own comment names the shape: `// (Vⱼᵀ K Vᵢ)` (`:122`).
 - `palace/drivers/magnetostaticsolver.cpp:110-152` — **second `B`-weighted `gram` witness
   (inductance).** Structurally identical: `M(i,j) = linalg::Dot(A[j], H_gf)/(Iᵢ Iⱼ)` with
   `H_gf = M_mag·A[i]` (`:129`), inner sweep `:135-141`, symmetry copy `:144-150`. Cell
   `M(i,j) = A[j]ᴴ M_mag A[i]` (pre-`/(IᵢIⱼ)`) `= inner_product_M(A[j], M_mag, A[i])`. Palace
-  comment `// (Aⱼᵀ K Aᵢ)` (`:134`). Self-verified.
+  comment `// (Aⱼᵀ K Aᵢ)` (`:134`).
 - `palace/models/domainpostoperator.cpp:30-66` — the weight matrices' construction: `M_elec`
   = `BilinearForm + VectorFEMassIntegrator(ε)` `PartialAssemble()` (`:38-39`); `M_mag` =
   μ⁻¹-weighted mass integrator `PartialAssemble()` (`:53-64`). Establishes `K` is an assembled
-  SPD FE mass matrix — the concrete `B`-weight. Self-verified.
-- Artifact cross-references (read this invocation): `book/src/L2/inner_product.md` (the firm
+  SPD FE mass matrix — the concrete `B`-weight.
+- Artifact cross-references: `book/src/L2/inner_product.md` (the firm
   scalar fold `gram` lifts; the pinned arg-1-conjugated convention §"Conjugation convention
   (pinned)" `:46-102`; the Algebraic-laws §`:184-265`; the sibling-fold do-NOT-merge boundary
   §`:364-388`), `book/src/L1/dot.md:43` (the pinned `⟨x,y⟩ = xᴴ y` convention),
   `book/src/L2/orthogonalize.md:40-44,67-71,73-76` (the stateless-L2-placement argument, the
   `op.dot` hook axis, the orthonormal-basis precondition — the over-unification-guard sibling),
-  `book/src/L2/index.md:50,54,55` (the firm `inner_product` row, the `gram` rough-in row being
-  flipped, the `deflate` consumer row).
-- Provenance: combinator-miner:2026-05-29T051532Z
-  (`reports/2026-05-29T051532Z-combinator-miner-deflate-gram/CYCLE.md`, integrated cycle-021
-  commit `881f200` — the `gram`/`deflate` rough-in dep-map rows + pattern-instance list + the
-  over-unification guard this entry firms); cross-layer-cross-cutter:2026-05-29T034441Z
-  (the dot-callers census flagging `nleps.cpp:529` observable).
+  `book/src/L2/index.md:50,54,55` (the firm `inner_product` row, the `gram` row, the
+  `deflate` consumer row).

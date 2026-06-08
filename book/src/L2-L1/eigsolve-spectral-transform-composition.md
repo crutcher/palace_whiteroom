@@ -1,9 +1,9 @@
 # eigsolve-spectral-transform-composition
 
-The per-step pipeline de-fusion for the shift-invert spectral transformation. Lowers the firm
+The per-step pipeline de-fusion for the shift-invert spectral transformation. Lowers the
 L2 named composition [`eigsolve`](../L2/eigsolve.md)'s per-step **fold body**
 `apply_shift_invert = apply_linop(op.operand) ▷ ksp_solve(op.inv) ▷ scale_untransform`
-(`book/src/L2/eigsolve.md`, firm cycle-023) into its two firm L1 leaves —
+(`book/src/L2/eigsolve.md`) into its two firm L1 leaves —
 [`apply_linop`](../L1/apply_linop.md) (the operator-application stage against `M` / the PEP
 block `L₁`) and [`ksp_solve`](../L1/ksp_solve.md) (the inner Krylov solve inverting the shifted
 operator `(K − σM)`) — by **expanding the `▷`-composition into the literal Palace per-step
@@ -24,7 +24,7 @@ Rayleigh-Ritz extraction, convergence test) is **out of scope**: it is the witne
 opaque-library [`sequential-obstruction`](../concepts/sequential-obstruction.md) — SLEPc
 `EPSSolve` / ARPACK `naupd` RCI, with **no Palace-authored eigen-step kernel / eigen-iteration
 driver pair** analogous to the `(krylov-step, ksp_solve)` pair — documented at L3
-[`eigsolve`](../L3/eigsolve.md) (`partial-obstruction`, cycle-024). That obstruction is this
+[`eigsolve`](../L3/eigsolve.md) (`partial-obstruction`). That obstruction is this
 theme's **boundary**, referenced, not re-derived.
 
 It is a sibling of [`orthogonalize-composition-lowering`](./orthogonalize-composition-lowering.md)
@@ -74,6 +74,7 @@ The L2 composition-identity laws this theme lowers (read off the positive `Apply
 `book/src/L2/eigsolve.md:103`). Law 4 (inner-solve linearity inherited by the per-step
 application, `book/src/L2/eigsolve.md:105`) is the algebraic substrate that makes the de-fused
 sequence a Krylov per-step body.
+
 
 ## L1 form (RHS)
 
@@ -196,8 +197,8 @@ witnessed [`sequential-obstruction`](../concepts/sequential-obstruction.md) root
 with **no Palace-authored eigen-step kernel / eigen-iteration driver pair** analogous to the
 `(krylov-step, ksp_solve)` pair. This theme lowers only the **fold body** (the per-step composition
 Palace DOES author, in `ApplyOp` / `__pc_apply_EPS`); the fold itself is named by role at L2 and is
-the load-bearing obstruction documented at L3 [`eigsolve`](../L3/eigsolve.md) (`partial-obstruction`,
-cycle-024 — the per-step body lifts identity-in-form, the loop does not lift). **This theme references
+the load-bearing obstruction documented at L3 [`eigsolve`](../L3/eigsolve.md) (`partial-obstruction`
+— the per-step body lifts identity-in-form, the loop does not lift). **This theme references
 that L3 obstruction as its boundary; it does NOT re-derive it.** The distinction from the sibling
 [`ksp_solve`](../L1/ksp_solve.md) L2 entry — whose loop IS Palace-authored (`iterative.cpp`) and so
 IS opened — is the load-bearing structural fact that makes `eigsolve` the partial-opening case.
@@ -275,72 +276,63 @@ inherited through the firm `ksp_solve` leaf.
   `(K − σM)`. The `scale_untransform` tail is a [`scal`](../L1/scal.md) (firm) post-multiply; the
   divergence-free-projector tail is an [`apply_linop`](../L1/apply_linop.md) (firm) constituent.
 
-The LHS [`eigsolve`](../L2/eigsolve.md) is firm (cycle-023). This theme proposes no new operators —
+The LHS [`eigsolve`](../L2/eigsolve.md) is firm. This theme proposes no new operators —
 it is the lowering edge between firm vocabulary on both sides. The **nonlinear (NEP)** problem-type's
 per-`λ` operand `A(λ) = K + λC + λ²M + A2(λ)` is the [`apply_nonlinear_pencil`](../L1/apply_nonlinear_pencil.md)
 leaf (firm); the NEP per-step body is its own composition (the NLEPS deflation cohort), not re-derived
 here — this theme's canonical case is the linear EPS shift-invert; the quadratic PEP and nonlinear NEP
 are recorded as variant-axis selections of the operand stage, lowering the same way.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `palace-codemap` read_range + `tools/citecheck/`
-`--anchor`/`--scan` this invocation — producer-citation self-verification,
-`verify-citation-range` producer-self-verification; paths relative to `reference/`):
+L0 evidence ranges (paths relative to `reference/`):
 
 - `palace/linalg/arpack.cpp:562-590` — `ArpackEPSSolver::ApplyOp`: the **explicit Palace-owned
   shift-invert composition** — the decisive positive anchor for the de-fusion. Shift-invert branch
   `opM->Mult(x1, z1)` (`:579`, stage-1 `apply_linop`), `opInv->Mult(z1, y1)` (`:580`, stage-2 inner
   `ksp_solve`), `y1 *= gamma` (`:581`, `scale_untransform` tail); no-transform branch `opK->Mult`
   (`:573`) / `opInv->Mult` (`:574`) / `y1 *= 1/gamma` (`:575`); divergence-free projector tail
-  `opProj->Mult(y1)` (`:586`). **Self-verified via read_range (562-590) + citecheck anchors `opM->Mult`
-  @579, `opInv->Mult` @574/580, `opK->Mult` @573, `opProj->Mult` @586 — all [ok].**
+  `opProj->Mult(y1)` (`:586`).
 - `palace/linalg/arpack.cpp:733-799` — `ArpackPEPSolver::ApplyOp`: the quadratic-PEP shift-invert
   composition `(L₀ − σL₁)⁻¹ L₁` via the block linearization `L₀ = [[−K, 0], [0, M]]`,
   `L₁ = [[C, M], [M, 0]]` (block comment `:736-743`); the `opInv->Mult` inner-solve sites
-  (`:761, 778`). The problem-type=quadratic operand-stage variant. **Self-verified via read_range
-  (733-745) + citecheck `opInv->Mult` @761 [ok].**
+  (`:761, 778`). The problem-type=quadratic operand-stage variant.
 - `palace/linalg/arpack.cpp:191-193` — `ArpackEigenvalueSolver::SetLinearSolver`: `opInv = &ksp`. The
-  inner-solver binding (`op.inv = E.linear`). **Self-verified via read_range.**
+  inner-solver binding (`op.inv = E.linear`).
 - `palace/linalg/arpack.cpp:245-246` — `ArpackEigenvalueSolver::SetShiftInvert`: `sigma = s;
-  sinvert = true;` (precond aborts at `:243-244`, MFEM_VERIFY). The shift binding. **Self-verified via
-  read_range (243-247).**
+  sinvert = true;` (precond aborts at `:243-244`, MFEM_VERIFY). The shift binding.
 - `palace/linalg/arpack.cpp:263-358` — `ArpackEigenvalueSolver::SolveInternal`: the **ARPACK RCI
   eigen-iteration** driver (`naupd` RCI loop). The opaque library loop NOT lowered by this theme — the
-  boundary reference. **Self-verified via citecheck `naupd` @263-358 [ok].**
+  boundary reference.
 - `palace/linalg/slepc.cpp:1847-1877` — `__pc_apply_EPS`: the **SLEPc shift-invert inverse-apply**
   `y = (K − σM)⁻¹ x`. Inner solve `ctx->opInv->Mult(ctx->x1, ctx->y1)` (`:1858`, stage-2
   `ksp_solve`); no-transform un-scale `y1 *= 1/(δγ)` (`:1861`) vs shift-invert un-scale `y1 *= 1/δ`
   (`:1865`); divergence-free projector tail `ctx->opProj->Mult(ctx->y1)` (`:1870`). The SLEPc-face
-  anchor that the inner solve is the same `ksp_solve`. **Self-verified via read_range (1847-1877) +
-  citecheck `opInv->Mult` @1858, `opProj->Mult` @1870 — all [ok].**
+  anchor that the inner solve is the same `ksp_solve`.
 - `palace/linalg/slepc.cpp:1801-1827` — `__mat_apply_EPS_A0` (`opK->Mult` `:1809`, `*= delta` `:1810`)
   and `__mat_apply_EPS_A1` (`opM->Mult` `:1824`, `*= delta*gamma` `:1825`): the original-problem
   operator shell matvecs SLEPc's `ST` composes with the inverse-apply (the SLEPc-face of the stage-1
-  `apply_linop` + the `δ`/`δγ` scaling). **Self-verified via read_range (1801-1827) + citecheck
-  `opK->Mult` @1809 / `delta` @1810 (A0) and `opM->Mult` @1824 / `delta` @1825 (A1) — all [ok].**
+  `apply_linop` + the `δ`/`δγ` scaling).
 - `palace/linalg/slepc.cpp:379-394` — `SlepcEigenvalueSolver::SetShiftInvert`: `STSetType(st,
   STPRECOND)` (precond, `:384`) vs `STSetType(st, STSINVERT)` (exact-inverse, `:388`);
   `STSetTransform(st, PETSC_TRUE)` (`:390`); `STSetMatMode(st, ST_MATMODE_SHELL)` (`:391`, the ST-shell
   delegation); `sigma = s` (`:392`). The spectral-transformation variant-axis source + the
-  explicit-vs-ST-shell assembly distinction. **Self-verified via read_range + citecheck `STSINVERT` [ok].**
+  explicit-vs-ST-shell assembly distinction.
 - `palace/linalg/slepc.cpp:364-366` — `SlepcEigenvalueSolver::SetLinearSolver`: `opInv = &ksp`. The
-  SLEPc inner-solver binding (the SLEPc `op.inv`). **Self-verified via read_range.**
+  SLEPc inner-solver binding (the SLEPc `op.inv`).
 - `palace/linalg/slepc.cpp:674` — `SlepcEPSSolverBase::Customize`: `EPSSetTarget(eps, sigma / gamma)`
-  — the solve-time deferred target in scaled coordinates (the `σ/γ` form). **Self-verified via citecheck
-  `EPSSetTarget` @674 [ok].**
+  — the solve-time deferred target in scaled coordinates (the `σ/γ` form).
 - `palace/linalg/slepc.cpp:694` — `EPSSolve(eps)` inside `SlepcEPSSolverBase::Solve` (`:687`): the
   **opaque library eigen-iteration** entry point — the fold NOT lowered by this theme (boundary
-  reference, the L3 `partial-obstruction`). **Self-verified via citecheck `EPSSolve` @694 [ok].**
+  reference, the L3 `partial-obstruction`).
 - `palace/models/modeeigensolver.cpp:1030-1053` — eigensolver-backend construction: ARPACK branch
   `arpack->SetLinearSolver(*ksp)` (`:1037`), SLEPc branch `slepc->SetType(KRYLOVSCHUR)` (`:1045`) +
   `slepc->SetLinearSolver(*ksp)` (`:1050`). The construction site wiring the inner `ksp_solve` into
-  the eigensolver (`op.inv = E.linear`). **Self-verified via read_range + citecheck `SetLinearSolver`
-  @1037 [ok].**
+  the eigensolver (`op.inv = E.linear`).
 
-L2 / L1 / cross-theme anchors (firm on every side):
+L2 / L1 / cross-theme anchors:
 
-- `book/src/L2/eigsolve.md` — the firm L2 named composition (LHS, cycle-023). §Signature
+- `book/src/L2/eigsolve.md` — the firm L2 named composition (LHS). §Signature
   (`apply_shift_invert` body, `:55-77`), law 1 (shift-invert composition identity, `:99`), law 3
   (scaling-coordinate un-transform, `:103`), law 4 (inner-solve linearity, `:105`), the
   backend-orchestration collapsed axis (`:148-151`), the §"Lowers from" forward-reference to this theme
@@ -350,11 +342,11 @@ L2 / L1 / cross-theme anchors (firm on every side):
 - `book/src/L1/ksp_solve.md` — the firm L1 stage-2 leaf (RHS): `ksp_solve :: (K, b) -> SolveResult`
   (§Signature), the soft-fail / solver-as-operator semantics, the reduction-tree + orthogonalisation
   bit-determinism non-laws inherited by the per-step body.
-- `book/src/L3/eigsolve.md` — the L3 `partial-obstruction` (cycle-024): the per-step body lifts
+- `book/src/L3/eigsolve.md` — the L3 `partial-obstruction`: the per-step body lifts
   identity-in-form (this composition); the eigen-iteration loop does not lift (opaque-library
   `sequential-obstruction`). **The boundary reference — this theme covers the body, that entry covers
   the loop obstruction.**
-- `book/src/L1/eigsolve.md` — the firm L1 anchor (cycle-022): the opaque eigensolver-as-operator the
+- `book/src/L1/eigsolve.md` — the firm L1 anchor: the opaque eigensolver-as-operator the
   L2 composition unfolds the per-step half of; laws 4/5 (shift-invariance, scaling un-transform)
   restate as this theme's `scale_untransform` boundary + composition identity.
 - `book/src/L2-L1/orthogonalize-composition-lowering.md`,
@@ -367,141 +359,23 @@ L2 / L1 / cross-theme anchors (firm on every side):
 
 ## Status
 
-`firm` — the L2 LHS [`eigsolve`](../L2/eigsolve.md) is firm (cycle-023, firm-on-positive-structure),
-both L1 RHS leaves are firm ([`apply_linop`](../L1/apply_linop.md), [`ksp_solve`](../L1/ksp_solve.md)),
-and the de-fusion rule IS the syntactic expansion of the L2 `▷` composition operator read **line-for-line**
-off two positive Palace per-step bodies — the ARPACK `ApplyOp` explicit assembly
-(`palace/linalg/arpack.cpp:562-590`, the canonical `opM->Mult ▷ opInv->Mult ▷ scal` at `:579-581`) and
-the SLEPc ST-shell-decomposed `__pc_apply_EPS` + `__mat_apply_EPS_A0/A1` triple
-(`palace/linalg/slepc.cpp:1801-1827, 1847-1877`). This is the same firm basis as the firm L2
-[`ksp_solve`](../L1/ksp_solve.md) entry (composition-structural laws on positive `Mult`/`ApplyOp`
-bodies) and is **not** test-gated (the de-fusion is operator-algebra on read closures, firm-on-positive-structure
-per the [`apply_nonlinear_pencil`](../L1/apply_nonlinear_pencil.md) precedent). No literature inference,
-no negative-anchor reconstruction, no speculative operator — so `firm`, matching the sibling
-[`orthogonalize-composition-lowering`](./orthogonalize-composition-lowering.md) /
-[`gram-fold-specialization`](./gram-fold-specialization.md) firmness bar. This is the **seventh chapter**
-under the `book/src/L2-L1/` Part (after `chebyshev-iteration-fusion`,
-`linear-combination-fold-specialization`, `inner-product-fold-specialization`,
-`orthogonalize-composition-lowering`, `gram-fold-specialization`, `deflate-composition-lowering`).
+`firm` — the L2 LHS and both L1 RHS leaves ([`apply_linop`](../L1/apply_linop.md),
+[`ksp_solve`](../L1/ksp_solve.md)) are firm; the de-fusion rule IS the syntactic expansion of the
+L2 `▷` composition operator read line-for-line off two positive Palace per-step bodies — the ARPACK
+`ApplyOp` explicit assembly (`palace/linalg/arpack.cpp:562-590`, the canonical
+`opM->Mult ▷ opInv->Mult ▷ scal` at `:579-581`) and the SLEPc ST-shell-decomposed `__pc_apply_EPS` +
+`__mat_apply_EPS_A0/A1` triple (`palace/linalg/slepc.cpp:1801-1827, 1847-1877`). Operator-algebra on
+read closures (firm-on-positive-structure), not test-gated.
 
 The theme covers the **per-step spectral-transform-apply composition only**; the eigen-iteration loop
 is the opaque-library `sequential-obstruction` documented at L3 [`eigsolve`](../L3/eigsolve.md)
-(`partial-obstruction`, cycle-024), referenced as the boundary, not re-derived. This completes the
-eigsolve L1→L2→L3 chain's only remaining authoring gap (the L2>L1 edge) and discharges OQ
-`eigsolve-l2-l1-spectral-transform-composition-lowering-theme-needed`. A `lowering-verifier` audit
-attaching a `verified_against:` block (confirming the two-stage de-fusion + the two backend assembly
-faces + the `scale_untransform` tail against the L0 source, and the loop-obstruction boundary delegation
-to L3) is the standard follow-up, not a status reduction.
+(`partial-obstruction`), referenced as the boundary, not re-derived.
 
 ## Open questions / caveats
 
-- **Lifting note (reverse direction, working notes only — NOT in the high→low chapter body).** Lifting
-  an L1 two-stage `apply_linop ▷ ksp_solve` sequence *up* to the L2 `apply_shift_invert` composition is
-  determinate: recognizing the `M`-matvec-then-shifted-solve dataflow IS the named shift-invert
-  composition with the canonical spectral transform. The lift loses (a) the per-step `scale_untransform`
-  multiplier (the L2 form names the un-scale by role, the coordinate is restored at the boundary), (b)
-  the backend assembly face (the L2 form collapses ARPACK-explicit vs SLEPc-ST-shell to the single named
-  composition), and (c) the inner-solve reduction tree (inherited through the firm `ksp_solve` leaf). So
-  the lift is value-faithful but NOT bit-faithful and NOT assembly-faithful. This reverse-direction note
-  lives here in working notes per the high→low layer-definition discipline; the formal chapter narrates
-  only L2 → L1.
-
-- **Loop-obstruction boundary is the load-bearing scope limit.** The decisive structural fact is that
-  this theme lowers the per-step BODY only — the eigen-iteration loop is opaque-library-owned with no
-  Palace-authored loop to render (the L3 `partial-obstruction`). A `lowering-verifier` should confirm the
-  boundary is clean: this L2>L1 theme owns the per-step `apply_linop ▷ ksp_solve` de-fusion; the L3
-  `eigsolve` entry owns the loop `sequential-obstruction`; no content should be duplicated. The
-  per-step-body-lifts / loop-does-not-lift split is recorded at both ends (this theme's §"What this theme
-  does NOT cover" and the L3 entry's §"Lifts from").
-
-- **Inner-`ksp_solve` non-determinism propagation (for the lowering-verifier).** The per-step transformed
-  vector is bit-sensitive to the inner-solve reduction tree and tolerance (inherited through the firm
-  `ksp_solve` leaf). The de-fusion is value-preserving under algorithmic-correctness but bit-reproduction
-  requires matching the inner-solve tree. This is the standard load-bearing-vs-transparent split (CLAUDE.md
-  §"Optimization tricks"), inherited verbatim from the `ksp_solve` leaf — not a new caveat to the de-fusion,
-  recorded as applicability condition 4.
-
-- **NEP per-step body is a separate composition (out of scope, deferred).** The nonlinear (NEP)
+- **NEP per-step body is a separate composition (out of scope).** The nonlinear (NEP)
   problem-type's per-`λ` operand is the [`apply_nonlinear_pencil`](../L1/apply_nonlinear_pencil.md) leaf;
   the NEP per-step body (the NLEPS quasi-Newton / deflation cohort) is its own composition, lowered by the
   NLEPS-deflation L2>L1 cohort (`deflate-composition-lowering` et al.), not this theme. This theme's
   canonical case is the linear EPS shift-invert; the quadratic PEP is a clean operand-stage variant
-  (the block `L₁`), but the NEP body is genuinely distinct and not folded in here. Recorded so a future
-  abstractor does not over-broaden this theme to the NEP per-step body.
-
-- **Plan / OQ bookkeeping (recommendation for the integrator).** This theme (a) discharges OQ
-  `eigsolve-l2-l1-spectral-transform-composition-lowering-theme-needed` (the cycle-024 carry-forward — the
-  L2 anchor is now firm and the L3 obstruction documented, so the L2>L1 edge was the last gap); (b) closes
-  the `L2/eigsolve` §"Lowers from" forward-reference (`book/src/L2/eigsolve.md:163`, "The L2>L1 theme
-  narrating this opening forward (`L2-L1/eigsolve-spectral-transform-composition`) is pending (a future
-  dispatch)") — a layer-intro-author / lifter cross-reference refresh on the `L2/eigsolve` entry's "pending"
-  note is the standard follow-up, NOT actioned here per dispatch-phase write discipline.
-
-- **Coordination note for the integrator (shared-file overlap).** `book/src/L2-L1/index.md` and
-  `book/src/SUMMARY.md` are shared-edit surfaces. My proposed rows are append-only and distinct: I append
-  the `eigsolve-spectral-transform-composition` theme-list row (after `deflate-composition-lowering`) +
-  the SUMMARY chapter entry (after `deflate-composition-lowering`) only. No collision with prior rows.
-
-```yaml
-verified_against:
-  - citation: palace/linalg/arpack.cpp:562-590
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: ArpackEPSSolver::ApplyOp is line-for-line the L1 sequence — opM->Mult@579 ▷ opInv->Mult@580 ▷ y1*=gamma@581 (shift-invert); opK->Mult@573 ▷ opInv->Mult@574 ▷ y1*=1/gamma@575 (no-transform); opProj->Mult@586 (projector tail). read_range + citecheck all [ok].
-  - citation: palace/linalg/slepc.cpp:1801-1827
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: cycle-025 +7 repair CONFIRMED on disk, no regression — __mat_apply_EPS_A0 opK->Mult@1809 *=delta@1810; __mat_apply_EPS_A1 opM->Mult@1824 *=delta*gamma@1825. read_range + citecheck all [ok].
-  - citation: palace/linalg/slepc.cpp:1847-1877
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: __pc_apply_EPS inner solve opInv->Mult@1858; un-scale *=1/(delta*gamma)@1861 (no-transform) / *=1/delta@1865 (shift-invert); opProj->Mult@1870. read_range + citecheck all [ok]. Header comment @1849-1851 names it the (K-sigmaM)^-1 x inverse-apply.
-  - citation: palace/linalg/arpack.cpp:733-799
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: ArpackPEPSolver::ApplyOp quadratic-PEP operand variant — block comment L0=[[-K,0],[0,M]] L1=[[C,M],[M,0]] @736-743; opInv->Mult@761,778. read_range + citecheck [ok].
-  - citation: palace/linalg/arpack.cpp:191-193
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: SetLinearSolver opInv=&ksp (the inner-solver binding op.inv=E.linear). read_range [ok].
-  - citation: palace/linalg/arpack.cpp:245-246
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: SetShiftInvert sigma=s@245 sinvert=true@246 (precond MFEM_VERIFY abort @243-244). read_range [ok].
-  - citation: palace/linalg/arpack.cpp:263-358
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: SolveInternal naupd RCI driver — the opaque eigen-iteration loop, correctly referenced as the out-of-scope boundary, not lowered. --scan in-bounds [ok].
-  - citation: palace/linalg/slepc.cpp:364-366
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: SlepcEigenvalueSolver::SetLinearSolver opInv=&ksp. read_range [ok]. (Body is 364-367; cited 364-366 bounds the same construct — cosmetic 1-line span diff vs L2 entry, not a drift.)
-  - citation: palace/linalg/slepc.cpp:379-394
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: SetShiftInvert STPRECOND@384 / STSINVERT@388 / STSetTransform@390 / STSetMatMode ST_MATMODE_SHELL@391 (the ST-shell delegation) / sigma=s@392. read_range + citecheck [ok].
-  - citation: palace/linalg/slepc.cpp:674
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: EPSSetTarget(eps, sigma/gamma) deferred scaled-coordinate target. citecheck [ok].
-  - citation: palace/linalg/slepc.cpp:694
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: EPSSolve(eps) — the opaque library eigen-iteration entry, correctly referenced as the L3 partial-obstruction boundary, not lowered. citecheck [ok].
-  - citation: palace/linalg/slepc.cpp:715
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: GetEigenvalue boundary un-scale — line 715 IS "return l * gamma;" (the content cited). NOT a drift; the function-name token is at 714 but the cited line is the described return content.
-  - citation: palace/models/modeeigensolver.cpp:1030-1053
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: backend construction wiring inner ksp into eigensolver — ARPACK SetLinearSolver@1037; SLEPc SetType(KRYLOVSCHUR)@1045 + SetLinearSolver@1050. read_range + citecheck [ok].
-  - citation: book/src/L2/eigsolve.md:55-77,99,103,105,163
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: L2 LHS — Signature apply_shift_invert body (58-67 within 55-77); law 1 (composition identity)@99; law 3 (scaling un-transform)@103; law 4 (inner-solve linearity)@105; Lowers-from forward-ref@163 (this theme enacts it). read_range [ok].
-  - citation: book/src/L3/eigsolve.md
-    verdict: supports
-    audited_at: 2026-05-29T16:47:39Z
-    note: L3 partial-obstruction boundary (cycle-024) — "body lifts, loop does not"; this theme owns the per-step body, the L3 entry owns the loop sequential-obstruction. Boundary clean, no content duplication.
-```
+  (the block `L₁`), but the NEP body is genuinely distinct and not folded in here.

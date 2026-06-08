@@ -5,8 +5,7 @@ operator: matrix-free-operator-apply
 # composition of the four firm element-local substrate ops that realizes FE matrix-free operator
 # application A = Gᵀ B_𝒟ᵀ D B_𝒟 G over the `concepts/element-local-tensor` shape family. It is a
 # constructive-kernel COMPOSITION (a new L2 cohort kind), distinct from the BLAS-1 fold cohorts.
-# Well-foundedness: its four `depends-on (composes)` substrate deps are all firm (basis_apply +
-# quad_point_contract firm c124 D3; element_restrict + geom_factor_build firm c125 D1), so
+# Well-foundedness: its four `depends-on (composes)` substrate deps are all firm, so
 # `rank(combinator) <= min(deps) = firm` permits firm; the composition is positively sourced
 # (AssembleCeedOperator master + Operator::Mult apply) and its laws are syntactic-identity
 # composition facts (firm-on-positive-structure escape — no test gates a composition identity).
@@ -16,7 +15,7 @@ operator: matrix-free-operator-apply
 rank: firm
 edges:
   depends-on:
-    # The four element-local substrate ops this combinator COMPOSES BY NAME (all firm after c125 D1).
+    # The four element-local substrate ops this combinator COMPOSES BY NAME (all firm).
     # `composes` = the L2 combinator is built from these L1 verbs; rank-constrained, GC-live.
     - target: L1/element_restrict        # G / Gᵀ — the [(N: ...)] ↔ [E, L] gather / scatter-add boundary
       kind: composes
@@ -31,7 +30,7 @@ edges:
       kind: lifts-kernel-impl   # the L1 kernel-impl this combinator NAMES at L2 (free, navigational — the L2 form is the named composition of the same chain; the L1 impl is the concrete realization; identity-in-named-terms rotation, in-line note below, NOT a separate L2-L1 theme)
     - target: L1/fe_assemble             # the firm fold K = Σ_i A(space, term_i) whose per-term leaf A IS this combinator's product (the consumer that pulls this to the feature root)
     - target: L1/weak_form_term          # (Q, 𝒟) — 𝒟 selects the basis_apply EvalMode B_𝒟; Q enters the quad_point_contract D
-    - target: concepts/element-local-tensor   # the rank-structured shape family the whole chain is typed over (firm, c124 D5)
+    - target: concepts/element-local-tensor   # the rank-structured shape family the whole chain is typed over (firm)
     - target: concepts/tensor-field-lift      # the pointwise D stage is the per-quad-point lift — the GPU-tensor backend-lowering form
     - target: concepts/build-time-vs-run-time-stratification  # G/B/geom are build-stratum; the [E, P, C] value tensor is the run-stratum transient
 ---
@@ -48,18 +47,6 @@ realizes concretely and that the firm [`fe_assemble`](../L1/fe_assemble.md) fold
 over the element axis `E` and quad-point axis `P` — **is** the burn/GPU matrix-free backend-lowering
 target (the reason `concepts/element-local-tensor` is the genuine vocabulary shift away from the flat
 `Tensor[N]` BLAS L1).
-
-## Status
-
-`firm` (rank 3) — **constructive-kernel composition** (a new L2 cohort kind; see §"Cohort placement").
-The combinator **composes four firm substrate ops by name** and its composition-level laws are
-syntactic-identity facts on the positively-read `AssembleCeedOperator` master assembler
-(`palace/fem/libceed/integrator.cpp:422-445`) + the `Operator::Mult` apply (`palace/fem/libceed/operator.cpp:182-189`) — no test gates a
-composition identity, so the **firm-on-positive-structure escape** applies. Well-foundedness: the four
-`depends-on (composes)` substrate deps are all firm — `basis_apply` + `quad_point_contract` (c124 D3),
-`element_restrict` + `geom_factor_build` (c125 D1) — so `rank ≤ min(deps) = firm` permits firm. The
-shape family it is typed over, [`element-local-tensor`](../concepts/element-local-tensor.md), is firm
-(c124 D5). All L0 citations self-verified against on-disk source this dispatch via `citecheck --anchor`.
 
 ## L2 form (the named contraction-chain combinator)
 
@@ -210,10 +197,9 @@ source, not reconstructed from negative anchors.
 
 ## Higher (L4) — firm
 
-At L4 this combinator's action is the **apply** of a now-firm matrix-free linear-operator constructor
+At L4 this combinator's action is the **apply** of a firm matrix-free linear-operator constructor
 in the backend-lowering feature surface — the calculus form whose semantics match the burn/GPU tensor-
-contraction backend directly (`project_l4_is_backend_lowering_target`). The L4 surface landed firm in
-cycle-127:
+contraction backend directly (`project_l4_is_backend_lowering_target`):
 
 - [`L4/mk_matrix_free_operator`](../L4/mk_matrix_free_operator.md) (firm) — the **operator-constructor**
   whose action this L2 combinator IS. Signature
@@ -227,11 +213,11 @@ cycle-127:
   — the dissolution theme whose RHS composes this combinator (the flat-`Tensor[(N: ...)]` black-box
   apply → the five-stage element-local rank-tensor contraction sweep).
 
-## Verified-against
+## Evidence
 
 - `palace/fem/libceed/operator.cpp:182-189` — `Operator::Mult`: `y = 0.0; CeedAddMult(op, u, v, x, y);
   if (dof_multiplicity.Size() > 0) y *= dof_multiplicity;` — the whole-operator apply (the run-stratum
-  `apply` + the `dof_multiplicity` post-scale). Self-verified via `citecheck --anchor 'Operator::Mult'`.
+  `apply` + the `dof_multiplicity` post-scale).
 - `palace/fem/libceed/operator.cpp:194-200` — `Operator::AddMult` + the `CeedAddMult` accumulation
   (`AddMult` adds into `y`) — the element-additivity / scatter-add law witness.
 - `palace/fem/libceed/operator.cpp:137-139` — `CeedOperatorLinearAssembleAddDiagonal` — the operator
@@ -253,33 +239,3 @@ cycle-127:
 - `book/src/concepts/element-local-tensor.md` — the firm shape family the contraction is typed over.
 - `book/src/L1/fe_assemble.md` — the firm fold whose per-term leaf `A(space, term)` is this
   combinator's product.
-
-The chapter carries a fenced `verified_against:` YAML block:
-
-```yaml
-verified_against:
-  - citation: reference/palace/palace/fem/libceed/operator.cpp:182-189
-    verdict: supports
-    audited_at: 2026-06-07T130000Z
-    note: Operator::Mult (:182) — y=0.0; CeedAddMult(op,u,v,x,y); y*=dof_multiplicity — the whole-operator apply. citecheck --anchor 'Operator::Mult' [ok], anchor at :182 within range.
-  - citation: reference/palace/palace/fem/libceed/operator.cpp:194-200
-    verdict: supports
-    audited_at: 2026-06-07T130000Z
-    note: Operator::AddMult (:194) + the CeedAddMult accumulation — element-additivity / scatter-add witness. citecheck --anchor 'AddMult' [ok], anchors at :194,:199 within range.
-  - citation: reference/palace/palace/fem/libceed/operator.cpp:483
-    verdict: supports
-    audited_at: 2026-06-07T130000Z
-    note: CeedOperatorAssembleCOO (:483) — the derived assembled-COO materialization (matrix-free-vs-assembled duality). citecheck --anchor 'CeedOperatorAssembleCOO' [ok].
-  - citation: reference/palace/palace/fem/libceed/integrator.cpp:422-445
-    verdict: supports
-    audited_at: 2026-06-07T130000Z
-    note: AssembleCeedOperator master assembler (:423 signature) — trial_restr/test_restr/trial_basis/test_basis/geom_data/geom_data_restr field wiring of the Gᵀ Bᵀ D B G pipeline (mk-operator build stratum). citecheck --anchor 'AssembleCeedOperator' [ok], anchor at :423 within range.
-  - citation: reference/palace/palace/fem/libceed/integrator.cpp:340-419
-    verdict: supports
-    audited_at: 2026-06-07T130000Z
-    note: build-QFunction f_build_geom_factor_* — the geom_factor_build setup-stratum carrier. citecheck --anchor 'f_build_geom_factor' [ok].
-  - citation: reference/palace/palace/fem/bilinearform.cpp:77
-    verdict: supports
-    audited_at: 2026-06-07T130000Z
-    note: AddSubOperator (:77) — per-term fold summation K = Σ_i A(space, term_i) (the fe_assemble consumer; element/term additivity). citecheck --anchor 'AddSubOperator' [ok].
-```

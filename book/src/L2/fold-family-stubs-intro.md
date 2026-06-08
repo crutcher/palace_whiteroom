@@ -12,14 +12,14 @@ edges:
 # L2 fold-family combinators (former specialization / consumer stubs — eliminated)
 
 The once-standalone same-named BLAS-1 leaves have all been **eliminated into their fold
-combinators** (the combinator is the entry; per the 2026-06-01 vocabulary-shift redirect the
+combinators** (the combinator is the entry; per the vocabulary-shift redirect the
 residual same-named per-layer leaf-floors are the retired rectangular pattern).
 
 The four `linear_combination` arity members (`scal`/`axpy`/`axpby`/`axpbypcz`) were
-**eliminated cycle-124 (RE6)**, their unique L0 anchors folded into
+eliminated, their unique L0 anchors folded into
 [`linear_combination` §Arity specializations](./linear_combination.md#arity-specializations).
 
-The two `inner_product` reduce-family stubs were **eliminated cycle-127 (RE-style)**, their
+The two `inner_product` reduce-family stubs were eliminated, their
 unique leaf-level facts folded into [`inner_product`](./inner_product.md):
 - the `M = I` Hermitian/symmetric **specialization** `dot` (conjugation variant-axis + the
   `Dot`/`TransposeDot` kernels + self-dot fast path) → §"Specializations";

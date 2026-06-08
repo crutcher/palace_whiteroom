@@ -1,18 +1,13 @@
 ---
-# Lowering theme (L1>L0), cycle-115 D2 hygiene: previously NO frontmatter (rank prose-inferred
-# from `## Status` `firm`). Per graded-stack scheme §5, theme rank = min(endpoint ranks); the L1
-# endpoint (`L1/scal`) is firm (rank 3), L0 endpoint rank-terminal, so the theme is firm. The
-# op->theme edge (`L1/scal →lowers-to→ this theme`, c114) lives on the op side and is NOT
-# re-added. This theme carries its OWN outbound `cites-evidence` edges to the L0 in-place
-# receiver-mutating member overloads it lowers to (the complex `ComplexVector::operator*=`
-# definition + its declaration). The real path is `mfem::Vector::operator*=(double)` — upstream
-# MFEM, not Palace source — so it is named in prose, not cited as a Palace L0 edge.
-# All ranges self-verified on disk via citecheck --anchor + direct Read of the close brace.
+# Lowering theme (L1>L0). Theme rank = min(endpoint ranks); the L1 endpoint (`L1/scal`) is firm,
+# the L0 endpoint is rank-terminal, so the theme is firm. This theme carries `cites-evidence`
+# edges to the L0 complex `ComplexVector::operator*=` overload it lowers to; the real path is
+# `mfem::Vector::operator*=(double)` — upstream MFEM, named in prose, not a Palace L0 edge.
 rank: firm
 edges:
   depends-on:
     - target: palace/linalg/vector.cpp:203-227
-      kind: cites-evidence        # ComplexVector::operator*= definition; si==0.0 two-real-call branch (:207-211) + general complex forall_switch kernel (:212-225); close brace verified on disk at :227
+      kind: cites-evidence        # ComplexVector::operator*= definition; si==0.0 two-real-call branch (:207-211) + general complex forall_switch kernel (:212-225)
     - target: palace/linalg/vector.hpp:98-99
       kind: cites-evidence        # ComplexVector &operator*=(std::complex<double> s); decl + `// Scale all entries by s.` comment
 ---
@@ -128,8 +123,7 @@ For both sub-patterns the rewrite preserves semantics when:
    a real `α` against a complex `x` is promoted via the internal
    `s.imag() == 0.0` branch at `vector.cpp:207-211` (see
    [`concepts/scalar-promotion`](../concepts/scalar-promotion.md), which
-   formalizes the real⊑complex typing rule — resolving the former
-   `scalar-promotion-typing-rule` OQ, closed cycle-005). A complex `α`
+   formalizes the real⊑complex typing rule). A complex `α`
    against a real `x` has no L0 overload and does not occur in the corpus.
 3. **`α` is a runtime scalar.** There is no sub-pattern selection on the value
    of `α` — `scal` has no `α == 0` / `α == 1` / `α == -1` constant-folding
@@ -165,10 +159,9 @@ construct (`x *= 1.0/norm; return norm;`) factors at L1 as the composition
 [`L1/scal`](../L1/scal.md) §Dependencies), not a speculative operator of this
 theme.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (all self-verified via codemap `read_range`,
-2026-05-29T034441Z):
+L0 evidence ranges:
 
 - `palace/linalg/vector.hpp:98-99` — `ComplexVector::operator*=(std::complex<double>)`
   declaration + `// Scale all entries by s.` comment.
@@ -195,7 +188,7 @@ L1 anchor:
   (signature `scal :: (α: Scalar, x: Tensor[N]) -> Tensor[N]`, nine algebraic
   laws).
 
-Test evidence (L0-equivalent semantic documentation; self-verified):
+Test evidence (L0-equivalent semantic documentation):
 
 - `palace/test/unit/test-orthog.cpp:193` — `V[0] *= 1 / v0_norm;` on a real
   `Vector`, immediately after a `CHECK_THAT(v0_norm, ...)` assertion on the norm.
@@ -214,21 +207,4 @@ two-overload recognition (real `mfem::Vector::operator*=(double)` vs complex
 `ComplexVector::operator*=(std::complex<double>)`) plus the fused `Normalize`
 template covers the observed corpus; additional `x *= α` sites exist under
 `palace/models/` and `palace/fem/` (e.g. the `RHS *= 0.5` excitation-vector
-rescale mirrored in `palace/models/spaceoperator.cpp`). Exhaustive corpus
-indexing deferred to a future `lowering-verifier` audit, consistent with the
-sibling `axpby-mutation-rotation` coverage note.
-
-## Status
-
-`firm` — the rewrite is a single structural buffer re-bind with one transparent
-algebraic shape-sub-note (the complex `imag(s) == 0.0` branch), and every L0
-range is direct from `palace/linalg/vector.{hpp,cpp}` + inlined call sites,
-self-verified against source and corroborated by two empirical-match test sites
-(real path `test-orthog.cpp:193`, complex-promotion path
-`test-lumpedportintegration.cpp:394`). No constructive sub-part: nothing here is
-reconstructed from negative anchors or literature — the `scal` L0 surface is
-small, fully present, and positively cited. (Contrast the `partly-constructive`
-`eigsolve-mutation-rotation`, whose `LinearSolveFailed` sub-part is negative-anchor
-reconstructed.) The one named absence — no `linalg::Scal`/`linalg::Scale` symbol —
-is a *positive* zero-hit corpus result (it confirms the receiver-only surface),
-not a reconstruction.
+rescale mirrored in `palace/models/spaceoperator.cpp`).

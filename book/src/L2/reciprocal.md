@@ -25,8 +25,8 @@ to L1 [`reciprocal`](../L1/reciprocal.md) (the mutation-lifted form of the same
 `Vector::Reciprocal()` / `ComplexVector::Reciprocal()` member-method pair) and L3
 [`reciprocal`](../L3/reciprocal.md) (the iteration-rotation rendering); the rotation
 L1 ↔ L2 is identity-in-form because `reciprocal` is a leaf field operation with no kernel
-fusion to unfold. The elementwise leaf that, composed with `assemble_diagonal` (its L1 form
-[`assemble-diagonal`](../L1/assemble-diagonal.md); no L2 floor yet), produces the inverse
+fusion to unfold. The elementwise leaf that, composed with `assemble_diagonal`
+([`assemble-diagonal`](../L2/assemble-diagonal.md)), produces the inverse
 diagonal `D⁻¹` consumed by the diagonal-preconditioner-apply chain (Jacobi, Chebyshev).
 
 ## Context
@@ -38,12 +38,11 @@ elementwise-multiplicative-inverse primitive in that vocabulary — a single fie
 acting pointwise over the shape group `S` (arbitrary, unknown rank), with no control flow, no monadic state
 threading, no reduction, and no convergence predicate.
 
-This is a thin **floor presence** entry, authored under the 2026-05-31 foundation-first
-directive `l2-floor-under-l3-leaf-cohort`. Its purpose is floor *presence*: the firm L3
-[`reciprocal`](../L3/reciprocal.md) (the iteration-rotation rendering, cycle-038, consumed
+This is a thin **floor presence** entry: the firm L3
+[`reciprocal`](../L3/reciprocal.md) (the iteration-rotation rendering, consumed
 inside the diagonal-preconditioner-apply chain) and the firm L1
 [`reciprocal`](../L1/reciprocal.md) (the mutation-rotation leaf) sandwich a layer at which
-`reciprocal` had no chapter. The L2 entry fills it so the lowering chain L3 → L2 → L1 has a
+`reciprocal` would otherwise have no chapter. The L2 entry fills it so the lowering chain L3 → L2 → L1 has a
 present chapter at every adjacent edge, and the L3 leaf can lower to an adjacent
 same-named L2 parent rather than non-adjacently to L1.
 
@@ -51,7 +50,7 @@ same-named L2 parent rather than non-adjacently to L1.
 §Methodology invariants "Layers are defined high→low"): the signature, semantics, and
 algebraic laws are stated at the L2 fusion-rotation resolution. The two adjacent rotations
 — how the L2 form lowers to L1 and how the L3 form lowers to L2 — are narrated by the
-separate lowering themes (the D10 dispatches this cycle); this chapter does not define
+separate lowering edges; this chapter does not define
 `reciprocal` in terms of L1 primitives. The L1 entry [`L1/reciprocal`](../L1/reciprocal.md)
 is authoritative on every factual claim about the Palace surface (the
 receiver-self-overwriting `Reciprocal()` member-method idiom, the complex `z̄/|z|²` kernel,
@@ -318,40 +317,6 @@ Non-axes (recorded for disambiguation, inherited from L1):
 The variant-axis count matches the L1 and L3 entries exactly (one orthogonal axis:
 element-type). No new axes introduced by the L2 rendering; no axes merged or split.
 
-## Status
-
-`firm` — the L2 form is value-thread-isomorphic to the firm L1 leaf
-[`L1/reciprocal`](../L1/reciprocal.md) (identity-in-form rotation on the primitive); every
-algebraic law is a standard elementwise-multiplicative-inverse fact inherited unchanged, with
-the complex closed-form (law 5) and the involution (law 1) directly confirmed by the in-source
-`s = 1/(XR²+XI²); XR *= s; XI *= -s` kernel (`palace/linalg/vector.cpp:257-259`), the
-nonlinearity / partiality / IEEE-754 caveats catalogued explicitly as non-laws, and the single
-orthogonal variant axis (element-type) inherited from L1.
-
-**Firm-on-positive-structure**: every law is a syntactic identity on the fully-present positive
-complex-elementwise kernel body (`palace/linalg/vector.cpp:248-261`, read in full) and the
-upstream-aliased real method — not a literature-inferred convergence claim — so the absence of
-a dedicated `Reciprocal` unit test under `reference/palace/test/unit/` does not gate firm (the
-`apply_linop` / `dot` / `scal` / `assemble-diagonal` firm-on-positive-structure situation, not
-the `eigsolve`-convergence-semantics situation). Behaviour is exercised indirectly through the
-integration coverage of the four consumer sites (Jacobi `palace/linalg/jacobi.cpp:80`;
-Chebyshev `:178, :241`; bilinearform `:278`).
-
-This is a **thin floor entry** authored under the 2026-05-31 foundation-first directive
-`l2-floor-under-l3-leaf-cohort`: its purpose is floor *presence* so the firm L3
-[`reciprocal`](../L3/reciprocal.md) leaf (cycle-038) rests on an adjacent same-named L2 parent
-(per CLAUDE.md §Methodology invariants **Identity-lowerings still require both L levels**)
-rather than skipping a layer to L1. No fusion structure unique to the leaf — beyond the
-transparent `s = 1/|z|²` factoring the L1 entry already records — was found; the entry stays a
-thin floor.
-
-**Design-final on the leaf-vs-fold fork.** Unlike its cohort siblings `dot` / `scal` — whose
-floor-vs-fold realization is under batch-12 meta-phase adjudication
-(`dot-l2-leaf-floor-vs-fold-only-design`, `book/src/L2/index.md:91`) — `reciprocal` has **no
-fold-parent** for the (a) fold-only reading to re-anchor it into. Its L2 floor is therefore a
-same-named standalone leaf regardless of the meta-phase decision; this entry is stable on that
-axis (see § "No fold-parent").
-
 ## Downward to L1
 
 L2 `reciprocal` lowers to L1 [`reciprocal`](../L1/reciprocal.md) via an **identity-in-form**
@@ -364,9 +329,7 @@ multi-operation kernel fusion to de-fuse — so **the vocabulary does not shift 
 
 There is **no dedicated `L2-L1/` theme file** for `reciprocal`: a mirrored L2/L1 entry plus a
 thin identity-in-named-terms theme is the degenerate smell the 2026-06-01 VOCABULARY-SHIFT
-REDIRECT names, so the relationship is recorded here as an in-line note. (The degenerate
-`reciprocal-leaf-identity` L2>L1 theme, authored cycle-042 D10, was demoted to this note in
-cycle-050.) This follows the in-line identity-rotation discipline for the floor cohort (lowering
+REDIRECT names, so the relationship is recorded here as an in-line note. This follows the in-line identity-rotation discipline for the floor cohort (lowering
 directories carry genuine vocabulary-shifting rotations, not identities). The substantive
 rotation in the chain is the firm L1>L0
 [`reciprocal-elementwise-product-mutation-rotation`](../L1-L0/reciprocal-elementwise-product-mutation-rotation.md)
@@ -387,28 +350,27 @@ reader navigating L2 must find `reciprocal` defined in L2 vocabulary as the base
 elementwise-multiplicative-inverse primitive, not have to reach down to L1 (or up to L3) to
 recover the field-operation shape.
 
-The cycle-041 BLAS-1-floor entries [`dot`](./inner_product.md#specializations), [`nrm2`](./inner_product.md#consumer-nrm2-and-matrix-weighted-norm), [`scal`](./linear_combination.md#arity-specializations)
-are the freshest structural precedents on the same `l2-floor-under-l3-leaf-cohort` directive:
+The BLAS-1-floor entries [`dot`](./inner_product.md#specializations), [`nrm2`](./inner_product.md#consumer-nrm2-and-matrix-weighted-norm), [`scal`](./linear_combination.md#arity-specializations)
+are the structural precedents on the same floor effort:
 identity-in-form rotation on the primitive's signature, thin floor presence, methodology
 invariant enacted. `reciprocal` is the **fold-parent-free** member of the broader floor effort
 (the elementwise self-map, distinct from the fold-leaf `dot`/`scal` and the fold-consumer
-`nrm2`); this dispatch closes its L2 entry.
+`nrm2`).
 
 ## Evidence
 
 The L2 form is value-thread-isomorphic to the L1 form (identity-in-form on the primitive's
 signature); all L0 evidence is transitive through the firm L1 leaf. Direct citations relevant
-to this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified via
-`tools/citecheck/citecheck.py --anchor` this invocation, 2026-06-01):
+to this L2 entry (paths relative to `reference/palace/`):
 
 - [`book/src/L1/reciprocal.md`](../L1/reciprocal.md) (firm) — the L1 entry whose signature,
   semantics (element-local, reduction-free, rank-local), eight algebraic laws, single variant
   axis (element-type), partiality precondition, and complete L0 evidence chain are transported
   unchanged to L2. The laws and non-laws cited above are reproduced from the L1 entry's
   §"Algebraic laws".
-- [`book/src/L3/reciprocal.md`](../L3/reciprocal.md) (firm cycle-038) — the L3 leaf this floor
+- [`book/src/L3/reciprocal.md`](../L3/reciprocal.md) (firm) — the L3 leaf this floor
   goes under; the iteration-rotation rendering whose adjacent L2 parent this entry supplies.
-- [`book/src/L2/dot.md`](./inner_product.md#specializations), [`book/src/L2/linear_combination.md`](./linear_combination.md#arity-specializations) (the arity-1 `scal` readout, firm cycle-041; folded in cycle-124 RE6) — the
+- [`book/src/L2/dot.md`](./inner_product.md#specializations), [`book/src/L2/linear_combination.md`](./linear_combination.md#arity-specializations) (the arity-1 `scal` readout, firm) — the
   BLAS-1-floor cohort siblings; the thin identity-in-form floor form, the firm-on-positive-
   structure status judgement, and the floor-presence framing are inherited from these. The
   do-NOT-merge fold-cohort boundary applies to *them* (leaf-of / member-of a fold); `reciprocal`
@@ -421,33 +383,31 @@ to this L2 entry (paths relative to `reference/palace/`; L0 ranges self-verified
   receiver-self-overwrite mutation, the complex kernel decomposition, and the no-zero-guard
   policy that the L2 entry abstracts away.
 
-**Transitive L0 evidence (via the L1 entry; load-bearing citations re-verified on-disk for
-this dispatch with `tools/citecheck/citecheck.py --anchor`, not duplicated in detail)**:
+**Transitive L0 evidence (via the L1 entry; not duplicated in detail)**:
 
 - `palace/linalg/vector.hpp:20` — `using Vector = mfem::Vector;` — the real-vector alias;
   `Vector::Reciprocal()` resolves into upstream `mfem::Vector::Reciprocal()` (the
-  real-element-type case). **Self-verified (anchor `mfem::Vector` at :20).**
+  real-element-type case).
 - `palace/linalg/vector.hpp:107-108` — doc comment `// Set all entries to their reciprocal.`
   (:107) and `void Reciprocal();` (:108) — the complex `ComplexVector::Reciprocal()`
-  declaration. **Self-verified (anchor `reciprocal` at :107, `Reciprocal` at :108).**
+  declaration.
 - `palace/linalg/vector.cpp:248-261` — `ComplexVector::Reciprocal()` definition (the
   `forall_switch` element-loop computing `s = 1.0 / (XR[i]² + XI[i]²); XR[i] *= s; XI[i] *= -s`
   at `:257-259`) — realises the complex closed form `1/z = z̄/|z|²`; witnesses laws 1, 5 and the
-  no-zero-guard policy. **Self-verified (anchor `Reciprocal` at :248, `XR` at :257-258).**
+  no-zero-guard policy.
 - `palace/linalg/jacobi.cpp:80` — consumer: `dinv.Reciprocal();` inside
   `JacobiSmoother::SetOperator`, immediately after `op.AssembleDiagonal(dinv)`. The principal
   downstream consumer; the `assemble_diagonal → reciprocal → elementwise_product` chain's
-  reciprocal step. **Self-verified (anchor `Reciprocal` at :80).**
+  reciprocal step.
 - `palace/linalg/jacobi.cpp:16` — comment `// Assumes A SPD (diag(A) > 0) ...` — the
   operator-class-level Jacobi consumer precondition (`diag(A) > 0` ⇒ no zero entry in `dinv`)
-  enforcing the L2 `x[i] ≠ 0` precondition. **Self-verified (anchor `SPD` at :16).**
+  enforcing the L2 `x[i] ≠ 0` precondition.
 - `palace/linalg/chebyshev.cpp:178` — consumer: `dinv.Reciprocal();` inside
   `ChebyshevSmoother::SetOperator` (4th-kind); `:241` — inside
-  `ChebyshevSmoother1stKind::SetOperator` (1st-kind). Same chain. **Self-verified (anchor
-  `Reciprocal` at :178, :241).**
+  `ChebyshevSmoother1stKind::SetOperator` (1st-kind). Same chain.
 - `palace/fem/bilinearform.cpp:278` — consumer: `test_multiplicity.Reciprocal();` — FE-assembly
   multiplicity-averaging step (a non-preconditioner consumer of the same elementwise-reciprocal
-  primitive). **Self-verified (anchor `Reciprocal` at :278).**
+  primitive).
 - *Negative anchor*: no dedicated `Reciprocal` test under `reference/palace/test/unit/`. Per the
   firm-on-positive-structure precedent (`apply_linop`, `dot`, `scal`, `assemble-diagonal`, the
   BLAS-1 leaves), the firm judgement does not require a dedicated test — every law is a syntactic

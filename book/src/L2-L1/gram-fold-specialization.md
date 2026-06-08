@@ -1,7 +1,7 @@
 # gram-fold-specialization
 
 The all-pairs lift of the BLAS-1 reduce-to-scalar conjugation rotation. Lowers the L2 all-pairs
-fold [`gram`](../L2/gram.md) (`book/src/L2/gram.md`, firm cycle-022) into a **`k×k` grid of L1
+fold [`gram`](../L2/gram.md) (`book/src/L2/gram.md`) into a **`k×k` grid of L1
 per-cell leaves** — each cell a [`dot`](../L1/dot.md) (canonical Hermitian hook) or a
 [`bilinear-form`](../L1/bilinear-form.md) (`xᴴ M y`, the B-weighted hook) — by **materializing
 the all-pairs definition law as a double loop over the two basis index axes and dispatching each
@@ -184,7 +184,7 @@ conjugate of cell `(i,j)`: `G[j,i] = X[i]ᴴ X[j] = conj(X[j]ᴴ X[i]) = conj(G[
 off-diagonal is the **conjugation-sensitive** part. So the re-order is observable per-cell exactly
 where the scalar theme says: a downstream consumer that reads the **full complex value** of an
 off-diagonal Gram cell sees the conjugate if the operand order is swapped. The
-cross-layer-cross-cutter dot-callers census (`inner-product-fold-specialization` §"Caller-site
+dot-callers census (`inner-product-fold-specialization` §"Caller-site
 conjugation inventory") flags `nleps.cpp:529` as an **observable-unweighted** site precisely
 because the Gram cells feed a complex LU solve (`palace/linalg/nleps.cpp:533-534`), not a real
 projection — the full complex value is consumed, so the per-cell conjugation handedness is
@@ -270,7 +270,7 @@ The dispatch lowering preserves the L2 Gram value when:
    only used for its eigenvalues via a Hermitian solver) sees no re-order. A Gram whose
    **off-diagonal complex cells are consumed by value** — the NLEPS deflation Gram fed to the
    complex LU solve `SS.fullPivLu().solve(...)` (`palace/linalg/nleps.cpp:533-534`) — is the
-   observable case (the cross-layer-cross-cutter census flags `nleps.cpp:529` observable-unweighted
+   observable case (the dot-callers census flags `nleps.cpp:529` observable-unweighted
    for exactly this reason). There the lowering must emit Palace's operand order
    `linalg::Dot(comm, X[i], X[j])` (or `conj(linalg::Dot(comm, X[j], X[i]))`) to land the
    conjugation on the right column.
@@ -295,10 +295,10 @@ reduction-tree split is the load-bearing residue recorded in §"Per-cell summati
 
 **None.** Both sides are existing vocabulary:
 
-- LHS [`gram`](../L2/gram.md) is **firm** (cycle-022; all-pairs `inner_product` syntactic-identity
+- LHS [`gram`](../L2/gram.md) is **firm** (all-pairs `inner_product` syntactic-identity
   laws on the positive Gram-build site `palace/linalg/nleps.cpp:524-531`).
 - RHS leaves are the sibling scalar theme's leaves: [`dot`](../L1/dot.md) (firm; co-defines `dot`
-  + `tdot`) and [`bilinear-form`](../L1/bilinear-form.md) (firm, promoted cycle-095; the B-weighted hook member).
+  + `tdot`) and [`bilinear-form`](../L1/bilinear-form.md) (firm; the B-weighted hook member).
 
 This theme proposes no new operators — it is the matrix-lift lowering edge between existing
 vocabulary on both sides, built by lifting the sibling scalar theme's dispatch over the two basis
@@ -313,63 +313,55 @@ theme — the *dispatch structure* is firm):
   but behaviorally unexercised. The theme's behavioral weight is on the `dot` (Hermitian — the
   NLEPS deflation Gram) arm.
 
-- **`bilinear-form` is firm at L1** (promoted cycle-095). The B-weighted-hook Gram
-  arm (`G = XᴴBX`) was always firm independent of the leaf's promotion: the arm's structure is firm (each cell is the
+- **`bilinear-form` is firm at L1.** The B-weighted-hook Gram
+  arm (`G = XᴴBX`) is firm: each cell is the
   composition `inner_product (apply_linop B X[i]) X[j]` lowering to `Dot(comm, B·X[i], X[j])`,
-  directly verified at the scalar level). NLEPS uses the canonical hook only; the B-weighted Gram
-  is the SLEPc/ROM Rayleigh–Ritz overlap, not exercised at the NLEPS site. The leaf's rough-in
-  status lives at L1; it does not gate this theme.
+  directly verified at the scalar level. NLEPS uses the canonical hook only; the B-weighted Gram
+  is the SLEPc/ROM Rayleigh–Ritz overlap, not exercised at the NLEPS site.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `palace-codemap` read_range / search_text this invocation —
-producer-citation-drift discipline, `verify-citation-range` producer-self-verification; paths
-relative to `reference/`):
+L0 evidence ranges (paths relative to `reference/`):
 
 - `palace/linalg/nleps.cpp:524-531` — **the sole literal Gram-build site.** `Eigen::MatrixXcd
   SS(k, k);` (`:524`) then the nested loop `for (int i = 0; i < k; i++) { for (int j = 0; j < k;
   j++) { SS(i, j) = linalg::Dot(GetComm(), X[i], X[j]); } }` (`:525-531`, the cell body
   `SS(i, j) = linalg::Dot(GetComm(), X[i], X[j])` on `:529`). The double-loop materialization +
-  the per-cell `dot`-leaf dispatch + the canonical Hermitian hook. **Self-verified via read_range
-  (lines 504-537) + search_text (`linalg::Dot\(GetComm\(\), X` → exactly :529).**
+  the per-cell `dot`-leaf dispatch + the canonical Hermitian hook.
 - `palace/linalg/nleps.cpp:529` — the cell body, the only `linalg::Dot(GetComm(), X[i], X[j])`
-  occurrence (search_text confirmed exactly one hit). The positive `XᴴX` build cell; per Palace's
-  arg-2-conjugated `linalg::Dot`, `= X[j]ᴴ X[i] = inner_product(X[j], X[i])`. **Self-verified.**
+  occurrence. The positive `XᴴX` build cell; per Palace's
+  arg-2-conjugated `linalg::Dot`, `= X[j]ᴴ X[i] = inner_product(X[j], X[i])`.
 - `palace/linalg/nleps.cpp:515-518` — the `k == 0` early-return (`if (k == 0) // no deflation
   { return; }`): the empty-basis identity (`gram dot [] = Matrix[0,0]`, `L2/gram` law 2) realized
-  as the deflation skip. **Self-verified.**
+  as the deflation skip.
 - `palace/linalg/nleps.cpp:532-535` — the consumer (NOT a `gram` law): `const Eigen::MatrixXcd S =
   eig_opInv * Identity(k,k) - H` (`:532`), `SS = -S.fullPivLu().solve(SS)` (`:533`), `x2 =
   SS.fullPivLu().solve(x2)` (`:534`), back-projection `MatVecMult(X, S.fullPivLu().solve(x2))`
   (`:535`) — `deflate`'s complex LU solve consuming the full complex Gram value (the observable
-  re-order witness). **Self-verified.**
+  re-order witness).
 - `palace/linalg/nleps.cpp:520-523` — the coordinate-extraction loop `x2(j) = b2(j) -
   linalg::Dot(GetComm(), x1, X[j])`: the `Xᴴ·` half (arg-1-conjugated convention applied to a
-  vector rather than a basis column); flagged observable-unweighted at `:522` in the
-  cross-layer-cross-cutter census. **Self-verified.**
+  vector rather than a basis column); flagged observable-unweighted at `:522`.
 - `palace/linalg/nleps.cpp:561-569` — `compute_residual`'s deflation: `MatVecMult(X,
   S.fullPivLu().solve(vv2))` (`:563`) + residual coords `rr2(j) = linalg::Dot(GetComm(), vv,
-  X[j])` (`:568`). A second consumer of the Gram-solve (not a fresh Gram build). **Self-verified
-  via read_range (lines 561-569).**
+  X[j])` (`:568`). A second consumer of the Gram-solve (not a fresh Gram build).
 - `palace/linalg/nleps.cpp:614-619` — deflation-basis growth `X.resize(k+1); X[k] = v;
   H.conservativeResizeLike(...); H(k,k) = eig; k++`: the basis grows one column per converged
   eigenpair (the incremental-Gram rank-1 border, `L2/gram` law 6) — the Gram is rebuilt at the
-  bordered `k+1` size on the next `deflated_solve`. **Self-verified.** (Range tightened from the
-  enclosing `:613-619`; `:613` is `eigs[k] = eig;`, a related-but-distinct statement.)
+  bordered `k+1` size on the next `deflated_solve`.
 - `palace/linalg/nleps.cpp:354-362` — the deflation-scheme literature anchors: Jarlebring/Koskela/
   Mele 2018 quasi-Newton (`:354-355`), SLEPc-NEP minimality index 1 (`:356`), Effenberger 2013
   successive eigenpair computation (`:357-358`). The standard-scheme anchor for the
-  oblique-Galerkin deflation Gram. **Self-verified via read_range + search_text.**
+  oblique-Galerkin deflation Gram.
 - `palace/linalg/vector.cpp:263-266` — `ComplexVector::Dot` body `= x·conj(y) = yᴴ x` (arg-2
-  conjugated): the per-cell conjugation kernel + the conjugate-pair re-order source. **Cited via
-  the sibling scalar theme's verified evidence (read this invocation in
-  `inner-product-fold-specialization.md:394-397`); inherited from the firm sibling.**
+  conjugated): the per-cell conjugation kernel + the conjugate-pair re-order source. Cited via
+  the sibling scalar theme's evidence; inherited from the firm sibling.
 - `palace/linalg/vector.cpp:664-672` (real LocalDot single Hypre pass), `:674-685` (complex
   four-real-dot lift), `palace/linalg/operator.cpp:621-638` (weighted `Dot` two-stage) — the
-  per-cell reduction trees. **Cited via the sibling scalar theme's verified evidence (the
-  §"Summation-order recording" table); inherited from the firm sibling, not re-derived here.**
+  per-cell reduction trees. Cited via the sibling scalar theme's evidence (the
+  §"Summation-order recording" table); inherited from the firm sibling, not re-derived here.
 
-L2 / L1 anchors (read this invocation):
+L2 / L1 anchors:
 
 - `book/src/L2/gram.md` — the L2 all-pairs fold (LHS). Signature (`:42-50`), pinned conjugation
   convention (`:73-85`), all-pairs definition law 1 (`:117-122`), empty-basis law 2 (`:124-126`),
@@ -389,148 +381,35 @@ L2 / L1 anchors (read this invocation):
 
 ## Status
 
-`firm` — the L2 LHS [`gram`](../L2/gram.md) is firm (cycle-022), the RHS leaves are existing
-vocabulary (`dot`/`tdot` firm; `bilinear-form` firm (cycle-095) and its B-weighted-hook dispatch arm is
-firm), and the dispatch rule IS the `gram` all-pairs definition law (`L2/gram` law 1) read as a
-lowering, composed pointwise with the **already-firm** sibling scalar theme
+`firm` — the L2 LHS [`gram`](../L2/gram.md) and the RHS leaves (`dot`/`tdot`; `bilinear-form` and
+its B-weighted-hook dispatch arm) are firm, and the dispatch rule IS the `gram` all-pairs definition
+law (`L2/gram` law 1) read as a lowering, composed pointwise with the sibling scalar theme
 [`inner-product-fold-specialization`](./inner-product-fold-specialization.md). The matrix-specific
 content — the double-loop materialization, the per-cell conjugate-pair re-order, the
 symmetry-exploitation transparent note, and the per-cell pinned reduction tree — is read straight
-off the **verified** positive Gram-build site (`palace/linalg/nleps.cpp:524-531`, cell body
-`:529`) and the firm sibling theme's verified `vector.cpp` bodies. No literature inference, no
-negative-anchor reconstruction, no speculative operator. This is the fifth chapter under the
-`book/src/L2-L1/` Part (after `chebyshev-iteration-fusion`,
-`linear-combination-fold-specialization`, `inner-product-fold-specialization`, and
-`orthogonalize-composition-lowering`). A `lowering-verifier` audit confirming the per-cell
-dispatch + the re-order + the per-cell summation-order table against the L0 source is the standard
-follow-up, not a status reduction.
+off the positive Gram-build site (`palace/linalg/nleps.cpp:524-531`, cell body `:529`) and the firm
+sibling theme's `vector.cpp` bodies. No literature inference, no negative-anchor reconstruction, no
+speculative operator.
 
-> **Coverage caveat (not a status reduction).** The literal `XᴴX` Gram-build appears at exactly
-> **one** site in the whole Palace tree — `palace/linalg/nleps.cpp:524-531` (`search_text`
-> `fullPivLu|Gram|deflat|SS\(` over `palace/**/*.cpp` returns the Gram cell + its solves only in
-> `nleps.cpp`; the ROM path `palace/models/romoperator.cpp:757-765` does small-dense solves on a
-> *reduced operator*, not an explicit `XᴴX` build, so it is not a `gram` instance — inherited from
-> `L2/gram`'s coverage caveat). There is **no dedicated NLEPS/deflation unit test**. The firmness
-> rests on (a) the dispatch being the `gram` all-pairs law composed with the firm sibling scalar
-> theme's dispatch (both firm), and (b) the single build site being read directly. The
-> single-algorithm concentration is recorded at the theme's granularity, not a firmness gate;
-> promotion of the caveat to closed would follow a second Palace algorithm building an explicit
-> Gram or a dedicated deflation unit test — neither blocks the firm status of the all-pairs-law +
-> inherited-dispatch lowering.
+> **Coverage caveat.** The literal `XᴴX` Gram-build appears at exactly **one** site in the whole
+> Palace tree — `palace/linalg/nleps.cpp:524-531` (the ROM path `palace/models/romoperator.cpp:757-765`
+> does small-dense solves on a *reduced operator*, not an explicit `XᴴX` build, so it is not a `gram`
+> instance — inherited from `L2/gram`'s coverage caveat). There is **no dedicated NLEPS/deflation unit
+> test**. The firmness rests on (a) the dispatch being the `gram` all-pairs law composed with the firm
+> sibling scalar theme's dispatch, and (b) the single build site being read directly.
 
 ## Open questions / caveats
-
-- **Lifting note (reverse direction, working notes only — NOT in the high→low chapter body).**
-  Lifting an L1 per-cell leaf grid *up* to the L2 `gram` fold is determinate: a `k×k` grid of
-  `dot(X[i], X[j])` cells IS `gram dot X` with the canonical hook (the all-pairs definition law
-  read in reverse), so the lift requires no additional structure beyond recognizing the cartesian
-  index structure and naming the hook. The lift loses (a) the per-cell pinned reduction trees (the
-  L2 fold is order-agnostic per cell), (b) the per-cell L0 arg-order/conjugation handedness (the
-  L2 fold pins arg-1 per cell), and (c) the cell-coverage choice (all-`k²` vs triangle-mirror — the
-  L2 fold has no materialization-order). So the lift is value-faithful but NOT bit-faithful, NOT
-  handedness-faithful, and NOT materialization-faithful — re-lowering recovers the original Palace
-  Gram only if the per-cell summation-order table, the per-cell operand order, AND the all-`k²`
-  cell coverage are re-applied. This reverse-direction note lives here in working notes per the
-  high→low layer-definition discipline; the formal chapter narrates only L2 → L1.
 
 - **Per-cell tree independence is the matrix-specific structural fact.** Unlike a hypothetical
   matrix-level fused Gram kernel (e.g. a batched GEMM `XᴴX` that accumulates across cells in a
   shared tree), Palace's double-`Dot` loop computes `k²` **independent** trees with no cross-cell
   accumulation. A burn implementation using a single fused `XᴴX` matmul would pin a *different*
   (matrix-level) tree and would NOT bit-reproduce Palace's per-cell-`Dot` Gram even cell-for-cell.
-  This is a genuine load-bearing-vs-transparent classification question for the downstream port: is
-  the per-cell-`Dot` structure load-bearing (NLEPS depends on the exact Gram bits) or transparent
-  (NLEPS only needs the Gram to LU-solve to within tolerance)? Surfaced as a new OQ
-  (`gram-percell-dot-vs-fused-matmul-tree-loadbearing`) for a `lowering-verifier` /
-  same-layer-cross-cutter follow-up — not resolvable from the source alone (needs the NLEPS
-  convergence-sensitivity analysis). Not blocking: the value-level lowering is firm either way.
+  Whether the per-cell-`Dot` structure is load-bearing (NLEPS depends on the exact Gram bits) or
+  transparent (NLEPS only needs the Gram to LU-solve to within tolerance) is OQ
+  `gram-percell-dot-vs-fused-matmul-tree-loadbearing` (needs the NLEPS convergence-sensitivity
+  analysis). Not blocking: the value-level lowering is firm either way.
 
-- **Carry-forward review from the sibling scalar theme
-  (`inner-product-fold-specialization` §Open questions).** I reviewed the sibling's live
-  follow-ups; none is small/in-scope to fold into *this* theme, and this theme consumes none of
-  them as blockers:
-  - its **lifting note** — mirrored here for the matrix lift above; no action needed on the scalar
-    theme.
-  - its **weighted-member two-stage reduction-tree** caveat — inherited verbatim by the B-weighted
-    Gram arm's per-cell tree (the `bilinear_form` row of the per-cell table is two-stage). Tracked
-    under the existing OQ `apply-linop-lowering-verifier-audit-cohort` exactly as the scalar theme
-    records it; no new OQ needed for the Gram lift.
-  - its **conjugate-pair re-order per-site audit** OQ — this theme adds one data point (the Gram
-    cell `nleps.cpp:529` is observable-unweighted, already in the scalar theme's caller inventory);
-    no separate audit needed.
-  Recommend the integrator treat the sibling theme's follow-ups as unchanged — this Gram theme
-  inherits them, does not add to them (except the per-cell-vs-fused-matmul OQ above, which is
-  genuinely new to the matrix lift).
-
-- **Plan / OQ bookkeeping (recommendation for the integrator).** This theme closes the `L2/gram`
-  forward-reference (`book/src/L2/gram.md:242-246`, "L2>L1 lowering theme (forthcoming)") — the
-  `gram` entry's §Dependencies and §"Algebraic laws" IEEE-non-law deferral now resolve to this
-  chapter. Recommend the integrator (a) note in the `L2/gram` cross-reference that the forthcoming
-  theme is now `gram-fold-specialization` (a layer-intro-author / lifter cross-reference refresh,
-  NOT actioned here per dispatch-phase write discipline), and (b) surface the new OQ
-  `gram-percell-dot-vs-fused-matmul-tree-loadbearing`. The L2-L1 `index.md` "two reduce-to-X fold
-  siblings now both have matrix-and-scalar specialization themes" working-note refresh is
-  layer-intro-author scope.
-
-- **Coordination note for the integrator (shared-file overlap).** `book/src/L2-L1/index.md` and
-  `book/src/SUMMARY.md` are shared with the parallel cycle-024 `deflate-composition-lowering` L2>L1
-  abstractor. My proposed rows are **distinct and non-overlapping**: I append the
-  `gram-fold-specialization` theme-list row + SUMMARY entry only. The `deflate` theme should append
-  its own row. The two L2>L1 themes are siblings (both lower an NLEPS-deflation L2 operator) but
-  distinct chapters — `gram` builds the matrix, `deflate` solves it; the rows do not collide.
-
-```yaml
-verified_against:
-  - citation: palace/linalg/nleps.cpp:524-531
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: double-loop Gram-build materialization (SS decl :524 + nested loop :525-531); sole literal XHX build site (search_text)
-  - citation: palace/linalg/nleps.cpp:529
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: cell body SS(i,j)=linalg::Dot(GetComm(),X[i],X[j]) = X[j]ᴴX[i]; conjugate-pair re-order is no-op for Palace's operand order (chain verified nleps:529 -> vector.cpp:265-266 -> dot.md:43)
-  - citation: palace/linalg/nleps.cpp:515-518
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: k==0 early-return = empty-basis Matrix[0,0] (L2/gram law 2)
-  - citation: palace/linalg/nleps.cpp:520-523
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: x2 coordinate loop (Xᴴ· half); :522 observable-unweighted
-  - citation: palace/linalg/nleps.cpp:532-535
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: deflation complex LU solve (:533-534) consuming full Gram value -> off-diagonal re-order observable
-  - citation: palace/linalg/nleps.cpp:561-569
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: compute_residual second Gram-solve consumer (:563 MatVecMult, :568 rr2 coords)
-  - citation: palace/linalg/nleps.cpp:613-619
-    verdict: partially-supports
-    audited_at: 2026-05-29T151441Z
-    note: enclosing range encloses all cited basis-growth constructs but :613 is eigs[k]=eig; tight range is :614-619 (off-by-one at low boundary, in-bounds, value-faithful)
-  - citation: palace/linalg/nleps.cpp:354-362
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: Jarlebring/Koskela/Mele 2018 (:354-355), SLEPc-NEP minimality 1 (:356), Effenberger 2013 (:357-358)
-  - citation: palace/linalg/vector.cpp:263-266
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: ComplexVector::Dot = x·conj(y) = yᴴx (arg-2 conjugated); the re-order source kernel
-  - citation: palace/linalg/vector.cpp:665-672
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: real LocalDot single Hypre hypre_SeqVectorInnerProd pass (per-cell real tree)
-  - citation: palace/linalg/vector.cpp:674-685
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: complex LocalDot four-real-dot lift; Re=xr·yr+xi·yi, Im=xi·yr−xr·yi (per-cell complex tree)
-  - citation: palace/linalg/operator.cpp:621-638
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: weighted two-stage Dot (Ax workspace then Dot(comm,Ax,y)); both Operator and ComplexOperator overloads (bilinear_form per-cell tree)
-  - citation: palace/linalg/vector.cpp:668
-    verdict: does-not-support-at-cited-line-667
-    audited_at: 2026-05-29T151441Z
-    note: MFEM_ASSERT(x.Size()==y.Size()) is at :668, not the theme's previously-cited :667 (:667 is `static hypre::HypreVector X, Y;`); corrected to :668 in-theme; inherited carry-forward drift shared with inner_product.md + inner-product-fold-specialization.md
-```
+- **B-weighted Gram arm's per-cell tree is two-stage**, inherited from the sibling scalar theme's
+  weighted member (the `bilinear_form` row of the per-cell table). Tracked under OQ
+  `apply-linop-lowering-verifier-audit-cohort`.

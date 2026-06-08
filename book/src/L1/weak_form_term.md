@@ -167,7 +167,7 @@ terms. Two adjacent opaque objects it references but does NOT define:
 - `A(space, ·)` — the opaque per-term element-local→global assembly map that *realizes* the term. The term is
   `A`'s argument; `A`'s kernel body is libCEED-owned (the
   [`fe-assemble-libceed-boundary-obstruction`](../L1-L0/fe-assemble-libceed-boundary-obstruction.md) L1>L0
-  obstruction theme, `opaque-library-ownership`, established cycle-055 — identical boundary across all 5 solver
+  obstruction theme, `opaque-library-ownership` — identical boundary across all 5 solver
   pipelines). The TERM's IDENTITY (which `Q`, which `𝒟`) IS Palace-readable at the instantiation site
   (`AddDomainIntegrator<T>(Q)`); only the term's KERNEL is opaque. `weak_form_term` formalizes the
   Palace-readable identity; `A` realizes it.
@@ -183,7 +183,7 @@ terms. Two adjacent opaque objects it references but does NOT define:
   - `Gradient` — the **electrostatic** stiffness term `(ε, ∇)`, witnessed
     `palace/models/laplaceoperator.cpp:191-192` (`fe_assemble`'s single-term witness).
   - `Curl` — the **magnetostatic** stiffness term `(μ⁻¹, ∇×)`, witnessed
-    `palace/models/curlcurloperator.cpp:179-181` (c061's pull).
+    `palace/models/curlcurloperator.cpp:179-181`.
   - `Identity` — the **mass** term `(Q, I)` — the identity differential operator (`𝒟u = u`, **no derivative**),
     realizing the L² pairing `a(u, v) = (Q u, v)`. Witnessed by `SpaceOperator::GetMassMatrix`
     (`palace/models/spaceoperator.cpp:438`), whose `AddIntegrators` fold (`palace/models/spaceoperator.cpp:260`)
@@ -193,7 +193,7 @@ terms. Two adjacent opaque objects it references but does NOT define:
     coefficient still rides the variant-invariant base-class slot `palace/fem/integrator.hpp:39-42`). The mass
     term is heavily multi-witness (eigenmode/driven/transient/ROM/postprocess) — additional consumer sites at
     `palace/models/modeeigensolver.cpp:62`, `palace/models/domainpostoperator.cpp:38`,
-    `palace/models/romoperator.cpp:424`. (Grounded c062.)
+    `palace/models/romoperator.cpp:424`.
   **Pending-pull sibling variant point (named axis point, NOT yet authored — awaits its own pipeline pull):**
   - `Divergence` (div-div) — `DivDivIntegrator`-realized `(Q, ∇·)` term. **No in-scope solver-K witness** in the
     pulled pipelines; the integrator wrapper exists (`palace/fem/integrator.hpp:122-123`) but no
@@ -222,38 +222,6 @@ square `weak_form_term`s); they enter the spine only when a pipeline pull NEEDS 
 operators use them — `palace/models/modeeigensolver.cpp:50`, `palace/models/spaceoperator.cpp:298-299`). Named
 here as adjacent, not authored.
 
-## Status
-
-`firm`. **Clean-gate call: PROMOTE — clean (pulled, not speculative).** The promotion is justified because the
-operator's definition, signature, and all four algebraic laws are stated entirely in **existing shared
-vocabulary** — a `(coefficient, differential-operator)` pair whose laws are bilinearity/symmetry/scaling facts —
-**grounded by two in-scope solver-K witnesses** (the redirect's pull-only clean-gate is satisfied: the
-magnetostatic pipeline concretely NEEDS a non-diffusion term, and the curl-curl K-build uses the identical
-`BilinearForm`-fold differing only in the integrator). This is NOT speculative vocabulary expansion: it is the
-term abstraction that the firm `fe_assemble` fold already quantifies over, now firmed in its own L1 vocabulary
-because a second pipeline forced the `(coefficient, differential-operator)` factorization into view (one witness
-could be coincidence; multiple witnesses differing in EXACTLY the integrator slot establish the variant axis).
-The differential-operator variant axis is now **3-of-4 grounded** by in-scope solver-K/M witnesses
-(`Gradient`/electrostatic, `Curl`/magnetostatic, `Identity`/mass — the last grounded c062 at
-`palace/models/spaceoperator.cpp:278`,`:438`); only `Divergence`/div-div remains a named pending-pull sibling
-(no in-scope witness). The grounding is an in-place specialization note under the term abstraction
-(combinator-primary per the 2026-06-01 redirect §1), not a new mirrored entry; the term-abstraction-level
-algebraic laws are witness-independent and unchanged.
-
-The term's KERNEL is the libCEED-owned opaque map `A` (the
-[`fe-assemble-libceed-boundary-obstruction`](../L1-L0/fe-assemble-libceed-boundary-obstruction.md) boundary,
-`opaque-library-ownership`, cycle-055) — but the term's IDENTITY (which `Q`, which `𝒟`) is Palace-readable at
-the `AddDomainIntegrator<T>(Q)` instantiation site, and THAT is what this entry formalizes. The opaque kernel
-does NOT gate the term's firmness any more than it gated `fe_assemble`'s (the term is `A`'s argument; `A`'s
-classification is independent).
-
-This is the **firm-on-positive-structure** situation (the `fe_assemble` / `apply_linop` / BLAS-1-leaf
-precedent): the four laws are bilinearity/scaling/symmetry identities on a fully-specified positive pair
-structure, so the absence of a dedicated `weak_form_term` unit test does not gate them. (The libCEED
-full-assemble materialization IS test-covered — `test/unit/test-libceed.cpp` `TestCeedOperatorFullAssemble`
-asserts the assembled matrix matches an MFEM reference to 1e-12 — useful as future `empirical-match` evidence
-for the term's realization `A`, but not needed for the term's pair-constructor laws.)
-
 ## L1 vs L0 distinction
 
 - **L0**: the term is a `(template-type T, runtime-coefficient-arg Q)` pair materialized as a heap-owned
@@ -273,11 +241,11 @@ for the term's realization `A`, but not needed for the term's pair-constructor l
   `const MaterialPropertyCoefficient *Q` coefficient slot, **uniform across every differential-operator
   variant** — the structural ground for factoring the coefficient out of the variant axis.
 - `palace/fem/integrator.hpp:68-69` — `MassIntegrator`: `a(u, v) = (Q u, v)` for H1 / vector-`(H1)ᵈ` — the
-  `Identity` differential-operator variant (grounded c062; identity operator, no derivative).
+  `Identity` differential-operator variant (identity operator, no derivative).
 - `palace/fem/integrator.hpp:79-80` — `VectorFEMassIntegrator`: `a(u, v) = (Q u, v)` for vector finite elements
   — the vector-FE realization of the `Identity` variant (the integrator the mass witness instantiates).
-- `palace/models/spaceoperator.cpp:434-460` — `SpaceOperator::GetMassMatrix`: the **mass witness** (c062's
-  grounding). Builds the mass coefficient `fr` (`AddRealMassCoefficients(1.0, fr)`) then assembles via
+- `palace/models/spaceoperator.cpp:434-460` — `SpaceOperator::GetMassMatrix`: the **mass witness**.
+  Builds the mass coefficient `fr` (`AddRealMassCoefficients(1.0, fr)`) then assembles via
   `AssembleOperator(GetNDSpace(), nullptr, &fr, ...)` (`:459`), which routes through `AddIntegrators`
   (`palace/models/spaceoperator.cpp:260`) appending
   `a.AddDomainIntegrator<VectorFEMassIntegrator>(*f)` (`palace/models/spaceoperator.cpp:278`) — the term `(Q, I)`,
@@ -298,7 +266,7 @@ for the term's realization `A`, but not needed for the term's pair-constructor l
   `k.AddDomainIntegrator<DiffusionIntegrator>(epsilon_func)` (`:194`) — the term `(ε, ∇)`. Grounds the
   `Gradient` variant point.
 - `palace/models/curlcurloperator.cpp:170-181` — `CurlCurlOperator::GetStiffnessMatrix`: the **magnetostatic
-  witness** (this cycle's pull). `MaterialPropertyCoefficient muinv_func(...)` (`:178-179`) +
+  witness**. `MaterialPropertyCoefficient muinv_func(...)` (`:178-179`) +
   `k.AddDomainIntegrator<CurlCurlIntegrator>(muinv_func)` (`:181`) — the term `(μ⁻¹, ∇×)`; the SAME
   `BilinearForm`-fold as the electrostatic witness, differing ONLY in the integrator. Grounds the `Curl` variant
   point and establishes the differential-operator variant axis.
@@ -308,7 +276,7 @@ for the term's realization `A`, but not needed for the term's pair-constructor l
 - `book/src/L1/fe_assemble.md` — the sole downstream consumer: the integrator-fold `K = Σ_i A(space, term_i)`
   that folds over a `[WeakFormTerm]` list. This entry firms the element type that fold quantifies over.
 - `book/src/L1-L0/fe-assemble-libceed-boundary-obstruction.md` — the `opaque-library-ownership` obstruction theme
-  (cycle-055) classifying the per-term assembly map `A`'s kernel: the term's KERNEL is opaque, the term's
+  classifying the per-term assembly map `A`'s kernel: the term's KERNEL is opaque, the term's
   IDENTITY is Palace-readable.
 - `test/unit/test-libceed.cpp` — `TestCeedOperatorFullAssemble` (L0-equivalent: assembled matrix matches MFEM
   reference to 1e-12; future `empirical-match` evidence for the term's realization `A`).

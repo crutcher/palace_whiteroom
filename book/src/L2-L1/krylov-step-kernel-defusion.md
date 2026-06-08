@@ -78,8 +78,7 @@ call):
 
 The de-fusion writes each L2 primitive-group as a fixed sequence of these leaves. Read off the
 **CG specialisation** (the firm L0 home is `book/src/L1-L0/ksp-solve-mutation-rotation.md`
-Sub-pattern B; the per-step kernel for-loop `iterative.cpp:427-464`, self-verified this
-dispatch):
+Sub-pattern B; the per-step kernel for-loop `iterative.cpp:427-464`):
 
     krylov-step op s =                                              -- L1 de-fused (CG specialisation)
       let p'  = if s.it == 0 then s.z                               -- first-iteration branch (variant-axis 4)
@@ -213,8 +212,8 @@ The de-fusion preserves the L2 kernel's `{ state', outputs }` value when:
 `structural` — the de-fusion **is** the syntactic expansion of the L2 entry's five-primitive-
 group §Semantics body into the explicit sequence of seven firm L1 leaves, preserving the
 dataflow-forced order. The group→leaf map (the table in §"The de-fusion rewrite") is read
-straight off the L2 §Semantics text and the CG L0 specialisation (`iterative.cpp:427-464`,
-self-verified) — each named group expands to a fixed leaf sub-sequence with no algebraic law
+straight off the L2 §Semantics text and the CG L0 specialisation (`iterative.cpp:427-464`)
+— each named group expands to a fixed leaf sub-sequence with no algebraic law
 needed beyond the purity of the leaves. An **algebraic** flavour is present on the buffer
 rotation (the in-place/out-of-place forms are transparent-performance-equivalent, CLAUDE.md
 §Optimization tricks — value-identical, differing only in storage) and the demand-pruning of
@@ -230,14 +229,14 @@ the load-bearing content) — the kernel's only carried numerical residue is the
 
 ## Speculative L1 operators
 
-**None.** All seven L1 RHS leaves are firm (post-cycle-004, the firm list at
+**None.** All seven L1 RHS leaves are firm (the firm list at
 `book/src/L2/krylov-step.md:96`):
 
 - [`apply_linop`](../L1/apply_linop.md), [`axpy`](../L1/axpy.md), [`axpby`](../L1/axpby.md),
   [`axpbypcz`](../L1/axpbypcz.md), [`dot`](../L1/dot.md), [`nrm2`](../L1/nrm2.md),
   [`scal`](../L1/scal.md) — all firm.
 
-The LHS [`krylov-step`](../L2/krylov-step.md) is firm (cycle-004 firm-up, the canonical
+The LHS [`krylov-step`](../L2/krylov-step.md) is firm (the canonical
 fold-kernel shape). This theme proposes **no new operators** — it is the lowering edge between
 firm vocabulary on both sides. The optional auxiliary stage's `op.orthog` composition is the
 firm sibling theme [`orthogonalize-composition-lowering`](./orthogonalize-composition-lowering.md)
@@ -247,33 +246,27 @@ documentation** (`book/src/L1-L0/minres-iteration.md`, `bicgstab-iteration.md`) 
 unimplemented-component policy — their speculative `lanczos_step` / `bicgstab_step` would
 specialise this kernel but are not promoted (L2 entry §Status).
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `palace-codemap` read_range + `tools/citecheck/`
-anchor-drift checks this invocation — `verify-citation-range` producer-self-verification):
+L0 evidence ranges (paths relative to `reference/`):
 
 - `palace/linalg/iterative.cpp:427-464` — the CG per-step kernel for-loop (the de-fusion's L0
-  specialisation witness). **Self-verified (full body read this dispatch).**
+  specialisation witness).
 - `palace/linalg/iterative.cpp:440` — `linalg::AXPBY(1.0, z, beta/beta_prev, p)`: the `axpby`
   recurrence update (inside the `else` of the first-iteration branch `:434-441`).
-  **Self-verified (anchor `AXPBY` at :440 via citecheck).**
 - `palace/linalg/iterative.cpp:443` — `A->Mult(p, z)`: the one `apply_linop` per step.
-  **Self-verified (anchor `A->Mult` at :443 via citecheck).**
 - `palace/linalg/iterative.cpp:444` — `denom = linalg::Dot(comm, z, p)`: the first `dot`.
-  **Self-verified (read this dispatch).**
 - `palace/linalg/iterative.cpp:445` — `CheckDot(denom, ...)`: the SPD partial-function guard on
-  the `dot` result (applicability condition 4). **Self-verified.**
+  the `dot` result (applicability condition 4).
 - `palace/linalg/iterative.cpp:448-449` — `x.Add(alpha, p)` / `r.Add(-alpha, z)`: the two
   `axpy` iterate updates (the in-place L0 buffer overwrite — variant-axis-6 rotation target).
-  **Self-verified (anchor `x.Add` at :448 via citecheck).**
 - `palace/linalg/iterative.cpp:461` — `beta = linalg::Dot(comm, z, r)`: the second `dot`
-  (scalar-stratum thread). **Self-verified (read this dispatch).**
+  (scalar-stratum thread).
 - `palace/linalg/iterative.cpp:462` — `res = std::sqrt(std::abs(beta))`: the `nrm2`-shaped
-  derived-view residual readout (demand-pruning Law 1 witness). **Self-verified.**
+  derived-view residual readout (demand-pruning Law 1 witness).
 - `palace/linalg/iterative.cpp:21-32` — `CheckDot` partial-function guard (real overload :22,
   complex :28; the `MFEM_ASSERT(std::isfinite(dot) && dot >= 0.0, ...)`). The breakdown-token
-  precondition (applicability condition 4). **Cited unchanged from the L2 entry, which
-  corrected this from the drifted `:244-250`.**
+  precondition (applicability condition 4).
 
 L2 / L1 / cross-theme anchors (firm on every side):
 
@@ -299,59 +292,35 @@ L2 / L1 / cross-theme anchors (firm on every side):
 - `book/src/L2-L1/chebyshev-iteration-fusion.md` — the kernel-boundary-numerical-residue
   sibling (the recurrence↔polynomial fusion); contrast — this theme introduces no numerical
   re-association, only the structural de-fusion.
-- `book/src/L2-L1/ksp-solve-outer-driver-unfold.md` — the **outer-driver half** sibling (D3
-  this cycle): the `iterate_while` fold that wraps this kernel. This theme owns the
+- `book/src/L2-L1/ksp-solve-outer-driver-unfold.md` — the **outer-driver half** sibling:
+  the `iterate_while` fold that wraps this kernel. This theme owns the
   **per-step kernel de-fusion**; that theme owns the **outer fold unfold** — clean partition.
 
 ## Status
 
-`firm` — the LHS [`krylov-step`](../L2/krylov-step.md) is firm (the canonical fold-kernel
-shape, cycle-004 firm-up), all seven L1 RHS leaves are firm (post-cycle-004, the firm
-dependency list `:96`), and the de-fusion rule IS the syntactic expansion of the L2 §Semantics
-five-primitive-group body into the slice-pinned L1 leaf sequence — read straight off the L2
-entry text and the self-verified CG L0 specialisation (`iterative.cpp:427-464`). The
-group→leaf map, the dataflow-forced order, and the seven-leaf assignment are all anchored on
-firm vocabulary or self-verified L0; the one carried algebraic law (demand-pruning, L2 Law 1)
-and the breakdown guard (`CheckDot`) are carried by reference to the firm L2 entry, not
-re-derived; the in-place→out-of-place buffer rotation (variant-axis 6) is delegated to the firm
-per-leaf L1>L0 mutation-rotation themes (`axpby-mutation-rotation` for the `axpy`/`axpby`
-`Vector::Add` family, `apply-linop-mutation-rotation`) — the de-fusion stops at the L1 leaf.
-No literature inference,
-no negative-anchor reconstruction, no speculative operator — so `firm` (matching the
-`orthogonalize-composition-lowering` firmness bar, the structural composition-lowering sibling).
-A `lowering-verifier` audit attaching the `verified_against:` block (confirming the group→leaf
-map and the buffer-rotation delegation boundary against the L0 source, across the non-CG
-specialisations Arnoldi/Chebyshev as well) is the standard follow-up, not a status reduction.
+`firm` — the LHS [`krylov-step`](../L2/krylov-step.md) and all seven L1 RHS leaves are firm
+(the firm dependency list `:96`), and the de-fusion rule IS the syntactic expansion of the L2
+§Semantics five-primitive-group body into the slice-pinned L1 leaf sequence — read straight off
+the L2 entry text and the CG L0 specialisation (`iterative.cpp:427-464`). The group→leaf map, the
+dataflow-forced order, and the seven-leaf assignment are all anchored on firm vocabulary or L0;
+the one carried algebraic law (demand-pruning, L2 Law 1) and the breakdown guard (`CheckDot`) are
+carried by reference to the firm L2 entry, not re-derived; the in-place→out-of-place buffer rotation
+(variant-axis 6) is delegated to the firm per-leaf L1>L0 mutation-rotation themes
+(`axpby-mutation-rotation` for the `axpy`/`axpby` `Vector::Add` family, `apply-linop-mutation-rotation`)
+— the de-fusion stops at the L1 leaf. No literature inference, no negative-anchor reconstruction, no
+speculative operator.
 
 ## Open questions / caveats
 
-- **Per-leaf in-place delegation boundary (for the lowering-verifier).** This theme
-  deliberately does NOT re-derive the in-place buffer overwrites (`x.Add`/`r.Add`/`A->Mult`) —
-  it cites the per-leaf L1>L0 mutation-rotation themes. The audit should confirm the boundary
-  is clean: this L2>L1 theme owns the **group→leaf de-fusion + the variant-axis-6 buffer-use
-  annotation**; the per-leaf L1>L0 themes own the **in-place buffer mechanics**; the L2 entry
-  owns the **construction-time variant absorption + Law 1**. No content duplicated across the
-  three layers.
+- **Per-leaf in-place delegation boundary.** This theme deliberately does NOT re-derive the
+  in-place buffer overwrites (`x.Add`/`r.Add`/`A->Mult`) — it cites the per-leaf L1>L0
+  mutation-rotation themes. The boundary: this L2>L1 theme owns the **group→leaf de-fusion + the
+  variant-axis-6 buffer-use annotation**; the per-leaf L1>L0 themes own the **in-place buffer
+  mechanics**; the L2 entry owns the **construction-time variant absorption + Law 1**.
 
-- **CG-specialisation as the worked example; Arnoldi/Chebyshev sequences stated but not
-  per-line-verified.** The de-fusion is worked in full on the CG specialisation (the
-  self-verified `iterative.cpp:427-464` body). The Arnoldi (`scal` + orthog unfold) and
-  Chebyshev (`axpbypcz` + `axpy`) leaf sub-sequences are stated from the L2 entry §Semantics
-  per-slice enumeration (not re-verified line-for-line at L0 this dispatch — the L2 entry
-  already verified them). A lowering-verifier per-line audit across the non-CG specialisations
-  would upgrade those sub-sequences from "stated-on-L2-entry-authority" to
-  "self-verified-at-L0"; this does not gate the `firm` status (the structural de-fusion rule is
-  slice-invariant; only the exact per-slice sub-sequence is slice-specific).
-
-- **OQ discharge.** This theme discharges OQ `krylov-step-l2-l1-theme-gap` (the dangling
-  variant-axis-6 forward-ref at `book/src/L2/krylov-step.md:121` now resolves to a live file).
-  Jointly with D3 (`ksp-solve-outer-driver-unfold`, the outer-fold half) it closes
-  `residual-l2-l1-gap-audit` (the cycle-046 census found `krylov-step` had no §"Lowers from"
-  section at all — this theme + D3 supply the kernel and driver halves respectively).
-
-- **Lifting note (working-note only, reverse direction — NOT formal chapter content).** The
-  reverse lift (how the L1 seven-leaf sequence re-fuses INTO the L2 named kernel) requires
-  recognising the dataflow-forced group boundaries and re-absorbing the variant dispatch into
-  the `op` closures — the inverse of the §"de-fusion rewrite" table. Per high→low discipline
-  (CLAUDE.md §Methodology invariants "Layers are defined high→low") this is recorded here in
-  the CYCLE.md working notes only; the formal chapter narrates forward L2→L1.
+- **CG-specialisation is the worked example; Arnoldi/Chebyshev sequences stated, not
+  per-line-verified.** The de-fusion is worked in full on the CG specialisation
+  (`iterative.cpp:427-464`). The Arnoldi (`scal` + orthog unfold) and Chebyshev (`axpbypcz` +
+  `axpy`) leaf sub-sequences are stated from the L2 entry §Semantics per-slice enumeration. The
+  structural de-fusion rule is slice-invariant; only the exact per-slice sub-sequence is
+  slice-specific.

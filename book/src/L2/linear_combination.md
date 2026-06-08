@@ -38,12 +38,10 @@ governs the L1>L0 mutation rotation, where each fixed-arity symbol mirrors one L
 one-to-one. **At L2, `linear_combination` is the entry for this family** (vocabulary-shift
 redirect 2026-06-01, `CLAUDE.md` §Methodology invariants): the four arity forms `scal` /
 `axpy` / `axpby` / `axpbypcz` are **specialization notes under the combinator** (§"Arity
-specializations"), not standalone mirrored L2 chapters. This supersedes the cycle-018
-"the fold does not replace the leaves" framing and the batch-12 "keep leaf-floor (b)"
-ratification (`book/src/L2/index.md`): under the redirect, a same-named base-form floor
-mirrored beside the combinator is the retired rectangular pattern. The L1 leaves remain
-firm (the L1>L0 one-to-one shape is load-bearing there); what changes is L2's *entry* — the
-family speaks through the combinator at L2 and above.
+specializations"), not standalone mirrored L2 chapters. Under the redirect, a same-named
+base-form floor mirrored beside the combinator is the retired rectangular pattern. The L1
+leaves remain firm (the L1>L0 one-to-one shape is load-bearing there); what changes is L2's
+*entry* — the family speaks through the combinator at L2 and above.
 
 L2 is exactly the fusion-rotation layer (`book/src/L2/index.md`): "Kernel fusion
 across multiple algebraic operations is unfolded into composition… Batched specialized
@@ -104,10 +102,9 @@ axpby(α, x, β, y)          = linear_combination [(α, x), (β, y)]      -- ari
 axpbypcz(α, x, β, y, γ, z) = linear_combination [(α, x), (β, y), (γ, z)] -- arity 3
 ```
 
-**Per-arity unique L0 surface** (folded in from the eliminated L2 arity-leaf chapters,
-cycle-124 RE6 refactor — the bounded-arity L0 call shapes each readout label names; the
-combinator's generic free-function-surface anchors `vector.hpp:305-316` do not pinpoint these
-at the per-arity resolution):
+**Per-arity unique L0 surface** (the bounded-arity L0 call shapes each readout label names;
+the combinator's generic free-function-surface anchors `vector.hpp:305-316` do not pinpoint
+these at the per-arity resolution):
 
 | Arity | Readout | Unique L0 anchors (paths relative to `reference/palace/`) |
 |---|---|---|
@@ -115,10 +112,6 @@ at the per-arity resolution):
 | 2 (coeff-1) | `axpy(α,x,y)` | `linalg/vector.hpp:115-118` (`ComplexVector::AXPY` + `Add`/`Subtract` aliases decl); `linalg/vector.cpp:276-311` (`ComplexVector::AXPY` def + element-wise kernels); `linalg/vector.cpp:714-718` (real-α-on-complex forwarding overload — scalar-promotion sub-axis); `linalg/vector.cpp:720-724` (complex-α overload → member `ComplexVector::AXPY`). |
 | 2 (general) | `axpby(α,x,β,y)` | `linalg/vector.hpp:130-131` (`ComplexVector::AXPBY` member decl, receiver-mutating); `linalg/vector.cpp:732-737` (complex-complex specialisation → member); `linalg/vector.cpp:739-743` (real-scalar-on-complex promotion site). |
 | 3 | `axpbypcz(α,x,β,y,γ,z)` | `linalg/vector.hpp:133-136` (`ComplexVector::AXPBYPCZ` member decl); `linalg/vector.cpp:745-758` (real-real, incl. the `γ==0` arity-collapse fast-path `:749-751` → `add(α,x,β,y,z)` — the exact algebraic content of law 5, and the `γ≠0` split `:755-756`); `linalg/vector.cpp:760-765` (complex-complex → member); `linalg/vector.cpp:767-772` (real-scalar-on-complex promotion site). |
-
-(All anchors carried in from the eliminated L2 leaf chapters where they were self-verified
-on-disk via `tools/citecheck` at cycle-052; this RE6 pass moves them in-layer into the
-combinator, no re-localization claim.)
 
 These names remain useful as *readout labels* for the bounded-arity L0 call shapes (the
 L2>L1 [`linear-combination-fold-specialization`](../L2-L1/linear-combination-fold-specialization.md)
@@ -234,7 +227,7 @@ Laws that explicitly **do not** hold:
   match each other bit-for-bit). **The L2 algebra is order-agnostic for value, but
   bit-identical reproduction of any L0 call requires matching that call's pinned
   summation order**; which order a given lowered call pins is recorded by the L2>L1
-  lowering theme (forthcoming; not authored here — see § "Dependencies" forward-ref).
+  lowering theme [`linear-combination-fold-specialization`](../L2-L1/linear-combination-fold-specialization.md).
 
 - **Idempotence of re-folding.** `linear_combination` over a singleton list is `scal`,
   which is not idempotent in general (scal.md non-law); there is no fold-level
@@ -254,10 +247,9 @@ Laws that explicitly **do not** hold:
   [`axpby`](../L1/axpby.md) (arity 2), [`axpbypcz`](../L1/axpbypcz.md) (arity 3). These
   stay firm **L1** leaves (the L1>L0 one-to-one symbol shape is load-bearing for the
   mutation rotation; `axpby-as-primitive` keeps them fused there). **At L2 and above the
-  family speaks through this combinator** — the separate L2 `scal`/`axpy`/`axpby`/`axpbypcz`
-  chapters were **eliminated cycle-124 (RE6)**, their unique L0 anchors folded into
-  §"Arity specializations" above (see the replace-and-propagate map in
-  `reports/2026-06-01T190900Z-combinator-miner-refactor-pass-linear-combination-family/CYCLE.md`).
+  family speaks through this combinator** — there are no separate L2
+  `scal`/`axpy`/`axpby`/`axpbypcz` chapters; their unique L0 anchors are folded into
+  §"Arity specializations" above.
 - Concepts: [`scalar-promotion`](../concepts/scalar-promotion.md) — the element-type
   axis (`real ⊑ complex`), the concept-page-level sibling of this arity-axis unification;
   inherited unchanged, including its open upstream dependency (closure depends on the L1
@@ -266,13 +258,12 @@ Laws that explicitly **do not** hold:
 - Sibling fold (do **NOT** merge): `dot` (reduce-to-scalar inner product) — see
   § "Sibling fold". Tracked as the candidate `inner_product` L2 fold under OQ
   `inner-product-fold-sibling-candidate`.
-- L2>L1 lowering theme (forthcoming; abstractor work, not authored here): an
-  `L2-L1/linear-combination-fold-specialization` theme will narrate how the variadic
-  L2 fold lowers into the fixed-arity L1 leaves (list-length dispatch: 1 → `scal`,
-  2 → `axpy`/`axpby`, 3 → `axpbypcz`; longer lists → left-fold of `axpbypcz`-into-output
-  chains), and will record which L0 summation order each lowered call pins (the
-  load-bearing content of the permutation non-law). Forward-reference only — that chapter
-  does not yet exist.
+- L2>L1 lowering theme:
+  [`linear-combination-fold-specialization`](../L2-L1/linear-combination-fold-specialization.md)
+  narrates how the variadic L2 fold lowers into the fixed-arity L1 leaves (list-length
+  dispatch: 1 → `scal`, 2 → `axpy`/`axpby`, 3 → `axpbypcz`; longer lists → left-fold of
+  `axpbypcz`-into-output chains), and records which L0 summation order each lowered call pins
+  (the load-bearing content of the permutation non-law).
 
 ## Variant axes
 
@@ -306,11 +297,10 @@ remaining axes are orthogonal to it:
    `sum->AddOperator(ops[i]->LocalOperator(), coeff[i])` for `coeff[i] != 0`), the
    operator-domain scalar-weighted sum. The driven pipeline's per-ω system-operator
    assembly `A(ω) = K + iω·C − ω²·M + A2(ω)` is the L1 operator-operand specialization
-   [`assemble_frequency_operator`](../L1/assemble_frequency_operator.md) (cycle-062;
-   arity-4 instance, affine-in-ω scalar weights). The zero-coefficient term-drop law
+   [`assemble_frequency_operator`](../L1/assemble_frequency_operator.md) (arity-4 instance,
+   affine-in-ω scalar weights). The zero-coefficient term-drop law
    (law 5) holds verbatim at this corner — `BuildParSumOperator`'s `coeff[i] != 0`
-   guard IS the operator-domain `γ==0` arity-collapse. This is the replace-and-propagate
-   extension (2026-06-01 anti-mirror discipline): the operand category is a variant of
+   guard IS the operator-domain `γ==0` arity-collapse. The operand category is a variant of
    the one fold, NOT a mirrored `operator_linear_combination` chapter.
 
 **Fusion order (an L0 implementation detail, NOT an L2 variant axis)**: single aligned
@@ -341,7 +331,7 @@ collective), whereas `linear_combination` is element-local over `S` and folds ov
 term list. Its laws are symmetry / Hermitian-symmetry / positive-semi-definiteness, which
 have no analogue here. The target is a small **algebra of folds** — a tensor-producing
 linear-combination fold AND a scalar-producing inner-product fold — not one
-mega-combinator. The sibling [`inner_product`](./inner_product.md) L2 fold (firm cycle-019) captures `dot` /
+mega-combinator. The sibling [`inner_product`](./inner_product.md) L2 fold captures `dot` /
 `tdot` as conjugation-convention variants (the axis there is conjugation-convention, not
 arity). It is deliberately **NOT merged** into `linear_combination`: same operand shape
 `(Tensor[(S: ...)], Tensor[$S])`-ish, but a different codomain (`Scalar` vs `Tensor[$S]`) and a
@@ -349,22 +339,6 @@ different combining step (zip-and-reduce-over-`S` vs scale-and-accumulate-over-t
 The do-NOT-merge boundary is load-bearing and symmetric — recorded here and in
 [`inner_product`](./inner_product.md) §"Sibling fold". The two are the small algebra of
 folds (one tensor-producing, one scalar-producing), not one mega-combinator.
-
-## Status
-
-`firm` — the structure is a fold over four firm L1 leaves; the signature is the
-arity-axis unification (the structural sibling of the element-type unification carried by
-`concepts/scalar-promotion`, whose own closure depends on the L1 calculus adopting the
-`real ⊑ complex` scalar lattice — OQ `scalar-promotion-typing-rule`, not yet committed —
-inherited here as a dependency, not as a settled axis); every algebraic law is either a
-syntactic identity
-(empty-list seed, concatenation, specialization identities) or a standard
-linear-combination fact (multilinearity, coefficient-scaling, zero-term-drop), with the
-zero-coefficient term-drop directly transcribed from the in-source arity-collapse at
-`palace/linalg/vector.cpp:749-751`; the permutation law is paired with its explicit
-IEEE non-law per the load-bearing-numerical-trick discipline. The combinator-miner
-rough-in cleared the ≥3-instance bar (four operator definitions + six representative
-live call sites).
 
 > **Empirical-match caveat (not a status reduction).** There is **no dedicated unit
 > test** exercising the BLAS-1 linear-combination free functions — searches for
@@ -377,8 +351,7 @@ live call sites).
 > `vector.cpp:749-751`; the `AXPBY` real-real fusion pass `:726-730`; the free-function
 > decls `vector.hpp:305-316`) plus the verified live call sites. The
 > firm-without-dedicated-test bar follows the [`chebyshev-iteration`](./chebyshev-iteration.md)
-> precedent (source-transcription confidence + integration coverage), ratified for that
-> entry cycle-012.
+> precedent (source-transcription confidence + integration coverage).
 
 ## L2 vs L1 distinction
 
@@ -398,34 +371,34 @@ live call sites).
 - `palace/linalg/vector.cpp:749-751` — the `γ == 0` branch in real-real `AXPBYPCZ`:
   `if (gamma == 0.0) { add(alpha, x, beta, y, z); }`. The in-source arity-collapse — the
   arity-3 op dropping its third term and calling the arity-2 `add` directly. Exact
-  algebraic content of law 5 (zero-coefficient term-drop). **Self-verified via `read_range`.**
+  algebraic content of law 5 (zero-coefficient term-drop).
 - `palace/linalg/vector.cpp:726-730` — `AXPBY(double, Vector, double, Vector)` →
   `add(alpha, x, beta, y, y)` (the MFEM 5-arg single aligned in-place linear-combine; the
-  fusion-note witness for the arity-2 case). **Self-verified.**
+  fusion-note witness for the arity-2 case).
 - `palace/linalg/vector.cpp:702-712` — `AXPY(double, Vector, Vector)` with the `α == 1.0`
   fast-path (`y += x` else `y.Add(alpha, x)`) — the arity-2-coeff-1 (`axpy`) leaf.
-  **Self-verified.**
+ 
 - `palace/linalg/vector.cpp:203-227` — `ComplexVector::operator*=(std::complex<double>)`,
   the arity-1 (`scal`) site, with the `si == 0.0` real fast-path branch at `:207-211`
-  (the internal scalar-promotion site). **Self-verified.**
+  (the internal scalar-promotion site).
 - `palace/linalg/vector.hpp:305-316` — the free-function template decls `AXPY`
   (`:305-307`, comment `Addition y += alpha * x.`), `AXPBY` (`:309-311`, comment
   `Addition y = alpha * x + beta * y.`), `AXPBYPCZ` (`:313-316`, comment
   `Addition z = alpha * x + beta * y + gamma * z.`). The bounded-arity surface the fold
-  unifies. **Self-verified.**
+  unifies.
 - `palace/linalg/nleps.cpp:343-344` — `AXPBYPCZ(y(j).real(), X[j].Real(), -y(j).imag(),
   X[j].Imag(), 1.0, z.Real())` and the `.imag()` line: the `γ=1` fold-into-output
-  (output-aliasing variant axis, accumulate-into form). **Self-verified.**
+  (output-aliasing variant axis, accumulate-into form).
 - `palace/models/romoperator.cpp:188-189` — `AXPBYPCZ(y(j).real(), V[j], y(j+1).real(),
   V[j+1], 1.0, u.Real())` and `u.Imag()`: ROM solution reconstruction, the same
   accumulate-two-terms-into-output `γ=1` shape (multi-term combination open-coded as
-  iterated arity-3 fold). **Self-verified.**
+  iterated arity-3 fold).
 - `palace/models/timeoperator.cpp:217` — `AXPBYPCZ(1.0, RHS2, dt, k1, 0.0, k2)`: RK
   time-integrator stage, the `γ=0` collapse to the arity-2 `axpby` (`k2 ← RHS2 + dt·k1`);
-  live witness of law 5. **Self-verified.**
+  live witness of law 5.
 - `palace/linalg/iterative.cpp:632` — `w *= 1.0 / Hj[j + 1]`: GMRES Arnoldi
-  basis-normalisation, the arity-1 (`scal`) leaf in the wild. **Self-verified.**
-- Artifact cross-references (read this invocation): `book/src/L1/scal.md`,
+  basis-normalisation, the arity-1 (`scal`) leaf in the wild.
+- Artifact cross-references: `book/src/L1/scal.md`,
   `book/src/L1/axpy.md`, `book/src/L1/axpby.md`, `book/src/L1/axpbypcz.md` (the four firm
   leaves; signatures, laws, variant axes); `book/src/concepts/scalar-promotion.md` (the
   element-type-axis unification — the precedent for this arity-axis unification);
@@ -433,7 +406,3 @@ live call sites).
   leaf-vs-decompose only, does not preclude the L2 fold);
   `book/src/L2/chebyshev-iteration.md` (L2 chapter-format + firm-without-dedicated-test
   precedent).
-- Provenance: combinator-miner:2026-05-28T223022Z
-  (`reports/2026-05-28T223022Z-combinator-miner-linear-combination-fold/CYCLE.md`) —
-  arity-family unification of the BLAS-1 scalar-weighted-sum cohort; constructive prong
-  (b) of the human-raised OQ `blas1-variadic-linear-combination-fold-unification`.

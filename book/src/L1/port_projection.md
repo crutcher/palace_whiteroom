@@ -60,8 +60,8 @@ runtime application.
 
 `port_projection` is the per-port projection kernel that the L4 driven
 output-product reduction [`sparameter_reduce`](../L4/sparameter_reduce.md) folds
-(its `project sᵢ E = sᵢ·E` step). That reduction's gate-b — "the per-port
-projection has no firm L1 home" — is satisfied by this entry.
+(its `project sᵢ E = sᵢ·E` step) — this entry is that reduction's per-port projection
+L1 home.
 
 ## Signature
 
@@ -116,8 +116,7 @@ covector (which integrator, which boundary attributes, which mode coefficient) i
 an FE-assembly concern upstream of `port_projection`; this operator consumes the
 covector as an already-assembled construction-time constant and only applies it to
 the run-time field `E`. (If a second consumer of an assembled FE covector surfaces,
-this should be promoted to a `concepts/covector.md` record-definition page; flagged
-in Open questions as a watch, not yet owed.)
+this should be promoted to a `concepts/covector.md` record-definition page.)
 
 ## Semantics
 
@@ -263,29 +262,6 @@ Collapsed (absorbed) axes:
 - No SPD / symmetry / positive-definiteness requirement — the pairing is a plain
   bilinear dual contraction with no self-form.
 
-## Status
-
-`firm` — **firm-on-positive-structure**. The signature is read directly off two
-positive Palace source sites (`palace/models/lumpedportoperator.cpp:283-294` and
-`palace/models/waveportoperator.cpp:780-793`), and every algebraic law is a
-syntactic identity on the dual-pairing fold (linearity in each argument,
-real/imag splitting, the explicit non-Hermitian / non-symmetric absences). The
-covector's assembled-`mfem::LinearForm` realization is positively witnessed
-(`palace/models/lumpedportoperator.cpp:162-196`, `palace/models/lumpedportoperator.hpp:51`;
-`palace/models/waveportoperator.hpp:101`).
-
-The **no-dedicated-test caveat is non-gating** here, following the
-`apply_linop` / `jacobi-smoother` / `elementwise_product` precedent (firm-on-
-positive-structure laws are syntactic identities that a missing unit test does not
-gate). The projection *kernel* `GetSParameter` is in fact unit-tested
-(`test/unit/test-lumpedportintegration.cpp:367,720`,
-`test/unit/test-romoperator.cpp:603`) — these exercise `port_projection`'s
-realization directly at the call boundary, raising confidence on the contraction
-itself; the laws here are syntactic and need no further test. (The *reduction-level*
-assembly that consumes this projection — `MeasureSParameter` — is integration-tested
-only; that test-gating lands on [`sparameter_reduce`](../L4/sparameter_reduce.md),
-not on this leaf kernel.)
-
 ## L1 vs L0 distinction
 
 - **L0**: two model-method kernels. `LumpedPortData::GetSParameter`
@@ -309,16 +285,13 @@ not on this leaf kernel.)
 The L1>L0 lowering (narrated forward L1→L0, a future theme or in-line note on the
 S-parameter rotation) reintroduces: the lazy covector assembly, the complex-from-
 real-pairings expansion (lumped two-pairing / wave four-pairing 2×2), the wave
-field transfer onto the port space, and the `Mpi::GlobalSum` collective. This entry
-does not author that lowering theme (out of harvester scope; noted in Open
-questions / the coupled-column re-check).
+field transfer onto the port space, and the `Mpi::GlobalSum` collective.
 
 ## Evidence
 
 - `palace/models/lumpedportoperator.cpp:283-294` — `LumpedPortData::GetSParameter`
   (def `:283`, body `:285-293`, closes `:294`): the lumped projection
   `dot = (*s)·E.Real() [+ i·(*s)·E.Imag()]` — the single-real-covector dual pairing.
-  Verified on-disk: `:294` is the closing `}`.
 - `palace/models/lumpedportoperator.hpp:51` — `mutable std::unique_ptr<mfem::LinearForm> s, v;`
   — the covector `s` is an assembled `LinearForm` (FE dual-space element), not an
   `Operator`. The structural basis for the OWN-verb verdict.
@@ -330,8 +303,7 @@ questions / the coupled-column re-check).
   (def `:780`, body `:782-792`, closes `:793`): the wave projection
   `(E × H_inc⋆)·n = E·(−n × H_inc⋆)` (comment `:782-783`), realized as the 2×2 real
   recombination of `port_sr`, `port_si` against `port_E->Real()`/`Imag()`
-  (`:789-790`); `MFEM_VERIFY(E.HasImag())` guard `:784-786`. Verified on-disk: `:793`
-  is the closing `}`.
+  (`:789-790`); `MFEM_VERIFY(E.HasImag())` guard `:784-786`.
 - `palace/models/waveportoperator.hpp:101` — `std::unique_ptr<mfem::LinearForm> port_sr, port_si;`
   — the wave port mode is a **complex** covector `port_sr + i·port_si` (two assembled
   real `LinearForm`s). Confirms the complex-covector / non-Hermitian shape.
@@ -341,8 +313,8 @@ questions / the coupled-column re-check).
 - `test/unit/test-romoperator.cpp:603` — `auto S = port_data.GetSParameter(E)`:
   the projection kernel exercised in the ROM-operator test.
 - `book/src/L4/sparameter_reduce.md:86,197-202,255-259` — the L4 driven reduction
-  that folds this projection (`project sᵢ E = sᵢ·E`) and whose gate-b
-  (`sparameter-reduce-l1-port-projection-home`) this entry satisfies.
+  that folds this projection (`project sᵢ E = sᵢ·E`); this entry is its per-port
+  projection L1 home.
 - `book/src/L1/bilinear-form.md:62-94` — the candidate-subsume verb (`xᴴ M y`,
   matrix-weighted two-vector); the load-bearing question resolved NON-MATCH (a
   covector is not an `Operator`).
@@ -350,5 +322,3 @@ questions / the coupled-column re-check).
   (`conj(x)·y`) and its unconjugated bilinear variant `tdot`; resolved NON-MATCH
   (a covector dual pairing is not a co-spatial inner product).
 - `book/src/L1/index.md` — dep-map this entry adds a row to.
-- `scaffolding/open-questions.md` §`sparameter-reduce-l1-port-projection-home`
-  (c075 D1) — the OQ this harvest resolves.

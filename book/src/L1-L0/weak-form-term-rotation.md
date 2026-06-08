@@ -5,11 +5,6 @@ layer_to: L0
 status: firm
 justification_kind: structural
 l1_form: book/src/L1/weak_form_term.md
-verified_against:
-  - palace/models/laplaceoperator.cpp:188-194
-  - palace/models/curlcurloperator.cpp:170-181
-  - palace/fem/bilinearform.hpp:53-57
-  - palace/fem/integrator.hpp:39-130
 ---
 
 # weak-form-term-rotation
@@ -21,19 +16,6 @@ concrete Palace L0 form: the imperative templated integrator-registration call
 `k.AddDomainIntegrator<T>(Q)`. This is a **vocabulary translation across two different organizations of the same
 information** — a pure pair value on the L1 side, a C++ template-type-plus-runtime-argument dispatch into a
 mutable heap-owned container on the L0 side — NOT a one-to-one named-term rename.
-
-## Status
-
-`firm`. **Justification kind: structural.** The rewrite is shape-driven: the term's two L1 slots map onto two
-structurally-distinct L0 carriers (template parameter ↔ differential operator; runtime argument ↔ coefficient),
-and the mapping is exhaustively cited at both grounded witness sites. The **term-identity translation lowers
-cleanly**; the per-term assembly **kernel** is a named, already-firm sibling obstruction
-([`fe-assemble-libceed-boundary-obstruction`](./fe-assemble-libceed-boundary-obstruction.md),
-`opaque-library-ownership`, c055), not a gap in this theme — the split is explicit below. No constructive
-sub-part: every claim is read from a positive Palace source site. Firm-on-positive-structure (the
-identity-translation is a syntactic correspondence between the pure pair and the template/runtime slots, so the
-absence of a dedicated `weak_form_term` unit test does not gate it — same precedent as the firm
-[`weak_form_term`](../L1/weak_form_term.md) entry and `fe_assemble`).
 
 ## L1 form (LHS)
 
@@ -92,8 +74,8 @@ The term has two separable aspects, and they lower through **different** L1>L0 s
   integrator's `Assemble` method — is the libCEED-owned opaque map `A(space, ·)` over the firm
   [`fe_space`](../L1/fe_space.md) (the `space` argument is the de-opaqued FE-space value; only the
   realization `A` stays library-owned). It is already classified as the
-  `opaque-library-ownership` obstruction [`fe-assemble-libceed-boundary-obstruction`](./fe-assemble-libceed-boundary-obstruction.md)
-  (c055), identical across all 5 solver pipelines. It does NOT lower through this theme; this theme stops at the
+  `opaque-library-ownership` obstruction [`fe-assemble-libceed-boundary-obstruction`](./fe-assemble-libceed-boundary-obstruction.md),
+  identical across all 5 solver pipelines. It does NOT lower through this theme; this theme stops at the
   registration call.
 
 The split mirrors the firm [`weak_form_term`](../L1/weak_form_term.md) entry's own framing: the term carries an
@@ -153,8 +135,7 @@ variant-invariant slot.
 
 ## Pending-pull axis points (named, NOT authored)
 
-Matching D1's pull-only scoping (the redirect's clean-gate: author a variant's concrete rewrite only when a
-pipeline pull NEEDS it):
+Under pull-only scoping (author a variant's concrete rewrite only when a pipeline pull NEEDS it):
 
 - **`Identity`/mass** → `MassIntegrator` / `VectorFEMassIntegrator` (`palace/fem/integrator.hpp:68-69,79-80`),
   realizing `a(u, v) = (Q u, v)`. The most-likely next pull (pervasive across eigenmode/driven/transient/ROM
@@ -162,7 +143,7 @@ pipeline pull NEEDS it):
   L0 instantiation site is filled in under this theme as a specialization note when its own pipeline pull lands.
 - **`Divergence`/div-div** → `DivDivIntegrator` (`palace/fem/integrator.hpp:122-123`), realizing
   `a(u, v) = (Q ∇·u, ∇·v)`. **No in-scope solver-K witness**: the wrapper exists but no model-operator K-build
-  instantiates it (D1's negative anchor — codemap search over `palace/models/*.cpp` returns no
+  instantiates it (the negative anchor — a codemap search over `palace/models/*.cpp` returns no
   `DivDivIntegrator` use site). Recorded as a possible spine-coverage finding, not a gap to fill speculatively.
 
 ## L1 vs L0 distinction
@@ -180,34 +161,30 @@ pipeline pull NEEDS it):
 
 ## Speculative L1 operators
 
-None. This theme lowers an already-firm L1 operator ([`weak_form_term`](../L1/weak_form_term.md), firm c061) into
+None. This theme lowers an already-firm L1 operator ([`weak_form_term`](../L1/weak_form_term.md), firm) into
 existing L0 source; it proposes no new L1 vocabulary.
 
-## Verified-against
+## Evidence
 
 - `palace/models/laplaceoperator.cpp:188-194` — electrostatic K-build (`LaplaceOperator::GetStiffnessMatrix`,
   method at `:184`); `MaterialPropertyCoefficient epsilon_func(...)` (`:191-192`) +
-  `k.AddDomainIntegrator<DiffusionIntegrator>(epsilon_func)` (`:194`). citecheck `:188-194 --anchor
-  DiffusionIntegrator` → `[ok]` (anchor at 194). Grounds Case 1 (`Gradient`).
+  `k.AddDomainIntegrator<DiffusionIntegrator>(epsilon_func)` (`:194`). Grounds Case 1 (`Gradient`).
 - `palace/models/curlcurloperator.cpp:170-181` — magnetostatic K-build
   (`CurlCurlOperator::GetStiffnessMatrix`, method at `:171`); `MaterialPropertyCoefficient muinv_func(...)`
-  (`:179-180`) + `k.AddDomainIntegrator<CurlCurlIntegrator>(muinv_func)` (`:181`). citecheck `:170-181 --anchor
-  CurlCurlIntegrator` → `[ok]` (anchor at 181). Grounds Case 2 (`Curl`). SAME fold as Case 1, integrator-slot
-  difference only.
+  (`:179-180`) + `k.AddDomainIntegrator<CurlCurlIntegrator>(muinv_func)` (`:181`). Grounds Case 2 (`Curl`).
+  SAME fold as Case 1, integrator-slot difference only.
 - `palace/fem/bilinearform.hpp:53-57` — `AddDomainIntegrator<T>(args...)`: the templated append
   (`domain_integs.push_back(std::make_unique<T>(std::forward<U>(args)...))`) — the L0 instantiation surface. The
-  template parameter `T` = differential operator; the forwarded argument = coefficient. citecheck `:53-57
-  --anchor AddDomainIntegrator` → `[ok]` (anchor at 54).
+  template parameter `T` = differential operator; the forwarded argument = coefficient.
 - `palace/fem/integrator.hpp:39-42` — `BilinearFormIntegrator` base: the `const MaterialPropertyCoefficient *Q`
-  coefficient slot, uniform across every differential-operator variant (the factorization ground). citecheck
-  `:39-42 --anchor MaterialPropertyCoefficient` → `[ok]` (anchor at 42).
+  coefficient slot, uniform across every differential-operator variant (the factorization ground).
 - `palace/fem/integrator.hpp:100-101` — `DiffusionIntegrator` doc comment `a(u,v) = (Q grad u, grad v)` (the
   `Gradient` wrapper); `:111-112` — `CurlCurlIntegrator` `a(u,v) = (Q curl u, curl v)` (the `Curl` wrapper);
   `:68-69`/`:79-80` — `MassIntegrator`/`VectorFEMassIntegrator` (the `Identity` pending-pull wrapper);
   `:122-123` — `DivDivIntegrator` (the `Divergence` pending-pull wrapper).
 - `palace/fem/integrator.hpp:197,229,250` — the mixed/rectangular integrators (out-of-scope adjacent family).
-- `book/src/L1/weak_form_term.md` (firm c061) — the L1 operator this theme lowers.
-- `book/src/L1-L0/fe-assemble-libceed-boundary-obstruction.md` (c055, `opaque-library-ownership`) — the term's
+- `book/src/L1/weak_form_term.md` (firm) — the L1 operator this theme lowers.
+- `book/src/L1-L0/fe-assemble-libceed-boundary-obstruction.md` (`opaque-library-ownership`) — the term's
   KERNEL boundary (the identity-lowers/kernel-opaque split's opaque half).
-- `book/src/L1-L0/fe-operator-assemble-mutation-rotation.md` (firm c057) — the container build-up / assemble
+- `book/src/L1-L0/fe-operator-assemble-mutation-rotation.md` (firm) — the container build-up / assemble
   protocol; THIS theme is the per-term identity-translation sub-component below that fold.

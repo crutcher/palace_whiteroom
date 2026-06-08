@@ -29,21 +29,12 @@ MPI-tree-reduce fusion choice) are unfolded into the canonical
 `foldl (+) zero (zipWith kernel x y)`, with the pinned reduction tree de-fused into
 the fold's seed-and-accumulate.
 
-> **Vocabulary-shift redirect (2026-06-01) — combinator-as-entry inversion.** This
-> entry was authored cycle-019 under the retired mine-and-strand regime, which stated
-> `inner_product` was "the form they fuse *up* into, not a replacement" and stood it
-> *beside* same-named L2 leaf chapters (`L2/dot`). Per the redirect (replace-and-
-> propagate, not mine-and-strand; `METHODOLOGY-REDIRECT.md` §4-§5), the combinator is
-> now the **layer's primary entry** and the members are specialization notes under it.
-> The standalone `L2/dot.md` leaf-floor is collapsed into a §"Specializations" note
-> (cycle-050 enactment — see combinator-miner refactor-pass report); the degenerate
-> `L3-L2/dot-body-identity` + `L2-L1/dot-leaf-identity` identity-in-named-terms theme
-> files were deleted at cycle-051, their identity-in-form content absorbed into the
-> combinator homes (they were vocabulary-failed-to-shift smells, not translations). The
-> combinator propagates **up** to a new `L3/inner_product` entry
-> (cycle-050) through which the L3 leaf cohort re-expresses, rather than each L3 leaf
-> re-deriving a base form. `nrm2` is **not** a member — it is a `√ ∘ abs ∘
-> inner_product` **consumer** (§"Consumer (NOT an instance)").
+> **Combinator-as-entry.** The combinator is the **layer's primary entry** and the
+> members (`dot`/`tdot`/`bilinear_form`) are specialization notes under it (§"Specializations"),
+> not co-equal same-named L2 leaf chapters. The combinator propagates **up** to the
+> `L3/inner_product` entry through which the L3 leaf cohort re-expresses, rather than each
+> L3 leaf re-deriving a base form. `nrm2` is **not** a member — it is a `√ ∘ abs ∘
+> inner_product` **consumer** (§"Consumer").
 
 ## Context
 
@@ -105,9 +96,8 @@ L0 surface pins the **opposite** operand: the free-function and its kernels conj
   `palace/linalg/vector.hpp:242` / `:246` (`LocalDot` / free-function `Dot`,
   `// Calculate the … inner product yᴴ x or yᵀ x`), `palace/linalg/operator.hpp:386`
   (weighted, `// Compute the bilinear form inner product yᴴ A x`).
-- The kernel bodies **agree with the docs** (no Palace-internal contradiction —
-  contra the combinator-miner's wording of a "contradiction", which is between Palace
-  and the L1 entry, not within Palace): `ComplexVector::Dot(y)` body
+- The kernel bodies **agree with the docs** (no Palace-internal contradiction; the
+  re-order is between Palace and the L1 entry, not within Palace): `ComplexVector::Dot(y)` body
   (`palace/linalg/vector.cpp:263-267`) returns
   `{Re(x)·Re(y)+Im(x)·Im(y), Im(x)·Re(y)−Re(x)·Im(y)} = x·\overline{y} = y^{\mathsf H} x`
   (the imaginary cross-term sign is `+Im(x)Re(y)−Re(x)Im(y)`, i.e. arg-2 `y` is the
@@ -129,8 +119,8 @@ retracted an earlier draft's alleged comment-vs-implementation disagreement
 `bilinear-form-conjugation-convention-anchor`). The L2 entry pins arg-1 to stay
 consistent with both leaves; the **value-level effect of the re-order** (Palace's
 `yᴴ x` vs the representation's `xᴴ y`) is a conjugation that the L2>L1 lowering theme
-records explicitly when it maps the L2 fold onto the L0 call (forward-reference only —
-`inner-product-fold-specialization`, not authored here).
+[`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md)
+records explicitly when it maps the L2 fold onto the L0 call.
 
 For algorithms that take a real projection (`std::real`, `std::abs`) of the result —
 e.g. CG's `β = ⟨r, z⟩` for SPD `B` (`palace/linalg/iterative.cpp:395`), or norms via
@@ -195,7 +185,7 @@ bilinear_form(x, M, y) = inner_product_M x M y                      -- M-weighte
   defined with `dot` at L1; carried here with the type-API-surface-only caveat (§"tdot").
 - **`bilinear_form`** — the weight axis at value *general / SPD `M`* (`inner_product_M`),
   realized as the pre-application `inner_product (apply_linop M x) y`. Its L1 leaf is
-  [`bilinear-form`](../L1/bilinear-form.md) (firm, promoted cycle-095).
+  [`bilinear-form`](../L1/bilinear-form.md) (firm).
 
 The L2 entry differs from the L1 leaves in **resolution**, along the
 conjugation-convention / weight-presence axes: L1 sees `dot`/`tdot` (the conjugation
@@ -301,7 +291,8 @@ Laws that explicitly **do not** hold:
   claims", this is recorded, not erased: **the L2 fold is order-agnostic for value, but
   bit-identical reproduction of an L0 reduction requires matching that reduction's pinned
   tree.** Which tree a given lowered call pins is recorded by the L2>L1 lowering theme
-  (forthcoming — see § "Dependencies"). (Same discipline as
+  [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md).
+  (Same discipline as
   [`linear_combination`](./linear_combination.md)'s permutation non-law and
   [`dot`](../L1/dot.md) §Semantics.)
 
@@ -358,13 +349,12 @@ structural claim it is a family member is firm; only its *behavioral* weight is 
   carried there.
 - Sibling fold (do **NOT** merge): [`linear_combination`](./linear_combination.md)
   (reduce-to-`Tensor[N]`) — see § "Sibling fold".
-- L2>L1 lowering theme (forthcoming; abstractor work — cycle-019 dispatch #2, not
-  authored here): `inner-product-fold-specialization` will narrate how the L2 fold lowers
-  into the L1 leaves (conjugation/weight dispatch: Hermitian → `dot`, unconjugated →
-  `tdot`, weighted → `bilinear-form`; element-type → real Hypre kernel vs complex
+- L2>L1 lowering theme [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md):
+  how the L2 fold lowers into the L1 leaves (conjugation/weight dispatch: Hermitian → `dot`,
+  unconjugated → `tdot`, weighted → `bilinear-form`; element-type → real Hypre kernel vs complex
   four-real-dot lift), where the value-level conjugation re-order (`xᴴ y` ↔ `yᴴ x`)
   reappears, and which L0 reduction tree each lowered call pins (the load-bearing content
-  of the IEEE non-law). Forward-reference only — that chapter exists as a stub.
+  of the IEEE non-law).
 
 ## Variant axes
 
@@ -462,57 +452,6 @@ this entry's signature. (Law 5 — PSD at the diagonal — is exactly the proper
 the square-root well-defined; this is the family's downstream closure, recorded to show
 the boundary, not to claim subsumption.)
 
-## Status
-
-`firm` — the structure is a reduce-to-scalar fold over three firm/rough-in L1 leaves
-(`dot`, `tdot`, `bilinear-form`); the signature is the conjugation-convention-axis
-unification (the structural sibling of the arity-axis unification carried by
-`linear_combination`); the conjugation convention is pinned (arg-1 conjugated, matching
-both L1 leaves) and reconciled against the Palace `yᴴ x` source as the deliberate,
-self-consistent L1 re-order. Every algebraic law is either the defining fold law
-(empty-tensor seed, shape-concatenation-homomorphism) or a standard sesquilinear/bilinear
-fact (sesquilinearity, Hermitian symmetry, PSD-at-diagonal, zero-argument), with the
-PSD-at-diagonal directly confirmed by the in-source `&x==&y` imag=0 elision
-(`palace/linalg/vector.cpp:266,679`) and the SPD-realness assertion
-(`palace/linalg/operator.cpp:615-616`, comment "For SPD B, xᴴ B x is real" at `:611`);
-the reduction-tree associativity is paired as the
-explicit IEEE non-law per the load-bearing-numerical-trick discipline. The
-combinator-miner same-shape rough-in cleared the ≥3-instance bar (dot + tdot +
-bilinear-form), and the parametric-family mode independently characterized the cohort
-(combinator-miner:2026-05-29T023000Z) with the fold-law membership test + axis taxonomy.
-
-**Combinator-as-entry inversion (combinator-miner refactor-pass, cycle-049, D2).** Under
-the 2026-06-01 vocabulary-shift redirect this entry was inverted from mine-and-strand
-(combinator beside same-named L2 leaf chapters) to **combinator-as-entry**: the lede,
-§Context, §"Specializations" (formerly the §Signature "recovered as specializations"
-block), and §Dependencies now state the combinator IS the L2 inner-product entry and the
-members (`dot`/`tdot`/`bilinear_form`) are specialization notes under it. The standalone
-`L2/dot.md` leaf-floor collapse + the `L3/inner_product` upward propagation are the
-cycle-050 enactment (mapped in the refactor-pass report); the
-`L3-L2/dot-body-identity` / `L2-L1/dot-leaf-identity` smell-theme files were deleted at
-cycle-051 (their identity-in-form content absorbed into the combinator homes). The combinator's own substantive
-lowering [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md)
-is a GENUINE translation (conjugation/element-type/weight dispatch + the value-level
-`xᴴ y` ↔ `yᴴ x` re-order) and is KEPT (re-audited cycle-049, D2).
-
-> **Member-level caveat (not a status reduction).** `tdot` is carried as the unconjugated
-> conjugation-axis value with a **type-API-surface-only** evidentiary note: it has zero
-> Palace call sites (declaration + definition only). The fold *structure* is firm and the
-> other two axis values (`dot`, weighted) are behaviorally exercised; only `tdot`'s
-> behavioral weight is API-only. See § "tdot".
->
-> **Empirical-match caveat (not a status reduction).** The real-vector inner product has a
-> direct unit test (`test/unit/test-vector.cpp:206-207`: `double dot = vec1 * vec2;
-> CHECK_THAT(dot, WithinRel(32.0))` for `1·4+2·5+3·6=32`). The complex/Hermitian and
-> M-weighted members have no dedicated value-asserting unit test; they are grounded by
-> direct source-transcription (the `Dot`/`TransposeDot`/`LocalDot` kernels, the weighted
-> free-function, the SPD-realness assertion) plus the verified live call sites
-> (CG coefficients `iterative.cpp:395`; NLEPS norms `nleps.cpp:487,492`; Poynting power +
-> cross-coupling `boundarymodeoperator.cpp:85,90`). The firm-without-full-test bar follows
-> the [`chebyshev-iteration`](./chebyshev-iteration.md) /
-> [`linear_combination`](./linear_combination.md) precedent (source-transcription
-> confidence + integration coverage).
-
 ## L2 vs L1 distinction
 
 - **L1**: `dot`/`tdot` at one chapter (the conjugation axis below L1 resolution is the
@@ -532,59 +471,53 @@ is a GENUINE translation (conjugation/element-type/weight dispatch + the value-l
 
 - `palace/linalg/vector.cpp:263-267` — `ComplexVector::Dot` body: `Re = Re(x)Re(y)+Im(x)Im(y)`,
   `Im = Im(x)Re(y)−Re(x)Im(y)` (with `this==&y` imag=0 fast path) = `x·conj(y) = yᴴ x`.
-  The Hermitian kernel + the arg-2-conjugated Palace convention. **Self-verified via
-  `read_range`.**
+  The Hermitian kernel + the arg-2-conjugated Palace convention.
 - `palace/linalg/vector.cpp:269-274` — `ComplexVector::TransposeDot` body: same real part,
   **negated** imaginary cross-term (with `this==&y` returning `2·Im·Re`). The unconjugated
-  `tdot` kernel — differs from `Dot` only in the imag sign. **Self-verified.**
+  `tdot` kernel — differs from `Dot` only in the imag sign.
 - `palace/linalg/vector.cpp:664-672` — `LocalDot(Vector, Vector)` via a single Hypre
   `hypre_SeqVectorInnerProd`, with `MFEM_ASSERT(x.Size()==y.Size())` at `:667`. The real
-  member's fused kernel + the shape precondition. **Self-verified.**
+  member's fused kernel + the shape precondition.
 - `palace/linalg/vector.cpp:674-685` — `LocalDot(ComplexVector, ComplexVector)`: four real
   `LocalDot`s combined into `(Re, Im)`, with the `&x==&y` self-dot fast path returning
   imag=0 at `:679`. The element-type axis (complex = real fold lifted) + law-5 confirmation.
-  **Self-verified.**
+ 
 - `palace/linalg/vector.hpp:109` — `ComplexVector::Dot` decl, comment
   `// Vector dot product (yᴴ x) or indefinite dot product (yᵀ x)`. The documented arg-2
-  conjugation convention. **Self-verified.**
+  conjugation convention.
 - `palace/linalg/vector.hpp:112` — `TransposeDot` declaration (the only declaration; zero
-  callers). **Self-verified.**
+  callers).
 - `palace/linalg/vector.hpp:242,246` — `LocalDot` / `Dot` free-function comments
-  `// Calculate the … inner product yᴴ x or yᵀ x`. **Self-verified.**
+  `// Calculate the … inner product yᴴ x or yᵀ x`.
 - `palace/linalg/vector.hpp:247-253` — `Dot(comm, x, y) = Mpi::GlobalSum ∘ LocalDot`
-  template (the reduction's local-then-collective two-step). **Self-verified.**
+  template (the reduction's local-then-collective two-step).
 - `palace/linalg/operator.cpp:621-628` — `Dot(comm, x, A, y)` (real `Operator` weight):
   builds `Ax = A·x` then `Dot(comm, Ax, y) = yᴴ A x`. The M-weighted member; the weight axis
-  + the M-applied-operand conjugation. **Self-verified.**
+  + the M-applied-operand conjugation.
 - `palace/linalg/operator.cpp:631-638` — `Dot(comm, x, A, y)` (`ComplexOperator` weight),
-  the element-type-of-weight sibling overload. **Self-verified.**
+  the element-type-of-weight sibling overload.
 - `palace/linalg/operator.cpp:598-617` — `Norml2(comm, x, B, Bx)` real + complex: the
   B-weighted norm `√ Dot(comm, Bx, x)`, with the SPD-realness assertion
   (`dot.real() > 0 && |dot.imag()| < 1e-9·dot.real()`) at `:615-616` and the comment
   "For SPD B, xᴴ B x is real" at `:611`. The `matrix-weighted-norm` consumer +
-  law-5 confirmation. **Self-verified.**
+  law-5 confirmation.
 - `palace/linalg/operator.hpp:386,391` — the two weighted `Dot(comm, x, A, y)` declarations,
-  comment `// Compute the bilinear form inner product yᴴ A x`. **Self-verified.**
+  comment `// Compute the bilinear form inner product yᴴ A x`.
 - `palace/linalg/iterative.cpp:395` — `beta = linalg::Dot(comm, z, r)`: CG's
   preconditioned `(Br, r)` coefficient, the workhorse live call site of the Hermitian
-  member. **Self-verified.**
+  member.
 - `palace/linalg/nleps.cpp:487,492` — `std::sqrt(std::abs(linalg::Dot(GetComm(), c, c)) …)`
   and the `v,v` line: NLEPS normalization, live `inner_product`-at-diagonal sites
-  confirming the complex form returns complex. **Self-verified.**
+  confirming the complex form returns complex.
 - `palace/models/boundarymodeoperator.cpp:85` — `linalg::Dot(comm, et, *Bttr, et)`: Poynting
   power (M-weighted, diagonal `y=x`); `:90` — `linalg::Dot(comm, en, Atn, et)`: cross-coupling
-  (M-weighted, off-diagonal). The two live M-weighted call sites. **Self-verified.**
+  (M-weighted, off-diagonal). The two live M-weighted call sites.
 - `test/unit/test-vector.cpp:206-207` — real-vector dot `double dot = vec1 * vec2;
   CHECK_THAT(dot, WithinRel(32.0))` (`1·4+2·5+3·6=32`). Direct value-asserting test for the
-  real member. **Self-verified.**
-- Artifact cross-references (read this invocation): `book/src/L1/dot.md` (the `dot`/`tdot`
+  real member.
+- Artifact cross-references: `book/src/L1/dot.md` (the `dot`/`tdot`
   leaves + arg-1-conjugated L1 convention at `:34,:43`), `book/src/L1/bilinear-form.md`
   (the M-weighted leaf, `xᴴ M y` at `:19,:63`, conjugation-anchor resolution at `:50-53`),
-  `book/src/L2/linear_combination.md` (the sibling fold + harvest-format precedent),
-  `book/src/L2/index.md` (the dep-map row being flipped),
+  `book/src/L2/linear_combination.md` (the sibling fold),
+  `book/src/L2/index.md` (the dep-map row),
   `book/src/L2/chebyshev-iteration.md` (firm-without-full-test precedent).
-- Provenance: combinator-miner:2026-05-28T231046Z (cycle-018 same-shape rough-in row);
-  combinator-miner:2026-05-29T023000Z
-  (`reports/2026-05-29T023000Z-combinator-miner-parametric-family/CYCLE.md` — parametric-
-  family mode characterization: fold-law membership test, four-axis taxonomy, the
-  conjugation-convention contradiction + `tdot`-uncalled caveats this entry resolves).

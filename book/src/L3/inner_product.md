@@ -31,18 +31,12 @@ L0 reduction tree is a floating-point implementation choice (a recorded non-law)
 deferred to the L2>L1 [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md)
 theme, not an algebraic obstruction at L3.
 
-> **Combinator propagated up from L2 (cycle-050, replace-and-propagate).** The L2
-> `inner_product` combinator was inverted to combinator-as-entry at cycle-049 D2
-> (combinator beside same-named L2 leaf chapters → combinator IS the L2 entry; commit
-> `92327f7`) but was never propagated to L3 — the firm L3 `dot`/`nrm2` leaves lifted
-> directly from L1, each re-deriving a base form, with no L3 combinator. Per the
-> 2026-06-01 vocabulary-shift redirect (`METHODOLOGY-REDIRECT.md` §4-§5; CLAUDE.md
-> §Methodology invariants ⟢), this entry is the **upward-propagation** half: the L3
-> leaf cohort re-expresses through this combinator (`dot` = the Hermitian
-> specialization; `nrm2` = the `√ ∘ abs ∘ inner_product` **consumer** at `y=x`, NOT a
-> member) rather than each L3 leaf re-deriving the base form. The L3 `dot`/`nrm2` leaf
-> entries are not edited this cycle (cycle-051 scope); their re-expression-through-this-
-> combinator note lands when their leaves are slimmed.
+> **Combinator-as-entry (vocabulary-shift redirect).** Per the
+> vocabulary-shift redirect (`METHODOLOGY-REDIRECT.md` §4-§5; CLAUDE.md
+> §Methodology invariants ⟢), the L3 leaf cohort re-expresses through this combinator
+> (`dot` = the Hermitian specialization; `nrm2` = the `√ ∘ abs ∘ inner_product`
+> **consumer** at `y=x`, NOT a member) rather than each L3 leaf re-deriving the base form,
+> mirroring the L2 combinator-as-entry inversion (the combinator IS the L2 entry; commit `92327f7`).
 
 ## Context
 
@@ -68,8 +62,7 @@ This entry adds **iteration-rotation framing** to the combinator: it names
 GMRES orthogonalization coefficients — per the L3 `dot` consumption already recorded at
 `book/src/L3-L2/krylov-step-body-identity.md` §"Applicability conditions" point 3). It
 does not duplicate the combinator's algebraic-law derivations or its L0 evidence list —
-those are authoritative at [`L2/inner_product`](../L2/inner_product.md) (firm cycle-019,
-inverted cycle-049); the laws hold uniformly across L1 / L2 / L3 because the body is
+those are authoritative at [`L2/inner_product`](../L2/inner_product.md) (firm); the laws hold uniformly across L1 / L2 / L3 because the body is
 identity-in-form across the chain (§"Downward to L2").
 
 This L3 field reduction is data-parallel, not iteration-structural: it is a pure
@@ -77,14 +70,12 @@ value-producing reduction over the shape group `S` with no control-flow, no mona
 threading, and no convergence predicate (the per-element kernel is embarrassingly
 parallel; only the final sum communicates — contrast L4 `iterate_while`, which threads
 state through a stopping predicate). It lifts to [`L4/inner_product`](../L4/inner_product.md)
-(firm cycle-068) **identity-in-form on the body** — the L4 calculus combinator is
+(firm) **identity-in-form on the body** — the L4 calculus combinator is
 value-thread-isomorphic to this L3 reduction, with no dedicated L4>L3 theme file (the
 eigsolve/chebyshev in-line-marker route), precisely because there is no monadic
-state-threading or convergence predicate to dissolve across the edge. (Earlier revisions
-asserted "No `L4/inner_product` exists — folds/leaves are not first-class L4 vocabulary
-(cycle-010 audit)"; that admission is **superseded** by the c068 `L4/inner_product`
-landing and the 2026-06-01 vocabulary-shift redirect, under which the combinator IS
-first-class L4 vocabulary that rises to the feature surface as a named verb.) The
+state-threading or convergence predicate to dissolve across the edge. Under the
+vocabulary-shift redirect the combinator IS
+first-class L4 vocabulary that rises to the feature surface as a named verb. The
 combinator also appears inside other L4 composed entries (e.g.
 `book/src/L4/krylov-step.md` §Semantics) as a let-binding.
 
@@ -140,7 +131,7 @@ self-consistent L1 mutation-rotation re-order; the value-level effect (`xᴴ y` 
 complex conjugates of each other) is **L1>L0 / L2>L1 lowering content**, not L3 content.
 The genuine translation that carries the re-order is the KEPT
 [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md) theme
-(re-audited cycle-049 D2 (c); §"Downward to L2"). L3 sees the convention pinned at arg-1
+(§"Downward to L2"). L3 sees the convention pinned at arg-1
 and a single-step whole-tensor reduction.
 
 ## Specializations
@@ -149,7 +140,7 @@ The members are **not separate L3 chapters** — they are this field reduction r
 fixed axis-values. Each is the combinator with one axis pinned; there is no co-equal
 `L3/dot` / `L3/bilinear-form` floor beside this entry as a *member-of-the-fold*
 (the firm L3 `dot` leaf is the Hermitian specialization re-expressed through this
-combinator — cycle-051 slims it to a specialization note pointing here; `bilinear-form`
+combinator, a specialization note pointing here; `bilinear-form`
 has no standalone L3 entry, it lives as the weighted member here):
 
 ```text
@@ -161,7 +152,7 @@ bilinear_form(x, M, y) = inner_product_M x M y                      -- M-weighte
 - **`dot`** — the conjugation axis at value *Hermitian* (complex) / *symmetric* (real),
   with `M = I`. The workhorse specialization (CG coefficients, orthogonalization, NLEPS).
   `dot` at L3 IS this specialization (no standalone leaf chapter — the residual
-  `L3/dot` specialization-stub was eliminated cycle-127, RE-style, its conjugation
+  `L3/dot` specialization-stub was eliminated, its conjugation
   variant-axis + krylov-step consuming context folded into this section). The kept named
   L4 verb [`L4/dot`](../L4/dot.md) re-expresses through this combinator.
 - **`tdot`** — the conjugation axis at value *unconjugated bilinear* (complex-only).
@@ -170,8 +161,7 @@ bilinear_form(x, M, y) = inner_product_M x M y                      -- M-weighte
   from the L2 combinator §"tdot".
 - **`bilinear_form`** — the weight axis at value *general / SPD `M`* (`inner_product_M`),
   realized as the pre-application `inner_product (apply_linop M x) y`. It has no standalone
-  L3 chapter (its L1 leaf `bilinear-form` is firm, promoted cycle-095 — formerly the cycle-036
-  D2 audit (A) L1-promotion-gated member, now an identity-in-form L3 backfill candidate like
+  L3 chapter (its L1 leaf `bilinear-form` is firm — an identity-in-form L3 backfill candidate like
   its `matrix-weighted-norm` cohort-sibling; see `book/src/L3/index.md`); at L3 it is
   this weighted-member note.
 
@@ -272,7 +262,7 @@ Laws that explicitly **do not** hold:
   reproduction of an L0 reduction requires matching that reduction's pinned tree.** Which
   tree each lowered call pins is recorded by the L2>L1
   [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md) theme
-  (the genuine translation, not restated here per the cycle-049 D2 (c) KEEP verdict). This
+  (the genuine translation, not restated here). This
   is exactly the distinction the no-obstruction verdict turns on: the *value* lifts to a
   parallel whole-tensor reduction; only the *pinned tree* is an L0 non-law.
 
@@ -294,11 +284,10 @@ Laws that explicitly **do not** hold:
 - **Consumers (L3)**: [`krylov-step`](./krylov-step.md) (CG/GMRES coefficients). The
   do-NOT-merge consumers [`nrm2`](#consumer-nrm2-and-matrix-weighted-norm) / `matrix-weighted-norm` are
   `√ ∘ abs ∘ inner_product` at `y=x` — see §"Consumer (NOT an instance)".
-- **Upward reference (L2)**: [`L2/inner_product`](../L2/inner_product.md) (firm cycle-019,
-  inverted to combinator-as-entry cycle-049 D2) — authoritative on the algebraic laws,
+- **Upward reference (L2)**: [`L2/inner_product`](../L2/inner_product.md) (firm) — authoritative on the algebraic laws,
   the conjugation reconciliation, and the L0 evidence list. The L3 form is identity-in-form
   to the L2 reduction (§"Downward to L2").
-- **L2>L1 lowering theme** (the genuine translation; KEPT per cycle-049 D2 (c)):
+- **L2>L1 lowering theme** (the genuine translation; KEPT):
   [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md) —
   carries the conjugation/element-type/weight dispatch, the `xᴴ y` ↔ `yᴴ x` re-order, and
   the per-call pinned reduction trees (the load-bearing IEEE non-law content). Referenced,
@@ -345,7 +334,7 @@ The `√ ∘ abs` post-step is a downstream scalar map; the norm is not a reduct
 not enter this entry's signature. Merging `nrm2` into `inner_product` would be a category
 error — `inner_product` is the shape-group `S` homomorphism producing `⟨x, x⟩`; `nrm2` is the
 scalar map `α ↦ √|α|` applied to that output. `nrm2` at L3 IS this consumer (no standalone
-leaf chapter — the residual `L3/nrm2` consumer-stub was eliminated cycle-127, RE-style, the
+leaf chapter — the residual `L3/nrm2` consumer-stub was eliminated, the
 load-bearing `std::abs` defensive guard + the Arnoldi-sub-diagonal / residual-norm consuming
 context folded into this section; do-NOT-merge boundary preserved — `nrm2` is the
 `√∘abs∘inner_product` consumer, NOT a fold member). The kept named L4 verb
@@ -354,23 +343,7 @@ diagonal) is exactly the property that
 makes the consumer square-root well-defined; this section records the boundary, not a
 subsumption.
 
-## Status
-
-`firm` — the L3 form is the iteration-rotation rendering of the firm L2 `inner_product`
-combinator (firm cycle-019, inverted to combinator-as-entry cycle-049 D2): a whole-tensor
-reduce-to-scalar field reduction `Tensor[(S: ...)] -> Tensor[$S] -> Scalar` with **no sequential
-obstruction** (the shape-group `S` reduction is parallel-clean in exact arithmetic; the pinned
-L0 tree is a deferred non-law). The L3 form is **value-thread-isomorphic to the L2
-reduction** (identity-in-form across the L3>L2 edge — §"Downward to L2"); algebraic laws
-and variant-axis profile are inherited unchanged. The conjugation / element-type / weight
-specializations (`dot`/`tdot`/`bilinear_form`) are specialization notes under the
-combinator; `nrm2` is the do-NOT-merge `√ ∘ abs ∘ inner_product` consumer (NOT a member).
-This is the **upward-propagation** half of the cycle-049 D2 replace-and-propagate map
-(combinator-miner refactor-pass (b.5)); the L3 `dot`/`nrm2` leaf re-expression-through-this-
-combinator slim is cycle-051 (not enacted here). L0 anchors are **inherited from the firm
-L2 combinator** (cited cycle-019, self-verified there) — not re-localized at L3 per the
-high→low layer-definition discipline (CLAUDE.md §Methodology invariants "Layers are defined
-high→low").
+## Caveats
 
 > **Member-level caveat (not a status reduction; inherited from L2).** `tdot` is carried
 > as the unconjugated conjugation-axis value with a type-API-surface-only evidentiary note
@@ -386,12 +359,11 @@ reduction (the same `reduce (+) zero (zipWith kernel x y)` skeleton; the L3 laye
 iteration-rotation framing names it a single field-reduction node, the L2 layer's
 fusion-rotation framing names it the canonical fold the fused kernels unfold into; the
 *value thread is identical*). There is **no L3-L2 theme file** — the identity-in-form
-annotation lives in-line here, per the cycle-012 non-adjacent-identity convention (CLAUDE.md
+annotation lives in-line here, per the non-adjacent-identity convention (CLAUDE.md
 §Methodology invariants "Identity rotations across non-adjacent layers are annotated
 in-line"; precedent `book/src/L3/krylov-step.md`, and this entry's own §"Specializations"
 absorbing the former `L3/dot` leaf's "Downward to L2 (through inner_product)" framing). This section is the **home** the degenerate
-`dot-body-identity` L3>L2 identity-in-named-terms theme was demoted into at cycle-051
-(combinator-miner refactor-pass (b.3): "L3>L2 is identity-in-named-terms — no rotation;
+`dot-body-identity` L3>L2 identity-in-named-terms theme was demoted into ("L3>L2 is identity-in-named-terms — no rotation;
 `dot` is the Hermitian specialization of the `inner_product` combinator at both layers";
 the `L3-L2/dot-body-identity.md` file was deleted, its identity-in-form content absorbed
 here).
@@ -399,7 +371,7 @@ here).
 Transitively (L3>L2 identity ∘ L2>L1 substantive), the L3 form lowers to the L1 leaves
 through the L2 combinator: the **genuine** translation is the L2>L1
 [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md) theme
-(KEPT, cycle-049 D2 (c)) — the conjugation/element-type/weight dispatch + the value-level
+(KEPT) — the conjugation/element-type/weight dispatch + the value-level
 `xᴴ y` ↔ `yᴴ x` re-order + the per-call pinned reduction trees (the load-bearing IEEE
 non-law content). No `book/src/L3-L1/` directory — the non-adjacent identity-rotation
 annotation is in-line per the same convention.
@@ -407,14 +379,13 @@ annotation is in-line per the same convention.
 ## Evidence
 
 The L3 form is value-thread-isomorphic to the L2 combinator; **all L0 evidence is inherited
-transitively through the firm L2 entry** (self-verified there cycle-019) and is **not
+transitively through the firm L2 entry** and is **not
 re-localized at L3** per the high→low layer-definition discipline. Direct citations relevant
 to this L3 entry:
 
-- [`book/src/L2/inner_product.md`](../L2/inner_product.md) (firm cycle-019; inverted to
-  combinator-as-entry cycle-049 D2, commit `92327f7`) — the upward reference; authoritative
+- [`book/src/L2/inner_product.md`](../L2/inner_product.md) (firm; combinator-as-entry, commit `92327f7`) — the upward reference; authoritative
   on the signature, algebraic laws (inherited unchanged at L3), conjugation reconciliation,
-  variant axes, and the complete self-verified L0 evidence list (`palace/linalg/vector.cpp:263-267`
+  variant axes, and the complete L0 evidence list (`palace/linalg/vector.cpp:263-267`
   Hermitian kernel, `:269-274` `tdot`, `:664-672` real reduction / `:674-685` complex reduction; `palace/linalg/operator.cpp:598-617`
   SPD-norm + realness assertion, `:621-638` weighted member; `palace/linalg/vector.hpp:247-253`
   local-then-collective; `test/unit/test-vector.cpp:206-207` real-dot value test).
@@ -424,11 +395,11 @@ to this L3 entry:
   obstruction-free end this entry sits at.
 - [§"Specializations"](#specializations) — the
   Hermitian/unconjugated `dot` specialization (the residual standalone `L3/dot` leaf,
-  firm cycle-011, was eliminated cycle-127 RE-style; its conjugation variant-axis +
+  firm, was eliminated; its conjugation variant-axis +
   no-sequential-obstruction verdict + krylov-step consuming context are folded here).
 - [§"Consumer (NOT an instance)"](#consumer-nrm2-and-matrix-weighted-norm) — the
   `√ ∘ abs ∘ inner_product` consumer `nrm2` (the residual standalone `L3/nrm2` leaf, firm
-  cycle-011, was eliminated cycle-127 RE-style; do-NOT-merge boundary preserved — NOT a member).
+  was eliminated; do-NOT-merge boundary preserved — NOT a member).
 - [`book/src/L2-L1/inner-product-fold-specialization.md`](../L2-L1/inner-product-fold-specialization.md)
   — the KEPT genuine L2>L1 translation; the pinned-tree IEEE non-law + conjugation re-order
   home (referenced, not restated).
@@ -438,10 +409,6 @@ to this L3 entry:
   the identity-in-form L3>L2 rotation.
 - [`book/src/concepts/dot.md`](../concepts/dot.md) — the BLAS-1 heritage / cross-cutting
   framing; the element-type axis.
-- Provenance: combinator-miner refactor-pass cycle-049 D2
-  (`reports/2026-06-01T190900Z-combinator-miner-refactor-pass-inner-product-family/CYCLE.md`
-  (b.5)) — authorizes this upward propagation; (b.2) DECIDED `nrm2` stays consumer; (c)
-  KEEP verdict on `inner-product-fold-specialization`.
 
 ## L3 vs L2 distinction
 
@@ -449,7 +416,7 @@ to this L3 entry:
   optional pre-`apply_linop M`; the family of fused reduction kernels (a kernel-fusion
   choice) is unfolded into the canonical `foldl (+) zero (zipWith kernel x y)`; the pinned
   reduction tree is de-fused into the fold's seed-and-accumulate. The combinator IS the L2
-  entry (cycle-049 inversion).
+  entry.
 - **L3**: the same reduce-to-scalar reduction rendered as a single whole-tensor
   field-operation node in the iteration-rotation calculus — no element loop, no sequential
   obstruction (parallel-clean in exact arithmetic), consumed inside larger L3 forms

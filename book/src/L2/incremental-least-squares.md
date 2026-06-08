@@ -36,14 +36,10 @@ transparent fusion).
 
 This entry is a **named composition**, the structural sibling of the firm
 [`orthogonalize`](./orthogonalize.md) (the Gram-Schmidt `project ▷ subtract`
-composition) and the cycle-018 firm [`linear_combination`](./linear_combination.md)
-(the BLAS-1 arity-family fold). Per the
-[`krylov-step`](./krylov-step.md) §"L2 vs L1 distinction" forecast — "future L2
-entries (likely candidates: `orthogonalize` as an L2 first-class composition,
-`incremental-least-squares` as an L2 composition consumed by GMRES's outer driver)
-will follow the same pattern — name the composition, list its variant axes, state
+composition) and the firm [`linear_combination`](./linear_combination.md)
+(the BLAS-1 arity-family fold): name the composition, list its variant axes, state
 the laws that hold *at the composition level*, do not re-derive the laws of the
-constituent L1 primitives" — this is that entry.
+constituent L1 primitives.
 
 **Relation to `krylov-step` (the borderline, resolved).** This composition is **not**
 a [`krylov-step`](./krylov-step.md) instance. `krylov-step` is the iterative-method
@@ -331,13 +327,11 @@ Consumers (the L2/L4 surfaces that fold or call this composition):
   output) into the running iterate `s.x` for GMRES/FGMRES; the byproduct `β` is the
   driver's convergence-predicate input.
 
-L2>L1 lowering theme (forthcoming; abstractor work, **not** authored here): an
-`L2-L1/incremental-least-squares-composition-lowering` theme will narrate how the
-named L2 composition lowers into the L1 `ls_update_column` leaf — the per-column
-replay/generate/apply sub-step sequence, the back-solve `trsv`, and which L0
-finite-precision reduction order each lowered variant pins (the load-bearing content
-of the rotation-stream non-associativity non-law). Forward-reference only — that
-chapter does not yet exist.
+L2>L1 lowering theme (`L2-L1/incremental-least-squares-composition-lowering`, not yet
+authored): narrates how the named L2 composition lowers into the L1 `ls_update_column`
+leaf — the per-column replay/generate/apply sub-step sequence, the back-solve `trsv`, and
+which L0 finite-precision reduction order each lowered variant pins (the load-bearing
+content of the rotation-stream non-associativity non-law).
 
 ## Variant axes
 
@@ -375,37 +369,14 @@ path exists, so it is out of scope per the unimplemented-component policy.)
 
 ## Status
 
-`firm` — the composition is a `replay ▷ generate ▷ apply ▷ apply_rhs` pipeline over
-the firm scalar Givens kernel pair (`GeneratePlaneRotation` / `ApplyPlaneRotation`)
-with a terminal back-solve; the signature is the named-composition surface
-[`krylov-step`](./krylov-step.md) folds and [`ksp_solve`](./ksp_solve.md)
-`materialise_iterate` consumes. Every algebraic law is either a composition-level fact
-about the factorisation state and the residual byproduct (residual exposure, norm
-preservation, back-solve correctness) or a standard running-QR invariant
-(replay-before-generate ordering) modulo the explicitly-recorded load-bearing
-finite-precision caveats (rotation-stream non-associativity). The variant axes are
-closed at two parametric axes (`op.basis_kind` `V`/`Z` + `op.variant` real/complex),
-matching the L0 register declaration. The L0 implementation is read in full in **both**
-solver arms — GMRES running-QR stream + back-solve + correction
-(`iterative.cpp:632-680`) and FGMRES (`:812-844`) — confirming the stream is
-line-for-line identical and only the back-solve basis differs; both scalar Givens
-kernels are read in full (`:73-108` / `:112-...` generate, `:227-241` apply); the LS
-residual exposure and convergence read are verified at the source (`:642-644`); the
-register element-type split is verified (`iterative.hpp:193-194`). This matches the
-firmness bar of the sibling cycle-019 [`orthogonalize`](./orthogonalize.md) and
-cycle-018 [`linear_combination`](./linear_combination.md) L2 named compositions (named
-compositions over firm constituents with composition-level laws). The `krylov-step`
-borderline OQ (`gmres-givens-stream-as-step-kernel-borderline`) is resolved in the
-negative: distinct named composition, not a `krylov-step` axis.
-
-A dedicated GMRES/FGMRES running-QR unit test does not exist in
-`reference/palace/test/unit/` (the GMRES path is exercised only end-to-end), but the
-laws here are **syntactic / unitarity identities on fully-read positive source** (the
-running-QR stream, the back-solve, and the unitary-rotation residual exposure are all
-read directly off `iterative.cpp`), so the missing dedicated test does not gate them —
-the firm-on-positive-structure escape (the `apply_linop` / `apply_nonlinear_pencil`
-situation, not the `eigsolve`-convergence-semantics situation; CLAUDE.md §Methodology
-invariants "Two rough-in qualifiers").
+`firm` — a `replay ▷ generate ▷ apply ▷ apply_rhs` pipeline over the firm scalar Givens
+kernel pair with a terminal back-solve, read in full in both the GMRES
+(`iterative.cpp:632-680`) and FGMRES (`:812-844`) arms. Every algebraic law is a
+composition-level fact or a standard running-QR invariant; firm-on-positive-structure
+(syntactic / unitarity identities on fully-read positive source, no dedicated unit test
+required). The variant axes are closed at two parametric axes (`op.basis_kind` `V`/`Z` +
+`op.variant` real/complex). The `gmres-givens-stream-as-step-kernel-borderline` OQ is
+resolved in the negative: a distinct named composition, not a `krylov-step` axis.
 
 ## L2 vs L1 distinction
 
@@ -429,71 +400,53 @@ invariants "Two rough-in qualifiers").
 - `palace/linalg/iterative.cpp:73-108` — `GeneratePlaneRotation` (real): the
   LAPACK-style scaled rotation generator (`cs = |dx|/d`, `sn = dy/copysign(d,dx)`,
   with overflow/underflow scaling at `:101-108`). The `generate` sub-step's real
-  kernel. **Self-verified via citecheck `--anchor 'GeneratePlaneRotation'` (line 73)
-  + `--show` (the scaled branch ends at the closing brace line 108).**
+  kernel.
 - `palace/linalg/iterative.cpp:112-118` — `GeneratePlaneRotation` (complex): real
   `cs`, complex `sn`, with the in-comment contract "cs is real and cs² + |sn|² = 1"
   (`:118`). The complex `generate` kernel + the unitarity identity underwriting laws
-  1/3. **Self-verified (`--anchor 'GeneratePlaneRotation'` line 112; `--anchor 'cs is
-  real'` line 118).**
+  1/3.
 - `palace/linalg/iterative.cpp:227-241` — `ApplyPlaneRotation` (real `:227` + complex
   `:235`): the in-place 2-vector update `(dx', dy') = (cs·dx + sn·dy, −s̄n·dx + cs·dy)`
-  (`s̄n = conj(sn)` complex). The `apply` / `apply_rhs` sub-step kernel. **Self-verified
-  (`--anchor 'ApplyPlaneRotation'` lines 227, 235).**
+  (`s̄n = conj(sn)` complex). The `apply` / `apply_rhs` sub-step kernel.
 - `palace/linalg/iterative.cpp:612` — `s[0] = beta`: the RHS initialisation `s = β₀·e₁`
-  for the GMRES restart cycle (the running-QR's right-hand side seed). **Self-verified
-  (`--anchor 's[0] = beta'`).**
+  for the GMRES restart cycle (the running-QR's right-hand side seed).
 - `palace/linalg/iterative.cpp:631` — `Hj[j + 1] = linalg::Norml2(comm, w)`: the
   sub-diagonal `‖residual‖` entry of the arriving column `h_new[j+1]` (the
-  `orthogonalize` coeffs occupy `0..j`). **Self-verified (`--anchor 'Norml2'`).**
+  `orthogonalize` coeffs occupy `0..j`).
 - `palace/linalg/iterative.cpp:634-636` — GMRES **replay** sub-step:
   `for (int k = 0; k < j; k++) ApplyPlaneRotation(Hj[k], Hj[k+1], cs[k], sn[k]);` —
-  the stored-rotation replay on the new column (law 2 ordering). **Self-verified
-  (`--anchor 'ApplyPlaneRotation'`, anchor on line 636 within range).**
+  the stored-rotation replay on the new column (law 2 ordering).
 - `palace/linalg/iterative.cpp:638` — GMRES **generate**:
-  `GeneratePlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]);` — the new rotation. **Self-
-  verified (`--anchor 'GeneratePlaneRotation'`).**
+  `GeneratePlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]);` — the new rotation.
 - `palace/linalg/iterative.cpp:639` — GMRES **apply** (triangularise own column):
-  `ApplyPlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]);`. **Self-verified (range read
-  632-643; `apply_rhs` at `:640`).**
+  `ApplyPlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]);`.
 - `palace/linalg/iterative.cpp:640` — GMRES **apply_rhs**:
   `ApplyPlaneRotation(s[j], s[j+1], cs[j], sn[j]);` — propagates the new rotation to
-  the RHS, concentrating the residual in `s[j+1]`. **Self-verified (`--anchor
-  'ApplyPlaneRotation\(s\[j\]'`, regex).**
+  the RHS, concentrating the residual in `s[j+1]`.
 - `palace/linalg/iterative.cpp:642` — `beta = std::abs(s[j + 1]);` — the residual
-  exposure (law 1: the free byproduct). **Self-verified (`--anchor 'beta = std::abs'`).**
+  exposure (law 1: the free byproduct).
 - `palace/linalg/iterative.cpp:644` — `converged = (beta < eps);` — the convergence
-  test reads `β` with no explicit residual evaluation. **Self-verified (`--anchor
-  'converged = (beta < eps)'`).**
+  test reads `β` with no explicit residual evaluation.
 - `palace/linalg/iterative.cpp:652-660` — GMRES **back-solve** ("Reconstruct the
   solution"): the in-place back-substitution `s[i] /= H[i][i]` (`:656`) /
-  `s[k] -= H[i][k]·s[i]` (`:659`) yielding `y = s[0..j]` (law 4). **Self-verified
-  (`--anchor 'Reconstruct the solution'` line 652; `s[i] /= Hi[i]` re-anchored to
-  `:656`; `s[k] -= Hi[k] * s[i]` re-anchored to `:659` — both initially drifted, fixed
-  via citecheck).**
+  `s[k] -= H[i][k]·s[i]` (`:659`) yielding `y = s[0..j]` (law 4).
 - `palace/linalg/iterative.cpp:666` — GMRES correction (left/unpreconditioned):
   `x.Add(s[k], V[k]);` — `x += Σ_k y[k]·V[k]` (the `op.basis_kind = V` reconstruction).
-  **Self-verified (`--anchor 'x.Add(s[k], V[k])'` literal).**
+ 
 - `palace/linalg/iterative.cpp:674-677` — GMRES correction (right-preconditioned):
   `r.Add(s[k], V[k])` (`:674`) then `ApplyB(B, r, V[0]); x += V[0]` (`:676-677`) — the
-  preconditioner post-applied to the `V`-correction; back-solve identical. **Self-
-  verified (`--anchor 'r.Add(s[k], V[k])'` `:674`; `'ApplyB(B, r, V[0]'` `:676`).**
+  preconditioner post-applied to the `V`-correction; back-solve identical.
 - `palace/linalg/iterative.cpp:812-821` — FGMRES running-QR stream: replay `:813-815`,
   generate `:817`, apply `:818`, apply_rhs `:819`, `beta` `:821` — **line-for-line
-  identical** to the GMRES stream (law 6: `op.basis_kind`-invariant). **Self-verified
-  (`--anchor 'ApplyPlaneRotation'` `:813-815`; `'GeneratePlaneRotation'` `:817`;
-  `'ApplyPlaneRotation\(s\[j\]'` `:819`; `'beta = std::abs'` `:821`).**
+  identical** to the GMRES stream (law 6: `op.basis_kind`-invariant).
 - `palace/linalg/iterative.cpp:831-844` — FGMRES back-solve + correction:
   back-substitution `:831-840` (identical to GMRES) then `x.Add(s[k], Z[k])` (`:843`) —
   the `op.basis_kind = Z` reconstruction against the flexible-preconditioner basis.
-  **Self-verified (`--anchor 'Reconstruct the solution'` `:831`; `'x.Add(s[k], Z[k])'`
-  literal `:843`; full range `--show` confirms `:835` div / `:838` subtract).**
+ 
 - `palace/linalg/iterative.hpp:193-194` — `GmresSolver` rotation-register declarations:
   `mutable std::vector<ScalarType> s, sn;` (`:193`) / `mutable std::vector<RealType>
   cs;` (`:194`) — the element-type split (`s`, `sn` `ScalarType`; `cs` always
-  `RealType`) underwriting the `op.variant` real/complex axis. **Self-verified (both
-  initially drifted +1 from codemap read_range — the codemap brace-boundary offset —
-  re-anchored to `:193`/`:194` via citecheck on-disk, authoritative per task note).**
+  `RealType`) underwriting the `op.variant` real/complex axis.
 - `book/src/concepts/incremental-least-squares.md` — the cross-cutting concept page
   (the role: incremental triangularisation with residual byproduct; the L1
   `ls_update_column` contract; cross-method reuse).

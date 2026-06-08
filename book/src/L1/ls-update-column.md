@@ -23,10 +23,9 @@ columns the leading `(j+1)×(j+1)` block is an upper-triangular factor `R`, and 
 rotated RHS `s` (initialised `s = β₀·e₁`) carries the least-squares residual in its
 tail entry `s[j+1]`. This per-column update — `replay ▷ generate ▷ apply ▷
 apply_rhs` — is the **L2 named composition**
-[`incremental-least-squares`](../L2/incremental-least-squares.md) (firm cycle-026);
+[`incremental-least-squares`](../L2/incremental-least-squares.md);
 the fan-down of that composition onto the L1 leaves is the firm theme
-[`incremental-least-squares-composition-lowering`](../L2-L1/incremental-least-squares-composition-lowering.md)
-(firm cycle-028).
+[`incremental-least-squares-composition-lowering`](../L2-L1/incremental-least-squares-composition-lowering.md).
 
 `ls_update_column` is the **opaque single-column leaf** of that fan-down — Face 1
 in the theme's two-face presentation. It mirrors Palace's per-column loop body
@@ -49,8 +48,8 @@ per Arnoldi column (the inner loop) and incrementally triangularises; `back_solv
 is invoked once at convergence / restart / max-iterations (the outer cycle close)
 and finishes the LS solve. They share the rotation registers `cs`, `sn` and the
 RHS register `s` as bundle state, but they are distinct operators with distinct
-shapes and distinct algebraic content — naming distinction resolved cycle-027 (see
-`back_solve.md:30-34`).
+shapes and distinct algebraic content (see [`back_solve.md`](./back_solve.md) for
+the naming distinction).
 
 It is split out as its own firm L1 primitive — rather than left as a sub-step
 inside the L2 composition — because (i) each layer is coherent within itself
@@ -456,51 +455,16 @@ strategy.
 
 ## Status
 
-`firm` — the operator's structure is read directly from **positive** Palace
-source: the per-column running-QR loop body `iterative.cpp:634-640` (GMRES) and
-its line-for-line identical FGMRES twin `:813-819`, both read in full; the four
-sub-step calls (replay `:636`/`:815`, generate `:638`/`:817`, apply
-`:639`/`:818`, apply_rhs `:640`/`:819`), the residual exposure `beta =
-std::abs(s[j+1])` (`:642`/`:821`), and the convergence test `converged = (beta <
-eps)` (`:644`/`:823`) are all positively anchored. The signature's shape (the
-`{cs, sn, s}` register triple typed by `iterative.hpp:193-194`'s `ScalarType` /
-`RealType` split, the `(j+2)`-length Hessenberg column, the four-tuple
-result-bundle) matches the L0 register layout exactly; the algebraic laws are
-standard properties of a per-column running-QR update under a unitary rotation
-stream (sub-diagonal annihilation, replay non-commutativity, residual exposure by
-unitarity, unitarity preservation, boundary cases, basis-lift independence,
-scalar-kernel-variant absorption) modulo the explicitly-recorded replay-order /
-per-column non-commutativity / `(0,0)`-pair-degenerate / residual-by-shortcut
-non-laws.
-
-This is the **firm-on-positive-structure** decision, exactly as for the sibling
-[`back_solve`](./back_solve.md) and for [`apply_linop`](./apply_linop.md) /
-[`lu_solve`](./lu_solve.md) / [`apply_nonlinear_pencil`](./apply_nonlinear_pencil.md):
-every law is a **syntactic identity on fully-specified positive source**
-(operator-algebra facts about the rotation product `Qⱼ` and its action on the
-register, plus the LAPACK-style generate kernel's annihilation contract), not a
-convergence fact. No dedicated GMRES/FGMRES running-QR unit test exists in
-`reference/palace/test/unit/` (the GMRES path is exercised only end-to-end — the
-same coverage situation as the parent L2
-[`incremental-least-squares`](../L2/incremental-least-squares.md), firm cycle-026,
-and the sibling `back_solve`, firm cycle-027). Per the CLAUDE.md status-tier
-guidance, **a missing test does not gate syntactic-identity laws** (the
-`apply_linop` / `lu_solve` firm-on-positive-structure situation, not the
-`eigsolve`-convergence-semantics situation): the laws do not depend on iteration
-or convergence behaviour, so the absent test does not reduce law-confidence.
-Hence `firm`, not `rough-in (test-coverage-bounded)`. The two load-bearing
-caveats (the replay-order non-law and the per-column non-commutativity) are
-carried as recorded non-laws with their numerical properties stated, not as a
-status reduction — the *value* the operator computes is fully specified.
-
-Resolves the L2>L1 theme's plain-text forward-reference to Face 1
-(`incremental-least-squares-composition-lowering.md:87-88,307-310`) — the leaf now
-has a firm, positively-anchored L1 home, and the theme's Face-1 forward-ref can
-be upgraded from plain text to a live link in a subsequent dispatch (the
-upgrade is the skill `upgrade-plain-text-ref-to-live-link-when-target-on-disk`).
-Completes the GMRES restart-cycle least-squares L1 cohort: the **producer**
-(this leaf, per-column streaming) and the **consumer** (`back_solve`, terminal,
-firm cycle-027) are both now firm L1 primitives.
+`firm` — firm-on-positive-structure: the per-column running-QR loop body is read
+in full from positive source (`iterative.cpp:634-640` GMRES + its line-for-line
+identical FGMRES twin `:813-819`), and every law is a syntactic identity on that
+source (operator-algebra facts about the rotation product `Qⱼ` plus the
+LAPACK-style generate kernel's annihilation contract), not a convergence fact. No
+dedicated GMRES/FGMRES running-QR unit test exists (the path is exercised only
+end-to-end), but a missing test does not gate syntactic-identity laws (the
+`apply_linop` / `lu_solve` precedent). The two load-bearing caveats (the
+replay-order non-law and the per-column non-commutativity) are carried as recorded
+non-laws, not a status reduction.
 
 ## L1 vs L0 distinction
 
@@ -534,86 +498,70 @@ firm cycle-027) are both now firm L1 primitives.
 
 - `palace/linalg/iterative.cpp:634` — `for (int k = 0; k < j; k++)` — the GMRES
   replay loop header; strictly-ordered `k = 0..j-1` (laws 1, 2; the
-  skip-replay-for-`j=0` boundary law 5). **Self-verified via citecheck
-  `--anchor 'for (int k = 0; k < j'`.**
+  skip-replay-for-`j=0` boundary law 5).
 - `palace/linalg/iterative.cpp:636` — `ApplyPlaneRotation(Hj[k], Hj[k + 1],
   cs[k], sn[k]);` — the replay sub-step body; each stored rotation `k` applied
-  in-place to the `(Hj[k], Hj[k+1])` pair (law 2). **Self-verified (`--anchor
-  'ApplyPlaneRotation(Hj[k]'`, line 636).**
+  in-place to the `(Hj[k], Hj[k+1])` pair (law 2).
 - `palace/linalg/iterative.cpp:638` — `GeneratePlaneRotation(Hj[j], Hj[j + 1],
   cs[j], sn[j]);` — the generate sub-step; produces the new rotation
   `(cs[j], sn[j])` annihilating the sub-diagonal `Hj[j+1]` against `Hj[j]` (laws
-  1, 4). **Self-verified (`--anchor 'GeneratePlaneRotation(Hj[j]'`, line 638).**
+  1, 4).
 - `palace/linalg/iterative.cpp:639` — `ApplyPlaneRotation(Hj[j], Hj[j + 1],
   cs[j], sn[j]);` — the column-apply sub-step; writes `Hj[j+1] := 0` exactly
-  (law 1). **Self-verified (`--anchor 'ApplyPlaneRotation(Hj[j]'`, line 639).**
+  (law 1).
 - `palace/linalg/iterative.cpp:640` — `ApplyPlaneRotation(s[j], s[j + 1],
   cs[j], sn[j]);` — the RHS-apply sub-step; the same rotation applied to the
   RHS pair concentrates the residual in the new tail entry (law 3).
-  **Self-verified (`--anchor 'ApplyPlaneRotation(s[j]'`, line 640).**
 - `palace/linalg/iterative.cpp:642` — `beta = std::abs(s[j + 1]);` — the
   residual exposure: the LS residual norm `β = |s[j+1]|` read off the RHS tail
-  with no explicit residual evaluation (law 3 byproduct). **Self-verified
-  (`--anchor 'beta = std::abs'`, line 642).**
+  with no explicit residual evaluation (law 3 byproduct).
 - `palace/linalg/iterative.cpp:629-632` — `Hj[j + 1] = linalg::Norml2(comm,
   w);` (`:631`) — the upstream orthogonalisation + nrm2 producing the new
   column's sub-diagonal entry; NOT part of this leaf (the
   [`orthogonalize`](./orthogonalize.md) leaf produces `h_new[0..j]`, the
   [`nrm2`](./nrm2.md) produces `h_new[j+1]`), grounded here to mark the leaf's
-  upstream boundary. **Self-verified (`--anchor 'Norml2'`).**
+  upstream boundary.
 - `palace/linalg/iterative.cpp:813-819` — FGMRES per-column running-QR update;
   **line-for-line identical** to GMRES `:634-640` (law 6: GMRES ≡ FGMRES at
-  this leaf). **Self-verified (`--anchor 'ApplyPlaneRotation'`, range
-  813-819 hits :815/:818/:819; `--anchor 'GeneratePlaneRotation'`, line 817;
-  `--anchor 'ApplyPlaneRotation(s[j]'`, line 819).**
+  this leaf).
 - `palace/linalg/iterative.cpp:821` — FGMRES `beta = std::abs(s[j + 1]);` —
   the residual exposure in the FGMRES twin; identical to GMRES `:642`.
-  **Self-verified (`--anchor 'beta = std::abs'`, line 821).**
 - `palace/linalg/iterative.cpp:73-108` — `GeneratePlaneRotation` (real): the
   LAPACK-style scaled rotation generator inside the leaf's `generate` sub-step
-  for the real variant; scaling at `:101-108`. **Verified via the parent L2>L1
-  theme's `verified_against:` block (`incremental-least-squares-composition-lowering.md:503-506`,
-  `--anchor 'GeneratePlaneRotation'` line 73, audited 2026-05-29T195406Z).**
+  for the real variant; scaling at `:101-108`.
 - `palace/linalg/iterative.cpp:112-118` — `GeneratePlaneRotation` (complex):
   the complex variant; in-comment unitarity contract "cs is real and
-  cs²+|sn|²=1" at `:118` (underwrites law 4). **Verified via parent
-  theme's `verified_against:` (`:507-510`, `--anchor 'cs is real'` line 118,
-  audited 2026-05-29T195406Z).**
+  cs²+|sn|²=1" at `:118` (underwrites law 4).
 - `palace/linalg/iterative.cpp:227-241` — `ApplyPlaneRotation` (real `:227` +
   complex `:235`): the in-place 2-vector update `(dx', dy') = (cs·dx + sn·dy,
   −s̄n·dx + cs·dy)` inside the leaf's replay, column-apply, and RHS-apply
-  sub-steps. **Verified via parent theme's `verified_against:`
-  (`:511-514`, audited 2026-05-29T195406Z).**
+  sub-steps.
 - `palace/linalg/iterative.cpp:644` — `converged = (beta < eps);` — the
   convergence test reading the residual byproduct directly (the leaf's
   byproduct law 3 ground-trothed; not part of the leaf but bounds when the
-  outer loop exits before the next call). **Verified via parent theme's
-  `verified_against:` (`:543-546`, `--anchor 'converged = (beta < eps)'`
-  exact, audited 2026-05-29T195406Z).**
+  outer loop exits before the next call).
 - `palace/linalg/iterative.cpp:612` — `s[0] = beta;` — the RHS initialisation
   `s = β₀·e₁` at the start of each restart cycle; sets the leaf's first-call
-  input state. **Verified via parent theme's `verified_against:`
-  (`:515-518`, `--anchor 's[0] = beta'` exact, audited 2026-05-29T195406Z).**
+  input state.
 - `palace/linalg/iterative.hpp:193` — `mutable std::vector<ScalarType> s, sn;`
   — the RHS register `s` and the sine register `sn` element type `ScalarType`
   (complex in the complex case). Grounds the `s` / `sn` element-type axis (law
-  7). **Self-verified (`--anchor 'ScalarType> s, sn'`, line 193).**
+  7).
 - `palace/linalg/iterative.hpp:194` — `mutable std::vector<RealType> cs;` —
   the cosine register `cs` always `RealType` (the element-type split
   underwriting the real/complex variant axis; cs is always real per the
-  generate kernel's contract `iterative.cpp:118`). **Self-verified (`--anchor
-  'RealType> cs'`, line 194).**
-- `book/src/L2/incremental-least-squares.md` — the firm L2 named composition
-  (cycle-026); this leaf is its Face-1 single-column projection (the
+  generate kernel's contract `iterative.cpp:118`).
+- `book/src/L2/incremental-least-squares.md` — the firm L2 named composition;
+  this leaf is its Face-1 single-column projection (the
   composition's per-column body collapses into one `ls_update_column` call).
   The L2 entry's laws 1, 2, 3, 6 (residual exposure, replay ordering, unitary
   byproduct, basis-lift independence) read as leaf-level laws 3, 2, 4, 6.
 - `book/src/L2-L1/incremental-least-squares-composition-lowering.md` — the firm
-  L2>L1 theme (cycle-028); §Face-1 (`:67-90`) forward-references this leaf as
+  L2>L1 theme; §Face-1 (`:67-90`) forward-references this leaf as
   the opaque-leaf face of the named-composition fan-down; §"Speculative L1
   operators" (`:307-310`) records the leaf as a follow-on harvester target —
   resolved by this entry.
-- `book/src/L1/back_solve.md` — the firm sibling leaf (cycle-027); the
+- `book/src/L1/back_solve.md` — the firm sibling leaf; the
   terminal consumer of the R-factor and rotated RHS this leaf produces. The
   structural template (small-dense register operating leaf,
   firm-on-positive-structure with no dedicated test, recorded reduction-order
@@ -626,197 +574,3 @@ firm cycle-027) are both now firm L1 primitives.
 - `book/src/concepts/plane-rotation-stream.md:21-23` — the §"Sequential
   character" flagging the replay chain as a `sequential-obstruction`
   candidate at L3 (forward note; not content of this L1 entry).
-
-```yaml
-verified_against:
-  - citation: palace/linalg/iterative.cpp:634
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: GMRES replay loop header `for (int k = 0; k < j; k++)`; strict k=0..j-1 ordering (laws 1, 2; skip-replay-for-j=0 law 5); citecheck --anchor zero-drift on-disk.
-  - citation: palace/linalg/iterative.cpp:636
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: replay body `ApplyPlaneRotation(Hj[k], Hj[k+1], cs[k], sn[k])`; in-place pair update per stored rotation (law 2); zero-drift.
-  - citation: palace/linalg/iterative.cpp:638
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: generate `GeneratePlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j])`; writes new rotation into registers (laws 1, 4); zero-drift.
-  - citation: palace/linalg/iterative.cpp:639
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: column-apply `ApplyPlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j])`; Hj[j+1] := 0 exactly (law 1 defining contract); zero-drift.
-  - citation: palace/linalg/iterative.cpp:640
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: RHS-apply `ApplyPlaneRotation(s[j], s[j+1], cs[j], sn[j])`; concentrates residual in s[j+1] tail (law 3); zero-drift.
-  - citation: palace/linalg/iterative.cpp:642
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: residual exposure `beta = std::abs(s[j+1])`; byproduct read without explicit residual eval (law 3 load-bearing); zero-drift.
-  - citation: palace/linalg/iterative.cpp:629-632
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: upstream orthogonalize + nrm2 `Hj[j+1] = Norml2(comm, w)` producing h_new[j+1]; NOT part of leaf — grounds upstream boundary; --anchor 'Norml2' zero-drift.
-  - citation: palace/linalg/iterative.cpp:813-819
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: FGMRES per-column running-QR; range read confirms BYTE-IDENTICAL to GMRES :634-640 (law 6); :815/:817/:818/:819 per-line anchors all zero-drift.
-  - citation: palace/linalg/iterative.cpp:821
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: FGMRES residual exposure `beta = std::abs(s[j+1])`; identical to GMRES :642 (law 6); zero-drift.
-  - citation: palace/linalg/iterative.cpp:73-108
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: inherited from parent L2>L1 theme verified_against (incremental-least-squares-composition-lowering.md:503-506); GeneratePlaneRotation real kernel + LAPACK scaling :101-108; --anchor 'GeneratePlaneRotation' line 73 zero-drift.
-  - citation: palace/linalg/iterative.cpp:112-118
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: inherited from parent theme verified_against (:507-510); GeneratePlaneRotation complex + cs²+|sn|²=1 unitarity contract (law 4 underwriter); --anchor 'cs is real' line 118 exact.
-  - citation: palace/linalg/iterative.cpp:227-241
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: inherited from parent theme verified_against (:511-514); ApplyPlaneRotation real :227 + complex :235; body (cs·dx+sn·dy, −conj(sn)·dx+cs·dy); the kernel inside replay/column-apply/RHS-apply.
-  - citation: palace/linalg/iterative.cpp:612
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: inherited from parent theme verified_against (:515-518); RHS init s[0]=beta (s=β₀·e₁) at restart-cycle seed; --anchor 's[0] = beta' exact.
-  - citation: palace/linalg/iterative.cpp:644
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: inherited from parent theme verified_against (:543-546); convergence test `converged = (beta < eps)` reads law-3 byproduct directly; --anchor exact.
-  - citation: palace/linalg/iterative.hpp:193
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: rotation-register split `mutable std::vector<ScalarType> s, sn;` grounding s/sn element type (law 7); the c026 codemap +1-drift register confirmed exact on-disk; --anchor 'ScalarType> s, sn' line 193 zero-drift.
-  - citation: palace/linalg/iterative.hpp:194
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: cosine register `mutable std::vector<RealType> cs;` grounding cs always-real (the law-4 cs²+|sn|²=1 contract relies on cs:Real); --anchor 'RealType> cs' line 194 zero-drift.
-  - citation: book/src/L2/incremental-least-squares.md
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: parent L2 named composition (firm cycle-026); this leaf is its Face-1 single-column projection; L2 laws 1/2/3/6 read as leaf laws 3/2/4/6.
-  - citation: book/src/L2-L1/incremental-least-squares-composition-lowering.md
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: parent L2>L1 theme (firm cycle-028); Face-1 forward-ref at :67-90 + speculative-L1 entry :307-310 resolved by this leaf; theme's Face-1 plain-text ref upgradable post-integration.
-  - citation: book/src/L1/back_solve.md
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: firm sibling leaf (cycle-027); structural template (small-dense register-operating, firm-on-positive-structure no-test, recorded reduction-order non-law); slug-naming precedent (back_solve ≠ general trsv; ls_update_column ≠ back_solve, c027 resolved).
-  - citation: book/src/concepts/incremental-least-squares.md:14
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: 'ls_update_column slug contract: (K, j, h_new) → K'';" cross-method reuse rationale; "What is hidden at L1" list :22-27 characterises leaf hiding boundary.'
-  - citation: book/src/concepts/plane-rotation-stream.md:21-23
-    verdict: supports
-    audited_at: 2026-05-29T210000Z
-    note: replay-chain sequential-obstruction candidate at L3 (forward note; not content of this L1 entry).
-```
-
-```yaml
-verified_against:
-  # cycle-030 dispatch-3 lowering-verifier independent audit (separate
-  # invocation from the cycle-029 dispatch-5 harvester self-verify above).
-  - citation: palace/linalg/iterative.cpp:634
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'for (int k = 0; k < j' zero-drift on-disk; reads exactly the replay loop header; law 2 and law 5 (skip-replay-for-j=0) both witnessed.
-  - citation: palace/linalg/iterative.cpp:636
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'ApplyPlaneRotation(Hj[k]' zero-drift; replay body in-place pair update; rotation k acts on overlapping pair (k, k+1).
-  - citation: palace/linalg/iterative.cpp:638
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'GeneratePlaneRotation(Hj[j]' zero-drift; generate-contract per LAPACK c/zlartg comment :115-118.
-  - citation: palace/linalg/iterative.cpp:639
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'ApplyPlaneRotation(Hj[j]' zero-drift; apply-on-just-generated-pair zeros Hj[j+1] by construction (law 1 definitional).
-  - citation: palace/linalg/iterative.cpp:640
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'ApplyPlaneRotation(s[j]' zero-drift; RHS-apply concentrates residual in s[j+1] tail since s[j+1]=0 on entry (law 3).
-  - citation: palace/linalg/iterative.cpp:642
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'beta = std::abs' zero-drift; residual exposure read without explicit residual eval (law 3 load-bearing byproduct).
-  - citation: palace/linalg/iterative.cpp:629-632
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'Norml2' zero-drift; upstream nrm2 producing h_new[j+1] sub-diagonal entry; correctly out-of-scope of this leaf.
-  - citation: palace/linalg/iterative.cpp:813-819
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent verify STRONGER than claimed — diff of :634-640 vs :813-819 returns ZERO bytes (byte-identical, not just line-for-line); law 6 GMRES≡FGMRES at this leaf fully grounded.
-  - citation: palace/linalg/iterative.cpp:821
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'beta = std::abs' zero-drift; FGMRES residual exposure identical to GMRES :642.
-  - citation: palace/linalg/iterative.cpp:73-108
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independently re-read on-disk (not transcribed from parent theme); real GeneratePlaneRotation signature :73, dy=0/dx=0 rescues :80-91, main branch :94-98, safmin/safmax scaled-rescue :101-108; literal 'safmin' at :102.
-  - citation: palace/linalg/iterative.cpp:112-118
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independently re-read on-disk; complex GeneratePlaneRotation signature :112-113, matrix-form comment :115-117, unitarity contract literal 'cs is real and cs² + |sn|² = 1' at :118 (LAPACK c/zlartg spec).
-  - citation: palace/linalg/iterative.cpp:227-241
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independently re-read; real ApplyPlaneRotation signature :227 body :229-231 (no conj — real is own conjugate); complex signature :235-236 body :238-240 (explicit std::conj(sn) at :239); leaf's s̄n=conj(sn)-complex notation correct.
-  - citation: palace/linalg/iterative.cpp:612
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor exact; s[0]=beta restart-cycle RHS seed; s[k]=0 for k≥1 by inductive register zero-init underwrites law-5 entry precondition.
-  - citation: palace/linalg/iterative.cpp:644
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'converged = (beta < eps)' exact; convergence test reads law-3 byproduct directly.
-  - citation: palace/linalg/iterative.hpp:193
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'ScalarType> s, sn' zero-drift; H also ScalarType at :192 (the leaf does not separately cite :192 but the register triple is consistent); law 7 element-type axis grounded.
-  - citation: palace/linalg/iterative.hpp:194
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'RealType> cs' zero-drift; cs always-Real underwrites the law-4 cs²+|sn|²=1 contract (the cs:Real assumption is load-bearing).
-  - citation: book/src/L2/incremental-least-squares.md:81-83
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'back_solve' at :83; the parent L2 terminal back_solve projection (NOT this leaf — this leaf is the column-streaming sibling); naming distinction preserved.
-  - citation: book/src/L2/incremental-least-squares.md:225-232
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'residual' at :226/:231 within range; L2 residual-exposure law underwriting leaf law 3.
-  - citation: book/src/L2/incremental-least-squares.md:278-285
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'Rotation-stream associativity' at :278 exact; semantically the rotation-stream bit-level non-associativity non-law (literal 'non-associativity' token is at :339 in a downstream summary; the cite :278-285 IS the right region; leaf prose uses a shorter paraphrase nickname); supports — not a drift.
-  - citation: book/src/L2-L1/incremental-least-squares-composition-lowering.md:87-88
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'Face' at :88; the Face-1 forward-ref region this leaf resolves; theme's plain-text ref upgradable post-integration.
-  - citation: book/src/L2-L1/incremental-least-squares-composition-lowering.md:307-310
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'ls_update_column' at :307; the speculative-L1 entry resolved by this leaf landing firm.
-  - citation: book/src/L1/back_solve.md:30-34
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'DISTINCT' at :32; the c027 sibling's naming-distinction passage (back_solve ≠ ls_update_column); bidirectional preservation confirmed — neither leaf conflates with the other.
-  - citation: book/src/concepts/incremental-least-squares.md:14
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'ls_update_column' at :14; the slug contract `ls_update_column(K, j, h_new) → K'`.
-  - citation: book/src/concepts/incremental-least-squares.md:22-27
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'hidden' at :22; the 'What is hidden at L1' list correctly characterises the four sub-steps.
-  - citation: book/src/concepts/plane-rotation-stream.md:21-23
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: independent citecheck --anchor 'Sequential' at :21; the L3 sequential-obstruction-candidate forward note.
-```

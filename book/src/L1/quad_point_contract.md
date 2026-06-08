@@ -1,19 +1,13 @@
 ---
 layer: L1
 operator: quad_point_contract
-# Graded-stack: firm (rank 3). The D stage of A = Gᵀ B_𝒟ᵀ D B_𝒟 G — the pointwise per-quad-point
-# contraction geom_data ⊙ (basis-evaluated trial) over Tensor[(E, P, C)]. The element-local
-# rank-tensor is now firm L1 vocabulary (concepts/element-local-tensor, D5 this wave). Firm-on-positive-
-# structure: the laws are syntactic identities (pointwise no-coupling, linearity-in-field, self-adjoint-
-# when-symmetric) on exhaustively-anchored positive libCEED source. This is the embarrassingly-parallel
-# diagonal of the pipeline (the per-quad-point lift). Reachable via libceed-quadrature-kernel-impl (pulled-by).
 rank: firm
 edges:
   reference:
     - target: L1/libceed-quadrature-kernel-impl
-      kind: pulled-by      # the kernel-impl consumer whose pipeline composes this pointwise D stage (free)
+      kind: pulled-by      # the kernel-impl consumer whose pipeline composes this pointwise D stage
     - target: L1/geom_factor_build   # produces the geom_data this op contracts against (the setup-stratum factor)
-    - target: concepts/element-local-tensor   # the [E,P,C]/[E,P,G] quad-point rank-tensor this op operates on (the firm L1 data shape, D5 this wave)
+    - target: concepts/element-local-tensor   # the [E,P,C]/[E,P,G] quad-point rank-tensor this op operates on
     - target: concepts/tensor-field-lift   # the per-quad-point pointwise contraction IS the diagonal lift this concept describes
 ---
 
@@ -25,25 +19,6 @@ the **pointwise per-quadrature-point contraction** — apply, *independently at 
 precomputed `geom_data` (the product of material coefficient `Q`, geometry factor, and quadrature weight)
 to the basis-evaluated trial field. This is the **embarrassingly-parallel diagonal** of the pipeline — the
 per-quad-point lift that is the natural GPU-tensor form.
-
-## Status
-
-`firm` (rank 3). **Clean-gate: PROMOTE (roadmap_goal → firm).** The operator acts on the
-**quad-point-rank** tensor `Tensor[(E, P, C)]` (element axis `E`, quad-point axis `P`, component axis
-`C`) and contracts against the geometry-factor carrier `Tensor[(E, P, G)]` — the element-local rank
-structure the firm flat-vector-BLAS L1 (`Tensor[N]`) does not carry. That rank-tensor is now **firm L1
-vocabulary**: the `[E, P, C]` / `[E, P, G]` shape family has a record-definition home at
-[`concepts/element-local-tensor`](../concepts/element-local-tensor.md) (this wave), so the substrate gap
-that kept this chapter rank-0 — the *pointwise* elementwise-product structure (`⊙`) was firm only over
-flat `Tensor[N]` ([`elementwise_product`](./elementwise_product.md)); lifting it to the `[E, P, C]`-shaped
-diagonal needed the rank-tensor vocabulary — is closed. The promotion uses the **firm-on-positive-
-structure escape**: the algebraic laws below are **syntactic identities on fully-specified positive
-source** (pointwise-no-coupling is the per-`(e,p)` independence of the apply-QFunction; linearity-in-field
-and self-adjoint-when-symmetric are the structure of a pointwise multiply by a fixed factor) — not
-test-gated convergence semantics — so the absence of a dedicated test does not gate firm (the
-`apply_nonlinear_pencil` / `weak_form_term` / `fe_assemble` no-dedicated-test precedent). The Palace
-realization is exhaustively anchored (the apply-QFunction field wiring + the `f_apply_*` pointwise kernels
-— see *Verified-against*).
 
 ## L1 form
 
@@ -93,7 +68,7 @@ GPU-natural stage.
 3. Single-machine (per-`Ceed` device); the pointwise apply has no cross-rank coupling (the diagonal is
    element-local).
 
-## Verified-against
+## Evidence
 
 - `palace/fem/libceed/integrator.cpp:451-495` — the apply-QFunction + operator-field wiring:
   `geom_data` input field (`:457-458`), optional `q_w` quad-weight (`:462`, `CEED_EVAL_WEIGHT`), active

@@ -1,14 +1,12 @@
 ---
 layer: L2
 operator: orthogonalize
-# Graded-stack scheme (authored from scratch, batch-35 c111; mirrors the c109 L2/krylov-step
-# from-scratch authoring). This firm L2 named composition (`project ▷ subtract`) rests on the
+# Graded-stack scheme. This firm L2 named composition (`project ▷ subtract`) rests on the
 # firm L1 leaf it lifts (`L1/orthogonalize`) plus the two firm L1 primitives its composition
-# stages genuinely call (`L1/dot` for `project`, `L1/axpy` for `subtract`; body §:116-131,
-# §Dependencies :245-251) — all depends-on. AND it lowers through the firm L2>L1 lowering theme
-# `orthogonalize-composition-lowering` (lowers-to depends-on; mirrors L2/krylov-step →
-# L2-L1/krylov-step-kernel-defusion). This node firm (rank 3); all three L1 depends-on targets
-# carry rank: firm, the lowering theme is firm content (c022) — rank invariant holds firm→firm.
+# stages genuinely call (`L1/dot` for `project`, `L1/axpy` for `subtract`) — all depends-on.
+# AND it lowers through the firm L2>L1 lowering theme `orthogonalize-composition-lowering`
+# (lowers-to depends-on). This node firm (rank 3); all three L1 depends-on targets
+# carry rank: firm, the lowering theme is firm content — rank invariant holds firm→firm.
 rank: firm
 edges:
   depends-on:
@@ -52,15 +50,13 @@ synchronisation pattern as the disclosed residual axis** because it is load-bear
 (MPI-collective cost shape + finite-precision stability are the entire reason three variants
 exist).
 
-This entry is a **named composition**, the structural sibling of the cycle-018 firm
+This entry is a **named composition**, the structural sibling of the firm
 [`linear_combination`](./linear_combination.md) (the BLAS-1 arity-family fold) and of
-[`krylov-step`](./krylov-step.md) (the iterative-method step kernel). Per the
-`krylov-step` §"L2 vs L1 distinction" forecast — "future L2 entries (likely candidates:
-`orthogonalize` as an L2 first-class composition…) will follow the same pattern — name the
-composition, list its variant axes, state the laws that hold *at the composition level*, do
-not re-derive the laws of the constituent L1 primitives" — this is that entry. It does
+[`krylov-step`](./krylov-step.md) (the iterative-method step kernel): it names the
+composition, lists its variant axes, and states the laws that hold *at the composition
+level*, without re-deriving the laws of the constituent L1 primitives. It does
 **not** replace the L1 leaf; the leaf stays firm and is the form this composition lowers
-*into* (the L2>L1 lowering is forthcoming; see § "Dependencies").
+*into* (the L2>L1 lowering theme [`orthogonalize-composition-lowering`](../L2-L1/orthogonalize-composition-lowering.md); see § "Dependencies").
 
 The composition is **value-producing and stateless**, not iteration-structural: it folds a
 fixed-size basis prefix into one residual-plus-coefficients pair, with no convergence
@@ -254,7 +250,8 @@ Laws that explicitly **do NOT** hold:
   obstruction.
 - **Reduction-tree associativity (floating point).** Inherited from [`dot`](../L1/dot.md):
   different summation orders inside `project` give different bit-level coefficients.
-  Load-bearing; pinned per lowered call by the forthcoming L2>L1 theme.
+  Load-bearing; pinned per lowered call by the L2>L1 theme
+  [`orthogonalize-composition-lowering`](../L2-L1/orthogonalize-composition-lowering.md).
 - **Stage-fusion across the project/subtract boundary (CGS2).** The second CGS pass is not
   fusible with the first — fusing them would compute the correction `dH` against the
   *un*-orthogonalised `w` and destroy the re-orthogonalisation property. The `[CGS] × 2`
@@ -267,13 +264,13 @@ Laws that explicitly **do NOT** hold:
 
 L2 dependencies (other L2 vocabulary or below):
 
-- L1 leaf it lifts: [`orthogonalize`](../L1/orthogonalize.md) (firm, cycle-012) — the
+- L1 leaf it lifts: [`orthogonalize`](../L1/orthogonalize.md) (firm) — the
   parameterised primitive whose opaque variant this composition makes visible. This entry is
   the form the leaf is *named as* at L2; it does not replace the leaf.
 - L1 primitives the composition stages compose: [`dot`](../L1/dot.md) (the `project` stage's
   inner product `coeffs[j] = op.dot(w_eff(j), V[j])`; the `op.dot` hook is a `dot`
   substitution), [`axpy`](../L1/axpy.md) (the `subtract` stage's rank-1 update
-  `w ← w − coeffs[j]·V[j]` = `axpy(-coeffs[j], V[j], w)`). These are firm post-cycle-002.
+  `w ← w − coeffs[j]·V[j]` = `axpy(-coeffs[j], V[j], w)`). These are firm.
 - Sibling reduction (do **NOT** merge): the `project` stage's batched inner products are a
   use-site of the candidate L2 [`inner_product`](./inner_product.md) fold (rough-in) — but
   `orthogonalize` is the *project-and-subtract composition*, not the inner-product fold
@@ -297,11 +294,11 @@ Consumers (the L2/L4 surfaces that fold or call this composition):
 - The ROM basis-extension path (`romoperator.cpp:224, 633-645`), the second consumer with the
   `B`-weighted `op.dot` hook (confirms the composition is not GMRES-specific).
 
-L2>L1 lowering theme (forthcoming; abstractor work, **not** authored here): an
-`L2-L1/orthogonalize-composition-lowering` theme will narrate how the named L2 composition
-lowers into the firm L1 leaf — variant-dispatch on `op.variant`, and which L0 summation /
-reduction order each lowered variant pins (the load-bearing content of the reduction-tree and
-variant-agreement non-laws). Forward-reference only — that chapter does not yet exist.
+L2>L1 lowering theme:
+[`orthogonalize-composition-lowering`](../L2-L1/orthogonalize-composition-lowering.md)
+narrates how the named L2 composition lowers into the firm L1 leaf — variant-dispatch on
+`op.variant`, and which L0 summation / reduction order each lowered variant pins (the
+load-bearing content of the reduction-tree and variant-agreement non-laws).
 
 ## Variant axes
 
@@ -346,25 +343,6 @@ dependency (the conjugation lives in `dot`, exactly as for the L1 leaf); it does
 distinct compositions at L2. All parametric tests cover both element types
 (`test-orthog.cpp:123, 234` real/complex; `:276, 333` weighted real/complex).
 
-## Status
-
-`firm` — the composition is a `project ▷ subtract` pipeline over two firm L1 primitives
-(`dot`, `axpy`) lifting the firm L1 leaf `orthogonalize`; the signature is the named-composition
-surface that [`krylov-step`](./krylov-step.md) already absorbs at level-(b); every algebraic
-law is either a composition-level restatement of an inherited L1 fact (orthogonality,
-loss-free decomposition, empty-prefix identity, linearity) or a standard Gram-Schmidt
-composition fact (variant agreement, idempotence-as-CGS2-mechanism) modulo the
-explicitly-recorded floating-point caveats; the variant axes are closed at two (`gs_orthog`
-residual-axis + `dot` hook parametric), matching the L1 leaf and `variant-absorption.md:131`.
-The L0 implementation is read in full (`orthog.hpp:18-90`), both dispatch wrappers are read in
-full (`iterative.cpp:308-325`, `romoperator.cpp:51-66`), all four consumer call sites are
-verified (`iterative.cpp:630, 809`; `romoperator.cpp:224, 633`), and all three variants carry
-dedicated parametric test coverage across real / complex / B-weighted element types plus the
-empty-prefix edge case and the direct substitutability assertion
-(`test-orthog.cpp:99-160, 234, 276, 333`). This matches the firmness bar of the cycle-018
-`linear_combination` L2 composition (a named composition over firm L1 leaves) and the
-cycle-005 `krylov-step` L2 composition.
-
 ## L2 vs L1 distinction
 
 - **L1**: the single pure leaf `orthogonalize(w, V, variant) → (w', H)`, mirroring Palace's
@@ -385,60 +363,60 @@ cycle-005 `krylov-step` L2 composition.
   basis vectors using modified or classical Gram-Schmidt; "Assumes that the input vectors are
   normalized, but does not normalize the output vectors!" — the load-bearing
   no-output-normalisation contract (the `{ residual, coeffs }` record stops at the
-  un-normalised residual). **Self-verified via `read_range` this dispatch.**
+  un-normalised residual).
 - `palace/linalg/orthog.hpp:25-37` — `IdentityInnerProduct` and the `InnerProductHelper`
   concept (`InnerProduct(VecType, VecType) -> ScalarType`, "Also add MPI reduction"): the
-  `op.dot` template hook (the inner-product variant axis). **Self-verified.**
+  `op.dot` template hook (the inner-product variant axis).
 - `palace/linalg/orthog.hpp:38-53` — `OrthogonalizeColumnMGS`: the per-`j` loop
   `H[j] = dot_op(w, V[j]); Mpi::GlobalSum(1, &H[j], comm); w.Add(-H[j], V[j])`. The
   interleaving of `dot` and `w.Add` in the same `j`-loop body is the source witness of the MGS
-  sequential composition (`[dot, axpy] × m`, `m` reductions of size 1). **Self-verified.**
+  sequential composition (`[dot, axpy] × m`, `m` reductions of size 1).
 - `palace/linalg/orthog.hpp:55-89` — `OrthogonalizeColumnCGS`: empty-basis early return
   (`m == 0`, `:62-64`); `m` batched local dots into `H[0..m-1]`; single
   `Mpi::GlobalSum(m, H, comm)`; `m` batched `w.Add`s against the original `w`; the `refine`
   branch re-enters with `dH`, accumulating `H[j] += dH[j]` (the CGS2 `[CGS] × 2` second pass).
-  One (CGS) or two (CGS2) reductions of size `m`. **Self-verified.**
+  One (CGS) or two (CGS2) reductions of size `m`.
 - `palace/linalg/iterative.cpp:308-325` — `OrthogonalizeIteration`: the runtime variant
   dispatch (`switch (type)` over `MGS / CGS / CGS2`, `CGS2 = OrthogonalizeColumnCGS(..., true)`);
   confirms the variant is bound at solver construction and dispatched once, against the
-  leading `j + 1` columns. **Self-verified.**
+  leading `j + 1` columns.
 - `palace/linalg/iterative.cpp:630-632` — GMRES Arnoldi consumer:
   `OrthogonalizeIteration(gs_orthog, comm, V, w, Hj, j)` immediately followed by
   `Hj[j + 1] = linalg::Norml2(comm, w)` (the caller's sub-diagonal) and `w *= 1.0 / Hj[j + 1]`
   (the caller's normalisation) — confirming normalisation is the caller's, outside the
-  composition. **Self-verified.**
+  composition.
 - `palace/linalg/iterative.cpp:809-811` — FGMRES Arnoldi consumer: the identical
   `OrthogonalizeIteration` call + `Norml2` + `scal` sequence (with `Z[j]` flexible-preconditioner
-  basis). **Self-verified.**
+  basis).
 - `palace/models/romoperator.cpp:51-66` — the ROM `OrthogonalizeColumn` wrapper: the second
   dispatch surface, switching on `Orthogonalization` and forwarding `dot_op` to the
   `OrthogonalizeColumn{MGS,CGS}` family (CGS2 = `refine=true`); takes the `dot_op` hook
-  explicitly. **Self-verified.**
+  explicitly.
 - `palace/models/romoperator.cpp:224-226` — ROM basis-extension consumer (canonical hook):
   `OrthogonalizeColumn(orthog_type, comm, Q, Q[dim_Q], R.col(dim_Q).data(), dim_Q)` followed by
   `Norml2` + `*= 1.0 / norm` — the same compose-then-normalise structure as GMRES.
-  **Self-verified.**
+ 
 - `palace/models/romoperator.cpp:631-646` — ROM basis-extension consumer (B-weighted hook):
   `OrthogonalizeColumn(..., [&W, &r](const Vector &x, const Vector &y){ return
   W.InnerProduct(x, y, r.Real()); })` — the `op.dot` B-weighted substitution (the
   inner-product-hook variant axis), the second consumer confirming the composition is not
-  GMRES-specific. **Self-verified.**
+  GMRES-specific.
 - `test/unit/test-orthog.cpp:71-97` — `orthogonalize_wrapper` GENERATE harness running all
   three variants through one code path (the substitutability fixture; the wrapper class spans
-  the comment at 71 through the closing `};` at 97). **Self-verified.**
+  the comment at 71 through the closing `};` at 97).
 - `test/unit/test-orthog.cpp:99-120` — empty-prefix edge case ("OrthogonalizeColumn - Real
-  Empty"): all three variants leave `w` unchanged (`m = 0` identity, law 3). **Self-verified.**
+  Empty"): all three variants leave `w` unchanged (`m = 0` identity, law 3).
 - `test/unit/test-orthog.cpp:123-160` — parametric real test ("OrthogonalizeColumn
   Parameterized - Real 1"): all three variants zero the per-rank component and pass
   `⟨residual, V[i]⟩ ≈ 0` to `1e-12` (law 1, the substitutability witness); the orthogonality
   assertion `CHECK_THAT(dot, WithinAbs(0.0, 1e-12))` is at line 158, inside the check loop
-  154-159; TEST_CASE closes at 160. **Self-verified.**
+  154-159; TEST_CASE closes at 160.
 - `test/unit/test-orthog.cpp:164, 234, 276, 333` — real-2 (`:164`), complex-1 (`:234`),
   weighted-real-1 (`:276`), weighted-complex-1 (`:333`) parametrisations: the element-type axis
-  and the B-weighted `op.dot` variant axis. **Self-verified (TEST_CASE boundary lines).**
+  and the B-weighted `op.dot` variant axis.
 - `book/src/L1/orthogonalize.md` — the firm L1 leaf this composition lifts; the
   coefficient/normalisation boundary and the variant-axis contract are inherited from it.
-- `book/src/L2/linear_combination.md` (cycle-018) — the structural precedent for a firm L2
+- `book/src/L2/linear_combination.md` (firm precedent) — the structural precedent for a firm L2
   named-composition entry over firm L1 leaves.
 - `book/src/L2/krylov-step.md` — the consumer that absorbs this composition at level-(b)
   (`op.orthog`); §"L2 vs L1 distinction" forecasts this exact entry.

@@ -82,11 +82,11 @@ L2 record `{ state, beta }` is the same value as the L1 leaf's advanced `Krylov'
 `K'.beta` is the L2 `beta`; its rotation registers + RHS + Hessenberg are the L2 `state`). The leaf's
 own lowering onto the L0 in-place free functions — the four `*PlaneRotation` calls at
 `iterative.cpp:634-642` writing `Hj`, `cs`, `sn`, `s` in place — is the **L1>L0** concern of the firm
-[`ls_update_column-mutation-rotation`](../L1-L0/ls-update-column-mutation-rotation.md) theme
-(cycle-030); **this theme stops at the L1 leaf and does not re-derive that L0 in-place step** (the
+[`ls_update_column-mutation-rotation`](../L1-L0/ls-update-column-mutation-rotation.md) theme;
+**this theme stops at the L1 leaf and does not re-derive that L0 in-place step** (the
 same boundary the sibling draws at the L1 `orthogonalize` leaf). The
 [`ls_update_column`](../L1/ls-update-column.md) column-streaming leaf is **firm**
-(cycle-029; `book/src/L1/ls-update-column.md`, firm-on-positive-structure per the running-QR loop body
+(`book/src/L1/ls-update-column.md`, firm-on-positive-structure per the running-QR loop body
 `iterative.cpp:634-640` / `:813-819`); the co-extensive **Face 2** below carries the same value via the
 de-fused scalar Givens kernel pair, so either face resolves the L1 RHS of this fan-down.
 
@@ -130,7 +130,7 @@ basis reconstruction — independent of which per-column face was used:
     --   for i = j..0:  s[i] /= R[i][i];  for k = i-1..0:  s[k] -= R[i][k]·s[i]   (leaves y = s[0..j])
     -- the reconstruction correction_basis · y = Σ_k y[k]·basis[k] fans into a linear_combination over V or Z
 
-The triangular solve **IS** the firm L1 leaf [`back_solve`](../L1/back_solve.md) (cycle-027): the
+The triangular solve **IS** the firm L1 leaf [`back_solve`](../L1/back_solve.md): the
 small-dense back-substitution `y = back_solve(R, s)` over the materialised `(j+1)×(j+1)`
 upper-triangular running-QR R-factor `R` (the leading block of the Hessenberg register, after the
 stream has annihilated every sub-diagonal) and the rotated RHS `s`. Its body is the in-place
@@ -141,9 +141,8 @@ selected basis (the L0 `x.Add(s[k], V[k])` / `x.Add(s[k], Z[k])` accumulation lo
 `iterative.cpp:666` / `:843`); the `op.basis_kind` axis selects `V` vs `Z` and only this stage reads
 the axis (L2 entry law 6).
 
-**The terminal leaf is `back_solve`, NOT a general `trsv`.** The deferred draft of this theme
-forward-referenced the back-solve target as a forthcoming general `trsv` L1 leaf; the leaf cycle-027
-actually landed is the **specific** small-dense restart-correction back-solve
+**The terminal leaf is `back_solve`, NOT a general `trsv`.** The back-solve target is the
+**specific** small-dense restart-correction back-solve
 [`back_solve`](../L1/back_solve.md), which `book/src/L1/back_solve.md:44-61` deliberately argues is
 **not** a general `trsv` (a general sparse-triangular solve `sparse_triangular_solve` — the
 Gauss-Seidel / ILU smoother kernel acting on the length-`N` field — has *no positive L0 anchor* and
@@ -306,18 +305,18 @@ L1>L0 theme; the back-solve's reduction-order non-law is delegated to the firm
 **None proposed by this theme.** The L1 RHS resolves to firm vocabulary:
 
 - Face 1 — the L1 column-streaming leaf **[`ls_update_column`](../L1/ls-update-column.md)**
-  (the single-column running-QR update `(K, j, h_new) → K'`; **firm** cycle-029,
+  (the single-column running-QR update `(K, j, h_new) → K'`; **firm**,
   firm-on-positive-structure). The co-extensive firm **Face 2** carries the de-fused value, so either
   face resolves the L1 RHS.
 - Face 2 — the scalar Givens kernel pair [`concepts/givens_generate`](../concepts/givens_generate.md)
   / [`concepts/givens_apply`](../concepts/givens_apply.md) (firm concept pages; element-local
   kernels).
-- Terminal back-solve — the firm L1 leaf [`back_solve`](../L1/back_solve.md) (cycle-027; the
+- Terminal back-solve — the firm L1 leaf [`back_solve`](../L1/back_solve.md) (the
   small-dense `(j+1)×(j+1)` upper-triangular back-substitution `y = back_solve(R, s)`); the
   reconstruction stage is the firm [`linear_combination`](../L2/linear_combination.md) fold over the
   selected basis.
 
-The LHS [`incremental-least-squares`](../L2/incremental-least-squares.md) is firm (cycle-026). This
+The LHS [`incremental-least-squares`](../L2/incremental-least-squares.md) is firm. This
 theme proposes no new operators — it is the lowering edge between firm vocabulary (L2 LHS) and
 firm L1 leaves (Face 2 + `back_solve` + `linear_combination`), with the opaque Face-1 leaf a
 plain-text forward-reference. **Householder is scoped out** (Palace's L0 has no Householder path — L2
@@ -326,74 +325,55 @@ back-solve target** — it is a distinct, separately-**blocked** L3-inventory op
 (`sparse_triangular_solve`, no positive L0 anchor, `scaffolding/open-questions.md:24`); this theme's terminal
 solve is the specific `back_solve` leaf.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `tools/citecheck/citecheck.py --anchor` against on-disk
-`reference/palace/` this invocation — producer-citation self-verification per
-[`verify-citation-range`](../../../skills/verify-citation-range/SKILL.md) "Producer self-verification";
-the codemap had a +1 brace drift on `iterative.hpp:193-194` in cycle-026 — **on-disk authoritative**,
-re-confirmed `:193`/`:194` exact this invocation):
+L0 evidence ranges (paths relative to `reference/`):
 
 - `palace/linalg/iterative.cpp:73-108` — `GeneratePlaneRotation` (real): LAPACK-style scaled rotation
-  generator (the generate sub-step's real kernel; scaling at `:101-108`). **Self-verified (`--anchor
-  'GeneratePlaneRotation'`, line 73).**
+  generator (the generate sub-step's real kernel; scaling at `:101-108`).
 - `palace/linalg/iterative.cpp:112-118` — `GeneratePlaneRotation` (complex): real `cs`, complex `sn`,
-  in-comment unitarity contract "cs is real and cs² + |sn|² = 1" (`:118`). **Self-verified (`--anchor
-  'cs is real'` line 118).**
+  in-comment unitarity contract "cs is real and cs² + |sn|² = 1" (`:118`).
 - `palace/linalg/iterative.cpp:227-241` — `ApplyPlaneRotation` (real `:227` + complex `:235`): the
   in-place 2-vector update `(dx', dy') = (cs·dx + sn·dy, −s̄n·dx + cs·dy)`. The apply / apply_rhs /
-  replay kernel. **Self-verified (deferred-report critic direct-read confirmed `:227`, `:235`).**
-- `palace/linalg/iterative.cpp:612` — `s[0] = beta`: the RHS seed `s = β₀·e₁`. **Self-verified
-  (`--anchor 's[0] = beta'`).**
+  replay kernel.
+- `palace/linalg/iterative.cpp:612` — `s[0] = beta`: the RHS seed `s = β₀·e₁`.
 - `palace/linalg/iterative.cpp:631` — `Hj[j + 1] = linalg::Norml2(comm, w)`: the sub-diagonal entry of
-  the arriving column `h_new[j+1]` (the orthogonalize coeffs occupy `0..j`). **Self-verified (`--anchor
-  'Norml2'`).**
+  the arriving column `h_new[j+1]` (the orthogonalize coeffs occupy `0..j`).
 - `palace/linalg/iterative.cpp:634-636` — GMRES **replay**: `for (int k = 0; k < j; k++)
-  ApplyPlaneRotation(Hj[k], Hj[k+1], cs[k], sn[k]);` (anchor on `:636`; law 2 ordering). **Self-verified
-  (`--anchor 'ApplyPlaneRotation'`, line 636 within range).**
+  ApplyPlaneRotation(Hj[k], Hj[k+1], cs[k], sn[k]);` (anchor on `:636`; law 2 ordering).
 - `palace/linalg/iterative.cpp:638` — GMRES **generate**: `GeneratePlaneRotation(Hj[j], Hj[j+1], cs[j],
-  sn[j]);`. **Self-verified (`--anchor 'GeneratePlaneRotation'`, line 638).**
+  sn[j]);`.
 - `palace/linalg/iterative.cpp:639` — GMRES **apply** (triangularise own column):
-  `ApplyPlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]);`. **Self-verified (deferred-report critic direct-read
-  `:632-680`).**
+  `ApplyPlaneRotation(Hj[j], Hj[j+1], cs[j], sn[j]);`.
 - `palace/linalg/iterative.cpp:640` — GMRES **apply_rhs**: `ApplyPlaneRotation(s[j], s[j+1], cs[j],
-  sn[j]);` — concentrates the residual in `s[j+1]`. **Self-verified (`--anchor 'ApplyPlaneRotation'`,
-  line 640).**
+  sn[j]);` — concentrates the residual in `s[j+1]`.
 - `palace/linalg/iterative.cpp:642` — `beta = std::abs(s[j + 1]);` — the residual exposure (law 1).
-  **Self-verified (`--anchor 'beta = std::abs'`).**
 - `palace/linalg/iterative.cpp:644` — `converged = (beta < eps);` — convergence read with no explicit
-  residual evaluation. **Self-verified (deferred-report critic direct-read).**
+  residual evaluation.
 - `palace/linalg/iterative.cpp:652-660` — GMRES **back-solve** ("Reconstruct the solution"): in-place
   back-substitution `s[i] /= Hi[i]` (`:656`) / `s[k] -= Hi[k] * s[i]` (`:659`) — the firm
-  [`back_solve`](../L1/back_solve.md) leaf body (law 4). **Self-verified (`--anchor 'Reconstruct the
-  solution'` line 652; `--anchor 's[i] /= Hi[i]'` line 656; `--anchor 's[k] -= Hi[k] * s[i]'` line 659 —
-  all confirmed exact, no drift).**
+  [`back_solve`](../L1/back_solve.md) leaf body (law 4).
 - `palace/linalg/iterative.cpp:666` — GMRES correction (`op.basis_kind = V`, left/unpreconditioned):
-  `x.Add(s[k], V[k]);` — the `linear_combination` reconstruction. **Self-verified (`--anchor 'x.Add(s[k],
-  V[k])'`).**
+  `x.Add(s[k], V[k]);` — the `linear_combination` reconstruction.
 - `palace/linalg/iterative.cpp:674-677` — GMRES correction (right-preconditioned): `r.Add(s[k], V[k])`
   (`:674`) then `ApplyB(B, r, V[0], ...); x += V[0]` (`:676-677`) — preconditioner post-applied to the
-  `V`-correction; back-solve identical. **Self-verified (`--anchor 'r.Add(s[k], V[k])'` line 674).**
+  `V`-correction; back-solve identical.
 - `palace/linalg/iterative.cpp:812-821` — FGMRES running-QR stream: replay `:813-815`, generate `:817`,
   apply `:818`, apply_rhs `:819`, `beta` `:821` — **line-for-line identical** to the GMRES stream (law
-  6: `op.basis_kind`-invariant). **Self-verified (`--anchor 'GeneratePlaneRotation'` line 817 within
-  range).**
+  6: `op.basis_kind`-invariant).
 - `palace/linalg/iterative.cpp:831-840` — FGMRES back-solve (identical to GMRES `:652-660`); then
-  `x.Add(s[k], Z[k])` (`:843`) the `op.basis_kind = Z` reconstruction. **Self-verified (`--anchor
-  'Reconstruct the solution'` line 831; `--anchor 'x.Add(s[k], Z[k])'` line 843).**
+  `x.Add(s[k], Z[k])` (`:843`) the `op.basis_kind = Z` reconstruction.
 - `palace/linalg/iterative.hpp:193-194` — `GmresSolver` rotation-register declarations: `mutable
   std::vector<ScalarType> s, sn;` (`:193`) / `mutable std::vector<RealType> cs;` (`:194`) — the
-  element-type split underwriting `op.variant`. **Self-verified (`--anchor 'ScalarType> s, sn'` line
-  193; `--anchor 'RealType> cs'` line 194 — the c026 codemap +1 brace drift confirmed corrected;
-  on-disk exact).**
+  element-type split underwriting `op.variant`.
 
 L2 / L1 / concept / cross-theme anchors:
 
-- `book/src/L2/incremental-least-squares.md` — the firm L2 named composition (LHS, cycle-026); its
+- `book/src/L2/incremental-least-squares.md` — the firm L2 named composition (LHS); its
   §Semantics four-sub-step pipeline, §Algebraic-laws laws 1/2/3/6, the `back_solve` terminal-projection
   signature (`:81-83`), and the deferred rotation-stream-non-associativity non-law (`:278-285`) +
   §Dependencies forward-reference (`:334-340`) are this theme's dispatch rule and load-bearing residue.
-- `book/src/L1/back_solve.md` — the **firm** L1 leaf (cycle-027; Face / terminal back-solve target);
+- `book/src/L1/back_solve.md` — the **firm** L1 leaf (Face / terminal back-solve target);
   the small-dense triangular back-solve `y = back_solve(R, s)`, its §"Why this is NOT a general `trsv`"
   argument (`:44-61`), its basis-lift-independence law (§Algebraic-laws law 6), and its reduction-order
   non-law. This theme's terminal-back-solve fan-down lowers onto this leaf.
@@ -414,145 +394,35 @@ L2 / L1 / concept / cross-theme anchors:
 
 ## Status
 
-`firm` — the LHS L2 composition is firm (cycle-026); the lowering structure is fully recognized and
-exhaustively cited against self-verified L0 source (the four-sub-step fan-down, the fixed
+`firm` — the LHS L2 composition is firm; the lowering structure is fully recognized and
+exhaustively cited against L0 source (the four-sub-step fan-down, the fixed
 replay-before-generate ordering, the terminal back-solve fan-down, the two parametric variant axes,
 and the per-variant reduction-path table are all read straight off `iterative.cpp:634-642` /
 `:652-677` / `:812-844` + the scalar kernels `:73-241`); and the L1 RHS resolves to **firm**
 vocabulary on the value-carrying faces: the de-fused **Face 2** is the firm scalar Givens kernel pair
 ([`givens_generate`](../concepts/givens_generate.md) / [`givens_apply`](../concepts/givens_apply.md)),
-the terminal triangular solve **is the firm L1 [`back_solve`](../L1/back_solve.md) leaf** (cycle-027),
-and the reconstruction is the firm [`linear_combination`](../L2/linear_combination.md) fold. The fan-down
-rule **is** the L2 entry's already-firm laws 1/2/6 read as a lowering (the
-[`orthogonalize-composition-lowering`](./orthogonalize-composition-lowering.md) firm bar). No
-literature inference, no negative-anchor reconstruction, no speculative operator.
-
-Both Face-1 and Face-2 of the L1 RHS resolve to firm vocabulary on disk: the opaque Face-1
-[`ls_update_column`](../L1/ls-update-column.md) column-streaming leaf (firm cycle-029,
-firm-on-positive-structure) and the de-fused Face-2 scalar Givens kernel pair
-([`givens_generate`](../concepts/givens_generate.md) /
-[`givens_apply`](../concepts/givens_apply.md)) are co-extensive presentations of the same value, and
-the terminal back-solve target is the firm L1 [`back_solve`](../L1/back_solve.md) leaf (cycle-027).
-The general `trsv` is a distinct, separately-blocked L3-inventory operator
-(`scaffolding/open-questions.md:24`), NOT this theme's back-solve target.
-
-A `lowering-verifier` audit attaching the `verified_against:` block (confirming the four-sub-step
-fan-down + the reduction-path table against the L0 source, the back-solve fan-down onto the firm
-`back_solve` leaf, and the clean leaf-stops-at-L1 / L1>L0-deferred boundary) is the standard follow-up,
-not a status reduction.
+the terminal triangular solve **is the firm L1 [`back_solve`](../L1/back_solve.md) leaf**,
+and the reconstruction is the firm [`linear_combination`](../L2/linear_combination.md) fold. The opaque
+Face-1 [`ls_update_column`](../L1/ls-update-column.md) column-streaming leaf (firm) and the de-fused
+Face-2 are co-extensive presentations of the same value. The general `trsv` is a distinct,
+separately-blocked L3-inventory operator (`scaffolding/open-questions.md:24`), NOT this theme's
+back-solve target.
 
 ## Open questions / caveats
 
-- **General `trsv` remains BLOCKED — not closed by this theme.** The terminal-back-solve target is the
+- **General `trsv` remains BLOCKED.** The terminal-back-solve target is the
   specific `back_solve` leaf, NOT the general `trsv` / `sparse_triangular_solve` (the Gauss-Seidel /
-  ILU smoother kernel on the length-`N` field, no positive L0 anchor, `scaffolding/open-questions.md:24,:537`). The
-  re-anchor explicitly demotes the general-`trsv` mention to a forward note and does not claim it
-  exists; the `trsv` L3-inventory gap stays open (likely obstruction-theme target). Recorded so the
-  `trsv` gap is not falsely treated as touched by this firm theme.
+  ILU smoother kernel on the length-`N` field, no positive L0 anchor, `scaffolding/open-questions.md:24,:537`).
+  The `trsv` L3-inventory gap stays open (likely obstruction-theme target).
 
 - **L1>L0 boundary deferred.** This theme stops at the L1 leaves and does NOT re-derive the L0 in-place
   running-QR mechanics (the four `*PlaneRotation` writes to `Hj`/`cs`/`sn`/`s`) or the back-solve
   in-place `s[0..j]` overwrite (the firm `back_solve` leaf's own L1>L0 concern) or the `x.Add`
   reconstruction (a `linear_combination` concern). The per-column in-place step is the firm
-  [`ls_update_column-mutation-rotation`](../L1-L0/ls-update-column-mutation-rotation.md) L1>L0 theme
-  (cycle-030); the `lowering-verifier` audit should confirm this boundary is clean (no duplication of
-  the L0 in-place step across this L2>L1 theme and the leaf L1>L0 themes).
+  [`ls_update_column-mutation-rotation`](../L1-L0/ls-update-column-mutation-rotation.md) L1>L0 theme.
 
 - **L3 sequential-obstruction forecast (replay chain + back-solve recurrence).** The replay sub-step is
   a length-`j` ordered chain of 2-vector updates (`iterative.cpp:634-636`), each reading the previous —
   the [`plane-rotation-stream`](../concepts/plane-rotation-stream.md) §"Sequential character" (`:21-23`)
   flags it as a `sequential-obstruction` candidate for the eventual L3 iteration rotation (the
-  back-solve's inner `k`-recurrence likewise — `back_solve.md` reduction-order non-law). Forward note
-  for a future L3 pass, NOT content of this L2>L1 theme; recorded so the L3 author finds it.
-
-```yaml
-verified_against:
-  - citation: palace/linalg/iterative.cpp:73-108
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: GeneratePlaneRotation real kernel; LAPACK scaling :101-108 confirmed via --show. citecheck --anchor clean.
-  - citation: palace/linalg/iterative.cpp:112-118
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: GeneratePlaneRotation complex; "cs is real and cs²+|sn|²=1" anchor exact at :118.
-  - citation: palace/linalg/iterative.cpp:227-241
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: ApplyPlaneRotation real :227 / complex :235; body confirms (cs·dx+sn·dy, −conj(sn)·dx+cs·dy).
-  - citation: palace/linalg/iterative.cpp:612
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: s[0]=beta RHS seed; anchor exact.
-  - citation: palace/linalg/iterative.cpp:631
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: Hj[j+1]=Norml2 sub-diagonal entry; anchor exact.
-  - citation: palace/linalg/iterative.cpp:634-636
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: GMRES replay; ApplyPlaneRotation(Hj[k],Hj[k+1],cs[k],sn[k]) at :636; k<j skip-replay-for-j=0 boundary witnessed.
-  - citation: palace/linalg/iterative.cpp:638
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: GMRES generate; positively follows replay loop close :637 (replay-before-generate ordering witnessed).
-  - citation: palace/linalg/iterative.cpp:639
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: GMRES apply (triangularise own column); anchor exact.
-  - citation: palace/linalg/iterative.cpp:640
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: GMRES apply_rhs; ApplyPlaneRotation(s[j],s[j+1],...) concentrates residual; anchor exact.
-  - citation: palace/linalg/iterative.cpp:642
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: beta=std::abs(s[j+1]) residual exposure (law 1); anchor exact.
-  - citation: palace/linalg/iterative.cpp:644
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: converged=(beta<eps); convergence read with no explicit residual eval; anchor exact.
-  - citation: palace/linalg/iterative.cpp:652-660
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: GMRES back-solve; body line-identical to firm back_solve.md L0 evidence (s[i]/=Hi[i] :656, s[k]-=Hi[k]*s[i] :659) — IS the firm back_solve leaf, NOT general trsv.
-  - citation: palace/linalg/iterative.cpp:666
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: GMRES V-correction in !B||LEFT branch; linear_combination reconstruction (op.basis_kind=V); anchor exact.
-  - citation: palace/linalg/iterative.cpp:674-677
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: GMRES right-precond r.Add(s[k],V[k]) :674 then ApplyB(B,r,V[0]) :676 / x+=V[0] :677; back-solve identical.
-  - citation: palace/linalg/iterative.cpp:812-821
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: FGMRES stream (replay :813-815, generate :817, apply :818, apply_rhs :819, beta :821) — byte-identical to GMRES :634-642 (law 6).
-  - citation: palace/linalg/iterative.cpp:831-840
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: FGMRES back-solve identical to GMRES :652-660; x.Add(s[k],Z[k]) :843 the op.basis_kind=Z reconstruction (only V/Z divergence).
-  - citation: palace/linalg/iterative.hpp:193-194
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: register split ScalarType s,sn :193 / RealType cs :194 underwriting op.variant; KNOWN codemap +1-drift offender confirmed EXACT on-disk (on-disk authoritative).
-  - citation: book/src/L2/incremental-least-squares.md:278-285
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: rotation-stream non-associativity non-law — the load-bearing residue this theme picks up ("forthcoming L2>L1 theme"); :81-83 terminal back_solve sig + :334-340 forward-ref also confirmed.
-  - citation: book/src/L1/back_solve.md:44-61
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: '"Why this is NOT a general trsv" — terminal back-solve target re-anchor confirmed sound; small-dense N-independent leaf, not blocked general trsv.'
-  - citation: book/src/concepts/incremental-least-squares.md:22-27
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: '"What is hidden at L1" list matches Face-1 opaque-leaf characterisation; :14 ls_update_column contract confirmed.'
-  - citation: book/src/concepts/plane-rotation-stream.md:21-23
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: replay-chain sequential-obstruction candidate (L3 forecast) confirmed; :5-15 shape + :25-33 invariance also confirmed.
-  - citation: book/src/concepts/givens_apply.md
-    verdict: supports
-    audited_at: 2026-05-29T195406Z
-    note: Face-2 de-fused kernel; signature (c·dx+s·dy, −s̄·dx+c·dy) matches L0 body :229-230/:238-240. (Stale gmres.cpp self-citation in concept page noted as drive-by, not cited by this theme.)
-```
+  back-solve's inner `k`-recurrence likewise — `back_solve.md` reduction-order non-law).

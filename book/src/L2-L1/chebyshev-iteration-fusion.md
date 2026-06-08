@@ -16,10 +16,8 @@ recurrence collapses (fuses) upward into one named polynomial step at L1.
 
 The L2 form is the explicit degree-`order` three-term polynomial recurrence,
 built from named L1 leaf primitives, threaded by the variant scalar generator
-(`palace/linalg/chebyshev.cpp:190-220` 4th-kind signature-to-close — corrected
-from `:188-220`, whose start was the prior fn close brace (sig `:190`, brace
-`:191`); `:261-293` 1st-kind; the L2 unfolding in
-[`chebyshev-iteration`](../L2/chebyshev-iteration.md) §Semantics):
+(`palace/linalg/chebyshev.cpp:190-220` 4th-kind; `:261-293` 1st-kind; the L2
+unfolding in [`chebyshev-iteration`](../L2/chebyshev-iteration.md) §Semantics):
 
 ```text
 sweep(op, x, y, first):
@@ -140,22 +138,20 @@ a transparent-performance-trick fusion (L2 law 3) nested inside.
 
 None. Both anchors are firm
 ([`L1/chebyshev-smoother`](../L1/chebyshev-smoother.md),
-[`L2/chebyshev-iteration`](../L2/chebyshev-iteration.md), both cycle-012
-ratified). The L1 leaf primitives the L2 form composes
+[`L2/chebyshev-iteration`](../L2/chebyshev-iteration.md)). The L1 leaf primitives
+the L2 form composes
 ([`apply_linop`](../L1/apply_linop.md), [`axpy`](../L1/axpy.md),
 [`axpby`](../L1/axpby.md), [`scal`](../L1/scal.md)) and the
 [`elementwise-product`](../concepts/elementwise-product.md) concept are all
 already-firm vocabulary; this theme proposes no new operators.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (verified via `palace-codemap` read_range this cycle):
+L0 evidence ranges:
 
-- `palace/linalg/chebyshev.cpp:190-220` — 4th-kind `Mult2` (signature-to-close;
-  corrected from `:188-220`, whose start was the prior fn close brace — sig `:190`,
-  brace `:191`): the `order`-step recurrence (`ApplyOrder0`, the `k`-loop with
-  `sd`/`sr` closed forms, `ApplyOrderK`, the `y += d` accumulates) that L2 makes
-  explicit and L1 fuses.
+- `palace/linalg/chebyshev.cpp:190-220` — 4th-kind `Mult2` (signature-to-close):
+  the `order`-step recurrence (`ApplyOrder0`, the `k`-loop with `sd`/`sr` closed
+  forms, `ApplyOrderK`, the `y += d` accumulates) that L2 makes explicit and L1 fuses.
 - `palace/linalg/chebyshev.cpp:261-293` — 1st-kind `Mult2`: same scaffold, the
   `ρ`-threaded scalars.
 - `palace/linalg/chebyshev.cpp:68-78` — `ApplyOrder0` (real overload; the
@@ -170,39 +166,13 @@ L1 / L2 anchors:
 - `book/src/L2/chebyshev-iteration.md` — the firm L2 explicit recurrence (LHS);
   its law 1 is this theme's core identity.
 
-Lowering-verifier audit (cycle-014, verdict **CONFIRMS** — fusion algebraically
-sound; firm status retained):
-
-```yaml
-verified_against:
-  - citation: palace/linalg/chebyshev.cpp:190-220
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: 4th-kind Mult2 recurrence (L2-explicit / L1-fused) signature-to-close; corrected from :188-220 (sig :190, brace :191)
-  - citation: palace/linalg/chebyshev.cpp:261-293
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: 1st-kind Mult2 recurrence (rho-threaded)
-  - citation: palace/linalg/chebyshev.cpp:68-78
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: ApplyOrder0 real (d <- sr*dinv*r); cycle-013-repaired range exact
-  - citation: palace/linalg/chebyshev.cpp:112-123
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: ApplyOrderK real (d <- sd*d + sr*dinv*r); cycle-013-repaired range exact
-```
-
 ## Status
 
 `firm` — the L2→L1 fusion is the L2 entry's already-firm law 1 (the recurrence
-*is* the polynomial action), read as a lowering. Both anchors are firm
-(cycle-012 ratified); the fusion is a syntactic resolution-collapse with no
-literature inference and no negative-anchor reconstruction. The per-step and
-element-kernel structure both read straight off the source. This is the first
-chapter under the `book/src/L2-L1/` Part; a `lowering-verifier` audit confirming
-the fusion against the L0 source (both kinds) is the standard follow-up, not a
-status reduction.
+*is* the polynomial action), read as a lowering. Both anchors are firm; the fusion
+is a syntactic resolution-collapse with no literature inference and no negative-anchor
+reconstruction. The per-step and element-kernel structure both read straight off the
+source.
 
 ## Open questions / caveats
 
@@ -210,8 +180,7 @@ status reduction.
   L2 `k`-recurrence and `pc_it`-sweep sequentiality block a global-tensor-field
   L3 form — recorded in [`L2/chebyshev-iteration`](../L2/chebyshev-iteration.md)
   non-laws and [`concepts/sequential-obstruction`](../concepts/sequential-obstruction.md).
-  The cycle-013 wave-1 harvester's L3 chebyshev row treats this; this L2>L1
-  theme does not depend on it.
+  The L3 chebyshev row treats this; this L2>L1 theme does not depend on it.
 - **Lifting note (reverse direction, working notes only).** Lifting an L1
   polynomial-action token *up* to the L2 explicit recurrence requires knowing the
   `op.scalars` generator (which closed-form / `ρ`-threaded family) and the

@@ -12,7 +12,7 @@ Adams et al. 2003 explicitly). This is the concrete L0 evidence behind the
 L3 index's `:7` "certain triangular solves" obstruction note.
 
 **Obstruction-flavoured theme** — claim-free documentation, no constructive
-L1 form. Follows the cycle-004 [`minres-iteration`](./minres-iteration.md) and
+L1 form. Follows the [`minres-iteration`](./minres-iteration.md) and
 [`bicgstab-iteration`](./bicgstab-iteration.md) precedents (negative anchors
 only, `justification kind: obstruction`).
 
@@ -38,15 +38,14 @@ out of policy per CLAUDE.md §Scope "Unimplemented Palace components are NOT
 direct implementation targets"). The closest related leaves the artifact DOES
 firm are:
 
-- [`back_solve`](../L1/back_solve.md) (firm c027) — the **small-dense**
+- [`back_solve`](../L1/back_solve.md) (firm) — the **small-dense**
   upper-triangular GMRES / FGMRES restart-correction back-substitution
   (coordinate-space, dimension `j+1` ≤ `max_dim`, no collective). It is the
   *small-dense-triangular* sibling of [`lu_solve`](../L1/lu_solve.md), NOT a
   general `trsv`. The general `trsv` would act on the length-`N` field; this
   leaf does not.
 - [`back-solve-mutation-rotation`](./back-solve-mutation-rotation.md) L1>L0
-  theme (cycle-029 dispatch-1, sibling theme landed in the same cycle as this
-  one) — the rotation of the `back_solve` leaf into its L0 in-place
+  theme — the rotation of the `back_solve` leaf into its L0 in-place
   back-substitution loop. Cross-referenced here only to make the sibling
   distinction concrete; that theme also covers only the GMRES/FGMRES
   restart-correction case, NOT a general `trsv`.
@@ -200,11 +199,9 @@ in Palace does not falsely conclude the obstruction is filled by it.
 
 ### (d) The direct-solver wrappers are pure opaque forwarders — no factor, no MPI, no residual at the Palace level
 
-(Absorbed cycle-097 from the retired Phase-1 `sparse_triangular_solve` negative-result slice; these
-are the slice's three unique L0 findings, re-verified against source. The wrapper *class declarations*
-are already anchored in §(b3); the additional facts here are that the wrapper **bodies** are literal
-forwards, that the one residual-bearing operation is disabled, and that no Palace MPI / residual
-machinery surrounds the factor.)
+(The wrapper *class declarations* are already anchored in §(b3); the additional facts here are
+that the wrapper **bodies** are literal forwards, that the one residual-bearing operation is
+disabled, and that no Palace MPI / residual machinery surrounds the factor.)
 
 **(d1) The wrapper method bodies are literal forwards; iterative refinement is DISABLED.** The
 `SuperLUSolver` wrapper's four apply methods forward verbatim into the MFEM solver, contributing no
@@ -273,7 +270,7 @@ of the obstruction* — when does the negative finding apply?
 2. **The small-dense upper-triangular GMRES / FGMRES restart-correction
    back-substitution** (coordinate-space, dimension `j+1` ≤ `max_dim`, no
    collective) — has a positive Palace source site and is firm at L1
-   ([`back_solve`](../L1/back_solve.md), cycle-027). Obstruction does **not**
+   ([`back_solve`](../L1/back_solve.md)). Obstruction does **not**
    apply. The two are siblings on the "triangular solve" axis, split by the
    dense-small-coordinate vs sparse-large-field representation/cost
    distinction (the same split that separates [`lu_solve`](../L1/lu_solve.md)
@@ -306,7 +303,7 @@ triangular-solve operator is *recognised* (literature-standard `trsv` shape)
 and the L0 anchor in Palace is **empty for it**; the substitution exists in
 Palace runs only inside opaque library calls. The theme exists as
 **citation-grounded documentation** that the general `trsv` primitive has no
-home in Palace, not as an active lowering rule. Follows the cycle-004
+home in Palace, not as an active lowering rule. Follows the
 [`minres-iteration`](./minres-iteration.md) and
 [`bicgstab-iteration`](./bicgstab-iteration.md) precedents in form (negative
 anchors only, no constructive L1 operator promoted).
@@ -335,13 +332,9 @@ operator on the basis of this theme.
 ## Related
 
 This theme is the **sole** home for the negative result that Palace authors no general
-triangular-solve primitive. (Through cycle-096 a Phase-1 duplicate,
-`spec/slices/sparse_triangular_solve.md`, co-recorded this finding under the now-retired
-`annotated-and-retained` carve-out; per the graded-stack §6 retirement that slice was absorbed
-into this theme — its three unique L0 findings are §(d) above — and deleted in cycle-097. git
-history retains the slice.)
+triangular-solve primitive.
 
-The two concept pages that previously named the slice as their §"Canonical instance" now point here:
+The two concept pages that name this as their §"Canonical instance" point here:
 
 - [`scope-out-obstruction`](../concepts/scope-out-obstruction.md) §"Canonical instance" — the L0→L1
   scope-out obstruction (Palace forwards sparse-direct solves into MFEM / SuperLU_DIST / STRUMPACK /
@@ -355,7 +348,7 @@ This L1>L0 theme sits alongside [`minres-iteration`](./minres-iteration.md) and
 additionally records the engineered-absence evidence (Adams-2003 polynomial-over-GS,
 GPU GS→Jacobi flip) — see §(b2) — that the obstruction is deliberate.
 
-## Verified-against
+## Evidence
 
 L0 evidence ranges (all are **absence** / **negative-anchor** citations; this
 is by design for an obstruction theme):
@@ -407,25 +400,24 @@ is by design for an obstruction theme):
   NOT a scalar triangular substitution.
 - `palace/linalg/superlu.hpp:43-58` — the four `SuperLUSolver` apply bodies (`Mult` / `ArrayMult` /
   `MultTranspose` / `ArrayMultTranspose`), each a literal one-line forward into `mfem::SuperLUSolver`;
-  the wrapper contributes no factor / residual machinery. (Absorbed from the retired slice, §(d1).)
+  the wrapper contributes no factor / residual machinery.
 - `palace/linalg/superlu.cpp:78` — `solver.SetIterativeRefine(mfem::superlu::NOREFINE);` — iterative
-  refinement (the one factor-solve-then-residual loop) is explicitly DISABLED. (Absorbed, §(d1).)
+  refinement (the one factor-solve-then-residual loop) is explicitly DISABLED.
 - `palace/linalg/superlu.cpp:88` — `solver.SetFact(mfem::superlu::SamePattern_SameRowPerm);` — the
-  sole factor-reuse knob, gated on `reorder_reuse`; MFEM-enforced, not a Palace factor op. (Absorbed, §(d1).)
+  sole factor-reuse knob, gated on `reorder_reuse`; MFEM-enforced, not a Palace factor op.
 - `palace/linalg/solver.hpp:43-63` — the `Solver<OperType>` base interface: `SetOperator` (`:43`),
   `MultTranspose` (`:45-49`), `Mult2` (`:52-56`), `MultTranspose2` (`:59-63`); the `*2` scratch-residual
   variants are multigrid-smoother workspace (base-class `MFEM_ABORT`), not triangular-solve workspace,
-  and the direct-solver wrappers do not override them. (Absorbed, §(d2).)
+  and the direct-solver wrappers do not override them.
 - `palace/utils/communication.hpp:337-344` — the `Mpi::Allgatherv` variable-count wrapper definition.
-  (Absorbed, §(d3).)
+ 
 - `palace/utils/geodata.cpp:1538-1539` — the sole Palace `Mpi::Allgatherv` call site: gathers per-rank
-  edge-attribute counts during mesh setup (`all_edge_attrs`), NOT a factor. (Absorbed, §(d3).)
+  edge-attribute counts during mesh setup (`all_edge_attrs`), NOT a factor.
 - `palace/linalg/ksp.cpp:155` / `:165` / `:187` — the SuperLU / STRUMPACK / MUMPS wrappers are
   constructed via `MakeWrapperSolver<OperType, ...>` (declared `ksp.cpp:104`) and installed as the
-  preconditioner `pc` of an outer iterative method; the outer Krylov owns the residual. (Absorbed, §(d3).)
+  preconditioner `pc` of an outer iterative method; the outer Krylov owns the residual.
 
-Two exhaustive whole-tree zero-hit codemap text searches (cycle-028
-harvester, critic-reproduced):
+Two exhaustive whole-tree zero-hit codemap text searches:
 
 - `trsv|trsm|TriSolve|TriangularSolve|SpTrSV` — **zero hits anywhere in the
   Palace tree** (the negative finding's primary basis).
@@ -435,146 +427,40 @@ harvester, critic-reproduced):
 Sibling firm L1 evidence (positive — used to make the sibling distinction
 concrete, NOT to anchor this obstruction):
 
-- [`book/src/L1/back_solve.md`](../L1/back_solve.md) — the firm c027
+- [`book/src/L1/back_solve.md`](../L1/back_solve.md) — the firm
   small-dense upper-triangular GMRES / FGMRES restart-correction
   back-substitution; the **one** triangular-system component Palace DOES
   implement. Coordinate-space dense, dimension `j+1` ≤ `max_dim`, no
   collective. Distinct from a general `trsv` (which would act on the
   length-`N` field).
-- [`back-solve-mutation-rotation`](./back-solve-mutation-rotation.md)
-  (cycle-029 dispatch-1; sibling theme landed in the same cycle as this one).
-  The L1>L0 rotation of `back_solve` into its L0 in-place back-substitution
-  loop; also small-dense only, not a general `trsv`.
+- [`back-solve-mutation-rotation`](./back-solve-mutation-rotation.md) — the L1>L0 rotation of
+  `back_solve` into its L0 in-place back-substitution loop; also small-dense only, not a general
+  `trsv`.
 
-    verified_against:
-      - citation: reference/palace/palace/linalg/densematrix.hpp:24-36
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: full small-dense matrix utility API (MatrixSqrt/MatrixPow/SingularValue*/Mult); no triangular solve, no factorization; in-range bound zero-drift.
-      - citation: reference/palace/palace/linalg/amg.cpp:19
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: HYPRE BoomerAMG relax_type enum comment "8 = l1-symm. GS, 13 = l1-GS, 18 = l1-Jacobi, 16 = Chebyshev"; the triangular substitution is HYPRE-internal; citecheck --anchor 'l1-symm. GS' zero-drift.
-      - citation: reference/palace/palace/linalg/amg.cpp:24
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "GPU branch `relax_type = 18;` flipping from GS (8) to l1-Jacobi — load-bearing: documents that GS is GPU-hostile, justifying the Palace-engineered avoidance; citecheck --anchor 'relax_type = 18' zero-drift."
-      - citation: reference/palace/palace/linalg/amg.cpp:29
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "`HYPRE_BoomerAMGSetRelaxType(*this, relax_type);` — the setter handing the enum to opaque HYPRE; citecheck --anchor 'HYPRE_BoomerAMGSetRelaxType' zero-drift."
-      - citation: reference/palace/palace/linalg/ams.cpp:158
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "AMS internal `int amg_relax_type = 18;` (l1-Jacobi default); citecheck --anchor 'amg_relax_type' zero-drift."
-      - citation: reference/palace/palace/linalg/ams.cpp:162
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: HYPRE AMS smoother relax_type enum comment "2 = l1-SSOR, 4 = trunc. l1-SSOR, 1 = l1-Jacobi, 16 = Chebyshev"; the SSOR triangular substitution is HYPRE-AMS-internal; citecheck --anchor 'l1-SSOR' zero-drift.
-      - citation: reference/palace/palace/linalg/ams.cpp:173
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "`HYPRE_AMSSetSmoothingOptions(ams, relax_type, ams_smooth_it, weight, omega);` — the setter handing the enum to opaque HYPRE-AMS; citecheck --anchor 'HYPRE_AMSSetSmoothingOptions' zero-drift."
-      - citation: reference/palace/palace/linalg/ams.cpp:179
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "`int coarse_relax_type = 9;  // Default, l1-symm. GS, 9 = Gaussian elimination` — coarse-grid relax default (HYPRE-internal Gaussian elimination, not Palace-authored); citecheck --anchor 'coarse_relax_type' zero-drift."
-      - citation: reference/palace/palace/linalg/jacobi.hpp:19
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "`class JacobiSmoother` — Palace-native diagonal-only smoother (no triangular sweep); citecheck --anchor 'JacobiSmoother' zero-drift (re-anchored from the c028 report's `:15` after off-by-4 drift)."
-      - citation: reference/palace/palace/linalg/chebyshev.hpp:23
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "`class ChebyshevSmoother` — Palace-native polynomial smoother (no triangular sweep); citecheck --anchor 'ChebyshevSmoother' zero-drift."
-      - citation: reference/palace/palace/linalg/chebyshev.hpp:82
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "Adams et al. 2003 citation comment 'polynomial versus Gauss-Seidel' — load-bearing: documents Palace's deliberate choice of polynomial smoothing over GS; citecheck --anchor 'polynomial versus Gauss' zero-drift."
-      - citation: reference/palace/palace/linalg/strumpack.hpp:18
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "wrapper-class comment '// A wrapper for the STRUMPACK direct solver package.' — external-library wrapper; triangular substitution opaque to Palace; citecheck --anchor 'STRUMPACK' zero-drift."
-      - citation: reference/palace/palace/linalg/strumpack.hpp:21
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "`class StrumpackSolverBase` declaration — external-library wrapper; citecheck --anchor 'StrumpackSolverBase' zero-drift."
-      - citation: reference/palace/palace/linalg/superlu.hpp:22
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "`class SuperLUSolver : public mfem::Solver` — external-library wrapper; citecheck --anchor 'SuperLUSolver' zero-drift."
-      - citation: reference/palace/palace/linalg/mumps.hpp:21
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: "`class MumpsSolver : public mfem::MUMPSSolver` — external-library wrapper; citecheck --anchor 'MumpsSolver' zero-drift."
-      - citation: reference/palace/palace/linalg/blockprecond.hpp:16-29
-        verdict: negative-anchor
-        audited_at: 2026-05-29T234506Z
-        note: 'red-herring non-example — 2x2 BLOCK forward solve "z0 = P0^{-1} r0; z1 = P1^{-1}(r1 - L10 z0)" applying sub-solvers to whole blocks, NOT a scalar triangular substitution; citecheck --anchor "Block lower-triangular" zero-drift (anchor at line 16 within range 16-29).'
-      - citation: book/src/L3/index.md:7
-        verdict: positive-cross-reference
-        audited_at: 2026-05-29T234506Z
-        note: the L3 Context paragraph that names "certain triangular solves" as canonical L3 obstructions; this L1>L0 theme is the concrete L0 evidence behind that note.
-      - citation: book/src/L1/back_solve.md
-        verdict: positive-cross-reference
-        audited_at: 2026-05-29T234506Z
-        note: firm c027 small-dense GMRES/FGMRES restart-correction back-substitution — the sibling distinction (NOT a general trsv; coordinate-space, dimension j+1 ≤ max_dim).
-      - citation: book/src/L1-L0/minres-iteration.md
-        verdict: positive-cross-reference
-        audited_at: 2026-05-29T234506Z
-        note: cycle-004 obstruction-theme precedent (MFEM_ABORT-anchored); justification-kind/structure followed.
-      - citation: book/src/L1-L0/bicgstab-iteration.md
-        verdict: positive-cross-reference
-        audited_at: 2026-05-29T234506Z
-        note: cycle-004 obstruction-theme precedent (MFEM_ABORT-anchored, with verified_against negative-anchor YAML); YAML shape followed.
-      - citation: book/src/L1-L0/triangular-solve-obstruction.md
-        verdict: absorbed-and-deleted
-        audited_at: 2026-06-04T232852Z
-        note: "Phase-1 negative-result slice `spec/slices/sparse_triangular_solve.md` absorbed into this theme (§(d) — opaque-forwarding catalog + NOREFINE, the `*2` smoother-workspace distinction, no-factor-MPI / outer-residual) and DELETED cycle-097 per graded-stack §6 (annotated-and-retained carve-out retired). git history retains the slice. The two concept pages it was the canonical instance of (scope-out-obstruction, sequential-obstruction) now point to this theme."
-      - citation: book/src/concepts/scope-out-obstruction.md:68
-        verdict: positive-cross-reference
-        audited_at: 2026-05-29T234506Z
-        note: concept page §"Canonical instance" line cites the `sparse_triangular_solve` slice as the L0→L1 scope-out obstruction canonical instance; this L1>L0 theme is the layered-artifact partner record.
-      - citation: book/src/concepts/sequential-obstruction.md:53
-        verdict: positive-cross-reference
-        audited_at: 2026-05-29T234506Z
-        note: concept page §"Sub-kind: out-of-scope-obstruction" line distinguishes the out-of-scope sub-kind from genuine L2→L3 sequential obstruction; the `sparse_triangular_solve` slice is the canonical instance and this L1>L0 theme cross-links it.
+Positive cross-references:
+
+- `book/src/L3/index.md:7` — the L3 Context paragraph that names "certain triangular solves" as
+  canonical L3 obstructions; this L1>L0 theme is the concrete L0 evidence behind that note.
+- `book/src/L1-L0/minres-iteration.md`, `book/src/L1-L0/bicgstab-iteration.md` — the
+  obstruction-theme precedents (MFEM_ABORT-anchored) whose structure this follows.
+- `book/src/concepts/scope-out-obstruction.md:68` — concept page §"Canonical instance"; this
+  L1>L0 theme is the L0-evidence home for the L0→L1 scope-out obstruction.
+- `book/src/concepts/sequential-obstruction.md:53` — concept page §"Sub-kind:
+  out-of-scope-obstruction"; this theme holds the L0 wrapper-surface evidence.
 
 ## Status
 
-`obstruction (opaque-library-ownership)` — **kernel-api**. (DIRECTIVE-3
-role-label, 2026-06-07: this theme is repositioned as the **kernel-API surface**
-— the reviewable opaque contract the multigrid smoother slot calls. This edit
-adds the `kernel-api` role-label AND clarifies the sub-kind from the prior bare
-`obstruction` to `obstruction (opaque-library-ownership)` — it stays
-obstruction-*kind* (NOT downgraded, NOT promoted to a constructive status); the
-sub-kind is the accurate one because it genuinely IS the opaque
-GS-SSOR / sparse-triangular relaxation boundary (HYPRE / external direct-solver
-ownership), claim-free, with negative anchors. Its constructive
-kernel-IMPLEMENTATION counterpart is
-[`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md) (the
-Hiptmair distributive smoother, firm c121), which `realizes-kernel-api` this
-surface via a `reference`-class edge; `lowering-verifier` audits the
-impl-realizes-API correspondence.)
+`obstruction (opaque-library-ownership)` — **kernel-api**. This theme is the **kernel-API
+surface**: the reviewable opaque contract the multigrid smoother slot calls. It is the opaque
+GS-SSOR / sparse-triangular relaxation boundary (HYPRE / external direct-solver ownership),
+claim-free, with negative anchors. Its constructive kernel-IMPLEMENTATION counterpart is
+[`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md) (the Hiptmair
+distributive smoother), which `realizes-kernel-api` this surface via a `reference`-class edge.
 
-Claim-free documentation of the absence of a general
-triangular-solve primitive in Palace, with negative anchors. **Not
-`rough-in`** (no constructive L1 form is proposed and none should be —
-per CLAUDE.md §Scope, unimplemented Palace components are not direct
-implementation targets) and **not `firm`** (there is no positive L0 anchor
-to firm against; obstruction is the terminal status). Mirrors the
-[`minres-iteration`](./minres-iteration.md) /
-[`bicgstab-iteration`](./bicgstab-iteration.md) cycle-004 precedents.
-
-Resolves the `trsv` leaf of OQ `l3-vocabulary-inventory-gap`
-(`scaffolding/open-questions.md`) as **resolved-by-obstruction** rather than
-perpetually BLOCKED: the L3 index's `:7` "certain triangular solves" line now
-has a citable concrete L0-evidence home in this theme, and the absence of any
-Palace-authored `trsv` is documented with negative anchors. Does **not**
-close the entry by promoting a `trsv` L1 operator (the obstruction is the
-*resolution*, not a precursor to a constructive entry).
-
-Open follow-up for layer-intro-author (out of this dispatch's scope): the
-L3 index's `:7` line may want a back-reference to this theme file once it
-lands, paralleling the `eigsolve` partial-obstruction cross-reference at
-`:31`/`:45`. Not blocking for this theme.
+Claim-free documentation of the absence of a general triangular-solve primitive in Palace, with
+negative anchors. **Not `rough-in`** (no constructive L1 form is proposed and none should be —
+per CLAUDE.md §Scope, unimplemented Palace components are not direct implementation targets) and
+**not `firm`** (there is no positive L0 anchor to firm against). **Promotion route: NONE** —
+obstruction is the terminal status (the obstruction is the *resolution*, not a precursor to a
+constructive `trsv` entry). The L3 index's `:7` "certain triangular solves" line has its
+concrete L0-evidence home here.

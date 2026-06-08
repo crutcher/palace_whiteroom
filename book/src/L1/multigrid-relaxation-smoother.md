@@ -27,7 +27,7 @@ edges:
     - L1/set_subvector_zero            # the essential-dof pin on the auxiliary residual x_G (consumed-by, not a spine dep)
     - concepts/sequential-obstruction  # the outer pc_it relaxation-sweep recurrence (documented non-law)
     - L4/preconditioning-framework     # the multigrid V-cycle consumer that installs this as per-level smoother
-    - L2/correction_step               # DOWNWARD annotation: each per-sweep leg (primary B; auxiliary conjugated G·B_G·Gᵀ) is the L1 realization of the L2 correction_step combinator (firm c122). NOT a depends-on (L1 cannot depend UP on L2); reference-class navigational.
+    - L2/correction_step               # DOWNWARD annotation: each per-sweep leg (primary B; auxiliary conjugated G·B_G·Gᵀ) is the L1 realization of the L2 correction_step combinator. NOT a depends-on (L1 cannot depend UP on L2); reference-class navigational.
 ---
 
 # multigrid-relaxation-smoother
@@ -144,7 +144,7 @@ The two relaxation legs per sweep (`distrelaxation.cpp:104-117`):
 
 **Downward annotation (L1 → L2 navigational, NOT a dependency).** Both legs are
 the L1 realization of the L2 [`correction_step`](../L2/correction_step.md)
-combinator `y + B·(x − A·y)` (firm c122) with a different `B`-slot: the primary
+combinator `y + B·(x − A·y)` (firm) with a different `B`-slot: the primary
 leg is `correction_step A B x y` (B = the primary point smoother); the auxiliary
 leg is `correction_step A (G·B_G·Gᵀ) x y` — the **conjugated** preconditioner
 `B = T·B'·Tᵀ` with `T = G` (correction_step law 6, the de-Rham auxiliary-space
@@ -340,70 +340,3 @@ from the kept `triangular-solve-obstruction` theme):
   (the realized route avoids the triangular sweep the kernel-api names).
 - `palace/linalg/amg.cpp:24` — the GPU GS→l1-Jacobi flip; corroborates that the
   GS triangular sweep is the non-removable kernel engineered around.
-
-## Status
-
-`firm` — **kernel-impl**. (DIRECTIVE-3 role-label: this node is the
-kernel-IMPLEMENTATION — the constructive, in-our-semantics realization of the
-multigrid relaxation slot; its kernel-API counterpart is the kept
-[`triangular-solve-obstruction`](../L1-L0/triangular-solve-obstruction.md), to
-which it is linked by a `realizes-kernel-api` `reference`-class edge that
-constrains neither rank nor liveness.)
-
-Promoted firm on the **firm-on-positive-structure escape** (CLAUDE.md
-§Methodology "rough-in (test-coverage-bounded)"): every algebraic law (1-5) is a
-syntactic identity on the fully-read positive `Mult2` body
-(`distrelaxation.cpp:101-119`) + ctor/`SetOperators`, so the absence of a
-dedicated `test-distrelaxation.cpp` (multigrid-integration coverage only) does
-not gate firm — the [`chebyshev-smoother`](./chebyshev-smoother.md) /
-[`jacobi-smoother`](./jacobi-smoother.md) no-dedicated-test precedent. All four
-`depends-on` constituents (`chebyshev-smoother`, `apply_linop`, `axpby`,
-`interpolator`) are firm on disk, so the well-foundedness invariant
-`rank(impl) ≤ min(rank(deps))` holds (firm ≤ firm). The `realizes-kernel-api`
-edge to the obstruction theme does NOT enter the rank computation (it is
-`reference`-class, free).
-
-The **outer `pc_it` relaxation-sweep sequential-obstruction** (non-law NL1) is
-documented as the L3-lift `partial-obstruction` finding (the body lifts; the
-sweep loop does not — paralleling [`L3/chebyshev`](../L3/chebyshev.md)); it does
-NOT gate the L1 firm status (at L1 the sweep is a pure `pc_it`-fold parameter).
-
-L1>L0 lowering theme `multigrid-relaxation-smoother-mutation-rotation`
-(named-not-authored; reintroduces the `Mult2(x, y, r)` output-arg mutation +
-scratch vectors `x_G`/`y_G`/`r_G`/`r`).
-
-```yaml
-verified_against:
-  - citation: reference/palace/palace/linalg/distrelaxation.hpp:23-30
-    verdict: supports
-    audited_at: 2026-06-07T072951Z
-    note: Hiptmair-distributive-relaxation header comment + class decl; the kernel-impl IS the Hiptmair distributive smoother realizing the relaxation slot; citecheck --anchor zero-drift (comment :24, class :30).
-  - citation: reference/palace/palace/linalg/distrelaxation.cpp:13-36
-    verdict: supports
-    audited_at: 2026-06-07T072951Z
-    note: ctor — the two ChebyshevSmoother / ChebyshevSmoother1stKind point-smoothers B, B_G (GS-free by construction, realizing the kernel-api GS-free route); B_G->SetInitialGuess(false) :35; close brace :36; citecheck zero-drift.
-  - citation: reference/palace/palace/linalg/distrelaxation.cpp:38-69
-    verdict: supports
-    audited_at: 2026-06-07T072951Z
-    note: SetOperators — A/A_G capture (:49-50), auxiliary essential-dof set dbc_tdof_list_G (:61), B/B_G SetOperator (:64-65); close brace :69; citecheck zero-drift.
-  - citation: reference/palace/palace/linalg/distrelaxation.cpp:101-119
-    verdict: supports
-    audited_at: 2026-06-07T072951Z
-    note: Mult2 relaxation action body — primary leg y=y+B(x-Ay) (:104-106), auxiliary leg y=y+G B_G Gt(x-Ay) (A->Mult :109, AXPBY :110, Gt :111, ess-pin :112-115, B_G :116, G prolong-add :117); close brace :119; per-leg anchors all citecheck zero-drift.
-  - citation: reference/palace/palace/linalg/distrelaxation.cpp:121-151
-    verdict: supports
-    audited_at: 2026-06-07T072951Z
-    note: MultTranspose2 reversed-order transpose action (basis for the not-symmetric-in-general non-law + SSOR forward+transpose-pair idiom); function close brace at :151 on disk (chapter prose cites :152 — END +1 drift, see Change 2).
-  - citation: reference/palace/palace/linalg/chebyshev.hpp:82
-    verdict: supports
-    audited_at: 2026-06-07T072951Z
-    note: Adams et al. 2003 polynomial-versus-Gauss-Seidel citation — the kernel-api correspondence anchor that the realized relaxation is GS-free by design; citecheck --anchor zero-drift.
-  - citation: reference/palace/palace/linalg/amg.cpp:24
-    verdict: supports
-    audited_at: 2026-06-07T072951Z
-    note: GPU GS->l1-Jacobi flip (relax_type = 18) corroborating the GS triangular sweep is the non-removable kernel engineered around; citecheck --anchor zero-drift.
-  - citation: book/src/L1-L0/triangular-solve-obstruction.md
-    verdict: supports
-    audited_at: 2026-06-07T072951Z
-    note: kernel-api correspondence FAITHFUL — the impl realizes the relaxation-slot semantics the opaque GS-SSOR/sparse-triangular contract names, via a GS-free route; realizes-kernel-api edge is reference-class (NOT depends-on); the api theme stays obstruction (opaque-library-ownership). Scoped-coverage faithful (impl covers the Hiptmair distributive case; chebyshev/jacobi siblings realize the point-smoother cases of the same slot).
-```

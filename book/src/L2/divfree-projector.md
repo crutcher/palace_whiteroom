@@ -2,11 +2,6 @@
 layer: L2
 operator: divfree-projector
 firmness: firm
-# Graded-stack scheme: this L2 fusion-rotation floor lowers to the L1 divfree-projector
-# gate (lowers-to depends-on) AND through the L2>L1 lowering theme (mirrors how L1 ops reach
-# their L1>L0 theme). Its inner gate is the firm L2 ksp_solve (depends-on). Edges to the L3
-# consumer + L1 step-anchors + concepts are navigational references. All depends-on targets
-# firm (rank 3); this node firm (rank 3); well-foundedness holds.
 rank: firm
 edges:
   depends-on:
@@ -47,32 +42,29 @@ projection rendered at that layer — a fixed four-step composition over an opaq
 projector value, with the **one** kernel fusion in its body (the step-4 apply-and-accumulate)
 de-fused back into the base `apply_linop ▷ axpy` composition (see § "Fusion note").
 
-This entry is a **floor entry** authored under the 2026-05-31 foundation-first directive. Its
-purpose is floor *presence*: the firm L3 [`divfree-projector`](../L3/divfree-projector.md)
-(the iteration-rotation gate, consumed inside the eigensolver projection slot) and the firm L1
+This entry is a **floor entry**. Its purpose is floor *presence*: the firm L3
+[`divfree-projector`](../L3/divfree-projector.md) (the iteration-rotation gate, consumed inside
+the eigensolver projection slot) and the firm L1
 [`divfree-projector`](../L1/divfree-projector.md) (the mutation-rotation gate) sandwich a layer
-at which the projector had no chapter. The L3 entry's frontmatter records the gap explicitly
-("no interposed L2 entry … `book/src/L2/divfree-projector.md` does not exist"); this dispatch
-fills it so the lowering chain L3 → L2 → L1 has a present chapter at every adjacent edge, and
-the L3 gate lowers to an adjacent L2 parent rather than non-adjacently to L1.
+at which the projector had no chapter. The L2 entry fills it so the lowering chain L3 → L2 → L1
+has a present chapter at every adjacent edge, and the L3 gate lowers to an adjacent L2 parent
+rather than non-adjacently to L1.
 
-`divfree-projector` is **defined in L2 vocabulary** here (high→low discipline, CLAUDE.md
-§Methodology invariants "Layers are defined high→low"): the signature, semantics, and
-algebraic laws are stated at the L2 fusion-rotation resolution. The two adjacent rotations —
-how the L2 form lowers to L1 (where the in-place `Mult(VecType &y)` mutation idiom and the
-construction-bound `psi`/`rhs` scratch reappear) and how the L3 form lowers to L2 — are
-narrated by the separate lowering themes (the D9 dispatch this cycle authors the L2>L1 and
-L3>L2 edges). This chapter does not define `divfree-projector` in terms of L1 primitives.
+`divfree-projector` is **defined in L2 vocabulary** here (high→low discipline): the signature,
+semantics, and algebraic laws are stated at the L2 fusion-rotation resolution. The two adjacent
+rotations — how the L2 form lowers to L1 (where the in-place `Mult(VecType &y)` mutation idiom
+and the construction-bound `psi`/`rhs` scratch reappear) and how the L3 form lowers to L2 — are
+narrated by the separate lowering themes. This chapter does not define `divfree-projector` in
+terms of L1 primitives.
 
 The L1 entry [`L1/divfree-projector`](../L1/divfree-projector.md) is authoritative on every
 factual claim about the Palace surface (the construction chain, the empty-boundary
-synthetic single-dof pin, the `WeakDiv = -Gᵀ` sign convention with its cycle-014
-lowering-verifier positive anchoring, the complete L0 evidence list). This L2 entry adds
-**fusion-rotation framing** and does not duplicate those Palace-surface details.
+synthetic single-dof pin, the `WeakDiv = -Gᵀ` sign convention, the complete L0 evidence list).
+This L2 entry adds **fusion-rotation framing** and does not duplicate those Palace-surface details.
 
 ### Standalone gate — no fold-parent
 
-Unlike the cycle-041 BLAS-1 floors ([`dot`](./inner_product.md#specializations) / [`nrm2`](./inner_product.md#consumer-nrm2-and-matrix-weighted-norm) /
+Unlike the BLAS-1 floors ([`dot`](./inner_product.md#specializations) / [`nrm2`](./inner_product.md#consumer-nrm2-and-matrix-weighted-norm) /
 [`scal`](./linear_combination.md#arity-specializations)), which are leaves / consumers of the `inner_product` /
 `linear_combination` fold cohort and carry a load-bearing do-NOT-merge boundary,
 `divfree-projector` is **not a member of any fold cohort**. It is a **constructed-operator
@@ -272,8 +264,7 @@ Laws that explicitly **do not** hold (inherited unchanged from L1, both load-bea
   `palace/fem/integ/mixedvecgrad.cpp:202` (versus the non-negated `MixedVectorGradientIntegrator`,
   `palace/fem/integ/mixedvecgrad.cpp:142`). A flipped L0 sign would invert the correction
   direction. Property of the constructed `WeakDiv` operator, honored verbatim at L2 and
-  positively re-derived from Palace source (cycle-014 lowering-verifier audit; the `WeakDiv =
-  -Gᵀ` reading is anchored, not inferred).
+  positively re-derived from Palace source (the `WeakDiv = -Gᵀ` reading is anchored, not inferred).
 
 - **Step ordering.** The essential-BC zeroing `Z_{bdr_eff}` must compose *after* `WeakDiv·y`
   and *before* the inner `ksp_solve` (`palace/linalg/divfree.cpp:159-175`). Reordering changes
@@ -291,7 +282,7 @@ new laws or non-laws, which is what makes the L2↔L1 hop identity-in-form on th
 
 **Same-layer (L2):**
 
-- [`ksp_solve`](./ksp_solve.md) (firm cycle-021) — the inner projected H1 solve `P.M · ψ = rhs`
+- [`ksp_solve`](./ksp_solve.md) (firm) — the inner projected H1 solve `P.M · ψ = rhs`
   (step 3, `palace/linalg/divfree.cpp:175`). **Direct, load-bearing dependency**: this is the
   nested-constructed-operator gate's inner gate. The CG iteration internal to `ksp_solve` is the
   standard outer-loop `sequential-obstruction`; it is interior to `ksp_solve` and **does not
@@ -326,10 +317,10 @@ folded into any L2 expression.
 
 **No fold-parent.** `divfree-projector` is a standalone constructed-operator gate, not a member
 of the `inner_product` / `linear_combination` fold cohort; there is no fold-parent dependency
-and no do-NOT-merge boundary (contrast the cycle-041 BLAS-1 floors [`dot`](./inner_product.md#specializations) /
+and no do-NOT-merge boundary (contrast the BLAS-1 floors [`dot`](./inner_product.md#specializations) /
 [`nrm2`](./inner_product.md#consumer-nrm2-and-matrix-weighted-norm) / [`scal`](./linear_combination.md#arity-specializations)).
 
-**L1 anchor:** [`L1/divfree-projector`](../L1/divfree-projector.md) (firm cycle-015) —
+**L1 anchor:** [`L1/divfree-projector`](../L1/divfree-projector.md) (firm) —
 authoritative on the Palace surface, the construction chain, the empty-boundary single-dof pin,
 the `WeakDiv` sign convention, and the complete L0 evidence list. The L2 entry does not
 duplicate those details.
@@ -365,55 +356,13 @@ The variant-axis profile (one orthogonal + one absorbed) matches the L1 and L3 e
 own loop-shaping variant axes are interior to that gate, absorbed into `P.ksp` at construction;
 they are not `divfree-projector` axes.)
 
-## Status
+## Stale-doc caveat
 
-`firm` — the L2 form is value-thread-isomorphic to the firm L1 leaf
-[`L1/divfree-projector`](../L1/divfree-projector.md) and the firm L3
-[`divfree-projector`](../L3/divfree-projector.md) on the constructed-operator-gate apply
-(identity-in-form rotation, modulo the one value-preserving step-4 de-fusion). Every algebraic
-law is inherited unchanged from the firm L1 entry — the linearity / idempotence / range /
-M-orthogonality / real-linearity laws follow from the defining condition stated in the source
-(`palace/linalg/divfree.hpp:28-31`) and the SPD property asserted in the source
-(`palace/linalg/divfree.cpp:119`), and the two load-bearing non-laws (the `WeakDiv` sign
-convention, positively anchored by the cycle-014 lowering-verifier audit, and the step ordering)
-transport unchanged.
-
-This is a **moderate floor entry** (not a pure-thin one) authored under the 2026-05-31
-foundation-first directive: it carries **one genuine fusion-rotation claim** — the step-4
-`Grad->AddMult(ψ, y, 1.0)` apply-and-accumulate de-fused into `apply_linop(P.Grad, ψ) ▷ axpy`
-(§ "Fusion note") — beyond the bare floor-presence the cycle-041 BLAS-1 floors carry. The
-fusion is value-preserving, so it does not perturb the algebraic profile. No other kernel fusion
-exists in the projector body (no cache-blocking, SIMD, packed-format, or batched-BLAS trick; the
-inner solve's fused kernels are interior to `ksp_solve`), and the four-step composition is
-already explicit at L1/L3 — so the entry does not expose a fusion the L1 form hides. Its purpose
-is floor *presence* so the firm L3 [`divfree-projector`](../L3/divfree-projector.md) gate rests
-on an adjacent L2 parent (per CLAUDE.md §Methodology invariants **Identity-lowerings still
-require both L levels**) rather than skipping a layer down to L1, plus the explicit `AddMult`
-de-fusion.
-
-The firm-on-positive-structure precedent (the firm L1 `divfree-projector`, whose previously
-sign-contingent idempotence sub-law was positively anchored by the cycle-014 lowering-verifier
-audit and promoted to firm cycle-015) governs the absence of a dedicated `test-divfree.cpp`
-under `reference/palace/test/unit/`: every L2 law is a syntactic identity transported from the
-firm L1 entry, whose laws read off positive source — not literature-inferred convergence claims —
-so the missing dedicated test does not gate firm. The `WeakDiv` sign is cross-validated against
-MFEM at `test/unit/test-libceed.cpp:905-916` (L0-equivalent coverage). Behaviour is exercised
-through integration paths only — the eigensolver projection call site
-(`palace/drivers/eigensolver.cpp:260-262`).
-
-**Caveats (not status reductions):**
-
-- The inner `ksp_solve`'s outer-loop `sequential-obstruction` is carried **by reference**; it is
-  **not** an algebraic non-law of this gate. The projector's own apply is a fixed straight-line
-  four-step composition with no projector-level loop. The obstruction's home is the firm L2
-  [`ksp_solve`](./ksp_solve.md) entry; this gate composes against it (the fidelity rule), neither
-  introducing nor erasing it — exactly as the firm L3 entry requires.
-- The `Mult` class doc comment `palace/linalg/divfree.hpp:64-66` describing the output as "the
-  irrotational portion … satisfying ∇ × y = 0" is **stale/misleading** relative to the
-  implemented divergence-free behaviour (a Palace-internal documentation inconsistency, OQ
-  `divfree-mult-doc-irrotational-vs-divfree-stale`, inherited from the L1/L3 entries; the
-  per-method doc is **inverted** relative to the authoritative class doc); the implemented and L2
-  semantics are the divergence-free target of the class doc `palace/linalg/divfree.hpp:28-31`.
+The `Mult` class doc comment `palace/linalg/divfree.hpp:64-66` describing the output as "the
+irrotational portion … satisfying ∇ × y = 0" is **stale/misleading** relative to the implemented
+divergence-free behaviour (a Palace-internal documentation inconsistency; the per-method doc is
+**inverted** relative to the authoritative class doc); the implemented and L2 semantics are the
+divergence-free target of the class doc `palace/linalg/divfree.hpp:28-31`.
 
 ## L2 vs L1 distinction
 
@@ -441,51 +390,43 @@ both L levels") requires the L2 entry to exist so the firm L3 gate has an adjace
 The L2 form is value-thread-isomorphic to the firm L1 form (per the identity-in-form rotation on
 the constructed-operator-gate apply, modulo the one value-preserving step-4 de-fusion); all L0
 evidence is transitive through L1. Direct citations relevant to this L2 entry (paths relative to
-`reference/palace/`; L0 ranges self-verified via `tools/citecheck/citecheck.py --anchor` this
-invocation):
+`reference/palace/`):
 
-- [`book/src/L1/divfree-projector.md`](../L1/divfree-projector.md) (firm cycle-015) —
+- [`book/src/L1/divfree-projector.md`](../L1/divfree-projector.md) (firm) —
   authoritative on the Palace surface, the signature, the algebraic laws (inherited unchanged at
   L2), the variant axes (inherited unchanged at L2), the `WeakDiv` sign convention, and the
   complete L0 evidence list.
-- [`book/src/L3/divfree-projector.md`](../L3/divfree-projector.md) (firm cycle-038) — the L3
+- [`book/src/L3/divfree-projector.md`](../L3/divfree-projector.md) (firm) — the L3
   consumer this floor goes under; the iteration-rotation gate whose adjacent L2 parent this entry
-  supplies; the carried-by-reference obstruction discipline this entry honors. Its frontmatter
-  records the now-closed gap ("no interposed L2 entry … `book/src/L2/divfree-projector.md` does
-  not exist").
+  supplies; the carried-by-reference obstruction discipline this entry honors.
 - [`book/src/L2/index.md`](./index.md) — the dep-map + the constructed-operator-gate / floor
-  motif framing; the cycle-041 BLAS-1-floor cohort note (the standalone-vs-fold-member contrast).
-- [`book/src/L2/ksp_solve.md`](./ksp_solve.md) (firm cycle-021) — the inner gate this projector
+  motif framing; the BLAS-1-floor cohort note (the standalone-vs-fold-member contrast).
+- [`book/src/L2/ksp_solve.md`](./ksp_solve.md) (firm) — the inner gate this projector
   delegates to; the home of the carried `sequential-obstruction`.
 - `palace/linalg/divfree.cpp:155-187` — `DivFreeSolver<VecType>::Mult(VecType &y)`: the four-step
   apply the L2 composition floors. Step 1 `WeakDiv->Mult` (`:159-168`, complex Re/Im at
   `:162-163`, real at `:167`); step 2 `SetSubVector` zeroing (`:171-174`); step 3 inner
   `ksp->Mult(rhs, psi)` (`:175`); step 4 `Grad->AddMult(ψ, y, 1.0)` (`:177-186`, complex at
-  `:180-181`, real at `:185`). **Self-verified — anchor `Mult` at lines [155, 162, 163, 167, 175,
-  180, 181, 185].**
+  `:180-181`, real at `:185`).
 - `palace/linalg/divfree.cpp:175` — `ksp->Mult(rhs, psi);` — the opaque inner
   [`ksp_solve`](./ksp_solve.md) action (step 3); the nested-gate inner-solve invocation carrying
-  the `sequential-obstruction` by reference. **Self-verified — anchor `ksp`.**
+  the `sequential-obstruction` by reference.
 - `palace/linalg/divfree.cpp:43-152` — the construction body building `M`, `WeakDiv`, `Grad`,
   `bdr_eff`, and the inner `ksp` solver into the opaque `DivFreeProjector` closure (setup, not L2
   apply content; the `ksp` setup at `:121-149`, `WeakDiv` at `:111-116`, `M` at `:84-110`, `Grad`
-  at `:117`). **Self-verified — anchors `DivFreeSolver` at :43-152, `ksp` at :121-149, `WeakDiv`
-  at :111-116, `Diffusion` at :84-110, `Grad` at :117.**
+  at `:117`).
 - `palace/linalg/divfree.cpp:189-190` — `template class DivFreeSolver<Vector>;` /
-  `<ComplexVector>;` — the element-type variant axis instantiation. **Self-verified — anchor
-  `DivFreeSolver`.**
+  `<ComplexVector>;` — the element-type variant axis instantiation.
 - `palace/linalg/divfree.hpp:28-31` — class doc: the defining divergence-free condition
-  `Gᵀ M x = 0`, the range, and the kernel (gradient nullspace). **Self-verified — anchor
-  `divergence`.** The source of laws 2/3/4.
+  `Gᵀ M x = 0`, the range, and the kernel (gradient nullspace). The source of laws 2/3/4.
 - `palace/linalg/divfree.cpp:119` — `// … real and SPD.` — `P.M` SPD, justifying the
-  M-inner-product / M-orthogonality (law 4). **Self-verified — anchor `SPD`.**
+  M-inner-product / M-orthogonality (law 4).
 - `palace/fem/integrator.hpp:217` — `// Integrator for a(u, v) = -(Q u, grad v) for u in
   H(curl) and v in H1.` (the weak-div bilinear form; the negating sign in Palace source).
-  **Self-verified — anchor `grad`.**
 - `palace/fem/integ/mixedvecgrad.cpp:202` — `PopulateCoefficientContext(space_dim, Q, transpose,
-  -1.0)` (the `-1.0` materializing the weak-divergence sign). **Self-verified — anchor `-1.0`.**
+  -1.0)` (the `-1.0` materializing the weak-divergence sign).
 - `palace/fem/integ/mixedvecgrad.cpp:142` — sibling `MixedVectorGradientIntegrator` with NO
-  `-1.0` (the side-by-side sign contrast). **Self-verified — anchor `PopulateCoefficientContext`.**
+  `-1.0` (the side-by-side sign contrast).
 - `palace/drivers/eigensolver.cpp:260-262` — the `divfree->Mult(v0)` initial-vector projection
   call site (the integration-path behaviour exercise).
 - `test/unit/test-libceed.cpp:905-916` — Palace's `MixedVectorWeakDivergenceIntegrator`

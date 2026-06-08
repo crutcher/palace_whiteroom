@@ -158,8 +158,8 @@ arg-1-conjugated `dot` convention `⟨x, y⟩ = xᴴ y` (`book/src/L1/dot.md:43`
 the C++ arg-2 (`X[j]`) is conjugated, which is the L1 `dot`'s arg-1 once the call is re-ordered.
 The Gram entry is `G(i,j) = X[i]ᴴ X[j]` (`palace/linalg/nleps.cpp:529`,
 `linalg::Dot(GetComm(), X[i], X[j])`), consistent. Pinning the conjugation once here is the
-simplification this combinator buys the NLEPS lowering (the cycle-020 census found
-`:522, :529, :568` all load-bearing-conjugation-sensitive).
+simplification this combinator buys the NLEPS lowering (`:522, :529, :568` are all
+load-bearing-conjugation-sensitive).
 
 **(3) The big-space back-projection avoids a fresh temporary.** The source applies the
 subtraction `x1 ← x1 − X·(…)` via `MatVecMult` into a temporary then `AXPY(-1, …, x1)`
@@ -249,9 +249,9 @@ Laws that explicitly **do NOT** hold:
 
 **They are RELATED but DISTINCT. Do NOT collapse them into one combinator.** Both project a
 vector against a subspace `span(X)`, and there is a tempting identity
-`orthogonalize = deflate` with `gram = I` (orthonormal basis). The cycle-021 combinator-miner
-proposal flagged this collapse explicitly as an **over-unification to avoid**, and this entry
-preserves the distinction. They differ along three load-bearing axes:
+`orthogonalize = deflate` with `gram = I` (orthonormal basis). This collapse is an
+**over-unification to avoid**; the distinction is preserved. They differ along three
+load-bearing axes:
 
 | Axis | [`orthogonalize`](./orthogonalize.md) (L2, firm) | `deflate` (this entry) |
 |---|---|---|
@@ -267,9 +267,8 @@ result (the §Algebraic-laws "orthogonality of the projector" non-law). They sha
 (both extract coordinates via `dot`; both reconstruct via a `linear_combination`-shaped
 `X·coords`), and `gram` is the shared Gram-matrix builder — but the **solve** step differs
 fundamentally (sequential rank-1 subtraction vs Gram-`lu_solve`). The
-[`same-layer-cross-cutter`](../../../scaffolding/priorities.md) may later record the
-`orthogonalize = deflate|_{gram=I}` specialization *edge* as a cross-reference, but the two
-entries stay distinct (precedent: the `inner_product` / `linear_combination` do-NOT-merge
+`orthogonalize = deflate|_{gram=I}` specialization *edge* is recordable as a cross-reference,
+but the two entries stay distinct (precedent: the `inner_product` / `linear_combination` do-NOT-merge
 boundary, `book/src/L2/index.md:22-26`; the `orthogonalize` Householder scope-out,
 `book/src/L2/orthogonalize.md:301`). The L1 [`nleps_deflated_residual`](../L1/nleps_deflated_residual.md)
 entry records the *same* over-unification guard from the other direction
@@ -279,15 +278,15 @@ entry records the *same* over-unification guard from the other direction
 
 L2 dependencies (other L2 vocabulary or below):
 
-- [`gram`](./gram.md) (L2, firm cycle-022) — the Gram-matrix constructor `XᴴX` (the all-pairs
+- [`gram`](./gram.md) (L2, firm) — the Gram-matrix constructor `XᴴX` (the all-pairs
   `inner_product` fold, `palace/linalg/nleps.cpp:526-531`). `deflate` consumes the Gram as the
   coefficient matrix of the coordinate solve.
-- [`lu_solve`](../L1/lu_solve.md) (L1, firm cycle-022) — the small-dense `k×k`
+- [`lu_solve`](../L1/lu_solve.md) (L1, firm) — the small-dense `k×k`
   factor-and-solve against the Gram (Galerkin core) or the Schur block `S` and Schur-modified
   Gram `SS` (NLEPS form). The `Eigen::fullPivLu().solve` at `palace/linalg/nleps.cpp:533-535`.
   Distinct from the iterative big-space [`ksp_solve`](../L1/ksp_solve.md). The factorization
   kernel (full-pivot LU) is `lu_solve`'s contracted load-bearing axis, inherited.
-- [`linear_combination`](./linear_combination.md) (L2, firm cycle-018) — the `X·coords`
+- [`linear_combination`](./linear_combination.md) (L2, firm) — the `X·coords`
   back-projection, a length-`k` linear combination over the basis columns (the
   `MatVecMult(X, ·)` at `palace/linalg/nleps.cpp:329-347`, called at `:535`). The final `v − …`
   subtraction is the `axpy`-shaped term of the same fold.
@@ -302,7 +301,7 @@ Related-but-distinct (do **NOT** merge):
 
 - [`orthogonalize`](./orthogonalize.md) (L2, firm) — the orthonormal-basis specialization
   (`gram = I`) by a different algorithm. See § Over-unification guard.
-- [`nleps_deflated_residual`](../L1/nleps_deflated_residual.md) (L1, firm cycle-022) — shares
+- [`nleps_deflated_residual`](../L1/nleps_deflated_residual.md) (L1, firm) — shares
   the `Xᴴ·` / `X·` constituents but computes an extended-NEP-operator *residual*, not a
   projection. The shared constituents are the unification surface; the operators stay distinct
   (`book/src/L1/nleps_deflated_residual.md:109`).
@@ -313,19 +312,11 @@ Consumers (the surfaces that fold or call this composition):
   projection inside `deflated_solve` (`palace/linalg/nleps.cpp:505-537`); the residual
   back-projection and the Jacobian deflation terms reuse the `X·(S⁻¹·)` back-projection half
   (`palace/linalg/nleps.cpp:563`, `:666-667` — the latter two are the back-projection without a
-  fresh coordinate extraction, the carried-coordinate motif). The NLEPS L1>L0 lowering
-  (forthcoming) narrates the fused block.
-
-L2>L1 lowering theme (forthcoming; abstractor work, **not** authored here): an
-`L2-L1/deflate-composition-lowering` theme will narrate how the named L2 composition lowers
-into the fused `deflated_solve` block — the Gram double-loop, the three `fullPivLu().solve`
-calls, the `MatVecMult` + `AXPY`. Plain-text forward-reference only — that chapter does not yet
-exist.
+  fresh coordinate extraction, the carried-coordinate motif).
 
 ## Variant axes
 
-Following the [`classify-variant-axis`](../../../skills/classify-variant-axis/SKILL.md) output
-contract (per-axis-value: absorption path, load-bearing primitive, state binding):
+Per-axis-value: absorption path, load-bearing primitive, state binding.
 
 - **`op.block` ∈ {`Galerkin`, `Schur`}** (the **central, partly-constructive** axis): the
   coordinate-solve block.
@@ -361,58 +352,35 @@ contract (per-axis-value: absorption path, load-bearing primitive, state binding
 
 ## Status
 
-`partly-constructive` — the **structural decomposition is firm** and the **generic-Galerkin-core
-sub-part is constructive** (literature-anchored, not positively sourced).
+`partly-constructive` — the **structural decomposition is firm** (the Schur-form pipeline) and
+the **generic Galerkin-core sub-part is constructive** (literature-anchored, not positively
+sourced).
 
-- **Firm part** (the Schur-form pipeline): the `coords ▷ schur-solve ▷ back-project`
-  composition is read directly from a **positive** Palace source site — the `deflated_solve`
-  lambda (`palace/linalg/nleps.cpp:505-537`), with the source's own block-elimination comment
-  (`:508-513`) naming the Schur complement `SS = (B − A T⁻¹ U) = −XᴴX·S⁻¹` in its own words.
-  Every constituent is read, not constructed: the coordinate extraction is a positive
-  `linalg::Dot` loop (`:519-523`), the Gram build is a positive double-loop (`:526-531`), the
-  Schur block is a positive `S = λI − H` (`:532`), the three solves are positive
-  `fullPivLu().solve` calls (`:533-535`), the back-projection is a positive `MatVecMult` (`:535`,
-  `:329-347`), the subtraction is a positive `AXPY` (`:536`). The dependencies are all firm
-  vocabulary (`lu_solve`, `linear_combination`, `dot`; `inner_product` via `gram`). Laws 1–2
-  and 6 are syntactic identities on this positive source (linearity of a fixed composition of
-  linear maps; empty-basis branch).
+- **Firm part** (the Schur-form pipeline): the `coords ▷ schur-solve ▷ back-project` composition
+  is read directly from the positive `deflated_solve` lambda (`palace/linalg/nleps.cpp:505-537`),
+  every constituent read not constructed (coordinate extraction `:519-523`, Gram build `:526-531`,
+  Schur block `:532`, three `fullPivLu().solve` calls `:533-535`, back-projection `:535`,`:329-347`,
+  subtraction `:536`). Dependencies are all firm vocabulary (`lu_solve`, `linear_combination`,
+  `dot`; `inner_product` via `gram`).
 
-- **Constructive sub-part** (the generic Galerkin core `I − X(XᴴX)⁻¹Xᴴ`): the bare oblique
-  projector (the `op.block = Galerkin`, `S = I` case) and the projector-specific laws 3–5
-  (range-nulling, kernel/range, idempotence) are stated for it. This sub-part is **NOT** read
-  from a positive Palace site — Palace only exhibits the Schur-wrapped form. The Galerkin core
-  is materialized from (i) the deflation-scheme literature (Effenberger 2013 robust successive
-  eigenpair computation; Jarlebring–Koskela–Mele 2018 — `palace/linalg/nleps.cpp:354-362`),
-  which defines the oblique-Galerkin deflation projector the Schur form specializes, and
-  (ii) the **negative anchor** that no bare-Gram `(XᴴX)⁻¹` deflation solve appears anywhere in
-  Palace (`search_text` for a Gram-only deflation projection across `palace/linalg/*.cpp`
-  returns only the Schur-wrapped `nleps.cpp` block). The negative anchor is evidence **for** the
-  Galerkin core being a faithful `S = I` reconstruction of the positively-sourced Schur form; it
-  does NOT license asserting the Galerkin core as a positive Palace claim.
+- **Constructive sub-part** (the generic Galerkin core `I − X(XᴴX)⁻¹Xᴴ`, the `op.block = Galerkin`
+  / `S = I` case, and projector-specific laws 3–5): NOT read from a positive Palace site — Palace
+  only exhibits the Schur-wrapped form. Materialized from the deflation-scheme literature
+  (Effenberger 2013; Jarlebring–Koskela–Mele 2018 — `palace/linalg/nleps.cpp:354-362`) plus the
+  negative anchor that no bare-Gram `(XᴴX)⁻¹` deflation solve appears anywhere in Palace. The
+  negative anchor is evidence FOR a faithful `S = I` reconstruction; it does NOT license a
+  positive Palace claim.
 
-- **Promotion condition** (what makes the whole entry firm): a positive Palace source site that
-  exhibits the bare Galerkin deflation projector `I − X(XᴴX)⁻¹Xᴴ` directly (e.g. a future
-  linear-EVP deflation path, a preconditioner deflation, or a ROM Galerkin projection that uses
-  the Gram inverse without the `S = λI − H` Schur wrapping). Until such a site is dissected, the
-  Galerkin core stays constructive and the entry stays `partly-constructive`. Should the
-  decision be made to scope `deflate` to the NLEPS Schur form only (dropping the Galerkin
-  generalization), the entry would become `firm` on positive structure (the Schur pipeline) with
-  the Galerkin core demoted to a literature note — a `same-layer-cross-cutter` scope call, not
-  this dispatch's.
+- **Promotion condition**: a positive Palace source site exhibiting the bare Galerkin deflation
+  projector `I − X(XᴴX)⁻¹Xᴴ` directly (a future linear-EVP deflation path, a preconditioner
+  deflation, or a ROM Galerkin projection using the Gram inverse without the `S = λI − H` Schur
+  wrapping). Alternatively, scoping `deflate` to the NLEPS Schur form only would make the entry
+  `firm` on positive structure, with the Galerkin core demoted to a literature note.
 
-**Single-algorithm concentration** (noted, acceptable): all deflation-projection sites are in
-`nleps.cpp` (one solver) — the same concentration accepted for the firm
-`apply_nonlinear_pencil` / `nleps_deflated_residual`. The combinator's value is (a) pinning the
-load-bearing conjugation once for the NLEPS lowering and (b) naming the oblique-projection shape
-for anticipated reuse. The cross-algorithm fan-out is forecast, not yet observed; if a future
-scan finds no second Gram-`lu_solve` site, the Galerkin-generalization scope is the
-`same-layer-cross-cutter`'s call.
-
-**Test-coverage caveat** (inherited, non-gating on the firm part): NLEPS has zero dedicated unit
-tests (`search_text` for `QuasiNewton|nleps|fullPivLu|deflat` over `test/unit/**` returns no
-deflation-projection coverage). Per CLAUDE.md status guidance the absent test does not gate the
-syntactic-identity laws of the firm part (laws 1–2, 6 are operator-algebra facts). The gate on
-the whole entry is the missing **positive Galerkin source site**, not the missing test.
+All deflation-projection sites are in `nleps.cpp` (one solver), the same single-algorithm
+concentration accepted for `apply_nonlinear_pencil` / `nleps_deflated_residual`. NLEPS has no
+dedicated unit tests; the absent test does not gate the syntactic-identity laws of the firm part —
+the gate on the whole entry is the missing positive Galerkin source site.
 
 ## L2 vs L1 distinction
 
@@ -428,8 +396,7 @@ the whole entry is the missing **positive Galerkin source site**, not the missin
 
 ## Evidence
 
-All ranges `read_range`-verified and `tools/citecheck/citecheck.py`-anchor-checked this
-dispatch (paths relative to `reference/`):
+Paths relative to `reference/`:
 
 - `palace/linalg/nleps.cpp:505-537` — the `deflated_solve` lambda: the complete positive
   deflation-projection block. `auto deflated_solve =` at `:505`; closing `};` at `:537`.
@@ -479,24 +446,20 @@ dispatch (paths relative to `reference/`):
   2018 quasi-Newton at `:354`; Effenberger 2013 robust successive eigenpair computation at
   `:357`; SLEPc-NEP minimality index 1) — the literature anchor for the Schur form and the
   bare-Galerkin-core generalization (§ Status, constructive sub-part).
-- `book/src/L1/lu_solve.md` (firm, cycle-022) — the small-dense `k×k` solve dependency
+- `book/src/L1/lu_solve.md` (firm) — the small-dense `k×k` solve dependency
   (`:3` "small-dense"; RHS-linearity `:56`; multi-RHS column-wise `:58`; kernel-conditioning
   non-law `:63`; `A`-nonlinearity non-law `:64`). The `fullPivLu().solve` realization.
-- `book/src/L2/linear_combination.md` (firm, cycle-018) — the `X·coords` back-projection fold
+- `book/src/L2/linear_combination.md` (firm) — the `X·coords` back-projection fold
   (`MatVecMult` = length-`k` linear combination).
 - `book/src/L2/inner_product.md` (firm) — the scalar fold `gram` lifts to a matrix (via `gram`).
-- `book/src/L2/gram.md` (firm, cycle-022) — the Gram-matrix constructor `XᴴX` consumed as the
+- `book/src/L2/gram.md` (firm) — the Gram-matrix constructor `XᴴX` consumed as the
   coordinate-solve coefficient matrix.
 - `book/src/L2/orthogonalize.md` (firm) — the over-unification target: orthonormal-basis
   precondition (`:74`), the `project ▷ subtract` Gram-solve-free algorithm (`:114-142`),
   MGS column-order non-commutativity (`:224`), Householder scope-out boundary (`:301`).
 - `book/src/L1/dot.md:43` — the pinned `⟨x, y⟩ = xᴴ y` arg-1-conjugated convention (coordinate
   extraction; semantics point 2).
-- `book/src/L1/nleps_deflated_residual.md` (firm, cycle-022) — the related-but-distinct L1
+- `book/src/L1/nleps_deflated_residual.md` (firm) — the related-but-distinct L1
   residual sharing `deflate`'s constituents: the non-orthonormal-basis fact (`:60`), the
   over-unification guard from the other direction (`:109`).
-- `book/src/L2/index.md:54-56` — the `gram` (firm) / `deflate` dep-map rows (this dispatch
-  flips `deflate` to partly-constructive + a live link to `gram`).
-- `reports/2026-05-29T051532Z-combinator-miner-deflate-gram/CYCLE.md` (integrated, commit
-  `881f200`) — the proposing combinator report (the shape, the over-unification guard, the
-  `project_oblique`-vs-Schur factoring OQ this dispatch decides).
+- `book/src/L2/index.md:54-56` — the `gram` / `deflate` dep-map rows.
