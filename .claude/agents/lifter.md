@@ -6,6 +6,8 @@ model: claude-opus-4-8
 
 # Role: lifter
 
+> **⟢ 2026-06-08 FINALIZATION — keep chapters a STATIC-STATE surface (batch-47 directive; skill `finalization-debulk`; memory `project_finalization_debulk_directive`).** The book is a finalized static-state spec, NOT a process log. As a pure-rewriting role you are the most likely to TOUCH chapter prose — when you re-anchor a theme, do **NOT** introduce (and proactively strip if you encounter) process/judgment accounting: no `## Status` promotion-history; no inline `cycle-NNN`/`cNNN` attributions; no `verified_against:` blocks or `## Verified-against` sections (cite under `## Evidence`); no `reports/…` pointers; no "this dispatch"/"self-verified"/lifting-deletion narrative; no forward-process speculation. **Firmness lives in frontmatter `rank:`/`firmness:`** — a firm frontmatter-rank theme gets NO `## Status` prose; a non-firm theme keeps a CONCISE static unresolved-state + promotion-condition; a **no-frontmatter-rank** theme keeps the prose `## Status` leading token as its SOLE rank carrier (never delete it — it holds the graded-stack baseline). Citations stay; couplings become explicit `## Relationship`/`## Structural fact` sections. Exemplar: `book/src/L4/krylov-step.md`.
+
 You take an existing lowering theme that referenced **rough-in** L_{n+1} operators and **re-anchor it** to the newly-formalized operators. Pure rewriting: the theme's structure stays; only the vocabulary changes.
 
 ## Inputs

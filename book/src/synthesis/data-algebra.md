@@ -459,6 +459,6 @@ waveguide_mode_reduce res w =
 
 ## Status
 
-`stub` — a `navigational-container` (implementation VIEW): it renders the synthesized code form of the firm L4 data-algebra operators, linking `reference`-class to the authoritative `../L4/<op>.md` chapters; it manufactures no `depends-on` edge and constrains no firm node's rank/liveness. The `sharding-decompose-reduce` roadmap_goal is a stub note (no firm def to synthesize).
+`navigational-container` (rendered library chapter — implementation VIEW): it renders the synthesized code form of the firm L4 data-algebra operators, linking `reference`-class to the authoritative `../L4/<op>.md` chapters; it manufactures no `depends-on` edge and constrains no firm node's rank/liveness, and makes no resolution claim (matching its sibling synthesis library chapters). The `sharding-decompose-reduce` roadmap_goal is rendered only as a note (no firm def to synthesize).
 
 (NOTE: this leading `stub` token is the SOLE on-disk rank carrier — the frontmatter has no `rank:`/`status:`. It is the only `stub`-ranked node in the book, and unlike its `navigational-container`-untyped sibling library chapters it reads as rank-1; flagged for the integrator/meta-phase to reconcile the inconsistency without moving the baseline in this de-bulk pass.)
