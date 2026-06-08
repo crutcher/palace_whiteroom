@@ -192,4 +192,36 @@ verified_against:
     verdict: realizes-kernel-api-faithful
     audited_at: 2026-06-07T120000Z
     note: c124-D2 follow-up — the new nleps-deflated-eigensolve consumer (c124-D1) wires the FIRST blocking depends-on edge to this impl (the linear-eigensolve seed, nleps.cpp:470-474). The seed edge is faithful (the NEP loop genuinely averages eigenvectors[] linear-eigensolve outputs at :471). This grounds eigsolve-impl off the RE11 reference-only-reachable cohort — the intended RE11-discharge disposition, NOT decay. The realizes-kernel-api edges to L3/eigsolve + L4/eigsolve stay reference-class (re-confirmed on disk); no mistype to depends-on. The impl stays roadmap_goal (D1 did not promote); the prior c122 structural correspondence audit (above) is unaffected.
+  - citation: book/src/L3/eigsolve.md:189-195
+    verdict: realizes-kernel-api-faithful
+    audited_at: 2026-06-08T053000Z
+    note: c139-wave2 re-audit of the Hermitian inner-loop arm. (1) realizes-kernel-api edge eigsolve-impl -> eigsolve CONFIRMED reference-class on disk (eigsolve-impl.md:19-21 under reference:, NOT depends-on); no mistype, no manufactured rank constraint. (2) kernel-api status STAYS partial-obstruction + kernel-api role-label (eigsolve.md:4 firmness, :191 Status); UNDOWNGRADED by the impl existing. (3) No semantic restatement -- impl LINKS semantics/index.md sec3.7/3.8 + the L2/L3 laws, does not re-state. (4) Hermitian arm internally consistent with lanczos staying roadmap_goal -- op.hermitian -> lanczos_step (eigsolve-impl.md:81-82), problem-symmetry axis EPS_HEP/EPS_GHEP -> lanczos_step (:30), folds depends-on rank-0-on-rank-0 well-founded (:11-12). Obstruction PRESERVED.
+  - citation: book/src/L3/lanczos_step.md:5
+    verdict: supports
+    audited_at: 2026-06-08T053000Z
+    note: lanczos_step on-disk status roadmap_goal / rank roadmap_goal (NOT advanced off roadmap_goal -- the c139 D2 advance is in-place sharpening only). Therefore eigsolve-impl roadmap_goal->stub promotion condition does NOT fire this cycle; impl stays roadmap_goal; rank-0-on-rank-0 dependency well-founded.
+  - citation: reference/palace/palace/linalg/slepc.cpp:607
+    verdict: supports
+    audited_at: 2026-06-08T053000Z
+    note: EPS_HEP lands exact (citecheck --anchor OK). The Hermitian problem-symmetry token that selects the lanczos_step three-term arm.
+  - citation: reference/palace/palace/linalg/slepc.cpp:613
+    verdict: supports
+    audited_at: 2026-06-08T053000Z
+    note: EPS_GHEP lands exact (citecheck --anchor OK). The generalized-Hermitian token, the second lanczos_step-selecting pencil.
+  - citation: reference/palace/palace/linalg/slepc.cpp:635
+    verdict: supports
+    audited_at: 2026-06-08T053000Z
+    note: EPSKRYLOVSCHUR lands exact (citecheck --anchor OK). The default opaque eigen-iteration algorithm the impl reconstructs (thick-restart driver).
+  - citation: reference/palace/palace/linalg/slepc.cpp:694
+    verdict: supports
+    audited_at: 2026-06-08T053000Z
+    note: EPSSolve lands exact (citecheck --anchor OK). The opaque library iteration the kernel-api records as un-renderable; the impl's outer driver is the constructed equivalent.
+  - citation: reference/palace/palace/linalg/arpack.cpp:318
+    verdict: supports
+    audited_at: 2026-06-08T053000Z
+    note: naupd lands exact (citecheck --anchor OK). The ARPACK RCI inner basis-extension driver, library-owned in Palace.
+  - citation: reference/palace/palace/linalg/arpack.cpp:369
+    verdict: supports
+    audited_at: 2026-06-08T053000Z
+    note: neupd lands exact (citecheck --anchor OK). The post-iteration eigenpair extraction the impl's rayleigh_ritz/extract_eigpairs realizes.
 ```

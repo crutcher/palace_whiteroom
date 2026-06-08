@@ -1,6 +1,51 @@
-## 2026-05-26 cycle-139 — forward cg [L1→L2] — pass
+# cycle-139 — 2026-06-08 — batch-45 position 1/3 (OPENER): the WIDE ALL-FRONTS fan-out opens — and two of the four directed fronts are already landed
 
-- Synthesis: CG L1→L2 retroactive rotation_claims (4 claims: axpy/axpby family, apply_linop, dot, threaded-state compression) against on-disk L2 from cycle 1.
-- Verdict: pass.
-- Friction: none.
-- Structural change: applied: 1 lesson(s); 4 rotation_claim(s).
+**Batch-45 FIRST / OPENER primary cycle** of meta-batch-45 (cycles 139/140/141). The batch-45 meta-phase fires AFTER cycle-141's finalize, aggregating 139/140/141 as a separate dispatch/commit. The cycle counter does NOT reset.
+
+**Direction.** Batch-45 = **open ALL FOUR gated fronts at once** (USER DECISION 2026-06-07; `project_batch45_direction_open_all_gated_fronts`) — geometric-multigrid + AMR + eigsolve-impl + sharding-math-further, one **wide shared-exploration fan-out**. Standing gates held: **DIRECTIVE-1 MPI OUT**, **DIRECTIVE-3 kernel-API/impl**, the redirect's **no-forced-rectangular-pull-up**. The maintenance floor reverts to the steady-state surround.
+
+**The OPENER's planner-reshape finding (the headline).** TWO of the four directed fronts were **ALREADY SUBSTANTIALLY LANDED at batch-39**, verified on-disk by the cycle-139 cycle-planner:
+- **Front 1 (geometric-multigrid preconditioner):** `feature/geometric-multigrid-preconditioner.{L4,L1}.md` are `firm`; `L1/multigrid-relaxation-smoother.md` is `firm` (kernel-impl); the V-cycle pure recursion lives in the L1 feature column composing `L2/correction_step` (firm c122) per leg; **RE9/RE1/RE5/RE7/RE10 were ALL DISCHARGED batch-39**. No missing standalone V-cycle operator node — forcing one is a rectangular pull-up.
+- **Front 2 (AMR):** `L1-L0/amr-estimate-mark-refine.md` is `firm`; `L1/flux_recovery_estimate.md` + `L1/dorfler_mark.md` are `firm`.
+
+So the **substantive batch-45 forward content is fronts 3+4 + the shared-core finding + the synthesis follow-ups** — NOT a re-build of the landed fronts. (The human RATIFIED this intent-honoring plan 2026-06-08.)
+
+## What landed
+
+**D1 (`combinator-miner`, `iterate-while-basis-extension-shared-core`) — clean NO-COMBINATOR finding (verdict (b), NO book mutation).** The dominant shared substrate the four fronts share — the `iterate_while_L3`-over-basis-extension iteration shape — is **ALREADY lifted** as two firm combinators (`iterate_while_L3` driver + `correction_step` body); the 3 carry-shapes (GS-sweep / V-cycle recursion / eigsolve basis-extension) genuinely diverge; the `extend_while` candidate is rejected as identity-in-named-terms. 2 OQs: the durable negative verdict (`iterate-while-basis-extension-no-shared-combinator`) + an AMR-refinement-set-growth `iterate_while_L3`-rendering watch-item (re-check when the AMR consumer lands; lift-to-`iterate_while_L3`, NOT a new combinator).
+
+**D2 (`abstractor`, `lanczos-step-toward-promotion`) — 5 in-place edits to `book/src/L3/lanczos_step.md`.** §Signature operator-value spelling (the `LinOp[(S: ...), $S]` §1.2.2 square operator-VALUE form) / §Status two-arm promotion gate / §Relationship `:202` cross-ref / §Evidence + banner citation-drift fixes (the `:179`→`:202` carry-forward drift fully eliminated). **`lanczos_step` STAYS rank-0 `roadmap_goal`** — the redirect-correct floor: arm-A positive-structure promotion is structurally **UNSATISFIABLE** from the present `palace/` corpus (MINRES is an enum-only-stub, empty L0 RHS), so the live path is arm-B blocking-consumer wiring only. Consequently `eigsolve-impl`'s `roadmap_goal → stub` promotion **did NOT fire this cycle**. 2 OQs (`lanczos-step-arm-a-positive-structure-unsatisfiable-in-palace` + `eigsolve-impl-roadmap-goal-to-stub-not-fired-c139-lanczos-stays-roadmap-goal`).
+
+**D3 (`abstractor`, `sharding-decompose-reduce-solve-generalization-sketch`) — extended `book/src/L4/sharding-decompose-reduce.md` (STAYS rank-0 `roadmap_goal`).** Added the additive-Schwarz **SOLVE-generalization** of the sharding-as-decomposition-abstraction math. The 3 NEW firm solve roots (`L4/ksp_solve` / `L4/fold_solve` / `L4/krylov-step`) were added under `reference:` **ONLY** — NO `depends-on`, so no `rank(firm)=3 > rank(roadmap_goal)=0` violation is manufactured. **DIRECTIVE-1 held** (every MPI path mention confined to the deferred-future-mechanism accreting-context bullet + Evidence; none lifted). The solve-case recovery is recorded as an **honest config-conditional NON-law** — STRICTLY WEAKER than the reduce-case (block-diagonal exact / coupled approximate additive-Schwarz / overlapping p.o.u.-weighted); no free homomorphic-solve law claimed. 2 OQs (solve-case-recovery-weaker + compose-partition-pou-sketch-level).
+
+**D4 (`lowering-verifier`, `eigsolve-impl-realizes-kernel-api-reaudit-lanczos`) — audit-class FULLY-SUPPORTED.** Appended 8 `verified_against:` Hermitian-arm entries to `book/src/L3/eigsolve-impl.md` (195→227 lines; the 6 newly-cited Palace anchors — `slepc.cpp:607 EPS_HEP`/`:613 EPS_GHEP`/`:635 EPSKRYLOVSCHUR`/`:694 EPSSolve`, `arpack.cpp:318 naupd`/`:369 neupd` — all land EXACT). YAML round-trips clean (single top key, 16 entries, all 8 new carrying `audited_at`). The `realizes-kernel-api` edge stays `reference`-class; the kernel-api `L3/eigsolve` stays `partial-obstruction`, undowngraded. 0 NEW OQ (confirmations already covered by the sibling D2 OQs).
+
+**D5 (`layer-intro-author`, `synthesis-residual-content-fidelity-followups`) — 3 content-fidelity fixes across 5 files.** `L4/iterate-while-with-prev.md` (§Evidence `:233` stale `cg_solve` prototypical-call refreshed) + `L4/eigsolve.md` (`initial_state → initial_eig_state` at ALL 7 occurrences) + `L4/index.md` (the 2 eigsolve-cap occurrences flipped; the 4 `ksp_solve`/generic `solve_loop` `SimState` rows CORRECTLY left `initial_state`) + `synthesis/coordination.md` (the now-stale NOTE that pinned `eigsolve.md:44` re-phrased to record the upstream reconciliation landed) + `synthesis/types.md` (`units : Units` added to the `IoData` brace block). 3 parent c138 OQs DISCHARGED (DISCHARGED-c139 notes appended). **NOTE for the meta-phase:** CLOSE-RESOLVE the 3 parent OQ sections (ledger :2183/:2189/:2196) + retire their Backlog-Low plan-migration lines (:64/:65/:66) at the batch-45 unify pass.
+
+**D6 (`cross-layer-cross-cutter`, `maintenance-floor-batch-45-full-hygiene-sweep`) — MAINTENANCE FLOOR clean-bill (the once-per-batch full-hygiene sweep, placed at the OPENER to ground the wide arc's linter baseline).** Audit-class, NO book mutation (OQ append done in-dispatch). All 12 graded-stack baseline fields reproduce on-disk, both hard invariants hold, 3 `realizes-kernel-api` edges reference-class, DIRECTIVE-1 sharding-MPI boundary cited-not-lifted/intact, one deferred informational opportunistic-GC note (GROUND-don't-remove cohort the all-fronts consumer-wiring will itself collapse).
+
+## Build + linters
+
+- `cargo make book` (mdbook + linkcheck2): **EXIT 0.** **ONE build-repair** (step-5c): the **D2 §Signature edit re-introduced a `$`-sigil signature in an INDENTED (4-space) pseudocode block** (`lanczos_step :: LinOp[(S: ...), $S] -> ...`), which KaTeX ate — `class="katex"` appeared inside the `<pre>` in `L3/lanczos_step.html`. The surgical repair **converted the indented block to a fenced ` ```text ` block** per the standing convention (`project_katex_dollar_sigil_fence_requirement`); rebuild → step-5c PASS. ZERO dead links / linkcheck2 errors.
+- **Step-5c KaTeX `$`-sigil collision assertion: PASS (post-repair)** — `class="katex"` inside any `<pre>` block across ALL built HTML = **0**.
+- Only the pre-existing benign unclosed-HTML-tag WARNs (`<op>`/`<column>`/etc. in headings) + KaTeX/markdown-bracket "Potential incomplete link" WARNs in **untouched** files — long-standing, NOT this cycle's edits.
+- **Step-5b graded-stack linters (LANDED tree, authoritative; `--reference-reachable` tier):** both block-conditions **PASS** — `rank_violations: 0` (baseline fully discharged → any violation would be NEW; held 0) + NO newly-orphaned node (reachability IDENTICAL to c138). **ALL counts HELD EXACTLY vs c138 by design** (c139's edits are within-chapter content advances + reference-class outbound edges from an already-counted rank-0 node): `files=392, typed=331, untyped=61, roots=45, reachable=163, reference_reachable=247, rank_violations=0, unresolved=0, promotion_frontier=12, detritus=123 (HELD), true_detritus=51 (HELD), expected_unreachable_outside_dag=54 (HELD)`. Trend: `rank_violations` …→0 (c136)→0 (c137)→0 (c138)→0 (c139). D3's 3 reference-class solve-root edges point INTO already-reachable firm nodes — reference edges from a rank-0 node add no reachability mass, so `detritus` did NOT move (D6's forecast confirmed authoritatively post-landing).
+
+## Counts + process
+
+- NO vocabulary firm-count FLIP (no status/rank/edge change on any node; `lanczos_step` + `sharding-decompose-reduce` + `eigsolve-impl` all stay rank-0 `roadmap_goal`). front-3 (eigsolve-impl) did NOT promote. SLICE CORPUS: 0.
+- 6 of 6 dispatched-ready reports applied clean (6/6 staging rows == dispatched-ready — **120th consecutive clean staging**); zero deferrals / rejections / per-report gate-hits.
+- retroactive-budget global = 0; per-report gates all PASS/N/A; 0 implied-component stubs.
+- OQ activity (per-report integrators): 8 NEW OQs promoted (D1 two, D2 two, D3 two, D5 three discharge-notes minus the meta-note — net: D5 3 discharge-notes); 3 parent c138 OQs DISCHARGED (recorded for the meta-phase to close/migrate — finalize does not edit existing OQs per the write-authority partition).
+- ONE within-finalize build-repair (the lanczos_step fence conversion); ZERO consistency fixes.
+- The slice-era `cycle-139.md` (cycle-139 of the OLD slice-vertical numbering, dated 2026-05-26) was renamed to `cycle-139-slice-era.md` (c123–c138 precedent).
+- `scaffolding/{roadmap,integrator-signals,cycle-record}` + `log/` committed atomically + the 6 consumed-report `integrated_at` touches + `scaffolding/priorities.md` (cycle-139 planner reshape, co-owned) + `scaffolding/skill-candidates.md` (`cross-file-rename-completeness-sweep` proposal, any-agent-appendable); two-phase SHA-patch follows.
+
+## Carry to c140/c141 + the batch-45 meta (fires after c141)
+
+1. **front-3 (eigsolve-impl) did NOT promote** — `lanczos_step` stays `roadmap_goal` (arm-A positive-structure unsatisfiable in `palace/`; the live path is arm-B blocking-consumer). c140/c141 may carry an `eigsolve-impl` `roadmap_goal → stub` promotion ONLY if a positive grounding surfaces (it will NOT from MINRES).
+2. **The all-fronts reshaping disposition** — fronts 1 (GMG) + 2 (AMR) already firm/built at batch-39 (human-ratified plan 2026-06-08); the substantive batch-45 forward content is fronts 3+4 (eigsolve-impl advanced-but-gated; sharding-math solve-generalization sketched) + the D1 shared-core finding + the synthesis follow-ups. The batch-45 meta should render this.
+3. **D5 flagged the meta-phase** to CLOSE-RESOLVE 3 parent OQ sections + retire their Backlog-Low plan-migration lines at the batch-45 unify pass.
+4. **NO `.claude/agents/` changes from this finalize** → NO session restart needed before c140 (no meta-phase fires until after c141).
+
+The in-scope FEATURE-SURFACE SPINE remains L4-COMPLETE.

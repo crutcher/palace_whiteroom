@@ -223,10 +223,11 @@ The `Solve`-monadic outer-driver cap for the generalized eigenproblem. Unlike `k
 --   EigState         -- terminal: .pairs (converged (λ, x), original-problem coords), .converged / .status
 eigsolve :: OpParams -> Inputs -> EigState
 -- NOTE: the seed is `initial_eig_state` (the EigState constructor in the type block above),
--- DELIBERATELY eigen-specific. The authoritative L4 chapter (book/src/L4/eigsolve.md:44) writes
--- `initial_state inp`; here the cap threads `Solve a = StateT EigState Identity a`, so an
--- EigState-seeding constructor is the correct discharge (the L4 chapter's reuse of `initial_state`
--- for the EigState-threaded cap is a latent inconsistency to reconcile upstream — lowering-verifier).
+-- DELIBERATELY eigen-specific (the cap threads `Solve a = StateT EigState Identity a`, so an
+-- EigState-seeding constructor is the correct discharge). The authoritative L4 chapter
+-- (book/src/L4/eigsolve.md:44) now also writes `initial_eig_state inp` — the formerly-latent
+-- naming inconsistency (the L4 chapter once reused `initial_state` for the EigState-threaded cap)
+-- has been reconciled upstream; this render and the L4 chapter now agree.
 eigsolve op inp = execState (solve_loop op inp) (initial_eig_state inp)
   where
     -- outer driver: a SINGLE opaque library step + one classification (NOT a Palace tail-recursion).

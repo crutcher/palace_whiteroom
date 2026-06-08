@@ -31,7 +31,8 @@ Shared across **every** `drivers` column and the `coordination` caps (every solv
 -- The aggregate parsed once at startup; readonly across the whole solve.
 -- Authoritative schema + field strata + L0 home: concepts/config-record.md
 -- The five sub-record type names below are the synthesized (clean-room) renderings
--- of the authoritative `config::*Data` types (config-record.md:69-73):
+-- of the authoritative `config::*Data` types, plus the `Units` scale converter
+-- (config-record.md:69-74):
 --   ProblemConfig ≡ config::ProblemData,  ModelConfig ≡ config::ModelData,
 --   DomainConfig  ≡ config::DomainData,   BoundaryConfig ≡ config::BoundaryData,
 --   SolverConfig  ≡ config::SolverData.
@@ -40,7 +41,8 @@ IoData = {
   model      : ModelConfig,       -- mesh file + refinement + material assignment
   domains    : DomainConfig,      -- per-domain materials + postprocessing energy regions
   boundaries : BoundaryConfig,    -- BC surfaces (PEC/PMC/impedance/lumped-port/wave-port/…)
-  solver     : SolverConfig       -- linear/eigen/driven/transient solver settings + tolerances
+  solver     : SolverConfig,      -- linear/eigen/driven/transient solver settings + tolerances
+  units      : Units              -- SI ↔ nondimensional scale converter (set by nondimensionalization)
 }
 
 -- # Arguments / # Returns (utility API — construction-stratum only)
