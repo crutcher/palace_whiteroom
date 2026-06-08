@@ -1,0 +1,20 @@
+# Cycle-139 resume notes (post-batch-44 meta-phase)
+
+**SESSION RESTART REQUIRED before cycle-139.** The batch-44 meta-phase (post-cycle-138) enacted role-spec changes; the parent must restart the Claude Code session so the new agent definitions load before the next primary cycle. The restart also resets primary context (subsumes the retired `/compact` step — do NOT run a separate compaction).
+
+## Agent-defs changed (why the restart is needed)
+
+The SYNTHESIS chapter-KIND was codified into the role-specs (closing OQ `synthesis-chapter-kind-mechanics-role-spec-codification`):
+
+- **`.claude/agents/layer-intro-author.md`** — NEW `## SYNTHESIS` section: it is the primary authoring role for the `# Synthesis` Part (the synthesized-library implementation VIEW) — owns the Part shell + per-library intros + the `types`/`drivers` libraries; carries the full chapter-KIND mechanics (navigational-container `reference`-class edges only / no `status:` field on a filled chapter / 5-library partition / type-placement rule / completeness incl. deep-link-inline-unchanged + `#extern NAME`-after-type-sig / topological def order + `where`-clauses / the same-pass `synthesis/index.md` matrix-mirror-flip guard / `$`-sigil-fence).
+- **`.claude/agents/abstractor.md`** — NEW SYNTHESIS bullet in the L4-conventions section: renders per-operator synthesized def bodies into the 3 calculus libraries (implementation-VIEW, link-don't-restate, `#extern` for opaque kernels, deep-link-inline unchanged artifacts, type-placement, `reference`-edges-only).
+- **`.claude/agents/harvester.md`** — NEW SYNTHESIS bullet in the L4-conventions section (same per-operator-def-render discipline as abstractor; named-shape-group rule also called out).
+- **`.claude/agents/lowering-verifier.md`** — NEW `## SYNTHESIS` discipline bullet: the rendered-def↔L4 correspondence-audit duty (audit-class, faithfulness review; NOT a lowering-theme audit, no `verified_against:`/rank-check — a Synthesis chapter has no rank).
+
+## What the c139 planner should know
+
+- **The SYNTHESIS LEAD is substantively COMPLETE** — the `# Synthesis` Part is 6/6 bodied + whole-Part correspondence-audited (FULLY-SUPPORTED). The in-scope FEATURE-SURFACE SPINE remains L4-COMPLETE.
+- **§CENTRAL ASK is UNRESOLVED (fourth consecutive in-scope-complete batch)** — the forward direction awaits the human. The c139 planner LEADS with the (A) maintenance floor + the 3 migrated LOW Synthesis content-fidelity follow-ups (priorities.md CYCLE-139/batch-45 head item 1) as the steady-state default until the human selects.
+- **The 3 migrated LOW follow-ups** (opportunistic single-operator/shell touches, NOT a dedicated cycle): `iterate-while-with-prev-evidence-prose-stale-cg-call-shape` (harvester/lifter on `L4/iterate-while-with-prev.md:233`); `l4-eigsolve-initial-state-vs-initial-eig-state-seed-inconsistency` (abstractor on `L4/eigsolve.md:44`/`:97`); `synthesis-types-iodata-omits-units-field` (layer-intro-author shell pass on `synthesis/types.md`).
+- **Maintenance cadence (carried from batch-43):** per-BATCH full-hygiene sweep (folded into the meta-phase + at most one cross-cutter dispatch/batch) + the per-cycle integrator-finalize step-5b two-invariant tripwire. No dedicated maintenance-floor cross-cutter every cycle.
+- **Standing boundaries HELD:** DIRECTIVE-1 (MPI/sharding OUT of active scope); kernel-API/impl integrity (the 3 `realizes-kernel-api` edges stay `reference`-class); the RE set at its terminal in-scope state.

@@ -641,6 +641,27 @@ This shape is load-bearing, and it follows three principles:
 > consumer enters scope, or take a new substantive direction / re-scope / downstream-build handoff. The artifact has
 > reached steady-state in-scope completeness; the construction the stack was built to enable is now downstream of it.
 
+> **The bottom-up vocabulary is rendered as a synthesized library — the implementation VIEW (batch-44).** Cycles
+> 136/137/138 were the human's chosen response to the batch-43 done-ness recognition: rather than winding to maintenance,
+> add a *new substantive surface* — render the now-complete L4 vocabulary **as though it were a real implementation
+> library**. The new top-level `# Synthesis` Part (placed before `# Feature surfaces`) writes the spec's surface as
+> synthesized code in the L4 pseudo-language: six library chapters (a foundational `types`, the three calculus libraries
+> `iteration` / `data-algebra` / `coordination` mirroring the L4 doc-groups, and a top `drivers` library lifting the
+> entry-point surfaces), with concrete def bodies in topological order, deep-linked-unchanged lower artifacts rendered
+> inline (they *are* the implementation), and opaque kernels as `#extern` after their type signature. It is a **distinct
+> chapter kind** — an implementation VIEW, the mirror-image of the Feature spine's top-down entry-point VIEW: it *renders*
+> the synthesized code form and *links* to the authoritative defs (the L4 chapters / the semantic surface / the concept
+> pages), it does **not** restate semantics — the "define once" discipline holds (a Synthesis chapter that re-stated a law
+> would be the implementation-view analog of a degenerate identity-lowering). The whole Part landed complete and was
+> **rendered-def↔L4 correspondence-audited end to end** — the reviewability the directive mandates, made concrete: a
+> reviewer (and the `lowering-verifier`) reads the synthesized def and its authoritative chapter side by side and confirms
+> they match. The lesson the arc adds: once the bottom-up vocabulary and the top-down feature spine are both complete, the
+> *same* firm surface can be projected into a third view — generated-library code — that is the natural bridge toward the
+> downstream burn-component build the whole stack was constructed to enable. With Synthesis complete, the strategic forward
+> question returns for the *fourth consecutive batch*: wind to maintenance (the standing default), open a demand-gated
+> front only if its consumer enters scope, hand the now-complete spec + the synthesized-library view off downstream, or
+> take a new substantive direction / re-scope.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
