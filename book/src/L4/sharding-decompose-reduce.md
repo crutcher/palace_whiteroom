@@ -61,7 +61,10 @@ i.e. **`subdomain_reduce = mconcat ∘ map (reduce ∘ restrict_to_block) ∘ bl
 partition of the index set is a `++`-decomposition the firm reduce verbs' homomorphism law
 **already describes**, so the global result is recovered with no new reduction algebra.
 
-## The SOLVE generalization (the additive-Schwarz decomposition-abstraction — roadmap_goal, NO claims)
+## The SOLVE generalization
+
+**Status:** roadmap_goal (no claims)  
+**Kind:** additive-Schwarz decomposition-abstraction
 
 The eventual point of "sharding" is not reduction but **solve**: the same restrict / per-block /
 compose shape generalizes from a reduce verb to a SOLVE verb. The speculative combinator is
@@ -152,7 +155,9 @@ The combinator is sketched **in L4 vocabulary** (high→low discipline): the spe
 are stated in terms of the index-set partition, the per-block restriction, and the firm reduce
 verb each invocation closes over — NOT in terms of any C++ partitioning loop.
 
-## Speculative semantics (roadmap_goal — NO claims)
+## Speculative semantics
+
+**Status:** roadmap_goal (no claims)
 
 `subdomain_reduce reduce P field` partitions the field's index set into the blocks of `P`,
 restricts the field to each block, runs the closed-over firm reduce verb on each restricted
@@ -180,7 +185,9 @@ calls `ksp_solve` / `fold_solve` / `krylov-step` per block exactly as written, a
 restrict/compose wrapper. That is the whole-point of the gate-CLEAR: the solve-generalization adds an
 outer decomposition layer, NOT new solve algebra inside the firm verbs.
 
-## Speculative algebraic laws (roadmap_goal — intent, not asserted)
+## Speculative algebraic laws
+
+**Status:** roadmap_goal (intent, not asserted)
 
 These are the laws the abstraction WOULD carry; they are stated as the target shape, NOT as
 established claims. Each is intended to be a DERIVED consequence of a standing firm law, which
@@ -219,7 +226,9 @@ is the whole point of the gate-CLEAR (no NEW algebra):
    introduced inside the firm verbs; the recovery is the OUTER compose, which is exact only in the
    block-diagonal config.
 
-### Laws that explicitly do NOT hold (config-conditional NON-laws — carried, not asserted)
+### Laws that explicitly do NOT hold
+
+**Kind:** config-conditional NON-laws (carried, not asserted)
 
 Following how [`domain_energy_reduce.md`](./domain_energy_reduce.md):147-152,172-178 carries
 its partition-coverage non-law:
@@ -265,7 +274,9 @@ its partition-coverage non-law:
     law. `compose_partition` is written to CARRY the p.o.u. weighting as its config parameter precisely
     so the non-law is explicit at the combinator boundary, not hidden.
 
-## Declared dependencies (the well-foundedness target, when this promotes)
+## Declared dependencies
+
+*The well-foundedness target for when this promotes.*
 
 As a `roadmap_goal` (rank 0) this node `reference`s the firm roots it composes; it does NOT
 `depends-on` them (a rank-0 → rank-3 `depends-on` would violate `rank(u) ≤ min(deps)`). The
@@ -283,7 +294,9 @@ higher rank and the well-foundedness invariant is re-checked at that rank):
   the reduce-to-matrix family-grid case.
 - [`gram`](../L2/gram.md) — the L2 Gram form underneath the family-pair reduction.
 
-## Accreting working context (the roadmap_goal's open surface)
+## Accreting working context
+
+*The roadmap_goal's open surface.*
 
 - **The deferred-future MECHANISM (cited, NOT lifted — DIRECTIVE-1).** When/if this abstraction
   is realized for actual distributed execution, the realization path is Palace's existing
