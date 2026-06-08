@@ -24,8 +24,7 @@ The map serves two purposes:
   `constructed-operators`, `sequential-obstruction`) accumulate from cross-cycle friction integration. Reading the map
   answers "what methodology tools does the pipeline have for handling cross-cutting concerns?"
 
-**Edge convention** (graded-stack typed — re-derived cycle-103 P1 against the per-page `edges:` frontmatter,
-reconciling the c101 LIGHT in-prose typing pass; the **per-chapter `edges:` blocks are authoritative**, this map is the
+**Edge convention** (graded-stack typed; the **per-chapter `edges:` blocks are authoritative**, this map is the
 derived mirror, scheme §2/§4(b)):
 
 - A dashed edge `A -.->|ref| B` is a **`reference`** (navigational see-also) edge — `A` mentions/points-at `B` for
@@ -33,22 +32,20 @@ derived mirror, scheme §2/§4(b)):
 - A solid edge `A --> B` is a **`depends-on`** edge — blocking: `A`'s rank is bounded by `B`'s, and `B` is kept live by
   `A`'s reachability.
 
-**The load-bearing typing fact (re-derived this pass).** Per the WAVE-1 typed-edge campaign (D1/D2/D3): a concept page
-that is a **narrative-pointer / methodology / layer-pattern** page sits **outside the subject DAG** (scheme §2d, §5) —
-it is NOT a ranked node, and **every edge it emits is `reference`** (it points the reader at the firm L_n home; the
-blocking rank flows the OTHER way, carried by that L_n entry's own `depends-on` block, not by the concept page). So the
-overwhelming majority of edges below are `-.->|ref|`. The **only** concept pages that are DAG nodes are the
-**`record` Kind** pages (`config-record`, `dofset`, `krylov`, `op-params`, `sim-state`, `step-outputs`, `prev-carry`,
-`solve-result`); a record page is a leaf whose only **`depends-on`** edges are `kind: cites-evidence` edges to its raw
-L0 backing struct (`palace/...:lines`) — those targets are OFF this concept-graph (L0 source, not concept pages), so a
-record node appears here as a **leaf** that layer-pattern pages `-.->|ref|` into. (The c101 map drew these relations as
-solid `-->`; that over-asserted blocking dependence among non-node pages — the reconciliation re-types them `ref`.)
+**The load-bearing typing fact.** A concept page that is a **narrative-pointer / methodology / layer-pattern** page
+sits **outside the subject DAG** (scheme §2d, §5) — it is NOT a ranked node, and **every edge it emits is `reference`**
+(it points the reader at the firm L_n home; the blocking rank flows the OTHER way, carried by that L_n entry's own
+`depends-on` block, not by the concept page). So the overwhelming majority of edges below are `-.->|ref|`. The **only**
+concept pages that are DAG nodes are the **`record` Kind** pages (`config-record`, `dofset`, `krylov`, `op-params`,
+`sim-state`, `step-outputs`, `prev-carry`, `solve-result`); a record page is a leaf whose only **`depends-on`** edges
+are `kind: cites-evidence` edges to its raw L0 backing struct (`palace/...:lines`) — those targets are OFF this
+concept-graph (L0 source, not concept pages), so a record node appears here as a **leaf** that layer-pattern pages
+`-.->|ref|` into.
 
-Every node below corresponds to an on-disk concept page. The forward-projection `:::planned` machinery (roadmap-slice
-markers) was retired with the Phase-1 slice corpus (deleted cycles 097/098/099); planned/speculative vocabulary now
-lands as rank-0 `roadmap_goal` book chapters in the L_n Parts (graded resolution ladder), not as dashed nodes here.
-The scaffolding WIP version at `scaffolding/concept-dependency-map.md` tracks pending extractions and hypothetical
-concepts not yet stable enough for the book.
+Every node below corresponds to an on-disk concept page. Planned/speculative vocabulary lands as rank-0 `roadmap_goal`
+book chapters in the L_n Parts (graded resolution ladder), not as dashed nodes here. The scaffolding WIP version at
+`scaffolding/concept-dependency-map.md` tracks pending extractions and hypothetical concepts not yet stable enough for
+the book.
 
 ## Methodology concepts (cross-layer)
 
@@ -190,10 +187,8 @@ The `record` Kind pages (`krylov`, `op-params`, `sim-state`, `step-outputs`, `pr
 does not depend on the operators that thread it). **They are the only concept pages that are graded-stack DAG nodes**
 (scheme §5): each carries `rank:` (typically `firm` once its L0 backing struct is cited) and a `depends-on (kind:
 cites-evidence)` edge to that raw L0 struct — those L0 targets are OFF this concept-graph (they are `palace/...:lines`
-source ranges, not concept pages), so a record node shows here as a leaf the layer-pattern pages `-.->|ref|` into. As of
-cycle-103 only `config-record` (WAVE-1 D2) and `dofset` (WAVE-1 D7) carry the on-disk `rank:`+`edges:` frontmatter; the
-other six record pages are flagged for a follow-on record-page typing tranche (OQ below) — their node-status is settled
-(record ⇒ DAG node), only the on-disk frontmatter is pending. The newest record `dofset` (`DofSet[N]`, the essential-dof
+source ranges, not concept pages), so a record node shows here as a leaf the layer-pattern pages `-.->|ref|` into. The
+record `dofset` (`DofSet[N]`, the essential-dof
 index set produced by `essential_dofs` and consumed by the `eliminate_bc` verb-pair; see
 [`dofset`](./dofset.md)) is referenced by `state-stratification` (it is part of the readonly BC stratum) and
 `build-time-vs-run-time-stratification` (it sits on the build-time side); `eliminate-bc-consumers` in the graph above is
@@ -234,6 +229,4 @@ The scaffolding version at `scaffolding/concept-dependency-map.md` is the worksh
 ## Origin
 
 Introduced 2026-05-23 to operationalize the "build vocabulary bottom-up" principle (CLAUDE.md §Bunsen methodology
-conventions). Re-derived to the post-redirect artifact state in cycle-101 (the Phase-1 slice corpus + the pre-redirect
-orchestrator/`prompts/` roles were retired and deleted; the Mermaid node set is re-anchored to the on-disk concept
-pages).
+conventions). The Mermaid node set is anchored to the on-disk concept pages.

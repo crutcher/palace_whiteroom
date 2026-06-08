@@ -1,6 +1,6 @@
 # File — `palace/linalg/ksp.cpp`
 
-A file-overview reference note. The Krylov-solver factory: where Palace's enum-based solver-type selector dispatches into solver constructors. This file is the anchor for the **advertised-but-unimplemented pattern** that drives the cycle-004 obstruction themes for MINRES and BiCGStab.
+A file-overview reference note. The Krylov-solver factory: where Palace's enum-based solver-type selector dispatches into solver constructors. This file is the anchor for the **advertised-but-unimplemented pattern** that drives the obstruction themes for MINRES and BiCGStab.
 
 ## At a glance
 

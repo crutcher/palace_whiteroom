@@ -93,22 +93,9 @@ per-domain energy-table reduction combinator, folding the
 the readout carries the per-write lifts; this feature surface records the output-product *site map*
 (which source range realizes which reduction stage).
 
-## Status
-
-`firm` — the L0 ground-truth surface for the domain field-energy table output product (the
-output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive
-(2026-06-02), mirroring the [eigenfrequency-qfactor.L0](./eigenfrequency-qfactor.L0.md) /
-[capacitance.L0](./capacitance.L0.md) output-product exemplars. Promoted `seed`→`firm` cycle-091
-by the batch-29 firm-flip-and-cascade wave (the column's OWN composition became all-firm — own
-reduce verb `domain_energy_reduce` firm c091, own folded `matrix-weighted-norm` firm c091,
-`participation_ratio` firm c077; the L0 surface follows its L1/L4 siblings off `seed`). Every stage is a cited range into
-`palace/models/postoperator.cpp` (the per-domain table) + `palace/models/domainpostoperator.cpp`
-(the energy form), confirmed on-disk via palace-codemap `read_range`/`search_text` this dispatch
-(the def `postoperator.cpp:1021`, the electric map `:1030-1053`, the magnetic map `:1055-1078`, the
-`DomainData` emits `:1040-1041, 1065-1066`; the energy form `domainpostoperator.cpp:255-275`
-electric / `:277-298` magnetic, both returning `0.5 * dot`; the `Measurement::DomainData` struct
-`postoperatorcsv.hpp:74-79`). The load-bearing structural fact at L0: a pure per-domain map (the
-loops carry no inter-domain accumulator), reducing a single solution field to its per-domain
-`(energy, participation)` rows — a rank-1 per-domain table, NOT a family-PAIR Gram grid (c074 D6
-do-NOT-over-unify). The chapter's evidence IS the source range + the per-stage site map to the
-constituent reduction (the adapted surface-or-evidence form for the feature-surface kind).
+The load-bearing structural fact at L0: a pure per-domain map (the loops carry no inter-domain
+accumulator), reducing a single solution field to its per-domain `(energy, participation)` rows —
+a rank-1 per-domain table, NOT a family-PAIR Gram grid. The chapter's evidence is the source range
+(`postoperator.cpp:1021-1077` the per-domain table + `domainpostoperator.cpp:255-298` the energy
+form, both returning `0.5 * dot`; the `Measurement::DomainData` struct `postoperatorcsv.hpp:74-79`)
++ the per-stage site map to the constituent reduction.

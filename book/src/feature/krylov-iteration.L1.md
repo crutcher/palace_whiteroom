@@ -93,13 +93,14 @@ the prior step's output `K'`: the read-after-write that is the carry-threading
 
 ## Status
 
-`rough-in` — the L1 pure-function surface of the Krylov iteration spine (the 2nd Infrastructure
-column at L1, after the GMG preconditioner). The L1 constituents are all firm BLAS-1 +
-orthogonalize leaves, but the column inherits the L4 surface's `rough-in` rank: the
-*iteration-rotation* claim it composes (the [`krylov-iteration.L4`](./krylov-iteration.L4.md)
+`rough-in` — the L1 pure-function surface of the Krylov iteration spine. The L1 constituents are
+all firm BLAS-1 + orthogonalize leaves, but the column inherits the L4 surface's `rough-in` rank:
+the *iteration-rotation* claim it composes (the [`krylov-iteration.L4`](./krylov-iteration.L4.md)
 view) rests on the L3 iteration-views, two of which are `partial-obstruction`. The L1 per-step
-bodies lift cleanly; the obstruction is in the outer fold over the body (carry-threading), which
-this column records via the L3 `fold_solve` reference. This chapter carries the *compositional*
-claim (the iteration spine's per-step body = this pure composition of these firm L1 leaves), not
-the constituents' per-op algebra. Evidence: `iterative.cpp:421-464` (CG) + `:563-705` (GMRES)
-mutation-rotated to the pure per-step body + outer fold.
+bodies lift cleanly; the obstruction is in the outer fold over the body (carry-threading), recorded
+via the L3 `fold_solve` reference. **Promotion route:** `rough-in → firm` if the two
+partial-obstruction L3 iteration-views promote (their obstructions are intrinsic carry-threading,
+so this is the honest standing state). This chapter carries the *compositional* claim (the iteration
+spine's per-step body = this pure composition of these firm L1 leaves), not the constituents' per-op
+algebra. Evidence: `iterative.cpp:421-464` (CG) + `:563-705` (GMRES) mutation-rotated to the pure
+per-step body + outer fold.

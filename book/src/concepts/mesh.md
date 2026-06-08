@@ -139,21 +139,3 @@ The ≥2-consumer evidence for the standalone page (four consumers):
 
 **If this page and a consumer chapter / the L0 source disagree on any factual claim about the
 record, the L0 source (`palace/fem/mesh.hpp`) wins and this page is corrected.**
-
-## Status
-
-`firm` — the data shape is read directly from the positive `class Mesh` wrapper
-(`palace/fem/mesh.hpp:44-115`): the underlying `mfem::ParMesh` (`:47-49`), the libCEED attribute
-maps (`:51-59`), the `ceed_from_self` flag (`:60`) + `geom_data` cache (`:62-69`), the ctor chain
-(`:72-81`) with `EnsureNodes()`+`Update()` finalization (`:79-80`), and the single-machine read
-surface (`:84-115`). The construction-vs-run-time stratum per field is read off the ctor + the
-member comments. The record-definition obligation is met: this is the cross-cutting home for
-`Mesh`, referenced by ≥2 consumers (`L1/build_mesh`, `L1/fe_space`, `L1/fe_space_hierarchy`,
-`feature/lifecycle.L1`). All L0 citations self-verified against on-disk source this dispatch via
-codemap `read_range`.
-
-Well-foundedness (rank): the page is a `record` DAG node at `rank: firm`; its only blocking edge
-is `cites-evidence depends-on` to the L0 `class Mesh` range (rank-terminal ground truth), so the
-`rank(u) ≤ rank(v)` invariant holds vacuously. The edges to the producer/consumer chapters and
-the config surface are `reference` (navigational — a record page is named-by-use, it does not
-block on its consumers).

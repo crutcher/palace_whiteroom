@@ -76,7 +76,3 @@ When you read `Solve { sim, krylov, outputs }` in the [`krylov-step`](../L4/kryl
 - `first_step` / `steady_step` returning `Solve { sim, krylov, carry, outputs }` (Form B)
 
 both in [`krylov-step`](../L4/krylov-step.md) §Signature.
-
-## Status
-
-`firm` — the four fields, their types, their run-time discharge stratum (monadic-effect product vs. plain returned value), and the L0 mutated-state backing are all stated and cited; the record is the return shape of the firm L4 `krylov-step` signature. The effect-vs-record `Solve` distinction is drawn explicitly to forestall conflation with [`solve-monad`](./solve-monad.md).

@@ -91,7 +91,3 @@ These are exactly the fields [`state-stratification`](./state-stratification.md)
 - [`krylov`](./krylov.md) — stratum (3), the ephemeral workspace record.
 - [`variant-absorption`](./variant-absorption.md) — why the `readonly` typing makes variant absorption structural.
 - [`constructed-operators`](./constructed-operators.md) / [`constructed-operator-factory`](./constructed-operator-factory.md) — where the variant selectors are closed over into the `T` / `orthog?` / `scalars?` surfaces.
-
-## Status
-
-`firm` — the field schema is the construction-time stratum of the three-stratum typing, every field is backed by a cited `IterativeSolver`/`GmresSolver` instance-field declaration, and the construction-vs-run-time stratum of each field is the defining readonly property. The record-definition obligation (one home defining the record in itself) is met: this is the cross-cutting home for `OpParams`, referenced by ≥2 consumers (`L4/krylov-step.md`, `concepts/solve-monad.md`, `concepts/state-stratification.md`).

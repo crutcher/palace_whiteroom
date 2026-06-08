@@ -153,21 +153,3 @@ chapter; its §Record-definition (`:119-134`) flagged this page as the home
 **If this page and a consumer chapter / the L0 source disagree on any factual claim about the
 record, the L0 source (`palace/linalg/rap.hpp` / `rap.cpp` / `palace/fem/multigrid.hpp`) wins and
 this page is corrected.**
-
-## Status
-
-`firm` — the data shape is a single readonly index-set field backed by the cited
-`ParOperator::dbc_tdof_list` member (`palace/linalg/rap.hpp:35-36`), its materialization site
-(`palace/fem/multigrid.hpp:99-100`), and its record-by-reference site
-(`palace/linalg/rap.cpp:36-47`); the construction-vs-run-time stratum (build-once-at-assembly-config,
-readonly-at-solve) is the defining property and is read directly from the positive
-`SetEssentialTrueDofs` / `EliminateBC` lifecycle. The record-definition obligation is met: this is
-the cross-cutting home for `DofSet[N]`, referenced by ≥2 consumers (`L1/essential_dofs`,
-`L1/eliminate_essential_bc`, `L1/eliminate_rhs`, surfaced at `L4/eliminate_bc`). All L0 citations
-self-verified against on-disk source this dispatch via codemap `read_range`.
-
-Well-foundedness (rank): the page is a `record` DAG node at `rank: firm`; all its blocking edges
-are `cites-evidence depends-on` to L0 source ranges (rank-terminal ground truth), so the
-`rank(u) ≤ rank(v)` invariant holds vacuously. The edges to the producer/consumer operator
-chapters and the L4 surface are `reference` (navigational — a record page is named-by-use, it does
-not block on its consumers).

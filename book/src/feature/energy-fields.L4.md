@@ -69,7 +69,7 @@ One composed reduction stage, fed by a field-bearing driver column's solution fi
    `V`/`E`/`A`/`B` the solver populated (`postoperator.cpp:1032, 1057`).
 
 2. **The per-domain energy-table reduction** — [`domain_energy_reduce`](../L4/domain_energy_reduce.md)
-   (**firm** c091, authored cycle-079, promoted by the batch-29 firm-flip-and-cascade wave). The L4 per-domain energy-table reduction combinator
+   (**firm**). The L4 per-domain energy-table reduction combinator
    `domain_energy_reduce doms field e_total` maps each configured domain attribute `idx` to its
    `DomainData` row: the **per-domain energy** `energyᵢ = ½⟨field, M_idx field⟩` (the
    domain-restricted SPD energy form — the [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
@@ -110,9 +110,8 @@ type).
   `domain_H_field_energy_i`.
 - **Signatures that name it.** `energy_fields :: PostprocessConfig -> Field -> [DomainData]` (this
   column, L4/L1); the reduction verb `domain_energy_reduce` result
-  element. Currently a single-consumer record (this column); flagged for cross-cutter re-check
-  (OQ `record-DomainData-needs-definition-home`) in case the CSV-writer (`postoperatorcsv`) is
-  authored as a 2nd consumer (→ promote to a `concepts/` record-definition page).
+  element. Currently a single-consumer record (this column); if the CSV-writer (`postoperatorcsv`)
+  becomes a 2nd consumer it promotes to a `concepts/` record-definition page.
 
 ## Inputs / outputs (the feature surface)
 
@@ -144,10 +143,10 @@ products:
 
 - The upstream is a **single solution field**, not a solution family — there is no family-PAIR
   `xⱼᵀ K xᵢ` bilinear, no `symmetric_from_upper` (the load-bearing distinction from `gram_reduce`;
-  the c074 D6 do-NOT-over-unify guard, honored).
-- The reduction is [`domain_energy_reduce`](../L4/domain_energy_reduce.md) (**firm** c091), a **per-domain scalar
+  the do-NOT-over-unify guard).
+- The reduction is [`domain_energy_reduce`](../L4/domain_energy_reduce.md) (**firm**), a **per-domain scalar
   map** folding two scalar projections per domain: the domain-restricted energy form
-  (`matrix-weighted-norm`-squared, **firm** c091) and the participation ratio (firm
+  (`matrix-weighted-norm`-squared, **firm**) and the participation ratio (firm
   [`participation_ratio`](../L1/participation_ratio.md)).
 - The reduction is driver-agnostic — the SAME per-domain energy table reduces any field-bearing
   driver's field, which is why it is its own output-product column rather than a per-driver
@@ -155,52 +154,36 @@ products:
 
 The whole output product therefore lowers cleanly outward to the L4 backend surface:
 `energy_fields = domain_energy_reduce (doms, e_total) ∘ driver_field` — a one-reduction tail on a
-field-bearing driver column. Under the **OWN-COMPOSITION rule** (USER DIRECTIVE 2026-06-03;
-CLAUDE.md §Extraction-goal) a column promotes off `seed` when its OWN directly-owned constituents
-are firm; this column is now **firm** (promoted `seed`→`firm` cycle-091 by the batch-29
-firm-flip-and-cascade wave) because its OWN composition is now all-firm: its OWN reduce verb
-[`domain_energy_reduce`](../L4/domain_energy_reduce.md) firmed (c091, once both its folded primitives
-firmed), its OWN folded domain-restricted energy form is the now-firm
-[`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (c091), and the
-[`participation_ratio`](../L1/participation_ratio.md) half was already firm — all three
-directly-owned constituents firm. The field-bearing driver columns remain SIBLING references, NOT
-blockers — energy-fields is driver-agnostic (a shared postprocess all field-bearing drivers point
-at), and a sibling reference never gated the promotion.
+field-bearing driver column. Under the **OWN-COMPOSITION rule** a column promotes off `seed` when
+its OWN directly-owned constituents are firm; this column is **firm** because its OWN composition is
+all-firm: its OWN reduce verb [`domain_energy_reduce`](../L4/domain_energy_reduce.md), its OWN folded
+domain-restricted energy form [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md), and the
+[`participation_ratio`](../L1/participation_ratio.md) half — all three directly-owned constituents
+firm. The field-bearing driver columns are SIBLING references, NOT blockers — energy-fields is
+driver-agnostic (a shared postprocess all field-bearing drivers point at).
 
 ## Constituent down-links
 
 | Stage | L4 constituent | Status | L0 site |
 |---|---|---|---|
 | producing field (any field-bearing driver) | [`electrostatic.L4`](./electrostatic.L4.md) / [`magnetostatic.L4`](./magnetostatic.L4.md) / … | firm | `postoperator.cpp:1032, 1057` |
-| per-domain energy-table reduction | [`domain_energy_reduce`](../L4/domain_energy_reduce.md) *(firm c091)* | firm | `postoperator.cpp:1036-1042, 1061-1066` |
-| per-domain energy form (folded) | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared (domain-restricted `M_i`) | firm c091 | `domainpostoperator.cpp:255-275, 277-298` |
+| per-domain energy-table reduction | [`domain_energy_reduce`](../L4/domain_energy_reduce.md) | firm | `postoperator.cpp:1036-1042, 1061-1066` |
+| per-domain energy form (folded) | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared (domain-restricted `M_i`) | firm | `domainpostoperator.cpp:255-275, 277-298` |
 | participation ratio (folded) | [`participation_ratio`](../L1/participation_ratio.md) | firm | `postoperator.cpp:1039, 1064` |
 
-## Status
+## Promotion basis
 
-`firm` — an output-product **leaf feature column** authored under the FEATURE-SURFACE SPINE
-directive (2026-06-02), the rank-1 **per-domain**-table sibling of the rank-1 per-mode-table
-[eigenfrequency-qfactor](./eigenfrequency-qfactor.L4.md) and the rank-2 Gram/port-projection
-products [capacitance](./capacitance.L4.md) / [inductance](./inductance.L4.md) /
-[sparameters](./sparameters.L4.md). The composition is sound: a field-bearing driver column
-supplies the solution field; the `domain_energy_reduce` reduction
-maps each configured domain to its `(energyᵢ, pᵢ)` row, folding the domain-restricted energy form
-([`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared) and the firm
-[`participation_ratio`](../L1/participation_ratio.md). **Under the OWN-COMPOSITION rule
-(USER DIRECTIVE 2026-06-03; codified batch-26 meta-phase; memory `project_feature_column_promotion_rule`)
-a column promotes off `seed` when its OWN composition + directly-owned constituents are firm; this column
-was promoted `seed`→`firm` cycle-091** by the batch-29 firm-flip-and-cascade wave, once its OWN
-composition became all-firm: its OWN reduce verb `domain_energy_reduce` firmed (firm c091 — both its
-folded primitives now have firm L1 homes, `matrix-weighted-norm` c091 + `participation_ratio` c077,
-the firm-on-positive-structure escape), its OWN folded domain-restricted energy form is the now-firm
-`matrix-weighted-norm` (firm c091, the batch-29 firm flip), and the `participation_ratio` half was
-already firm — all three directly-owned constituents firm. The field-bearing driver columns are
-SIBLING references (this is a driver-agnostic shared postprocess), NOT blockers — a sibling reference
-never gated the promotion. This chapter carries the *compositional*
-claim (the domain energy table = the per-domain energy reduction over a field-bearing driver's
-field), NOT the constituents' per-op algebraic claims (those live in the linked chapters). The
-defining structural fact: a rank-1 per-domain scalar table, NOT a `gram_reduce` family-PAIR grid
-(c074 D6 do-NOT-over-unify, honored). Evidence: `MeasureDomainFieldEnergy`
-(`postoperator.cpp:1021-1077`) + the energy form (`domainpostoperator.cpp:255-298`), all anchors
-confirmed on-disk via palace-codemap `read_range`/`search_text` this dispatch, plus the
-constituent down-links.
+An output-product **leaf feature column**: the rank-1 **per-domain**-table sibling of the rank-1
+per-mode-table [eigenfrequency-qfactor](./eigenfrequency-qfactor.L4.md) and the rank-2
+Gram/port-projection products [capacitance](./capacitance.L4.md) / [inductance](./inductance.L4.md) /
+[sparameters](./sparameters.L4.md). Under the OWN-COMPOSITION rule (a column is firm when its OWN
+composition + directly-owned constituents are firm; cross-linked sibling columns are references, NOT
+blockers), this column is firm: its OWN reduce verb `domain_energy_reduce`, its OWN folded
+domain-restricted energy form `matrix-weighted-norm`, and the `participation_ratio` half are all
+firm. The field-bearing driver columns are SIBLING references (a driver-agnostic shared
+postprocess), NOT blockers. This chapter carries the *compositional* claim (the domain energy table
+= the per-domain energy reduction over a field-bearing driver's field), NOT the constituents' per-op
+algebraic claims (those live in the linked chapters). The defining structural fact: a rank-1
+per-domain scalar table, NOT a `gram_reduce` family-PAIR grid (do-NOT-over-unify). Evidence:
+`MeasureDomainFieldEnergy` (`postoperator.cpp:1021-1077`) + the energy form
+(`domainpostoperator.cpp:255-298`), plus the constituent down-links.

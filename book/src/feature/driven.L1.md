@@ -136,24 +136,11 @@ this composition root records only the L1 composition (high→low discipline).
 | per-ω solve | [`ksp_solve`](../L1/ksp_solve.md) | firm | `drivensolver.cpp:194, 196` |
 | S-parameter reduction (output product) | `sparameter_response` *(output-product column; not authored here)* | forward-ref | `drivensolver.cpp:205-216` |
 
-## Status
-
-`firm` — the L1 pure-function composition root for the driven feature, a **leaf
-feature column** authored under the FEATURE-SURFACE SPINE directive (2026-06-02),
-mirroring the [electrostatic.L1](./electrostatic.L1.md) /
-[magnetostatic.L1](./magnetostatic.L1.md) exemplars but at the operator-VARYING
-corner. **Promoted `seed → firm` cycle-085** under the OWN-COMPOSITION promotion rule
-(a column promotes off `seed` when its OWN composition + directly-owned constituents
-are firm; cross-linked sibling columns are references, NOT blockers). All three
-directly-composed L1 operators are firm ([`fe_assemble`](../L1/fe_assemble.md),
+All three directly-composed L1 operators are firm ([`fe_assemble`](../L1/fe_assemble.md),
 [`assemble_frequency_operator`](../L1/assemble_frequency_operator.md),
-[`ksp_solve`](../L1/ksp_solve.md)) — the driven L1 vocabulary is fully firm (as are
-the fixed-operator columns' stage-3 inductance/capacitance bilinear-form primitives,
-firm since c091/c095). The stage-3 S-parameter reduction is the driven
+[`ksp_solve`](../L1/ksp_solve.md)). The stage-3 S-parameter reduction is the driven
 output-product surface, presented as its own [`sparameters`](./sparameters.L1.md)
 column — a **sibling cross-link (a reference)**, NOT a directly-owned constituent, so
 it does not gate promotion (the `sparameters` column promotes independently on its own
 firm reduce verb). The chapter carries the compositional claim only; per-op algebraic
-claims live in the linked chapters. Evidence: the L0 driver range
-`drivensolver.cpp:77-229` (`SweepUniform`) realizing the composition, plus the firm L1
-constituent down-links (line ranges self-verified on-disk).
+claims live in the linked chapters.

@@ -103,7 +103,3 @@ This is the mapping [`state-stratification`](./state-stratification.md) §"Worke
 - [`op-params`](./op-params.md) — stratum (2), the construction-time readonly configuration record.
 - [`sim-state`](./sim-state.md) — stratum (1), the solve-persistent externally-visible record.
 - [`first-iteration-unrolling`](./first-iteration-unrolling.md) — the rotation that moves a recurrence-carry field out of `Krylov` into a `PrevCarry` closure argument.
-
-## Status
-
-`firm` — both slice-specific schemas (CG, GMRES/FGMRES) are settled and match `L4/krylov-step.md:50`; every field is backed by a cited `CgSolver` / `GmresSolver` / `FgmresSolver` `mutable`-workspace instance-field declaration; the run-time restart-local stratum (and the mixed iterate/scalar internal split) is the defining property vs. the other two strata. The record-definition obligation is met: this is the cross-cutting home for `Krylov`, referenced by ≥2 consumers (`L4/krylov-step.md`, `concepts/solve-monad.md`, `concepts/state-stratification.md`, `concepts/convergence-test.md`).

@@ -120,20 +120,20 @@ per CLAUDE.md §Scope — the multi-rank `ParMesh` shared-dof overlap is a defer
 
 ## Signatures / chapters that name this family
 
-- [`basis_apply`](../L1/basis_apply.md) — **consumer** (firm, c124 D3): `B :: BasisMode → Basis →
+- [`basis_apply`](../L1/basis_apply.md) — **consumer** (firm): `B :: BasisMode → Basis →
   Tensor[(E, L)] → Tensor[(E, P, C)]` (and transpose `Bᵀ`). The basis-eval contraction between the
   `[E, L]` and `[E, P, C]` members.
-- [`quad_point_contract`](../L1/quad_point_contract.md) — **consumer** (firm, c124 D3): `D ::
+- [`quad_point_contract`](../L1/quad_point_contract.md) — **consumer** (firm): `D ::
   GeomData → Tensor[(E, P, C)] → Tensor[(E, P, C')]`, `GeomData :: Tensor[(E, P, G)]`. The pointwise
   per-quad-point diagonal over `[E, P, C]` against the `[E, P, G]` carrier.
-- [`element_restrict`](../L1/element_restrict.md) — **consumer** (rough-in, c124 D4): `G ::
+- [`element_restrict`](../L1/element_restrict.md) — **consumer** (rough-in): `G ::
   ElemRestriction → Tensor[(N: ...)] → Tensor[(E, L)]` (and transpose `Gᵀ`). The flat-`[(N: ...)]` ↔
   `[E, L]` gather/scatter boundary; `depends-on` THIS page for its `[E, L]` shape home.
-- [`geom_factor_build`](../L1/geom_factor_build.md) — **consumer** (rough-in, c124 D4):
+- [`geom_factor_build`](../L1/geom_factor_build.md) — **consumer** (rough-in):
   `geom_factor_build :: MeshNodes → QuadWeights → Tensor[(E, P, G)]`. Produces the `[E, P, G]`
   carrier; `depends-on` THIS page for its carrier shape home.
 - [`libceed-quadrature-kernel-impl`](../L1/libceed-quadrature-kernel-impl.md) — **consumer**
-  (rough-in, c124 D5): composes all four substrate ops; the pipeline `A = Gᵀ B_𝒟ᵀ D B_𝒟 G` is typed
+  (rough-in): composes all four substrate ops; the pipeline `A = Gᵀ B_𝒟ᵀ D B_𝒟 G` is typed
   over this family.
 
 ## See also
@@ -149,24 +149,3 @@ per CLAUDE.md §Scope — the multi-rank `ParMesh` shared-dof overlap is a defer
 **If this page and a consumer chapter / the L0 source disagree on any factual claim about the shape
 family, the L0 source (the libCEED `CeedElemRestriction` / `CeedBasis` / build-QFunction construction
 args) wins and this page is corrected.**
-
-## Status
-
-`firm` — the shape family is read directly off the positive libCEED tensor-layout construction args:
-`E`/`L`/`C` from `CeedElemRestrictionCreate` (`palace/fem/libceed/restriction.cpp:200-203`), `L`/`P`/`C`
-from `CeedBasisCreateTensorH1` (`palace/fem/libceed/basis.cpp:25-37`), `G = 2 + space_dim*dim` from the
-build-QFunction `geom_data` output + its `MFEM_VERIFY` (`palace/fem/libceed/integrator.cpp:393-398`).
-There is no claim beyond the data shape (the contraction algebra lives in the four consumer chapters),
-so the firm bar is the data-shape analog of the firm-on-positive-structure escape — every axis is a
-syntactic read-off of a positive construction arg, no test gates a shape definition. All L0 citations
-self-verified against on-disk source this dispatch via codemap `read_range`. The record-definition
-obligation is met: this is the cross-cutting home for the element-local rank-tensor family, referenced
-by ≥2 consumers (all 4 substrate ops + `libceed-quadrature-kernel-impl`).
-
-Well-foundedness (rank): the page is a `record` DAG node at `rank: firm`; its only blocking edges are
-`cites-evidence depends-on` to the libCEED layout source (rank-terminal ground truth), so the
-`rank(u) ≤ rank(v)` invariant holds vacuously. The edges to the consumer chapters are `reference`
-(navigational — a record page is named-by-use; it does not block on its consumers). This page firming
-un-caps the two D4 rough-in consumers (`element_restrict`, `geom_factor_build`) — their rough-in is
-capped on this shape home, and they promote `rough-in → firm` once it is firm (the integrator's
-cross-report rank-propagation; flagged for the finalize pass).

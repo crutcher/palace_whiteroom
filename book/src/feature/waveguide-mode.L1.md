@@ -44,7 +44,7 @@ At L1 the waveguide-mode product is a pure function `config → mode table`: it 
    - the **effective index `n_eff = kn/ω`**. L0: `kn.real()/omega` / `kn.imag()/omega` (`boundarymodesolver.cpp:276-277`).
    - the **mode fields `(Et, En)`** — the VD back-transform of the eigenvector, then power-normalized so `|P| = 1`. L0: `mode_op.ApplyVDBackTransform(e0, kn, et, en)` (`boundarymodesolver.cpp:300`), `e0 *= 1/√|P|` from `mode_op.ComputePoyntingPower(...)` (`:304-307`).
    - the **longitudinal magnetic field `Bz = curl(Et)/(iω)`** for propagating modes (`is_propagating kn`). L0: the `Bz` formation `bz.Real() = curl_eti; bz.Real() *= 1/ω; bz.Imag() = curl_etr; bz.Imag() *= -1/ω` (`boundarymodesolver.cpp:316-333`).
-   This stage is a pure per-mode map — no inter-mode state, no solve-iteration. At L4 this exact per-mode reduction is named the firm [`waveguide_mode_reduce`](../L4/waveguide_mode_reduce.md) reduce verb (the propagation-mode member of the L4 output-product reduce-verb algebra, firm c118 D5); L1 sees the unfolded per-mode comprehension.
+   This stage is a pure per-mode map — no inter-mode state, no solve-iteration. At L4 this exact per-mode reduction is named the firm [`waveguide_mode_reduce`](../L4/waveguide_mode_reduce.md) reduce verb (the propagation-mode member of the L4 output-product reduce-verb algebra); L1 sees the unfolded per-mode comprehension.
 
 ## Inputs / outputs (the feature surface)
 
@@ -72,9 +72,5 @@ The defining structural fact at both levels: a **per-mode mode-TABLE carrying mo
 
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
-| producing driver column (sibling reference, not a blocker) | [`boundary-mode.L1`](./boundary-mode.L1.md) (driver feature column) | seed → promotable (own-readout gate cleared by this column) | `boundarymodesolver.cpp:201-268` |
-| per-mode propagation-mode readout | [`waveguide_mode_reduce`](../L4/waveguide_mode_reduce.md) (firm L4 reduce verb, c118 D5) | firm | `boundarymodesolver.cpp:273-333` |
-
-## Status
-
-`firm` — the L1 pure-function composition root for the waveguide-mode output product (the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive (2026-06-02), the L1 counterpart of the [waveguide-mode.L4](./waveguide-mode.L4.md) composition root. It consumes the [`boundary-mode.L1`](./boundary-mode.L1.md) driver column's converged eigenpair set, then maps each mode to its `{kn, n_eff, (Et, En, Bz)}` row (the eigenvalue un-transform + the VD back-transform + the power-normalization + the conditional `Bz`). **Promoted `rough-in` → `firm` (cycle-118 D5) under the OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03):** its sole directly-owned constituent — the reduction's L4 home [`waveguide_mode_reduce`](../L4/waveguide_mode_reduce.md) — is now firm (its dedicated L4 verb chapter landed c118 D5, OQ `waveguide-mode-reduce-needs-l4-verb-home` RESOLVED), so the OWN-COMPOSITION promotion gate clears, exactly as the L1 `sparameters` column promoted when `sparameter_reduce` firmed at c083. **`feature_root: seed` is KEPT** (the permanent GC-root marker, not a maturity tier). The cross-link to the [`boundary-mode.L1`](./boundary-mode.L1.md) driver column (itself a firm-once-promoted composition; its `feature_root: seed` is the permanent root marker, not a maturity) is a **SIBLING reference, NOT a blocker** — the reciprocal drift-guard. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters + the L0 sites. Evidence: the L0 readout range `boundarymodesolver.cpp:273-340` realizing the reduction, all anchors self-verified on-disk, plus the constituent down-links + the now-firm `waveguide_mode_reduce` verb.
+| producing driver column (sibling reference, not a blocker) | [`boundary-mode.L1`](./boundary-mode.L1.md) (driver feature column) | sibling reference | `boundarymodesolver.cpp:201-268` |
+| per-mode propagation-mode readout | [`waveguide_mode_reduce`](../L4/waveguide_mode_reduce.md) (firm L4 reduce verb) | firm | `boundarymodesolver.cpp:273-333` |

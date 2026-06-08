@@ -43,10 +43,8 @@ operator captured once, `SetOperators` hoisted outside the loop), the driven swe
 the [`frequency_sweep`](../L4/frequency_sweep.md) combinator (`SetOperators` *inside*
 the loop). That operator-varying shape is exactly what scopes driven *out* of
 `solve_family` and into `frequency_sweep`'s `operator-capture = per-element` axis
-value. This is the **first feature column all three of whose composition stages
-compose FIRM L4 combinators** (the assemble basis, the per-ω rebuild verb, and the
-operator-varying solve map are each firm) — the driven solve+assemble halves both
-reached L4 in cycles 069/070.
+value. All three of its composition stages compose FIRM L4 combinators — the assemble
+basis, the per-ω rebuild verb, and the operator-varying solve map are each firm.
 
 ## The composition
 
@@ -113,8 +111,8 @@ Three composed stages, each a link DOWN to firm L4 vocabulary:
    [`inductance`](./inductance.L4.md) output-product columns. The shared
    operator-weighted-Gram energy-form reduction combinator
    ([`gram_reduce`](../L4/gram_reduce.md), the capacitance/inductance reductions) does
-   NOT subsume the S-parameter reduction (it is a port-projection, not a Gram-weight
-   specialization — the c074 D6 / c075 closed-negative distinction); see Open questions.
+   NOT subsume the S-parameter reduction: it is a port-projection, not a Gram-weight
+   specialization.
 
 ## Inputs / outputs (the feature surface)
 
@@ -168,34 +166,18 @@ constituent `frequency_sweep` / `assemble_frequency_operator` vocabulary is firm
 | per-ω operator rebuild A(ω) | [`assemble_frequency_operator`](../L4/assemble_frequency_operator.md) | firm | `drivensolver.cpp:175-177` |
 | operator-varying per-ω solve map | [`frequency_sweep`](../L4/frequency_sweep.md) | firm | `drivensolver.cpp:168-196` |
 | per-ω solve cap | [`ksp_solve`](../L4/ksp_solve.md) | firm | `drivensolver.cpp:196` |
-| S-parameter reduction (output product) | [`sparameters`](./sparameters.L4.md) output-product column (verb [`sparameter_reduce`](../L4/sparameter_reduce.md), firm c083; sibling reference) | firm | `drivensolver.cpp:205-216` |
+| S-parameter reduction (output product) | [`sparameters`](./sparameters.L4.md) output-product column (verb [`sparameter_reduce`](../L4/sparameter_reduce.md); sibling reference) | firm | `drivensolver.cpp:205-216` |
 
-## Status
-
-`firm` — the driven feature-surface composition-root, a **leaf feature column**
-(per-driver; stage-2 constituents are vocabulary ops) authored under the
-FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the
-[electrostatic](./electrostatic.L4.md) / [magnetostatic](./magnetostatic.L4.md)
-exemplars but at the operator-VARYING corner. **Promoted `seed → firm` cycle-085**
-under the OWN-COMPOSITION promotion rule (CLAUDE.md §Extraction-goal FEATURE-SURFACE
-SPINE; memory `project_feature_column_promotion_rule`): a column promotes off `seed`
-when its OWN composition + directly-owned constituents are firm; cross-linked sibling
-columns are references, NOT blockers. The composition is sound and every
-directly-owned constituent is firm: stage (1) is three firm
+Every directly-owned constituent is firm: stage (1) is three firm
 [`fe_assemble`](../L4/fe_assemble.md) folds (the fixed basis captured once); stage (2)
 is the firm [`frequency_sweep`](../L4/frequency_sweep.md) map composing the firm per-ω
 operand verb [`assemble_frequency_operator`](../L4/assemble_frequency_operator.md) with
 the firm per-member [`ksp_solve`](../L4/ksp_solve.md) (the operator-varying corner,
-`SetOperators` inside the loop). All three directly-owned composition-stage L4
-combinators are **firm** — the cleanest operator-varying composition the spine
-carries. Stage (3), the S-parameter reduction, is presented as the dedicated
-output-product feature column [`sparameters`](./sparameters.L4.md): that is a
-**sibling cross-link (a reference / drift-guard), NOT a directly-owned constituent**,
-so it does NOT gate this driver column's promotion (the `sparameters` column itself
-promotes independently on its own firm reduce verb
-[`sparameter_reduce`](../L4/sparameter_reduce.md), firm cycle-083). This chapter
-carries the *compositional* claim (driven = this composition of these constituent
-pieces), not the constituents' per-op algebraic claims (those live in the linked
-chapters). Evidence: the L0 driver range `drivensolver.cpp:37-75` (`Solve` dispatch) +
-`:77-229` (`SweepUniform`) realizing the composition, plus the firm constituent
-down-links (all line ranges self-verified on-disk via palace-codemap).
+`SetOperators` inside the loop). Stage (3), the S-parameter reduction, is presented as
+the dedicated output-product feature column [`sparameters`](./sparameters.L4.md): that
+is a **sibling cross-link (a reference / drift-guard), NOT a directly-owned
+constituent**, so it does NOT gate this driver column's promotion (the `sparameters`
+column itself promotes independently on its own firm reduce verb
+[`sparameter_reduce`](../L4/sparameter_reduce.md)). This chapter carries the
+*compositional* claim (driven = this composition of these constituent pieces), not the
+constituents' per-op algebraic claims (those live in the linked chapters).

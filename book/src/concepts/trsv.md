@@ -17,8 +17,8 @@ Base primitive: triangular solve `T · y = b` for a triangular matrix `T` and co
 A **general** triangular solve (`trsv` / `trsm` / `SpTrSV`, sparse or dense, acting on the
 length-`N` field) has **no positive Palace source site** and gets **no L1 operator** — this is
 the settled disposition, documented by the L1>L0 obstruction theme
-[`triangular-solve-obstruction`](../L1-L0/triangular-solve-obstruction.md) (c028,
-`obstruction`): every triangular substitution that occurs in a Palace run lives inside opaque
+[`triangular-solve-obstruction`](../L1-L0/triangular-solve-obstruction.md) (`obstruction`):
+every triangular substitution that occurs in a Palace run lives inside opaque
 library calls (HYPRE GS/SSOR relaxation selected by an integer enum, forward/back substitution
 inside external MUMPS/SuperLU/STRUMPACK factorizations), and Palace-authored smoothers are
 deliberately GS-free (Jacobi + Chebyshev only, citing Adams et al. 2003). Per CLAUDE.md §Scope an
@@ -27,7 +27,7 @@ L1 form is proposed.
 
 The **one** triangular-solve component Palace *does* implement positively is the small-dense
 GMRES/FGMRES restart-correction back-substitution — the firm L1 leaf
-[`back_solve`](../L1/back_solve.md) (c027). It solves the dense upper-triangular `R · y = s` over
+[`back_solve`](../L1/back_solve.md). It solves the dense upper-triangular `R · y = s` over
 the small running-QR R-factor (coordinate space, dimension `j+1` ≤ `max_dim`, no collective), and
 is the *small-dense-triangular* sibling of [`lu_solve`](../L1/lu_solve.md). It is **not** a
 general `trsv` (which would act on the length-`N` field). This concept page is therefore a

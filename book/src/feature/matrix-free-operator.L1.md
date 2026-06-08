@@ -7,22 +7,22 @@ rank: firm
 edges:
   depends-on:
     # The four element-local substrate ops this pure-function surface composes BY NAME — the
-    # RE11-grounding faithful blocking edges (all firm c124 D3 / c125 D1). This is the L1 surface
-    # that names the substrate ops DIRECTLY (the L4 surface names them transitively via the L2 combinator).
+    # RE11-grounding faithful blocking edges. This is the L1 surface that names the substrate ops
+    # DIRECTLY (the L4 surface names them transitively via the L2 combinator).
     - target: L1/element_restrict
-      kind: composes                  # G / Gᵀ — the [(N: ...)] ↔ [E, L] gather / scatter-add (firm c125 D1)
+      kind: composes                  # G / Gᵀ — the [(N: ...)] ↔ [E, L] gather / scatter-add
     - target: L1/basis_apply
-      kind: composes                  # B_𝒟 / B_𝒟ᵀ — the [E, L] ↔ [E, P, C] basis-eval contraction keyed on 𝒟 (firm c124 D3)
+      kind: composes                  # B_𝒟 / B_𝒟ᵀ — the [E, L] ↔ [E, P, C] basis-eval contraction keyed on 𝒟
     - target: L1/quad_point_contract
-      kind: composes                  # D — the pointwise [E, P, C] per-quad-point diagonal against [E, P, G] (firm c124 D3)
+      kind: composes                  # D — the pointwise [E, P, C] per-quad-point diagonal against [E, P, G]
     - target: L1/geom_factor_build
-      kind: composes                  # the [E, P, G] geometry-factor carrier D contracts against (firm c125 D1)
+      kind: composes                  # the [E, P, G] geometry-factor carrier D contracts against
     - target: palace/fem/libceed/operator.cpp:182-189
       kind: cites-evidence            # Operator::Mult — the whole-operator apply (the pure contraction-chain action read as tensor-in/tensor-out)
   reference:
     - feature/matrix-free-operator.L4
-    - L1/libceed-quadrature-kernel-impl   # the kernel-impl whose concrete contraction chain this pure-function surface renders (firm c125 D1)
-    - concepts/element-local-tensor       # the rank-structured shape family the chain is typed over (firm c124 D5)
+    - L1/libceed-quadrature-kernel-impl   # the kernel-impl whose concrete contraction chain this pure-function surface renders
+    - concepts/element-local-tensor       # the rank-structured shape family the chain is typed over
 ---
 
 # matrix-free operator — L1 composition-root
@@ -59,18 +59,18 @@ The matrix-free apply is a **pure composition of the four element-local substrat
 That is the pure-function form of `A = Gᵀ ∘ B_𝒟ᵀ ∘ D(Q, geom) ∘ B_𝒟 ∘ G`. Four composed pieces,
 each a firm L1 link:
 
-1. **Element gather/scatter-add** — [`element_restrict`](../L1/element_restrict.md) (firm c125 D1).
+1. **Element gather/scatter-add** — [`element_restrict`](../L1/element_restrict.md).
    `G` gathers global dofs to per-element-local dofs `[E, L]`; `Gᵀ` scatters-**adds** back to the
    shared global dofs (the element-additivity of the assembled action). The only inter-dof transfer.
-2. **Basis-eval contraction** — [`basis_apply`](../L1/basis_apply.md) (firm c124 D3). `B_𝒟` contracts
+2. **Basis-eval contraction** — [`basis_apply`](../L1/basis_apply.md). `B_𝒟` contracts
    the tabulated basis against the element-local dofs to per-quad-point values `[E, P, C]`, keyed on
    the term's differential-operator 𝒟 (Identity/Gradient/Curl/Divergence selects the EvalMode);
    `B_𝒟ᵀ` is the adjoint. (Sum-factorization on tensor-product elements is a transparent performance
    trick below this resolution — a one-line note in `basis_apply`, not a separate form.)
-3. **Pointwise quad-point diagonal** — [`quad_point_contract`](../L1/quad_point_contract.md)
-   (firm c124 D3). `D` is the embarrassingly-parallel per-quad-point contraction of the value tensor
+3. **Pointwise quad-point diagonal** — [`quad_point_contract`](../L1/quad_point_contract.md).
+   `D` is the embarrassingly-parallel per-quad-point contraction of the value tensor
    against the `[E, P, G]` geometry carrier and the coefficient `Q`.
-4. **Geometry-factor carrier** — [`geom_factor_build`](../L1/geom_factor_build.md) (firm c125 D1).
+4. **Geometry-factor carrier** — [`geom_factor_build`](../L1/geom_factor_build.md).
    The build-stratum `[E, P, G]` Jacobian / detJ / adjJ carrier `D` contracts against (fixed once per
    mesh/order/quadrature).
 
@@ -84,18 +84,3 @@ relationship is identity-in-named-terms (both name the same composition of the s
 the same shape family); recorded here as a `reference`-class link, not a separate theme (the genuine
 vocabulary shift is the OTHER edge — flat-`Tensor[N]` → element-local-tensor — carried by the
 substrate ops' own L1>L0 rotations).
-
-## Status
-
-`firm` (landed firm cycle-127 D1) — the L1 pure-function surface of the infrastructure /
-shared-substrate matrix-free operator column. `feature_root: seed` preserved. Firm on the same
-well-foundedness basis as the [L4 surface](./matrix-free-operator.L4.md): all four blocking
-`depends-on` substrate constituents are firm on disk (`element_restrict` + `geom_factor_build`
-c125 D1; `basis_apply` + `quad_point_contract` c124 D3), typed over the firm
-[`element-local-tensor`](../concepts/element-local-tensor.md) shape family (c124 D5). The apply is
-the mutation-rotated pure rendering of `operator.cpp:182-189`; the contraction chain is a fixed
-five-stage composition with no loop obstruction (the element/quad-point axes are
-map-reduce-parallel, not a sequential recurrence) — firm-on-positive-structure. **This L1 surface's
-four blocking `depends-on (composes)` edges are the faithful root-reaching consumer that GROUNDS the
-RE11 libceed-substrate sub-cohort** — a REAL composition flip, not a `reference`-only hop.
-Evidence: `operator.cpp:182-189` + the four firm substrate-op down-links.

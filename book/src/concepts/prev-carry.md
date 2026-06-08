@@ -63,7 +63,3 @@ So the L0 home is the **loop-local recurrence value**, not a struct field. `Prev
 - `steady_step :: OpParams -> Krylov -> (PrevCarry -> SimState -> Solve { sim, krylov, carry: PrevCarry', outputs })`
 
 both in [`krylov-step`](../L4/krylov-step.md) §Signature (Form B).
-
-## Status
-
-`firm` — field, type, carry-stratum placement, and the negative L0 anchoring (Palace does not unroll; the carry is a reified rotation artifact) are all stated and cited; the record is the `carry` slot of the firm L4 `krylov-step` Form B signature and the canonical carry of the firm [`first-iteration-unrolling`](./first-iteration-unrolling.md) concept.

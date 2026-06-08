@@ -99,8 +99,8 @@ The L1 and L4 composition roots express the **same output product**; they differ
   consumes; the L1 form is the pure-function decomposition the L4 combinator names.
 
 The defining structural fact at both levels: a **rank-1 per-domain scalar-ratio table**, NOT a
-rank-2 family-PAIR Gram grid — distinct from the capacitance / inductance output products (c074 D6
-do-NOT-over-unify), and the per-domain sibling of the per-mode
+rank-2 family-PAIR Gram grid — distinct from the capacitance / inductance output products
+(do-NOT-over-unify), and the per-domain sibling of the per-mode
 [eigenfrequency-qfactor](./eigenfrequency-qfactor.L1.md) table. The L1→L0 direction (how the
 per-domain readout lowers to the in-place `emplace_back(DomainData{...})` cache accumulation) is the
 per-operator L1>L0 mutation-rotation of the readout; this composition root records only the L1
@@ -111,26 +111,17 @@ composition (high→low discipline).
 | Stage | L1 constituent | Status | L0 site |
 |---|---|---|---|
 | producing field (field-bearing driver) | [`electrostatic.L1`](./electrostatic.L1.md) (driver feature column) | firm | `postoperator.cpp:1032, 1057` |
-| per-domain energy form | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared (domain-restricted `M_i`) | firm c091 | `domainpostoperator.cpp:255-275, 277-298` |
+| per-domain energy form | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)-squared (domain-restricted `M_i`) | firm | `domainpostoperator.cpp:255-275, 277-298` |
 | participation ratio | [`participation_ratio`](../L1/participation_ratio.md) | firm | `postoperator.cpp:1039, 1064` |
 
-## Status
+## Promotion basis
 
-`firm` — the L1 pure-function composition root for the domain field-energy table output product
-(the output-product **leaf feature column**), authored under the FEATURE-SURFACE SPINE directive
-(2026-06-02), the L1 counterpart of the [energy-fields.L4](./energy-fields.L4.md) composition root.
-It consumes a field-bearing driver column's solution field, then maps each configured domain to its
-`(energyᵢ, pᵢ)` row (the domain-restricted energy form + the participation ratio). **Under the
-OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03) a column promotes off `seed` when its OWN
-directly-owned constituents are firm; this column was promoted `seed`→`firm` cycle-091** by the
-batch-29 firm-flip-and-cascade wave, once its OWN composition became all-firm: its OWN reduce verb's
-L4 home `domain_energy_reduce` firmed (firm c091) and its OWN folded domain energy form is the now-firm
-`matrix-weighted-norm` (firm c091, the batch-29 firm flip), with the
-[`participation_ratio`](../L1/participation_ratio.md) half already firm — all three directly-owned
-constituents firm. The field-bearing driver columns are SIBLING references (a driver-agnostic shared
-postprocess), NOT blockers — a sibling reference never gated the promotion. The
-chapter carries the compositional claim only; per-op
-algebraic claims live in the linked chapters. The defining structural fact carried from L4: a
-rank-1 per-domain scalar table, NOT a `gram_reduce` family-PAIR grid (c074 D6). Evidence: the L0
+Under the **OWN-COMPOSITION rule** (a column promotes off `seed` when its OWN directly-owned
+constituents are firm; cross-linked sibling columns are references, NOT blockers), this column is
+firm: its OWN reduce verb's L4 home `domain_energy_reduce` is firm, its OWN folded domain energy
+form is the firm `matrix-weighted-norm`, and the [`participation_ratio`](../L1/participation_ratio.md)
+half is firm — all three directly-owned constituents firm. The field-bearing driver columns are
+SIBLING references (a driver-agnostic shared postprocess), NOT blockers. The chapter carries the
+compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0
 energy-table ranges `postoperator.cpp:1021-1077` + the energy form `domainpostoperator.cpp:255-298`,
-confirmed on-disk this dispatch, plus the constituent down-links.
+plus the constituent down-links.

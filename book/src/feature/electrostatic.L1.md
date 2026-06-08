@@ -44,7 +44,7 @@ At L1 the electrostatic feature is a pure function `config → capacitance matri
 3. **Capacitance-matrix reduction** — the symmetric matrix `Cᵢⱼ = Vⱼᵀ K Vᵢ`, built from L1 bilinear-form evaluations (firm diagonal + firm off-diagonal):
    - diagonal `Cᵢᵢ = Vᵢᵀ K Vᵢ` — the operator-weighted self-form, the now-firm [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) squared (`matrix_weighted_norm(Vᵢ, K)² = Vᵢᵀ K Vᵢ`; the L0 source builds it directly as `M_elec->Mult(V_gf, D_gf)` then `linalg::Dot(V_gf, D_gf)`, `:118-119`).
    - off-diagonal `Cᵢⱼ = Vⱼᵀ K Vᵢ` — the operator-weighted cross-pairing, the firm [`bilinear-form`](../L1/bilinear-form.md) `α = xᴴ M y` instantiated `⟨Vⱼ, K Vᵢ⟩` (L0 `:122-127`, the same `Mult`/`Dot` with the `j` grid function).
-   The result is the symmetric `C` (and its LAPACK inverse `Cinv`, `:139-140`). This stage is a pure fold of bilinear-form evaluations over the solution-family pair grid — no L1 operator is *new* here; the reduction composes [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091) + [`bilinear-form`](../L1/bilinear-form.md) (firm c095).
+   The result is the symmetric `C` (and its LAPACK inverse `Cinv`, `:139-140`). This stage is a pure fold of bilinear-form evaluations over the solution-family pair grid — no L1 operator is *new* here; the reduction composes [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm) + [`bilinear-form`](../L1/bilinear-form.md) (firm).
 
 ## Inputs / outputs (the feature surface)
 
@@ -65,9 +65,9 @@ The L1→L0 direction (how each pure operator lowers to the in-place driver writ
 |---|---|---|---|
 | assemble K once | [`fe_assemble`](../L1/fe_assemble.md) | firm | `electrostaticsolver.cpp:30` |
 | per-terminal solve | [`ksp_solve`](../L1/ksp_solve.md) | firm | `electrostaticsolver.cpp:59, 68-69` |
-| diagonal Vᵢᵀ K Vᵢ | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) | firm c091 | `electrostaticsolver.cpp:118-119` |
-| off-diagonal Vⱼᵀ K Vᵢ | [`bilinear-form`](../L1/bilinear-form.md) | firm c095 | `electrostaticsolver.cpp:122-127` |
+| diagonal Vᵢᵀ K Vᵢ | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) | firm | `electrostaticsolver.cpp:118-119` |
+| off-diagonal Vⱼᵀ K Vᵢ | [`bilinear-form`](../L1/bilinear-form.md) | firm | `electrostaticsolver.cpp:122-127` |
 
-## Status
+## Structural fact
 
-`firm` (promoted `seed`→`firm` at cycle-095, the `bilinear-form-firm-flip-and-cascade-wave`) — the L1 pure-function composition root for the electrostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02). All four composed L1 operators are now firm — [`fe_assemble`](../L1/fe_assemble.md) (firm), [`ksp_solve`](../L1/ksp_solve.md) (firm), and the two capacitance-reduction primitives, the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091) and the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) (firm c095, this cycle's cascade — its `α = xᴴ M y` signature covers the cross-pairing). **Under the OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03) a column promotes off `seed` when its OWN directly-owned constituents are firm; this column is firm because all four are.** The cross-linked output-product column [`capacitance.L1`](./capacitance.L1.md) is a SIBLING reference, not a blocker. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 driver range `electrostaticsolver.cpp:21-98` + `:100-138` realizing the composition, plus the firm L1 constituent down-links.
+All four composed L1 operators are firm — [`fe_assemble`](../L1/fe_assemble.md), [`ksp_solve`](../L1/ksp_solve.md), and the two capacitance-reduction primitives, the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) and the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) (its `α = xᴴ M y` signature covers the cross-pairing). **Under the OWN-COMPOSITION rule a column is firm when its OWN directly-owned constituents are firm; this column is firm because all four are.** The cross-linked output-product column [`capacitance.L1`](./capacitance.L1.md) is a SIBLING reference, not a blocker. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters.

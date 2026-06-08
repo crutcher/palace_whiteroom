@@ -20,7 +20,7 @@ edges:
     - feature/geometric-multigrid-preconditioner.L4
     - L3/chebyshev
     - L2/jacobi-smoother
-    - L2/correction_step               # DOWNWARD annotation: each pure V-cycle per-sweep leg is the L1 realization of the L2 correction_step combinator (firm c122). NOT a depends-on — an L1 form cannot depend UP on an L2 abstraction (CLAUDE.md §"Layers are defined high→low"); reference-class navigational only.
+    - L2/correction_step               # DOWNWARD annotation: each pure V-cycle per-sweep leg is the L1 realization of the L2 correction_step combinator. NOT a depends-on — an L1 form cannot depend UP on an L2 abstraction (CLAUDE.md §"Layers are defined high→low"); reference-class navigational only.
 ---
 
 # geometric-multigrid preconditioner — L1 composition-root
@@ -70,7 +70,7 @@ Three composed pieces, each a firm L1 link:
    `prolong = apply (P[l])` are the only inter-level transfers. **GROUNDS RE9.** L0:
    `gmg.cpp:191` (restrict), `:199` (prolong).
 2. **Per-level smoother** — [`multigrid-relaxation-smoother`](../L1/multigrid-relaxation-smoother.md)
-   (kernel-impl, **firm** c121) / the Chebyshev/Jacobi polynomial smoothers
+   (kernel-impl, **firm**) / the Chebyshev/Jacobi polynomial smoothers
    ([`L3/chebyshev`](../L3/chebyshev.md) / [`L2/jacobi-smoother`](../L2/jacobi-smoother.md),
    cross-linked as references — the L2/L3 iteration-views of the smoother, not blocking deps).
    The smoother's diagonal-preconditioner setup
@@ -89,7 +89,7 @@ L4 surface's §"Why this is rough-in".
 **Downward annotation (L1 → L2 navigational, NOT a dependency).** Each per-sweep V-cycle leg
 (pre-smooth `presmooth (bs!l) x`, the residual+prolong-add coarse-grid correction, post-smooth)
 is the L1 pure-function realization of the L2 [`correction_step`](../L2/correction_step.md)
-combinator `y + B·(x − A·y)` (firm c122): the smooth legs with `B` = the per-level point
+combinator `y + B·(x − A·y)` (firm): the smooth legs with `B` = the per-level point
 smoother, the coarse-grid leg with the conjugated `B = P·B'·Pᵀ` (correction_step law 6, T = P).
 This is a **downward annotation only** — NO `depends-on` edge is created (an L1 form is defined
 in L1 vocabulary and cannot depend UP on an L2 abstraction, CLAUDE.md §"Layers are defined
@@ -97,16 +97,15 @@ high→low"); the L1 body is already well-grounded in the firm L1 primitives `ax
 that `correction_step` itself decomposes into. The reference is the combinator-primary
 navigational link.
 
-## Status
+## Promotion basis
 
-`firm` (promoted rough-in→firm cycle-122) — the L1 pure-function surface of the
-infrastructure / shared-substrate GMG preconditioner column. `feature_root: seed` preserved.
-Firm on the same well-foundedness basis as the
-[L4 surface](./geometric-multigrid-preconditioner.L4.md): all blocking `depends-on`
-constituents are firm on disk (`fe_space_hierarchy`, `multigrid-relaxation-smoother` (kernel-impl
-c121), `reciprocal`, `normalize`). The [`L3/chebyshev`](../L3/chebyshev.md) (partial-obstruction)
-+ [`L2/jacobi-smoother`](../L2/jacobi-smoother.md) cross-links are the L2/L3 iteration-VIEWS of
-the smoother (`reference`-class, already so typed here) — sibling-views, not blocking deps. The
-V-cycle body is the mutation-rotated pure rendering of `gmg.cpp:126-205`; the level recursion +
-`pc_it` Richardson sweep are the documented sequential obstructions inherited from the firm
-smoother and do not gate the compositional firm claim. Evidence: `gmg.cpp:126-205`.
+The L1 pure-function surface of the infrastructure / shared-substrate GMG preconditioner column,
+firm on the same well-foundedness basis as the
+[L4 surface](./geometric-multigrid-preconditioner.L4.md): all blocking `depends-on` constituents
+are firm (`fe_space_hierarchy`, `multigrid-relaxation-smoother` (kernel-impl), `reciprocal`,
+`normalize`). The [`L3/chebyshev`](../L3/chebyshev.md) (partial-obstruction) +
+[`L2/jacobi-smoother`](../L2/jacobi-smoother.md) cross-links are the L2/L3 iteration-VIEWS of the
+smoother (`reference`-class) — sibling-views, not blocking deps. The V-cycle body is the
+mutation-rotated pure rendering of `gmg.cpp:126-205`; the level recursion + `pc_it` Richardson sweep
+are documented sequential obstructions inherited from the firm smoother and do not gate the
+compositional firm claim. Evidence: `gmg.cpp:126-205`.

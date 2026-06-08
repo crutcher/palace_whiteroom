@@ -1,7 +1,7 @@
 ---
 edges:
   reference:
-    - L1/set_subvector_zero        # authoritative L1 operator entry (landed c104/c105; firm)
+    - L1/set_subvector_zero        # authoritative L1 operator entry (firm)
     - concepts/dofset              # reciprocal back-link (dofset.md references this page)
 ---
 

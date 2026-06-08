@@ -45,15 +45,15 @@ Use a negative-result slice when:
 
 ## Relation to spec invention
 
-A negative-result slice is the methodology's check against **spec invention** — the tempting move of writing a spec-level unifying concept that has no source citation and is justified only by accumulated lessons. The negative-result slice preserves the lessons (in `lessons.md`) and the scope question (in the slice's Context section) without crystallizing a fictional kernel.
+A negative-result slice is the methodology's check against **spec invention** — the tempting move of writing a spec-level unifying concept that has no source citation and is justified only by accumulated lessons. The negative-result slice preserves the scope question (in its Context section) without crystallizing a fictional kernel.
 
 If a later cycle finds that the source HAS unified the sites (e.g., a refactor lands), the negative-result slice can be replaced by a positive slice — the catalog becomes a record of the pre-unification state.
 
 ## Examples in this spec
 
-- `polynomial_recurrence_step` (the scope question; its catalog is absorbed into this page's §Partial-positive sub-pattern and §Falsification criterion below — the Phase-1 slice was deleted cycle-098 as reachability-GC detritus, its Chebyshev-pair firm home is `book/src/L4/chebyshev.md` §Semantics `innerStep`) — three independent scalar-update sequences (Chebyshev-4th-kind, Chebyshev-1st-kind, GMRES Givens stream) plus one out-of-scope branch (eigenvalue tracking via SLEPc/ARPACK). No Palace-level unification.
-- [`triangular-solve-obstruction`](../L1-L0/triangular-solve-obstruction.md) (the firm L1>L0 home; the
-  Phase-1 `sparse_triangular_solve` slice was absorbed here cycle-097) — the scope question (sparse
+- `polynomial_recurrence_step` (the scope question; its catalog is absorbed into this page's §Partial-positive sub-pattern and §Falsification criterion below — its Chebyshev-pair firm home is `book/src/L4/chebyshev.md` §Semantics `innerStep`) — three independent scalar-update sequences (Chebyshev-4th-kind, Chebyshev-1st-kind, GMRES Givens stream) plus one out-of-scope branch (eigenvalue tracking via SLEPc/ARPACK). No Palace-level unification.
+- [`triangular-solve-obstruction`](../L1-L0/triangular-solve-obstruction.md) (the firm L1>L0 home) —
+  the scope question (sparse
   `Ly=b`/`Uy=b`, factor Allgatherv, residual check) returns a negative result: Palace carries no
   Palace-level triangular-solve form. SuperLU/STRUMPACK/MUMPS are thin opaque `mfem::Solver`
   forwarders (the factor interior lives below the project boundary). This is the canonical L0→L1
@@ -71,7 +71,7 @@ The shape:
 
 The two claims are kept honest by scope: "the sites do not unify" is true *cross-family*; "two of them differ on a single axis and could be parametrically unified" is true *within-family*. Conflating the scopes is the failure mode — either overstating the negative (eliding the within-family opportunity) or overstating the positive (claiming a unification the cross-family evidence refutes).
 
-The canonical worked example is the `polynomial_recurrence_step` scope question's within-Chebyshev "L1 ↔ L1 self-tightening" finding (the Phase-1 slice was absorbed into this page and deleted cycle-098; its Chebyshev-pair firm home is `book/src/L4/chebyshev.md` §Semantics `innerStep`). Cross-family (Chebyshev ↔ GMRES ↔ eigentracking) the result is negative — different scalar-state cardinalities, recurrence kinds, vector-update kernels, and termination shapes (the five-axis table). Within the Chebyshev family, however, 4th-kind and 1st-kind agree on **four of five axes** (vector-update shape, persisted-state shape, termination shape, outer-driver shape) and differ only on the **scalar-recurrence kind** — so a `ChebyshevSmootherBase<ScalarGenerator>` parameterized on the single residual axis would absorb both variants cleanly. That refactor is structurally documented as a within-family partial positive *without* weakening the cross-family negative result; the within-family claim carries its own falsification surface (the vector-update / outer-driver / termination shapes diverging between the two Chebyshev variants).
+The canonical worked example is the `polynomial_recurrence_step` scope question's within-Chebyshev "L1 ↔ L1 self-tightening" finding (its Chebyshev-pair firm home is `book/src/L4/chebyshev.md` §Semantics `innerStep`). Cross-family (Chebyshev ↔ GMRES ↔ eigentracking) the result is negative — different scalar-state cardinalities, recurrence kinds, vector-update kernels, and termination shapes (the five-axis table). Within the Chebyshev family, however, 4th-kind and 1st-kind agree on **four of five axes** (vector-update shape, persisted-state shape, termination shape, outer-driver shape) and differ only on the **scalar-recurrence kind** — so a `ChebyshevSmootherBase<ScalarGenerator>` parameterized on the single residual axis would absorb both variants cleanly. That refactor is structurally documented as a within-family partial positive *without* weakening the cross-family negative result; the within-family claim carries its own falsification surface (the vector-update / outer-driver / termination shapes diverging between the two Chebyshev variants).
 
 When recording a partial positive, the discipline is:
 
@@ -91,4 +91,4 @@ Absence-of-X is not falsified by spec-side desire for symmetry, by methodology a
 
 This is symmetric to how a [`sequential-obstruction`](./sequential-obstruction.md) names what would have to hold for the obstruction to lift (a global form for the genuinely-sequential algorithm), and to how an OBSTRUCTION claim in a `rotation_claim` names the specific reason the rotation does not proceed. A negative-result slice without a falsification criterion is structurally indistinguishable from a slice that just hasn't found the unification yet.
 
-The falsification criterion also serves as **forward-anchor** for future cycles: a Planner doing a refinement push on a negative-result slice consults the criterion to decide whether new source evidence has accumulated. The polynomial_recurrence_step slice (2026-05-26) is the canonical worked example.
+The falsification criterion also serves as **forward-anchor**: a refinement push on a negative-result slice consults the criterion to decide whether new source evidence has accumulated. The `polynomial_recurrence_step` scope question is the canonical worked example.

@@ -102,7 +102,7 @@ lifted record of that scattered per-mode readout. The `IsPropagating` predicate 
 The ≥2-consumer evidence for the standalone page (three signature consumers):
 
 - [`waveguide_mode_reduce`](../L4/waveguide_mode_reduce.md) — the **producer** (L4 reduce verb):
-  `waveguide_mode_reduce :: EigResult -> Scalar -> WaveguideModeTable` (D5 this cycle).
+  `waveguide_mode_reduce :: EigResult -> Scalar -> WaveguideModeTable`.
 - [`waveguide-mode.L4`](../feature/waveguide-mode.L4.md) — the output-product composition root:
   `waveguide_mode :: BoundaryModeConfig -> WaveguideModeTable`
   (`book/src/feature/waveguide-mode.L4.md:30`).
@@ -128,21 +128,3 @@ The ≥2-consumer evidence for the standalone page (three signature consumers):
 **If this page and a consumer chapter / the L0 source disagree on any factual claim about the
 record, the L0 source (`palace/drivers/boundarymodesolver.cpp` / `palace/models/modeeigensolver.cpp`)
 wins and this page is corrected.**
-
-## Status
-
-`firm` — the row schema is read directly from the positive boundary-mode readout loops
-(`palace/drivers/boundarymodesolver.cpp:272-340`): the `kn` un-transform (`:299`), `n_eff` divide
-(`:276`), the VD back-transform `(Et, En)` (`:300`) + power-normalization (`:304-307`), and the
-conditional `Bz = curl(Et)/(iω)` (`:316-333`) keyed on `IsPropagating(kn)`
-(`palace/models/modeeigensolver.cpp:516-519`). The per-field construction stratum is the readout
-of the converged eigenpair family. The record-definition obligation is met: this is the
-cross-cutting home for `WaveguideModeTable`, referenced by ≥2 signature consumers
-(`L4/waveguide_mode_reduce`, `feature/waveguide-mode.L4`, `feature/waveguide-mode.L1`). All L0
-citations self-verified against on-disk source this dispatch via codemap `read_range`.
-
-Well-foundedness (rank): the page is a `record` DAG node at `rank: firm`; its blocking edges are
-`cites-evidence depends-on` to L0 source ranges (rank-terminal ground truth), so the
-`rank(u) ≤ rank(v)` invariant holds vacuously. The edges to the producer verb chapter, the feature
-columns, and the config surface are `reference` (navigational — a record page is named-by-use, it
-does not block on its consumers).

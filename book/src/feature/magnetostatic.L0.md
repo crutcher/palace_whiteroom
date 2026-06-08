@@ -46,7 +46,3 @@ The driver returns `{indicator, curlcurl_op.GlobalTrueVSize()}` (`:108`) — the
 ## Lifts to
 
 This L0 surface lifts to the L1 pure-function composition root [`magnetostatic.L1`](./magnetostatic.L1.md) (each in-place driver write → a value-returning pure operator) and the L4 combinator composition root [`magnetostatic.L4`](./magnetostatic.L4.md) (the per-source loop → the [`solve_family`](../L4/solve_family.md) map; the assemble → the [`fe_assemble`](../L4/fe_assemble.md) fold). The per-operator L1>L0 mutation-rotation themes of the constituent ops carry the per-write lifts; this feature surface records the composition-root *site map* (which driver range realizes which composed stage).
-
-## Status
-
-`firm` (promoted `seed`→`firm` at cycle-095 alongside its L1/L4 levels, the `bilinear-form-firm-flip-and-cascade-wave`) — the L0 ground-truth surface for the magnetostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the [electrostatic.L0](./electrostatic.L0.md) exemplar. Every stage is a cited range into `palace/drivers/magnetostaticsolver.cpp`, confirmed on-disk via palace-codemap `read_range` this dispatch. The chapter's evidence IS the driver-source range + the per-stage site map to the constituent ops (the adapted surface-or-evidence form for the feature-surface kind); as a cited ground-truth surface its rank is firm.

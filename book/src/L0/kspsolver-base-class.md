@@ -84,21 +84,20 @@ The L4 `solve-monad` concept abstracts this whole flow: a constructed solver is 
 
 ## Notes for higher layers
 
-- **`BaseKspSolver` is the natural anchor for the L1 `ksp_solve` operator (not yet authored — `L1/ksp_solve.md` does not currently exist; only the methodology concept page [`concepts/ksp_solve`](../concepts/ksp_solve.md) is present; harvester firm-up anticipated cycle-007+)** — `ksp_solve(solver, b) = x where A · x = b`. The L1 form drops the in-place destination `y`, the statistics counters, and the convergence-warning side-channel; the pure functional form returns the solution vector. Non-convergence in the L1 form would be modelled either as a sentinel return value or as a separate `convergence-status` output, per the L1 design discussion in [`concepts/convergence-test`](../concepts/convergence-test.md).
+- **`BaseKspSolver` is the natural anchor for the L1 `ksp_solve` operator** (the methodology concept page [`concepts/ksp_solve`](../concepts/ksp_solve.md) carries the pure-functional shape) — `ksp_solve(solver, b) = x where A · x = b`. The L1 form drops the in-place destination `y`, the statistics counters, and the convergence-warning side-channel; the pure functional form returns the solution vector. Non-convergence in the L1 form would be modelled either as a sentinel return value or as a separate `convergence-status` output, per the L1 design discussion in [`concepts/convergence-test`](../concepts/convergence-test.md).
 - **The composition pattern (iterative + preconditioner) is what the L4 `solve-monad` lifts** — at L4 a "solver" is a value parameterised by an operator type and a (possibly empty) preconditioner type. The `BaseKspSolver` class is one concrete realisation; `MfemWrapperSolver` (also at `palace/linalg/solver.hpp:70-134`) is another. Both are `Solver<OperType>` subclasses; both expose a `Mult` of the same shape.
 - **The unimplemented branches in the factory** (`MINRES` / `BICGSTAB` / `DEFAULT`) are documented in [`ksp-factory-file`](./ksp-factory-file.md). `BaseKspSolver` itself has no enum-based dispatch — the abort happens upstream during factory construction; once the `BaseKspSolver` exists, the iterative solver inside it is always one of the implemented kinds.
 
 ## Referenced from
 
-*Forward-declared. The L1 `ksp_solve` operator (queued, not yet firm — no `L1/ksp_solve.md` chapter exists yet; harvester firm-up anticipated cycle-007+), the L2 `krylov-step` entry, and the L4 `solve-monad` / `solver-as-operator` concept pages will all reference this chapter when they expand.*
-
+- [`L1/ksp_solve`](../L1/ksp_solve.md) — the pure-functional solve operator anchored on this class's `Mult` entry point.
 - [`L2/krylov-step`](../L2/krylov-step.md) — the per-step body that `BaseKspSolver::Mult` invokes (via `ksp->Mult`) when the inner iterative solver is one of CG / GMRES / FGMRES.
 - [`L1/apply_linop`](../L1/apply_linop.md) — `BaseKspSolver` owns an `OperType` reference (the system operator) and dispatches `apply_linop` calls into it from inside the iterative solver.
 - [`L0/ksp-factory-file`](./ksp-factory-file.md) — the factory functions that construct the `IterativeSolver` and `Solver` objects passed to the `BaseKspSolver` constructor.
 - [`L0/apply-linop-overload-set`](./apply-linop-overload-set.md) — the `OperType` template parameter resolves to one of `Operator` / `ComplexOperator`, whose `Mult` family is the per-step primitive.
 - [`concepts/solver-as-operator`](../concepts/solver-as-operator.md) — the methodology concept (a solver "is" a linear operator under the algebraic identification `A → A⁻¹`).
 - [`concepts/solve-monad`](../concepts/solve-monad.md) — the L4 abstraction over the construction-then-apply flow.
-- [`concepts/ksp_solve`](../concepts/ksp_solve.md) — the L1-shaped pure-functional solve operator (concept page only; `L1/ksp_solve.md` chapter not yet authored — anticipated cycle-007+).
+- [`concepts/ksp_solve`](../concepts/ksp_solve.md) — the L1-shaped pure-functional solve operator concept page.
 
 ## Evidence (representative)
 

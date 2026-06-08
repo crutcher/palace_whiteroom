@@ -75,7 +75,3 @@ The accessor surface confirms these five are exactly the externally-observable q
 - [`op-params`](./op-params.md) — stratum (2), the construction-time readonly configuration record.
 - [`krylov`](./krylov.md) — stratum (3), the ephemeral per-restart workspace record.
 - [`solve-monad`](./solve-monad.md) — the monad that threads `SimState`.
-
-## Status
-
-`firm` — the five-field schema is uniform across all Krylov slices, every field is backed by a cited `IterativeSolver` `mutable` instance-field declaration (or the `Mult` iterate argument), and every field is run-time-evolved (the defining property vs. the construction-time `OpParams`). The record-definition obligation is met: this is the cross-cutting home for `SimState`, referenced by ≥2 consumers (`L4/krylov-step.md`, `concepts/solve-monad.md`, `concepts/state-stratification.md`, `concepts/convergence-test.md`).

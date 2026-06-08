@@ -79,7 +79,7 @@ single-point-of-truth for the inner gate.
 
 Three FIRM L1 operators exhibit the gate-carrying-gate shape; a fourth site is latent.
 
-- **`eigsolve`** (firm structure; cycle-011, `8bb16b7`) — **two** nested gates. The
+- **`eigsolve`** (firm structure) — **two** nested gates. The
   closure `E` binds `E.linear : Solver[A]` (the inner Krylov solver invoked per
   RCI / shell-matrix callback for spectral-transformation modes) and `E.projector :
   Maybe DivFreeSolver[ComplexVector]` (the optional divergence-free projector)
@@ -96,7 +96,7 @@ Three FIRM L1 operators exhibit the gate-carrying-gate shape; a fourth site is l
   source-anchored, so `eigsolve` is a clean FIRM instance of this shape independent of
   that caveat.
 
-- **`divfree-projector`** (firm; cycle-016, `b54ea1c`) — **one** nested gate. The
+- **`divfree-projector`** (firm) — **one** nested gate. The
   closure `P` binds `P.ksp : Solver[P.M]` (a CG solver bound to the ε-weighted H1
   mass-like operator `P.M` as both operator and preconditioner target), materialised
   at construction (`book/src/L1-L0/divfree-projector-mutation-rotation.md:193-198`).
@@ -104,7 +104,7 @@ Three FIRM L1 operators exhibit the gate-carrying-gate shape; a fourth site is l
   (`book/src/L1-L0/divfree-projector-mutation-rotation.md:108-113`,
   `book/src/L1/divfree-projector.md`).
 
-- **`floquet-correction`** (firm; cycle-036) — **one** nested gate. The closure `F`
+- **`floquet-correction`** (firm) — **one** nested gate. The closure `F`
   binds `F.ksp : Solver[F.M_RT]` (a CG solver preconditioned by `JacobiSmoother`,
   bound to the RT vector-FE mass operator `F.M_RT` as both operator and
   preconditioner target), materialised at construction

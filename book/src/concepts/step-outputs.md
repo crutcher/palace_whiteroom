@@ -71,7 +71,3 @@ The L0 form **mixes** these three readouts into the loop body and the persistent
 ## Signatures that name this record
 
 - `krylov-step :: OpParams -> Krylov -> (SimState -> Solve { sim, krylov, outputs: StepOutputs })` (Form A) and the Form B `first_step` / `steady_step` pair — [`krylov-step`](../L4/krylov-step.md) §Signature.
-
-## Status
-
-`firm` — fields, types, per-field run-time stratum, and L0 backing sites are all positively cited; the record is the `outputs` field of the firm L4 `krylov-step` signature. The `BreakdownTag` enumeration is slice-specific and left open (the only constructed sub-part), but the record *shape* is firm.

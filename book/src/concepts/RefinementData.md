@@ -4,9 +4,9 @@ kind: record
 edges:
   depends-on:
     - target: palace/utils/configfile.hpp:97-154
-      kind: cites-evidence            # struct RefinementData: public AMR fields :100-138 (tol :101, max_it :104, max_size :108, nonconformal :111, max_nc_levels :115, update_fraction :119, maximum_imbalance :123, save_adapt_iterations :127, save_adapt_mesh :130, uniform_ref_levels :133, ser_uniform_ref_levels :136), private box/sphere lists + accessors :140-150, ctors :152-153
+      kind: cites-evidence            # struct RefinementData: public AMR fields + private box/sphere lists + accessors + ctors
     - target: palace/utils/configfile.cpp:318-359
-      kind: cites-evidence            # RefinementData(const json &) JSON->field binding: "Tol":321 "MaxIts":322 "MaxSize":323 "Nonconformal":324 "MaxNCLevels":325 "UpdateFraction":326 "MaximumImbalance":327 "SaveAdaptIterations":328 "SaveAdaptMesh":329 "UniformLevels":332 "SerialUniformLevels":333
+      kind: cites-evidence            # RefinementData(const json &) JSON->field binding
   reference:
     - L1/dorfler_mark
     - L1-L0/amr-estimate-mark-refine
@@ -140,24 +140,3 @@ not define the multi-rank rebalancing semantics.
 
 **If this page and a consumer chapter / the L0 source disagree on any factual claim about the record,
 the L0 source (`palace/utils/configfile.hpp` / `configfile.cpp`) wins and this page is corrected.**
-
-## Status
-
-`firm` — the data shape is read directly from the positive `struct RefinementData`
-(`palace/utils/configfile.hpp:97-154`): the public AMR fields with their defaults (`tol :101`,
-`max_it :104`, `max_size :108`, `nonconformal :111`, `max_nc_levels :115`, `update_fraction :119`,
-`maximum_imbalance :123`, `save_adapt_iterations :127`, `save_adapt_mesh :130`, `uniform_ref_levels
-:133`, `ser_uniform_ref_levels :136`), the private region-refinement lists + accessors (`:140-150`),
-and the ctor declarations (`:152-153`). The JSON `Refinement` surface + the field bindings are read off
-`RefinementData::RefinementData(const json &)` (`palace/utils/configfile.cpp:318-359`,
-`field = refinement.value("<Key>", field)` per field `:321-333`). Every field is construction-time
-(parsed once at startup, read-only thereafter). All L0 citations self-verified against on-disk source
-this dispatch via codemap `read_range`. The record-definition obligation is met: this is the
-cross-cutting home for `RefinementData`, referenced by ≥2 consumers (`L1/dorfler_mark` θ-field + the
-AMR loop at `lifecycle.L4` + the `amr-estimate-mark-refine` theme).
-
-Well-foundedness (rank): the page is a `record` DAG node at `rank: firm`; its only blocking edges are
-`cites-evidence depends-on` to the L0 `struct RefinementData` extent + JSON-ctor range (rank-terminal
-ground truth), so the `rank(u) ≤ rank(v)` invariant holds vacuously. The edges to the consumer
-chapters are `reference` (navigational — a record page is named-by-use, it does not block on its
-consumers).

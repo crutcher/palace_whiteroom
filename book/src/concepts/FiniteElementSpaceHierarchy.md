@@ -111,15 +111,14 @@ carries the level stack but does not define the multi-rank transfer semantics.
 
 ## Signatures that name this record
 
-The ≥2-consumer evidence for the standalone page (the `record-FiniteElementSpaceHierarchy-promote-watch`
-firing — producer + GMG column):
+The ≥2-consumer evidence for the standalone page (producer + GMG column):
 
 - [`fe_space_hierarchy`](../L1/fe_space_hierarchy.md) — the **producer**:
   `fe_space_hierarchy :: [Mesh] -> [FECollection] -> Config -> FiniteElementSpaceHierarchy`
   (`book/src/L1/fe_space_hierarchy.md:35,87`).
 - [geometric-multigrid preconditioner](../feature/geometric-multigrid-preconditioner.L4.md) —
   the **consumer**: the V-cycle composes the record's `GetProlongationOperators()` level-stack
-  by name (the `depends-on (composes)` edge `GMG.L4 → L1/fe_space_hierarchy`, GROUNDING RE9;
+  by name (the `depends-on (composes)` edge `GMG.L4 → L1/fe_space_hierarchy`;
   `book/src/feature/geometric-multigrid-preconditioner.L4.md`); the L1 surface
   ([`geometric-multigrid-preconditioner.L1`](../feature/geometric-multigrid-preconditioner.L1.md))
   renders the same `restrict = apply_transpose (P[l])` / `prolong = apply (P[l])` transfers.
@@ -150,23 +149,3 @@ cross-cutting status but are mediated through the GMG column (the consumer named
 
 **If this page and a consumer chapter / the L0 source disagree on any factual claim about the
 record, the L0 source (`palace/fem/fespace.hpp`) wins and this page is corrected.**
-
-## Status
-
-`firm` — the data shape is read directly from the positive `class FiniteElementSpaceHierarchy`
-(`palace/fem/fespace.hpp:200-286`): the level vector `fespaces` (`:203`), the `mutable` lazy
-prolongation vector `P` (`:204`) + `BuildProlongationAtLevel` (`:206`), the seed ctor
-(`:210-213`), `AddLevel` = `push_back` + `nullptr` slot (`:217-221`), and the read surface
-`GetNumLevels`/`GetFESpaceAtLevel`/`GetFinestFESpace`/`GetProlongationAtLevel`/`GetProlongationOperators`/`GetDiscreteInterpolators`
-(`:215-285`). The construction-vs-run-time stratum per field is read off the `mutable`-marking
-+ the lazy `BuildProlongationAtLevel` materialization. The record-definition obligation is met:
-this is the cross-cutting home for `FiniteElementSpaceHierarchy`, referenced by ≥2 consumers
-(`L1/fe_space_hierarchy` producer + the geometric-multigrid-preconditioner column). All L0
-citations self-verified against on-disk source this dispatch via codemap `read_range`.
-
-Well-foundedness (rank): the page is a `record` DAG node at `rank: firm`; its only blocking
-edge is `cites-evidence depends-on` to the L0 `class FiniteElementSpaceHierarchy` range
-(rank-terminal ground truth), so the `rank(u) ≤ rank(v)` invariant holds vacuously. The edges
-to the producer/consumer chapters are `reference` (navigational — a record page is named-by-use,
-it does not block on its consumers; the GMG consumer being rough-in does not gate this firm
-record page).

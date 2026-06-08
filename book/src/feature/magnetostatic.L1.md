@@ -44,7 +44,7 @@ At L1 the magnetostatic feature is a pure function `config → inductance matrix
 3. **Inductance-matrix reduction** — the symmetric matrix `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)`, built from L1 bilinear-form evaluations (firm diagonal + firm off-diagonal), each normalized by the excitation currents:
    - diagonal `Mᵢᵢ = (Aᵢᵀ K Aᵢ)/Iᵢ²` — the operator-weighted self-form normalized by the squared current, the now-firm [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) squared (`matrix_weighted_norm(Aᵢ, K)² = Aᵢᵀ K Aᵢ`; the L0 source builds it directly as `M_mag->Mult(A_gf, H_gf)` then `linalg::Dot(A_gf, H_gf)`, then `/ (I_inc[i]*I_inc[i])`, `:129-131`).
    - off-diagonal `Mᵢⱼ = (Aⱼᵀ K Aᵢ)/(Iᵢ Iⱼ)` — the operator-weighted cross-pairing normalized by the current product, the firm [`bilinear-form`](../L1/bilinear-form.md) `α = xᴴ M y` instantiated `⟨Aⱼ, K Aᵢ⟩` (L0 `:135-138`, the same `Mult`/`Dot` with the `j` grid function, then `/ (I_inc[i]*I_inc[j])`).
-   The result is the symmetric `M` (and its LAPACK inverse `Minv`, `:151-152`). This stage is a pure fold of current-normalized bilinear-form evaluations over the solution-family pair grid — no L1 operator is *new* here; the reduction composes [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091) + [`bilinear-form`](../L1/bilinear-form.md) (firm c095), with the current normalization a scalar weight on each entry.
+   The result is the symmetric `M` (and its LAPACK inverse `Minv`, `:151-152`). This stage is a pure fold of current-normalized bilinear-form evaluations over the solution-family pair grid — no L1 operator is *new* here; the reduction composes [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm) + [`bilinear-form`](../L1/bilinear-form.md) (firm), with the current normalization a scalar weight on each entry.
 
 ## Inputs / outputs (the feature surface)
 
@@ -65,9 +65,7 @@ The L1→L0 direction (how each pure operator lowers to the in-place driver writ
 |---|---|---|---|
 | assemble K once | [`fe_assemble`](../L1/fe_assemble.md) | firm | `magnetostaticsolver.cpp:29` |
 | per-source solve | [`ksp_solve`](../L1/ksp_solve.md) | firm | `magnetostaticsolver.cpp:66, 76-77` |
-| diagonal Aᵢᵀ K Aᵢ / Iᵢ² | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) | firm c091 | `magnetostaticsolver.cpp:129-131` |
-| off-diagonal Aⱼᵀ K Aᵢ / Iᵢ Iⱼ | [`bilinear-form`](../L1/bilinear-form.md) | firm c095 | `magnetostaticsolver.cpp:135-138` |
+| diagonal Aᵢᵀ K Aᵢ / Iᵢ² | [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) | firm | `magnetostaticsolver.cpp:129-131` |
+| off-diagonal Aⱼᵀ K Aᵢ / Iᵢ Iⱼ | [`bilinear-form`](../L1/bilinear-form.md) | firm | `magnetostaticsolver.cpp:135-138` |
 
-## Status
-
-`firm` (promoted `seed`→`firm` at cycle-095, the `bilinear-form-firm-flip-and-cascade-wave`) — the L1 pure-function composition root for the magnetostatic feature, authored under the FEATURE-SURFACE SPINE directive (2026-06-02), mirroring the [electrostatic.L1](./electrostatic.L1.md) exemplar. All four composed L1 operators are now firm — [`fe_assemble`](../L1/fe_assemble.md) (firm), [`ksp_solve`](../L1/ksp_solve.md) (firm), and the two inductance-reduction primitives, the diagonal [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md) (firm c091) and the off-diagonal [`bilinear-form`](../L1/bilinear-form.md) (firm c095, this cycle's cascade — its `α = xᴴ M y` signature covers the cross-pairing). **Under the OWN-COMPOSITION rule (USER DIRECTIVE 2026-06-03) a column promotes off `seed` when its OWN directly-owned constituents are firm; this column is firm because all four are.** The cross-linked output-product column [`inductance.L1`](./inductance.L1.md) is a SIBLING reference, not a blocker. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters. Evidence: the L0 driver range `magnetostaticsolver.cpp:22-108` + `:110-204` realizing the composition, plus the firm L1 constituent down-links.
+The cross-linked output-product column [`inductance.L1`](./inductance.L1.md) is a SIBLING reference, not a blocker. The chapter carries the compositional claim only; per-op algebraic claims live in the linked chapters.
