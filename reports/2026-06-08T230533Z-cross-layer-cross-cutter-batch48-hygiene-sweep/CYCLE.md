@@ -4,7 +4,7 @@ invoked_at: 2026-06-08T230533Z
 scope: batch-48 OPENER (cycle-145 D1) — once-per-batch maintenance-floor full-hygiene sweep (AUDIT-class, read-only)
 status: integrated
 integrated_at: 2026-06-08T231900Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: b1f6955
 integration_notes: "cycle-145 (batch-48 OPENER, 1/3). MAINTENANCE-FLOOR clean-bill, AUDIT-class — NO book mutation (no proposed-changes block; per-report apply a genuine no-op); the once-per-batch full-hygiene sweep at the OPENER grounds the batch's linter baseline. CLEAN BILL 6/6 sweep checks + critic 8/8 PASS; overall_status set ready by the critic (no repairer ran). All graded-stack baseline fields reproduce on-disk vs the prompt-stated batch baseline; both hard invariants hold (rank_violations==0, unresolved_depends_on_targets==0); 3 realizes-kernel-api edges reference-class; DIRECTIVE-1 MPI/sharding boundary intact. Finalize step-5b re-run on the LANDED tree confirmed all counts HELD EXACTLY; step-5c KaTeX <pre>-assertion PASS (0 hits across 392 built HTML); cargo make book EXIT 0, ZERO repairs."
 ---
 
