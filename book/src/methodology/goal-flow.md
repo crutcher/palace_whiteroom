@@ -684,6 +684,20 @@ This shape is load-bearing, and it follows three principles:
 > the complete spec + the synthesized-library view off to the downstream burn build, or take a new substantive direction /
 > re-scope (e.g. lifting MPI/sharding into active scope — a DIRECTIVE-1 re-scope).
 
+> **The first realized maintenance batch — near-empty cycles are themselves the completeness signal (batch-46).** Cycles
+> 142/143/144 were the human's chosen response to the batch-45 done-ness recognition: of the four candidate directions,
+> the human selected **(A) wind to maintenance** (over the meta-phase's standing (C) downstream-burn-handoff recommendation).
+> Batch-46 is the first batch run *as* the maintenance floor, and its texture is the lesson: a single audit-class
+> full-hygiene sweep at the opener (clean bill — 8/8 critic checks, baseline held exactly, no artifact mutation) followed by
+> **two zero-dispatch cycles** in which the planner honestly dispatched nothing because there was no substantive in-scope
+> frontier and no recorded-but-unfixed hygiene nuance to land. The graded-stack baseline held *exactly* across all three
+> cycles; both hard invariants held every cycle. The arc's load-bearing lesson, sharpening the prior five: a maintenance
+> floor that produces near-empty cycles is not a failure of the cadence — it is the *strongest* evidence that the in-scope
+> R&D is genuinely complete. The honesty of a zero-dispatch cycle (refusing to manufacture a touch) is the signal. The
+> strategic forward question returns for the *sixth consecutive batch*, with the same candidate set — and the diminishing
+> marginal value of further maintenance-only batches now points more sharply at the downstream-burn handoff as the
+> highest-value realization of the project's original goal.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
