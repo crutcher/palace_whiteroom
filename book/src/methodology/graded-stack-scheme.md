@@ -235,7 +235,12 @@ entries, all concept pages. How each acquires a `rank:`:
   word, maps it via the §1 table, and writes the `rank:` frontmatter to match. Where a chapter
   has neither frontmatter nor a `## Status` line and lacks the firm apparatus, it is NOT
   labelled firm — its rank is prose-derived conservatively and the on-disk gap is flagged as an
-  OQ (an upstream landing gap), not forced.
+  OQ (an upstream landing gap), not forced. **For these no-frontmatter-rank chapters the concise
+  prose `## Status` token is the SOLE rank carrier** — the finalization de-bulk discipline (the
+  static-state-surface invariant; strips `## Status` *promotion-history prose* and the *firm
+  frontmatter-rank* entries' redundant `## Status` sections) **must NOT strip this token**; a
+  no-frontmatter-rank chapter keeps a concise static `## Status` token (plus its promotion
+  condition when non-firm), or the entry would lose its rank entirely.
 
 - **Lowering themes (`L*-L*/`)** — **resolved cleanly by the graded-stack §8 lowering-verifier
   rule.** A lowering theme is **at most as resolved as its endpoints**: the lowering edge is a

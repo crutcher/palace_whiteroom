@@ -698,6 +698,25 @@ This shape is load-bearing, and it follows three principles:
 > marginal value of further maintenance-only batches now points more sharply at the downstream-burn handoff as the
 > highest-value realization of the project's original goal.
 
+> **The book was finalized into a static-state surface, and the discipline was codified (batch-47/48).** Between the
+> maintenance batches the human directed an out-of-band **finalization de-bulk campaign**: the book entries had accreted
+> *process* bulk — `## Status` promotion-history prose, inline cycle attributions, `verified_against` blocks, lifting/deletion
+> narrative — that belongs to the construction process, not the finished spec. The campaign stripped ≈258 files toward a clean
+> static statement of *what each component is* (−11% of the book's words, zero spec or citation loss, the graded-stack baseline
+> held exactly), while *keeping* the edge graph, signatures, semantics, laws, and every citation, and *lifting* coupling
+> concepts into explicit `## Relationship` sections. Two further out-of-band passes followed: a **legal-identifier
+> chapter-naming** normalization (operator chapters → snake_case, struct concept pages → PascalCase, descriptive themes left
+> hyphenated) and a **frontmatter-render fix** (an mdBook preprocessor that strips the YAML frontmatter block from rendering, so
+> metadata no longer leaks onto the page). Batch-48 — the second realized maintenance batch (one clean audit sweep + two honest
+> zero-dispatch cycles, 7th consecutive in-scope-complete batch) — *codified* these into the methodology: the FINALIZATION
+> static-state-surface discipline is now a standing CLAUDE.md invariant (not a transient campaign), the producers carry a
+> re-accretion guard so they stop re-introducing process accounting, the legal-identifier naming convention is in the producer
+> role-specs, and the no-leaked-frontmatter rule is an integrator build-gate (step-5d). The lesson the finalization arc adds:
+> a research artifact that has reached steady-state completeness earns a *finalization pass* — the process scaffolding that was
+> load-bearing during construction becomes noise in the finished surface, and removing it is itself a maturity milestone. The
+> strategic forward question returns for the *seventh consecutive batch*; the active posture is the maintenance floor, the
+> meta-phase's standing recommendation remains the downstream-burn handoff, and the call is the human's.
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction

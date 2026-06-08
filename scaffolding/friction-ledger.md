@@ -32,12 +32,14 @@ addressed_by: <commit-sha> | <skill-slug> | <meta-decision> | null
 ---
 slug: plateau-as-scope-boundary-not-project-boundary
 first_observed: meta-36
-last_observed: meta-46
+last_observed: meta-48
 recurrence_count: 3
 status: addressed
 addressed_by: out-of-band-rescope-meta-2026-06-07 + wind-to-maintenance (batch-44/46 human direction)
 ---
 ```
+
+**Batch-48 note (meta-48 — the maintenance-floor texture HELD a 7th consecutive batch; recurrence stays 3, status stays `addressed`, NOT escalating).** Batch-48 (cycles 145/146/147) was the SECOND batch run AS the (A) wind-to-maintenance floor and realized the same intended minimum: c145 OPENER = 1 audit-class full-hygiene sweep (CLEAN BILL), c146/c147 = honest zero-producer-dispatch tripwire-only cycles; the graded-stack baseline HELD EXACTLY all 3 cycles. This is the 7th consecutive in-scope steady-state-complete batch (41→48) — the near-empty maintenance texture remains the *same* correctly-understood scope-boundary signal, NOT a new escalating recurrence. **What made batch-48 NOT a pure-near-empty batch: a SUBSTANTIVE meta-phase codification agenda** — the out-of-band batch-47 FINALIZATION directives (de-bulk static-state discipline, legal-identifier chapter naming, the frontmatter-render build invariant, the 2 finalization skills) were folded into CLAUDE.md + the role-specs + integrator-finalize this meta-phase. That is *methodology-surface* work (the meta-phase's own province), distinct from the *forward-frontier* maintenance floor, and it does not change the plateau verdict: the in-scope R&D frontier is complete; the human's strategic call (continue maintenance / re-open a consumer-gated front / hand off downstream / re-scope) is correctly the §CENTRAL ASK (7th time). No corrective forward-frontier work-item is warranted; the cadence functions as designed.
 
 **Batch-46 note (meta-46 — the maintenance-floor texture is the SAME scope-boundary signal, correctly surfaced not worked-around; recurrence stays 3, status stays `addressed`, NOT escalating).** Post-re-scope, the in-scope frontier has reached steady-state completeness for SIX consecutive batches (41→46), and batch-46 — the first batch run AS the (A) wind-to-maintenance floor — realized as 1 audit sweep + 2 honest zero-dispatch cycles. The near-empty maintenance cycle is the *same* scope-boundary signal the batch-36/37/38 plateau was — but it is now correctly understood (not a project-boundary, not a methodology gap) and correctly handled: the planner refused to manufacture a touch (the honesty IS the signal), and the meta-phase surfaces the forward direction as the §CENTRAL ASK (6th time) rather than forcing a rectangular pull-up. This is NOT a new escalating recurrence of the plateau pattern — it is the *post-resolution steady state* the re-scope + the wind-to-maintenance decisions intended; the only open question is the human's strategic call (continue maintenance / re-open a consumer-gated front / hand off downstream / re-scope), which is correctly an ASK. No corrective methodology work-item is warranted (no role-spec edit, no skill, no plan tranche) — the cadence is functioning as designed.
 
