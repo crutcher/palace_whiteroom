@@ -662,6 +662,28 @@ This shape is load-bearing, and it follows three principles:
 > front only if its consumer enters scope, hand the now-complete spec + the synthesized-library view off downstream, or
 > take a new substantive direction / re-scope.
 
+> **Opening all four gated fronts at once CONFIRMED rather than extended the completeness (batch-45).** Cycles
+> 139/140/141 were the human's chosen response to the batch-44 done-ness recognition: rather than wind to maintenance,
+> *open ALL FOUR live gated/deferred fronts simultaneously* (geometric-multigrid preconditioner + AMR + the eigsolve-impl
+> kernel-impl + the sharding-math-further sketch) as one wide shared-exploration fan-out. The arc's load-bearing lesson is
+> the *shape of a done frontier*: the opener's deliverable-presence sweep found — and the human ratified — that **two of
+> the four fronts were already firm/built** (the geometric-multigrid preconditioner at batch-39, with its V-cycle recursion
+> correctly living in the feature column composing firm vocabulary; AMR's estimate→mark→refine theme and leaves firm) —
+> re-building them would be a forbidden rectangular pull-up. The other two reached their *honest floors*: the eigsolve-impl
+> kernel-impl is comprehensively fleshed but **promotion-gate-blocked** (its `lanczos_step` blocker's positive-structure arm
+> is *structurally unsatisfiable* from the present Palace corpus — MINRES is an enum-only-stub with an empty L0 — so its only
+> live promotion path is a blocking consumer not yet in flight); the sharding-math sketch was extended with an
+> additive-Schwarz solve-generalization that the lowering-verifier confirmed records its weaker recovery as an honest
+> config-conditional *non-law* (no false free-recovery claim), staying exploratory rank-0 with MPI cited-but-not-lifted
+> (DIRECTIVE-1). The whole batch moved no node maturity and held the graded-stack baseline exactly; it was a
+> **disposition / consolidation batch**, not a build-out. The lesson the arc adds to the prior three: when a directed
+> campaign to "open everything" finds the fronts already landed, gate-blocked at an honest floor, or exploratory-only, that
+> *is the signal* — the in-scope artifact is complete for its in-scope purpose, and "opening a front" cannot manufacture
+> forward work the scope does not contain. The strategic forward question returns for the *fifth consecutive batch*: wind to
+> maintenance (the now-many-times-reinforced default), re-open a gated front only if its consumer enters active scope, hand
+> the complete spec + the synthesized-library view off to the downstream burn build, or take a new substantive direction /
+> re-scope (e.g. lifting MPI/sharding into active scope — a DIRECTIVE-1 re-scope).
+
 ## FLOW — how the goal is met
 
 The stack is **not the deliverable** — it is a research artifact whose construction
