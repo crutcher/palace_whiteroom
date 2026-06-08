@@ -63,7 +63,9 @@ its disposition.
 
 ## The three dispositions
 
-### 1. Black-box kernel — rises (opaque body, clean surface)
+### 1. Black-box kernel — rises
+
+*Opaque body, clean surface.*
 
 A tensor operation with **no easy decomposition but a clean operation surface**
 (signature + semantics), typically carrying a lot of **non-local iterative
@@ -104,7 +106,9 @@ implement and stays a true obstruction — there is no clean surface to rise.
 A black-box kernel is implemented (by the external library) with a genuinely
 clean surface; an enum-only stub is not implemented at all.
 
-### 2. Kept named abstraction — rises (decomposes, but earns its name)
+### 2. Kept named abstraction — rises
+
+*Decomposes, but earns its name.*
 
 A named operator that **does** decompose into a simple combinator application,
 **but** whose simple named definition is **well-studied / literature-standard
@@ -127,7 +131,9 @@ Confirmed keeps:
 Both rise as named abstractions; the general combinator
 [`inner_product`](../L3/inner_product.md) rises alongside them.
 
-### 3. Accelerated kernel — stopped low (decomposes, only for speed)
+### 3. Accelerated kernel — stopped low
+
+*Decomposes, only for speed.*
 
 A named operator that exists **solely to speed up a common operation that
 *does* have a clean decomposition** — a performance-fused special case of a

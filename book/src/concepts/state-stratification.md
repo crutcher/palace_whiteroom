@@ -42,7 +42,7 @@ The split makes two things structural that are merely conventional at L1–L3:
 - [constructed-operators](./constructed-operators.md) — where the variant selectors live and get absorbed.
 - [sequential-obstruction](./sequential-obstruction.md) — small-dense ephemeral state often hosts sequential obstructions (Givens-replay, back-solve) that do not lift to a global form.
 
-## Worked example — GMRES (slice: gmres, L4)
+## Worked example — GMRES
 
 The GMRES slice's L4 form is a worked example of the three-bundle split:
 
@@ -52,7 +52,7 @@ The GMRES slice's L4 form is a worked example of the three-bundle split:
 
 The split mirrors Palace's L0 class layout: instance fields (configuration, persistent state) ↔ OpParams; lazy `Initialize`/`Update` workspace ↔ Krylov; the externally-observable `final_res` / `converged` flags ↔ SimState. Variant absorption is preserved at L4 because the bundles type the contract: `OpParams.flexible` determines whether `Krylov.Z` is present, but the main control flow does not branch on this — `apply_correction` closes over the right basis (V or Z) based on the captured OpParams.
 
-## Worked example — Chebyshev smoother (slice: chebyshev, L4): a fourth stratum
+## Worked example — Chebyshev smoother: a fourth stratum
 
 The three strata above are the common case. Some operators have a **fourth** stratum: per-call ephemeral state that is *threaded across an inner loop within a single call* but does not survive the call. The Chebyshev smoother's L4 form (slice: chebyshev §L4) is the canonical example — it adds a **scalar-recurrence stratum** distinct from the other three:
 

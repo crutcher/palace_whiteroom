@@ -52,7 +52,7 @@ The rule of thumb: if the action reads or writes `SimState`, it's in the monad; 
 - [constructed-operators](./constructed-operators.md) — what the inner loop calls; the operator interface is variant-absorbed and lives outside the monad.
 - [sequential-obstruction](./sequential-obstruction.md) — small-dense recurrences are pure inside the monad, not monadic effects.
 
-## Worked example — GMRES (slice: gmres, L4)
+## Worked example — GMRES
 
 The GMRES L4 form coordinates the solve via `Solve a = StateT SimState Identity a` over the SimState bundle:
 

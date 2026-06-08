@@ -188,7 +188,9 @@ reduction** (it is an assembled differential matrix, no summation-order load-bea
 concern at the L1 surface — the assembly summation order is an `apply_linop`/`fe_assemble`
 representation concern, not an `interpolator`-construction one).
 
-## GSLIB point-interpolation sibling — obstruction (opaque-library-ownership)
+## GSLIB point-interpolation sibling
+
+**Status:** obstruction (opaque-library-ownership)
 
 Palace's `palace/fem/interpolator.{hpp,cpp}` also exposes a **distinct**
 interpolation facility — **GSLIB point/field interpolation** — which is **NOT**

@@ -27,16 +27,18 @@ edges:
 
 The synthesized rendering of the L4 [Iteration & step combinators](../L4/iteration-combinators-intro.md) doc-group: the value-threaded loop combinators and the step kernels that drive Palace's iterative algorithms. Implementation VIEW — links to the authoritative L4 chapters for laws/semantics, renders the synthesized code form here.
 
-## Operators this library holds (topological order)
+## Operators this library holds
 
-A def appears after everything it uses:
+*Topological order — a def appears after everything it uses:*
 
 1. [`iterate_while`](../L4/iterate_while.md) — value-threaded tail-recursive loop with demand-pruned trajectory; the canonical iteration primitive (everything below uses it).
 2. [`iterate_while_with_prev`](../L4/iterate_while_with_prev.md) — carry-bootstrapped variant threading a `PrevCarry` closure; degenerates to `iterate_while` when `β = ()`.
 3. [`krylov_step`](../L4/krylov_step.md) — the typed-wrapper Krylov step kernel; Form A consumes `iterate_while`, Form B consumes `iterate_while_with_prev`.
 4. [`chebyshev`](../L4/chebyshev.md) — the fixed-degree polynomial smoother; both bounded loops are `iterate_while` folds with step-count predicates.
 
-## Clustering types (rendered before the group)
+## Clustering types
+
+*Rendered before the operator group.*
 
 Per the [type-placement rule](./index.md#type-placement--cluster-a-type-with-its-api-group), the iteration-clustering state carriers — [`Krylov`](../concepts/krylov.md), [`StepOutputs`](../concepts/StepOutputs.md), [`PrevCarry`](../concepts/PrevCarry.md) — are rendered **immediately before** the operator group, bundled with their utility API (constructors / accessors / predicates). Their consumer methods stay in the group AFTER the type+utility block. The cross-cutting `SimState` / `OpParams` are shared and live in [`types`](./types.md), not here.
 

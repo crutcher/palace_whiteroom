@@ -25,7 +25,9 @@ L1 is the mutation-rotation layer: Palace's in-place / output-arg / receiver-mut
 
 This operator is the **named content of the `map_solve` scope boundary**. `book/src/L4/solve_family.md` records the driven per-ω `SetOperators`-inside-the-loop as the boundary that scopes driven *out* of the shared `solve_family` (the `map_solve_over_(operator,rhs)_family` superset). This entry sharpens that boundary: the per-element operator the driven `map_solve` superset folds over is **not arbitrary** — it is an affine-in-ω fixed-basis operator-valued `linear_combination`, which is cleanly describable in existing spine vocabulary. The per-ω operator rebuild that scopes driven out of `solve_family` IS this affine-operator-family evaluation.
 
-### Relationship to linear_combination (the replace-and-propagate framing)
+### Relationship to linear_combination
+
+*The replace-and-propagate framing.*
 
 `assemble_frequency_operator` does NOT introduce a second scalar-weighted-sum fold. The firm `linear_combination` (`L2/linear_combination.md`, `L3/linear_combination.md`) is `Σᵢ aᵢ·tᵢ` over a list of `(Scalar, Operand)` pairs; its operands were originally tensors (the BLAS-1 `scal`/`axpy`/`axpby`/`axpbypcz` cohort). The driven assembly is the *same fold* with the operand category lifted from **tensor** to **operator** (`ParOperator`: `K`/`C`/`M`/`A2`), under the operator monoid (operator addition + scalar-operator scaling, realized at L0 by `SumOperator::AddOperator`). Per the vocabulary-shift redirect, this is handled by **extending the existing combinator's operand-category variant axis** (`tensor-operand | operator-operand`) — the operator-operand case is witnessed by `BuildParSumOperator` (`rap.cpp:781-787`) — NOT by authoring a mirrored `operator_linear_combination` chapter. `assemble_frequency_operator` is then the **driven-pipeline specialization** of the operator-operand case: a fixed three-operator basis `{K, C, M}` combined under the affine-in-ω scalar weights `{1, iω, −ω²}`, plus the extra term `A2`.
 
@@ -59,7 +61,9 @@ Shape contract (bunsen-style; named axes):
 
 The L0 surface materializes the result eagerly as an `mfem::SumOperator`-backed `ParOperator` (`rap.cpp:779-787`); the L1 form is a pure value (operator-as-value), the eager materialization is an L1>L0 concern.
 
-## Through linear_combination (the operand-operand specialization)
+## Through linear_combination
+
+*The operand-operand specialization.*
 
 The body is exactly `linear_combination` at the **operator-operand** corner of its operand-category variant axis:
 
@@ -78,7 +82,7 @@ The operator is **pure / out-of-place at L1**: it consumes the fixed basis and �
 
 It is **affine-in-ω modulo `A2`**: for the three fixed-basis terms the per-ω rebuild is a genuine affine operator family — fixed basis, ω-varying scalar weights. The fourth term `A2` is the exception: `A2 = GetExtraSystemMatrix(omega)` (`drivensolver.cpp:175`) is itself ω-dependent — an ω-dependent **operand** carrying the constant coefficient `1`, NOT an ω-dependent coefficient. So the literal `BuildParSumOperator` shape is a four-operand affine combination whose fourth operand happens to vary with ω. The "affine-in-ω fixed-basis operator family" abstraction is exact for `{K, C, M}` and holds for `A2` only if one folds `A2`'s ω-dependence into the operand (the literal source shape). This is stated honestly rather than hidden: `assemble_frequency_operator` is affine-in-ω **modulo the `A2` ω-dependence**.
 
-### Why this is a single-pipeline specialization (by design)
+### Why this is a single-pipeline specialization
 
 The operator-operand `linear_combination` is shared spine vocabulary (the fold is firm at the tensor-operand layer; this is the operand-category extension). The `assemble_frequency_operator` **specialization** — an affine-in-parameter fixed-basis operator *family* re-evaluated per parameter inside a solve loop — is witnessed by the driven pipeline ONLY, and that is permanent by design (a finding, not a gap):
 

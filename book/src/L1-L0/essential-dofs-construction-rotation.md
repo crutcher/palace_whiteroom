@@ -76,7 +76,9 @@ into `dbc_tdof_lists->emplace_back()`. The mutation-rotation reads the out-param
 standalone (non-hierarchy) at `spaceoperator.cpp:204-205` (writing into
 `aux_bdr_tdof_lists.emplace_back()`).
 
-### The construction-head-lowers / dof-resolution-tail-MFEM-owned split (the translation boundary)
+### The construction-head-lowers / dof-resolution-tail-MFEM-owned split
+
+*The translation boundary.*
 
 The translation is sharp on the last line of the block: `...GetEssentialTrueDofs(dbc_marker, out)`.
 

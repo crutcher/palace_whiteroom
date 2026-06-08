@@ -46,7 +46,7 @@ What this is: a `firm` L4 operator `mk_matrix_free_operator` — the **operator-
 
 The two representations Palace already carries are the **variant axis** this op makes structural: the matrix-free `ceed::Operator` (the wrapper `palace/fem/libceed/operator.hpp:32`, sub-operators added by `AddSubOperator` `:48`) is the un-materialized form `mk_matrix_free_operator` builds; `CeedOperatorFullAssemble` (`:81-82`) is the alternative CSR materialization (the `full` branch). The L4 form is **representation-agnostic in its signature** (the variant axis absorbs the partial/full choice, inherited from `L4/fe_assemble.md:166` + `L1/fe_assemble.md:182-187`) — `mk_matrix_free_operator` names specifically the *partial / un-materialized* constructor that the backend-lowering target wants.
 
-## L4 form (the constructor signature + apply-lowering)
+## L4 form
 
 The signature + apply-lowering below are the L4 rendering of the positively-cited `partial matrix-free` constructor + its contraction-chain apply.
 
@@ -67,7 +67,7 @@ The apply lowers to the firm L2 contraction-chain combinator (the `depends-on (l
 
 where (per [`L2/matrix-free-operator-apply`](../L2/matrix-free-operator-apply.md)) `G`/`Gᵀ` is `element_restrict` (the `[(N: ...)] ↔ [E, L]` gather / scatter-add), `B_𝒟`/`B_𝒟ᵀ` is `basis_apply` (the `[E, L] ↔ [E, P, C]` basis-eval contraction keyed on 𝒟), and `D` is `quad_point_contract` (the pointwise `[E, P, C]` per-quad-point diagonal against the `[E, P, G]` geometry carrier `GeomFactors`). The L4 op is the **operator-constructor surface**; the L2 combinator is the **apply-chain composition** it produces — the constructor/apply split is the GPU-backend-relevant factoring (build the contraction graph once at construction; run it per `apply`).
 
-## Pull-chain (reachability — why this is firm and not garbage)
+## Pull-chain
 
 Now firm, this op is reachable from a feature root by a faithful **blocking `depends-on`** inbound edge:
 
@@ -79,7 +79,9 @@ Now firm, this op is reachable from a feature root by a faithful **blocking `dep
 
 This cap proposes **no new operator** beyond itself: `mk_matrix_free_operator` is the L4 backend-lowering operator-constructor. Its dependencies are all firm on disk — the L2 combinator and (transitively) the four L1 substrate ops below it. The *upward* pull is the dedicated L4 backend-lowering feature surface.
 
-## Blocking dependencies (all firm — the well-foundedness this rests on)
+## Blocking dependencies
+
+*All firm — the well-foundedness this rests on.*
 
 Its blocking deps are (the L2 combinator recorded `depends-on (lowers-to)`; the four substrate ops reached transitively through it):
 
@@ -87,7 +89,9 @@ Its blocking deps are (the L2 combinator recorded `depends-on (lowers-to)`; the 
 - (transitively, via the L2 combinator) `L1/element_restrict`, `L1/basis_apply`, `L1/quad_point_contract`, `L1/geom_factor_build` — all firm.
 - [`concepts/element-local-tensor`](../concepts/element-local-tensor.md) — firm; the rank-structured shape family `(N: ...)`/`[E, L]`/`[E, P, C]`/`[E, P, G]` the chain is typed over.
 
-## L0 anchors (construction-site evidence — the positive compositional claim)
+## L0 anchors
+
+*Construction-site evidence — the positive compositional claim.*
 
 The matrix-free *representation* this L4 op names is grounded at:
 

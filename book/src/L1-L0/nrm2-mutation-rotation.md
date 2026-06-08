@@ -123,7 +123,9 @@ Citations:
 - `palace/fem/errorindicator.hpp:43` — `auto Norml2(MPI_Comm comm) const { return
   linalg::Norml2(comm, local); }`.
 
-## The `std::abs` defensive guard — classification
+## The `std::abs` defensive guard
+
+**Kind:** classification
 
 Resolves OQ `nrm2-std-abs-defensive-guard-classification`. The outer `std::abs` in
 `std::sqrt(std::abs(Dot(comm, x, x)))` is a **load-bearing numerical guard**, not a

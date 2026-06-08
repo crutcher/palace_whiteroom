@@ -21,7 +21,9 @@ L4 is **not**:
 - Committed to eager-vs-traced execution, persistent-DS choices, or monad-transformer stacks. Those are realization concerns for the (separate, downstream) burn-realization spec.
 - A complete language. It is the smallest calculus that admits Palace's algorithms cleanly; extensions are added as friction at the lower layers demands them.
 
-## 0.1 Active-management discipline (how this surface stays unified, consolidated, live)
+## 0.1 Active-management discipline
+
+*How this surface stays unified, consolidated, live.*
 
 This surface is maintained under the same standing discipline as the graded-stack vocabulary, owned by `layer-intro-author` (authoring) + the `meta-phase` (every-batch liveness/unification refresh, the standing duty analog of the GC sweep).
 
@@ -70,7 +72,9 @@ Examples:
 - `Tensor[m, n]`          — rank-2 with free axes `m`, `n`
 - `Tensor[h_wins * window, w_wins * window, C]` — algebraic composition
 
-#### 1.2.1 Named shape groups (shape congruence of unknown rank)
+#### 1.2.1 Named shape groups
+
+*Shape congruence of unknown rank.*
 
 A **named shape group** `(S: ...)` gives a name to a *contiguous run of axes* inside a shape — **without committing to its rank or its individual dims**. It reads as *"the shape pattern `...`, named `S`"*. The name is then **used** (`$S`) elsewhere in the same signature to assert that two shapes are **congruent** over that run.
 
@@ -140,7 +144,9 @@ e ::= x                                      -- variable
 
 A `do`-block statement `s` is either `x ← e` (monadic bind), `let x = e` (pure binding), or just `e` (side-effect-only call returning `Sim ()`).
 
-#### 1.3.1 Closure-returning signatures (the calculus is high-order)
+#### 1.3.1 Closure-returning signatures
+
+*The calculus is high-order.*
 
 L4 is a **high-order calculus**: a function/operator signature's domain *and* codomain may themselves be function types (the `τ₁ → τ₂` and `Op[τ_in → τ_out]` type formers of §1.1). A constructor whose *intended use is to yield a closure* — a value that is **applied later**, not a fully-evaluated result — must make that higher-order intent **syntactically explicit**, so the closure codomain is not misread as the final argument of a still-curried call.
 

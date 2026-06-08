@@ -114,7 +114,9 @@ dot  x y = inner_product x y                          -- Hermitian (complex) / s
 tdot x y = inner_product x y  -- with unconjugated kernel (the conjugation-axis second value)
 ```
 
-### `nrm2` — Euclidean-norm verb (CONSUMER of `inner_product`)
+### `nrm2` — Euclidean-norm verb
+
+**Kind:** CONSUMER of `inner_product` (not a fold member)
 
 Renders [`L4/nrm2`](../L4/nrm2.md). The kept named verb `‖x‖₂ = √⟨x, x⟩`; a **consumer** of `inner_product` at the diagonal post-composed with `√ ∘ abs`, NOT a fold member (the do-NOT-merge guard). The `abs` is the load-bearing defensive non-negativity guard, preserved as an explicit part of the scalar map.
 
@@ -164,7 +166,9 @@ mk_matrix_free_operator space term geom = mkOp (\v -> apply_chain v)
         (quad_point_contract geom (basis_apply term (element_restrict space v))))
 ```
 
-### `fe_assemble` — assemble-fold combinator (libCEED quadrature leaf as `#extern`)
+### `fe_assemble` — assemble-fold combinator
+
+*The libCEED per-term quadrature leaf renders as `#extern`.*
 
 Renders [`L4/fe_assemble`](../L4/fe_assemble.md). The assemble-fold `K = Σ_t assemble_term(space, t)` — a `foldr` over a `[WeakFormTerm]` list producing a commutative-monoid (operator-`+`) sum. The per-term assembly leaf `assemble_term` is the **libCEED-owned opaque kernel** ([`fe-assemble-libceed-boundary-obstruction`](../L1-L0/fe-assemble-libceed-boundary-obstruction.md), the kernel-API node) — rendered as `#extern` after its type signature.
 
@@ -194,7 +198,9 @@ assemble_term :: FiniteElementSpace[N] -> WeakFormTerm -> LinOp[(N: ...), $N]
 #extern assemble_term
 ```
 
-### type `DofSet[N]` + utility API (clusters with `eliminate_bc`)
+### type `DofSet[N]` + utility API
+
+**Kind:** clustering type (clusters with `eliminate_bc`)
 
 Renders the synthesized form of the [`DofSet`](../concepts/dofset.md) record (authoritative schema there) — the essential (Dirichlet) true-dof index set the BC verb-pair consumes — bundled with its intrinsic utility API. Placed immediately before its consumer `eliminate_bc`. `DiagPolicy` (the two-valued diagonal-policy enum, named only here) is rendered inline alongside.
 
@@ -404,7 +410,9 @@ sparameter_reduce ports family =
     scale ports i j = port_scale (ports!!i) (ports!!j)  -- lumped: √(R_src/R_dst); wave: exp(ikₙᵢdᵢ)·exp(ikₙⱼdⱼ)
 ```
 
-### type `WaveguideModeTable` + utility API (clusters with `waveguide_mode_reduce`)
+### type `WaveguideModeTable` + utility API
+
+**Kind:** clustering type (clusters with `waveguide_mode_reduce`)
 
 Renders the synthesized form of the [`WaveguideModeTable`](../concepts/WaveguideModeTable.md) record (authoritative schema there) — the per-mode propagation-mode table the boundary-mode reduction produces — bundled with its intrinsic utility API. Placed immediately before its producer `waveguide_mode_reduce`. The mode fields `Et`/`En`/`Bz` are genuine flat rank-1 dof-vectors (NOT named shape groups, per [semantics §1.2.1](../semantics/index.md)).
 
@@ -453,7 +461,9 @@ waveguide_mode_reduce res w =
   | i <- [0 .. res.converged - 1] ]                              -- map over converged modes (no inter-mode state)
 ```
 
-### `sharding-decompose-reduce` — roadmap_goal stub note (NOT a filled def)
+### `sharding-decompose-reduce` — stub note
+
+**Status:** roadmap_goal (no claims; not a filled def)
 
 [`sharding-decompose-reduce`](../L4/sharding-decompose-reduce.md) is a **rank-0 `roadmap_goal`** — the speculative sharding-as-decomposition-abstraction MATH the batch-43 (C) gate authorizes as a future direction. It is NOT firm vocabulary and is NOT rendered as a synthesized def here; it asserts no claims, and the MPI/distributed mechanism it would eventually realize against is the deferred-future mechanism (DIRECTIVE-1, cited-not-lifted). The synthesized library therefore carries it only as this **stub note**: the intended combinator pair is `subdomain_reduce = mconcat ∘ map (reduce ∘ restrict_to_block) ∘ blocks` — recovering a global reduction over a partition of the index set by the firm reduce verbs' standing concatenation-homomorphism. See the roadmap_goal chapter for the speculative forms and the gate provenance; no implementation is rendered (a roadmap_goal has no firm def to synthesize).
 

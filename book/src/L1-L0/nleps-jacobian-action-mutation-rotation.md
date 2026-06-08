@@ -331,7 +331,9 @@ Citations:
 - `book/src/L1/apply_nonlinear_pencil.md` — the linearity-in-`v` law 1 (`T(λ)·a + T(λ)·b =
   T(λ)·(a+b)`) that makes the accumulate-into-`w` the algebraic sum.
 
-## The big-space-only output — the load-bearing recording
+## The big-space-only output
+
+**Kind:** the load-bearing recording
 
 The structural signature distinguishing this lowering from the residual / solve siblings is that
 **`w` is big-space only — there is no coordinate companion `w₂`**. The residual returns an

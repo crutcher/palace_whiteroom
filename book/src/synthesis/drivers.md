@@ -37,9 +37,9 @@ The top bracket of the [Synthesis](./index.md) library partition: the synthesize
 
 These are the same composition roots the [Feature surfaces](../feature/index.md) spine presents top-down; the `drivers` library is the **implementation rendering** of those entry points (the synthesized code that realizes them), parallel to the Feature spine's entry-point VIEW. This is the implementation VIEW — it renders the synthesized **composition** of the firm calculus-library defs; the **compositional** claim for each driver/product (driver = this composition of these constituents) lives ONCE in its [`../feature/<column>.L4.md`](../feature/index.md) chapter, and the constituents' **per-op algebra** lives ONCE in the [`../L4/<op>.md`](../L4/index.md) chapters — this chapter LINKS to both (it does not restate either).
 
-## What this library holds (topological order — composes everything below it)
+## What this library holds
 
-A def appears after everything it uses. The realized order: the per-driver config records (each a thin `IoData` projection-view, rendered immediately before its driver and bundled with its utility API per the [type-placement rule](./index.md#type-placement--cluster-a-type-with-its-api-group)); then the 6 sim-driver composition defs; then the 6 output-product composition defs (each composing a rendered reduce verb from [`data-algebra`](./data-algebra.md) over a driver's solution family); finally the lifecycle ROOT, which dispatches on `IoData.problem.type` over the 6 driver defs and folds the AMR estimate-mark-refine schedule via [`fold_solve`](./coordination.md).
+*Topological order — this library composes everything below it; a def appears after everything it uses.* The realized order: the per-driver config records (each a thin `IoData` projection-view, rendered immediately before its driver and bundled with its utility API per the [type-placement rule](./index.md#type-placement--cluster-a-type-with-its-api-group)); then the 6 sim-driver composition defs; then the 6 output-product composition defs (each composing a rendered reduce verb from [`data-algebra`](./data-algebra.md) over a driver's solution family); finally the lifecycle ROOT, which dispatches on `IoData.problem.type` over the 6 driver defs and folds the AMR estimate-mark-refine schedule via [`fold_solve`](./coordination.md).
 
 The composed constituents already rendered in the calculus libraries (composed BY NAME here): from [`data-algebra`](./data-algebra.md) — `fe_assemble`, `assemble_frequency_operator`, `gram_reduce`, `sparameter_reduce`, `eigenfreq_qfactor_reduce`, `domain_energy_reduce`, `waveguide_mode_reduce`; from [`coordination`](./coordination.md) — `ksp_solve`, `eigsolve`, `solve_family`, `frequency_sweep`, `fold_solve`; from [`types`](./types.md) — `IoData` (the parsed config every driver projects).
 
@@ -49,7 +49,9 @@ Per the [Synthesis overview](./index.md#rendering-conventions): topological def 
 
 ---
 
-## Per-driver config records (the `IoData` projection-views)
+## Per-driver config records
+
+*The `IoData` projection-views.*
 
 The per-driver config records named in the driver signatures (`ElectrostaticConfig`, `MagnetostaticConfig`, `DrivenConfig`, `TransientConfig`, `EigenmodeConfig`, `BoundaryModeConfig`) are **NOT distinct data shapes** — they are **projection-views of the one [`IoData`](./types.md)** (the single parsed config object), each selecting the construction-stratum sub-records the driver reads. The authoritative schema + the per-driver projection table is [`config-record`](../concepts/config-record.md) §"per-driver views" (`there is ONE IoData type; the per-driver config records are projections of it`). Rendered here as type aliases over `IoData` (the projection is the utility API — a trivial accessor), clustered before the driver group per the type-placement rule, NOT a field-schema restatement.
 
@@ -94,7 +96,9 @@ electrostatic cfg =
 
 The capacitance reduction is presented as a feature in [`capacitance`](#capacitance--voltage-w--1-gram-output-product) (the `w = 1` Gram output product) below; the inverse `Cinv = gram_inverse C` is the consumer tail, kept out of the reduction.
 
-## `magnetostatic` — fixed-operator driver (current-normalized sibling)
+## `magnetostatic` — fixed-operator driver
+
+*The current-normalized sibling of `electrostatic`.*
 
 Renders the [`magnetostatic.L4`](../feature/magnetostatic.L4.md) composition root (firm). The fixed-operator sibling of `electrostatic`, structurally identical down to the operator-capture-once hoist; the curl-curl stiffness `K` is assembled once, swept over the surface-current family, reduced to the inductance matrix at the `w = 1/(IᵢIⱼ)` current-normalized weight.
 
@@ -218,7 +222,9 @@ The per-mode propagation-mode reduction is presented as a feature in [`waveguide
 
 ---
 
-## Output products (composing the reduce verbs)
+## Output products
+
+*Composing the reduce verbs.*
 
 Each output product is a one-reduction tail on a producing driver column: it consumes the driver's solution family and composes a rendered reduce verb from [`data-algebra`](./data-algebra.md) by name. The reduce verbs are NOT re-rendered here (they live in `data-algebra`); the products *compose* them.
 
@@ -322,7 +328,9 @@ waveguide_mode cfg =
 
 ---
 
-## `lifecycle` — the spine ROOT (composes the driver defs)
+## `lifecycle` — the spine ROOT
+
+*Composes the driver defs (the topologically-last def).*
 
 Renders the [`lifecycle.L4`](../feature/lifecycle.L4.md) composition root (firm) — the topologically-LAST def, the spine-ROOT **meta-feature** whose constituents are the driver defs above (plus driver-agnostic firm vocabulary). It builds the mesh, dispatches on `IoData.problem.type` to ONE driver def, and threads the adaptive estimate-mark-refine schedule through [`fold_solve`](./coordination.md) in its state-generated `schedule-source` form (the AMR loop; degenerates to the single initial solve when AMR is disabled).
 

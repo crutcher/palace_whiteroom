@@ -109,7 +109,9 @@ The L1 fold maps onto this body as:
 - the refinement sequence ⟶ split across **two** imperative loops by axis (see the next section).
 - the produced level sequence ⟶ the returned `fespaces` value (`multigrid.hpp:125`).
 
-### The fold-into-two-axis-loops reorganization (the translation core)
+### The fold-into-two-axis-loops reorganization
+
+*The translation core.*
 
 A single declarative `foldl AddLevel seed refinements` reorganizes into **start-index arithmetic + a seed
 + two sequential axis-specialized loops** — this is where the vocabulary genuinely shifts (and why this is
@@ -173,7 +175,9 @@ The translation has a sharp boundary, matching the sibling construction-rotation
   (`fespace.hpp:269-285`) are read-as-given properties of the result record (sibling-pull-gated), NOT
   constructed by this fold.
 
-## Variant axis — refinement-axis (2 loop cases) × Dirichlet-presence (optional block)
+## Variant axis — refinement-axis × Dirichlet-presence
+
+*refinement-axis: 2 loop cases; Dirichlet-presence: optional block.*
 
 The construction is identical modulo (a) which refinement axis a loop body indexes and (b) whether the
 optional dbc block runs:

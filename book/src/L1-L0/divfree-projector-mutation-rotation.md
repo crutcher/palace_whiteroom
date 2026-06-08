@@ -270,7 +270,9 @@ Citations:
 - `palace/linalg/divfree.cpp:148-151` — `psi`/`rhs` `SetSize(...TrueVSize())`
   + `UseDevice(true)` (the scratch-member sizing).
 
-#### Sign sub-note (load-bearing, positively anchored)
+#### Sign sub-note
+
+**Kind:** load-bearing, positively anchored
 
 The `WeakDiv = -Gᵀ` (ε-weighted) reading is anchored in Palace-owned source:
 the `MixedVectorWeakDivergenceIntegrator` bilinear form is `a(u, v) = -(Q u,

@@ -86,7 +86,9 @@ Palace**. A repo-wide grep for any GS / SOR / ILU / IC smoother class
 returned **zero hits** — no Palace-authored GS / SOR / ILU / IC smoother
 class exists.
 
-### (b) Where triangular solves occur — only inside opaque library calls
+### (b) Where triangular solves occur
+
+*Only inside opaque library calls.*
 
 **(b1) HYPRE-internal Gauss-Seidel / SSOR relaxation sweeps.** The only
 Gauss-Seidel / SOR relaxation in a Palace run is selected by an integer config
@@ -197,7 +199,9 @@ obstruction (it should not be conflated with a triangular-solve primitive)
 and is documented here as a non-example so a future search for "triangular"
 in Palace does not falsely conclude the obstruction is filled by it.
 
-### (d) The direct-solver wrappers are pure opaque forwarders — no factor, no MPI, no residual at the Palace level
+### (d) The direct-solver wrappers are pure opaque forwarders
+
+*No factor, no MPI, no residual at the Palace level.*
 
 (The wrapper *class declarations* are already anchored in §(b3); the additional facts here are
 that the wrapper **bodies** are literal forwards, that the one residual-bearing operation is

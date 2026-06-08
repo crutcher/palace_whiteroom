@@ -209,7 +209,7 @@ Citations:
 - `palace/linalg/vector.cpp:665-685` — the `LocalDot` real (Hypre) / complex (four-real-dot, `yᴴ x`) kernels the hook resolves to.
 - `palace/utils/communication.hpp:266-270` — `Mpi::GlobalSum(len, buff, comm) → GlobalOp(..., MPI_SUM, ...)`.
 
-## The conjugation asymmetry — the core theme content
+## The conjugation asymmetry
 
 Resolves OQ `l1-l0-dot-lowering-asymmetry`. The L1 `dot` convention pins **arg-1 conjugated**
 (`xᴴ y`, [`L1/dot`](../L1/dot.md):43); every L0 surface form pins **arg-2 conjugated**
@@ -262,7 +262,9 @@ narrates at the **L2>L1** edge (§"The conjugate-pair re-order"); this L1>L0 the
 L2>L1 theme dispatches the L2 fold onto the L1 leaf, this theme lowers the L1 leaf onto the L0
 source.
 
-## Reduction tree — load-bearing-numerical recording
+## Reduction tree
+
+**Kind:** load-bearing-numerical recording
 
 Reduction-tree non-associativity is **load-bearing** ([`L1/dot`](../L1/dot.md) §Semantics,
 `:45`): floating-point summation is non-associative, so different reduction trees give

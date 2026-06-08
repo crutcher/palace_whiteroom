@@ -122,7 +122,9 @@ the facts that hold *of the composed `Gᵀ B_𝒟ᵀ D B_𝒟 G` pipeline*:
 (The bilinearity over `(trial, test)` and the per-term additivity over the weak form
 `K = Σ_i A_i` are `fe_assemble`'s laws — see [`fe_assemble`](../L1/fe_assemble.md) — not restated here.)
 
-## Cohort placement — a NEW L2 vocabulary kind
+## Cohort placement
+
+*A NEW L2 vocabulary kind.*
 
 The combinator is a **constructive-kernel composition**: a named pipe of element-local contraction
 verbs over the rank-structured [`element-local-tensor`](../concepts/element-local-tensor.md) family.
@@ -142,7 +144,9 @@ It seeds a new L2 sub-chapter grouping, **Constructive-kernel compositions** (th
 backend-lowering contraction surface). It is the first member; future members (e.g. the term-fold of
 `fe_assemble` at L2, sum-factorized basis application as a named sub-combinator) would join it.
 
-## Sum-factorization — a transparent performance trick (one note)
+## Sum-factorization
+
+*A transparent performance trick (one note).*
 
 On a tensor-product element, `basis_apply`'s `B_𝒟` contraction factors into a sum-factorized sequence
 of 1-D contractions (the matrix-free efficiency win — `O(p^{d+1})` instead of `O(p^{2d})`). This is a
@@ -152,7 +156,7 @@ factored 1-D-sweep evaluation order is a one-line note on the `basis_apply` stag
 form. (The factoring lives below L2 resolution; it is a `basis_apply` implementation detail — see that
 chapter.)
 
-## Matrix-free vs assembled-COO duality (one note)
+## Matrix-free vs assembled-COO duality
 
 The two representation variants the obstruction theme catalogues map cleanly onto this combinator:
 
@@ -165,7 +169,9 @@ The two representation variants the obstruction theme catalogues map cleanly ont
   materialization of the same contraction**, not a different algorithm — the same combinator,
   evaluated on the identity basis and tabulated. Chosen at runtime by Palace's assembly-level config.
 
-## Downward to L1 (identity-in-named-terms — in-line note, NOT a separate L2-L1 theme)
+## Downward to L1
+
+**Kind:** identity-in-named-terms rotation (in-line note)
 
 The L1 [`libceed-quadrature-kernel-impl`](../L1/libceed-quadrature-kernel-impl.md) **already states
 this exact named chain** `A = Gᵀ ∘ B_𝒟ᵀ ∘ D ∘ B_𝒟 ∘ G` and decomposes it into the same four substrate
@@ -195,7 +201,9 @@ master assembler field-wiring (restriction → basis → QFunction → basis →
 element-additivity of the scatter-add) are syntactic-identity / structural facts on that positive
 source, not reconstructed from negative anchors.
 
-## Higher (L4) — firm
+## Higher (L4)
+
+**Status:** firm
 
 At L4 this combinator's action is the **apply** of a firm matrix-free linear-operator constructor
 in the backend-lowering feature surface — the calculus form whose semantics match the burn/GPU tensor-

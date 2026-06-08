@@ -251,7 +251,9 @@ Citations:
    u, w0) + u2_w0) / linalg::Dot(GetComm(), w, w0)` (`:674-675`). Unweighted `linalg::Dot`;
    informational only (does not exercise the bilinear_form overload).
 
-## The internal workspace `Ax` — the structural distinguisher from the weighted-norm sibling
+## The internal workspace `Ax`
+
+*The structural distinguisher from the weighted-norm sibling.*
 
 The **single structural distinguisher** between this theme and
 [`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md) is the
@@ -290,7 +292,9 @@ of the L1 form. The L1 form is workspace-free; the workspace ownership is purely
 choice. This is the same observation as `matrix-weighted-norm-mutation-rotation` §"The
 caller-owned workspace `Bx`": the workspace boundary disappears at L1.
 
-## Element-type-of-`M` overload split — the variant-absorption boundary
+## Element-type-of-`M` overload split
+
+*The variant-absorption boundary.*
 
 The two L0 overloads (Sub-pattern A real-`A`, Sub-pattern B complex-`A`) differ only in:
 
@@ -313,7 +317,9 @@ This is the **same** element-type-absorption pattern as Sub-pattern A vs B of
 **same** `complex-from-real-lift` step ([`apply-linop`](../L1/apply_linop.md) §Applicability
 condition 3) for the real-on-complex case.
 
-## Reduction tree — load-bearing-numerical recording
+## Reduction tree
+
+*Load-bearing-numerical recording.*
 
 The bilinear form accumulates non-associativity from **two** inherited sources (per
 [`L1/bilinear_form`](../L1/bilinear_form.md) §Semantics):
@@ -330,7 +336,9 @@ reproduction of a specific Palace `Dot(comm, x, A, y)` call requires matching **
 `A`-representation kernel tree and the inner `Dot` reduction tree — not merely the value. (Same
 discipline as the weighted-norm sibling, minus the deterministic-`sqrt` final step.)
 
-## Conjugation asymmetry — the L1/L0 reconciliation
+## Conjugation asymmetry
+
+*The L1/L0 reconciliation.*
 
 A core feature of this theme — and the key surface-form distinction from the weighted-norm sibling
 — is that **the conjugation handedness is materially visible** in the bilinear_form lowering,

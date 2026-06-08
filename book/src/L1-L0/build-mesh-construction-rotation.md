@@ -194,7 +194,9 @@ concern.
   the `lifecycle` root's outer fold (MFEM-opaque AMR), NOT part of this construction (build_mesh
   Non-laws; out of scope here, obstruction-documented at the lifecycle root).
 
-## Scope (single-machine — flag-once-skip)
+## Scope
+
+**Kind:** single-machine (flag-once-skip)
 
 Per CLAUDE.md §Scope (single-machine target; MPI / `Par*` out of scope):
 

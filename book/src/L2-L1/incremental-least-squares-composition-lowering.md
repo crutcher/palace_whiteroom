@@ -64,7 +64,9 @@ The L1 form has two co-extensive faces of the same value (as the sibling
 **Which face the lowering targets is a resolution choice, not a value choice** — they advance the
 factorisation state identically.
 
-### Face 1 — the opaque single-column leaf (the fused face)
+### Face 1 — the fused face
+
+*The opaque single-column leaf.*
 
 The L1 column-streaming leaf [`ls_update_column`](../L1/ls_update_column.md) (the per-column running-QR update; per the
 [`concepts/incremental_least_squares`](../concepts/incremental_least_squares.md) contract `:14`),
@@ -90,7 +92,9 @@ same boundary the sibling draws at the L1 `orthogonalize` leaf). The
 `iterative.cpp:634-640` / `:813-819`); the co-extensive **Face 2** below carries the same value via the
 de-fused scalar Givens kernel pair, so either face resolves the L1 RHS of this fan-down.
 
-### Face 2 — the de-fused scalar Givens sub-step sequence (the spelled-out face)
+### Face 2 — the spelled-out face
+
+*The de-fused scalar Givens sub-step sequence.*
 
 The four per-column sub-steps spelled out in the firm scalar Givens kernel pair
 ([`concepts/givens_generate`](../concepts/givens_generate.md) /
@@ -198,7 +202,9 @@ its ordering, or its reduction shape. The single load-bearing residue is the **f
 reduction path** pinned by the fixed sequence (§"Reduction-path recording"), not a selectable
 collective shape.
 
-## Reduction-path recording — load-bearing-numerical residue
+## Reduction-path recording
+
+**Kind:** load-bearing-numerical residue
 
 This is the **load-bearing residue the L2 entry deferred to "the forthcoming L2>L1 theme"** (L2 entry
 §Algebraic-laws, the rotation-stream-non-associativity non-law

@@ -18,9 +18,9 @@ edges:
 
 The synthesized rendering of the L4 [Outer-driver caps & coordination combinators](../L4/outer-driver-combinators-intro.md) doc-group: the `Solve`-monadic outer-driver caps and the map/fold coordination combinators that drive the iteration kernels to convergence and over RHS / schedule / frequency families. Implementation VIEW — links to the authoritative L4 chapters for laws/semantics, renders the synthesized code form here.
 
-## Operators this library holds (topological order)
+## Operators this library holds
 
-A def appears after everything it uses. The realized order — the coordination-clustering type block (the `Solve` monad surface, the termination sums, the state carriers) first; then the construction/binding framework; then the caps; then the combinators that map/fold over them:
+*Topological order — a def appears after everything it uses.* The realized order — the coordination-clustering type block (the `Solve` monad surface, the termination sums, the state carriers) first; then the construction/binding framework; then the caps; then the combinators that map/fold over them:
 
 1. **Coordination type block** (placed BEFORE the group, bundled with utility API): the `Solve` monad surface + `execState`, the `Outcome` / `EigOutcome` termination sums, `EigState` (the eigsolve persistent stratum), the `StepReturn` accessor utility (the per-step return record, authoritatively named in [`SolveResult`](../concepts/SolveResult.md)).
 2. [`preconditioning-framework`](../L4/preconditioning-framework.md) — the `buildKspSolver` / `setOperators` construction-and-binding framework (the non-iteration construction surface the caps run against).
@@ -30,7 +30,9 @@ A def appears after everything it uses. The realized order — the coordination-
 6. [`frequency_sweep`](../L4/frequency_sweep.md) — the per-ω operator-VARYING sweep combinator.
 7. [`fold_solve`](../L4/fold_solve.md) — the state-threaded fold-over-schedule combinator.
 
-## Clustering types (placed BEFORE the group)
+## Clustering types
+
+*Placed before the operator group.*
 
 Per the [type-placement rule](./index.md#type-placement--cluster-a-type-with-its-api-group): the coordination-clustering state carriers — `EigState` (the eigsolve persistent stratum) and the [`StepReturn`](../concepts/SolveResult.md) return record — are rendered immediately before the group, bundled with their **utility API** (constructors / accessors / predicates) only; their **consumer methods stay in the group** (after the type block). The cross-cutting `SimState` / `OpParams` / `IoData` live in [`types`](./types.md). The `Solve = StateT SimState Identity` monad (the [`solve-monad`](../concepts/solve-monad.md) outer-driver vocabulary) and the `Outcome` / `EigOutcome` termination sums are rendered here as the coordination surface.
 
@@ -72,7 +74,9 @@ done (Done _) = True
 done Continue = False
 ```
 
-### `EigOutcome` / `EigStatus` — the eigsolve termination sum (richer extension)
+### `EigOutcome` / `EigStatus` — the eigsolve termination sum
+
+*The richer extension of `Outcome` (adds a first-class `PartialConverged` arm).*
 
 The 4-arm extension of `Outcome`, with a first-class `PartialConverged k` arm (`0 < k < requested`) that has **no `ksp_solve` analog**. Authoritative semantics: [`eigsolve`](../L4/eigsolve.md) §"Variant axes".
 
@@ -110,7 +114,9 @@ type EigState = {
 -- num_converged :: EigState -> Int                     -- accessor: the converged count
 ```
 
-### `StepReturn` — the per-step return record (accessor utility)
+### `StepReturn` — the per-step return record
+
+**Kind:** accessor utility
 
 The `krylov_step` kernel's return record, surfaced here for the cap's per-cycle classification reads. Authoritative field schema: [`SolveResult`](../concepts/SolveResult.md), where this record is named **`StepReturn`** (Form A) / `StepReturnB` (Form B). Rendered here under its authoritative name (link-don't-restate). (The record itself is produced by the `iteration` library's `krylov_step`; coordination consumes its `outputs`/`krylov` fields at the cycle boundary.)
 

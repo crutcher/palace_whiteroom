@@ -24,7 +24,9 @@ precompute, per quadrature point, the `geom_data` that the `D` stage ([`quad_poi
 contracts against — the Jacobian-derived geometry metric times the quadrature weight. This is the
 **setup-stratum** factor: built once per `(mesh, order)`, reused across every operator apply.
 
-## L1 form (the constructive sketch)
+## L1 form
+
+*The constructive sketch.*
 
 Semantic/notation conventions (named shape groups, the build/run-time stratification) live on
 `book/src/semantics/index.md` §1.2.1 + `concepts/build-time-vs-run-time-stratification` — linked, not
@@ -52,7 +54,9 @@ This is the **setup stratum** of the build/run-time split (`concepts/build-time-
 fixed, only the trial field varies per apply. (When the mesh moves — e.g. AMR refinement — `geom_data` is
 rebuilt; that is a setup-stratum invalidation, not a run-time cost.)
 
-## Algebraic laws (firm — syntactic identities on positive source)
+## Algebraic laws
+
+**Status:** firm — syntactic identities on positive source
 
 - **Setup-stratum purity:** `geom_factor_build` is a pure function of `(mesh_nodes, quad_weights)` — no
   field/state dependence; its output is cacheable and reused across applies (the build/run-time split law).

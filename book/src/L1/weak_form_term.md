@@ -20,7 +20,9 @@ naming one weak-form contribution `a(u, v) = (Q · 𝒟u, 𝒟v)` to a global fi
 divergence); `Q` is the **material-property coefficient** weighting the bilinear pairing. The genuinely-new FE
 vocabulary the FE-assembly sub-spine introduces, and the value [`fe_assemble`](./fe_assemble.md) folds over.
 
-## Slug-context (load-bearing — what this is and is NOT)
+## Slug-context
+
+*What this is and is NOT.*
 
 `weak_form_term` is the **per-term value** the [`fe_assemble`](./fe_assemble.md) fold quantifies over. It is NOT
 the assembled operator (that is `fe_assemble`'s result `K = Σ_i A(term_i)`), and it is NOT the per-term assembly

@@ -93,7 +93,9 @@ Downstream consumers at L1/L2 (cross-reference, not reverse-dependencies):
 
 No constant-folding axis (the rescale scalar `1/β` is a runtime value, never `0`/`1`/`-1` by construction since `β > 0`). No reduction-order variant beyond `nrm2`'s inherited one. The only non-trivial semantic axis relative to the leaves is the **partiality** at `x = 0`, which is uniform across element types.
 
-### B-weighted sibling `normalize_B` — rough-in note (NOT a separate firm operator)
+### B-weighted sibling `normalize_B`
+
+**Status:** rough-in note (not a separate firm operator)
 
 The energy-norm normalisation `(β_B, x/β_B)` with `β_B = √(xᴴ B x)` for SPD `B` is a *recognised* construct but lands here as a **rough-in note**, deliberately not a separate firm chapter, for two reasons:
 

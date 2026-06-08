@@ -30,7 +30,7 @@ A concept is a candidate for "constructed operator" treatment when:
 3. **Variants would otherwise force deep-plumbing.** If `side ∈ {LEFT, RIGHT, NONE}` causes every per-step procedure to inspect `side` and branch, constructing a `PreconditionedOperator(M, side)` lets the per-step procedure call `op.apply(v)` without ever re-inspecting `side`.
 4. **The cost is amortized.** Construction may be expensive; the value comes from many cheap applications. A constructed operator used once is overkill.
 
-## Worked example: GMRES preconditioning (resolves cycle-7 / cycle-9 friction)
+## Worked example: GMRES preconditioning
 
 **Without constructed operators (cycle-7 / cycle-9 shape):**
 

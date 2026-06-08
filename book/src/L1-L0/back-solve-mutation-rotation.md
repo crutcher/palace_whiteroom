@@ -313,7 +313,9 @@ Citations:
   lift; NOT part of this leaf, second boundary instance grounds basis-lift
   independence.
 
-## The in-place RHS overwrite — the destination/RHS-collapsed-into-one machinery
+## The in-place RHS overwrite
+
+*The destination/RHS-collapsed-into-one machinery.*
 
 The distinguishing feature of this theme — what the rotation rotates — is the
 **collapse of the L1 separate-value pair `(R, s) → y` into a single in-place
@@ -367,7 +369,9 @@ overwrite (the small-dense full LU sibling), differing only in that this
 theme's coefficient `R` is already triangular and the matrix register is the
 flat column-major Hessenberg slab rather than a heap-allocated dense matrix.
 
-## The column-major flat register `H` — storage-representation machinery
+## The column-major flat register `H`
+
+*Storage-representation machinery.*
 
 The second piece of machinery the L1 form hides is the **flat column-major
 storage of the R-factor in a `std::vector<ScalarType>` slab**, accessed via
@@ -409,7 +413,9 @@ content the same value via different memory access. It is not load-bearing
 would compute identical bit-exact results — the only difference is allocation
 shape and access pattern). The rotation surfaces it; the L1 form erases it.
 
-## Reduction order — load-bearing-numerical recording
+## Reduction order
+
+*Load-bearing-numerical recording.*
 
 The L1 leaf's law-4 ("back-substitution correctness, descending recurrence")
 is satisfied by *any* consistent back-substitution order (row-oriented gather,
@@ -499,7 +505,9 @@ The rewrite preserves semantics when:
    `max_dim+1` walks the allocation. The two are consistent because the
    unused columns `> j` are zero / unread.
 
-## GMRES preconditioning fork — the back-solve is invariant under it
+## GMRES preconditioning fork
+
+*The back-solve is invariant under it.*
 
 GMRES splits on `pc_side` immediately after the back-solve (`iterative.cpp:662-678`):
 

@@ -49,7 +49,9 @@ i.e. `FiniteElementSpace(mesh, collection)` with `collection = fecs[0]`. The hie
 list of levels) is the deferred `fe_space_hierarchy` sibling; a single
 `fe_space(mesh, collection)` is one such `make_unique<FiniteElementSpace>(mesh, coll)`.
 
-### The construction-lowers / dof-bookkeeping-MFEM-owned split (the translation boundary)
+### The construction-lowers / dof-bookkeeping-MFEM-owned split
+
+*The translation boundary.*
 
 The translation is sharp on one line of the ctor: `fespace(&mesh.Get(), ...args)`.
 

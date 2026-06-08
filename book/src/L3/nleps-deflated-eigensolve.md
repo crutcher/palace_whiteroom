@@ -232,7 +232,9 @@ not commute (the deflation of an earlier pair changes the operator the later pai
 RENDERS as the explicit `iterate_while_L3` tail recursion above — the `ksp_solve` / `fold_solve`
 rendering class, not the `eigsolve` un-renderable class.
 
-## Algebraic laws (composition level)
+## Algebraic laws
+
+*Stated at the composition level.*
 
 The laws below are stated at the composition level — facts about the deflation eigensolve the
 composition produces — not re-derivations of the constituent atoms' algebra (which lives in the
@@ -325,7 +327,7 @@ The `seed_invariant_pair` / `extend_invariant_pair` / `quasi_newton_step` / `arm
 `converge_one_eigenpair` / `seed_guess` are this consumer's own composition scaffolding (named
 inline, single-consumer — not separate dep-map rows).
 
-## Pulled-by (reachability provenance)
+## Pulled-by
 
 Reachable from a feature root (the liveness guard, [`resolution-ladder`](../methodology/resolution-ladder.md)):
 

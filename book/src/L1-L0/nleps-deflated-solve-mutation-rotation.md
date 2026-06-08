@@ -287,7 +287,9 @@ Citations:
 - `book/src/L2-L1/linear-combination-fold-specialization.md` — the L2>L1 lowering of the
   `MatVecMult` back-projection fold; live link (this theme references its realization).
 
-## The block-elimination structure — the load-bearing recording
+## The block-elimination structure
+
+**Kind:** the load-bearing recording
 
 The structural signature of this lowering is that **`S⁻¹` appears twice**: once inside the Schur
 complement `SS = −S⁻¹·(XᴴX)` (`:533`) and once in the final back-projection correction

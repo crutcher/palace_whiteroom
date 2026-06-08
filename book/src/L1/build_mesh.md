@@ -141,7 +141,9 @@ other L1 operator is invoked.) The result is consumed by [`fe_space`](./fe_space
 `Mesh` with an `FECollection`) and is stage (1) of the [`lifecycle`](../feature/lifecycle.L1.md)
 composition root — those are consumed-by relations, NOT dependencies.
 
-## Scope (single-machine — flag-once-skip)
+## Scope
+
+**Kind:** single-machine (flag-once-skip)
 
 Per CLAUDE.md §Scope (single-machine target; MPI / `Par*` out of scope):
 

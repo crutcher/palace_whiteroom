@@ -12,7 +12,9 @@ edges:
 
 Base primitive: triangular solve `T · y = b` for a triangular matrix `T` and conforming vectors `b`, `y`. The BLAS-2 routine `?trsv`.
 
-## Disposition: no L1 home — obstruction + a positively-anchored sibling
+## Disposition
+
+**Kind:** no L1 home — obstruction theme + a positively-anchored sibling.
 
 A **general** triangular solve (`trsv` / `trsm` / `SpTrSV`, sparse or dense, acting on the
 length-`N` field) has **no positive Palace source site** and gets **no L1 operator** — this is

@@ -66,7 +66,9 @@ given indices to the given (real) value") and defined twice. This theme covers t
 call shape (`sr = 0`). The rewrite splits into two element-type sub-patterns realizing the same
 in-place receiver-argument zeroing kernel, plus a consumer-call-site cohort C.
 
-### Sub-pattern A — real `SetSubVector(Vector &x, …, 0.0)` in-place receiver-arg zeroing
+### Sub-pattern A — real path
+
+*`SetSubVector(Vector &x, …, 0.0)` in-place receiver-arg zeroing.*
 
 The L1 value `x' = set_subvector_zero(x, idx)` lowers to the in-place mutation of `x`'s indexed
 entries to zero. The destination *is* the input argument `x` (`x.ReadWrite(use_dev)`):
@@ -90,7 +92,9 @@ One write per indexed dof, `X[id] = sr` at `:472`, `sr = 0` in the zeroing case.
 over `N = rows.Size()` (the size of `idx`, NOT the vector length) — the empty-index identity is
 the `forall` over zero rows, a structural no-op. Reduction-free, rank-local.
 
-### Sub-pattern B — complex `SetSubVector(ComplexVector &x, …, 0.0)` two-buffer in-place zeroing
+### Sub-pattern B — complex path
+
+*`SetSubVector(ComplexVector &x, …, 0.0)` two-buffer in-place zeroing.*
 
 The complex element-type lowers to the two-buffer kernel that threads the real and imaginary
 device pointers separately and zeros **both** parts of each indexed dof:

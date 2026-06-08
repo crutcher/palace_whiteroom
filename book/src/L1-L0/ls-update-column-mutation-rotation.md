@@ -307,7 +307,9 @@ Citations:
   FGMRES-specific right-preconditioned-basis register (NOT read by this
   leaf — basis-lift independence boundary marker).
 
-## The in-place four-register overwrite — the destination/RHS-collapsed-into-input machinery
+## The in-place four-register overwrite
+
+**Kind:** the destination/RHS-collapsed-into-input machinery
 
 The distinguishing feature of this theme — what the rotation rotates — is the
 **collapse of the L1 fresh six-tuple value bundle `{h_out, cs_j, sn_j, s_j,
@@ -368,7 +370,9 @@ producer accumulating R + new rotation + rotated RHS one slot at a time
 across many calls) where the back-solve sibling writes ONE (the terminal
 consumer collapsing R⁻¹·s back into `s` in one call).
 
-## The flat column-major register `H` + `Hj` stride pointer — storage-representation machinery
+## The flat column-major register `H` + `Hj` stride pointer
+
+**Kind:** storage-representation machinery
 
 The second piece of machinery the L1 form hides is the **flat column-major
 storage of the Hessenberg / R-factor in a `std::vector<ScalarType>` slab**,
@@ -413,7 +417,9 @@ heap allocation, would compute identical bit-exact results — the only
 difference is allocation shape and access pattern). The rotation surfaces it;
 the L1 form erases it.
 
-## Reduction order — load-bearing-numerical recording
+## Reduction order
+
+**Kind:** load-bearing-numerical recording
 
 The L1 leaf's law 2 (replay non-commutativity) records that the running-QR's
 stored rotations MUST be applied **in generation order** `k = 0, 1, ..., j-1`.

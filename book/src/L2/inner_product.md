@@ -310,7 +310,9 @@ Laws that explicitly **do not** hold:
   `linear_combination` fold over different axes into different result types — see
   § "Sibling fold". No bridge identity is claimed.
 
-## tdot — the unconjugated member (type-API-surface only)
+## tdot — the unconjugated member
+
+**Kind:** type-API-surface only
 
 `tdot` is the unconjugated-bilinear value of the conjugation axis: kernel
 `x[idx] · y[idx]` (no conjugation), realized at L0 by

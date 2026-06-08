@@ -174,7 +174,9 @@ for an edge-untyped flip conflates the two — the faithful result holds STRONGE
 edge-untyped. (c114 D2 surfaced this: grounding three frontmatter-less L1>L0 themes moved
 reachable/edge-untyped but held STRONGER at 23.)
 
-## 4. The migration mapping — where edges live going forward
+## 4. The migration mapping
+
+*Where edges live going forward.*
 
 Dependency information lives today in **three incompatible representations**. The scheme
 unifies them into the single `edges:` frontmatter block (§2). The recommendation and the
@@ -222,7 +224,7 @@ rank-validation actually need), letting the long tail of leaf entries acquire `e
 as they are next touched — the linters treat un-typed frontmatter as a WARNING, not a hard
 error, so an incrementally-typed artifact is runnable throughout.
 
-## 5. Node-status for the un-fronted files (253 of 357)
+## 5. Node-status for the un-fronted files
 
 253 files carry no maturity frontmatter today: index pages, lowering themes, all L2/L3/L0
 entries, all concept pages. How each acquires a `rank:`:

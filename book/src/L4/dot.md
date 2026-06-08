@@ -158,7 +158,9 @@ not under `dot`. **Diagonal degeneration (`y = x`) is NOT a variant axis of `dot
 is the entry point of the [`nrm2`](./nrm2.md) consumer** (the `√ ∘ abs` post-step on
 `dot(x, x)`; see [`nrm2`](./nrm2.md)).
 
-## Relationship to inner_product (the permitted dual — do NOT merge dot INTO the combinator)
+## Relationship to inner_product
+
+*The permitted dual — do NOT merge `dot` INTO the combinator.*
 
 `dot` and [`inner_product`](./inner_product.md) are a **permitted genuinely-distinct
 dual** per [`black-box-vs-accelerated-kernels`](../concepts/black-box-vs-accelerated-kernels.md)

@@ -50,7 +50,9 @@ graph hides.
 
 `mk-matrix-free-operator-dissolution`
 
-## Context — distinct from, and the constructive INTERIOR of, `fe-assemble-fold-dissolution`
+## Context
+
+*Distinct from, and the constructive INTERIOR of, [`fe-assemble-fold-dissolution`](./fe-assemble-fold-dissolution.md).*
 
 This theme is the **constructive interior** of the opaque per-term leaf that the sibling
 [`fe-assemble-fold-dissolution`](./fe-assemble-fold-dissolution.md) bottoms out at. That theme
@@ -206,7 +208,7 @@ constructor/apply split (build the graph once, run per apply) survives at L3 as 
 coding-convention placement (the loop sits in `PartialAssemble`, the contraction in `Mult`), not a type-level
 stratification.
 
-### 2. Flat-`Tensor[(N: ...)]` black-box apply → the five-stage element-local rank-tensor contraction (THE vocabulary shift)
+### 2. Flat-`Tensor[(N: ...)]` black-box apply → the five-stage element-local rank-tensor contraction
 
 The L4 `apply` over the flat operator-domain shape `Tensor[(N: ...)]` (an atomic black-box matvec named only
 by its lowering to the L2 combinator) dissolves into the L3 explicit five-stage **rank-tensor contraction

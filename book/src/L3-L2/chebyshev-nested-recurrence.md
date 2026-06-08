@@ -166,7 +166,7 @@ operator entry (the L2 `chebyshev-iteration` is the body-composition *plus* the 
 single theme carries **both** subjects (where the Krylov chain split them into two themes:
 `krylov-step-body-identity` + `ksp-solve-outer-driver`).
 
-### Part A — the body is identity-in-form (the non-substantive part)
+### Part A — the body is identity-in-form
 
 The per-inner-step body (the three-line `k`-update plus the initial-direction / final-accumulate) maps
 **line-for-line** from the L3 `kloop`/`sweep` body to the L2 `sweep` body:
@@ -186,7 +186,7 @@ layers). This body identity-in-form is the part the L3 entry's §"Downward to L2
 in-line, and it is **retained** in-line — the body annotation is not the subject of this theme. (It is
 the chebyshev analogue of `krylov-step-body-identity`; the body identity needs no theme. What needed a theme is Part B.)
 
-### Part B — the nested loop surface is a substantive erasure (the load-bearing part)
+### Part B — the nested loop surface is a substantive erasure
 
 The L3 nested tail recursion dissolves into the L2 loop-as-driver composition, and the two named
 obstructions are erased to their L2 non-law shadows. This is the substantive content of the hop.

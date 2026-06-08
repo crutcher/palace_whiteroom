@@ -49,7 +49,9 @@ What this `roadmap_goal` will become: a `rough-in`→`firm` **L3 kernel-impl ope
 2. an **inner basis-extension loop** (`iterate_while_L3` over basis columns to dimension `ncv`), each step one `krylov_step` (non-Hermitian Arnoldi) or one [`lanczos_step`](./lanczos_step.md) (Hermitian three-term recurrence), whose body is exactly the kernel-api's `apply_shift_invert` followed by `orthogonalize` against the basis;
 3. a **Rayleigh-Ritz extraction** (project the shift-inverted operator onto the orthonormal basis `BV`, solve the small dense eigenproblem `H y = θ y`, lift Ritz vectors `x = BV·y`, undo the spectral transform `λ = σ + 1/θ` and Higham scaling), realizing ARPACK `neupd` (`palace/linalg/arpack.cpp:369`) / SLEPc post-`EPSSolve` extraction.
 
-## kernel-impl form (the constructive realization)
+## kernel-impl form
+
+*The constructive realization.*
 
 > **SPECULATIVE.** The value-threaded form below is a *reconstruction* in our L3 vocabulary, not a transcription of Palace source. It composes only firm/roadmap_goal constituents.
 
@@ -95,7 +97,9 @@ The inner `krylov_step`/`lanczos_step` body, expanded, is **exactly the kernel-a
 So the kernel-api's opaque `eigen_iterate op st0 apply_shift_invert` is realized as
 `iterate_while_L3 (extend_basis ▷ rayleigh_ritz ▷ thick_restart)` — the obstruction's "no Palace loop" replaced by our authored loop, with `apply_shift_invert` as the kernel-api names it sitting verbatim inside the basis-extension step.
 
-## Correspondence to the kernel-API (the `realizes-kernel-api` claim)
+## Correspondence to the kernel-API
+
+*The `realizes-kernel-api` claim.*
 
 > **SPECULATIVE reconstruction** — the audit is the `lowering-verifier`'s job once both nodes are firm.
 
@@ -114,7 +118,7 @@ The impl **preserves the obstruction the api records** — it does not dissolve 
 
 `structural` (primary) — the construction is a shape-driven decomposition of the eigensolve into the firm `(krylov_step, ksp_solve)` kernel/driver pair the kernel-api explicitly names as the analog. `reduction-chain` (secondary) — the small-step iteration semantics (basis-extension recurrence, Rayleigh-Ritz, thick-restart) are the load-bearing content. `empirical-match` is **deferred** — confirming the impl computes the same eigenpairs as the api (modulo tolerance + the four non-determinism sources the L1 entry catalogs) is the `lowering-verifier`'s audit, not asserted here.
 
-## Pulled-by (reachability provenance)
+## Pulled-by
 
 This `roadmap_goal` is reachable from a feature root (the proliferation/liveness guard, [`resolution-ladder`](../methodology/resolution-ladder.md)):
 

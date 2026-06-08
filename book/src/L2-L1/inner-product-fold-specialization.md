@@ -141,7 +141,9 @@ The **selection rule** has three orthogonal dispatch keys, applied independently
    real-`Operator` weight `:621-628` splits `x` into Re/Im and applies `A` to each;
    `ComplexOperator` weight `:631-638` applies `A` to `x` directly).
 
-### The weighted-member workspace (a lowering concern, not L2 algebra)
+### The weighted-member workspace
+
+*A lowering concern, not L2 algebra.*
 
 At L2 the weighted member is the clean composition `inner_product (apply_linop M x) y`
 (`L2/inner_product` §Semantics). The lowering reintroduces the **internal workspace `Ax`**
@@ -151,7 +153,9 @@ that the L0 weighted `Dot` allocates (`ComplexVector Ax(A.Height())`,
 [`bilinear_form`](../L1/bilinear_form.md):39-43. The workspace disappears at L2 (pure
 threading) and reappears here as the M-application buffer; it is invisible to the L2 value.
 
-### The diagonal degeneration (`y = x`) — a consumer entry, not a dispatch key
+### The diagonal degeneration (`y = x`)
+
+*A consumer entry, not a dispatch key.*
 
 When `y = x` the fold collapses to the norm-squared and triggers the `&x == &y` self-dot
 fast path (transparent trick: `palace/linalg/vector.cpp:266` returns imag = `0.0` for the
@@ -162,7 +166,9 @@ the complex local fold). The fast path is an L0 implementation detail the loweri
 `palace/linalg/operator.cpp:598-618`), which compose an outer `√` post-step — that
 composition is downstream of this lowering, not a dispatch within it.
 
-## The conjugate-pair re-order (the core theme content)
+## The conjugate-pair re-order
+
+*The core theme content.*
 
 This is the headline value-level reconciliation the L2 entry hands to this theme
 (`L2/inner_product` §"Conjugation convention (pinned)", final paragraph). The L1/L2

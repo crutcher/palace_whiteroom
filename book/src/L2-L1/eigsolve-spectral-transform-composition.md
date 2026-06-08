@@ -167,7 +167,9 @@ L2 to the single named composition). The lowering recognizes both as the same L1
   sequence either way** — `(K − σM)⁻¹ M v`; the assembly site is the collapsed backend-orchestration
   axis, invariant on the lowered L1 sequence.
 
-### The scale_untransform tail (a coordinate-bookkeeping `scal`, informational at the boundary)
+### The scale_untransform tail
+
+*A coordinate-bookkeeping `scal`, informational at the boundary.*
 
 The per-step body's final stage is the Higham `γ` / `δ` un-scale — a `scal` (scalar-times-vector)
 post-multiply: ARPACK `y1 *= gamma` (`:581`) / `y1 *= 1/gamma` (`:575`); SLEPc `y1 *= 1/δ` (`:1865`)
@@ -179,7 +181,9 @@ runs in scaled `θ`-coordinates, and the boundary un-scale at extraction (`GetEi
 original-problem coordinates. The scaling axis (`NONE | NORM_2`) shapes only this tail's multiplier,
 not the de-fusion structure.
 
-### The divergence-free projector tail (an optional `apply_linop` constituent)
+### The divergence-free projector tail
+
+*An optional `apply_linop` constituent.*
 
 When a divergence-free projector `op.projector` is bound, the per-step body applies it after the
 inner solve: `opProj->Mult(y1)` (ARPACK `:586`; SLEPc `:1870`). This is an additional
@@ -187,7 +191,9 @@ inner solve: `opProj->Mult(y1)` (ARPACK `:586`; SLEPc `:1870`). This is an addit
 eigen-iteration. It is part of the named composition's tail at L2 ([`eigsolve`](../L2/eigsolve.md)
 §Semantics), and lowers to a guarded `apply_linop op.projector` when the projector is non-null.
 
-## What this theme does NOT cover — the eigen-iteration loop obstruction (boundary reference)
+## What this theme does NOT cover
+
+*The eigen-iteration loop obstruction (boundary reference).*
 
 The eigen-iteration **loop** that folds `apply_shift_invert` is **out of scope for this theme** and
 is the boundary of what an L2>L1 spectral-transform-apply lowering can express. The loop is a

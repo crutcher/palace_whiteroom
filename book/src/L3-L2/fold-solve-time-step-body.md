@@ -69,15 +69,19 @@ where:
 
 The dissolution is **one substantive rewrite** (the outer-sweep erasure) + **one identity** (the opaque per-step leaf, unchanged):
 
-### 1. Explicit carry-threaded sweep + obstruction marker → fold-by-role + obstruction shadowed to non-laws (substantive)
+### 1. Explicit carry-threaded sweep + obstruction marker → fold-by-role + obstruction shadowed to non-laws
 
 **The load-bearing rotation.** The L3 explicit `step_loop` tail recursion — threading the persistent `sol` in place, carrying the first-class carry-threading `sequential-obstruction` marker — dissolves into the L2 `time_sweep_fold ... by role` composition driver, with the iteration view **erased**. The carry-threading obstruction the L3 form names explicitly survives at L2 only as the **non-laws**: no schedule-commutativity (reordering the steps changes the trajectory), no whole-march fusion (the sweep folds opaque steps, it does not collapse them). This is the **iteration-view erasure** the substantive L3>L2 themes share (`L3-L2/index.md` §"Erasure-scope taxonomy"): L3 makes the obstruction first-class; L2 erases the iteration view and demotes the obstruction to a non-law. It is structurally parallel to [`eigsolve-opaque-eigen-iteration`](./eigsolve-opaque-eigen-iteration.md)'s marker-erasure — but where `eigsolve`'s L3 marker is "Palace authors no loop" (the loop is un-renderable), `fold_solve`'s L3 marker is the carry-threading obstruction on a Palace-authored, L3-rendered sweep (the carry-threaded root, NOT the opaque-whole-loop root).
 
-### 2. Opaque per-step leaf → opaque per-step leaf (identity, stays opaque)
+### 2. Opaque per-step leaf → opaque per-step leaf
+
+*Identity; the per-step leaf stays opaque across the edge.*
 
 The per-step body `ode->Step(sol, t, dt)` (`palace/models/timeoperator.cpp:410`) is an **opaque MFEM `ODESolver` integrator leaf** at L3, and it **stays opaque** at L2 — it does NOT open into a composition of L2 base primitives. This is the **distinguishing contrast** with [`eigsolve-opaque-eigen-iteration`](./eigsolve-opaque-eigen-iteration.md): `eigsolve`'s per-step body lifts to a visible L2 composition (`apply_linop ▷ ksp_solve`, the body-identity-in-form half of that theme), whereas `fold_solve`'s per-step body is an opaque leaf with NO L2 composition (the per-step `ode->Step` does not decompose). So this theme has **no body-identity-in-form half** — the per-step leaf is recorded as opaque at both layers (`obstruction (opaque-library-ownership)`), and the whole substantive content of the theme is the outer-sweep erasure (rewrite 1).
 
-### The opaque per-step sub-leaf — `obstruction (opaque-library-ownership)`
+### The opaque per-step sub-leaf
+
+**Kind:** `obstruction (opaque-library-ownership)`
 
 The per-step body bottoms out in an **opaque library step that lives entirely outside Palace** — Palace's `TimeOperator::Step` (`palace/models/timeoperator.cpp:407-413`) is a thin forwarder whose sole act is `ode->Step(sol, t, dt)` (`:410`), dispatching into the MFEM `ODESolver` (selected at construction `palace/models/timeoperator.cpp:312`+). This is the **`obstruction (opaque-library-ownership)`** sub-kind (CLAUDE.md §Methodology invariants "Obstruction themes have two sub-kinds"; the [`eigsolve-opaque-eigen-iteration`](./eigsolve-opaque-eigen-iteration.md) sibling, the L4>L3 [`fold-solve-time-step-dissolution`](../L4-L3/fold-solve-time-step-dissolution.md) per-step-leaf precedent): the functionality IS available to Palace but ONLY through a library boundary; Palace never exposes the per-step integrator as a standalone callable. **The negative anchor is Palace's CALL `ode->Step(sol, t, dt)` (`palace/models/timeoperator.cpp:410`), NOT MFEM internals.** The promotion route is NONE in the conventional sense (the theme stays an opaque-leaf record unless Palace re-architects its consumption of MFEM); the value is documenting the boundary so future producers do not waste cycles re-localizing the per-step body inside MFEM.
 

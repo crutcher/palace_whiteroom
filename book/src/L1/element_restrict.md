@@ -23,7 +23,9 @@ the **element restriction** — a pure gather/scatter that maps the global true-
 local-dof tensors (`G`, gather) and back by transpose scatter-add (`Gᵀ`, assembly). No arithmetic; it
 is the indexing/permutation backbone of matrix-free FE operator application.
 
-## L1 form (the constructive sketch)
+## L1 form
+
+*The constructive sketch.*
 
 For semantic/notation conventions (named shape groups, `Tensor[(S: ...)]` binding vs `Tensor[$S]`
 use), see the governing surface `book/src/semantics/index.md` §1.2.1 — not restated here. The
@@ -50,7 +52,9 @@ rank-structured axis (the shape-vocabulary home `concepts/element-local-tensor`)
 element `L` itself factors as a per-dimension dof product, but that factoring is an interior detail of
 `basis_apply` (the sum-factorization sub-axis), not of the restriction.
 
-## Algebraic laws (firm — syntactic identities on positive source)
+## Algebraic laws
+
+**Status:** firm — syntactic identities on positive source
 
 - **Transpose/adjoint pair:** `⟨G x, y⟩_{(E,L)} = ⟨x, Gᵀ y⟩_N` — `element_restrict_t` is the exact
   adjoint of `element_restrict` (the gather and the scatter-add are transposes of the same Boolean

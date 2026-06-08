@@ -183,7 +183,9 @@ Citations:
 - `palace/linalg/operator.hpp:377-384` — `Normalize` inline definition: `norm = Norml2(...)`
   (`:380`), `MFEM_ASSERT(norm > 0.0, ...)` (`:381`), `x *= 1.0 / norm` (`:382`).
 
-## The caller-owned workspace `Bx` — the matrix-weighted machinery
+## The caller-owned workspace `Bx`
+
+**Kind:** the matrix-weighted machinery
 
 The distinguishing feature of this theme over `nrm2-mutation-rotation` is the **workspace `Bx`**.
 Unlike `nrm2` / `dot` (no buffer at all — the result is a stack scalar), the weighted norm needs a
@@ -217,7 +219,9 @@ in-file references in [`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md)
 `Bx`-ownership unfold to this theme). It is **resolved**: `Bx` is a caller-owned destination buffer,
 materialized in the lowering, erased at L1.
 
-## The `MFEM_ASSERT(dot > 0.0)` SPD guard — classification
+## The `MFEM_ASSERT(dot > 0.0)` SPD guard
+
+**Kind:** classification
 
 Resolves the stub's deferred "the L0 `MFEM_ASSERT`" classification. The guard
 `MFEM_ASSERT(dot > 0.0, ...)` (`palace/linalg/operator.cpp:604-605` real; `:616-617` complex) is a **load-bearing
@@ -249,7 +253,9 @@ trick; consistent with the `nrm2` abs-guard classification and the
 [`L0/transparent-vs-load-bearing-tricks`](../L0/transparent-vs-load-bearing-tricks.md)
 "Defensive non-negativity guard" worked example, with the additional SPD-detector role noted.
 
-## Reduction tree — load-bearing-numerical recording
+## Reduction tree
+
+**Kind:** load-bearing-numerical recording
 
 The weighted norm accumulates non-associativity from **two** inherited sources (per
 [`L1/matrix_weighted_norm`](../L1/matrix_weighted_norm.md) §Semantics):

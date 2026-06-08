@@ -102,7 +102,7 @@ two duals:
   are. Promotion propagates **upward** through the dependency DAG; the **frontier** is
   the rank-discontinuity surface where the resolved region meets the unbuilt region.
 
-### Worked example — rank propagating upward (the cycles 088–095 cascade, completed)
+### Worked example — rank propagating upward
 
 The `matrix_weighted_norm` cascade is exactly a wave of rank propagating upward under
 the invariant. The relevant fragment of the DAG (`depends-on` edges, leaf at the

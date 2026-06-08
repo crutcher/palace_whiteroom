@@ -24,7 +24,9 @@ per-geometry lazy basis / element-restriction caches) and (ii) the **inter-space
 transfer operators** (discrete gradient/curl/divergence interpolators; hierarchy prolongation). The
 MFEM dof internals are read as-is per the single-rank rule and not re-anchored here.
 
-## At a glance — the wrapper class, the hierarchy, and the MFEM-forwarding surface
+## At a glance
+
+*The wrapper class, the hierarchy, and the MFEM-forwarding surface.*
 
 - **`FiniteElementSpace`** (`fespace.hpp:21-194`) — wraps a `mfem::ParFiniteElementSpace fespace`
   (`fespace.hpp:24`) plus a non-owned `Mesh &mesh` (`fespace.hpp:27`). Holds the Palace-specific

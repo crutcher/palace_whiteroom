@@ -84,7 +84,9 @@ The result is always real even for a complex `x`, because the diagonal
 `inner_product x x` is real-and-non-negative by law 5 (PSD at the diagonal) of the
 combinator, and `√ ∘ abs` maps it to a non-negative real.
 
-### The `abs` defensive guard (load-bearing scalar-map detail)
+### The `abs` defensive guard
+
+*A load-bearing scalar-map detail.*
 
 The defining identity is `nrm2 x = √ (inner_product x x)`; the `abs` is a **load-bearing
 defensive non-negativity guard** against floating-point round-off pushing the reduction
@@ -143,7 +145,9 @@ of the combinator's weighted member `inner_product_M` (tracked rough-in at L1
 pins the weight at `M = I` through the plain `inner_product` (the same pinning that makes
 `dot` the plain-weight named specialization).
 
-## Relationship to inner_product (CONSUMER, NOT a fold member — the do-NOT-merge guard)
+## Relationship to inner_product
+
+*CONSUMER, NOT a fold member — the do-NOT-merge guard.*
 
 `nrm2` **consumes** [`inner_product`](./inner_product.md)'s scalar output at the diagonal
 and post-composes `√ ∘ abs`; it is **NOT a member of the fold cohort** and does **NOT**

@@ -192,7 +192,9 @@ Citations:
   the dense complex PROM matrix and RHS member declarations. Grounds the dense-materialized,
   complex element-type shape contract.
 
-## The factorization-kernel axis — load-bearing-numerical recording
+## The factorization-kernel axis
+
+**Kind:** load-bearing-numerical recording
 
 This is the core load-bearing content of the theme. The factorization *kernel* differs across
 the two sub-patterns — **full-pivot LU** at NLEPS (`nleps.cpp:533`), **full-pivot Householder
@@ -230,7 +232,9 @@ first "do not hold" bullet): `lu_solve` with the `fullPivLu` kernel and with the
 arithmetic) but differ at the bit level and in conditioning behaviour. The lowering carries the
 kernel as a contracted parameter, not an absorbed detail.
 
-## The in-place RHS overwrite — the mutation the rotation undoes
+## The in-place RHS overwrite
+
+*The mutation the rotation undoes.*
 
 Unlike the BLAS-1 reduction themes ([`dot`](./dot-mutation-rotation.md),
 [`nrm2`](./nrm2-mutation-rotation.md)) whose L0 result is a returned scalar (no destination

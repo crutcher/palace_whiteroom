@@ -186,7 +186,9 @@ Citations (consumer evidence the returned norm is load-bearing):
 - `palace/linalg/nleps.cpp:617` — `H.col(k).head(k) = v2 / scale;` (the returned norm `scale`
   reused to rescale the coordinate companion — doubly load-bearing).
 
-## The `MFEM_ASSERT(norm > 0.0)` partiality guard — classification
+## The `MFEM_ASSERT(norm > 0.0)` partiality guard
+
+**Kind:** classification
 
     MFEM_ASSERT(norm > 0.0, "Zero vector norm in normalization!");   // vector.hpp:267
 

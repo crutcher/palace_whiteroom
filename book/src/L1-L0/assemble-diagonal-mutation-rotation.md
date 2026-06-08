@@ -271,7 +271,9 @@ when:
    downstream consumer that requires the exact diagonal is outside this
    theme's applicability for that representation.
 
-## Load-bearing non-law — matrix-free high-order-Nedelec approximate diagonal
+## Load-bearing non-law
+
+*Matrix-free high-order-Nedelec approximate diagonal.*
 
 Carried verbatim from the L1 entry as a **load-bearing** numerical property
 (per the CLAUDE.md optimization-tricks-vs-base-algebra taxonomy): for a

@@ -154,7 +154,9 @@ dH[j]` accumulate (`palace/linalg/orthog.hpp:85`, inside the `if (refine)` block
 `orthog.hpp:75`). CGS2 is dispatched as the `refine = true` parametrisation of
 `OrthogonalizeColumnCGS` (`palace/linalg/iterative.cpp:322`).
 
-## Inner-product realisation — cite Sub-pattern D, do not re-derive
+## Inner-product realisation
+
+*Cite Sub-pattern D, do not re-derive.*
 
 The `project` stage's per-column inner product is the firm L1 [`dot`](../L1/dot.md) leaf
 (conjugate-linear arg-1; the `op.dot` hook is a `dot` substitution, L2 entry law 7). Its L0
@@ -183,7 +185,9 @@ The B-weighted hook (`op.dot = λ x y. W.InnerProduct(x, y, r)`, the SLEPc/ROM s
 composition — the inner-product-hook variant axis, invariant on the lowering shape (L2 entry
 law 7).
 
-## Collective-shape recording — load-bearing-numerical residue
+## Collective-shape recording
+
+*Load-bearing-numerical residue.*
 
 This is the **load-bearing residual axis the L2 entry surfaced and this theme pins per lowered
 variant** (L2 entry §Semantics "collective-shape residual axis"; the variant-agreement-in-

@@ -67,7 +67,9 @@ sub-pattern A; the `y` output argument for sub-pattern B). Both sub-patterns
 are realised by `mfem::forall_switch` element-loops with per-element kernel
 bodies that match the L1 closed forms verbatim.
 
-### Sub-pattern A — `reciprocal` lowers to in-place receiver `Reciprocal()` member-method pair
+### Sub-pattern A — `reciprocal`
+
+*Lowers to in-place receiver `Reciprocal()` member-method pair.*
 
 The L1 value `result = reciprocal(x)` lowers to an in-place receiver mutation
 `x.Reciprocal()` (the receiver `*this` becomes both the input source and the
@@ -180,7 +182,9 @@ Citations:
   (FE-assembly multiplicity-averaging consumer; converts per-true-dof
   contribution count into averaging weight).
 
-### Sub-pattern B — `elementwise_product` lowers to in-place `Mult(x, y)` / `Apply(dinv, x, y)` kernel cohort
+### Sub-pattern B — `elementwise_product`
+
+*Lowers to in-place `Mult(x, y)` / `Apply(dinv, x, y)` kernel cohort.*
 
 The L1 value `y = elementwise_product(a, b)` lowers to an in-place
 destination-arg mutation `y = a ⊙ b` writing through the output argument `y`.

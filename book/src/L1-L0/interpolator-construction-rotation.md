@@ -154,7 +154,10 @@ the L1>L0 lowering and is **not** a distinct L1 operator (the L1 `interpolator` 
 it as the assembly-representation variant axis, not a semantic one). No load-bearing numerical property
 rides on the choice — both paths assemble the identical interpolatory matrix.
 
-## GSLIB point-interpolation sibling — obstruction (opaque-library-ownership), in-theme sub-note
+## GSLIB point-interpolation sibling
+
+**Status:** obstruction (opaque-library-ownership)  
+**Kind:** in-theme sub-note
 
 Palace's `palace/fem/interpolator.{hpp,cpp}` exposes a **distinct** interpolation facility — **GSLIB
 point/field interpolation** — that is **NOT** the de-Rham discrete grid-transfer operator this theme

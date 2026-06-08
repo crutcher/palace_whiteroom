@@ -264,7 +264,7 @@ The general `linear_combination` arity axis is pinned to 4 (the driven readout
 label); element-type pins to `complex`; output-aliasing is pure/out-of-place at L4
 (as for the combinator).
 
-### Why this is a single-pipeline specialization (by design)
+### Why this is a single-pipeline specialization
 
 Per the [`disciplined-cross-pipeline-combinator-mining-gate`](../../../skills/disciplined-cross-pipeline-combinator-mining-gate/SKILL.md):
 the operator-operand `linear_combination` is shared spine vocabulary (the fold is

@@ -23,7 +23,7 @@ finite-element space and an **immutable list of weak-form terms**, as the fold
 `K = Σ_i A(term_i)`. The pure-functional lift of the MFEM-equivalent `BilinearForm` build-up-then-
 assemble C++ class — the entry point of the FE-assembly sub-spine (in scope per CLAUDE.md mesh/FE).
 
-## Slug-collision (load-bearing — do NOT conflate)
+## Slug-collision
 
 `fe_assemble` is **not** [`bilinear_form`](./bilinear_form.md). They are different L1 objects that
 share only the math phrase "bilinear form":

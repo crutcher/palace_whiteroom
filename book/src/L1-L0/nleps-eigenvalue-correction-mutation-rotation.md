@@ -226,7 +226,9 @@ Citations:
 - `book/src/L1-L0/scal-mutation-rotation.md` — the `scal` mutation rotation (the negation form;
   this theme references the leaf).
 
-## The big/coordinate RHS asymmetry — the load-bearing recording
+## The big/coordinate RHS asymmetry
+
+**Kind:** the load-bearing recording
 
 The structural signature distinguishing this lowering is that **the eigenvalue increment `δλ`
 couples into the big-space RHS `z` only (through the Jacobian action `w`), never into the
@@ -245,7 +247,9 @@ Per the CLAUDE.md trick taxonomy this is a **load-bearing** recording (the big/c
 is part of the algorithm, not a transparent rewrite): the structural-asymmetry law from the
 operator entry (`book/src/L1/nleps_eigenvalue_correction.md:82`, law 4) is carried here.
 
-## The Newton-ratio defining property — the algebraic characterization
+## The Newton-ratio defining property
+
+**Kind:** the algebraic characterization
 
 `δλ` is the increment that zeroes the *projected linearized residual* to first order:
 

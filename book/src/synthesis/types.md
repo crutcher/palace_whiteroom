@@ -50,7 +50,9 @@ IoData = {
 -- problemType :: IoData -> ProblemType       -- the driver-dispatch selector (a trivial projection)
 ```
 
-## `OpParams` — operator-internal parameters (construction-time, readonly)
+## `OpParams` — operator-internal parameters
+
+**Kind:** construction-time, readonly
 
 Shared across `iteration` (the `krylov_step` kernel reads it through closed-over surfaces) and `coordination` (`ksp_solve` / `solve_family` / `fold_solve` capture it once at solve construction). The readonly variant-selector + constructed-operator-surface closure, fixed across the whole `Mult` call. Authoritative field schema: [`OpParams`](../concepts/OpParams.md).
 
@@ -79,7 +81,9 @@ OpParams = {
 }
 ```
 
-## `SimState` — SimState stratum (run-time-evolved)
+## `SimState` — the solve-state stratum
+
+**Kind:** run-time-evolved
 
 Shared across `iteration` (the `krylov_step` kernel's monadic effect *is* the `SimState` transition) and `coordination` (the `Solve = StateT SimState Identity` caps thread it; `solve_family` collects it). The externally-visible quantities a Krylov-shaped solve evolves and reports; **uniform across all slices** (CG / GMRES / FGMRES / Chebyshev share this exact five-field shape). Authoritative field schema: [`SimState`](../concepts/SimState.md).
 
