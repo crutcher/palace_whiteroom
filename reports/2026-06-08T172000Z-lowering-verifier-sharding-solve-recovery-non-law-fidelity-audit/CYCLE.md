@@ -4,7 +4,7 @@ invoked_at: 2026-06-08T172000Z
 scope: L4 roadmap_goal SOLVE-case NON-LAW fidelity audit — sharding-solve-recovery-non-law-fidelity-audit
 status: pending
 integrated_at: 2026-06-08T173000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: da3e334
 integration_notes: >
   Applied cycle-140 (batch-45 MIDDLE 2/3) as the sole report. Audit-class FULLY-SUPPORTED;
   the 9-entry `verified_against:` block landed as a separate ```yaml fence after the existing
