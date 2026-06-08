@@ -4,7 +4,7 @@ invoked_at: 2026-06-08T193500Z
 scope: maintenance-floor — batch-46 once-per-batch full-hygiene sweep (cycle-142 OPENER)
 status: pending
 integrated_at: 2026-06-08T194000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 234257e
 integration_notes: |
   Applied clean by integrator-per-report (cycle-142 staging, single row, status applied).
   Audit-class clean-bill maintenance-floor full-hygiene sweep for batch-46 OPENER (WIND-TO-MAINTENANCE);

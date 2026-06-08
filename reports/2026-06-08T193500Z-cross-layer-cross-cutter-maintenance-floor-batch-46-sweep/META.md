@@ -13,7 +13,7 @@ checks:
   skill-uptake-survey: pass
 overall_status: ready
 integrated_at: 2026-06-08T194000Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 234257e
 ---
 
 # META: verification of "Maintenance-floor full-hygiene sweep — batch-46 (cycle-142 OPENER)"
