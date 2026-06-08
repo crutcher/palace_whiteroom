@@ -1,26 +1,17 @@
 ---
 layer: L1
 operator: fe_assemble
-# Graded-stack scheme (migrated batch-36 c114 off legacy firmness/lowers_to/depends_on frontmatter).
 # This firm L1 assembly FOLD composes its two firm L1 inputs — the term-list element type
-# `weak_form_term` and the FE-space input `fe_space` — and lowers through its L1>L0 mutation-rotation
-# theme (lowers-to depends-on; the c108 §5 L1-op→theme grounding convention, mirroring set_subvector_zero).
-# The two `composes` edges flip `weak_form_term` + `fe_space` reachable (both firm-but-currently-garbage);
-# `fe_assemble` itself is reachable (inbound from 7 feature columns). Well-foundedness rank(u) <= rank(v):
-# this node is firm (rank 3) and both composed inputs carry `rank: firm`. The `lowers_to` edge is preserved
-# exactly as the pre-scheme `lowers_to` (the theme `fe-operator-assemble-mutation-rotation` is `status: firm`,
-# so rank(op=3) <= rank(theme=3) holds). The variant_axes (assembly-representation / term-position /
-# trial-test-coincidence) are documented in the chapter body §Variant axes (the scheme drops the frontmatter
-# list; the prose is the home).
+# `weak_form_term` and the FE-space input `fe_space` — and lowers through its L1>L0 mutation-rotation theme.
 rank: firm
 edges:
   depends-on:
     - target: L1/weak_form_term
-      kind: composes              # the `terms: [WeakFormTerm]` fold element-type (sig :60, :71-72; §Dependencies :163)
+      kind: composes              # the `terms: [WeakFormTerm]` fold element-type
     - target: L1/fe_space
-      kind: composes              # the `space: FiniteElementSpace[N]` input (sig :60, :68-70)
+      kind: composes              # the `space: FiniteElementSpace[N]` input
     - target: L1-L0/fe-operator-assemble-mutation-rotation
-      kind: lowers-to             # the L1>L0 mutation-rotation theme (preserved from pre-scheme `lowers_to`)
+      kind: lowers-to             # the L1>L0 mutation-rotation theme
   reference:
     - L1/bilinear-form             # slug-collision sibling (a DIFFERENT object; do NOT conflate — §Slug-collision)
 ---
@@ -82,7 +73,7 @@ Shape contract (bunsen-style, named axes):
   `N = space.GetTrueVSize()` (`palace/fem/fespace.hpp:96`) is the global true-dof count (the
   operator's square dimension) — the axis `fe_space` defines. Read-only.
 - `terms` — `[WeakFormTerm]` — an immutable, finite list of weak-form contributions. Each element is a firm
-  [`weak_form_term`](./weak_form_term.md) — a `(coefficient, differential-operator)` pair (firm cycle-061).
+  [`weak_form_term`](./weak_form_term.md) — a `(coefficient, differential-operator)` pair.
   `fe_assemble` quantifies over the term list **opaquely**: the fold's structure and laws never crack open a
   term's `(coefficient, differential-operator)` internals (see *Dependencies*), so the term's firmness does not
   alter `fe_assemble`'s definition — it replaces an undefined placeholder with a defined-but-still-opaquely-folded
@@ -161,11 +152,11 @@ Laws that explicitly **do not** hold:
   singular before BC-elimination — the constant null-space). `fe_assemble` carries no SPD/Hermitian
   precondition.
 - **BC-elimination is NOT part of the fold**: pinning essential (Dirichlet) dofs
-  (`eliminate_essential_bc`, L0 `ParOperator::SetEssentialTrueDofs`,
+  ([`eliminate_essential_bc`](./eliminate_essential_bc.md), L0 `ParOperator::SetEssentialTrueDofs`,
   `palace/models/laplaceoperator.cpp:216-217`) and lifting inhomogeneous Dirichlet data into the RHS
-  (`eliminate_rhs`, L0 `ParOperator::EliminateRHS`, `palace/linalg/rap.cpp:56-82`) are **separable
-  post-compositions** on the assembled operator, valid independently of how it was assembled. They
-  are sibling speculative-rough-in operators (deferred), not laws of `fe_assemble`.
+  ([`eliminate_rhs`](./eliminate_rhs.md), L0 `ParOperator::EliminateRHS`, `palace/linalg/rap.cpp:56-82`)
+  are **separable post-compositions** on the assembled operator, valid independently of how it was
+  assembled. They are sibling operators, not laws of `fe_assemble`.
 
 ## Dependencies
 
@@ -173,15 +164,15 @@ Laws that explicitly **do not** hold:
 concatenation, sum-of-operators, empty identity) uses no other firm L1 operator. It quantifies over
 two rough-in inputs it does NOT define:
 
-- [`weak_form_term`](./weak_form_term.md) (type) — **firm** (cycle-061); the `(coefficient,
+- [`weak_form_term`](./weak_form_term.md) (type) — **firm**; the `(coefficient,
   differential-operator)` pair that is the element type of the term list. This is the genuinely-NEW FE
   vocabulary the sub-spine introduces; the **differential-operator** is the variant axis — grounded by two
   in-scope solver-K witnesses, ∇/Gradient (electrostatic diffusion, `palace/models/laplaceoperator.cpp:193-196`)
   and ∇×/Curl (magnetostatic curl-curl, `palace/models/curlcurloperator.cpp:180-181`) — with identity/mass and
   div-div named as pending-pull sibling variants (`palace/fem/integrator.hpp:39-130`). **`fe_assemble` does not
-  crack open the term** — it folds over the list opaquely — so although the term is now firm, the fold's
-  structure and laws are unchanged: the term remains an opaquely-folded input (the clean-gate call, see
-  §Status). The per-term assembly map `A(space, ·)` that *realizes* a term is the libCEED-owned leaf below.
+  crack open the term** — it folds over the list opaquely — so the fold's structure and laws are unchanged by
+  the term's firmness: the term remains an opaquely-folded input (see §Clean fold). The per-term assembly map
+  `A(space, ·)` that *realizes* a term is the libCEED-owned leaf below.
 - `A(space, ·)` — the opaque per-term element-local→global assembly map (libCEED restriction +
   basis-apply + quadrature contraction). Cited at the Palace call boundary
   (`integ->Assemble(...)` building one `CeedOperator` sub-operator,
@@ -210,33 +201,25 @@ two rough-in inputs it does NOT define:
   rectangular generalization `fe_assemble(trial_space, test_space, terms)` is a sub-axis the
   signature can carry; not exercised by the electrostatic witness.
 
-## Status
+## Clean fold
 
-`firm`. **Clean-gate call: PROMOTE — clean.** The promotion is justified because the operator's
-definition, signature, and all four algebraic laws are stated entirely in **existing shared
-vocabulary** (fold / sum-of-operators / list-homomorphism) over the term list, treating
-`WeakFormTerm` and `A(space, ·)` as **opaque inputs**. Concretely, the clean-gate test from the
-dispatch scope is met:
-
-> Can `fe_assemble` be cleanly defined treating `weak_form_term` as an opaque rough-in input (the
-> fold doesn't need to crack open the term to be defined)?
-
-**Yes.** The fold's structure and its homomorphism/identity/commutativity laws are about the LIST
-and the operator-`+`; they never inspect a term's `(coefficient, differential-operator)` internals.
-Defining `fe_assemble` therefore does NOT require formalizing `weak_form_term` first. The
-genuinely-new FE vocabulary (`weak_form_term`, the differential-operator cohort) stays a deferred
-rough-in input, and the per-term assembly map `A` stays an opaque leaf pending the libCEED-boundary
-classification — neither gates this entry.
+`fe_assemble`'s definition, signature, and all four algebraic laws are stated entirely in **existing
+shared vocabulary** (fold / sum-of-operators / list-homomorphism) over the term list, treating
+`WeakFormTerm` and `A(space, ·)` as **opaque inputs**. The fold's structure and its
+homomorphism/identity/commutativity laws are about the LIST and the operator-`+`; they never inspect a
+term's `(coefficient, differential-operator)` internals. Defining `fe_assemble` therefore does NOT
+require formalizing `weak_form_term`; the per-term assembly map `A` stays an opaque leaf regardless of
+the libCEED-boundary classification.
 
 The structural signature is uncontested at L0 (the integrator-fold is independently named by the
 firm L0 navigation `book/src/L0/fem-bilinearform-file.md`), and the four laws are standard
 list-fold / operator-sum facts that hold syntactically over the opaque `A`. This is the
-**firm-on-positive-structure** situation (the `apply_linop` / BLAS-1-leaf precedent): the laws are
-identities on a fully-specified positive fold structure, so the absence of a dedicated
-`fe_assemble` unit test does not gate them. (The libCEED full-assemble materialization IS
-test-covered — `test/unit/test-libceed.cpp` `TestCeedOperatorFullAssemble` asserts the assembled
-matrix matches an MFEM reference to 1e-12 — useful as future `empirical-match` evidence for `A`'s
-faithfulness, but not needed for `fe_assemble`'s fold laws.)
+**firm-on-positive-structure** situation: the laws are identities on a fully-specified positive fold
+structure, so the absence of a dedicated `fe_assemble` unit test does not gate them. (The libCEED
+full-assemble materialization IS test-covered — `test/unit/test-libceed.cpp`
+`TestCeedOperatorFullAssemble` asserts the assembled matrix matches an MFEM reference to 1e-12 —
+useful as `empirical-match` evidence for `A`'s faithfulness, but not needed for `fe_assemble`'s fold
+laws.)
 
 ## L1 vs L0 distinction
 
@@ -290,9 +273,6 @@ faithfulness, but not needed for `fe_assemble`'s fold laws.)
 
 The lowering is the
 [`fe-operator-assemble-mutation-rotation`](../L1-L0/fe-operator-assemble-mutation-rotation.md)
-L1>L0 theme (currently `rough-in` thread-opener). With `fe_assemble` now firm, the theme's LHS is
-no longer a speculative placeholder; it should be re-anchored to this firm operator (flagged for a
-lifter pass — see *Open questions*). The theme narrates how this L1 fold lowers into Palace's
-build-up-then-assemble object protocol (construct container → `push_back` integrators → fold via
-`AddSubOperator` → finalize → PA/FA dispatch → libCEED materialization), plus the separable
-BC-elimination post-compositions.
+L1>L0 theme. It narrates how this L1 fold lowers into Palace's build-up-then-assemble object protocol
+(construct container → `push_back` integrators → fold via `AddSubOperator` → finalize → PA/FA dispatch
+→ libCEED materialization), plus the separable BC-elimination post-compositions.

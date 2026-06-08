@@ -22,8 +22,7 @@ SLEPc-EPS / external-direct-solver `opaque-library-ownership` obstruction record
 This annotation **settles the open question** logged by the FE-assembly thread-opener
 [`fe-operator-assemble-mutation-rotation`](./fe-operator-assemble-mutation-rotation.md)
 §"libCEED boundary" — "transitive-firm vs opaque-library-ownership vs
-tensor-contraction-respine" — RATIFIED by the batch-16 meta-phase as
-**`opaque-library-ownership`**.
+tensor-contraction-respine" — as **`opaque-library-ownership`**.
 
 ## Status
 
@@ -46,7 +45,7 @@ matches the [`triangular-solve-obstruction`](./triangular-solve-obstruction.md) 
 sites).
 
 **`fe_assemble` stays FIRM — this annotation does NOT downgrade the fold.** The firm
-[`fe_assemble`](../L1/fe_assemble.md) operator (cycle-054) expresses FE assembly as the fold
+[`fe_assemble`](../L1/fe_assemble.md) operator expresses FE assembly as the fold
 
     K = fe_assemble(space, [term_0, term_1, ...]) = Σ_i A(term_i)
 
@@ -184,14 +183,14 @@ documentation of a library boundary. The element-local quadrature kernel + COO n
 materialization are *recognized* (they are the matrix-free FE-assembly leaf) but have **no
 Palace-authored L0 form** to lift; the kernel lives entirely inside libCEED, consumed
 opaquely by Palace through the `CeedOperator` API. Follows the
-[`triangular-solve-obstruction`](./triangular-solve-obstruction.md) (cycle-029)
+[`triangular-solve-obstruction`](./triangular-solve-obstruction.md)
 opaque-library-ownership precedent in routing: the value is documenting the boundary +
 cataloguing negative anchors, with **no** promotion route (Palace will not re-architect its
 libCEED consumption).
 
 **Structural distinction from the precedents.** Unlike `triangular-solve-obstruction` (where
 the L1 form is *empty* — there is no positive Palace site at all), this theme's surrounding
-L1 fold **exists and is firm** (`fe_assemble`, c054). The obstruction is a *strict sub-term*
+L1 fold **exists and is firm** (`fe_assemble`). The obstruction is a *strict sub-term*
 inside a firm fold, not a whole-operator absence. This makes it a **shallower** obstruction
 than the triangular-solve case and a closer sibling of the `eigsolve` `partial-obstruction`
 (where the per-step body lifts but the iteration loop is library-owned): here the fold lifts
@@ -209,92 +208,15 @@ annotation adds no new operators, it only documents the boundary below the fold'
 
 ## Related
 
-- [`fe-operator-assemble-mutation-rotation`](./fe-operator-assemble-mutation-rotation.md)
-  (rough-in, cycle-053 thread-opener) — the sibling theme that maps the full FE-assembly
-  surface and **logged the libCEED boundary as an OQ** (§"libCEED boundary":
-  "transitive-firm vs opaque-library-ownership vs tensor-contraction-respine"). **This
-  annotation settles that OQ** as `opaque-library-ownership`. The two cross-link: the
-  thread-opener is the surface map; this annotation is the boundary classification. (D6 of
-  this cycle re-anchors the thread-opener to the firm `fe_assemble` LHS — a distinct,
-  parallel-safe edit; this annotation is a new file.)
-- [`fe_assemble`](../L1/fe_assemble.md) (firm, cycle-054) — the L1 fold whose per-term leaf
-  this annotation bounds. **Stays firm; not downgraded.**
-- [`triangular-solve-obstruction`](./triangular-solve-obstruction.md) (cycle-029) — the
-  prior `opaque-library-ownership` obstruction theme (HYPRE GS/SSOR relaxation +
-  external direct-solver wrappers). The routing precedent for this sub-kind: document the
-  boundary, catalogue the negative anchors, no promotion route.
-
-## Verified-against
-
-L0 evidence (a mix of **positive** Palace-owned anchors and **boundary** library-owned
-anchors — the positive anchors establish what Palace OWNS; the boundary anchors establish
-what is library-owned):
-
-- `palace/fem/bilinearform.cpp:64-70` — boundary: the `CeedElemRestriction` / `CeedBasis`
-  inputs Palace supplies to the libCEED leaf kernel (`trial_restr`/`test_restr` at 64/66,
-  `trial_basis`/`test_basis` at 68/69); the leaf `CeedOperator` is built from these.
-- `palace/fem/bilinearform.cpp:75` — boundary: `integ->Assemble(...)` — the call dispatching
-  into the libCEED-owned element-local quadrature kernel (builds `sub_op`).
-- `palace/fem/bilinearform.cpp:77` — **Palace-owned**: `op->AddSubOperator(sub_op);` — the
-  integrator-fold `Σ_i`; the L0 home of the firm `fe_assemble` fold.
-- `palace/fem/integrator.hpp:58-61` — boundary: `BilinearFormIntegrator::Assemble` pure-virtual
-  signature — the leaf-kernel contract that produces a `CeedOperator` from restriction/basis/
-  geometry inputs.
-- `palace/fem/libceed/operator.cpp:455-490` — the `CeedOperatorFullAssemble` function: the
-  COO→CSR materialization path.
-- `palace/fem/libceed/operator.cpp:483` — boundary: `CeedOperatorAssembleCOO(...)` — the
-  libCEED API call performing the numerical COO assembly (library-owned).
-- `palace/fem/libceed/operator.cpp:487-488` — **Palace-owned**: `OperatorCOOtoCSR(...)` — the
-  Palace-side COO→CSR layout shuffle (format conversion of already-assembled triples).
-- `palace/fem/bilinearform.cpp:118-132` — **Palace-owned**: `UseFullAssembly` — the PA-vs-FA
-  dispatch (Palace-authored variant axis).
-
-Cross-references (positive):
-
-- `book/src/L1/fe_assemble.md` — the firm fold this annotation bounds (stays firm).
-- `book/src/L1-L0/fe-operator-assemble-mutation-rotation.md` — the thread-opener whose
-  libCEED-boundary OQ this settles.
-- `book/src/L1-L0/triangular-solve-obstruction.md` — the opaque-library-ownership routing
-  precedent.
-
-    verified_against:
-      - citation: reference/palace/palace/fem/bilinearform.cpp:64-70
-        verdict: boundary-anchor
-        audited_at: 2026-06-02T010700Z
-        note: "CeedElemRestriction trial/test_restr (64/66) + CeedBasis trial/test_basis (68/69) inputs Palace supplies to the libCEED leaf; widened 67-70 to 64-70 to fully cover the named restriction inputs (repairer, D5 critique finding 1); citecheck in-bounds (file 284 lines)."
-      - citation: reference/palace/palace/fem/bilinearform.cpp:75
-        verdict: boundary-anchor
-        audited_at: 2026-06-02T010700Z
-        note: "integ->Assemble(...) leaf-kernel dispatch; citecheck --anchor 'integ->Assemble' zero-drift (line 75)."
-      - citation: reference/palace/palace/fem/bilinearform.cpp:77
-        verdict: positive-palace-owned
-        audited_at: 2026-06-02T010700Z
-        note: "op->AddSubOperator(sub_op) integrator-fold; citecheck --anchor 'AddSubOperator' zero-drift (line 77). The L0 home of the firm fe_assemble fold's Sigma_i."
-      - citation: reference/palace/palace/fem/integrator.hpp:58-61
-        verdict: boundary-anchor
-        audited_at: 2026-06-02T010700Z
-        note: "BilinearFormIntegrator::Assemble pure-virtual leaf-kernel signature (produces CeedOperator); verified line 58 = 'virtual void Assemble(Ceed ceed, CeedElemRestriction trial_restr,'."
-      - citation: reference/palace/palace/fem/libceed/operator.cpp:455-490
-        verdict: boundary-anchor
-        audited_at: 2026-06-02T010700Z
-        note: "CeedOperatorFullAssemble COO->CSR materialization function; citecheck --anchor 'CeedOperatorFullAssemble' zero-drift (line 455); in-bounds (file 587 lines)."
-      - citation: reference/palace/palace/fem/libceed/operator.cpp:483
-        verdict: boundary-anchor
-        audited_at: 2026-06-02T010700Z
-        note: "CeedOperatorAssembleCOO(...) libCEED API call — numerical COO assembly is library-owned; citecheck --anchor 'CeedOperatorAssembleCOO' zero-drift (line 483)."
-      - citation: reference/palace/palace/fem/libceed/operator.cpp:487-488
-        verdict: positive-palace-owned
-        audited_at: 2026-06-02T010700Z
-        note: "OperatorCOOtoCSR(...) Palace-side layout shuffle (format conversion, not the quadrature contraction); citecheck --anchor 'OperatorCOOtoCSR' lands line 488 (assignment spans 487-488)."
-      - citation: book/src/L1/fe_assemble.md
-        verdict: positive-cross-reference
-        audited_at: 2026-06-02T010700Z
-        note: "the firm c054 fold this annotation bounds; STAYS FIRM — boundary is a strict sub-term below the fold."
-      - citation: book/src/L1-L0/fe-operator-assemble-mutation-rotation.md
-        verdict: positive-cross-reference
-        audited_at: 2026-06-02T010700Z
-        note: "the cycle-053 thread-opener whose libCEED-boundary OQ this annotation settles as opaque-library-ownership."
-      - citation: book/src/L1-L0/triangular-solve-obstruction.md
-        verdict: positive-cross-reference
-        audited_at: 2026-06-02T010700Z
-        note: "the opaque-library-ownership sub-kind routing precedent (HYPRE relax + external direct-solver wrappers)."
+- [`fe-operator-assemble-mutation-rotation`](./fe-operator-assemble-mutation-rotation.md) —
+  the sibling theme that maps the full FE-assembly surface and **logged the libCEED boundary
+  as an OQ** (§"libCEED boundary": "transitive-firm vs opaque-library-ownership vs
+  tensor-contraction-respine"). **This annotation settles that OQ** as
+  `opaque-library-ownership`. The two cross-link: the thread-opener is the surface map; this
+  annotation is the boundary classification.
+- [`fe_assemble`](../L1/fe_assemble.md) (firm) — the L1 fold whose per-term leaf this
+  annotation bounds. **Stays firm; not downgraded.**
+- [`triangular-solve-obstruction`](./triangular-solve-obstruction.md) — the prior
+  `opaque-library-ownership` obstruction theme (HYPRE GS/SSOR relaxation + external
+  direct-solver wrappers). The routing precedent for this sub-kind: document the boundary,
+  catalogue the negative anchors, no promotion route.

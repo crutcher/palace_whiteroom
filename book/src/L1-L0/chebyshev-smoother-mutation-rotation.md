@@ -95,17 +95,14 @@ re-derive the per-degree coefficients (those are the L2>L1 theme's concern).
 
 Citations:
 - `palace/linalg/chebyshev.cpp:190-220` — `ChebyshevSmoother<OperType>::Mult2`
-  (4th-kind, signature-to-close; corrected from `:188-220`, whose start was the
-  prior `SetOperator` close brace — the signature is `:190`, opening brace `:191`,
-  close `:220`): the `pc_it` outer sweep, the `initial_guess` branch, the in-place
-  `y += d` / `y = 0.0`, the scribbled `r` / `d`, the `ApplyOrder0` / `ApplyOrderK`
-  diagonal-scaled passes.
+  (4th-kind; signature `:190`, opening brace `:191`, close `:220`): the `pc_it`
+  outer sweep, the `initial_guess` branch, the in-place `y += d` / `y = 0.0`, the
+  scribbled `r` / `d`, the `ApplyOrder0` / `ApplyOrderK` diagonal-scaled passes.
 - `palace/linalg/chebyshev.cpp:261-293` —
   `ChebyshevSmoother1stKind<OperType>::Mult2`: identical scaffold, 1st-kind
   scalars.
 - `palace/linalg/chebyshev.hpp:44` — `mutable VecType d, r;` (the two scribbled
-  workspaces; `d` is a member, `r` is passed; corrected from `:43`, which is the
-  explanatory comment).
+  workspaces; `d` is a member, `r` is passed; `:43` is the explanatory comment).
 
 ### Sub-pattern B — entry-point forwarding (`Mult` → `Mult2`; resize-on-demand)
 
@@ -195,13 +192,11 @@ gate construction step (same family as the
 pure function of the setup inputs modulo the opaque `spectrum_estimate`.
 
 Citations:
-- `palace/linalg/chebyshev.cpp:169-188` — 4th-kind `SetOperator` (corrected from
-  `:169-186`, which undershot the close brace `:188`, missing `this->width`@187):
-  capture `A`, `AssembleDiagonal(dinv); dinv.Reciprocal()`, `lambda_max = sf_max *
-  GetLambdaMax(...)`, `MFEM_VERIFY(lambda_max > 0.0, …)`.
-- `palace/linalg/chebyshev.cpp:232-258` — 1st-kind `SetOperator` (corrected from
-  `:232-259`, one past the close brace `:258`): same scaffold + `sf_min` default,
-  `theta`, `delta`.
+- `palace/linalg/chebyshev.cpp:169-188` — 4th-kind `SetOperator` (close brace `:188`,
+  `this->width`@187): capture `A`, `AssembleDiagonal(dinv); dinv.Reciprocal()`,
+  `lambda_max = sf_max * GetLambdaMax(...)`, `MFEM_VERIFY(lambda_max > 0.0, …)`.
+- `palace/linalg/chebyshev.cpp:232-258` — 1st-kind `SetOperator` (close brace `:258`):
+  same scaffold + `sf_min` default, `theta`, `delta`.
 - `palace/linalg/chebyshev.cpp:13-27` — `GetLambdaMax` (real + complex
   overloads): `DinvA = Dinv·A`; `linalg::SpectralNorm(comm, DinvA, hermitian)`.
 - `palace/linalg/chebyshev.cpp:161-167` / `:223-230` — the two ctors:
@@ -255,9 +250,8 @@ The rewrite preserves semantics when:
 - **Sub-pattern D** (construction) — `structural`. Constructed-operator-gate
   closure materialisation; pure-of-inputs modulo opaque `spectrum_estimate`.
 
-The theme as a whole is `structural` with one algebraic sub-rule (C). A
-`lowering-verifier` audit in a later cycle should confirm the four sub-patterns
-match the L0 corpus exhaustively (both kinds, both element types, the consumer
+The theme as a whole is `structural` with one algebraic sub-rule (C), spanning the
+four sub-patterns exhaustively (both kinds, both element types, the consumer
 forwarding sites).
 
 ## Speculative L1 operators
@@ -269,26 +263,28 @@ None. Both L1 anchors are already firm
 (`scaffolding/open-questions.md`, `matrix-weighted-norm-and-bilinear-form`), not
 a new rough-in proposed here — this theme treats it as opaque.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (all verified via `palace-codemap` read_range this cycle):
+L0 evidence ranges:
 
 - `palace/linalg/chebyshev.cpp:13-27` — `GetLambdaMax` (real literal-`true` /
   complex `A.IsReal()`); `DinvA = Dinv·A`; `linalg::SpectralNorm`.
 - `palace/linalg/chebyshev.cpp:161-188` — 4th-kind ctor + `SetOperator`
-  (`SetOperator` close brace is `:188`; corrected from `:161-186`).
-- `palace/linalg/chebyshev.cpp:190-220` — 4th-kind `Mult2` (signature-to-close;
-  corrected from `:188-220`, whose start was the prior fn close brace — sig `:190`,
-  brace `:191`): in-place `y`, `r`, `d`; `ApplyOrder0` / `ApplyOrderK`
-  diagonal-scaled passes.
+  (`SetOperator` close brace `:188`).
+- `palace/linalg/chebyshev.cpp:190-220` — 4th-kind `Mult2` (sig `:190`, brace
+  `:191`): in-place `y`, `r`, `d`; `ApplyOrder0` / `ApplyOrderK` diagonal-scaled
+  passes.
 - `palace/linalg/chebyshev.cpp:223-258` — 1st-kind ctor + `SetOperator`
-  (`sf_min` default, `theta`, `delta`; `SetOperator` close brace is `:258`,
-  corrected from `:223-259`).
+  (`sf_min` default, `theta`, `delta`; `SetOperator` close brace `:258`).
 - `palace/linalg/chebyshev.cpp:261-293` — 1st-kind `Mult2`.
 - `palace/linalg/chebyshev.cpp:295-299` — element-type instantiations.
+- `palace/linalg/chebyshev.cpp:183-184` — 4th-kind `MFEM_VERIFY(lambda_max>0)`
+  setup precondition (1st-kind `:250-251`).
+- `palace/linalg/chebyshev.cpp:102-110, :147-155` — dead-code complex
+  conjugate-`dinv` transpose kernels (recognition rules; `:101` is the close brace
+  of the non-transpose if-branch).
 - `palace/linalg/chebyshev.hpp:30-44` — 4th-kind member layout (`mutable VecType
-  d, r;` is `:44`, `:43` the explanatory comment; `dinv`, `lambda_max`, `sf_max`;
-  corrected from `:30-43`).
+  d, r;` is `:44`, `:43` the explanatory comment; `dinv`, `lambda_max`, `sf_max`).
 - `palace/linalg/chebyshev.hpp:50-76` — `Mult` / `MultTranspose` resize-forward;
   `Mult2` / `MultTranspose2` (symmetry alias).
 - `palace/linalg/chebyshev.hpp:80-114` — 1st-kind doc + member layout
@@ -303,68 +299,14 @@ L1 anchor:
 - `book/src/L1/chebyshev-smoother.md` — the firm L1 operator all sub-patterns
   lower from.
 
-Lowering-verifier audit (cycle-014, verdict **CONFIRMS-WITH-REFINEMENT** — no
-semantic defect; firm status retained):
-
-```yaml
-verified_against:
-  - citation: palace/linalg/chebyshev.cpp:190-220
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: 4th-kind Mult2 signature-to-close; corrected from :188-220 (start was prior fn close brace; sig is :190, brace :191)
-  - citation: palace/linalg/chebyshev.cpp:261-293
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-  - citation: palace/linalg/chebyshev.cpp:169-188
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: 4th-kind SetOperator; corrected from :169-186 (end undershot close @188)
-  - citation: palace/linalg/chebyshev.cpp:232-258
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: 1st-kind SetOperator; corrected from :232-259 (end was 1 past close @258)
-  - citation: palace/linalg/chebyshev.cpp:13-27
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: GetLambdaMax real(:18 true)/complex(:27 A.IsReal()); DinvA=Dinv*A
-  - citation: palace/linalg/chebyshev.cpp:183-184
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: 4th-kind MFEM_VERIFY(lambda_max>0) setup precondition (1st-kind :250-251)
-  - citation: palace/linalg/chebyshev.hpp:44
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: mutable VecType d, r (member d, passed r); corrected from :43 (:43 is the explanatory comment, member is :44)
-  - citation: palace/linalg/chebyshev.hpp:50-76
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: Mult resize-forward + Mult2 decl + MultTranspose2 symmetry alias
-  - citation: palace/linalg/chebyshev.cpp:295-299
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: both-kind x both-element-type instantiations
-  - citation: palace/linalg/distrelaxation.cpp:36
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: B_G->SetInitialGuess(false) per-call initial_guess control (exact line 36)
-  - citation: palace/linalg/chebyshev.cpp:102-110,147-155
-    verdict: supports
-    audited_at: 2026-05-28T19:33:25Z
-    note: dead-code complex conjugate-dinv transpose kernels (recognition rules); first-kernel start tightened from :101-110 to :102-110 (:101 is the close brace of the non-transpose if-branch; the dead else-block is :102-110) (cycle-040 D3); second-kernel range tightened from :150-159 to :147-155 (cycle-035 D1)
-```
-
 ## Status
 
 `firm` — every sub-pattern is a syntactic identity on fully-specified Palace
-source (verified via codemap read_range this cycle): the output-arg mutation
-re-binding (A), the workspace-ownership forwarding split (B), the SPD-symmetry
-transpose alias (C, = L1 law 3), and the closure-field construction (D) all read
-straight off the source with no literature inference and no negative-anchor
-reconstruction. The L1 anchor is itself firm (cycle-012 ratified). The opaque
-`spectrum_estimate` setup sub-action is treated as a closure field, not
-re-derived, so it imposes no constructive caveat on this theme. A
-`lowering-verifier` exhaustiveness audit (both kinds × both element types ×
-consumer forwarding sites) is the standard follow-up, not a status reduction.
+source: the output-arg mutation re-binding (A), the workspace-ownership
+forwarding split (B), the SPD-symmetry transpose alias (C, = L1 law 3), and the
+closure-field construction (D). The opaque `spectrum_estimate` setup sub-action
+is treated as a closure field, not re-derived, so it imposes no constructive
+caveat.
 
 ## Open questions / caveats
 

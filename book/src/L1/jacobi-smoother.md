@@ -19,8 +19,8 @@ reads the construction-bound inverse diagonal `dinv`, asserts no initial guess,
 and dispatches through the namespace-local `Apply(dinv, x, y)` kernel — to a
 single pure-functional smoother action over an opaque constructed-operator
 closure. The L0 output-arg mutation idiom (`Mult(x, y)` writes through `y`) is
-an L0 concern reintroduced in the forthcoming L1>L0 mutation-rotation theme,
-not in the L1 signature.
+an L0 concern reintroduced in the L1>L0 mutation-rotation theme, not in the L1
+signature.
 
 `jacobi_smoother` is a **constructed-operator gate** at L1, in the same family
 as [`ksp_solve`](./ksp_solve.md), [`eigsolve`](./eigsolve.md),
@@ -286,14 +286,11 @@ Laws that explicitly **do not** hold:
   decisive *forgetting* that makes the Jacobi gate the thinnest constructed
   operator at L1.
 
-- Elementwise `reciprocal` and elementwise `multiply` (the
-  diagonal-preconditioner-apply chain forward-referenced in
-  [`assemble-diagonal`](./assemble-diagonal.md) §Dependencies) — both are
-  L1-primitive candidates not yet authored
-  (`reciprocal`, `elementwise_product`,
-  recorded here as plain text). At L1 the apply *is* a single elementwise
-  multiply, so the operator's body is one elementwise-multiply call; the
-  setup-side `dinv.Reciprocal()` (`palace/linalg/jacobi.cpp:80`) is one
+- [`reciprocal`](./reciprocal.md) and [`elementwise_product`](./elementwise_product.md)
+  (the diagonal-preconditioner-apply chain in
+  [`assemble-diagonal`](./assemble-diagonal.md) §Dependencies). At L1 the apply *is* a
+  single elementwise multiply, so the operator's body is one elementwise-multiply call;
+  the setup-side `dinv.Reciprocal()` (`palace/linalg/jacobi.cpp:80`) is one
   elementwise-reciprocal call.
 
 - `spectrum_estimate` (setup only, `omega == 0.0` path) — the
@@ -370,47 +367,6 @@ representation-axis absorption — by the time `dinv` is committed to the
 closure, the representation distinction has been erased. The
 matrix-free-Nedelec approximation propagates as a non-law (law 6 above);
 the variant absorption itself is inherited, not re-stated.
-
-## Status
-
-`firm` — the signature is a direct transcription of the `Mult` member method
-on `JacobiSmoother<OperType>`, parameterised by element-type and
-damping-mode (both absorbed into the closure); the algebraic laws are
-closed-form identities readable straight off the source apply kernel (one
-elementwise multiply) and the source setup chain (`AssembleDiagonal +
-Reciprocal + omega-fold`). The constructed-operator gate framing matches the
-firm [`chebyshev-smoother`](./chebyshev-smoother.md) precedent (same
-`SetOperator` shape, same `Solver<OperType>` base, same `dinv` member, same
-`apply` body — minus the polynomial sweep). The firm-on-positive-structure
-precedent ([`apply_linop`](./apply_linop.md) /
-[`apply_nonlinear_pencil`](./apply_nonlinear_pencil.md) /
-[`chebyshev-smoother`](./chebyshev-smoother.md)) governs the absence of a
-dedicated `test-jacobi.cpp` under `reference/palace/test/unit/`: every law
-is a syntactic identity on fully-specified positive source (elementwise
-multiply at `palace/linalg/jacobi.cpp:38`; setup chain at
-`palace/linalg/jacobi.cpp:79-93`; transpose alias at
-`palace/linalg/jacobi.hpp:43`; instantiations at
-`palace/linalg/jacobi.cpp:106-107`), not literature-inferred convergence
-claims — so the missing dedicated test does not gate firm. Behaviour is
-exercised through integration paths only (`ksp.cpp:199`,
-`errorestimator.cpp:76`, three further consumer sites); the integration
-coverage is broader than `chebyshev-smoother`'s (five call sites vs
-chebyshev's two consumer paths).
-
-**Caveats (not status reductions):**
-
-- The complex `Apply<Transpose=true>` kernel (`palace/linalg/jacobi.cpp:61-69`)
-  is dead code under symmetric wiring — `MultTranspose` aliases `Mult`, not
-  `Apply<true>`. The conjugate-`dinv` Hermitian-transpose law is therefore
-  *not realized* by the Palace surface even though the source contains the
-  machinery for it. Recorded as a non-law (above) and as an open question
-  (below).
-- The `omega = 0.0` estimated-damping mode is exercised by exactly one of
-  the five call sites (`palace/linalg/errorestimator.cpp:76`); the other
-  four use the default `omega = 1.0`. The estimated-damping path's
-  setup-time correctness depends on the `spectrum_estimate` sub-action
-  (out-of-scope opaque), but the per-call *apply* law is identical
-  regardless (law 1 with the substituted `ω`).
 
 ## L1 vs L0 distinction
 
@@ -543,6 +499,10 @@ chebyshev's two consumer paths).
   `reference/palace/test/unit/` (`grep -rn 'Jacobi' test/unit/` returns
   one unrelated `// MFEM's GradientIntegrator only supports square
   Jacobians` match at `test-libceed.cpp:1128`). Per the
-  `chebyshev-smoother` firm-without-dedicated-test precedent (cycle-012
-  ratification), the firm-on-positive-structure judgement does not
-  require a dedicated test here either.
+  `chebyshev-smoother` firm-without-dedicated-test precedent, the
+  firm-on-positive-structure judgement does not require a dedicated test
+  here either.
+
+## Status
+
+`firm` — the signature is a direct transcription of the `Mult` member method.

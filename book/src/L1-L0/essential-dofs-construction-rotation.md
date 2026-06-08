@@ -31,25 +31,16 @@ sequence* that writes its result into a caller-provided out-parameter. The trans
 boundary — the **construction head lowers (Palace-authored) / the dof-resolution tail is
 MFEM-owned-read-as-given** — narrated in the split below.
 
-## Status
-
-`firm` — structural. The construction head is positively anchored at L0: the `bdr_attr_max` extraction
-(`multigrid.hpp:95-97`, witnessed standalone at `spaceoperator.cpp:174`) and the fully Palace-authored
-marker constructor `mesh::AttrToMarker` (`geodata.hpp:75-96`, with its documented `{0,1}`-membership +
-`-1`-wildcard contract `geodata.hpp:76-78`). The marker → true-dof-set step (`GetEssentialTrueDofs`,
-`multigrid.hpp:99`) is **documented as MFEM-owned-read-as-given** — it is a witnessed library-ownership
-boundary, NOT a constructive reconstruction, so it does not gate firmness (cf. the firm
+The marker → true-dof-set step (`GetEssentialTrueDofs`, `multigrid.hpp:99`) is **MFEM-owned-read-as-given**
+— a witnessed library-ownership boundary, not a constructive reconstruction (cf. the firm
 [`fe-space-construction-rotation`](./fe-space-construction-rotation.md) construction-lowers /
 dof-bookkeeping-MFEM-owned split, and the `opaque-library-ownership`
-[`fe-assemble-libceed-boundary-obstruction`](./fe-assemble-libceed-boundary-obstruction.md)). Because
-the tail is read-as-given (not a sub-part materialized from negative anchors), this is `firm`, not
-`partly-constructive`. The no-dedicated-`test-multigrid.cpp` caveat is non-gating per the
-`fe_space`/`fe_collection`/`fe_assemble` firm-on-positive-structure precedent. MPI/`Par*` and mesh
-partitioning are flagged once and read single-rank (out of scope per CLAUDE.md §Scope).
+[`fe-assemble-libceed-boundary-obstruction`](./fe-assemble-libceed-boundary-obstruction.md)). MPI/`Par*`
+and mesh partitioning are read single-rank (out of scope per CLAUDE.md §Scope).
 
 ## L1 form (LHS)
 
-The pure construction value (D2's prime entry [`L1/essential_dofs`](../L1/essential_dofs.md)):
+The pure construction value ([`L1/essential_dofs`](../L1/essential_dofs.md)):
 
     essential_dofs :: (space: FiniteElementSpace[N], bdr_attrs: [Attr], bdr_attr_max: Nat) -> DofSet[N]
 
@@ -162,45 +153,32 @@ is needed; the boundary (what lowers vs. what is MFEM-owned-read-as-given) is es
 site on `.Get()` (`multigrid.hpp:99`), exactly as the `fe_space` thin-forwarding accessors establish
 the dof-bookkeeping boundary there.
 
-## Verified-against
+## Evidence
 
 - `palace/fem/multigrid.hpp:92-101` — the dbc block: `bdr_attr_max` extraction (`:95-97`),
   `dbc_marker = mesh::AttrToMarker(bdr_attr_max, *dbc_attr)` (`:98`),
   `GetEssentialTrueDofs(dbc_marker, dbc_tdof_lists->emplace_back())` (`:99-100`). Per-level
-  reapplication of the same marker: `:106-111` (h-refinement), `:117-122` (p-refinement). (Verified
-  on-disk via Read + `citecheck --anchor bdr_attr_max`/`GetEssentialTrueDofs`; codemap NOT used.)
+  reapplication of the same marker: `:106-111` (h-refinement), `:117-122` (p-refinement).
 - `palace/utils/geodata.hpp:75-96` — `mesh::AttrToMarker`: the size-`max_attr` zero/one
   membership-indicator + `-1`-wildcard contract documentation (`:75-78`), the `(int, const int*, int,
   Array&, bool)` decl (`:79-80`), the iterable-overload template wrapper (`:82-88`), and the
-  return-by-value template wrapper that builds the `mfem::Array<int>` marker (`:90-96`). (Verified
-  on-disk; `citecheck --anchor AttrToMarker` ✓ at `:79`.)
+  return-by-value template wrapper that builds the `mfem::Array<int>` marker (`:90-96`).
 - `palace/models/spaceoperator.cpp:169-206` — `CheckBoundaryProperties` standalone site: `bdr_attr_max`
   (`:174`), `mesh::AttrToMarker(bdr_attr_max, dbc_attr)` (`:175`), the pointwise-OR marker union over
   eight per-condition markers (`:187-198`), and the per-level
-  `GetEssentialTrueDofs(aux_bdr_marker, aux_bdr_tdof_lists.emplace_back())` (`:202-205`). (Verified
-  on-disk; `citecheck --anchor GetEssentialTrueDofs` ✓ at `:204`.)
-- [`L1/essential_dofs`](../L1/essential_dofs.md) — the prime L1 entry this theme lowers (D1 this-cycle).
-- Sibling precedent: [`fe-space-construction-rotation`](./fe-space-construction-rotation.md) (c064;
-  construction-lowers / dof-bookkeeping-MFEM-owned split),
-  [`fe-collection-construction-rotation`](./fe-collection-construction-rotation.md) (c065),
-  [`fe-assemble-libceed-boundary-obstruction`](./fe-assemble-libceed-boundary-obstruction.md) (c055;
-  opaque-library-ownership posture).
+  `GetEssentialTrueDofs(aux_bdr_marker, aux_bdr_tdof_lists.emplace_back())` (`:202-205`).
+- [`L1/essential_dofs`](../L1/essential_dofs.md) — the prime L1 entry this theme lowers.
+- Sibling precedent: [`fe-space-construction-rotation`](./fe-space-construction-rotation.md)
+  (construction-lowers / dof-bookkeeping-MFEM-owned split),
+  [`fe-collection-construction-rotation`](./fe-collection-construction-rotation.md),
+  [`fe-assemble-libceed-boundary-obstruction`](./fe-assemble-libceed-boundary-obstruction.md)
+  (opaque-library-ownership posture).
 
 ## Open questions / caveats
 
-- **Lifting note (reverse direction, working-note only).** The L0 dbc block lifts to L1
-  `essential_dofs` cleanly precisely because the dof-resolution tail is read-as-given — the lift retains
-  only the `(space, bdr_attrs, bdr_attr_max) → DofSet[N]` shape and the Palace-authored marker
-  semantics, discarding the MFEM true-dof numbering. The structure the lift would need to be *complete*
-  (rather than opaque) is the marker → dof-index algebra, which is MFEM's and out of scope.
-  (High→low formal content stays in the chapter above; this is a working note.)
 - **`fe_space_hierarchy` per-level fan-out.** The `dbc_tdof_lists` per-level accumulation
   (`multigrid.hpp:99-100`, `:106-111`, `:117-122`) is the hierarchy consumer's property, not this
-  single-space rewrite's. It belongs in the eventual `fe_space_hierarchy` entry; flagged so that entry
-  picks up the per-level dof-set fan-out.
-- **Replace-and-propagate (later cycle).** `eliminate_essential_bc`'s `dofs: DofSet[N]` and
-  `eliminate_rhs`'s essential-row pin can now cross-ref `essential_dofs` for `DofSet[N]` provenance
-  (currently bare typed names). Same follow-up class as the `fe_space` opaque-parameter fan-out.
-- **Forward-reference resolution.** The live-link to [`L1/essential_dofs`](../L1/essential_dofs.md)
-  (D1, this cycle) resolves once D1's entry lands; per CLAUDE.md §Integration-may-materialize, both
-  D1's and D2's chapters land in the same cycle.
+  single-space rewrite's. It belongs in the eventual `fe_space_hierarchy` entry, which picks up the
+  per-level dof-set fan-out.
+- **Downstream `DofSet[N]` provenance.** `eliminate_essential_bc`'s `dofs: DofSet[N]` and
+  `eliminate_rhs`'s essential-row pin cross-ref `essential_dofs` for `DofSet[N]` provenance.

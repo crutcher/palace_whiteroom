@@ -154,7 +154,7 @@ The four-step apply (`palace/linalg/divfree.cpp:155-187`):
    (`palace/linalg/divfree.cpp:175`). The triple product `Gᵀ M G` is never
    materialized: the system passed to `ksp` is `M` itself, with `Gᵀ` realized
    by `WeakDiv` on the RHS side and `G` realized by `Grad` on the correction
-   side (the slice's "Equivalent abstract form": `(Gᵀ M G) ψ = Gᵀ M y`).
+   side (the equivalent abstract form `(Gᵀ M G) ψ = Gᵀ M y`).
 4. **Gradient correction** `y' ← y + Grad·ψ`
    (`palace/linalg/divfree.cpp:177-186`, via `Grad->AddMult(ψ, y, 1.0)` — the
    complex Re/Im branches at :180-181, the real branch at :185).
@@ -225,8 +225,7 @@ is no cross-coupling between the real and imaginary parts through the projection
   `palace/fem/integ/mixedvecgrad.cpp:142`). A flipped L0 sign would invert the
   correction direction. This is a property of the constructed `WeakDiv`
   operator, honored verbatim at L1 and **positively re-derived from Palace
-  source** (cycle-014 lowering-verifier audit; the `WeakDiv = -Gᵀ` reading is
-  anchored, not inferred).
+  source** (the `WeakDiv = -Gᵀ` reading is anchored, not inferred).
 - **Non-law (load-bearing): step ordering.** The essential-BC zeroing
   (`Z_{bdr_eff}`) must compose *after* `WeakDiv·y` and *before* the `ksp` solve
   (`palace/linalg/divfree.cpp:159-175`). Reordering changes the result. The
@@ -259,53 +258,6 @@ Shared concepts (cross-referenced, not duplicated):
   essential-BC zeroing (step 2).
 - [`constructed-operator-factory`](../concepts/constructed-operator-factory.md) —
   the construction-time assembly of `M`, `WeakDiv`, `Grad`, `bdr_eff`, `ksp`.
-
-## Status
-
-`firm`.
-
-The **structural decomposition is firm**: every step of the apply is read from a
-positive source site (`palace/linalg/divfree.cpp:155-187`), the construction is
-fully read (`palace/linalg/divfree.cpp:43-152`), and the linearity, range,
-M-orthogonality, real-linearity, idempotence, and step-ordering laws follow from
-the defining condition stated in the source (`palace/linalg/divfree.hpp:28-31`)
-and the SPD/real properties asserted in the source
-(`palace/linalg/divfree.cpp:119`).
-
-The entry was `partly-constructive` (cycle-013) on one named sub-part — the
-**idempotence law `P∘P = P`** and the **divergence-free output characterization**,
-both contingent on the `WeakDiv ≈ -Gᵀ M` sign reading. The **cycle-014
-lowering-verifier audit**
-(`reports/2026-05-28T2115Z-lowering-verifier-divfree-weakdiv-sign-convention-l0-verify/`,
-verdict **UNBLOCK-PROMOTION**) **resolved that contingency at the evidence level**:
-the sign is positively anchored in Palace-owned source. The cycle-013 framing
-("rests on the MFEM-vendored `MixedVectorWeakDivergenceIntegrator`, below the L0
-scope boundary") was a mislocalization — `MixedVectorWeakDivergenceIntegrator` is
-**Palace-owned, libCEED-backed** (`palace/fem/integrator.hpp:218-226`), its
-bilinear form is documented **in Palace source** as `a(u, v) = -(Q u, grad v)`
-(`palace/fem/integrator.hpp:217`), and the negating sign is materialized as an
-explicit `-1.0` coefficient
-`PopulateCoefficientContext(space_dim, Q, transpose, -1.0)`
-(`palace/fem/integ/mixedvecgrad.cpp:202`) — side-by-side contrasted with the
-non-negated `MixedVectorGradientIntegrator`
-(`palace/fem/integ/mixedvecgrad.cpp:142`, no `-1.0`), and cross-validated against
-MFEM (`test/unit/test-libceed.cpp:905-916`). The `WeakDiv = -Gᵀ M` reading is
-therefore unconditional, the idempotence sub-law and divergence-free
-characterization are now firm, and the entry **promotes to `firm`** (cycle-015
-enactment; OQ `divfree-projector-partly-constructive-to-firm-enactment` closed,
-OQ `divfree-weakdiv-sign-convention-l0-verify` resolved).
-
-No dedicated unit test exists (`test/unit/test-divfree.cpp` is absent; confirmed
-by codemap call-site survey — only `divfree.cpp`-internal `Mult` calls and the
-`eigensolver.cpp` / `arpack.cpp` / `slepc.cpp` driver call sites appear). The
-test absence does not block `firm` (cf. the
-[`chebyshev-smoother`](./chebyshev-smoother.md) precedent, where every law is a
-verified-exact syntactic identity): the projector's semantics are a fully-read
-linear projection with a source-stated defining condition, and the previously
-sign-contingent sub-law is now positively anchored. Supporting test evidence: the
-`MixedVectorWeakDivergenceIntegrator` is cross-validated against
-`mfem::MixedVectorWeakDivergenceIntegrator` at `test/unit/test-libceed.cpp:905-916`
-(L0-equivalent integrator-level coverage that exercises the sign behavior).
 
 ## Evidence
 
@@ -352,10 +304,3 @@ sign-contingent sub-law is now positively anchored. Supporting test evidence: th
 - `test/unit/test-libceed.cpp:905-916` — Palace's `MixedVectorWeakDivergenceIntegrator`
   cross-validated against `mfem::MixedVectorWeakDivergenceIntegrator` (L0-equivalent
   test evidence that the sign behavior is exercised).
-
-Provenance: this firm entry superseded the cycle-001-era `divfree` slice (its L1
-form at slice §L1, L2 primitive composition at slice §L2). The slice was deleted
-in the batch-31 graded-stack slice-deletion campaign once this entry and the
-`L2`/`L3`/`L4` divfree chapters + the `L1-L0/divfree-projector-mutation-rotation`
-theme carried all of its content with positive L0 anchoring; git history is the
-record.

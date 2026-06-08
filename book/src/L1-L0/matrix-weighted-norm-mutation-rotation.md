@@ -102,11 +102,11 @@ Citations:
 - `palace/linalg/operator.hpp:372-374` — `Norml2(comm, x, B, Bx)` template decl with comment
   `// Calculate the vector norm with respect to an SPD matrix B.` (`:372`). The SPD precondition
   stated at L0.
-- `palace/linalg/apply-linop-mutation-rotation.md` Sub-pattern A — the inherited `B.Mult(x, Bx)`
-  lowering (operator-apply into a destination buffer).  [theme reference, see Verified-against]
-- `palace/linalg/dot-mutation-rotation.md` Sub-pattern A — the inherited `Dot(comm, Bx, x)`
-  lowering (the `Mpi::GlobalSum ∘ LocalDot` two-step + the arg-2-conjugated convention).
-  [theme reference, see Verified-against]
+- [`apply-linop-mutation-rotation`](./apply-linop-mutation-rotation.md) Sub-pattern A — the
+  inherited `B.Mult(x, Bx)` lowering (operator-apply into a destination buffer).
+- [`dot-mutation-rotation`](./dot-mutation-rotation.md) Sub-pattern A — the inherited
+  `Dot(comm, Bx, x)` lowering (the `Mpi::GlobalSum ∘ LocalDot` two-step + the arg-2-conjugated
+  convention).
 
 ### Sub-pattern B — complex specialization (real-operator-on-complex-vector split)
 
@@ -314,7 +314,7 @@ reconstruction, no literature inference, no speculative operator), hence `firm` 
 ## Speculative L1 operators
 
 **None.** This theme lowers the existing L1 [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
-operator (firm, promoted cycle-091) into existing firm L1 vocabulary — `apply_linop` for the
+operator (firm) into existing firm L1 vocabulary — `apply_linop` for the
 `B·x` step, `dot` for the inner reduction, `scal` for the `Normalize` consumer. It proposes no new
 L1 vocabulary. The sibling **bilinear-form** `linalg::Dot(comm, x, A, y) = yᴴ A x`
 (`palace/linalg/operator.hpp:386-389`, `palace/linalg/operator.cpp:621-639`) shares the L0 file block and the same two L1
@@ -362,179 +362,16 @@ no masking or strided variants in the Palace surface. The output-arg-vs-return d
 `Bx` workspace) is not a *variant axis* but the workspace-ownership boundary covered in §"The
 caller-owned workspace `Bx`".
 
-## Verified-against
+## Additional cited L0 ranges
 
-L0 evidence ranges (self-verified via `tools/citecheck/citecheck.py --anchor` against on-disk
-`reference/palace/` this invocation — producer-citation self-verification, `verify-citation-range`;
-cycle-025 nleps.cpp +1 codemap drift confirmed NOT to affect operator.cpp/hpp or the callsite
-cohort, all anchors land on the asserted lines):
-
-- `palace/linalg/operator.cpp:599-607` — real `Norml2` specialization: `B.Mult(x, Bx)` (`:602`),
-  `double dot = Dot(comm, Bx, x)` (`:603`), `MFEM_ASSERT(dot > 0.0, ...)` (`:604-605`),
-  `return std::sqrt(dot)` (`:606`). **Self-verified.**
-- `palace/linalg/operator.cpp:609-619` — complex `Norml2` specialization:
-  `// For SPD B, xᴴ B x is real.` (`:612`), `B.Mult(x.Real(), Bx.Real())` /
-  `B.Mult(x.Imag(), Bx.Imag())` (`:613-614`), `std::complex<double> dot = Dot(comm, Bx, x)`
-  (`:615`), two-part `MFEM_ASSERT` (`:616-617`), `return std::sqrt(dot.real())` (`:618`).
-  **Self-verified.**
-- `palace/linalg/operator.hpp:372-374` — `Norml2(comm, x, B, Bx)` decl + comment
-  `// Calculate the vector norm with respect to an SPD matrix B.` (`:372`). The SPD precondition
-  at L0. **Self-verified.**
-- `palace/linalg/operator.hpp:377-384` — `Normalize(comm, x, B, Bx)` inline def:
-  `norm = Norml2(...)` (`:380`), `MFEM_ASSERT(norm > 0.0, ...)` (`:381`), `x *= 1.0 / norm`
-  (`:382`). Sub-pattern C consumer. **Self-verified.**
-- `palace/linalg/operator.hpp:386-389` — sibling bilinear-form `Dot(comm, x, A, y)` decl + comment
-  `// Compute the bilinear form inner product yᴴ A x ... Allocates workspace internally.`
-  (`:386-387`). Cited only to mark the boundary (internally-allocated `Ax` vs caller-supplied `Bx`).
-  **Self-verified.**
-- `palace/linalg/arpack.cpp:433-444` — `ArpackEigenvalueSolver::GetEigenvectorNorm`: dispatches to
-  `linalg::Norml2(comm, x, *opB, Bx)` (`:438`) when `opB` non-null, else unweighted
-  `linalg::Norml2(comm, x)` (`:442`). Weighted-norm callsite in M-orthonormalisation.
-  **Self-verified.**
-- `palace/linalg/arpack.cpp:470` — `xscale.get()[i] = 1.0 / GetEigenvectorNorm(x1, y1);` — the
-  reuse-`Bx`-across-eigenvectors loop body (`y1` is the reused `Bx`). **Self-verified.**
-- `palace/linalg/slepc.cpp:470-481` — `SlepcEigenvalueSolver::GetEigenvectorNorm`: identical
-  pattern, `linalg::Norml2(GetComm(), x, *opB, Bx)` (`:475`; note `GetComm()` not bare `comm`).
-  **Self-verified.**
-- `palace/linalg/slepc.cpp:505` — `xscale.get()[i] = 1.0 / GetEigenvectorNorm(x1, y1);` (SLEPc
-  reuse loop). **Self-verified.**
-- `palace/linalg/nleps.cpp:109-120` — `NonLinearEigenvalueSolver::GetEigenvectorNorm`: identical
-  pattern, `linalg::Norml2(comm, x, *opB, Bx)` (`:114`). Three-backend consistency confirms the
-  M-orthonormalisation role. **Self-verified.**
-- `palace/linalg/nleps.cpp:146` — `xscale.get()[i] = 1.0 / GetEigenvectorNorm(x1, y1);` (NLEPS
-  reuse loop). **Self-verified.**
-- `book/src/L0/linalg-operator-file.md:30-34` — the L0 chapter naming the `linalg::` free-function
-  block (the SPD-weighted `Norml2(comm, x, B, Bx)`, the `Normalize`, the sibling bilinear-form
-  `Dot(comm, x, A, y)`, `SpectralNorm`). **Self-verified.**
-
-L1 / cross-theme anchors:
-
-- `book/src/L1/matrix-weighted-norm.md` — the L1 operator this theme lowers (firm, promoted
-  cycle-091): closed form `√(xᴴ B x)` (`:18-19`), law 8 self-bilinear identity (`:58`),
-  SPD applicability conditions (`:72-79`), the workspace-ownership deferral (`:11`, `:99`,
-  `:122`), the real-`B`-on-complex-`x` variant-gate question (`:106`).
-- `book/src/L1-L0/apply-linop-mutation-rotation.md` — Sub-pattern A (bare `B.Mult(x, Bx)` forward
-  apply into a destination buffer) inherited as step 1; the `complex-from-real-lift` for the complex
-  branch's real/imaginary split (§Applicability condition 3).
-- `book/src/L1-L0/dot-mutation-rotation.md` — Sub-pattern A (`linalg::Dot(comm, Bx, x)` =
-  `Mpi::GlobalSum ∘ LocalDot`) inherited as step 2; the arg-2-conjugated convention + the
-  re-order-invisible-for-real-projection case (§"The conjugation asymmetry").
-- `book/src/L1-L0/nrm2-mutation-rotation.md` — the unweighted relative; the `B = I` degenerate
-  collapse meets it exactly, and the `std::abs`-guard classification precedent informs the
-  `MFEM_ASSERT`-guard classification here.
-- `book/src/L1-L0/scal-mutation-rotation.md` — the `x *= 1.0/norm` step in the `Normalize` consumer
-  (Sub-pattern C).
-- `book/src/L1/apply_linop.md:50,53-55` — laws 1 (linearity in x), 4/5/6 (composition / sum /
-  scalar) underwriting the `B·x` step.
-- `book/src/L1/dot.md:43,45` — the arg-1-conjugated L1 convention + the load-bearing
-  reduction-tree non-law underwriting the inner reduction.
+- `palace/linalg/operator.cpp:624` — the sibling bilinear-form `Dot(comm, x, A, y)`'s
+  internally-allocated workspace `ComplexVector Ax(A.Height())` (the boundary contrast with the
+  caller-supplied `Bx`).
+- `palace/linalg/arpack.cpp:433-444` / `palace/linalg/slepc.cpp:470-481` /
+  `palace/linalg/nleps.cpp:109-120` — the three `GetEigenvectorNorm` dispatch bodies (weighted
+  `Norml2(comm, x, *opB, Bx)` vs the unweighted `opB`-null fallback), the M-orthonormalisation
+  callsite cohort.
 
 ## Status
 
-`firm` — the rewrite is the structural expansion of the L0 `Norml2(comm, x, B, Bx)` three-step
-composition `B.Mult → Dot → sqrt`, exhaustively pinned by direct, self-verified evidence (the two
-specializations `palace/linalg/operator.cpp:599-607` / `:609-619`, the decl + SPD comment `palace/linalg/operator.hpp:372-374`,
-the `Normalize` consumer `palace/linalg/operator.hpp:377-384`, the three-backend M-orthonormalisation callsite
-cohort `arpack.cpp:438,470` / `slepc.cpp:475,505` / `nleps.cpp:114,146`). The two sub-patterns
-(A real, B complex), the Sub-pattern C consumer, the element-type and weight-operator variant axes,
-the `B = I` degenerate collapse, the caller-owned-workspace boundary, and the SPD-guard
-classification are all directly cited. The theme **reuses** the firm/rough-in sibling sub-themes
-(`apply_linop` Sub-pattern A, `dot` Sub-pattern A, `scal`) rather than restating them. The one
-non-syntactic ingredient — `xᴴ B x ∈ ℝ_{≥0}` for SPD `B` — is positively anchored to the L0
-source's own comment (`:612`) and assertion (`:616-617`); **no negative-anchor reconstruction, no
-literature inference, no speculative operator** — so `firm` rather than `partly-constructive`.
-
-**Note on the upstream L1 gate (now discharged).** The L1 operator [`matrix-weighted-norm`](../L1/matrix-weighted-norm.md)
-promoted to `firm` at cycle-091 (both norm-axiom law-sides discharged c088/c089 under the
-firm-on-positive-structure escape). This theme was already `firm` while the L1 operator was still
-rough-in — a firm lowering of a rough-in L1 operator is consistent, since the lowering's structural
-fidelity (does the L1 form expand into this L0 source?) is independent of the L1 law-confidence gate
-(are the L1 laws test-confirmed?). The L1 promotion did not change this theme's status; it only
-strengthened the LHS the theme already lowers. The standing precedent for the firm-theme-over-
-rough-in-L1 pattern is now [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md), firm
-over the still-rough-in `L1/eigsolve`.
-
-A `lowering-verifier` audit attaching the `verified_against:` block (per the sibling-theme
-convention) confirming the surface-form recognition is exhaustive (no un-cited `Norml2` overload,
-the inherited-sub-theme boundaries hold, the `Bx` workspace reading is consistent) is the standard
-follow-up, not a status reduction.
-
-~~~yaml
-verified_against:
-  - citation: palace/linalg/operator.cpp:599-607
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: real Norml2 spec; B.Mult(:602)/Dot(:603)/MFEM_ASSERT(:604-605)/sqrt(:606) all citecheck --anchor OK
-  - citation: palace/linalg/operator.cpp:609-619
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: complex Norml2 spec; lane split(:613-614)/dot(:615)/two-part guard(:616-617)/sqrt(dot.real())(:618); SPD-real comment(:612) positively anchors xᴴBx∈ℝ
-  - citation: palace/linalg/operator.hpp:372-374
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: Norml2 decl + SPD comment(:372); precondition is documentation, structural SPD enforcement is the run-time guard
-  - citation: palace/linalg/operator.hpp:377-384
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: Sub-pattern C Normalize; norm=Norml2(:380)/assert(:381)/x*=1/norm(:382); assert redundant-but-boundary-documenting
-  - citation: palace/linalg/operator.hpp:386-389
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: bilinear-form boundary marker; internal Ax alloc confirmed at palace/linalg/operator.cpp:624; correctly excluded from theme
-  - citation: palace/linalg/arpack.cpp:433-444
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: GetEigenvectorNorm dispatch; weighted(:438)/unweighted-fallback(:442)
-  - citation: palace/linalg/arpack.cpp:470
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: reuse-Bx-across-eigenvectors loop body (y1 reused)
-  - citation: palace/linalg/slepc.cpp:470-481
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: identical pattern; GetComm()(:475) not bare comm, theme correctly flags; unweighted-fallback(:479)
-  - citation: palace/linalg/slepc.cpp:505
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: SLEPc reuse loop body
-  - citation: palace/linalg/nleps.cpp:109-120
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: identical pattern; weighted(:114)/unweighted-fallback(:118); NOT affected by cycle-025 nleps +1 codemap drift (anchors land on asserted lines)
-  - citation: palace/linalg/nleps.cpp:146
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: NLEPS reuse loop body
-  - citation: book/src/L0/linalg-operator-file.md:30-34
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: L0 chapter names the linalg:: free-function block; benign framing diff (:31 gives impl as :600-619 vs theme :599/:609)
-  - citation: book/src/L1/matrix-weighted-norm.md:58
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: L1 law 8 self-bilinear identity; underwrites the lowering's √(dot) structure
-  - citation: book/src/L1/matrix-weighted-norm.md:59
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: L1 law 9 identity-weight collapse; underwrites B=I→nrm2 degenerate boundary (eigensolver opB-null fallback is the L0 witness)
-  - citation: book/src/L1/matrix-weighted-norm.md:106
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: mixed-element-type variant gate is an UPSTREAM L1-entry promotion gate; faithfully recorded, not resolved by this theme, correctly not claimed resolved
-  - citation: book/src/L1-L0/apply-linop-mutation-rotation.md:43
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: Sub-pattern A reuse (step 1 B.Mult); complex-from-real-lift correctly attributed to apply-linop condition 3 (:216-225)
-  - citation: book/src/L1-L0/dot-mutation-rotation.md:44
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: Sub-pattern A reuse (step 2 Dot); arg-2-conjugated leaf(:59-60) + reduction-tree non-law inherited, not restated
-  - citation: book/src/L1/apply_linop.md:50
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: laws 1/4/5/6 (:50,:53-55) underwrite the B·x apply across operator-representation axis
-  - citation: book/src/L1/dot.md:43
-    verdict: supports
-    audited_at: 2026-05-29T18:03:03Z
-    note: conjugate-in-first convention(:43) + load-bearing reduction-tree non-law(:45)
-~~~
+`firm` — the structural expansion of the L0 `Norml2(comm, x, B, Bx)` three-step form.

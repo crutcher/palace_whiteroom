@@ -18,22 +18,6 @@ lowering; when `k = 0` it degenerates to one `apply_nonlinear_pencil` of `vv` pl
 
 `nleps-deflated-residual-mutation-rotation`
 
-## Status
-
-`firm` — every constituent of the rewrite is read from a **positive** source site (the
-`compute_residual` lambda, `palace/linalg/nleps.cpp:547-577`, with the source's own naming
-comment at `:547-549`). The big-space residual is two `Mult`/`AddMult` calls on a
-`BuildParSumOperator` pencil (`:557-564`), the deflation correction is a positive
-`MatVecMult(X, S.fullPivLu().solve(vv2))` (`:563`), the coordinate residual is a positive
-`linalg::Dot` loop (`:565-570`), the norm is a positive `std::sqrt(...)` (`:575`). The rewrite
-is a **structural** syntactic expansion — no sub-part is materialized from negative anchors,
-so there is no `partly-constructive` caveat. This matches the firm-on-positive-structure
-status of the operator this theme lowers (`book/src/L1/nleps_deflated_residual.md:111-117`) and
-of the interior atom it extends (`book/src/L1/apply_nonlinear_pencil.md:98`): the laws are
-syntactic identities on fully-specified positive source, so the NLEPS test-coverage absence
-(`search_text` for `QuasiNewton|nleps|funcA2|GetResidualNorm` over `test/unit/**` returns zero
-hits) does not gate the firm decision.
-
 ## L1 form (LHS)
 
 The pure-functional L1 operator — no destination buffers, no `A2`-caching, no build-form choice
@@ -209,7 +193,7 @@ inter-column orthogonalization (`palace/linalg/nleps.cpp:606-619`: each converge
 `1/‖v‖₂` at `:610-611`, stored at `X[k] = v` at `:615`, no Gram-Schmidt). This is *why* the
 coupling carries the `(λI−H)⁻¹` linearization-block solve rather than a trivial transpose; the
 non-orthonormal basis is load-bearing and is the same fact that keeps the L2 `deflate` combinator
-distinct from `orthogonalize` (the cycle-021 over-unification guard). Recorded here so the
+distinct from `orthogonalize` (the over-unification guard). Recorded here so the
 lowering does not collapse the `fullPivLu().solve` into a no-op.
 
 Justification kind: **structural** — `:563` is the syntactic composition `MatVecMult ∘
@@ -322,28 +306,13 @@ taxonomy.
 
 ## Speculative L1 operators
 
-None. Every constituent is **already firm L1 vocabulary**: `apply_nonlinear_pencil` (firm,
-cycle-021), `lu_solve` (firm, cycle-022), `dot` (firm), `nrm2` (firm), `linear_combination`
-(firm L2). This theme proposes no new rough-in operators — it composes existing firm leaves.
+None. Every constituent is **already firm L1 vocabulary**: `apply_nonlinear_pencil` (firm),
+`lu_solve` (firm), `dot` (firm), `nrm2` (firm), `linear_combination` (firm L2). This theme
+proposes no new rough-in operators — it composes existing firm leaves.
 
-## Verified-against
-
-- `palace/linalg/nleps.cpp:547-577` — the complete `compute_residual` lambda (the positive L0
-  site). All pinpoint anchors below mechanically confirmed via `tools/citecheck` (bounds + token
-  anchor) and `palace-codemap` `read_range`.
-- `palace/linalg/nleps.cpp:587` — `compute_residual(eig, v, v2, u, u2, A2n)`: the committed-point
-  residual call (convergence quantity).
-- `palace/linalg/nleps.cpp:702` — `compute_residual(eig_trial, v_trial, v2_trial, u, u2, A2n)`:
-  the Armijo-backtrack trial residual call (line-search convergence quantity).
-- `palace/linalg/nleps.cpp:329-347` — `MatVecMult(X, y)`: the back-projection fold body.
-- `palace/linalg/nleps.cpp:606-619` — deflation-basis growth (`X`-not-orthonormal, variadic-`k`).
-- `book/src/L1/nleps_deflated_residual.md` — the firm L1 operator this theme lowers (its laws 1
-  and 2 are the basis for Sub-patterns A and B; its `:111-117` firm-status is the precedent).
-- `book/src/L1/apply_nonlinear_pencil.md` — the interior pencil-apply atom (linearity-in-`v` law
-  1; the `{1, λ, λ², 1}` pencil-build form). No L1>L0 theme yet — plain-text reference.
-- `book/src/L1-L0/dot-mutation-rotation.md:44-81` — Sub-pattern A (fused `linalg::Dot`), reused
-  for the coordinate residual and the big-space norm self-dot.
-- `book/src/L2-L1/linear-combination-fold-specialization.md` — the L2>L1 lowering of the
-  `MatVecMult` back-projection fold; live link.
-- No dedicated unit test (NLEPS test-coverage absence inherited from `apply_nonlinear_pencil` /
-  `eigsolve`); the firm decision rests on exhaustive positive structural citation.
+The two residual call sites the lowering serves: `palace/linalg/nleps.cpp:587`
+(`compute_residual(eig, v, v2, u, u2, A2n)`, the committed-point residual / convergence quantity)
+and `palace/linalg/nleps.cpp:702`
+(`compute_residual(eig_trial, v_trial, v2_trial, u, u2, A2n)`, the Armijo-backtrack trial
+residual / line-search convergence quantity). NLEPS has no dedicated unit test; the firm decision
+rests on exhaustive positive structural citation.

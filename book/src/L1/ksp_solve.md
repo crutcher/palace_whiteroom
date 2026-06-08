@@ -99,10 +99,6 @@ Out of scope for this operator (deliberate exclusions):
 - **MINRES / BICGSTAB / DEFAULT** — three enumerated `KrylovSolver` cases that route to `MFEM_ABORT` at `palace/linalg/ksp.cpp:53-57`. Per the CLAUDE.md "Unimplemented Palace stub policy", these are documented as L1>L0 obstruction themes ([`L1-L0/minres-iteration`](../L1-L0/minres-iteration.md), [`L1-L0/bicgstab-iteration`](../L1-L0/bicgstab-iteration.md)) and are **not** part of this firm L1 operator's surface. A Palace user attempting to construct `K` with `KrylovSolver::MINRES` aborts during factory construction (`ConfigureKrylovSolver` at `palace/linalg/ksp.cpp:34-58`), so no `K` of those methods ever reaches a `ksp_solve` call site.
 - **Eigenvalue solves, nonlinear solves, least-squares solves** — different primitives, different signatures. Out of scope.
 
-## Status
-
-`firm` — signature is canonical (matches the in-place `BaseKspSolver<OperType>::Mult(b, x)` pattern with the L1 rotations applied — destination drops, statistics structured into the result, per-method dispatch absorbed), evidence is direct from the Palace source (the `BaseKspSolver` class plus the three implemented `IterativeSolver` subclasses plus use sites across the four solver-pipeline drivers), and the algebraic laws listed are standard properties of approximate-linear-inverse operators modulo the explicitly-recorded floating-point and finite-tolerance caveats. The MINRES / BICGSTAB / DEFAULT enum cases that abort at the factory are documented as out-of-scope obstructions, consistent with the unimplemented-Palace-stub policy in CLAUDE.md.
-
 ## L1 vs L0 distinction
 
 - **L0**: `BaseKspSolver<OperType>` class with three constructors, owned `unique_ptr` to an `IterativeSolver<OperType>` (one of `CgSolver`, `GmresSolver`, `FgmresSolver`) and an optional `unique_ptr` to a `Solver<OperType>` preconditioner. `Mult(b, x)` method wraps `BlockTimer`, dispatches to `ksp->Mult(x, y)` (note: argument-name swap — the inner method's `x` is the RHS, `y` is the solution; see [`L0/kspsolver-base-class`](../L0/kspsolver-base-class.md) "The `Mult` method"), checks `ksp->GetConverged()`, logs an `Mpi::Warning` on non-convergence, and increments cumulative counters. Per-method body (CG / GMRES / FGMRES) implemented in `palace/linalg/iterative.cpp` with disjoint workspace layouts and per-method enum dispatch at the factory (`palace/linalg/ksp.cpp:34-58`). Three unimplemented enum cases (`MINRES` / `BICGSTAB` / `DEFAULT`) route to `MFEM_ABORT`.
@@ -132,8 +128,8 @@ Out of scope for this operator (deliberate exclusions):
 - `palace/drivers/electrostaticsolver.cpp:69` — `ksp.Mult(RHS, V[step])` call site inside the per-terminal loop. Direct L0 evidence of the driver-side use pattern.
 - `palace/drivers/magnetostaticsolver.cpp:77` — `ksp.Mult(RHS, A[step])` call site (analogous).
 - `palace/drivers/drivensolver.cpp:196` — `ksp.Mult(RHS, E)` call site (analogous, complex path).
-- `book/src/L0/kspsolver-base-class.md` — cycle-006 L0 anchor chapter for `BaseKspSolver` (the direct source-of-truth for what L1 wraps).
-- `book/src/L0/ksp-factory-file.md` — cycle-004 L0 anchor for the factory + the documented advertised-but-unimplemented pattern.
+- `book/src/L0/kspsolver-base-class.md` — L0 anchor chapter for `BaseKspSolver` (the direct source-of-truth for what L1 wraps).
+- `book/src/L0/ksp-factory-file.md` — L0 anchor for the factory + the documented advertised-but-unimplemented pattern.
 - `book/src/L0/apply-linop-overload-set.md` — L0 anchor for the `Mult` / `MultTranspose` / `AddMult` overload family the iterative solvers dispatch into.
 - `book/src/concepts/ksp_solve.md` — pre-existing methodology-era concept page for the L1 `ksp_solve` primitive (predates the firm operator chapter; covers the constructed-operator-companion-to-`apply_linop` framing and the divfree slice use).
 - `book/src/concepts/solve-monad.md` — L4-bound monadic coordination layer the L1 form anchors.
@@ -141,3 +137,7 @@ Out of scope for this operator (deliberate exclusions):
 - `book/src/concepts/constructed-operators.md`, `concepts/variant-absorption.md`, `concepts/constructed-operator-factory.md` — the three methodology concepts the L1 entry's variant-axis collapse and opaque-type treatment rest on.
 - `book/src/L2/krylov-step.md` — the upstream L2 layer that unfolds the per-method body the L1 `ksp_solve` opaquely wraps.
 - `book/src/L1/divfree-projector.md` — the firm L1 consumer of `ksp_solve`: the projected H1 solve `M·ψ = rhs` (`palace/linalg/divfree.cpp:175`) is its constructed-operator inner solve.
+
+## Status
+
+`firm` — canonical in-place `BaseKspSolver<OperType>::Mult(b, x)` signature with the L1 rotations applied; the MINRES / BICGSTAB / DEFAULT enum cases that abort at the factory are out-of-scope obstructions per the unimplemented-Palace-stub policy.

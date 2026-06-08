@@ -196,9 +196,9 @@ solve. The standard electrostatic pipeline is
 It is **not** part of the `fe_assemble` fold (law 2 of `fe_assemble` explicitly excludes
 BC-elimination) and is independent of the assembly representation (PA/FA): the elimination acts on
 the assembled square matrix's true-dof structure, which both representations share. Its sibling
-post-composition is `eliminate_rhs` (lift inhomogeneous Dirichlet data into the RHS, L0
-`ParOperator::EliminateRHS` `palace/linalg/rap.cpp:60-83`) — a deferred rough-in operator (dispatch
-D3 this cycle); the two together realize the full Dirichlet-BC application on the operator+RHS pair.
+post-composition is [`eliminate_rhs`](./eliminate_rhs.md) (lift inhomogeneous Dirichlet data into the
+RHS, L0 `ParOperator::EliminateRHS` `palace/linalg/rap.cpp:60-83`); the two together realize the full
+Dirichlet-BC application on the operator+RHS pair.
 
 ## Variant axes
 
@@ -218,34 +218,25 @@ D3 this cycle); the two together realize the full Dirichlet-BC application on th
   The signature above is the square case; the rectangular case is a hard reject at L0, not a
   variant the L1 operator carries.
 
-## Status
+## Clean post-composition
 
-`firm`. **Clean-gate call: PROMOTE — clean.** The promotion is justified because the operator's
-definition, signature, and all four algebraic laws are stated entirely in **existing shared
-vocabulary** (operator block-decomposition on the free/essential dof partition; the free-block
-projection `K ↦ P_F K P_F`; operator addition) treating `K` as an **opaque assembled square
-operator** and the diagonal policy as a two-valued variant axis. The clean-gate test from the
-dispatch scope is met:
-
-> Does the `EliminateBC` diagonal-policy interact with the assembled operator in a way that resists
-> clean post-composition?
-
-**No.** The elimination is defined purely on `(K, dofs, policy)` and does not inspect how `K` was
-assembled; it factors through the free-block projection regardless of the term decomposition (law 4).
-The diagonal policy is a per-essential-diagonal choice (law 3) — it does not couple to the
-free-block physics and does not require cracking open `K`. Defining `eliminate_essential_bc`
-therefore does NOT require formalizing `fe_assemble`'s internals; the two compose as
-post-composition.
+`eliminate_essential_bc`'s definition, signature, and all four algebraic laws are stated entirely in
+**existing shared vocabulary** (operator block-decomposition on the free/essential dof partition; the
+free-block projection `K ↦ P_F K P_F`; operator addition) treating `K` as an **opaque assembled square
+operator** and the diagonal policy as a two-valued variant axis. The `EliminateBC` diagonal-policy
+does **not** resist clean post-composition: the elimination is defined purely on `(K, dofs, policy)`
+and does not inspect how `K` was assembled; it factors through the free-block projection regardless of
+the term decomposition (law 4). The diagonal policy is a per-essential-diagonal choice (law 3) — it
+does not couple to the free-block physics and does not require cracking open `K`. Defining
+`eliminate_essential_bc` therefore does NOT require formalizing `fe_assemble`'s internals; the two
+compose as post-composition.
 
 This is the **firm-on-positive-structure** situation (the `apply_linop` / `fe_assemble` precedent):
 the four laws are syntactic identities on the positive `EliminateBC` zero-rows-cols-then-set-diagonal
 operation (`palace/linalg/rap.cpp:143`) + the recorded `(dofs, policy)`
 (`palace/linalg/rap.cpp:36-47`). No dedicated unit test exercises essential-BC elimination at this
-entry point (codemap search of `test/unit/**` for `EliminateBC` / `SetEssentialTrueDofs` returns no
-hits), but the missing test does not gate syntactic-identity laws on fully-specified positive source
-(the `eliminate`-as-block-projection structure is read, not constructed) — exactly the
-firm-on-positive-structure escape codified for `apply_linop` / `fe_assemble` /
-`bilinear-form`-cohort entries.
+entry point, but the missing test does not gate syntactic-identity laws on fully-specified positive
+source (the `eliminate`-as-block-projection structure is read, not constructed).
 
 ## L1 vs L0 distinction
 
@@ -282,8 +273,7 @@ firm-on-positive-structure escape codified for `apply_linop` / `fe_assemble` /
   `auto K_l = std::make_unique<ParOperator>(std::move(k_vec[l]), h1_fespace_l)` (`:216`) +
   `K_l->SetEssentialTrueDofs(dbc_tdof_lists[l], Operator::DiagonalPolicy::DIAG_ONE)` (`:217`) — the
   separable `eliminate_essential_bc(K, E, DIAG_ONE)` post-comp on each multigrid-level stiffness
-  operator. (NOTE: the codemap-supplied scope anchor `:215-217` is codemap-drifted; the on-disk
-  `SetEssentialTrueDofs` call is at `:217`, construction at `:216`, verified via citecheck.)
+  operator.
 - `palace/models/laplaceoperator.cpp:184-219` — `LaplaceOperator::GetStiffnessMatrix`: the full
   witness — `fe_assemble` the diffusion operator, per-level `ParOperator` wrap, essential-BC
   elimination. The `eliminate_essential_bc ∘ fe_assemble` pipeline.
@@ -291,7 +281,7 @@ firm-on-positive-structure escape codified for `apply_linop` / `fe_assemble` /
   `Ar->EliminateBC` / `Ai->EliminateBC` (real/imag stiffness blocks) + `Br->EliminateBC` /
   `Bi->EliminateBC` (real/imag mass blocks) — additional witnesses exercising both diagonal
   policies across the generalized-EVP `A`/`B` blocks.
-- `book/src/L1/fe_assemble.md` — the sibling FIRM operator (cycle-054); §"Algebraic laws" law 5
+- `book/src/L1/fe_assemble.md` — the sibling firm operator; §"Algebraic laws" law 5
   explicitly names BC-elimination (`eliminate_essential_bc`) as a separable post-composition NOT
   part of the assembly fold — the upstream framing this entry realizes.
 
@@ -299,11 +289,8 @@ firm-on-positive-structure escape codified for `apply_linop` / `fe_assemble` /
 
 The lowering is folded into the
 [`fe-operator-assemble-mutation-rotation`](../L1-L0/fe-operator-assemble-mutation-rotation.md)
-L1>L0 theme (currently `rough-in` thread-opener), which narrates the FE-assembly sub-spine's
-build-up-then-assemble protocol and the separable BC-elimination post-compositions. With
-`eliminate_essential_bc` now firm, the theme's treatment of the elimination step should be
-re-anchored to this firm operator (a lifter pass — see *Open questions*): the theme narrates how
-this L1 pure post-composition lowers into Palace's deferred-config-then-apply two-step (record
-`(dofs, policy)` on the `ParOperator` wrapper via `SetEssentialTrueDofs`, then mutate the assembled
-`HypreParMatrix` in place via `EliminateBC` at parallel-assemble time), plus the square-operator
-guards and the rectangular reject.
+L1>L0 theme, which narrates the FE-assembly sub-spine's build-up-then-assemble protocol and the
+separable BC-elimination post-compositions: how this L1 pure post-composition lowers into Palace's
+deferred-config-then-apply two-step (record `(dofs, policy)` on the `ParOperator` wrapper via
+`SetEssentialTrueDofs`, then mutate the assembled `HypreParMatrix` in place via `EliminateBC` at
+parallel-assemble time), plus the square-operator guards and the rectangular reject.

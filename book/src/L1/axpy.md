@@ -2,7 +2,7 @@
 layer: L1
 operator: axpy
 rank: firm
-# Graded-stack scheme (cycle-110, D2): firm-in-prose BLAS-1 leaf — fully-specified
+# Firm-in-prose BLAS-1 leaf — fully-specified
 # positive L0 source + syntactic-identity laws (the firm-on-positive-structure escape).
 # The blocking depends-on is the rank-terminal POSITIVE L0 SOURCE (cites-evidence),
 # which is what makes the `firm` rank well-founded (the set_subvector_zero precedent).
@@ -93,10 +93,6 @@ None at L1. `axpy` is a leaf primitive — the canonical floor of the linear-alg
 - **scalar promotion** (sub-axis): see [`concepts/scalar-promotion`](../concepts/scalar-promotion.md) — real `α` against complex vectors via `vector.cpp:715-718`.
 
 No other variant axes — `axpy` is unconditionally pure, element-local, and reduction-free across all variants.
-
-## Status
-
-`firm` — signature is canonical, evidence is uncontested across the Palace solver corpus, and the algebraic laws listed are standard BLAS-1 facts.
 
 ## L1 vs L0 distinction
 

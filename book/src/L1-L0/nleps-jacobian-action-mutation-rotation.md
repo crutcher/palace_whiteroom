@@ -20,41 +20,12 @@ applies its `λ`-derivative `[T'(λ), U'(λ)]`) and the derivative-pencil specia
 big-space part is `apply_nonlinear_pencil` of the derivative pencil `T'` rather than the value
 pencil `T`). When `k = 0` it degenerates to one bare derivative-pencil apply. This entry, with
 its dispatch-2 sibling `nleps-eigenvalue-correction-mutation-rotation`, completes the NEP-interior
-L1>L0 lowering cohort (with the cycle-022/023 residual + solve themes and the cycle-024
+L1>L0 lowering cohort (with the residual + solve themes and
 [`apply-nonlinear-pencil-mutation-rotation`](./apply-nonlinear-pencil-mutation-rotation.md)).
 
 ## Slug
 
 `nleps-jacobian-action-mutation-rotation`
-
-## Status
-
-`firm` — every constituent of the rewrite is read from a **positive** source site (the
-`w = J * v` block, `palace/linalg/nleps.cpp:649-669`, opened by the source's own comment
-`// Compute w = J * v.` at `:649` and the deflation-coupling comment `w1 = T'(l) v1 + U'(l) v2 =
-T'(l) v1 + T'(l)XS v2 - T(l)XS^2 v2` at `:660-661`). The divided-difference `A2'` is the positive
-`BuildParSumOperator({1/denom, −1/denom}, {opA2p, A2n})` (`:653-654`), the derivative pencil is
-`BuildParSumOperator({0, 1, 2λ, 1}, {opK, opC, opM, opAJ})` (`:655-656`), the big-space apply is
-`opJ->Mult(v, w)` (`:657`), the re-scoped value pencil is `BuildParSumOperator({1, λ, λ², 1},
-{opK, opC, opM, A2n})` (`:662-663`), the block `S = λI − H` (`:664`), the two dense solves
-`S.fullPivLu().solve` (`:665`, `:667`), the back-projections `MatVecMult(X, ·)` (`:666`, `:667`),
-and the two `AddMult` accumulations (`:668`, `:669`). The rewrite is a **structural** syntactic
-expansion — no sub-part is materialized from negative anchors, so there is no
-`partly-constructive` caveat. Every leaf is firm L1/L2 vocabulary read from a positive site
-([`apply_nonlinear_pencil`](../L1/apply_nonlinear_pencil.md),
-[`lu_solve`](../L1/lu_solve.md), [`linear_combination`](../L2/linear_combination.md),
-[`apply_linop`](../L1/apply_linop.md)). This matches the firm-on-positive-structure status of the
-operator this theme lowers (`book/src/L1/nleps_jacobian_action.md:130`) and of its residual /
-solve / pencil siblings: the laws are syntactic identities on fully-specified positive source, so
-the NLEPS test-coverage absence (`search_text` for `QuasiNewton|nleps|funcA2|GetResidualNorm`
-over `test/unit/**` returns zero hits) does not gate the firm decision.
-
-**The one non-syntactic point — the divided-difference `A2'`** (Sub-pattern A; the quasi-Newton
-approximate Jacobian) — is recorded as an explicit **non-law** (the realized Jacobian is *not*
-the exact analytic derivative), not asserted as a tight identity, so it does not require a test
-to firm. The `δ = √ε` accuracy trade-off (`palace/linalg/nleps.cpp:412`) is a load-bearing
-numerical contract documented as such; the *structure* of the Jacobian (which terms, which
-coefficients, the product-rule coupling) is fully positive.
 
 ## L1 form (LHS)
 
@@ -265,7 +236,7 @@ inter-column orthogonalization (`palace/linalg/nleps.cpp:606-619`: each converge
 `1/‖v‖₂` at `:610-611`, stored at `X[k] = v` at `:615`, no Gram-Schmidt). This is *why* the
 coupling carries the `S⁻¹` / `S⁻²` linearization-block solves rather than a trivial transpose; the
 non-orthonormal basis is load-bearing and is the same fact that keeps the L2 `deflate` combinator
-distinct from `orthogonalize` (the cycle-021/022 over-unification guard). Recorded here so the
+distinct from `orthogonalize` (the over-unification guard). Recorded here so the
 lowering does not collapse the `fullPivLu().solve` solves into no-ops.
 
 Justification kind: **structural** — `:664-667` are the syntactic compositions `MatVecMult ∘
@@ -422,8 +393,8 @@ fresh-destination dense solves are the `lu-solve-mutation-rotation` kernel.
 ## Speculative L1 operators
 
 **None.** Every constituent is **already firm L1/L2 vocabulary**:
-[`apply_nonlinear_pencil`](../L1/apply_nonlinear_pencil.md) (firm, cycle-021),
-[`lu_solve`](../L1/lu_solve.md) (firm, cycle-022),
+[`apply_nonlinear_pencil`](../L1/apply_nonlinear_pencil.md) (firm),
+[`lu_solve`](../L1/lu_solve.md) (firm),
 [`linear_combination`](../L2/linear_combination.md) (firm L2),
 [`apply_linop`](../L1/apply_linop.md) (firm, transitive via `apply_nonlinear_pencil`'s term
 decomposition). This theme composes existing firm leaves; it proposes no new rough-in operators.
@@ -431,200 +402,10 @@ The back-projection is the L2 `deflate` combinator's constituent, but that L2 co
 here only to mark the upward fan-out boundary (and the deflate-promotion guard) — it is **not**
 part of this theme.
 
-## Verified-against
+Additional cited L0 ranges:
 
-L0 evidence ranges — **self-verified this invocation** via `tools/citecheck/citecheck.py`
-(`--anchor` token-drift check + `--show` line-map confirmation) against the on-disk
-`reference/palace/` checkout, the producer-citation self-verification discipline
-(`verify-citation-range`). All line numbers below are the **on-disk ground truth**; the
-`palace-codemap` MCP `read_range` indexing was found to be +1 behind the file for the deflation
-block (see the theme's CYCLE.md §Open questions carry-forward note):
-
-- `palace/linalg/nleps.cpp:649-669` — the complete `w = J * v` block (the positive L0 site).
-  Comment `:649` ("Compute w = J * v.") names the operator; comment `:660-661` names the
-  product-rule decomposition in the source's own words. **Self-verified** (`citecheck --show`
-  649-671).
-- `palace/linalg/nleps.cpp:650` — `auto opA2p = (*funcA2)(std::abs(eig.imag()) * (1.0 + delta));`.
-  **Self-verified** (`citecheck --anchor 'funcA2'`).
-- `palace/linalg/nleps.cpp:651-652` — `const std::complex<double> denom = ...`. **Self-verified**
-  (`citecheck --anchor 'denom'` → line 651).
-- `palace/linalg/nleps.cpp:653-654` — `BuildParSumOperator({1.0 / denom, -1.0 / denom}, ...)`.
-  **Self-verified** (`citecheck --anchor 'BuildParSumOperator'` → line 654).
-- `palace/linalg/nleps.cpp:655-656` — `BuildParSumOperator({0.0 + 0.0i, 1.0 + 0.0i, 2.0 * eig,
-  1.0 + 0.0i}, {opK, opC, opM, opAJ.get()}, true)`. **Self-verified** (`citecheck --anchor
-  '2.0 * eig'` → line 655).
-- `palace/linalg/nleps.cpp:657` — `opJ->Mult(v, w);`. **Self-verified** (`citecheck --anchor
-  'opJ->Mult'` → line 657).
-- `palace/linalg/nleps.cpp:658` — `if (k > 0)`. **Self-verified** (`citecheck --anchor 'k > 0'` →
-  line 658).
-- `palace/linalg/nleps.cpp:660-661` — the source comment `w1 = T'(l) v1 + ...`. **Self-verified**
-  (`citecheck --anchor "w1 = T'(l) v1"` → line 660).
-- `palace/linalg/nleps.cpp:662-663` — `auto A = BuildParSumOperator({1.0 + 0.0i, eig, eig * eig,
-  1.0 + 0.0i}, {opK, opC, opM, A2n.get()}, true);`. **Self-verified** (`citecheck --anchor
-  'eig * eig'` → line 662).
-- `palace/linalg/nleps.cpp:664` — `const Eigen::MatrixXcd S = eig * Eigen::MatrixXcd::Identity
-  (k, k) - H;`. **Self-verified** (`citecheck --anchor 'Identity'` → line 664; `--show`).
-- `palace/linalg/nleps.cpp:665` — `const Eigen::VectorXcd Sv2 = S.fullPivLu().solve(v2);`.
-  **Self-verified** (`citecheck --anchor 'S.fullPivLu().solve(v2)'` → line 665).
-- `palace/linalg/nleps.cpp:666` — `const ComplexVector XSv2 = MatVecMult(X, Sv2);`.
-  **Self-verified** (`citecheck --anchor 'MatVecMult(X, Sv2)'` → line 666).
-- `palace/linalg/nleps.cpp:667` — `const ComplexVector XSSv2 = MatVecMult(X, S.fullPivLu().solve
-  (Sv2));`. **Self-verified** (`citecheck --anchor 'S.fullPivLu().solve(Sv2)'` → line 667).
-- `palace/linalg/nleps.cpp:668` — `opJ->AddMult(XSv2, w, 1.0);`. **Self-verified** (`citecheck
-  --anchor 'opJ->AddMult(XSv2, w, 1.0)'` → line 668).
-- `palace/linalg/nleps.cpp:669` — `A->AddMult(XSSv2, w, -1.0);`. **Self-verified** (`citecheck
-  --anchor 'A->AddMult(XSSv2, w, -1.0)'` → line 669).
-- `palace/linalg/nleps.cpp:412` — `const auto delta = std::sqrt(std::numeric_limits<double>::
-  epsilon())` — the `δ = √ε` step. **Self-verified** (`citecheck --anchor 'std::sqrt'` → line 412).
-- `palace/linalg/nleps.cpp:378` — `ComplexVector v, u, w, c, w0, z, du, v_trial;` — the `w`
-  destination-buffer declaration. **Self-verified** (`citecheck --anchor 'w, c, w0'` → line 378).
-- `palace/linalg/nleps.cpp:673` / `:675` — `std::complex<double> u2_w0 = std::complex<double>
-  (w2.adjoint() * u2)` (`:673`) then `delta_eig = -(linalg::Dot(GetComm(), u, w0) + u2_w0) /
-  linalg::Dot(GetComm(), w, w0)` (`:675`) — the consumer: `w` enters the Newton eigenvalue
-  correction only through the big-space dot `⟨w, w0⟩` (the big-space-only confirmation).
-  **Self-verified** (`citecheck --anchor 'w2.adjoint'` → 673; `--anchor 'linalg::Dot(GetComm(),
-  w, w0)'` → 675).
-- `palace/linalg/nleps.cpp:676` — `z.AXPBYPCZ(-delta_eig, w, -1.0, u, 0.0);` — the Newton step
-  direction `z = −delta_eig·w − u` (the second consumer of `w`). **Self-verified** (`citecheck
-  --anchor 'z.AXPBYPCZ(-delta_eig, w'` → line 676).
 - `palace/linalg/nleps.cpp:177-181` — `QuasiNewtonSolver::SetExtraSystemMatrix(...)` — the
   nonlinear closure type `Real -> ComplexOperator` (the `A2` evaluated at `|Im λ|` and
-  `(1+δ)|Im λ|`). **Self-verified** (`citecheck --anchor 'SetExtraSystemMatrix'` → line 177).
-- `palace/linalg/nleps.cpp:329-347` — `MatVecMult(X, y)` body (the `X·y` fold). **Self-verified**
-  (`citecheck --anchor 'MatVecMult'` → line 329).
-- `palace/linalg/nleps.cpp:606-619` — deflation-basis growth (`X`-not-orthonormal, variadic-`k`):
-  normalize `:610-611`, store `X[k] = v` `:615`. **Self-verified** (`citecheck --anchor
-  'X[k] = v'` → line 615).
-
-L1 / cross-theme anchors:
-
-- `book/src/L1/nleps_jacobian_action.md` — the firm L1 operator this theme lowers (signature
-  `:14-28`, Semantics `:46-83`, laws `:89-104`, Status `:130`, Evidence `:145-173`). **Drift
-  note**: its inline Evidence anchors for the deflation block (`:659-660`, `:661-662`, `:663`,
-  `:664`, `:665`, `:666`) are −1 from the on-disk file (the codemap-drift carry-forward); this
-  theme uses the corrected on-disk numbers.
-- `book/src/L1-L0/nleps-deflated-residual-mutation-rotation.md` — the residual sibling (the
-  residual applies the extended deflated operator where this Jacobian applies its `λ`-derivative;
-  apply/derivative duality). Its single `S⁻¹` solve is the un-differentiated counterpart of this
-  theme's double `S⁻¹`.
-- `book/src/L1-L0/nleps-deflated-solve-mutation-rotation.md` — the solve sibling (shares the block
-  `S = λI − H`, the `MatVecMult ∘ fullPivLu().solve` back-projection, the `X`-not-orthonormal
-  fact, the over-unification guard; its double-`S⁻¹` block-elimination signature is a *different*
-  double-`S⁻¹` — Schur-complement, not product-rule).
-- `book/src/L1-L0/apply-nonlinear-pencil-mutation-rotation.md` — the interior pencil-apply atom
-  this Jacobian differentiates (Sub-pattern B's `BuildParSumOperator`-dual pencil-build form,
-  specialized to the derivative coefficient vector `{0, 1, 2λ, 1}`).
-- `book/src/L1-L0/lu-solve-mutation-rotation.md` — Sub-pattern A (NLEPS full-pivot-LU dense
-  kernel): the two `fullPivLu().solve` solves at `:665`, `:667`.
-- `book/src/L1-L0/dot-mutation-rotation.md` — the fused `linalg::Dot(comm, x, y) = yᴴx` form of
-  the consumer dot `⟨w, w0⟩` (`:675`), cited for the big-space-only confirmation.
-- `book/src/L1/apply_nonlinear_pencil.md` — the linearity-in-`v` law 1 (the basis for the
-  accumulate-into-`w` sum) and the term-decomposition law 3 (Sub-pattern A unfold).
-- `book/src/L1/lu_solve.md` — the small-dense full-pivot-LU direct-solve leaf at `:665`, `:667`.
-- `book/src/L2/linear_combination.md` — the `X·S⁻¹v₂` / `X·S⁻²v₂` back-projections (`MatVecMult
-  (X, ·)` at `:666`, `:667`); live link.
-- `book/src/L2-L1/linear-combination-fold-specialization.md` — the L2>L1 lowering of the
-  `MatVecMult` back-projection fold; live link.
-- No dedicated unit test: NLEPS has zero `test/unit/**` hits (same absence as `eigsolve` /
-  `apply_nonlinear_pencil` / `nleps_deflated_residual` / `nleps_deflated_solve` /
-  `nleps_jacobian_action`); the firm decision rests on exhaustive positive structural citation.
-
-```yaml
-verified_against:
-  - citation: palace/linalg/nleps.cpp:649-669
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: complete `w = J * v` block; full read + per-line citecheck --anchor, zero drift
-  - citation: palace/linalg/nleps.cpp:649
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: "// Compute w = J * v. — source's own operator naming"
-  - citation: palace/linalg/nleps.cpp:650
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: opA2p bumped-frequency A2((1+δ)|Im λ|)
-  - citation: palace/linalg/nleps.cpp:651-652
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: denom = i·δ·|Im λ|
-  - citation: palace/linalg/nleps.cpp:653-654
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: divided-difference A2'(λ) (quasi-Newton non-law); anchor at 654
-  - citation: palace/linalg/nleps.cpp:655-656
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: derivative pencil T'(λ) coeffs {0, 1, 2λ, 1}; anchor at 655
-  - citation: palace/linalg/nleps.cpp:657
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: opJ->Mult(v, w) big-space apply w := T'(λ)·v
-  - citation: palace/linalg/nleps.cpp:658
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: if (k > 0) deflation guard; k=0 is the bare derivative-pencil apply
-  - citation: palace/linalg/nleps.cpp:660-661
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: source product-rule comment + scoping note (both present at this range)
-  - citation: palace/linalg/nleps.cpp:662-663
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: re-scoped value pencil T(λ) coeffs {1, λ, λ², 1} reusing cached A2n; anchor at 662
-  - citation: palace/linalg/nleps.cpp:664
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: block S = λI − H (on-disk truth; codemap was 663, +1 drift)
-  - citation: palace/linalg/nleps.cpp:665
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: first dense solve S⁻¹·v₂ (lu_solve, fresh destination)
-  - citation: palace/linalg/nleps.cpp:666
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: back-projection X·(S⁻¹·v₂) (MatVecMult / linear_combination)
-  - citation: palace/linalg/nleps.cpp:667
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: second sequential solve + back-projection X·S⁻²·v₂ (the S⁻¹-applied-twice signature)
-  - citation: palace/linalg/nleps.cpp:668
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: opJ->AddMult(XSv2, w, 1.0) +T'(λ)·X·S⁻¹·v₂ (derivative pencil, +1)
-  - citation: palace/linalg/nleps.cpp:669
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: A->AddMult(XSSv2, w, -1.0) −T(λ)·X·S⁻²·v₂ (value pencil, −1; the ∂_λ S⁻¹ = −S⁻² sign)
-  - citation: palace/linalg/nleps.cpp:412
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: δ = √ε divided-difference step (:411 comment confirms intent)
-  - citation: palace/linalg/nleps.cpp:378
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: w destination-buffer declaration (dead-on-entry scratch)
-  - citation: palace/linalg/nleps.cpp:329-347
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: MatVecMult(X, y) fold body (z=0; per-j complex AXPY via two AXPBYPCZ)
-  - citation: palace/linalg/nleps.cpp:606-619
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: deflation-basis growth (normalize :610-611, store X[k]=v :615, no orthogonalization)
-  - citation: palace/linalg/nleps.cpp:673
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: w2.adjoint()*u2 is the deflated-solve output, not a coordinate part of J·v
-  - citation: palace/linalg/nleps.cpp:675
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: w consumed only via big-space dot ⟨w, w0⟩ (big-space-only confirmation)
-  - citation: palace/linalg/nleps.cpp:676
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: z = −delta_eig·w − u Newton step direction (second consumer of w, big-space)
-  - citation: palace/linalg/nleps.cpp:177-181
-    verdict: supports
-    audited_at: 2026-05-29T16:47:29Z
-    note: SetExtraSystemMatrix — nonlinear closure type Real -> ComplexOperator (funcA2 provenance)
-```
+  `(1+δ)|Im λ|`; the `funcA2` provenance).
+- `palace/linalg/nleps.cpp:676` — `z.AXPBYPCZ(-delta_eig, w, -1.0, u, 0.0);` — the Newton step
+  direction `z = −delta_eig·w − u` (the second big-space consumer of `w`).

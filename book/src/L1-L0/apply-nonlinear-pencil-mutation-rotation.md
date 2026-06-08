@@ -23,27 +23,6 @@ linear Krylov loop.
 
 `apply-nonlinear-pencil-mutation-rotation`
 
-## Status
-
-`firm` — the rewrite is read from a **positive** source site (`QuasiNewtonSolver::GetResidualNorm`,
-`palace/linalg/nleps.cpp:807-821`) and corroborated at four further positive sites
-(`:496-499` in-`Solve` setup, `:556-559` deflated-residual `k==0` core, `:655` Jacobian build,
-`:729` lagged system-operator refresh). Both L0 build forms — the term-by-term `Mult`+`AddMult`
-accumulation (`:812-819`) and the `BuildParSumOperator`+`Mult` materialization (`:498-499`,
-`:557-559`) — are directly cited; the `BuildParSumOperator` signature
-(`palace/linalg/rap.cpp:832-841`) and the `A2`-closure type (`SetExtraSystemMatrix`,
-`palace/linalg/nleps.cpp:177-181`) ground the structure. The rewrite is a **structural** syntactic
-expansion — no sub-part is materialized from negative anchors, so there is no
-`partly-constructive` caveat. This matches the firm-on-positive-structure status of the operator
-this theme lowers (`book/src/L1/apply_nonlinear_pencil.md:98`) and the sibling deflated-residual
-theme (`book/src/L1-L0/nleps-deflated-residual-mutation-rotation.md:23-35`): every law is a
-syntactic identity on a fully-specified positive source closure (linearity in `v`, term
-decomposition, build-form duality), so the NLEPS test-coverage absence (`search_text` for
-`QuasiNewton|nleps|funcA2|GetResidualNorm` over `test/unit/**` returns zero hits) does not gate
-the firm decision — the laws do not depend on convergence behaviour. A `lowering-verifier` audit
-attaching the `verified_against:` block (per the sibling-theme convention) confirming surface-form
-recognition is exhaustive is the standard follow-up, not a status reduction.
-
 ## L1 form (LHS)
 
 The pure-functional L1 operator — no destination buffer, no `A2`-caching, no build-form choice in
@@ -324,46 +303,40 @@ derivative pencil, `:653-655`) deserves a small `divided_difference_operator` pr
 deferred upstream decision (see the parent's Open questions), **not** a speculative operator of
 this theme.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `palace-codemap` `read_range` / `get_symbol_def` this
-invocation — producer-citation self-verification, `verify-citation-range`):
+L0 evidence ranges:
 
 - `palace/linalg/nleps.cpp:807-821` — `QuasiNewtonSolver::GetResidualNorm` (Form A, the clean
   positive site): signature `:807-808`, comment `:810-811`, `opK->Mult(x, r)` `:812`, `if (opC) {
   opC->AddMult(x, r, l); }` `:813-816`, `opM->AddMult(x, r, l*l)` `:817`, `auto A2 =
   (*funcA2)(std::abs(l.imag()))` `:818`, `A2->AddMult(x, r, 1.0)` `:819`, `return
-  linalg::Norml2(comm, r)` `:820`. **Self-verified** (`read_range` 806-821).
+  linalg::Norml2(comm, r)` `:820`.
 - `palace/linalg/nleps.cpp:496-499` — in-`Solve` linear-solver setup: `opA2 = (*funcA2)(std::abs(
   eig.imag()))` `:497`, `opA = BuildParSumOperator({1, eig, eig*eig, 1}, {opK, opC, opM,
-  opA2.get()}, true)` `:498-499`. **Self-verified** (`read_range` 494-500).
+  opA2.get()}, true)` `:498-499`.
 - `palace/linalg/nleps.cpp:556-559` — `compute_residual` core (Form B): `A2_out =
   (*funcA2)(std::abs(lam.imag()))` `:556`, `auto A = BuildParSumOperator({1, lam, lam*lam, 1},
-  {opK, opC, opM, A2_out.get()}, true)` `:557-558`, `A->Mult(vv, rr)` `:559`. **Self-verified**
-  (`read_range` 547-560).
+  {opK, opC, opM, A2_out.get()}, true)` `:557-558`, `A->Mult(vv, rr)` `:559`.
 - `palace/linalg/nleps.cpp:655` — Jacobian build: `auto opJ = BuildParSumOperator({0, 1, 2*eig,
   1}, {opK, opC, opM, opAJ.get()}, true)` `:655-656`, `opJ->Mult(v, w)` `:657`; the `A2'`
-  finite-difference closure `opA2p`/`opAJ` at `:650-654`. **Self-verified** (`read_range` 650-658).
+  finite-difference closure `opA2p`/`opAJ` at `:650-654`.
 - `palace/linalg/nleps.cpp:729` — lagged system-operator refresh: `opA = BuildParSumOperator({1,
   eig_opInv, eig_opInv*eig_opInv, 1}, {opK, opC, opM, opA2.get()}, true)` (`opA =` at `:728`,
-  args at `:729-730`); `opA2 = (*funcA2)(std::abs(eig_opInv.imag()))` `:727`. **Self-verified**
-  (`read_range` 725-733).
+  args at `:729-730`); `opA2 = (*funcA2)(std::abs(eig_opInv.imag()))` `:727`.
 - `palace/linalg/nleps.cpp:177-181` — `QuasiNewtonSolver::SetExtraSystemMatrix(std::function<
   std::unique_ptr<ComplexOperator>(double)> A2) { funcA2 = A2; }`: the real-argument closure type.
-  **Self-verified** (`read_range` 176-182).
 - `palace/linalg/nleps.cpp:191`, `:221` — the two `SetOperators` overloads (`without-C` at `:191`,
-  `with-C` at `:221`): the damping-present axis. **Self-verified** (`read_range` 189-225).
+  `with-C` at `:221`): the damping-present axis.
 - `palace/linalg/nleps.hpp:146` — class comment "Quasi-Newton nonlinear eigenvalue solver for
-  (K + λ C + λ² M + A2(λ)) x = 0" (preceding `class QuasiNewtonSolver` at `:147`). **Self-verified**
-  (`read_range` 144-148).
+  (K + λ C + λ² M + A2(λ)) x = 0" (preceding `class QuasiNewtonSolver` at `:147`).
 - `palace/linalg/rap.cpp:832-841` — `BuildParSumOperator(coeff: array<complex,N>, ops:
   array<ComplexParOperator*,N>, set_essential: bool)`: the construction signature; a `nullptr`
-  operator entry is skipped (`std::find_if(... p != nullptr ...)`, `:837`). **Self-verified**
-  (`get_symbol_def BuildParSumOperator` → rap.cpp:832-912 + `read_range` 832-842).
+  operator entry is skipped (`std::find_if(... p != nullptr ...)`, `:837`).
 - `palace/linalg/eps.hpp:69-74` — the nonlinear `SetOperators(K, M, A2, type)` virtual: corroborates
   the pencil shape + complex-only element type; note this overload's `A2` is a *complex-argument*
   closure (`std::function<const ComplexOperator &(std::complex<double>)>`), distinct from the
-  operative real-argument `SetExtraSystemMatrix` closure. **Self-verified** (`read_range` 57-74).
+  operative real-argument `SetExtraSystemMatrix` closure.
 
 L1 / cross-theme anchors:
 
@@ -381,85 +354,3 @@ L1 / cross-theme anchors:
   `AddMult(x, r, c) = axpby(c, op·x, 1, r)` accumulate-mode fusion (transitive).
 - No dedicated unit test (NLEPS test-coverage absence inherited from `apply_nonlinear_pencil` /
   `eigsolve`); the firm decision rests on exhaustive positive structural citation.
-
-```yaml
-verified_against:
-  - citation: palace/linalg/nleps.cpp:807-821
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: Form A GetResidualNorm — full function read_range-confirmed; anchors 810/812/815/817/818/819/820 all citecheck-OK
-  - citation: palace/linalg/nleps.cpp:810-811
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: residual comment; citecheck anchor 'P(λ) x' at 810 within range — cycle-024 no-shift re-confirmed
-  - citation: palace/linalg/nleps.cpp:812
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-  - citation: palace/linalg/nleps.cpp:813-816
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: conditional opC->AddMult(x, r, l); anchor at 815
-  - citation: palace/linalg/nleps.cpp:817
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-  - citation: palace/linalg/nleps.cpp:818
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-  - citation: palace/linalg/nleps.cpp:819
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-  - citation: palace/linalg/nleps.cpp:820
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: fused Norml2 — correctly excluded from the apply itself
-  - citation: palace/linalg/nleps.cpp:556
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-  - citation: palace/linalg/nleps.cpp:557-558
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: Form B BuildParSumOperator {1, lam, lam², 1}; anchor at 557
-  - citation: palace/linalg/nleps.cpp:559
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-  - citation: palace/linalg/nleps.cpp:496-499
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: in-Solve setup; opA2 at 497, BuildParSumOperator at 498
-  - citation: palace/linalg/nleps.cpp:655
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: Jacobian {0, 1, 2·eig, 1}; opAJ divided-diff at 653
-  - citation: palace/linalg/nleps.cpp:729
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: lagged refresh; opA= at 728, coeff {1, eig_opInv, eig_opInv², 1} at 729
-  - citation: palace/linalg/nleps.cpp:177-181
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: SetExtraSystemMatrix real-argument closure; funcA2 = A2 at 180
-  - citation: palace/linalg/nleps.cpp:191
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: SetOperators(K, M) without-C overload
-  - citation: palace/linalg/nleps.cpp:221
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: SetOperators(K, C, M) with-C overload
-  - citation: palace/linalg/rap.cpp:832-841
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: BuildParSumOperator signature; nullptr-skip find_if at 837
-  - citation: palace/linalg/nleps.hpp:146
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: class comment K + λ C + λ² M + A2(λ)
-  - citation: palace/linalg/nleps.hpp:232-283
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: Interpolation (232) / NewtonInterpolationOperator (246) — A2-representation axis
-  - citation: palace/linalg/eps.hpp:69-74
-    verdict: supports
-    audited_at: 2026-05-29T151441Z
-    note: nonlinear SetOperators virtual; A2 here is complex-arg closure (distinct from operative real-arg), correctly disambiguated by theme
-```

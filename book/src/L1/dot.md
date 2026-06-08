@@ -4,10 +4,7 @@ operator: dot
 rank: firm
 edges:
   depends-on:
-    # Per the c108 §5 L1-op→theme grounding convention, a firm L1 operator's L1>L0 lowering
-    # theme is a blocking depends-on (kind: lowers-to), routing liveness DOWN to the theme.
-    # The theme `dot-mutation-rotation` is firm (rank 3), so rank(op=3) ≤ rank(theme=3) holds.
-    - kind: lowers-to
+    - kind: lowers-to             # the L1>L0 mutation-rotation home
       target: L1-L0/dot-mutation-rotation
   reference:
     - concepts/dot
@@ -99,7 +96,7 @@ Laws that explicitly **do not** hold across both `dot` and `tdot`:
 
 None at L1. `dot` is a leaf primitive — alongside `axpy`, it is one of the two BLAS-1 floor primitives. Its sub-operations are scalar multiplication, scalar conjugation (complex case only), and scalar addition, all at or below the L1 layer's resolution.
 
-`nrm2` (forthcoming; cycle-003) will depend on `dot` via `nrm2(x) = √dot(x, x)` for real, and `nrm2(x) = √re(dot(x, x))` (equivalent to `√dot(x, x)` since law 9 guarantees the result is real) for complex.
+[`nrm2`](./nrm2.md) depends on `dot` via `nrm2(x) = √dot(x, x)` for real, and `nrm2(x) = √re(dot(x, x))` (equivalent to `√dot(x, x)` since law 9 guarantees the result is real) for complex.
 
 ## Variant axes
 
@@ -109,10 +106,6 @@ None at L1. `dot` is a leaf primitive — alongside `axpy`, it is one of the two
 - **conjugation convention** (complex element-type only): `hermitian` (the default `dot`) | `unconjugated` (the separate operator `tdot`). At L0: `ComplexVector::Dot` vs `ComplexVector::TransposeDot`. At L1 these are distinct operators (sharing only the reduction skeleton), because the algebraic laws differ — `dot` is positive semi-definite at `y = x`, `tdot` is not.
 
 No other variant axes — the reduction is unconditionally exhaustive over the length axis `N`, with no masking or strided variants in the Palace surface.
-
-## Status
-
-`firm` — signatures are canonical, evidence is direct from the Palace source, and the algebraic laws listed are standard sesquilinear/bilinear facts modulo the explicitly-recorded floating-point caveats.
 
 ## L1 vs L0 distinction
 

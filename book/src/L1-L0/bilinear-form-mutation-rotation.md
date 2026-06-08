@@ -1,8 +1,7 @@
 # bilinear-form-mutation-rotation
 
 The mutation rotation for the operator-weighted (bilinear-form) inner product. Lowers the pure L1
-form `bilinear_form(x, M, y) = xᴴ M y` ([`L1/bilinear-form`](../L1/bilinear-form.md), firm
-cycle-095) into Palace's L0 `linalg::Dot(comm, x, A, y)` three-step composition
+form `bilinear_form(x, M, y) = xᴴ M y` ([`L1/bilinear-form`](../L1/bilinear-form.md)) into Palace's L0 `linalg::Dot(comm, x, A, y)` three-step composition
 `ComplexVector Ax(A.Height()); A.Mult(x, Ax); return Dot(comm, Ax, y)`
 (`palace/linalg/operator.cpp:621-639`). It is the **off-diagonal sibling** of
 [`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md): where the
@@ -28,7 +27,7 @@ L1 form `xᴴ M y` with `x ↔ y` argument-order swap).
 
 The pure-functional matrix-weighted bilinear-form inner product consumes three read-only inputs
 and produces a fresh scalar; nothing is mutated, and there is no workspace in the signature. The
-LHS shape (the firm L1 operator, promoted cycle-095; see [`L1/bilinear-form`](../L1/bilinear-form.md)):
+LHS shape (the L1 operator; see [`L1/bilinear-form`](../L1/bilinear-form.md)):
 
     alpha = bilinear_form(x, M, y)    -- alpha = xᴴ M y, scalar
                                       -- (complex x, real M, complex y    -> complex)
@@ -493,31 +492,23 @@ These gates are **upstream** L1-entry promotion conditions; they do not gate thi
 (per the `matrix-weighted-norm-mutation-rotation` precedent — a firm lowering theme over a
 rough-in L1 entry is consistent).
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `tools/citecheck/citecheck.py --anchor` against on-disk
-`reference/palace/` this invocation — producer-citation self-verification per
-`verify-citation-range`; codemap-read+1-drift confirmed NOT to affect operator.cpp/hpp or the
-boundarymodeoperator.cpp callsites):
+L0 evidence ranges:
 
 - `palace/linalg/operator.hpp:386-394` — both bilinear-form overload declarations + comments
   (`// Compute the bilinear form inner product yᴴ A x for a {real,complex} operator A and complex
-   vectors. Allocates workspace internally.`). **Self-verified** (`--anchor 'Compute the bilinear
-   form'` OK).
+   vectors. Allocates workspace internally.`).
 - `palace/linalg/operator.cpp:621-629` — real-`A` overload body: `ComplexVector Ax(A.Height())`
   (`:624`), `Ax.UseDevice(true)` (`:625`), `A.Mult(x.Real(), Ax.Real())` (`:626`),
-  `A.Mult(x.Imag(), Ax.Imag())` (`:627`), `return Dot(comm, Ax, y)` (`:628`). **Self-verified**
-  (`--anchor 'ComplexVector Ax'` OK).
+  `A.Mult(x.Imag(), Ax.Imag())` (`:627`), `return Dot(comm, Ax, y)` (`:628`).
 - `palace/linalg/operator.cpp:631-638` — complex-`A` overload body: `ComplexVector Ax(A.Height())`
   (`:634`), `Ax.UseDevice(true)` (`:635`), `A.Mult(x, Ax)` (`:636`), `return Dot(comm, Ax, y)`
-  (`:637`). **Self-verified** (same `--anchor 'ComplexVector Ax'` OK; second anchor on `:634`
-  within range 621-639).
+  (`:637`).
 - `palace/models/boundarymodeoperator.cpp:75-93` — `ComputePoyntingPower` body. Line `:85`
-  Hermitian-`A` callsite (`Bttr`); line `:90` non-Hermitian-`A` callsite (`Atn`). **Self-verified**
-  (`--anchor 'linalg::Dot'` OK for both `:85` and `:90`).
+  Hermitian-`A` callsite (`Bttr`); line `:90` non-Hermitian-`A` callsite (`Atn`).
 - `palace/linalg/nleps.cpp:672-675` — Newton denominator using unweighted `linalg::Dot(GetComm(),
-   w, w0)` (informational; not a bilinear-form callsite). **Self-verified** (`--anchor 'Dot'`
-  OK).
+   w, w0)` (informational; not a bilinear-form callsite).
 
 L1 / cross-theme anchors:
 
@@ -545,123 +536,28 @@ L1 / cross-theme anchors:
 - [`L1/dot`](../L1/dot.md)`:43, 104-105` — the arg-1-conjugated L1 convention + the documented
   L1/L0 conjugation asymmetry.
 
+## Relationship to the matrix-weighted-norm sibling
+
+The L1 operator [`bilinear-form`](../L1/bilinear-form.md) and its sibling
+[`L1/matrix-weighted-norm`](../L1/matrix-weighted-norm.md) share L0-file-block evidence (both live
+in `palace/linalg/operator.{hpp,cpp}`) and inherited sub-themes (`apply_linop` Sub-pattern A + `dot`
+Sub-pattern A), but are distinct operators with their own firm themes
+([`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md)). The
+single structural distinguisher is the workspace-ownership boundary (caller-supplied `Bx` vs
+internally-allocated `Ax`); the bilinear form additionally admits the off-diagonal non-Hermitian
+case the weighted norm excludes by its SPD precondition. The lowering's structural fidelity is
+independent of the L1 leaf's own promotion gates: this theme lowers the L1 form into the L0 source
+regardless of the L1 entry's test-coverage status — the same firm-theme-over-rough-in-leaf pattern
+as [`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md) and
+[`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md).
+
 ## Status
 
-`firm` — the rewrite is the structural expansion of the L0 `Dot(comm, x, A, y)` three-step
-composition `alloc → A.Mult → Dot return`, exhaustively pinned by direct, self-verified evidence
-(the two overload decls `palace/linalg/operator.hpp:386-389` and `:391-394`, the two specialization
-bodies `palace/linalg/operator.cpp:621-629` and `:631-638`, the two callsite witnesses
-`palace/models/boundarymodeoperator.cpp:85` and `:90`). The two sub-patterns (A real-`A`, B
-complex-`A`), the Sub-pattern C callsite cohort, the element-type and M-symmetry-property variant
-axes, the internal-workspace boundary (vs the caller-supplied `Bx` of the sibling theme), and the
-L1/L0 conjugation-asymmetry reconciliation are all directly cited. The theme **reuses** the firm
-sibling sub-themes (`apply_linop` Sub-pattern A applied once-or-twice, `dot` Sub-pattern A) and
-inherits the conjugation-asymmetry reconciliation from `dot-mutation-rotation` rather than
-restating any of them.
-
-The non-syntactic ingredients — `complex-from-real-lift` for the real-`A` overload, the
-argument-position-swap conjugation reconciliation, the element-type-overload absorption onto
-`apply_linop` — are all positively anchored to the L0 source's own comments (the `yᴴ A x`
-declarations at `palace/linalg/operator.hpp:386, :391`) and the inherited sub-themes; **no negative-anchor
-reconstruction, no literature inference, no speculative operator** — so `firm` rather than
-`partly-constructive`.
-
-**Note on the upstream L1 leaf.** The L1 operator [`bilinear-form`](../L1/bilinear-form.md) is
-now `firm` (promoted cycle-095 under the firm-on-positive-structure escape; DISCHARGE c092). This
-theme was already `firm` while the L1 leaf was `rough-in (test-coverage-bounded)`, which is the
-consistent case: the lowering's structural fidelity (does the L1 form expand into this L0 source?)
-is independent of the L1 entry's own promotion gates. The L1 promotion only **strengthens** the
-LHS this theme lowers — it does not change the theme's firm status. Precedent for the firm-theme-
-over-then-rough-in-leaf pattern:
-[`matrix-weighted-norm-mutation-rotation`](./matrix-weighted-norm-mutation-rotation.md) was firm
-over `L1/matrix-weighted-norm` while the latter was rough-in (it promoted to firm at cycle-091,
-which did not change the theme's firm status); [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md)
-remains firm over the still-rough-in `L1/eigsolve`. Promoting an L1 operator to firm (its own
-gate) does not change a lowering theme's status; it only strengthens the LHS the theme already lowers.
-
-A `lowering-verifier` audit attaching the `verified_against:` block (per the sibling-theme
-convention) confirming the surface-form recognition is exhaustive (no un-cited `Dot(comm, x, A,
-y)` overload, the inherited-sub-theme boundaries hold, the conjugation-reconciliation reading is
-consistent across all callsites) is the standard follow-up, not a status reduction.
-
-## Verified against
-
-```yaml
-verified_against:
-  - citation: palace/linalg/operator.hpp:386-394
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: both bilinear-form Dot overload decls + comments yᴴ A x; citecheck --anchor 'Compute the bilinear form' lands at [386, 391] within range; on-disk lines 386-394 verbatim-match the theme transcription
-  - citation: palace/linalg/operator.hpp:386-389
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: real-A overload decl + comment; on-disk :386-387 comment + :388-389 decl exact; provides the load-bearing positive anchor 'yᴴ A x' for the conjugation reconciliation (not a theme reconstruction)
-  - citation: palace/linalg/operator.hpp:391-394
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: complex-A overload decl + comment; on-disk :391-392 comment + :393-394 decl exact; same positive anchor for arg-2-conjugated convention
-  - citation: palace/linalg/operator.cpp:621-629
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: real-A Dot body; ComplexVector Ax(:624)/UseDevice(:625)/Mult lane split(:626-627)/return Dot(:628) all citecheck --anchor OK; lane-split exactly parallels matrix-weighted-norm Sub-pattern B (palace/linalg/operator.cpp:613-614)
-  - citation: palace/linalg/operator.cpp:631-638
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: complex-A Dot body; ComplexVector Ax(:634)/UseDevice(:635)/direct Mult(:636)/return Dot(:637) all exact; the single-direct-apply form (vs Sub-pattern A's lane split) is the only element-type difference
-  - citation: palace/models/boundarymodeoperator.cpp:75-93
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: ComputePoyntingPower body; on-disk matches theme; both Bttr(:85) Hermitian-A and Atn(:90) non-Hermitian-A callsites within range; both dispatch via complex-A Sub-pattern B overload
-  - citation: palace/models/boundarymodeoperator.cpp:85
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: Hermitian Bttr callsite; on-disk verbatim '0.5 * std::conj(kn) / omega * linalg::Dot(comm, et, *Bttr, et)'; the diagonal (x=y) case so the L1/L0 arg-swap is invisible
-  - citation: palace/models/boundarymodeoperator.cpp:88-89
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: Atn ComplexWrapperOperator construction; cycle-029 repairer correction :88-90 to :88-89 confirmed on-disk (construction spans exactly two lines; line 90 is the USE not construction); --anchor 'ComplexWrapperOperator' lands at [88] within :88-89
-  - citation: palace/models/boundarymodeoperator.cpp:90
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: non-Hermitian Atn callsite; on-disk verbatim 'P += std::complex<double>(0.0, 1.0) / (2.0 * omega) * linalg::Dot(comm, en, Atn, et)'; the caller-selected prefactor orientation confirms the arg-2-conjugated reading via the etᴴ Atn en intent
-  - citation: palace/linalg/nleps.cpp:672-675
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: informational Newton denominator; both linalg::Dot calls on :675 are the unweighted 3-arg form (comm,x,y), NOT bilinear-form 4-arg; correctly classified as a peer datum (manually-inlined L1>L0 unfolding) not a Sub-pattern A/B callsite; NOT affected by cycle-025 nleps +1 codemap drift (anchor at :675 verified on-disk)
-  - citation: book/src/L1/bilinear-form.md:111-117
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: composition identity bilinear_form(x, M, y) = dot(x, apply_linop(M, y)); cycle-029 repairer correction landed on-disk (previous misquote dot(apply_linop(M,y), x) replaced with upstream-canonical dot(x, apply_linop(M,y))); theme cites the corrected form
-  - citation: book/src/L1/dot.md:43
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: arg-1-conjugated L1 convention 'conjugate-linear in the first argument'; the load-bearing inherited convention that motivates the L1 form xᴴ M y and gives the clean bilinear_form(x, I, y) = dot(x, y) specialisation
-  - citation: book/src/L1/dot.md:104-105
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: L1 vs L0 distinction recording the receiver-vs-argument arg-2-conjugated L0 convention; theme inherits the reconciliation rather than restating
-  - citation: book/src/L1-L0/matrix-weighted-norm-mutation-rotation.md:194-196
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: workspace-ownership boundary cross-attestation; sibling explicitly cites this theme as the internal-Ax counterpart, this theme explicitly contrasts the caller-supplied Bx; bidirectional documentation, no contradiction
-  - citation: book/src/L1-L0/apply-linop-mutation-rotation.md:225
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: complex-from-real-lift concept (applicability condition 3 zone :218-225); the named inherited mechanism for the real-A overload's lane split; theme correctly cites
-  - citation: book/src/L1-L0/dot-mutation-rotation.md:44
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: Sub-pattern A free-function 'linalg::Dot(comm, x, y) canonical form'; the inherited inner-Dot reduction lowering
-  - citation: book/src/L1-L0/dot-mutation-rotation.md:189
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: section header "The conjugation asymmetry" — the core theme content; the inherited reconciliation the bilinear-form theme refers to rather than restating
-  - citation: book/src/L1/apply_linop.md:50
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: laws 1/4/5/6 underwriting the M·x apply step across operator-representation axis (cited for parallel-structure with the sibling theme; in-bounds per citecheck)
-  - citation: book/src/L1/bilinear-form.md:18-19
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: opening tagline — Mutation-free matrix-weighted inner-product reduction α = xᴴ M y; the L1 closed form the theme lowers
-```
+`firm` — the structural expansion of the L0 `Dot(comm, x, A, y)` three-step composition
+`alloc → A.Mult → Dot return`, pinned by direct evidence (the two overload decls
+`palace/linalg/operator.hpp:386-389` / `:391-394`, the two specialization bodies
+`palace/linalg/operator.cpp:621-629` / `:631-638`, the two callsite witnesses
+`palace/models/boundarymodeoperator.cpp:85` / `:90`). The non-syntactic ingredients
+(`complex-from-real-lift`, the argument-position-swap conjugation reconciliation, the
+element-type-overload absorption onto `apply_linop`) are positively anchored to the L0 source's
+own `yᴴ A x` comments and the inherited sub-themes — no negative-anchor reconstruction.

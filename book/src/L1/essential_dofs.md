@@ -1,7 +1,4 @@
 ---
-status: firm
-harvested_by: harvester:2026-06-02T164202Z-harvester-essential-dofs
-cycle: cycle-066
 layer: L1
 operator: essential_dofs
 firmness: firm
@@ -145,19 +142,16 @@ operator.
   (its `dofs: DofSet[N]` parameter) and [`eliminate_rhs`](./eliminate_rhs.md) (its essential-row pin).
 - the per-level fan-out belongs to `fe_space_hierarchy` (named-not-authored rough-in).
 
-## Status
-
-`firm` — FE-space sub-spine essential-dof-set constructor.
+## Firmness basis
 
 Firm-on-positive-structure: the whole Palace-authored head (`bdr_attr_max` extraction + `AttrToMarker`)
 is read directly from source; the stated laws are syntactic/structural identities on that head, and the
 MFEM tail (`GetEssentialTrueDofs`) is read-as-given (the same opaque-MFEM-tail posture as
 [`fe_space`](./fe_space.md) toward dof structure). The MFEM tail does NOT gate a *constructed* sub-part
 materialized from negative anchors, so this is `firm`, not `partly-constructive`. The
-no-dedicated-`test-multigrid.cpp` caveat is non-gating per the `fe_space` / `fe_assemble` /
-`fe_collection` precedent.
+no-dedicated-`test-multigrid.cpp` caveat is non-gating.
 
-MPI/Par*/partitioning out-of-scope (flagged once): `GetEssentialTrueDofs` and `bdr_attributes.Max()`
+MPI/Par*/partitioning out-of-scope: `GetEssentialTrueDofs` and `bdr_attributes.Max()`
 are read as their single-rank equivalents.
 
 ## Evidence
@@ -180,7 +174,7 @@ are read as their single-rank equivalents.
 
 ## Downward to L0
 
-The L1>L0 rotation `essential-dofs-construction-rotation` (cycle-066 D2; forthcoming) narrates how this
-L1 composition rewrites into the open-coded two-call L0 idiom (`bdr_attr_max` extraction →
-`mesh::AttrToMarker` → `GetEssentialTrueDofs`), recording the Palace-authored-head / MFEM-opaque-tail
-boundary explicitly.
+The L1>L0 rotation [`essential-dofs-construction-rotation`](../L1-L0/essential-dofs-construction-rotation.md)
+narrates how this L1 composition rewrites into the open-coded two-call L0 idiom (`bdr_attr_max`
+extraction → `mesh::AttrToMarker` → `GetEssentialTrueDofs`), recording the Palace-authored-head /
+MFEM-opaque-tail boundary explicitly.

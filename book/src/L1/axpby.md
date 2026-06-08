@@ -2,10 +2,9 @@
 layer: L1
 operator: axpby
 rank: firm
-# Graded-stack scheme (cycle-110, D2): firm-in-prose fused BLAS-1 leaf — matches three
-# Palace L0 entry points exactly, syntactic-identity laws (firm-on-positive-structure).
-# Blocking depends-on = rank-terminal POSITIVE L0 SOURCE (cites-evidence) → well-founds
-# the `firm` rank. The lowers-to edge points at the axpby-mutation-rotation theme.
+# Firm-in-prose fused BLAS-1 leaf — matches three Palace L0 entry points exactly,
+# syntactic-identity laws (firm-on-positive-structure). Blocking depends-on =
+# rank-terminal POSITIVE L0 SOURCE (cites-evidence) → well-founds the `firm` rank.
 edges:
   depends-on:
     - target: palace/linalg/vector.cpp:726-730
@@ -38,7 +37,7 @@ Mutation-lifted fused two-scalar two-vector update: `y_new = α·x + β·y_old`.
 
 At L0, the in-place destination `y` is overwritten; the prior value of `y` is consumed by the update and inaccessible afterwards. The L1 form drops the destination-buffer mention: the operator consumes `α`, `x`, `β`, and the pre-update value of `y`, and produces a fresh post-update value. The fusion (single-call combined update rather than the two-pass `y *= β; y += α·x`) is preserved at L1 because it has algebraic meaning — the law `axpby(α, x, β, y) = α·x + β·y` is a primitive statement of the linear combination, not a derived shorthand.
 
-This entry is the firm operator definition for `axpby` at L1; it supersedes the rough-in row in `book/src/L1/index.md` (originally proposed by the cycle-002 abstractor `axpby-mutation-rotation` theme — see [`L1-L0/axpby-mutation-rotation`](../L1-L0/axpby-mutation-rotation.md)). The lowering theme remains the L1>L0 narrative; this entry is the L1 algebra. No `concepts/axpby.md`-style cross-cutting prose exists yet for `axpby` (the existing `concepts/axpy.md` covers `axpy` only); if one is authored, it should cross-reference this entry.
+This entry is the firm operator definition for `axpby` at L1. The [`L1-L0/axpby-mutation-rotation`](../L1-L0/axpby-mutation-rotation.md) theme is the L1>L0 narrative; this entry is the L1 algebra. The existing `concepts/axpy.md` cross-cutting prose covers `axpy` only.
 
 ## Signature
 
@@ -93,9 +92,9 @@ Laws that explicitly **do not** hold:
 
 None at L1. `axpby` is a leaf primitive — the harvester decision (`scaffolding/decisions/axpby-as-primitive.md`) is explicit on this point. Its sub-operations are two scalar multiplications and one element-wise addition, all at or below the L1 layer's resolution.
 
-Subsumption (not dependency): `axpy(α, x, y) ≡ axpby(α, x, 1, y)` — both stay in the L1 dep-map as siblings; the L1>L0 lowering theme `axpby-mutation-rotation` covers `axpy`'s sub-patterns A/B/C as the β=1 specialisation of `axpby`'s lowering (per the abstractor's "Subsumption relation" paragraph).
+Subsumption (not dependency): `axpy(α, x, y) ≡ axpby(α, x, 1, y)` — both stay in the L1 dep-map as siblings; the L1>L0 lowering theme `axpby-mutation-rotation` covers `axpy`'s sub-patterns A/B/C as the β=1 specialisation of `axpby`'s lowering.
 
-Future siblings (not dependencies): `axpbypcz` (the three-vector generalisation `z = α·x + β·y + γ·z`) is the next harvester target — see open question `axpby-axpbypcz-next-harvest`. The real-path `AXPBYPCZ` at `vector.cpp:749-752` branches on `γ == 0` and delegates to `AXPBY`, confirming the subsumption chain `axpy ≺ axpby ≺ axpbypcz` at L1 (each generalises the prior by one more scalar-vector pair).
+Future siblings (not dependencies): `axpbypcz` (the three-vector generalisation `z = α·x + β·y + γ·z`). The real-path `AXPBYPCZ` at `vector.cpp:749-752` branches on `γ == 0` and delegates to `AXPBY`, confirming the subsumption chain `axpy ≺ axpby ≺ axpbypcz` at L1 (each generalises the prior by one more scalar-vector pair).
 
 ## Variant axes
 
@@ -105,10 +104,6 @@ Future siblings (not dependencies): `axpbypcz` (the three-vector generalisation 
 - **scalar promotion** (sub-axis on the complex element-type): see [`concepts/scalar-promotion`](../concepts/scalar-promotion.md) — real `(α, β)` against complex vectors via `vector.cpp:739-743`.
 
 No other variant axes — `axpby` is unconditionally pure, element-local, and reduction-free across all variants. Unlike `axpy` (which has the real-path `α == 1.0` constant-folding specialisation at L0), `axpby` has no L0 constant-folding branches — the AXPBY surface uniformly delegates without inspecting scalar values. Consequently, the L1>L0 lowering for `axpby` does not need an algebraic-sub-rule mechanism; it is purely structural.
-
-## Status
-
-`firm` — signature is canonical (matches three Palace L0 entry points exactly), evidence is direct from the Palace source, the algebraic laws listed are standard linear-combination facts, and the decomposition decision is recorded in `scaffolding/decisions/axpby-as-primitive.md`.
 
 ## L1 vs L0 distinction
 
@@ -126,4 +121,4 @@ No other variant axes — `axpby` is unconditionally pure, element-local, and re
 - `palace/linalg/vector.hpp:133-136` — `ComplexVector::AXPBYPCZ` member decl (forward reference for the next harvester target).
 - `palace/linalg/vector.hpp:313-316` — free-function template `AXPBYPCZ` decl (forward reference).
 - Decision record: [`scaffolding/decisions/axpby-as-primitive.md`](../../../scaffolding/decisions/axpby-as-primitive.md) — fused-primitive choice rationale.
-- Cross-references: `book/src/L1-L0/axpby-mutation-rotation.md` (L1>L0 lowering theme, cycle-002), `book/src/L1/axpy.md` (the β=1 specialisation; sibling L1 leaf).
+- Cross-references: `book/src/L1-L0/axpby-mutation-rotation.md` (L1>L0 lowering theme), `book/src/L1/axpy.md` (the β=1 specialisation; sibling L1 leaf).

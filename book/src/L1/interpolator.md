@@ -2,21 +2,15 @@
 layer: L1
 operator: interpolator
 firmness: firm
-# Graded-stack scheme: this L1 entry is the de-Rham discrete grid-transfer operator. It is a
-# leaf at L1 (its produced LinOp is consumed via apply_linop, but the interpolator's own
-# construction folds no other L1 operator). The GSLIB point-interpolation sibling is an
-# opaque-library-ownership obstruction, recorded in-chapter (a reference note, not a dep).
+# This L1 entry is the de-Rham discrete grid-transfer operator. It is a leaf at L1 (its produced
+# LinOp is consumed via apply_linop, but the interpolator's own construction folds no other L1
+# operator). The GSLIB point-interpolation sibling is an opaque-library-ownership obstruction,
+# recorded in-chapter (a reference note, not a dep).
 rank: firm
 edges:
-  # The L1>L0 `interpolator-construction-rotation` lowering theme is now authored + `status: firm`
-  # (c118 D3), so its `lowers-to` edge is promoted from a navigational `reference` to a blocking
-  # `depends-on (kind: lowers-to)` — rank 3 <= 3 holds (the theme is firm), matching the
-  # `fe_space` -> `fe-space-construction-rotation` precedent. The firm rank still rests on positive
-  # L0 source (the cites-evidence ground truth below + the now-firm lowering theme), not on any
-  # sub-firm node.
   depends-on:
     - target: L1-L0/interpolator-construction-rotation
-      kind: lowers-to             # the L1>L0 construction-rotation theme (firm, c118 D3)
+      kind: lowers-to             # the L1>L0 construction-rotation theme
   reference:
     - L1/apply_linop              # the produced LinOp is applied via apply_linop (consumed-by, not a build dep)
     - L1/fe_space                 # the trial/test FiniteElementSpace operands (operates-on)
@@ -186,7 +180,7 @@ Stated only where they hold; the de-Rham complex identities are flagged as
    (Palace assembles each edge separately and never composes them in one call), so it
    is recorded as the defining family property, not promoted to a verified-on-Palace
    algebraic law. (A literature/MFEM-de-Rham anchor would be required to promote it to
-   a law; flagged in Open questions.)
+   a law.)
 
 Non-laws explicitly: **not commutative/symmetric in arguments** (law 4); **not
 defined for non-de-Rham-adjacent space pairs** (aborts, law 3); **not a quadrature/
@@ -237,7 +231,7 @@ theme's GSLIB sub-note as well.
 separate L1>L0 obstruction theme because it is a *facility-level* boundary adjacent to
 this operator, not a lowering of `interpolator` itself; if the field-interp facility
 gains its own feature-surface consumer that needs a dedicated theme, that theme is a
-later dispatch — flagged in Open questions.)
+later dispatch.)
 
 ## Variant axes
 
@@ -271,40 +265,6 @@ The construction lowers to L0 via the firm
 theme (the `depends-on (kind: lowers-to)` edge). The GSLIB point-interpolation facility
 is an `obstruction (opaque-library-ownership)` sibling (see above), NOT a dependency.
 
-## Status
-
-**`firm`.** The de-Rham discrete grid-transfer interpolator is firm on positive
-structure: the entire `BuildDiscreteInterpolator` body is read
-(`palace/fem/fespace.cpp:173-238`), the map-type dispatch is exhaustive over the four
-supported de-Rham edges (all others abort), the Palace-owned `DiscreteLinearOperator`
-builder is read (`palace/fem/bilinearform.hpp:95-115`), and the produced operator's
-linearity/determinism/edge-selection/direction-asymmetry laws are syntactic
-read-offs over that body plus the inherited `apply_linop` linearity. Promoted on the
-**firm-on-positive-structure escape**: the laws are syntactic identities on fully
-specified positive source, so the absence of a dedicated `test-fespace.cpp`
-interpolator test does not gate firm (the `fe_space` / `fe_assemble` / `apply_linop`
-no-dedicated-test precedent). The MFEM interpolator *kernels*
-(`GradientInterpolator` etc.) are read-as-given the same way `fe_space`'s dof
-internals are — NOT `partly-constructive`, since no sub-part is materialized from
-negative anchors.
-
-The **GSLIB point-interpolation sibling facility** is a separate, library-owned
-operation disposed as `obstruction (opaque-library-ownership)` (see the dedicated
-section above) — it is orthogonal to this firm operator and does not reduce its
-maturity.
-
-Well-foundedness: the firm rank rests on **positive L0 source** (the read
-`BuildDiscreteInterpolator` body + the Palace-owned `DiscreteLinearOperator` builder —
-rank-terminal ground truth). The L1>L0
-`interpolator-construction-rotation` lowering theme is now **authored + `status: firm`**
-(c118 D3), so its `lowers-to` edge is promoted from a navigational `reference` to a
-blocking `depends-on (kind: lowers-to)` — rank 3 ≤ 3 holds (the theme is firm),
-matching the `fe_space` → `fe-space-construction-rotation` precedent (which carries the
-`lowers-to` `depends-on` edge BECAUSE its theme exists and is firm). The remaining
-`reference` edges (`apply_linop`, `fe_space`, `divfree-projector` — all firm) carry no
-rank constraint. So no `depends-on` edge rests on a sub-firm or non-existent node, and
-the firm rank is well-founded.
-
 ## Evidence
 
 - `palace/fem/fespace.cpp:173-238` — `BuildDiscreteInterpolator` full body: the
@@ -330,4 +290,4 @@ the firm rank is well-founded.
   `:190` / `:293` (`FindPointsGSLIB`), `:278` / `:304` / `:108` / `:363`
   (`MFEM_ABORT` GSLIB-absent fallbacks).
 - L1>L0 lowering: [`interpolator-construction-rotation`](../L1-L0/interpolator-construction-rotation.md)
-  (firm, c118 D3) — the construction-rotation theme this operator lowers through.
+  — the construction-rotation theme this operator lowers through.

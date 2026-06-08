@@ -308,70 +308,8 @@ tricks nested inside the sub-patterns.
 **None.** This theme lowers the already-firm L1 [`lu_solve`](../L1/lu_solve.md) operator; it
 proposes no new L1 vocabulary. The factorization kernel is a contracted variant axis of the
 existing `lu_solve` operator (not a new operator). The L2 NEP-deflation vocabulary that composes
-`lu_solve` — the cycle-022 wave-2 [`deflate`](../L2/deflate.md) / [`gram`](../L2/gram.md)
-combinators (rough-in) — is named here only to mark the upward fan-out boundary; it is **not**
-part of this theme.
-
-## Verified-against
-
-L0 evidence ranges (self-verified via `palace-codemap` `read_range` / `search_text` this
-invocation — producer-citation self-verification, `verify-citation-range`):
-
-- `palace/linalg/nleps.cpp:351` — `int QuasiNewtonSolver::Solve()`, the enclosing function.
-  **Self-verified** (`get_symbol_def`/`search_text` `QuasiNewtonSolver::Solve`).
-- `palace/linalg/nleps.cpp:397` — `Eigen::MatrixXcd H;` (k×k projected Hessenberg).
-  **Self-verified** (`read_range` 395-398).
-- `palace/linalg/nleps.cpp:524` — `Eigen::MatrixXcd SS(k, k);` (multi-RHS matrix).
-  **Self-verified** (`read_range` 524-532).
-- `palace/linalg/nleps.cpp:532` — `const Eigen::MatrixXcd S = eig_opInv * Eigen::MatrixXcd::
-  Identity(k, k) - H;` (the dense `k×k` `S = λI − H`). **Self-verified** (`read_range` 524-532).
-- `palace/linalg/nleps.cpp:533-535` — `SS = -S.fullPivLu().solve(SS);` (`:533`),
-  `x2 = SS.fullPivLu().solve(x2);` (`:534`), `const ComplexVector XSx2 = MatVecMult(X,
-  S.fullPivLu().solve(x2));` (`:535`). **Self-verified** (`read_range` 520-540 + `search_text`
-  `fullPivLu().solve` → lines 533/534/535).
-- `palace/linalg/nleps.cpp:536` — `linalg::AXPY(-1.0, XSx2, x1);`. **Self-verified**
-  (`read_range` 536-537).
-- `palace/linalg/nleps.cpp:562-563` — `const Eigen::MatrixXcd S = lam * Eigen::MatrixXcd::
-  Identity(k, k) - H;` (`:562`), `const ComplexVector XSvv2 = MatVecMult(X, S.fullPivLu()
-  .solve(vv2));` (`:563`). **Self-verified** (`read_range` 558-566 + `search_text` → line 563).
-- `palace/linalg/nleps.cpp:664-667` — `const Eigen::MatrixXcd S = eig * Eigen::MatrixXcd::
-  Identity(k, k) - H;` (`:664`), `const Eigen::VectorXcd Sv2 = S.fullPivLu().solve(v2);`
-  (`:665`), `const ComplexVector XSSv2 = MatVecMult(X, S.fullPivLu().solve(Sv2));` (`:667`).
-  **Self-verified** (`read_range` 662-668 + `search_text` → lines 665/667).
-- `palace/models/romoperator.cpp:701` — `void RomOperator::SolvePROM(int excitation_idx, double
-  omega, ComplexVector &u)`. **Self-verified** (`read_range` 701-720).
-- `palace/models/romoperator.cpp:717` — `Ar.resize(V.size(), V.size());`. **Self-verified**
-  (`read_range` 701-720).
-- `palace/models/romoperator.cpp:720-734` — the `Ar(ω)` assembly: `ProjectMatInternal(...A2...,
-  Ar...)` (`:723`, `has_A2` block opening `:720`), `Ar += Kr` (`:729`), `Ar += (1i*omega)*Cr` (`:732`), `Ar +=
-  (-omega*omega)*Mr` (`:734`). **Self-verified** (`read_range` 719-736).
-- `palace/models/romoperator.cpp:754` — `if constexpr (false)`. **Self-verified** (`read_range`
-  750-766).
-- `palace/models/romoperator.cpp:757-758` — `RHSr = Ar.ldlt().solve(RHSr);` (`:757`),
-  `RHSr = Ar.selfadjointView<Eigen::Lower>().ldlt().solve(RHSr);` (`:758`). The disabled LDLT.
-  **Self-verified** (`read_range` 750-766 + `search_text` → lines 757/758).
-- `palace/models/romoperator.cpp:762-764` — the "QR solve, for maximal stability …" comment.
-  **Self-verified** (`read_range` 750-766).
-- `palace/models/romoperator.cpp:765` — `RHSr = Ar.fullPivHouseholderQr().solve(RHSr);`. The
-  active QR solve. **Self-verified** (`read_range` 750-766 + `search_text` → line 765).
-- `palace/models/romoperator.hpp:188-189` — `Eigen::MatrixXcd Ar;` / `Eigen::VectorXcd RHSr;`.
-  **Self-verified** (`read_range` 186-190).
-- `search_text fullPivLu\(\)\.solve|fullPivHouseholderQr\(\)\.solve|ldlt\(\)\.solve|
-  selfadjointView` over `palace/**/*.cpp` → exactly the 9 hits cited above (nleps 533/534/535/
-  563/665/667; romoperator 757/758/765) and **no `palace/linalg/lu.cpp`**. **Self-verified** —
-  confirms `lu_solve` has no dedicated source file; it is realized inline at these two sites only.
-
-L1 / cross-theme anchors:
-
-- `book/src/L1/lu_solve.md` — the firm L1 operator this theme lowers: signature (`:18-25`),
-  factorization-kernel variant axis (`:77`), the in-place / transient-factorization L1-vs-L0
-  distinction (`:89-90`), the kernel-conditioning non-law (`:63`), and the forward-reference to
-  this theme (`:14,:90`, now resolved).
-- `book/src/L1-L0/ksp-solve-mutation-rotation.md` — the large-sparse iterative sibling on the
-  "solve a linear system" axis (dense-direct vs sparse-iterative split).
-- `book/src/L1-L0/dot-mutation-rotation.md` — the sibling whose §"Reduction tree" establishes the
-  same load-bearing-numerical recording discipline (kernel conditioning here ↔ summation order
-  there).
+`lu_solve` — the [`deflate`](../L2/deflate.md) / [`gram`](../L2/gram.md) combinators (rough-in) —
+is named here only to mark the upward fan-out boundary; it is **not** part of this theme.
 
 ## Variant axes
 
@@ -395,22 +333,4 @@ load-bearing, the rest absorbed (mirrors [`L1/lu_solve`](../L1/lu_solve.md) §Va
 
 ## Status
 
-`firm` — the rewrite is the structural expansion of the L1 `lu_solve` direct solve into the L0
-**transient-Eigen-decomposition + in-place back-substitution** form, exhaustively pinned by
-direct, self-verified evidence at the only two L0 use families (NLEPS `S.fullPivLu().solve(·)`,
-`nleps.cpp:533-535,563,665,667`; ROM `Ar.fullPivHouseholderQr().solve(RHSr)`,
-`romoperator.cpp:765`). The two sub-patterns (A NLEPS full-pivot LU, B ROM full-pivot QR), the
-in-place RHS overwrite, the factor-once/solve-many multi-RHS form, and the nested-solve shape are
-all directly cited. The **factorization-kernel axis** is a positively-anchored
-load-bearing-numerical choice — the active LU/QR kernels AND the disabled LDLT alternative AND
-the "for maximal stability" comment are all read straight off positive source
-(`romoperator.cpp:757-758,762-765`), so the kernel recording is positively grounded, not a
-negative-anchor reconstruction. No speculative operator, no literature inference, no constructive
-sub-part — hence `firm` rather than `partly-constructive`. There is **no `palace/linalg/lu.cpp`**
-(`search_text` over `palace/**/*.cpp` for the solve-call patterns returns only the 9 inline
-sites); the firm decision rests on the inline-realization structure being exhaustively cited.
-Consistent with the [`L1/lu_solve`](../L1/lu_solve.md) firm-on-positive-structure decision (the
-laws are operator-algebra identities on `A⁻¹`, not convergence facts; a missing dedicated solve
-unit test does not gate syntactic-identity laws). A `lowering-verifier` audit attaching the
-`verified_against:` block (per the sibling-theme convention) confirming surface-form recognition
-is exhaustive is the standard follow-up, not a status reduction.
+`firm` — the structural expansion of the L1 `lu_solve` direct solve into the L0 form.

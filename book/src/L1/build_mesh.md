@@ -1,15 +1,11 @@
 ---
 layer: L1
 operator: build_mesh
-harvested_by: harvester:2026-06-06T205239Z-harvester-build-mesh
-cycle: cycle-117
-# Graded-stack scheme. This firm L1 construction is a leaf at L1 (it consumes a `Config`/`IoData`
+# This firm L1 construction is a leaf at L1 (it consumes a `Config`/`IoData`
 # surface and produces the `Mesh` typed value; no other L1 operator is invoked). It rests on its
 # positive L0 ctor + build-referent source (cites-evidence, rank-terminal ground truth). The `Mesh`
 # record is its produced output; `fe_space` (firm) consumes it (a consumed-by relation, NOT a dep of
-# build_mesh). Well-foundedness rank(u) <= rank(v): this node firm (rank 3); the cites-evidence edges
-# point at rank-terminal L0 source, and the `lowers-to` edge points at the firm L1>L0
-# `build-mesh-construction-rotation` theme (c118; rank firm = min(endpoints)).
+# build_mesh).
 rank: firm
 edges:
   depends-on:
@@ -18,7 +14,7 @@ edges:
     - target: palace/main.cpp:286-301
       kind: cites-evidence        # the build referent: Load -> Preprocess -> Partition -> RefineMesh -> wrap
     - target: L1-L0/build-mesh-construction-rotation
-      kind: lowers-to             # the L1>L0 home: how this typed construction rewrites into the L0 free-function chain (c118)
+      kind: lowers-to             # the L1>L0 home: how this typed construction rewrites into the L0 free-function chain
   reference:
     - L1/fe_space                  # the primary consumer of the constructed Mesh (fe_space takes `mesh: Mesh`)
     - feature/lifecycle.L1         # the composition root that forward-references `build_mesh :: Config -> Mesh`
@@ -57,7 +53,7 @@ the level-mesh sequence (`:291`), and each resulting `mfem::ParMesh` is wrapped 
 
 This chapter is defined in L1 vocabulary (the typed `config → Mesh` construction pipeline). The forward
 rewrite into the L0 free-function chain + the in-place `unique_ptr` mesh-handle mutation is the L1>L0
-`build-mesh-construction-rotation` theme (named, NOT authored this cycle — see *Status*).
+[`build-mesh-construction-rotation`](../L1-L0/build-mesh-construction-rotation.md) theme.
 
 ## Signature
 
@@ -89,7 +85,7 @@ record-definition page: fields, types, per-field construction-vs-run-time stratu
 (`build_mesh`, the **producer**), [`fe_space`](./fe_space.md) (`mesh: Mesh` input),
 [`fe_space_hierarchy`](./fe_space_hierarchy.md) (`[Mesh]` element type), and the
 [`lifecycle`](../feature/lifecycle.L1.md) root's stage-(1) — so per the record-definition
-obligation it has a shared `concepts/` home (promoted c118 D6) rather than an in-chapter table.
+obligation it has a shared `concepts/` home rather than an in-chapter table.
 In brief: `Mesh` wraps a single-rank `mfem::ParMesh` augmented with the libCEED domain/boundary
 local-attribute maps (`loc_attr` / `loc_bdr_attr`), finalized at construction by the adopting
 ctor's `EnsureNodes()` + `Update()` (`palace/fem/mesh.hpp:76-81`); see the
@@ -171,37 +167,7 @@ narrates how the typed `config → Mesh` construction rewrites into the L0 free-
 `solver->Preprocess` ▷ `mesh::Partition` ▷ `mesh::RefineMesh` ▷ `make_unique<Mesh>` (`palace/main.cpp:287-299`),
 including the in-place `unique_ptr` mesh-handle mutation (the level-vector grown in place by `RefineMesh`,
 `palace/utils/geodata.cpp:421-455`) and the construction-time `EnsureNodes()` + `Update()` finalization
-(`palace/fem/mesh.hpp:79-80`). The `lowers-to` edge to that theme is asserted in this chapter's front-matter
-(c118).
-
-## Status
-
-**firm (firm-on-positive-structure).** The construction is read directly from positive source: the `Mesh`
-ctor chain (`palace/fem/mesh.hpp:72-81`), the single-machine read surface (`:84-96`), and the build referent
-(`palace/main.cpp:286-301`) → the four `mesh::` stage declarations (`palace/utils/geodata.hpp:25-50`) +
-bodies (`palace/utils/geodata.cpp:122`, `:421`). Every law is a syntactic identity on this positive
-structure (construction determinism, pipeline staging, zero-refinement identity, a-priori
-level-monotonicity) — there is no convergence/iteration semantics to test-gate (the a-priori refinement
-*depth* is a fixed config field, not an adaptively-driven loop), so the absence of a dedicated
-mesh-construction unit test does not gate firm (the `fe_space` cycle-064 / `fe_assemble` cycle-054 /
-`apply_linop` no-dedicated-test precedent).
-
-This is the **geometric substrate under all five solver pipelines** — the highest-fan-out entry of the
-mesh-wrapper front (every driver column's mesh stage and the FE-space sub-spine, via `fe_space`'s
-`mesh: Mesh` input, stand on it).
-
-**Single-machine scope (flagged):** the partition/distribute stage and the `ParMesh`/`loc_attr` per-process
-attribute remap are read as single-rank equivalents (see *Scope*); MFEM-opaque adaptive mesh refinement is
-left to the `lifecycle` root's outer fold (obstruction-documented there), NOT forced to a firm claim here.
-
-**`Mesh` record home:** the cross-cutting [`concepts/mesh.md`](../concepts/mesh.md) record page
-is the definition home (promoted c118 D6, since `Mesh` has ≥2 consumers); this chapter's
-§Record-definition is a back-link to it (the OQ `record-Mesh-needs-definition-home` is resolved).
-
-**Deferred follow-on (named, NOT authored this cycle):** the L1>L0
-`build-mesh-construction-rotation` theme; the `concepts/mesh.md` record page; and (downstream) the
-mesh-refinement / `fe_space_hierarchy` h-refinement coupling (the a-priori level sequence is the
-geometric-multigrid stack `fe_space_hierarchy` consumes).
+(`palace/fem/mesh.hpp:79-80`). The `lowers-to` edge to that theme is asserted in this chapter's front-matter.
 
 ## Evidence
 

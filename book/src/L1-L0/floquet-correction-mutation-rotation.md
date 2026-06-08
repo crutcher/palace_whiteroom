@@ -100,7 +100,7 @@ facts the L1 form erases:
   is a transitive three-level nesting (parallel to the eigsolve→divfree→ksp
   chain documented in
   [`book/src/concepts/nested-constructed-operator-gate.md:91-102`](../concepts/nested-constructed-operator-gate.md)).
-  See Open questions / caveats.
+  See §Structural notes / caveats.
 
 Justification kind: **structural** — re-bind the L1 output value into the L0
 output destination buffer `y`; erase the scratch member `rhs`; the operators
@@ -437,9 +437,9 @@ firm, and all its sub-dependencies are firm L1 operators / firm concepts:
 
 This theme proposes no new vocabulary.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (all verified via `citecheck` this cycle, 2026-05-31):
+L0 evidence ranges:
 
 - `palace/linalg/floquetcorrection.cpp:20-71` — constructor body (sig `:20-23`,
   M assembly `:26-39`, Cross assembly `:41-57`, ksp+JacobiSmoother
@@ -488,43 +488,7 @@ L1 anchor:
 - `book/src/L1/floquet-correction.md` — the firm L1 operator all four
   sub-patterns lower from.
 
-## Status
-
-`firm`.
-
-Every sub-pattern reads from a positive Palace source site verified via
-`citecheck` this cycle:
-
-- the out-of-place output-arg apply with scratch-member threading (A,
-  `palace/linalg/floquetcorrection.cpp:73-78`),
-- the apply-and-accumulate AddMult-as-axpy fusion (B,
-  `palace/linalg/floquetcorrection.cpp:80-86`),
-- the constructed-operator-gate closure materialisation (C,
-  `palace/linalg/floquetcorrection.cpp:20-71`),
-- the `<ComplexVector>`-only element-type scope-out (D,
-  `palace/linalg/floquetcorrection.cpp:88`).
-
-The single load-bearing algebraic sub-rule — the AddMult-as-axpy unfolding —
-follows from the algebraic identity `axpy(α, a, b) = α·a + b` applied to the
-`(α=a, a=floquet_correction(F, x), b=y)` instantiation visible in the L0 body
-lines `:83-85`.
-
-**No partly-constructive caveat applies.** This theme has a positive source
-site for every step, including the AddMult fusion's load-bearing aliasing
-applicability — its positive mechanism site is `CgSolver<OperType>::Mult`
-(`palace/linalg/iterative.cpp:361`, the aliasing-safe else-branch
-`:382-386` runs `r = b;` (`:384`) before `x = 0.0;` (`:385`)), gated by the
-`pcg->SetInitialGuess(0)` precondition (`palace/linalg/floquetcorrection.cpp:61`);
-`palace/linalg/ksp.cpp:297` is the `BaseKspSolver::Mult` delegation wrapper on
-the call-path (it forwards `ksp->Mult(x, y)` at `:300`), not the mechanism. The L1
-anchor is firm-on-positive-structure (the `divfree-projector` / `jacobi-smoother`
-/ `chebyshev-smoother` precedent), so this theme is firm at birth.
-
-A `lowering-verifier` exhaustiveness audit (`<ComplexVector>` sole
-instantiation × `Mult` + `AddMult` entry points × all 4 driver call sites × all
-3 construction sites) is the standard follow-up, not a status reduction.
-
-## Open questions / caveats
+## Structural notes / caveats
 
 - **Theme's closure carries a transitively-three-deep nested gate
   (`F.ksp.preconditioner = JacobiSmoother`).** Parallel to the
@@ -547,9 +511,6 @@ instantiation × `Mult` + `AddMult` entry points × all 4 driver call sites × a
   is the **second three-level transitive nesting in the firm artifact** (after
   the eigsolve→divfree→ksp chain), confirming the concept's
   cross-layer-fidelity rule is load-bearing across two independent pipelines.
-  **Concept-page §Firm-instances upgrade**: 2 firm → 3 firm
-  (eigsolve + divfree + floquet-correction); the transitive-nesting note
-  should mention the second three-deep chain.
 - **`<Vector>` real-only path is dead-code under the
   `<ComplexVector>`-only-instantiation.** The constructor's `if constexpr` real
   branches at `palace/linalg/floquetcorrection.cpp:35-38, 53-56` are present
@@ -557,162 +518,14 @@ instantiation × `Mult` + `AddMult` entry points × all 4 driver call sites × a
   FloquetCorrSolver<ComplexVector>;` at `:88`. This is a documentation-internal
   inconsistency (the parametric template invites a `<Vector>` instantiation
   the L0 doesn't supply); not a defect — it is a deliberate scope-out captured
-  at Sub-pattern D. **OQ**: `floquet-correction-real-vector-instantiation-dead-code`
-  (note for a future harvester / lowering-verifier — confirm no upstream Palace
-  PR is in flight to add `<Vector>` instantiation).
+  at Sub-pattern D.
 - **The AddMult buffer-economy aliasing is theme-specific.** The
   `this->Mult(x, rhs)` re-binding pattern (sub-pattern B's load-bearing
   aliasing applicability) does not appear in any of the four sister themes —
   divfree, jacobi, chebyshev, ksp_solve don't have an AddMult surface that
   re-uses the construction-bound scratch as Mult's destination. This is a
-  unique L0 idiom of `FloquetCorrSolver` and deserves a verified_against audit
-  pass.
-- **Lifting note (reverse direction — working notes only, NOT in the formal
-  chapter).** An L0 in-place floquet-corrector apply (output-arg mutation +
-  one scratch member + construction-bound operator reads) lifts to the L1
-  pure correction by: (i) re-binding the output arg `y` to the return value,
-  (ii) erasing the `rhs` scratch member, (iii) capturing the
-  construction-bound operators as the closure `F`, (iv) unfolding `AddMult`
-  into `axpy ∘ floquet_correction`. The lift requires the no-aliasing +
-  no-prior-`y`-observer guarantees (Applicability conditions 1, 3) and the
-  inner-ksp aliasing tolerance (Applicability condition 2) to hold at every
-  call site; all four `AddMult` call sites uphold this by lexical sequencing
-  (the `B *= -1.0/(1i*omega)` rescale precedes the `AddMult` which then
-  consumes its result; no upstream caller observes the prior `B`). This
-  reverse note is recorded here, not in the high→low formal theme content
-  (per CLAUDE.md §Methodology invariants "Layers are defined high→low").
+  unique L0 idiom of `FloquetCorrSolver`.
 
-```yaml
-verified_against:
-  # Sub-pattern A — out-of-place apply (Mult)
-  - citation: palace/linalg/floquetcorrection.cpp:73-78
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: Mult(const VecType &x, VecType &y) const two-step body; sig :73-74, brace :75, Cross->Mult(x, rhs) :76, ksp->Mult(rhs, y) :77, close :78 — matches theme transcription verbatim (citecheck OK, anchors lit).
-  - citation: palace/linalg/floquetcorrection.hpp:49
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: mutable VecType rhs; the single scribbled scratch member confirmed at :49 (citecheck OK).
-  - citation: palace/linalg/floquetcorrection.hpp:58
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: void Mult(const VecType &x, VecType &y) const; apply decl with const-ref x input and ref y output confirmed at :58 (citecheck OK).
-  # Sub-pattern B — apply-and-accumulate (AddMult) + the load-bearing inner-ksp aliasing applicability
-  - citation: palace/linalg/floquetcorrection.cpp:80-86
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: AddMult body; this->Mult(x, rhs) :83 (output rebind to scratch member), rhs *= a :84, y += rhs :85 — the axpy-into-floquet fusion reads verbatim; the algebraic axpy(a, floquet_correction(F,x), y) unfolding is the literal :83-85 body (citecheck OK).
-  - citation: palace/linalg/floquetcorrection.hpp:59
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: void AddMult(const VecType &x, VecType &y, ScalarType a = 1.0) const; default a=1.0 (no-scale Mult-and-add) confirmed at :59 (citecheck OK).
-  - citation: palace/linalg/ksp.cpp:297
-    verdict: supports
-    audited_at: 2026-05-31T215306Z
-    note: BaseKspSolver<OperType>::Mult :297 is the DELEGATION WRAPPER (call-path, not mechanism) — :299 BlockTimer, :300 ksp->Mult(x,y) forwards verbatim to the inner CgSolver::Mult. Re-anchored cycle-039 D2 — the AddMult aliasing-tolerance MECHANISM is at CgSolver::Mult, see the iterative.cpp:360-386 and floquetcorrection.cpp:61 rows below (citecheck OK).
-  - citation: palace/linalg/iterative.cpp:360-386
-    verdict: supports
-    audited_at: 2026-05-31T215306Z
-    note: CgSolver<OperType>::Mult(const VecType &b, VecType &x) sig at :361 (:360 is the template line; planner hinted :360 — +1 drift corrected to :361) — the TRUE aliasing-tolerance mechanism. With initial_guess==false the else-branch :382-386 runs r = b; (:384) x = 0.0; (:385) — copies b into r BEFORE zeroing the aliased x, so when AddMult passes b==x==rhs the read of b precedes the write of x and aliasing is safe. The if(this->initial_guess) test is at :377; the aliasing-unsafe if-branch is :377-381. citecheck OK on :361/:377/:384/:385.
-  - citation: palace/linalg/floquetcorrection.cpp:61
-    verdict: supports
-    audited_at: 2026-05-31T215306Z
-    note: pcg->SetInitialGuess(0) sets the initial_guess==false precondition that gates the CgSolver::Mult else-branch — without it the if-branch at iterative.cpp:377-381 reads x (A->Mult(x,r)) before r is set, which WOULD break b==x aliasing. This SetInitialGuess(0) is what makes the AddMult aliasing tolerance load-bearing-safe (citecheck OK, anchor lit).
-  # Sub-pattern C — construction-site closure materialisation
-  - citation: palace/linalg/floquetcorrection.cpp:20-71
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: ctor body; sig :20-23, M assembly :26-39 (ComplexParOperator wrap :33 / dead-code ParOperator :37), Cross assembly :41-57 (MaterialPropertyCoefficient :42, GetFloquetCross :43, ComplexParOperator :50-51 / dead-code :55), ksp+JacobiSmoother :60-66 (CgSolver :60, JacobiSmoother :65), SetOperators(*M,*M) :67, rhs sizing :69-70 — all finer anchors lit (citecheck OK). M-block comment anchored at :25 (the comment line; :26 is the opening brace) — tightened from the earlier :25-26 over-extension (cycle-040 D3).
-  - citation: palace/linalg/floquetcorrection.cpp:67
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: ksp->SetOperators(*M, *M) — operator and preconditioner-target both bound to the RT mass M_RT, confirmed at :67 (citecheck OK).
-  - citation: palace/linalg/floquetcorrection.hpp:42-43
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: std::unique_ptr<OperType> M, Cross; construction-bound closure operator fields confirmed at :42-43 (citecheck OK).
-  - citation: palace/linalg/floquetcorrection.hpp:46
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: std::unique_ptr<BaseKspSolver<OperType>> ksp; inner constructed-operator-gate field confirmed at :46 (citecheck OK).
-  - citation: palace/linalg/floquetcorrection.hpp:52-53
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: FloquetCorrSolver(...) constructor decl confirmed at :52-53 (citecheck OK).
-  - citation: palace/models/materialoperator.hpp:103,128
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: GetFloquetCross per-attribute (:103) and all-attributes (:128) accessors both lit (citecheck OK).
-  - citation: palace/models/materialoperator.cpp:358
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: mat_kx(count).Set(1.0, wave_vector_cross); per-attribute skew-symmetric wave-vector cross-product init confirmed at :358 (citecheck OK).
-  - citation: palace/models/materialoperator.hpp:35
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: wave_vector_cross member (mfem::DenseMatrix, real-valued) confirmed at :35 — substantiates Applicability condition 7 (wave vector real-valued, spatially constant per material) (citecheck OK).
-  # Sub-pattern D — element-type scope-out (<ComplexVector> only)
-  - citation: palace/linalg/floquetcorrection.cpp:88
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: template class FloquetCorrSolver<ComplexVector>; the SOLE explicit instantiation — no <Vector> line anywhere; the scope-out is positively witnessed (citecheck OK).
-  - citation: palace/linalg/floquetcorrection.cpp:31
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: first if constexpr (std::is_same<OperType, ComplexOperator>::value) — the reachable complex branch of M_RT assembly, anchor lit at :31 (citecheck OK).
-  - citation: palace/linalg/floquetcorrection.cpp:35-38
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: else { ... ParOperator ... } real-branch dead-code of M_RT assembly confirmed at :35-38 (unreachable under <ComplexVector>-only instantiation) (citecheck OK).
-  - citation: palace/linalg/floquetcorrection.cpp:48
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: second if constexpr — the reachable complex branch of Cross assembly, anchor lit at :48 (citecheck OK).
-  - citation: palace/linalg/floquetcorrection.cpp:53-56
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: else { ... ParOperator ... } real-branch dead-code of Cross assembly confirmed at :53-56 (citecheck OK).
-  - citation: palace/drivers/drivensolver.cpp:138-143
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: first construction site; std::unique_ptr<FloquetCorrSolver<ComplexVector>> :138 + make_unique<...<ComplexVector>> :141 — binds <ComplexVector>, no <Vector> (citecheck OK; corroborates Sub-pattern D and Applicability condition 6).
-  - citation: palace/drivers/drivensolver.cpp:289-294
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: second construction site; same <ComplexVector> binding at :289/:292 (citecheck OK).
-  - citation: palace/drivers/eigensolver.cpp:237-243
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: eigenmode construction site; <ComplexVector> binding at :237/:240 (citecheck OK).
-  # AddMult call-site cohort (all four) — the apply-and-accumulate witnesses + Applicability condition 3 lexical sequencing
-  - citation: palace/drivers/drivensolver.cpp:208-213
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: first AddMult call site floquet_corr->AddMult(E, B, 1.0/omega) :212, preceded by B *= -1.0/(1i*omega) at :207 — confirms Applicability condition 3 (prior B fully written by rescale before AddMult accumulates; no prior-y observer) (citecheck OK).
-  - citation: palace/drivers/drivensolver.cpp:332-337
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: second AddMult call site AddMult(E, B, 1.0/omega) :336 (citecheck OK).
-  - citation: palace/drivers/drivensolver.cpp:464-469
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: third AddMult call site AddMult(E, B, 1.0/omega) :468 (citecheck OK).
-  - citation: palace/drivers/eigensolver.cpp:450-455
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: fourth AddMult call site AddMult(E, B, 1.0/omega) :454, preceded by B *= -1.0/(1i*omega) at :449 — confirms condition 3 lexical sequencing on the eigen path (citecheck OK). Four AddMult call sites total — theme exhaustiveness claim confirmed.
-  # Test / regression supplements (L0-equivalent semantic documentation)
-  - citation: test/unit/test-schema.cpp:340-353
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: SECTION("FloquetWaveVector must be array") JSON-schema validation for the Periodic FloquetWaveVector config at :340-353 — supporting (config-surface) evidence, not a per-rewrite anchor (citecheck OK).
-  - citation: test/examples/runtests.jl:289-294
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: cylinder/floquet periodic end-to-end regression at :289-294 (testcase "cylinder","floquet.json","floquet") — L0-equivalent semantic supplement (citecheck OK).
-  # L1 anchor
-  - citation: book/src/L1/floquet-correction.md
-    verdict: supports
-    audited_at: 2026-05-31T210435Z
-    note: the firm L1 floquet_correction operator all four sub-patterns lower from; firm at cycle-036 D1 (sibling-theme L1-anchor convention).
-```
+## Status
+
+`firm` — the rewrite is positively anchored at L0.

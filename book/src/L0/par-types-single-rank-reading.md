@@ -94,7 +94,7 @@ These tests are L0-equivalent semantic evidence for both the `ParOperator` / `Co
 
 - [`L0/mfem-vector-types`](./mfem-vector-types.md) — sibling reference note (element-type axis).
 - [`L0/apply-linop-overload-set`](./apply-linop-overload-set.md) — sibling reference note (operator-hierarchy view).
-- Higher-layer L1 / L2 / L4 entries that touch `Par*` types (forward-target): all `L1/` operator entries currently cite `Par*` types inline. The cycle-006+ retroactive-thinning sweep (priority #11) will rewrite those inline citations to reference this chapter.
+- Higher-layer L1 / L2 / L4 entries that touch `Par*` types: `L1/` operator entries citing `Par*` types inline reference this chapter for the single-rank reading rule.
 
 ## Evidence (representative)
 

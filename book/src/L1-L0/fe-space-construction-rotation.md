@@ -9,21 +9,15 @@ the L0 form is an imperative ctor that constructs an `mfem::ParFiniteElementSpac
 wires up the dof bookkeeping. The translation has a sharp boundary — the **construction lowers / the
 dof-bookkeeping is MFEM-owned-read-as-given** — narrated in the split below.
 
-## Status
-
-`firm` — structural. The construction rewrite is positively anchored at L0: the variadic ctor
-(`fespace.hpp:67-75`), the single-space coarse-seed construction site
-(`multigrid.hpp:90`), and the four de-Rham collection-type instantiation sites
-(`spaceoperator.cpp:47/49/51/75`). The dof-numbering/ordering/conformity/prolongation boundary is
-**documented as MFEM-owned-read-as-given** (the thin forwarding accessors `fespace.hpp:93-103`) — it
-is a witnessed library-ownership boundary, NOT a constructive reconstruction, so it does not gate
-firmness (cf. the firm `weak-form-term-rotation` identity-lowers/kernel-opaque split and the firm
-`fe-operator-assemble-mutation-rotation` over a libCEED-opaque leaf). MPI/`Par*` and mesh
-partitioning are flagged once and read single-rank (out of scope per CLAUDE.md §Scope).
+The dof-numbering/ordering/conformity/prolongation boundary is **MFEM-owned-read-as-given** (the thin
+forwarding accessors `fespace.hpp:93-103`) — a witnessed library-ownership boundary, NOT a constructive
+reconstruction (cf. the firm `weak-form-term-rotation` identity-lowers/kernel-opaque split and the firm
+`fe-operator-assemble-mutation-rotation` over a libCEED-opaque leaf). MPI/`Par*` and mesh partitioning
+are flagged once and read single-rank (out of scope per CLAUDE.md §Scope).
 
 ## L1 form (LHS)
 
-The pure construction value (D2's prime entry [`L1/fe_space`](../L1/fe_space.md)):
+The pure construction value ([`L1/fe_space`](../L1/fe_space.md)):
 
     fe_space :: (mesh: Mesh, collection: FECollection) -> FiniteElementSpace[N]
 
@@ -52,7 +46,7 @@ The single-space construction is exercised at the multigrid coarse-seed
         std::make_unique<FiniteElementSpace>(*mesh[coarse_mesh_l], fecs[0].get()));
 
 i.e. `FiniteElementSpace(mesh, collection)` with `collection = fecs[0]`. The hierarchy wrapping (the
-list of levels) is the deferred `fe_space_hierarchy` sibling (D1 survey pick #4); a single
+list of levels) is the deferred `fe_space_hierarchy` sibling; a single
 `fe_space(mesh, collection)` is one such `make_unique<FiniteElementSpace>(mesh, coll)`.
 
 ### The construction-lowers / dof-bookkeeping-MFEM-owned split (the translation boundary)
@@ -123,7 +117,7 @@ itself (H1 -grad-> H(curl) -curl-> H(div) -div-> L2) is already named at
 - `collection` must be one of the four de-Rham FECollection subclasses (the variant axis). The
   collection *order schedule* (`ConstructFECollections`, `multigrid.hpp:22-75`: pmin floor, basis
   type, LINEAR/LOG coarsening) is upstream of this theme — it produces the `collection` input; whether
-  it earns its own `fe_collection` entry is the deferred D1 granularity question.
+  it earns its own `fe_collection` entry is a deferred granularity question.
 - Single-rank reading: `mfem::ParFiniteElementSpace`/`ParMesh` are read as their serial equivalents
   (out of scope per CLAUDE.md §Scope; `book/src/L0/fespace-file.md:13-16`). Mesh PARTITIONING (the
   `Mesh` wrapper `loc_attr`/`loc_bdr_attr` remap) is out of scope — flagged once.
@@ -135,39 +129,18 @@ concrete `FiniteElementSpace(mesh, collection)` ctor call, with the de-Rham coll
 positively-anchored case axis. No algebraic law or reduction chain is needed; the boundary (what
 lowers vs. what is MFEM-owned-read-as-given) is established by the thin forwarding accessors.
 
-## Verified-against
+## Adjacent constructions (out of this theme's scope)
 
-- `palace/fem/fespace.hpp:67-75` — `FiniteElementSpace(Mesh &mesh, T &&...args)` variadic ctor
-  forwarding `(&mesh.Get(), args...)` into `mfem::ParFiniteElementSpace` (verified via codemap
-  read_range).
-- `palace/fem/fespace.hpp:93-103` — thin MFEM-forwarding dof accessors (`GetTrueVSize` `:96`,
-  `GetProlongationMatrix`/`GetRestrictionMatrix` `:102-103`) — the MFEM-owned boundary.
-- `palace/fem/multigrid.hpp:90` — `make_unique<FiniteElementSpace>(*mesh[coarse_mesh_l], fecs[0].get())`
-  single-space coarse-seed (the cleanest single-`fe_space` construction anchor).
-- `palace/models/spaceoperator.cpp:47/49/51` — `ConstructFiniteElementSpaceHierarchy<ND/H1/RT_FECollection>`
-  de-Rham instantiation sites (ctor member init); `:75` — 2-D L2-curl `L2_FECollection` site (ctor
-  body `:73-79`). Full ctor body `:45-89`.
-- `book/src/L0/fespace-file.md:13-16` (single-rank/MFEM-as-given reading), `:154-158`
-  (dof-structure-is-MFEM's boundary), `:159-164` (transparent libCEED-cache classification),
-  `:165-169` (de-Rham complex H1->H(curl)->H(div)->L2) — the firm L0 localization.
-- [`L1/fe_space`](../L1/fe_space.md) — the prime L1 entry this theme lowers (D2 this-cycle).
-
-## Open questions / caveats
-
-- **Lifting note (reverse direction, working-note only).** The L0 ctor lifts to L1 `fe_space`
-  cleanly precisely because the dof internals are read-as-given — the lift discards the MFEM index
-  bookkeeping and retains only the `(mesh, collection) -> [N]` shape. The additional structure the
-  lift would need to be *complete* (rather than opaque) is the dof-numbering algebra, which is MFEM's
-  and out of scope. (High->low formal content stays in the chapter above; this is a working note.)
 - **`fe_collection` / order-schedule upstream.** `ConstructFECollections` (`multigrid.hpp:22-75`)
-  produces the `collection` input via the pmin floor + basis-type + coarsening schedule. Whether it
-  earns a separate `fe_collection` L1 entry (+ its own L1>L0 theme) is the deferred D1 granularity
-  question — for this theme, `collection` is a given input.
-- **`essential_dofs` straddle.** The boundary-attribute -> essential-true-dof-set extraction
+  produces the `collection` input via the pmin floor + basis-type + coarsening schedule. For this
+  theme, `collection` is a given input; the schedule's own rewrite is
+  [`fe-collection-construction-rotation`](./fe-collection-construction-rotation.md).
+- **`essential_dofs` straddle.** The boundary-attribute → essential-true-dof-set extraction
   (`GetEssentialTrueDofs` ∘ `AttrToMarker`, `multigrid.hpp:97-99`) is a derived projection off the
-  constructed space; the attribute->marker shape is Palace-side but `GetEssentialTrueDofs` is
-  MFEM-owned dof-numbering. Per D1, lean is noted-property of `fe_space`, not a separate theme — it is
-  the `DofSet[N]` the `eliminate_*` cohort takes opaquely. Out of scope for this construction theme.
-- **Forward-reference resolution.** `L1/fe_space.md` (D2) and the `fe_space_hierarchy` /
-  `fe_collection` siblings are this-cycle / deferred; the live-link to `fe_space` resolves once D2's
-  entry lands this cycle.
+  constructed space; the attribute→marker shape is Palace-side but `GetEssentialTrueDofs` is
+  MFEM-owned dof-numbering. It is a noted-property of `fe_space`, not a separate theme — the
+  `DofSet[N]` the `eliminate_*` cohort takes opaquely. Out of scope for this construction theme.
+
+## Status
+
+`firm` — structural; the construction rewrite is positively anchored at L0.

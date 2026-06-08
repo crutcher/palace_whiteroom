@@ -11,22 +11,10 @@ imperative loop that `push_back`es one collection per level into a `std::vector`
 declarative-enumeration-vs-imperative-build-then-reverse gap is the translation; it is narrated forward
 (L1 → L0) in the split below.
 
-## Status
-
-`firm` — structural. The schedule rewrite is positively anchored at L0: the entire
-`ConstructFECollections` template body is read in full (`palace/fem/multigrid.hpp:22-73`), and every
-piece of the forward rewrite has a positive source site — the family `pmin` `constexpr`
-(`multigrid.hpp:30-33`) + its `MFEM_VERIFY` precondition (`:34`), the basis-type selection
-(`:35-39`), the bounded `push_back` loop (`:44-69`) with the ND/RT-4-arg vs H1/L2-3-arg ctor branch
-(`:46-55`), the early floor `break` (`:56-59`), the `LINEAR`/`LOGARITHMIC` coarsening `switch`
-(`:60-68`), and the terminal `std::reverse` (`:70`). Every rewrite step is a syntactic identity /
-loop-invariant on this positive structure — there is no convergence/iteration semantics to test-gate,
-so the absence of a dedicated `test-multigrid.cpp` exercising `ConstructFECollections` does not gate
-firm (matching D2's firm-on-positive-structure verdict + the `fe_space`/`fe_assemble`/`apply_linop`
-no-dedicated-test precedent). The internal basis/dof structure of the produced `FECollection`s is
+The internal basis/dof structure of the produced `FECollection`s is
 **MFEM-owned-read-as-given** (the `H1_/ND_/RT_/L2_FECollection` classes are MFEM's; this theme lowers
 only the *order schedule + subclass + basis-type selection*) — a witnessed library-ownership boundary,
-not a constructive reconstruction, so it does not gate firmness (cf. the firm
+not a constructive reconstruction (cf. the firm
 [`fe-space-construction-rotation`](./fe-space-construction-rotation.md) construction-lowers /
 dof-bookkeeping-MFEM-owned split). MPI/`Par*` and mesh partitioning are out of scope (flagged once):
 `ConstructFECollections` is rank-agnostic — it builds `FECollection` template objects, not partitioned
@@ -35,7 +23,7 @@ spaces; the per-rank distribution enters only downstream at the
 
 ## L1 form (LHS)
 
-The pure schedule value (D2's prime entry [`L1/fe_collection`](../L1/fe_collection.md)):
+The pure schedule value ([`L1/fe_collection`](../L1/fe_collection.md)):
 
     fe_collection :: (p: Order, dim: Dim, mg_max_levels: Nat, coarsening: CoarseningPolicy, family: DeRhamFamily) -> [FECollection]
 
@@ -199,49 +187,16 @@ rewrite piece is a syntactic identity / loop-invariant on the read-in-full posit
 (`multigrid.hpp:22-73`). The MFEM-owned-read-as-given boundary (the produced collections' internal
 basis/dof structure) is a witnessed library-ownership boundary, not a reconstruction.
 
-## Verified-against
+## Relationship to the FE-space hierarchy
 
-- `palace/fem/multigrid.hpp:23-26` — `ConstructFECollections<FECollection>(int p, int dim, int
-  mg_max_levels, MultigridCoarsening mg_coarsening, bool mat_lor)` signature (template param + return
-  `std::vector<std::unique_ptr<FECollection>>`). On-disk verified.
-- `palace/fem/multigrid.hpp:30-34` — family `pmin` `constexpr` (`is_base_of<H1...> || is_base_of<ND...>
-  ? 1 : 0`, `:30-33`) + `MFEM_VERIFY(p >= pmin, ...)` precondition (`:34`).
-- `palace/fem/multigrid.hpp:35-39` — `b1 = GaussLobatto`, `b2 = GaussLegendre`, `if (mat_lor) b2 =
-  IntegratedGLL` (the LOR basis variant axis C).
-- `palace/fem/multigrid.hpp:44-69` — the bounded build loop (`max(1, mg_max_levels)` cap `:44`), the
-  ND/RT-4-arg vs H1/L2-3-arg ctor branch (`:46-55`, `MFEM_CONTRACT_VAR(b2)` at `:54`), the floor
-  `break` (`:56-59`), the `LINEAR`/`LOGARITHMIC` coarsening `switch` (`:60-68`).
-- `palace/fem/multigrid.hpp:70` — `std::reverse(fecs.begin(), fecs.end())` (the coarsest-first
-  reorientation). `:72` — `return fecs;` (body end; closing `}` at on-disk `:73`).
-- `palace/utils/labels.hpp:114-119` — `enum class MultigridCoarsening : char { LINEAR, LOGARITHMIC }`
-  (coarsening-policy variant axis B). On-disk verified.
-- `palace/utils/configfile.hpp:918` — `MultigridCoarsening mg_coarsening = MultigridCoarsening::LOGARITHMIC`
-  (the default policy). On-disk verified.
-- `palace/models/spaceoperator.cpp:47/49/51` — the ND/H1/RT
-  `ConstructFiniteElementSpaceHierarchy<FECollection>` de-Rham family selection sites (shared with the
-  sibling FE-space theme).
-- `palace/fem/multigrid.hpp:90` / `:117` — `ConstructFiniteElementSpaceHierarchy` consumer: coarse-seed
-  uses `fecs[0]` (`:90`), p-refinement loop `AddLevel`s a `fe_space` per `fecs[l]` (`:117`) — the
-  producer→consumer boundary to the FE-space theme.
-- [`L1/fe_collection`](../L1/fe_collection.md) — the prime L1 entry this theme lowers (D2 this-cycle,
-  firm-on-positive-structure).
+This theme is the **upstream producer** of the `[FECollection]` schedule. Its consumer is
+`ConstructFiniteElementSpaceHierarchy` (`multigrid.hpp:78-126`), which *pairs* this schedule's
+`[FECollection]` with the mesh sequence: the coarse-seed uses `fecs[0]` (`multigrid.hpp:90`) and the
+p-refinement loop `AddLevel`s a `fe_space` per `fecs[l]` (`multigrid.hpp:117`). The per-level
+`FiniteElementSpace(mesh_l, fecs[l].get())` construction is the sibling
+[`fe-space-construction-rotation`](./fe-space-construction-rotation.md) (the *consumer* rewrite across
+the `[FECollection]` boundary); this theme produces the input it consumes.
 
-## Open questions / caveats
+## Status
 
-- **Lifting note (reverse direction, working-note only).** The L0 `ConstructFECollections` body lifts
-  to L1 `fe_collection` cleanly precisely because the produced collections' internal basis/dof
-  structure is MFEM-owned-read-as-given — the lift discards the imperative build-then-reverse machinery
-  and the `std::vector`/`unique_ptr` ownership plumbing, retaining only the `(p, dim, mg_max_levels,
-  coarsening, family) → [FECollection]` schedule shape. The additional structure a *complete* (rather
-  than opaque) lift would need is the `FECollection` subclass internals (node placement, dof tables),
-  which are MFEM's and out of scope. (High→low formal content stays in the chapter above; this is a
-  working note.)
-- **`fe_space_hierarchy` consumer pull.** The producer→consumer relation to the FE-space theme makes
-  the deferred `fe_space_hierarchy` sibling (`ConstructFiniteElementSpaceHierarchy`,
-  `multigrid.hpp:78-126`) the natural next pull — it is the operator that *pairs* this schedule's
-  `[FECollection]` with the mesh sequence. Named, not authored (per D2's deferred-sibling list).
-- **Stale `:22-75` close in a prior reference.** The pre-D2 `fe_space.md:124-126`
-  applicability-condition note (and the old `fe_collection` deferred-sibling row) cited
-  `multigrid.hpp:22-75`; the body actually ends `return` at `:72`, closing `}` at on-disk `:73`. D2's
-  cohort-bullet edit corrects the row; the `fe_space.md` in-prose references are out of this dispatch's
-  write-scope — flagged for a later citation-hygiene pass (a change to propose, not to apply here).
+`firm` — structural; the schedule rewrite is positively anchored at L0.

@@ -31,13 +31,9 @@ The L1 form is a pure function `FrequencyOperatorFamily[N] -> Scalar -> LinearOp
 - **Sparsity prune (transparent performance trick).** The `coeff[i] != 0` skip (`rap.cpp:782`) avoids accumulating zero-weighted operands — algebraically the term-drop law (transparent for value), an L0 performance realization, not a semantic change.
 - **Fixed-basis hoist (transparent performance trick).** Assembling `{K, C, M}` once outside the loop (`drivensolver.cpp:91-93`) rather than per-ω is the realization of operand-stationarity = fixed-basis — transparent for value, load-bearing for cost (the affine-family structure is exactly what licenses the hoist).
 
-## Status
-
-`firm` — the rotation is read in full from positive source: the per-ω combination call (`drivensolver.cpp:176-177`), the once-hoisted fixed basis (`:91-93`), the ω-dependent `A2` operand (`:175`), the per-ω capture (`:180`), the `GetSystemMatrix` forward (`spaceoperator.cpp:521-528`), and the `BuildParSumOperator` fold body with its sparsity prune (`rap.cpp:764-787`). The three load-bearing residues (accumulation order, sparsity prune, fixed-basis hoist) are positively anchored. No dedicated driven-assembly unit test exists; the rotation is firm-on-positive-structure (the `fe-operator-assemble-mutation-rotation` / `apply-linop-mutation-rotation` precedent), since every step is a syntactic transcription of fully-specified source.
-
 ## Evidence
 
-Paths relative to `reference/palace/`; verified via `palace-codemap` `read_range` this dispatch:
+Paths relative to `reference/palace/`:
 
 - `palace/drivers/drivensolver.cpp:91-93` — fixed basis `K`/`C`/`M` assembled once before the sweep.
 - `palace/drivers/drivensolver.cpp:175` — `A2 = GetExtraSystemMatrix<ComplexOperator>(omega, DIAG_ZERO)` (ω-dependent operand).
@@ -46,5 +42,3 @@ Paths relative to `reference/palace/`; verified via `palace-codemap` `read_range
 - `palace/models/spaceoperator.cpp:521-528` — `GetSystemMatrix` ≡ `BuildParSumOperator({a0,a1,a2,1}, {K,C,M,A2})`.
 - `palace/linalg/rap.cpp:764-767` — `BuildParSumOperator<N>` template signature.
 - `palace/linalg/rap.cpp:779-787` — `SumOperator` allocation + the `AddOperator` accumulate fold (`:783`) + the `coeff[i] != 0` sparsity prune (`:782`).
-
-Provenance: licensed by cross-layer-cross-cutter:2026-06-02T075145Z (c061 D3, Region 1); authored by harvester:2026-06-02T083220Z (cycle-062 D3) alongside the L1 [`assemble_frequency_operator`](../L1/assemble_frequency_operator.md) entry.

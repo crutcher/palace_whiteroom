@@ -99,7 +99,7 @@ material-property `coeff` (`ε` resp. `μ⁻¹`) and the matching mass integrato
 space pair (which are mirror-swapped: ND→RT for Grad, RT→ND for Curl). So flux-channel is a
 **closure-absorbed parametric axis**, not a structural branch in the verb body.
 
-**The composite is NOT a third estimate verb (OQ resolved).** The "Grad+Curl composite" used
+**The composite is NOT a third estimate verb.** The "Grad+Curl composite" used
 by the 3D drivers (`TimeDependentFluxErrorEstimator`, `BoundaryModeFluxErrorEstimator`)
 computes the two channels **separately** and combines them by the elementwise vector add
 `grad_estimates += curl_estimates` over the **squared** indicators
@@ -109,11 +109,9 @@ $$ \eta^2_K \;=\; \lVert \varepsilon E - D\rVert^2_K + \lVert \mu^{-1}B - H\rVer
 
 This is an `axpy(1, curl_estimates, grad_estimates)` / `linear_combination`-over-indicators
 shape on the per-element indicator vectors — it composes two `flux_recovery_estimate` results,
-it does **not** introduce a new estimate kernel. (OQ
-`flux-recovery-estimate-flux-channel-axis-vs-separate-verbs` resolves: flux-channel is a
-single parametric axis on one verb; the composite is an L2-level `linear_combination` over
-indicator vectors, NOT a 3rd verb. The over-mark factor `0.5/Et` √-scaling is the same shared
-epilogue regardless of channel.)
+it does **not** introduce a new estimate kernel. Flux-channel is a single parametric axis on one
+verb; the composite is an L2-level `linear_combination` over indicator vectors, NOT a 3rd verb.
+The over-mark factor `0.5/Et` √-scaling is the same shared epilogue regardless of channel.
 
 ## libCEED kernel-api leaf
 
@@ -161,11 +159,11 @@ record-definition obligation, single-consumer case). It mirrors the C++
 | `M` | `LinearOperator[Ns, Ns]` | construction | smooth-space SPD mass operator (`:124-148`). |
 | `ksp` | `Solver[M]` | construction | configured projection solver (`:163`). |
 
-All fields are **construction-time** — the verb's run-time input is only `F : Tensor[N]`. This
-resolves the OQ `flux-projector-constructed-operator-gate-vs-absorbed`: `FluxProjector` is a
-**construction-time member absorbed into the `FluxEstimator` closure**, not a separate run-time
-gate argument (the same absorption as `ksp_solve`'s closed-over preconditioner). It is recorded
-as a nested record here for definition-home completeness, not surfaced as a verb operand.
+All fields are **construction-time** — the verb's run-time input is only `F : Tensor[N]`.
+`FluxProjector` is a **construction-time member absorbed into the `FluxEstimator` closure**, not a
+separate run-time gate argument (the same absorption as `ksp_solve`'s closed-over preconditioner).
+It is recorded as a nested record here for definition-home completeness, not surfaced as a verb
+operand.
 
 ## Algebraic laws
 
@@ -194,8 +192,8 @@ Let `fre = flux_recovery_estimate(est, ·)`. The following hold:
    elementwise sum of the per-channel squared indicators:
    `composite(E, B)_K = fre(grad_est, E)_K + fre(curl_est, B)_K`
    (`palace/linalg/errorestimator.cpp:536`, `:566`). This is `axpy(1, ·, ·)` /
-   `linear_combination` over indicator vectors — the composite is **not** a new verb (the OQ
-   resolution). Composing in the **squared** domain is load-bearing: the global error
+   `linear_combination` over indicator vectors — the composite is **not** a new verb.
+   Composing in the **squared** domain is load-bearing: the global error
    `E² = (1/N)Σ Eₙ²` decomposition requires squared accumulation (see law 5 / the
    `ErrorIndicator` averaging note `palace/fem/errorindicator.cpp:27-43`).
 
@@ -245,30 +243,12 @@ L1-internal `depends-on (uses)`:
 - [`fe_space`](./fe_space.md) — operates-on the trial + smooth FE spaces (a consumed-by/
   operates-on relation, not a blocking dependency).
 
-## Status
-
-`firm` (AMR estimate verb; flux-channel variant axis Grad/Curl, composite an L2
-`linear_combination` over indicators NOT a 3rd verb).
-
-Promoted rough-in→**firm** on the **firm-on-positive-structure escape** (the `apply_linop` /
-`jacobi-smoother` / `reciprocal` no-dedicated-test precedent): every law is a syntactic
-identity / structural-property read-off on **fully-specified positive source** — the recovery
-projection `M⁻¹·Flux·F` is read in full at `FluxProjector::Mult`
-(`palace/linalg/errorestimator.cpp:170-178`), the per-element difference reduction in full at
-`ComputeErrorEstimates` (`:184-268`), both channel constructors in full
-(`:273-378` Grad, `:391-500` Curl), and the composite `+=` at `:536`/`:566`. The
-quadratic-in-`F` non-law and the non-negativity / per-element-locality / channel-additivity
-laws are operator-algebra / squared-norm facts, not convergence facts — the absence of a
-dedicated error-estimator unit test (AMR is integration-covered only, exercised through the
-adaptive driver) does not gate syntactic-identity laws. The two constructive sub-parts that
-ride opaque leaves — the libCEED element integral and the `ksp_solve` projection convergence —
-are referenced kernel-api / firm-constituent boundaries, not reconstructed claims, so they do
-not force `partly-constructive`.
+## Single-rank reading
 
 **Single-rank reading (DIRECTIVE-1).** `ComputeErrorEstimates` is read single-rank: the
 per-element `estimates` vector is local-element-indexed; the cross-rank reductions in the
-*surrounding* AMR loop (global-error averaging, Dörfler threshold bisection — D2's territory)
-are out of this verb's body. The L1 signature carries no communicator.
+*surrounding* AMR loop (global-error averaging, Dörfler threshold bisection) are out of this
+verb's body. The L1 signature carries no communicator.
 
 ## Evidence
 

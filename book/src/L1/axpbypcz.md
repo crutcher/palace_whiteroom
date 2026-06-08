@@ -2,10 +2,9 @@
 layer: L1
 operator: axpbypcz
 rank: firm
-# Graded-stack scheme (cycle-110, D2): firm-in-prose fused BLAS-1-extended leaf — matches
-# three Palace L0 entry points exactly, syntactic-identity laws (firm-on-positive-structure).
-# Blocking depends-on = rank-terminal POSITIVE L0 SOURCE (cites-evidence) → well-founds
-# the `firm` rank. The lowers-to edge points at the axpbypcz-mutation-rotation theme.
+# Firm-in-prose fused BLAS-1-extended leaf — matches three Palace L0 entry points exactly,
+# syntactic-identity laws (firm-on-positive-structure). Blocking depends-on =
+# rank-terminal POSITIVE L0 SOURCE (cites-evidence) → well-founds the `firm` rank.
 edges:
   depends-on:
     - target: palace/linalg/vector.cpp:745-758
@@ -30,7 +29,7 @@ edges:
 
 # axpbypcz
 
-Mutation-lifted fused three-scalar three-vector update: `z_new = α·x + β·y + γ·z_old`. The fused BLAS-1-extended primitive that subsumes `axpby` (γ=0), `axpy` (β=1, γ=0), and pure-scaling (α=0, β=0). At L1, the fused form is a leaf primitive; the decision against decomposing it as a composition of `axpby` + `axpy` (or chained `axpby` calls) mirrors the cycle-003 fused-primitive choice for `axpby` recorded in [`scaffolding/decisions/axpby-as-primitive.md`](../../../scaffolding/decisions/axpby-as-primitive.md) (§ "Knock-on effects").
+Mutation-lifted fused three-scalar three-vector update: `z_new = α·x + β·y + γ·z_old`. The fused BLAS-1-extended primitive that subsumes `axpby` (γ=0), `axpy` (β=1, γ=0), and pure-scaling (α=0, β=0). At L1, the fused form is a leaf primitive; the decision against decomposing it as a composition of `axpby` + `axpy` (or chained `axpby` calls) mirrors the fused-primitive choice for `axpby` recorded in [`scaffolding/decisions/axpby-as-primitive.md`](../../../scaffolding/decisions/axpby-as-primitive.md) (§ "Knock-on effects").
 
 ## Context
 
@@ -38,7 +37,7 @@ Mutation-lifted fused three-scalar three-vector update: `z_new = α·x + β·y +
 
 At L0, the in-place destination `z` is overwritten; the prior value of `z` is consumed by the update and inaccessible afterwards. The L1 form drops the destination-buffer mention: the operator consumes `α`, `x`, `β`, `y`, `γ`, and the pre-update value of `z`, and produces a fresh post-update value. The fusion (single-call combined update rather than a multi-pass form) is preserved at L1 because it has algebraic meaning — the law `axpbypcz(α, x, β, y, γ, z) = α·x + β·y + γ·z` is a primitive statement of the linear combination, not a derived shorthand.
 
-This entry is the firm operator definition for `axpbypcz` at L1; it lands as a new firm row in `book/src/L1/index.md` (no prior rough-in row — this entry is a fresh promotion, motivated by the forward reference in `axpby.md` § "Dependencies" and open question `axpby-axpbypcz-next-harvest`). The L1>L0 lowering theme for `axpbypcz` (companion to `axpby-mutation-rotation`) is not authored in this report — that is abstractor work; see open question `axpbypcz-mutation-rotation-abstractor-target` below.
+This entry is the firm operator definition for `axpbypcz` at L1. The L1>L0 lowering theme for `axpbypcz` is the companion to `axpby-mutation-rotation`.
 
 ## Signature
 
@@ -63,9 +62,9 @@ Shape contract (bunsen-style, named axes):
 
 Element-wise: `result[i] = α·x[i] + β·y[i] + γ·z[i]` for `i ∈ [0, N)`. Reduction-free and element-local — every output element depends on exactly one input element from each of `x`, `y`, and `z`. No cross-element communication, no dependence on iteration order.
 
-The operator is pure at L1: the prior `z` and the new `z` are distinct values. The L0 source overwrites the in-place destination buffer; that overwrite is an L1>L0 lowering concern (see open question `axpbypcz-mutation-rotation-abstractor-target`). At L1 the relationship is purely algebraic.
+The operator is pure at L1: the prior `z` and the new `z` are distinct values. The L0 source overwrites the in-place destination buffer; that overwrite is an L1>L0 lowering concern. At L1 the relationship is purely algebraic.
 
-Special algebraic cases — `γ = 0` (recovers `axpby`), `β = 0, γ = 0` (recovers `axpy` with α=α), `β = 1, γ = 0` (recovers `axpy`), `α = 0` (drops `x`, gives `axpby(β, y, γ, z)`), all-zero (zero vector) — are not separate operators at L1. They are algebraic identities, recorded in the laws below. The L0 source has exactly one specialisation branch inside the `AXPBYPCZ` family: the real-real path at `vector.cpp:749-752` branches on `γ == 0` to dispatch either MFEM's `add(α, x, β, y, z)` (one-call) or the two-call split `AXPBY(α, x, γ, z); z.Add(β, y)`. This is a transparent performance trick — the `γ == 0` fast-path avoids the two-call split — and is recorded as such in the L1>L0 lowering theme (forthcoming).
+Special algebraic cases — `γ = 0` (recovers `axpby`), `β = 0, γ = 0` (recovers `axpy` with α=α), `β = 1, γ = 0` (recovers `axpy`), `α = 0` (drops `x`, gives `axpby(β, y, γ, z)`), all-zero (zero vector) — are not separate operators at L1. They are algebraic identities, recorded in the laws below. The L0 source has exactly one specialisation branch inside the `AXPBYPCZ` family: the real-real path at `vector.cpp:749-752` branches on `γ == 0` to dispatch either MFEM's `add(α, x, β, y, z)` (one-call) or the two-call split `AXPBY(α, x, γ, z); z.Add(β, y)`. This is a transparent performance trick — the `γ == 0` fast-path avoids the two-call split — and is recorded as such in the L1>L0 lowering theme.
 
 ## Algebraic laws
 
@@ -104,7 +103,7 @@ Laws that explicitly **do not** hold:
 - **Commutativity in the vector arguments**: `axpbypcz(α, x, β, y, γ, z) ≠ axpbypcz(β, y, α, x, γ, z)` in general unless `α = β` — the operator is symmetric in the inputs only because `α·x + β·y + γ·z = β·y + α·x + γ·z` mathematically. The signature distinguishes argument slots by which scalar pairs with which vector; swapping scalar-vector pairs simultaneously preserves the value, but swapping vectors without swapping scalars does not. (Three-way permutation of the `(α, x), (β, y), (γ, z)` pair-triples preserves the value algebraically, but the signature has fixed argument positions.)
 - **Associativity**: `axpbypcz` is six-ary (three scalar-vector pairs); "associativity" is not well-typed.
 - **Floating-point associativity of the summation**: `α·x + β·y + γ·z` computed in IEEE-754 may differ from any reordering at the bit level when the magnitudes of the three partial sums differ enough to lose precision in one ordering. Palace's L0 form pins the ordering in the `γ == 0` fast-path (MFEM's `add(α, x, β, y, z)` kernel) but the `γ ≠ 0` slow-path uses a two-call split (`AXPBY(α, x, γ, z); z.Add(β, y)`) which computes the sum in a *different* order than the fused form would. **The L1 algebra is order-agnostic, but bit-identical reproduction of L0 output requires matching the L0 evaluation order, and the two L0 branches do not match each other.** This is recorded here, not erased.
-- **Fusion identity with three separate `scal`+`add` passes**: `axpbypcz(α, x, β, y, γ, z) ≠ scal(α, x) + scal(β, y) + scal(γ, z)` in general at the bit level (the three-pass form rounds three times; the fused form rounds once or twice depending on the L0 branch) even though the values agree mathematically. The L0 form is fused for a reason; the L1 algebra preserves the fused statement. The lowering theme will record the fusion choice as load-bearing for performance, not for numerics.
+- **Fusion identity with three separate `scal`+`add` passes**: `axpbypcz(α, x, β, y, γ, z) ≠ scal(α, x) + scal(β, y) + scal(γ, z)` in general at the bit level (the three-pass form rounds three times; the fused form rounds once or twice depending on the L0 branch) even though the values agree mathematically. The L0 form is fused for a reason; the L1 algebra preserves the fused statement. The lowering theme records the fusion choice as load-bearing for performance, not for numerics.
 
 ## Dependencies
 
@@ -121,13 +120,9 @@ Future siblings (not dependencies): `scal` (pure scalar-vector multiply `(α, x)
 - **element-type**: `real` | `complex`. The L0 source has separate template specialisations (real-real at `vector.cpp:745-758`; complex-complex at `vector.cpp:760-765`; real-scalar-on-complex-vector at `vector.cpp:767-772`; member form on `ComplexVector` at `vector.hpp:133-136`). At L1 these collapse to one operator parameterised by element type. The semantics are identical across element types — the per-element kernel is just `α·x[i] + β·y[i] + γ·z[i]` in the appropriate field.
 - **scalar promotion** (sub-axis on the complex element-type): see [`concepts/scalar-promotion`](../concepts/scalar-promotion.md) — real `(α, β, γ)` against complex vectors via `vector.cpp:767-772`.
 
-**Internal control-flow axis at L0 (not an L1 variant axis)**: the real-real specialisation at `vector.cpp:749-752` branches on `γ == 0` to choose between a single-call fused dispatch and a two-call split. This is a transparent performance specialisation — algebraically equivalent — and not visible at L1. The L1>L0 lowering theme records it as a constant-folding sub-rule (the `γ == 0` algebraic-sub-rule, analogous to `axpy`'s `α == 1.0` sub-rule). The complex-complex and real-scalar-on-complex-vector specialisations do not have this branch — they uniformly delegate to the member form `z.AXPBYPCZ(α, x, β, y, γ)`, which presumably has its own internal branch or unified kernel (member-method body is in the corresponding `vector.cpp` definition, not surveyed in this report — recorded as a minor follow-up below).
+**Internal control-flow axis at L0 (not an L1 variant axis)**: the real-real specialisation at `vector.cpp:749-752` branches on `γ == 0` to choose between a single-call fused dispatch and a two-call split. This is a transparent performance specialisation — algebraically equivalent — and not visible at L1. The L1>L0 lowering theme records it as a constant-folding sub-rule (the `γ == 0` algebraic-sub-rule, analogous to `axpy`'s `α == 1.0` sub-rule). The complex-complex and real-scalar-on-complex-vector specialisations do not have this branch — they uniformly delegate to the member form `z.AXPBYPCZ(α, x, β, y, γ)`, which has its own internal branch or unified kernel (the member-method body is in the corresponding `vector.cpp` definition).
 
 No other variant axes — `axpbypcz` is unconditionally pure, element-local, and reduction-free across all variants.
-
-## Status
-
-`firm` — signature is canonical (matches three Palace L0 entry points exactly), evidence is direct from the Palace source, the algebraic laws listed are standard linear-combination facts extended from the axpby laws, and the fused-primitive choice mirrors the recorded decision for `axpby`.
 
 ## L1 vs L0 distinction
 
@@ -143,4 +138,4 @@ No other variant axes — `axpbypcz` is unconditionally pure, element-local, and
 - `palace/linalg/vector.cpp:767-772` — `AXPBYPCZ(double, ComplexVector, ...)` real-scalar-on-complex-vector specialisation: also delegates to the member form (implicit promotion).
 - `palace/linalg/vector.cpp:729` — MFEM `add(α, x, β, y, y)` reference at the `AXPBY` real-real path (confirms the kernel reused by `axpbypcz`'s `γ == 0` fast-path which calls `add(α, x, β, y, z)`).
 - Decision record: [`scaffolding/decisions/axpby-as-primitive.md`](../../../scaffolding/decisions/axpby-as-primitive.md) § "Knock-on effects" — the explicit invitation for the `axpbypcz` harvester to mirror the fused-primitive choice.
-- Cross-references: `book/src/L1/axpby.md` (the γ=0 specialisation; sibling L1 leaf), `book/src/L1/axpy.md` (the β=1, γ=0 specialisation; sibling L1 leaf), forthcoming `book/src/L1-L0/axpbypcz-mutation-rotation.md` (L1>L0 lowering theme; abstractor target).
+- Cross-references: `book/src/L1/axpby.md` (the γ=0 specialisation; sibling L1 leaf), `book/src/L1/axpy.md` (the β=1, γ=0 specialisation; sibling L1 leaf), `book/src/L1-L0/axpbypcz-mutation-rotation.md` (L1>L0 lowering theme).

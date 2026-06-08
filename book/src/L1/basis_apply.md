@@ -1,19 +1,17 @@
 ---
 layer: L1
 operator: basis_apply
-# Graded-stack: firm (rank 3). The B / Bᵀ stage of A = Gᵀ B_𝒟ᵀ D B_𝒟 G. It contracts the
-# element-local-dof tensor Tensor[(E, L)] against the tabulated basis to produce quad-point values
-# Tensor[(E, P, C)] — the element-local rank-tensor vocabulary now firm L1 (concepts/element-local-tensor,
-# D5 this wave). Firm-on-positive-structure: the laws are syntactic identities (adjoint pairing,
+# The B / Bᵀ stage of A = Gᵀ B_𝒟ᵀ D B_𝒟 G: contracts the element-local-dof tensor
+# Tensor[(E, L)] against the tabulated basis to produce quad-point values Tensor[(E, P, C)].
+# Firm-on-positive-structure: the laws are syntactic identities (adjoint pairing,
 # per-element linearity, block-diagonality) on exhaustively-anchored positive libCEED source.
-# Reachable via libceed-quadrature-kernel-impl (pulled-by).
 rank: firm
 edges:
   reference:
     - target: L1/libceed-quadrature-kernel-impl
       kind: pulled-by      # the kernel-impl consumer whose pipeline composes this B/Bᵀ basis-eval stage (free)
     - target: L1/weak_form_term   # the term's differential-operator 𝒟 selects the EvalMode (Interp/Grad/Curl/Div) this op applies
-    - target: concepts/element-local-tensor   # the [E,L]/[E,P,C] element-local rank-tensor shape family this op maps between (the firm L1 data shape, D5 this wave)
+    - target: concepts/element-local-tensor   # the [E,L]/[E,P,C] element-local rank-tensor shape family this op maps between (the firm L1 data shape)
 ---
 
 # basis_apply
@@ -24,24 +22,6 @@ The **B / Bᵀ** stage of the libCEED contraction pipeline
 derivatives) to produce field values (or derivatives) at quadrature points (`B`), and its transpose
 contracting quad-point data back to element dofs (`Bᵀ`). The basis-eval *mode* (`interp` / `grad` /
 `curl` / `div`) is selected by the term's differential operator `𝒟`.
-
-## Status
-
-`firm` (rank 3). **Clean-gate: PROMOTE (roadmap_goal → firm).** The operator contracts the
-element-local tensor `Tensor[(E, L)]` to the **quad-point-valued** tensor `Tensor[(E, P, C)]`
-(element axis `E`, local-dofs-per-element axis `L`, quad-point axis `P`, value-component axis `C`) —
-the element-local rank structure the firm flat-vector-BLAS L1 (`Tensor[N]`) does not carry. That
-rank-tensor is now **firm L1 vocabulary**: the `[E, L]` / `[E, P, C]` shape family has a
-record-definition home at [`concepts/element-local-tensor`](../concepts/element-local-tensor.md)
-(this wave), so the vocabulary shift that kept this chapter rank-0 is closed. The promotion uses the
-**firm-on-positive-structure escape**: the algebraic laws below are **syntactic identities on
-fully-specified positive source** (the adjoint pairing is the basis-matrix transpose read off the
-`B`-on-the-left / `Bᵀ`-on-the-right construction; per-element linearity and block-diagonality are the
-structure of a per-element matrix contraction) — not test-gated convergence semantics — so the
-absence of a dedicated `test-basis.cpp` does not gate firm (the `apply_nonlinear_pencil` cycle-021 /
-`weak_form_term` cycle-061 / `fe_assemble` no-dedicated-test precedent). The Palace realization is
-exhaustively anchored (the `CeedBasis` construction + the `EvalMode`-keyed field dispatch — see
-*Verified-against*).
 
 ## L1 form
 
@@ -70,8 +50,7 @@ factors into a sequence of 1-D contractions (`CeedBasisCreateTensorH1`), reducin
 from `O(P·L)` to `O(d·P^{1/d}·L)`. This is *algebraically equivalent* to the dense per-element basis
 contraction — it changes the contraction order, not the result. Per CLAUDE.md §Optimization-tricks it
 is a **transparent trick**: the L1 form is the un-factorized dense contraction; sum-factorization is a
-one-line note, not a separate algebraic claim. (This resolves the OQ
-`libceed-quadrature-kernel-impl-sum-factorization-classification`: transparent, one-line note.)
+one-line note, not a separate algebraic claim.
 
 ## Algebraic laws
 
@@ -96,7 +75,7 @@ one-line note, not a separate algebraic claim. (This resolves the OQ
 2. The term's `𝒟` is one of `{Identity, Gradient, Curl, Divergence}` — these select the `EvalMode`
    (`Interp`/`Grad`/`Curl`/`Div`). Non-de-Rham / non-polynomial integrands are out of scope.
 
-## Verified-against
+## Evidence
 
 - `palace/fem/libceed/integrator.cpp:25-65` — `AddQFunctionActiveInputs`: the `EvalMode`-keyed
   active-input field dispatch (`CEED_EVAL_INTERP` `:41`, `GRAD` `:49`, `DIV` `:57`, `CURL` `:65`) — the

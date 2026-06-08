@@ -1,27 +1,18 @@
 ---
 status: firm
-harvested_by: harvester:2026-06-02T160332Z-harvester-fe-collection
-cycle: cycle-065
-# Graded-stack scheme (cycle-115 D2 hygiene; chapter previously carried only `status: firm`,
-# NO typed edges — the rank was prose-inferred from `## Status`). This firm L1 schedule operator
-# is a leaf in L1 vocabulary (a pure enumeration producing a `[FECollection]` list; no L1 op is
-# invoked — §Dependencies), so it carries no `composes` edge. It rests on its positive L0 source
-# (the whole `ConstructFECollections` template body, cites-evidence, rank-terminal ground truth)
-# and lowers through its L1>L0 construction-rotation theme. The producer->consumer relation to
-# `fe_space` (which consumes one of the produced collections) is navigational, NOT a dependency
-# (§Dependencies: "a consumed-by relation ... not a dependency") -> `reference`.
-# Well-foundedness rank(u) <= rank(v): this node firm (rank 3); the cites-evidence target is
-# rank-terminal L0 ground truth; the lowering theme `fe-collection-construction-rotation` is
-# typed `rank: firm` (this cycle, D2) so 3 <= 3 holds.
+# This firm L1 schedule operator is a leaf in L1 vocabulary (a pure enumeration producing a
+# `[FECollection]` list; no L1 op is invoked — §Dependencies), so it carries no `composes` edge.
+# It rests on its positive L0 source and lowers through its L1>L0 construction-rotation theme.
+# The producer->consumer relation to `fe_space` is navigational, NOT a dependency -> `reference`.
 rank: firm
 edges:
   depends-on:
     - target: palace/fem/multigrid.hpp:22-73
-      kind: cites-evidence        # ConstructFECollections<FECollection> whole template body; close brace verified on disk at :73 (return fecs; at :72, } at :73)
+      kind: cites-evidence        # ConstructFECollections<FECollection> whole template body
     - target: L1-L0/fe-collection-construction-rotation
-      kind: lowers-to             # the L1>L0 construction-rotation theme (cycle-065 D3; §Downward :175-180)
+      kind: lowers-to             # the L1>L0 construction-rotation theme
   reference:
-    - L1/fe_space                  # producer->consumer: each produced FECollection is a per-level fe_space input (§Dependencies; NOT a depends-on)
+    - L1/fe_space                  # producer->consumer: each produced FECollection is a per-level fe_space input (NOT a depends-on)
 ---
 
 # `fe_collection` — FE-collection p-multigrid order schedule
@@ -59,8 +50,7 @@ loop `AddLevel`s a [`fe_space`](./fe_space.md) per `fecs[l]` (`:117`).
 
 This chapter is defined in L1 vocabulary (the typed `(p, dim, mg_max_levels, coarsening, family) →
 [FECollection]` schedule). The forward rewrite into the L0 `ConstructFECollections` loop + the
-`std::reverse` is the L1>L0 theme `fe-collection-construction-rotation` (authored cycle-065 D3;
-forward-reference `fe-collection-construction-rotation` until on disk).
+`std::reverse` is the L1>L0 theme `fe-collection-construction-rotation`.
 
 ## Signature
 
@@ -192,33 +182,22 @@ of `fe_space`, which is in turn upstream of the FE-assembly sub-spine.
 
 ## Downward (to L0)
 
-The L1>L0 rotation `fe-collection-construction-rotation` (cycle-065 D3) narrates how the typed
+The L1>L0 rotation `fe-collection-construction-rotation` narrates how the typed
 `(p, dim, mg_max_levels, coarsening, family) → [FECollection]` schedule rewrites into the L0
 `ConstructFECollections` template (`multigrid.hpp:22-73`): the `pmin` `constexpr`
 (`:30-33`), the basis-type selection (`:35-39`), the bounded `push_back` loop with the
 arity-3/4 ctor branch (`:44-55`), the coarsening switch (`:60-68`), and the terminal `std::reverse`
-(`:70`). (Forward-reference `fe-collection-construction-rotation` until that theme is on disk.)
+(`:70`).
 
-## Status
-
-**firm (firm-on-positive-structure).** The schedule is read in full from a single positive source site:
-the entire `ConstructFECollections` template body (`palace/fem/multigrid.hpp:22-73`). All three variant
-axes are positively witnessed — the de-Rham family + `pmin` + ctor-arity coupling
-(`:30-34,46-55`), the `LINEAR`/`LOGARITHMIC` coarsening switch (`:60-68`, enum at
-`palace/utils/labels.hpp:114-119`, default at `palace/utils/configfile.hpp:918`), and the LOR basis
-selection (`:35-39`). Every law is a syntactic identity / loop-invariant on this positive structure —
-there is no convergence/iteration semantics to test-gate, so the absence of a dedicated
-`test-multigrid.cpp` exercising `ConstructFECollections` does not gate firm (the
-[`fe_space`](./fe_space.md) cycle-064 / [`fe_assemble`](./fe_assemble.md) cycle-054 / `apply_linop`
-no-dedicated-test precedent). The internal basis/dof structure of the produced `FECollection`s is
-explicitly MFEM-owned-read-as-given, not L1 law substrate.
+## Role
 
 This is the **upstream producer** of the FE-space-construction sub-spine: it schedules the
 `[FECollection]` list that the geometric-multigrid hierarchy feeds one-per-level into
-[`fe_space`](./fe_space.md) constructions. Warrant: it earns its own entry (not a `fe_space`
+[`fe_space`](./fe_space.md) constructions. It earns its own entry (not a `fe_space`
 variant-axis note) on the strength of its list-producing schedule laws (1, 3, 4, 6) — the p-multigrid
 order sequence, the level-count bound, the policy-determines-order-step fact, and the singleton-collapse
-boundary — none of which `fe_space` (a single-collection→single-space construction) carries.
+boundary — none of which `fe_space` (a single-collection→single-space construction) carries. The internal
+basis/dof structure of the produced `FECollection`s is MFEM-owned-read-as-given, not L1 law substrate.
 
 **MPI / `Par*` out of scope (flagged once):** `ConstructFECollections` is rank-agnostic — it builds
 `FECollection` template objects, not partitioned spaces. The per-rank distribution enters only

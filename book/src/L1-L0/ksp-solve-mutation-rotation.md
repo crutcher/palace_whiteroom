@@ -1,7 +1,7 @@
 # ksp-solve-mutation-rotation
 
 The mutation rotation for the preconditioned Krylov solve. Lowers the pure
-L1 form `ksp_solve(K, b) → SolveResult[N]` (cycle-007 firm; see
+L1 form `ksp_solve(K, b) → SolveResult[N]` (see
 [`L1/ksp_solve`](../L1/ksp_solve.md)) into Palace's in-place L0 entry
 `BaseKspSolver<OperType>::Mult(b, x)` at `palace/linalg/ksp.cpp:296-310`
 together with the inner per-method `IterativeSolver<OperType>::Mult` body
@@ -321,10 +321,8 @@ pending. The corresponding warm-vs-cold initial-residual computation in
 (`palace/linalg/iterative.cpp:252-285`, called at
 `iterative.cpp:566-567`, noted in Sub-pattern C) which uses a different
 internal control flow and is **not** affected by this asymmetry — the
-bug is local to `CgSolver<OperType>::Mult`. See OQ
-`cg-initial-residual-quirk-palace-bug-flag-lift-path` (narrowed to
-upstream-confirmation; the lift annotation now lives here in the firm
-artifact).
+bug is local to `CgSolver<OperType>::Mult`. Upstream confirmation that
+the asymmetry is unintentional is pending.
 
 Citations:
 - `palace/linalg/iterative.hpp:117-150` — `CgSolver<OperType>` declaration;
@@ -599,7 +597,7 @@ sister themes' workspace-mention-and-erase discipline.
 
 None.
 
-`ksp_solve` is the firm L1 form (cycle-007); the per-step inner-body
+`ksp_solve` is the firm L1 form; the per-step inner-body
 decomposition recovers `apply_linop` / `axpy` / `axpby` / `dot` / `nrm2`
 — all firm. The orthogonalisation, preconditioner-side, and
 initial-guess choices that GMRES / FGMRES expose at L0 are absorbed into
@@ -618,304 +616,62 @@ obstruction themes ([`minres-iteration`](./minres-iteration.md),
 operators because their L0 anchor is the *absence* of an implementation
 and the L1 form must be sketched against the literature.
 
-## Verified-against
-
-L0 evidence ranges (verified by direct read during this cycle):
-
-- `palace/linalg/ksp.cpp:296-310` — `BaseKspSolver<OperType>::Mult`
-  definition (sub-pattern A outer body).
-- `palace/linalg/ksp.cpp:299` — `BlockTimer bt(Timer::KSP, use_timer);`.
-- `palace/linalg/ksp.cpp:300` — `ksp->Mult(x, y);` inner dispatch.
-- `palace/linalg/ksp.cpp:301-307` — non-convergence `Mpi::Warning`.
-- `palace/linalg/ksp.cpp:308-309` — cumulative counter mutations.
-- `palace/linalg/ksp.cpp:34-58` — `ConfigureKrylovSolver` switch (the
-  three implemented arms + the three aborting arms; documents the
-  recognition-set boundary for applicability condition §1).
-- `palace/linalg/ksp.cpp:53-57` — `MFEM_ABORT` fall-through for the
-  three unimplemented enum cases.
-- `palace/linalg/ksp.hpp:29-72` — `BaseKspSolver<OperType>` class
-  declaration.
-- `palace/linalg/ksp.hpp:60-61` — `NumTotalMult()` /
-  `NumTotalMultIterations()` accessors (driver-side reads of the
-  cumulative counters).
-- `palace/linalg/ksp.hpp:74-75` — `KspSolver` / `ComplexKspSolver`
-  type aliases.
-- `palace/linalg/iterative.hpp:25-115` — `IterativeSolver<OperType>`
-  abstract base.
-- `palace/linalg/iterative.hpp:53-55` — `mutable` per-solve statistics
-  (`converged`, `initial_res`, `final_res`, `final_it`).
-- `palace/linalg/iterative.hpp:117-150` — `CgSolver<OperType>`
-  declaration.
-- `palace/linalg/iterative.hpp:144` — CG workspace `mutable VecType r,
-  z, p`.
-- `palace/linalg/iterative.hpp:152-217` — `GmresSolver<OperType>`
-  declaration.
-- `palace/linalg/iterative.hpp:190-194` — GMRES workspace.
-- `palace/linalg/iterative.hpp:180` — GMRES `max_dim` restart parameter.
-- `palace/linalg/iterative.hpp:184` — GMRES `gs_orthog`
-  orthogonalisation choice.
-- `palace/linalg/iterative.hpp:187` — GMRES `pc_side` preconditioner-side
-  choice.
-- `palace/linalg/iterative.hpp:219-275` — `FgmresSolver<OperType>`
-  declaration.
-- `palace/linalg/iterative.hpp:256` — FGMRES extra workspace `mutable
-  std::vector<VecType> Z`.
-- `palace/linalg/iterative.hpp:262-272` — FGMRES right-preconditioning
-  constraint.
-- `palace/linalg/iterative.cpp:21-32` — `CheckDot` helper (SPD-guard).
-- `palace/linalg/iterative.cpp:243-250` — `ApplyB` helper
-  (preconditioner-only apply with optional timing).
-- `palace/linalg/iterative.cpp:252-285` — `InitialResidual` helper
-  (initial-guess threading, `pc_side`-aware).
-- `palace/linalg/iterative.cpp:287-305` — `ApplyBA` helper
-  (combined preconditioner + operator apply).
-- `palace/linalg/iterative.cpp:307-325` — `OrthogonalizeIteration`
-  helper.
-- `palace/linalg/iterative.cpp:360-486` — `CgSolver<OperType>::Mult`
-  definition (sub-pattern B).
-- `palace/linalg/iterative.cpp:369-374` — CG workspace lazy-allocation.
-- `palace/linalg/iterative.cpp:377-386` — CG initial-guess threading.
-- `palace/linalg/iterative.cpp:418-419` — short-circuit on zero
-  initial residual.
-- `palace/linalg/iterative.cpp:427-464` — CG inner for-loop.
-- `palace/linalg/iterative.cpp:443` — CG per-step `A->Mult(p, z)`
-  (`apply_linop` invocation).
-- `palace/linalg/iterative.cpp:448-449` — CG per-step `x.Add(alpha, p)`
-  and `r.Add(-alpha, z)` axpy updates.
-- `palace/linalg/iterative.cpp:484-485` — CG `final_res = res;
-  final_it = it;` write-out.
-- `palace/linalg/iterative.cpp:488-516` — `GmresSolver::Initialize`.
-- `palace/linalg/iterative.cpp:518-541` — `GmresSolver::Update(j)`.
-- `palace/linalg/iterative.cpp:543-705` — `GmresSolver<OperType>::Mult`
-  definition (sub-pattern C).
-- `palace/linalg/iterative.cpp:566-567` — GMRES `InitialResidual`
-  invocation per restart cycle.
-- `palace/linalg/iterative.cpp:627` — GMRES per-step `ApplyBA`.
-- `palace/linalg/iterative.cpp:630` — GMRES per-step
-  `OrthogonalizeIteration`.
-- `palace/linalg/iterative.cpp:636-640` — GMRES per-step Givens
-  application.
-- `palace/linalg/iterative.cpp:703-704` — GMRES `final_res = beta;
-  final_it = it;` write-out.
-- `palace/linalg/iterative.cpp:707-731` — FGMRES `Initialize` /
-  `Update(j)` overrides.
-- `palace/linalg/iterative.cpp:733-870` — `FgmresSolver<OperType>::Mult`
-  definition (sub-pattern D).
+## Related themes
 
 L1 anchor:
 
-- `book/src/L1/ksp_solve.md` — the firm L1 operator that all four
+- [`L1/ksp_solve`](../L1/ksp_solve.md) — the firm L1 operator that all four
   sub-patterns lower from.
 
 Sibling lowering themes (recursed into by per-step body rewrites):
 
-- `book/src/L1-L0/apply-linop-mutation-rotation.md` — the per-step
-  `A->Mult` / `B->Mult` invocations rewrite by sub-patterns A / D of
-  this sister theme.
-- `book/src/L1-L0/axpby-mutation-rotation.md` — the per-step
+- [`apply-linop-mutation-rotation`](./apply-linop-mutation-rotation.md) — the
+  per-step `A->Mult` / `B->Mult` invocations.
+- [`axpby-mutation-rotation`](./axpby-mutation-rotation.md) — the per-step
   `x.Add(alpha, p)` / `r.Add(-alpha, z)` / `y.Add(s[k], V[k])` /
-  `linalg::AXPBY(...)` calls rewrite by this sister theme.
-- `book/src/L1-L0/axpbypcz-mutation-rotation.md` — composite per-step
-  updates that fuse to `AXPBYPCZ` rewrite by this sister theme.
+  `linalg::AXPBY(...)` calls.
+- [`axpbypcz-mutation-rotation`](./axpbypcz-mutation-rotation.md) — composite
+  per-step updates that fuse to `AXPBYPCZ`.
+- [`dot-mutation-rotation`](./dot-mutation-rotation.md) — the per-step
+  `linalg::Dot` reductions.
 
-L0 convention anchors:
+L0 convention anchors: `book/src/L0/kspsolver-base-class.md` (sub-pattern A
+outer body), `book/src/L0/linalg-iterative-file.md` (per-method bodies),
+`book/src/L0/ksp-factory-file.md` (recognition-set boundary, applicability
+§1), `book/src/L0/mutable-workspace-pattern.md` (workspace-erase convention),
+`book/src/L0/output-arg-vs-receiver.md` (destination-binding convention).
 
-- `book/src/L0/kspsolver-base-class.md` — the L0 class chapter for
-  `BaseKspSolver` (sub-pattern A outer body's anchor).
-- `book/src/L0/linalg-iterative-file.md` — the L0 file chapter for the
-  per-method bodies (sub-patterns B / C / D anchor).
-- `book/src/L0/ksp-factory-file.md` — the factory chapter that
-  enumerates the recognition-set boundary (applicability condition
-  §1).
-- `book/src/L0/mutable-workspace-pattern.md` — the workspace-erase L0
-  convention that this theme cites once and does not re-state per
-  sub-pattern.
-- `book/src/L0/output-arg-vs-receiver.md` — the receiver-vs-output-arg
-  L0 convention that the destination-binding rewrite cites once.
+Sibling obstruction themes (recognition-set boundary, out-of-scope per
+applicability §1): [`minres-iteration`](./minres-iteration.md) for
+`KrylovSolver::MINRES`, [`bicgstab-iteration`](./bicgstab-iteration.md) for
+`KrylovSolver::BICGSTAB`.
 
-Sibling obstruction themes (recognition-set boundary):
+## Coverage
 
-- `book/src/L1-L0/minres-iteration.md` — symmetric companion for
-  `KrylovSolver::MINRES` (out-of-scope per applicability §1).
-- `book/src/L1-L0/bicgstab-iteration.md` — symmetric companion for
-  `KrylovSolver::BICGSTAB` (out-of-scope per applicability §1).
-
-Coverage note: this theme cites the **three implemented `IterativeSolver`
-subclasses** (`CgSolver`, `GmresSolver`, `FgmresSolver`) at the inner
-sub-pattern level. The Palace corpus contains only these three
-implemented Krylov methods plus the three aborting enum cases; the cited
-set is exhaustive at the inner-method level. The outer
-`BaseKspSolver::Mult` is also the unique outer entry point (only one
-`BaseKspSolver` template class, two instantiations for `Operator` /
-`ComplexOperator`); the cited set is exhaustive at the outer-composition
-level. The sub-pattern recognition is **complete** for implemented-Krylov
-use within Palace. Verification of the recognition-set complement (the
-three aborting enum cases) is by the existing obstruction themes
+This theme cites the **three implemented `IterativeSolver` subclasses**
+(`CgSolver`, `GmresSolver`, `FgmresSolver`) at the inner sub-pattern level.
+The Palace corpus contains only these three implemented Krylov methods plus
+the three aborting enum cases; the cited set is exhaustive at the inner-method
+level. The outer `BaseKspSolver::Mult` is also the unique outer entry point
+(only one `BaseKspSolver` template class, two instantiations for `Operator` /
+`ComplexOperator`); the cited set is exhaustive at the outer-composition level.
+The sub-pattern recognition is **complete** for implemented-Krylov use within
+Palace; the recognition-set complement (the three aborting enum cases) is
+covered by the obstruction themes
 ([`minres-iteration`](./minres-iteration.md),
-[`bicgstab-iteration`](./bicgstab-iteration.md)). Full per-step
-sub-rewrite verification against the inner bodies is deferred to a
-later `lowering-verifier` audit; the sister-theme citation chains
-(`apply-linop-mutation-rotation`, `axpby-mutation-rotation`,
-`axpbypcz-mutation-rotation`) each carry their own coverage notes for
-the per-step decomposition.
+[`bicgstab-iteration`](./bicgstab-iteration.md)).
+
+Additional cited L0 ranges:
+
+- `palace/linalg/ksp.cpp:34-58` — the full `ConfigureKrylovSolver` switch (the three implemented
+  arms CG/GMRES/FGMRES + the three aborting arms; the recognition-set boundary for applicability §1).
+- `palace/linalg/ksp.hpp:29-72` — `BaseKspSolver<OperType>` class declaration.
+- `palace/linalg/ksp.hpp:74-75` — `KspSolver` / `ComplexKspSolver` type aliases.
+- `palace/linalg/iterative.hpp:25-115` — `IterativeSolver<OperType>` abstract base.
+- `palace/linalg/iterative.cpp:243-250` — `ApplyB` helper (preconditioner-only apply with
+  optional timing).
+
 
 ## Status
 
-`firm` — promoted by the cycle-100 `lowering-verifier` audit, which
-discharged the previously-deferred per-step sub-rewrite verification gate.
-The four sub-pattern recognition rules are confirmed: the outer-composition
-rewrite at `BaseKspSolver::Mult` (`palace/linalg/ksp.cpp:296-310`) is a
-syntactic identity on a fully-read closure (all four surface concerns —
-timer-erase, warning-to-structured-field, counter-to-driver-accumulator,
-destination-binding — line-exact and each mapped to an established absorption
-rule), and the three inner per-method bodies (CG `iterative.cpp:360-486`,
-GMRES `:543-705`, FGMRES `:733-870`) are cited at section level with the
-per-step `apply_linop` / `axpy` / `dot` invocations cross-checked
-call-by-call against the **firm** sister themes
-([`axpby-mutation-rotation`](./axpby-mutation-rotation.md),
-[`dot-mutation-rotation`](./dot-mutation-rotation.md)) and the
-[`apply-linop-mutation-rotation`](./apply-linop-mutation-rotation.md)
-per-step recognition rule. Promotion rests on the **firm-on-positive-
-structure / syntactic-identity escape**: the structural rewrite is a set of
-syntactic identities on fully-specified positive source, so the absence of a
-dedicated end-to-end KSP unit test (which would gate convergence *semantics*,
-not the structural rewrite this theme claims) does not gate the firm verdict.
-The unimplemented-Krylov boundary (MINRES / BICGSTAB / DEFAULT →
-`MFEM_ABORT` at `palace/linalg/ksp.cpp:56`) stays documented as applicability
-condition §1 with the sibling obstruction themes
-([`minres-iteration`](./minres-iteration.md),
-[`bicgstab-iteration`](./bicgstab-iteration.md)) carrying their own rough-in
-operators; it remains correctly out of scope. The `cg-initial-residual-quirk`
-(`(b·b)^{1/4}` Norml2-vs-Dot asymmetry, recognition note above) rides in as a
-documented likely-Palace-bug recognition rule with upstream confirmation
-pending; it does not downgrade the firm status.
-
-verified_against:
-  - citation: palace/linalg/ksp.cpp:296-310
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: BaseKspSolver<OperType>::Mult definition; four surface concerns visible (BlockTimer at 299, inner ksp->Mult at 300, Mpi::Warning block at 301-307, counter updates at 308-309). Matches sub-pattern A rewrite.
-  - citation: palace/linalg/ksp.cpp:299
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: BlockTimer bt(Timer::KSP, use_timer); RAII timer scope spanning the inner ksp->Mult call. Transparent instrumentation; erases at L1.
-  - citation: palace/linalg/ksp.cpp:300
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: ksp->Mult(x, y); inner per-method dispatch into one of CgSolver / GmresSolver / FgmresSolver. Argument-name swap (x is the RHS, y is the destination) noted on the L0 anchor chapter.
-  - citation: palace/linalg/ksp.cpp:301-307
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: Non-convergence Mpi::Warning side-channel. Formatted residual-ratio warning; emits to Palace MPI-aware logger; returns iterate regardless. L1 rewrite is to result.converged structured field.
-  - citation: palace/linalg/ksp.cpp:308-309
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: ksp_mult++; ksp_mult_it += ksp->GetNumIterations(); cumulative-counter mutations. L1 rewrite is to driver-side accumulator over per-call result.iterations.
-  - citation: palace/linalg/ksp.cpp:34-58
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: ConfigureKrylovSolver switch; documents the three implemented arms (CG, GMRES, FGMRES) and the three aborting arms (MINRES, BICGSTAB, DEFAULT). Recognition-set boundary for applicability §1.
-  - citation: palace/linalg/ksp.cpp:53-57
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: 'case MINRES: case BICGSTAB: case DEFAULT: MFEM_ABORT(...); three-case fall-through. Unimplemented enum tags abort at factory time; theme''s recognition set excludes these.'
-  - citation: palace/linalg/iterative.hpp:53-55
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: mutable bool converged; mutable double initial_res, final_res; mutable int final_it; — the four L0 slots whose values are copied into L1 SolveResult fields by the rewrite.
-  - citation: palace/linalg/iterative.hpp:144
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: mutable VecType r, z, p; CG workspace. Lazy-allocated on first Mult; erased at L1 per mutable-workspace-pattern.
-  - citation: palace/linalg/iterative.hpp:190-194
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: GMRES workspace (V Arnoldi basis, r residual, H Hessenberg, s/sn/cs Givens state). Erased at L1.
-  - citation: palace/linalg/iterative.hpp:256
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: mutable std::vector<VecType> Z; FGMRES extra workspace for flexible-preconditioner basis.
-  - citation: palace/linalg/iterative.cpp:360-486
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: CgSolver<OperType>::Mult definition. Sub-pattern B inner body. Workspace allocation (369-374), initial-guess threading (377-386), inner for-loop (427-464), final-state write-out (484-485) all visible.
-  - citation: palace/linalg/iterative.cpp:369-374
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: r.SetSize(A->Height()); z.SetSize(...); p.SetSize(...); + UseDevice(true) for each — canonical lazy-allocation + GPU-residency pattern.
-  - citation: palace/linalg/iterative.cpp:377-386
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: 'if (this->initial_guess) branch: A->Mult(x, r); linalg::AXPBY(1.0, b, -1.0, r); else branch: r = b; x = 0.0; — direct evidence of the initial-guess-policy rewrite.'
-  - citation: palace/linalg/iterative.cpp:418-419
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: eps = std::max(rel_tol * initial_res, abs_tol); converged = (res < eps); — zero-residual short-circuit supports L1 law 2 (zero-RHS-zero-solution).
-  - citation: palace/linalg/iterative.cpp:443
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: A->Mult(p, z); per-step apply_linop invocation. Rewrites by apply-linop-mutation-rotation sub-pattern A.
-  - citation: palace/linalg/iterative.cpp:448-449
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: x.Add(alpha, p); r.Add(-alpha, z); per-step axpy updates. Rewrite by axpby-mutation-rotation sub-patterns A (general alpha) and C (literal -alpha as Subtract-shape).
-  - citation: palace/linalg/iterative.cpp:484-485
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: final_res = res; final_it = it; — write-out into mutable IterativeSolver base fields read post-call via GetFinalRes() / GetNumIterations().
-  - citation: palace/linalg/iterative.cpp:543-705
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: GmresSolver<OperType>::Mult definition. Sub-pattern C inner body. Outer restart loop (563-683), inner Arnoldi loop (615-650), per-restart InitialResidual (566-567), Givens machinery (636-640).
-  - citation: palace/linalg/iterative.cpp:733-870
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: FgmresSolver<OperType>::Mult definition. Sub-pattern D inner body. Structurally inherits GMRES with the additional Z basis tracking.
-  - citation: palace/linalg/iterative.cpp:252-285
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: InitialResidual helper — factored-out warm-vs-cold initial-residual computation, pc_side-aware. Shared by GMRES and FGMRES sub-patterns.
-  - citation: palace/linalg/iterative.cpp:21-32
-    verdict: supports
-    audited_at: 2026-05-27T17:32:55Z
-    note: CheckDot helper; SPD-guard for CG. Load-bearing algebraic precondition enforcement; not transparent. L1 opaque type Solver[A] elides the SPD requirement at signature level but the construction-time choice carries the obligation.
-  - citation: palace/linalg/iterative.cpp:440
-    verdict: supports
-    audited_at: 2026-06-05T04:48:40Z
-    note: linalg::AXPBY(ScalarType(1.0), z, beta / beta_prev, p); per-step CG search-direction update. Rewrites by axpby-mutation-rotation free-function AXPBY form (firm). Line-exact.
-  - citation: palace/linalg/iterative.cpp:443
-    verdict: supports
-    audited_at: 2026-06-05T04:48:40Z
-    note: A->Mult(p, z); per-step apply_linop. Rewrites by apply-linop-mutation-rotation sub-pattern A; one-line syntactic identity on a LinearOperator apply. Line-exact (re-confirmed cycle-100).
-  - citation: palace/linalg/iterative.cpp:444
-    verdict: supports
-    audited_at: 2026-06-05T04:48:40Z
-    note: denom = linalg::Dot(comm, z, p); per-step dot. Rewrites by dot-mutation-rotation sub-pattern A (firm); value-real for SPD CG. Line-exact.
-  - citation: palace/linalg/iterative.cpp:460
-    verdict: supports
-    audited_at: 2026-06-05T04:48:40Z
-    note: beta = linalg::Dot(comm, z, r); per-step residual dot. Rewrites by dot-mutation-rotation sub-pattern A (firm). Line-exact; dot theme already cites the sibling iterative.cpp:395 consumer.
-  - citation: palace/linalg/iterative.cpp:463
-    verdict: supports
-    audited_at: 2026-06-05T04:48:40Z
-    note: converged = (res < eps); per-step scalar convergence test. The mutable converged field write the L1 SolveResult.converged reads post-call.
-  - citation: palace/linalg/iterative.cpp:627
-    verdict: supports
-    audited_at: 2026-06-05T04:48:40Z
-    note: ApplyBA(pc_side, A, B, V[j], w, r, ...); GMRES per-step combined preconditioner+operator apply. Composes apply-linop + preconditioner apply; pc_side-aware. Line-exact.
-  - citation: palace/linalg/iterative.cpp:630
-    verdict: supports
-    audited_at: 2026-06-05T04:48:40Z
-    note: OrthogonalizeIteration(gs_orthog, comm, V, w, Hj, j); GMRES per-step MGS/CGS/CGS2 dispatch. Delegates to the orthogonalize theme (firm). Line-exact.
-  - citation: palace/linalg/iterative.cpp:636-640
-    verdict: supports
-    audited_at: 2026-06-05T04:48:40Z
-    note: ApplyPlaneRotation replay loop + GeneratePlaneRotation + two ApplyPlaneRotation; GMRES Givens machinery (subject of firm siblings ls-update-column / back-solve themes). Range line-exact.
-  - citation: palace/linalg/iterative.cpp:703-704
-    verdict: supports
-    audited_at: 2026-06-05T04:48:40Z
-    note: final_res = beta; final_it = it; GMRES write-out into mutable IterativeSolver base fields (beta is the rotated-RHS residual proxy). Line-exact.
-  - citation: palace/linalg/ksp.cpp:310
-    verdict: supports
-    audited_at: 2026-06-05T04:48:40Z
-    note: close-brace END bound of BaseKspSolver<OperType>::Mult; confirmed by direct read with cushion (lines 294-313). No codemap read-range-plus-one drift on this boundary.
+`firm` — a syntactic-identity structural rewrite positively anchored at L0.

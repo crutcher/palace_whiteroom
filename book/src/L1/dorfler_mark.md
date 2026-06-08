@@ -5,11 +5,8 @@ rank: firm
 edges:
   depends-on:
     # A firm L1 operator's blocking dependencies are its POSITIVE L0 SOURCE (rank-terminal ground
-    # truth) via cites-evidence, plus the L1>L0 lowering theme via `lowers-to` (the c108 §5 L1-op→theme
-    # grounding convention; precedent: set_subvector_zero.md). The `firm` rank rests on the read-in-full
-    # Palace-authored ComputeDorflerThreshold + MarkedElements bodies below; well-foundedness
-    # rank(u) ≤ rank(v) holds against rank-terminal evidence AND against the amr theme (rank(op=3) ≤
-    # rank(theme=3) once the theme firm-flips this cycle with its two L1 endpoints).
+    # truth) via cites-evidence, plus the L1>L0 lowering theme via `lowers-to`. The `firm` rank rests
+    # on the read-in-full Palace-authored ComputeDorflerThreshold + MarkedElements bodies below.
     - kind: cites-evidence
       target: palace/utils/dorfler.cpp:14-171        # ComputeDorflerThreshold: bulk-marking math (read single-rank)
     - kind: cites-evidence
@@ -19,7 +16,7 @@ edges:
     - kind: cites-evidence
       target: palace/utils/configfile.hpp:97-119      # RefinementData: update_fraction θ (default 0.7) config home
     - kind: lowers-to
-      target: L1-L0/amr-estimate-mark-refine          # the L1>L0 lowering theme (sub-pattern B is the mark verb); firm-flips this cycle
+      target: L1-L0/amr-estimate-mark-refine          # the L1>L0 lowering theme (sub-pattern B is the mark verb)
   reference:
     - L1/flux_recovery_estimate                        # the AMR estimate verb (sibling; produces the indicator vector this verb marks)
     - L1/nrm2                                           # the indicator-vector reduction the loop also computes (Norml2); sibling, not a dep
@@ -274,49 +271,11 @@ largest set making up θ of the *coarsening opportunities*); it is a distinct ve
 here as the sibling shape, flagged in Open questions (`dorfler-coarsening-threshold-sibling-verb`) as a
 future AMR-cohort harvest, not in this one-operator scope.
 
-## Status
-
-`firm` — the operator's structure is read directly from **positive** Palace source: the
-`ComputeDorflerThreshold` body read in full (`palace/utils/dorfler.cpp:14-171`), the `MarkedElements`
-threshold→index-set collection (`palace/drivers/basesolver.cpp:103-115`), the mark-stage caller
-composition (`:220-233`), and the θ config home (`palace/utils/configfile.hpp:97-119`). The signature's
-shape (fraction + per-element indicator vector → element index set) matches the body exactly; the
-algebraic laws (coverage, minimality, θ-monotonicity, over-mark tie-break, permutation equivariance,
-positive-scaling invariance) are properties of the Dörfler bulk-marking criterion read off the sorted
-prefix-sum + lower-bound pivot, modulo the explicitly-recorded non-additivity / no-θ-additivity /
-no-reduction-order non-laws.
-
-This is the **firm-on-positive-structure** decision, exactly as for the BLAS-1 elementwise leaves
-([`reciprocal`](./reciprocal.md), [`set_subvector_zero`](./set_subvector_zero.md)): every law is a
-**syntactic identity on fully-specified positive source** (set-selection / threshold-pivot facts about
-a sorted prefix sum), not a convergence or numerical-tolerance fact. No dedicated `dorfler.cpp` unit
-test exists in `reference/palace/test/unit/` (the marking is exercised only indirectly through the AMR
-integration path) — but **a missing test does not gate syntactic-identity laws** (the `apply_linop` /
-`reciprocal` / `set_subvector_zero` firm-on-positive-structure situation, not the `eigsolve`-convergence
-situation): the marking laws do not depend on iteration or convergence, so the absent test does not
-reduce law-confidence. Hence `firm`, not `rough-in (test-coverage-bounded)`. (The over-mark tie-break
-post-condition is *itself* a positive in-source assertion, `MFEM_VERIFY` at `:167-169`, which is
-stronger than a test — the code aborts if the predicate fails.)
-
-Well-foundedness: the `depends-on` edges are (a) `cites-evidence` edges to the **positive L0 source**
-(`dorfler.cpp:14-171`, `basesolver.cpp:103-115`, `:220-233`, `configfile.hpp:97-119`), rank-terminal
-ground truth, and (b) a `lowers-to` edge to the L1>L0 lowering theme
-[`amr-estimate-mark-refine`](../L1-L0/amr-estimate-mark-refine.md) (the c108 §5 L1-op→theme grounding
-convention; precedent `set_subvector_zero.md`). The theme firm-flips this cycle once both its L1
-endpoints (this verb + D1's `flux_recovery_estimate`) are firm (well-foundedness: a theme is at most as
-resolved as its least-resolved endpoint, scheme §5), so after this cycle `rank(op=3) ≤ rank(theme=3)`
-holds; the verb's firmness *grounds* on the positive L0 read (not on the theme), and the `lowers-to`
-edge routes liveness down to the theme.
-
-Resolves 1 of the 6 `unresolved_depends_on_targets` (the `L1/dorfler_mark` endpoint of
-`amr-estimate-mark-refine`). Discharges the `dorfler_mark` half of OQ
-`amr-estimate-mark-refine-theme-firmness-gate`.
-
 ## Downward to L0
 
 The lowering is the [`amr-estimate-mark-refine`](../L1-L0/amr-estimate-mark-refine.md) L1>L0 theme
 (sub-pattern B — mark; this verb's firmness rests on the positive L0 read, cited as `cites-evidence`
-deps, with the theme carried as a `lowers-to` `depends-on` edge per the c108 §5 convention). It
+deps, with the theme carried as a `lowers-to` `depends-on` edge). It
 narrates how this pure set-selection lowers into Palace's imperative
 `ComputeDorflerThreshold` ▷ `MarkedElements`: the in-place sort/square/partial-sum on the copied
 estimate vector (`dorfler.cpp:19-31`), the lower-bound pivot (`:36`), the threshold-comparison
@@ -343,68 +302,22 @@ that is part of the deferred concern, not this verb's algebra.
   (threshold→count/error) `:40-56`, the single-rank-degenerate per-rank min/max `:64-67`, the
   bisection loop `:100-158`, the tolerances + termination `:123-127`, the **over-mark tie-break**
   `error_threshold = min_threshold` `:163` with the explanatory comment `:160-162`, the post-condition
-  `MFEM_VERIFY(error_marked >= fraction * error.total, ...)` `:167-169`, return `:170`. On-disk read
-  (codemap `read_range` drifts +1/+3 on this file's comment/brace boundaries — the c121 producer note;
-  line numbers above are the **on-disk** values, confirmed by direct `Read` of
-  `reference/palace/palace/utils/dorfler.cpp`).
+  `MFEM_VERIFY(error_marked >= fraction * error.total, ...)` `:167-169`, return `:170`. Line numbers
+  above are the on-disk values.
 - `palace/drivers/basesolver.cpp:103-115` — `MarkedElements(const Vector &e, double threshold)`: the
   `ind.Reserve(e.Size())` (`:106`), the `for (i ...) if (e[i] >= threshold) ind.Append(i)` loop
-  (`:107-113`, the threshold→index-set collection), `return ind` (`:114`). On-disk confirmed.
+  (`:107-113`, the threshold→index-set collection), `return ind` (`:114`).
 - `palace/drivers/basesolver.cpp:220-233` — the mark-stage caller: the `marked_elements` lambda calling
   `utils::ComputeDorflerThreshold(comm, indicators.Local(), refinement.update_fraction)` (`:223-224`)
   then `MarkedElements(indicators.Local(), threshold)` (`:225`) — the `dorfler_mark` composition. The
-  `θ = refinement.update_fraction` binding (`:224`). On-disk confirmed.
+  `θ = refinement.update_fraction` binding (`:224`).
 - `palace/utils/configfile.hpp:97-119` — `RefinementData`, the AMR config record; `update_fraction =
   0.7` (`:119`) with the Dörfler comment "The set of marked elements is the minimum set that contains
-  update_fraction of the total error" (`:117-118`). The θ config home. On-disk confirmed.
+  update_fraction of the total error" (`:117-118`). The θ config home.
 - `palace/utils/dorfler.hpp:21-29` — the `ComputeDorflerThreshold` spec comment "the smallest set to
   achieve sum_{K_E} e² >= fraction * sum e²" (`:21-25`) + the Dörfler 1996 citation (`:26-27`) + the
-  declaration (`:28-29`). The criterion stated in Palace's own words. On-disk confirmed.
-- `book/src/L1-L0/amr-estimate-mark-refine.md` — the L1>L0 lowering theme (sub-pattern B is this verb);
-  firm-flips this cycle with its two L1 endpoints. The downward home.
-- `book/src/L1/flux_recovery_estimate.md` — the AMR estimate verb (sibling D1 this cycle); produces the
+  declaration (`:28-29`). The criterion stated in Palace's own words.
+- `book/src/L1-L0/amr-estimate-mark-refine.md` — the L1>L0 lowering theme (sub-pattern B is this verb).
+  The downward home.
+- `book/src/L1/flux_recovery_estimate.md` — the AMR estimate verb (sibling); produces the
   indicator vector this verb marks.
-
-```yaml
-verified_against:
-  - citation: palace/utils/dorfler.cpp:14
-    verdict: supports
-    audited_at: 2026-06-07T071941Z
-    note: ComputeDorflerThreshold(MPI_Comm, const Vector &e, double fraction) signature; on-disk Read confirmed (codemap +1 drift bypassed).
-  - citation: palace/utils/dorfler.cpp:20
-    verdict: supports
-    audited_at: 2026-06-07T071941Z
-    note: std::sort(estimates...) ascending sort; on-disk line 20.
-  - citation: palace/utils/dorfler.cpp:28
-    verdict: supports
-    audited_at: 2026-06-07T071941Z
-    note: std::partial_sum cumulative squared-error prefix sum; on-disk line 28.
-  - citation: palace/utils/dorfler.cpp:36
-    verdict: supports
-    audited_at: 2026-06-07T071941Z
-    note: lower_bound pivot on (1-fraction)*local_total; the threshold-finding pivot AND the single-rank over-mark over-coverage mechanism for law 4 (selects the largest E still achieving >=theta coverage); on-disk line 36.
-  - citation: palace/utils/dorfler.cpp:163
-    verdict: supports
-    audited_at: 2026-06-07T071941Z
-    note: error_threshold = min_threshold — the MULTI-RANK over-mark bracket-selection tie-break; comment :160-162 "rather over mark than under mark"; degenerates to identity single-rank (min==max==error_threshold, :64-67) returning the :36 pivot; the single-rank over-coverage mechanism is the :36 lower_bound; on-disk line 163.
-  - citation: palace/utils/dorfler.cpp:167
-    verdict: supports
-    audited_at: 2026-06-07T071941Z
-    note: MFEM_VERIFY(error_marked >= fraction * error.total) — the coverage post-condition (law 1); on-disk line 167.
-  - citation: palace/drivers/basesolver.cpp:103
-    verdict: supports
-    audited_at: 2026-06-07T071941Z
-    note: MarkedElements(const Vector &e, double threshold) — threshold→index-set; the if(e[i]>=threshold) ind.Append loop :109-112; on-disk line 103.
-  - citation: palace/drivers/basesolver.cpp:223
-    verdict: supports
-    audited_at: 2026-06-07T071941Z
-    note: ComputeDorflerThreshold(comm, indicators.Local(), refinement.update_fraction) ▷ MarkedElements — the dorfler_mark composition + θ binding; on-disk lines 223-225.
-  - citation: palace/utils/configfile.hpp:119
-    verdict: supports
-    audited_at: 2026-06-07T071941Z
-    note: update_fraction = 0.7 — the Dörfler θ config home in RefinementData; on-disk line 119.
-  - citation: book/src/L1-L0/amr-estimate-mark-refine.md
-    verdict: positive-cross-reference
-    audited_at: 2026-06-07T071941Z
-    note: the L1>L0 lowering theme; sub-pattern B is the mark verb; firm-flips this cycle with its two L1 endpoints.
-```

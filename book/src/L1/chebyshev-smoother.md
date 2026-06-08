@@ -249,34 +249,6 @@ does not surface at the smoother-action signature. The **degree** (`order`) and
 variant axes — they parameterise one operator, they do not select among
 operators.
 
-## Status
-
-`firm` — the signature is a direct transcription of the `Mult2` member-method
-family on both `ChebyshevSmoother` and `ChebyshevSmoother1stKind`, parameterised
-by polynomial-kind and element-type; the algebraic laws are closed-form
-identities readable straight off the source recurrence (no
-literature-inference). The constructed-operator gate framing matches the firm
-[`ksp_solve`](./ksp_solve.md) precedent. **Caveat (not a status reduction)**:
-there is no dedicated unit test under `reference/palace/test/unit/` — behaviour
-is exercised only through multigrid integration (`gmg.cpp`,
-`distrelaxation.cpp`). Because every L1 law is a syntactic identity on
-fully-specified source code rather than a literature-inferred property, the
-absence of a dedicated test does not reduce confidence to rough-in (contrast
-[`eigsolve`](./eigsolve.md), where literature-anchored convergence semantics
-*did* warrant rough-in pending coverage).
-
-> **Firm-promotion ratified (cycle-012 integrator).** The
-> firm-without-dedicated-test decision was surfaced for integrator ratification
-> and is ratified **keep-firm**. The decision deviates from the `eigsolve`
-> constructed-operator-gate precedent (which landed rough-in), but the deviation
-> is justified: every chebyshev law is a syntactic identity on fully-specified
-> C++ source (verified exact by the critic), whereas `eigsolve`'s rough-in was
-> driven by *literature-inferred convergence semantics* the source alone does
-> not pin down. Chebyshev is additionally a bounded fixed-degree polynomial
-> action with closed-form coefficients and live integration coverage
-> (`gmg.cpp`, `distrelaxation.cpp`), not a composite solve-to-convergence with
-> constructed sum-type status — so the `eigsolve` precedent does not bind.
-
 ## L1 vs L0 distinction
 
 - **L0**: two template classes (`ChebyshevSmoother<OperType>`,
@@ -327,8 +299,7 @@ absence of a dedicated test does not reduce confidence to rough-in (contrast
   Fischer 2022, eq. 2.24); `theta = 0.5·(λ_max+λ_min)`, `delta =
   0.5·(λ_max−λ_min)`.
 - `palace/linalg/chebyshev.cpp:261-293` — 1st-kind `Mult2` body: identical sweep
-  scaffold; `ApplyOrder0(1/theta, dinv, r, d)`; `rhop = delta/theta` (NOTE: the
-  slice §L2 line 160 claims `delta/(2·theta)` — the **source is `delta/theta`**);
+  scaffold; `ApplyOrder0(1/theta, dinv, r, d)`; `rhop = delta/theta`;
   the `k`-loop with `rho = 1/(2·theta/delta − rhop)`, `sd = rho·rhop`, `sr =
   2·rho/delta`, `rhop = rho`.
 - `palace/linalg/chebyshev.cpp:295-299` — element-type instantiations
@@ -338,9 +309,8 @@ absence of a dedicated test does not reduce confidence to rough-in (contrast
   (1st) per `cheby_4th_kind`.
 - `palace/linalg/distrelaxation.cpp:21-36` — consumer: distributive-relaxation
   smoother constructs the same; `B_G->SetInitialGuess(false)` (law 2 use site).
-- Provenance: the cycle-001-era L1 content this entry promotes was lifted from the
-  Phase-1 chebyshev §L1 (439-line form), reduced cycle-015 once its material became
-  authoritative here (with the `rho_0` correction noted above) and deleted cycle-099
-  (graded-stack P2; git history is the record per CLAUDE.md §Methodology invariants
-  "Phase 1 corpus was lifted and deleted").
 - `book/src/concepts/chebyshev-iteration.md` — cross-cutting prose treatment.
+
+## Status
+
+`firm` — the signature is a direct transcription of the `Mult2` member method.

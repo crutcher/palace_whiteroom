@@ -104,14 +104,13 @@ The pattern is **not thread-safe across the `mutable` member**. Two threads invo
 ## Notes for higher layers
 
 - **L1 view: erase the workspace.** The `mutable` member appears in *no* L1 form. L1 operators are pure functions; intermediate values are named via let-binding or composed via function application. The L1>L0 lowering theme records the workspace mention as a transparent allocation pattern, **not** as a sub-pattern variant.
-- **L1>L0 lowering themes acknowledge the workspace once.** The existing [`apply-linop-mutation-rotation`](../L1-L0/apply-linop-mutation-rotation.md) theme (cycle-005) cites the `BaseProductOperator::Mult` body's `B.Mult(x, z); A.Mult(z, y)` shape and records the workspace `z` as L0-only state separating the two sub-applies. The general L1>L0 rewrite rule: **workspace members named by the L0 body but not appearing in the L1 form are transparent allocations**; they don't constitute separate sub-patterns.
-- **Cross-cutting verification.** A future `lowering-verifier` audit (see open question `apply-linop-workspace-tensor-reading-at-L0`, cycle-005) should confirm that the workspace-mention-and-erase rewrite rule is consistently applied across all L1>L0 themes whose L0 forms use `mutable` workspaces.
-- **The `mutable` statistics on `IterativeSolver` are a distinct case** — they are *outputs* of the operation, not workspace. The L1 form of `ksp_solve` (anticipated cycle-007+) will need to decide whether the convergence-status output is part of the return value or a side channel; see the cycle-005 entry `solver-as-operator` for the algebraic discussion.
+- **L1>L0 lowering themes acknowledge the workspace once.** The [`apply-linop-mutation-rotation`](../L1-L0/apply-linop-mutation-rotation.md) theme cites the `BaseProductOperator::Mult` body's `B.Mult(x, z); A.Mult(z, y)` shape and records the workspace `z` as L0-only state separating the two sub-applies. The general L1>L0 rewrite rule: **workspace members named by the L0 body but not appearing in the L1 form are transparent allocations**; they don't constitute separate sub-patterns.
+- **The `mutable` statistics on `IterativeSolver` are a distinct case** — they are *outputs* of the operation, not workspace. The L1 form of `ksp_solve` decides whether the convergence-status output is part of the return value or a side channel.
 - **GPU-device residency** (`UseDevice(true)` calls accompanying every workspace `SetSize`) is below the L1 abstraction. At L1 vectors live in an unspecified storage; the device-vs-host placement is part of the lowering to MFEM operations, not part of the algebraic semantics.
 
 ## Referenced from
 
-*Forward-declared. The L1>L0 lowering themes covering operator-composition-shaped L0 forms will cite this chapter rather than re-stating the lazy-allocation discipline per theme.*
+The L1>L0 lowering themes covering operator-composition-shaped L0 forms cite this chapter rather than re-stating the lazy-allocation discipline per theme.
 
 - [`L1-L0/apply-linop-mutation-rotation`](../L1-L0/apply-linop-mutation-rotation.md) — explicitly mentions the workspace `z` in the `BaseProductOperator::Mult` discussion; the workspace-mention-and-erase rewrite is one of the lowering rules this chapter formalises.
 - [`L0/apply-linop-overload-set`](./apply-linop-overload-set.md) — names the concrete operator subclasses (`SumOperator`, `BaseProductOperator`, `ComplexWrapperOperator`) whose workspaces are Category-1 instances.

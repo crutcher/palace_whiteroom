@@ -16,33 +16,13 @@ extended deflated `(n+k)` system — the solve sibling of
 [`nleps-deflated-residual-mutation-rotation`](./nleps-deflated-residual-mutation-rotation.md)
 (the residual *applies* the extended deflated operator; this solve *inverts* it). When `k = 0`
 it degenerates to one plain big-space [`ksp_solve`](../L1/ksp_solve.md) of `b1`. This entry
-completes the NLEPS L1>L0 lowering cohort (with the cycle-023
+completes the NLEPS L1>L0 lowering cohort (with
 [`lu-solve-mutation-rotation`](./lu-solve-mutation-rotation.md) and
 [`nleps-deflated-residual-mutation-rotation`](./nleps-deflated-residual-mutation-rotation.md)).
 
 ## Slug
 
 `nleps-deflated-solve-mutation-rotation`
-
-## Status
-
-`firm` — every constituent of the rewrite is read from a **positive** source site (the
-`deflated_solve` lambda, `palace/linalg/nleps.cpp:504-537`, with the source's own block-system +
-block-elimination comment at `:508-513`). The big-space block is `opInv->Mult(b1, x1)`
-(`:514`), the `k = 0` reduction is the `if (k == 0) { return; }` guard (`:515-518`), the
-coordinate RHS is a positive `linalg::Dot` loop (`:519-523`), the Gram `XᴴX` is a positive
-`linalg::Dot` double-loop (`:524-531`), the block `S = λI − H` (`:532`), the three
-`fullPivLu().solve` solves (`:533-535`), the back-projection `MatVecMult(X, ·)` (`:535`), and
-the final `linalg::AXPY(-1.0, …)` (`:536`). The rewrite is a **structural** syntactic expansion
-— no sub-part is materialized from negative anchors, so there is no `partly-constructive`
-caveat. Every leaf is firm L1/L2 vocabulary read from a positive site
-([`ksp_solve`](../L1/ksp_solve.md), [`lu_solve`](../L1/lu_solve.md), [`dot`](../L1/dot.md),
-[`axpy`](../L1/axpy.md), [`linear_combination`](../L2/linear_combination.md)). This matches the
-firm-on-positive-structure status of the operator this theme lowers
-(`book/src/L1/nleps_deflated_solve.md:141`) and of its residual sibling
-(`book/src/L1-L0/nleps-deflated-residual-mutation-rotation.md:23`): the laws are syntactic
-identities on fully-specified positive source, so the NLEPS test-coverage absence (NLEPS has
-zero `test/unit/**` hits) does not gate the firm decision.
 
 ## L1 form (LHS)
 
@@ -212,7 +192,7 @@ Five firm-leaf recognitions:
    at `:610-611`, stored at `X[k] = v` at `:615`, no Gram-Schmidt), the Schur block carries the
    **full Gram** `XᴴX`, not a trivial identity. This is the L2 [`gram`](../L2/gram.md)
    combinator's positive site, and the load-bearing fact that keeps the oblique `deflate`
-   distinct from `orthogonalize` (the cycle-021/022 over-unification guard).
+   distinct from `orthogonalize` (the over-unification guard).
 3. **Block `S = λI − H` (`:532`)** — `S = eig_opInv * Identity(k,k) - H` materializes the `k×k`
    linearization block as a dense `Eigen::MatrixXcd` (λ = the lagged `eig_opInv`; `H` the
    redundantly-stored Rayleigh block).
@@ -316,16 +296,15 @@ block elimination of the `2×2` extended system whose top block-row is `[T(σ), 
 block-row is `[Xᴴ, B(σ)]` (the source's own statement, `:508-513`). It is **not** the
 bare-Galerkin `(XᴴX)⁻¹` projection.
 
-This matters for the cycle-022 L2 [`deflate`](../L2/deflate.md) combinator's promotion gate (OQ
-`nleps-deflated-solve-firm-landed-deflate-promotion-gate-stays-open`,
-`scaffolding/open-questions.md:774`). The Gram `XᴴX` is built here **positively** (`:529`) but
-is **never solved alone** — at `:533` it is immediately overwritten into the Schur complement
-`SS = −S⁻¹·(XᴴX)`; only `SS⁻¹` (`:534`) and `S⁻¹` (`:533`, `:535`) are ever applied. The bare
-`(XᴴX)⁻¹` Galerkin core (the `S = I` degenerate case) is **absent** at this site. So the L2
-`deflate` entry's Schur-form pipeline is firm-on-this-site, but its bare-Galerkin-core
-sub-part's promotion still gates on a positive bare-Gram-solve site **outside** `nleps.cpp`
-(ROM / eigensolver-locking). This theme **confirms** (does not change) the cycle-022 `deflate`
-`partly-constructive` verdict and does **not** touch the L2 `deflate` entry (out of scope).
+This matters for the L2 [`deflate`](../L2/deflate.md) combinator's promotion gate. The Gram
+`XᴴX` is built here **positively** (`:529`) but is **never solved alone** — at `:533` it is
+immediately overwritten into the Schur complement `SS = −S⁻¹·(XᴴX)`; only `SS⁻¹` (`:534`) and
+`S⁻¹` (`:533`, `:535`) are ever applied. The bare `(XᴴX)⁻¹` Galerkin core (the `S = I`
+degenerate case) is **absent** at this site. So the L2 `deflate` entry's Schur-form pipeline is
+firm-on-this-site, but its bare-Galerkin-core sub-part's promotion still gates on a positive
+bare-Gram-solve site **outside** `nleps.cpp` (ROM / eigensolver-locking). This theme **confirms**
+(does not change) the `deflate` `partly-constructive` verdict and does **not** touch the L2
+`deflate` entry (out of scope).
 
 Per the CLAUDE.md trick taxonomy this is a **load-bearing** recording (the block-elimination
 structure is part of the algorithm, not a transparent rewrite): collapsing the double `S⁻¹` into
@@ -379,87 +358,10 @@ aliasing at `:533-534` is the transparent workspace-reuse trick from
 ## Speculative L1 operators
 
 **None.** Every constituent is **already firm L1/L2 vocabulary**:
-[`ksp_solve`](../L1/ksp_solve.md) (firm), [`lu_solve`](../L1/lu_solve.md) (firm, cycle-022),
+[`ksp_solve`](../L1/ksp_solve.md) (firm), [`lu_solve`](../L1/lu_solve.md) (firm),
 [`dot`](../L1/dot.md) (firm), [`axpy`](../L1/axpy.md) (firm),
 [`linear_combination`](../L2/linear_combination.md) (firm L2). This theme composes existing firm
 leaves; it proposes no new rough-in operators. The Gram `XᴴX` build is the L2
 [`gram`](../L2/gram.md) combinator's positive site and the back-projection is the L2 `deflate`
 combinator's constituent, but those L2 combinators are named here only to mark the upward
 fan-out boundary (and the deflate-promotion guard) — they are **not** part of this theme.
-
-## Verified-against
-
-L0 evidence ranges (self-verified via `palace-codemap` `read_range` / `search_text` this
-invocation — producer-citation self-verification, `verify-citation-range`):
-
-- `palace/linalg/nleps.cpp:504-537` — the complete `deflated_solve` lambda (the positive L0
-  site). Comment `:508-513` names the block system + Schur elimination in the source's own words.
-  **Self-verified** (`read_range` 503-545 + 504-523 + 524-537).
-- `palace/linalg/nleps.cpp:505-507` — the lambda signature `[&](const ComplexVector &b1, const
-  Eigen::VectorXcd &b2, ComplexVector &x1, Eigen::VectorXcd &x2)`. **Self-verified** (`read_range`
-  504-523).
-- `palace/linalg/nleps.cpp:514` — `opInv->Mult(b1, x1);`. **Self-verified** (`read_range`
-  504-523).
-- `palace/linalg/nleps.cpp:515-518` — `if (k == 0) { return; }`. **Self-verified** (`read_range`
-  504-523).
-- `palace/linalg/nleps.cpp:519-523` — coordinate-RHS loop `x2(j) = b2(j) - linalg::Dot(GetComm(),
-  x1, X[j])` (statement `:522`). **Self-verified** (`read_range` 504-523).
-- `palace/linalg/nleps.cpp:524-531` — Gram double-loop `SS(i, j) = linalg::Dot(GetComm(), X[i],
-  X[j])` (statement `:529`). **Self-verified** (`read_range` 524-537).
-- `palace/linalg/nleps.cpp:532` — `const Eigen::MatrixXcd S = eig_opInv * Eigen::MatrixXcd::
-  Identity(k, k) - H;`. **Self-verified** (`read_range` 524-537).
-- `palace/linalg/nleps.cpp:533-535` — `SS = -S.fullPivLu().solve(SS);` (`:533`),
-  `x2 = SS.fullPivLu().solve(x2);` (`:534`), `const ComplexVector XSx2 = MatVecMult(X,
-  S.fullPivLu().solve(x2));` (`:535`). **Self-verified** (`read_range` 524-537 + `search_text`
-  `fullPivLu\(\)\.solve` → lines 533/534/535).
-- `palace/linalg/nleps.cpp:536` — `linalg::AXPY(-1.0, XSx2, x1);`. **Self-verified** (`read_range`
-  524-537).
-- `palace/linalg/nleps.cpp:329-347` — `MatVecMult(X, y)` body (the `X·y` fold; `z = 0` at
-  `:337-340`, per-`j` complex AXPY via two `AXPBYPCZ` at `:343-344`). **Self-verified**
-  (`read_range` 329-347).
-- `palace/linalg/nleps.cpp:474` — `eig_opInv = eig;  // eigenvalue estimate used in the (lagged)
-  preconditioner`. **Self-verified** (`read_range` 470-476 + `search_text` `eig_opInv =`).
-- `palace/linalg/nleps.cpp:498-502` — `opA = BuildParSumOperator(...)` (`:498-499`),
-  `opInv->SetOperators(*opA, *opP)` (`:501`), `opInv->SetAbsTol(1.0e-12)` (`:502`).
-  **Self-verified** (`read_range` 495-502).
-- `palace/linalg/nleps.cpp:541-542` — `opInv->SetRelTol(std::max(ksp_rel_tol, inexact_tol));`
-  (`:541`), `deflated_solve(c, c2, w0, w2);` (`:542`) — projection-direction setup call.
-  **Self-verified** (`read_range` 503-545 + `search_text` → lines 541/542).
-- `palace/linalg/nleps.cpp:681-682` — `opInv->SetRelTol(std::max(ksp_rel_tol, std::min(inexact_tol,
-  res)));` (`:681`), `deflated_solve(z, z2, du, du2);` (`:682`) — Newton-step solve call.
-  **Self-verified** (`read_range` 678-683 + `search_text` → lines 681/682).
-- `palace/linalg/nleps.cpp:726` / `:732-735` — `eig_opInv = eig;` (`:726`), `opInv->SetOperators
-  (*opA, *opP);` (`:732`), `opInv->SetRelTol(std::max(ksp_rel_tol, inexact_tol));` (`:734`),
-  `deflated_solve(c, c2, w0, w2);` (`:735`) — restart projection-direction setup. **Self-verified**
-  (`read_range` 732-736 + `search_text` `eig_opInv =`/`SetOperators` → lines 726/732/734/735).
-- `palace/linalg/nleps.cpp:606-619` — deflation-basis growth (`X`-not-orthonormal, variadic-`k`).
-  **Self-verified** (cited in the firm operator entry `book/src/L1/nleps_deflated_solve.md:175`;
-  consistent with this dispatch's reads).
-
-L1 / cross-theme anchors:
-
-- `book/src/L1/nleps_deflated_solve.md` — the firm L1 operator this theme lowers (signature
-  `:24-43`, Semantics `:60-93`, laws `:99-114`, Status `:141`, Evidence `:154-185`).
-- `book/src/L1-L0/lu-solve-mutation-rotation.md:69-133` — Sub-pattern A (NLEPS full-pivot LU,
-  `:533-535`); the dense-solve kernel + in-place RHS overwrite this theme references.
-- `book/src/L1-L0/nleps-deflated-residual-mutation-rotation.md` — the solve/residual sibling
-  (the residual applies the extended deflated operator where this solve inverts it; apply/inverse
-  duality, `book/src/L1/nleps_deflated_solve.md:107`).
-- `book/src/L1-L0/dot-mutation-rotation.md` — Sub-pattern A (fused `linalg::Dot`); reused for the
-  coordinate RHS (`:522`) and the Gram entries (`:529`).
-- `book/src/L1/dot.md:43` — the L1 `⟨x, y⟩ = xᴴ y` arg-1-conjugated convention.
-- `book/src/L1/ksp_solve.md` — the big-space constructed-operator solve gate this theme's
-  Sub-pattern A is.
-- `book/src/L1/lu_solve.md` — the small-dense direct-solve leaf realizing the three
-  `fullPivLu().solve` solves at `:533-535`.
-- `book/src/L1/axpy.md` — the `α = −1` final-correction fold (`:536`).
-- `book/src/L2/linear_combination.md` — the `X·(S⁻¹x2)` back-projection (`MatVecMult(X, ·)` at
-  `:535`); live link.
-- `book/src/L2-L1/linear-combination-fold-specialization.md` — the L2>L1 lowering of the
-  `MatVecMult` back-projection fold; live link.
-- `book/src/L2/index.md` — the cycle-022 `gram` (firm) / `deflate` (partly-constructive) L2
-  dep-map rows: the Gram positive site (`:529`) and the over-unification / deflate-promotion
-  guard.
-- No dedicated unit test: NLEPS has zero `test/unit/**` hits (same absence as `eigsolve` /
-  `apply_nonlinear_pencil` / `nleps_deflated_residual` / `nleps_deflated_solve`); the firm
-  decision rests on exhaustive positive structural citation.

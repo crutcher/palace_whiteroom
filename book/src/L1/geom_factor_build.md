@@ -1,24 +1,18 @@
 ---
 layer: L1
 operator: geom_factor_build
-# Graded-stack: firm (rank 3). The geometry-factor build-pass (build-QFunction) of the libCEED
-# pipeline: (mesh-nodes, quad-weights) → geom_data. Promoted roadmap_goal → rough-in (cycle-124 D4) →
-# firm (cycle-125 D1) on the element-local rank-tensor vocabulary: the shape-vocabulary home
-# concepts/element-local-tensor (firm c124 D5, commit db5ea4d) defines the per-quad-point carrier
-# Tensor[(E, P, G)] this op produces, so the op RESTS on a firm shape home. depends-on
-# concepts/element-local-tensor (the [E, P, G] geom-data carrier shape home) — rank invariant
-# rank(u) <= min(deps): the dep is now firm, so the firm-flip is warranted (firm-on-positive-structure
-# escape — laws are syntactic setup-stratum-purity / pointwise identities on positive source).
-# Setup-stratum (built once per mesh/order, reused across applies). Reachable via
-# libceed-quadrature-kernel-impl (pulled-by) and quad_point_contract (which consumes geom_data).
+# The geometry-factor build-pass (build-QFunction) of the libCEED pipeline:
+# (mesh-nodes, quad-weights) → geom_data. Setup-stratum (built once per mesh/order, reused
+# across applies). depends-on concepts/element-local-tensor (the [E, P, G] geom-data carrier
+# shape home this op produces).
 rank: firm
 edges:
   depends-on:
     - target: concepts/element-local-tensor
-      kind: shape-vocabulary   # the [E, P, G] per-quad-point geom-data carrier shape home this op produces (firm c124 D5; rank-constrained, GC-live)
+      kind: shape-vocabulary   # the [E, P, G] per-quad-point geom-data carrier shape home this op produces
   reference:
     - target: L1/libceed-quadrature-kernel-impl
-      kind: pulled-by      # the consumer whose pipeline's D stage consumes this op's geom_data output (free)
+      kind: pulled-by      # the consumer whose pipeline's D stage consumes this op's geom_data output
     - target: concepts/build-time-vs-run-time-stratification   # this is the setup-stratum (build-once) factor of the build/apply split
 ---
 
@@ -29,20 +23,6 @@ The **geometry-factor build-pass** (libCEED build-QFunction) of the contraction 
 precompute, per quadrature point, the `geom_data` that the `D` stage ([`quad_point_contract`](./quad_point_contract.md))
 contracts against — the Jacobian-derived geometry metric times the quadrature weight. This is the
 **setup-stratum** factor: built once per `(mesh, order)`, reused across every operator apply.
-
-## Status
-
-`firm` (rank 3). **Promoted roadmap_goal → rough-in (cycle-124 D4) → firm (cycle-125 D1).** The Palace
-realization is exhaustively anchored (the `f_build_geom_factor_*` build-QFunction with its `attr`/`q_w`/`grad_x` inputs
-and `geom_data` output — see *Verified-against*), and the operator produces the **quad-point-rank**
-carrier `Tensor[(E, P, G)]` whose **shape-vocabulary home is `concepts/element-local-tensor`** — now
-**firm on disk** (c124 D5, commit `db5ea4d`). With that home firm (as a `depends-on` shape-vocabulary
-edge), the op rests on a firm shape and the well-foundedness cap lifts: `rank(u) ≤ min(deps)` no longer
-bounds this op below firm. The promotion is on the **firm-on-positive-structure escape** — every law
-below is a syntactic setup-stratum-purity / pointwise-block-diagonality identity on fully-specified
-positive source (the build-QFunction is read directly off `AssembleCeedGeometryData`), so the absence
-of a dedicated build-QFunction unit test does not gate firm; the only gate was the firmness of the
-`[E, P, G]` shape home, now discharged.
 
 ## L1 form (the constructive sketch)
 
@@ -84,9 +64,7 @@ rebuilt; that is a setup-stratum invalidation, not a run-time cost.)
   the element, so `geom_data` is constant in `p` — a degenerate case worth noting (the curved/high-order
   case is the general one).
 
-These laws are syntactic facts on the positively-read build-QFunction. They require no test
-(firm-on-positive-structure); the only gate was the firmness of the `[E, P, G]` shape home
-(`concepts/element-local-tensor`), now firm on disk (c124 D5).
+These laws are syntactic facts on the positively-read build-QFunction.
 
 ## Applicability conditions
 
@@ -96,7 +74,7 @@ These laws are syntactic facts on the positively-read build-QFunction. They requ
    `MFEM_VERIFY(geom_data_size == 2 + space_dim*dim)` contract).
 3. Single-machine (per-`Ceed` device).
 
-## Verified-against
+## Evidence
 
 - `palace/fem/libceed/integrator.cpp:335-421` — `AssembleCeedGeometryData`: the build-QFunction
   `f_build_geom_factor_*` assembly: the `(dim, space_dim)`-keyed QFunction dispatch

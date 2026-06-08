@@ -57,28 +57,10 @@ No `BiCGStabSolver` class exists in `palace/linalg/iterative.hpp`.
 
 All `rough-in (obstruction)` — harvester should not promote until either Palace gains BiCGStab or the MFEM-as-L0-substrate decision admits `mfem::BiCGSTAB`:
 
-- **`bicgstab_step`** — `(A, M, r̂₀, state) → state'` where `state = (x, r, p, v, ρ_prev, α_prev, ω_prev)`. Short-recurrence specialisation of the cycle-002 combinator-miner `krylov-step` pattern. Differs from `cg_step` / `gmres_step` in maintaining the second residual `r̂₀` and the half-step (`t`, `ω`) stabilisation.
+- **`bicgstab_step`** — `(A, M, r̂₀, state) → state'` where `state = (x, r, p, v, ρ_prev, α_prev, ω_prev)`. Short-recurrence specialisation of the `krylov-step` pattern. Differs from `cg_step` / `gmres_step` in maintaining the second residual `r̂₀` and the half-step (`t`, `ω`) stabilisation.
 - **`omega_update`** — `(t, r) → ⟨t,r⟩/⟨t,t⟩`. The signature scalar of BiCGStab — the `ω` Galerkin-coefficient that minimizes the residual norm over the new search direction `t`.
 - **`stabilisation_update`** — `(t, r, ẑ, h) → (x_new, r_new, ω)`. Composite half-step: computes `ω`, then updates iterate `x` and residual `r` via two `axpy` calls. Bundled because the three sub-steps share the `ω` value and are conceptually one stabilisation phase.
 
-## Verified-against
-
-```yaml
-verified_against:
-  - citation: reference/palace/palace/linalg/ksp.cpp:53-57
-    verdict: negative-anchor
-    note: BiCGStab + MINRES grouped abort branch
-  - citation: reference/palace/palace/utils/labels.hpp:111
-    verdict: negative-anchor
-    note: BICGSTAB enum declared but never instantiated
-  - citation: reference/palace/palace/utils/configfile.cpp:132
-    verdict: negative-anchor
-    note: JSON serialise present but maps to aborting enum
-  - citation: Saad 2003 §7.4.2
-    verdict: literature-anchor
-    note: out-of-tree algorithmic specification
-```
-
 ## Status
 
-`rough-in (obstruction)` — awaiting an anchor (Palace implementation or admitted MFEM substrate).
+`rough-in (obstruction)` — awaiting an anchor (Palace implementation or admitted MFEM substrate). The L1 form is well-specified against the literature (Saad 2003 §7.4.2); the L0 anchor in Palace is empty (the three negative anchors above). Promotion requires either a Palace BiCGStab implementation or the MFEM-as-L0-substrate decision admitting `mfem::BiCGSTAB` (open question `bicgstab-mfem-reanchor-policy`).

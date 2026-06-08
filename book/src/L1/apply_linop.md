@@ -76,7 +76,7 @@ Laws that explicitly **do not** hold:
 
 None at L1. `apply_linop` is a leaf primitive at L1 — alongside `axpy`, `axpby`, `dot`, and `nrm2`, it is one of the foundational L1 operators. Its sub-operations are the operator's internal evaluation (element-local kernels, SpMV inner loops, multigrid V-cycles, etc.) — all below the L1 layer's resolution and visible only in the L1>L0 lowering.
 
-`apply_linop` is the operator-application primitive that the L2 `krylov-step` will depend on (forthcoming). At L2, the operator-application count is the standard cost metric for iterative solvers; each L2 step (CG inner iteration, GMRES Arnoldi step, MGS orthogonalisation pass) is characterised by its number of `apply_linop` calls. The L2 vocabulary names these as opaque primitives rather than unfolding them into per-element loops — see [`concepts/apply_linop`](../concepts/apply_linop.md) "Role in the L2 vocabulary".
+`apply_linop` is the operator-application primitive the L2 `krylov-step` depends on. At L2, the operator-application count is the standard cost metric for iterative solvers; each L2 step (CG inner iteration, GMRES Arnoldi step, MGS orthogonalisation pass) is characterised by its number of `apply_linop` calls. The L2 vocabulary names these as opaque primitives rather than unfolding them into per-element loops — see [`concepts/apply_linop`](../concepts/apply_linop.md) "Role in the L2 vocabulary".
 
 The accumulating form `AddMult(A, x, a, y) → y + a · A · x` is **not** a separate L1 operator (per the Semantics section): it is the L1 composition `axpby(a, apply_linop(A, x), 1, y)` — a sibling-leaf composition, not a dependency. The L0 source provides `AddMult` as a fused method for performance; the L1>L0 lowering reintroduces the fusion as a transparent performance trick.
 
@@ -91,10 +91,6 @@ The accumulating form `AddMult(A, x, a, y) → y + a · A · x` is **not** a sep
 Collapsed (absorbed) axis:
 
 - **operator-representation**: `sparse-matrix` | `dense-matrix` | `matrix-free` | `composition` | `multigrid` | `block` | `wrapped` | ... At L0 these are concrete subclasses of the `Operator` / `ComplexOperator` interface (`SumOperator`, `BaseProductOperator`, `BaseDiagonalOperator`, `BaseMultigridOperator`, `ComplexWrapperOperator`, `ParOperator`, `ComplexParOperator`, all preconditioners, all FE assembly closures, ...). At L1 these **collapse to a single `LinearOperator` opaque type** — the L1 contract sees only the linear-map interface and the domain/codomain axes; the internal representation is an L0 concern that surfaces only in the L1>L0 lowering theme (and in load-bearing numerical caveats like reduction-tree non-associativity for matrix-free representations). This is the canonical *variant absorption* application (per [`concepts/variant-absorption`](../concepts/variant-absorption.md)).
-
-## Status
-
-`firm` — signature is canonical (matches the abstract `Mult` virtual on both the real and complex operator hierarchies, parameterised by element type), evidence is direct from the Palace source (abstract decls + concrete realisations + use sites in iterative solvers), and the algebraic laws listed are standard properties of linear maps modulo the explicitly-recorded floating-point caveats.
 
 ## L1 vs L0 distinction
 
@@ -115,6 +111,6 @@ Collapsed (absorbed) axis:
 - `palace/linalg/rap.cpp:481-517` — `ComplexParOperator::Mult` definition: complex analogue of the above.
 - `palace/linalg/iterative.cpp:379, 443` — CG using `A->Mult(x, r)` for residual computation and `A->Mult(p, z)` for the inner-loop matrix-vector product. Direct evidence `apply_linop` is the per-step primitive in CG.
 - `palace/linalg/iterative.cpp:544-734` — GMRES `Mult` body using `A->Mult` for Arnoldi-step matrix-vector products. Confirms `apply_linop` is the per-step primitive in GMRES.
-- `book/src/concepts/apply_linop.md` — cross-cutting prose treatment (predates this L1 firm-up; covers BLAS-2 generalisation, constructed-operator chains, and slice-level use across CG / GMRES / divfree).
+- `book/src/concepts/apply_linop.md` — cross-cutting prose treatment (BLAS-2 generalisation, constructed-operator chains, and slice-level use across CG / GMRES / divfree).
 - `book/src/concepts/constructed-operators.md` — narrative for the operator-composition construct underwriting algebraic law 4.
 - `book/src/concepts/variant-absorption.md` — narrative for the operator-representation axis collapse.

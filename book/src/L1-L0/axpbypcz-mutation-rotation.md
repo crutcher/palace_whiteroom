@@ -2,14 +2,10 @@
 layer: L1-L0
 theme: axpbypcz-mutation-rotation
 rank: firm
-# Graded-stack scheme (cycle-111, D2): L1>L0 lowering-theme leaf, typed from scratch
-# (discharges OQ `l1-l0-axpy-family-themes-need-scheme-frontmatter`). Firm mutation
-# rotation: structural rewrites + a transparent γ==0 constant-folding sub-rule over
-# fully-specified positive L0 source. The blocking depends-on edges are the rank-terminal
-# POSITIVE L0 SOURCE (cites-evidence) the rewrite rests on, which makes the `firm` rank
-# well-founded. The firm L1 parent (axpbypcz) reaches this theme via its own legacy
-# depends-on edge; recorded here as `reference` see-also — scheme hygiene, NOT a
-# reachability flip (the theme was already reachable from that parent).
+# L1>L0 lowering-theme leaf. Firm mutation rotation: structural rewrites + a transparent
+# γ==0 constant-folding sub-rule over fully-specified positive L0 source. The blocking
+# depends-on edges are the rank-terminal positive L0 source (cites-evidence) the rewrite
+# rests on. The firm L1 parent (axpbypcz) is recorded as `reference` see-also.
 edges:
   depends-on:
     - target: palace/linalg/vector.cpp:745-758
@@ -327,116 +323,3 @@ None. `axpbypcz`, `axpby`, and `axpy` are all firm L1 operators
 and this theme reaches into them as established vocabulary. The γ==0
 sub-rule's RHS reference to `axpby(α, x, β, y)` invokes the firm
 [`L1/axpby`](../L1/axpby.md) operator directly; no rough-in is needed.
-
-## Status
-
-`firm` — 4 sub-patterns (A real-real / B complex free-fn / C complex member /
-D real-on-complex) + the mixed-justification γ==0 algebraic sub-rule; all
-decl/body/kernel ranges line-exact; full call-site corpus census applied
-(13 sites via `search_text "AXPBYPCZ\("`). Sub-patterns B and D are
-defined-not-used recognition rules (no observed callers). The only observed
-γ≠0 path is sub-pattern A's real-real slow-path (`nleps.cpp:343-344`,
-`romoperator.cpp:188-189`), which makes the load-bearing IEEE-order
-cross-branch non-law a live reproduction concern. No constructive sub-part —
-nothing is reconstructed from negative anchors (the defined-not-used sub-
-patterns B/D are positively-cited overloads with a census showing no callers,
-not negative-anchor reconstructions). (Firmed cycle-022 after lowering-verifier
-call-site corrections: nleps:343-344 D→A, romoperator:188-189 D→A, slepc:1986
-γ≠0→γ=0, sub-pattern D downgraded to defined-not-used, γ==0 branch citation
-tightened to vector.cpp:402-427.) Residual: MFEM `add(α,x,β,y,z)` alias-safety
-(applicability condition #1 exception, timeoperator:139) is an out-of-Palace-
-scope OQ, not a firm-blocker.
-
-## Verified-against
-
-```yaml
-verified_against:
-  - citation: palace/linalg/vector.hpp:133-136
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: ComplexVector::AXPBYPCZ member decl + (*this)=a*x+b*y+g*(*this) comment. read_range + citecheck confirmed.
-  - citation: palace/linalg/vector.hpp:313-316
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: free-fn template decl z=a*x+b*y+g*z (AXPBYPCZ<VecType,ScalarType>).
-  - citation: palace/linalg/vector.cpp:381-386
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: ComplexVector::AXPBYPCZ outer member trampoline; delegates to static form on Real()/Imag() halves at 385.
-  - citation: palace/linalg/vector.cpp:388-455
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: static member body; gamma==0 outer branch at 402 (Write, no prior-z read) vs gamma!=0 (ReadWrite at 430-431); inner ai==0&&bi==0 (+gi==0 on gamma!=0 at 433) imaginary-scalar fast-paths.
-  - citation: palace/linalg/vector.cpp:402-427
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: gamma==0 branch (CORRECTED from cycle-021 draft 402-426/402-429 to 402-427; block opens at 402, closes at 427 before the else at 428). Write access, no gamma*Z_prev cross-terms.
-  - citation: palace/linalg/vector.cpp:745-758
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: free-fn real-real specialisation; gamma==0 fast-path add(a,x,b,y,z) at 751; gamma!=0 slow-path AXPBY(a,x,g,z); z.Add(b,y) at 755-756.
-  - citation: palace/linalg/vector.cpp:749-751
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: gamma==0 fast-path MFEM 5-arg add(alpha,x,beta,y,z); anchor lands at 751.
-  - citation: palace/linalg/vector.cpp:755-756
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: gamma!=0 slow-path AXPBY(alpha,x,gamma,z); z.Add(beta,y) -- different IEEE summation order than the fused add; the load-bearing non-law.
-  - citation: palace/linalg/vector.cpp:760-765
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: free-fn complex-complex one-line delegate; defined-not-used (no complex-scalar caller in corpus census).
-  - citation: palace/linalg/vector.cpp:767-772
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: free-fn real-on-complex one-line delegate (sub-pattern D); DEFINED-NOT-USED. The cycle-021 nleps:343-344 + romoperator:188-189 D-classification was wrong -- those pass real Vector halves and dispatch to real-real (sub-pattern A).
-  - citation: palace/linalg/vector.cpp:729
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: MFEM add(alpha,x,beta,y,y) at AXPBY real-real; same kernel reused by axpbypcz gamma==0 fast-path add(a,x,b,y,z) at 751.
-  - citation: palace/models/timeoperator.cpp:139
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: sub-pattern A, gamma=0 literal, z(rhs1) aliases x(rhs1). Applicability-condition-1 exception (MFEM add alias-safety = out-of-scope OQ).
-  - citation: palace/models/timeoperator.cpp:217
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: sub-pattern A, gamma=0 literal.
-  - citation: palace/models/timeoperator.cpp:273
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: sub-pattern A, gamma=0 literal (saved_gamma is the beta scalar, not gamma).
-  - citation: palace/linalg/arpack.cpp:772
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: sub-pattern C, gamma=0 literal (the `gamma` variable is the beta slot).
-  - citation: palace/linalg/arpack.cpp:787
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: sub-pattern C, gamma=0 literal.
-  - citation: palace/linalg/nleps.cpp:471
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: sub-pattern C, gamma=0 literal.
-  - citation: palace/linalg/nleps.cpp:676
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: sub-pattern C, gamma=0 literal; alpha=-delta_eig, beta=-1 literals.
-  - citation: palace/linalg/nleps.cpp:693
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: sub-pattern C, gamma=0 literal.
-  - citation: palace/linalg/slepc.cpp:1986
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: CORRECTED from cycle-021 draft: sub-pattern C, gamma=0 (5th arg literal 0.0). The cycle-021 classification "gamma!=0 runtime" was wrong; -gamma/sigma is the beta scalar in the 4th slot. Receiver ctx->y1 is ComplexVector.
-  - citation: palace/linalg/nleps.cpp:343-344
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: CORRECTED from cycle-021 draft: sub-pattern A (real-real), gamma=1.0 literal. X[j].Real()/Imag(), z.Real()/Imag() are real Vector halves with double scalars -> real-real free-fn, NOT sub-pattern D. Sole observed gamma!=0 site (exercises the AXPBY; z.Add slow-path). Paired .Imag() call at 344.
-  - citation: palace/models/romoperator.cpp:188-189
-    verdict: supports
-    audited_at: 2026-05-29T07:10:41Z
-    note: CORRECTED from cycle-021 draft: sub-pattern A (real-real), gamma=1.0 literal. V is std::vector<Vector>, u.Real() a Vector half (confirmed by AXPY companion at 193-194). NOT sub-pattern D. Second observed gamma!=0 site.
-```

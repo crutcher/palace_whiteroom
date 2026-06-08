@@ -326,16 +326,13 @@ reconstruction from negative anchors — so this theme is `firm`, not
 
 The theme as a whole is `structural` (the operator-to-data materialisation
 re-bind) with one algebraic sub-rule (complex split) and one
-domain-boundary marker. A `lowering-verifier` audit in a later cycle should
-confirm the four rewrite sub-patterns exhaust the diagonal-capable subclasses
-in the L0 corpus and that the abs-prolongation / zero-init / element-local
-accumulation readings are consistent across the realisations.
+domain-boundary marker.
 
 ## Speculative L1 operators
 
 None.
 
-`assemble_diagonal` is the firm L1 form (cycle-019); the four rewrite
+`assemble_diagonal` is the firm L1 form; the four rewrite
 sub-patterns decompose into existing firm L1 vocabulary only (the single
 `assemble_diagonal` operator, parameterised by element type; the complex
 split reduces to two real-path applications). No rough-in L1 operator is
@@ -345,10 +342,9 @@ plain-text forward-references, not speculative operators emitted by this
 theme; they belong to the diagonal-preconditioner-apply chain, not to the
 `assemble_diagonal` lowering itself.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (verified by direct read during this cycle via
-palace-codemap `read_range`):
+L0 evidence ranges:
 
 - `palace/linalg/operator.hpp:21` — `using Operator = mfem::Operator;`
   (real alias; inherits abstract `AssembleDiagonal` from MFEM).
@@ -386,7 +382,7 @@ palace-codemap `read_range`):
 
 L1 anchor:
 
-- `book/src/L1/assemble-diagonal.md` — the firm L1 operator (cycle-019) that
+- `book/src/L1/assemble-diagonal.md` — the firm L1 operator that
   all four sub-patterns lower from.
 
 Sibling lowering theme:
@@ -402,8 +398,7 @@ Coverage note: this theme cites the **complete** set of concrete
 `ComplexWrapperOperator`) plus the base-class abort — diagonal assembly is a
 narrower virtual family than `Mult` (not every operator overrides it; only
 the diagonal-capable subclasses do), so the corpus is small and the cited
-set is exhaustive rather than illustrative. A `lowering-verifier` audit
-should confirm no further override exists.
+set is exhaustive rather than illustrative.
 
 ## Status
 
@@ -411,67 +406,12 @@ should confirm no further override exists.
 exhaustively cited across all four representation sub-patterns (sparse-CSR
 exact / matrix-free accumulation / parallel AMR abs-prolongation / complex
 split) + the partial-domain abort + the two consuming smoother families. The
-structural decomposition matches the firm L1 `assemble-diagonal` entry; the
-L0 evidence ranges have been verified by direct read this cycle. The one
+structural decomposition matches the firm L1 `assemble-diagonal` entry. The one
 caveat — the matrix-free high-order-Nedelec approximate diagonal — is a
 **positively-anchored load-bearing non-law** (a Palace comment that names it
 + a test that relaxes its tolerance for it), carried verbatim from the L1
 entry, NOT a reconstruction from negative anchors: this theme is therefore
-`firm`, not `partly-constructive`. The only residual is the upstream-MFEM
+`firm`, not `partly-constructive`. The one residual is the upstream-MFEM
 resolution of the real-path `mfem::Operator::AssembleDiagonal` virtual
 (logged as an OQ), which does not affect the rewrite recognition (the alias
 is the Palace L0 anchor).
-
-verified_against:
-  - citation: palace/linalg/operator.hpp:21
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: using Operator = mfem::Operator; real-operator alias, inherits abstract AssembleDiagonal from MFEM.
-  - citation: palace/linalg/operator.hpp:50-51
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: "// Diagonal assembly." + virtual void AssembleDiagonal(ComplexVector &diag) const; abstract complex decl.
-  - citation: palace/linalg/operator.cpp:25-28
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: ComplexOperator::AssembleDiagonal base MFEM_ABORT; partial-domain boundary (sub-pattern E).
-  - citation: palace/linalg/operator.cpp:85-96
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: ComplexWrapperOperator::AssembleDiagonal; diag = 0.0 at :87, Ar->AssembleDiagonal(diag.Real()) :88-91, Ai->AssembleDiagonal(diag.Imag()) :92-95 (sub-pattern D; laws 2/6).
-  - citation: palace/linalg/hypre.cpp:85-89
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: HypreCSRMatrix::AssembleDiagonal; diag.SetSize(height) :87, hypre_CSRMatrixExtractDiagonal(mat, diag.Write(), 0) :88 (sub-pattern A; exact sparse read).
-  - citation: palace/fem/libceed/operator.cpp:116-143
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: fem::libceed::Operator::AssembleDiagonal; MFEM_VERIFY(diag.Size() == height) :120, diag = 0.0 :121, CeedOperatorLinearAssembleAddDiagonal :139 (sub-pattern B; matrix-free accumulation).
-  - citation: palace/linalg/rap.cpp:154-193
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: ParOperator::AssembleDiagonal; RAP-delegate :157-161, convergent comment :163-164, MFEM_VERIFY square :165-166, A->AssembleDiagonal(lx) :168, hP->AbsMultTranspose(1.0, lx, 0.0, diag) :174, DiagonalPolicy DIAG_ONE/DIAG_ZERO :180-191 (sub-pattern C).
-  - citation: palace/linalg/rap.cpp:467-479
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: ComplexParOperator::AssembleDiagonal; diag = 0.0 :470, RAPr->AssembleDiagonal(diag.Real()) :471-474, RAPi->AssembleDiagonal(diag.Imag()) :475-478 (sub-pattern D; second witness).
-  - citation: palace/linalg/jacobi.cpp:79-80
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: JacobiSmoother::SetOperator; op.AssembleDiagonal(dinv) :79, dinv.Reciprocal() :80 (consuming chain).
-  - citation: palace/linalg/jacobi.hpp:15-16
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: comment naming (approximate) diagonal construction for matrix-free operators (load-bearing non-law positive anchor).
-  - citation: palace/linalg/chebyshev.cpp:177-178
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: ChebyshevSmoother::SetOperator; op.AssembleDiagonal(dinv) :177, dinv.Reciprocal() :178.
-  - citation: palace/linalg/chebyshev.cpp:240-241
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: ChebyshevSmoother1stKind::SetOperator; identical op.AssembleDiagonal(dinv) :240, dinv.Reciprocal() :241.
-  - citation: test/unit/test-libceed.cpp:343-376
-    verdict: supports
-    audited_at: 2026-05-29T03:50:30Z
-    note: diagonal-assembly test; mat_ref->GetDiag/op_test->AssembleDiagonal compare; rtol=1.0e-12 general (:360), rtol=1.0 for high-order 3D Nedelec non-tensor-basis (condition :365-369, assignment :371). Test-witnessed load-bearing approximation.

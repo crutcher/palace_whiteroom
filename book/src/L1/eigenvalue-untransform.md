@@ -22,9 +22,9 @@ problem-specific spectral transformation the eigensolver solved under,
 reduction [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md) folds: the
 `untransform : EvpDegree -> Complex -> Complex` map the combinator applies to each eigenvalue
 before taking `f = Re ω` (`eigenfreq_qfactor_reduce.md:73,80-81`). It is the sibling of the firm
-[`participation_ratio`](./participation_ratio.md) (the κ-participation half, c077) — together the
-two firm the **structure side** of that combinator's rough-in: this entry firms the eigenvalue
-un-transform gate, `participation_ratio` already firmed the `½X|I|²/E` energy-ratio gate.
+[`participation_ratio`](./participation_ratio.md) (the κ-participation half) — together the
+two firm the **structure side** of that combinator: this entry is the eigenvalue
+un-transform gate, `participation_ratio` is the `½X|I|²/E` energy-ratio gate.
 
 ## Context
 
@@ -174,43 +174,25 @@ eigenfrequency projection `f = Re ω` (the L4 verb / postprocess `freq_re`), the
 recovery `B = -1/(iω)∇×E` (`eigensolver.cpp:449`), and the Floquet B-correction scale `1/ω`
 (`:454`). Those are named here as the consumers, not authored.
 
-## Status
+## No L2 entry (by warrant)
 
-`firm`. **Reasoning (firm-on-positive-structure):** the un-transform structure is read directly off
-the single positive Palace site — the readout-loop branch
-`if (!C && !has_A2) { omega = std::sqrt(omega); } else { omega /= 1i; }`
-(`eigensolver.cpp:430-439`), with the selector operators `C`/`has_A2` constructed at `:41,52-53`.
-Every law (§Algebraic laws) is a **syntactic identity on the scalar branch** (two literal closed-form
-complex operations and their inverse-of-the-transform round-trip), not a convergence or numerical
-claim. Per the `apply_linop` / `participation_ratio` (c077) / `eigsolve` (cycle-022)
-firm-on-positive-structure precedent, the **absence of a dedicated unit test** for the eigenmode
-readout (the readout loop is integration-level, exercised only through the full eigenmode
-`Solve(mesh)` driver — no `test/unit/` coverage) does **not** gate firm: syntactic-identity scalar
-laws are not test-gated (the `eigsolve`-rough-in case was driven by literature-inferred *convergence*
-semantics, absent here — this is bare closed-form arithmetic on positive source).
-
-**No L2 entry by warrant.** `eigenvalue-untransform` is a bare per-mode scalar branch (two closed-form
+`eigenvalue-untransform` is a bare per-mode scalar branch (two closed-form
 inverses keyed on a binary axis). An L2 mirror would be an identity-in-named-terms re-statement — the
-degenerate-mirror smell the 2026-06-01 vocabulary-shift redirect names; there is no fusion content,
+degenerate-mirror smell the vocabulary-shift redirect names; there is no fusion content,
 no iteration, no base-primitive composition to unfold at L2. It stops at L1 as a leaf (the
 [`participation_ratio`](./participation_ratio.md) / [`reciprocal`](./reciprocal.md) NO-L2 precedent).
 The downstream `f = Re ω` / `B = -1/(iω)∇×E` consumers are separate readout steps with their own homes,
 not L2 reshapes of this map.
 
-**Coupled re-anchor (enacted this dispatch — see proposed-changes):** firming `eigenvalue-untransform`
-discharges **gate-(a)** of the L4 [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md)
-rough-in (the eigenvalue un-transform now has a firm L1 home, completing the κ-participation +
-un-transform pair — `participation_ratio` discharged the κ half c077, this entry discharges the
-un-transform half). That combinator's promotion is **double-gated** and remains
-`rough-in (test-coverage-bounded)` until gate-(b) (a dedicated eigenpair→`(f,Q)` assembly test, or a
-lowering-verifier law-confidence pass) is addressed — out of this dispatch's write-scope. The verb is
-re-anchored to a live link + gate-(a) marked discharged in this dispatch; it is NOT promoted to firm.
+## Relationship to `eigenfreq_qfactor_reduce`
+
+This entry is **gate-(a)** of the L4 [`eigenfreq_qfactor_reduce`](../L4/eigenfreq_qfactor_reduce.md)
+combinator — the eigenvalue un-transform's firm L1 home, completing the κ-participation +
+un-transform pair ([`participation_ratio`](./participation_ratio.md) is the κ half). That combinator's
+promotion is **double-gated** and remains `rough-in (test-coverage-bounded)` until gate-(b) (a
+dedicated eigenpair→`(f,Q)` assembly test, or a lowering-verifier law-confidence pass) is addressed.
 
 ## Evidence
-
-All L0 citations self-verified on-disk this dispatch via the codemap
-(`mcp__palace-codemap__read_range` + `search_text` + `tools/citecheck/citecheck.py --anchor` line
-pinpoints against `reference/palace/`).
 
 - **Eigenvalue un-transform (the positive site):** `palace/drivers/eigensolver.cpp:424` (the
   `for (int i = 0; i < num_conv; i++)` readout loop start), `:427`
@@ -218,39 +200,28 @@ pinpoints against `reference/palace/`).
   `:430` (`if (!C && !has_A2)` — the EVP-degree selector predicate), `:431-433`
   (`// Linear EVP has eigenvalue μ = -λ² = ω².` + `omega = std::sqrt(omega)` — the linear arm),
   `:435-438` (`// Quadratic EVP solves for eigenvalue λ = iω.` + `omega /= 1i` — the quadratic arm).
-  citecheck `--anchor 'std::sqrt'` → `:433`; `--anchor 'omega /= 1i'` → `:438`; `--anchor
-  'GetEigenvalue'` → `:427`; all in-range, on-disk confirmed.
 - **EVP-degree selector operators (the construction the predicate reads):**
   `palace/drivers/eigensolver.cpp:41` (`auto C = space_op.GetDampingMatrix<ComplexOperator>(...)`),
-  `:52-53` (`auto A2 = funcA2(target); bool has_A2 = (A2 != nullptr);`). citecheck `:41-53 --anchor
-  'has_A2'` → `:53`, in-range, on-disk confirmed.
+  `:52-53` (`auto A2 = funcA2(target); bool has_A2 = (A2 != nullptr);`).
 - **Downstream consumers of the un-transformed ω (separate steps, NOT this map):**
   `palace/drivers/eigensolver.cpp:449` (`B *= -1.0 / (1i * omega)` — the `B = -1/(iω)∇×E` field
   recovery), `:454` (`floquet_corr->AddMult(E, B, 1.0 / omega)` — the Floquet B-correction scale),
   `:457-458` (`post_op.MeasureAndPrintAll(i, E, B, omega, ...)` — the per-mode measure that takes
   `f = Re ω`).
-- **L4 fold consumer (the gate this firms):** `book/src/L4/eigenfreq_qfactor_reduce.md:51-53` (the
+- **L4 fold consumer:** `book/src/L4/eigenfreq_qfactor_reduce.md:51-53` (the
   `ω = √μ` / `ω = λ/i` per-mode un-transform the combinator folds), `:68,73,80-81` (the
   `ProblemType -> ... untransform ptype lambda` signature + the `untransform Linear/Quadratic`
-  branch), `:195-198` (the rough-in §Status naming the absent eigenvalue-un-transform L1 entry as
-  gate-(a)). This entry IS that un-transform L1 home.
-- **Firm sibling (the κ-participation half, already firm — NOT re-opened):**
-  `book/src/L1/participation_ratio.md` (c077; the `½X|I|²/E` energy-ratio half of the same L4 verb's
-  rough-in; this entry is its eigenvalue-un-transform sibling, the two together firming the structure
-  side of `eigenfreq_qfactor_reduce`'s rough-in).
+  branch), `:195-198` (the §Status naming the eigenvalue-un-transform L1 entry as gate-(a)). This
+  entry IS that un-transform L1 home.
+- **Sibling (the κ-participation half):** `book/src/L1/participation_ratio.md` (the `½X|I|²/E`
+  energy-ratio half of the same L4 verb; this entry is its eigenvalue-un-transform sibling, the two
+  together firming the structure side of `eigenfreq_qfactor_reduce`).
 - **`ProblemType` record home (cross-cutting, cross-referenced not redefined):**
   `book/src/concepts/config-record.md:61-77` (the `enum class ProblemType : char` six-member
   definition, `palace/utils/labels.hpp:18-26`). The L1 selector `EvpDegree` is the narrower
   derived axis (the in-chapter single-consumer §Record definition), distinct from `ProblemType`.
-- **Sibling-primitive grounding:** `book/src/L1/reciprocal.md` (the bare-scalar-map
-  firm-on-positive-structure NO-L2 precedent for a non-reducing scalar primitive),
-  `book/src/L1/nrm2.md` (the elementary `√·` analog), `book/src/L1/index.md:36` (the
-  `participation_ratio` firm-on-positive-structure no-dedicated-test + NO-L2 precedent cited here).
+- **Sibling-primitive grounding:** `book/src/L1/reciprocal.md` (the bare-scalar-map NO-L2 precedent
+  for a non-reducing scalar primitive), `book/src/L1/nrm2.md` (the elementary `√·` analog).
 - **No dedicated test** exercises the eigenmode readout un-transform (the `eigensolver.cpp` readout
   loop is integration-level under the eigenmode `Solve(mesh)` driver; no `reference/palace/test/unit/`
   coverage) — non-gating for the syntactic-identity scalar laws (firm-on-positive-structure).
-- **Provenance:** harvested cycle-080 D2 from the OQs `eigenvalue-untransform-l1-primitive` +
-  `eigenfreq-qfactor-reduce-firm-needs-l1-eigenvalue-untransform-primitive` (the residual structure
-  side of `eigenfreq_qfactor_reduce`'s gate-(a)). WARRANT verdict: genuine firm L1 leaf entry (the
-  eigenvalue→ω un-transform scalar map, the second per-mode building block of
-  `eigenfreq_qfactor_reduce`, firming the un-transform half of its gate-(a); NO L2 by warrant).

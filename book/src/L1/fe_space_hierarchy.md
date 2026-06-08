@@ -1,20 +1,10 @@
 ---
 layer: L1
 operator: fe_space_hierarchy
-harvested_by: layer-intro-author:2026-06-06T205239Z-layer-intro-author-fe-space-hierarchy
-cycle: cycle-117
-# Graded-stack scheme (edges authored from scratch). This firm L1 construction is the
-# `AddLevel`-fold composition of its two firm L1 constituents — per-level `fe_space`
-# (composes; each level is one `fe_space(mesh, collection)` construction) and the
-# `[FECollection]` schedule `fe_collection` (composes; the per-level collection list it
-# folds over). It cross-links D3's `build_mesh` (`Mesh` record home) as a reference (the
-# `[Mesh]` input element type is defined there — navigational, not a constituent-use).
-# It rests on its positive L0 ctor source (cites-evidence, rank-terminal ground truth).
-# Well-foundedness rank(u) <= rank(v): this node firm (rank 3); both `fe_space` and
-# `fe_collection` carry `rank: firm` (status: firm on disk, c064 / c065); the
-# cites-evidence target is rank-terminal L0 ground truth. No `lowers-to` edge yet (the
-# L1>L0 `fe-space-hierarchy-construction-rotation` theme is sibling-pull-gated, named
-# below, NOT authored this cycle).
+# This firm L1 construction is the `AddLevel`-fold composition of its two firm L1 constituents —
+# per-level `fe_space` and the `[FECollection]` schedule `fe_collection`. It cross-links
+# `build_mesh` (`Mesh` record home) as a reference (the `[Mesh]` input element type is defined
+# there — navigational, not a constituent-use).
 rank: firm
 edges:
   depends-on:
@@ -23,12 +13,12 @@ edges:
     - target: L1/fe_collection
       kind: composes              # the [FECollection] schedule it folds one-per-level (fecs[0] :90, fecs[l] :117)
     - target: L1-L0/fe-space-hierarchy-construction-rotation
-      kind: lowers-to             # the L1>L0 forward-rewrite theme for this AddLevel-fold (D2 this cycle)
+      kind: lowers-to             # the L1>L0 forward-rewrite theme for this AddLevel-fold
     - target: palace/fem/multigrid.hpp:78-126
-      kind: cites-evidence        # ConstructFiniteElementSpaceHierarchy whole body; close brace verified on disk at :126 (return fespaces; :125, } :126)
+      kind: cites-evidence        # ConstructFiniteElementSpaceHierarchy whole body
   reference:
-    - L1/build_mesh                # the [Mesh] input element type — the `Mesh` record home (D3 this cycle); navigational, NOT a depends-on
-    - concepts/FiniteElementSpaceHierarchy   # the output record's cross-cutting definition home (promoted c121; producer + GMG-column consumers ≥2)
+    - L1/build_mesh                # the [Mesh] input element type — the `Mesh` record home; navigational, NOT a depends-on
+    - concepts/FiniteElementSpaceHierarchy   # the output record's cross-cutting definition home (producer + GMG-column consumers ≥2)
 ---
 
 # `fe_space_hierarchy` — p-multigrid FE-space hierarchy
@@ -80,8 +70,7 @@ distinct operation here). The result is the `FiniteElementSpaceHierarchy` value
 This chapter is defined in L1 vocabulary (the typed `AddLevel`-fold over per-level
 `fe_space` constructions). The forward rewrite into the L0 imperative
 `push_back`/`AddLevel` loops is the L1>L0 theme
-`fe-space-hierarchy-construction-rotation` (sibling-pull-gated — named, NOT
-authored this cycle; see *Downward*).
+`fe-space-hierarchy-construction-rotation` (see *Downward*).
 
 ## Signature
 
@@ -126,9 +115,9 @@ definition home at [`concepts/FiniteElementSpaceHierarchy`](../concepts/FiniteEl
 — its field schema (`fespaces` construction-time level stack; `P` run-time-lazy
 prolongations), per-field construction-vs-run-time strata, the read surface, and
 the L0 backing `class FiniteElementSpaceHierarchy` (`palace/fem/fespace.hpp:200-286`)
-are defined there. It was promoted to a standalone page (c121) once the
-≥2-consumer bar was met: this chapter is the **producer** (the `AddLevel`-fold),
-and the [geometric-multigrid preconditioner](../feature/geometric-multigrid-preconditioner.L4.md)
+are defined there. It is a standalone page (≥2-consumer bar): this chapter is the
+**producer** (the `AddLevel`-fold), and the
+[geometric-multigrid preconditioner](../feature/geometric-multigrid-preconditioner.L4.md)
 is the **consumer** (its V-cycle composes the record's `GetProlongationOperators()`
 level-stack by name).
 
@@ -207,15 +196,15 @@ cycle.
 
 Composes two firm L1 constituents (this is a genuine combinator, not a leaf):
 
-- [`fe_space`](./fe_space.md) (firm, c064) — each level is one
+- [`fe_space`](./fe_space.md) — each level is one
   `fe_space(mesh, collection)` construction; the seed (`multigrid.hpp:89-90`) and
   every `AddLevel` (`:106`, `:117`).
-- [`fe_collection`](./fe_collection.md) (firm, c065) — produces the
+- [`fe_collection`](./fe_collection.md) — produces the
   `[FECollection]` schedule this fold consumes one-per-level (`fecs[0]` at `:90`,
   `fecs[l]` at `:117`).
 
 The `[Mesh]` input element type is the `Mesh` record defined by
-[`build_mesh`](./build_mesh.md) (D3 this cycle) — a **reference** (the element
+[`build_mesh`](./build_mesh.md) — a **reference** (the element
 type's definition home), NOT a `depends-on` (the fold does not invoke `build_mesh`;
 it consumes already-constructed meshes). The per-level
 [`essential_dofs`](./essential_dofs.md) construction is the hierarchy-consumer
@@ -224,53 +213,34 @@ dependency).
 
 ## Downward (to L0)
 
-The L1>L0 rotation `fe-space-hierarchy-construction-rotation` (sibling-pull-gated;
-named, NOT authored this cycle) would narrate how the typed `AddLevel`-fold rewrites
-into the L0 imperative `ConstructFiniteElementSpaceHierarchy` body
-(`multigrid.hpp:78-126`): the `coarse_mesh_l` computation (`:87-88`), the
-`make_unique<FiniteElementSpace>` seed (`:89-90`), the two `AddLevel` refinement
-loops (`:104-112`, `:115-123`), and the optional per-level `GetEssentialTrueDofs`
-block (`:92-101`). The hierarchy-of-one degeneracy (law 1) is the in-line
-annotation already carried by [`fe_space`](./fe_space.md) law 4 — this chapter is
-the general fold over that base case.
+The L1>L0 rotation `fe-space-hierarchy-construction-rotation` narrates how the typed
+`AddLevel`-fold rewrites into the L0 imperative
+`ConstructFiniteElementSpaceHierarchy` body (`multigrid.hpp:78-126`): the
+`coarse_mesh_l` computation (`:87-88`), the `make_unique<FiniteElementSpace>` seed
+(`:89-90`), the two `AddLevel` refinement loops (`:104-112`, `:115-123`), and the
+optional per-level `GetEssentialTrueDofs` block (`:92-101`). The hierarchy-of-one
+degeneracy (law 1) is the in-line annotation already carried by
+[`fe_space`](./fe_space.md) law 4 — this chapter is the general fold over that base
+case.
 
-## Status
-
-**firm (firm-on-positive-structure).** The construction is read in full from one
-positive source site: the entire `ConstructFiniteElementSpaceHierarchy` body
-(`palace/fem/multigrid.hpp:78-126`). Both composed constituents are firm on disk
-([`fe_space`](./fe_space.md) `## Status` line: firm, c064;
-[`fe_collection`](./fe_collection.md) `## Status` line: firm, c065), so the
-well-foundedness invariant `rank(u) ≤ min(deps)` holds at firm/firm. Every law is a
-syntactic identity / fold-invariant on the positive structure (coarse-seed base
-case, AddLevel-fold structure, coarse-to-fine level-monotonicity, determinism,
-per-level essential-dof coherence) — there is no convergence/iteration semantics to
-test-gate, so the absence of a dedicated `test-multigrid.cpp` exercising
-`ConstructFiniteElementSpaceHierarchy` does not gate firm (the
-[`fe_space`](./fe_space.md) c064 / [`fe_collection`](./fe_collection.md) c065 /
-[`fe_assemble`](./fe_assemble.md) c054 / `apply_linop` no-dedicated-test
-precedent). The lazy prolongation `P[l]` / discrete-interpolator machinery is
-read-as-given (a property of the result record, sibling-pull-gated — NOT a
-materialized constructive sub-part from negative anchors, so NOT
-partly-constructive).
+## Role
 
 This is the **hierarchy combinator** of the FE-space sub-spine — the fold whose
 base case is one [`fe_space`](./fe_space.md) construction and whose general case
-stacks per-level constructions; it closes the `fe_space_hierarchy` deferred-sibling
-slot named by both [`fe_space`](./fe_space.md) and [`fe_collection`](./fe_collection.md).
+stacks per-level constructions; it closes the `fe_space_hierarchy` slot named by
+both [`fe_space`](./fe_space.md) and [`fe_collection`](./fe_collection.md). The lazy
+prolongation `P[l]` / discrete-interpolator machinery is read-as-given (a property
+of the result record).
 
 **MPI / `Par*` out of scope (flagged once):** `ConstructFiniteElementSpaceHierarchy`
 wraps each level into an `mfem::ParFiniteElementSpace` (read single-rank, per the
 existing `par-types-single-rank-reading` rule); mesh partitioning is out of scope.
 
-**Deferred siblings (named, NOT authored this cycle):** the L1>L0
-`fe-space-hierarchy-construction-rotation` theme (sibling-pull-gated); the
-multigrid-transfer `BuildProlongationAtLevel` (`fespace.hpp:206,249-255`) and the
-de-Rham `BuildDiscreteInterpolator` / discrete-interpolator machinery
-(`fespace.hpp:269-285`) — both already named sibling-pull-gated in the
-[`fe_space`](./fe_space.md) deferred-sibling list. (D5 this cycle lands the de-Rham
-interpolator front; this chapter only reads its output as a given property of the
-record.)
+**Deferred siblings (named):** the multigrid-transfer `BuildProlongationAtLevel`
+(`fespace.hpp:206,249-255`) and the de-Rham `BuildDiscreteInterpolator` /
+discrete-interpolator machinery (`fespace.hpp:269-285`) — both named
+sibling-pull-gated in the [`fe_space`](./fe_space.md) deferred-sibling list; this
+chapter reads their output as a given property of the record.
 
 ## Evidence
 

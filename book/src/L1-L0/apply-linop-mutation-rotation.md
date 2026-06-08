@@ -263,17 +263,13 @@ For all five sub-patterns the rewrite preserves semantics when:
 
 The theme as a whole is `structural` with four algebraic sub-rules
 covering the two orthogonal L1 variant axes (transpose-mode ×
-accumulate-mode). A `lowering-verifier` audit in a later cycle should
-confirm sub-rule recognition exhausts the L0 corpus and that the
-workspace-tensor reading (member `z` as L1 intermediate) is consistent
-across the `BaseProductOperator` / `SumOperator` / `ParOperator` / etc.
-realisations.
+accumulate-mode).
 
 ## Speculative L1 operators
 
 None.
 
-`apply_linop` is the firm L1 form (cycle-004); the five sub-patterns
+`apply_linop` is the firm L1 form; the five sub-patterns
 decompose into existing firm L1 primitives only — `apply_linop` for
 forward / transposed / Hermitian-transposed application, `axpby` for the
 accumulating-mode composition. No rough-in L1 operator is needed for this
@@ -287,168 +283,41 @@ obstruction themes (`minres-iteration`, `bicgstab-iteration`) emit
 rough-in operators because no L0 anchor exists; here the L0 anchors are
 plentiful and the L1 abstractions are firm.
 
-## Verified-against
+## Coverage
 
-L0 evidence ranges (verified by direct read during this cycle):
-
-- `palace/linalg/operator.hpp:21` — real-operator alias.
-- `palace/linalg/operator.hpp:54-67` — `ComplexOperator` virtual decls
-  (`Mult`, `MultTranspose`, `MultHermitianTranspose`,
-  `AddMult{,Transpose,HermitianTranspose}`).
-- `palace/linalg/operator.hpp:116-136` — `SumOperator` declaration.
-- `palace/linalg/operator.hpp:158-175` — `ProductOperatorHelper`
-  Hermitian-transpose specialisation.
-- `palace/linalg/operator.hpp:178-226` — `BaseProductOperator` template
-  (composition).
-- `palace/linalg/operator.cpp:428-441` — `SumOperator::Mult` (sub-pattern A).
-- `palace/linalg/operator.cpp:443-456` — `SumOperator::MultTranspose`
-  (sub-pattern B).
-- `palace/linalg/operator.cpp:458-466` — `SumOperator::AddMult`
-  (sub-pattern D).
-- `palace/linalg/operator.cpp:468-476` — `SumOperator::AddMultTranspose`
-  (sub-pattern E).
-- `palace/linalg/operator.cpp:479-507` — `BaseDiagonalOperator<...>::Mult`
-  (matrix-free realisation, sub-pattern A).
-- `palace/linalg/operator.cpp:509-519` — `BaseDiagonalOperator<Operator>::AddMult`
-  (matrix-free realisation, sub-pattern D).
-- `palace/linalg/rap.cpp:195-234` — `ParOperator::Mult` (parallel
-  wrapper, sub-pattern A).
-- `palace/linalg/rap.cpp:236-275` — `ParOperator::MultTranspose`
-  (parallel wrapper, sub-pattern B).
-- `palace/linalg/rap.cpp:277-318` — `ParOperator::AddMult` (parallel
-  wrapper, sub-pattern D).
-
-L1 anchor:
-
-- `book/src/L1/apply_linop.md` — the firm L1 operator that all five
-  sub-patterns lower from.
-
-Sibling lowering theme:
-
-- `book/src/L1-L0/axpby-mutation-rotation.md` — the
-  inner-axpy-accumulator step of sub-patterns D, E is covered there; not
-  duplicated here.
-
-Coverage note: this theme cites the **representative** concrete
-realisations (`SumOperator`, `BaseProductOperator`, `BaseDiagonalOperator`,
+This theme cites the **representative** concrete realisations
+(`SumOperator`, `BaseProductOperator`, `BaseDiagonalOperator`,
 `ParOperator`). The full Palace corpus contains many more concrete
 realisations (preconditioners under `palace/linalg/{amg,ams,jacobi,
 chebyshev,distrelaxation,blockprecond,gmg,hcurl}.{hpp,cpp}`; FE assembly
-closures; Jacobian-action operators in transient / nleps drivers).
-Exhaustive corpus indexing is deferred to a `lowering-verifier` audit.
-The cited set is illustrative — sufficient to establish each sub-pattern
+closures; Jacobian-action operators in transient / nleps drivers); the
+cited set is illustrative — sufficient to establish each sub-pattern
 recognition rule. Estimated total `Mult`-virtual implementations across
 the corpus: ~30-40 (every concrete operator subclass implements at least
 `Mult`; many also implement `MultTranspose` and the `AddMult` family).
 
+Further L0 declaration ranges grounding the cited realisations:
+`palace/linalg/operator.hpp:116-136` (`SumOperator` declaration),
+`palace/linalg/operator.hpp:178-226` (`BaseProductOperator` template),
+`palace/linalg/operator.cpp:488-507` (`BaseDiagonalOperator<ComplexOperator>::Mult`
+matrix-free realisation, sub-pattern A complex path).
+
+The L1 anchor is `book/src/L1/apply_linop.md` (the firm L1 operator all
+five sub-patterns lower from); the sibling lowering theme
+`book/src/L1-L0/axpby-mutation-rotation.md` covers the inner-axpy-accumulator
+step of sub-patterns D, E (not duplicated here).
+
 ## Status
 
 `firm` — all five sub-pattern recognition rules (A structural, B/C/D/E algebraic)
-verified row-by-row against the L0 corpus by `lowering-verifier` (cycle-100). The
-theme promotes to `firm` via the **firm-on-positive-structure / syntactic-identity
-escape**: every sub-rule is a name-match identity over a fully-specified positive
+hold via the **firm-on-positive-structure / syntactic-identity escape**: every
+sub-rule is a name-match identity over a fully-specified positive
 `mfem::Operator::Mult` / `ComplexOperator::Mult`-family method body (operator algebra
 read off the source — `operator.cpp:428-520`, `rap.cpp:195-361`,
 `operator.hpp:54-226`), NOT a numerically-asserted axiom or a convergence-semantics
-claim, so the absence of a dedicated unit test does not gate the laws (the `apply_linop`
-situation named in the CLAUDE.md `rough-in (test-coverage-bounded)` invariant). The
-deferred D/E composition path is the composition of two already-firm syntactic rules
+claim, so the absence of a dedicated unit test does not gate the laws. The
+D/E composition path is the composition of two already-firm syntactic rules
 (`apply_linop` + `axpby`, the sister theme `axpby-mutation-rotation` being firm); the
 inner accumulator (`y.Add(a*c, z)` `operator.cpp:464`, `y.Add(a, ty)` `rap.cpp:317`)
-is covered by the sister theme and intentionally not re-handled here. Rank check passes:
-both endpoints firm (`L1/apply_linop` firm cycle-004; L0 ground truth), so
-`rank(theme) ≤ min(firm, firm) = firm` is well-founded.
-
-verified_against:
-  - citation: palace/linalg/operator.hpp:21
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: using Operator = mfem::Operator; real-operator alias, inherits abstract Mult from MFEM. Sub-pattern A real path.
-  - citation: palace/linalg/operator.hpp:54
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: ComplexOperator::Mult pure-virtual decl. Sub-pattern A complex path.
-  - citation: palace/linalg/operator.hpp:56
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: ComplexOperator::MultTranspose decl. Sub-pattern B.
-  - citation: palace/linalg/operator.hpp:58
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: ComplexOperator::MultHermitianTranspose decl; complex-only by static type. Sub-pattern C.
-  - citation: palace/linalg/operator.hpp:60-67
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: ComplexOperator AddMult / AddMultTranspose / AddMultHermitianTranspose decls; scalar a defaults to 1.0 on all three. Sub-patterns D and E.
-  - citation: palace/linalg/operator.hpp:133
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: SumOperator::AddMult real-path decl (const double a = 1.0). Sub-pattern D.
-  - citation: palace/linalg/operator.hpp:158-175
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: ProductOperatorHelper Hermitian-transpose specialisation; MultHermitianTranspose 158-165 + AddMultHermitianTranspose 167-175 composition witnesses. Sub-patterns C and E.
-  - citation: palace/linalg/operator.hpp:202-206
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: BaseProductOperator::Mult body B.Mult(x, z); A.Mult(z, y); chained sub-pattern A composition witness.
-  - citation: palace/linalg/operator.hpp:214-218
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: BaseProductOperator::AddMult body B.Mult(x, z); A.AddMult(z, y, a); accumulating-outer-apply composition witness. Sub-pattern D.
-  - citation: palace/linalg/operator.hpp:220-225
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: BaseProductOperator::AddMultTranspose body A.MultTranspose(x, z); B.AddMultTranspose(z, y, a). Sub-pattern E.
-  - citation: palace/linalg/operator.cpp:428-441
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: SumOperator::Mult; size-1 fast path y *= ops.front().second (line 435); size>1 path y = 0.0 (439) then AddMult(x, y) (440), witness of L0 Mult-via-AddMult reuse. Sub-pattern A.
-  - citation: palace/linalg/operator.cpp:443-456
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: SumOperator::MultTranspose; mirrors Mult with MultTranspose/AddMultTranspose. Sub-pattern B.
-  - citation: palace/linalg/operator.cpp:458-466
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: SumOperator::AddMult; loop accumulates y.Add(a*c, z) at line 464 (axpy-shaped inner step, shared with axpby-mutation-rotation). Sub-pattern D.
-  - citation: palace/linalg/operator.cpp:468-476
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: SumOperator::AddMultTranspose; loop op->MultTranspose(x, z); y.Add(a*c, z). Sub-pattern E.
-  - citation: palace/linalg/operator.cpp:479-507
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: BaseDiagonalOperator<Operator>::Mult (479-487, Y[i] = D[i]*X[i]) + <ComplexOperator>::Mult (488-507) matrix-free realisations. Sub-pattern A.
-  - citation: palace/linalg/operator.cpp:509-520
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: BaseDiagonalOperator<Operator>::AddMult matrix-free fused Y[i] += a*D[i]*X[i] (forall body 519, closing brace 520 — corrects prior :509-519 range-END off-by-one). Sub-pattern D.
-  - citation: palace/linalg/rap.cpp:195-234
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: ParOperator::Mult; prolongation + inner A->Mult(lx, ly) at line 219 (corrects prior note line 220) + RestrictionMatrixMult + dbc_tdof masking; MFEM_ASSERT shape guard 197-198. L1 form preserved under parallel wrapper. Sub-pattern A.
-  - citation: palace/linalg/rap.cpp:236-275
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: ParOperator::MultTranspose; restriction/prolongation roles swapped. Sub-pattern B.
-  - citation: palace/linalg/rap.cpp:277-318
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: ParOperator::AddMult; same prolong/restrict shape as Mult with final accumulation y.Add(a, ty) at line 317 (axpy-shaped, cited by sister theme); MFEM_ASSERT shape guard 280-281. Sub-pattern D.
-  - citation: palace/linalg/rap.cpp:320-361
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: ParOperator::AddMultTranspose; final accumulation y.Add(a, tx) at line 360, closing brace 361 (corrects prior :320-360 range-END off-by-one). Sub-pattern E.
-  - citation: palace/linalg/operator.hpp:73-113
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: ComplexWrapperOperator block-2x2 equivalent-real wrap; applicability condition 3 mixed real-op-on-complex-vector lift (complex-from-real-lift concept, not part of this theme).
-  - citation: palace/linalg/iterative.cpp:379
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: CG residual call site A->Mult(x, r) inside if(initial_guess). Sub-pattern A live consumer.
-  - citation: palace/linalg/iterative.cpp:443
-    verdict: supports
-    audited_at: 2026-06-05T04:49:16Z
-    note: CG inner-loop call site A->Mult(p, z) feeding Dot(comm, z, p). Sub-pattern A live consumer.
+is covered by the sister theme and intentionally not re-handled here. Both endpoints
+are firm (`L1/apply_linop`; L0 ground truth), so `rank(theme) ≤ min(firm, firm) = firm`.

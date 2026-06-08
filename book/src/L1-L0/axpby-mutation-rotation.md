@@ -2,14 +2,10 @@
 layer: L1-L0
 theme: axpby-mutation-rotation
 rank: firm
-# Graded-stack scheme (cycle-111, D2): L1>L0 lowering-theme leaf, typed from scratch
-# (discharges OQ `l1-l0-axpy-family-themes-need-scheme-frontmatter`). The theme is a
-# firm mutation-rotation: structural + transparent-trick rewrites over fully-specified
-# positive L0 source. The blocking depends-on edges are the rank-terminal POSITIVE L0
-# SOURCE (cites-evidence) the rewrite rests on, which makes the `firm` rank well-founded.
-# The firm L1 parents (axpy/axpby) reach this theme via their own legacy depends-on
-# edges; here they are recorded as `reference` see-also (this is scheme hygiene, NOT a
-# reachability flip — the theme was already reachable from those parents).
+# L1>L0 lowering-theme leaf. Firm mutation-rotation: structural + transparent-trick
+# rewrites over fully-specified positive L0 source. The blocking depends-on edges are the
+# rank-terminal positive L0 source (cites-evidence) the rewrite rests on. The firm L1
+# parents (axpy/axpby) are recorded as `reference` see-also.
 edges:
   depends-on:
     - target: palace/linalg/vector.cpp:710
@@ -163,9 +159,7 @@ For all three sub-patterns the rewrite preserves semantics when:
 - **Sub-pattern C** — `algebraic`. `axpy(-1, x, y) = y - x` and `Subtract(α,
   x) ≡ AXPY(-α, x)`.
 
-The theme as a whole is `structural` with three algebraic sub-rules. A
-`lowering-verifier` audit in a later cycle should confirm sub-rule recognition
-matches the L0 corpus exhaustively.
+The theme as a whole is `structural` with three algebraic sub-rules.
 
 ## Speculative L1 operators
 
@@ -178,7 +172,7 @@ would violate one-theme-per-invocation. A follow-up theme
 `axpbypcz-mutation-rotation` should be sketched once `axpbypcz` is
 harvested.)
 
-## Verified-against
+## Evidence
 
 L0 evidence ranges:
 
@@ -199,69 +193,14 @@ L1 anchor:
 - `book/src/L1/axpy.md` — the firm L1 operator that sub-patterns A/B/C all
   lower from.
 
-```yaml
-verified_against:
-  - citation: palace/linalg/vector.hpp:115-118
-    verdict: supports
-    audited_at: 2026-05-29T05:22:35Z
-    note: Re-confirmed cycle-021. ComplexVector AXPY/Add/Subtract decls; Subtract inline body AXPY(-alpha, x) at hpp:118.
-  - citation: palace/linalg/vector.hpp:119-128
-    verdict: supports
-    audited_at: 2026-05-29T05:22:35Z
-    note: operator+= -> AXPY(1.0,x) (119-123); operator-= -> AXPY(-1.0,x) (124-128). Defined-not-used in palace/**.
-  - citation: palace/linalg/vector.cpp:276-311
-    verdict: supports
-    audited_at: 2026-05-29T05:22:35Z
-    note: ComplexVector::AXPY def; ai==0 two-real-kernel else complex-kernel; no alpha==1 value-branch on complex path.
-  - citation: palace/linalg/vector.cpp:701-712
-    verdict: supports
-    audited_at: 2026-05-29T05:22:35Z
-    note: Free-fn real-Vector specialisation; if(alpha==1.0){y+=x;}else{y.Add(alpha,x);} at 704-710. Range line-exact.
-  - citation: palace/linalg/vector.cpp:714-718
-    verdict: supports
-    audited_at: 2026-05-29T05:22:35Z
-    note: Free-fn real-alpha-on-ComplexVector dispatches to member AXPY at 717; no branch.
-  - citation: palace/linalg/vector.cpp:720-724
-    verdict: supports
-    audited_at: 2026-05-29T05:22:35Z
-    note: Free-fn complex-alpha-on-ComplexVector dispatches to member AXPY at 723; defined-not-used (linalg::AXPY corpus = 5 sites, all double alpha: nleps:536, romoperator:193-194, drivensolver:367,394).
-  - citation: palace/linalg/operator.cpp:458-466
-    verdict: supports
-    audited_at: 2026-05-29T05:22:35Z
-    note: SumOperator::AddMult uses y.Add(a*c,z) at 464; transpose sibling AddMultTranspose 468-475 identical at 474 (uncited).
-  - citation: palace/linalg/rap.cpp:73
-    verdict: supports
-    audited_at: 2026-05-29T05:22:35Z
-    note: b.Add(-1.0, ty); literal -1.0 confirmed sub-pattern C.
-  - citation: palace/linalg/rap.cpp:317
-    verdict: supports
-    audited_at: 2026-05-29T05:22:35Z
-    note: y.Add(a, ty); runtime alpha=a; transpose sibling y.Add(a, tx) at rap.cpp:360 (uncited).
-```
-
-Coverage note (lowering-verifier audit, 2026-05-27): the corpus contains
-~25 additional axpy-shaped sites beyond those cited (under
-palace/linalg/{orthog,iterative,chebyshev,floquetcorrection,nleps},
+Coverage note: the corpus contains ~25 additional axpy-shaped sites beyond
+those cited (under palace/linalg/{orthog,iterative,chebyshev,floquetcorrection,nleps},
 palace/models/{romoperator,waveportoperator,materialoperator}, palace/fem,
-palace/drivers/drivensolver). Theme content as written is correct; the
-cited set is illustrative not exhaustive. The ComplexVector::Subtract(α, x),
-ComplexVector::operator-=, and the free-function
+palace/drivers/drivensolver); the cited set is illustrative not exhaustive. The
+ComplexVector::Subtract(α, x), ComplexVector::operator-=, and the free-function
 `linalg::AXPY(std::complex<double>, ComplexVector, ComplexVector)`
 specialisation (vector.cpp:720-724) are all defined-not-used in palace/**
-(definitions exist; no caller sites). Treat these three L0 forms as
-recognition rules for *potential* call sites rather than observed ones.
-Exhaustive corpus indexing deferred to a future cycle.
-
-## Status
-
-`firm` — all three sub-pattern recognition rules (A bare axpy / B `α==1` / C
-`α==-1` & `Subtract`) are verified against the L0 corpus, every cited range is
-line-exact, and the `linalg::AXPY` corpus census (5 sites, all `double` α)
-confirms the complex-α free-function overload and the `Subtract` / `operator-=` /
-`operator+=` member forms are defined-not-used recognition rules. No constructive
-sub-part — nothing is reconstructed from negative anchors. (Re-audited cycle-021,
-lowering-verifier.) Residual: exhaustive indexing of the ~25 additional
-axpy-shaped `y.Add(α,x)` / `y += x` sites under
-`palace/linalg/{orthog,iterative,chebyshev,...}` + `palace/models/` is a coverage
-*completeness* nicety, not a correctness gate — the recognition rules are firm; the
-cited set is illustrative. Carried as OQ `axpby-corpus-coverage-exhaustive-indexing`.
+(definitions exist; no caller sites) — recognition rules for *potential* call
+sites rather than observed ones. (The `linalg::AXPY` corpus census is 5 sites,
+all `double` α: nleps:536, romoperator:193-194, drivensolver:367,394.) Carried
+as OQ `axpby-corpus-coverage-exhaustive-indexing`.

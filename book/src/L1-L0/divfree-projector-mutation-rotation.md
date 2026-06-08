@@ -135,8 +135,8 @@ the L1 form erases:
   sub-field (`P.ksp : Solver[P.M]`) — the
   [`nested-constructed-operator-gate`](../concepts/nested-constructed-operator-gate.md)
   shape. It is **not the first** such case: the firm
-  [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md) theme (landed
-  cycle-011) is the prior and richer instance, whose closure `E` carries **two**
+  [`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md) theme is the
+  prior and richer instance, whose closure `E` carries **two**
   nested gates (`E.linear : Solver[A]` and `E.projector : Maybe
   DivFreeSolver[ComplexVector]` — the latter being this projector itself,
   [`L1/eigsolve`](../L1/eigsolve.md) §Shape contract `E`), so the nesting is
@@ -152,8 +152,7 @@ composed steps 1:1 onto the four L0 statement groups.
 Citations:
 - `palace/linalg/divfree.cpp:155-187` — `DivFreeSolver<VecType>::Mult(VecType
   &y)` (signature `:155`, opening brace `:156`, close brace `:187`; the four
-  steps; **corrected from the L1 entry's `:155-186`, which undershot the close
-  brace `:187` by one**).
+  steps).
 - `palace/linalg/divfree.cpp:159-168` — step 1: `WeakDiv->Mult(...)` (complex
   Re/Im at `:162-163`, real at `:167`).
 - `palace/linalg/divfree.cpp:170-174` — step 2: `if (bdr_tdof_list_M)
@@ -383,9 +382,8 @@ sites).
 
 ## Speculative L1 operators
 
-None. The L1 anchor [`L1/divfree-projector`](../L1/divfree-projector.md) is firm
-(promoted cycle-015), and all its sub-dependencies are firm L1 operators / firm
-concepts:
+None. The L1 anchor [`L1/divfree-projector`](../L1/divfree-projector.md) is firm,
+and all its sub-dependencies are firm L1 operators / firm concepts:
 [`apply_linop`](../L1/apply_linop.md) (the `WeakDiv·y` and `Grad·ψ` applies),
 [`axpy`](../L1/axpy.md) (the `y + Grad·ψ` accumulate, fused as
 `Grad->AddMult(psi, y, 1.0)`),
@@ -393,13 +391,12 @@ concepts:
 [`set_subvector_zero`](../concepts/set_subvector_zero.md) (the `Z_{bdr_eff}`
 zeroing). This theme proposes no new vocabulary.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (all verified via `palace-codemap` `read_range` this cycle,
-2026-05-28):
+L0 evidence ranges:
 
 - `palace/linalg/divfree.cpp:155-187` — `Mult(VecType &y)` apply (sig `:155`,
-  brace `:156`, close `:187`; **corrected from `:155-186`**).
+  brace `:156`, close `:187`).
 - `palace/linalg/divfree.cpp:159-186` — the four apply steps (step 1
   `:159-168`, step 2 `:170-174`, step 3 `:175`, step 4 `:177-186`).
 - `palace/linalg/divfree.cpp:43-152` — constructor (sig `:43-48`, empty-bdr pin
@@ -441,43 +438,9 @@ L1 anchor:
 - `book/src/L1/divfree-projector.md` — the firm L1 operator all four
   sub-patterns lower from.
 
-## Status
-
-`firm`.
-
-Every sub-pattern reads from a positive Palace source site verified via codemap
-`read_range` this cycle:
-
-- the in-place output-arg apply with scratch-member threading (A,
-  `palace/linalg/divfree.cpp:155-187`),
-- the copy-then-apply out-of-place wrapper (B,
-  `palace/linalg/divfree.hpp:68-72`),
-- the constructed-operator-gate closure materialisation (C,
-  `palace/linalg/divfree.cpp:43-152`),
-- the `VecType`-templated element-type variant (D,
-  `palace/linalg/divfree.cpp:189-190`).
-
-The single load-bearing algebraic sub-note — the `WeakDiv = -Gᵀ` sign making
-the additive correction divergence-free — is **positively anchored** in
-Palace-owned source (`palace/fem/integrator.hpp:217` +
-`palace/fem/integ/mixedvecgrad.cpp:202`, side-by-side with the non-negated
-sibling `:142`), per the cycle-014 lowering-verifier audit
-(`reports/2026-05-28T2115Z-lowering-verifier-divfree-weakdiv-sign-convention-l0-verify/`,
-verdict UNBLOCK-PROMOTION) that promoted the L1 entry to firm in cycle-015.
-
-**No partly-constructive caveat applies.** Unlike
-[`eigsolve-mutation-rotation`](./eigsolve-mutation-rotation.md) (whose
-`LinearSolveFailed` sub-part is reconstructed from negative anchors), this theme
-has a positive source site for every step, including the sign. The L1 anchor is
-firm, so the theme is firm at birth.
-
-A `lowering-verifier` exhaustiveness audit (both element-type instantiations ×
-in-place + out-of-place entry points × all driver call sites) is the standard
-follow-up, not a status reduction.
-
 ## Open questions / caveats
 
-- **Stale `Mult` doc comment (resolved cycle-019 — OQ closed).** The per-method
+- **Stale `Mult` doc comment (Palace-internal inconsistency).** The per-method
   doc comment `palace/linalg/divfree.hpp:64-66` describes the output as "the
   irrotational portion ... satisfying ∇ × y = 0". This is **inverted**: in the
   Helmholtz/Hodge decomposition `y = y_divfree + Grad·ψ`, the *irrotational*
@@ -489,13 +452,9 @@ follow-up, not a status reduction.
   space satisfying `Gᵀ M x = 0`"), which the implementation
   (`palace/linalg/divfree.cpp:155-190`) realises; Palace's own inline comment at
   `palace/linalg/divfree.cpp:176` ("Compute the irrotational portion of y and
-  subtract.") confirms the irrotational component is the *subtracted* part. A
-  pre-existing Palace-internal
-  documentation inconsistency, NOT a defect in this theme; the rewrite honours
-  the *implemented* divergence-free semantics. The `lowering-verifier` must NOT
-  treat the per-method comment as a citation against the divergence-free claim.
-  (OQ `divfree-mult-doc-irrotational-vs-divfree-stale`, carried from the L1
-  entry cycle-013, re-surfaced cycle-016, resolved cycle-019.)
+  subtract.") confirms the irrotational component is the *subtracted* part. The
+  rewrite honours the *implemented* divergence-free semantics; the per-method
+  comment is not a citation against the divergence-free claim.
 - **Inner `ksp_solve` is a nested constructed-operator gate.** `P.ksp :
   Solver[P.M]` means this theme's closure carries another L1 constructed-operator
   as a sub-field — an instance of the
@@ -507,7 +466,7 @@ follow-up, not a status reduction.
   theme (sub-pattern B, `book/src/L1-L0/eigsolve-mutation-rotation.md:213-258`;
   the **core sub-pattern** of that theme, lowering ten `opInv->Mult` inner-solve
   call sites through the firm `ksp-solve-mutation-rotation` theme) is the prior
-  (cycle-011) and richer instance — its closure carries **two** nested gates
+  and richer instance — its closure carries **two** nested gates
   (`E.linear`, `E.projector`; [`L1/eigsolve`](../L1/eigsolve.md) §Shape contract
   `E` at `:60`, prose-named "the first L1 operator to compose two layers of
   constructed-operator absorption" at `book/src/L1/eigsolve.md:136`, and
@@ -518,24 +477,3 @@ follow-up, not a status reduction.
   the [`nested-constructed-operator-gate`](../concepts/nested-constructed-operator-gate.md)
   concept page for the full instance index, the latent `ksp_solve`-preconditioner
   site, and the fidelity rule.
-- **L1 entry minor citation drift (corrected in this theme, NOT edited in the L1
-  entry — out of abstractor authority).** (a) The apply close brace is `:187`,
-  not the L1 entry's `:155-186`. (b) The CG rel-tol set is at
-  `palace/linalg/divfree.cpp:141` (`SetRelTol(tol)`), not the L1 entry's `:140`
-  (`:140` is `SetInitialGuess(false)`); the abs-tol `:142` is correct. These are
-  off-by-one drifts in the *firm L1 entry* `book/src/L1/divfree-projector.md`
-  (§Signature `P.ksp`, §Algebraic laws idempotence-tolerance note, §Evidence) —
-  this theme cites the corrected ranges. **Surface to a harvester / repairer
-  pass on the L1 entry** (modifying the L1 operator entry is harvester authority,
-  not abstractor). Recommend an OQ:
-  `divfree-l1-entry-apply-close-and-reltol-line-drift`.
-- **Lifting note (reverse direction — working notes only, NOT in the formal
-  chapter).** An L0 in-place projector apply (output-arg mutation + scratch
-  members + construction-bound operator reads) lifts to the L1 pure projection
-  by: (i) re-binding the output arg `y` to the return value, (ii) erasing the
-  `psi`/`rhs` scratch members, (iii) capturing the construction-bound operators
-  as the closure `P`. The lift requires the no-aliasing + no-prior-`y`-observer
-  guarantees (Applicability conditions 1,2) to hold at every call site; both
-  hold at the eigensolver/arpack/slepc sites by lexical sequencing. This reverse
-  note is recorded here, not in the high→low formal theme content (per CLAUDE.md
-  §Methodology invariants "Layers are defined high→low").

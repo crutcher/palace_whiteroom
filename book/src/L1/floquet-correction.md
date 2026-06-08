@@ -292,34 +292,6 @@ All four are `floquet_corr->AddMult(E, B, 1.0 / omega)` inside `if
 (`palace/drivers/drivensolver.cpp:141,292` for the two driven entry points;
 `palace/drivers/eigensolver.cpp:240`).
 
-## Status
-
-`firm`.
-
-The **structural decomposition is firm**: every step of the apply is read from a
-positive source site (`palace/linalg/floquetcorrection.cpp:73-86`), the
-construction is fully read (`palace/linalg/floquetcorrection.cpp:20-71`), and
-the linearity, range, composition, and step-ordering laws follow directly from
-the source-stated two-step body and the SPD/real properties of the
-construction.
-
-**Firm-on-positive-structure precedent** (the `divfree-projector` + `jacobi-smoother`
-+ `chebyshev-smoother` + `apply_linop` cohort): every law is a syntactic
-operator-algebra identity on a fully-specified positive source. No dedicated
-unit test exists (`test/unit/test-floquetcorrection.cpp` is absent; confirmed by
-codemap survey — only `test/unit/test-schema.cpp:340-353` validates the
-`FloquetWaveVector` JSON shape; the `test/examples/cylinder/floquet`
-end-to-end regression at `test/examples/runtests.jl:289-294` covers the
-*integration*, not the operator). The test absence does not block `firm` — the
-operator's semantics are a fully-read two-step linear map with source-stated
-construction; the firm decision matches the `chebyshev-smoother`,
-`jacobi-smoother`, and `divfree-projector` precedents (where every law is a
-verified-exact syntactic identity on fully-specified source).
-
-The complex-only scope (no `<Vector>` instantiation) is a deliberate scope-out
-captured in §Signature `x` element-type note + §Context — not an absence
-gate.
-
 ## Evidence
 
 - `palace/linalg/floquetcorrection.hpp:28-30` — class doc: "This solver
@@ -400,3 +372,7 @@ gate.
   `FloquetWaveVector` (the only floquet-related unit test in `test/unit/`).
 - `test/examples/runtests.jl:289-294` — `cylinder/floquet` end-to-end regression
   example.
+
+## Status
+
+`firm` — the signature and laws are read directly from positive Palace source.

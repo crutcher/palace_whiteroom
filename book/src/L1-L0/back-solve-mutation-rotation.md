@@ -2,7 +2,7 @@
 
 The mutation rotation for the GMRES / FGMRES restart-correction back-substitution.
 Lowers the pure L1 form `y = back_solve(R, s)`
-([`L1/back_solve`](../L1/back_solve.md), firm + cycle-028 audited) into the
+([`L1/back_solve`](../L1/back_solve.md), firm) into the
 in-place descending-back-substitution loop at
 `palace/linalg/iterative.cpp:652-660` (GMRES) and its shape-identical FGMRES twin
 at `:831-840`: a four-element rewrite consisting of (1) the **outer descending
@@ -614,88 +614,65 @@ which has a load-bearing full-pivot-LU vs full-pivot-QR kernel axis).
 No storage-layout axis (the flat column-major slab is the only storage,
 a transparent allocation trick).
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `tools/citecheck/citecheck.py --anchor`
-against on-disk `reference/palace/` this invocation — producer-citation
-self-verification, `verify-citation-range` skill, "Producer self-verification
-before emitting citations" sub-case). The `iterative.cpp` restart region is
-the known codemap +1-drift offender mentioned in the role spec; **citecheck
-against on-disk is the source of truth** here, and every line below was
-re-confirmed via `--anchor` zero-drift this invocation.
+L0 evidence ranges (the `iterative.cpp` restart region is a known codemap
++1-drift region; on-disk `reference/palace/` is the source of truth):
 
 - `palace/linalg/iterative.cpp:652` — comment `// Reconstruct the solution
   (for restart or due to convergence or maximum iterations).` (GMRES restart
-  back-solve role). **Self-verified** (`--anchor 'Reconstruct the solution'`
-  → 652).
+  back-solve role).
 - `palace/linalg/iterative.cpp:653` — `for (int i = j; i >= 0; i--)`
-  (GMRES outer descending sweep). **Self-verified** (`--anchor 'for (int
-  i = j'` → 653).
+  (GMRES outer descending sweep).
 - `palace/linalg/iterative.cpp:655` — `ScalarType *Hi = H.data() + i *
-  (max_dim + 1);` (GMRES column-major stride pointer). **Self-verified**
-  (`--anchor 'H.data() + i * (max_dim + 1)'` → 655).
+  (max_dim + 1);` (GMRES column-major stride pointer).
 - `palace/linalg/iterative.cpp:656` — `s[i] /= Hi[i];` (GMRES diagonal
-  division). **Self-verified** (`--anchor 's[i] /= Hi[i]'` → 656).
+  division).
 - `palace/linalg/iterative.cpp:657` — `for (int k = i - 1; k >= 0; k--)`
-  (GMRES inner super-diagonal scan). **Self-verified** (`--anchor 'for
-  (int k = i - 1'` → 657).
+  (GMRES inner super-diagonal scan).
 - `palace/linalg/iterative.cpp:659` — `s[k] -= Hi[k] * s[i];` (GMRES
-  column-oriented super-diagonal subtraction). **Self-verified** (`--anchor
-  's[k] -= Hi[k] * s[i]'` → 659).
+  column-oriented super-diagonal subtraction).
 - `palace/linalg/iterative.cpp:666` — `x.Add(s[k], V[k]);` (GMRES downstream
   `V`-basis lift; NOT part of the leaf — Sub-pattern C boundary marker).
-  **Self-verified** (`--anchor 'x.Add(s[k], V[k])'` → 666).
 - `palace/linalg/iterative.cpp:831` — comment `// Reconstruct the solution
   (for restart or due to convergence or maximum iterations).` (FGMRES restart
-  back-solve role). **Self-verified** (`--anchor 'Reconstruct the solution'`
-  → 831).
+  back-solve role).
 - `palace/linalg/iterative.cpp:832` — `for (int i = j; i >= 0; i--)`
-  (FGMRES outer descending sweep — note +1 line-shift vs GMRES :653 from
-  brace-on-own-line style). **Self-verified** (`--anchor 'for (int i = j'`
-  → 832).
+  (FGMRES outer descending sweep — byte-identical to GMRES `:653` at a uniform
+  +179-line file offset, zero local relative shift).
 - `palace/linalg/iterative.cpp:834` — `ScalarType *Hi = H.data() + i *
-  (max_dim + 1);` (FGMRES column-major stride pointer). **Self-verified**
-  (`--anchor 'H.data() + i * (max_dim + 1)'` → 834).
+  (max_dim + 1);` (FGMRES column-major stride pointer).
 - `palace/linalg/iterative.cpp:835` — `s[i] /= Hi[i];` (FGMRES diagonal
-  division). **Self-verified** (`--anchor 's[i] /= Hi[i]'` → 835).
+  division).
 - `palace/linalg/iterative.cpp:836` — `for (int k = i - 1; k >= 0; k--)`
-  (FGMRES inner super-diagonal scan). **Self-verified** (`--anchor 'for
-  (int k = i - 1'` → 836).
+  (FGMRES inner super-diagonal scan).
 - `palace/linalg/iterative.cpp:838` — `s[k] -= Hi[k] * s[i];` (FGMRES
-  column-oriented super-diagonal subtraction). **Self-verified** (`--anchor
-  's[k] -= Hi[k] * s[i]'` → 838).
+  column-oriented super-diagonal subtraction).
 - `palace/linalg/iterative.cpp:843` — `x.Add(s[k], Z[k]);` (FGMRES downstream
   `Z`-basis lift; NOT part of the leaf — Sub-pattern C second boundary
-  instance). **Self-verified** (`--anchor 'x.Add(s[k], Z[k])'` → 843).
+  instance).
 - `palace/linalg/iterative.cpp:644` — `converged = (beta < eps);` (the
   convergence test that exits before the back-solve in the lucky-breakdown
-  / singular-`R` case; applicability boundary). **Self-verified** (`--anchor
-  'converged = (beta < eps)'` → 644).
+  / singular-`R` case; applicability boundary).
 - `palace/linalg/iterative.cpp:612` — `s[0] = beta;` (RHS seed for the
   running-QR stream; the back-solve's RHS `s[0..j]` is its rotated
-  descendant). **Self-verified** (`--anchor 's[0] = beta'` → 612).
+  descendant).
 - `palace/linalg/iterative.cpp:631` — `Hj[j + 1] = linalg::Norml2(comm, w);`
   (the sub-diagonal entry the running-QR stream annihilates — context for
   why `R` is upper-triangular when the back-solve reads it; not directly
-  consumed by the back-solve). **Self-verified** (`--anchor 'Norml2(comm,
-  w)'` → 631).
+  consumed by the back-solve).
 - `palace/linalg/iterative.hpp:192` — `mutable std::vector<ScalarType> H;`
-  (the flat column-major register storing the R-factor). **Self-verified**
-  (`--anchor 'H'` → 192).
+  (the flat column-major register storing the R-factor).
 - `palace/linalg/iterative.hpp:193` — `mutable std::vector<ScalarType> s,
   sn;` (the RHS / Givens-sine register `s` of element type `ScalarType`).
-  **Self-verified** (`--anchor 's, sn'` → 193).
 - `palace/linalg/iterative.hpp:222` — `class FgmresSolver : public
   GmresSolver<OperType>` (FGMRES inherits the GMRES registers, grounding
-  Sub-pattern B's identical-`H`-and-`s`-access claim). **Self-verified**
-  (`--anchor 'class FgmresSolver'` → 222).
+  Sub-pattern B's identical-`H`-and-`s`-access claim).
 - `palace/linalg/iterative.hpp:250` — `using GmresSolver<OperType>::H;`
-  (FGMRES inherits the Hessenberg register). **Self-verified** (`--anchor
-  'GmresSolver<OperType>::H'` → 250).
+  (FGMRES inherits the Hessenberg register).
 - `palace/linalg/iterative.hpp:256` — `mutable std::vector<VecType> Z;`
   (FGMRES-specific right-preconditioned-basis register; NOT read by the
-  back-solve — basis-lift independence boundary marker). **Self-verified**
-  (`--anchor 'std::vector<VecType> Z'` → 256).
+  back-solve — basis-lift independence boundary marker).
 
 L1 / cross-theme anchors:
 
@@ -706,9 +683,8 @@ L1 / cross-theme anchors:
   `:207-215`), the empty-stream / single-column boundary (law 5,
   `:217-221`), basis-lift independence (law 6, `:223-230`), the reduction-
   order non-law (`:234-243`), the singular-`R` applicability boundary
-  (`:249-254`), the L1 vs L0 distinction section (`:371-390`), the firm-
-  on-positive-structure status (`:330-369`), the cycle-028 `verified_against:`
-  block (`:466-540`).
+  (`:249-254`), the L1 vs L0 distinction section (`:371-390`), and the firm-
+  on-positive-structure status (`:330-369`).
 - [`L1-L0/normalize-mutation-rotation`](./normalize-mutation-rotation.md) —
   firm sibling theme precedent: in-place destructive overwrite of the
   receiver, structural rewrite, three-sub-pattern decomposition, firm-on-
@@ -726,9 +702,9 @@ L1 / cross-theme anchors:
 - [`L2/incremental-least-squares`](../L2/incremental-least-squares.md) —
   the firm L2 composition that produces `R` and `s` in the flat register
   `H` via the running-QR stream; the L2>L1
-  `incremental-least-squares-composition-lowering` theme (c028 staged for
-  c030) is its forward-edge complement — that theme's terminal step is
-  exactly this leaf, and exactly this lowering is its terminal rewrite.
+  `incremental-least-squares-composition-lowering` theme is its forward-edge
+  complement — that theme's terminal step is exactly this leaf, and exactly
+  this lowering is its terminal rewrite.
 - [`concepts/givens`](../concepts/givens.md) — the concept page that names
   the back_solve step "via `trsv`" at `:29`; this theme is the L1>L0
   rotation of that step.
@@ -738,175 +714,38 @@ L1 / cross-theme anchors:
 `firm` — the rewrite is the structural expansion of the L1 leaf
 [`back_solve`](../L1/back_solve.md) into the L0 in-place back-substitution
 loop at `palace/linalg/iterative.cpp:652-660` (GMRES Sub-pattern A) /
-`:831-840` (FGMRES Sub-pattern B), exhaustively pinned by direct, self-
-verified evidence:
+`:831-840` (FGMRES Sub-pattern B), pinned by direct positive evidence:
 
-- **The L1 leaf is firm + audited** (cycle-028 `verified_against:` block,
-  every L0 anchor zero-drift on-disk).
-- **Both surface forms are positively anchored** (GMRES `:652-660` and
+- Both surface forms are positively anchored (GMRES `:652-660` and
   FGMRES `:831-840`); the two are **byte-for-byte identical** within the
-  back-solve body (`cmp` over `:653-660` ≡ `:832-839`; uniform +179-line
-  file offset, zero local relative shift, same brace-on-its-own-line style),
-  grounding law-6 basis-lift independence.
-- **Every rewrite element is positively anchored**: the descending outer
+  back-solve body (`:653-660` ≡ `:832-839`; uniform +179-line file offset,
+  zero local relative shift, same brace-on-its-own-line style), grounding
+  law-6 basis-lift independence.
+- Every rewrite element is positively anchored: the descending outer
   sweep, the column-major stride formula, the diagonal division, the
   inner column-oriented super-diagonal subtraction, the in-place RHS
   overwrite, the basis-invariant downstream lift.
-- **The one load-bearing numerical detail** — the descending column-
-  oriented eager-subtraction reduction order — is recorded explicitly,
-  matching the L1 leaf's reduction-order non-law.
-- **The two transparent tricks** — the flat column-major register storage
+- The one load-bearing numerical detail — the descending column-oriented
+  eager-subtraction reduction order — is recorded explicitly, matching the
+  L1 leaf's reduction-order non-law.
+- The two transparent tricks — the flat column-major register storage
   and the `max_dim+1` stride — are recorded as such, algebraically
   equivalent to a 2D `R[k][i]` matrix indexing.
 
-The theme **reuses** no prior L1>L0 sub-theme verbatim (unlike
+The theme reuses no prior L1>L0 sub-theme verbatim (unlike
 `normalize-mutation-rotation` / `matrix-weighted-norm-mutation-rotation`
 which delegate steps to sibling themes); the back-substitution loop is a
-single atomic four-element rewrite, not a composition of sibling rotations.
-The downstream basis-lift (Sub-pattern C) is a boundary marker only, handled
-by `linear-combination-fold-specialization` at L2>L1.
+single atomic four-element rewrite. The downstream basis-lift (Sub-pattern C)
+is a boundary marker only, handled by `linear-combination-fold-specialization`
+at L2>L1.
 
 The one non-syntactic ingredient — the destination-collapsed-into-RHS
 in-place overwrite — is read straight off the L0 source's own compound-
 assignment operators `s[i] /= Hi[i]` (`:656`) and `s[k] -= Hi[k] * s[i]`
-(`:659`) on the receiver `s`; **no negative-anchor reconstruction, no
-literature inference, no speculative operator** — so `firm` rather than
-`partly-constructive`. The firm-on-positive-structure rationale matches the
-L1 leaf and the
-[`lu-solve-mutation-rotation`](./lu-solve-mutation-rotation.md) sibling: no
+(`:659`) on the receiver `s`; no negative-anchor reconstruction and no
+speculative operator — so `firm` rather than `partly-constructive`. No
 dedicated GMRES/FGMRES back-substitution unit test exists in
 `reference/palace/test/unit/` (the back-solve is exercised only end-to-end
-through the GMRES / FGMRES solve, the same coverage situation as
-`incremental-least-squares` and `lu_solve`), and **a missing test does not
-gate syntactic-identity laws** (per CLAUDE.md status-tier guidance); every
-law of the L1 leaf is operator-algebra on the cited positive source, none
-depend on iteration or convergence behaviour.
-
-A `lowering-verifier` audit attaching the `verified_against:` block (per
-the sibling-theme convention) — confirming the surface-form recognition is
-exhaustive (these two are the only Palace `R · y = s` back-substitution
-sites, no third overload), the line-shift between GMRES and FGMRES is the
-sole content-difference (modulo the downstream basis), and the
-reduction-order non-law composes cleanly with `incremental-least-squares`'s
-rotation-stream non-associativity — is the standard follow-up scheduled for
-cycle-030 (per role-prompt direction), not a status reduction.
-
-## Verified against
-
-```yaml
-verified_against:
-  - citation: palace/linalg/iterative.cpp:652
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: GMRES "Reconstruct the solution" comment; citecheck --anchor zero-drift on-disk.
-  - citation: palace/linalg/iterative.cpp:653
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: GMRES outer descending sweep `for (int i = j; i >= 0; i--)`; empty-cycle (j=-1) skip grounds law 5; zero-drift.
-  - citation: palace/linalg/iterative.cpp:655
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: GMRES column-major stride pointer `Hi = H.data() + i*(max_dim+1)`; transparent allocation trick; zero-drift.
-  - citation: palace/linalg/iterative.cpp:656
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: GMRES diagonal division `s[i] /= Hi[i]` (in-place RHS overwrite, laws 1+4, singular-R divide-by-zero boundary); zero-drift.
-  - citation: palace/linalg/iterative.cpp:657
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: GMRES inner super-diagonal scan `for (int k = i-1; k >= 0; k--)` (empty for i=0, law 5 single-column boundary); zero-drift.
-  - citation: palace/linalg/iterative.cpp:659
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: GMRES column-oriented subtraction `s[k] -= Hi[k] * s[i]` (law-4 transposed-index variant; pins reduction-order non-law); zero-drift.
-  - citation: palace/linalg/iterative.cpp:666
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: GMRES downstream V-basis lift `x.Add(s[k], V[k])` (LEFT branch; RIGHT branch :674 also reads s[k] via r-register; grounds law-6 basis-invariance; NOT part of leaf); zero-drift.
-  - citation: palace/linalg/iterative.cpp:831
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: FGMRES "Reconstruct the solution" comment; byte-for-byte identical to :652; zero-drift.
-  - citation: palace/linalg/iterative.cpp:832
-    verdict: supports
-    audited_at: 2026-05-30T050100Z
-    note: 'FGMRES outer descending sweep `for (int i = j; i >= 0; i--)`; byte-for-byte identical to GMRES :653 (cmp over :653-660 ≡ :832-839 zero; brace-on-its-own-line style identical in both arms; uniform +179-line file offset, zero local relative shift). Narrative Sub-pattern B repaired (cycle-031 D2 lifter): the prior "+1-line brace-style shift" claim was wrong — re-stated as byte-identical, +179-line file offset. Matches L1 leaf at L1/back_solve.md:225-226 "line-for-line identical" phrasing. citecheck --anchor zero-drift.'
-  - citation: palace/linalg/iterative.cpp:834
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: FGMRES column-major stride pointer; byte-for-byte identical to :655; zero-drift.
-  - citation: palace/linalg/iterative.cpp:835
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: FGMRES diagonal division; byte-for-byte identical to :656; zero-drift.
-  - citation: palace/linalg/iterative.cpp:836
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: FGMRES inner super-diagonal scan; byte-for-byte identical to :657; zero-drift.
-  - citation: palace/linalg/iterative.cpp:838
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: FGMRES column-oriented subtraction; byte-for-byte identical to :659; zero-drift.
-  - citation: palace/linalg/iterative.cpp:843
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: FGMRES downstream Z-basis lift `x.Add(s[k], Z[k])` (second boundary instance grounding law-6 V/Z basis split; NOT part of leaf); zero-drift.
-  - citation: palace/linalg/iterative.cpp:612
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: RHS seed `s[0] = beta` (s = beta_0 e_1); back-solve RHS s[0..j] is its Givens-rotated descendant; zero-drift.
-  - citation: palace/linalg/iterative.cpp:631
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: 'sub-diagonal `Hj[j+1] = Norml2(comm, w)` the running-QR stream annihilates (sole MPI-collective in upstream; back-solve itself has zero MPI calls — grep-verified on :650-660 / :830-840); zero-drift.'
-  - citation: palace/linalg/iterative.cpp:644
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: convergence test `converged = (beta < eps)`; control-flow traced (outer :645-648 break before next-restart-cycle seed :612), so lucky-breakdown singular-R back-solve is unreachable; applicability-condition-2 complete; zero-drift.
-  - citation: palace/linalg/iterative.hpp:192
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: flat column-major Hessenberg register `mutable std::vector<ScalarType> H`; zero-drift.
-  - citation: palace/linalg/iterative.hpp:193
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: RHS / Givens-sine register `mutable std::vector<ScalarType> s, sn`; grounds element-type axis with H :192; zero-drift.
-  - citation: palace/linalg/iterative.hpp:222
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: FgmresSolver inherits from GmresSolver — grounds Sub-pattern B identical-register-access claim; zero-drift.
-  - citation: palace/linalg/iterative.hpp:250
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: FGMRES `using GmresSolver<OperType>::H;` — inherited Hessenberg register confirms FGMRES back-solve reads the same H slab as GMRES; zero-drift.
-  - citation: palace/linalg/iterative.hpp:256
-    verdict: supports
-    audited_at: 2026-05-30T010118Z
-    note: FGMRES-specific `mutable std::vector<VecType> Z;` right-preconditioned-basis register; NOT read by the back-solve body (basis-lift independence boundary); zero-drift.
-```
-
-```yaml
-# Additive c032 D2 re-verification — closes c031 D2 lifter narrative-repair loop.
-# The 22-row c030 baseline block above remains authoritative and is NOT re-audited here.
-# This block independently confirms the 5 narrative sites the c031 D2 repair changed
-# (Sub-pattern B header :198, Sub-pattern B prose :222-243, §Variant axes :591-594,
-# §Justification clause :532-536, §Status two-form bullet :747-750) and the
-# verified_against `:832` row flip (partially-supports → supports).
-verified_against:
-  - citation: palace/linalg/iterative.cpp:653-660
-    verdict: supports
-    audited_at: 2026-05-30T053000Z
-    note: GMRES back-solve body block re-verified cycle-032 D2 — cmp of sed-extracted ranges :653-660 vs :832-839 returns 0 (byte-identical); diff exit 0. Closes c031 D2 lifter narrative-repair loop. Independent re-verification of the Sub-pattern B header (line 198), Sub-pattern B prose with prior-draft retraction (lines 222-243), §Variant axes bullet (lines 591-594), §Justification clause (lines 532-536), and §Status two-form bullet (lines 747-750) — all 5 repaired sites now match on-disk source. Extended cmp 645-660 vs 824-839 (16-line epilogue+block) also byte-identical. citecheck --anchor zero-drift on for-loop opener.
-  - citation: palace/linalg/iterative.cpp:832-839
-    verdict: supports
-    audited_at: 2026-05-30T053000Z
-    note: FGMRES back-solve body block re-verified cycle-032 D2 — paired with GMRES :653-660; uniform +179-line file offset (832-653=179), zero local relative shift. Within-block relative offsets (0,+2,+3,+4,+6) byte-identical in both arms. Preceding break sits at +5 lines back from each arm for-line (GMRES :648, FGMRES :827); confirms boundary of the 16-line cmp-identical region. Resolves c029 D5 partial→supports flip and closes c031 D2 narrative-repair loop. citecheck --anchor zero-drift.
-  - citation: palace/linalg/iterative.cpp:654
-    verdict: supports
-    audited_at: 2026-05-30T053000Z
-    note: GMRES outer opening brace on its own line — Allman style; grep -cE for K&R-style braces (opening at end of for/if/while line) in iterative.cpp returns 0 (whole-file confirmation that the brace-on-own-line claim generalizes throughout the body). Grounds "throughout the whole iterative.cpp body" prose at theme line 238.
-  - citation: palace/linalg/iterative.cpp:833
-    verdict: supports
-    audited_at: 2026-05-30T053000Z
-    note: FGMRES outer opening brace on its own line — byte-identical to GMRES :654 (both bare opening-brace lines at indent 4). Paired anchor confirming "no brace-placement shift between the arms" prose at theme line 236.
-```
+through the GMRES / FGMRES solve), and a missing test does not gate
+syntactic-identity laws; every law of the L1 leaf is operator-algebra on the
+cited positive source, none depend on iteration or convergence behaviour.

@@ -1,13 +1,9 @@
 ---
-# Lowering theme (L1>L0), cycle-115 D2 hygiene: this file previously had NO frontmatter at
-# all — its rank was prose-inferred from the `## Status` `firm` token. Per graded-stack
-# scheme §5 a theme's rank = min(endpoint ranks); the L1 endpoint (`L1/dot`) is firm (rank 3)
-# and the L0 endpoints are rank-terminal ground truth, so the theme is firm. Per the D2
-# dispatch constraint the op->theme edge (`L1/dot →lowers-to→ this theme`) lives on the L1
-# op side (landed c114) and is NOT re-added here; this theme carries only its OWN outbound
-# `cites-evidence` edges to the L0 reduction surface it lowers to (the `Dot` template, the
-# real/complex `LocalDot` leaves, and the `Mpi::GlobalSum`/`GlobalOp` collective). All ranges
-# self-verified on disk via citecheck --anchor this invocation.
+# Lowering theme (L1>L0). Per graded-stack scheme §5: rank = min(endpoint ranks). The L1
+# endpoint (`L1/dot`) is firm (rank 3) and the L0 endpoints are rank-terminal ground truth,
+# so the theme is firm. The op->theme edge (`L1/dot →lowers-to→ this theme`) lives on the L1
+# op side; this theme carries only its OWN outbound `cites-evidence` edges to the L0 reduction
+# surface (the `Dot` template, the real/complex `LocalDot` leaves, the `Mpi::GlobalSum` collective).
 rank: firm
 edges:
   depends-on:
@@ -199,7 +195,7 @@ is consumed as a **full complex value** (the residual update `w.Add(-H[j], V[j])
 Hessenberg-column store), so this is an **unweighted observable** use of the arg-2-conj
 convention — the header's own `// Note order is important for complex vectors`
 (`orthog.hpp:48`) flags it. It is the first cited unweighted-observable `dot` use OUTSIDE
-the SLEPc-NEP deflation cohort (the cycle-020 `linalg::Dot`-caller census,
+the SLEPc-NEP deflation cohort (the `linalg::Dot`-caller census,
 `book/src/L2-L1/inner-product-fold-specialization.md:301-329`, found only `nleps.cpp` because
 it scoped `linalg::Dot` callers and `orthog.hpp` bypasses `linalg::Dot`).
 
@@ -259,9 +255,9 @@ Consumers that take a **real projection** — `std::real`, `std::abs` — see no
 (not a projection) see the conjugate; the lowering must then emit the operand-swap form to
 stay faithful to the L1 `xᴴ y`.
 
-This is the same conjugate-pair relationship the cycle-019
+This is the same conjugate-pair relationship the
 [`inner-product-fold-specialization`](../L2-L1/inner-product-fold-specialization.md) theme
-narrated at the **L2>L1** edge (§"The conjugate-pair re-order"); this L1>L0 theme is the
+narrates at the **L2>L1** edge (§"The conjugate-pair re-order"); this L1>L0 theme is the
 **L1-leaf-level** lowering of the same fact. The two are cited together for consistency — the
 L2>L1 theme dispatches the L2 fold onto the L1 leaf, this theme lowers the L1 leaf onto the L0
 source.
@@ -329,58 +325,55 @@ reduction-tree split is the load-bearing residue recorded above.
 co-defines `dot` + `tdot`); it proposes no new L1 vocabulary. The M-weighted relative
 `linalg::Dot(comm, x, A, y) = yᴴ A x` (`palace/linalg/operator.cpp:621-638`) shares the L0
 symbol via overloading but is a **different operator** with a different L1 referent
-(`bilinear-form`, firm cycle-095) — it requires the operator-application primitive and a workspace
-`Ax`, and is the subject of a separate forthcoming theme. It is named here only to mark the
-boundary; it is **not** part of this theme.
+(`bilinear-form`) — it requires the operator-application primitive and a workspace
+`Ax`, and is the subject of a separate theme ([`bilinear-form-mutation-rotation`](./bilinear-form-mutation-rotation.md)).
+It is named here only to mark the boundary; it is **not** part of this theme.
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (self-verified via `palace-codemap` read_range / search_text this
-invocation — producer-citation self-verification, `verify-citation-range`):
+L0 evidence ranges:
 
 - `palace/linalg/vector.cpp:263-267` — `ComplexVector::Dot` body `{Re(x)Re(y)+Im(x)Im(y),
   Im(x)Re(y)−Re(x)Im(y)} = x·conj(y) = yᴴ x` with `this==&y` imag = `0.0` fast path (`:266`).
-  The arg-2-conjugated Palace convention + the conjugate-pair re-order source. **Self-verified.**
+  The arg-2-conjugated Palace convention + the conjugate-pair re-order source.
 - `palace/linalg/vector.cpp:269-274` — `ComplexVector::TransposeDot` body: negated imag
   cross-term, `this==&y` returns `2·Im·Re` (`:272-273`). The unconjugated `tdot` kernel.
-  **Self-verified.**
 - `palace/linalg/vector.cpp:665-672` — `LocalDot(Vector, Vector)` via single Hypre
   `hypre_SeqVectorInnerProd`, `MFEM_ASSERT(x.Size()==y.Size())` at `:668`. The real leaf + the
-  shape precondition. **Self-verified.**
+  shape precondition.
 - `palace/linalg/vector.cpp:674-685` — `LocalDot(ComplexVector, ComplexVector)`: four real
   `LocalDot`s combined into `(Re, Im)`, `Im = LocalDot(xi,yr) − LocalDot(xr,yi)`, with `&x==&y`
   self-dot fast path returning imag = `0.0` (`:678`). The complex leaf + the conjugation
-  cross-term sign. **Self-verified.**
+  cross-term sign.
 - `palace/linalg/vector.hpp:110-113` — method-form decls + comment `// Vector dot product
   (yᴴ x) or indefinite dot product (yᵀ x) for complex vectors.`; `operator*` aliased to `Dot`.
-  **Self-verified.**
 - `palace/linalg/vector.hpp:242-244` — `LocalDot` decls (real + complex) + comment
-  `// Calculate the local inner product yᴴ x or yᵀ x`. **Self-verified.**
+  `// Calculate the local inner product yᴴ x or yᵀ x`.
 - `palace/linalg/vector.hpp:246-253` — `Dot` template; comment `// Calculate the parallel
   inner product yᴴ x or yᵀ x` (`:246`); body `auto dot = LocalDot(x, y); Mpi::GlobalSum(1,
   &dot, comm); return dot;` (`:248-253`). The documented arg-2 convention + the
-  local-then-collective two-step. **Self-verified.**
+  local-then-collective two-step.
 - `palace/utils/communication.hpp:266-270` — `Mpi::GlobalSum(len, buff, comm)` →
-  `GlobalOp(len, buff, MPI_SUM, comm)`. **Self-verified.**
+  `GlobalOp(len, buff, MPI_SUM, comm)`.
 - `palace/utils/communication.hpp:246-249` — `GlobalOp` body `MPI_Allreduce(MPI_IN_PLACE,
-  buff, len, mpi::DataType<T>(), op, comm)`. **Self-verified.**
+  buff, len, mpi::DataType<T>(), op, comm)`.
 - `palace/linalg/iterative.cpp:395` — `beta = linalg::Dot(comm, z, r)`: CG's preconditioned
   `(Br, r)` coefficient — the workhorse Hermitian-member live call site consumed in real
-  arithmetic (the re-order-invisible case). Sibling sites `:404,:444,:460`. **Self-verified.**
+  arithmetic (the re-order-invisible case). Sibling sites `:404,:444,:460`.
 - `test/unit/test-vector.cpp:206-207` — `double dot = vec1 * vec2; CHECK_THAT(dot,
-  WithinRel(32.0));` (`1·4 + 2·5 + 3·6 = 32`). Real form returns `double`. **Self-verified.**
+  WithinRel(32.0));` (`1·4 + 2·5 + 3·6 = 32`). Real form returns `double`.
 - `search_text TransposeDot` over `palace/**/*.cpp` → exactly one hit (`vector.cpp:269`, the
   definition); the only other surface mention is the declaration `vector.hpp:112`. Confirms
-  `tdot`'s zero call sites. **Self-verified.**
+  `tdot`'s zero call sites.
 
 L1 / cross-theme anchors:
 
 - `book/src/L1/dot.md` — the firm L1 operator this theme lowers: `dot`/`tdot` element-type
   table (`:33-35`), arg-1-conjugated convention (`:43`), self-dot trick (`:49`), variant axes
   (`:89-96`).
-- `book/src/L2-L1/inner-product-fold-specialization.md` — the cycle-019 firm sibling that
-  narrates the same conjugate-pair re-order at the L2>L1 edge (§"The conjugate-pair re-order");
-  cited for consistency. This theme is the L1-leaf-level lowering of that fact.
+- `book/src/L2-L1/inner-product-fold-specialization.md` — the firm sibling that narrates the
+  same conjugate-pair re-order at the L2>L1 edge (§"The conjugate-pair re-order"). This theme is
+  the L1-leaf-level lowering of that fact.
 - `book/src/L1-L0/nrm2-mutation-rotation.md` — the firm sibling whose lowering inherits this
   `Dot`-collective sub-theme (`nrm2 = √∘abs∘dot`).
 
@@ -406,42 +399,7 @@ L1 / cross-theme anchors:
   §"Speculative L1 operators".
 
 No other variant axes — the reduction is unconditionally exhaustive over the length axis `N`,
-with no masking or strided variants in the Palace surface.
-
-## Status
-
-`firm` — the rewrite is the structural expansion of the L1 `dot` reduction into the L0
-`Mpi::GlobalSum ∘ LocalDot` two-step, exhaustively pinned by direct, self-verified evidence
-(the `Dot` template body `vector.hpp:248-253`, the complex kernel `vector.cpp:263-267`, the
-real / complex leaves `vector.cpp:665-672` / `:674-685`, the collective
-`communication.hpp:246-249,266-270`). The three surface forms (A free-function, B method, C
-real leaf), the variant-axis collapse, and the conjugate-pair re-order are all directly cited
-with live call-site witnesses for the re-order-invisible case (CG `iterative.cpp:395`). The
-conjugation asymmetry is a positively-anchored value-level identity (`xᴴ y = conj(yᴴ x)`, read
-straight off the verified `ComplexVector::Dot` body) — no negative-anchor reconstruction, no
-literature inference, no speculative operator — so `firm` rather than `partly-constructive`.
-The `tdot` type-API-surface-only note is a member-level evidentiary caveat (the dispatch
-structure is firm; only the unconjugated arm is behaviorally unexercised), not a status
-reduction. A `lowering-verifier` audit attaching the `verified_against:` block (per the
-sibling-theme convention) confirming the surface-form recognition is exhaustive is the standard
-follow-up, not a status reduction.
-
-```yaml
-verified_against:
-  - citation: palace/linalg/orthog.hpp:35
-    verdict: supports
-    audited_at: 2026-05-29T105500Z
-    note: IdentityInnerProduct::operator() body `return LocalDot(x, y);` confirmed at :35 (was miscited :34, the operator-body opening brace). Corrected in §Sub-pattern D lines 160 + 183.
-  - citation: palace/linalg/orthog.hpp:48
-    verdict: supports
-    audited_at: 2026-05-29T105500Z
-    note: "// Global inner product: Note order is important for complex vectors." re-confirmed at :48.
-  - citation: palace/linalg/orthog.hpp:46-52
-    verdict: supports
-    audited_at: 2026-05-29T105500Z
-    note: MGS per-j interleaved size-1 collective block re-confirmed (dot at :49, GlobalSum(1,...) at :50, Add at :51).
-  - citation: palace/linalg/orthog.hpp:66-88
-    verdict: supports
-    audited_at: 2026-05-29T105500Z
-    note: CGS m local dots then ONE Mpi::GlobalSum(m, H, comm) at :70; CGS2 refine second pass through :88.
-```
+with no masking or strided variants in the Palace surface. The `tdot` arm is
+type-API-surface-only: structurally firm (a defined kernel differing from `dot` by one sign)
+but behaviorally unexercised (zero call sites); the theme's behavioral weight rests on the `dot`
+(Hermitian) arm.

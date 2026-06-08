@@ -8,7 +8,7 @@ Mutation-lifted **operator-to-data** extraction: `d = diag(A)`, the main diagona
 
 **This is not an `apply_linop` variant** (OQ `assemblediagonal-is-not-apply-linop-variant`): `apply_linop` has signature `(A: LinearOperator[M, N], x: Tensor[N]) -> Tensor[M]` — it takes a vector and returns the operator's *action* on it. `assemble_diagonal` has signature `(A: LinearOperator[N, N]) -> Tensor[N]` — it takes **no vector** and returns operator-intrinsic *data*. There is no `x` to be linear in; the result is a property of `A` alone. The two share the opaque `LinearOperator` argument type and the L0 output-arg mutation idiom, but they live on opposite sides of the operator/data divide (the action of `A` versus the contents of `A`). Recording `assemble_diagonal` as its own L1 entry — rather than folding it into `apply_linop`'s variant axes — keeps that divide visible.
 
-At L0, the in-place destination `diag` is sized and overwritten; the operator `A` is read-only (the method is `const`). For the matrix-free libCEED path the diagonal is accumulated element-by-element (`CeedOperatorLinearAssembleAddDiagonal`), and for the `ParOperator` AMR path it is assembled via the absolute-value prolongation transpose `|P|ᵀ dₗ` then has its Dirichlet true-dofs set per a `DiagonalPolicy`. The L1 form drops the destination buffer, the sizing, the workspace, and the BC-policy step: the operator consumes `A`, produces a fresh `Tensor[N]`. Workspace, in-place overwrite, the choice of representation, the absolute-value-prolongation assembly, and the Dirichlet-BC diagonal policy are all L0 concerns; they reappear in the (forthcoming) L1>L0 `assemble-diagonal-mutation-rotation` lowering theme, not in the L1 signature.
+At L0, the in-place destination `diag` is sized and overwritten; the operator `A` is read-only (the method is `const`). For the matrix-free libCEED path the diagonal is accumulated element-by-element (`CeedOperatorLinearAssembleAddDiagonal`), and for the `ParOperator` AMR path it is assembled via the absolute-value prolongation transpose `|P|ᵀ dₗ` then has its Dirichlet true-dofs set per a `DiagonalPolicy`. The L1 form drops the destination buffer, the sizing, the workspace, and the BC-policy step: the operator consumes `A`, produces a fresh `Tensor[N]`. Workspace, in-place overwrite, the choice of representation, the absolute-value-prolongation assembly, and the Dirichlet-BC diagonal policy are all L0 concerns; they reappear in the L1>L0 `assemble-diagonal-mutation-rotation` lowering, not in the L1 signature.
 
 ## Signature
 
@@ -68,9 +68,9 @@ Downstream consumers at L1 (cross-reference, not reverse-dependencies) — the f
 
 - **Jacobi smoother**: `dinv = assemble_diagonal(A); dinv = reciprocal(dinv)` then `y = dinv ⊙ x` (`palace/linalg/jacobi.cpp:79-80`). The diagonal-preconditioner-apply intermediate is `assemble_diagonal` + element-wise `reciprocal` + element-wise product.
 - **Chebyshev smoother** (both 4th-kind and 1st-kind): identical `op.AssembleDiagonal(dinv); dinv.Reciprocal();` setup (`palace/linalg/chebyshev.cpp:177-178` and `chebyshev.cpp:240-241`), feeding the diagonally-scaled polynomial smoother.
-- Block-Jacobi / polynomial preconditioners (roadmap §Intermediate "Diagonal-preconditioner apply") reuse the same `assemble_diagonal` → `reciprocal` → element-wise-product chain.
+- Block-Jacobi / polynomial preconditioners reuse the same `assemble_diagonal` → `reciprocal` → element-wise-product chain.
 
-The `reciprocal` (`mfem::Vector::Reciprocal`) and element-wise product that complete the diagonal-preconditioner apply are themselves L1-primitive candidates (forthcoming `reciprocal` / `elementwise_product` entries — referenced here as plain text, not yet authored).
+The `reciprocal` (`mfem::Vector::Reciprocal`) and element-wise product that complete the diagonal-preconditioner apply are themselves L1-primitive candidates (`reciprocal` / `elementwise_product`).
 
 ## Variant axes
 
@@ -90,7 +90,7 @@ Non-axes (recorded for disambiguation):
 
 ## Status
 
-`firm` — signature is canonical (matches the `AssembleDiagonal(diag)` virtual on both the real and complex operator hierarchies, parameterised by element type, with the square `N×N` precondition the source enforces), evidence is direct from the Palace source (abstract decls + concrete realisations across sparse/matrix-free/parallel/complex-wrapped representations + the consuming smoother call sites + the libCEED diagonal-assembly unit test), and the algebraic laws listed are standard properties of the matrix-diagonal map modulo the explicitly-recorded load-bearing exact-vs-approximate caveat. The one caveat (matrix-free high-order-Nedelec approximate diagonal) is recorded as a non-law, not a status reduction: the structure is exhaustively cited and the approximation is a documented, test-witnessed property of the matrix-free representation, not an unresolved gap.
+`firm` — signature is canonical (matches the `AssembleDiagonal(diag)` virtual on both the real and complex operator hierarchies, parameterised by element type, with the square `N×N` precondition the source enforces); evidence is direct from the Palace source (abstract decls + concrete realisations across sparse/matrix-free/parallel/complex-wrapped representations + the consuming smoother call sites + the libCEED diagonal-assembly unit test); the algebraic laws are standard properties of the matrix-diagonal map modulo the load-bearing exact-vs-approximate caveat. The one caveat (matrix-free high-order-Nedelec approximate diagonal) is recorded as a non-law: a documented, test-witnessed property of the matrix-free representation, not an unresolved gap.
 
 ## L1 vs L0 distinction
 
@@ -99,7 +99,7 @@ Non-axes (recorded for disambiguation):
 
 ## Evidence
 
-- `palace/linalg/operator.hpp:21` — `using Operator = mfem::Operator;` — the real-operator alias inheriting the abstract `mfem::Operator::AssembleDiagonal(Vector &diag) const` virtual (resolves into upstream MFEM; see Open questions).
+- `palace/linalg/operator.hpp:21` — `using Operator = mfem::Operator;` — the real-operator alias inheriting the abstract `mfem::Operator::AssembleDiagonal(Vector &diag) const` virtual (resolves into upstream MFEM).
 - `palace/linalg/operator.hpp:50-51` — `// Diagonal assembly.` / `virtual void AssembleDiagonal(ComplexVector &diag) const;` — the abstract complex-operator diagonal-assembly declaration.
 - `palace/linalg/operator.hpp:97` — `void AssembleDiagonal(ComplexVector &diag) const override;` — `ComplexWrapperOperator` override declaration.
 - `palace/linalg/operator.cpp:25-28` — `ComplexOperator::AssembleDiagonal` base definition: `MFEM_ABORT("Base class ComplexOperator does not implement AssembleDiagonal!")` — the partial-domain non-axis (the operator's L1 domain is the diagonal-capable subclasses).

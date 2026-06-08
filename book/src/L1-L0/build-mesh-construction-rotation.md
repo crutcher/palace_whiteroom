@@ -36,27 +36,15 @@ geometric kernel is MFEM-owned-read-as-given** — narrated in the split below. 
 domain-construction analogue of the FE-space sub-spine's `fe-space-construction-rotation` /
 `essential-dofs-construction-rotation` siblings (construction-lowers / library-owned-kernel-as-given).
 
-## Status
-
-`firm` — structural (firm-on-positive-structure). The construction rewrite is positively anchored at L0:
-the mesh block of `main` (`palace/main.cpp:285-302`) gives the four-stage chain + the wrap loop; the four
-`mesh::` stage declarations + contracts are at `palace/utils/geodata.hpp:25-50`; the in-place level-vector
-growth is the `mesh::RefineMesh` body (`palace/utils/geodata.cpp:421-455`); the construction finalization
-is the `unique_ptr`-adopting `Mesh` ctor (`palace/fem/mesh.hpp:76-81`, the `EnsureNodes()`+`Update()` at
-`:79-80`). Every translation piece is a **syntactic identity on positive source** (handle-threading
-ownership transfer, in-place level-vector growth, ctor-finalization) — there is no convergence/iteration
-semantics to test-gate (the a-priori refinement *depth* is a fixed config field, not an adaptively-driven
-loop), so the absence of a dedicated mesh-construction unit test does not gate firm (the
-`fe-space-construction-rotation` c064 / `fe-collection-construction-rotation` c065 /
-`essential-dofs-construction-rotation` c066 no-dedicated-test precedent). The per-stage geometric kernels
-(`UniformRefinement`, the MFEM `MeshPartitioner`, `EnsureNodes`) are **MFEM-owned-read-as-given** — a
-witnessed library-ownership boundary, NOT a constructive reconstruction, so it does not gate firmness (the
-same posture the FE-space siblings take toward dof bookkeeping / element quadrature). MPI/`Par*` and mesh
-partitioning/distribution are flagged once and read single-rank (out of scope per CLAUDE.md §Scope).
+The per-stage geometric kernels (`UniformRefinement`, the MFEM `MeshPartitioner`, `EnsureNodes`)
+are **MFEM-owned-read-as-given** — a witnessed library-ownership boundary, not a constructive
+reconstruction (the same posture the FE-space siblings take toward dof bookkeeping / element
+quadrature). MPI/`Par*` and mesh partitioning/distribution are read single-rank (out of scope per
+CLAUDE.md §Scope).
 
 ## L1 form (LHS)
 
-The pure construction value (the c117 firm prime entry [`build_mesh`](../L1/build_mesh.md)):
+The pure construction value (the prime entry [`build_mesh`](../L1/build_mesh.md)):
 
     build_mesh :: Config -> Mesh
 
@@ -73,7 +61,7 @@ each a pure function of the prior stage's mesh value:
       in  wrap levels                     -- the Palace Mesh wrapper (finalized geometry + attr maps)
 
 At L1 the staging is referentially transparent: given the same `config`, `build_mesh` names the same
-`Mesh` (same geometry, same `Dimension`/`SpaceDimension`/`GetNE`/`GetNBE`, same attribute maps — the c117
+`Mesh` (same geometry, same `Dimension`/`SpaceDimension`/`GetNE`/`GetNBE`, same attribute maps — the
 construction-determinism + pipeline-staging laws). There are **no mutable handles** at this layer — each
 stage takes a value and returns a value; the constructed `Mesh` is an immutable typed object.
 
@@ -156,9 +144,9 @@ The translation pieces:
   `mesh.emplace_back` (`:452`), `mesh.back()->UniformRefinement()` (`:454`) all mutate the caller's
   `mfem_mesh` vector. This is the load-bearing in-place `unique_ptr`-handle mutation the theme exists to
   document: the level-vector that the L1 form treats as a returned value is grown in place at L0.
-- **Zero-refinement identity** (c117 build_mesh law 3): with `uniform_ref_levels == 0` the loop `:448`
+- **Zero-refinement identity** (build_mesh law 3): with `uniform_ref_levels == 0` the loop `:448`
   does not execute and the vector keeps its single partitioned entry — the refine stage is the identity on
-  the partitioned mesh. **Level-monotonicity** (c117 law 4): with `uniform_ref_levels = k`, the vector is
+  the partitioned mesh. **Level-monotonicity** (build_mesh law 4): with `uniform_ref_levels = k`, the vector is
   the ordered coarse→fine level stack (the geometric-multigrid stack, head = coarse), per the contract
   `palace/utils/geodata.hpp:47-49`.
 - `UniformRefinement()` (`:454`) is the **MFEM-owned geometric kernel** — read-as-given (the same boundary
@@ -203,7 +191,7 @@ concern.
 - **Single-rank only** (see Scope below): the partition/distribute stage is read as the identity
   distribution.
 - The **a-priori** refinement only — the adaptive (error-estimator-driven) estimate-mark-refine loop is
-  the `lifecycle` root's outer fold (MFEM-opaque AMR), NOT part of this construction (c117 build_mesh
+  the `lifecycle` root's outer fold (MFEM-opaque AMR), NOT part of this construction (build_mesh
   Non-laws; out of scope here, obstruction-documented at the lifecycle root).
 
 ## Scope (single-machine — flag-once-skip)
@@ -232,9 +220,9 @@ are in scope and lowered here.
 free-function call (or the wrap loop); the vocabulary shift (value-pipeline → in-place handle-threading +
 ctor-finalization) is a syntactic identity on positive source, with the per-stage geometric kernels a
 witnessed MFEM-owned-read-as-given boundary. No reduction-chain or empirical-match argument is needed; no
-algebraic law beyond the c117 build_mesh staging/identity/monotonicity laws is asserted.
+algebraic law beyond the build_mesh staging/identity/monotonicity laws is asserted.
 
-## Evidence (verified-against)
+## Evidence
 
 - `palace/main.cpp:285-302` — the mesh block of `main` (the build referent + the whole L0 RHS): the
   level-vector decl (`:285`), the scope (`:286`/`:301`), `mesh::Load` (`:287`), `solver->Preprocess`
@@ -256,7 +244,7 @@ algebraic law beyond the c117 build_mesh staging/identity/monotonicity laws is a
 - `palace/fem/mesh.hpp:44-115` — the `class Mesh` wrapper (the produced output's record): `class Mesh`
   (`:44`), `unique_ptr<mfem::ParMesh> mesh` (`:49`), `loc_attr`/`loc_bdr_attr` maps (`:51-59`), the
   single-machine read surface `Get`/`Dimension`/`SpaceDimension`/`GetNE`/`GetNBE` (`:84-96`).
-- `book/src/L1/build_mesh.md` — the L1 upper endpoint (firm c117): the typed `config → Mesh` pipeline, the
+- `book/src/L1/build_mesh.md` — the L1 upper endpoint: the typed `config → Mesh` pipeline, the
   `Mesh` record definition (`#record-definition`), the staging/identity/monotonicity laws this theme's
   pieces realize, and the Downward note (`:178-186`) this theme grounds.
 - `book/src/feature/lifecycle.L1.md:44` — the `lifecycle.L1` composition root's stage-(1)

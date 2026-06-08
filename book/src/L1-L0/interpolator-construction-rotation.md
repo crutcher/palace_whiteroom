@@ -35,24 +35,13 @@ the **construction + kernel-selection lowers (Palace-owned) / the per-edge inter
 MFEM-owned-read-as-given**, and the **memoization cache is an L1>L0 concern that the L1 purity
 absorbs** — narrated in the splits below.
 
-## Status
-
-`firm` — structural. Every piece of the rewrite is positively anchored at L0 and verified on disk:
-the accessor + lazy-rebuild cache (`fespace.hpp:107-114`), the full `BuildDiscreteInterpolator` body
-(`fespace.cpp:173-238`) with its forward/swap direction pin (`:178-185`), the exhaustive four-way
-map-type-pair dispatch (Grad `:190-198`, Curl-3D `:199-207`, Curl-2D-native `:208-221`, Div
-`:222-230`) and the unsupported-pair abort (`:231-235`), and the Palace-owned
-`DiscreteLinearOperator` builder (`bilinearform.hpp:95-115`). The per-edge interpolator *kernels*
-(`GradientInterpolator` / `CurlInterpolator` / `DivergenceInterpolator`) are **MFEM-owned-read-as-given**
-(same posture as `fe-space-construction-rotation` toward dof structure and `weak-form-term-rotation`
-toward the libCEED quadrature kernel) — a witnessed library-ownership boundary, NOT a constructive
-reconstruction, so it does not gate firmness. The **GSLIB point-interpolation sibling facility** is a
-separate, library-owned operation disposed `obstruction (opaque-library-ownership)` (in-theme sub-note
-below); it is orthogonal to this firm construction and does not reduce its maturity. MPI/`Par*` is read
-single-rank per CLAUDE.md §Scope. Promoted on the **firm-on-positive-structure escape**: the rewrite is
-a syntactic structural mapping on fully-specified positive source, so the absence of a dedicated
-`test-fespace.cpp` interpolator test does not gate firm (the `fe-space-construction-rotation` /
-`fe-collection-construction-rotation` / `essential-dofs-construction-rotation` precedent).
+The per-edge interpolator *kernels* (`GradientInterpolator` / `CurlInterpolator` /
+`DivergenceInterpolator`) are **MFEM-owned-read-as-given** (same posture as
+`fe-space-construction-rotation` toward dof structure and `weak-form-term-rotation` toward the libCEED
+quadrature kernel) — a witnessed library-ownership boundary, NOT a constructive reconstruction. The
+**GSLIB point-interpolation sibling facility** is a separate, library-owned operation disposed
+`obstruction (opaque-library-ownership)` (in-theme sub-note below); it is orthogonal to this firm
+construction. MPI/`Par*` is read single-rank per CLAUDE.md §Scope.
 
 ## L1 form (LHS)
 
@@ -220,9 +209,9 @@ two boundaries (the MFEM-owned per-edge kernel; the transparent 2D-native assemb
 established by direct read of the dispatch body, and the GSLIB obstruction by exhaustive
 negative-anchor scan.
 
-## Verified-against
+## Evidence
 
-- `palace/fem/fespace.cpp:173-238` — `BuildDiscreteInterpolator` full body (verified via read_range):
+- `palace/fem/fespace.cpp:173-238` — `BuildDiscreteInterpolator` full body:
   forward/swap direction pin `:178-185` (`MFEM_VERIFY` `:182-185`), trial/test binding + map-type read
   `:186-189`, Grad branch `:190-198`, Curl-3D branch `:199-207`, Curl-2D native branch `:208-221`
   (libCEED-bypass comment `:211-212`, native `Assemble`/`Finalize`/`LoseMat` `:217-219`), Div branch
@@ -239,34 +228,15 @@ negative-anchor scan.
   (`InterpolateFunction` bodies), `:190` / `:293` (`mfem::FindPointsGSLIB`), `:135` / `:285` / `:83` /
   `:311` (`#if defined(MFEM_USE_GSLIB)` guards), `:108` / `:278` / `:304` / `:363` (`MFEM_ABORT`
   GSLIB-absent fallbacks).
-- [`L1/interpolator`](../L1/interpolator.md) — the firm L1 entry (c117) this theme lowers (the coupled
-  `reference` → `depends-on (kind: lowers-to)` edge upgrade lands with this theme).
+- [`L1/interpolator`](../L1/interpolator.md) — the firm L1 entry this theme lowers.
 
-## Open questions / caveats
+## Caveats
 
-- **Lifting note (reverse direction, working-note only).** The L0 ctor lifts to L1 `interpolator`
-  cleanly precisely because the per-edge interpolator kernels are read-as-given — the lift discards the
-  MFEM kernel internals and the cache, retaining only the `(aux, primal) → LinOp` shape selected by the
-  map-type pair. (High→low formal content stays in the chapter above; this is a working note.)
 - **De-Rham exactness law anchor.** The exactness identities `Curl · Grad = 0` / `Div · Curl = 0` are
   recorded in the L1 entry as a *defining-family property*, not a Palace-read law (Palace assembles
   each edge separately, never composing them in one call) — promoting them to a verified law would need
-  a literature/MFEM-de-Rham anchor (carried OQ `interpolator-derham-exactness-law-anchor`, c117 D5).
-  This theme lowers the per-edge *construction*, not the complex-level composition, so the OQ is
-  unaffected by this theme.
-- **GSLIB facility dedicated obstruction theme** (carried OQ
-  `gslib-field-interp-facility-dedicated-obstruction-theme`, c117 D5) — the field-interp facility is an
-  in-theme sub-note here; whether it earns a first-class obstruction theme triggers on a
-  field-probe/point-sample output-product feature consumer landing.
-
-```yaml
-verified_against:
-  - citation: palace/fem/interpolator.cpp:282-306
-    verdict: supports
-    audited_at: 2026-06-07T02:27:59Z
-    note: point-list InterpolateFunction body; corrected from over-range :282-310 which ran 4 lines into ComputeLineIntegral (starts :308); close-brace confirmed on disk at :306
-  - citation: palace/fem/interpolator.cpp:133-280
-    verdict: supports
-    audited_at: 2026-06-07T02:27:59Z
-    note: GridFunction-overload InterpolateFunction body; anchor-verified clean
-```
+  a literature/MFEM-de-Rham anchor. This theme lowers the per-edge *construction*, not the complex-level
+  composition.
+- **GSLIB facility dedicated obstruction theme** — the field-interp facility is an in-theme sub-note
+  here; whether it earns a first-class obstruction theme triggers on a field-probe/point-sample
+  output-product feature consumer landing.

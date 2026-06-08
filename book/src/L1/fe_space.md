@@ -1,26 +1,18 @@
 ---
 layer: L1
 operator: fe_space
-harvested_by: harvester:2026-06-02T151056Z-harvester-fe-space
-cycle: cycle-064
-# Graded-stack scheme (edges authored from scratch, batch-36 c114; chapter previously carried only
-# `status: firm`, NO edges). This firm L1 construction composes its one firm L1 input — the
-# `collection: FECollection`, produced by `fe_collection` — and rests on its positive L0 ctor source
-# (cites-evidence, rank-terminal ground truth) + lowers through its L1>L0 construction-rotation theme.
-# The `composes` edge to `fe_collection` flips it reachable (firm-but-currently-garbage); `fe_space`
-# itself flips reachable transitively via `fe_assemble`'s c114 `composes` edge (sibling D1 migration).
-# Well-foundedness rank(u) <= rank(v): this node firm (rank 3); `fe_collection` carries `rank: firm`
-# (status: firm, cycle-065); the cites-evidence target is rank-terminal L0 ground truth; the lowering
-# theme `fe-space-construction-rotation` is `status: firm` (rank 3 <= 3).
+# This firm L1 construction composes its one firm L1 input — the `collection: FECollection`,
+# produced by `fe_collection` — and rests on its positive L0 ctor source + lowers through its
+# L1>L0 construction-rotation theme.
 rank: firm
 edges:
   depends-on:
     - target: L1/fe_collection
-      kind: composes              # the `collection: FECollection` input, produced by fe_collection (sig :9/:43; §Variant-axis :89)
+      kind: composes              # the `collection: FECollection` input, produced by fe_collection
     - target: palace/fem/fespace.hpp:67-75
-      kind: cites-evidence        # the variadic `FiniteElementSpace(Mesh&, T&&...)` ctor — the (mesh,collection) pairing (Evidence :191-193)
+      kind: cites-evidence        # the variadic `FiniteElementSpace(Mesh&, T&&...)` ctor — the (mesh,collection) pairing
     - target: L1-L0/fe-space-construction-rotation
-      kind: lowers-to             # the L1>L0 construction-rotation theme (cycle-064 D3; §Downward :145)
+      kind: lowers-to             # the L1>L0 construction-rotation theme
   reference:
     - L1/fe_assemble               # the primary consumer of the constructed space
     - L1/weak_form_term
@@ -61,7 +53,7 @@ whose coarse seed is a single `std::make_unique<FiniteElementSpace>(*mesh[coarse
 
 This chapter is defined in L1 vocabulary (the typed `(mesh, collection) → space` construction). The
 forward rewrite into the L0 ctor + the `ConstructFiniteElementSpaceHierarchy` coarse-seed is the L1>L0
-theme [`fe-space-construction-rotation`](../L1-L0/fe-space-construction-rotation.md) (authored cycle-064 D3).
+theme [`fe-space-construction-rotation`](../L1-L0/fe-space-construction-rotation.md).
 
 ## Signature
 
@@ -111,8 +103,8 @@ The **collection order schedule** itself (`ConstructFECollections`, `palace/fem/
 `multigrid.hpp:30-33`), the GaussLobatto/GaussLegendre/IntegratedGLL basis-type choice
 (`multigrid.hpp:34-38`), the LINEAR/LOGARITHMIC coarsening — is a *separate* construction that produces
 the `collection` input(s). At this assembly-front altitude a single `FECollection` is just an input to
-`fe_space`; the list-producing order-schedule is deferred to the `fe_collection` / `fe_space_hierarchy`
-follow-on (see *Status*).
+`fe_space`; the list-producing order-schedule is the separate [`fe_collection`](./fe_collection.md) /
+[`fe_space_hierarchy`](./fe_space_hierarchy.md) operators.
 
 ## MFEM-owned, read-as-given (NOT lifted)
 
@@ -128,7 +120,7 @@ through thin forwarding accessors that all `return Get().X()` (`palace/fem/fespa
   `fespace.hpp:102-103`) — MFEM-owned, forwarded verbatim; the L-vector ↔ true-dof transfer.
 
 Authoring a separate `dof_map` L1 entry for this structure would mint a thin mirror of opaque MFEM
-internals — the redirect's degenerate identity-in-named-terms smell (D1 survey §3). The dof structure
+internals — the redirect's degenerate identity-in-named-terms smell. The dof structure
 is a *property* of the `FiniteElementSpace` value (the opaque axis `N`), not a distinct L1 operation.
 
 ## Algebraic laws
@@ -168,49 +160,41 @@ consumed-by relations, not dependencies.
 ## Downward (to L0)
 
 The L1>L0 rotation [`fe-space-construction-rotation`](../L1-L0/fe-space-construction-rotation.md)
-(cycle-064 D3) narrates how the typed
+narrates how the typed
 `(mesh, collection) → FiniteElementSpace[N]` construction rewrites into the L0 variadic ctor
 (`fespace.hpp:67-75`) forwarding into `mfem::ParFiniteElementSpace`, and into the
 `ConstructFiniteElementSpaceHierarchy` coarse-seed (`multigrid.hpp:89-90`) + `GetEssentialTrueDofs`
 extraction (`multigrid.hpp:98-99`, via `mesh::AttrToMarker` `:97-98`).
 
-**Opaque-parameter fan-out (replace-and-propagate forward-look — re-anchors NOT enacted this cycle).**
-Four firm L1 entries currently take the FE-space, its true-dof axis `N`, or its essential-dof set
-opaquely; a firm `fe_space` gives each a real L1 home. A later replace-and-propagate dispatch (D4 +
-follow-on) upgrades their bare typed parameters to live `[fe_space](./fe_space.md)` cross-refs:
+## Consumers
 
-- `fe_assemble` — `space: FiniteElementSpace[N]` (the bare typed input; `N = space.GetTrueVSize()`
-  named but undefined-at-L1) becomes the output of `fe_space(mesh, collection)`; `N` gets its L1
-  definition here. (The per-term `A(space, ·)` map stays libCEED-owned — a separate obstruction.)
-- `weak_form_term` — `A(space, ·)` over an opaque `space` cross-refs `fe_space`.
-- `eliminate_essential_bc` — `dofs: DofSet[N]`, `N = space.GetTrueVSize()`, re-anchors `N` + the
-  essential-dof extraction (the deferred `essential_dofs` sibling) to `fe_space`.
-- `eliminate_rhs` — the `dbc_tdof_list` masking projections over the same opaque dof set re-anchor to
-  `fe_space`'s `N`.
+`fe_space` is the de-opaquing home for four firm L1 entries that take the FE-space, its true-dof axis
+`N`, or its essential-dof set, each cross-referencing `fe_space(mesh, collection)` as the source of `N`:
 
-## Status
+- [`fe_assemble`](./fe_assemble.md) — `space: FiniteElementSpace[N]` is the output of
+  `fe_space(mesh, collection)`; `N` gets its L1 definition here. (The per-term `A(space, ·)` map stays
+  libCEED-owned — a separate obstruction.)
+- [`weak_form_term`](./weak_form_term.md) — `A(space, ·)` over `space`.
+- [`eliminate_essential_bc`](./eliminate_essential_bc.md) — `dofs: DofSet[N]`,
+  `N = space.GetTrueVSize()`; `N` + the essential-dof extraction (the `essential_dofs` sibling) anchor
+  to `fe_space`.
+- [`eliminate_rhs`](./eliminate_rhs.md) — the `dbc_tdof_list` masking projections over the same dof set
+  anchor to `fe_space`'s `N`.
 
-**firm (firm-on-positive-structure).** The construction is read directly from positive source: the
-variadic ctor (`palace/fem/fespace.hpp:67-75`) and the ND/H1/RT construction calls
-(`palace/models/spaceoperator.cpp:47/49/51`) plus the 2-D L2-curl construction (`:72-75`). The de-Rham
-family variant axis is fully witnessed (all four collection types appear at construction sites). Every
-law is a syntactic identity on this positive structure — there is no convergence/iteration semantics to
-test-gate, so the absence of a dedicated `test-fespace.cpp` exercising the constructor does not gate
-firm (the `fe_assemble` cycle-054 / `apply_linop` no-dedicated-test precedent). The dof-numbering /
-ordering / conformity / prolongation-restriction internals are explicitly MFEM-owned-read-as-given, not
-L1 law substrate.
+## Role
 
 This is the highest-fan-out entry of the FE-space-construction front: the **shared substrate under all
-five solver pipelines** and the de-opaquing home for four firm L1 entries (the fan-out above).
+five solver pipelines** and the de-opaquing home for the four firm L1 entries above. The dof-numbering /
+ordering / conformity / prolongation-restriction internals are MFEM-owned-read-as-given, not L1 law
+substrate.
 
-**Deferred follow-on siblings (named, NOT authored this cycle):** `fe_collection` (the
-`ConstructFECollections` order schedule — `multigrid.hpp:22-73`), `essential_dofs` (the
-boundary-attribute-marker → essential-true-dof-set extraction, `multigrid.hpp:97-99` — straddles the
-MFEM-owned boundary, likely a noted-property of `fe_space` unless `eliminate_*`'s `DofSet[N]` demands a
-self-standing home), and [`fe_space_hierarchy`](./fe_space_hierarchy.md) (the h/p-refinement multigrid stack,
-`multigrid.hpp:78-126` — **now firm**, cycle-117 D4). The `BuildDiscreteInterpolator` (de-Rham
-interpolator) and `BuildProlongationAtLevel` (multigrid transfer) machinery is sibling-pull-gated —
-named, not authored.
+**Siblings (named):** [`fe_collection`](./fe_collection.md) (the `ConstructFECollections` order schedule
+— `multigrid.hpp:22-73`), `essential_dofs` (the boundary-attribute-marker → essential-true-dof-set
+extraction, `multigrid.hpp:97-99` — straddles the MFEM-owned boundary, likely a noted-property of
+`fe_space` unless `eliminate_*`'s `DofSet[N]` demands a self-standing home), and
+[`fe_space_hierarchy`](./fe_space_hierarchy.md) (the h/p-refinement multigrid stack,
+`multigrid.hpp:78-126`). The `BuildDiscreteInterpolator` (de-Rham interpolator) and
+`BuildProlongationAtLevel` (multigrid transfer) machinery is sibling-pull-gated.
 
 ## Evidence
 

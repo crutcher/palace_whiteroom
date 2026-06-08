@@ -79,7 +79,7 @@ materialises:
   [`assemble-diagonal`](../L1/assemble-diagonal.md) operator via its L1>L0
   lowering [`assemble-diagonal-mutation-rotation`](./assemble-diagonal-mutation-rotation.md);
   the reciprocal step is the elementwise [`reciprocal`](../L1/reciprocal.md)
-  primitive (firm L1 leaf, harvested cycle-033 sibling dispatch).
+  primitive (firm L1 leaf).
 - `op.omega` ← either the ctor-given `omega` (default `1.0`; arbitrary `ω ≠ 0`
   honored as-is) or, on the `omega == 0.0` branch, the **substituted**
   `ω = 2 / (lambda_min + lambda_max) = 2 / (sf_max · lambda_max)` from the
@@ -429,7 +429,7 @@ sub-pattern A diagonal-prep chain references two forward-referenced L1
 primitives:
 
 - [`reciprocal`](../L1/reciprocal.md) — the elementwise inverse primitive at
-  L1 (firm L1 leaf, harvested cycle-033 sibling dispatch D2). Witnessed at L0
+  L1 (firm L1 leaf). Witnessed at L0
   by `Vector::Reciprocal()` (real, via the upstream-MFEM `using Vector =
   mfem::Vector` alias at `palace/linalg/vector.hpp:20`) and
   `ComplexVector::Reciprocal()` (`palace/linalg/vector.cpp:248-261`, the full
@@ -439,18 +439,14 @@ primitives:
   [`reciprocal`](../L1/reciprocal.md) →
   [`elementwise_product`](../L1/elementwise_product.md).
 - [`elementwise_product`](../L1/elementwise_product.md) — the elementwise
-  multiply primitive at L1 (firm L1 leaf, harvested cycle-033 sibling
-  dispatch D3). Witnessed at L0 by the namespace-local `Apply(dinv, x, y)`
-  kernel (`palace/linalg/jacobi.cpp:38` for real, `:52-60` for complex). The
-  shared `concepts/elementwise-product.md` concept page exists; the L1
-  primitive is now landed (D3 of cycle-033).
+  multiply primitive at L1 (firm L1 leaf). Witnessed at L0 by the
+  namespace-local `Apply(dinv, x, y)` kernel (`palace/linalg/jacobi.cpp:38`
+  for real, `:52-60` for complex). The shared `concepts/elementwise-product.md`
+  concept page defines the data shape.
 
-Both were existing forward-references named in
-[`L1/assemble-diagonal`](../L1/assemble-diagonal.md) §Dependencies and
-[`L1/jacobi-smoother`](../L1/jacobi-smoother.md) §Dependencies; they landed
-as firm L1 leaves in D2/D3 of cycle-033 and are now live links here per the
-`upgrade-plain-text-ref-to-live-link-when-target-on-disk` skill (in-cycle
-upgrade by `integrator-finalize`).
+Both are named in [`L1/assemble-diagonal`](../L1/assemble-diagonal.md)
+§Dependencies and [`L1/jacobi-smoother`](../L1/jacobi-smoother.md)
+§Dependencies as firm L1 leaves.
 
 The `spectrum_estimate` setup sub-action (the `SpectralNorm`
 power-iteration sibling) is the same *existing* open L1 candidate named in
@@ -460,11 +456,9 @@ question (`scaffolding/open-questions.md`,
 this entry and treated as opaque (same handling as the chebyshev sibling
 sub-pattern D).
 
-## Verified-against
+## Evidence
 
-L0 evidence ranges (all verified on-disk via `tools/citecheck/citecheck.py
---anchor` against `reference/palace/palace/linalg/jacobi.{hpp,cpp}` this
-cycle):
+L0 evidence ranges:
 
 - `palace/linalg/jacobi.cpp:14-20` — real `GetLambdaMax` (SPD comment @16,
   `DiagonalOperator Dinv(dinv); ProductOperator DinvA(Dinv, A); return
@@ -523,7 +517,7 @@ cycle):
 L1 anchor:
 
 - `book/src/L1/jacobi-smoother.md` — the firm L1 operator all sub-patterns
-  lower from (landed cycle-032).
+  lower from.
 
 L1>L0 sibling precedents (structural template):
 
@@ -540,33 +534,7 @@ L1>L0 sibling precedents (structural template):
   representation sub-patterns of `assemble_diagonal` may propagate through
   here, depending on the operator wrapper).
 
-## Status
-
-`firm` — every sub-pattern is a syntactic identity on fully-specified
-positive Palace source (verified via `tools/citecheck/citecheck.py
---anchor` this cycle against `reference/palace/palace/linalg/jacobi.{hpp,cpp}`):
-the closure-field materialisation (A), the output-arg mutation via
-namespace-local elementwise-multiply kernel (B), the opaque spectral-estimate
-sub-action with positively-cited body (C), and the SPD-symmetry transpose
-self-alias (D, = L1 law 5) all read straight off the source with no
-literature inference and no negative-anchor reconstruction. The L1 anchor
-is itself firm (landed cycle-032). The opaque `spectrum_estimate` sub-action
-is treated as a closure field, not re-derived, so it imposes no
-constructive caveat on this theme (same handling as the chebyshev sibling
-sub-pattern D, which is also `firm`).
-
-Per the firm-on-positive-structure precedent
-([`apply_linop`](../L1/apply_linop.md) /
-[`apply_nonlinear_pencil`](../L1/apply_nonlinear_pencil.md) /
-[`chebyshev-smoother`](../L1/chebyshev-smoother.md)), the absence of a
-dedicated `test-jacobi.cpp` under `reference/palace/test/unit/` does not
-gate `firm`: every sub-pattern is a syntactic identity on fully-specified
-positive source. Behaviour is exercised through five integration paths
-(`ksp.cpp:199`, `errorestimator.cpp:75-77`, `floquetcorrection.cpp:65`,
-`spaceoperator.cpp:640`, `timeoperator.cpp:85`); the integration coverage
-is broader than the chebyshev sibling's (five vs two consumer paths).
-
-**Caveats (not status reductions):**
+## Caveats
 
 - The complex `Apply<Transpose=true>` kernel
   (`palace/linalg/jacobi.cpp:61-69`) is dead code under symmetric wiring —
@@ -582,33 +550,20 @@ is broader than the chebyshev sibling's (five vs two consumer paths).
   opaque-out-of-scope `spectrum_estimate` sub-action, but the per-call
   *apply* law (sub-pattern B) is identical regardless (L1 law 1 with the
   substituted `ω` absorbed into `dinv`).
-- A `lowering-verifier` exhaustiveness audit (both element-type
-  instantiations × consumer forwarding sites × dead-code transpose kernel
-  as recognition rule) is the standard follow-up, not a status reduction.
 
 ## Open questions / caveats
 
-- **`reciprocal` and `elementwise_product` forward-references — resolved
-  in-cycle.** Both landed as firm L1 leaves in D2/D3 of cycle-033 and the
-  plain-text references throughout this theme were upgraded to live links
-  by `integrator-finalize` per the
-  `upgrade-plain-text-ref-to-live-link-when-target-on-disk` skill (closes
-  OQ `jacobi-smoother-mutation-rotation-reciprocal-elementwise-product-live-link-upgrade`).
 - **Dead-code complex transpose kernel.**
   `palace/linalg/jacobi.cpp:61-69` defines the conjugate-`dinv` Hermitian-
   transpose elementwise kernel; it is unreachable under the symmetric
   `MultTranspose → Mult` wiring. Same defined-not-used status as the
   chebyshev sibling's complex transpose kernels
   (`palace/linalg/chebyshev.cpp:101-110, :150-159`) and the `axpby`
-  sibling's `ComplexVector::Subtract` forms. Flag for the
-  `lowering-verifier` audit.
+  sibling's `ComplexVector::Subtract` forms.
 - **`spectrum_estimate` L1 candidacy.** Whether the `GetLambdaMax →
   SpectralNorm` power-iteration sub-action should be firmed as its own L1
   operator is the open `matrix-weighted-norm-and-bilinear-form` residual-
-  cohort question; this theme treats it as opaque. (Lifting note — reverse
-  direction: an L0 power-iteration loop would lift to a `spectrum_estimate`
-  L1 op; recorded here in working notes, not in the formal chapter, per
-  the high→low layer-definition discipline.)
+  cohort question; this theme treats it as opaque.
 - **L2 unification candidate: `polynomial_smoother` combinator.** Both
   `jacobi_smoother` and `chebyshev_smoother` lift the *identical*
   diagonal-prep setup chain (sub-pattern A here ≡ chebyshev sub-pattern D)
@@ -616,9 +571,7 @@ is broader than the chebyshev sibling's (five vs two consumer paths).
   (sub-pattern C here ≡ chebyshev sub-pattern D opaque). The L2
   unification — Jacobi as the degree-zero (`order = 0`) member of the
   diagonally-scaled-polynomial-smoother family parameterised by chebyshev's
-  `order ≥ 1` — is a candidate but not pursued in this theme. Recorded as
-  an L2 vocabulary candidate for future
-  `same-layer-cross-cutter` or `combinator-miner` dispatch attention; the
+  `order ≥ 1` — is a candidate but not pursued in this theme; the
   unification would obscure the Jacobi apply's identity with the
   underlying L2 elementwise-product primitive, so the case for/against is
   not slam-dunk.
@@ -627,3 +580,7 @@ is broader than the chebyshev sibling's (five vs two consumer paths).
   context. Per CLAUDE.md §Scope, MPI distribution is out of scope; the
   `Par*` machinery is read as its single-rank equivalent. Flagged once
   here.
+
+## Status
+
+`firm` — every sub-pattern is a syntactic identity on fully-specified positive source.

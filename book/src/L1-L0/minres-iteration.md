@@ -6,7 +6,7 @@ Palace exposes a `KrylovSolver::MINRES` enum tag but `MakeSolver` aborts
 on it at runtime; there is no Palace-side L0 implementation to rewrite
 into. The L1 form is sketched against the literature so that downstream
 work has a hook, but the rewrite has no realised RHS in the Palace
-corpus as of cycle-004.
+corpus.
 
 ## Slug
 
@@ -123,7 +123,7 @@ implementation or an explicit decision to treat MFEM as L0 substrate.
   the LS residual `|s|` falls out of the Givens cascade as for GMRES,
   but only the last 3 entries of `s` are touched per step.
 
-## Verified-against
+## Evidence
 
 L0 evidence ranges (all are *absence* citations; this is by design for
 an obstruction theme):

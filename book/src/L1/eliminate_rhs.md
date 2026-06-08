@@ -205,31 +205,29 @@ term-list machinery.
   its action directly; the round-trip is the L0 realization of one `apply_linop`, absorbed (not a
   distinct algebraic step).
 
-## Status
+## Vocabulary closure
 
-`firm`. **Clean-gate call: PROMOTE — clean.** The operator's definition, signature, and all four
-algebraic laws are stated entirely in **existing firm-spine vocabulary** —
-[`apply_linop`](./apply_linop.md) for the operator action `K·x_bc`, [`axpy`](./axpy.md) for the RHS
-subtraction `b − K·x_bc`, and the already-named `set_subvector` essential-dof masking projection
-(shared with [`divfree-projector`](./divfree-projector.md)) for the gather/pin. The body needs **no
-vocabulary the spine lacks**: the L0 prolongation/restriction round-trip is the assembled operator's
-own true-dof action (absorbed into `apply_linop`), and the diagonal-policy branch is a parameter on
-the essential-row pin, not a new primitive.
+`eliminate_rhs`'s definition, signature, and all four algebraic laws are stated entirely in
+**existing firm-spine vocabulary** — [`apply_linop`](./apply_linop.md) for the operator action
+`K·x_bc`, [`axpy`](./axpy.md) for the RHS subtraction `b − K·x_bc`, and the already-named
+`set_subvector` essential-dof masking projection (shared with
+[`divfree-projector`](./divfree-projector.md)) for the gather/pin. The body needs **no vocabulary the
+spine lacks**: the L0 prolongation/restriction round-trip is the assembled operator's own true-dof
+action (absorbed into `apply_linop`), and the diagonal-policy branch is a parameter on the
+essential-row pin, not a new primitive. Source line-by-line: `SetSubVector` gather `:64` →
+prolongation `:65` → `A->Mult` (apply_linop) `:69` → restriction `:72` → `b.Add(-1.0, ·)` (axpy)
+`:73` → diagonal-policy pin `:74-81`.
 
-This is the **firm-on-positive-structure** situation (the `apply_linop` / BLAS-1-leaf /
-`fe_assemble` no-dedicated-test precedent): every law is a syntactic identity on the fully-specified
-positive source body (`reference/palace/palace/linalg/rap.cpp:56-82`), so the absence of a dedicated
-`eliminate_rhs` unit test does not gate them. The cycle-053 D3 judgment (the body is
-`apply_linop`+`axpy`, firm-spine vocabulary) is confirmed against source line-by-line:
-`SetSubVector` gather `:64` → prolongation `:65` → `A->Mult` (apply_linop) `:69` → restriction `:72`
-→ `b.Add(-1.0, ·)` (axpy) `:73` → diagonal-policy pin `:74-81`.
+The only sub-step that is not a named spine operator is the essential-dof mask (`SetSubVector` over
+`dbc_tdof_list`). This is NOT a spine gap — it is the general `set_subvector` write-mask, whose
+zeroing special case `divfree-projector` names and uses as `set_subvector_zero`
+(`concepts/set_subvector_zero.md`): the `DIAG_ZERO` pin arm is exactly that zeroing case, while the
+gather and the `DIAG_ONE` pin are its general (boundary-data-writing) form. Reusing it as the
+essential-dof pin introduces no new vocabulary.
 
-**Clean-gate honesty note**: the only sub-step that is not a named spine operator is the essential-dof
-mask (`SetSubVector` over `dbc_tdof_list`). This is NOT a spine gap — it is the general
-`set_subvector` write-mask, whose zeroing special case `divfree-projector` already names and uses as
-`set_subvector_zero` (`concepts/set_subvector_zero.md`): the `DIAG_ZERO` pin arm is exactly that
-zeroing case, while the gather and the `DIAG_ONE` pin are its general (boundary-data-writing) form.
-Reusing it as the essential-dof pin introduces no new vocabulary. The clean-gate is met.
+This is the **firm-on-positive-structure** situation: every law is a syntactic identity on the
+fully-specified positive source body (`reference/palace/palace/linalg/rap.cpp:56-82`), so the absence
+of a dedicated `eliminate_rhs` unit test does not gate them.
 
 ## L1 vs L0 distinction
 
@@ -281,5 +279,4 @@ in-place `b.Add(-1.0, ·)` (`:73`) → in-place essential-row `SetSubVector` pin
 prolongation/restriction round-trip realizing the single `apply_linop`. It shares that theme with the
 operator-side leg `eliminate_essential_bc` — both BC-treatment post-compositions lower in one theme
 on the shared `GetExcitationVector`/`GetStiffnessMatrix` witness. There is **no** dedicated
-`eliminate-rhs-mutation-rotation` sibling theme (disposition: FOLD, cycle-103 D6 — a degenerate split
-would be an anti-mirror smell).
+`eliminate-rhs-mutation-rotation` sibling theme — a degenerate split would be an anti-mirror smell.
