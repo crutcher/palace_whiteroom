@@ -4,7 +4,7 @@ invoked_at: 2026-06-08T053000Z
 scope: L3 kernel-impl↔kernel-api correspondence re-audit — eigsolve-impl-realizes-kernel-api-reaudit-lanczos (Hermitian inner-loop arm, coupled to the c139 lanczos advance)
 status: integrated
 integrated_at: 2026-06-08T165758Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 292a301
 integration_notes: "cycle-139 (batch-45 OPENER, 1/3). Audit-class FULLY-SUPPORTED; appended 8 verified_against: Hermitian-arm entries to book/src/L3/eigsolve-impl.md (195->227 lines; YAML round-trips clean, single top key, 16 entries; the 6 Palace anchors land EXACT); realizes-kernel-api stays reference-class, kernel-api L3/eigsolve stays partial-obstruction undowngraded. 0 NEW OQ."
 inputs:
   - book/src/L3/eigsolve-impl.md (kernel-impl node, status roadmap_goal)

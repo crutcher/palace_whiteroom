@@ -4,7 +4,7 @@ invoked_at: 2026-06-08T053000Z
 scope: synthesis-residual-content-fidelity-followups (3 LOW Synthesis correspondence-audit follow-ups)
 status: integrated
 integrated_at: 2026-06-08T165758Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 292a301
 integration_notes: "cycle-139 (batch-45 OPENER, 1/3). 3 content-fidelity fixes across 5 files — L4/iterate-while-with-prev.md (stale cg_solve call) + L4/eigsolve.md (7x initial_state->initial_eig_state) + L4/index.md (2 eigsolve-cap occurrences) + synthesis/coordination.md (stale NOTE re-phrased) + synthesis/types.md (units:Units added); 3 parent c138 OQs DISCHARGED. Meta-phase CLOSE-RESOLVES the 3 parent sections + retires their Backlog-Low migration lines at the batch-45 unify."
 ---
 

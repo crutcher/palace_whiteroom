@@ -4,7 +4,7 @@ invoked_at: 2026-06-08T053000Z
 scope: Pattern proposal — iterate-while-basis-extension-shared-core
 status: integrated
 integrated_at: 2026-06-08T165758Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 292a301
 integration_notes: "cycle-139 (batch-45 OPENER, 1/3). Clean NO-COMBINATOR finding (verdict (b)) — NO book mutation; the shared iterate_while_L3-over-basis-extension substrate is already lifted as iterate_while_L3 + correction_step, the 3 carry-shapes diverge, extend_while rejected as identity-in-named-terms. 2 OQs promoted. Applied clean per STAGING.md row 1; no gate hits."
 ---
 

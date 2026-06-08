@@ -4,7 +4,7 @@ invoked_at: 2026-06-08T053000Z
 scope: L4 roadmap_goal extension — sharding-decompose-reduce solve-generalization sketch (batch-45 front-4, gated/exploratory)
 status: integrated
 integrated_at: 2026-06-08T165758Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 292a301
 integration_notes: "cycle-139 (batch-45 OPENER, 1/3). Extended book/src/L4/sharding-decompose-reduce.md (STAYS rank-0 roadmap_goal) with the additive-Schwarz SOLVE-generalization; 3 NEW firm solve roots under reference: ONLY (no depends-on, no rank violation); DIRECTIVE-1 held (MPI cited-not-lifted); honest config-conditional NON-law (solve-case recovery strictly weaker than reduce-case). 2 OQs."
 inputs:
   - book/src/L4/sharding-decompose-reduce.md (the batch-43 rank-0 sketch being extended)

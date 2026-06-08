@@ -4,7 +4,7 @@ invoked_at: 2026-06-08T053000Z
 scope: maintenance-floor — batch-45 once-per-batch full-hygiene sweep
 status: integrated
 integrated_at: 2026-06-08T165758Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 292a301
 integration_notes: "cycle-139 (batch-45 OPENER, 1/3). MAINTENANCE FLOOR clean-bill, audit-class — NO book mutation (OQ append done in-dispatch); the once-per-batch full-hygiene sweep placed at the OPENER to ground the wide arc's linter baseline. All 12 graded-stack baseline fields reproduce on-disk, both hard invariants hold (rank_violations==0, unresolved==0), 3 realizes-kernel-api edges reference-class, DIRECTIVE-1 boundary intact. Finalize step-5b re-run on the LANDED tree confirmed the forecast (all counts HELD)."
 ---
 

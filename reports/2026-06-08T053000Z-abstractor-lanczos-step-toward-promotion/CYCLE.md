@@ -4,7 +4,7 @@ invoked_at: 2026-06-08T053000Z
 scope: L3 lanczos_step advance toward promotion — lanczos-step-toward-promotion
 status: integrated
 integrated_at: 2026-06-08T165758Z
-integration_commit: PLACEHOLDER_SHA
+integration_commit: 292a301
 integration_notes: "cycle-139 (batch-45 OPENER, 1/3). 5 in-place edits to book/src/L3/lanczos_step.md; STAYS rank-0 roadmap_goal (arm-A positive-structure UNSATISFIABLE from palace/ — MINRES enum-only-stub; live path arm-B blocking-consumer); eigsolve-impl roadmap_goal->stub did NOT fire. 2 OQs. NOTE: the finalize step-5c build-repair converted this chapter's §Signature indented $-sigil block to a fenced ```text block (KaTeX collision)."
 inputs:
   - book/src/L3/lanczos_step.md (the roadmap_goal chapter advanced)
