@@ -355,7 +355,7 @@ None. This theme lowers the already-authored L4 constructor
 from the already-firm L2 chain combinator + the four firm L1 substrate ops. No new speculative operator is
 introduced; the RHS constituents are all firm on disk.
 
-## Verified-against
+## Evidence
 
 L4 source (the LHS of this rewrite):
 

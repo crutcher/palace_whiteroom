@@ -219,7 +219,7 @@ is needed; the fold-step body (`AddLevel(fe_space(·, ·))`) and the append sema
 sub-constructions (`fe_space` / `fe_collection` / `essential_dofs`) carry their own firm structural
 rewrites; this theme is their composition.
 
-## Verified-against
+## Evidence
 
 - `palace/fem/multigrid.hpp:78-126` — `ConstructFiniteElementSpaceHierarchy`: the signature (`:78-82`),
   the non-empty `MFEM_VERIFY` (`:84-86`), the `coarse_mesh_l` start index (`:87-88`), the coarse-seed
