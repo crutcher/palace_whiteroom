@@ -2076,3 +2076,12 @@ The **genuinely-open / consumer-gated residuals** kept live are folded into §Op
 - `maintenance-floor-batch-45-full-hygiene-sweep-CLEAN-BILL-c139` (c139 D6) → CLOSED-STALE — informational closed audit-residue note (clean bill, no deliverable); superseded by the c142 D1 batch-46 sweep (also clean bill).
 - `iterate-while-basis-extension-no-shared-combinator` (c139 D1) → KEPT as the recorded durable NEGATIVE finding (combinator-miner verdict (b): no new combinator; the shared substrate is already firm `iterate_while_L3` + `correction_step`; the per-instance carry shapes genuinely diverge). Re-open only on a FOURTH instance with a carry shape distinct from `BV`. (Finding retained in git; indexed here so the slug resolves.)
 
+---
+
+## sibling-layer-index-finalization-debulk-residue-check
+
+opened_at: cycle-148
+opened_by: integrator-per-report
+
+The c148 L1-index FINALIZATION de-bulk (`reports/2026-06-09T003000Z-layer-intro-author-c148-l1-index-debulk`) discharged `book/src/L1/index.md` of its process-accounting residue (HEAD 56 `cycle-NNN`/`cNNN`/`batch-NNN`/`wave-N` tags → worktree 0; OQ `l1-index-finalization-debulk-residue` is thereby RESOLVED-IN-CYCLE, NOT promoted). That de-bulk report + the c148 cross-layer hygiene sweep (`reports/2026-06-09T001500Z-cross-layer-cross-cutter-c148-hygiene-sweep`) flag that the **sibling navigational-container index files `book/src/L2/index.md`, `book/src/L3/index.md`, `book/src/L0/index.md` may carry the same `cycle-NNN`-attribution / promotion-history-narrative residue class** — the batch-47 de-bulk campaign reached the per-operator chapters but these prose-dep-map indexes were not swept. These are NO-FRONTMATTER-RANK files whose dep-map cell status tokens are the SOLE rank carriers (per the CLAUDE.md `## Status`-as-sole-rank-carrier subtlety + the `finalization-debulk` skill), so a de-bulk pass must preserve every status token / citation / link exactly (the L1 pass model: 136→136 citations, 57→57 tokens, baseline held). *Disposition:* a LIVE forward item for the batch-49 meta-phase to triage into the plan — one `layer-intro-author` de-bulk dispatch per residue-carrying sibling index (one-file-de-bulk discipline). *Trigger:* meta-phase confirms which siblings carry the residue (a `grep -cE 'cycle-[0-9]+|c[0-9]{2,3}\b|batch-[0-9]+' book/src/L{2,3,0}/index.md` over each) and ranks the de-bulk dispatches.
+
